@@ -278,3 +278,23 @@ class TestGetFrameworkInfo:
         """Unknown framework value returns NATIVE info (via dict.get fallback)."""
         native_info = get_framework_info(Framework.NATIVE)
         assert native_info["name"] == "Empathy Native"
+
+
+class TestRecommendedFrameworkFallback:
+    """Cover line 119: get_recommended_framework returns NATIVE when no preferred installed."""
+
+    def test_returns_native_when_none_installed(self):
+        from unittest.mock import patch
+
+        from attune.agent_factory.framework import (
+            Framework,
+            get_recommended_framework,
+        )
+
+        # No frameworks installed → should fall back to NATIVE
+        with patch(
+            "attune.agent_factory.framework.detect_installed_frameworks",
+            return_value=set(),
+        ):
+            result = get_recommended_framework("research")
+        assert result == Framework.NATIVE

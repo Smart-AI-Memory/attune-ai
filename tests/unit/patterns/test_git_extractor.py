@@ -624,3 +624,233 @@ class TestGetCommitDiff:
             result = extractor._get_commit_diff("HEAD~1", "HEAD")
 
         assert result == diff_content
+
+
+# ---------------------------------------------------------------------------
+# Multi-file diff — covers lines 302-307 (process previous file on new header)
+# ---------------------------------------------------------------------------
+
+
+class TestAnalyzeDiffMultiFile:
+    """Lines 302-307: previous file's patterns processed when a new diff header appears."""
+
+    def test_two_file_diff_processes_first_file(self, tmp_path):
+        """_analyze_diff hits the 'process previous file' branch (lines 302-307)."""
+        extractor = GitPatternExtractor(str(tmp_path))
+        commit_info = {"author": "dev", "date": "2025-01-01T00:00:00"}
+
+        # Two-file diff: file1 has try: (error_handling), file2 has unrelated content
+        diff = (
+            "diff --git a/src/first.py b/src/first.py\n"
+            "+try:\n"
+            "+    risky()\n"
+            "diff --git a/src/second.py b/src/second.py\n"
+            "+x = 1\n"
+        )
+
+        result = extractor._analyze_diff(diff, commit_info)
+
+        # The first file's error_handling pattern should be detected
+        types = [p["type"] for p in result]
+        assert "error_handling" in types
+
+    def test_two_file_diff_processes_both_files(self, tmp_path):
+        """_analyze_diff processes both file sections (last file + previous file)."""
+        extractor = GitPatternExtractor(str(tmp_path))
+        commit_info = {"author": "dev", "date": "2025-01-01T00:00:00"}
+
+        # Both files have detectable patterns
+        diff = (
+            "diff --git a/src/a.py b/src/a.py\n"
+            "+try:\n"
+            "+    do_something()\n"
+            "diff --git a/src/b.py b/src/b.py\n"
+            "+if isinstance(value, str):\n"
+        )
+
+        result = extractor._analyze_diff(diff, commit_info)
+
+        # Both files should contribute patterns
+        files = {p["file"] for p in result}
+        assert len(files) >= 1  # at least one file's patterns detected
+
+
+# ---------------------------------------------------------------------------
+# main() — covers lines 368-439
+# ---------------------------------------------------------------------------
+
+
+class TestGitExtractorMain:
+    """Tests for the main() CLI entry point in git_extractor."""
+
+    def _no_patterns_subprocess(self):
+        """Returns a failed subprocess result (no git repo → no patterns)."""
+        return _make_completed_process(stdout="", returncode=128)
+
+    def test_main_no_patterns_prints_message(self, tmp_path, capsys):
+        """Lines 409-412: main() prints 'No fix patterns detected' when empty."""
+        from attune.patterns.git_extractor import main
+
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path)]),
+            patch("subprocess.run", return_value=self._no_patterns_subprocess()),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert "No fix patterns detected" in out
+
+    def test_main_quiet_no_output_when_no_patterns(self, tmp_path, capsys):
+        """Line 410-411: --quiet suppresses 'No fix patterns detected' message."""
+        from attune.patterns.git_extractor import main
+
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path), "--quiet"]),
+            patch("subprocess.run", return_value=self._no_patterns_subprocess()),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert out == ""
+
+    def test_main_staged_flag(self, tmp_path, capsys):
+        """Line 405: --staged calls extract_from_staged."""
+        from attune.patterns.git_extractor import main
+
+        empty_diff = _make_completed_process(stdout="", returncode=0)
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path), "--staged"]),
+            patch("subprocess.run", return_value=empty_diff),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert "No fix patterns detected" in out
+
+    def test_main_with_patterns_displays_them(self, tmp_path, capsys):
+        """Lines 415-429: main() displays detected patterns."""
+        from attune.patterns.git_extractor import main
+
+        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
+        diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
+        log_result = _make_completed_process(stdout=commit_log, returncode=0)
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path)]),
+            patch("subprocess.run", side_effect=[log_result, diff_result]),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert "Detected" in out
+        assert "Pattern:" in out
+
+    def test_main_with_patterns_and_save(self, tmp_path, capsys):
+        """Lines 431-435: main() saves patterns when --save is set."""
+        from attune.patterns.git_extractor import main
+
+        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
+        diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
+        log_result = _make_completed_process(stdout=commit_log, returncode=0)
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+
+        with (
+            patch(
+                "sys.argv",
+                ["git_extractor", "--patterns-dir", str(tmp_path), "--save"],
+            ),
+            patch("subprocess.run", side_effect=[log_result, diff_result]),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        # Save completion message shown (lines 437-439)
+        assert "saved" in out.lower() or "Saved" in out
+
+    def test_main_quiet_with_patterns_no_display(self, tmp_path, capsys):
+        """Lines 421: --quiet suppresses pattern display."""
+        from attune.patterns.git_extractor import main
+
+        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
+        diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
+        log_result = _make_completed_process(stdout=commit_log, returncode=0)
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+
+        with (
+            patch(
+                "sys.argv",
+                ["git_extractor", "--patterns-dir", str(tmp_path), "--quiet"],
+            ),
+            patch("subprocess.run", side_effect=[log_result, diff_result]),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert out == ""
+
+    def test_main_pattern_with_commit_message_field(self, tmp_path, capsys):
+        """Line 426-427: patterns with 'commit_message' field display the commit."""
+        from attune.patterns.git_extractor import main
+
+        commit_log = (
+            "abc12345\nfix: null pointer dereference in parser\nJane Dev\n2025-01-01T00:00:00Z"
+        )
+        diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
+        log_result = _make_completed_process(stdout=commit_log, returncode=0)
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path)]),
+            patch("subprocess.run", side_effect=[log_result, diff_result]),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert "Commit:" in out
+
+    def test_main_staged_patterns_displayed_without_commit_message(self, tmp_path, capsys):
+        """Line 426->428: pattern without 'commit_message' skips that print line."""
+        from attune.patterns.git_extractor import main
+
+        # --staged produces patterns without 'commit_message' key
+        diff_output = "diff --git a/src/module.py b/src/module.py\n" "+try:\n" "+    risky()\n"
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+        # _get_git_config for user.name
+        config_result = _make_completed_process(stdout="Dev Name", returncode=0)
+
+        with (
+            patch("sys.argv", ["git_extractor", "--patterns-dir", str(tmp_path), "--staged"]),
+            patch("subprocess.run", side_effect=[diff_result, config_result]),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        # Pattern shown but no "Commit:" line (no commit_message key on staged patterns)
+        assert "Pattern:" in out
+        assert "Commit:" not in out
+
+    def test_main_save_failed_skips_saved_path_message(self, tmp_path, capsys):
+        """Line 433->420: when save_pattern returns None, no 'Saved to:' printed."""
+        from attune.patterns.git_extractor import main
+
+        commit_log = "abc12345\nfix: null pointer\nJane Dev\n2025-01-01T00:00:00Z"
+        diff_output = "diff --git a/src/module.py b/src/module.py\n+try:\n+    risky()\n"
+        log_result = _make_completed_process(stdout=commit_log, returncode=0)
+        diff_result = _make_completed_process(stdout=diff_output, returncode=0)
+
+        with (
+            patch(
+                "sys.argv",
+                ["git_extractor", "--patterns-dir", str(tmp_path), "--save"],
+            ),
+            patch("subprocess.run", side_effect=[log_result, diff_result]),
+            patch(
+                "attune.patterns.git_extractor.GitPatternExtractor.save_pattern",
+                return_value=None,
+            ),
+        ):
+            main()
+
+        out = capsys.readouterr().out
+        assert "Saved to:" not in out

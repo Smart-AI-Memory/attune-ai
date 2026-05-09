@@ -326,3 +326,305 @@ class TestGlobalHealthCheck:
 
         # Should be the same instance (singleton)
         assert health1 is health2
+
+
+# ---------------------------------------------------------------------------
+# Coverage gaps
+# ---------------------------------------------------------------------------
+
+
+class TestRunCheckEdgeCases:
+    @pytest.mark.asyncio
+    async def test_unknown_check_returns_unknown_status(self):
+        """Line 137: name not in self._checks → UNKNOWN."""
+        h = HealthCheck(version="1.0")
+        result = await h.run_check("does_not_exist")
+        assert result.status == HealthStatus.UNKNOWN
+        assert "not found" in result.message
+
+    @pytest.mark.asyncio
+    async def test_non_bool_non_dict_result_is_healthy(self):
+        """Line 173: result is neither bool nor dict → HEALTHY default."""
+        h = HealthCheck()
+
+        @h.register("returns_int")
+        def returns_int():
+            return 42
+
+        result = await h.run_check("returns_int")
+        assert result.status == HealthStatus.HEALTHY
+
+    @pytest.mark.asyncio
+    async def test_timeout_returns_unhealthy(self):
+        """Line 180: asyncio.TimeoutError → UNHEALTHY with timeout message."""
+        h = HealthCheck()
+
+        @h.register("slow", timeout=0.05)
+        async def slow():
+            await asyncio.sleep(1)
+            return True
+
+        result = await h.run_check("slow")
+        assert result.status == HealthStatus.UNHEALTHY
+        assert "timed out" in result.message
+
+
+class TestRunAllOverallStatus:
+    @pytest.mark.asyncio
+    async def test_unhealthy_when_any_unhealthy(self):
+        """Line 204-205: any UNHEALTHY → overall UNHEALTHY."""
+        h = HealthCheck()
+
+        @h.register("ok")
+        def ok():
+            return True
+
+        @h.register("bad")
+        def bad():
+            return False
+
+        sys_health = await h.run_all()
+        assert sys_health.status == HealthStatus.UNHEALTHY
+
+    @pytest.mark.asyncio
+    async def test_degraded_when_any_degraded(self):
+        """Lines 206-207: any DEGRADED (and no UNHEALTHY) → overall DEGRADED."""
+        h = HealthCheck()
+
+        # Pre-populate _checks with a function that returns a custom status by
+        # constructing the HealthCheckResult directly via a wrapper.
+        async def degraded_check() -> HealthCheckResult:
+            return HealthCheckResult(name="d", status=HealthStatus.DEGRADED)
+
+        # We can't easily get DEGRADED through normal return values, so monkey-patch
+        # run_check to inject one DEGRADED and one HEALTHY.
+        original = h.run_check
+
+        async def patched_run_check(name):
+            if name == "degraded":
+                return HealthCheckResult(name=name, status=HealthStatus.DEGRADED)
+            return await original(name)
+
+        h._checks["degraded"] = lambda: True
+        h._checks["healthy"] = lambda: True
+        h._timeouts["degraded"] = 5.0
+        h._timeouts["healthy"] = 5.0
+        h.run_check = patched_run_check
+
+        sys_health = await h.run_all()
+        assert sys_health.status == HealthStatus.DEGRADED
+
+    @pytest.mark.asyncio
+    async def test_unknown_when_only_unknown(self):
+        """Lines 208-209: no HEALTHY/UNHEALTHY/DEGRADED → UNKNOWN."""
+        h = HealthCheck()
+
+        async def patched_run_check(name):
+            return HealthCheckResult(name=name, status=HealthStatus.UNKNOWN)
+
+        h._checks["x"] = lambda: True
+        h._timeouts["x"] = 5.0
+        h.run_check = patched_run_check
+
+        sys_health = await h.run_all()
+        assert sys_health.status == HealthStatus.UNKNOWN
+
+
+class TestRegisterDefaultChecks:
+    """Cover register_default_checks (lines 235-306)."""
+
+    @pytest.mark.asyncio
+    async def test_default_checks_registered(self):
+        from attune.resilience.health import register_default_checks
+
+        h = HealthCheck()
+        register_default_checks(h)
+        assert "workflow_registry" in h._checks
+        assert "memory_graph" in h._checks
+        assert "smart_router" in h._checks
+        assert "chain_executor" in h._checks
+
+    @pytest.mark.asyncio
+    async def test_workflow_registry_check_runs(self, monkeypatch):
+        """Lines 238-252: workflow_registry check happy path + exception."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        from attune.resilience.health import register_default_checks
+
+        # Happy path
+        fake_registry_cls = MagicMock()
+        fake_registry_cls.return_value.list_all.return_value = ["w1", "w2"]
+        fake_module = SimpleNamespace(WorkflowRegistry=fake_registry_cls)
+        monkeypatch.setitem(sys.modules, "attune.routing", fake_module)
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("workflow_registry")
+        assert result.status == HealthStatus.HEALTHY
+
+        # Exception path: accessing WorkflowRegistry raises
+        class _Broken:
+            def __getattr__(self, name):
+                raise RuntimeError("import failed")
+
+        monkeypatch.setitem(sys.modules, "attune.routing", _Broken())
+        result2 = await h.run_check("workflow_registry")
+        assert result2.status == HealthStatus.UNHEALTHY
+
+    @pytest.mark.asyncio
+    async def test_memory_graph_check_with_existing_file(self, monkeypatch, tmp_path):
+        """Lines 254-272: memory_graph check, file exists."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        from attune.resilience.health import register_default_checks
+
+        fake_graph = MagicMock()
+        fake_graph.nodes = [1, 2, 3]
+        fake_graph.edges = [(1, 2)]
+        fake_module = SimpleNamespace(MemoryGraph=lambda path: fake_graph)
+        monkeypatch.setitem(sys.modules, "attune.memory", fake_module)
+
+        # patch Path so that exists() returns True
+        from attune.resilience import health as health_mod
+
+        class FakePath:
+            def __init__(self, *a, **kw):
+                pass
+
+            def exists(self):
+                return True
+
+        monkeypatch.setattr(health_mod, "Path", FakePath)
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("memory_graph")
+        assert result.status == HealthStatus.HEALTHY
+        assert result.details.get("node_count") == 3
+
+    @pytest.mark.asyncio
+    async def test_memory_graph_check_no_file(self, monkeypatch):
+        """Lines 268-273: memory graph file does not exist."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        from attune.resilience import health as health_mod
+        from attune.resilience.health import register_default_checks
+
+        fake_module = SimpleNamespace(MemoryGraph=MagicMock())
+        monkeypatch.setitem(sys.modules, "attune.memory", fake_module)
+
+        class FakePath:
+            def __init__(self, *a, **kw):
+                pass
+
+            def exists(self):
+                return False
+
+        monkeypatch.setattr(health_mod, "Path", FakePath)
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("memory_graph")
+        assert result.status == HealthStatus.HEALTHY
+        assert result.details.get("node_count") == 0
+
+    @pytest.mark.asyncio
+    async def test_memory_graph_check_exception(self, monkeypatch):
+        """Lines 274-275: memory_graph exception → unhealthy."""
+        import sys
+
+        from attune.resilience.health import register_default_checks
+
+        class _Broken:
+            def __getattr__(self, name):
+                raise RuntimeError("nope")
+
+        monkeypatch.setitem(sys.modules, "attune.memory", _Broken())
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("memory_graph")
+        assert result.status == HealthStatus.UNHEALTHY
+
+    @pytest.mark.asyncio
+    async def test_smart_router_check_happy_path(self, monkeypatch):
+        """Lines 277-289: smart_router check happy path."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        from attune.resilience.health import register_default_checks
+
+        fake_decision = SimpleNamespace(primary_workflow="wf-x")
+        fake_router = MagicMock()
+        fake_router.route_sync.return_value = fake_decision
+        fake_module = SimpleNamespace(SmartRouter=lambda: fake_router)
+        monkeypatch.setitem(sys.modules, "attune.routing", fake_module)
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("smart_router")
+        assert result.status == HealthStatus.HEALTHY
+        assert result.details.get("primary_workflow") == "wf-x"
+
+    @pytest.mark.asyncio
+    async def test_smart_router_check_exception(self, monkeypatch):
+        """Lines 290-291: smart_router exception → unhealthy."""
+        import sys
+
+        from attune.resilience.health import register_default_checks
+
+        class _Broken:
+            def __getattr__(self, name):
+                raise RuntimeError("router broken")
+
+        monkeypatch.setitem(sys.modules, "attune.routing", _Broken())
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("smart_router")
+        assert result.status == HealthStatus.UNHEALTHY
+
+    @pytest.mark.asyncio
+    async def test_chain_executor_check_happy_path(self, monkeypatch):
+        """Lines 293-304: chain_executor check happy path."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        from attune.resilience.health import register_default_checks
+
+        fake_executor = MagicMock()
+        fake_executor.list_templates.return_value = ["t1", "t2"]
+        fake_module = SimpleNamespace(ChainExecutor=lambda: fake_executor)
+        monkeypatch.setitem(sys.modules, "attune.routing", fake_module)
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("chain_executor")
+        assert result.status == HealthStatus.HEALTHY
+        assert result.details.get("template_count") == 2
+
+    @pytest.mark.asyncio
+    async def test_chain_executor_check_exception(self, monkeypatch):
+        """Lines 305-306: chain_executor exception → unhealthy."""
+        import sys
+
+        from attune.resilience.health import register_default_checks
+
+        class _Broken:
+            def __getattr__(self, name):
+                raise RuntimeError("executor broken")
+
+        monkeypatch.setitem(sys.modules, "attune.routing", _Broken())
+
+        h = HealthCheck()
+        register_default_checks(h)
+        result = await h.run_check("chain_executor")
+        assert result.status == HealthStatus.UNHEALTHY

@@ -49,6 +49,42 @@ def _make_stage(
 
 
 @pytest.mark.unit
+class TestStageProgressToDict:
+    """Cover StageProgress.to_dict() serialization."""
+
+    def test_to_dict_includes_all_fields(self):
+        from datetime import datetime
+
+        started = datetime(2026, 5, 9, 12, 0, 0)
+        completed = datetime(2026, 5, 9, 12, 0, 1)
+        sp = StageProgress(
+            name="stage-1",
+            status=ProgressStatus.COMPLETED,
+            tier="capable",
+            model="haiku",
+            started_at=started,
+            completed_at=completed,
+            duration_ms=1234,
+            cost=0.05,
+            tokens_in=100,
+            tokens_out=50,
+        )
+        d = sp.to_dict()
+        assert d["name"] == "stage-1"
+        assert d["status"] == "completed"
+        assert d["tier"] == "capable"
+        assert d["started_at"] == started.isoformat()
+        assert d["completed_at"] == completed.isoformat()
+        assert d["cost"] == 0.05
+
+    def test_to_dict_handles_none_timestamps(self):
+        sp = StageProgress(name="s", status=ProgressStatus.PENDING)
+        d = sp.to_dict()
+        assert d["started_at"] is None
+        assert d["completed_at"] is None
+
+
+@pytest.mark.unit
 class TestConsoleProgressReporterBasic:
     """Test basic console output formatting."""
 

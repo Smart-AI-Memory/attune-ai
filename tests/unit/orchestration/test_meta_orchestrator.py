@@ -414,6 +414,116 @@ class TestCostEstimation:
         max_timeout = max(a.resource_requirements.timeout_seconds for a in agents)
         assert duration == max_timeout
 
+    def test_analyze_task_returns_requirements(self):
+        """Public analyze_task() with valid input returns TaskRequirements (lines 165-166)."""
+        result = self.orchestrator.analyze_task("Improve test coverage", context=None)
+        # No context → defaults to {}, then delegates to _analyze_task
+        assert result is not None
+        assert hasattr(result, "domain")
+        assert hasattr(result, "complexity")
+
+    def test_analyze_task_rejects_empty_string(self):
+        """Public analyze_task() rejects empty/non-string input (line 163)."""
+        with pytest.raises(ValueError, match="non-empty string"):
+            self.orchestrator.analyze_task("")
+
+    def test_analyze_task_rejects_non_string(self):
+        """Public analyze_task() rejects non-string input (line 163)."""
+        with pytest.raises(ValueError, match="non-empty string"):
+            self.orchestrator.analyze_task(None)  # type: ignore[arg-type]
+
+    def test_compose_team_invokes_dynamic_team_builder(self):
+        """compose_team builds a plan and delegates to DynamicTeamBuilder (lines 290-307)."""
+        from unittest.mock import MagicMock, patch
+
+        sentinel_team = object()
+        fake_builder = MagicMock()
+        fake_builder.build_from_plan.return_value = sentinel_team
+
+        with patch(
+            "attune.orchestration.team_builder.DynamicTeamBuilder",
+            return_value=fake_builder,
+        ):
+            result = self.orchestrator.compose_team(
+                task="Improve test coverage for the project",
+                context={},
+            )
+
+        assert result is sentinel_team
+        fake_builder.build_from_plan.assert_called_once()
+        plan_dict = fake_builder.build_from_plan.call_args[0][0]
+        assert "name" in plan_dict
+        assert "strategy" in plan_dict
+        assert "agents" in plan_dict
+        assert "quality_gates" in plan_dict
+        assert "phases" in plan_dict
+
+    def test_classify_domain_no_keyword_match_returns_general(self):
+        """Task with no keyword matches falls through to default GENERAL (line 244)."""
+        # Use a string with no domain keywords from DOMAIN_KEYWORDS
+        result = self.orchestrator._classify_domain("xqyz lorem ipsum dolor")
+        assert result == TaskDomain.GENERAL
+
+    def test_extract_capabilities_ignores_non_list_context_value(self):
+        """Context['capabilities'] that isn't a list is silently ignored (branch 263->266)."""
+        result = self.orchestrator._extract_capabilities(
+            TaskDomain.TESTING,
+            {"capabilities": "not-a-list"},
+        )
+        # Default capabilities for TESTING are returned; non-list extra is ignored
+        assert isinstance(result, list)
+
+    def test_get_default_agents_skips_unknown_template_id(self):
+        """When a default template_id doesn't resolve, it's skipped (branch 367->365)."""
+        # Patch the defaults dict path: call _get_default_agents with a domain whose
+        # default template_id doesn't exist by patching get_template to return None.
+        from unittest.mock import patch
+
+        with patch(
+            "attune.orchestration.meta_orch_analysis.get_template",
+            return_value=None,
+        ):
+            agents = self.orchestrator._get_default_agents(TaskDomain.TESTING)
+        # All template IDs return None, so no agents are appended
+        assert agents == []
+
+    def test_select_agents_raises_when_no_agents_resolvable(self):
+        """If no capability matches AND defaults return empty, ValueError is raised (line 339)."""
+        from unittest.mock import patch
+
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.SIMPLE,
+            domain=TaskDomain.GENERAL,
+            capabilities_needed=["nonexistent_capability"],
+        )
+
+        with (
+            patch(
+                "attune.orchestration.meta_orch_analysis.get_templates_by_capability",
+                return_value=[],
+            ),
+            patch(
+                "attune.orchestration.meta_orch_analysis.get_template",
+                return_value=None,
+            ),
+        ):
+            with pytest.raises(ValueError, match="No agents available"):
+                self.orchestrator._select_agents(requirements)
+
+    def test_estimate_duration_unknown_strategy_returns_max_timeout(self):
+        """Defensive default branch: unrecognized strategy falls back to max timeout."""
+        requirements = TaskRequirements(
+            complexity=TaskComplexity.SIMPLE,
+            domain=TaskDomain.TESTING,
+            capabilities_needed=["analyze_gaps"],
+        )
+        agents = self.orchestrator._select_agents(requirements)
+        max_timeout = max(a.resource_requirements.timeout_seconds for a in agents)
+
+        # Pass a sentinel that does not equal any CompositionPattern value
+        duration = self.orchestrator._estimate_duration(agents, "unknown-strategy-sentinel")
+        assert duration == max_timeout
+
 
 class TestAnalyzeAndCompose:
     """Test end-to-end orchestration."""

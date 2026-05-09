@@ -239,3 +239,149 @@ class TestCreateHeaderFromQuestion:
         header = create_header_from_question(question)
 
         assert header == "Security"
+
+
+# ---------------------------------------------------------------------------
+# _ask_batch coverage (lines 145-166)
+# ---------------------------------------------------------------------------
+
+
+class TestAskBatch:
+    def test_callback_invoked_returns_result(self):
+        """Lines 148-153: callback present → returned dict."""
+        engine = SocraticFormEngine(
+            ask_user_callback=lambda qs: {"q1": "yes"},
+        )
+        result = engine._ask_batch([{"question_id": "q1", "header": "Q1", "question": "?"}], "tmpl")
+        assert result == {"q1": "yes"}
+
+    def test_callback_raises_with_defaults_fallback(self):
+        """Lines 154-158: callback raises + use_defaults_when_no_callback=True → defaults."""
+
+        def bad_callback(qs):
+            raise ValueError("network down")
+
+        engine = SocraticFormEngine(
+            ask_user_callback=bad_callback,
+            use_defaults_when_no_callback=True,
+        )
+        result = engine._ask_batch([{"question_id": "q1", "default": "x"}], "tmpl")
+        assert result == {"q1": "x"}
+
+    def test_callback_raises_no_defaults_reraises(self):
+        """Line 159: callback raises + use_defaults_when_no_callback=False → RuntimeError."""
+        import pytest
+
+        def bad_callback(qs):
+            raise ValueError("net down")
+
+        engine = SocraticFormEngine(
+            ask_user_callback=bad_callback,
+            use_defaults_when_no_callback=False,
+        )
+        with pytest.raises(RuntimeError, match="callback failed"):
+            engine._ask_batch([{"question_id": "q1"}], "tmpl")
+
+    def test_no_callback_uses_defaults(self):
+        """Lines 162-164: no callback + use_defaults=True → defaults."""
+        engine = SocraticFormEngine(use_defaults_when_no_callback=True)
+        result = engine._ask_batch([{"question_id": "q1", "default": "auto"}], "tmpl")
+        assert result == {"q1": "auto"}
+
+    def test_no_callback_no_defaults_raises(self):
+        """Lines 166-169: no callback + use_defaults=False → RuntimeError."""
+        import pytest
+
+        engine = SocraticFormEngine(use_defaults_when_no_callback=False)
+        with pytest.raises(RuntimeError, match="No AskUserQuestion callback"):
+            engine._ask_batch([{"question_id": "q1"}], "tmpl")
+
+
+# ---------------------------------------------------------------------------
+# _get_defaults_from_questions coverage (lines 181-206)
+# ---------------------------------------------------------------------------
+
+
+class TestGetDefaultsFromQuestions:
+    def test_explicit_default_is_used(self):
+        """Lines 187-190: q['default'] takes precedence."""
+        engine = SocraticFormEngine()
+        result = engine._get_defaults_from_questions(
+            [{"question_id": "q1", "default": "MY_DEFAULT", "options": [{"label": "ignored"}]}]
+        )
+        assert result == {"q1": "MY_DEFAULT"}
+
+    def test_first_option_dict_used_when_no_default(self):
+        """Lines 197-198: first option is dict → use its label."""
+        engine = SocraticFormEngine()
+        result = engine._get_defaults_from_questions(
+            [{"question_id": "q1", "options": [{"label": "yes"}, {"label": "no"}]}]
+        )
+        assert result == {"q1": "yes"}
+
+    def test_first_option_string_used_when_no_default(self):
+        """Lines 199-200: first option is non-dict → str() conversion."""
+        engine = SocraticFormEngine()
+        result = engine._get_defaults_from_questions(
+            [{"question_id": "q1", "options": ["alpha", "beta"]}]
+        )
+        assert result == {"q1": "alpha"}
+
+    def test_no_options_no_default_yields_empty_string(self):
+        """Lines 201-202: no options and no default → empty string."""
+        engine = SocraticFormEngine()
+        result = engine._get_defaults_from_questions([{"question_id": "q1"}])
+        assert result == {"q1": ""}
+
+    def test_falls_back_to_header_then_question_when_no_id(self):
+        """Line 184: prefer question_id, then header, then question."""
+        engine = SocraticFormEngine()
+        result = engine._get_defaults_from_questions([{"header": "MyHeader", "default": "v"}])
+        assert result == {"MyHeader": "v"}
+        result2 = engine._get_defaults_from_questions([{"question": "Q text?", "default": "v"}])
+        assert result2 == {"Q text?": "v"}
+
+
+# ---------------------------------------------------------------------------
+# set_callback (lines 215-216)
+# ---------------------------------------------------------------------------
+
+
+class TestSetCallback:
+    def test_set_callback_assigns(self):
+        """Line 215: callback is stored on instance."""
+        engine = SocraticFormEngine()
+
+        def cb(qs):
+            return {}
+
+        engine.set_callback(cb)
+        assert engine._ask_user_callback is cb
+
+    def test_set_callback_clears_with_none(self):
+        """Line 215: passing None clears the callback."""
+        engine = SocraticFormEngine(ask_user_callback=lambda qs: {})
+        engine.set_callback(None)
+        assert engine._ask_user_callback is None
+
+
+# ---------------------------------------------------------------------------
+# create_header_from_question — coverage gaps at lines 296, 298, 300
+# ---------------------------------------------------------------------------
+
+
+class TestCreateHeaderEdgeCases:
+    def test_name_keyword(self):
+        """Line 295-296: 'name' in text → 'Name'."""
+        q = FormQuestion(id="x", text="What is the project name?", type=QuestionType.TEXT_INPUT)
+        assert create_header_from_question(q) == "Name"
+
+    def test_changelog_keyword(self):
+        """Line 297-298: 'changelog' in text → 'Changelog'."""
+        q = FormQuestion(id="x", text="Update the changelog?", type=QuestionType.BOOLEAN)
+        assert create_header_from_question(q) == "Changelog"
+
+    def test_git_keyword(self):
+        """Line 299-300: 'git' in text → 'Git'."""
+        q = FormQuestion(id="x", text="Configure git settings?", type=QuestionType.BOOLEAN)
+        assert create_header_from_question(q) == "Git"

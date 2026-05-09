@@ -387,3 +387,189 @@ class TestAvailableWizardsOverride:
         result = classifier.classify_sync("test something")
 
         assert isinstance(result, ClassificationResult)
+
+
+# ---------------------------------------------------------------------------
+# Coverage for LLM client path and missing branches
+# ---------------------------------------------------------------------------
+
+
+import builtins  # noqa: E402
+from unittest.mock import MagicMock, patch  # noqa: E402
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.unit
+class TestGetClient:
+    """Cover _get_client lazy-import paths."""
+
+    def test_get_client_instantiates_anthropic(self):
+        """Lines 56-60: api_key set + anthropic importable → client created."""
+        classifier = HaikuClassifier(api_key="test-key")
+        fake_client = MagicMock(name="anthropic-client")
+        fake_anthropic = MagicMock()
+        fake_anthropic.Anthropic.return_value = fake_client
+
+        with patch.dict("sys.modules", {"anthropic": fake_anthropic}):
+            client = classifier._get_client()
+
+        assert client is fake_client
+        fake_anthropic.Anthropic.assert_called_once_with(api_key="test-key")
+
+    def test_get_client_handles_import_error(self):
+        """Lines 61-62: ImportError when anthropic missing → returns None."""
+        classifier = HaikuClassifier(api_key="test-key")
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "anthropic":
+                raise ImportError("not installed")
+            return real_import(name, *args, **kwargs)
+
+        with patch.object(builtins, "__import__", side_effect=fake_import):
+            assert classifier._get_client() is None
+
+    def test_get_client_no_api_key_returns_none(self, monkeypatch):
+        """Without api_key, _get_client returns None without importing."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        classifier = HaikuClassifier(api_key=None)
+        assert classifier._get_client() is None
+
+
+@pytest.mark.unit
+class TestClassifyLLMPath:
+    """Cover the LLM-driven classify path (lines 82, 90, 122-153)."""
+
+    def _build_classifier_with_client(self, client):
+        classifier = HaikuClassifier(api_key="test-key")
+        classifier._client = client
+        return classifier
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_success_plain_json(self):
+        """Lines 122-147: full LLM happy path with plain JSON response."""
+        block = MagicMock()
+        block.text = (
+            '{"primary_workflow": "security-scan",'
+            ' "secondary_workflows": ["code-review"],'
+            ' "confidence": 0.92, "reasoning": "found CVE",'
+            ' "extracted_context": {"file": "auth.py"}}'
+        )
+        response = MagicMock()
+        response.content = [block]
+        client = MagicMock()
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify(
+            "scan auth.py for vulnerabilities",
+            context={"project": "api"},
+            available_workflows={"security-scan": "scan", "code-review": "review"},
+        )
+
+        assert result.primary_workflow == "security-scan"
+        assert result.secondary_workflows == ["code-review"]
+        assert result.confidence == 0.92
+        assert result.reasoning == "found CVE"
+        assert result.extracted_context == {"file": "auth.py"}
+
+        # Verify the user prompt included the context block (line 90)
+        call = client.messages.create.call_args
+        user_msg = call.kwargs["messages"][0]["content"]
+        assert "Context:" in user_msg
+        assert "project" in user_msg
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_response_wrapped_in_json_codeblock(self):
+        """Lines 135-136: ```json fenced response is unwrapped."""
+        block = MagicMock()
+        block.text = '```json\n{"primary_workflow": "test-gen", "confidence": 0.7}\n```'
+        response = MagicMock()
+        response.content = [block]
+        client = MagicMock()
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify("write tests")
+        assert result.primary_workflow == "test-gen"
+        assert result.confidence == 0.7
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_response_wrapped_in_plain_codeblock(self):
+        """Lines 137-138: ``` (no language) fenced response is unwrapped."""
+        block = MagicMock()
+        block.text = '```\n{"primary_workflow": "doc-gen"}\n```'
+        response = MagicMock()
+        response.content = [block]
+        client = MagicMock()
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify("docs please")
+        assert result.primary_workflow == "doc-gen"
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_empty_content_falls_through_to_keyword(self):
+        """Line 130: empty content list yields '{}', triggering defaults."""
+        response = MagicMock()
+        response.content = []  # falsy, content defaults to "{}"
+        client = MagicMock()
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify("review my code")
+        # "{}" parses, primary_workflow falls back to default "code-review"
+        assert result.primary_workflow == "code-review"
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_invalid_json_falls_back_to_keyword(self):
+        """Lines 148-149: JSONDecodeError logs warning and falls back."""
+        block = MagicMock()
+        block.text = "this is not JSON at all"
+        response = MagicMock()
+        response.content = [block]
+        client = MagicMock()
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify("review this code please")
+        # Falls through to _keyword_classify — returns a valid result
+        assert isinstance(result, ClassificationResult)
+        assert result.primary_workflow is not None
+
+    @pytest.mark.asyncio
+    async def test_classify_llm_api_exception_falls_back(self):
+        """Lines 151-153: API exception → keyword fallback."""
+        client = MagicMock()
+        client.messages.create.side_effect = RuntimeError("boom")
+        classifier = self._build_classifier_with_client(client)
+
+        result = await classifier.classify("audit security holes")
+        assert isinstance(result, ClassificationResult)
+        # Keyword fallback should still produce a workflow name
+        assert result.primary_workflow is not None
+
+    @pytest.mark.asyncio
+    async def test_classify_uses_provided_available_workflows(self):
+        """Line 82->86: when available_workflows provided, skip registry lookup."""
+        client = MagicMock()
+        block = MagicMock()
+        block.text = '{"primary_workflow": "custom-flow"}'
+        response = MagicMock()
+        response.content = [block]
+        client.messages.create.return_value = response
+        classifier = self._build_classifier_with_client(client)
+
+        # If we pass available_workflows, registry method should NOT be called
+        with patch.object(
+            classifier._registry,
+            "get_descriptions_for_classification",
+        ) as mock_reg:
+            result = await classifier.classify(
+                "do the thing",
+                available_workflows={"custom-flow": "Custom"},
+            )
+
+        mock_reg.assert_not_called()
+        assert result.primary_workflow == "custom-flow"

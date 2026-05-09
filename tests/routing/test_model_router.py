@@ -250,3 +250,22 @@ class TestCostOptimization:
 
         savings = premium_total - optimized_total
         assert savings > 0, "Batch should save with optimization"
+
+
+class TestRouteFallback:
+    """Cover line 197: tier missing for provider → fallback to capable."""
+
+    def test_fallback_when_tier_missing(self):
+        from attune.routing.model_router import ModelRouter
+
+        router = ModelRouter()
+        # Patch MODELS so the resolved tier doesn't exist for the provider, but capable does
+        provider = router._default_provider
+        original = router.MODELS[provider].copy()
+        # Remove the cheap tier (summarize task → cheap)
+        try:
+            router.MODELS[provider] = {"capable": original["capable"]}
+            model_id = router.route("summarize")
+            assert model_id == original["capable"].model_id
+        finally:
+            router.MODELS[provider] = original

@@ -282,6 +282,29 @@ class TestStatePersistenceErrorIsolation:
             # At least one debug log for the state store errors
             assert mock_logger.debug.call_count > 0
 
+    async def test_completion_persistence_exception_logged(self, tmp_path: Path) -> None:
+        """When record_start succeeds but record_completion throws, the error is
+        caught and logged (lines 122-124 in state_mixin.record_workflow_complete)."""
+        store = MagicMock(spec=AgentStateStore)
+        # record_start succeeds and produces an exec_id so completion is reached
+        store.record_start.return_value = "exec-abc"
+        store.save_checkpoint.return_value = None
+        # record_completion explodes — this is the path under test
+        store.record_completion.side_effect = OSError("disk full at completion")
+
+        cost_tracker = CostTracker(storage_dir=str(tmp_path / ".empathy"))
+        wf = _StubWorkflow(cost_tracker=cost_tracker, state_store=store)
+
+        with patch("attune.workflows.state_mixin.logger") as mock_logger:
+            result = await wf.execute(data="test")
+
+        assert result.success is True  # workflow itself still succeeds
+        # The exception path emitted a debug log
+        assert any(
+            "failed to record workflow completion" in str(c)
+            for c in mock_logger.debug.call_args_list
+        )
+
 
 # ---------------------------------------------------------------------------
 # Tests: recovery checkpoint

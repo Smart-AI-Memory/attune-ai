@@ -890,3 +890,250 @@ class TestCallLlm:
             result = await analyzer._call_llm("prompt", "system")
 
             assert result == "string response"
+
+    @pytest.mark.asyncio
+    async def test_call_llm_uses_direct_api_success(self, analyzer_with_key):
+        """Direct Anthropic API path returns response.content[0].text."""
+        mock_block = MagicMock()
+        mock_block.text = '{"ok": true}'
+        mock_response = MagicMock()
+        mock_response.content = [mock_block]
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        with patch.object(analyzer_with_key, "_get_client", return_value=mock_client):
+            result = await analyzer_with_key._call_llm("prompt", "system")
+
+        assert result == '{"ok": true}'
+        mock_client.messages.create.assert_called_once()
+        # capable tier model used by default
+        call_kwargs = mock_client.messages.create.call_args.kwargs
+        assert call_kwargs["model"] == LLMGoalAnalyzer.MODELS["capable"]
+        assert call_kwargs["system"] == "system"
+
+    @pytest.mark.asyncio
+    async def test_call_llm_direct_api_empty_content(self, analyzer_with_key):
+        """Direct API with empty content returns '{}' default."""
+        mock_response = MagicMock()
+        mock_response.content = []
+
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        with patch.object(analyzer_with_key, "_get_client", return_value=mock_client):
+            result = await analyzer_with_key._call_llm("prompt", "system")
+
+        assert result == "{}"
+
+    @pytest.mark.asyncio
+    async def test_call_llm_direct_api_falls_back_on_exception(self, analyzer_with_key):
+        """When direct API raises, fall back to executor."""
+        mock_client = MagicMock()
+        mock_client.messages.create.side_effect = Exception("API down")
+
+        mock_executor = AsyncMock()
+        executor_resp = MagicMock()
+        executor_resp.content = "fallback content"
+        mock_executor.run.return_value = executor_resp
+
+        with (
+            patch.object(analyzer_with_key, "_get_client", return_value=mock_client),
+            patch.object(analyzer_with_key, "_get_executor", new_callable=AsyncMock) as mock_get,
+        ):
+            mock_get.return_value = mock_executor
+            result = await analyzer_with_key._call_llm("prompt", "system")
+
+        assert result == "fallback content"
+
+    @pytest.mark.asyncio
+    async def test_call_llm_uses_unknown_tier_falls_back_to_capable(self):
+        """Unknown model_tier falls back to capable model."""
+        analyzer = LLMGoalAnalyzer(api_key="k", model_tier="bogus")
+        mock_block = MagicMock()
+        mock_block.text = "ok"
+        mock_response = MagicMock()
+        mock_response.content = [mock_block]
+        mock_client = MagicMock()
+        mock_client.messages.create.return_value = mock_response
+
+        with patch.object(analyzer, "_get_client", return_value=mock_client):
+            await analyzer._call_llm("p", "s")
+
+        call_kwargs = mock_client.messages.create.call_args.kwargs
+        assert call_kwargs["model"] == LLMGoalAnalyzer.MODELS["capable"]
+
+
+# =============================================================================
+# GET CLIENT / GET EXECUTOR ADDITIONAL TESTS
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestGetClientInstantiation:
+    """Tests that exercise the anthropic client instantiation path."""
+
+    def test_get_client_instantiates_anthropic(self, analyzer_with_key):
+        """When api_key is set and anthropic importable, client is created."""
+        fake_client = MagicMock(name="anthropic-client")
+        fake_anthropic = MagicMock()
+        fake_anthropic.Anthropic.return_value = fake_client
+
+        with patch.dict("sys.modules", {"anthropic": fake_anthropic}):
+            client = analyzer_with_key._get_client()
+
+        assert client is fake_client
+        fake_anthropic.Anthropic.assert_called_once_with(api_key="test-api-key")
+
+    def test_get_client_handles_import_error(self, analyzer_with_key, caplog):
+        """When anthropic import fails, client stays None."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "anthropic":
+                raise ImportError("not installed")
+            return real_import(name, *args, **kwargs)
+
+        analyzer_with_key._client = None
+        with patch.object(builtins, "__import__", side_effect=fake_import):
+            client = analyzer_with_key._get_client()
+
+        assert client is None
+
+
+@pytest.mark.unit
+class TestGetExecutor:
+    """Tests for _get_executor lazy loader."""
+
+    @pytest.mark.asyncio
+    async def test_get_executor_loads_empathy_executor(self, analyzer):
+        """Successful import returns EmpathyLLMExecutor instance."""
+        fake_executor = MagicMock(name="empathy")
+        fake_module = MagicMock()
+        fake_module.EmpathyLLMExecutor.return_value = fake_executor
+
+        with patch.dict("sys.modules", {"attune.models.empathy_executor": fake_module}):
+            # Force the import path to find our fake
+
+            # Clear any cached executor
+            analyzer._executor = None
+
+            # Patch the actual import inside the function: use builtins.__import__
+            import builtins
+
+            real_import = builtins.__import__
+
+            def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+                if "empathy_executor" in name and "EmpathyLLMExecutor" in (fromlist or ()):
+                    return fake_module
+                return real_import(name, globals, locals, fromlist, level)
+
+            with patch.object(builtins, "__import__", side_effect=fake_import):
+                executor = await analyzer._get_executor()
+
+        assert executor is fake_executor
+
+    @pytest.mark.asyncio
+    async def test_get_executor_falls_back_to_mock_on_import_error(self, analyzer):
+        """ImportError of EmpathyLLMExecutor yields MockLLMExecutor."""
+        import builtins
+
+        real_import = builtins.__import__
+
+        def fake_import(name, globals=None, locals=None, fromlist=(), level=0):
+            if "empathy_executor" in name:
+                raise ImportError("missing")
+            return real_import(name, globals, locals, fromlist, level)
+
+        analyzer._executor = None
+        with patch.object(builtins, "__import__", side_effect=fake_import):
+            executor = await analyzer._get_executor()
+
+        assert isinstance(executor, MockLLMExecutor)
+
+    @pytest.mark.asyncio
+    async def test_get_executor_caches(self, analyzer):
+        """Repeat calls return cached executor."""
+        sentinel = MagicMock(name="cached")
+        analyzer._executor = sentinel
+        executor = await analyzer._get_executor()
+        assert executor is sentinel
+
+
+# =============================================================================
+# JSON PARSING - ADDITIONAL EDGE CASES
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestParseJsonResponseEdgeCases:
+    """Tests for fallback paths inside _parse_json_response."""
+
+    def test_invalid_json_in_code_block_then_object_extract(self, analyzer):
+        """Invalid JSON in code block falls through to brace-regex extract."""
+        # Code block content is invalid (missing quotes), but the inner
+        # text contains a parseable JSON object via the brace regex.
+        content = '```json\nnot { valid\n```\nreal one: {"k": 1}'
+        result = analyzer._parse_json_response(content)
+        # The brace regex is greedy — it will match from the first { to last }.
+        # Just verify it doesn't crash and we got something dict-like.
+        assert isinstance(result, dict)
+
+    def test_invalid_json_everywhere_returns_empty(self, analyzer):
+        """Both code-block parse and brace-regex parse fail -> empty dict."""
+        # Code block has invalid JSON; brace-regex match also has invalid JSON.
+        content = "```json\n{this is not valid}\n```"
+        result = analyzer._parse_json_response(content)
+        assert result == {}
+
+    def test_brace_regex_match_invalid_returns_empty(self, analyzer):
+        """No code block; brace match exists but is invalid JSON -> {}."""
+        content = "noise {not valid at all} more noise"
+        result = analyzer._parse_json_response(content)
+        assert result == {}
+
+
+# =============================================================================
+# GENERATE QUESTIONS - NO GOAL ANALYSIS BRANCH
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestGenerateQuestionsNoGoalAnalysis:
+    """Cover the branch when session.goal_analysis is None."""
+
+    @pytest.mark.asyncio
+    async def test_generate_questions_no_goal_analysis(self, analyzer, mock_session):
+        """When goal_analysis is None, ambiguities default to []."""
+        mock_session.goal_analysis = None
+        with patch.object(analyzer, "_call_llm", new_callable=AsyncMock) as mock_call:
+            mock_call.return_value = '{"questions": [], "ready_to_generate": false}'
+            result = await analyzer.generate_questions(mock_session)
+        assert result.questions == []
+
+
+# =============================================================================
+# LLM QUESTIONS TO FORM - OPTION TYPE BRANCH
+# =============================================================================
+
+
+@pytest.mark.unit
+class TestLlmQuestionsToFormOptionBranches:
+    """Cover the option-type elif fallthrough."""
+
+    def test_options_non_str_non_dict_skipped(self, mock_session):
+        """Options that are neither str nor dict are silently skipped."""
+        questions = [
+            {
+                "id": "q1",
+                "question": "Pick",
+                "type": "single_select",
+                "options": [123, None, "valid_str"],
+            },
+        ]
+        form = llm_questions_to_form(questions, round_number=1, session=mock_session)
+        # Only the string survives (int and None hit neither branch)
+        assert len(form.fields[0].options) == 1
+        assert form.fields[0].options[0].label == "valid_str"

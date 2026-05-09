@@ -282,6 +282,27 @@ class TestExplainWorkflowFunction:
 
         assert "#" in result  # Markdown headers
 
+    def test_explain_workflow_use_llm_with_json_falls_back_to_markdown(
+        self, sample_workflow_blueprint
+    ):
+        """LLM path doesn't handle JSON format — falls back to returning markdown (line 440)."""
+        from unittest.mock import patch
+
+        from attune.socratic.explainer import OutputFormat, explain_workflow
+
+        # Mock LLMExplanationGenerator.generate to avoid real API calls
+        with patch("attune.socratic.explainer.LLMExplanationGenerator") as MockGenerator:
+            instance = MockGenerator.return_value
+            instance.generate.return_value = "# Generated Markdown\n\nContent."
+
+            result = explain_workflow(
+                sample_workflow_blueprint,
+                format=OutputFormat.JSON,  # not handled in use_llm branch
+                use_llm=True,
+            )
+
+        assert "Generated Markdown" in result
+
 
 class TestExplanationContent:
     """Tests for explanation content quality."""

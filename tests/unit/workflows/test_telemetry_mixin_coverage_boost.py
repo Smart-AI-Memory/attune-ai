@@ -500,6 +500,100 @@ class TestEmitWorkflowTelemetry:
         # Should not raise error
         mixin._emit_workflow_telemetry(mock_result)
 
+    @patch("attune.models.WorkflowRunRecord")
+    def test_emit_workflow_telemetry_handles_os_error(self, mock_run_record):
+        """log_workflow raising OSError is logged and swallowed (lines 270-272)."""
+        mixin = TelemetryMixin()
+        mixin.name = "test"
+        mock_backend = MagicMock()
+        mock_backend.log_workflow.side_effect = OSError("Disk full")
+        mixin._telemetry_backend = mock_backend
+
+        mock_result = MagicMock()
+        mock_result.stages = []
+        mock_result.started_at = datetime.now()
+        mock_result.completed_at = datetime.now()
+        mock_result.cost_report = MagicMock(
+            total_cost=0.0,
+            baseline_cost=0.0,
+            savings=0.0,
+            savings_percent=0.0,
+            by_tier={},
+        )
+        mock_result.total_duration_ms = 1
+        mock_result.success = True
+        mock_result.error = None
+
+        mixin._emit_workflow_telemetry(mock_result)  # must not raise
+
+    @patch("attune.models.WorkflowRunRecord")
+    def test_emit_workflow_telemetry_handles_generic_exception(self, mock_run_record):
+        """log_workflow raising arbitrary Exception is caught at the bare-except (lines 273-275)."""
+        mixin = TelemetryMixin()
+        mixin.name = "test"
+        mock_backend = MagicMock()
+        # RuntimeError is NOT in (AttributeError, ValueError, TypeError) and NOT OSError —
+        # so it must hit the catch-all bare-except handler.
+        mock_backend.log_workflow.side_effect = RuntimeError("unexpected")
+        mixin._telemetry_backend = mock_backend
+
+        mock_result = MagicMock()
+        mock_result.stages = []
+        mock_result.started_at = datetime.now()
+        mock_result.completed_at = datetime.now()
+        mock_result.cost_report = MagicMock(
+            total_cost=0.0,
+            baseline_cost=0.0,
+            savings=0.0,
+            savings_percent=0.0,
+            by_tier={},
+        )
+        mock_result.total_duration_ms = 1
+        mock_result.success = True
+        mock_result.error = None
+
+        mixin._emit_workflow_telemetry(mock_result)  # must not raise
+
+
+@pytest.mark.unit
+class TestInitTelemetryUnavailable:
+    """Cover the branch where TELEMETRY_AVAILABLE is False (branch 83->exit)."""
+
+    @patch("attune.workflows.telemetry_mixin.TELEMETRY_AVAILABLE", False)
+    @patch("attune.workflows.telemetry_mixin.UsageTracker", None)
+    def test_init_telemetry_skips_tracker_when_unavailable(self):
+        mixin = TelemetryMixin()
+        mixin.name = "test"
+        mixin._init_telemetry(telemetry_backend=MagicMock())
+        # Tracker stays None because availability check short-circuited
+        assert mixin._telemetry_tracker is None
+        # _enable_telemetry stays True (set before the check); the if-block exits early
+        assert mixin._enable_telemetry is True
+
+
+@pytest.mark.unit
+class TestEmitCallTelemetryGenericException:
+    """Cover the bare-except branch in _emit_call_telemetry (lines 212-214)."""
+
+    @patch("attune.models.LLMCallRecord")
+    def test_emit_call_telemetry_handles_generic_exception(self, mock_record_class):
+        mixin = TelemetryMixin()
+        mixin.name = "test"
+        mock_backend = MagicMock()
+        mock_backend.log_call.side_effect = RuntimeError("unexpected")
+        mixin._telemetry_backend = mock_backend
+
+        mixin._emit_call_telemetry(
+            step_name="step",
+            task_type="task",
+            tier="cheap",
+            model_id="model",
+            input_tokens=10,
+            output_tokens=5,
+            cost=0.001,
+            latency_ms=100,
+        )  # must not raise
+
 
 @pytest.mark.unit
 class TestGenerateRunId:

@@ -1159,3 +1159,303 @@ class TestEnsureInitializedImportError:
         # Calling again should be a no-op
         await server._ensure_initialized()
         assert server._initialized is True
+
+
+# ---------------------------------------------------------------------------
+# Coverage gaps
+# ---------------------------------------------------------------------------
+
+
+class TestLLMAnalyzerInit:
+    @pytest.mark.asyncio
+    async def test_llm_analyzer_initialized_when_api_key_present(self, monkeypatch):
+        """Line 73: api_key truthy → _llm_analyzer is set."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "fake-key")
+
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock
+
+        fake_analyzer_cls = MagicMock()
+        fake_analyzer_cls.return_value = MagicMock(name="analyzer")
+        fake_module = SimpleNamespace(LLMGoalAnalyzer=fake_analyzer_cls)
+        monkeypatch.setitem(sys.modules, "attune.socratic.llm_analyzer", fake_module)
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        # _llm_analyzer should be set (line 73)
+        fake_analyzer_cls.assert_called_with(api_key="fake-key")
+
+
+class TestStartSessionStorageBranches:
+    @pytest.mark.asyncio
+    async def test_start_session_no_storage(self):
+        """Line 129->132: storage is None → save_session not called."""
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = None
+
+        result = await server._handle_start_session({})
+        assert "session_id" in result
+
+    @pytest.mark.asyncio
+    async def test_start_session_with_goal_no_analysis(self):
+        """Line 141->144: goal set but session.goal_analysis is None."""
+        from unittest.mock import MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        # Stub builder.start_session to return session without goal_analysis
+        fake_session = MagicMock()
+        fake_session.session_id = "S1"
+        fake_session.state.value = "initial"
+        fake_session.goal_analysis = None
+        server._builder = MagicMock()
+        server._builder.start_session.return_value = fake_session
+        server._storage = None
+
+        result = await server._handle_start_session({"goal": "build a thing"})
+        assert result["goal"] == "build a thing"
+        assert "detected_domain" not in result
+
+
+class TestSetGoalBranches:
+    @pytest.mark.asyncio
+    async def test_set_goal_llm_analyzer_failure_logged(self):
+        """Lines 158-161: LLM analyzer raises → caught, fallback to None."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._llm_analyzer = MagicMock()
+        server._llm_analyzer.analyze_goal = AsyncMock(side_effect=RuntimeError("api down"))
+
+        fake_session = MagicMock()
+        fake_session.state.value = "x"
+        fake_session.goal_analysis = None
+        server._sessions["S1"] = fake_session
+        server._builder = MagicMock()
+        server._builder.set_goal.return_value = fake_session
+        server._storage = None
+
+        result = await server._handle_set_goal({"session_id": "S1", "goal": "g"})
+        # Should not include llm_analysis (analysis is None due to exception)
+        assert "llm_analysis" not in result
+
+    @pytest.mark.asyncio
+    async def test_set_goal_with_llm_analysis(self):
+        """Line 179: analysis present → llm_analysis added to result."""
+        from unittest.mock import AsyncMock, MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+
+        analysis = MagicMock()
+        analysis.primary_domain = "code"
+        analysis.confidence = 0.9
+        analysis.ambiguities = []
+        analysis.suggested_questions = ["q1", "q2", "q3", "q4"]
+
+        server._llm_analyzer = MagicMock()
+        server._llm_analyzer.analyze_goal = AsyncMock(return_value=analysis)
+
+        fake_session = MagicMock()
+        fake_session.state.value = "x"
+        fake_session.goal_analysis = None
+        server._sessions["S1"] = fake_session
+        server._builder = MagicMock()
+        server._builder.set_goal.return_value = fake_session
+        server._storage = None
+
+        result = await server._handle_set_goal({"session_id": "S1", "goal": "g"})
+        assert result["llm_analysis"]["primary_domain"] == "code"
+        assert len(result["llm_analysis"]["suggested_questions"]) == 3
+
+
+class TestStorageBranchesNone:
+    @pytest.mark.asyncio
+    async def test_submit_answers_no_storage(self):
+        """Line 248->251: storage None → no save."""
+        from unittest.mock import MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = None
+        fake_session = MagicMock()
+        fake_session.state.value = "x"
+        server._sessions["S1"] = fake_session
+        server._builder = MagicMock()
+        server._builder.submit_answers.return_value = fake_session
+        server._builder.is_ready_to_generate.return_value = True
+
+        result = await server._handle_submit_answers({"session_id": "S1", "answers": {"q1": "a"}})
+        assert result["ready_to_generate"] is True
+
+    @pytest.mark.asyncio
+    async def test_generate_workflow_no_storage(self):
+        """Line 274->279: storage None → no save."""
+        from unittest.mock import MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = None
+
+        fake_session = MagicMock()
+        fake_session.state.value = "ready"
+        server._sessions["S1"] = fake_session
+        server._builder = MagicMock()
+        server._builder.is_ready_to_generate.return_value = True
+
+        # Build a synthetic workflow
+        fake_workflow = MagicMock()
+        fake_workflow.blueprint.blueprint_id = "BP1"
+        fake_workflow.blueprint.name = "wf"
+        fake_workflow.blueprint.agents = []
+        fake_workflow.blueprint.stages = []
+        fake_workflow.success_criteria.metrics = []
+        server._builder.generate_workflow.return_value = fake_workflow
+
+        result = await server._handle_generate_workflow({"session_id": "S1"})
+        assert result["blueprint_id"] == "BP1"
+
+    @pytest.mark.asyncio
+    async def test_list_sessions_no_storage(self):
+        """Line 326->337: storage None → skip stored list."""
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = None
+        result = await server._handle_list_sessions({})
+        assert "sessions" in result
+        assert "count" in result
+
+    @pytest.mark.asyncio
+    async def test_list_sessions_in_memory_match_storage_skipped(self):
+        """Line 338->337: in-memory session_id already in stored → skip append."""
+        from unittest.mock import MagicMock
+
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = MagicMock()
+        server._storage.list_sessions.return_value = [
+            {"session_id": "S1", "state": "active", "goal": "g"}
+        ]
+        fake_session = MagicMock()
+        fake_session.session_id = "S1"
+        fake_session.state.value = "active"
+        fake_session.goal = "g"
+        fake_session.created_at = None
+        server._sessions["S1"] = fake_session
+
+        result = await server._handle_list_sessions({})
+        assert result["count"] == 1  # No duplicate
+
+    @pytest.mark.asyncio
+    async def test_get_session_no_storage_returns_none(self):
+        """Line 448->454: storage None → returns None for unknown session."""
+        from attune.socratic.mcp_server import SocraticMCPServer
+
+        server = SocraticMCPServer()
+        await server._ensure_initialized()
+        server._storage = None
+        # _get_session is called by _handle_get_session
+        result = await server._handle_get_session({"session_id": "missing"})
+        assert "error" in result
+
+
+class TestRunMcpServerAndMain:
+    @pytest.mark.asyncio
+    async def test_run_mcp_server_handles_initialize_and_eof(self, monkeypatch):
+        """Lines 459-549: run_mcp_server with mocked stdin/stdout."""
+        import asyncio
+        from unittest.mock import AsyncMock, MagicMock
+
+        # Build a mock StreamReader that yields one initialize message then EOF
+        mock_reader = MagicMock(spec=asyncio.StreamReader)
+        sequence = [
+            (json.dumps({"jsonrpc": "2.0", "id": 1, "method": "initialize"}) + "\n").encode(),
+            (json.dumps({"jsonrpc": "2.0", "id": 2, "method": "tools/list"}) + "\n").encode(),
+            (
+                json.dumps(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": 3,
+                        "method": "tools/call",
+                        "params": {"name": "socratic_start_session", "arguments": {}},
+                    }
+                )
+                + "\n"
+            ).encode(),
+            (
+                json.dumps({"jsonrpc": "2.0", "id": 4, "method": "notifications/initialized"})
+                + "\n"
+            ).encode(),
+            (json.dumps({"jsonrpc": "2.0", "id": 5, "method": "unknown_method"}) + "\n").encode(),
+            b"not-json\n",
+            (json.dumps([1, 2, 3]) + "\n").encode(),  # valid JSON, wrong type → general except
+            b"",  # EOF
+        ]
+        idx = [0]
+
+        async def fake_readline():
+            i = idx[0]
+            idx[0] += 1
+            return sequence[i] if i < len(sequence) else b""
+
+        mock_reader.readline = fake_readline
+
+        # Patch asyncio internals
+        from attune.socratic import mcp_server as mod
+
+        monkeypatch.setattr(asyncio, "StreamReader", lambda *a, **kw: mock_reader)
+        monkeypatch.setattr(asyncio, "StreamReaderProtocol", lambda *a, **kw: MagicMock())
+
+        # connect_read_pipe is async
+        loop = asyncio.get_event_loop()
+
+        async def fake_connect_read_pipe(factory, pipe):
+            return (MagicMock(), MagicMock())
+
+        async def fake_connect_write_pipe(factory, pipe):
+            return (MagicMock(), MagicMock())
+
+        monkeypatch.setattr(loop, "connect_read_pipe", fake_connect_read_pipe)
+        monkeypatch.setattr(loop, "connect_write_pipe", fake_connect_write_pipe)
+
+        # Patch StreamWriter to a no-op
+        fake_writer = MagicMock()
+        fake_writer.drain = AsyncMock()
+        monkeypatch.setattr(asyncio, "StreamWriter", lambda *a, **kw: fake_writer)
+
+        # Run server (should exit on EOF after consuming the sequence)
+        await mod.run_mcp_server()
+
+        # Writer.write should have been called for the responding messages
+        # (notifications/initialized has no response; bad-json + wrong-type don't either)
+        assert fake_writer.write.call_count >= 4
+
+    def test_main_keyboard_interrupt(self, monkeypatch):
+        """Lines 552-563: main() catches KeyboardInterrupt."""
+        from unittest.mock import patch
+
+        from attune.socratic import mcp_server as mod
+
+        with patch.object(mod.asyncio, "run", side_effect=KeyboardInterrupt):
+            mod.main()  # Should not raise

@@ -1439,3 +1439,328 @@ class TestGetCacheStats:
         # Should not raise even with unknown model (falls back to default pricing)
         stats = tracker.get_cache_stats(days=7)
         assert stats["total_reads"] >= 50
+
+
+# ---------------------------------------------------------------------------
+# Coverage-gap tests for usage_tracker.py
+# ---------------------------------------------------------------------------
+
+
+class TestSummaryLoadSave:
+    def test_load_existing_summary_file(self, temp_dir):
+        """Lines 190-191: existing summary file is parsed and assigned."""
+        summary_path = temp_dir / "usage_summary.json"
+        summary_path.write_text(
+            json.dumps(
+                {
+                    "v": "1.0",
+                    "updated": "2025-01-01T00:00:00Z",
+                    "days": {
+                        "2025-01-01": {
+                            "calls": 5,
+                            "cost": 1.23,
+                            "tokens_in": 100,
+                            "tokens_out": 200,
+                            "cache_hits": 1,
+                            "cache_misses": 4,
+                            "by_tier": {"cheap": 1.23},
+                            "by_workflow": {"x": 1.23},
+                            "by_provider": {"anthropic": 1.23},
+                        }
+                    },
+                }
+            )
+        )
+        t = UsageTracker(telemetry_dir=temp_dir, retention_days=7, max_file_size_mb=1)
+        # Loaded from file (not rebuilt)
+        assert "2025-01-01" in t._daily_summary
+        assert t._daily_summary["2025-01-01"]["calls"] == 5
+
+    def test_load_summary_with_corrupt_file_falls_back(self, temp_dir):
+        """Lines 192-193: JSONDecodeError → resets to empty, then rebuild path."""
+        summary_path = temp_dir / "usage_summary.json"
+        summary_path.write_text("not-json{")
+        t = UsageTracker(telemetry_dir=temp_dir, retention_days=7, max_file_size_mb=1)
+        assert t._daily_summary == {}
+
+    def test_save_summary_swallows_oserror(self, tracker):
+        """Lines 223-224: _save_summary swallows OSError silently."""
+        tracker._daily_summary = {"2025-01-01": tracker._empty_day()}
+        with patch("builtins.open", side_effect=OSError("disk full")):
+            # Should not raise
+            tracker._save_summary()
+
+
+class TestFlushEdgeCases:
+    def test_flush_empty_buffer_returns_zero(self, tracker):
+        """Line 348: early return 0 when buffer is empty."""
+        assert tracker.flush() == 0
+
+
+class TestGetRecentEntriesBufferCutoff:
+    def test_buffer_entry_before_cutoff_skipped(self, tracker):
+        """Line 495: buffered entry older than cutoff is skipped."""
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=30)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        tracker._buffer.append(
+            {
+                "v": "1.0",
+                "ts": old_ts,
+                "seq": 999,
+                "workflow": "old",
+                "tier": "cheap",
+                "model": "x",
+                "provider": "anthropic",
+                "cost": 0.01,
+                "tokens": {"input": 10, "output": 20},
+                "cache": {"hit": False},
+                "duration_ms": 5,
+                "user_id": "h",
+            }
+        )
+        # cutoff is 1 day → old entry filtered out
+        entries = tracker.get_recent_entries(limit=100, days=1)
+        assert all(e.get("workflow") != "old" for e in entries)
+
+
+class TestGetStatsFastPath:
+    def test_fast_path_uses_prebuilt_summary(self, tracker):
+        """Lines 541-551: when _daily_summary is non-empty, use fast aggregation."""
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        tracker._daily_summary = {
+            today: {
+                "calls": 4,
+                "cost": 2.5,
+                "tokens_in": 400,
+                "tokens_out": 800,
+                "cache_hits": 1,
+                "cache_misses": 3,
+                "by_tier": {"premium": 2.5},
+                "by_workflow": {"wfA": 2.5},
+                "by_provider": {"anthropic": 2.5},
+            }
+        }
+        stats = tracker.get_stats(days=30)
+        assert stats["total_calls"] == 4
+        assert stats["total_cost"] == 2.5
+        assert stats["total_tokens_input"] == 400
+        assert stats["total_tokens_output"] == 800
+        assert stats["cache_hits"] == 1
+        assert stats["cache_misses"] == 3
+        assert stats["by_tier"]["premium"] == 2.5
+        assert stats["by_workflow"]["wfA"] == 2.5
+        assert stats["by_provider"]["anthropic"] == 2.5
+
+    def test_fast_path_skips_dates_before_cutoff(self, tracker):
+        """Line 542: dates older than cutoff_date are skipped."""
+        old_date = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%d")
+        tracker._daily_summary = {
+            old_date: {
+                "calls": 99,
+                "cost": 9.0,
+                "tokens_in": 1,
+                "tokens_out": 1,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "by_tier": {},
+                "by_workflow": {},
+                "by_provider": {},
+            }
+        }
+        stats = tracker.get_stats(days=30)
+        assert stats["total_calls"] == 0
+
+    def test_fast_path_includes_buffered_entries(self, tracker):
+        """Lines 562-568: buffered entries get accumulated after summary path."""
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        tracker._daily_summary = {
+            today: {
+                "calls": 1,
+                "cost": 1.0,
+                "tokens_in": 10,
+                "tokens_out": 20,
+                "cache_hits": 0,
+                "cache_misses": 1,
+                "by_tier": {},
+                "by_workflow": {},
+                "by_provider": {},
+            }
+        }
+        now_ts = datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        tracker._buffer.append(
+            {
+                "ts": now_ts,
+                "cost": 0.5,
+                "tokens": {"input": 5, "output": 7},
+                "cache": {"hit": True},
+                "tier": "cheap",
+                "workflow": "wf",
+                "provider": "anthropic",
+            }
+        )
+        stats = tracker.get_stats(days=30)
+        assert stats["total_calls"] == 2
+        assert abs(stats["total_cost"] - 1.5) < 1e-9
+
+    def test_fast_path_skips_buffered_entry_with_bad_ts(self, tracker):
+        """Lines 564-565: KeyError/ValueError on bad ts → entry skipped."""
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        tracker._daily_summary = {
+            today: {
+                "calls": 0,
+                "cost": 0.0,
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "by_tier": {},
+                "by_workflow": {},
+                "by_provider": {},
+            }
+        }
+        tracker._buffer.append({"ts": "not-a-date", "cost": 99.0})
+        tracker._buffer.append({"cost": 99.0})  # missing ts
+        stats = tracker.get_stats(days=30)
+        assert stats["total_cost"] == 0.0
+
+    def test_fast_path_skips_buffered_entry_before_cutoff(self, tracker):
+        """Lines 566-567: buffered entry older than cutoff is skipped."""
+        today = datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        tracker._daily_summary = {
+            today: {
+                "calls": 0,
+                "cost": 0.0,
+                "tokens_in": 0,
+                "tokens_out": 0,
+                "cache_hits": 0,
+                "cache_misses": 0,
+                "by_tier": {},
+                "by_workflow": {},
+                "by_provider": {},
+            }
+        }
+        old_ts = (datetime.now(timezone.utc) - timedelta(days=60)).strftime("%Y-%m-%dT%H:%M:%SZ")
+        tracker._buffer.append(
+            {
+                "ts": old_ts,
+                "cost": 99.0,
+                "tokens": {"input": 1, "output": 1},
+                "cache": {"hit": False},
+                "tier": "cheap",
+                "workflow": "old",
+                "provider": "anthropic",
+            }
+        )
+        stats = tracker.get_stats(days=7)
+        assert stats["total_cost"] == 0.0
+
+
+class TestCacheStatsBranches:
+    def test_no_prompt_cache_hit(self, tracker):
+        """Line 732->735: prompt_cache.get('hit') False → skip hit_count++."""
+        tracker.track_llm_call(
+            workflow="wf",
+            stage=None,
+            tier="cheap",
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            cost=0.01,
+            tokens={"input": 100, "output": 50},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=10,
+            prompt_cache_hit=False,
+            prompt_cache_creation_tokens=10,  # forces prompt_cache dict
+            prompt_cache_read_tokens=0,
+        )
+        tracker.flush()
+        stats = tracker.get_cache_stats(days=7)
+        assert stats["hit_count"] == 0
+
+    def test_zero_read_tokens_skips_pricing_lookup(self, tracker):
+        """Line 740->749: read_tokens == 0 → skip pricing block."""
+        tracker.track_llm_call(
+            workflow="wf",
+            stage=None,
+            tier="cheap",
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            cost=0.01,
+            tokens={"input": 100, "output": 50},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=10,
+            prompt_cache_hit=False,
+            prompt_cache_creation_tokens=20,
+            prompt_cache_read_tokens=0,  # zero read tokens
+        )
+        tracker.flush()
+        stats = tracker.get_cache_stats(days=7)
+        assert stats["savings"] == 0.0
+
+    def test_pricing_cache_reused_across_entries(self, tracker):
+        """Line 742->744: model_id already in pricing_cache → skip lookup."""
+        for _ in range(3):
+            tracker.track_llm_call(
+                workflow="wf",
+                stage=None,
+                tier="cheap",
+                model="claude-haiku-4-5",  # same model each time
+                provider="anthropic",
+                cost=0.01,
+                tokens={"input": 100, "output": 50},
+                cache_hit=False,
+                cache_type=None,
+                duration_ms=10,
+                prompt_cache_hit=True,
+                prompt_cache_creation_tokens=0,
+                prompt_cache_read_tokens=50,
+            )
+        tracker.flush()
+        stats = tracker.get_cache_stats(days=7)
+        assert stats["hit_count"] == 3
+        # 3 entries with reads → pricing_cache reused twice (covers branch)
+        assert stats["total_reads"] == 150
+
+    def test_existing_workflow_not_reinitialized(self, tracker):
+        """Line 750->758: workflow already in by_workflow → skip init block."""
+        for _ in range(2):
+            tracker.track_llm_call(
+                workflow="same_wf",  # same workflow each time
+                stage=None,
+                tier="cheap",
+                model="claude-haiku-4-5",
+                provider="anthropic",
+                cost=0.01,
+                tokens={"input": 100, "output": 50},
+                cache_hit=False,
+                cache_type=None,
+                duration_ms=10,
+                prompt_cache_hit=True,
+                prompt_cache_creation_tokens=0,
+                prompt_cache_read_tokens=10,
+            )
+        tracker.flush()
+        stats = tracker.get_cache_stats(days=7)
+        assert stats["by_workflow"]["same_wf"]["requests"] == 2
+
+    def test_per_workflow_no_hit(self, tracker):
+        """Line 760->762: per-workflow miss path (skip hits++)."""
+        tracker.track_llm_call(
+            workflow="wf_no_hit",
+            stage=None,
+            tier="cheap",
+            model="claude-haiku-4-5",
+            provider="anthropic",
+            cost=0.01,
+            tokens={"input": 100, "output": 50},
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=10,
+            prompt_cache_hit=False,  # no hit
+            prompt_cache_creation_tokens=10,
+            prompt_cache_read_tokens=0,
+        )
+        tracker.flush()
+        stats = tracker.get_cache_stats(days=7)
+        assert stats["by_workflow"]["wf_no_hit"]["hits"] == 0
+        assert stats["by_workflow"]["wf_no_hit"]["requests"] == 1

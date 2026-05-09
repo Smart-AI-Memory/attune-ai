@@ -8,6 +8,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import time
+from unittest.mock import MagicMock
 
 from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
 from attune.meta_workflows.session_context import (
@@ -489,3 +490,290 @@ class TestIntegrationScenarios:
         # If Redis not running, will be None anyway
         # Test verifies no crashes occur
         assert retrieved is None or isinstance(retrieved, str)
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestRecordChoiceException:
+    """Cover lines 119-121: record_choice exception handling."""
+
+    def test_stash_exception_returns_false(self):
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        memory.stash.side_effect = RuntimeError("redis down")
+
+        session = SessionContext(memory=memory)
+        assert session.record_choice("t1", "q1", "yes") is False
+
+
+class TestGetRecentChoiceEdgeCases:
+    """Cover lines 150-152: get_recent_choice exception handling."""
+
+    def test_retrieve_exception_returns_none(self):
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        memory.retrieve.side_effect = RuntimeError("memory broken")
+
+        session = SessionContext(memory=memory)
+        assert session.get_recent_choice("t1", "q1") is None
+
+    def test_retrieve_returns_non_dict(self):
+        """Line 145-148: retrieve returns non-dict → None."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        memory.retrieve.return_value = "string-not-dict"
+
+        session = SessionContext(memory=memory)
+        assert session.get_recent_choice("t1", "q1") is None
+
+
+class TestGetRecentChoices:
+    """Cover lines 168, 179-181."""
+
+    def test_no_memory_returns_empty(self):
+        """Line 168: memory None → empty dict."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        session = SessionContext(memory=None)
+        assert session.get_recent_choices("t1") == {}
+
+    def test_with_memory_returns_empty_dict_currently(self):
+        """Lines 170-177: pattern matching not implemented → returns {}."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = SessionContext(memory=memory)
+        # Currently returns empty dict (pattern matching unsupported)
+        assert session.get_recent_choices("t1") == {}
+
+    def test_exception_returns_empty(self, monkeypatch):
+        """Lines 179-181: exception in try block → empty dict."""
+        from attune.meta_workflows import session_context as mod
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = mod.SessionContext(memory=memory)
+
+        bad_logger = MagicMock()
+        bad_logger.debug.side_effect = RuntimeError("logger broke")
+        bad_logger.error = MagicMock()
+        bad_logger.info = MagicMock()
+        monkeypatch.setattr(mod, "logger", bad_logger)
+
+        assert session.get_recent_choices("t1") == {}
+
+
+class TestSuggestDefaultsValidation:
+    """Cover lines 211-213, 217-221."""
+
+    def test_validates_choice_when_in_recent(self, monkeypatch):
+        """Lines 209-213: choice in recent + valid → included."""
+        from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = SessionContext(memory=memory)
+
+        # Patch get_recent_choices to return real data
+        monkeypatch.setattr(session, "get_recent_choices", lambda t: {"q1": "yes"})
+
+        question = FormQuestion(id="q1", text="Question?", type=QuestionType.TEXT_INPUT)
+        schema = FormSchema(questions=[question], title="t", description="d")
+
+        suggestions = session.suggest_defaults("t1", form_schema=schema)
+        assert suggestions == {"q1": "yes"}
+
+    def test_invalid_choice_skipped(self, monkeypatch):
+        """Branch 212->208: validate_choice False → skip, don't add to validated."""
+        from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = SessionContext(memory=memory)
+
+        monkeypatch.setattr(session, "get_recent_choices", lambda t: {"q1": "bad_choice"})
+        # Build question with options that don't include "bad_choice"
+        question = FormQuestion(
+            id="q1",
+            text="Question?",
+            type=QuestionType.SINGLE_SELECT,
+            options=["a", "b"],
+        )
+        schema = FormSchema(questions=[question], title="t", description="d")
+
+        suggestions = session.suggest_defaults("t1", form_schema=schema)
+        # validate_choice returns False → not in suggestions
+        assert "q1" not in suggestions
+
+    def test_no_form_schema_returns_recent_choices(self, monkeypatch):
+        """Line 217: no schema → return recent_choices directly."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = SessionContext(memory=memory)
+        monkeypatch.setattr(session, "get_recent_choices", lambda t: {"q1": "x", "q2": "y"})
+        suggestions = session.suggest_defaults("t1")
+        assert suggestions == {"q1": "x", "q2": "y"}
+
+    def test_exception_returns_empty(self, monkeypatch):
+        """Lines 219-221: exception → empty dict."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = SessionContext(memory=memory)
+
+        def boom(t):
+            raise RuntimeError("boom")
+
+        monkeypatch.setattr(session, "get_recent_choices", boom)
+        assert session.suggest_defaults("t1") == {}
+
+
+class TestRecordExecutionException:
+    """Cover lines 265-267."""
+
+    def test_stash_raises(self):
+        from attune.meta_workflows.session_context import SessionContext
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        memory.stash.side_effect = RuntimeError("memory down")
+
+        session = SessionContext(memory=memory)
+        assert (
+            session.record_execution("t1", "run-1", success=True, cost=0.1, duration=1.0) is False
+        )
+
+
+class TestGetSessionStatsException:
+    """Cover lines 294-296."""
+
+    def test_with_broken_memory_attribute(self):
+        """Force an exception inside the try block."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        class _SessionRaising(SessionContext):
+            @property
+            def user_id(self):  # type: ignore[override]
+                raise RuntimeError("attr broken")
+
+        # Construct via __new__ to avoid __init__ accessing the property
+        bad_session = _SessionRaising.__new__(_SessionRaising)
+        bad_session.memory = MagicMock()
+        bad_session.memory.user_id = "u"
+        bad_session.session_id = "s"
+        bad_session.default_ttl = 60
+
+        result = bad_session.get_session_stats()
+        assert "error" in result
+
+
+class TestClearSessionException:
+    """Cover lines 315-317."""
+
+    def test_logger_exception_caught(self, monkeypatch):
+        """Trigger exception via patched logger."""
+        from attune.meta_workflows import session_context as mod
+
+        memory = MagicMock()
+        memory.user_id = "u"
+        session = mod.SessionContext(memory=memory)
+
+        # Make logger.info raise → caught
+        original_logger = mod.logger
+        bad_logger = MagicMock()
+        bad_logger.info.side_effect = RuntimeError("logger crashed")
+        bad_logger.error = MagicMock()
+        monkeypatch.setattr(mod, "logger", bad_logger)
+
+        try:
+            assert session.clear_session() is False
+        finally:
+            monkeypatch.setattr(mod, "logger", original_logger)
+
+
+class TestValidateChoiceException:
+    """Cover lines 360-363: _validate_choice exception path."""
+
+    def test_validation_exception_returns_false(self):
+        """An options attribute that raises on access → False."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        session = SessionContext(memory=None)
+
+        class _BadQuestion:
+            @property
+            def options(self):
+                raise RuntimeError("options broken")
+
+        result = session._validate_choice("yes", _BadQuestion())
+        assert result is False
+
+    def test_validate_choice_no_options(self):
+        """Question with no options → True."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        session = SessionContext(memory=None)
+
+        class _Q:
+            options = None
+
+        assert session._validate_choice("anything", _Q()) is True
+
+    def test_validate_choice_list_in_options(self):
+        """Multi-select choices all in options."""
+        from attune.meta_workflows.session_context import SessionContext
+
+        session = SessionContext(memory=None)
+
+        class _Q:
+            options = ["a", "b", "c"]
+
+        assert session._validate_choice(["a", "b"], _Q()) is True
+        assert session._validate_choice(["a", "z"], _Q()) is False
+
+    def test_validate_choice_single_in_options(self):
+        from attune.meta_workflows.session_context import SessionContext
+
+        session = SessionContext(memory=None)
+
+        class _Q:
+            options = ["a", "b"]
+
+        assert session._validate_choice("a", _Q()) is True
+        assert session._validate_choice("z", _Q()) is False
+
+
+class TestConvenienceFunctionsExtra:
+    """Cover create_session_context and get_session_defaults."""
+
+    def test_create_session_context(self):
+        from attune.meta_workflows.session_context import (
+            SessionContext,
+            create_session_context,
+        )
+
+        session = create_session_context()
+        assert isinstance(session, SessionContext)
+        assert session.memory is None
+
+    def test_get_session_defaults(self):
+        from attune.meta_workflows.session_context import get_session_defaults
+
+        # Without memory → empty
+        result = get_session_defaults("t1")
+        assert result == {}

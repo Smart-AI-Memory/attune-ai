@@ -699,3 +699,274 @@ class TestCostSavingsReport:
             assert report["total_baseline_cost"] == 0.0
             assert report["total_savings"] == 0.0
             assert report["avg_cost_per_workflow"] == 0.0
+
+
+# ===========================================================================
+# Coverage for previously-missed branches
+# ===========================================================================
+
+
+from attune.models.telemetry import AgentAssignmentRecord, CoverageRecord  # noqa: E402
+
+
+def _now():
+    return datetime.now(timezone.utc).isoformat()
+
+
+@pytest.mark.unit
+class TestSonnetOpusFallbackAnalysis:
+    """Cover lines 200-263 of analytics.py."""
+
+    def test_returns_zeros_when_no_anthropic_calls(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+            # Log a non-anthropic call so the calls list isn't empty
+            store.log_call(
+                LLMCallRecord(
+                    call_id="x",
+                    timestamp=_now(),
+                    provider="openai",
+                    model_id="gpt-4",
+                ),
+            )
+            result = analytics.sonnet_opus_fallback_analysis()
+            assert result["total_calls"] == 0
+            assert result["sonnet_attempts"] == 0
+            assert result["savings"] == 0.0
+            assert result["fallback_rate"] == 0.0
+
+    def test_full_analysis_with_sonnet_and_opus(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            # 2 sonnet successes
+            for i in range(2):
+                store.log_call(
+                    LLMCallRecord(
+                        call_id=f"sonnet-ok-{i}",
+                        timestamp=_now(),
+                        provider="anthropic",
+                        model_id="claude-sonnet-4-6",
+                        input_tokens=1000,
+                        output_tokens=500,
+                        estimated_cost=0.005,
+                        success=True,
+                    ),
+                )
+            # 1 sonnet failure
+            store.log_call(
+                LLMCallRecord(
+                    call_id="sonnet-fail",
+                    timestamp=_now(),
+                    provider="anthropic",
+                    model_id="claude-sonnet-4-6",
+                    input_tokens=1000,
+                    output_tokens=500,
+                    estimated_cost=0.005,
+                    success=False,
+                ),
+            )
+            # 1 opus fallback
+            store.log_call(
+                LLMCallRecord(
+                    call_id="opus-fb",
+                    timestamp=_now(),
+                    provider="anthropic",
+                    model_id="claude-opus-4-6",
+                    input_tokens=1000,
+                    output_tokens=500,
+                    estimated_cost=0.05,
+                    success=True,
+                    fallback_used=True,
+                ),
+            )
+
+            result = analytics.sonnet_opus_fallback_analysis()
+            assert result["total_calls"] == 4
+            assert result["sonnet_attempts"] == 3
+            assert result["sonnet_successes"] == 2
+            assert result["opus_fallbacks"] == 1
+            assert result["success_rate_sonnet"] == pytest.approx(2 / 3 * 100)
+            assert result["fallback_rate"] == 25.0
+            assert result["actual_cost"] > 0
+            assert result["always_opus_cost"] > result["actual_cost"]
+            assert result["savings"] > 0
+            assert result["savings_percent"] > 0
+            assert result["avg_cost_per_call"] > 0
+            assert result["avg_opus_cost_per_call"] > 0
+
+
+@pytest.mark.unit
+class TestCoverageProgressStableTrend:
+    """Cover line 460: trend = 'stable' when |change| <= 1.0."""
+
+    def test_two_records_small_change_is_stable(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            # Two records with tiny change → stable
+            for i, pct in enumerate([85.0, 85.5]):
+                store.log_coverage(
+                    CoverageRecord(
+                        record_id=f"c{i}",
+                        timestamp=_now(),
+                        overall_percentage=pct,
+                        lines_total=1000,
+                        lines_covered=int(pct * 10),
+                    ),
+                )
+
+            result = analytics.coverage_progress()
+            assert result["trend"] == "stable"
+            assert result["change"] == pytest.approx(0.5)
+
+
+@pytest.mark.unit
+class TestAgentPerformanceBranches:
+    """Cover assignment-loop branches: 532->538, 541->543, 544, 550->554."""
+
+    def test_non_completed_with_no_review_and_no_automation(self):
+        """Status != 'completed' AND not automated_eligible AND not human_review."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            # Single in-progress assignment, no automation flags, no human review
+            store.log_agent_assignment(
+                AgentAssignmentRecord(
+                    assignment_id="a1",
+                    timestamp=_now(),
+                    task_id="t1",
+                    task_title="Task 1",
+                    task_description="desc",
+                    assigned_agent="agent-a",
+                    status="in_progress",
+                    success=False,
+                    automated_eligible=False,
+                    human_review_required=False,
+                ),
+            )
+
+            result = analytics.agent_performance()
+            assert result["total_assignments"] == 1
+            assert result["automation_rate"] == 0.0
+            assert result["human_review_rate"] == 0.0
+            stats = result["by_agent"]["agent-a"]
+            # No completed assignments → avg_duration_hours stays default 0.0
+            assert stats["avg_duration_hours"] == 0.0
+            # Helper fields removed
+            assert "total_duration" not in stats
+            assert "quality_scores" not in stats
+            assert "successful" not in stats
+
+    def test_human_review_required_branch(self):
+        """Cover line 544: human_review_required True."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            store.log_agent_assignment(
+                AgentAssignmentRecord(
+                    assignment_id="a1",
+                    timestamp=_now(),
+                    task_id="t1",
+                    task_title="Task",
+                    task_description="d",
+                    assigned_agent="agent-h",
+                    status="completed",
+                    actual_duration_hours=2.5,
+                    success=True,
+                    automated_eligible=True,
+                    human_review_required=True,
+                ),
+            )
+
+            result = analytics.agent_performance()
+            assert result["automation_rate"] == 1.0
+            assert result["human_review_rate"] == 1.0
+            stats = result["by_agent"]["agent-h"]
+            assert stats["completed"] == 1
+            assert stats["avg_duration_hours"] == pytest.approx(2.5)
+
+
+@pytest.mark.unit
+class TestProviderAndTierBranches:
+    """Cover branches in provider_usage_summary and tier_distribution."""
+
+    def test_provider_summary_unknown_tier_not_counted(self):
+        """Line 105->88: call.tier not in by_tier → skip increment."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            store.log_call(
+                LLMCallRecord(
+                    call_id="c1",
+                    timestamp=_now(),
+                    provider="anthropic",
+                    tier="unknown_tier",  # not in by_tier dict
+                    input_tokens=100,
+                    output_tokens=50,
+                    estimated_cost=0.01,
+                    success=True,
+                ),
+            )
+            summary = analytics.provider_usage_summary()
+            stats = summary["anthropic"]
+            assert stats["call_count"] == 1
+            # Unknown tier shouldn't appear or increment any tier counter
+            assert sum(stats["by_tier"].values()) == 0
+
+    def test_tier_distribution_unknown_tier_skipped(self):
+        """Line 137->136: call.tier not in dist → skip."""
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+
+            # Mix: one valid tier and one unknown
+            store.log_call(
+                LLMCallRecord(
+                    call_id="c1",
+                    timestamp=_now(),
+                    provider="anthropic",
+                    tier="cheap",
+                    estimated_cost=0.001,
+                    input_tokens=10,
+                    output_tokens=5,
+                ),
+            )
+            store.log_call(
+                LLMCallRecord(
+                    call_id="c2",
+                    timestamp=_now(),
+                    provider="anthropic",
+                    tier="bogus_tier",
+                    estimated_cost=0.5,
+                    input_tokens=10,
+                    output_tokens=5,
+                ),
+            )
+            dist = analytics.tier_distribution()
+            assert dist["cheap"]["count"] == 1
+            # Unknown tier not added
+            assert "bogus_tier" not in dist
+
+
+@pytest.mark.unit
+class TestTopExpensiveZeroRunCount:
+    """Cover line 66->65: skip avg_cost calc when run_count == 0.
+
+    This branch is unreachable in normal flow (run_count is incremented for
+    every workflow), but exercising the loop with no workflows still touches
+    the for-loop to exit normally — so we just ensure the fallback path is
+    valid (empty result set bypasses the for-body).
+    """
+
+    def test_no_workflows_returns_empty_list(self):
+        with tempfile.TemporaryDirectory() as tmpdir:
+            store = TelemetryStore(tmpdir)
+            analytics = TelemetryAnalytics(store)
+            assert analytics.top_expensive_workflows() == []

@@ -415,3 +415,476 @@ class TestPrioritizeStale:
             result = wf._prioritize_stale(items)
 
         assert len(result) == 3
+
+
+# ------------------------------------------------------------------
+# Coverage-gap tests for help_maintenance.py
+# ------------------------------------------------------------------
+
+
+class TestExecuteEdgeCases:
+    """Cover branches in execute()."""
+
+    @pytest.mark.asyncio
+    async def test_manifest_entry_with_empty_source_skipped(self, tmp_path):
+        """Line 138: entry with no 'source' is skipped."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        (tmp_path / "scripts").mkdir(exist_ok=True)
+
+        manifest = {"ref-empty": {"source": "", "hash": "x"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        with patch(
+            "attune.workflows.help_maintenance._repo_root",
+            return_value=tmp_path,
+        ):
+            result = await wf.execute(dry_run=True)
+        assert result.final_output["stale_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_path_traversal_blocked(self, tmp_path):
+        """Lines 145-150: path traversal in manifest source is skipped."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        (tmp_path / "scripts").mkdir(exist_ok=True)
+
+        manifest = {"ref-bad": {"source": "../../etc/passwd", "hash": "x"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        with patch(
+            "attune.workflows.help_maintenance._repo_root",
+            return_value=tmp_path,
+        ):
+            result = await wf.execute(dry_run=True)
+        # Skipped because of path traversal — counts as not-stale
+        assert result.final_output["stale_count"] == 0
+
+    @pytest.mark.asyncio
+    async def test_unknown_prefix_skipped_in_types_to_regen(self, tmp_path):
+        """Line 193->190: stale id with unknown prefix → no type to regen."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {
+            "unknownprefix-001": {"source": "src/x.py", "hash": "stale"},
+        }
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        mock_run = MagicMock(return_value=MagicMock(returncode=0))
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                mock_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        # types_to_regen empty → regenerated should be empty
+        assert result.final_output["regenerated"] == []
+
+    @pytest.mark.asyncio
+    async def test_type_without_generator_skipped(self, tmp_path):
+        """Line 210: type_dir not in _TYPE_TO_GENERATOR → continue."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # Map references → "references" prefix, but remove "references" from generators
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch.dict(
+                "attune.workflows.help_maintenance._TYPE_TO_GENERATOR",
+                clear=True,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        # Type 'references' has no generator → regenerated empty, no failed
+        assert result.final_output["regenerated"] == []
+
+    @pytest.mark.asyncio
+    async def test_script_not_found_added_to_failed(self, tmp_path):
+        """Lines 212-214: script_path doesn't exist → failed entry."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        # Don't create the generator script — it will be missing
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {
+            "ref-001": {"source": "src/x.py", "hash": "stale"},
+        }
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        with patch(
+            "attune.workflows.help_maintenance._repo_root",
+            return_value=tmp_path,
+        ):
+            result = await wf.execute(dry_run=False)
+        assert any(
+            f.get("reason") == "script not found" for f in result.final_output.get("failed", [])
+        )
+
+    @pytest.mark.asyncio
+    async def test_generator_timeout(self, tmp_path):
+        """Lines 225-227: TimeoutExpired on generator → 'timeout' failure."""
+        import subprocess as sp_mod
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "generate_reference_templates.py").write_text("stub", encoding="utf-8")
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        def fake_run(*args, **kwargs):
+            raise sp_mod.TimeoutExpired(cmd="x", timeout=60)
+
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                side_effect=fake_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        assert any(f.get("reason") == "timeout" for f in result.final_output.get("failed", []))
+
+    @pytest.mark.asyncio
+    async def test_generator_called_process_error(self, tmp_path):
+        """Lines 228-231: CalledProcessError → 'exit N' failure."""
+        import subprocess as sp_mod
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "generate_reference_templates.py").write_text("stub", encoding="utf-8")
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        call_idx = [0]
+
+        def fake_run(*args, **kwargs):
+            call_idx[0] += 1
+            if call_idx[0] == 1:
+                raise sp_mod.CalledProcessError(returncode=1, cmd="x", stderr=b"boom")
+            return MagicMock(returncode=0)
+
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                side_effect=fake_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        failures = result.final_output.get("failed", [])
+        assert any("exit 1" in f.get("reason", "") for f in failures)
+
+    @pytest.mark.asyncio
+    async def test_cross_link_timeout_swallowed(self, tmp_path):
+        """Lines 244-245: cross-link TimeoutExpired → swallowed."""
+        import subprocess as sp_mod
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "generate_reference_templates.py").write_text("stub", encoding="utf-8")
+        (scripts_dir / "build_cross_links.py").write_text("stub", encoding="utf-8")
+        (scripts_dir / "generate_all.py").write_text("stub", encoding="utf-8")
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # First call (generator) succeeds; second call (cross-link) times out
+        call_idx = [0]
+
+        def fake_run(*args, **kwargs):
+            call_idx[0] += 1
+            if call_idx[0] == 2:
+                raise sp_mod.TimeoutExpired(cmd="x", timeout=30)
+            return MagicMock(returncode=0)
+
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                side_effect=fake_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        # Should not raise; result has regenerated
+        assert "regenerated" in result.final_output
+
+    @pytest.mark.asyncio
+    async def test_manifest_update_oserror_swallowed(self, tmp_path):
+        """Lines 262-263: manifest-update OSError swallowed."""
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "generate_reference_templates.py").write_text("stub", encoding="utf-8")
+        # No build_cross_links.py to cover line 235->248 (skips cross-link)
+        (scripts_dir / "generate_all.py").write_text("stub", encoding="utf-8")
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        call_idx = [0]
+
+        def fake_run(*args, **kwargs):
+            call_idx[0] += 1
+            # First (generator) succeeds. Second (manifest update) raises OSError.
+            # Third (validate) raises OSError too.
+            if call_idx[0] >= 2:
+                raise OSError("disk failure")
+            return MagicMock(returncode=0)
+
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                side_effect=fake_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        # validate failed → committed False, but still a result
+        assert result.final_output["validated"] is False
+
+    @pytest.mark.asyncio
+    async def test_validation_passes_triggers_commit_with_failure(self, tmp_path):
+        """Lines 287->314 + 311-312: commit step where git fails (CalledProcessError)."""
+        import subprocess as sp_mod
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        (scripts_dir / "generate_reference_templates.py").write_text("stub", encoding="utf-8")
+        (scripts_dir / "generate_all.py").write_text("stub", encoding="utf-8")
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        call_idx = [0]
+
+        def fake_run(*args, **kwargs):
+            call_idx[0] += 1
+            # 1: generator success; 2: manifest update success; 3: validate success;
+            # 4: git add success; 5: git commit fails
+            if call_idx[0] == 5:
+                raise sp_mod.CalledProcessError(returncode=1, cmd="git commit")
+            return MagicMock(returncode=0)
+
+        with (
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch(
+                "attune.workflows.help_maintenance.subprocess.run",
+                side_effect=fake_run,
+            ),
+        ):
+            result = await wf.execute(dry_run=False)
+        # Commit failed → committed False, validated True
+        assert result.final_output["validated"] is True
+        assert result.final_output["committed"] is False
+
+
+class TestExecuteBatch:
+    """Cover _execute_batch (lines 348-424)."""
+
+    @pytest.mark.asyncio
+    async def test_batch_mode_with_stub_workflow(self, tmp_path):
+        """Lines 348-422: batch=True path runs BatchProcessingWorkflow."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import AsyncMock as AM
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        fake_workflow = MagicMock()
+        fake_workflow.execute_batch = AM(
+            return_value=[SimpleNamespace(task_id="regen-references", success=True, error=None)]
+        )
+
+        class FakeRequest:
+            def __init__(self, **kwargs):
+                self.__dict__.update(kwargs)
+
+        fake_module = SimpleNamespace(
+            BatchProcessingWorkflow=lambda: fake_workflow,
+            BatchRequest=FakeRequest,
+        )
+
+        with (
+            patch.dict(sys.modules, {"attune.workflows.batch_processing": fake_module}),
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+        ):
+            result = await wf.execute(dry_run=False, batch=True)
+
+        assert result.final_output["batch"] is True
+        assert result.final_output["submitted"] == 1
+        assert result.final_output["results"][0]["success"] is True
+
+    @pytest.mark.asyncio
+    async def test_batch_mode_no_requests(self, tmp_path):
+        """Lines 386-395: empty requests → 'No generators needed'."""
+        import sys
+        from types import SimpleNamespace
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        # Use a prefix that maps to a type without a generator script
+        # (we'll force types_to_regen to be empty by removing the type from generator map)
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # Patch _TYPE_TO_GENERATOR so the type has no script
+        fake_module = SimpleNamespace(
+            BatchProcessingWorkflow=MagicMock(),
+            BatchRequest=lambda **kw: kw,
+        )
+
+        with (
+            patch.dict(sys.modules, {"attune.workflows.batch_processing": fake_module}),
+            patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ),
+            patch.dict(
+                "attune.workflows.help_maintenance._TYPE_TO_GENERATOR",
+                clear=True,
+            ),
+        ):
+            result = await wf.execute(dry_run=False, batch=True)
+        assert result.final_output["batch"] is True
+        assert "No generators needed" in result.final_output.get("message", "")
+
+    @pytest.mark.asyncio
+    async def test_batch_mode_import_error(self, tmp_path):
+        """Lines 423-432: ImportError → returns failure with 'Batch API not available'."""
+        import sys
+
+        wf = HelpMaintenanceWorkflow()
+        gen_dir = tmp_path / "plugin" / "help" / "generated"
+        gen_dir.mkdir(parents=True, exist_ok=True)
+        scripts_dir = tmp_path / "scripts"
+        scripts_dir.mkdir(exist_ok=True)
+        src_file = tmp_path / "src" / "x.py"
+        src_file.parent.mkdir(parents=True, exist_ok=True)
+        src_file.write_text("changed", encoding="utf-8")
+
+        manifest = {"ref-001": {"source": "src/x.py", "hash": "stale"}}
+        (gen_dir / "source_manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+
+        # Make import fail by setting the module to None (raises ImportError on access)
+        # Actually we need to delete it from sys.modules and patch finder
+        original = sys.modules.pop("attune.workflows.batch_processing", None)
+        try:
+            with patch(
+                "attune.workflows.help_maintenance._repo_root",
+                return_value=tmp_path,
+            ):
+                # patch builtins.__import__ to raise ImportError for the target
+                import builtins as _b
+
+                real_import = _b.__import__
+
+                def fake_import(name, *args, **kwargs):
+                    if "batch_processing" in name:
+                        raise ImportError("not available")
+                    return real_import(name, *args, **kwargs)
+
+                with patch("builtins.__import__", side_effect=fake_import):
+                    result = await wf.execute(dry_run=False, batch=True)
+        finally:
+            if original is not None:
+                sys.modules["attune.workflows.batch_processing"] = original
+
+        assert result.success is False
+        assert "Batch API not available" in result.final_output.get("error", "")

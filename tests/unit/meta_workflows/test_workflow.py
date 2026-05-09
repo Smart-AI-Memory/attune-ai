@@ -11,7 +11,7 @@ Created: 2026-01-17
 """
 
 import json
-from unittest.mock import Mock, patch
+from unittest.mock import MagicMock, Mock, patch
 
 import pytest
 
@@ -355,3 +355,455 @@ class TestAgentExecution:
         agent_ids = {agent.agent_id for agent in result.agents_created}
         result_agent_ids = {result.agent_id for result in result.agent_results}
         assert agent_ids == result_agent_ids
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestExecuteFormCollection:
+    """Cover lines 164-168: form_response None without use_defaults → ask_questions."""
+
+    def test_no_form_response_interactive(self):
+        """Lines 167-171: ask_questions called when no form_response + not use_defaults."""
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+
+        # Mock form engine and downstream pieces
+        fake_response = FormResponse(template_id="t1", responses={})
+        with (
+            patch.object(wf.form_engine, "ask_questions", return_value=fake_response) as mock_ask,
+            patch.object(wf.agent_creator, "create_agents", return_value=[]),
+        ):
+            result = wf.execute(mock_execution=True, use_defaults=False)
+        mock_ask.assert_called_once()
+        assert result.success is True
+
+
+class TestExecuteRealAgentsPath:
+    """Cover line 187: execute_agents_real path."""
+
+    def test_real_execution_calls_execute_agents_real(self):
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+
+        fr = FormResponse(template_id="t1", responses={})
+        with (
+            patch.object(wf.agent_creator, "create_agents", return_value=[]),
+            patch(
+                "attune.meta_workflows.workflow.execute_agents_real",
+                return_value=[],
+            ) as mock_real,
+        ):
+            wf.execute(form_response=fr, mock_execution=False)
+        mock_real.assert_called_once()
+
+
+class TestExecutePatternLearnerStorage:
+    """Cover lines 213-217: pattern_learner storage."""
+
+    def test_pattern_learner_stores_execution(self):
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        learner = MagicMock()
+        learner.store_execution_in_memory.return_value = "pattern-123"
+        wf = MetaWorkflow(template=template, pattern_learner=learner)
+
+        fr = FormResponse(template_id="t1", responses={})
+        with patch.object(wf.agent_creator, "create_agents", return_value=[]):
+            result = wf.execute(form_response=fr, mock_execution=True)
+
+        learner.store_execution_in_memory.assert_called_once()
+        assert result.success is True
+
+    def test_pattern_learner_returns_no_id(self):
+        """Line 216 branch: pattern_id falsy → no log."""
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        learner = MagicMock()
+        learner.store_execution_in_memory.return_value = None
+        wf = MetaWorkflow(template=template, pattern_learner=learner)
+
+        fr = FormResponse(template_id="t1", responses={})
+        with patch.object(wf.agent_creator, "create_agents", return_value=[]):
+            result = wf.execute(form_response=fr, mock_execution=True)
+        assert result.success is True
+
+
+class TestExecuteErrorPath:
+    """Cover lines 244-245: save error result exception."""
+
+    def test_error_path_save_failure_logged(self):
+        import pytest
+
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+
+        fr = FormResponse(template_id="t1", responses={})
+        # First _save_execution call (success path) won't be reached;
+        # create_agents raises → enter except block → _save_execution
+        # for error result also raises.
+        call_idx = [0]
+
+        def fake_save(result):
+            call_idx[0] += 1
+            raise RuntimeError("disk full")
+
+        with (
+            patch.object(
+                wf.agent_creator,
+                "create_agents",
+                side_effect=RuntimeError("creation failed"),
+            ),
+            patch.object(wf, "_save_execution", side_effect=fake_save),
+            pytest.raises(ValueError, match="Meta-workflow execution failed"),
+        ):
+            wf.execute(form_response=fr, mock_execution=True)
+
+
+class TestMockExecutionAllTiers:
+    """Cover lines 278-280: PREMIUM_ONLY tier branch."""
+
+    def test_premium_only_tier_path(self):
+        from attune.meta_workflows.models import (
+            AgentSpec,
+            FormSchema,
+            MetaWorkflowTemplate,
+            TierStrategy,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+
+        agent = AgentSpec(
+            role="r",
+            base_template="bt",
+            tier_strategy=TierStrategy.PREMIUM_ONLY,
+        )
+        results = wf._execute_agents_mock([agent])
+        assert len(results) == 1
+        assert results[0].tier_used == "premium"
+
+    def test_capable_first_tier_path(self):
+        """Cover the CAPABLE_FIRST branch (line 273)."""
+        from attune.meta_workflows.models import (
+            AgentSpec,
+            FormSchema,
+            MetaWorkflowTemplate,
+            TierStrategy,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+        agent = AgentSpec(
+            role="r",
+            base_template="bt",
+            tier_strategy=TierStrategy.CAPABLE_FIRST,
+        )
+        results = wf._execute_agents_mock([agent])
+        assert results[0].tier_used == "capable"
+
+
+class TestDelegateMethods:
+    """Cover lines 408, 422, 437: delegate methods."""
+
+    def _make_wf(self):
+        from attune.meta_workflows.models import FormSchema, MetaWorkflowTemplate
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        return MetaWorkflow(template=template)
+
+    def test_get_generic_instructions_delegates(self):
+        wf = self._make_wf()
+        result = wf._get_generic_instructions("analyst")
+        assert "analyst" in result.lower()
+
+    def test_build_agent_prompt_delegates(self):
+        from attune.meta_workflows.models import AgentSpec, TierStrategy
+
+        wf = self._make_wf()
+        spec = AgentSpec(
+            role="reviewer",
+            base_template="bt",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
+        )
+        with patch(
+            "attune.meta_workflows.workflow.build_agent_prompt",
+            return_value="PROMPT",
+        ):
+            assert wf._build_agent_prompt(spec) == "PROMPT"
+
+    def test_evaluate_success_criteria_delegates(self):
+        from attune.meta_workflows.models import AgentExecutionResult, AgentSpec, TierStrategy
+
+        wf = self._make_wf()
+        result = AgentExecutionResult(
+            agent_id="a",
+            role="r",
+            success=True,
+            cost=0.0,
+            duration=0.0,
+            tier_used="cheap",
+            output={},
+        )
+        spec = AgentSpec(
+            role="r",
+            base_template="bt",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
+        )
+        with patch(
+            "attune.meta_workflows.workflow.evaluate_success_criteria",
+            return_value=True,
+        ):
+            assert wf._evaluate_success_criteria(result, spec) is True
+
+
+class TestHelperFunctions:
+    """Cover lines 461, 488, 493."""
+
+    def test_load_execution_result_default_dir(self, tmp_path, monkeypatch):
+        from pathlib import Path
+
+        """Line 461: storage_dir None uses ~/.attune/meta_workflows/executions."""
+        import pytest
+
+        from attune.meta_workflows.workflow import load_execution_result
+
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+        # No file → FileNotFoundError
+        with pytest.raises(FileNotFoundError):
+            load_execution_result("nonexistent")
+
+    def test_list_execution_results_default_dir(self, tmp_path, monkeypatch):
+        from pathlib import Path
+
+        """Line 488: storage_dir None uses default."""
+        from attune.meta_workflows.workflow import list_execution_results
+
+        monkeypatch.setattr(Path, "home", classmethod(lambda cls: tmp_path))
+        # Default dir doesn't exist → empty list
+        assert list_execution_results() == []
+
+    def test_list_execution_results_path_does_not_exist(self, tmp_path):
+        """Line 493: storage_path doesn't exist → []."""
+        from attune.meta_workflows.workflow import list_execution_results
+
+        result = list_execution_results(str(tmp_path / "nonexistent"))
+        assert result == []
+
+
+class TestExecuteUseDefaults:
+    """Cover line 165: use_defaults=True path."""
+
+    def test_use_defaults_true_logs_default_values(self):
+        from attune.meta_workflows.models import (
+            FormResponse,
+            FormSchema,
+            MetaWorkflowTemplate,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+
+        fake_response = FormResponse(template_id="t1", responses={})
+        with (
+            patch.object(wf.form_engine, "ask_questions", return_value=fake_response),
+            patch.object(wf.agent_creator, "create_agents", return_value=[]),
+        ):
+            result = wf.execute(mock_execution=True, use_defaults=True)
+        assert result.success is True
+
+
+class TestMockExecutionRemainingTiers:
+    """Cover lines 266-268, 270-272 (CHEAP_ONLY, PROGRESSIVE)."""
+
+    def test_cheap_only_tier(self):
+        from attune.meta_workflows.models import (
+            AgentSpec,
+            FormSchema,
+            MetaWorkflowTemplate,
+            TierStrategy,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+        agent = AgentSpec(
+            role="r",
+            base_template="bt",
+            tier_strategy=TierStrategy.CHEAP_ONLY,
+        )
+        results = wf._execute_agents_mock([agent])
+        assert results[0].tier_used == "cheap"
+
+    def test_progressive_tier(self):
+        from attune.meta_workflows.models import (
+            AgentSpec,
+            FormSchema,
+            MetaWorkflowTemplate,
+            TierStrategy,
+        )
+        from attune.meta_workflows.workflow import MetaWorkflow
+
+        schema = FormSchema(questions=[], title="t", description="d")
+        template = MetaWorkflowTemplate(
+            template_id="t1",
+            name="Test",
+            description="d",
+            form_schema=schema,
+            agent_composition_rules=[],
+        )
+        wf = MetaWorkflow(template=template)
+        agent = AgentSpec(
+            role="r",
+            base_template="bt",
+            tier_strategy=TierStrategy.PROGRESSIVE,
+        )
+        results = wf._execute_agents_mock([agent])
+        assert results[0].tier_used == "capable"
+
+
+class TestLoadExecutionResultInvalid:
+    """Cover lines 473-474: invalid JSON → ValueError."""
+
+    def test_invalid_json_raises_value_error(self, tmp_path):
+        import pytest
+
+        from attune.meta_workflows.workflow import load_execution_result
+
+        # Create directory with bad result.json
+        run_dir = tmp_path / "run-1"
+        run_dir.mkdir()
+        (run_dir / "result.json").write_text("not-json{")
+
+        with pytest.raises(ValueError, match="Invalid result file"):
+            load_execution_result("run-1", storage_dir=str(tmp_path))
+
+
+class TestListExecutionResultsSkipsInvalid:
+    """Cover branch 498->497: iterdir entries without result.json or non-dir → skipped."""
+
+    def test_skips_files_and_dirs_without_result(self, tmp_path):
+        from attune.meta_workflows.workflow import list_execution_results
+
+        # Loose file (not a dir) — should be skipped
+        (tmp_path / "loose.txt").write_text("x")
+        # Directory without result.json — should be skipped
+        empty_dir = tmp_path / "empty-run"
+        empty_dir.mkdir()
+        # Directory with result.json — should be included
+        good_dir = tmp_path / "good-run"
+        good_dir.mkdir()
+        (good_dir / "result.json").write_text("{}")
+
+        result = list_execution_results(str(tmp_path))
+        assert "good-run" in result
+        assert "empty-run" not in result

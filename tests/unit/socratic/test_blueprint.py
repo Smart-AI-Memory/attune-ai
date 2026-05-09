@@ -201,6 +201,272 @@ class TestAgentRole:
         assert len(roles) == 8
 
 
+class TestAgentBlueprintValidate:
+    """Tests for AgentBlueprint.validate() error branches."""
+
+    def _make_blueprint(self, **overrides):
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+        )
+
+        spec_kwargs = {
+            "id": "agent-1",
+            "name": "Reviewer",
+            "role": AgentRole.REVIEWER,
+            "goal": "Review",
+            "backstory": "Years of experience",
+        }
+        spec_kwargs.update(overrides)
+        spec = AgentSpec(**spec_kwargs)
+        return AgentBlueprint(spec=spec)
+
+    def test_validate_missing_id_appends_error(self):
+        bp = self._make_blueprint(id="")
+        assert bp.validate() is False
+        assert any("ID" in e for e in bp.validation_errors)
+
+    def test_validate_missing_name_appends_error(self):
+        bp = self._make_blueprint(name="")
+        assert bp.validate() is False
+        assert any("name" in e for e in bp.validation_errors)
+
+    def test_validate_missing_goal_appends_error(self):
+        bp = self._make_blueprint(goal="")
+        assert bp.validate() is False
+        assert any("goal" in e for e in bp.validation_errors)
+
+    def test_validate_missing_backstory_appends_error(self):
+        bp = self._make_blueprint(backstory="")
+        assert bp.validate() is False
+        assert any("backstory" in e for e in bp.validation_errors)
+
+    def test_validate_passes_with_all_fields(self):
+        bp = self._make_blueprint()
+        assert bp.validate() is True
+        assert bp.validation_errors == []
+
+
+class TestWorkflowBlueprintLookups:
+    """Cover get_agent_by_id / get_stage_by_id None paths."""
+
+    def test_get_agent_by_id_returns_none_for_unknown(self, sample_workflow_blueprint):
+        result = sample_workflow_blueprint.get_agent_by_id("does-not-exist")
+        assert result is None
+
+    def test_get_stage_by_id_returns_none_for_unknown(self, sample_workflow_blueprint):
+        result = sample_workflow_blueprint.get_stage_by_id("nope")
+        assert result is None
+
+
+class TestWorkflowBlueprintValidate:
+    """Cover WorkflowBlueprint.validate() error paths."""
+
+    def test_validate_missing_name_appends_error(self):
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="a1",
+                name="Agent",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(
+            name="",
+            agents=[agent],
+            stages=[StageSpec(id="s1", name="S", description="d", agent_ids=["a1"])],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        assert any("name" in e for e in errors)
+
+    def test_validate_invalid_agent_extends_errors(self):
+        """An agent failing its own validate() contributes prefixed errors (line 412)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+
+        # Agent with no goal will fail validate()
+        bad_agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="bad-1",
+                name="Bad",
+                role=AgentRole.REVIEWER,
+                goal="",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(
+            name="WF",
+            agents=[bad_agent],
+            stages=[
+                StageSpec(id="s1", name="S", description="d", agent_ids=["bad-1"]),
+            ],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        # Agent-prefixed error should appear
+        assert any("Agent 'bad-1':" in e for e in errors)
+
+    def test_validate_stage_references_unknown_agent(self):
+        """Stage referencing an agent not in the workflow appends an error (line 419)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="known",
+                name="Known",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(
+            name="WF",
+            agents=[agent],
+            stages=[
+                StageSpec(
+                    id="s1",
+                    name="S",
+                    description="d",
+                    agent_ids=["known", "ghost-agent"],
+                ),
+            ],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        assert any("ghost-agent" in e for e in errors)
+
+    def test_validate_no_agents_appends_error(self):
+        """Workflow with no agents appends 'at least one agent' error (line 404)."""
+        from attune.socratic.blueprint import StageSpec, WorkflowBlueprint
+
+        bp = WorkflowBlueprint(
+            name="WF",
+            agents=[],
+            stages=[StageSpec(id="s1", name="S", description="d", agent_ids=[])],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        assert any("at least one agent" in e for e in errors)
+
+    def test_validate_no_stages_appends_error(self):
+        """Workflow with no stages appends 'at least one stage' error (line 407)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            WorkflowBlueprint,
+        )
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="a1",
+                name="A",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(name="WF", agents=[agent], stages=[])
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        assert any("at least one stage" in e for e in errors)
+
+    def test_validate_stage_depends_on_known_stage_no_error(self):
+        """Stage depends_on a valid stage takes the if-False branch (425->424)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="a1",
+                name="A",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(
+            name="WF",
+            agents=[agent],
+            stages=[
+                StageSpec(id="s1", name="S1", description="d", agent_ids=["a1"]),
+                StageSpec(
+                    id="s2",
+                    name="S2",
+                    description="d",
+                    agent_ids=["a1"],
+                    depends_on=["s1"],  # valid reference — exercises if-False branch
+                ),
+            ],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is True
+        assert errors == []
+
+    def test_validate_stage_depends_on_unknown_stage(self):
+        """Stage depending on a non-existent stage appends an error (line 426)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="a1",
+                name="A",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+            )
+        )
+        bp = WorkflowBlueprint(
+            name="WF",
+            agents=[agent],
+            stages=[
+                StageSpec(
+                    id="s1",
+                    name="S",
+                    description="d",
+                    agent_ids=["a1"],
+                    depends_on=["non-existent-stage"],
+                ),
+            ],
+        )
+        is_valid, errors = bp.validate()
+        assert is_valid is False
+        assert any("non-existent-stage" in e for e in errors)
+
+
 class TestToolCategory:
     """Tests for ToolCategory enum."""
 

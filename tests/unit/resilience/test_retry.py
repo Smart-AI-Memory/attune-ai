@@ -286,3 +286,100 @@ class TestRetryWithBackoff:
 
         assert result == "sync result"
         assert call_count == 1
+
+
+@pytest.mark.unit
+class TestRetryCoverageGapFillers:
+    """Tests filling specific coverage gaps."""
+
+    @pytest.mark.asyncio
+    async def test_async_on_retry_callback_called(self):
+        """on_retry callback fires from the async wrapper between retries (line 112)."""
+        retry_events: list[tuple[str, int]] = []
+
+        def on_retry_handler(exception: Exception, attempt: int) -> None:
+            retry_events.append((str(exception), attempt))
+
+        call_count = 0
+
+        @retry(max_attempts=3, initial_delay=0.01, on_retry=on_retry_handler)
+        async def async_fails_twice():
+            nonlocal call_count
+            call_count += 1
+            if call_count < 3:
+                raise ValueError(f"async-attempt {call_count}")
+            return "ok"
+
+        result = await async_fails_twice()
+        assert result == "ok"
+        assert len(retry_events) == 2
+        assert retry_events[0][1] == 1
+        assert retry_events[1][1] == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_with_backoff_uses_default_config_when_none(self):
+        """retry_with_backoff(func) without a config falls through to RetryConfig() (line 186)."""
+        call_count = 0
+
+        async def my_func():
+            nonlocal call_count
+            call_count += 1
+            return "default-config"
+
+        # No config passed — function should still execute successfully via defaults.
+        result = await retry_with_backoff(my_func)
+        assert result == "default-config"
+        assert call_count == 1
+
+    @pytest.mark.asyncio
+    async def test_retry_with_backoff_raises_after_max_attempts(self):
+        """retry_with_backoff re-raises after exhausting all attempts (line 200)."""
+        call_count = 0
+
+        async def always_fails():
+            nonlocal call_count
+            call_count += 1
+            raise ValueError("permanent")
+
+        config = RetryConfig(max_attempts=2, initial_delay=0.01)
+        with pytest.raises(ValueError, match="permanent"):
+            await retry_with_backoff(always_fails, config=config)
+
+        assert call_count == 2
+
+    @pytest.mark.asyncio
+    async def test_retry_with_backoff_max_attempts_zero_raises_runtime_error(self):
+        """With max_attempts=0 the for-loop is skipped, hitting the RuntimeError fallback."""
+        called = False
+
+        async def my_func():
+            nonlocal called
+            called = True
+            return "should not be called"
+
+        config = RetryConfig(max_attempts=0)
+        with pytest.raises(RuntimeError, match="Unexpected retry loop exit"):
+            await retry_with_backoff(my_func, config=config)
+
+        assert called is False
+
+    def test_retry_decorator_sync_max_attempts_zero_raises_runtime_error(self):
+        """Sync wrapper with max_attempts=0 hits the RuntimeError fallback."""
+
+        @retry(max_attempts=0)
+        def my_func():
+            return "unreachable"
+
+        with pytest.raises(RuntimeError, match="Unexpected retry loop exit"):
+            my_func()
+
+    @pytest.mark.asyncio
+    async def test_retry_decorator_async_max_attempts_zero_raises_runtime_error(self):
+        """Async wrapper with max_attempts=0 hits the RuntimeError fallback."""
+
+        @retry(max_attempts=0)
+        async def my_func():
+            return "unreachable"
+
+        with pytest.raises(RuntimeError, match="Unexpected retry loop exit"):
+            await my_func()

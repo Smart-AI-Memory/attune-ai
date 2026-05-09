@@ -421,3 +421,398 @@ class TestDefaultStorage:
         # Note: get_default_storage may return cached instance
         # This test validates set_default_storage doesn't error
         assert True
+
+
+# ---------------------------------------------------------------------------
+# Additional coverage for previously-missed branches
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestJSONFileStorageMissingBranches:
+    """Cover error handlers and filter branches not hit by existing tests."""
+
+    def test_load_session_corrupt_json_returns_none(self, storage_path):
+        """Lines 162-164: JSONDecodeError in load_session → return None."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        corrupt = storage.sessions_dir / "bad-session.json"
+        corrupt.write_text("{bad json}")
+
+        result = storage.load_session("bad-session")
+        assert result is None
+
+    def test_list_sessions_state_filter_excludes_non_matching(self, storage_path):
+        """Line 184: list_sessions with state filter skips non-matching sessions."""
+        from attune.socratic.session import SessionState, SocraticSession
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+
+        s1 = SocraticSession(session_id="state-a")
+        s1.state = SessionState.AWAITING_GOAL
+        s2 = SocraticSession(session_id="state-b")
+        s2.state = SessionState.READY_TO_GENERATE
+
+        storage.save_session(s1)
+        storage.save_session(s2)
+
+        results = storage.list_sessions(state=SessionState.AWAITING_GOAL)
+        ids = [r["session_id"] for r in results]
+        assert "state-a" in ids
+        assert "state-b" not in ids
+
+    def test_delete_session_nonexistent_returns_false(self, storage_path):
+        """Line 207: delete_session on missing file returns False."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        result = storage.delete_session("does-not-exist")
+        assert result is False
+
+    def test_load_blueprint_nonexistent_returns_none(self, storage_path):
+        """Line 225: load_blueprint on missing file returns None."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        result = storage.load_blueprint("ghost-blueprint")
+        assert result is None
+
+    def test_load_blueprint_corrupt_json_returns_none(self, storage_path):
+        """Lines 231-233: JSONDecodeError in load_blueprint → return None."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        corrupt = storage.blueprints_dir / "bad-bp.json"
+        corrupt.write_text("{broken json}")
+
+        result = storage.load_blueprint("bad-bp")
+        assert result is None
+
+    def test_list_blueprints_limit_triggers_break(self, storage_path, sample_workflow_blueprint):
+        """Line 245: list_blueprints limit hit causes break."""
+        from attune.socratic.blueprint import WorkflowBlueprint
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+
+        # Save 3 blueprints, then list with limit=2
+        for i in range(3):
+            bp = WorkflowBlueprint(
+                id=f"bp-limit-{i}",
+                name=f"Blueprint {i}",
+                description="test",
+                domain="code_review",
+                agents=[],
+                stages=[],
+            )
+            storage.save_blueprint(bp)
+
+        results = storage.list_blueprints(limit=2)
+        assert len(results) == 2
+
+    def test_list_blueprints_domain_filter_excludes_non_matching(
+        self, storage_path, sample_workflow_blueprint
+    ):
+        """Line 253: list_blueprints domain filter skips non-matching blueprints."""
+        from attune.socratic.blueprint import WorkflowBlueprint
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+
+        bp_a = WorkflowBlueprint(
+            id="domain-a",
+            name="BP A",
+            description="test",
+            domain="code_review",
+            agents=[],
+            stages=[],
+        )
+        bp_b = WorkflowBlueprint(
+            id="domain-b",
+            name="BP B",
+            description="test",
+            domain="testing",
+            agents=[],
+            stages=[],
+        )
+        storage.save_blueprint(bp_a)
+        storage.save_blueprint(bp_b)
+
+        results = storage.list_blueprints(domain="code_review")
+        ids = [r["id"] for r in results]
+        assert "domain-a" in ids
+        assert "domain-b" not in ids
+
+    def test_list_blueprints_corrupt_json_skips(self, storage_path):
+        """Lines 264-265: JSONDecodeError in list_blueprints → continue."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        corrupt = storage.blueprints_dir / "corrupt.json"
+        corrupt.write_text("{not valid}")
+
+        results = storage.list_blueprints()
+        # Corrupt file should be skipped, not raise
+        assert isinstance(results, list)
+
+    def test_save_and_get_evaluations(self, storage_path):
+        """Lines 275-284, 292-305: save_evaluation and get_evaluations full paths."""
+        from attune.socratic.storage import JSONFileStorage
+        from attune.socratic.success import SuccessEvaluation
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        blueprint_id = "eval-bp-001"
+
+        evaluation = SuccessEvaluation(
+            overall_success=True,
+            overall_score=0.9,
+            metric_results=[],
+            summary="all good",
+        )
+        storage.save_evaluation(blueprint_id, evaluation)
+
+        results = storage.get_evaluations(blueprint_id)
+        assert len(results) == 1
+        assert results[0]["overall_success"] is True
+
+    def test_get_evaluations_nonexistent_dir_returns_empty(self, storage_path):
+        """Line 294-295: get_evaluations with no dir returns []."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        results = storage.get_evaluations("no-such-blueprint")
+        assert results == []
+
+    def test_get_evaluations_corrupt_json_skips(self, storage_path):
+        """Line 302-303: JSONDecodeError in get_evaluations → continue."""
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+        blueprint_id = "corrupt-eval-bp"
+        eval_dir = storage.evaluations_dir / blueprint_id
+        eval_dir.mkdir(parents=True)
+        (eval_dir / "bad.json").write_text("{broken}")
+
+        results = storage.get_evaluations(blueprint_id)
+        assert results == []
+
+
+@pytest.mark.unit
+class TestStorageManagerMissingBranches:
+    """Cover StorageManager cached storage and redis/default branches."""
+
+    def test_get_storage_twice_returns_cached(self, storage_path):
+        """Line 350->352: second call to get_storage() returns cached instance."""
+        from attune.socratic.storage import StorageConfig, StorageManager
+
+        config = StorageConfig(backend="json", path=str(storage_path))
+        manager = StorageManager(config=config)
+
+        s1 = manager.get_storage()
+        s2 = manager.get_storage()
+        assert s1 is s2  # same object — cached path taken
+
+    def test_create_storage_sqlite_backend(self, storage_path):
+        """Line 357: _create_storage with sqlite backend returns SQLiteStorage."""
+        from attune.socratic.storage import SQLiteStorage, StorageConfig, StorageManager
+
+        config = StorageConfig(backend="sqlite", path=str(storage_path / "store"))
+        manager = StorageManager(config=config)
+        storage = manager.get_storage()
+        assert isinstance(storage, SQLiteStorage)
+
+    def test_create_storage_redis_falls_back_to_json(self, storage_path):
+        """Lines 360-361: redis backend not implemented → falls back to JSONFileStorage."""
+        from attune.socratic.storage import JSONFileStorage, StorageConfig, StorageManager
+
+        config = StorageConfig(backend="redis", path=str(storage_path))
+        manager = StorageManager(config=config)
+        storage = manager.get_storage()
+        assert isinstance(storage, JSONFileStorage)
+
+
+@pytest.mark.unit
+class TestGetDefaultStorageMissingBranch:
+    """Cover line 373: _default_storage assignment when global is None."""
+
+    def test_get_default_storage_initializes_when_none(self, monkeypatch):
+        """Line 373: get_default_storage creates JSONFileStorage when global is None."""
+        import attune.socratic.storage as storage_mod
+        from attune.socratic.storage import JSONFileStorage, get_default_storage
+
+        monkeypatch.setattr(storage_mod, "_default_storage", None)
+        result = get_default_storage()
+        assert isinstance(result, JSONFileStorage)
+
+    def test_get_default_storage_returns_existing_when_set(self, monkeypatch, storage_path):
+        """Line 372->374: get_default_storage returns existing storage when already set."""
+        import attune.socratic.storage as storage_mod
+        from attune.socratic.storage import JSONFileStorage, get_default_storage
+
+        existing = JSONFileStorage(base_dir=str(storage_path))
+        monkeypatch.setattr(storage_mod, "_default_storage", existing)
+        result = get_default_storage()
+        assert result is existing
+
+
+@pytest.mark.unit
+class TestListSessionsLimitBranch:
+    """Cover line 176: list_sessions break when limit is reached."""
+
+    def test_list_sessions_respects_limit(self, storage_path):
+        """Line 176: list_sessions stops at limit."""
+        from attune.socratic.session import SocraticSession
+        from attune.socratic.storage import JSONFileStorage
+
+        storage = JSONFileStorage(base_dir=str(storage_path))
+
+        for i in range(5):
+            s = SocraticSession(session_id=f"limit-session-{i}")
+            storage.save_session(s)
+
+        results = storage.list_sessions(limit=3)
+        assert len(results) == 3
+
+
+# ---------------------------------------------------------------------------
+# SQLiteStorage — additional coverage for blueprint queries and evaluations
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.unit
+class TestSQLiteStorageMissingBranches:
+    """Cover load_blueprint(None), list_blueprints, evaluations, success_rate."""
+
+    def test_load_blueprint_returns_none_when_missing(self, tmp_path):
+        """Line 210: load_blueprint with no row returns None."""
+        from attune.socratic.storage import SQLiteStorage
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "miss.db"))
+        result = storage.load_blueprint("does-not-exist")
+        assert result is None
+
+    def test_list_blueprints_no_filter(self, tmp_path, sample_workflow_blueprint):
+        """Lines 218, 230-241: list_blueprints without domain filter."""
+        from attune.socratic.blueprint import WorkflowBlueprint
+        from attune.socratic.storage import SQLiteStorage
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "lb.db"))
+        storage.save_blueprint(sample_workflow_blueprint)
+        bp2 = WorkflowBlueprint(
+            id="bp-other",
+            name="Other",
+            description="x",
+            domain="testing",
+            agents=[],
+            stages=[],
+        )
+        storage.save_blueprint(bp2)
+
+        results = storage.list_blueprints()
+        ids = [r["id"] for r in results]
+        assert sample_workflow_blueprint.id in ids
+        assert "bp-other" in ids
+
+    def test_list_blueprints_with_domain_filter(self, tmp_path, sample_workflow_blueprint):
+        """Lines 218-229: list_blueprints with domain filter."""
+        from attune.socratic.blueprint import WorkflowBlueprint
+        from attune.socratic.storage import SQLiteStorage
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "lb_filt.db"))
+        storage.save_blueprint(sample_workflow_blueprint)  # code_review
+        bp2 = WorkflowBlueprint(
+            id="bp-testing",
+            name="T",
+            description="x",
+            domain="testing",
+            agents=[],
+            stages=[],
+        )
+        storage.save_blueprint(bp2)
+
+        results = storage.list_blueprints(domain="code_review")
+        ids = [r["id"] for r in results]
+        assert sample_workflow_blueprint.id in ids
+        assert "bp-testing" not in ids
+
+    def test_save_and_get_evaluations(self, tmp_path):
+        """Lines 249-252, 273-284: save_evaluation and get_evaluations."""
+        from attune.socratic.storage import SQLiteStorage
+        from attune.socratic.success_models import SuccessEvaluation
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "eval.db"))
+        bp_id = "bp-eval"
+
+        ev1 = SuccessEvaluation(
+            overall_success=True,
+            overall_score=0.95,
+            metric_results=[],
+            summary="great",
+        )
+        ev2 = SuccessEvaluation(
+            overall_success=False,
+            overall_score=0.4,
+            metric_results=[],
+            summary="poor",
+        )
+        storage.save_evaluation(bp_id, ev1)
+        storage.save_evaluation(bp_id, ev2)
+
+        results = storage.get_evaluations(bp_id)
+        assert len(results) == 2
+        # Each result is a dict produced from to_dict
+        scores = sorted(r["overall_score"] for r in results)
+        assert scores == [0.4, 0.95]
+
+    def test_get_evaluations_respects_limit(self, tmp_path):
+        """get_evaluations limit clause works."""
+        from attune.socratic.storage import SQLiteStorage
+        from attune.socratic.success_models import SuccessEvaluation
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "elim.db"))
+        bp_id = "bp-lim"
+        for i in range(4):
+            storage.save_evaluation(
+                bp_id,
+                SuccessEvaluation(
+                    overall_success=True,
+                    overall_score=0.5 + 0.1 * i,
+                    metric_results=[],
+                    summary=f"e{i}",
+                ),
+            )
+
+        results = storage.get_evaluations(bp_id, limit=2)
+        assert len(results) == 2
+
+    def test_get_success_rate_with_evaluations(self, tmp_path):
+        """Lines 288-302 (truthy branch): success rate from saved evaluations."""
+        from attune.socratic.storage import SQLiteStorage
+        from attune.socratic.success_models import SuccessEvaluation
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "rate.db"))
+        bp_id = "bp-rate"
+        # 3 of 4 successes → rate = 0.75
+        for ok in (True, True, True, False):
+            storage.save_evaluation(
+                bp_id,
+                SuccessEvaluation(
+                    overall_success=ok,
+                    overall_score=1.0 if ok else 0.0,
+                    metric_results=[],
+                    summary="x",
+                ),
+            )
+
+        rate = storage.get_success_rate(bp_id)
+        assert rate == pytest.approx(0.75)
+
+    def test_get_success_rate_no_evaluations(self, tmp_path):
+        """Line 302: returns 0.0 when no evaluations exist."""
+        from attune.socratic.storage import SQLiteStorage
+
+        storage = SQLiteStorage(db_path=str(tmp_path / "rate0.db"))
+        rate = storage.get_success_rate("nonexistent-bp")
+        assert rate == 0.0

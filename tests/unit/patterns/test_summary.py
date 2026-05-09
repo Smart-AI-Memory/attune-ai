@@ -441,3 +441,247 @@ class TestWriteToFile:
 
         content = output_path.read_text(encoding="utf-8")
         assert "bug_write_test" in content
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestSummaryCoverageGaps:
+    """Cover lines 121-122, 203, 267-268, 271-272, 275, 280->302, 322-353."""
+
+    def test_load_debt_history_malformed(self, tmp_path, caplog):
+        """Lines 121-122: malformed debt_history.json → warning."""
+        import logging
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text("not-json{")
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            gen.load_all_patterns()
+        # Should not crash
+        assert any("Debt history load failed" in r.message for r in caplog.records)
+
+    def test_bugs_with_resolution_time_shown(self, tmp_path):
+        """Line 203: bug with time_mins truthy → 'Resolution time' line."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        (debug_dir / "bug_x.json").write_text(
+            _json.dumps(
+                {
+                    "bug_id": "bug_x",
+                    "status": "resolved",
+                    "root_cause": "missing check",
+                    "fix_applied": "added check",
+                    "resolution_time_minutes": 15,
+                }
+            )
+        )
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "Resolution time: 15 min" in markdown
+
+    def test_debt_section_with_by_type(self, tmp_path):
+        """Lines 266-268: by_type rendered."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {
+                            "date": "2025-12-01",
+                            "total_items": 10,
+                            "by_type": {"complexity": 3, "duplication": 7},
+                        }
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "By type:" in markdown
+        assert "complexity: 3" in markdown
+
+    def test_debt_section_with_by_severity(self, tmp_path):
+        """Lines 270-272: by_severity rendered."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {
+                            "date": "2025-12-01",
+                            "total_items": 5,
+                            "by_severity": {"high": 2, "low": 3},
+                        }
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "By severity:" in markdown
+        assert "high: 2" in markdown
+
+    def test_debt_section_with_hotspots(self, tmp_path):
+        """Line 275: hotspots rendered."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {
+                            "date": "2025-12-01",
+                            "total_items": 5,
+                            "hotspots": ["src/a.py", "src/b.py", "src/c.py"],
+                        }
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "Hotspots:" in markdown
+        assert "src/a.py" in markdown
+
+    def test_debt_trajectory_with_two_snapshots(self, tmp_path):
+        """Line 280-300: trajectory section rendered."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {"date": "2025-12-01", "total_items": 10},
+                        {"date": "2025-11-01", "total_items": 5},
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        # 10 > 5 → INCREASING
+        assert "Trajectory: INCREASING" in markdown
+        assert "Change: 5 items" in markdown
+
+    def test_debt_trajectory_decreasing(self, tmp_path):
+        """Trajectory DECREASING."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {"date": "2025-12-01", "total_items": 5},
+                        {"date": "2025-11-01", "total_items": 10},
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "Trajectory: DECREASING" in markdown
+
+    def test_debt_trajectory_stable(self, tmp_path):
+        """Trajectory STABLE."""
+        import json as _json
+
+        from attune.patterns.summary import PatternSummaryGenerator
+
+        debt_dir = tmp_path / "tech_debt"
+        debt_dir.mkdir()
+        (debt_dir / "debt_history.json").write_text(
+            _json.dumps(
+                {
+                    "snapshots": [
+                        {"date": "2025-12-01", "total_items": 7},
+                        {"date": "2025-11-01", "total_items": 7},
+                    ]
+                }
+            )
+        )
+
+        gen = PatternSummaryGenerator(str(tmp_path))
+        gen.load_all_patterns()
+        markdown = gen.generate_markdown()
+        assert "Trajectory: STABLE" in markdown
+
+
+class TestSummaryMain:
+    """Cover lines 322-353: main() CLI entry point."""
+
+    def test_main_writes_to_file(self, tmp_path, capsys):
+        """Default path: writes to file."""
+        from unittest.mock import patch as _patch
+
+        from attune.patterns import summary as mod
+
+        output_file = tmp_path / "out" / "summary.md"
+        argv = [
+            "prog",
+            "--patterns-dir",
+            str(tmp_path),
+            "--output",
+            str(output_file),
+        ]
+        with _patch("sys.argv", argv):
+            mod.main()
+        out = capsys.readouterr().out
+        assert "Pattern summary written to" in out
+        assert output_file.exists()
+
+    def test_main_print_mode(self, tmp_path, capsys):
+        """--print → output to stdout instead of file."""
+        from unittest.mock import patch as _patch
+
+        from attune.patterns import summary as mod
+
+        argv = ["prog", "--patterns-dir", str(tmp_path), "--print"]
+        with _patch("sys.argv", argv):
+            mod.main()
+        out = capsys.readouterr().out
+        # Should print the markdown content (which contains the title)
+        assert "Pattern" in out or "patterns" in out.lower()

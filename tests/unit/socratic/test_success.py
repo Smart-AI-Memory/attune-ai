@@ -717,6 +717,197 @@ class TestSuccessCriteriaExtraction:
         result = criteria.evaluate(output)
         assert result.metric_results[0].value == 30
 
+    def test_extractor_exception_returns_none(self):
+        """Custom extractor that raises returns None (lines 169-170)."""
+
+        def bad_extractor(_output):
+            raise KeyError("missing")
+
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="bad",
+                    name="Bad",
+                    description="raises",
+                    metric_type=MetricType.COUNT,
+                    extractor=bad_extractor,
+                ),
+            ],
+        )
+        result = criteria.evaluate({})
+        assert "not found" in result.metric_results[0].explanation.lower()
+
+    def test_extraction_path_traverses_list_index(self):
+        """extraction_path with numeric segment traverses list (lines 179-180)."""
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="from_list",
+                    name="From List",
+                    description="list",
+                    metric_type=MetricType.COUNT,
+                    extraction_path="items.1.score",
+                ),
+            ],
+        )
+        output = {"items": [{"score": 10}, {"score": 99}]}
+        result = criteria.evaluate(output)
+        assert result.metric_results[0].value == 99
+
+    def test_extraction_path_non_dict_non_list_returns_none(self):
+        """extraction_path hitting non-traversable value returns None (lines 181-182)."""
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="dead_end",
+                    name="Dead End",
+                    description="x",
+                    metric_type=MetricType.COUNT,
+                    extraction_path="data.value.unreachable",
+                ),
+            ],
+        )
+        # data.value is a string — can't traverse further
+        output = {"data": {"value": "stop here"}}
+        result = criteria.evaluate(output)
+        assert "not found" in result.metric_results[0].explanation.lower()
+
+    def test_extraction_path_key_error_returns_none(self):
+        """extraction_path missing key raises KeyError → returns None (lines 184-185)."""
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="absent",
+                    name="Absent",
+                    description="x",
+                    metric_type=MetricType.COUNT,
+                    extraction_path="data.absent_key",
+                ),
+            ],
+        )
+        result = criteria.evaluate({"data": {"present": 1}})
+        assert "not found" in result.metric_results[0].explanation.lower()
+
+    def test_metric_evaluate_boolean_metric_with_non_bool_value_falls_through(self):
+        """BOOLEAN metric with non-bool value falls through to numeric check (branch 123->130)."""
+        from attune.socratic.success_models import (
+            MetricDirection,
+            MetricType,
+            SuccessMetric,
+        )
+
+        m = SuccessMetric(
+            id="b",
+            name="b",
+            description="d",
+            metric_type=MetricType.BOOLEAN,
+            direction=MetricDirection.HIGHER_IS_BETTER,
+        )
+        # Value is not bool — falls through; then numeric check applies
+        # (1 is technically bool-castable but isinstance(1, bool) is False)
+        # Use a non-bool, non-numeric value to fall through AND fail numeric check.
+        met, score, explanation = m.evaluate("not-a-bool")
+        assert met is False
+        assert "Expected numeric" in explanation
+
+    def test_metric_lower_is_better_no_maximum_always_met(self):
+        """LOWER_IS_BETTER with no maximum_value → always met (lines 151-152)."""
+        from attune.socratic.success_models import (
+            MetricDirection,
+            MetricType,
+            SuccessMetric,
+        )
+
+        m = SuccessMetric(
+            id="l",
+            name="l",
+            description="d",
+            metric_type=MetricType.COUNT,
+            direction=MetricDirection.LOWER_IS_BETTER,
+            # no maximum_value set
+        )
+        met, score, _ = m.evaluate(9999)
+        assert met is True
+        assert score == 1.0
+
+    def test_metric_range_with_infinite_size_scores_one(self):
+        """RANGE with infinite range_size returns score 1.0 (line 177)."""
+        from attune.socratic.success_models import (
+            MetricDirection,
+            MetricType,
+            SuccessMetric,
+        )
+
+        m = SuccessMetric(
+            id="r",
+            name="r",
+            description="d",
+            metric_type=MetricType.COUNT,
+            direction=MetricDirection.RANGE,
+            # No minimum/maximum → range becomes [-inf, +inf]
+        )
+        met, score, _ = m.evaluate(42)
+        assert met is True
+        assert score == 1.0
+
+    def test_metric_unknown_direction_defaults_to_met(self):
+        """An unrecognized MetricDirection hits the else branch (lines 181-182)."""
+        from attune.socratic.success_models import MetricType, SuccessMetric
+
+        m = SuccessMetric(
+            id="u",
+            name="u",
+            description="d",
+            metric_type=MetricType.COUNT,
+        )
+        # Manually set direction to a value not in the enum's expected paths
+        # — using a string directly to bypass the elif chain.
+        m.direction = "bogus-direction"  # type: ignore[assignment]
+        met, score, _ = m.evaluate(10)
+        assert met is True
+        assert score == 1.0
+
+    def test_zero_weight_metrics_use_simple_average(self):
+        """All-zero metric weights → fallback to simple average (line 240)."""
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="m1",
+                    name="M1",
+                    description="d",
+                    metric_type=MetricType.COUNT,
+                    weight=0.0,
+                ),
+                SuccessMetric(
+                    id="m2",
+                    name="M2",
+                    description="d",
+                    metric_type=MetricType.COUNT,
+                    weight=0.0,
+                ),
+            ],
+            require_all=False,
+        )
+        result = criteria.evaluate({"m1": 1, "m2": 2})
+        # Score is the simple average — verify no division-by-zero crash and a numeric score
+        assert isinstance(result.overall_score, float)
+
+    def test_metrics_dict_present_but_id_absent_returns_none(self):
+        """output['metrics'] present but metric.id not in it → returns None (193->196)."""
+        criteria = SuccessCriteria(
+            metrics=[
+                SuccessMetric(
+                    id="ghost",
+                    name="Ghost",
+                    description="x",
+                    metric_type=MetricType.COUNT,
+                ),
+            ],
+        )
+        # 'metrics' dict exists but doesn't contain 'ghost'
+        result = criteria.evaluate({"metrics": {"other": 1}})
+        assert "not found" in result.metric_results[0].explanation.lower()
+
 
 @pytest.mark.unit
 class TestSuccessCriteriaCustomEvaluator:

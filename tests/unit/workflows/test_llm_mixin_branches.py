@@ -248,3 +248,146 @@ class TestCallLLMExceptions:
             content, in_tok, out_tok = await host._call_llm(tier, "sys", "user")
 
         assert "invalid input" in content
+
+
+# ---------------------------------------------------------------------------
+# Coverage gaps: simple methods (get_model_for_tier, should_skip_stage,
+# validate_output, validate_input, validate_contract, _assess_complexity)
+# ---------------------------------------------------------------------------
+
+
+class TestGetModelForTier:
+    def test_returns_model_string(self):
+        """Lines 58-64: get_model is called with provider/tier/_config."""
+        host = _make_host()
+        tier = _make_tier("cheap")
+        with patch("attune.workflows.config.get_model", return_value="claude-haiku-4-5") as gm:
+            assert host.get_model_for_tier(tier) == "claude-haiku-4-5"
+            gm.assert_called_once_with("anthropic", "cheap", None)
+
+    def test_falls_back_to_provider_value_when_no_provider_str(self):
+        """Line 60: getattr default uses provider.value when _provider_str absent."""
+        host = LLMMixin()
+        host.name = "wf"
+        host.stages = []
+        host.provider = MagicMock()
+        host.provider.value = "openai"
+        host._config = None
+        # No _provider_str attribute set
+        tier = _make_tier("premium")
+        with patch("attune.workflows.config.get_model", return_value="gpt-x") as gm:
+            host.get_model_for_tier(tier)
+            assert gm.call_args[0][0] == "openai"
+
+
+class TestShouldSkipStage:
+    def test_default_returns_false_none(self):
+        """Line 202: default implementation returns (False, None)."""
+        host = _make_host()
+        result = host.should_skip_stage("analyze", {"some": "data"})
+        assert result == (False, None)
+
+
+class TestValidateOutput:
+    def test_empty_output_returns_invalid(self):
+        """Lines 234-235: empty dict → (False, 'output_empty')."""
+        host = _make_host()
+        assert host.validate_output({}) == (False, "output_empty")
+
+    def test_error_field_returns_execution_error(self):
+        """Lines 238-239: 'error' present → (False, 'execution_error')."""
+        host = _make_host()
+        assert host.validate_output({"error": "boom"}) == (False, "execution_error")
+
+    def test_valid_output(self):
+        """Lines 241-242: normal output → (True, None)."""
+        host = _make_host()
+        assert host.validate_output({"result": "ok", "error": None}) == (True, None)
+
+
+class TestValidateInput:
+    def test_no_schema_returns_early(self):
+        """Lines 257-258: input_schema is None → no validation."""
+        host = _make_host()
+        # Should not raise
+        host.validate_input({"foo": "bar"})
+
+    def test_with_valid_input(self):
+        """Lines 259-260: validate_against_input_schema returns no errors → no raise."""
+        host = _make_host()
+        host.input_schema = MagicMock()  # truthy
+        with patch("attune.workflows.llm_mixin.validate_against_input_schema", return_value=[]):
+            host.validate_input({"foo": "bar"})  # no raise
+
+    def test_with_invalid_input_raises(self):
+        """Lines 261-265: errors → WorkflowValidationError raised."""
+        from attune.workflows.llm_mixin import WorkflowValidationError
+
+        host = _make_host()
+        host.input_schema = MagicMock()
+        with patch(
+            "attune.workflows.llm_mixin.validate_against_input_schema",
+            return_value=["missing field x"],
+        ):
+            with pytest.raises(WorkflowValidationError):
+                host.validate_input({})
+
+
+class TestValidateContract:
+    def test_no_contract_returns_early(self):
+        """Lines 280-282: contract not in stage_contracts → no validation."""
+        host = _make_host()
+        host.stage_contracts = {}
+        # Should not raise
+        host.validate_contract("missing_stage", {"key": "value"})
+
+    def test_with_valid_contract(self):
+        """Lines 283-284: validate_against_contract returns no errors."""
+        host = _make_host()
+        host.stage_contracts = {"analyze": MagicMock()}
+        with patch("attune.workflows.llm_mixin.validate_against_contract", return_value=[]):
+            host.validate_contract("analyze", {"ok": True})  # no raise
+
+    def test_with_invalid_contract_raises(self):
+        """Lines 285-289: errors → WorkflowValidationError raised."""
+        from attune.workflows.llm_mixin import WorkflowValidationError
+
+        host = _make_host()
+        host.stage_contracts = {"analyze": MagicMock()}
+        with patch(
+            "attune.workflows.llm_mixin.validate_against_contract",
+            return_value=["missing key 'foo'"],
+        ):
+            with pytest.raises(WorkflowValidationError):
+                host.validate_contract("analyze", {})
+
+
+class TestAssessComplexity:
+    def test_simple(self):
+        """Lines 309-310: <=2 stages + 0 premium → 'simple'."""
+        host = _make_host()
+        host.stages = ["a"]
+        host.get_tier_for_stage = MagicMock(return_value=MagicMock(value="cheap"))
+        with patch("attune.workflows.compat.ModelTier") as MT:
+            MT.PREMIUM = "PREMIUM_SENTINEL"
+            host.get_tier_for_stage = MagicMock(return_value="not_premium")
+            assert host._assess_complexity({}) == "simple"
+
+    def test_moderate(self):
+        """Lines 311-312: 3-4 stages + <=1 premium → 'moderate'."""
+        host = _make_host()
+        host.stages = ["a", "b", "c"]
+        with patch("attune.workflows.compat.ModelTier") as MT:
+            MT.PREMIUM = "P"
+            # one stage returns premium, others don't
+            host.get_tier_for_stage = MagicMock(side_effect=["P", "not_p", "not_p"])
+            assert host._assess_complexity({}) == "moderate"
+
+    def test_complex(self):
+        """Line 313: >4 stages or >1 premium → 'complex'."""
+        host = _make_host()
+        host.stages = ["a", "b", "c", "d", "e"]
+        with patch("attune.workflows.compat.ModelTier") as MT:
+            MT.PREMIUM = "P"
+            host.get_tier_for_stage = MagicMock(return_value="not_p")
+            assert host._assess_complexity({}) == "complex"

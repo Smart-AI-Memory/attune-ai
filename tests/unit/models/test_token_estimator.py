@@ -337,3 +337,250 @@ class TestEdgeCases:
 
         # Should use default multiplier of 1.0
         assert result["estimated_output_tokens"] > 0
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestEstimateTokensFallbacks:
+    """Cover lines 78-83: tiktoken fallback path."""
+
+    def test_tiktoken_fallback_when_count_tokens_import_fails(self, monkeypatch):
+        """Lines 75-83: ImportError on count_tokens → use tiktoken."""
+        # Make count_tokens import raise ImportError
+        import sys
+        from unittest.mock import patch as _patch
+
+        from attune.models import token_estimator as mod
+
+        sys.modules.pop("attune.utils.tokens", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.utils.tokens":
+                raise ImportError("toolkit missing")
+            return real_import(name, *args, **kwargs)
+
+        with (
+            _patch("builtins.__import__", side_effect=fake_import),
+            _patch.object(mod, "TIKTOKEN_AVAILABLE", True),
+        ):
+            result = mod.estimate_tokens("hello world", model_id="claude-sonnet-4-6")
+        assert result > 0
+
+    def test_tiktoken_fallback_with_encoding_exception(self, monkeypatch):
+        """Lines 82-83: tiktoken encoding raises → heuristic fallback."""
+        import sys
+        from unittest.mock import patch as _patch
+
+        from attune.models import token_estimator as mod
+
+        sys.modules.pop("attune.utils.tokens", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.utils.tokens":
+                raise ImportError("toolkit missing")
+            return real_import(name, *args, **kwargs)
+
+        # Patch _get_encoding to raise
+        with (
+            _patch("builtins.__import__", side_effect=fake_import),
+            _patch.object(mod, "TIKTOKEN_AVAILABLE", True),
+            _patch.object(mod, "_get_encoding", side_effect=RuntimeError("encoding broken")),
+        ):
+            result = mod.estimate_tokens("hello world", model_id="claude-x")
+        # Heuristic fallback
+        assert result == max(1, int(len("hello world") * mod.TOKENS_PER_CHAR_HEURISTIC))
+
+    def test_no_tiktoken_uses_heuristic(self, monkeypatch):
+        """Line 86: tiktoken unavailable + count_tokens unavailable → heuristic."""
+        import sys
+        from unittest.mock import patch as _patch
+
+        from attune.models import token_estimator as mod
+
+        sys.modules.pop("attune.utils.tokens", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.utils.tokens":
+                raise ImportError("toolkit missing")
+            return real_import(name, *args, **kwargs)
+
+        with (
+            _patch("builtins.__import__", side_effect=fake_import),
+            _patch.object(mod, "TIKTOKEN_AVAILABLE", False),
+        ):
+            result = mod.estimate_tokens("hello", model_id="x")
+        assert result == max(1, int(len("hello") * mod.TOKENS_PER_CHAR_HEURISTIC))
+
+
+class TestGetEncodingTiktokenUnavailable:
+    """Cover line 34: tiktoken unavailable → None."""
+
+    def test_no_tiktoken_returns_none(self, monkeypatch):
+        from unittest.mock import patch as _patch
+
+        from attune.models import token_estimator as mod
+
+        # Clear lru_cache + patch flag
+        mod._get_encoding.cache_clear()
+        with _patch.object(mod, "TIKTOKEN_AVAILABLE", False):
+            result = mod._get_encoding("any-model")
+        assert result is None
+        # Clear cache for subsequent tests
+        mod._get_encoding.cache_clear()
+
+
+class TestEstimateProjectTokensEdges:
+    """Cover lines 184->183, 190-191, 193-194 in _estimate_file_tokens (or similar)."""
+
+    def test_walks_directory_skipping_non_source_files(self, tmp_path):
+        """Line 184->183: files without source extensions skipped."""
+        from attune.models.token_estimator import _estimate_file_tokens
+
+        # Create mix of files
+        (tmp_path / "a.py").write_text("def f(): pass\n" * 10)
+        (tmp_path / "b.txt").write_text("not source")  # skipped
+        (tmp_path / "c.md").write_text("docs")  # skipped
+
+        result = _estimate_file_tokens(str(tmp_path))
+        assert result > 0
+
+    def test_handles_unreadable_file(self, tmp_path, monkeypatch):
+        """Lines 190-191: file open OSError → skip."""
+        from attune.models.token_estimator import _estimate_file_tokens
+
+        good = tmp_path / "good.py"
+        good.write_text("x = 1\n")
+        bad = tmp_path / "bad.py"
+        bad.write_text("y = 2\n")
+
+        # Patch open to raise OSError for bad.py
+        original_open = open
+
+        def fake_open(path, *args, **kwargs):
+            if "bad.py" in str(path):
+                raise OSError("permission denied")
+            return original_open(path, *args, **kwargs)
+
+        monkeypatch.setattr("builtins.open", fake_open)
+        # Should not raise — bad.py is skipped
+        result = _estimate_file_tokens(str(tmp_path))
+        assert result >= 0
+
+    def test_invalid_path_returns_zero(self):
+        """Lines 193-194: outer try/except returns 0."""
+        from attune.models.token_estimator import _estimate_file_tokens
+
+        # Path validation should fail or os calls should fail
+        result = _estimate_file_tokens("/path/does/not/exist/at/all")
+        assert result == 0
+
+
+class TestCalculateStageCostsEdges:
+    """Cover lines 222-223, 226."""
+
+    def test_get_model_exception_falls_back(self):
+        """Lines 222-223: get_model raises → falls back to capable."""
+        from unittest.mock import MagicMock as _MagicMock
+        from unittest.mock import patch as _patch
+
+        from attune.models.token_estimator import _calculate_stage_costs
+
+        stages = [{"name": "x", "tier": "weird-tier"}]
+
+        with _patch("attune.models.registry.get_model") as mock_get:
+            fake_model = _MagicMock()
+            fake_model.input_cost_per_million = 1.0
+            fake_model.output_cost_per_million = 2.0
+            fake_model.id = "fallback"
+            mock_get.side_effect = [RuntimeError("unknown tier"), fake_model]
+            estimates, total_min, total_max = _calculate_stage_costs(
+                stages, input_tokens=100, provider="anthropic"
+            )
+        assert len(estimates) == 1
+
+    def test_model_info_none_skipped(self):
+        """Line 226: model_info None → skip stage."""
+        from unittest.mock import patch as _patch
+
+        from attune.models.token_estimator import _calculate_stage_costs
+
+        stages = [{"name": "skip-me", "tier": "cheap"}]
+
+        with _patch("attune.models.registry.get_model", return_value=None):
+            estimates, total_min, total_max = _calculate_stage_costs(
+                stages, input_tokens=100, provider="anthropic"
+            )
+        assert estimates == []
+
+
+class TestEstimateSingleCallCostNoModel:
+    """Cover line 369: model_info None fallback path."""
+
+    def test_no_model_returns_fallback(self):
+        from unittest.mock import patch as _patch
+
+        from attune.models.token_estimator import estimate_single_call_cost
+
+        with _patch("attune.models.registry.get_model", return_value=None):
+            result = estimate_single_call_cost("hello world", task_type="summarize")
+        assert result["model"] == "unknown"
+        assert result["estimated_cost"] == 0.0
+
+
+class TestGetEncodingPaths:
+    """Cover lines 40-43 in _get_encoding."""
+
+    def test_gpt4_encoding(self):
+        from attune.models import token_estimator as mod
+
+        mod._get_encoding.cache_clear()
+        result = mod._get_encoding("gpt-4-turbo")
+        assert result is not None
+        mod._get_encoding.cache_clear()
+
+    def test_o1_encoding(self):
+        from attune.models import token_estimator as mod
+
+        mod._get_encoding.cache_clear()
+        result = mod._get_encoding("o1-preview")
+        assert result is not None
+        mod._get_encoding.cache_clear()
+
+    def test_unknown_model_uses_default_encoding(self):
+        from attune.models import token_estimator as mod
+
+        mod._get_encoding.cache_clear()
+        result = mod._get_encoding("unknown-model")
+        assert result is not None
+        mod._get_encoding.cache_clear()
+
+
+class TestEstimateFileTokensOuterError:
+    """Cover lines 193-194: outer try/except in _estimate_file_tokens."""
+
+    def test_path_validation_failure_returns_zero(self):
+        """ValueError in path validation → outer except → 0."""
+        from unittest.mock import patch as _patch
+
+        from attune.models.token_estimator import _estimate_file_tokens
+
+        with _patch(
+            "attune.models.token_estimator._validate_file_path",
+            side_effect=ValueError("invalid"),
+        ):
+            assert _estimate_file_tokens("/anything") == 0

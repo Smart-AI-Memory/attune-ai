@@ -361,3 +361,120 @@ class TestInvitationManager:
 
         assert invitation_manager is not None
         assert invitation_manager.collab is collab_manager
+
+
+class TestCollaborationModelsSerialization:
+    """Roundtrip serialization for collaboration_models data classes."""
+
+    def test_comment_roundtrip(self):
+        from attune.socratic.collaboration_models import Comment, CommentStatus
+
+        c = Comment(
+            comment_id="c1",
+            author_id="u1",
+            content="hello",
+            target_type="answer",
+            target_id="t1",
+            status=CommentStatus.OPEN,
+            parent_id=None,
+            reactions={"thumbs": ["u2"]},
+        )
+        d = c.to_dict()
+        c2 = Comment.from_dict(d)
+        assert c2.comment_id == "c1"
+        assert c2.status == CommentStatus.OPEN
+        assert c2.reactions == {"thumbs": ["u2"]}
+
+    def test_vote_roundtrip(self):
+        from attune.socratic.collaboration_models import Vote, VoteType
+
+        v = Vote(
+            vote_id="v1",
+            voter_id="u1",
+            target_type="requirement",
+            target_id="t1",
+            vote_type=VoteType.APPROVE,
+            comment="lgtm",
+        )
+        d = v.to_dict()
+        v2 = Vote.from_dict(d)
+        assert v2.vote_id == "v1"
+        assert v2.vote_type == VoteType.APPROVE
+        assert v2.comment == "lgtm"
+
+    def test_change_roundtrip(self):
+        from attune.socratic.collaboration_models import Change, ChangeType
+
+        ch = Change(
+            change_id="ch1",
+            change_type=ChangeType.GOAL_SET,
+            author_id="u1",
+            description="added field",
+            before_value=None,
+            after_value={"x": 1},
+        )
+        d = ch.to_dict()
+        ch2 = Change.from_dict(d)
+        assert ch2.change_id == "ch1"
+        assert ch2.change_type == ChangeType.GOAL_SET
+        assert ch2.after_value == {"x": 1}
+
+    def test_collaborative_session_roundtrip(self):
+        from attune.socratic.collaboration_models import (
+            CollaborativeSession,
+            Comment,
+            CommentStatus,
+        )
+
+        cs = CollaborativeSession(
+            session_id="cs1",
+            base_session_id="bs1",
+            name="Review",
+            description="rev",
+            comments=[
+                Comment(
+                    comment_id="c1",
+                    author_id="u1",
+                    content="hi",
+                    target_type="answer",
+                    target_id="t1",
+                    status=CommentStatus.OPEN,
+                ),
+            ],
+        )
+        d = cs.to_dict()
+        cs2 = CollaborativeSession.from_dict(d)
+        assert cs2.session_id == "cs1"
+        assert cs2.name == "Review"
+        assert len(cs2.comments) == 1
+
+
+class TestVotingResultApprovalRate:
+    def test_approval_rate_excludes_abstentions(self):
+        from attune.socratic.collaboration_models import VotingResult
+
+        vr = VotingResult(
+            target_id="t",
+            total_votes=10,
+            approvals=6,
+            rejections=2,
+            abstentions=2,
+            is_approved=True,
+            quorum_reached=True,
+        )
+        assert vr.approval_rate == 0.75
+
+    def test_approval_rate_zero_active_returns_zero(self):
+        """All abstentions → approval_rate is 0.0 (line 305)."""
+        from attune.socratic.collaboration_models import VotingResult
+
+        vr = VotingResult(
+            target_id="t",
+            total_votes=3,
+            approvals=0,
+            rejections=0,
+            abstentions=3,
+            is_approved=False,
+            quorum_reached=False,
+        )
+        assert vr.approval_rate == 0.0

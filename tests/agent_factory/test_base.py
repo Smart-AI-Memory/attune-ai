@@ -594,3 +594,81 @@ class TestWorkflowConfigDefaults:
         config2 = WorkflowConfig(name="workflow2")
         config1.framework_options["key"] = "value"
         assert "key" not in config2.framework_options
+
+
+class TestGetModelForTierImportError:
+    """Cover lines 307-314 in BaseAgent.get_model_for_tier: ImportError fallback."""
+
+    def test_falls_back_to_default_models_on_import_error(self):
+        import sys
+
+        from attune.agent_factory.adapters.native import NativeAdapter
+
+        sys.modules.pop("attune.routing", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.routing" or name.startswith("attune.routing."):
+                raise ImportError("routing not available")
+            return real_import(name, *args, **kwargs)
+
+        adapter = NativeAdapter(provider="anthropic")
+
+        from unittest.mock import patch
+
+        with patch("builtins.__import__", side_effect=fake_import):
+            model = adapter.get_model_for_tier("cheap", "anthropic")
+        assert model == "claude-haiku-4-5-20251001"
+
+    def test_fallback_with_unknown_provider(self):
+        """Lines 314-317: unknown provider falls back to anthropic defaults."""
+        import sys
+
+        from attune.agent_factory.adapters.native import NativeAdapter
+
+        sys.modules.pop("attune.routing", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.routing" or name.startswith("attune.routing."):
+                raise ImportError("routing not available")
+            return real_import(name, *args, **kwargs)
+
+        adapter = NativeAdapter(provider="anthropic")
+
+        from unittest.mock import patch
+
+        with patch("builtins.__import__", side_effect=fake_import):
+            model = adapter.get_model_for_tier("capable", "unknown-provider")
+        assert model == "claude-sonnet-4-6"
+
+    def test_fallback_with_unknown_tier(self):
+        """Line 316: unknown tier returns the default sonnet."""
+        import sys
+
+        from attune.agent_factory.adapters.native import NativeAdapter
+
+        sys.modules.pop("attune.routing", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if name == "attune.routing" or name.startswith("attune.routing."):
+                raise ImportError("routing not available")
+            return real_import(name, *args, **kwargs)
+
+        adapter = NativeAdapter(provider="anthropic")
+
+        from unittest.mock import patch
+
+        with patch("builtins.__import__", side_effect=fake_import):
+            model = adapter.get_model_for_tier("ultra-tier", "anthropic")
+        assert model == "claude-sonnet-4-6"

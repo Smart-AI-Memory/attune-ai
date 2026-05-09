@@ -11,6 +11,10 @@ Covers previously-uncovered branches:
 
 from __future__ import annotations
 
+import sys
+from types import SimpleNamespace
+from unittest.mock import AsyncMock, MagicMock
+
 import pytest
 
 from attune.workflows.refactor_plan_report import (
@@ -297,3 +301,73 @@ class TestFullReport:
         assert "TODO" in report
         assert "Refactor now" in report
         assert "premium" in report
+
+
+# ---------------------------------------------------------------------------
+# main() CLI entry (lines 189-214)
+# ---------------------------------------------------------------------------
+
+
+def test_main_runs_workflow_and_prints_summary(capsys, monkeypatch):
+    """main() awaits the workflow and prints provider, summary, and cost."""
+    import attune.workflows.refactor_plan_report as mod
+
+    cost_report = SimpleNamespace(total_cost=0.1234, savings=0.05, savings_percent=28.5)
+    fake_result = SimpleNamespace(
+        provider="anthropic",
+        success=True,
+        final_output={
+            "summary": {"total_debt": 7, "trajectory": "stable", "high_priority_count": 3}
+        },
+        cost_report=cost_report,
+    )
+
+    fake_workflow_cls = MagicMock()
+    fake_workflow_instance = MagicMock()
+    fake_workflow_instance.execute = AsyncMock(return_value=fake_result)
+    fake_workflow_cls.return_value = fake_workflow_instance
+
+    fake_module = SimpleNamespace(RefactorPlanWorkflow=fake_workflow_cls)
+    monkeypatch.setitem(sys.modules, "attune.workflows.refactor_plan", fake_module)
+
+    mod.main()
+
+    out = capsys.readouterr().out
+    assert "Refactor Plan Results" in out
+    assert "Provider: anthropic" in out
+    assert "Success: True" in out
+    assert "Total Debt: 7 items" in out
+    assert "Trajectory: stable" in out
+    assert "High Priority: 3" in out
+    assert "Total Cost: $0.1234" in out
+    assert "Savings: $0.0500 (28.5%)" in out
+
+    fake_workflow_instance.execute.assert_awaited_once_with(path=".", file_types=[".py"])
+
+
+def test_main_handles_missing_summary(capsys, monkeypatch):
+    """main() falls back to defaults when final_output has no 'summary'."""
+    import attune.workflows.refactor_plan_report as mod
+
+    cost_report = SimpleNamespace(total_cost=0.0, savings=0.0, savings_percent=0.0)
+    fake_result = SimpleNamespace(
+        provider="local",
+        success=False,
+        final_output={},
+        cost_report=cost_report,
+    )
+
+    fake_workflow_cls = MagicMock()
+    fake_workflow_instance = MagicMock()
+    fake_workflow_instance.execute = AsyncMock(return_value=fake_result)
+    fake_workflow_cls.return_value = fake_workflow_instance
+
+    fake_module = SimpleNamespace(RefactorPlanWorkflow=fake_workflow_cls)
+    monkeypatch.setitem(sys.modules, "attune.workflows.refactor_plan", fake_module)
+
+    mod.main()
+
+    out = capsys.readouterr().out
+    assert "Total Debt: 0 items" in out
+    assert "Trajectory: N/A" in out
+    assert "High Priority: 0" in out

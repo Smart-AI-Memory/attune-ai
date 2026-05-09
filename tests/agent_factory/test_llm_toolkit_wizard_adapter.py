@@ -523,3 +523,18 @@ class TestWrapWizard:
 
         # Agent should have the tier set in config
         assert agent.config.model_tier == "premium"
+
+
+class TestWizardAdapterCoverageGap:
+    """Cover line 140->144: recommendations present but not a list."""
+
+    def test_recommendations_non_list_falls_through_to_str(self):
+        """Line 140->144: recs is not a list → fall through to str(result)."""
+        from attune.agent_factory.adapters.wizard_adapter import WizardAgent
+
+        # Bypass __init__ to test _extract_output directly
+        agent = WizardAgent.__new__(WizardAgent)
+        # 'recommendations' is a str, not a list → fall through to str(result)
+        result = {"recommendations": "single rec text"}
+        text = agent._extract_output(result)
+        assert "recommendations" in text

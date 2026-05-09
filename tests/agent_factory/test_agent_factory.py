@@ -439,3 +439,196 @@ class TestToolCreation:
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestAdapterDispatch:
+    """Cover lines 117-118, 124-133 in _get_adapter."""
+
+    def test_langchain_adapter_dispatch(self):
+        """Lines 117-118: LANGCHAIN framework → get_langchain_adapter()."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        fake_adapter_cls = MagicMock(return_value="langchain-adapter")
+        with patch(
+            "attune.agent_factory.adapters.get_langchain_adapter",
+            return_value=fake_adapter_cls,
+        ):
+            f = AgentFactory(framework=Framework.LANGCHAIN, api_key="key")
+            assert f._adapter == "langchain-adapter"
+
+    def test_autogen_adapter_dispatch(self):
+        """Lines 124-126: AUTOGEN framework → get_autogen_adapter()."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        fake_adapter_cls = MagicMock(return_value="autogen-adapter")
+        with patch(
+            "attune.agent_factory.adapters.get_autogen_adapter",
+            return_value=fake_adapter_cls,
+        ):
+            f = AgentFactory(framework=Framework.AUTOGEN, api_key="key")
+            assert f._adapter == "autogen-adapter"
+
+    def test_haystack_adapter_dispatch(self):
+        """Lines 128-130: HAYSTACK framework → get_haystack_adapter()."""
+        from unittest.mock import MagicMock, patch
+
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        fake_adapter_cls = MagicMock(return_value="haystack-adapter")
+        with patch(
+            "attune.agent_factory.adapters.get_haystack_adapter",
+            return_value=fake_adapter_cls,
+        ):
+            f = AgentFactory(framework=Framework.HAYSTACK, api_key="key")
+            assert f._adapter == "haystack-adapter"
+
+    def test_unknown_framework_falls_back_to_native(self):
+        """Line 133: unknown framework → NativeAdapter."""
+        from attune.agent_factory.adapters.native import NativeAdapter
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
+        # Now manually set framework to a sentinel that doesn't match any branch
+        f.framework = "fake-framework-not-in-enum"
+        adapter = f._get_adapter()
+        assert isinstance(adapter, NativeAdapter)
+
+
+class TestCreateAgentWrapperImportErrors:
+    """Cover lines 252-255 (memory) and 276-279 (resilience) ImportError paths."""
+
+    def test_memory_graph_import_error_logs_warning(self, caplog):
+        """Lines 252-255: MemoryAwareAgent import fails → warning logged."""
+        import logging
+        import sys
+
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        # Pop the module so import gets attempted; patch finder to raise
+        sys.modules.pop("attune.agent_factory.memory_integration", None)
+
+        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if "memory_integration" in name:
+                raise ImportError("memory not installed")
+            return real_import(name, *args, **kwargs)
+
+        with caplog.at_level(logging.WARNING):
+            from unittest.mock import patch
+
+            with patch("builtins.__import__", side_effect=fake_import):
+                agent = f.create_agent(
+                    name="a",
+                    memory_graph_enabled=True,
+                )
+        # Warning should mention memory integration
+        assert any("Memory integration not available" in r.message for r in caplog.records)
+        assert agent is not None
+
+    def test_resilience_import_error_logs_warning(self, caplog):
+        """Lines 276-279: ResilientAgent import fails → warning logged."""
+        import logging
+        import sys
+
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        sys.modules.pop("attune.agent_factory.resilient", None)
+
+        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if "agent_factory.resilient" in name:
+                raise ImportError("resilient not installed")
+            return real_import(name, *args, **kwargs)
+
+        with caplog.at_level(logging.WARNING):
+            from unittest.mock import patch
+
+            with patch("builtins.__import__", side_effect=fake_import):
+                agent = f.create_agent(name="b", resilience_enabled=True)
+        assert any("Resilience module not available" in r.message for r in caplog.records)
+        assert agent is not None
+
+
+class TestSwitchFramework:
+    """Cover line 421->424: framework as enum (no str conversion)."""
+
+    def test_switch_with_framework_enum(self):
+        """Line 421->424: framework is already Framework enum → skip str path."""
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
+        # Pass an enum (not a string) — should hit the else branch
+        f.switch_framework(Framework.NATIVE)
+        assert f.framework == Framework.NATIVE
+        assert f._agents == {}
+
+    def test_switch_with_string(self):
+        """Line 421-422: framework is str → from_string conversion."""
+        from attune.agent_factory.factory import AgentFactory, Framework
+
+        f = AgentFactory(framework=Framework.NATIVE, api_key="key")
+        f.switch_framework("native")
+        assert f.framework == Framework.NATIVE
+
+
+class TestLazyAdapterImports:
+    """Cover lines 27-31, 47-51, 57-61 in adapters/__init__.py."""
+
+    def test_langchain_adapter_lazy_import(self):
+        """Lines 27-31: get_langchain_adapter actually imports LangChainAdapter."""
+        # Reset cache so the import path actually runs
+        from attune.agent_factory import adapters as ad
+
+        ad._langchain_adapter = None
+        adapter_cls = ad.get_langchain_adapter()
+        assert adapter_cls is not None
+        # Second call returns cached version
+        assert ad.get_langchain_adapter() is adapter_cls
+
+    def test_autogen_adapter_lazy_import(self):
+        """Lines 47-51: get_autogen_adapter actually imports AutoGenAdapter."""
+        from attune.agent_factory import adapters as ad
+
+        ad._autogen_adapter = None
+        adapter_cls = ad.get_autogen_adapter()
+        assert adapter_cls is not None
+        # Second call hits cached branch
+        assert ad.get_autogen_adapter() is adapter_cls
+
+    def test_haystack_adapter_lazy_import(self):
+        """Lines 57-61: get_haystack_adapter actually imports HaystackAdapter."""
+        from attune.agent_factory import adapters as ad
+
+        ad._haystack_adapter = None
+        adapter_cls = ad.get_haystack_adapter()
+        assert adapter_cls is not None
+        # Second call hits cached branch
+        assert ad.get_haystack_adapter() is adapter_cls
+
+    def test_langgraph_adapter_lazy_import_cached(self):
+        """Line 37->41: get_langgraph_adapter cached path."""
+        from attune.agent_factory import adapters as ad
+
+        # Make sure it's loaded
+        first = ad.get_langgraph_adapter()
+        # Cached path
+        assert ad.get_langgraph_adapter() is first

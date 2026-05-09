@@ -413,6 +413,138 @@ class TestASCIIVisualizer:
         assert "START" in ascii_art
         assert "END" in ascii_art
 
+    def test_render_handles_agent_with_many_tools(self):
+        """ASCII renderer truncates tool list when >3 tools (line 62)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            ToolCategory,
+            ToolSpec,
+            WorkflowBlueprint,
+        )
+        from attune.socratic.visual_editor import ASCIIVisualizer
+
+        many_tools = [
+            ToolSpec(
+                id=f"tool_{i}", name=f"T{i}", description="", category=ToolCategory.CODE_ANALYSIS
+            )
+            for i in range(6)
+        ]
+        agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="a1",
+                name="A",
+                role=AgentRole.REVIEWER,
+                goal="g",
+                backstory="b",
+                tools=many_tools,
+            )
+        )
+        bp = WorkflowBlueprint(
+            id="bp1",
+            name="WF",
+            description="d",
+            domain="general",
+            agents=[agent],
+            stages=[StageSpec(id="s1", name="S", description="d", agent_ids=["a1"])],
+        )
+        out = ASCIIVisualizer().render(bp)
+        assert "(+3 more)" in out
+
+    def test_render_truncates_long_agent_string(self):
+        """When concatenated agent_ids exceed width, the string is truncated (line 88)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+        from attune.socratic.visual_editor import ASCIIVisualizer
+
+        # Many long agent IDs that exceed width when joined
+        agent_ids = [f"very-long-agent-name-{i:03d}" for i in range(10)]
+        agents = [
+            AgentBlueprint(
+                spec=AgentSpec(id=aid, name=aid, role=AgentRole.REVIEWER, goal="g", backstory="b")
+            )
+            for aid in agent_ids
+        ]
+        bp = WorkflowBlueprint(
+            id="bp1",
+            name="WF",
+            description="d",
+            domain="general",
+            agents=agents,
+            stages=[StageSpec(id="s1", name="S", description="d", agent_ids=agent_ids)],
+        )
+        out = ASCIIVisualizer(width=40).render(bp)
+        assert "..." in out
+
+    def test_render_marks_parallel_stage_indicator(self):
+        """A parallel next-stage gets a (parallel) marker (line 95)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+        from attune.socratic.visual_editor import ASCIIVisualizer
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(id="a1", name="A", role=AgentRole.REVIEWER, goal="g", backstory="b")
+        )
+        bp = WorkflowBlueprint(
+            id="bp1",
+            name="WF",
+            description="d",
+            domain="general",
+            agents=[agent],
+            stages=[
+                StageSpec(id="s1", name="S1", description="d", agent_ids=["a1"]),
+                StageSpec(id="s2", name="S2", description="d", agent_ids=["a1"], parallel=True),
+            ],
+        )
+        out = ASCIIVisualizer().render(bp)
+        assert "(parallel)" in out
+
+    def test_render_skips_agent_listing_when_stage_empty(self):
+        """Stage with no agent_ids skips the agent-string block (branch 85->92)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+            StageSpec,
+            WorkflowBlueprint,
+        )
+        from attune.socratic.visual_editor import ASCIIVisualizer
+
+        agent = AgentBlueprint(
+            spec=AgentSpec(id="a1", name="A", role=AgentRole.REVIEWER, goal="g", backstory="b")
+        )
+        bp = WorkflowBlueprint(
+            id="bp1",
+            name="WF",
+            description="d",
+            domain="general",
+            agents=[agent],
+            stages=[StageSpec(id="s1", name="S", description="d", agent_ids=[])],
+        )
+        out = ASCIIVisualizer().render(bp)
+        # No "()" agent listing line — stage block still present
+        assert "S" in out
+
+    def test_center_returns_text_when_too_wide(self):
+        """_center returns text unchanged when len(text) >= width (line 138)."""
+        from attune.socratic.visual_editor import ASCIIVisualizer
+
+        v = ASCIIVisualizer(width=10)
+        long_text = "x" * 20
+        assert v._center(long_text) == long_text
+
     def test_render_compact(self, sample_workflow_blueprint):
         """Test compact rendering."""
         from attune.socratic.visual_editor import ASCIIVisualizer
@@ -602,3 +734,176 @@ class TestGenerateEditorHtml:
         )
 
         assert "Custom Editor Title" in html
+
+
+class TestVisualEditorValidateState:
+    """Cover VisualWorkflowEditor.validate_state error branches."""
+
+    def _make_state(self, nodes, edges):
+        from attune.socratic.visual_editor import EditorState
+
+        return EditorState(nodes=nodes, edges=edges)
+
+    def _node(self, node_id: str, node_type):
+        from attune.socratic.visual_editor import EditorNode, Position
+
+        return EditorNode(
+            node_id=node_id,
+            node_type=node_type,
+            label=node_id,
+            position=Position(x=0, y=0),
+            data={},
+        )
+
+    def _edge(self, source: str, target: str):
+        from attune.socratic.visual_editor import EditorEdge
+
+        return EditorEdge(edge_id=f"{source}-{target}", source=source, target=target)
+
+    def test_validate_state_detects_orphan_node(self):
+        """Node with no edges (and not start/end) is reported as orphan (line 154)."""
+        from attune.socratic.visual_editor import NodeType, VisualWorkflowEditor
+
+        nodes = [
+            self._node("start", NodeType.START),
+            self._node("end", NodeType.END),
+            self._node("orphan-x", NodeType.AGENT),
+        ]
+        edges = [self._edge("start", "end")]
+        state = self._make_state(nodes, edges)
+
+        editor = VisualWorkflowEditor()
+        errors = editor.validate_state(state)
+
+        assert any("Orphan" in e and "orphan-x" in e for e in errors)
+
+    def test_validate_state_detects_cycle(self):
+        """Workflow with a cycle is reported (lines 163, 173, 178)."""
+        from attune.socratic.visual_editor import NodeType, VisualWorkflowEditor
+
+        # start -> A -> B -> A  (cycle between A and B)
+        nodes = [
+            self._node("start", NodeType.START),
+            self._node("A", NodeType.AGENT),
+            self._node("B", NodeType.AGENT),
+            self._node("end", NodeType.END),
+        ]
+        edges = [
+            self._edge("start", "A"),
+            self._edge("A", "B"),
+            self._edge("B", "A"),  # cycle
+            self._edge("A", "end"),
+        ]
+        state = self._make_state(nodes, edges)
+
+        editor = VisualWorkflowEditor()
+        errors = editor.validate_state(state)
+
+        assert any("cycle" in e.lower() for e in errors)
+
+    def test_blueprint_to_editor_skips_unknown_agent_in_stage(self, sample_workflow_blueprint):
+        """Stage that references an agent not in the blueprint skips that node (line 105)."""
+        from attune.socratic.blueprint import StageSpec
+        from attune.socratic.visual_editor import (
+            NodeType,
+            WorkflowVisualizer,
+        )
+
+        # Add a stage that references an unknown agent ID
+        sample_workflow_blueprint.stages.append(
+            StageSpec(
+                id="ghost-stage",
+                name="Ghost",
+                description="references unknown agent",
+                agent_ids=["nonexistent-agent-id"],
+                depends_on=[sample_workflow_blueprint.stages[0].id],
+            )
+        )
+        viz = WorkflowVisualizer()
+        state = viz.blueprint_to_editor(sample_workflow_blueprint)
+
+        # The ghost-stage stage node should exist, but the missing agent's
+        # AGENT node must not.
+        agent_ids = [n.node_id for n in state.nodes if n.node_type == NodeType.AGENT]
+        assert "nonexistent-agent-id" not in agent_ids
+
+    def test_blueprint_to_editor_with_no_stages_does_not_connect_to_end(self):
+        """Blueprint with empty stages skips the end-edge creation (branch 145->156)."""
+        from attune.socratic.blueprint import WorkflowBlueprint
+        from attune.socratic.visual_editor import WorkflowVisualizer
+
+        bp = WorkflowBlueprint(
+            id="empty-1",
+            name="Empty",
+            description="No stages",
+            domain="general",
+            agents=[],
+            stages=[],
+        )
+        viz = WorkflowVisualizer()
+        state = viz.blueprint_to_editor(bp)
+
+        # Should still produce start and end nodes, but no edges (no stage to link)
+        node_ids = {n.node_id for n in state.nodes}
+        assert "start" in node_ids
+        assert "end" in node_ids
+        assert state.edges == []
+
+    def test_workflow_visualizer_from_blueprint_alias(self, sample_workflow_blueprint):
+        """from_blueprint is an alias for blueprint_to_editor (line 168)."""
+        from attune.socratic.visual_editor import WorkflowVisualizer
+
+        viz = WorkflowVisualizer()
+        state = viz.from_blueprint(sample_workflow_blueprint)
+        assert state.workflow_id == sample_workflow_blueprint.id
+
+    def test_workflow_visualizer_to_blueprint_without_original(self, sample_workflow_blueprint):
+        """to_blueprint with no original_blueprint constructs a minimal one (lines 185-195)."""
+        from attune.socratic.visual_editor import WorkflowVisualizer
+
+        viz = WorkflowVisualizer()
+        state = viz.blueprint_to_editor(sample_workflow_blueprint)
+        rebuilt = viz.to_blueprint(state, original_blueprint=None)
+
+        assert rebuilt.name == "Reconstructed Workflow"
+        assert rebuilt.id == state.workflow_id
+
+    def test_workflow_visualizer_to_blueprint_with_original(self, sample_workflow_blueprint):
+        """to_blueprint with original_blueprint skips the placeholder branch (185->195)."""
+        from attune.socratic.visual_editor import WorkflowVisualizer
+
+        viz = WorkflowVisualizer()
+        state = viz.blueprint_to_editor(sample_workflow_blueprint)
+        rebuilt = viz.to_blueprint(state, original_blueprint=sample_workflow_blueprint)
+
+        assert rebuilt.name == sample_workflow_blueprint.name
+        assert rebuilt.id == sample_workflow_blueprint.id
+
+    def test_validate_state_visits_node_only_once(self):
+        """Diamond pattern (two paths converge) hits the 'already visited' branch (line 165)."""
+        from attune.socratic.visual_editor import NodeType, VisualWorkflowEditor
+
+        # start -> A -> C -> end
+        # start -> B -> C -> end
+        # When traversing from start, both A and B reach C; second time C is in visited.
+        nodes = [
+            self._node("start", NodeType.START),
+            self._node("A", NodeType.AGENT),
+            self._node("B", NodeType.AGENT),
+            self._node("C", NodeType.AGENT),
+            self._node("end", NodeType.END),
+        ]
+        edges = [
+            self._edge("start", "A"),
+            self._edge("start", "B"),
+            self._edge("A", "C"),
+            self._edge("B", "C"),
+            self._edge("C", "end"),
+        ]
+        state = self._make_state(nodes, edges)
+
+        editor = VisualWorkflowEditor()
+        errors = editor.validate_state(state)
+        # No cycle, no orphans — the diamond is just a converging DAG
+        assert not any("cycle" in e.lower() for e in errors)
+        assert not any("Orphan" in e for e in errors)

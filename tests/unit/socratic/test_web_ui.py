@@ -623,6 +623,56 @@ class TestRenderFormHtml:
         assert 'min="1"' in html
         assert 'max="10"' in html
 
+    def test_render_show_when_emits_data_attribute_when_field_visible(self):
+        """A field with show_when that's satisfied gets a data-show-when attribute (line 79)."""
+        # show_when={"x": None} matches against missing answers (None == None)
+        # so the field passes the visibility filter and reaches _render_field_html
+        # with show_when truthy.
+        sw_form = Form(
+            id="sw-form",
+            title="SW",
+            description="d",
+            fields=[
+                FormField(
+                    id="visible_with_sw",
+                    field_type=FieldType.TEXT,
+                    label="Visible",
+                    show_when={"some_other_field": None},
+                ),
+            ],
+            round_number=1,
+            progress=0.0,
+        )
+        html = render_form_html(sw_form)
+        assert "data-show-when=" in html
+
+    def test_render_field_directly_with_option_description(self):
+        """_render_field_html called via render_form on a field with options + descriptions
+        emits the option-desc span (line 100)."""
+        # complex_form already covers test_render_option_description; ensure the
+        # specific span class appears.
+        from attune.socratic.forms import FieldOption
+
+        opt_form = Form(
+            id="opt",
+            title="opt",
+            description="d",
+            fields=[
+                FormField(
+                    id="lang",
+                    field_type=FieldType.SINGLE_SELECT,
+                    label="Lang",
+                    options=[
+                        FieldOption(value="py", label="Python", description="for backend"),
+                    ],
+                ),
+            ],
+            round_number=1,
+            progress=0.0,
+        )
+        html = render_form_html(opt_form)
+        assert 'class="option-desc"' in html
+
     def test_render_show_when_filters_hidden_fields(self):
         """Test that fields with unsatisfied show_when are filtered out.
 

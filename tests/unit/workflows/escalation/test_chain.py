@@ -493,3 +493,16 @@ class TestEscalateConvenience:
             await escalate("prompt")
             _, kwargs = MockChain.call_args
             assert kwargs["evaluator"] is None
+
+    @pytest.mark.asyncio
+    async def test_confidence_validator_added_when_min_confidence_provided(self):
+        """min_confidence triggers a ConfidenceValidator (covers line 68)."""
+        with patch("attune.workflows.escalation.convenience.EscalationChain") as MockChain:
+            mock_instance = MagicMock()
+            mock_instance.run = AsyncMock(
+                return_value=EscalationResult(success=True, response={}, final_model="haiku"),
+            )
+            MockChain.return_value = mock_instance
+            await escalate("prompt", min_confidence=0.8)
+            _, kwargs = MockChain.call_args
+            assert any(isinstance(v, ConfidenceValidator) for v in kwargs["validators"])

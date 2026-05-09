@@ -464,6 +464,50 @@ class TestAgentGeneratorWorkflow:
         with pytest.raises(ValueError, match="Invalid blueprint"):
             generator.generate_workflow(invalid_blueprint)
 
+    def test_match_agent_returns_false_for_agent_without_role(self):
+        """_match_agent returns False when agent has no `role` attribute (line 100)."""
+        from unittest.mock import MagicMock
+
+        # Object that explicitly doesn't have a `role` attribute
+        class NoRoleAgent:
+            pass
+
+        gw = GeneratedWorkflow(
+            blueprint=MagicMock(),
+            agents=[],
+            stages=[],
+        )
+        assert gw._match_agent(NoRoleAgent(), "anything") is False
+
+    def test_generate_workflow_calls_real_create_xml_agent(self, generator, valid_blueprint):
+        """generate_workflow without patching exercises real _create_xml_agent (line 219)."""
+        workflow = generator.generate_workflow(valid_blueprint)
+        # Should produce a workflow with at least one agent dict
+        assert isinstance(workflow, GeneratedWorkflow)
+        # Spot-check: real agents have role/goal/backstory keys
+        for a in workflow.agents:
+            if isinstance(a, dict):
+                assert "role" in a or "goal" in a
+
+    def test_generate_agents_handles_unknown_template_id(self, generator):
+        """Unknown template IDs are caught and logged (lines 167-168).
+
+        We force the path by patching the quality_to_templates map to point at
+        a template ID that doesn't exist in the registry.
+        """
+        from unittest.mock import patch
+
+        with patch.object(
+            generator,
+            "generate_agent_from_template",
+            side_effect=ValueError("Unknown template: phantom"),
+        ):
+            agents = generator.generate_agents_for_requirements(
+                {"quality_focus": ["security"]},
+            )
+        # The except branch swallows the error; result list is empty for this path
+        assert agents == []
+
 
 @pytest.mark.unit
 class TestAgentGeneratorCreateWorkflowBlueprint:
@@ -512,6 +556,71 @@ class TestAgentGeneratorCreateWorkflowBlueprint:
         # Should have analysis stage for reviewers/auditors
         stage_ids = [s.id for s in blueprint.stages]
         assert "analysis" in stage_ids or "generation" in stage_ids
+
+    def test_blueprint_with_only_reporter_skips_analysis_and_generation(self, generator):
+        """Reporters-only agent set produces only synthesis stage; depends list is empty
+        (covers branches 262->275, 290->292, 292->295)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+        )
+
+        # Some implementations don't have a REPORTER role enum; check the codebase
+        reporter_role = getattr(AgentRole, "REPORTER", None)
+        if reporter_role is None:
+            pytest.skip("AgentRole.REPORTER not present in this build")
+
+        reporter = AgentBlueprint(
+            spec=AgentSpec(
+                id="r1",
+                name="Reporter",
+                role=reporter_role,
+                goal="report",
+                backstory="b",
+            )
+        )
+        bp = generator.create_workflow_blueprint(
+            name="ReporterOnly",
+            description="d",
+            agents=[reporter],
+            quality_focus=[],
+            automation_level="semi_auto",
+        )
+        # Synthesis is the only stage
+        synthesis = next((s for s in bp.stages if s.id == "synthesis"), None)
+        assert synthesis is not None
+        # depends_on is empty because no analysis/generation stage was created
+        assert synthesis.depends_on == []
+
+    def test_blueprint_with_only_generator_skips_analysis(self, generator):
+        """Generator-only set creates Generation stage with no analysis dependency
+        (covers `depends_on=[] if analyzers else ...` ternary False branch and 290->292)."""
+        from attune.socratic.blueprint import (
+            AgentBlueprint,
+            AgentRole,
+            AgentSpec,
+        )
+
+        gen_agent = AgentBlueprint(
+            spec=AgentSpec(
+                id="g1",
+                name="Gen",
+                role=AgentRole.GENERATOR,
+                goal="generate",
+                backstory="b",
+            )
+        )
+        bp = generator.create_workflow_blueprint(
+            name="GenOnly",
+            description="d",
+            agents=[gen_agent],
+            quality_focus=[],
+            automation_level="semi_auto",
+        )
+        gen_stage = next((s for s in bp.stages if s.id == "generation"), None)
+        assert gen_stage is not None
+        assert gen_stage.depends_on == []
 
 
 # =============================================================================

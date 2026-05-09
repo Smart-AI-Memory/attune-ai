@@ -1657,3 +1657,159 @@ class TestGetStrategy:
                 continue
             strategy = get_strategy(strategy_name)
             assert strategy is not None
+
+
+# ===========================================================================
+# Coverage for previously-missed branches in core_strategies.py
+# ===========================================================================
+
+
+class TestSequentialStrategyExceptionPath:
+    """Cover lines 85-87: SequentialStrategy exception in _execute_agent."""
+
+    @pytest.mark.asyncio
+    async def test_agent_exception_appended_as_failure_result(self, mock_agents, test_context):
+        strategy = SequentialStrategy()
+
+        async def mock_execute(agent, context):
+            raise RuntimeError(f"boom-{agent.id}")
+
+        with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
+            result = await strategy.execute(mock_agents[:1], test_context)
+
+        assert result.success is False
+        assert len(result.outputs) == 1
+        assert result.outputs[0].success is False
+        assert "boom" in result.outputs[0].error
+
+
+class TestParallelStrategyExceptionPaths:
+    """Cover lines 142-144 (gather raises) and 150-151 (per-task exception)."""
+
+    @pytest.mark.asyncio
+    async def test_per_agent_exception_recorded_as_failure(self, mock_agents, test_context):
+        """Lines 149-158: agent raising in _execute_agent → wrapped failure."""
+        strategy = ParallelStrategy()
+
+        async def mock_execute(agent, context):
+            if agent.id == mock_agents[0].id:
+                raise RuntimeError("agent crashed")
+            return create_success_result(agent.id)
+
+        with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
+            result = await strategy.execute(mock_agents[:2], test_context)
+
+        # First agent's exception captured, second succeeded
+        assert result.success is False
+        crashed = next(r for r in result.outputs if not r.success)
+        assert "agent crashed" in crashed.error
+        succeeded = next(r for r in result.outputs if r.success)
+        assert succeeded.agent_id == mock_agents[1].id
+
+    @pytest.mark.asyncio
+    async def test_gather_outer_exception_re_raised(self, mock_agents, test_context):
+        """Lines 142-144: asyncio.gather itself raising → re-raise."""
+        strategy = ParallelStrategy()
+
+        async def mock_execute(agent, context):
+            return create_success_result(agent.id)
+
+        # Patch asyncio.gather to raise — exercises the outer try/except.
+        with (
+            patch.object(strategy, "_execute_agent", side_effect=mock_execute),
+            patch(
+                "attune.orchestration._strategies.core_strategies.asyncio.gather",
+                side_effect=RuntimeError("gather broke"),
+            ),
+            pytest.raises(RuntimeError, match="gather broke"),
+        ):
+            await strategy.execute(mock_agents[:2], test_context)
+
+
+class TestDebateStrategyEmpty:
+    """Cover line 203: DebateStrategy raises on empty agents."""
+
+    @pytest.mark.asyncio
+    async def test_empty_agents_raises(self, test_context):
+        strategy = DebateStrategy()
+        with pytest.raises(ValueError, match="agents list cannot be empty"):
+            await strategy.execute([], test_context)
+
+
+class TestRefinementStrategyBreakOnFailure:
+    """Cover lines 385-386: refinement loop breaks on first failure."""
+
+    @pytest.mark.asyncio
+    async def test_break_after_failure(self, mock_agents, test_context):
+        strategy = RefinementStrategy()
+
+        call_count = 0
+
+        async def mock_execute(agent, context):
+            nonlocal call_count
+            call_count += 1
+            if call_count == 2:
+                return create_failure_result(agent.id, "stage 2 broke")
+            return create_success_result(agent.id)
+
+        with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
+            result = await strategy.execute(mock_agents[:3], test_context)
+
+        # Only 2 stages ran (first success, second failure → break)
+        assert len(result.outputs) == 2
+        assert result.outputs[1].success is False
+        assert result.success is False
+
+
+class TestAdaptiveStrategyClassifierFailure:
+    """Cover lines 448-449: classifier failure → first specialist."""
+
+    @pytest.mark.asyncio
+    async def test_classifier_failure_falls_back_to_first_specialist(self, test_context):
+        strategy = AdaptiveStrategy()
+        classifier = create_mock_agent("classifier", "Classifier", tier="CHEAP")
+        spec_a = create_mock_agent("spec_a", "Specialist A", tier="CHEAP")
+        spec_b = create_mock_agent("spec_b", "Specialist B", tier="PREMIUM")
+        agents = [classifier, spec_a, spec_b]
+
+        async def mock_execute(agent, context):
+            if agent.id == "classifier":
+                return create_failure_result(agent.id, "classifier down")
+            return create_success_result(agent.id)
+
+        with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
+            result = await strategy.execute(agents, test_context)
+
+        # First specialist (spec_a) was used
+        assert any(r.agent_id == "spec_a" for r in result.outputs)
+        assert not any(r.agent_id == "spec_b" for r in result.outputs)
+
+
+class TestAdaptiveStrategyLowConfidence:
+    """Cover line 464: low classifier confidence → premium specialist."""
+
+    @pytest.mark.asyncio
+    async def test_low_confidence_routes_to_premium(self, test_context):
+        strategy = AdaptiveStrategy()
+        classifier = create_mock_agent("classifier", "Classifier", tier="CHEAP")
+        cheap_spec = create_mock_agent("cheap_spec", "Cheap S", tier="CHEAP")
+        premium_spec = create_mock_agent("premium_spec", "Premium S", tier="PREMIUM")
+        agents = [classifier, cheap_spec, premium_spec]
+
+        async def mock_execute(agent, context):
+            if agent.id == "classifier":
+                # Success but low confidence (≤ 0.8) → premium path
+                return AgentResult(
+                    agent_id=agent.id,
+                    success=True,
+                    output={"complexity": "high"},
+                    confidence=0.5,
+                    duration_seconds=0.1,
+                )
+            return create_success_result(agent.id)
+
+        with patch.object(strategy, "_execute_agent", side_effect=mock_execute):
+            result = await strategy.execute(agents, test_context)
+
+        assert any(r.agent_id == "premium_spec" for r in result.outputs)
+        assert not any(r.agent_id == "cheap_spec" for r in result.outputs)

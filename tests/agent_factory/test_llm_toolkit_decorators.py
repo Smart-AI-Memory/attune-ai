@@ -557,3 +557,30 @@ class TestDecoratorCombinations:
 
         assert result["content"] == "test"
         assert len(agent.costs) == 1
+
+
+class TestAuditEntryNonDictArg:
+    """Cover line 73->76 branch: args[0] is not a dict → state stays empty."""
+
+    @pytest.mark.asyncio
+    async def test_non_dict_first_arg_yields_empty_state(self):
+        from attune.agent_factory.decorators import safe_agent_operation
+        from attune.config.agent_config import AgentOperationError
+
+        class TestAgent:
+            name = "NonDictAgent"
+            audit_entries = []
+
+            def add_audit_entry(self, state, action, details):
+                self.audit_entries.append({"state": state, "action": action})
+
+            @safe_agent_operation("non_dict_op")
+            async def operation(self, value):
+                raise ValueError("Boom")
+
+        agent = TestAgent()
+        with pytest.raises(AgentOperationError):
+            await agent.operation("just-a-string")  # not dict, not state kw
+
+        assert len(agent.audit_entries) == 1
+        assert agent.audit_entries[0]["state"] == {}

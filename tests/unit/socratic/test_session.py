@@ -312,3 +312,40 @@ class TestSessionContextSummary:
         assert summary["goal"] == "Review code"
         assert summary["confidence"] == 0.8
         assert "ready_to_generate" in summary
+
+    def test_can_generate_max_rounds_reached(self):
+        """can_generate returns True once max_rounds is reached (line 200)."""
+        from attune.socratic.session import GoalAnalysis, SocraticSession
+
+        session = SocraticSession()
+        session.goal_analysis = GoalAnalysis(
+            raw_goal="g",
+            intent="i",
+            domain="d",
+            confidence=0.4,  # below 0.8
+        )
+        session.max_rounds = 2
+        session.current_round = 2  # at max
+        assert session.can_generate() is True
+
+    def test_from_dict_parses_goal_analysis(self):
+        """from_dict reconstructs goal_analysis when present (lines 288-296)."""
+        from attune.socratic.session import SocraticSession
+
+        data = {
+            "session_id": "s1",
+            "goal": "review",
+            "state": "awaiting_answers",
+            "goal_analysis": {
+                "intent": "code review",
+                "domain": "code_review",
+                "confidence": 0.85,
+                "ambiguities": ["scope"],
+                "assumptions": ["python"],
+            },
+        }
+        session = SocraticSession.from_dict(data)
+        assert session.goal_analysis is not None
+        assert session.goal_analysis.intent == "code review"
+        assert session.goal_analysis.confidence == 0.85
+        assert session.goal_analysis.ambiguities == ["scope"]

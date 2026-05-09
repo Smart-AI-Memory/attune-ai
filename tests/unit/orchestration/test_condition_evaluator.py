@@ -777,3 +777,201 @@ class TestMultiConditionalStrategyExecute:
 
         assert result.success is True
         assert result.aggregated_output["_matched_index"] == 0
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestConditionEvaluatorGaps:
+    """Cover lines 105->exit, 214-218, 247, 274, 292-300, 314-336, 378."""
+
+    def test_string_predicate_without_space_stays_json(self):
+        """Branch 105->exit: string predicate without space stays JSON_PREDICATE."""
+        from attune.orchestration._strategies.conditions import (
+            Condition,
+            ConditionType,
+        )
+
+        # String without space and starting with '{'
+        cond = Condition(predicate='{"key":1}')
+        # Should stay JSON_PREDICATE (default)
+        assert cond.condition_type == ConditionType.JSON_PREDICATE
+
+    def test_invalid_condition_type_raises(self):
+        """Lines 214-218: unknown condition_type → ValueError."""
+        import pytest
+
+        from attune.orchestration._strategies.conditions import (
+            Condition,
+            ConditionEvaluator,
+        )
+
+        cond = Condition(predicate={"x": 1})
+        # Force an unknown type
+        object.__setattr__(cond, "condition_type", "UNKNOWN_TYPE")
+        with pytest.raises(ValueError, match="Unknown condition type"):
+            ConditionEvaluator().evaluate(cond, {"x": 1})
+
+    def test_unknown_operator_raises(self):
+        """Line 247: operator not in OPERATORS → ValueError."""
+        import pytest
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        evaluator = ConditionEvaluator()
+        with pytest.raises(ValueError, match="Unknown operator"):
+            evaluator._evaluate_json({"x": {"$weirdop": 5}}, {"x": 5})
+
+    def test_get_nested_value_non_dict_returns_none(self):
+        """Line 274: encountered non-dict during traversal → None."""
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        evaluator = ConditionEvaluator()
+        # 'x' is an int, not a dict; can't traverse 'y'
+        result = evaluator._get_nested_value({"x": 42}, "x.y")
+        assert result is None
+
+    def test_natural_language_uses_llm_fallback(self):
+        """Lines 292-300: try LLM → exception → keyword fallback."""
+        from unittest.mock import patch as _patch
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        evaluator = ConditionEvaluator()
+        with _patch.object(evaluator, "_evaluate_with_llm", side_effect=RuntimeError("LLM down")):
+            # Falls back to keyword matching
+            result = evaluator._evaluate_natural_language(
+                "confidence is high", {"confidence": "high"}
+            )
+        assert isinstance(result, bool)
+
+    def test_natural_language_llm_success(self):
+        """Line 296: LLM evaluation succeeds → return result."""
+        from unittest.mock import patch as _patch
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        evaluator = ConditionEvaluator()
+        with _patch.object(evaluator, "_evaluate_with_llm", return_value=True):
+            result = evaluator._evaluate_natural_language("anything", {})
+        assert result is True
+
+    def test_evaluate_with_llm_import_error(self):
+        """Lines 314-318: LLM client import fails → re-raises."""
+        import sys
+        from unittest.mock import patch as _patch
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        # Pop the cached LLM module
+        sys.modules.pop("attune.orchestration.llm", None)
+
+        import builtins as _b
+
+        real_import = _b.__import__
+
+        def fake_import(name, *args, **kwargs):
+            if "orchestration.llm" in name:
+                raise ImportError("missing")
+            return real_import(name, *args, **kwargs)
+
+        evaluator = ConditionEvaluator()
+        with _patch("builtins.__import__", side_effect=fake_import):
+            import pytest
+
+            with pytest.raises(ImportError):
+                evaluator._evaluate_with_llm("condition", {})
+
+    def test_evaluate_with_llm_success_path(self):
+        """Lines 320-336: LLM client returns 'TRUE' → True."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock as _MagicMock
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        fake_client = _MagicMock()
+        fake_client.complete.return_value = "TRUE"
+        fake_module = SimpleNamespace(get_cheap_tier_client=lambda: fake_client)
+        sys.modules["attune.orchestration.llm"] = fake_module
+
+        try:
+            evaluator = ConditionEvaluator()
+            result = evaluator._evaluate_with_llm("condition", {"x": 1})
+            assert result is True
+        finally:
+            sys.modules.pop("attune.orchestration.llm", None)
+
+    def test_evaluate_with_llm_returns_false(self):
+        """Line 336: LLM returns 'FALSE' → False."""
+        import sys
+        from types import SimpleNamespace
+        from unittest.mock import MagicMock as _MagicMock
+
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        fake_client = _MagicMock()
+        fake_client.complete.return_value = "FALSE"
+        fake_module = SimpleNamespace(get_cheap_tier_client=lambda: fake_client)
+        sys.modules["attune.orchestration.llm"] = fake_module
+
+        try:
+            evaluator = ConditionEvaluator()
+            assert evaluator._evaluate_with_llm("condition", {}) is False
+        finally:
+            sys.modules.pop("attune.orchestration.llm", None)
+
+    def test_evaluate_composite_delegates_to_json(self):
+        """Line 378: _evaluate_composite calls _evaluate_json."""
+        from attune.orchestration._strategies.conditions import ConditionEvaluator
+
+        evaluator = ConditionEvaluator()
+        result = evaluator._evaluate_composite(
+            {"$and": [{"x": {"$gt": 0}}, {"y": {"$lt": 10}}]},
+            {"x": 5, "y": 3},
+        )
+        assert result is True
+
+
+class TestEvaluateDispatchBranches:
+    """Cover lines 215, 217: NATURAL_LANGUAGE and COMPOSITE dispatch."""
+
+    def test_natural_language_dispatch(self):
+        """Line 215: NATURAL_LANGUAGE → _evaluate_natural_language."""
+        from unittest.mock import patch as _patch
+
+        from attune.orchestration._strategies.conditions import (
+            Condition,
+            ConditionEvaluator,
+            ConditionType,
+        )
+
+        cond = Condition(
+            predicate="confidence is high",
+            condition_type=ConditionType.NATURAL_LANGUAGE,
+        )
+        evaluator = ConditionEvaluator()
+        with _patch.object(evaluator, "_evaluate_natural_language", return_value=True) as mock_nl:
+            assert evaluator.evaluate(cond, {}) is True
+            mock_nl.assert_called_once()
+
+    def test_composite_dispatch(self):
+        """Line 217: COMPOSITE → _evaluate_composite."""
+        from unittest.mock import patch as _patch
+
+        from attune.orchestration._strategies.conditions import (
+            Condition,
+            ConditionEvaluator,
+            ConditionType,
+        )
+
+        cond = Condition(
+            predicate={"$and": [{"x": 1}]},
+            condition_type=ConditionType.COMPOSITE,
+        )
+        evaluator = ConditionEvaluator()
+        with _patch.object(evaluator, "_evaluate_composite", return_value=True) as mock_comp:
+            assert evaluator.evaluate(cond, {"x": 1}) is True
+            mock_comp.assert_called_once()

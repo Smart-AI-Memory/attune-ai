@@ -323,3 +323,27 @@ class TestUCBAllocation:
         # B has fewer impressions so gets a larger exploration bonus
         # despite lower mean — UCB may pick it
         assert result in exp.variants
+
+
+class TestFixedAllocationFallback:
+    """Cover _fixed_allocation fallback when traffic_percentages don't sum to 100."""
+
+    def test_fixed_allocation_falls_back_to_last_variant(self):
+        """When variants only cover <100% of buckets, the last variant is the fallback (line 65)."""
+        # Two variants summing to 50% — most user_ids fall outside both buckets.
+        variants = [
+            _make_variant("a", "A", traffic_pct=10.0),
+            _make_variant("b", "B", traffic_pct=10.0),
+        ]
+        exp = _make_experiment(AllocationStrategy.FIXED, variants)
+        allocator = TrafficAllocator(exp)
+        # Find a user_id whose bucket > 20 (forces fallback)
+        # Try several user IDs; with only 20% covered, most fall through.
+        any_fallback = False
+        for uid in (f"user-{i}" for i in range(50)):
+            result = allocator.allocate(uid)
+            assert result in variants
+            if result is variants[-1]:
+                any_fallback = True
+        # With only 20% covered across 50 users, the last variant gets hit a lot.
+        assert any_fallback

@@ -233,6 +233,59 @@ class TestAgentPerformanceContextScore:
         # (0.6*1 + 0.9*2) / 3 = 0.8
         assert score == pytest.approx(0.8, rel=0.01)
 
+    def test_score_weighted_by_languages(self):
+        """Languages list contributes language-specific scores (lines 137-140)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 0  # skip base score path
+        perf.by_language["python"] = {"uses": 4, "successes": 4, "total_score": 3.6}
+        perf.by_language["go"] = {"uses": 2, "successes": 2, "total_score": 1.8}
+
+        score = perf.get_score_for_context(languages=["python", "go"])
+        # Both 0.9, weights both 1.5 → 0.9
+        assert score == pytest.approx(0.9, rel=0.01)
+
+    def test_score_weighted_by_quality_focus(self):
+        """quality_focus list contributes scores (lines 146-149)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 0
+        perf.by_quality_focus["security"] = {"uses": 5, "successes": 5, "total_score": 4.0}
+
+        score = perf.get_score_for_context(quality_focus=["security"])
+        assert score == pytest.approx(0.8, rel=0.01)
+
+    def test_score_skips_zero_use_domain(self):
+        """Domain entry with uses==0 is skipped (branch 129->134)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 0
+        perf.by_domain["code_review"] = {"uses": 0, "successes": 0, "total_score": 0.0}
+        # Falls through to default
+        assert perf.get_score_for_context(domain="code_review") == 0.5
+
+    def test_score_skips_zero_use_language(self):
+        """Language entry with uses==0 is skipped (branch 138->135)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 0
+        perf.by_language["python"] = {"uses": 0, "successes": 0, "total_score": 0.0}
+        assert perf.get_score_for_context(languages=["python"]) == 0.5
+
+    def test_score_skips_zero_use_quality_focus(self):
+        """quality_focus entry with uses==0 is skipped (branch 147->144)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 0
+        perf.by_quality_focus["security"] = {"uses": 0, "successes": 0, "total_score": 0.0}
+        assert perf.get_score_for_context(quality_focus=["security"]) == 0.5
+
+    def test_score_skips_unknown_languages(self):
+        """A language not in by_language is silently skipped (branch 129->134-equivalent)."""
+        perf = AgentPerformance(template_id="test")
+        perf.total_uses = 5
+        perf.average_score = 0.7
+        # No by_language entries
+
+        score = perf.get_score_for_context(languages=["rust"])
+        # Falls back to base score
+        assert score == pytest.approx(0.7, rel=0.01)
+
 
 @pytest.mark.unit
 class TestAgentPerformanceSerialization:
@@ -538,13 +591,8 @@ class TestFeedbackCollectorQueries:
         assert len(patterns) == 0
 
     def test_get_insights(self, populated_collector):
-        """Test getting aggregated insights.
-
-        Note: There's a recursion bug in _generate_recommendations that calls
-        get_insights(). We mock it to avoid the recursion.
-        """
-        with patch.object(populated_collector, "_generate_recommendations", return_value=[]):
-            insights = populated_collector.get_insights()
+        """Test getting aggregated insights."""
+        insights = populated_collector.get_insights()
 
         assert "total_agents_tracked" in insights
         assert insights["total_agents_tracked"] == 2
@@ -723,3 +771,255 @@ class TestFeedbackLoop:
 
         assert "context" in explanation
         assert "recommended_agents" in explanation
+
+
+# ===========================================================================
+# Coverage for previously-missed branches in feedback_collector.py
+# ===========================================================================
+
+from attune.socratic.feedback_models import WorkflowPattern as WP  # noqa: E402
+
+
+def _make_blueprint(domain="code_review", agent_template_ids=None, blueprint_id="bp-x"):
+    """Build a minimal WorkflowBlueprint mock."""
+    bp = MagicMock()
+    bp.id = blueprint_id
+    bp.domain = domain
+    bp.supported_languages = ["python"]
+    bp.quality_focus = ["security"]
+
+    if agent_template_ids is None:
+        agent_template_ids = ["agent_a"]
+    bp.agents = []
+    for tid in agent_template_ids:
+        a = MagicMock()
+        a.template_id = tid
+        a.spec = MagicMock()
+        a.spec.id = tid
+        bp.agents.append(a)
+
+    bp.stages = [MagicMock(to_dict=MagicMock(return_value={"stage": 1}))]
+    return bp
+
+
+def _make_evaluation(success: bool, score: float):
+    return SuccessEvaluation(
+        overall_success=success,
+        overall_score=score,
+        metric_results=[],
+        summary="x",
+    )
+
+
+# Need this import for the helpers above
+from attune.socratic.success_models import SuccessEvaluation  # noqa: E402
+
+
+@pytest.mark.unit
+class TestLoadDataCorruptedWorkflowPatterns:
+    """Cover lines 67-73: corrupted workflow_patterns.json swallowed."""
+
+    def test_corrupted_patterns_file_swallowed(self, tmp_path, caplog):
+        storage = tmp_path / "fb"
+        storage.mkdir()
+        (storage / "workflow_patterns.json").write_text("{not valid")
+
+        # Should log warning, not crash
+        with caplog.at_level("WARNING"):
+            collector = FeedbackCollector(storage_path=str(storage))
+
+        assert collector._workflow_patterns == {}
+        assert any("Failed to load workflow patterns" in m for m in caplog.messages)
+
+    def test_corrupted_agent_performance_file_swallowed(self, tmp_path, caplog):
+        storage = tmp_path / "fb"
+        storage.mkdir()
+        (storage / "agent_performance.json").write_text("{broken")
+
+        with caplog.at_level("WARNING"):
+            collector = FeedbackCollector(storage_path=str(storage))
+
+        assert collector._agent_performance == {}
+
+    def test_load_valid_workflow_patterns(self, tmp_path):
+        """Cover lines 70-71: parse valid workflow_patterns.json into WorkflowPattern."""
+        storage = tmp_path / "fb"
+        storage.mkdir()
+        # WorkflowPattern accepts pattern_id, domain, agent_combination,
+        # stage_configuration, uses, successes, average_score — no success_rate.
+        data = {
+            "pat-1": {
+                "pattern_id": "pat-1",
+                "domain": "code_review",
+                "agent_combination": ["agent_a"],
+                "stage_configuration": [],
+                "uses": 5,
+                "successes": 4,
+                "average_score": 0.85,
+            },
+        }
+        (storage / "workflow_patterns.json").write_text(json.dumps(data))
+
+        collector = FeedbackCollector(storage_path=str(storage))
+        assert "pat-1" in collector._workflow_patterns
+        loaded = collector._workflow_patterns["pat-1"]
+        assert loaded.uses == 5
+        assert loaded.successes == 4
+        assert loaded.average_score == 0.85
+
+
+@pytest.mark.unit
+class TestRecordExecutionExistingEntries:
+    """Cover branches 110->113, 123->131, 133->136."""
+
+    def test_repeated_record_uses_existing_perf_and_pattern(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        bp = _make_blueprint(agent_template_ids=["agent_a"])
+
+        # First record creates entries
+        collector.record_execution(bp, _make_evaluation(True, 0.9))
+        # Second record exercises the existing-entry branches AND failure path
+        collector.record_execution(bp, _make_evaluation(False, 0.4))
+
+        perf = collector._agent_performance["agent_a"]
+        assert perf.total_uses == 2
+
+        pattern_id = collector._generate_pattern_id(bp)
+        pattern = collector._workflow_patterns[pattern_id]
+        assert pattern.uses == 2
+        assert pattern.successes == 1  # only first was success → covers `if success` False branch
+
+
+@pytest.mark.unit
+class TestGetSuccessfulPatternsFilters:
+    """Cover lines 212 and 214: min_uses and min_success_rate filters."""
+
+    def test_min_uses_filter_excludes_low_use_pattern(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        # Add patterns directly
+        p_low = WP(
+            pattern_id="p1",
+            domain="x",
+            agent_combination=["a"],
+            stage_configuration=[],
+            uses=2,
+            successes=2,
+            average_score=0.9,
+        )
+        p_high = WP(
+            pattern_id="p2",
+            domain="x",
+            agent_combination=["a"],
+            stage_configuration=[],
+            uses=10,
+            successes=9,
+            average_score=0.9,
+        )
+        collector._workflow_patterns["p1"] = p_low
+        collector._workflow_patterns["p2"] = p_high
+
+        results = collector.get_successful_patterns(min_uses=5)
+        assert [p.pattern_id for p in results] == ["p2"]
+
+    def test_min_success_rate_filter_excludes_low_rate(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        p = WP(
+            pattern_id="p1",
+            domain="x",
+            agent_combination=["a"],
+            stage_configuration=[],
+            uses=10,
+            successes=4,  # 40% success
+            average_score=0.5,
+        )
+        collector._workflow_patterns["p1"] = p
+
+        results = collector.get_successful_patterns(min_success_rate=0.7)
+        assert results == []
+
+
+@pytest.mark.unit
+class TestInsightsDecliningAndDomainBranches:
+    """Cover line 251 (declining_agents append) and 270->269 (zero-use skip)."""
+
+    def test_declining_agent_appears_in_insights(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        perf = AgentPerformance(template_id="weak_agent")
+        perf.total_uses = 6
+        # Build trend by adding old high scores then recent low ones
+        perf.recent_scores = [
+            ("2024-01-01", 0.9),
+            ("2024-01-02", 0.9),
+            ("2024-01-03", 0.9),
+            ("2024-01-04", 0.9),
+            ("2024-01-05", 0.9),
+            ("2024-02-01", 0.2),
+            ("2024-02-02", 0.2),
+            ("2024-02-03", 0.2),
+            ("2024-02-04", 0.2),
+            ("2024-02-05", 0.2),
+        ]
+        perf.average_score = 0.4
+        collector._agent_performance["weak_agent"] = perf
+
+        insights = collector.get_insights()
+        declining_ids = [d["template_id"] for d in insights["declining_agents"]]
+        assert "weak_agent" in declining_ids
+
+    def test_zero_use_domain_skipped_from_insights(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        perf = AgentPerformance(template_id="zero_agent")
+        # Domain entry but zero uses — skipped by the `if total_uses > 0` guard
+        perf.by_domain = {"empty_domain": {"uses": 0, "total_score": 0.0}}
+        collector._agent_performance["zero_agent"] = perf
+
+        insights = collector.get_insights()
+        # The zero-use domain should not appear in domain_insights
+        assert "empty_domain" not in insights["domain_insights"]
+
+
+@pytest.mark.unit
+class TestGenerateRecommendations:
+    """Cover lines 296-297 (successful patterns rec) and 303-304 (sparse domain rec)."""
+
+    def test_successful_patterns_appear_in_recommendations(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        # Pattern with high success and uses
+        pattern = WP(
+            pattern_id="success-p",
+            domain="security",
+            agent_combination=["sec-rev"],
+            stage_configuration=[],
+            uses=10,
+            successes=9,
+            average_score=0.9,
+        )
+        collector._workflow_patterns["success-p"] = pattern
+
+        recs = collector._generate_recommendations()
+        assert any("Successful pattern for 'security'" in r for r in recs)
+
+    def test_sparse_domain_recommendation(self, tmp_path):
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+        perf = AgentPerformance(template_id="agent_x")
+        perf.total_uses = 1
+        perf.average_score = 0.7
+        # Total domain uses = 1, < 5 threshold
+        perf.by_domain = {"obscure_domain": {"uses": 1, "total_score": 0.7}}
+        collector._agent_performance["agent_x"] = perf
+
+        recs = collector._generate_recommendations()
+        assert any("More data needed for 'obscure_domain'" in r for r in recs)
+
+    def test_underperforming_agent_recommendation(self, tmp_path):
+        """Existing test confirms; also covers branch 288->287 (success_rate >= 0.5)."""
+        collector = FeedbackCollector(storage_path=str(tmp_path / "fb"))
+
+        # Healthy agent → no underperformance recommendation
+        good = AgentPerformance(template_id="good")
+        good.total_uses = 12
+        good.successful_uses = 10
+        collector._agent_performance["good"] = good
+
+        recs = collector._generate_recommendations()
+        assert not any("'good'" in r and "configuration" in r for r in recs)

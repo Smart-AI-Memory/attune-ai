@@ -721,3 +721,177 @@ class TestRenderFormInteractive:
 
         captured = capsys.readouterr()
         assert "Please answer the following" in captured.out
+
+    def test_render_form_text_area_field(self):
+        """render_form_interactive routes TEXT_AREA field to _input_text_area (line 171)."""
+        c = _make_console()
+        field = FormField(
+            id="notes",
+            field_type=FieldType.TEXT_AREA,
+            label="Notes",
+            validation=FieldValidation(required=False),
+        )
+        form = Form(id="f-ta", title="TA Form", fields=[field])
+
+        # Simulate one line of text + double-Enter to finish
+        with patch("builtins.input", side_effect=iter(["something useful", "", ""])):
+            answers = render_form_interactive(form, c)
+
+        assert "notes" in answers
+        assert "something useful" in answers["notes"]
+
+    def test_render_form_field_with_help_text_displays_it(self, capsys):
+        """Field with help_text causes console.dim() to print it (line 158)."""
+        c = _make_console()
+        field = FormField(
+            id="name",
+            field_type=FieldType.TEXT,
+            label="Name",
+            help_text="Your full name please",
+            validation=FieldValidation(required=False),
+        )
+        form = Form(id="f-help", title="Help Form", fields=[field])
+
+        with patch("builtins.input", return_value=""):
+            render_form_interactive(form, c)
+
+        captured = capsys.readouterr()
+        assert "Your full name please" in captured.out
+
+
+# ---------------------------------------------------------------------------
+# Coverage gap fillers — option descriptions, required-empty errors, and edge cases
+# ---------------------------------------------------------------------------
+
+
+class TestSelectOptionDescriptions:
+    """Cover console.dim() branch printing option descriptions."""
+
+    def test_single_select_option_description_displayed(self, capsys):
+        """Single-select option with description triggers dim() print (line 187)."""
+        c = _make_console()
+        opts = [FieldOption(value="x", label="Option X", description="The X choice")]
+        field = FormField(
+            id="pick",
+            field_type=FieldType.SINGLE_SELECT,
+            label="Pick",
+            options=opts,
+            validation=FieldValidation(required=False),
+        )
+
+        with patch("builtins.input", return_value=""):
+            _input_single_select(field, c)
+
+        captured = capsys.readouterr()
+        assert "The X choice" in captured.out
+
+    def test_multi_select_option_description_displayed(self, capsys):
+        """Multi-select option with description triggers dim() print (line 213)."""
+        c = _make_console()
+        opts = [FieldOption(value="x", label="Option X", description="The X choice")]
+        field = FormField(
+            id="picks",
+            field_type=FieldType.MULTI_SELECT,
+            label="Picks",
+            options=opts,
+            validation=FieldValidation(required=False),
+        )
+
+        with patch("builtins.input", return_value=""):
+            _input_multi_select(field, c)
+
+        captured = capsys.readouterr()
+        assert "The X choice" in captured.out
+
+
+class TestSelectRequiredEmpty:
+    """Cover empty-input-on-required branches that print error and continue."""
+
+    def test_single_select_required_empty_then_valid(self, capsys):
+        """Required single_select: empty input prints error, loops, then succeeds (lines 195-196)."""
+        c = _make_console()
+        field = _make_select_field(required=True)
+
+        with patch("builtins.input", side_effect=iter(["", "1"])):
+            result = _input_single_select(field, c)
+
+        assert result == "a"
+        captured = capsys.readouterr()
+        assert "required" in captured.out.lower()
+
+    def test_multi_select_required_empty_then_valid(self, capsys):
+        """Required multi_select: empty input prints error, loops, then succeeds (lines 221-222)."""
+        c = _make_console()
+        field = _make_select_field(multi=True, required=True)
+
+        with patch("builtins.input", side_effect=iter(["", "1"])):
+            result = _input_multi_select(field, c)
+
+        assert result == ["a"]
+        captured = capsys.readouterr()
+        assert "at least one" in captured.out.lower()
+
+    def test_multi_select_all_indices_invalid_loops(self, capsys):
+        """Multi_select where all parsed indices are out of range prints error and loops (line 233)."""
+        c = _make_console()
+        field = _make_select_field(multi=True, required=True)
+
+        # First all indices are out of range, then a valid one
+        with patch("builtins.input", side_effect=iter(["99,100", "1"])):
+            result = _input_multi_select(field, c)
+
+        assert result == ["a"]
+        captured = capsys.readouterr()
+        assert "no valid options" in captured.out.lower()
+
+    def test_multi_select_non_numeric_loops(self, capsys):
+        """Multi_select with non-numeric input triggers ValueError handler (lines 234-235)."""
+        c = _make_console()
+        field = _make_select_field(multi=True, required=True)
+
+        with patch("builtins.input", side_effect=iter(["abc,xyz", "1"])):
+            result = _input_multi_select(field, c)
+
+        assert result == ["a"]
+        captured = capsys.readouterr()
+        assert "valid numbers" in captured.out.lower()
+
+
+class TestTextAreaRequiredRecursion:
+    """Cover the empty-required recursion branch in _input_text_area (lines 294-295)."""
+
+    def test_text_area_required_empty_recurses_until_value(self, capsys):
+        """Required text_area: empty submission prints error and recurses, then accepts text."""
+        c = _make_console()
+        field = FormField(
+            id="notes",
+            field_type=FieldType.TEXT_AREA,
+            label="Notes",
+            validation=FieldValidation(required=True),
+        )
+
+        # First call: empty (two blank lines) -> error + recurse
+        # Second call: a real line + two blanks -> returns
+        inputs = iter(["", "", "real content", "", ""])
+
+        with patch("builtins.input", side_effect=inputs):
+            result = _input_text_area(field, c)
+
+        assert "real content" in result
+        captured = capsys.readouterr()
+        assert "required" in captured.out.lower()
+
+
+class TestTableExtraCells:
+    """Cover Console.table() branch where row has more cells than headers (line 103)."""
+
+    def test_table_row_with_more_cells_than_headers(self, capsys):
+        """Row with extra cells beyond the header count is handled without error."""
+        c = _make_console()
+        # 2 headers, but a row has 3 cells — extra cell ignored for width tracking
+        c.table(["A", "B"], [["x", "y", "z-extra"]])
+        captured = capsys.readouterr()
+
+        # Row prints; 'z-extra' is in widths beyond header length so iteration short-circuits
+        assert "A" in captured.out
+        assert "B" in captured.out

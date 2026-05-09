@@ -318,3 +318,172 @@ class TestCircuitOpenError:
         assert "test_circuit" in str(error)
         assert error.name == "test_circuit"
         assert error.reset_time == 30.5
+
+
+@pytest.mark.unit
+class TestCircuitBreakerCoverageGaps:
+    """Tests filling specific coverage gaps in circuit_breaker.py."""
+
+    def test_should_reset_returns_true_when_no_failure_time(self):
+        """`_should_reset` returns True if no failure has been recorded yet (line 92)."""
+        cb = CircuitBreaker(name="x")
+        # _last_failure_time is None by default
+        assert cb._should_reset() is True
+
+    def test_record_success_in_open_state_no_op(self):
+        """record_success() while OPEN (timeout not elapsed) is a no-op (branch 124->exit)."""
+        cb = CircuitBreaker(name="open_no_op", failure_threshold=1, reset_timeout=999.0)
+        # Force OPEN state by recording a failure
+        cb.record_failure(RuntimeError("boom"))
+        assert cb._state == CircuitState.OPEN
+        prior_success = cb._success_count
+        prior_state = cb._state
+
+        # state property would not flip because reset_timeout is huge
+        cb.record_success()
+
+        # No state change, no counter movement
+        assert cb._state == prior_state
+        assert cb._success_count == prior_success
+
+    def test_record_failure_in_open_state_no_transition(self):
+        """record_failure() while already OPEN does not re-trigger transition (branch 142->exit)."""
+        cb = CircuitBreaker(name="open_no_trans", failure_threshold=1, reset_timeout=999.0)
+        cb.record_failure(RuntimeError("first"))
+        assert cb._state == CircuitState.OPEN
+
+        # Recording another failure while OPEN — already OPEN, no further transition.
+        cb.record_failure(RuntimeError("second"))
+        assert cb._state == CircuitState.OPEN
+        # failure_count keeps incrementing
+        assert cb._failure_count >= 2
+
+    def test_decorator_with_excluded_exceptions_provided(self):
+        """Calling decorator with excluded_exceptions skips the None-default branch (214->217)."""
+
+        # Use a unique name to avoid registry collision
+        @circuit_breaker(
+            name="cov_excluded",
+            failure_threshold=2,
+            excluded_exceptions=(ValueError,),
+        )
+        def func_raises_value():
+            raise ValueError("excluded")
+
+        # ValueError should not count as a failure → circuit stays closed
+        for _ in range(5):
+            with pytest.raises(ValueError):
+                func_raises_value()
+
+        cb = get_circuit_breaker("cov_excluded")
+        assert cb is not None
+        assert cb.is_closed
+
+    def test_decorator_reuses_existing_breaker_for_same_name(self):
+        """Re-decorating with the same name returns the cached breaker (branch 222->231)."""
+
+        @circuit_breaker(name="reused_name", failure_threshold=99)
+        def f1():
+            return "f1"
+
+        cb_first = get_circuit_breaker("reused_name")
+
+        # Decorating a second function with the SAME name reuses the breaker
+        @circuit_breaker(name="reused_name", failure_threshold=1)  # different threshold
+        def f2():
+            return "f2"
+
+        cb_second = get_circuit_breaker("reused_name")
+
+        # Same instance — registry was hit, not re-created
+        assert cb_first is cb_second
+        # Original threshold preserved (cached breaker wasn't reconfigured)
+        assert cb_first.failure_threshold == 99
+
+    @pytest.mark.asyncio
+    async def test_async_circuit_open_uses_async_fallback(self):
+        """Async wrapper with circuit OPEN awaits an async fallback (lines 237-241)."""
+        async_fallback_called = []
+
+        async def async_fallback(*args, **kwargs):
+            async_fallback_called.append(True)
+            return "async-fallback"
+
+        @circuit_breaker(
+            name="async_fb_circuit",
+            failure_threshold=1,
+            reset_timeout=999.0,
+            fallback=async_fallback,
+        )
+        async def flaky():
+            raise RuntimeError("boom")
+
+        # Trip the circuit
+        with pytest.raises(RuntimeError):
+            await flaky()
+
+        cb = get_circuit_breaker("async_fb_circuit")
+        assert cb is not None and cb.is_open
+
+        # Now circuit is OPEN — fallback should fire
+        result = await flaky()
+        assert result == "async-fallback"
+        assert async_fallback_called
+
+    @pytest.mark.asyncio
+    async def test_async_circuit_open_uses_sync_fallback(self):
+        """Async wrapper with a sync fallback calls it directly (line 242)."""
+
+        def sync_fallback(*args, **kwargs):
+            return "sync-fallback"
+
+        @circuit_breaker(
+            name="async_sync_fb_circuit",
+            failure_threshold=1,
+            reset_timeout=999.0,
+            fallback=sync_fallback,
+        )
+        async def flaky():
+            raise RuntimeError("boom")
+
+        with pytest.raises(RuntimeError):
+            await flaky()
+
+        cb = get_circuit_breaker("async_sync_fb_circuit")
+        assert cb is not None and cb.is_open
+
+        result = await flaky()
+        assert result == "sync-fallback"
+
+    @pytest.mark.asyncio
+    async def test_async_circuit_open_no_fallback_raises(self):
+        """Async wrapper with circuit OPEN and no fallback raises CircuitOpenError (line 243)."""
+
+        @circuit_breaker(
+            name="async_no_fb_circuit",
+            failure_threshold=1,
+            reset_timeout=999.0,
+        )
+        async def flaky():
+            raise RuntimeError("boom")
+
+        with pytest.raises(RuntimeError):
+            await flaky()
+
+        with pytest.raises(CircuitOpenError):
+            await flaky()
+
+    @pytest.mark.asyncio
+    async def test_async_records_failure_and_reraises(self):
+        """Async wrapper records failure and re-raises original exception (lines 249-251)."""
+
+        @circuit_breaker(name="async_fail_record", failure_threshold=99)
+        async def flaky():
+            raise RuntimeError("kaboom")
+
+        with pytest.raises(RuntimeError, match="kaboom"):
+            await flaky()
+
+        cb = get_circuit_breaker("async_fail_record")
+        assert cb is not None
+        assert cb._failure_count == 1

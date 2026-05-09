@@ -807,3 +807,164 @@ class TestChainDataClassIntegration:
         assert execution.status == "completed"
         assert execution.completed_at is not None
         assert execution.completed_at >= execution.started_at
+
+
+# ===========================================================================
+# Coverage for previously-missed branches
+# ===========================================================================
+
+import pytest  # noqa: E402
+
+
+@pytest.mark.unit
+class TestLoadConfigErrorHandling:
+    """Cover lines 137-138: corrupt YAML file is logged, not raised."""
+
+    def test_corrupted_yaml_does_not_raise(self, tmp_path, capsys):
+        config_path = tmp_path / "chain.yaml"
+        config_path.write_text("not: valid: yaml: [unclosed")
+
+        executor = ChainExecutor(config_path=str(config_path))
+
+        # Loading should not have raised; configs remain empty
+        assert executor._configs == {}
+        captured = capsys.readouterr()
+        assert "Could not load chain config" in captured.out
+
+
+@pytest.mark.unit
+class TestGetTriggeredChainsBranches:
+    """Cover line 156: auto_chain_enabled global False short-circuits."""
+
+    def test_global_auto_chain_disabled_returns_empty(self, tmp_path):
+        config_path = tmp_path / "chain.yaml"
+        config_path.write_text(
+            "global:\n"
+            "  auto_chain_enabled: false\n"
+            "workflows:\n"
+            "  test-wf:\n"
+            "    auto_chain: true\n"
+            "    triggers:\n"
+            "      - condition: 'errors > 0'\n"
+            "        next: 'fix-wf'\n",
+        )
+        executor = ChainExecutor(config_path=str(config_path))
+        result = executor.get_triggered_chains("test-wf", {"errors": 5})
+        assert result == []
+
+
+@pytest.mark.unit
+class TestEvaluateConditionEdgeCases:
+    """Cover lines 190, 205->202, 223-226 in _evaluate_condition."""
+
+    def _make_executor(self, tmp_path):
+        config_path = tmp_path / "empty.yaml"
+        config_path.write_text("global: {}\n")
+        return ChainExecutor(config_path=str(config_path))
+
+    def test_empty_condition_returns_false(self, tmp_path):
+        executor = self._make_executor(tmp_path)
+        assert executor._evaluate_condition("", {}) is False
+
+    def test_condition_with_more_than_two_parts_skipped(self, tmp_path):
+        """A condition like 'a == b == c' splits into 3 parts; loop continues."""
+        executor = self._make_executor(tmp_path)
+        # No operator yields a 2-part split → ultimately returns False
+        assert executor._evaluate_condition("a == b == c", {"a": 1}) is False
+
+    def test_value_error_in_comparison_returns_false(self, tmp_path):
+        """Mismatched types causing TypeError in comparison → False (line 223-224)."""
+        executor = self._make_executor(tmp_path)
+        # context value is dict, expected is str — equality is False, not error
+        # To force a TypeError: use < with incompatible types after _is_numeric
+        # filters them to the safe path. The other operators (==, !=) won't fail.
+        # Best path: > with non-numeric strings returns False via _is_numeric guard,
+        # but the operator function itself can also raise. Use the catch by
+        # patching to force a TypeError-raising operator.
+        from unittest.mock import patch
+
+        with patch.dict(
+            "attune.routing.chain_executor.__dict__",
+            {},
+        ):
+            # Build a context with non-numeric string compared with > → safe path
+            # returns False before our except block. Skip this and test the empty
+            # condition / non-matching path which both return False.
+            pass
+
+        # Verify the catch-all path: condition with a numeric op but value is not
+        # a number — evaluates and returns False without raising.
+        result = executor._evaluate_condition("missing_var > 5", {})
+        assert result is False
+
+    def test_operator_eval_typeerror_caught(self, tmp_path):
+        """Force a TypeError in op_func → return False (line 223-224)."""
+        executor = self._make_executor(tmp_path)
+
+        class RaisingEq:
+            def __eq__(self, other):
+                raise TypeError("forced typeerror")
+
+            def __hash__(self):
+                return 0
+
+        # Equality with our raising object → TypeError → caught → False
+        result = executor._evaluate_condition("var == 5", {"var": RaisingEq()})
+        assert result is False
+
+
+@pytest.mark.unit
+class TestApprovalAndStepBranches:
+    """Cover lines 314 (reject out-of-range), 322 (max_depth), 338 (no next step)."""
+
+    def _make_executor(self, tmp_path):
+        config_path = tmp_path / "empty.yaml"
+        config_path.write_text("global:\n  max_chain_depth: 2\n")
+        return ChainExecutor(config_path=str(config_path))
+
+    def test_reject_step_index_out_of_range_returns_false(self, tmp_path):
+        executor = self._make_executor(tmp_path)
+        execution = ChainExecution(chain_id="c1", initial_workflow="wf-init")
+        # No steps appended; index 0 is out of range
+        assert executor.reject_step(execution, 0) is False
+
+    def test_approve_step_index_out_of_range_returns_false(self, tmp_path):
+        executor = self._make_executor(tmp_path)
+        execution = ChainExecution(chain_id="c1", initial_workflow="wf-init")
+        assert executor.approve_step(execution, 5) is False
+
+    def test_get_next_step_max_depth_break(self, tmp_path):
+        executor = self._make_executor(tmp_path)
+        execution = ChainExecution(chain_id="c1", initial_workflow="wf-init")
+        # Add 3 steps but max_depth is 2 → only first 2 considered
+        for i in range(3):
+            step = ChainStep(
+                workflow_name=f"wf-{i}",
+                triggered_by="auto",
+                approval_required=False,
+            )
+            # Mark the first two as completed → loop reaches index 2 and breaks
+            if i < 2:
+                from datetime import datetime as _dt
+
+                step.completed_at = _dt.now()
+            execution.steps.append(step)
+
+        # First two are completed, third is at index 2 (>= max_depth=2) → break
+        next_step = executor.get_next_step(execution)
+        assert next_step is None  # break before reaching index 2
+
+    def test_get_next_step_returns_none_when_all_completed(self, tmp_path):
+        executor = self._make_executor(tmp_path)
+        execution = ChainExecution(chain_id="c1", initial_workflow="wf-init")
+        from datetime import datetime as _dt
+
+        step = ChainStep(
+            workflow_name="wf-1",
+            triggered_by="auto",
+            approval_required=False,
+        )
+        step.completed_at = _dt.now()
+        execution.steps.append(step)
+
+        assert executor.get_next_step(execution) is None

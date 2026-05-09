@@ -394,3 +394,182 @@ class TestCmdPatternsResolve:
             cmd_patterns_resolve(args)
 
         mock_regen.assert_called_once()
+
+
+# ===========================================================================
+# Coverage gap tests
+# ===========================================================================
+
+
+class TestResolverCoverageGaps:
+    """Cover lines 80-81, 88->84, 169-171, 231, 239-276."""
+
+    def test_find_bug_malformed_json_logged(self, tmp_path, caplog):
+        """Lines 80-81: malformed JSON in <bug_id>.json → warning logged."""
+        import logging
+
+        from attune.patterns.resolver import PatternResolver
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        # Direct file <bug_id>.json with bad JSON
+        (debug_dir / "bug_x.json").write_text("not-json{")
+
+        resolver = PatternResolver(str(tmp_path))
+        with caplog.at_level(logging.WARNING):
+            file_path, data = resolver.find_bug("bug_x")
+        assert file_path is None
+        assert any("Failed to load" in r.message for r in caplog.records)
+
+    def test_find_bug_glob_skips_unmatched(self, tmp_path):
+        """Branch 88->84: bug_id field doesn't match → continue glob."""
+        import json as _json
+
+        from attune.patterns.resolver import PatternResolver
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        # File exists but bug_id field doesn't match
+        (debug_dir / "bug_other.json").write_text(_json.dumps({"bug_id": "different-id"}))
+
+        resolver = PatternResolver(str(tmp_path))
+        file_path, data = resolver.find_bug("target-id")
+        assert file_path is None
+
+    def test_resolve_bug_oserror_logged(self, tmp_path, caplog):
+        """Lines 169-171: OSError on write → log + return False."""
+        import json as _json
+        import logging
+        from unittest.mock import patch as _patch
+
+        from attune.patterns.resolver import PatternResolver
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        # Create the file so find_bug succeeds
+        (debug_dir / "bug_x.json").write_text(
+            _json.dumps({"bug_id": "bug_x", "status": "investigating"})
+        )
+
+        resolver = PatternResolver(str(tmp_path))
+
+        # Patch open() (write mode) to raise OSError
+        original_open = open
+
+        def fake_open(path, mode="r", *args, **kwargs):
+            if "w" in mode:
+                raise OSError("disk full")
+            return original_open(path, mode, *args, **kwargs)
+
+        with caplog.at_level(logging.ERROR), _patch("builtins.open", side_effect=fake_open):
+            result = resolver.resolve_bug(bug_id="bug_x", root_cause="cause", fix_applied="fix")
+        assert result is False
+        assert any("Failed to write" in r.message for r in caplog.records)
+
+
+class TestCmdPatternsResolveRegenerateFailure:
+    """Cover line 231: regenerate_summary returns False → 'Failed to regenerate'."""
+
+    def test_regenerate_failure_prints_warning(self, tmp_path, capsys):
+        from types import SimpleNamespace
+        from unittest.mock import patch as _patch
+
+        from attune.patterns.resolver import PatternResolver, cmd_patterns_resolve
+
+        # Set up bug to resolve
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        import json as _json
+
+        (debug_dir / "bug_x.json").write_text(
+            _json.dumps({"bug_id": "bug_x", "status": "investigating"})
+        )
+
+        args = SimpleNamespace(
+            patterns_dir=str(tmp_path),
+            bug_id="bug_x",
+            root_cause="cause",
+            fix="fix",
+            fix_code=None,
+            time=None,
+            resolved_by="@dev",
+            no_regenerate=False,
+        )
+
+        with _patch.object(PatternResolver, "regenerate_summary", return_value=False):
+            cmd_patterns_resolve(args)
+
+        out = capsys.readouterr().out
+        assert "Failed to regenerate" in out
+
+
+class TestMainEntryPoint:
+    """Cover lines 239-276: main() CLI entry point."""
+
+    def test_main_no_bug_id_lists_investigating(self, tmp_path, capsys, monkeypatch):
+        """Line 198-211: no bug_id → list investigating."""
+        import json as _json
+        from unittest.mock import patch as _patch
+
+        from attune.patterns import resolver as mod
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        (debug_dir / "bug_x.json").write_text(
+            _json.dumps(
+                {
+                    "bug_id": "bug_x",
+                    "status": "investigating",
+                    "error_type": "null_ref",
+                    "file_path": "src/x.py",
+                    "error_message": "boom",
+                }
+            )
+        )
+
+        argv = ["prog", "--patterns-dir", str(tmp_path)]
+        with _patch("sys.argv", argv):
+            mod.main()
+        out = capsys.readouterr().out
+        assert "bug_x" in out
+
+    def test_main_resolve_with_required_args(self, tmp_path, capsys):
+        """Line 273: bug_id present requires --root-cause and --fix."""
+        import json as _json
+        from unittest.mock import patch as _patch
+
+        from attune.patterns import resolver as mod
+
+        debug_dir = tmp_path / "debugging"
+        debug_dir.mkdir()
+        (debug_dir / "bug_x.json").write_text(
+            _json.dumps({"bug_id": "bug_x", "status": "investigating"})
+        )
+
+        argv = [
+            "prog",
+            "bug_x",
+            "--root-cause",
+            "cause",
+            "--fix",
+            "fix",
+            "--patterns-dir",
+            str(tmp_path),
+            "--no-regenerate",
+        ]
+        with _patch("sys.argv", argv):
+            mod.main()
+        out = capsys.readouterr().out
+        assert "Resolved" in out
+
+    def test_main_resolve_missing_required_args_errors(self, tmp_path, capsys):
+        """Line 273-274: missing root-cause or fix → parser.error."""
+        from unittest.mock import patch as _patch
+
+        import pytest
+
+        from attune.patterns import resolver as mod
+
+        argv = ["prog", "bug_x", "--patterns-dir", str(tmp_path)]
+        with _patch("sys.argv", argv), pytest.raises(SystemExit):
+            mod.main()

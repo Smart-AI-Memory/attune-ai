@@ -432,3 +432,253 @@ class TestErrorHandling:
 
         # Should skip corrupted file and return empty
         assert insights == []
+
+
+# ---------------------------------------------------------------------------
+# Coverage for previously-missed branches
+# ---------------------------------------------------------------------------
+
+import json  # noqa: E402
+
+from attune.meta_workflows.models import (  # noqa: E402
+    AgentExecutionResult,
+    AgentSpec,
+    MetaWorkflowResult,
+    TierStrategy,
+)
+
+
+def _write_result(
+    storage_dir: Path,
+    run_id: str,
+    template_id: str,
+    agent_results: list[AgentExecutionResult],
+    agents_created: list[AgentSpec] | None = None,
+    success: bool = True,
+    total_cost: float | None = None,
+) -> None:
+    """Write a synthetic execution result file."""
+    if agents_created is None:
+        agents_created = []
+        for ar in agent_results:
+            agents_created.append(
+                AgentSpec(
+                    role=ar.role,
+                    base_template="general",
+                    tier_strategy=TierStrategy.CHEAP_ONLY,
+                ),
+            )
+    if total_cost is None:
+        total_cost = sum(ar.cost for ar in agent_results)
+    result = MetaWorkflowResult(
+        run_id=run_id,
+        template_id=template_id,
+        timestamp="2026-05-09T00:00:00",
+        form_responses=FormResponse(template_id=template_id),
+        agents_created=agents_created,
+        agent_results=agent_results,
+        total_cost=total_cost,
+        total_duration=1.0,
+        success=success,
+    )
+    run_dir = storage_dir / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    (run_dir / "result.json").write_text(json.dumps(result.to_dict()))
+
+
+def _agent_result(role: str, success: bool, tier: str = "cheap", cost: float = 0.01):
+    return AgentExecutionResult(
+        agent_id=f"id-{role}-{tier}",
+        role=role,
+        success=success,
+        cost=cost,
+        duration=0.1,
+        tier_used=tier,
+        output={"message": "ok" if success else "fail"},
+        error=None if success else "failed",
+    )
+
+
+@pytest.mark.unit
+class TestAnalyzeFailureAndTierBranches:
+    """Cover lines 175->177, 280, 283-288: failure tracking and skipping."""
+
+    def test_failures_recorded_and_failure_insight_emitted(self, tmp_path):
+        """Mix successful + failing agent_results — failure analysis runs."""
+        # 5 runs, with role 'flaky' failing twice out of 5 runs
+        for i in range(5):
+            results_for_run = [
+                _agent_result("flaky", success=(i >= 2), tier="cheap"),
+            ]
+            _write_result(tmp_path, f"run-{i}", "tmpl-A", results_for_run)
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        insights = learner.analyze_patterns(min_confidence=0.0)
+        types = {i.insight_type for i in insights}
+        assert "failure_analysis" in types
+        # 2 failures out of 5 runs = 40% failure rate
+        failure = next(i for i in insights if i.insight_type == "failure_analysis")
+        assert failure.data["failure_count"] == 2
+        assert failure.data["total_runs"] == 5
+        assert failure.data["failure_rate"] == pytest.approx(0.4)
+
+
+@pytest.mark.unit
+class TestGetRecommendationsBranches:
+    """Cover lines 325-334, 344-347: tier-performance and failure recs."""
+
+    def test_high_success_rate_recommendation(self, tmp_path):
+        """tier_performance success_rate >= 0.9 → 'works well' recommendation."""
+        # Need >=3 samples in same role:tier to emit tier_performance insight
+        for i in range(10):
+            _write_result(
+                tmp_path,
+                f"run-{i}",
+                "tmpl-good",
+                [_agent_result("solid", success=True, tier="cheap", cost=0.01)],
+            )
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        recs = learner.get_recommendations("tmpl-good", min_confidence=0.0)
+        assert any("works well" in r and "solid" in r for r in recs)
+        # cost_analysis recommendation also emitted
+        assert any("Expected workflow cost" in r for r in recs)
+
+    def test_low_success_rate_recommendation_and_failure_rec(self, tmp_path):
+        """tier_performance success_rate < 0.6 → upgrading tier recommendation,
+        and failure_analysis with rate > 0.3 → needs attention."""
+        # 10 runs, role 'weak' fails 6 times → 40% success, 60% failure
+        for i in range(10):
+            success = i >= 6
+            _write_result(
+                tmp_path,
+                f"run-{i}",
+                "tmpl-weak",
+                [_agent_result("weak", success=success, tier="cheap", cost=0.01)],
+            )
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        recs = learner.get_recommendations("tmpl-weak", min_confidence=0.0)
+        assert any("struggles" in r and "weak" in r for r in recs)
+        assert any("needs attention" in r and "weak" in r for r in recs)
+
+
+@pytest.mark.unit
+class TestAnalyzeWithMixedTemplates:
+    """Cover line 374->371: result.template_id != template_id branch."""
+
+    def test_generate_report_filters_by_template_id(self, tmp_path):
+        """generate_analytics_report should skip results from other templates."""
+        # 2 results for tmpl-A, 1 for tmpl-B
+        _write_result(
+            tmp_path,
+            "run-A1",
+            "tmpl-A",
+            [_agent_result("agent", success=True, cost=0.05)],
+            total_cost=0.05,
+        )
+        _write_result(
+            tmp_path,
+            "run-A2",
+            "tmpl-A",
+            [_agent_result("agent", success=True, cost=0.10)],
+            total_cost=0.10,
+        )
+        _write_result(
+            tmp_path,
+            "run-B1",
+            "tmpl-B",
+            [_agent_result("agent", success=True, cost=1.00)],
+            total_cost=1.00,
+        )
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        report = learner.generate_analytics_report(template_id="tmpl-A")
+
+        # Only the 2 tmpl-A results counted
+        assert report["summary"]["total_runs"] == 2
+        assert report["summary"]["total_cost"] == pytest.approx(0.15)
+
+
+@pytest.mark.unit
+class TestAnalyticsReportCorruptedFile:
+    """Cover lines 376-377: except path during report generation."""
+
+    def test_report_skips_corrupted_results(self, tmp_path):
+        """Corrupted result files in second loop are silently skipped."""
+        # Valid result
+        _write_result(
+            tmp_path,
+            "run-good",
+            "tmpl-x",
+            [_agent_result("a", success=True, cost=0.02)],
+        )
+        # Corrupted result
+        bad_dir = tmp_path / "run-bad"
+        bad_dir.mkdir()
+        (bad_dir / "result.json").write_text("{not-valid")
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        report = learner.generate_analytics_report()
+        # Only the valid run is counted
+        assert report["summary"]["total_runs"] == 1
+
+
+@pytest.mark.unit
+class TestEmptyAnalysisHelpers:
+    """Cover lines 131 & 220: explicit empty-results fast paths.
+
+    These paths are unreachable via analyze_patterns (which guards on empty
+    results upstream), but the helpers still defend against an empty list,
+    so we exercise the helpers directly.
+    """
+
+    def test_analyze_agent_counts_empty(self, tmp_path):
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        assert learner._analyze_agent_counts([]) == []
+
+    def test_analyze_costs_empty(self, tmp_path):
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        assert learner._analyze_costs([]) == []
+
+
+@pytest.mark.unit
+class TestRecommendationsMidRangeBranches:
+    """Cover lines 333->323 and 346->323: mid-range success / low failure."""
+
+    def test_moderate_success_rate_emits_no_tier_recommendation(self, tmp_path):
+        """0.6 <= success_rate < 0.9 → no tier_performance recommendation."""
+        # 10 runs, 7 successes (70% success — between 60% and 90%)
+        for i in range(10):
+            success = i >= 3
+            _write_result(
+                tmp_path,
+                f"run-{i}",
+                "tmpl-mid",
+                [_agent_result("mid", success=success, tier="cheap", cost=0.01)],
+            )
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        recs = learner.get_recommendations("tmpl-mid", min_confidence=0.0)
+        # No tier-performance recommendation in either band
+        assert not any("works well" in r and "mid" in r for r in recs)
+        assert not any("struggles" in r and "mid" in r for r in recs)
+        # Failure rate is 30% — strictly > 0.3 is needed; 0.30 should NOT emit
+        assert not any("needs attention" in r and "mid" in r for r in recs)
+
+    def test_low_failure_rate_emits_no_failure_recommendation(self, tmp_path):
+        """failure_rate <= 0.3 → no 'needs attention' rec."""
+        # 10 runs, only 1 failure → 10% failure
+        for i in range(10):
+            success = i != 0
+            _write_result(
+                tmp_path,
+                f"run-{i}",
+                "tmpl-low-fail",
+                [_agent_result("ok-agent", success=success, tier="cheap", cost=0.01)],
+            )
+
+        learner = PatternLearner(executions_dir=str(tmp_path))
+        recs = learner.get_recommendations("tmpl-low-fail", min_confidence=0.0)
+        # 1/10 = 10% failure → no failure recommendation
+        assert not any("needs attention" in r for r in recs)

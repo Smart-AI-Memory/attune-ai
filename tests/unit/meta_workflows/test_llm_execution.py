@@ -484,3 +484,200 @@ class TestExecuteLlmCall:
 
         mock_sim.assert_called_once()
         assert "cost" in result
+
+
+# ---------------------------------------------------------------------------
+# Coverage for previously-missed branches
+# ---------------------------------------------------------------------------
+
+
+class TestUnknownTierStrategy:
+    """Cover lines 110-111: PREMIUM_ONLY (or unknown) → fallback to CAPABLE."""
+
+    def test_premium_only_falls_back_to_capable(self):
+        from attune.meta_workflows.llm_execution import execute_agents_real
+
+        agent = _make_agent_spec(tier_strategy=TierStrategy.PREMIUM_ONLY)
+
+        mock_router = MagicMock()
+        mock_router._default_provider = "anthropic"
+        cfg = _make_model_config()
+        mock_router.MODELS = {
+            "anthropic": {"cheap": cfg, "capable": cfg, "premium": cfg},
+        }
+
+        tiers_seen: list[str] = []
+
+        def side_effect(prompt, model_config, tier):
+            tiers_seen.append(tier.value)
+            return {
+                "cost": 0.005,
+                "tokens": {"input": 50, "output": 500, "total": 550},
+                "success": True,
+                "output": {"message": "ok", "model": "x", "tier": tier.value, "success": True},
+            }
+
+        with (
+            patch("attune.meta_workflows.llm_execution.ModelRouter", return_value=mock_router),
+            patch("attune.meta_workflows.llm_execution.UsageTracker") as mock_tracker_cls,
+            patch("attune.meta_workflows.llm_execution.build_agent_prompt", return_value="p"),
+            patch("attune.meta_workflows.llm_execution.execute_llm_call", side_effect=side_effect),
+        ):
+            mock_tracker_cls.get_instance.return_value = MagicMock()
+            results = execute_agents_real([agent])
+
+        # Fallback uses CAPABLE only
+        assert tiers_seen == ["capable"]
+        assert results[0].success is True
+
+
+class TestAllTiersExhausted:
+    """Cover lines 136-140: all tiers fail → return last failure result."""
+
+    def test_progressive_all_tiers_fail(self):
+        from attune.meta_workflows.llm_execution import execute_agents_real
+
+        agent = _make_agent_spec(tier_strategy=TierStrategy.PROGRESSIVE)
+
+        mock_router = MagicMock()
+        mock_router._default_provider = "anthropic"
+        cfg = _make_model_config()
+        mock_router.MODELS = {
+            "anthropic": {"cheap": cfg, "capable": cfg, "premium": cfg},
+        }
+
+        fail_response = {
+            "cost": 0.001,
+            "tokens": {"input": 10, "output": 500, "total": 510},
+            "success": False,
+            "output": {"error": "no", "model": "x", "tier": "?", "success": False},
+        }
+
+        with (
+            patch("attune.meta_workflows.llm_execution.ModelRouter", return_value=mock_router),
+            patch("attune.meta_workflows.llm_execution.UsageTracker") as mock_tracker_cls,
+            patch("attune.meta_workflows.llm_execution.build_agent_prompt", return_value="p"),
+            patch(
+                "attune.meta_workflows.llm_execution.execute_llm_call",
+                return_value=fail_response,
+            ),
+        ):
+            mock_tracker_cls.get_instance.return_value = MagicMock()
+            results = execute_agents_real([agent])
+
+        assert len(results) == 1
+        # All three tiers attempted → cumulative cost
+        assert results[0].cost > 0.001  # cheap + capable + premium
+        # Last attempted tier was premium
+        assert results[0].tier_used == "premium"
+        assert results[0].success is False
+
+
+class TestExecuteAtTierExceptionPath:
+    """Cover lines 210-214: execute_llm_call raises → error result returned."""
+
+    def test_llm_call_exception_returns_failure_result(self):
+        from attune.meta_workflows.llm_execution import execute_agents_real
+
+        agent = _make_agent_spec(tier_strategy=TierStrategy.CHEAP_ONLY)
+        mock_router = MagicMock()
+        mock_router._default_provider = "anthropic"
+        cfg = _make_model_config()
+        mock_router.MODELS = {
+            "anthropic": {"cheap": cfg, "capable": cfg, "premium": cfg},
+        }
+
+        with (
+            patch("attune.meta_workflows.llm_execution.ModelRouter", return_value=mock_router),
+            patch("attune.meta_workflows.llm_execution.UsageTracker") as mock_tracker_cls,
+            patch("attune.meta_workflows.llm_execution.build_agent_prompt", return_value="p"),
+            patch(
+                "attune.meta_workflows.llm_execution.execute_llm_call",
+                side_effect=RuntimeError("api down"),
+            ),
+        ):
+            mock_tracker_cls.get_instance.return_value = MagicMock()
+            results = execute_agents_real([agent])
+
+        assert len(results) == 1
+        assert results[0].success is False
+        # tier_used is "cheap" (the tier that errored), NOT "error" — the
+        # exception was caught inside _execute_at_tier, not in execute_agents_real.
+        assert results[0].tier_used == "cheap"
+        assert "api down" in str(results[0].error)
+
+
+class TestExecuteLlmCallRealApiSuccess:
+    """Cover lines 257-276: Anthropic SDK success path."""
+
+    def test_real_api_success_returns_response(self):
+        from attune.meta_workflows.llm_execution import execute_llm_call
+
+        # Build a fake Anthropic SDK module
+        fake_block = MagicMock()
+        fake_block.text = "real model output"
+        fake_response = MagicMock()
+        fake_response.content = [fake_block]
+        fake_response.usage = MagicMock(input_tokens=120, output_tokens=80)
+
+        fake_client = MagicMock()
+        fake_client.messages.create.return_value = fake_response
+
+        fake_anthropic_class = MagicMock(return_value=fake_client)
+
+        # Build a fake module with `Anthropic` attribute
+        fake_module = MagicMock()
+        fake_module.Anthropic = fake_anthropic_class
+
+        model_cfg = _make_model_config(
+            model_id="claude-sonnet-x",
+            cost_per_1k_input=2.0,
+            cost_per_1k_output=10.0,
+        )
+
+        import os
+
+        with (
+            patch.dict("os.environ", {"ANTHROPIC_API_KEY": "test-key"}),
+            patch.dict("sys.modules", {"anthropic": fake_module}),
+        ):
+            result = execute_llm_call("Hi there", model_cfg, ModelTier.CAPABLE)
+
+        # Cost = (120/1000)*2.0 + (80/1000)*10.0 = 0.24 + 0.8 = 1.04
+        assert result["success"] is True
+        assert result["cost"] == 1.04
+        assert result["tokens"]["input"] == 120
+        assert result["tokens"]["output"] == 80
+        assert result["tokens"]["total"] == 200
+        assert result["output"]["message"] == "real model output"
+        assert result["output"]["model"] == "claude-sonnet-x"
+        assert result["output"]["tier"] == ModelTier.CAPABLE.value
+        # Sanity: the SDK class was instantiated with the api_key
+        fake_anthropic_class.assert_called_once_with(api_key="test-key")
+        # Suppress unused import flake
+        del os
+
+    def test_real_api_success_empty_content_returns_blank_text(self):
+        """Cover the `if response.content else ""` branch for empty content list."""
+        from attune.meta_workflows.llm_execution import execute_llm_call
+
+        fake_response = MagicMock()
+        fake_response.content = []  # falsy → output_text = ""
+        fake_response.usage = MagicMock(input_tokens=10, output_tokens=5)
+
+        fake_client = MagicMock()
+        fake_client.messages.create.return_value = fake_response
+
+        fake_module = MagicMock()
+        fake_module.Anthropic = MagicMock(return_value=fake_client)
+
+        model_cfg = _make_model_config()
+
+        with (
+            patch.dict("os.environ", {"ANTHROPIC_API_KEY": "k"}),
+            patch.dict("sys.modules", {"anthropic": fake_module}),
+        ):
+            result = execute_llm_call("p", model_cfg, ModelTier.CHEAP)
+
+        assert result["success"] is True
+        assert result["output"]["message"] == ""
