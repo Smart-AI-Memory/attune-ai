@@ -98,3 +98,44 @@ initializes", "tier cache has 3 entries"). Nothing unique to recover.
 is healthy and has live coverage. The retired file was a write-only
 artifact of an in-progress sprint that never reconciled with where
 the implementation actually landed.
+
+---
+
+## `tests/unit/scaffolding/test_scaffolding_cli.py`
+
+**Date:** 2026-05-09
+**Initial classification:** R3 RETIRE with salvage (28/42 fail, 67%) — possibly downgrade to R2 RECONCILE if cli.py is small enough
+**Final classification:** **R3 RETIRE — no salvage**
+**Action:** File deleted.
+
+**Why no salvage / no downgrade.** The `cli.py` reading
+(228 lines, mostly argparse plumbing) confirmed the deprecation
+hypothesis but moved the verdict harder, not softer:
+
+- **Production CLI is deprecated.** `src/attune/scaffolding/__main__.py:16`
+  unconditionally emits a deprecation notice (`_emit_cli_deprecation(
+  "attune.scaffolding", "attune workflow run")`) before invoking
+  `main()`. Every user invocation prints "use `attune workflow run`
+  instead."
+- **Excluded from coverage.** `pyproject.toml:630-631` excludes both
+  `*/scaffolding/cli.py` and `*/scaffolding/__main__.py` from coverage
+  measurement. The project itself doesn't expect this CLI to be
+  tested.
+- **No callers in production code.** `cmd_create`, `cmd_list_patterns`,
+  `main` are referenced only by the CLI's own `__main__.py` and (was)
+  the deleted test file. Not wired into the `attune` console script.
+- **Mocks had moved out from under the production code.** The test
+  file's heavy `sys.modules["test_generator"] = MagicMock()` and
+  `sys.modules["patterns"] = MagicMock()` injections (lines 21–24) are
+  the textbook smell for a mock-driven test that lost its target.
+
+The 14 "passing" tests were exercising argparse subcommand wiring for
+a deprecated CLI surface. Salvage value: zero.
+
+**Out-of-scope follow-up:** the production module is similarly overdue
+for removal. `attune.scaffolding` and `orchestrated_release_prep` are
+both legacy CLI/workflow surfaces deprecated in favor of
+`attune workflow run`. A separate retirement spec for these modules
+themselves would be reasonable — not in scope here. If pursued,
+verify nothing on PyPI / in attune-* sibling packages still imports
+`attune.scaffolding`.
