@@ -4757,10 +4757,10 @@
 <p><strong>Solutions:</strong></p>
 <p><strong>Don't use sudo! Use virtual environments instead:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="c1"># Create virtual environment</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>~/.empathy_env
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>python<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>~/.attune_env
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
 <a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># Activate it</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">source</span><span class="w"> </span>~/.empathy_env/bin/activate
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="nb">source</span><span class="w"> </span>~/.attune_env/bin/activate
 <a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>
 <a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="c1"># Install without sudo</span>
 <a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
@@ -5323,10 +5323,10 @@
 <p><strong>Solutions:</strong></p>
 <p><strong>1. Clean up old state files:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-77-1" name="__codelineno-77-1" href="#__codelineno-77-1"></a><span class="c1"># Find large state files</span>
-<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>du<span class="w"> </span>-sh<span class="w"> </span>~/.empathy_data/*
+<a id="__codelineno-77-2" name="__codelineno-77-2" href="#__codelineno-77-2"></a>du<span class="w"> </span>-sh<span class="w"> </span>~/.attune_data/*
 <a id="__codelineno-77-3" name="__codelineno-77-3" href="#__codelineno-77-3"></a>
 <a id="__codelineno-77-4" name="__codelineno-77-4" href="#__codelineno-77-4"></a><span class="c1"># Remove old states (backup first!)</span>
-<a id="__codelineno-77-5" name="__codelineno-77-5" href="#__codelineno-77-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/.empathy_data/old_states/
+<a id="__codelineno-77-5" name="__codelineno-77-5" href="#__codelineno-77-5"></a>rm<span class="w"> </span>-rf<span class="w"> </span>~/.attune_data/old_states/
 </code></pre></div></p>
 <p><strong>2. Limit state persistence:</strong>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-78-1" name="__codelineno-78-1" href="#__codelineno-78-1"></a><span class="c1"># empathy.config.yml</span>
