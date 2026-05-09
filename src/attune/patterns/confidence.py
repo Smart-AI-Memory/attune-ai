@@ -112,10 +112,15 @@ class PatternConfidenceTracker:
             try:
                 with open(self.stats_file, encoding="utf-8") as f:
                     data = json.load(f)
+                    _computed = {"success_rate", "application_rate", "confidence_score"}
                     for pattern_id, stats_dict in data.get("patterns", {}).items():
                         self._stats[pattern_id] = PatternUsageStats(
                             pattern_id=pattern_id,
-                            **{k: v for k, v in stats_dict.items() if k != "pattern_id"},
+                            **{
+                                k: v
+                                for k, v in stats_dict.items()
+                                if k != "pattern_id" and k not in _computed
+                            },
                         )
             except (json.JSONDecodeError, OSError) as e:
                 logger.warning("Failed to load usage stats: %s", e)
