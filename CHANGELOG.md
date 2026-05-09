@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.6.0] - 2026-05-09
+
+### Added — session-continuity hooks + `/handoff` slash command
+
+Two new plugin hooks plus a manual slash command that keep long
+Claude Code sessions oriented and recoverable. All opt-in via
+plugin install; silent until they have something to say.
+
+- **`spec_orient.py`** (SessionStart hook). On `startup` /
+  `resume` / `clear`, prints up to 3 in-flight specs from
+  `<workspace>/specs/` and `<workspace>/<layer>/specs/`. On
+  `compact`, prints the most-recent spec body (≤8 kB) so the
+  active spec survives auto-compaction in fresh post-compact
+  context.
+- **`compact_warning.py`** (Stop hook). Once per session when a
+  transcript-size proxy crosses
+  `ATTUNE_AI_COMPACT_WARNING_THRESHOLD` (default `0.70`). Emits
+  a copy-pasteable resume prompt and recommends starting a
+  fresh session. Sentinel is written before output to guarantee
+  single-fire even on duplicate Stop events.
+- **`/handoff`** slash command. Prints the same resume prompt
+  on demand and appends it to `~/.attune/last-handoff.md` for
+  cross-session recovery.
+- **Tunable defaults** via env vars:
+  `ATTUNE_AI_COMPACT_WARNING_THRESHOLD`,
+  `ATTUNE_AI_CHARS_PER_TOKEN`,
+  `ATTUNE_AI_CONTEXT_WINDOW_TOKENS`,
+  `ATTUNE_AI_WORKSPACE_ROOTS`,
+  `ATTUNE_AI_SENTINEL_DIR`,
+  `ATTUNE_AI_LAST_HANDOFF_FILE`.
+
+Implementation backed by 55 unit + IO tests; hooks wrap
+`main()` in `try/except` and always exit 0 to guarantee the
+plugin can never crash a user's session.
+
+Verified pre-implementation against the public Claude Code
+hook docs (V1 — Stop has no context-utilization field;
+V2 — PreCompact has no content-injection mechanism;
+V3 — SessionStart passes both `session_id` and `source` with
+values `startup` / `resume` / `clear` / `compact`). Spec at
+`specs/precompact-sessionstart-hooks/`.
+
 ## [6.5.5] - 2026-05-06
 
 ### Fixed — cross-project release-prep robustness (#196)
