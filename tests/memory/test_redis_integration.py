@@ -20,7 +20,7 @@ Licensed under the Apache License, Version 2.0
 
 import pytest
 
-from attune.memory import AccessTier, AgentCredentials, StagedPattern, TTLStrategy
+from attune.memory import AccessTier, AgentCredentials, StagedPattern
 from attune.redis_config import get_redis_memory
 
 
@@ -353,7 +353,7 @@ class TestTTLBehavior:
         if keys:
             ttl = memory._client.ttl(keys[0])
             assert ttl > 0  # TTL is set
-            assert ttl <= TTLStrategy.COORDINATION.value  # Not more than 5 min
+            assert ttl <= 300  # Not more than 5 min (COORDINATION TTL removed in v5.0)
 
 
 class TestConcurrentAccess:
