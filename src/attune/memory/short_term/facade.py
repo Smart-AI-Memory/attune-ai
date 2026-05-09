@@ -338,12 +338,15 @@ class RedisShortTermMemory:
     def create_conflict_context(
         self,
         conflict_id: str,
-        agents: list[str],
+        positions: dict,
+        interests: dict,
         credentials: AgentCredentials,
-        topic: str = "",
+        batna: str | None = None,
     ) -> ConflictContext | None:
         """Create a conflict negotiation context."""
-        return self._conflicts.create_conflict_context(conflict_id, agents, credentials, topic)  # type: ignore[arg-type]
+        return self._conflicts.create_conflict_context(  # type: ignore[arg-type]
+            conflict_id, positions, interests, credentials, batna
+        )
 
     def get_conflict_context(
         self,
@@ -368,6 +371,54 @@ class RedisShortTermMemory:
     ) -> list[ConflictContext]:
         """List all active (unresolved) conflicts."""
         return self._conflicts.list_active_conflicts(credentials)
+
+    def send_signal(
+        self,
+        signal_type: str,
+        data: Any,
+        credentials: AgentCredentials,
+        target_agent: str | None = None,
+    ) -> bool:
+        """Send a coordination signal to other agents."""
+        import json
+        from datetime import datetime
+
+        if not credentials.can_stage():
+            raise PermissionError(
+                f"Agent {credentials.agent_id} cannot send signals. "
+                "Requires CONTRIBUTOR tier or higher.",
+            )
+        target = target_agent or "broadcast"
+        key = f"{self.PREFIX_COORDINATION}{signal_type}:{credentials.agent_id}:{target}"
+        payload = {
+            "signal_type": signal_type,
+            "from_agent": credentials.agent_id,
+            "to_agent": target_agent,
+            "data": data,
+            "sent_at": datetime.now().isoformat(),
+        }
+        return bool(self._base._set(key, json.dumps(payload), 300))
+
+    def receive_signals(
+        self,
+        credentials: AgentCredentials,
+        signal_type: str | None = None,
+    ) -> list[dict]:
+        """Receive coordination signals addressed to this agent."""
+        import json
+
+        if signal_type:
+            pattern = f"{self.PREFIX_COORDINATION}{signal_type}:*:{credentials.agent_id}"
+        else:
+            pattern = f"{self.PREFIX_COORDINATION}*:{credentials.agent_id}"
+        broadcast_pattern = f"{self.PREFIX_COORDINATION}*:*:broadcast"
+        keys = set(self._base._keys(pattern)) | set(self._base._keys(broadcast_pattern))
+        signals = []
+        for key in keys:
+            raw = self._base._get(key)
+            if raw:
+                signals.append(json.loads(raw))
+        return signals
 
     # =========================================================================
     # Session Management Operations - delegate to SessionManager
