@@ -304,13 +304,25 @@ class TestPluginStructure:
             f"Expected 15 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
         )
 
-    def test_no_commands_directory(self) -> None:
-        """Test that commands/ directory no longer exists (fully skills-centric)."""
+    def test_commands_directory_only_has_allowlisted_commands(self) -> None:
+        """Test commands/ contains only the explicit allowlist, not legacy commands.
+
+        The plugin is mostly skills-centric, but a small number of slash
+        commands live alongside skills when they need lighter-weight plumbing
+        (e.g. session-continuity helpers like /handoff that just shell out
+        to a Python script). New entries here must be deliberate — anything
+        else should be a skill.
+        """
+        allowed = {"handoff.md"}
         commands_dir = PLUGIN_ROOT / "commands"
-        assert not commands_dir.exists(), (
-            f"commands/ directory should not exist. "
-            f"All commands migrated to skills. "
-            f"Found: {sorted(f.name for f in commands_dir.glob('*.md')) if commands_dir.exists() else []}"
+        if not commands_dir.exists():
+            return
+        actual = {f.name for f in commands_dir.glob("*.md")}
+        unexpected = actual - allowed
+        assert not unexpected, (
+            f"Unexpected files in commands/: {sorted(unexpected)}. "
+            f"New slash commands must be added to the allowlist explicitly. "
+            f"Allowlist: {sorted(allowed)}"
         )
 
     def test_hook_scripts_exist(self) -> None:
