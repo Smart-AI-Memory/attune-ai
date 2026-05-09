@@ -163,6 +163,32 @@ class TestCmdTier1StatusPlainText:
         captured = capsys.readouterr()
         assert "Error" in captured.out
 
+    def test_plain_text_with_no_task_types(self, capsys):
+        """cmd_tier1_status plain-text branch skips 'By Task Type' when empty.
+
+        Restored from origin's PR #204 test_plain_text_with_no_task_types after
+        the merge resolution kept the helper-function fixture style instead of
+        origin's _make_analytics builder.
+        """
+        from attune.telemetry import cli_automation
+
+        summary = _tier1_summary()
+        summary["task_routing"]["by_task_type"] = {}
+        analytics = MagicMock()
+        analytics.tier1_summary.return_value = summary
+        mock_store = MagicMock()
+
+        with (
+            patch.object(cli_automation, "RICH_AVAILABLE", False),
+            patch("attune.models.telemetry.get_telemetry_store", return_value=mock_store),
+            patch("attune.models.telemetry.TelemetryAnalytics", return_value=analytics),
+        ):
+            result = cli_automation.cmd_tier1_status(_args())
+
+        assert result == 0
+        captured = capsys.readouterr()
+        assert "By Task Type" not in captured.out
+
 
 # ---------------------------------------------------------------------------
 # cmd_task_routing_report — plain text fallback (lines 185-195)
