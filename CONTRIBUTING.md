@@ -184,6 +184,19 @@ pytest tests/ -v
 pytest tests/ -s
 ```
 
+### Cleaning up between runs
+
+If coverage runs error with *"Data file ... doesn't seem to be a coverage data
+file"*, or if stale `pytest` processes are eating RAM, run:
+
+```bash
+./scripts/clean_test_artifacts.sh
+```
+
+This removes leftover `.coverage*` files and `.pytest_cache/`, and kills any
+orphaned `pytest` processes belonging to your user. Safe to run anytime —
+only touches artifacts that are already in `.gitignore`.
+
 ### Coverage Requirements
 
 - Minimum **80% overall coverage**
