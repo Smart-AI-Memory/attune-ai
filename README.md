@@ -328,6 +328,34 @@ reporting and full security details.
 
 ---
 
+## Session continuity
+
+Three lightweight surfaces keep long Claude Code sessions
+oriented and recoverable. All are opt-in via plugin install
+and silent until they have something to say.
+
+| Surface | Event | When it fires |
+|---------|-------|---------------|
+| `spec_orient.py` | `SessionStart` | On `startup` / `resume` / `clear`, prints up to 3 in-flight spec slugs. On `compact`, prints the most-recent spec body so the model keeps the spec in fresh post-compact context. |
+| `compact_warning.py` | `Stop` | Once per session when transcript size crosses ~70% of the context window. Emits a copy-pasteable resume prompt and recommends starting a fresh session. |
+| `/handoff` | slash command | On demand. Prints the same resume prompt as the auto-warning AND appends it to `~/.attune/last-handoff.md` so you can recover it later. |
+
+### Tunable defaults
+
+- `ATTUNE_AI_COMPACT_WARNING_THRESHOLD` (default `0.70`) — fraction of context window before the warning fires.
+- `ATTUNE_AI_CHARS_PER_TOKEN` (default `4.0`) — utilization estimator's chars-to-tokens factor.
+- `ATTUNE_AI_CONTEXT_WINDOW_TOKENS` (default `200000`) — context window assumed by the estimator.
+- `ATTUNE_AI_WORKSPACE_ROOTS` (colon-separated paths) — override the workspace roots scanned for `specs/`.
+- `ATTUNE_AI_SENTINEL_DIR` (default `~/.attune`) — directory for the once-per-session warning sentinel.
+
+The transcript-size proxy is crude but monotonic: the warning
+fires when the user's total content characters cross the
+threshold once. If your real auto-compact triggers consistently
+earlier or later than the warning, drop the threshold to `0.65`
+or raise it to `0.75`.
+
+---
+
 ## Migration
 
 `attune-help` and `attune-author` have moved to their own

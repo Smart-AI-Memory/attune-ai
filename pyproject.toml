@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "6.5.5"
+version = "6.6.0"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -684,6 +684,12 @@ omit = [
     "*/core_modules/__init__.py",  # Core modules init
     # Models main entry
     "*/models/__main__.py",  # Models CLI entry point
+    # Standalone hook script (not importable via pytest)
+    "*/hooks/scripts/help_freshness_nudge.py",
+    # Interactive agent CLI (requires live Claude agent loop)
+    "*/meta_workflows/cli_commands/agent_commands.py",
+    # Shadowed by attune/config/ package — unreachable import
+    "*/attune/config.py",
 ]
 branch = true
 

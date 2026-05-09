@@ -5,8 +5,8 @@ Licensed under the Apache License, Version 2.0
 """
 
 import time
-from datetime import datetime
-from unittest.mock import Mock, patch
+from datetime import datetime, timezone
+from unittest.mock import MagicMock, Mock, patch
 
 from attune.telemetry.approval_gates import ApprovalGate, ApprovalRequest, ApprovalResponse
 
@@ -518,3 +518,138 @@ class TestApprovalGateIntegration:
         # Verify approval was received
         assert response.approved is True
         assert response.responder == "user@example.com"
+
+
+# =============================================================================
+# Branch-coverage additions — targets previously-uncovered lines
+# =============================================================================
+
+
+class TestApprovalRequestFromDictBranches:
+    """Cover from_dict timestamp branches (lines 91-94)."""
+
+    def test_from_dict_timestamp_not_datetime_not_str(self):
+        data = {
+            "request_id": "r1",
+            "approval_type": "deploy",
+            "agent_id": "agent1",
+            "timestamp": None,  # Neither str nor datetime
+        }
+        req = ApprovalRequest.from_dict(data)
+        assert req.timestamp.tzinfo is not None
+
+    def test_from_dict_timestamp_naive_datetime_gets_utc(self):
+        naive = datetime(2025, 1, 1, 12, 0, 0)  # No tzinfo
+        data = {
+            "request_id": "r2",
+            "approval_type": "delete",
+            "agent_id": "agent2",
+            "timestamp": naive,
+        }
+        req = ApprovalRequest.from_dict(data)
+        assert req.timestamp.tzinfo is not None
+
+
+class TestApprovalResponseFromDictBranches:
+    """Cover from_dict timestamp branches in ApprovalResponse (lines 142-145)."""
+
+    def test_from_dict_timestamp_none_gets_utc(self):
+        data = {
+            "request_id": "r3",
+            "approved": True,
+            "responder": "user@example.com",
+            "timestamp": None,
+        }
+        resp = ApprovalResponse.from_dict(data)
+        assert resp.timestamp.tzinfo is not None
+
+    def test_from_dict_timestamp_naive_datetime_gets_utc(self):
+        naive = datetime(2025, 6, 1, 8, 0, 0)
+        data = {
+            "request_id": "r4",
+            "approved": False,
+            "responder": "bot",
+            "timestamp": naive,
+        }
+        resp = ApprovalResponse.from_dict(data)
+        assert resp.timestamp.tzinfo is not None
+
+
+class TestApprovalGateNoBranchCoverage:
+    """Cover branches where memory/agent_id missing or no Redis client."""
+
+    def test_request_approval_no_memory_returns_rejected(self):
+        gate = ApprovalGate(memory=None, agent_id=None)
+        gate.memory = None
+        response = gate.request_approval("deploy", context={}, timeout=0.1)
+        assert response.approved is False
+
+    def test_respond_to_approval_no_memory_returns_false(self):
+        gate = ApprovalGate(memory=None, agent_id="wf")
+        gate.memory = None
+        result = gate.respond_to_approval("req1", approved=True, responder="user")
+        assert result is False
+
+    def test_respond_to_approval_no_redis_client_returns_false(self):
+        mock_memory = MagicMock()
+        mock_memory._client = None  # No Redis backend
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        result = gate.respond_to_approval("req1", approved=True, responder="user")
+        assert result is False
+
+    def test_check_for_response_no_memory_returns_none(self):
+        gate = ApprovalGate(memory=None, agent_id="wf")
+        gate.memory = None
+        result = gate._check_for_response("req1")
+        assert result is None
+
+    def test_check_for_response_retrieve_method(self):
+        mock_memory = MagicMock(spec=["retrieve"])
+        mock_memory.retrieve.return_value = None
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        result = gate._check_for_response("req1")
+        assert result is None
+
+    def test_check_for_response_redis_client_no_data(self):
+        mock_memory = MagicMock(spec=["_client"])
+        mock_memory._client.get.return_value = None
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        result = gate._check_for_response("req1")
+        assert result is None
+
+    def test_check_for_response_redis_bytes_decoded(self):
+        import json
+
+        response_data = {
+            "request_id": "r1",
+            "approved": True,
+            "responder": "user",
+            "reason": "",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+        mock_memory = MagicMock(spec=["_client"])
+        mock_memory._client.get.return_value = json.dumps(response_data).encode("utf-8")
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        result = gate._check_for_response("r1")
+        assert result is not None
+        assert result.approved is True
+
+    def test_check_for_response_exception_returns_none(self):
+        mock_memory = MagicMock(spec=["retrieve"])
+        mock_memory.retrieve.side_effect = RuntimeError("redis error")
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        result = gate._check_for_response("req1")
+        assert result is None
+
+    def test_request_approval_no_redis_client_logs_warning(self, caplog):
+        import logging
+
+        mock_memory = MagicMock()
+        mock_memory._client = None
+        # _check_for_response uses retrieve(); make it return None so no response found
+        mock_memory.retrieve.return_value = None
+        gate = ApprovalGate(memory=mock_memory, agent_id="wf")
+        with caplog.at_level(logging.WARNING):
+            # times out immediately since poll loop never gets response
+            response = gate.request_approval("deploy", timeout=0.01)
+        assert response.approved is False

@@ -4,8 +4,9 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import time
 from datetime import datetime
-from unittest.mock import Mock
+from unittest.mock import MagicMock, Mock, patch
 
 from attune.telemetry.feedback_loop import (
     FeedbackEntry,
@@ -13,6 +14,7 @@ from attune.telemetry.feedback_loop import (
     ModelTier,
     QualityStats,
     TierRecommendation,
+    _InMemoryStore,
 )
 
 
@@ -361,3 +363,121 @@ class TestFeedbackLoop:
         assert cleared == 1
         assert loop.get_feedback_history("test", "stage1") == []
         assert len(loop.get_feedback_history("test", "stage2")) == 1
+
+
+# =============================================================================
+# Branch-coverage additions — targets previously-uncovered lines
+# =============================================================================
+
+
+class TestInMemoryStoreBranches:
+    """Cover _InMemoryStore expiry, stats, and capabilities (lines 77-116)."""
+
+    def test_retrieve_expired_entry_returns_none(self):
+        store = _InMemoryStore()
+        # Directly insert an entry that is already expired
+        store._data["k"] = ("v", time.monotonic() - 10)
+        result = store.retrieve("k")
+        assert result is None
+
+    def test_keys_prunes_expired(self):
+        store = _InMemoryStore()
+        store.stash("old_key", "v", ttl=1)
+        # Force the key to appear expired
+        key_internal = list(store._data.keys())[0]
+        store._data[key_internal] = ("v", time.monotonic() - 10)  # already expired
+        with patch("attune.telemetry.feedback_loop.time") as mock_time:
+            mock_time.monotonic.return_value = time.monotonic() + 100
+            result = store.keys("*")
+        assert "old_key" not in result
+
+    def test_get_stats_returns_dict(self):
+        store = _InMemoryStore()
+        stats = store.get_stats()
+        assert "entries" in stats
+        assert stats["backend"] == "in-memory"
+
+    def test_close_is_noop(self):
+        store = _InMemoryStore()
+        store.close()  # Should not raise
+
+    def test_supports_realtime_false(self):
+        assert _InMemoryStore().supports_realtime() is False
+
+    def test_supports_distributed_false(self):
+        assert _InMemoryStore().supports_distributed() is False
+
+
+class TestFeedbackLoopBranches:
+    """Cover remaining branches in FeedbackLoop (lines 161-406)."""
+
+    def test_record_feedback_with_model_tier_enum(self):
+        from attune.telemetry.feedback_loop import ModelTier
+
+        loop = FeedbackLoop()
+        fid = loop.record_feedback("wf", "stage", ModelTier.CHEAP, 0.9)
+        assert fid != ""
+
+    def test_record_feedback_stash_exception_returns_empty(self):
+        loop = FeedbackLoop()
+        loop.memory.stash = MagicMock(side_effect=RuntimeError("disk full"))
+        result = loop.record_feedback("wf", "stage", "cheap", 0.8)
+        assert result == ""
+
+    def test_get_feedback_history_with_model_tier_enum(self):
+        from attune.telemetry.feedback_loop import ModelTier
+
+        loop = FeedbackLoop()
+        loop.record_feedback("wf2", "s2", ModelTier.CAPABLE, 0.75)
+        result = loop.get_feedback_history("wf2", "s2", tier=ModelTier.CAPABLE)
+        assert isinstance(result, list)
+
+    def test_get_feedback_history_parse_error_continues(self):
+        """Bad entry in store is skipped rather than raising."""
+        loop = FeedbackLoop()
+        loop.memory.stash("feedback:wf:s:cheap:bad1", {"corrupted": True})
+        # Patch FeedbackEntry.from_dict to fail on this entry
+        with patch(
+            "attune.telemetry.feedback_loop.FeedbackEntry.from_dict",
+            side_effect=ValueError("parse error"),
+        ):
+            result = loop.get_feedback_history("wf", "s", tier="cheap")
+        assert isinstance(result, list)
+
+    def test_get_feedback_history_memory_exception_returns_empty(self):
+        loop = FeedbackLoop()
+        loop.memory.keys = MagicMock(side_effect=RuntimeError("redis down"))
+        result = loop.get_feedback_history("wf", "stage")
+        assert result == []
+
+    def test_retrieve_feedback_exception_returns_none(self):
+        loop = FeedbackLoop()
+        loop.memory.retrieve = MagicMock(side_effect=RuntimeError("oops"))
+        result = loop._retrieve_feedback("some:key")
+        assert result is None
+
+    def test_recommend_tier_no_current_tier_inferred_from_history(self):
+        """current_tier=None → inferred from first history entry (lines 377-379)."""
+        loop = FeedbackLoop()
+        # Seed enough data for stats (10+ samples) at 'cheap' tier
+        for _ in range(12):
+            loop.record_feedback("wf3", "s3", "cheap", 0.5)
+        rec = loop.recommend_tier("wf3", "s3", current_tier=None)
+        assert rec.current_tier in ("cheap", "capable", "premium", "unknown")
+
+    def test_recommend_tier_capable_low_quality_upgrades_to_premium(self):
+        """Low quality on capable tier → recommend premium (lines 403-404)."""
+        loop = FeedbackLoop()
+        for _ in range(12):
+            loop.record_feedback("wf4", "s4", "capable", 0.3)
+        rec = loop.recommend_tier("wf4", "s4", current_tier="capable")
+        assert rec.recommended_tier == "premium"
+
+    def test_recommend_tier_model_tier_enum(self):
+        from attune.telemetry.feedback_loop import ModelTier
+
+        loop = FeedbackLoop()
+        for _ in range(12):
+            loop.record_feedback("wf5", "s5", "cheap", 0.9)
+        rec = loop.recommend_tier("wf5", "s5", current_tier=ModelTier.CHEAP)
+        assert rec is not None
