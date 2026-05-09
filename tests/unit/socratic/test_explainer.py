@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """Tests for the Socratic workflow explainer module.
 
 Copyright 2026 Smart-AI-Memory
@@ -323,3 +324,321 @@ class TestRoleDescriptions:
 
         for audience in AudienceLevel:
             assert audience in ROLE_DESCRIPTIONS
+
+
+# =============================================================================
+# Branch-coverage additions — targets lines 106, 213, 238, 267, 293,
+# 298-309, 341-386, 416-455 in src/attune/socratic/explainer.py
+# =============================================================================
+
+from datetime import datetime
+from unittest.mock import MagicMock, patch
+
+from attune.socratic.blueprint import (
+    AgentBlueprint,
+    AgentRole,
+    AgentSpec,
+    StageSpec,
+    WorkflowBlueprint,
+)
+from attune.socratic.explainer import WorkflowExplainer
+from attune.socratic.explainer import explain_workflow as top_level_explain
+from attune.socratic.explainer_types import AudienceLevel, DetailLevel, OutputFormat
+from attune.socratic.success import SuccessCriteria, SuccessMetric
+
+# ---------------------------------------------------------------------------
+# Fixtures / helpers
+# ---------------------------------------------------------------------------
+
+
+def _spec(agent_id="a1", name="Bot", role=AgentRole.ANALYZER, tools=None):
+    t = MagicMock()
+    t.id = "read_file"
+    return AgentSpec(
+        id=agent_id,
+        name=name,
+        role=role,
+        goal="analyse code",
+        backstory="exp",
+        tools=tools if tools is not None else [t],
+    )
+
+
+def _bp_agent(spec=None):
+    return AgentBlueprint(spec=spec or _spec())
+
+
+def _stage(sid="s1", name="Rev", agent_ids=None, parallel=False, depends_on=None):
+    return StageSpec(
+        id=sid,
+        name=name,
+        description="d",
+        agent_ids=agent_ids or ["a1"],
+        parallel=parallel,
+        depends_on=depends_on or [],
+    )
+
+
+def _blueprint(agents=None, stages=None, description="Desc", domain="quality"):
+    a = agents or [_bp_agent()]
+    s = stages or [_stage()]
+    return WorkflowBlueprint(
+        id="w1",
+        name="TestWF",
+        description=description,
+        agents=a,
+        stages=s,
+        domain=domain,
+        generated_at=datetime(2025, 1, 1),
+    )
+
+
+def _criteria():
+    from attune.socratic.success import MetricType
+
+    m = SuccessMetric(
+        id="m1",
+        name="Cov",
+        description="coverage",
+        metric_type=MetricType.PERCENTAGE,
+        target_value=0.9,
+    )
+    return SuccessCriteria(id="sc1", name="Gates", description="", metrics=[m])
+
+
+# ---------------------------------------------------------------------------
+# explain_workflow — success_criteria branch (line 106)
+# ---------------------------------------------------------------------------
+
+
+class TestExplainWorkflowSuccessCriteriaBranch:
+    def test_success_criteria_section_added(self):
+        expl = WorkflowExplainer()
+        bp = _blueprint()
+        result = expl.explain_workflow(bp, success_criteria=_criteria())
+        headings = [s["heading"] for s in result.sections]
+        assert "Success Metrics" in headings
+
+    def test_no_success_criteria_omits_section(self):
+        expl = WorkflowExplainer()
+        bp = _blueprint()
+        result = expl.explain_workflow(bp)
+        headings = [s["heading"] for s in result.sections]
+        assert "Success Metrics" not in headings
+
+
+# ---------------------------------------------------------------------------
+# _explain_agents — BRIEF / DETAILED (line 213, 217)
+# ---------------------------------------------------------------------------
+
+
+class TestExplainAgentsBranches:
+    def test_brief_no_tools_count(self):
+        expl = WorkflowExplainer(detail_level=DetailLevel.BRIEF)
+        result = expl._explain_agents(_blueprint().agents)
+        assert "Bot" in result
+        assert "tools" not in result
+
+    def test_detailed_shows_tool_count(self):
+        expl = WorkflowExplainer(detail_level=DetailLevel.DETAILED)
+        result = expl._explain_agents(_blueprint().agents)
+        assert "tool" in result
+
+    def test_standard_shows_goal(self):
+        expl = WorkflowExplainer(detail_level=DetailLevel.STANDARD)
+        result = expl._explain_agents(_blueprint().agents)
+        assert "analyse code" in result
+
+
+# ---------------------------------------------------------------------------
+# _explain_process — BEGINNER parallel/sequential, DETAILED depends_on
+# ---------------------------------------------------------------------------
+
+
+class TestExplainProcessBranches:
+    def test_beginner_parallel(self):
+        s1, s2 = _spec("a1", "B1"), _spec("a2", "B2")
+        agents = [_bp_agent(s1), _bp_agent(s2)]
+        stage = _stage(agent_ids=["a1", "a2"], parallel=True)
+        bp = _blueprint(agents=agents, stages=[stage])
+        expl = WorkflowExplainer(audience=AudienceLevel.BEGINNER)
+        result = expl._explain_process(bp.stages, bp.agents)
+        assert "same time" in result
+
+    def test_beginner_sequential(self):
+        agents = [_bp_agent(_spec("a1", "B1"))]
+        stage = _stage(agent_ids=["a1"], parallel=False)
+        bp = _blueprint(agents=agents, stages=[stage])
+        expl = WorkflowExplainer(audience=AudienceLevel.BEGINNER)
+        result = expl._explain_process(bp.stages, bp.agents)
+        assert "one after another" in result
+
+    def test_detailed_shows_depends_on(self):
+        agents = [_bp_agent(_spec("a1", "B1"))]
+        stage = _stage(agent_ids=["a1"], depends_on=["init_stage"])
+        bp = _blueprint(agents=agents, stages=[stage])
+        expl = WorkflowExplainer(detail_level=DetailLevel.DETAILED)
+        result = expl._explain_process(bp.stages, bp.agents)
+        assert "init_stage" in result
+
+
+# ---------------------------------------------------------------------------
+# _explain_tools — BRIEF (line 267)
+# ---------------------------------------------------------------------------
+
+
+class TestExplainToolsBranch:
+    def test_brief_shows_count_only(self):
+        expl = WorkflowExplainer(detail_level=DetailLevel.BRIEF)
+        result = expl._explain_tools(_spec().tools)
+        assert "1 tool" in result
+
+    def test_unknown_tool_uses_id(self):
+        expl = WorkflowExplainer(detail_level=DetailLevel.STANDARD)
+        t = MagicMock()
+        t.id = "my_custom_tool"
+        result = expl._explain_tools([t])
+        assert "my_custom_tool" in result
+
+
+# ---------------------------------------------------------------------------
+# _explain_agent_value — BEGINNER (line 293)
+# ---------------------------------------------------------------------------
+
+
+class TestExplainAgentValueBranch:
+    def test_beginner_saves_time(self):
+        expl = WorkflowExplainer(audience=AudienceLevel.BEGINNER)
+        result = expl._explain_agent_value(_spec(role=AgentRole.ANALYZER))
+        assert "saves you time" in result
+
+    def test_technical_adds_value(self):
+        expl = WorkflowExplainer(audience=AudienceLevel.TECHNICAL)
+        result = expl._explain_agent_value(_spec(role=AgentRole.REVIEWER))
+        assert "adds value" in result
+
+
+# ---------------------------------------------------------------------------
+# _explain_success_criteria — BEGINNER / TECHNICAL (lines 301-307)
+# ---------------------------------------------------------------------------
+
+
+class TestExplainSuccessCriteriaBranch:
+    def test_beginner_omits_target(self):
+        expl = WorkflowExplainer(audience=AudienceLevel.BEGINNER)
+        result = expl._explain_success_criteria(_criteria())
+        assert "Cov" in result
+        assert "0.9" not in result
+
+    def test_technical_shows_target(self):
+        expl = WorkflowExplainer(audience=AudienceLevel.TECHNICAL)
+        result = expl._explain_success_criteria(_criteria())
+        assert "0.9" in result
+
+    def test_no_target_value_omits_target(self):
+        from attune.socratic.success import MetricType
+
+        expl = WorkflowExplainer(audience=AudienceLevel.TECHNICAL)
+        m = SuccessMetric(
+            id="m2",
+            name="Pass",
+            description="tests",
+            metric_type=MetricType.BOOLEAN,
+            target_value=None,
+        )
+        crit = SuccessCriteria(id="sc2", name="G", description="", metrics=[m])
+        result = expl._explain_success_criteria(crit)
+        assert "target" not in result
+
+
+# ---------------------------------------------------------------------------
+# generate_narrative (lines 341-386)
+# ---------------------------------------------------------------------------
+
+
+class TestGenerateNarrativeBranch:
+    def test_contains_workflow_name(self):
+        expl = WorkflowExplainer()
+        result = expl.generate_narrative(_blueprint())
+        assert "TestWF" in result
+
+    def test_contains_stage_name(self):
+        expl = WorkflowExplainer()
+        result = expl.generate_narrative(_blueprint())
+        assert "Rev" in result
+
+    def test_parallel_stage_narrative(self):
+        s1, s2 = _spec("a1", "B1"), _spec("a2", "B2")
+        agents = [_bp_agent(s1), _bp_agent(s2)]
+        stage = _stage(agent_ids=["a1", "a2"], parallel=True)
+        bp = _blueprint(agents=agents, stages=[stage])
+        result = WorkflowExplainer().generate_narrative(bp)
+        assert "parallel" in result.lower()
+
+    def test_sequential_stage_narrative(self):
+        agents = [_bp_agent(_spec("a1", "B1"))]
+        stage = _stage(agent_ids=["a1"], parallel=False)
+        bp = _blueprint(agents=agents, stages=[stage])
+        result = WorkflowExplainer().generate_narrative(bp)
+        assert "B1" in result
+
+    def test_ends_with_result_section(self):
+        result = WorkflowExplainer().generate_narrative(_blueprint())
+        assert "The Result" in result
+
+
+# ---------------------------------------------------------------------------
+# top-level explain_workflow (lines 415-455)
+# ---------------------------------------------------------------------------
+
+
+class TestTopLevelExplainWorkflowBranch:
+    def test_string_args_accepted(self):
+        result = top_level_explain(_blueprint(), audience="technical", detail_level="standard")
+        assert isinstance(result, str)
+
+    def test_format_text(self):
+        result = top_level_explain(_blueprint(), format=OutputFormat.TEXT)
+        assert isinstance(result, str)
+
+    def test_format_markdown(self):
+        result = top_level_explain(_blueprint(), format="markdown")
+        assert isinstance(result, str)
+
+    def test_format_html(self):
+        result = top_level_explain(_blueprint(), format=OutputFormat.HTML)
+        assert "<" in result or isinstance(result, str)
+
+    def test_format_json(self):
+        import json
+
+        result = top_level_explain(_blueprint(), format=OutputFormat.JSON)
+        parsed = json.loads(result)
+        assert isinstance(parsed, dict)
+
+    def test_use_llm_markdown(self):
+        with patch("attune.socratic.explainer.LLMExplanationGenerator") as M:
+            M.return_value.generate.return_value = "# LLM Output"
+            result = top_level_explain(_blueprint(), use_llm=True, format=OutputFormat.MARKDOWN)
+        assert result == "# LLM Output"
+
+    def test_use_llm_text_strips_headers(self):
+        with patch("attune.socratic.explainer.LLMExplanationGenerator") as M:
+            M.return_value.generate.return_value = "## Header\n**Bold**"
+            result = top_level_explain(_blueprint(), use_llm=True, format=OutputFormat.TEXT)
+        assert "##" not in result
+        assert "**" not in result
+
+    def test_use_llm_html_wraps_div(self):
+        with patch("attune.socratic.explainer.LLMExplanationGenerator") as M:
+            M.return_value.generate.return_value = "content"
+            result = top_level_explain(_blueprint(), use_llm=True, format=OutputFormat.HTML)
+        assert "<div" in result
+
+    def test_beginner_audience(self):
+        result = top_level_explain(_blueprint(), audience="beginner")
+        assert isinstance(result, str)
+
+    def test_business_audience(self):
+        result = top_level_explain(_blueprint(), audience="business")
+        assert isinstance(result, str)

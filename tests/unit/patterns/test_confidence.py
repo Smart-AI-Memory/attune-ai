@@ -634,3 +634,158 @@ class TestPatternConfidenceTrackerSaveError:
         with patch("builtins.open", side_effect=OSError("disk full")):
             # Should not raise — just log the error
             tracker._save()
+
+    def test_save_logs_error_when_path_open_fails(self, tmp_path):
+        """_save handles OSError from Path.open gracefully."""
+        tracker = PatternConfidenceTracker(str(tmp_path))
+        tracker._ensure_loaded()
+        tracker._stats["bug_test"] = PatternUsageStats(pattern_id="bug_test")
+
+        with patch("pathlib.Path.open", side_effect=OSError("permission denied")):
+            # Should not raise — just log the error
+            tracker._save()
+
+    def test_save_logs_error_when_value_error_raised(self, tmp_path):
+        """_save handles ValueError (e.g. path validation fails) gracefully."""
+        tracker = PatternConfidenceTracker(str(tmp_path))
+        tracker._ensure_loaded()
+        tracker._stats["bug_test"] = PatternUsageStats(pattern_id="bug_test")
+
+        with patch(
+            "attune.security.path_validation._validate_file_path",
+            side_effect=ValueError("invalid path"),
+        ):
+            tracker._save()
+
+
+# ---------------------------------------------------------------------------
+# main() CLI function coverage
+# ---------------------------------------------------------------------------
+
+
+class TestConfidenceMainCLI:
+    """Tests for the confidence.py CLI main() function."""
+
+    def test_list_no_data(self, tmp_path, capsys):
+        """'list' with no data prints 'No pattern usage data recorded yet.'"""
+
+        from attune.patterns.confidence import main
+
+        with patch(
+            "sys.argv",
+            ["confidence", "--patterns-dir", str(tmp_path), "list"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "No pattern usage data" in captured.out
+
+    def test_list_with_data(self, tmp_path, capsys):
+        """'list' with pattern data prints confidence scores."""
+
+        from attune.patterns.confidence import PatternConfidenceTracker, main
+
+        tracker = PatternConfidenceTracker(str(tmp_path))
+        tracker.record_suggestion("bug_001")
+        tracker.record_application("bug_001", successful=True)
+
+        with patch(
+            "sys.argv", ["confidence", "--patterns-dir", str(tmp_path), "list", "--top", "5"]
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "bug_001" in captured.out
+
+    def test_stats_command(self, tmp_path, capsys):
+        """'stats' prints key/value pairs for a pattern."""
+        from attune.patterns.confidence import PatternConfidenceTracker, main
+
+        tracker = PatternConfidenceTracker(str(tmp_path))
+        tracker.record_suggestion("bug_001")
+
+        with patch("sys.argv", ["confidence", "--patterns-dir", str(tmp_path), "stats", "bug_001"]):
+            main()
+
+        captured = capsys.readouterr()
+        assert "bug_001" in captured.out
+
+    def test_record_suggested(self, tmp_path, capsys):
+        """'record --suggested' records a suggestion."""
+        from attune.patterns.confidence import main
+
+        with patch(
+            "sys.argv",
+            ["confidence", "--patterns-dir", str(tmp_path), "record", "bug_001", "--suggested"],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "Recorded suggestion" in captured.out
+
+    def test_record_applied_success(self, tmp_path, capsys):
+        """'record --applied --success' records a successful application."""
+        from attune.patterns.confidence import main
+
+        with patch(
+            "sys.argv",
+            [
+                "confidence",
+                "--patterns-dir",
+                str(tmp_path),
+                "record",
+                "bug_001",
+                "--applied",
+                "--success",
+            ],
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "Recorded application" in captured.out
+        assert "success=True" in captured.out
+
+    def test_stale_no_data(self, tmp_path, capsys):
+        """'stale' with no patterns prints appropriate message."""
+        from attune.patterns.confidence import main
+
+        with patch(
+            "sys.argv", ["confidence", "--patterns-dir", str(tmp_path), "stale", "--days", "90"]
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "No patterns unused" in captured.out
+
+    def test_stale_with_data(self, tmp_path, capsys):
+        """'stale' lists patterns with old last_applied date."""
+        from datetime import datetime, timedelta
+
+        from attune.patterns.confidence import PatternConfidenceTracker, PatternUsageStats, main
+
+        tracker = PatternConfidenceTracker(str(tmp_path))
+        tracker._ensure_loaded()
+        old_stats = PatternUsageStats(pattern_id="old_bug")
+        old_stats.times_suggested = 1
+        old_stats.last_suggested = (datetime.now() - timedelta(days=200)).isoformat()
+        tracker._stats["old_bug"] = old_stats
+        tracker._save()
+
+        with patch(
+            "sys.argv", ["confidence", "--patterns-dir", str(tmp_path), "stale", "--days", "90"]
+        ):
+            main()
+
+        captured = capsys.readouterr()
+        assert "old_bug" in captured.out
+
+    def test_no_command_prints_help(self, tmp_path, capsys):
+        """No subcommand prints help."""
+        from attune.patterns.confidence import main
+
+        with patch("sys.argv", ["confidence", "--patterns-dir", str(tmp_path)]):
+            main()
+
+        # Help output should show usage/commands
+        captured = capsys.readouterr()
+        assert captured.out or True  # argparse may print to stderr

@@ -1,3 +1,4 @@
+# ruff: noqa: E402
 """Coverage boost tests for models/auth_strategy.py
 
 Targets uncovered authentication strategy logic and edge cases to increase
@@ -590,3 +591,120 @@ class TestAuthStrategyEdgeCases:
         strategy.metadata["custom_key"] = "custom_value"
 
         assert strategy.metadata["custom_key"] == "custom_value"
+
+
+# =============================================================================
+# Branch-coverage additions — targets previously-uncovered lines
+# =============================================================================
+
+from unittest.mock import patch
+
+import pytest
+
+
+class TestAuthStrategySaveBranch:
+    """AuthStrategy.save() default path (line 274)."""
+
+    def test_save_uses_default_path_when_none(self, tmp_path):
+        from attune.models.auth_strategy import AuthStrategy
+
+        strategy = AuthStrategy()
+        custom = tmp_path / "auth_strategy.json"
+        with patch("attune.models.auth_strategy.AUTH_STRATEGY_FILE", custom):
+            strategy.save(path=None)
+        assert custom.exists()
+
+
+class TestConfigureAuthInteractive:
+    """configure_auth_interactive — all print/input paths (lines 317-394)."""
+
+    def _run_with_inputs(self, inputs, module_lines=100):
+        from attune.models.auth_strategy import configure_auth_interactive
+
+        with (
+            patch("builtins.input", side_effect=inputs),
+            patch("attune.models.auth_strategy.AuthStrategy.save"),
+        ):
+            return configure_auth_interactive(module_lines=module_lines)
+
+    def test_subscription_mode_chosen(self):
+        strategy = self._run_with_inputs(["2", "1"])  # Pro tier, Subscription mode
+        from attune.models.auth_strategy import AuthMode, SubscriptionTier
+
+        assert strategy.default_mode == AuthMode.SUBSCRIPTION
+        assert strategy.subscription_tier == SubscriptionTier.PRO
+
+    def test_api_mode_chosen(self):
+        strategy = self._run_with_inputs(["5", "2"])  # API_ONLY tier, API mode
+        from attune.models.auth_strategy import AuthMode
+
+        assert strategy.default_mode == AuthMode.API
+
+    def test_auto_mode_chosen(self):
+        strategy = self._run_with_inputs(["3", "3"])  # Max tier, Auto mode
+        from attune.models.auth_strategy import AuthMode
+
+        assert strategy.default_mode == AuthMode.AUTO
+
+    def test_invalid_tier_defaults_to_api_only(self):
+        strategy = self._run_with_inputs(["99", "3"])  # Bad tier, Auto mode
+        from attune.models.auth_strategy import SubscriptionTier
+
+        assert strategy.subscription_tier == SubscriptionTier.API_ONLY
+
+    def test_invalid_mode_defaults_to_auto(self):
+        strategy = self._run_with_inputs(["1", "99"])  # Free tier, bad mode
+        from attune.models.auth_strategy import AuthMode
+
+        assert strategy.default_mode == AuthMode.AUTO
+
+    def test_enterprise_tier(self):
+        strategy = self._run_with_inputs(["4", "3"])
+        from attune.models.auth_strategy import SubscriptionTier
+
+        assert strategy.subscription_tier == SubscriptionTier.ENTERPRISE
+
+    def test_free_tier(self):
+        strategy = self._run_with_inputs(["1", "3"])
+        from attune.models.auth_strategy import SubscriptionTier
+
+        assert strategy.subscription_tier == SubscriptionTier.FREE
+
+
+class TestCountNonBlankLines:
+    """count_lines_of_code exception paths (lines 436-442)."""
+
+    def test_counts_non_blank_lines(self, tmp_path):
+        from attune.models.auth_strategy import count_lines_of_code
+
+        f = tmp_path / "mod.py"
+        f.write_text("line1\n\n# comment\nline2\n")
+        result = count_lines_of_code(f)
+        assert result == 2
+
+    def test_fallback_on_first_read_error(self, tmp_path):
+        from attune.models.auth_strategy import count_lines_of_code
+
+        f = tmp_path / "mod.py"
+        f.write_text("a\nb\nc\n")
+        call_count = [0]
+        original_open = open
+
+        def selective_open(path, *args, **kwargs):
+            call_count[0] += 1
+            if call_count[0] == 1:
+                raise OSError("disk error")
+            return original_open(path, *args, **kwargs)
+
+        with patch("builtins.open", side_effect=selective_open):
+            result = count_lines_of_code(f)
+        assert result == 3
+
+    def test_returns_zero_when_both_reads_fail(self, tmp_path):
+        from attune.models.auth_strategy import count_lines_of_code
+
+        f = tmp_path / "mod.py"
+        f.write_text("data")
+        with patch("builtins.open", side_effect=OSError("no access")):
+            result = count_lines_of_code(f)
+        assert result == 0
