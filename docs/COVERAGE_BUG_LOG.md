@@ -18,6 +18,55 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-09 — session 49e (Opus 4.7)
+
+Test-infrastructure spec executed (docs/specs/test-infrastructure/).
+**3 production bugs surfaced**, none in the spec's target area — all
+side effects of investigating it.
+
+### Spec outcome (Phase 2A diagnosis)
+
+The "biggest infrastructure debt" identified in the project-health
+audit turned out to be a stale comment, not a real bug. `pytest.ini`
+forced `-n 0` (sequential execution) for years based on a one-line
+comment about "import timing issues with workflows package." Test #1
+of the spec (flip `-n 0` → `-n auto`, run full suite) just worked:
+14,073 tests pass under xdist in 101 seconds. The issue evidently
+got fixed incidentally as the codebase evolved; nobody re-checked
+the constraint.
+
+This is a **fourth diagnostic pattern worth naming**: "load-bearing
+comment that nobody re-validated." Different shape from Class 1/2/3,
+because the bug is in the documented constraint, not the code.
+
+### Bugs surfaced as side effects
+
+- `plugin/.claude-plugin/marketplace.json` + `plugin/core/__init__.py`
+  — version mismatch (6.3.0 vs plugin.json 6.6.0) from PR #204's
+  release bump that didn't propagate. Surfaced by `test_all_versions_match`
+  under the re-enabled parallel run, NOT introduced by it. Bumped both
+  to 6.6.0.
+- `tests/unit/plugins/test_plugin_config_validation.py` — test asserted
+  `plugin/commands/` directory shouldn't exist (skills migration), but
+  PR #204 intentionally added `plugin/commands/handoff.md`. Test wasn't
+  updated. Replaced with `test_commands_directory_only_has_allowlisted_commands`
+  with explicit allowlist.
+- 463 stale help templates in `plugin/help/generated/`. The
+  `Check Help Template Freshness` pre-commit hook is warn-only locally
+  but in CI auto-regenerates and reports "files modified by hook" as
+  a failure. This had been blocking dependabot PRs (#191, #192) for
+  5+ days. Regenerated via `ATTUNE_DOCS_AUTOREGEN=1`; both PRs unblocked
+  on rebase.
+
+### Audit findings (task #4)
+
+The four `--ignore`-d test files in `pytest.ini` were audited. All
+four have real test debt totaling 88 failures. Resolution deferred
+to a follow-up spec because each needs design work, not 5-minute
+fixes. Findings documented inline in `pytest.ini`.
+
+---
+
 ## 2026-05-09 — session 49d (Opus 4.7)
 
 Targeted sweep using a new AST-based scanner
@@ -178,6 +227,7 @@ they predate this log.
 | 1 | Crash paths nobody triggered | 3 |
 | 2 | Dead defensive code | 13 |
 | 3 | Tests mocking around bugs | 1 |
+| 4 | Load-bearing comments nobody re-validated | 1 |
 
 **Class 2 sub-patterns observed:**
 
@@ -201,7 +251,10 @@ they predate this log.
 
 **Sessions where 0 bugs surfaced:** 1 (session 49b).
 
-**Bug-find rate:** 17 bugs across 80 modules pushed to 100% = ~21% of
+**Bug-find rate:** 18 bugs across 80 modules pushed to 100% = ~22% of
 modules contain at least one production bug surfaced by the coverage push.
+Plus 3 merge-artifact bugs surfaced by the test-infrastructure spec
+(version mismatch, commands-directory test, stale templates) that aren't
+strictly coverage-push finds but came from the same investigative posture.
 
 Modules at 100%: 80 (cumulative across all sessions).

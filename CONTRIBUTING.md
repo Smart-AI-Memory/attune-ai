@@ -197,23 +197,20 @@ This removes leftover `.coverage*` files and `.pytest_cache/`, and kills any
 orphaned `pytest` processes belonging to your user. Safe to run anytime —
 only touches artifacts that are already in `.gitignore`.
 
-### Running the full suite locally (OOM workaround)
-
-`pytest tests/` will OOM on most dev machines. The reason: `pytest.ini` forces
-`-n 0` (sequential execution) due to known import-timing issues in the
-workflows package, so memory accumulates across the ~5000 tests in a single
-process. CI sidesteps this by running each matrix job on a fresh VM.
-
-To run the full suite locally, run by chunks instead — each chunk is its own
-pytest invocation and reclaims memory between chunks:
+### Running the full suite locally
 
 ```bash
-./scripts/run_tests_chunked.sh           # all chunks
-./scripts/run_tests_chunked.sh --failfast # stop at first chunk failure
+pytest tests/unit/
 ```
 
-If you need a true single-process run with xdist, the import-timing issues
-must be resolved first. Tracked as a future task.
+Defaults in `pytest.ini` use `-n auto` (pytest-xdist parallel execution).
+The full unit suite completes in ~100 seconds across all available cores.
+
+(For historical context: `-n 0` (sequential) was the previous default,
+based on a comment about "import timing issues with workflows package."
+Diagnosis 2026-05-09 in `docs/specs/test-infrastructure/` showed that
+issue no longer reproduces — likely fixed incidentally as the codebase
+evolved. xdist is now the standard.)
 
 ### Coverage Requirements
 
