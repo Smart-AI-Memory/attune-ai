@@ -39,21 +39,11 @@ jobs:
         pip install -e .[dev]
 
     - name: Run tests with coverage
-      # Coverage strategy: `coverage run` instruments pytest, each xdist
-      # worker writes its own parallel-mode .coverage file, then
-      # `coverage combine` merges them. This avoids pytest-cov's in-master
-      # IPC merge step, which was OOM-ing on GitHub-hosted runners after
-      # successfully running all 18,000+ tests (manifested as
-      # `[100%] PASSED` immediately followed by a runner shutdown signal,
-      # before coverage XML could be generated).
-      #
-      # `--no-cov` on pytest disables pytest-cov's plugin so it doesn't
-      # double-instrument or compete with `coverage run`.
-      #
       # --timeout=60 + --timeout-method=thread: catches a hanging test by
       # name with a stack trace instead of letting it kill the xdist worker
-      # silently. `thread` method is required for cross-platform support
-      # (default `signal` uses SIGALRM, unreliable on Windows).
+      # silently (which manifests as partial test runs + bogus low coverage).
+      # `thread` method is required for cross-platform support (default
+      # `signal` uses SIGALRM, which is unreliable on Windows).
       #
       # `not integration` excludes tests marked @pytest.mark.integration —
       # they require live services (Claude API, Redis, etc.) and crash xdist
@@ -61,11 +51,7 @@ jobs:
       # they exercise but are not part of the standard CI gate. Run them
       # separately via `pytest -m integration` against a configured env.
       run: |
-        coverage erase
-        coverage run -m pytest -n auto --no-cov --timeout=60 --timeout-method=thread -m "not network and not integration"
-        coverage combine
-        coverage report --fail-under=85
-        coverage xml
+        pytest --cov=src/attune --cov-branch --cov-report=xml --cov-report=term-missing --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 

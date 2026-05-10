@@ -608,12 +608,6 @@ filterwarnings = [
 # Coverage configuration
 [tool.coverage.run]
 source = ["attune", "attune_software"]
-# Parallel mode: each subprocess writes its own .coverage.<host>.<pid>.<rand>
-# file. `coverage combine` merges them after the run. Required for clean
-# pytest-xdist coverage capture without pytest-cov's IPC merge step (which
-# was OOM-ing on GitHub-hosted runners; see CI workflow comment).
-parallel = true
-concurrency = ["multiprocessing", "thread"]
 omit = [
     "*/tests/*",
     "*/test_*.py",
