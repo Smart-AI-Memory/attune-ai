@@ -51,7 +51,7 @@ jobs:
       # they exercise but are not part of the standard CI gate. Run them
       # separately via `pytest -m integration` against a configured env.
       run: |
-        pytest --cov=src/attune --cov-branch --cov-report=xml --cov-report=term-missing --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest --cov=src/attune --cov-branch --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
