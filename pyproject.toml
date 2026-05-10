@@ -488,8 +488,6 @@ exclude = [
     "src/attune/workflows/new_sample_workflow1.py",  # Test workflow
     "src/attune/workflows/test5.py",  # Test workflow
     "benchmarks/",  # Benchmark and test scripts
-    "scaffolding/",  # Development scaffolding code
-
     "test_generator/",  # Test generator tools
     "workflow_patterns/",  # Experimental workflow patterns
     "workflow_scaffolding/",  # Workflow scaffolding tools
@@ -544,7 +542,6 @@ known-first-party = ["attune", "attune_software"]
 "manual_*.py" = ["BLE001"]  # Manual test scripts
 "benchmarks/**/*.py" = ["BLE001"]  # Benchmark directory - broad exception handling for test/benchmark scripts
 
-"scaffolding/**/*.py" = ["BLE001"]  # Scaffolding code - development tools
 "test_generator/**/*.py" = ["BLE001"]  # Test generator - development tools
 "workflow_patterns/**/*.py" = ["BLE001"]  # Workflow patterns - development/experimental
 "workflow_scaffolding/**/*.py" = ["BLE001"]  # Workflow scaffolding - development tools
@@ -671,9 +668,6 @@ omit = [
     # Legacy/alternative CLIs
     "attune_software/cli/*.py",  # Plugin CLI subcommands
     # Infrastructure requiring external deps
-    # Scaffolding CLI (tested via integration)
-    "*/scaffolding/cli.py",  # Scaffolding CLI
-    "*/scaffolding/__main__.py",  # Scaffolding entry point
     # Deleted in v2.9.0: cli/, cli_unified.py, security/, pattern modules
     # Socratic interactive modules (require user interaction / external LLM)
     "*/socratic/cli.py",  # Interactive Socratic CLI
@@ -723,8 +717,6 @@ omit = [
     "*/commands/__init__.py",  # Commands package init
     # Storage init
     "*/memory/storage/__init__.py",  # Storage package init
-    # Scaffolding init
-    "*/scaffolding/__init__.py",  # Scaffolding package init
     # Core modules init
     "*/core_modules/__init__.py",  # Core modules init
     # Models main entry

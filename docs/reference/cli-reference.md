@@ -858,7 +858,6 @@ Invoked via `python -m <module>`:
 | --- | --- |
 | `python -m attune.models` | Model registry, auth setup, cost estimation |
 | `python -m attune.test_generator` | AI-powered test generation and risk analysis |
-| `python -m attune.scaffolding` | Project scaffolding and boilerplate generation |
 | `python -m attune.socratic` | Socratic question-driven workflow selection |
 | `python -m attune.telemetry` | Detailed telemetry and cost analysis |
 | `python -m attune.project_index` | Project indexing and code scanning |
