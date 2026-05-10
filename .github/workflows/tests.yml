@@ -57,6 +57,9 @@ jobs:
       # IPC merge step. Background monitor logs `free -m` every 30s so we
       # can correlate memory with the failure timing. macOS/Windows skipped
       # for now; ubuntu data is enough signal to verify the hypothesis.
+      # shell: bash forces Git Bash on Windows runners — the if/trap/awk
+      # syntax below is bash-only and would otherwise fail under PowerShell.
+      shell: bash
       run: |
         if [ "${{ runner.os }}" = "Linux" ]; then
           echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
