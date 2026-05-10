@@ -277,22 +277,33 @@ class TestCoverageThreshold:
     """tests.yml must enforce a minimum coverage threshold."""
 
     def test_coverage_threshold_is_at_least_80(self):
-        """tests.yml must enforce --cov-fail-under >= 80."""
+        """tests.yml must enforce a coverage threshold >= 80%.
+
+        Accepts either form:
+        - ``pytest --cov-fail-under=N`` (pytest-cov syntax)
+        - ``coverage report --fail-under=N`` (coverage.py canonical syntax)
+        """
         workflow = ALL_WORKFLOWS["tests.yml"]
         test_job = workflow["jobs"]["test"]
 
-        # Find the pytest step
-        pytest_step = None
+        gate_step = None
+        gate_pattern = None
         for step in test_job["steps"]:
             run_cmd = step.get("run", "")
-            if "--cov-fail-under" in run_cmd:
-                pytest_step = step
+            for pattern in (r"--cov-fail-under=(\d+)", r"--fail-under=(\d+)"):
+                if re.search(pattern, run_cmd):
+                    gate_step = step
+                    gate_pattern = pattern
+                    break
+            if gate_step:
                 break
 
-        assert pytest_step is not None, "tests.yml:test has no step with --cov-fail-under"
+        assert gate_step is not None, (
+            "tests.yml:test has no coverage threshold gate "
+            "(expected --cov-fail-under= or --fail-under=)"
+        )
 
-        match = re.search(r"--cov-fail-under=(\d+)", pytest_step["run"])
-        assert match, "Could not parse --cov-fail-under value"
+        match = re.search(gate_pattern, gate_step["run"])
         threshold = int(match.group(1))
         assert threshold >= 80, f"Coverage threshold is {threshold}%, expected >= 80%"
 
