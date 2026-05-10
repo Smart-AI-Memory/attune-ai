@@ -6,6 +6,15 @@
 
 ## Phase 3: Tasks
 
+### Phase 0 — Hypothesis verification (cheap probes before architectural change)
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 0a | **Probe A**: drop `--cov-report=term-missing` from `.github/workflows/tests.yml` test step. Push to PR #212, watch matrix. **Decision point**: if matrix passes (≥10/12 green), close this spec — Phase 1+ unnecessary. If matrix still fails with the same `[100%] PASSED → shutdown` pattern, output-buffer pressure ruled out, proceed to 0b. | .github/workflows/tests.yml | todo | Single-line change. Lowest possible cost. Tests one specific theory. |
+| 0b | **Probe B**: add memory monitoring to the test step — pre-test `free -m`, parallel monitor logging every 30s, post-test `free -m`. Captures whether memory actually spikes during the suspected merge step. **Decision point**: if memory near limit at shutdown → OOM confirmed, proceed to Phase 3A. If memory has headroom → hypothesis wrong, pause spec and investigate alternative causes (network, log-buffer, GH Actions internal). | .github/workflows/tests.yml | todo | Only execute if 0a fails. ~10 YAML lines. |
+
+**Gate**: only proceed to Phase 3A if Probe A fails AND Probe B confirms memory exhaustion.
+
 ### Phase 3A — Local groundwork (no push until all 3A tasks pass)
 
 | # | Task | Layer | Status | Notes |

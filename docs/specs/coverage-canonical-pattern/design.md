@@ -8,6 +8,54 @@
 
 ### Approach
 
+**Phase 0 (added 2026-05-10)**: verify the working hypothesis cheaply
+*before* committing to the five-piece architectural change. Two
+ordered probes; if either resolves CI, the rest of this spec becomes
+unnecessary work.
+
+**Phase 1+ (the canonical pattern itself)**: five small artifacts,
+each landing as its own commit on a single PR. Only execute if Phase
+0 fails to resolve the failure mode.
+
+### Phase 0 — Hypothesis verification (cheap probes first)
+
+The spec's premise is *"pytest-cov's xdist IPC merge OOMs the runner."*
+That's plausible but unproven. Before doing the five-piece overhaul,
+test the hypothesis with the smallest possible change.
+
+**Probe A — Drop `--cov-report=term-missing`** (single-line change).
+The term-missing report writes a full per-line coverage table to
+stdout — for 18,000+ tests across 200+ source files, that's a *lot*
+of post-test output. If runner log buffer or pytest stdout is the
+real bottleneck, dropping it fixes CI without touching coverage
+collection.
+
+- Cost: 1 token deletion in `.github/workflows/tests.yml`
+- Risk: zero (term-missing is purely diagnostic; XML report still
+  generated for Codecov; local devs run pytest with their own flags)
+- Outcome if it works: spec status → **partial** or **closed**;
+  Phase 1+ becomes unnecessary
+- Outcome if it doesn't work: rules out output-buffer pressure as
+  cause, strengthens the OOM hypothesis (or pushes us to Probe B)
+
+**Probe B — Memory instrumentation** (only if Probe A fails). Add a
+pre-test step capturing baseline `free -m` and a parallel monitor
+that logs memory every 30s during the test run. If memory truly
+spikes during coverage merge, the metrics will show it. If the
+shutdown happens with significant memory headroom remaining, the
+hypothesis is wrong and we need a different theory before doing
+Phase 1+.
+
+- Cost: ~10 lines of YAML adding monitoring steps
+- Risk: low (additive, doesn't change test execution)
+- Outcome: empirical answer to "is this OOM or something else"
+
+**Phase 1+ gate**: only proceed if Probe A doesn't resolve CI *and*
+Probe B confirms the memory hypothesis. Otherwise refactor the spec
+to address the actual cause.
+
+### Phase 1+ artifacts (the five-piece canonical pattern)
+
 Five small artifacts, each landing as its own commit on a single PR:
 
 1. **Bootstrap file** — a project-root `sitecustomize.py` (or `.pth`
