@@ -56,10 +56,19 @@ def _redis_running() -> bool:
 class TestRedisFallbackBehavior:
     """Test that RedisShortTermMemory gracefully falls back to mock when Redis unavailable."""
 
+    @patch("attune.memory.redis_auto_detect.RedisAutoDetector")
     @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
     @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
     @patch("attune.memory.short_term.base.redis.Redis")
-    def test_falls_back_to_mock_on_connection_failure(self, mock_redis_cls, _mock_feat):
+    def test_falls_back_to_mock_on_connection_failure(
+        self, mock_redis_cls, _mock_feat, mock_detector
+    ):
+        # Force auto-detect to report Redis available so the production
+        # __init__ proceeds to _create_client_with_retry() instead of
+        # short-circuiting to mock when no real Redis server runs (CI).
+        mock_detector.return_value.detect.return_value = type(
+            "DetectResult", (), {"available": True, "reason": ""}
+        )()
         """Test graceful fallback to mock storage when Redis connection fails."""
         # Mock Redis connection failure
         mock_redis_cls.side_effect = redis.ConnectionError("Connection refused")
@@ -71,11 +80,17 @@ class TestRedisFallbackBehavior:
         # Verify it attempted to connect
         assert mock_redis_cls.called
 
+    @patch("attune.memory.redis_auto_detect.RedisAutoDetector")
     @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
     @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
     @patch("attune.memory.short_term.base.redis.Redis")
-    def test_falls_back_to_mock_on_auth_failure(self, mock_redis_cls, _mock_feat):
+    def test_falls_back_to_mock_on_auth_failure(self, mock_redis_cls, _mock_feat, mock_detector):
         """Test graceful fallback when Redis authentication fails."""
+        # See test_falls_back_to_mock_on_connection_failure for why
+        # auto-detect is patched.
+        mock_detector.return_value.detect.return_value = type(
+            "DetectResult", (), {"available": True, "reason": ""}
+        )()
         mock_client = Mock()
         mock_client.ping.side_effect = redis.AuthenticationError("Invalid password")
         mock_redis_cls.return_value = mock_client
@@ -84,11 +99,19 @@ class TestRedisFallbackBehavior:
         with pytest.raises(redis.AuthenticationError):
             _ = RedisShortTermMemory(host="localhost", port=6379, password="wrong")
 
+    @patch("attune.memory.redis_auto_detect.RedisAutoDetector")
     @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
     @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
     @patch("attune.memory.short_term.base.redis.Redis")
-    def test_retries_connection_with_exponential_backoff(self, mock_redis_cls, _mock_feat):
+    def test_retries_connection_with_exponential_backoff(
+        self, mock_redis_cls, _mock_feat, mock_detector
+    ):
         """Test that connection retries use exponential backoff."""
+        # See test_falls_back_to_mock_on_connection_failure for why
+        # auto-detect is patched.
+        mock_detector.return_value.detect.return_value = type(
+            "DetectResult", (), {"available": True, "reason": ""}
+        )()
         mock_client = Mock()
         call_count = 0
 

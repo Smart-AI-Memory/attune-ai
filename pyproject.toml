@@ -221,6 +221,18 @@ dev = [
     # matches the [rag] extra so dev + runtime deps stay in
     # lock-step.
     "attune-rag>=0.1.5,<0.2",
+    # Test deps for paths that import optional runtime libs
+    # unconditionally. Without these, the unit suite fails at
+    # collection on a fresh `pip install -e .[dev]`. See
+    # docs/specs/ci-debt/ Phase A for the contract:
+    #   - redis: tests/unit/memory/test_pubsub_direct.py
+    #   - langchain-anthropic: tests/unit/agent_factory/test_langgraph_adapter.py
+    #   - tiktoken: tests/unit/models/test_token_estimator.py
+    #     (tiktoken stays optional in production; tests cover
+    #      both TIKTOKEN_AVAILABLE paths)
+    "redis>=5.0.0,<8.0.0",
+    "langchain-anthropic>=0.3.0,<1.0.0",
+    "tiktoken>=0.7.0,<1.0.0",
 ]
 
 # Individual developers - lightweight, software development focused

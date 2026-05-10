@@ -326,6 +326,7 @@ dev = [
     { name = "coverage" },
     { name = "fastapi" },
     { name = "httpx" },
+    { name = "langchain-anthropic" },
     { name = "mypy" },
     { name = "pre-commit" },
     { name = "pytest" },
@@ -335,8 +336,10 @@ dev = [
     { name = "pytest-picked" },
     { name = "pytest-testmon" },
     { name = "pytest-xdist" },
+    { name = "redis" },
     { name = "requests" },
     { name = "ruff" },
+    { name = "tiktoken" },
     { name = "types-pyyaml" },
 ]
 developer = [
@@ -465,6 +468,7 @@ requires-dist = [
     { name = "langchain", marker = "extra == 'developer'", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchain", marker = "extra == 'enterprise'", specifier = ">=1.0.0,<2.0.0" },
     { name = "langchain", marker = "extra == 'full'", specifier = ">=1.0.0,<2.0.0" },
+    { name = "langchain-anthropic", marker = "extra == 'dev'", specifier = ">=0.3.0,<1.0.0" },
     { name = "langchain-core", marker = "extra == 'agents'", specifier = ">=1.2.28,<2.0.0" },
     { name = "langchain-core", marker = "extra == 'all'", specifier = ">=1.2.28,<2.0.0" },
     { name = "langchain-core", marker = "extra == 'developer'", specifier = ">=1.2.28,<2.0.0" },
@@ -548,6 +552,7 @@ requires-dist = [
     { name = "pyyaml", marker = "extra == 'developer'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'enterprise'", specifier = ">=6.0,<7.0" },
     { name = "pyyaml", marker = "extra == 'full'", specifier = ">=6.0,<7.0" },
+    { name = "redis", marker = "extra == 'dev'", specifier = ">=5.0.0,<8.0.0" },
     { name = "redis", marker = "extra == 'developer'", specifier = ">=5.0.0,<8.0.0" },
     { name = "redis", marker = "extra == 'memory'", specifier = ">=5.0.0,<8.0.0" },
     { name = "redis", marker = "extra == 'redis'", specifier = ">=5.0.0,<8.0.0" },
@@ -559,6 +564,7 @@ requires-dist = [
     { name = "starlette", marker = "extra == 'backend'", specifier = ">=0.40.0,<2.0.0" },
     { name = "starlette", marker = "extra == 'enterprise'", specifier = ">=0.40.0,<2.0.0" },
     { name = "structlog", specifier = ">=24.0.0,<26.0.0" },
+    { name = "tiktoken", marker = "extra == 'dev'", specifier = ">=0.7.0,<1.0.0" },
     { name = "typer", specifier = ">=0.9.0,<1.0.0" },
     { name = "types-pyyaml", marker = "extra == 'dev'", specifier = ">=6.0,<7.0" },
     { name = "typing-extensions", specifier = ">=4.0.0,<5.0.0" },
@@ -1968,6 +1974,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/47/f2/478ca9f3455b5d66402066d287eae7e8d6c722acfb8553937e06af708334/langchain-1.2.7.tar.gz", hash = "sha256:ba40e8d5b069a22f7085f54f405973da3d87cfdebf116282e77c692271432ecb", size = 556837, upload-time = "2026-01-23T15:22:10.817Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/dd/c8/9ce37ae34870834c7d00bb14ff4876b700db31b928635e3307804dc41d74/langchain-1.2.7-py3-none-any.whl", hash = "sha256:1d643c8ca569bcde2470b853807f74f0768b3982d25d66d57db21a166aabda72", size = 108827, upload-time = "2026-01-23T15:22:09.771Z" },
+]
+
+[[package]]
+name = "langchain-anthropic"
+version = "0.3.21"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "anthropic" },
+    { name = "langchain-core" },
+    { name = "pydantic" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/a0/26/5e02dee815a5b03b332ee2ba3a244a8266795d6bfa7a683845ae1689c991/langchain_anthropic-0.3.21.tar.gz", hash = "sha256:c6372fbc933171b2707d856215bb88e48bc480fbc8a23b3ff9652acd5646ad3e", size = 470812, upload-time = "2025-09-29T20:05:02.006Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/21/de/3b553f9a173dc6b57ec66f727ffed5131119b0ac23654e8c304decb8ded1/langchain_anthropic-0.3.21-py3-none-any.whl", hash = "sha256:459102b1bf223595d6ace70b771816c18f0adc29131151c789c1ea08f67d65e1", size = 32521, upload-time = "2025-09-29T20:05:00.545Z" },
 ]
 
 [[package]]

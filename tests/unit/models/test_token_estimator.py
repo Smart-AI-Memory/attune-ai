@@ -543,7 +543,7 @@ class TestEstimateSingleCallCostNoModel:
 
 
 class TestGetEncodingPaths:
-    """Cover lines 40-43 in _get_encoding."""
+    """Cover lines 40-43 in _get_encoding (tiktoken-installed path)."""
 
     def test_gpt4_encoding(self):
         from attune.models import token_estimator as mod
@@ -567,6 +567,29 @@ class TestGetEncodingPaths:
         mod._get_encoding.cache_clear()
         result = mod._get_encoding("unknown-model")
         assert result is not None
+        mod._get_encoding.cache_clear()
+
+
+class TestGetEncodingPathsNoTiktoken:
+    """Cover lines 33-34 in _get_encoding (tiktoken-not-installed path).
+
+    tiktoken is optional in production (heuristic fallback exists). These
+    tests verify the no-tiktoken branch returns None so callers fall
+    through to the heuristic. Pairs with TestGetEncodingPaths above which
+    covers the tiktoken-installed branch.
+    """
+
+    def test_returns_none_when_tiktoken_unavailable(self):
+        from unittest.mock import patch
+
+        from attune.models import token_estimator as mod
+
+        mod._get_encoding.cache_clear()
+        with patch.object(mod, "TIKTOKEN_AVAILABLE", False):
+            assert mod._get_encoding("gpt-4-turbo") is None
+            assert mod._get_encoding("o1-preview") is None
+            assert mod._get_encoding("unknown-model") is None
+            assert mod._get_encoding("claude-sonnet-4-6") is None
         mod._get_encoding.cache_clear()
 
 
