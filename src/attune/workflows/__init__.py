@@ -74,7 +74,6 @@ if TYPE_CHECKING:
 
     # HealthCheckAgentSDKWorkflow: Merged into OrchestratedHealthCheckWorkflow (v5.2.0)
     from .orchestrated_health_check import HealthCheckReport, OrchestratedHealthCheckWorkflow
-    from .orchestrated_release_prep import OrchestratedReleasePrepWorkflow, ReleaseReadinessReport
     from .perf_audit import PerformanceAuditWorkflow
     from .rag_code_gen import RagCodeGenWorkflow
     from .refactor_plan import RefactorPlanWorkflow
@@ -155,11 +154,6 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
         "OrchestratedHealthCheckWorkflow",
     ),
     "HealthCheckReport": (".orchestrated_health_check", "HealthCheckReport"),
-    "OrchestratedReleasePrepWorkflow": (
-        ".orchestrated_release_prep",
-        "OrchestratedReleasePrepWorkflow",
-    ),
-    "ReleaseReadinessReport": (".orchestrated_release_prep", "ReleaseReadinessReport"),
     "PerformanceAuditWorkflow": (".perf_audit", "PerformanceAuditWorkflow"),
     "RefactorPlanWorkflow": (".refactor_plan", "RefactorPlanWorkflow"),
     "ReleasePreparationWorkflow": (".release_prep", "ReleasePreparationWorkflow"),
@@ -670,9 +664,9 @@ __all__ = [
     # Removed deprecated: "CoverageBoostResult"
     # Experimental: Meta-orchestration
     "OrchestratedHealthCheckWorkflow",
-    "OrchestratedReleasePrepWorkflow",
+    # Removed in v7.0.0: "OrchestratedReleasePrepWorkflow" / "ReleaseReadinessReport"
+    # (deprecated v5.2.0; use ReleasePrepTeamWorkflow from attune.agents.release)
     "HealthCheckReport",
-    "ReleaseReadinessReport",
     # Additional workflows (added for completeness)
     # Test5Workflow removed - test artifact
     "TestMaintenanceWorkflow",

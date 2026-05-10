@@ -13,6 +13,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 
+from attune.agents.release import ReleasePrepTeamWorkflow
 from attune.orchestration.agent_templates import (
     get_all_templates,
     get_template,
@@ -20,8 +21,6 @@ from attune.orchestration.agent_templates import (
 )
 from attune.orchestration.execution_strategies import get_strategy
 from attune.orchestration.meta_orchestrator import MetaOrchestrator
-from attune.workflows.orchestrated_release_prep import OrchestratedReleasePrepWorkflow
-from attune.workflows.test_coverage_boost import TestCoverageBoostWorkflow
 
 # =============================================================================
 # Example 1: Release Preparation with Default Settings
@@ -35,7 +34,7 @@ async def example1_basic_release_prep():
     print("=" * 60)
 
     # Create workflow
-    workflow = OrchestratedReleasePrepWorkflow()
+    workflow = ReleasePrepTeamWorkflow()
 
     # Execute on current directory
     report = await workflow.execute(path=".")
@@ -77,7 +76,7 @@ async def example2_custom_quality_gates():
         print(f"  • {gate}: {threshold}")
 
     # Create workflow with custom gates
-    workflow = OrchestratedReleasePrepWorkflow(quality_gates=quality_gates)
+    workflow = ReleasePrepTeamWorkflow(quality_gates=quality_gates)
 
     # Execute
     report = await workflow.execute(path=".")
@@ -90,37 +89,10 @@ async def example2_custom_quality_gates():
 
 
 # =============================================================================
-# Example 3: Test Coverage Boost
-# =============================================================================
-
-
-async def example3_test_coverage_boost():
-    """Boost test coverage to specific target."""
-    print("\n" + "=" * 60)
-    print("Example 3: Test Coverage Boost")
-    print("=" * 60)
-
-    # Create workflow targeting 90% coverage
-    workflow = TestCoverageBoostWorkflow(
-        target_coverage=90.0,
-        project_root="./src",
-        save_patterns=True,  # Save successful compositions
-    )
-
-    # Execute with current coverage hint
-    result = await workflow.execute(context={"current_coverage": 75.0})
-
-    # Display results
-    print(f"\n📊 Results:")
-    print(f"  Target Coverage: {result.get('target_coverage', 90.0)}%")
-    print(f"  Current Coverage: {result.get('current_coverage', 0.0)}%")
-    print(f"  Improvement: +{result.get('coverage_improvement', 0.0)}%")
-    print(f"  Tests Generated: {result.get('tests_generated', 0)}")
-
-
-# =============================================================================
 # Example 4: Exploring Available Agent Templates
 # =============================================================================
+# (Example 3 retired with TestCoverageBoostWorkflow in v7.0.0;
+# numbering preserved so example identifiers remain stable.)
 
 
 def example4_explore_templates():
@@ -211,23 +183,23 @@ async def example6_specific_strategy():
 
     agents = [security, coverage, quality]
 
-    print(f"\n🤖 Selected Agents:")
+    print("\n🤖 Selected Agents:")
     for agent in agents:
         print(f"  • {agent.role}")
 
     # Execute with parallel strategy
-    print(f"\n⚡ Executing with PARALLEL strategy...")
+    print("\n⚡ Executing with PARALLEL strategy...")
 
     strategy = get_strategy("parallel")
     result = await strategy.execute(agents=agents, context={"path": ".", "strict_mode": True})
 
-    print(f"\n✅ Execution Complete!")
+    print("\n✅ Execution Complete!")
     print(f"  Success: {result.success}")
     print(f"  Duration: {result.total_duration:.2f}s")
     print(f"  Agents: {len(result.outputs)}")
 
     # Show individual agent results
-    print(f"\n📊 Individual Results:")
+    print("\n📊 Individual Results:")
     for agent_result in result.outputs:
         status = "✅" if agent_result.success else "❌"
         print(f"  {status} {agent_result.agent_id}: {agent_result.duration_seconds:.2f}s")
@@ -282,16 +254,14 @@ async def example8_error_handling():
     # Example 1: Invalid quality gates
     print("\n1. Handling invalid quality gates:")
     try:
-        workflow = OrchestratedReleasePrepWorkflow(
-            quality_gates={"min_coverage": 150.0}  # Invalid: >100
-        )
+        workflow = ReleasePrepTeamWorkflow(quality_gates={"min_coverage": 150.0})  # Invalid: >100
     except ValueError as e:
         print(f"  ❌ Caught ValueError: {e}")
 
     # Example 2: Invalid path
     print("\n2. Handling invalid path:")
     try:
-        workflow = OrchestratedReleasePrepWorkflow()
+        workflow = ReleasePrepTeamWorkflow()
         report = await workflow.execute(path="")  # Empty path
     except ValueError as e:
         print(f"  ❌ Caught ValueError: {e}")
@@ -328,7 +298,6 @@ async def main():
     # Run examples
     await example1_basic_release_prep()
     await example2_custom_quality_gates()
-    await example3_test_coverage_boost()
     example4_explore_templates()
     await example5_direct_orchestrator()
     await example6_specific_strategy()
