@@ -345,7 +345,7 @@ and silent until they have something to say.
 - `ATTUNE_AI_COMPACT_WARNING_THRESHOLD` (default `0.70`) — fraction of context window before the warning fires.
 - `ATTUNE_AI_CHARS_PER_TOKEN` (default `4.0`) — utilization estimator's chars-to-tokens factor.
 - `ATTUNE_AI_CONTEXT_WINDOW_TOKENS` (default `200000`) — context window assumed by the estimator.
-- `ATTUNE_AI_WORKSPACE_ROOTS` (colon-separated paths) — override the workspace roots scanned for `specs/`.
+- `ATTUNE_AI_WORKSPACE_ROOTS` (`os.pathsep`-separated paths: `:` on POSIX, `;` on Windows) — override the workspace roots scanned for `specs/`.
 - `ATTUNE_AI_SENTINEL_DIR` (default `~/.attune`) — directory for the once-per-session warning sentinel.
 
 The transcript-size proxy is crude but monotonic: the warning
