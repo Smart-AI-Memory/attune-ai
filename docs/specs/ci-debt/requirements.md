@@ -1,6 +1,6 @@
 # Spec: CI Test-Matrix Failures (Pre-existing)
 
-**Status**: approved
+**Status**: complete (2026-05-10) — Phase A `68f19b90`, Phase B `28441852`, Phase C `463df6a5`
 **Created**: 2026-05-09
 **Discovered**: while verifying that the `ignored-tests` spec landing on
 `main` (`e872eae9`) didn't break CI. Investigation revealed `main` was

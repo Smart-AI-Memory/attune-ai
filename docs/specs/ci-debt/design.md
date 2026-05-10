@@ -1,6 +1,6 @@
 # Spec: CI Test-Matrix Failures
 
-**Status**: approved
+**Status**: complete (2026-05-10)
 
 ---
 

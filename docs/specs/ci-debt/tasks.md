@@ -1,6 +1,6 @@
 # Spec: CI Test-Matrix Failures
 
-**Status**: approved
+**Status**: complete (2026-05-10) — Phase A `68f19b90`, Phase B `28441852`, Phase C `463df6a5`
 
 ---
 
