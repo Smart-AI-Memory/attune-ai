@@ -201,6 +201,7 @@ dev = [
     "pytest-cov>=4.0,<8.0",  # Updated upper bound
     "pytest-mock>=3.14.0,<4.0",  # Mock fixtures for testing
     "pytest-xdist>=3.5.0,<4.0",  # Parallel test execution (4-8x faster)
+    "pytest-timeout>=2.3.0,<3.0",  # Per-test timeout — names hanging tests instead of cascading worker death (CI diagnostic)
     "pytest-testmon>=2.1.0,<3.0",  # Run only tests affected by changes
     "pytest-picked>=0.5.0,<1.0",  # Run tests for uncommitted changes
     "black>=24.3.0,<27.0",  # CVE fix: PYSEC-2024-48
