@@ -28,6 +28,14 @@ import sys
 import traceback
 from pathlib import Path
 
+# Force utf-8 on stdout and stderr. On Windows the default cp1252
+# encoding can't emit emoji/em-dash and would crash this hook (caught
+# by the outer try/except → silent breakage). errors='replace'
+# substitutes '?' for any stray non-encodable byte.
+for _stream in (sys.stdout, sys.stderr):
+    if _stream.encoding and _stream.encoding.lower() != "utf-8":
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
 # Hooks are invoked as standalone scripts; ensure sibling helpers
 # resolve.
 _HOOKS_DIR = str(Path(__file__).resolve().parent)
