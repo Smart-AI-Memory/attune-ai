@@ -44,8 +44,14 @@ jobs:
       # silently (which manifests as partial test runs + bogus low coverage).
       # `thread` method is required for cross-platform support (default
       # `signal` uses SIGALRM, which is unreliable on Windows).
+      #
+      # `not integration` excludes tests marked @pytest.mark.integration —
+      # they require live services (Claude API, Redis, etc.) and crash xdist
+      # workers in CI. They live under tests/unit/ for proximity to the code
+      # they exercise but are not part of the standard CI gate. Run them
+      # separately via `pytest -m integration` against a configured env.
       run: |
-        pytest --cov=src/attune --cov-branch --cov-report=xml --cov-report=term-missing --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network"
+        pytest --cov=src/attune --cov-branch --cov-report=xml --cov-report=term-missing --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
 
