@@ -7,6 +7,121 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.7.0] - 2026-05-11
+
+### CI stabilization release — main fixes for a healthier test matrix
+
+The matrix had been hitting silent OOM crashes on Linux/macOS runners
+at ~92-98% of suite completion, masking real test failures and
+producing partial coverage. This release lands the diagnostic
+instrumentation, the fixes, and the resolution.
+
+- **`pytest-timeout` in the CI gate** (#212). Adds
+  `--timeout=60 --timeout-method=thread` so a hanging test fails
+  with a stack trace pointing at the exact line instead of letting
+  it kill an xdist worker silently. `thread` method for
+  cross-platform support — `signal`/`SIGALRM` is unreliable on
+  Windows.
+- **Integration-marked tests excluded from the CI gate** (#212).
+  4 tests in `tests/unit/orchestration/` were marked
+  `@pytest.mark.integration` but the CI filter only excluded
+  `network`. Extended to `-m "not network and not integration"`;
+  the 4 crashing-in-CI tests are now correctly out of the unit
+  gate and can be run separately via `pytest -m integration`.
+- **`sys.modules` test pollution fix** (#212). 3 tests in
+  `test_token_estimator.py` used bare `sys.modules.pop(...)`
+  without restoring, leaking module state to later xdist tests
+  that imported the same name at collection time. Replaced with
+  `monkeypatch.delitem(sys.modules, ..., raising=False)` so cleanup
+  is automatic at test teardown.
+- **Probe B memory instrumentation in CI** (#212). Background
+  monitor logs `free -m` every 30s on Linux runners. Diagnosed the
+  `[~98%] PASSED → runner shutdown` pattern as kernel OOM killer
+  harvesting xdist workers when total memory crossed the 16 GB
+  ceiling. Data ruled out coverage configuration as the dominant
+  consumer — the actual cost is heavy import chain (anthropic,
+  claude-agent-sdk, pydantic, mcp, redis, attune-*) accumulating
+  in xdist workers across thousands of tests.
+- **OOM mitigation: `-n 1` sequential in CI** (#212). Override
+  pytest.ini's `-n auto` to eliminate xdist worker multiplication.
+  Local dev keeps `-n auto`. Doubles CI wall-clock but stays
+  safely under the 16 GB Linux / 7 GB macOS ceilings.
+- **Coverage tuning**: `branch = false` in `[tool.coverage.run]`
+  plus `parallel = true` and
+  `concurrency = ["multiprocessing", "thread"]` (#212). Branch
+  coverage was set via pyproject config, so dropping
+  `--cov-branch` from the CLI alone had no effect. Disabling at
+  the config level reduces memory; parallel-mode flushing writes
+  per-worker coverage data to disk instead of accumulating in
+  RAM.
+- **`asyncio.run()` migration in `test_langgraph_adapter.py`**
+  (#212). 30 calls of
+  `asyncio.get_event_loop().run_until_complete(coro)` replaced
+  with `asyncio.run(coro)`. The deprecated form raises in Python
+  3.12+; failures were masked previously by earlier OOM crashes.
+- **`pip-audit` editable workaround** (#218). pip's editable
+  metadata handling changed around late April 2026; pip-audit
+  2.10.0's `--strict --skip-editable` started failing on every
+  PR touching `pyproject.toml` with
+  `ERROR:pip_audit._cli:attune-ai: distribution marked as editable`
+  before the skip applied. Switched to auditing a
+  `pip freeze --exclude-editable` requirements file. Same audit
+  closure, never sees the editable root.
+- **Windows runner shell fix** (#212). The new memory-monitoring
+  `run:` block uses bash syntax (`if [ ... ]; then`, `trap`, `awk`)
+  which the default PowerShell on `windows-latest` can't parse.
+  Added `shell: bash` to the step; Git Bash on Windows handles it
+  identically to Linux/macOS.
+
+### CI debt resolution (Phases A, B, C)
+
+Three follow-on PRs from the ci-debt spec that landed before the
+PR #212 stabilization work:
+
+- **Phase A** (#207): expanded `[dev]` extras + resolved tiktoken
+  contract drift.
+- **Phase B** (#210): force UTF-8 stdout/stderr in plugin hook
+  scripts. Prevents Windows `cp1252` console encoding from
+  corrupting structured hook output.
+- **Phase C** (#211): `os.pathsep`-aware
+  `ATTUNE_AI_WORKSPACE_ROOTS` parsing. Comma-separated parsing
+  broke on Windows where paths legitimately contain `:`; the env
+  var now uses the platform's path separator (`:` on POSIX, `;`
+  on Windows).
+
+### Other changes
+
+- **Dependabot patch auto-merge** (#206). PRs labeled
+  `dependabot:patch` now auto-merge once required checks pass.
+  Frees up review attention for minor/major bumps.
+- **SHA-pinned `dependabot/fetch-metadata`** (#208). Tag-based
+  pinning of GitHub Actions is vulnerable to tag-rewrite attacks;
+  this auto-merge workflow's action is now pinned by SHA.
+- **`pytest-xdist` re-enabled for local dev**. The previous `-n 0`
+  override was justified by a stale comment from before the
+  workflow refactor. Re-enabling cut suite time ~10x for local
+  dev (14k tests pass under `-n auto` in <2 min). The CI-level
+  `-n 1` cap above is separate and CI-only.
+- **Spec-driven dev infrastructure** (#213, #215, #216). Three
+  spec docs landed: redis-decoupling Phase 3A pre-flight,
+  canonical coverage pattern, and coverage exclusion policy.
+- **Help template regeneration**. 463 stale templates refreshed
+  to match current source via attune-author.
+
+### Migration notes
+
+None required. `-n auto` is still the local-dev default; the
+`-n 1` and coverage-config changes only affect CI. Branch
+coverage is off by default — re-enable in a dedicated coverage
+job with reduced `--cov=` scope if branch signal is needed.
+
+### Stats
+
+- 18,000+ unit tests passing
+- 15 auto-triggering Claude Code skills
+- 16 multi-agent workflows
+- 41 MCP tools
+
 ## [6.6.0] - 2026-05-09
 
 ### Added — session-continuity hooks + `/handoff` slash command

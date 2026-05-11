@@ -8,7 +8,7 @@
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-16%2C900%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Tests](https://img.shields.io/badge/tests-18%2C000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
 [![Coverage](https://img.shields.io/badge/coverage-88%25-green)](https://github.com/Smart-AI-Memory/attune-ai)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
@@ -16,8 +16,8 @@
 
 ---
 
-18 multi-agent workflows, 14 auto-triggering Claude Code skills, and
-36 MCP tools — specialist teams of 2–6 Claude subagents that review
+16 multi-agent workflows, 15 auto-triggering Claude Code skills, and
+41 MCP tools — specialist teams of 2–6 Claude subagents that review
 your code, surface vulnerabilities, generate tests, and plan refactors.
 The same system doubles as the authoring and assistance toolkit for
 building and maintaining knowledge bases at scale.
@@ -118,10 +118,10 @@ pip install 'attune-ai[developer]'
 
 | Capability | Plugin only | Plugin + pip |
 | ---------- | ----------- | ------------ |
-| 14 auto-triggering skills | Yes | Yes |
+| 15 auto-triggering skills | Yes | Yes |
 | Security hooks | Yes | Yes |
 | Prompt-based analysis | Yes | Yes |
-| 36 MCP tools | -- | Yes |
+| 41 MCP tools | -- | Yes |
 | `attune` CLI | -- | Yes |
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
@@ -179,9 +179,9 @@ pip install 'attune-ai[developer]'
 
 ## MCP Tools
 
-36 tools organized into 4 categories:
+41 tools organized into 5 categories:
 
-### Workflow (20)
+### Workflow (21)
 
 `security_audit` `code_review` `bug_predict`
 `performance_audit` `refactor_plan` `simplify_code`
@@ -189,7 +189,7 @@ pip install 'attune-ai[developer]'
 `test_gen_parallel` `doc_gen` `doc_audit`
 `doc_orchestrator` `release_prep` `health_check`
 `dependency_check` `secure_release` `research_synthesis`
-`analyze_batch` `analyze_image`
+`analyze_batch` `analyze_image` `rag_knowledge_query`
 
 ### Help (5)
 
@@ -200,6 +200,11 @@ pip install 'attune-ai[developer]'
 
 `memory_store` `memory_retrieve` `memory_search`
 `memory_forget`
+
+### Personal Memory (4)
+
+`personal_memory_capture` `personal_memory_recall`
+`personal_memory_topics` `personal_memory_forget`
 
 ### Utility (7)
 
@@ -243,10 +248,10 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 18 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 16 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
-| **MCP integration** | 36 native tools | None | No | No |
-| **Auto-triggering skills** | 14 skills, natural language | None | None | None |
+| **MCP integration** | 41 native tools | None | No | No |
+| **Auto-triggering skills** | 15 skills, natural language | None | None | None |
 | **Socratic discovery** | Questions before execution | None | None | None |
 | **Portable security hooks** | PreToolUse + PostToolUse | None | No | No |
 
