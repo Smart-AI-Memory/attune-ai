@@ -201,6 +201,7 @@ dev = [
     "pytest-cov>=4.0,<8.0",  # Updated upper bound
     "pytest-mock>=3.14.0,<4.0",  # Mock fixtures for testing
     "pytest-xdist>=3.5.0,<4.0",  # Parallel test execution (4-8x faster)
+    "pytest-timeout>=2.3.0,<3.0",  # Per-test timeout — names hanging tests instead of cascading worker death (CI diagnostic)
     "pytest-testmon>=2.1.0,<3.0",  # Run only tests affected by changes
     "pytest-picked>=0.5.0,<1.0",  # Run tests for uncommitted changes
     "black>=24.3.0,<27.0",  # CVE fix: PYSEC-2024-48
@@ -713,6 +714,25 @@ omit = [
     "*/attune/config.py",
 ]
 branch = true
+# parallel + concurrency: ensure xdist workers flush coverage data
+# to per-worker `.coverage.<host>.<pid>` files instead of holding
+# everything in memory until suite end. Combined with the CI-only
+# `-n 1` cap in .github/workflows/tests.yml this keeps CI memory
+# well under the 16 GB Linux / 7 GB macOS ceilings (measured peak
+# 1.5 GB on iter 4 of PR #212). These settings are safe in local
+# dev too.
+#
+# NOTE: branch coverage was briefly disabled in PR #212 commit
+# b43f6803 on the theory that it caused the OOM. Memory data from
+# iter 4 (commit d4f33ddd, `-n 1` sequential) showed peak RAM at
+# 1.5 GB — branch coverage was never the OOM driver. Re-enabling
+# because the real OOM cause was xdist worker multiplication, now
+# capped at 1 worker in CI, and because turning branch off dropped
+# the reported total coverage from 87.70% to 81.66%, tripping
+# --cov-fail-under=85 with what looked like worker crashes
+# (actually pytest-cov killing workers on coverage-gate failure).
+parallel = true
+concurrency = ["multiprocessing", "thread"]
 
 [tool.coverage.report]
 precision = 2
