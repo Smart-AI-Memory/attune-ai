@@ -704,18 +704,24 @@ omit = [
     # Shadowed by attune/config/ package — unreachable import
     "*/attune/config.py",
 ]
-# Branch coverage disabled — measured to exceed 16 GB RAM on the
-# 14k-test suite under xdist on GitHub Linux runners (OOM-killed
-# workers at ~92-98% completion). See PR #212 Probe B for the
-# diagnostic data. Line coverage alone still provides the
-# --cov-fail-under=85 gate. Re-enable in a dedicated coverage job
-# with reduced scope if branch signal is needed.
-branch = false
+branch = true
 # parallel + concurrency: ensure xdist workers flush coverage data
 # to per-worker `.coverage.<host>.<pid>` files instead of holding
-# everything in memory until suite end. Combined with the runner
-# cap above this should keep CI memory under the 16 GB Linux / 7 GB
-# macOS ceilings.
+# everything in memory until suite end. Combined with the CI-only
+# `-n 1` cap in .github/workflows/tests.yml this keeps CI memory
+# well under the 16 GB Linux / 7 GB macOS ceilings (measured peak
+# 1.5 GB on iter 4 of PR #212). These settings are safe in local
+# dev too.
+#
+# NOTE: branch coverage was briefly disabled in PR #212 commit
+# b43f6803 on the theory that it caused the OOM. Memory data from
+# iter 4 (commit d4f33ddd, `-n 1` sequential) showed peak RAM at
+# 1.5 GB — branch coverage was never the OOM driver. Re-enabling
+# because the real OOM cause was xdist worker multiplication, now
+# capped at 1 worker in CI, and because turning branch off dropped
+# the reported total coverage from 87.70% to 81.66%, tripping
+# --cov-fail-under=85 with what looked like worker crashes
+# (actually pytest-cov killing workers on coverage-gate failure).
 parallel = true
 concurrency = ["multiprocessing", "thread"]
 
