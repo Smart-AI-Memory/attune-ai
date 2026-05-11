@@ -3048,3 +3048,64 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   module scope" lesson — that one covers function-body
   imports; this one is about package re-export semantics
   differing between 3.10 and 3.11+.
+
+- **`pytest -n auto` can reshuffle module-level-state
+  flaky tests into passing**: Probe-c Phase 4 (PR #242)
+  flipped `-n 1` to `-n auto` and watched ALL Ubuntu +
+  macOS lanes turn green — including Py 3.10, which had
+  been failing on every PR for weeks due to
+  `test_chain_executor`'s `patch.dict("attune.routing.chain_executor.__dict__", ...)`
+  failing module-attribute lookup. The mechanism: each
+  xdist worker process gets a fresh interpreter and
+  re-runs imports independently. The submodule-binding
+  side-effect of `from .chain_executor import X` fires
+  reliably in a clean process where chain_executor is
+  the FIRST thing imported, but unreliably in a
+  long-running serial process where 18k tests have
+  already interacted with the parent package. Implication:
+  when a Py 3.10 flake appears under `-n 1` but vanishes
+  under `-n auto`, the root cause is almost always
+  module-level state from a prior test polluting the
+  parent package's `__dict__`. Either way, fix the test
+  (delete the dead `patch.dict`, or `import pkg.submodule`
+  explicitly at test-file top) rather than relying on
+  the parallel-execution side effect.
+
+- **Restoring parallelism exposes Windows xdist worker
+  crashes that `-n 1` was hiding by being too slow**:
+  When PR #242 flipped to `-n auto`, the Windows lanes
+  finished within timeout for the first time and
+  surfaced 4 worker crashes (`test_memory_features.py`
+  × 2, `test_redis_auto_detect.py`, plus 1
+  TypeError-NoneType in
+  `test_session_continuity_io.py`). With `-n 1`, those
+  tests would have hit the 75-min job timeout before
+  reaching them. Lesson: when restoring parallelism
+  after a sequential cap, expect to find platform-
+  specific failures that were hidden not by serial
+  execution itself but by the suite never completing
+  on the slower platforms. Plan for a dedicated
+  follow-up spec to characterize and fix the platform
+  fragility — don't iterate ad-hoc in the original
+  restoration PR. (Convert to draft + write a deferral
+  comment that enumerates each failure and links to a
+  separate investigation track.)
+
+- **`path.endswith("/docs/specs")` fails on Windows;
+  use `os.path.join("docs", "specs")` for cross-platform
+  suffix checks**: Path-suffix assertions in tests
+  routinely break on Windows because the resolved
+  filesystem paths use `\` separators. The bug doesn't
+  surface in Linux CI or local Mac dev, only when
+  Windows runners actually finish (which they sometimes
+  don't under `-n 1`). Fix pattern:
+  ```python
+  import os
+  assert body["root"].endswith(os.path.join("docs", "specs"))
+  ```
+  Generalize: any test asserting on path suffixes should
+  use `os.sep` or `os.path.join` for the platform-
+  agnostic separator, never a hardcoded literal `/`.
+  Doubles as a quick grep target when triaging Windows
+  CI failures: `grep -r 'endswith("/' tests/` catches
+  the antipattern.
