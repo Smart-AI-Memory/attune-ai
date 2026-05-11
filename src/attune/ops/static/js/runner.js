@@ -1,8 +1,52 @@
-// Minimal SSE-driven workflow runner UI.
+// SSE-driven workflow runner UI with rich line rendering.
 // No frameworks. Wires the per-row Run button to POST /workflows/<name>/run,
 // then attaches an EventSource to /runs/<id>/stream.
+//
+// Line rendering (since v6.X) parses each streamed line for URLs, file
+// paths, workflow-name mentions, and section headers; renders them as
+// clickable links / styled chips / bold headers. No innerHTML — every
+// segment becomes a real DOM node, so attacker-controlled output (file
+// paths, error messages) can't inject script.
 (function () {
   "use strict";
+
+  // Canonical workflow names — kept in sync with `attune.ops.data
+  // .list_workflows()` output. When this drifts, runner.js still works
+  // (mentions of unknown names just render as text), so no hard sync
+  // dependency, but worth a periodic glance.
+  var WORKFLOW_NAMES = [
+    "bug-predict", "code-review", "deep-review", "dependency-check",
+    "doc-audit", "doc-gen", "doc-orchestrator", "health-check",
+    "orchestrated-health-check", "perf-audit", "rag-code-gen",
+    "refactor-plan", "release-prep", "research-synthesis",
+    "secure-release", "security-audit", "simplify-code",
+    "test-audit", "test-gen"
+  ];
+
+  // Section headers (line-leader text) that get bolded/colored so users
+  // can scan workflow output quickly. Matched case-insensitively against
+  // the start of the line.
+  var SECTION_HEADERS = [
+    "Recommendations", "Recommendation",
+    "Next steps", "Next step",
+    "Issues found", "Issues", "Findings", "Finding",
+    "Summary", "Suggestions", "Suggestion",
+    "Warnings", "Warning", "Errors", "Error",
+    "Notes", "Note"
+  ];
+
+  // Build a single regex that matches a URL, file path, or workflow
+  // name. Order in the alternation is important: URLs first (they
+  // might contain dots), then file paths, then workflow names.
+  var FILE_EXTS = "py|pyi|js|jsx|ts|tsx|md|rst|txt|yml|yaml|json|toml|cfg|ini|html|css|sh|bash|zsh";
+  var TOKEN_RE = new RegExp(
+    "(https?:\\/\\/[^\\s<>\"']+)" +                                  // 1: URL
+    "|" +
+    "((?:[\\w][\\w./\\-]*\\/)?[\\w][\\w.\\-]*\\.(?:" + FILE_EXTS + ")(?::\\d+(?::\\d+)?)?)" +  // 2: file path
+    "|" +
+    "\\b(" + WORKFLOW_NAMES.map(function (n) { return n.replace(/-/g, "\\-"); }).join("|") + ")\\b",  // 3: workflow name
+    "g"
+  );
 
   function findRow(name) {
     return document.querySelector('tr[data-workflow="' + CSS.escape(name) + '"]');
@@ -13,10 +57,80 @@
     if (el) el.textContent = status;
   }
 
+  // Detect a section-header prefix on a line. Returns {header, rest} if
+  // matched, else null. Tolerates leading whitespace and bullet markers
+  // so "- Recommendations:" or "  ## Next steps" both qualify.
+  function detectSectionHeader(line) {
+    var stripped = line.replace(/^[\s\-*#>•]+/, "");
+    for (var i = 0; i < SECTION_HEADERS.length; i++) {
+      var h = SECTION_HEADERS[i];
+      var re = new RegExp("^" + h.replace(/\s/g, "\\s") + "\\s*:", "i");
+      var match = stripped.match(re);
+      if (match) {
+        var leader = line.slice(0, line.length - stripped.length) + match[0];
+        var rest = stripped.slice(match[0].length);
+        return { leader: leader, rest: rest };
+      }
+    }
+    return null;
+  }
+
+  // Append inline-parsed segments of `text` to `parent`. Each segment is
+  // either a Text node (safe by construction) or a styled child element.
+  function appendInline(parent, text) {
+    if (!text) return;
+    var lastIndex = 0;
+    var m;
+    TOKEN_RE.lastIndex = 0;
+    while ((m = TOKEN_RE.exec(text)) !== null) {
+      if (m.index > lastIndex) {
+        parent.appendChild(document.createTextNode(text.slice(lastIndex, m.index)));
+      }
+      if (m[1]) {
+        // URL
+        var a = document.createElement("a");
+        a.href = m[1];
+        a.target = "_blank";
+        a.rel = "noopener noreferrer";
+        a.className = "log-link";
+        a.textContent = m[1];
+        parent.appendChild(a);
+      } else if (m[2]) {
+        // File path with optional :line[:col] suffix
+        var span = document.createElement("span");
+        span.className = "log-file";
+        span.textContent = m[2];
+        parent.appendChild(span);
+      } else if (m[3]) {
+        // Workflow name — inert pill in Tier 1; Tier 2 will make it clickable
+        var pill = document.createElement("span");
+        pill.className = "log-workflow";
+        pill.textContent = m[3];
+        parent.appendChild(pill);
+      }
+      lastIndex = TOKEN_RE.lastIndex;
+    }
+    if (lastIndex < text.length) {
+      parent.appendChild(document.createTextNode(text.slice(lastIndex)));
+    }
+  }
+
+  // Render one streamed line into the log pane with rich segments.
   function appendLine(row, line) {
     var pre = row.querySelector("[data-log]");
     if (!pre) return;
-    pre.textContent += line + "\n";
+
+    var header = detectSectionHeader(line);
+    if (header) {
+      var leaderSpan = document.createElement("span");
+      leaderSpan.className = "log-header";
+      leaderSpan.textContent = header.leader;
+      pre.appendChild(leaderSpan);
+      appendInline(pre, header.rest);
+    } else {
+      appendInline(pre, line);
+    }
+    pre.appendChild(document.createTextNode("\n"));
     pre.scrollTop = pre.scrollHeight;
   }
 
@@ -24,7 +138,21 @@
     var pane = row.querySelector("[data-log-pane]");
     if (pane) pane.hidden = false;
     var pre = row.querySelector("[data-log]");
-    if (pre) pre.textContent = "";
+    // Clear via removing all children (faster than textContent = "" for
+    // a pre with many child nodes after rich rendering).
+    if (pre) while (pre.firstChild) pre.removeChild(pre.firstChild);
+  }
+
+  // Export internals for the test page (tests/unit/ops/static/test_runner.html).
+  // Wrapped in a check so it's a no-op in environments without window.
+  if (typeof window !== "undefined") {
+    window.__attuneRunner = {
+      detectSectionHeader: detectSectionHeader,
+      appendInline: appendInline,
+      appendLine: appendLine,
+      WORKFLOW_NAMES: WORKFLOW_NAMES,
+      SECTION_HEADERS: SECTION_HEADERS
+    };
   }
 
   // Format server error responses into something a human can read.

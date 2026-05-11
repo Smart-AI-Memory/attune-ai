@@ -453,6 +453,44 @@ a.kpi:hover {
   word-break: break-word;
 }
 
+/* Rich-rendering tokens within .log-output (runner.js Tier 1). */
+.log-output .log-link {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.log-output .log-link:hover {
+  color: var(--accent-strong, var(--accent));
+  text-decoration-thickness: 2px;
+}
+.log-output .log-file {
+  display: inline-block;
+  padding: 0 4px;
+  margin: 0 1px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  color: var(--fg);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+.log-output .log-workflow {
+  display: inline-block;
+  padding: 0 6px;
+  margin: 0 2px;
+  background: var(--accent-soft, var(--bg-soft));
+  border: 1px solid var(--accent-soft, var(--border));
+  border-radius: 99px;
+  color: var(--accent);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 500;
+}
+.log-output .log-header {
+  font-weight: 600;
+  color: var(--accent);
+}
+
 /* Home polish */
 .sparkline {
   display: block;
