@@ -71,19 +71,6 @@ async def telemetry_page(request: Request) -> HTMLResponse:
     return _render(request, "telemetry.html", page="telemetry", telemetry=summary)
 
 
-@router.get("/memory", response_class=HTMLResponse)
-async def memory_page(request: Request) -> HTMLResponse:
-    cfg = request.app.state.config
-    entries = data.list_memory_topics(cfg)
-    return _render(request, "memory.html", page="memory", entries=entries)
-
-
-@router.get("/releases", response_class=HTMLResponse)
-async def releases_page(request: Request) -> HTMLResponse:
-    versions = data.family_versions()
-    return _render(request, "releases.html", page="releases", versions=versions)
-
-
 @router.get("/health", response_class=HTMLResponse)
 async def health_page(request: Request) -> HTMLResponse:
     cfg = request.app.state.config

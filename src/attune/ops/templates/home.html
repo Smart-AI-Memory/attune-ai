@@ -3,7 +3,7 @@
 {% block content %}
 <section class="hero">
   <h1>attune ops</h1>
-  <p class="hero-sub">Operations dashboard for the workflow OS — workflows, telemetry, memory, releases.</p>
+  <p class="hero-sub">Operations dashboard for the workflow OS — workflows, telemetry, health.</p>
 </section>
 
 <section class="kpi-grid">
@@ -33,7 +33,7 @@
     <div class="kpi-foot">{% if workflow_count == 0 %}attune package not importable{% else %}runnable from CLI / MCP / dashboard{% endif %}</div>
   </a>
 
-  <a class="kpi" href="/releases">
+  <a class="kpi" href="#family-snapshot">
     <div class="kpi-label">attune-ai</div>
     <div class="kpi-value">{% if attune_ai and attune_ai.version %}v{{ attune_ai.version }}{% else %}—{% endif %}</div>
     <div class="kpi-foot">{{ versions|length }} family packages tracked</div>
@@ -78,7 +78,7 @@
   {% endif %}
 </section>
 
-<section class="panel">
+<section class="panel" id="family-snapshot">
   <h2>Family snapshot</h2>
   <ul class="version-list">
     {% for v in versions %}

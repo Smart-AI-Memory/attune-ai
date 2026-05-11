@@ -35,12 +35,22 @@ def test_home_renders(client):
 
 @pytest.mark.parametrize(
     "path",
-    ["/workflows", "/telemetry", "/memory", "/releases", "/health"],
+    ["/workflows", "/telemetry", "/health"],
 )
 def test_pages_render(client, path):
     response = client.get(path)
     assert response.status_code == 200
     assert "<html" in response.text.lower()
+
+
+@pytest.mark.parametrize(
+    "path",
+    ["/memory", "/releases"],
+)
+def test_removed_pages_404(client, path):
+    """Memory + Releases tabs were removed (family info still on Home)."""
+    response = client.get(path)
+    assert response.status_code == 404
 
 
 def test_info_endpoint(client):
