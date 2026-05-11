@@ -355,7 +355,7 @@ class TestEstimateTokensFallbacks:
 
         from attune.models import token_estimator as mod
 
-        sys.modules.pop("attune.utils.tokens", None)
+        monkeypatch.delitem(sys.modules, "attune.utils.tokens", raising=False)
 
         import builtins as _b
 
@@ -380,7 +380,7 @@ class TestEstimateTokensFallbacks:
 
         from attune.models import token_estimator as mod
 
-        sys.modules.pop("attune.utils.tokens", None)
+        monkeypatch.delitem(sys.modules, "attune.utils.tokens", raising=False)
 
         import builtins as _b
 
@@ -408,7 +408,7 @@ class TestEstimateTokensFallbacks:
 
         from attune.models import token_estimator as mod
 
-        sys.modules.pop("attune.utils.tokens", None)
+        monkeypatch.delitem(sys.modules, "attune.utils.tokens", raising=False)
 
         import builtins as _b
 

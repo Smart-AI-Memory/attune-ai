@@ -90,30 +90,28 @@ class TestLangGraphAgentInvoke:
         """Line 64: string input → messages dict."""
         config = _agent_config()
         agent = LangGraphAgent(config)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert "output" in result
 
     def test_dict_input_copied(self):
         """Line 66: dict input → copied as state."""
         config = _agent_config()
         agent = LangGraphAgent(config)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke({"custom_key": "value"}))
+        result = asyncio.run(agent.invoke({"custom_key": "value"}))
         assert "output" in result
 
     def test_other_input_type(self):
         """Line 68: non-str, non-dict input → fallback state."""
         config = _agent_config()
         agent = LangGraphAgent(config)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke(42))
+        result = asyncio.run(agent.invoke(42))
         assert "output" in result
 
     def test_context_merged_into_state(self):
         """Line 72: context merged into state."""
         config = _agent_config()
         agent = LangGraphAgent(config)
-        result = asyncio.get_event_loop().run_until_complete(
-            agent.invoke("task", context={"extra": "ctx"})
-        )
+        result = asyncio.run(agent.invoke("task", context={"extra": "ctx"}))
         assert "output" in result
 
     def test_runnable_with_ainvoke(self):
@@ -122,7 +120,7 @@ class TestLangGraphAgentInvoke:
         mock_runnable = MagicMock()
         mock_runnable.ainvoke = AsyncMock(return_value={"output": "from-ainvoke"})
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "from-ainvoke"
 
     def test_runnable_with_invoke_only(self):
@@ -131,7 +129,7 @@ class TestLangGraphAgentInvoke:
         mock_runnable = MagicMock(spec=[])  # no ainvoke attr
         mock_runnable.invoke = MagicMock(return_value={"output": "from-invoke"})
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "from-invoke"
 
     def test_async_node_func(self):
@@ -142,7 +140,7 @@ class TestLangGraphAgentInvoke:
             return {"output": "async-node", "messages": []}
 
         agent = LangGraphAgent(config, node_func=my_node)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "async-node"
 
     def test_sync_node_func(self):
@@ -153,14 +151,14 @@ class TestLangGraphAgentInvoke:
             return {"output": "sync-node"}
 
         agent = LangGraphAgent(config, node_func=my_node)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "sync-node"
 
     def test_no_runnable_or_node_func(self):
         """Line 87: no runnable or node_func → default output."""
         config = _agent_config()
         agent = LangGraphAgent(config)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert "No runnable configured" in result["output"]
 
     def test_result_dict_with_messages(self):
@@ -175,7 +173,7 @@ class TestLangGraphAgentInvoke:
             }
         )
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "final answer"
 
     def test_result_dict_messages_non_content(self):
@@ -186,7 +184,7 @@ class TestLangGraphAgentInvoke:
             return_value={"messages": [{"role": "assistant"}]}  # no 'content'
         )
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert "output" in result
 
     def test_result_not_dict(self):
@@ -195,7 +193,7 @@ class TestLangGraphAgentInvoke:
         mock_runnable = MagicMock()
         mock_runnable.ainvoke = AsyncMock(return_value="plain string result")
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert result["output"] == "plain string result"
 
     def test_exception_returns_error_dict(self):
@@ -204,7 +202,7 @@ class TestLangGraphAgentInvoke:
         mock_runnable = MagicMock()
         mock_runnable.ainvoke = AsyncMock(side_effect=RuntimeError("api failure"))
         agent = LangGraphAgent(config, runnable=mock_runnable)
-        result = asyncio.get_event_loop().run_until_complete(agent.invoke("hello"))
+        result = asyncio.run(agent.invoke("hello"))
         assert "Error" in result["output"]
         assert "error" in result["metadata"]
 
@@ -234,7 +232,7 @@ class TestLangGraphAgentStream:
                 chunks.append(c)
             return chunks
 
-        chunks = asyncio.get_event_loop().run_until_complete(_run())
+        chunks = asyncio.run(_run())
         assert chunks == ["chunk1", "chunk2"]
 
     def test_stream_fallback_to_invoke(self):
@@ -250,7 +248,7 @@ class TestLangGraphAgentStream:
                 chunks.append(c)
             return chunks
 
-        chunks = asyncio.get_event_loop().run_until_complete(_run())
+        chunks = asyncio.run(_run())
         assert len(chunks) == 1
         assert chunks[0]["output"] == "fallback"
 
@@ -265,7 +263,7 @@ class TestLangGraphAgentStream:
                 chunks.append(c)
             return chunks
 
-        chunks = asyncio.get_event_loop().run_until_complete(_run())
+        chunks = asyncio.run(_run())
         assert len(chunks) == 1
 
 
@@ -319,7 +317,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert result["output"] == "compiled-result"
 
     def test_run_with_compiled_sync_invoke(self):
@@ -330,7 +328,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert result["output"] == "sync-result"
 
     def test_run_with_initial_state(self):
@@ -341,9 +339,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(
-            wf.run("hello", initial_state={"extra": "data"})
-        )
+        result = asyncio.run(wf.run("hello", initial_state={"extra": "data"}))
         assert "output" in result
 
     def test_run_dict_input(self):
@@ -354,7 +350,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run({"input": "dict-data"}))
+        result = asyncio.run(wf.run({"input": "dict-data"}))
         assert "output" in result
 
     def test_run_result_with_messages(self):
@@ -365,7 +361,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert result["output"] == "msg-output"
 
     def test_run_fallback_sequential_when_no_graph(self):
@@ -374,7 +370,7 @@ class TestLangGraphWorkflowRun:
         wf = LangGraphWorkflow(config, [], graph=None)
 
         # No agents → sequential returns empty output
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert "output" in result
 
     def test_run_exception_returns_error(self):
@@ -385,7 +381,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert "Error" in result["output"]
         assert "error" in result
 
@@ -397,7 +393,7 @@ class TestLangGraphWorkflowRun:
         mock_graph = MagicMock()
         mock_graph.compile.return_value = mock_compiled
         wf = LangGraphWorkflow(config, [], graph=mock_graph)
-        result = asyncio.get_event_loop().run_until_complete(wf.run("hello"))
+        result = asyncio.run(wf.run("hello"))
         assert result["output"] == "plain string"
 
 
@@ -415,7 +411,7 @@ class TestLangGraphWorkflowRunSequential:
         mock_agent.invoke = AsyncMock(return_value={"output": "agent-out"})
         wf = LangGraphWorkflow(config, [], graph=None)
         wf.agents = {"a1": mock_agent}
-        result = asyncio.get_event_loop().run_until_complete(wf._run_sequential("hello"))
+        result = asyncio.run(wf._run_sequential("hello"))
         assert result["output"] == "agent-out"
 
     def test_run_sequential_no_agents(self):
@@ -423,7 +419,7 @@ class TestLangGraphWorkflowRunSequential:
         config = _workflow_config()
         wf = LangGraphWorkflow(config, [], graph=None)
         wf.agents = {}
-        result = asyncio.get_event_loop().run_until_complete(wf._run_sequential("input"))
+        result = asyncio.run(wf._run_sequential("input"))
         assert result["output"] == "input"
 
 
@@ -454,7 +450,7 @@ class TestLangGraphWorkflowStream:
                 events.append(e)
             return events
 
-        events = asyncio.get_event_loop().run_until_complete(_run())
+        events = asyncio.run(_run())
         assert len(events) == 2
 
     def test_stream_fallback_when_no_astream(self):
@@ -472,7 +468,7 @@ class TestLangGraphWorkflowStream:
                 events.append(e)
             return events
 
-        events = asyncio.get_event_loop().run_until_complete(_run())
+        events = asyncio.run(_run())
         assert len(events) == 1
 
     def test_stream_dict_input(self):
@@ -490,7 +486,7 @@ class TestLangGraphWorkflowStream:
                 events.append(e)
             return events
 
-        events = asyncio.get_event_loop().run_until_complete(_run())
+        events = asyncio.run(_run())
         assert len(events) == 1
 
 
@@ -724,7 +720,7 @@ class TestLangGraphAdapterCreateWorkflow:
         # Invoke the captured agent_node function (lines 315-318)
         node_func = captured_nodes["node-agent"]
         state = {"messages": [{"role": "user", "content": "hi"}]}
-        result = asyncio.get_event_loop().run_until_complete(node_func(state))
+        result = asyncio.run(node_func(state))
         assert result["current_agent"] == "node-agent"
         assert len(result["messages"]) > 0
 

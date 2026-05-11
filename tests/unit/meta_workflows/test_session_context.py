@@ -10,6 +10,8 @@ Licensed under the Apache License, Version 2.0
 import time
 from unittest.mock import MagicMock
 
+import pytest
+
 from attune.meta_workflows.models import FormQuestion, FormSchema, QuestionType
 from attune.meta_workflows.session_context import (
     SessionContext,
@@ -55,8 +57,17 @@ class TestSessionContextInitialization:
         assert session.default_ttl == 7200
 
 
+@pytest.mark.integration
 class TestRecordChoice:
-    """Test recording form choices."""
+    """Test recording form choices.
+
+    Marked integration because tests use real UnifiedMemory which needs
+    a live Redis backend. Locally these graceful-degrade and pass; in CI
+    without Redis they previously hung silently (masked by the runner-
+    shutdown CI bug, fixed by the canonical coverage pattern in PR #212),
+    now crash workers cleanly. Either run with a real Redis service or
+    skip via the standard `-m "not integration"` filter.
+    """
 
     def test_record_choice_with_memory(self):
         """Test recording choice when memory is available."""
