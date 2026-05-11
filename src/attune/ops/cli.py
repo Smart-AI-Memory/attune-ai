@@ -37,9 +37,17 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         help="Don't auto-open the browser on startup",
     )
     parser.add_argument(
+        "--read-only",
+        action="store_true",
+        help="Disable workflow execution from the dashboard (default: runs enabled)",
+    )
+    # Backwards-compat: --allow-run was the opt-IN flag before runs became
+    # the default. Accept it silently as a no-op so existing scripts and
+    # shell history keep working without prompting users to update.
+    parser.add_argument(
         "--allow-run",
         action="store_true",
-        help="Enable workflow execution from the dashboard (default: read-only)",
+        help=argparse.SUPPRESS,
     )
 
 
@@ -58,11 +66,15 @@ def cmd_ops(args: argparse.Namespace) -> int:
     from attune.ops.config import build_config
     from attune.ops.server import create_app
 
+    # Runs are enabled by default; --read-only opts out. The legacy
+    # --allow-run flag is accepted as a no-op (already the default).
+    allow_run = not args.read_only
+
     config = build_config(
         project_root=args.project_root,
         host=args.host,
         port=args.port,
-        allow_run=args.allow_run,
+        allow_run=allow_run,
     )
     app = create_app(config)
 
