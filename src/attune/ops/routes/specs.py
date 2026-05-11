@@ -1,28 +1,33 @@
-"""Specs API — read-only endpoints for federated spec listing + drill-in.
+"""Specs API — endpoints for federated spec listing, drill-in, and status flip.
 
-Phase 1 of docs/specs/ops-specs-features/. Mirrors attune-gui's
-`sidecar/attune_gui/routes/cowork_specs.py` GET endpoints for the
-listing + read paths; status flip and other write tools come in
-Phase 2.
+Phases 1 + 2 of docs/specs/ops-specs-features/. Mirrors attune-gui's
+`sidecar/attune_gui/routes/cowork_specs.py` GET endpoints (Phase 1)
+and the PUT status-flip endpoint (Phase 2).
 
 The endpoints:
 
-    GET /api/specs           — list all specs across configured roots
-                               with phase status for each
-    GET /api/specs/{slug}    — return content of phase files for one spec
+    GET /api/specs                          — list specs across roots
+    GET /api/specs/{slug}                   — read phase-file contents
+    PUT /api/specs/{slug}/{phase}/status    — rewrite **Status** line
 
 Roots are configured via the `--specs-root` CLI flag on `attune ops`
 (defaults to `<project-root>/docs/specs/`). Multiple roots are
 supported for federated listing across project boundaries.
+
+The status-flip endpoint is gated by ``config.allow_run`` — when the
+server runs with ``--read-only``, mutations are rejected with 403.
 """
 
 from __future__ import annotations
 
+import os
 import re
+import tempfile
 from dataclasses import asdict, dataclass
 from pathlib import Path
+from typing import Any
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Body, HTTPException, Request
 
 router = APIRouter(prefix="/api/specs", tags=["specs"])
 
@@ -46,6 +51,26 @@ _STATUS_RE = re.compile(
     r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$",
     re.MULTILINE,
 )
+
+# Phase file names (without `.md`) accepted by the status-flip endpoint.
+# Derived from `_PHASE_FILES` so the two stay in lockstep.
+_VALID_PHASES: tuple[str, ...] = tuple(p.removesuffix(".md") for p in _PHASE_FILES)
+
+# Statuses we accept on a PUT — mirrors attune-gui's set so callers can use
+# the same vocabulary across both dashboards. "completed" and "done" are
+# accepted aliases for "complete".
+_VALID_STATUSES: tuple[str, ...] = (
+    "draft",
+    "in-review",
+    "approved",
+    "complete",
+    "completed",
+    "done",
+)
+
+# Slug rule: lowercase letters/digits/dashes, must start with letter/digit,
+# max 63 chars. Matches attune-gui's `_SLUG_RE` so the two endpoints agree.
+_SLUG_RE = re.compile(r"^[a-z0-9][a-z0-9-]{0,62}$")
 
 
 @dataclass(frozen=True)
@@ -196,3 +221,142 @@ async def get_spec(slug: str, request: Request) -> dict:
                 "contents": contents,
             }
     raise HTTPException(status_code=404, detail=f"spec '{slug}' not found in any configured root")
+
+
+# ---------------------------------------------------------------------------
+# Phase 2 — status-flip write API
+# ---------------------------------------------------------------------------
+
+
+def _validate_slug(slug: str) -> None:
+    """Reject slugs that fail the directory-name shape check."""
+    if not _SLUG_RE.match(slug):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "invalid slug: must be lowercase letters/digits/dashes, "
+                "start with a letter or digit, max 63 chars"
+            ),
+        )
+
+
+def _validate_phase_name(phase: str) -> None:
+    """Reject phase names not in the recognized set."""
+    if phase not in _VALID_PHASES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"unknown phase: {phase!r}. valid: {', '.join(_VALID_PHASES)}",
+        )
+
+
+def _validate_status_value(status: str) -> None:
+    """Reject status values outside the accepted vocabulary."""
+    if status not in _VALID_STATUSES:
+        raise HTTPException(
+            status_code=400,
+            detail=f"invalid status: {status!r}. valid: {', '.join(_VALID_STATUSES)}",
+        )
+
+
+def _atomic_write(target: Path, text: str) -> None:
+    """Write ``text`` to ``target`` atomically via tempfile + os.replace.
+
+    Mirrors attune-gui's `_fs.atomic_write` so a concurrent reader either
+    sees the old file or the new one, never a partial write. Cleans up the
+    temp file if anything raises before the rename lands.
+    """
+    target.parent.mkdir(parents=True, exist_ok=True)
+    fd, tmp = tempfile.mkstemp(prefix=f".{target.name}.", suffix=".tmp", dir=str(target.parent))
+    try:
+        with os.fdopen(fd, "w", encoding="utf-8") as f:
+            f.write(text)
+        os.replace(tmp, target)
+    except Exception:
+        Path(tmp).unlink(missing_ok=True)
+        raise
+
+
+def _rewrite_status_line(original: str, status: str) -> str:
+    """Return ``original`` with its first **Status** line replaced by ``status``.
+
+    If no recognized status line exists, inserts ``**Status:** {status}`` near
+    the top (after the first ``# `` heading if present).
+    """
+    if _STATUS_RE.search(original):
+        return _STATUS_RE.sub(f"**Status:** {status}", original, count=1)
+    lines = original.splitlines()
+    insert_at = 1 if lines and lines[0].startswith("# ") else 0
+    lines.insert(insert_at, f"\n**Status:** {status}\n")
+    new_text = "\n".join(lines)
+    if not new_text.endswith("\n"):
+        new_text += "\n"
+    return new_text
+
+
+@router.put("/{slug}/{phase}/status")
+async def update_phase_status(
+    slug: str,
+    phase: str,
+    request: Request,
+    body: dict[str, Any] = Body(...),  # noqa: B008
+) -> dict[str, Any]:
+    """Rewrite the ``**Status**`` line in the named phase file.
+
+    Body: ``{"status": "<one of _VALID_STATUSES>"}``.
+
+    Gated on ``config.allow_run`` — when the server runs with
+    ``--read-only``, this returns 403.
+    """
+    config = request.app.state.config
+    if not getattr(config, "allow_run", False):
+        raise HTTPException(
+            status_code=403,
+            detail="server is read-only; status flip is disabled",
+        )
+
+    _validate_slug(slug)
+    _validate_phase_name(phase)
+
+    status = body.get("status")
+    if not isinstance(status, str):
+        raise HTTPException(
+            status_code=422,
+            detail="body must include `status` (string)",
+        )
+    _validate_status_value(status)
+
+    roots = _resolved_roots(config)
+    target: Path | None = None
+    matched_root: Path | None = None
+    for root in roots:
+        candidate = root / slug / f"{phase}.md"
+        if candidate.is_file():
+            target = candidate
+            matched_root = root
+            break
+    if target is None or matched_root is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"{phase}.md not found for spec '{slug}' in any configured root",
+        )
+
+    try:
+        original = target.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"read failed: {exc}") from exc
+
+    new_text = _rewrite_status_line(original, status)
+
+    try:
+        _atomic_write(target, new_text)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"write failed: {exc}") from exc
+
+    return {
+        "slug": slug,
+        "phase": phase,
+        "file": f"{phase}.md",
+        "status": status,
+        "root": str(matched_root),
+        "path": str(target),
+    }

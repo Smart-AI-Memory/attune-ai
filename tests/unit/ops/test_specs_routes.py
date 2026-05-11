@@ -37,8 +37,17 @@ def _make_spec(root: Path, slug: str, *, files: dict[str, str]) -> Path:
     return spec_dir
 
 
-def _client(tmp_path: Path, *, specs_roots: tuple[Path, ...] | None = None) -> TestClient:
-    config = build_config(project_root=tmp_path, specs_roots=specs_roots)
+def _client(
+    tmp_path: Path,
+    *,
+    specs_roots: tuple[Path, ...] | None = None,
+    allow_run: bool = False,
+) -> TestClient:
+    config = build_config(
+        project_root=tmp_path,
+        specs_roots=specs_roots,
+        allow_run=allow_run,
+    )
     return TestClient(create_app(config))
 
 
@@ -233,3 +242,173 @@ def test_config_accepts_multiple_specs_roots(tmp_path):
     b = tmp_path / "b" / "docs" / "specs"
     config = build_config(project_root=tmp_path, specs_roots=(a, b))
     assert config.specs_roots == (a, b)
+
+
+# ---------------------------------------------------------------------------
+# PUT /api/specs/{slug}/{phase}/status — Phase 2 status flip
+# ---------------------------------------------------------------------------
+
+
+def test_put_status_flips_attune_ai_convention(tmp_path, monkeypatch):
+    """`**Status:** old` is rewritten to `**Status:** new` (colon-inside)."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "# Tasks\n\n**Status:** draft\n\nBody.\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "approved"})
+
+    assert r.status_code == 200, r.text
+    payload = r.json()
+    assert payload["status"] == "approved"
+    assert payload["phase"] == "tasks"
+    assert payload["slug"] == "alpha"
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** approved" in updated
+    assert "**Status:** draft" not in updated
+    assert "Body." in updated  # body preserved
+
+
+def test_put_status_flips_attune_gui_convention(tmp_path, monkeypatch):
+    """`**Status**: old` (colon-outside) is also recognized and rewritten."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "beta", files={"design.md": "# Design\n\n**Status**: draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/beta/design/status", json={"status": "complete"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "beta" / "design.md").read_text(encoding="utf-8")
+    assert "**Status:** complete" in updated
+
+
+def test_put_status_inserts_when_missing(tmp_path, monkeypatch):
+    """Files without any **Status** line get one inserted near the top."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "gamma", files={"requirements.md": "# Requirements\n\nNo status here.\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/gamma/requirements/status", json={"status": "draft"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "gamma" / "requirements.md").read_text(encoding="utf-8")
+    assert "**Status:** draft" in updated
+    assert "# Requirements" in updated  # H1 preserved
+    assert "No status here." in updated  # body preserved
+
+
+def test_put_status_accepts_done_and_completed_aliases(tmp_path, monkeypatch):
+    """`done` and `completed` are accepted alongside `complete`."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "delta", files={"tasks.md": "**Status:** approved\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    for status in ("done", "completed", "complete"):
+        r = client.put("/api/specs/delta/tasks/status", json={"status": status})
+        assert r.status_code == 200, f"{status}: {r.text}"
+
+
+def test_put_status_read_only_returns_403(tmp_path, monkeypatch):
+    """When allow_run is False (default --read-only), PUT is rejected."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=False)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "approved"})
+
+    assert r.status_code == 403, r.text
+    # File unchanged
+    assert (root / "alpha" / "tasks.md").read_text(encoding="utf-8") == "**Status:** draft\n"
+
+
+def test_put_status_unknown_spec_returns_404(tmp_path, monkeypatch):
+    """Slug that doesn't exist in any root → 404."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    root.mkdir(parents=True)
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/missing/tasks/status", json={"status": "draft"})
+
+    assert r.status_code == 404, r.text
+
+
+def test_put_status_unknown_phase_returns_400(tmp_path, monkeypatch):
+    """Phase name outside the recognized set → 400 before any FS work."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/notarealphase/status", json={"status": "draft"})
+
+    assert r.status_code == 400, r.text
+    assert "unknown phase" in r.json()["detail"].lower()
+
+
+def test_put_status_invalid_status_value_returns_400(tmp_path, monkeypatch):
+    """Status value outside the accepted vocabulary → 400."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "WIP"})
+
+    assert r.status_code == 400, r.text
+    assert "invalid status" in r.json()["detail"].lower()
+
+
+def test_put_status_missing_status_field_returns_422(tmp_path, monkeypatch):
+    """Body without a `status` string → 422 (Unprocessable Entity)."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"other": "value"})
+
+    assert r.status_code == 422, r.text
+
+
+@pytest.mark.parametrize(
+    "slug",
+    ["../escape", "weird/slash", "back\\slash", "UPPERCASE", "-leading-dash", "with space"],
+)
+def test_put_status_rejects_invalid_slug(tmp_path, monkeypatch, slug):
+    """Slugs that don't match the directory-name shape are rejected as 400."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    root.mkdir(parents=True)
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put(f"/api/specs/{slug}/tasks/status", json={"status": "draft"})
+
+    # FastAPI may also return 404 for some path-traversal-shaped slugs that
+    # don't reach the route handler — accept either rejection.
+    assert r.status_code in (400, 404), f"slug={slug!r} status={r.status_code} body={r.text}"
+
+
+def test_put_status_first_root_wins_on_collision(tmp_path, monkeypatch):
+    """When the same slug exists in multiple roots, PUT writes to the first."""
+    monkeypatch.chdir(tmp_path)
+    root_a = tmp_path / "a"
+    root_b = tmp_path / "b"
+    _make_spec(root_a, "shared", files={"tasks.md": "**Status:** draft\n"})
+    _make_spec(root_b, "shared", files={"tasks.md": "**Status:** approved\n"})
+    client = _client(tmp_path, specs_roots=(root_a, root_b), allow_run=True)
+
+    r = client.put("/api/specs/shared/tasks/status", json={"status": "complete"})
+
+    assert r.status_code == 200, r.text
+    assert r.json()["root"] == str(root_a)
+    # Only root_a was rewritten
+    assert "**Status:** complete" in (root_a / "shared" / "tasks.md").read_text(encoding="utf-8")
+    # root_b is untouched
+    assert (root_b / "shared" / "tasks.md").read_text(encoding="utf-8") == (
+        "**Status:** approved\n"
+    )
