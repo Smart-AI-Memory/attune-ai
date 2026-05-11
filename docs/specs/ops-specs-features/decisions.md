@@ -1,6 +1,6 @@
 # Decisions — Port spec-handling features from attune-gui to attune ops
 
-**Status:** Approved (2026-05-11) — execution gated on existing-features-stable
+**Status:** Approved & Prioritized (2026-05-11) — gate relaxed; ready when next main CI settles
 **Owner:** Patrick
 
 ---
@@ -85,28 +85,45 @@ enough. Authoring stays in the existing tools.
 
 ## Execution gate
 
+**Updated 2026-05-11 (post-priority-bump):** The original gate
+was set defensively last night during the CI tar-pit. With
+Probe C's threading fix landed, the gate is over-correlated to
+unrelated CI work. Tightened to what actually matters for
+ops-specs-features specifically.
+
 Phase 1 does NOT start until ALL of these are true:
 
 1. **PR #212 (CI stabilization) merged and stable** —
-   3 consecutive green CI runs on `main` AND no new CI-fix
-   PRs opened during that period. Measurable, not calendar-
-   based: the signal is *evidence of stability*, not *time
-   elapsed*. Could clear in a day or a week — whichever
-   demonstrates the data.
+   the most-recent merge cycle's settled run on `main` shows
+   only known-pre-existing failures (Py 3.10 `test_chain_executor`
+   AttributeError, Windows xdist tracked in #232). No NEW
+   failure modes introduced by the merge cycle.
 2. **`#227` (ops default-run), `#228` (ops 409 UX)
    merged and verified** — current ops surface is rough;
    building on top of bugs is wasteful
 3. **No critical open ops bugs** — check
    `gh issue list --label ops --state open`
-4. **Probe C Phase 4 settled** — parallel xdist restored
-   on default runners with no new failures
-5. **(Optional) `#226` larger runners** — not blocking,
+4. **(Optional) `#226` larger runners** — not blocking,
    but if landed, this work benefits from the dev-parity
    improvement
 
-The gate is the spec's main load-bearing element. Without it,
-this spec is "yet another feature to add"; with it, this spec
-is "the work we'll do once the foundation is solid."
+### Dropped from the gate (2026-05-11)
+
+- ~~"3 consecutive green CI runs on `main` AND no new CI-fix
+  PRs in that period"~~ — replaced by criterion #1 above
+  ("settled run with only known pre-existing failures").
+  Reason: with Probe C's threading fix in, CI is stable on the
+  steady state; the strict 3-in-a-row was over-corrective. Most
+  recent main runs are cancelled by concurrency from rapid
+  merges, not by failure.
+- ~~"Probe C Phase 4 settled"~~ — dropped entirely. Phase 4
+  (restore `-n auto` parallel xdist) is a CI optimization
+  orthogonal to ops-specs-features. The two specs share no
+  code surface; gating ops-specs-features on Phase 4 was
+  defensive coupling without justification.
+
+The gate is still the spec's main load-bearing element — it's
+just sized to what actually matters.
 
 ## Alternatives considered
 

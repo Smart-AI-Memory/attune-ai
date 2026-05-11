@@ -1,25 +1,30 @@
 # Tasks — Port spec-handling features from attune-gui to attune ops
 
-**Status:** Approved (2026-05-11) — execution gated on Phase 0 conditions
+**Status:** Approved & Prioritized (2026-05-11) — gate relaxed; ready when next main CI settles
 
 ---
 
 ## Phase 0 — Gate (the contract before any code)
 
-This phase is the spec's most important deliverable. Without
-the gate, this spec is just "add a feature." With it, this
-spec is "do the work when the foundation is ready."
+**Gate relaxed 2026-05-11** (see decisions.md "Dropped from the
+gate" section). Two original conditions removed as
+over-correlated to unrelated CI work. The remaining conditions
+are sized to what actually matters for ops-specs-features
+specifically.
 
-- [ ] **0.1** Verify gate conditions before starting Phase 1:
-  - [ ] PR #212 merged + 3 consecutive green CI runs on `main`
-        + no new CI-fix PRs opened in that window
-  - [ ] PRs #227, #228 merged + verified in production
-  - [ ] No critical open `ops`-labeled issues
-  - [ ] Probe C Phase 4 settled (parallel xdist restored)
-  - [ ] (Optional) PR #226 larger runners landed
-- [ ] **0.2** Re-check decisions.md "What we port / what we
-  do NOT port" — has Patrick's usage of attune ops changed
-  in the interim such that the scope should adjust?
+- [x] **0.1a** PR #212 merged
+- [ ] **0.1b** Most-recent merge cycle's settled CI run on `main`
+      shows only known-pre-existing failures (Py 3.10
+      test_chain_executor AttributeError, Windows xdist tracked
+      in #232). No new failure modes.
+- [x] **0.2** PRs #227, #228 merged + verified in production
+- [x] **0.3** No critical open `ops`-labeled issues
+- [x] **0.4** (Optional) PR #226 larger runners landed
+- [ ] **0.5** Re-check decisions.md "What we port / what we do
+      NOT port" — has Patrick's usage of attune ops changed in
+      the interim such that the scope should adjust?
+
+When 0.1b clears, Phase 1 starts.
 
 ## Phase 1 — Federated spec listing read-side
 
