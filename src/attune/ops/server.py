@@ -14,6 +14,7 @@ from attune import __version__
 from attune.ops.config import Config
 from attune.ops.routes import dashboard
 from attune.ops.routes import runner as runner_routes
+from attune.ops.routes import specs as specs_routes
 from attune.ops.runner import RunnerService
 
 
@@ -51,6 +52,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
 
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
+    app.include_router(specs_routes.router)
 
     @app.get("/api/info", response_class=JSONResponse)
     async def info(request: Request):
