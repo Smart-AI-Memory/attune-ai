@@ -77,7 +77,7 @@ jobs:
           MEM_MONITOR_PID=$!
           trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
         fi
-        pytest -n 2 --cov=src/attune --cov-branch --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n 2 --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
         if [ "${{ runner.os }}" = "Linux" ]; then
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
         fi

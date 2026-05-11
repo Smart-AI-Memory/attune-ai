@@ -704,7 +704,20 @@ omit = [
     # Shadowed by attune/config/ package — unreachable import
     "*/attune/config.py",
 ]
-branch = true
+# Branch coverage disabled — measured to exceed 16 GB RAM on the
+# 14k-test suite under xdist on GitHub Linux runners (OOM-killed
+# workers at ~92-98% completion). See PR #212 Probe B for the
+# diagnostic data. Line coverage alone still provides the
+# --cov-fail-under=85 gate. Re-enable in a dedicated coverage job
+# with reduced scope if branch signal is needed.
+branch = false
+# parallel + concurrency: ensure xdist workers flush coverage data
+# to per-worker `.coverage.<host>.<pid>` files instead of holding
+# everything in memory until suite end. Combined with the runner
+# cap above this should keep CI memory under the 16 GB Linux / 7 GB
+# macOS ceilings.
+parallel = true
+concurrency = ["multiprocessing", "thread"]
 
 [tool.coverage.report]
 precision = 2
