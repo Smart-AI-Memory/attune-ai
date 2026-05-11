@@ -50,15 +50,15 @@ GET endpoints. Backend first; frontend follows.
 
 ## Phase 2 — Status-flip write-side
 
-- [ ] **2.1** Add `PUT /api/specs/{slug}/{phase}/status` route
+- [x] **2.1** Add `PUT /api/specs/{slug}/{phase}/status` route
   — same body as attune-gui's
   (`{"status": "<valid-value>"}`)
-- [ ] **2.2** Reuse attune-gui's `_STATUS_RE` and
+- [x] **2.2** Reuse attune-gui's `_STATUS_RE` and
   `_VALID_STATUSES` patterns directly (or copy with
   attribution comment)
-- [ ] **2.3** Honor the `--read-only` flag added in PR #227 —
+- [x] **2.3** Honor the `--read-only` flag added in PR #227 —
   status flip is a mutation, so blocked in read-only mode
-- [ ] **2.4** Atomic write via existing
+- [x] **2.4** Atomic write via existing
   `attune.ops` write helpers (or port `atomic_write` from
   attune-gui)
 
