@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ slug }} — Specs{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1><code>{{ slug }}</code></h1>
+  <p class="page-sub">
+    <a href="/specs" class="link">← Back to specs</a>
+    &nbsp;·&nbsp;
+    <code>{{ root }}/{{ slug }}/</code>
+  </p>
+</section>
+
+{% for phase in phases %}
+  <section class="spec-phase" data-phase="{{ phase.name }}">
+    <h2>
+      {{ phase.name|capitalize }}
+      {% if not phase.exists %}
+        <span class="chip chip-muted">missing</span>
+      {% elif phase.status %}
+        {% set st = phase.status|lower %}
+        {% if st in ('approved', 'complete', 'completed', 'done') %}
+          <span class="chip chip-ok">{{ phase.status }}</span>
+        {% elif st in ('in-review', 'review') %}
+          <span class="chip chip-warn">{{ phase.status }}</span>
+        {% elif st == 'draft' %}
+          <span class="chip chip-muted">{{ phase.status }}</span>
+        {% else %}
+          <span class="chip">{{ phase.status }}</span>
+        {% endif %}
+      {% else %}
+        <span class="chip chip-muted">(no status)</span>
+      {% endif %}
+    </h2>
+    {% if phase.exists %}
+      {% if contents.get(phase.name) %}
+        <pre class="log-output spec-phase-body">{{ contents[phase.name] }}</pre>
+      {% else %}
+        <p class="empty">File exists but could not be read.</p>
+      {% endif %}
+    {% else %}
+      <p class="empty"><code>{{ phase.file }}</code> doesn't exist yet.</p>
+    {% endif %}
+  </section>
+{% endfor %}
+{% endblock %}

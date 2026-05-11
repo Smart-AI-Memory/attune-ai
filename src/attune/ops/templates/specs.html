@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+{% block title %}Specs{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Specs</h1>
+  <p class="page-sub">
+    {{ specs|length }} spec{{ '' if specs|length == 1 else 's' }}
+    across {{ roots|length }} root{{ '' if roots|length == 1 else 's' }}.
+    {% if allow_run %}
+      Click a status chip to flip it.
+    {% else %}
+      Read-only mode — restart without <code>--read-only</code> to edit statuses.
+    {% endif %}
+  </p>
+</section>
+
+{% if roots %}
+  <p class="meta-line">
+    Reading from
+    {% for root in roots %}
+      <code>{{ root }}</code>{% if not loop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+{% endif %}
+
+{% if specs %}
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Slug</th>
+        {% for phase_name in ("decisions", "requirements", "design", "tasks") %}
+          <th>{{ phase_name|capitalize }}</th>
+        {% endfor %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for s in specs %}
+        <tr data-slug="{{ s.slug }}">
+          <td>
+            <a href="/specs/{{ s.slug }}" class="link"><code>{{ s.slug }}</code></a>
+          </td>
+          {% for phase in s.phases %}
+            <td data-phase="{{ phase.name }}">
+              {% if not phase.exists %}
+                <span class="chip chip-muted">—</span>
+              {% else %}
+                {% set st = (phase.status or '')|lower %}
+                {% if st in ('approved', 'complete', 'completed', 'done') %}
+                  {% set chip_cls = 'chip-ok' %}
+                {% elif st in ('in-review', 'review') %}
+                  {% set chip_cls = 'chip-warn' %}
+                {% elif st == 'draft' %}
+                  {% set chip_cls = 'chip-muted' %}
+                {% else %}
+                  {% set chip_cls = 'chip' %}
+                {% endif %}
+                {% if allow_run %}
+                  <select
+                    class="status-select {{ chip_cls }}"
+                    data-slug="{{ s.slug }}"
+                    data-phase="{{ phase.name }}"
+                    data-original="{{ phase.status or '' }}"
+                    aria-label="Status for {{ phase.name }} of {{ s.slug }}"
+                  >
+                    {% for opt in ('draft', 'in-review', 'approved', 'complete') %}
+                      <option value="{{ opt }}"{% if (phase.status or '')|lower == opt %} selected{% endif %}>{{ opt }}</option>
+                    {% endfor %}
+                    {% if phase.status and (phase.status|lower) not in ('draft', 'in-review', 'approved', 'complete') %}
+                      <option value="{{ phase.status }}" selected>{{ phase.status }}</option>
+                    {% endif %}
+                  </select>
+                {% else %}
+                  <span class="chip {{ chip_cls }}">{{ phase.status or '(no status)' }}</span>
+                {% endif %}
+              {% endif %}
+            </td>
+          {% endfor %}
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% else %}
+  <p class="empty">
+    No specs found. Configure a roots directory with
+    <code>attune ops --specs-root &lt;dir&gt;</code>, or place spec
+    folders under <code>docs/specs/</code>.
+  </p>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+{% if allow_run %}
+  <script src="{{ url_for('static', path='js/specs.js') }}"></script>
+{% endif %}
+{% endblock %}

@@ -481,3 +481,64 @@ a.kpi:hover {
   font-size: 11px;
   color: var(--fg-subtle);
 }
+
+/* Specs tab — status-flip dropdown styled as a chip. */
+.status-select {
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 22px 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-soft);
+  color: var(--fg-muted);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 7px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+}
+.status-select:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.status-select.chip-ok {
+  background-color: var(--ok-soft);
+  border-color: var(--ok-soft);
+  color: var(--ok);
+}
+.status-select.chip-warn {
+  background-color: var(--warn-soft);
+  border-color: var(--warn-soft);
+  color: var(--warn);
+}
+.status-select.chip-muted {
+  background-color: var(--bg-soft);
+  border-color: var(--border);
+  color: var(--fg-muted);
+}
+.status-select.flash-ok {
+  outline: 2px solid var(--ok);
+  outline-offset: 1px;
+  transition: outline 0.3s ease-out;
+}
+.status-select.flash-err {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+  transition: outline 0.3s ease-out;
+}
+
+/* Spec drill-in: phase body in a readable monospace block. */
+.spec-phase {
+  margin-bottom: 2rem;
+}
+.spec-phase-body {
+  max-height: 60vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}

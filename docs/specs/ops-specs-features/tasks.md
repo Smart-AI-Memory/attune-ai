@@ -64,16 +64,16 @@ GET endpoints. Backend first; frontend follows.
 
 ## Phase 3 — Frontend Specs tab
 
-- [ ] **3.1** Add `Specs` tab to nav in
+- [x] **3.1** Add `Specs` tab to nav in
   `src/attune/ops/templates/base.html`, between
   `Workflows` and `Telemetry`
-- [ ] **3.2** New template
+- [x] **3.2** New template
   `src/attune/ops/templates/specs.html` — pattern-match
   attune-gui's `templates/specs.html` (160 lines, simple)
-- [ ] **3.3** Status-flip dropdown per phase with optimistic
+- [x] **3.3** Status-flip dropdown per phase with optimistic
   UI + server-confirmation pattern (similar to runner.js
   workflow row buttons)
-- [ ] **3.4** Per-spec drill-in showing phase file content
+- [x] **3.4** Per-spec drill-in showing phase file content
   (read-only)
 
 ## Phase 4 — Observe & adjust
