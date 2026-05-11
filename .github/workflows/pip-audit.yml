@@ -39,16 +39,24 @@ jobs:
       - name: Install project (core deps only)
         run: pip install -e .
 
+      # `pip-audit --strict --skip-editable` against the installed env
+      # used to skip the editable root package cleanly. After a pip
+      # internals change (~late April 2026) editable distributions now
+      # raise `ERROR:pip_audit._cli:attune-ai: distribution marked as
+      # editable` BEFORE the skip is applied, failing the gate on every
+      # PR that touches pyproject.toml. Workaround: feed pip-audit a
+      # requirements file generated from `pip freeze --exclude-editable`,
+      # which omits the project root entirely. Audits the same dependency
+      # closure, but pip-audit doesn't see the editable install at all.
+      - name: Generate audit requirements (exclude editable project)
+        run: pip freeze --exclude-editable > /tmp/audit-reqs.txt
+
       - name: Audit core dependencies
-        # --skip-editable excludes the root package's own editable install
-        # from the audit scope. Without it, `pip-audit` fails on
-        # version-bump PRs with "Dependency not found on PyPI: attune-ai
-        # (X.Y.Z)" before the release is published. Supported since
-        # pip-audit v2.6.0.
-        run: pip-audit --strict --skip-editable --desc on --ignore-vuln CVE-2026-4539  # pygments 2.19.2, no fix available yet
+        run: pip-audit -r /tmp/audit-reqs.txt --strict --desc on --ignore-vuln CVE-2026-4539  # pygments 2.19.2, no fix available yet
 
       - name: Audit with optional deps
         continue-on-error: true
         run: |
           pip install -e ".[agents,backend]" 2>/dev/null || true
-          pip-audit --strict --skip-editable --desc on
+          pip freeze --exclude-editable > /tmp/audit-reqs-full.txt
+          pip-audit -r /tmp/audit-reqs-full.txt --strict --desc on
