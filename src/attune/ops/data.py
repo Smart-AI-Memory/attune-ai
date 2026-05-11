@@ -35,13 +35,6 @@ class WorkflowEntry:
 
 
 @dataclass(frozen=True)
-class MemoryEntry:
-    topic: str
-    snippet: str
-    path: str
-
-
-@dataclass(frozen=True)
 class FamilyVersion:
     package: str
     version: str | None
@@ -211,24 +204,6 @@ def list_workflows() -> list[WorkflowEntry]:
         # INTENTIONAL: registry introspection is best-effort; never fail the dashboard.
         return []
     return sorted(out, key=lambda w: w.name)
-
-
-def list_memory_topics(config: Config, *, limit: int = 50) -> list[MemoryEntry]:
-    """List recent personal-memory entries, if any."""
-    out: list[MemoryEntry] = []
-    base = config.memory_dir
-    if not base.exists():
-        return out
-
-    for md in sorted(base.rglob("*.md"))[:limit]:
-        try:
-            text = md.read_text(encoding="utf-8")
-        except OSError:
-            continue
-        snippet = text.strip().splitlines()[0] if text.strip() else ""
-        topic = md.stem.replace("_", " ")
-        out.append(MemoryEntry(topic=topic, snippet=snippet[:240], path=str(md)))
-    return out
 
 
 def family_versions() -> list[FamilyVersion]:
