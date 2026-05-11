@@ -41,6 +41,19 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
         action="store_true",
         help="Disable workflow execution from the dashboard (default: runs enabled)",
     )
+    parser.add_argument(
+        "--specs-root",
+        type=Path,
+        action="append",
+        default=None,
+        metavar="DIR",
+        help=(
+            "Directory containing spec subdirectories (each with"
+            " decisions.md/tasks.md/etc.). Repeatable for federated"
+            " listing across multiple project roots. Default:"
+            " <project-root>/docs/specs/"
+        ),
+    )
     # Backwards-compat: --allow-run was the opt-IN flag before runs became
     # the default. Accept it silently as a no-op so existing scripts and
     # shell history keep working without prompting users to update.
@@ -75,6 +88,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         host=args.host,
         port=args.port,
         allow_run=allow_run,
+        specs_roots=tuple(args.specs_root) if args.specs_root else None,
     )
     app = create_app(config)
 

@@ -16,6 +16,10 @@ class Config:
     host: str = "127.0.0.1"
     port: int = 8765
     allow_run: bool = False
+    # Roots to scan for spec directories. Defaults to empty here; the specs
+    # route resolves an empty tuple to `<project_root>/docs/specs/`. Multiple
+    # roots supported for federated listing across project boundaries.
+    specs_roots: tuple[Path, ...] = ()
 
     @property
     def telemetry_path(self) -> Path:
@@ -44,8 +48,14 @@ def build_config(
     host: str = "127.0.0.1",
     port: int = 8765,
     allow_run: bool = False,
+    specs_roots: tuple[Path, ...] | None = None,
 ) -> Config:
-    """Build a Config from inputs and environment defaults."""
+    """Build a Config from inputs and environment defaults.
+
+    ``specs_roots`` defaults to ``()``; the specs route resolves an empty
+    tuple to ``<project_root>/docs/specs/`` so unconfigured installs pick up
+    the standard layout automatically.
+    """
     root = (project_root or Path.cwd()).expanduser().resolve()
     return Config(
         project_root=root,
@@ -53,4 +63,5 @@ def build_config(
         host=host,
         port=port,
         allow_run=allow_run,
+        specs_roots=tuple(specs_roots or ()),
     )
