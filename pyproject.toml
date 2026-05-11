@@ -231,7 +231,7 @@ dev = [
     #     (tiktoken stays optional in production; tests cover
     #      both TIKTOKEN_AVAILABLE paths)
     "redis>=5.0.0,<8.0.0",
-    "langchain-anthropic>=0.3.0,<1.0.0",
+    "langchain-anthropic>=0.3.0,<2.0.0",
     "tiktoken>=0.7.0,<1.0.0",
 ]
 
