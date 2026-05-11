@@ -1,0 +1,82 @@
+# Diagnostic-only workflow — Phase 1 of
+# docs/specs/windows-memory-detection/tasks.md.
+#
+# Runs the 4 Windows-failing tests serially with full traceback to
+# capture the real exception text that xdist swallows as "worker
+# crashed". Runs on PRs to the diagnostic branch only (so it doesn't
+# spam every PR). Delete this file after the spec's Phase 4 closes.
+name: Diagnostic — windows-memory-detection Phase 1
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/diag-windows-memory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ['3.11']  # one version is enough to see the trace
+    steps:
+    - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: ${{ matrix.python-version }}
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    # Each test runs as its own step so a hard worker crash on one
+    # doesn't mask the others. `continue-on-error: true` keeps the
+    # subsequent steps firing even if a step fails.
+    - name: 1.1 — test_list_all_features_returns_dict
+      continue-on-error: true
+      shell: bash
+      run: |
+        pytest tests/unit/test_memory_features.py::TestMemoryFeatures::test_list_all_features_returns_dict \
+          -n 1 --tb=long -v --capture=no --no-cov
+
+    - name: 1.2 — test_list_all_features_structure
+      continue-on-error: true
+      shell: bash
+      run: |
+        pytest tests/unit/test_memory_features.py::TestMemoryFeatures::test_list_all_features_structure \
+          -n 1 --tb=long -v --capture=no --no-cov
+
+    - name: 1.3 — test_respects_redis_enabled_true
+      continue-on-error: true
+      shell: bash
+      run: |
+        pytest tests/unit/memory/test_redis_auto_detect.py::TestBaseOperationsBackwardCompat::test_respects_redis_enabled_true \
+          -n 1 --tb=long -v --capture=no --no-cov
+
+    - name: 1.4 — test_above_threshold_fires_once
+      continue-on-error: true
+      shell: bash
+      run: |
+        pytest tests/unit/hooks/test_session_continuity_io.py::TestCompactWarning::test_above_threshold_fires_once \
+          -n 1 --tb=long -v --capture=no --no-cov
+
+    # Final summary step always runs; useful for spotting "all 4
+    # passed" (which would mean the failures depend on parallel
+    # execution context, not the tests themselves).
+    - name: Summary
+      if: always()
+      run: |
+        echo "Phase 1 diagnostic complete. Review each step's log."
+        echo "If any step shows '1 passed' instead of a traceback, that"
+        echo "test is parallel-execution-dependent, not Windows-broken."
