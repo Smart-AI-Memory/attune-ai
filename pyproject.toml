@@ -607,6 +607,15 @@ filterwarnings = [
 # Coverage configuration
 [tool.coverage.run]
 source = ["attune", "attune_software"]
+
+# Coverage exclusion policy — see docs/specs/coverage-exclusion-policy/.
+# Every production-code entry below MUST have an inline `#` comment
+# stating the reason. Reason should fit one of the categories in
+# requirements.md: interactive CLI, infrastructure server, live
+# service required, deprecated, optional adapter, standalone script,
+# example/demo, or justified-other. Meta-excludes (test discovery
+# patterns, build artifacts, third-party paths) do not need comments.
+# Future enforcement: scripts/check_coverage_omits.py (Phase 3C).
 omit = [
     "*/tests/*",
     "*/test_*.py",
