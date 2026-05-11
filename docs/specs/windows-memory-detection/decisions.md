@@ -1,6 +1,6 @@
 # Decisions — Windows Memory-Feature Detection
 
-**Status:** draft
+**Status:** approved
 **Owner:** Patrick
 **Opened:** 2026-05-11
 **Predecessor:** `docs/specs/probe-c-memory-investigation/` (Phase 4 deferred — see PR #242)
