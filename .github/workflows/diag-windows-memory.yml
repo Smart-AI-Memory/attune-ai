@@ -119,6 +119,43 @@ jobs:
             print('stderr repr:', repr(result.stderr))
         "
 
+    # Isolate the None-stdout anomaly: does it happen with a trivial
+    # hello-world script, or only the real hook?
+    - name: 1.4 isolate — hello-world subprocess (no hook)
+      continue-on-error: true
+      shell: bash
+      run: |
+        python -c "
+        import subprocess, sys
+        script = 'import sys; sys.stdout.write(\"hello\"); sys.exit(0)'
+        result = subprocess.run(
+            [sys.executable, '-c', script],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+        print('returncode:', result.returncode)
+        print('stdout type:', type(result.stdout).__name__)
+        print('stdout repr:', repr(result.stdout))
+        print('stderr type:', type(result.stderr).__name__)
+        print('stderr repr:', repr(result.stderr))
+        "
+
+    # Isolate the reconfigure() block: bypass it and see if a
+    # minimal hook (no sys.stdout.reconfigure) returns stdout.
+    - name: 1.4 isolate — minimal hook, no reconfigure
+      continue-on-error: true
+      shell: bash
+      run: |
+        # Write the minimal hook to a file via shell heredoc so the
+        # python -c body stays single-line (avoids YAML indent issues).
+        cat > /tmp/minimal_hook.py << 'PYEOF'
+        import json, sys
+        payload = json.load(sys.stdin)
+        sys.stdout.write('ECHO ' + str(payload.get('session_id', 'none')) + chr(10))
+        PYEOF
+        python -c "import json, subprocess, sys; r = subprocess.run([sys.executable, '/tmp/minimal_hook.py'], input=json.dumps({'session_id': 'test-iso'}), capture_output=True, text=True, timeout=10); print('returncode:', r.returncode); print('stdout type:', type(r.stdout).__name__); print('stdout repr:', repr(r.stdout)); print('stderr type:', type(r.stderr).__name__); print('stderr repr:', repr(r.stderr))"
+
     # Final summary step always runs; useful for spotting "all 4
     # passed" (which would mean the failures depend on parallel
     # execution context, not the tests themselves).
