@@ -87,8 +87,12 @@ enough. Authoring stays in the existing tools.
 
 Phase 1 does NOT start until ALL of these are true:
 
-1. **PR #212 (CI stabilization) merged and stable** — green
-   CI for at least 1 week on default runners
+1. **PR #212 (CI stabilization) merged and stable** —
+   3 consecutive green CI runs on `main` AND no new CI-fix
+   PRs opened during that period. Measurable, not calendar-
+   based: the signal is *evidence of stability*, not *time
+   elapsed*. Could clear in a day or a week — whichever
+   demonstrates the data.
 2. **`#227` (ops default-run), `#228` (ops 409 UX)
    merged and verified** — current ops surface is rough;
    building on top of bugs is wasteful

@@ -7,7 +7,8 @@ the gate, this spec is just "add a feature." With it, this
 spec is "do the work when the foundation is ready."
 
 - [ ] **0.1** Verify gate conditions before starting Phase 1:
-  - [ ] PR #212 merged + 1 week of green CI
+  - [ ] PR #212 merged + 3 consecutive green CI runs on `main`
+        + no new CI-fix PRs opened in that window
   - [ ] PRs #227, #228 merged + verified in production
   - [ ] No critical open `ops`-labeled issues
   - [ ] Probe C Phase 4 settled (parallel xdist restored)
