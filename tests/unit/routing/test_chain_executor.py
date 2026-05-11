@@ -873,27 +873,12 @@ class TestEvaluateConditionEdgeCases:
         assert executor._evaluate_condition("a == b == c", {"a": 1}) is False
 
     def test_value_error_in_comparison_returns_false(self, tmp_path):
-        """Mismatched types causing TypeError in comparison → False (line 223-224)."""
+        """A numeric op on a missing var → False, no exception raised."""
         executor = self._make_executor(tmp_path)
-        # context value is dict, expected is str — equality is False, not error
-        # To force a TypeError: use < with incompatible types after _is_numeric
-        # filters them to the safe path. The other operators (==, !=) won't fail.
-        # Best path: > with non-numeric strings returns False via _is_numeric guard,
-        # but the operator function itself can also raise. Use the catch by
-        # patching to force a TypeError-raising operator.
-        from unittest.mock import patch
-
-        with patch.dict(
-            "attune.routing.chain_executor.__dict__",
-            {},
-        ):
-            # Build a context with non-numeric string compared with > → safe path
-            # returns False before our except block. Skip this and test the empty
-            # condition / non-matching path which both return False.
-            pass
-
-        # Verify the catch-all path: condition with a numeric op but value is not
-        # a number — evaluates and returns False without raising.
+        # The catch-all path: condition uses a numeric op (`>`) but the
+        # context lacks the variable. `_evaluate_condition` returns False
+        # without raising. `test_operator_eval_typeerror_caught` below
+        # covers the actual TypeError-from-op_func branch.
         result = executor._evaluate_condition("missing_var > 5", {})
         assert result is False
 
