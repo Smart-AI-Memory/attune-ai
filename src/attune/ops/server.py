@@ -41,6 +41,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     templates.env.globals["nav_items"] = [
         ("/", "Home"),
         ("/workflows", "Workflows"),
+        ("/specs", "Specs"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
     ]
