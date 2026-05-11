@@ -64,9 +64,12 @@ def test_list_specs_empty_roots_returns_empty(tmp_path, monkeypatch):
     assert response.status_code == 200
     body = response.json()
     assert body["specs"] == []
-    # Default root is project_root/docs/specs even when it doesn't exist
+    # Default root is project_root/docs/specs even when it doesn't exist.
+    # Use os.sep to be cross-platform (Windows: \, POSIX: /).
+    import os
+
     assert len(body["roots"]) == 1
-    assert body["roots"][0].endswith("/docs/specs")
+    assert body["roots"][0].endswith(os.path.join("docs", "specs"))
 
 
 def test_list_specs_single_root_multiple_specs(tmp_path, monkeypatch):
