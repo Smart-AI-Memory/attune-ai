@@ -60,17 +60,15 @@ Sequential `-n 1` is ~15-17 min on Linux. `-n auto` (4 workers on
 GH standard runner) should land closer to ~5-7 min — roughly 3×
 faster, ~100+ minutes of compute saved per matrix run.
 
-- [ ] **4.1** Verify locally: full suite under `-n auto` matches
-      sequential outcome
-      ```
-      pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
-      ```
-- [ ] **4.2** Flip `-n 1` to `-n auto` in `.github/workflows/tests.yml`,
+- [x] **4.1** Verify locally: full suite under `-n auto` matches
+      sequential outcome — **18,045 passed, 0 failures in 42.76s**
+      on macOS (2026-05-11). No parallel-unsafe tests surfaced.
+- [x] **4.2** Flip `-n 1` to `-n auto` in `.github/workflows/tests.yml`,
       both the matrix `test` job AND the dedicated `coverage` job.
-      Update the comment block to reflect the new understanding
-      (leak was the cause, not worker count).
-- [ ] **4.3** Push to a separate PR (not bundled with the leak fix).
-      Rollback plan = single-commit revert.
+      Comment block updated to reflect the leak-was-the-cause
+      understanding.
+- [x] **4.3** Push to a separate PR (not bundled with the leak fix).
+      Rollback plan = single-commit revert. — see PR (this one).
 - [ ] **4.4** If green: close Phase 4. If red: read failure
       carefully — could be another parallel-unsafe test that the
       pubsub leak was masking. Investigate per the

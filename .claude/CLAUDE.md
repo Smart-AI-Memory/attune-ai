@@ -2996,3 +2996,55 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   errors="replace"` on `subprocess.run` when the
   child may emit non-ASCII. Same fix shape as the
   `Path.read_text(encoding="utf-8")` lesson.
+
+- **`gh workflow run --ref <tag>` validates the
+  `workflow_dispatch` trigger against the workflow file
+  at the SPECIFIED REF, not at the default branch**:
+  Adding `workflow_dispatch:` to `.github/workflows/foo.yml`
+  on `main` does NOT enable manual dispatch against
+  pre-existing tags. `gh workflow run --ref v0.11.1`
+  still returns `HTTP 422: Workflow does not have
+  'workflow_dispatch' trigger` because the workflow file
+  on the v0.11.1 tag still lacks the trigger. Fix:
+  `--ref main` (the version in `pyproject.toml` is what
+  determines the published wheel name, not the ref). For
+  any release-triggered publish workflow, add
+  `workflow_dispatch` BEFORE cutting the tag, not after.
+
+- **PyPI run-level "failure" can hide a successful wheel
+  upload that subsequent retries surface as "File
+  already exists"**: A `release: published`-triggered
+  publish job that wraps `twine upload` plus downstream
+  steps (attestations, sigstore, slack notify) can have
+  the upload succeed and a downstream step fail. The
+  GitHub Actions run shows `conclusion: failure`, making
+  it look like nothing was published. Diagnosis: a
+  retry returns `400 File already exists` on the wheel
+  filename. Cross-check
+  `curl https://pypi.org/pypi/<pkg>/<ver>/json` — if it
+  returns a valid release JSON, the upload landed.
+  Compare the JSON's `upload_time` against the run's
+  start time to confirm. Don't keep chasing "the publish
+  failed" — the publish succeeded; only a later step did.
+
+- **Py 3.10 doesn't reliably bind submodule attributes
+  from `from .submodule import X` in `__init__.py`,
+  breaking `patch.dict("pkg.submodule.__dict__", ...)`**:
+  `mock`'s `_get_target` resolves
+  `"attune.routing.chain_executor.__dict__"` via
+  `getattr(attune.routing, 'chain_executor')`. On Python
+  3.11+ this works because import side-effects bind the
+  submodule onto its parent package; on 3.10 the binding
+  is unreliable and the getattr raises
+  `AttributeError: module 'attune.routing' has no
+  attribute 'chain_executor'. Did you mean:
+  'ChainExecutor'?`. Two fixes:
+  (1) `import attune.routing.chain_executor` at the
+  test-file top — explicit submodule import forces the
+  parent binding on 3.10 too; or
+  (2) if the `patch.dict` block is dead scaffolding
+  around an empty patch, just delete it. Distinct from
+  the existing "patch() requires target name to exist at
+  module scope" lesson — that one covers function-body
+  imports; this one is about package re-export semantics
+  differing between 3.10 and 3.11+.
