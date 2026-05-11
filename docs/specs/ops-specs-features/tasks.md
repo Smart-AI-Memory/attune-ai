@@ -1,5 +1,9 @@
 # Tasks — Port spec-handling features from attune-gui to attune ops
 
+**Status:** Approved (2026-05-11) — execution gated on Phase 0 conditions
+
+---
+
 ## Phase 0 — Gate (the contract before any code)
 
 This phase is the spec's most important deliverable. Without

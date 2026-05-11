@@ -1,6 +1,6 @@
 # Decisions — Port spec-handling features from attune-gui to attune ops
 
-**Status:** Draft (2026-05-11) — gated on existing-features-stable
+**Status:** Approved (2026-05-11) — execution gated on existing-features-stable
 **Owner:** Patrick
 
 ---
