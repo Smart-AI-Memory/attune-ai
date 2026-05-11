@@ -39,7 +39,43 @@ PR #242 stays as draft until this spec's tasks 1–4 close. The `-n auto` win is
 
 ---
 
-## Working hypotheses (to verify, not commit to)
+## Phase 1 findings (2026-05-11, PR #245 run #25698758103)
+
+The diagnostic workflow ran each of the 4 failing tests serially on `windows-latest` Py 3.11 with `--tb=long --capture=no`. Result was a **significant pivot** from the original hypotheses:
+
+| Test | Outcome | Implication |
+|------|---------|-------------|
+| `test_list_all_features_returns_dict` | ✅ **PASSED** in isolation | Not a Windows-portability bug; fails only under parallel execution |
+| `test_list_all_features_structure` | ✅ **PASSED** in isolation | Same |
+| `test_respects_redis_enabled_true` | ✅ **PASSED** in isolation | Same |
+| `test_above_threshold_fires_once` | ❌ **FAILED** in isolation | Genuine Windows bug |
+
+**Pivot:** Hypothesis A (Linux-only probing in `MemoryFeatures.list_all_features()`) is **disproven**. The 3 memory tests are Windows-clean when run serially. The xdist worker crashes under `-n auto` are caused by xdist process management on Windows (which uses `spawn`, not `fork`, and is heavier and more fragile than POSIX) or by state pollution from a concurrent test in a different worker.
+
+Hypothesis B (hook subprocess wrapper) is **partially confirmed** but more puzzling than expected. The diagnostic showed `first.stdout is None` at the failing assertion despite `_run_hook` using `capture_output=True, text=True` — per Python docs, that combination should always produce a string. A deeper diagnostic step is queued (commit `ea92b9a0`) that calls `subprocess.run` directly and prints `repr(result.stdout)` so we can see what's actually happening on Windows.
+
+## Revised plan
+
+### For the 3 memory tests
+The fix is NOT in the tests or in `MemoryFeatures.list_all_features()`. Options:
+
+1. **`@pytest.mark.no_xdist`** on the 3 tests — force serial execution for them. Trades a few seconds of parallelism for stability.
+2. **`pytest-forked`** — give the 3 tests their own subprocess. Heavier but clean isolation.
+3. **`--dist=loadgroup`** with `xdist_group` markers — group these tests on one worker. Less granular but cheaper than forked.
+4. **Stop the bleeding from upstream** — find what test is leaving cross-worker state on Windows and fix it.
+
+(4) is the principled fix but high-effort. (1) is the pragmatic fix. Decide after seeing if a 5th test surfaces during Phase 4 rebase.
+
+### For the hook test
+Continue debugging in Phase 1's second diagnostic step. Most likely candidates after seeing `repr(stdout)` result:
+
+- Empty string (`""`) — hook returned early without writing. Theory: `estimate_utilization` raises on Windows and the `except` block routes to stderr.
+- `None` — would indicate `subprocess.run`'s behavior diverges from docs on Windows.
+- Some Windows-specific bytes — encoding issue at the subprocess pipe.
+
+---
+
+## Working hypotheses (superseded by Phase 1 findings above — kept for history)
 
 ### Hypothesis A — `MemoryFeatures.list_all_features()` uses Linux-only probing
 

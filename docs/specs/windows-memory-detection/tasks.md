@@ -8,9 +8,11 @@ Investigation + fix tasks for the 4 Windows-only failures surfaced by PR #242 (`
 
 ## Phase 1 — Characterize (no fixes yet)
 
+**Status (2026-05-11):** First diagnostic run complete via PR #245 — see `decisions.md` "Phase 1 findings". Major pivot: 3 of 4 tests PASSED in isolation on Windows, so they're parallel-context bugs (xdist on Windows), not Windows-portability bugs. Second diagnostic step (deep subprocess inspection for the hook test) is queued.
+
 Goal: turn "worker crashed" into a concrete exception trace so we know what to fix.
 
-- [ ] **1.1** On a Windows runner (CI matrix `test (windows-latest, 3.11)` is sufficient), run the 3 memory-feature tests serially with full traceback:
+- [x] **1.1** On a Windows runner (CI matrix `test (windows-latest, 3.11)` is sufficient), run the 3 memory-feature tests serially with full traceback:
       ```
       pytest tests/unit/test_memory_features.py::TestMemoryFeatures::test_list_all_features_returns_dict \
              tests/unit/test_memory_features.py::TestMemoryFeatures::test_list_all_features_structure \
