@@ -277,30 +277,39 @@ class TestCoverageThreshold:
     """tests.yml must enforce a minimum coverage threshold."""
 
     def test_coverage_threshold_is_at_least_80(self):
-        """tests.yml must enforce a coverage threshold >= 80%.
+        """tests.yml must enforce a coverage threshold >= 80% in *some* job.
 
         Accepts either form:
         - ``pytest --cov-fail-under=N`` (pytest-cov syntax)
         - ``coverage report --fail-under=N`` (coverage.py canonical syntax)
+
+        Coverage may live in the matrix ``test`` job or in a dedicated
+        ``coverage`` job — the policy is "tests.yml must enforce a
+        threshold somewhere," not "must be in the matrix step." Searching
+        all jobs lets us split coverage into its own job (e.g. to keep
+        the matrix memory-disciplined) without losing the gate test.
         """
         workflow = ALL_WORKFLOWS["tests.yml"]
-        test_job = workflow["jobs"]["test"]
 
         gate_step = None
         gate_pattern = None
-        for step in test_job["steps"]:
-            run_cmd = step.get("run", "")
-            for pattern in (r"--cov-fail-under=(\d+)", r"--fail-under=(\d+)"):
-                if re.search(pattern, run_cmd):
-                    gate_step = step
-                    gate_pattern = pattern
+        for _job_name, job in workflow["jobs"].items():
+            for step in job.get("steps", []):
+                run_cmd = step.get("run", "") or ""
+                for pattern in (r"--cov-fail-under=(\d+)", r"--fail-under=(\d+)"):
+                    if re.search(pattern, run_cmd):
+                        gate_step = step
+                        gate_pattern = pattern
+                        break
+                if gate_step:
                     break
             if gate_step:
                 break
 
         assert gate_step is not None, (
-            "tests.yml:test has no coverage threshold gate "
-            "(expected --cov-fail-under= or --fail-under=)"
+            "tests.yml has no coverage threshold gate in any job "
+            "(expected --cov-fail-under= or --fail-under= in either the "
+            "matrix test job or a dedicated coverage job)"
         )
 
         match = re.search(gate_pattern, gate_step["run"])
