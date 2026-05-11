@@ -10,8 +10,8 @@
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Confirm `attune_redis` plugin's current state on PyPI: does it ship `AgentCoordinator` / `TeamSession` already, or would Phase C need to push them upstream first? | research | todo | Determines C1 vs C2 in design.md. |
-| 2 | Capture the **current** test count baseline. `pytest tests/unit/ -n auto` (after `ci-debt` Phase A lands so the suite is green). Record so Phase E's "~100 fewer tests" expectation can be verified. | test-infra | todo | |
+| 1 | Confirm `attune_redis` plugin's current state on PyPI: does it ship `AgentCoordinator` / `TeamSession` already, or would Phase C need to push them upstream first? | research | done | **`attune-redis` is not on PyPI** (HTTP 404 on both naming forms; absent from simple-index). Forces **C1** path (delete + deprecation shim). See `decisions.md`. |
+| 2 | Capture the **current** test count baseline. `pytest tests/unit/ -n auto` (after `ci-debt` Phase A lands so the suite is green). Record so Phase E's "~100 fewer tests" expectation can be verified. | test-infra | done | **Baseline: 14,122 passed** (local, 2026-05-10). 5 env-sensitive failures unrelated to redis. Caveat: captured before CI is green — see `decisions.md`. |
 
 ### Phase 3B — Per-phase resolution
 
