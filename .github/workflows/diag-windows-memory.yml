@@ -71,6 +71,54 @@ jobs:
         pytest tests/unit/hooks/test_session_continuity_io.py::TestCompactWarning::test_above_threshold_fires_once \
           -n 1 --tb=long -v --capture=no --no-cov
 
+    # Direct reproduction: bypass pytest and call the hook from a
+    # tiny script to see exactly what subprocess.run returns.
+    - name: 1.4 deep — direct subprocess inspection
+      continue-on-error: true
+      shell: bash
+      run: |
+        python -c "
+        import json, os, subprocess, sys, tempfile
+        from pathlib import Path
+
+        with tempfile.TemporaryDirectory() as tmp:
+            tmpp = Path(tmp)
+            transcript = tmpp / 'transcript.jsonl'
+            transcript.write_text(json.dumps({'role': 'user', 'content': 'x' * 4000}) + '\n')
+            sentinel_dir = tmpp / 'sentinels'
+            sentinel_dir.mkdir()
+            hook = Path('plugin/hooks/compact_warning.py').resolve()
+            env = os.environ.copy()
+            env.update({
+                'ATTUNE_AI_SENTINEL_DIR': str(sentinel_dir),
+                'ATTUNE_AI_CONTEXT_WINDOW_TOKENS': '1000',
+                'ATTUNE_AI_COMPACT_WARNING_THRESHOLD': '0.50',
+            })
+            payload = json.dumps({
+                'session_id': 'fires-once',
+                'transcript_path': str(transcript),
+                'cwd': str(tmpp),
+            })
+            print('--- invoking hook ---')
+            print('sys.executable:', sys.executable)
+            print('hook:', hook)
+            print('hook exists:', hook.is_file())
+            result = subprocess.run(
+                [sys.executable, str(hook)],
+                input=payload,
+                capture_output=True,
+                text=True,
+                env=env,
+                timeout=10,
+            )
+            print('--- result ---')
+            print('returncode:', result.returncode)
+            print('stdout type:', type(result.stdout).__name__)
+            print('stdout repr:', repr(result.stdout))
+            print('stderr type:', type(result.stderr).__name__)
+            print('stderr repr:', repr(result.stderr))
+        "
+
     # Final summary step always runs; useful for spotting "all 4
     # passed" (which would mean the failures depend on parallel
     # execution context, not the tests themselves).
