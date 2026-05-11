@@ -69,20 +69,7 @@ jobs:
           MEM_MONITOR_PID=$!
           trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
         fi
-        # --ignore the redis-detection test cluster: each file allocates
-        # 3+ GB of resident memory locally; in CI's sequential -n 1 run
-        # the cumulative residue from earlier test files puts the worker
-        # over the 16 GB / 7 GB ceilings during this cluster. Local runs
-        # still execute these tests (they pass in isolation). Tracking
-        # in Probe C — likely a shared expensive import or fixture
-        # pattern; longer-term fix is to either localize the heavy
-        # state or extract redis into a separate package per the
-        # ecosystem layout.
-        pytest -n 1 --timeout=60 --timeout-method=thread -m "not network and not integration" \
-          --ignore=tests/unit/memory/test_pubsub_direct.py \
-          --ignore=tests/unit/memory/test_redis_auto_detect.py \
-          --ignore=tests/unit/memory/test_redis_bootstrap.py \
-          --ignore=tests/unit/test_memory_features.py
+        pytest -n 1 --timeout=60 --timeout-method=thread -m "not network and not integration"
         if [ "${{ runner.os }}" = "Linux" ]; then
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
         fi
@@ -121,11 +108,7 @@ jobs:
         (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
         MEM_MONITOR_PID=$!
         trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        pytest -n 1 --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration" \
-          --ignore=tests/unit/memory/test_pubsub_direct.py \
-          --ignore=tests/unit/memory/test_redis_auto_detect.py \
-          --ignore=tests/unit/memory/test_redis_bootstrap.py \
-          --ignore=tests/unit/test_memory_features.py
+        pytest -n 1 --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

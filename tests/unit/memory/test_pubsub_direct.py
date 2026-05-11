@@ -141,7 +141,18 @@ class TestSubscribeRealRedis:
         mock_pubsub_obj = MagicMock()
         mock_client.pubsub.return_value = mock_pubsub_obj
 
-        with patch("redis.Redis", return_value=mock_client):
+        # patch threading.Thread alongside redis.Redis — without it,
+        # subscribe() spawns a real daemon thread running
+        # _pubsub_listener(), which loops on self._pubsub.get_message()
+        # returning fresh MagicMocks indefinitely. That zombie thread
+        # accumulates ~100k MagicMock allocations during the rest of
+        # the test class run and was the dominant memory consumer in
+        # this file (~1 GB per run on a 16 GB CI box). Fixed per
+        # Probe C Phase 2 finding 2026-05-11.
+        with (
+            patch("redis.Redis", return_value=mock_client),
+            patch("threading.Thread"),
+        ):
             base = _make_real_base(client=mock_client)
             pubsub = PubSubManager(base)
             handler = lambda m: None  # noqa: E731
