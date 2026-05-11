@@ -27,6 +27,26 @@
     if (pre) pre.textContent = "";
   }
 
+  // Format server error responses into something a human can read.
+  // 409 in particular has a structured payload {detail: {message,
+  // current_run_id}} — surface just the message + the run id, not
+  // the raw JSON envelope.
+  function formatErrorDetail(status, rawText) {
+    if (status === 409) {
+      try {
+        var parsed = JSON.parse(rawText);
+        var detail = parsed && parsed.detail ? parsed.detail : {};
+        var msg = detail.message || "another workflow is running";
+        var runId = detail.current_run_id ? " (run " + detail.current_run_id + ")" : "";
+        return msg.charAt(0).toUpperCase() + msg.slice(1) + runId +
+          ". Wait for it to finish, then try again.";
+      } catch (e) {
+        // Fall through to raw text on parse failure.
+      }
+    }
+    return rawText;
+  }
+
   // Format an elapsed-seconds count as "Xs" or "Xm Ys" for readability.
   // Updates roughly every second so the user sees the run is alive even
   // when subagents are mid-call and no new log lines are arriving.
@@ -65,7 +85,7 @@
         });
         if (!resp.ok) {
           var detail = await resp.text();
-          appendLine(row, "[error] " + resp.status + " " + detail);
+          appendLine(row, "[error] " + formatErrorDetail(resp.status, detail));
           setStatus(row, "error");
           button.disabled = false;
           return;
