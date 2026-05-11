@@ -1,6 +1,6 @@
 # Tasks — Windows Memory-Feature Detection
 
-**Status:** draft
+**Status:** approved
 
 Investigation + fix tasks for the 4 Windows-only failures surfaced by PR #242 (`-n auto` restore). See `decisions.md` for context.
 
