@@ -1,12 +1,53 @@
 # Decisions — Probe C: Memory Investigation
 
-**Status:** Draft (2026-05-11)
+**Status:** ✓ Resolved (2026-05-11) — see Resolution section below
 **Owner:** Patrick
 **Predecessors:** Probe B (in `docs/specs/coverage-canonical-pattern/`)
 
 ---
 
-## Problem
+## Resolution (2026-05-11, same day as spec opened)
+
+**Root cause:** ONE missing `patch("threading.Thread")` in ONE test
+(`test_subscribe_adds_to_subscriptions_dict` in
+`tests/unit/memory/test_pubsub_direct.py`, line 139). The test
+patched `redis.Redis` but not `threading.Thread`, so `subscribe()`
+spawned a real daemon thread running `_pubsub_listener()`. The
+listener's `while self._pubsub_running:` loop polled
+`self._pubsub.get_message(...)` where `self._pubsub` was a MagicMock —
+each call returned a fresh MagicMock with a full attribute access
+tree. The test exited but pytest's main thread kept running, so the
+daemon thread stayed alive and allocated ~100k MagicMocks during the
+rest of the test class run.
+
+**Local profile, before vs after the one-line fix:**
+
+| File | Before | After |
+|---|---|---|
+| `test_pubsub_direct.py` | 40 tests, 30 s, **3.3 GB RSS** | 40 tests, **1.5 s**, **130 MB RSS** |
+
+20x faster, 25x less memory. The other three "suspect" files
+(`test_redis_auto_detect.py`, `test_redis_bootstrap.py`,
+`test_memory_features.py`) profiled at ~130 MB each in isolation —
+they crashed in CI only because pubsub had already filled the xdist
+worker by the time they ran.
+
+**Decision: Phase 3a (local fix), not 3b (extract `attune-redis`).**
+Structural extraction was the worst-case option Patrick named on
+2026-05-10. The data ruled it out: one missing mock, not a redis
+import bloat or fixture pattern across the cluster.
+
+Shipped in PR #212 commit `bcc6bdec` along with the CI workflow
+revert (no more `--ignore` for the four files).
+
+Phase 1 hypotheses 1, 2, 3, 5 all turned out wrong; **hypothesis 4
+(`@patch("threading.Thread")` interaction)** was the right
+direction — but it wasn't the patch leaking, it was the test that
+DIDN'T patch where its siblings did.
+
+---
+
+## Problem (original framing, kept for posterity)
 
 Probe B (PR #212) chased an OOM during CI test runs. Five iterations
 of pytest/coverage tuning narrowed it down. Iter 4 mem-tick data
