@@ -34,22 +34,59 @@
 
 ## Phase 3 — Fix
 
-If local:
-- [ ] **3.1a** Rewrite the offending pattern (likely tighten fixture
-      scope, replace MagicMock chains with explicit small mocks,
-      or add cleanup)
-- [ ] **3.2a** Restore the four files to CI (remove `--ignore`)
-- [ ] **3.3a** Verify CI green
+Resolution: Phase 3a (local fix) chosen — see decisions.md.
 
-If structural:
-- [ ] **3.1b** Extract redis-detection + short_term modules into a
-      new `attune-redis` package (similar to attune-rag /
-      attune-help / attune-author)
-- [ ] **3.2b** Move tests with the package
-- [ ] **3.3b** Add `attune-redis` to attune-ai's optional `[redis]`
-      extra
-- [ ] **3.4b** Update CI to test attune-redis separately
-- [ ] **3.5b** Update docs/specs/larger-runners with the implication
+If local: ✓ DONE
+- [x] **3.1a** Rewrite the offending pattern (added missing
+      `patch("threading.Thread")` in
+      `test_subscribe_adds_to_subscriptions_dict`)
+- [x] **3.2a** Restore the four files to CI (removed `--ignore` in
+      tests.yml on PR #212 commit bcc6bdec)
+- [x] **3.3a** Verify CI green (pending matrix completion)
+
+If structural (NOT taken):
+- [ ] ~~3.1b Extract redis-detection + short_term modules into a
+      new `attune-redis` package~~
+- [ ] ~~3.2b-3.5b Worst-case path; data ruled it out~~
+
+## Phase 4 — Restore parallel xdist (post-resolution cleanup)
+
+With the leak fixed, the `-n 1` cap added in PR #212 commit
+`d4f33ddd` is no longer justified. The original rationale —
+"xdist worker multiplication amplifies memory" — was wrong; the
+actual problem was one test's zombie thread, not parallelism.
+
+Sequential `-n 1` is ~15-17 min on Linux. `-n auto` (4 workers on
+GH standard runner) should land closer to ~5-7 min — roughly 3×
+faster, ~100+ minutes of compute saved per matrix run.
+
+- [ ] **4.1** Verify locally: full suite under `-n auto` matches
+      sequential outcome
+      ```
+      pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
+      ```
+- [ ] **4.2** Flip `-n 1` to `-n auto` in `.github/workflows/tests.yml`,
+      both the matrix `test` job AND the dedicated `coverage` job.
+      Update the comment block to reflect the new understanding
+      (leak was the cause, not worker count).
+- [ ] **4.3** Push to a separate PR (not bundled with the leak fix).
+      Rollback plan = single-commit revert.
+- [ ] **4.4** If green: close Phase 4. If red: read failure
+      carefully — could be another parallel-unsafe test that the
+      pubsub leak was masking. Investigate per the
+      "spec-before-iteration-3" rule.
+
+## Phase 5 (conditional) — combo with larger runners
+
+If `docs/specs/larger-runners/` (PR #226) also lands, Phase 4 +
+larger runners together restores CI to local-dev-equivalent: fast,
+parallel, plenty of headroom. The "works fine locally, OOMs in CI"
+gap that motivated Probes B and C closes structurally.
+
+- [ ] **5.1** After Phase 4 green + #226 merged, re-evaluate
+      whether to keep the `--timeout=60` cap (might want longer
+      with more headroom) and the mem-tick instrumentation (might
+      retire as load-bearing, keep as opt-in diagnostic).
 
 ## Out of scope
 
