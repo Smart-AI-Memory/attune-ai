@@ -1,11 +1,57 @@
 # Decisions — Larger CI Runners
 
-**Status:** Draft (2026-05-11)
+**Status:** Draft (2026-05-11, revised post-Probe-C)
 **Owner:** Patrick
 
 ---
 
-## Problem
+## 2026-05-11 update — post-Probe-C revision
+
+The original spec (below) was written mid-tar-pit with the
+understanding that attune-ai's 14k-test suite genuinely needed
+14+ GB of process memory. **That turned out to be wrong.** Probe C
+identified the actual cause: one missing
+`patch("threading.Thread")` in
+`tests/unit/memory/test_pubsub_direct.py` spawning a zombie
+daemon thread that allocated ~100k MagicMocks per file run. After
+the one-line fix (PR #212 commit `bcc6bdec`), the full suite peaks
+at **130 MB RSS, runs in 1.5 s sequential** — well within the
+default 16 GB ceiling.
+
+So the "rescue from OOM" framing of this spec no longer applies.
+**The case for larger runners is now smaller** but still
+defensible:
+
+1. **Headroom for future growth** — the suite is 14k tests today
+   and gaining ~1k/quarter. The next dep cycle (new SDK, more
+   workflows) could repeat the squeeze. 32 GB buys ~3-5 years
+   of runway without revisiting.
+2. **Dev parity** — Patrick's local box is 64 GB; CI at 16 GB
+   means "works locally, fails in CI" is a chronic class of
+   confusion. Larger runners narrow the gap.
+3. **Speed** — 8-core / 32 GB lets `-n auto` use more workers,
+   roughly halving matrix wall-clock again on top of Phase 4
+   of Probe C (which restores `-n auto` at 4 workers).
+
+**What the spec NO LONGER promises:**
+
+- "Lets us undo the dedicated coverage job split" — coverage job
+  now passes cleanly on default runners (post-bcc6bdec). Could
+  re-merge into matrix or keep split; lateral move.
+- "Lets us undo `-n 1`" — Probe C Phase 4 will do this on default
+  runners anyway. Larger runners just multiply available workers.
+- "Lets us undo `parallel = true / concurrency`" — keep these;
+  harmless and useful.
+- "mem-tick instrumentation no longer load-bearing" — already
+  true after bcc6bdec; the instrumentation is now diagnostic-only.
+
+**Decision still stands** because of (1)-(3) above, but priority
+drops from "blocker for tonight's release" to "nice-to-have for
+this month's release cadence."
+
+---
+
+## Problem (original framing, kept for posterity)
 
 GitHub Actions' default `ubuntu-latest` runner has **4 vCPU / 16 GB
 RAM**; `macos-latest` has **3 cores / 7 GB**; `windows-latest` has

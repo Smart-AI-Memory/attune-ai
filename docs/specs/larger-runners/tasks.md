@@ -1,6 +1,22 @@
 # Tasks — Larger CI Runners
 
-## Phase 1 — Switch & verify (the actual work)
+**Post-Probe-C revision (2026-05-11):** with the threading-patch
+fix landed in PR #212 commit `bcc6bdec`, CI is no longer
+OOM-pressed on default 16 GB runners. The phases below are now
+about *headroom and speed*, not *rescue*. Order of operations
+also changed — Probe C Phase 4 (restore `-n auto`) is independent
+and runs first; this spec's Phase 1 stacks on top of it.
+
+Sequencing:
+
+1. **Probe C Phase 4** (separate PR) — flip `-n 1` → `-n auto`
+   on default runners. Verify green.
+2. **This spec Phase 1** — switch to larger runners; multiplies
+   the available workers (4 → 8 on Linux) and adds memory
+   headroom.
+3. **This spec Phase 2** — observe + adjust.
+
+## Phase 1 — Switch to larger runners
 
 - [ ] **1.1** Verify the org has larger runners enabled. Check
       [GitHub Actions runner groups settings](https://github.com/organizations/Smart-AI-Memory/settings/actions/runner-groups)
@@ -10,32 +26,32 @@
       - `runs-on: ubuntu-latest` → `runs-on: ubuntu-latest-large`
         on the `test` matrix job's ubuntu entries.
       - Leave macOS and Windows runners on defaults.
-- [ ] **1.3** Trigger a fresh CI run. Verify matrix completes in
-      reasonable time without OOM.
+- [ ] **1.3** Trigger a fresh CI run. Verify matrix completes
+      faster than the default-runner baseline (expectation: ~2x
+      speedup from 8 workers vs 4 with `-n auto`).
 
-## Phase 2 — Undo the workarounds (after Phase 1 confirms green)
+## Phase 2 — Observe & adjust
 
-- [ ] **2.1** Restore `-n auto` in the matrix pytest invocation
-      (remove the `-n 1` override).
-- [ ] **2.2** Re-merge the `coverage:` job back into the matrix's
-      ubuntu-3.11 entry. Or, alternative: keep the dedicated job
-      but remove `continue-on-error: true` since OOM is no longer
-      expected.
-- [ ] **2.3** Decide whether to keep mem-tick instrumentation as
-      always-on diagnostic or move it behind a workflow input flag.
-- [ ] **2.4** Close PR #212's history with a follow-up note in
-      `docs/specs/coverage-canonical-pattern/decisions.md`
-      pointing at this spec.
-
-## Phase 3 — Observe & adjust
-
-- [ ] **3.1** After one month on larger runners, check the GitHub
+- [ ] **2.1** After one month on larger runners, check the GitHub
       Actions usage report. Confirm spend is within budget
       ($50-80/month range expected).
-- [ ] **3.2** If cost exceeds expectations, evaluate self-hosted
+- [ ] **2.2** If cost exceeds expectations, evaluate self-hosted
       runner option (Alternative #1 in decisions.md).
-- [ ] **3.3** File a smaller follow-up if macOS 7 GB becomes a
+- [ ] **2.3** File a smaller follow-up if macOS 7 GB becomes a
       practical blocker for any contributor.
+
+## ~~Phase 2 — Undo the workarounds~~ (now mostly moot)
+
+The Probe C threading-patch fix already neutralized most of these:
+
+- ~~Restore `-n auto`~~ → handled by Probe C Phase 4 (separate PR)
+- ~~Re-merge `coverage:` job~~ → coverage job already passes
+  cleanly post-bcc6bdec; keeping it split is fine, no benefit
+  to re-merging
+- ~~Decide mem-tick fate~~ → already diagnostic-only post-fix;
+  keep as opt-in or retire when convenient
+- ~~Close out PR #212 history~~ → handled in
+  `docs/specs/probe-c-memory-investigation/decisions.md`
 
 ## Out of scope
 
