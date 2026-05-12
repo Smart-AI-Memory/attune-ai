@@ -160,33 +160,64 @@ Per-row addition before the Run button:
 </td>
 ```
 
-Recent-runs strip below the log pane:
+Recent-runs strip below each row (history chip per-workflow):
 
 ```html
 <div class="recent-runs" data-recent-runs="{{ w.name }}"></div>
 ```
 
-(Populated by JS via `GET /api/runs/{w.name}` after DOMContentLoaded.)
+(Populated by JS via `GET /api/runs/{w.name}` after DOMContentLoaded. Each chip is a link to `/runs/{run_id}/view` — the user can browse prior runs of this workflow with one click.)
 
-### `src/attune/ops/static/js/runner.js`
+### `src/attune/ops/templates/run_view.html` (Run-view page integration — post-#251)
 
-Additions:
+PR #251 introduced this page. Tier 2 extends it with three Tier 2-specific elements:
+
+```html
+<!-- Inline run-history navigator at the top of the run-view page,
+     showing the last 5 runs of THIS workflow as chips. Click a chip
+     to switch the page to that run's view. Same data source as the
+     workflows-table strip, just a different layout. -->
+<div class="run-view-history" data-recent-runs="{{ run.workflow }}"></div>
+
+<!-- Below the log pane: a slot for structured recommendation cards
+     (Phase 5). The log pane is unchanged — recommendations come from
+     a separate SSE event type ("recommendation"), not parsed from
+     the log stream. -->
+<div class="run-view-recommendations" data-recs></div>
+
+<!-- A "← from <source-workflow>" badge in the header when this run
+     was chained from a workflow-name pill click in another run.
+     Hidden by default; set by JS when the source query param is
+     present in the URL (e.g. `/runs/{id}/view?from=code-review`). -->
+<span class="chained-from" hidden></span>
+```
+
+### `src/attune/ops/static/js/runner.js` (Workflows-table launcher only)
+
+Additions on the workflows page (responsible for scope-pick + Run + recent-runs strip):
 - `getScope(row)` — reads the picker + custom input, returns string or null
 - `setupScopePicker(row)` — wires the "Custom path…" toggle behavior
-- `setupRecentRuns(row)` — fetches `/api/runs/<name>`, renders chips
-- `setupPillHandlers()` — Tier 1 pills get a click listener that POSTs to the named workflow's row with `getScope(currentRow)` carried forward
-- `renderRecommendationCard(row, payload)` — new SSE event handler for `recommendation` events
+- `setupRecentRuns(row)` — fetches `/api/runs/<name>`, renders chips that link to `/runs/<run_id>/view`
 
-The existing `attach(button)` for the Run button is extended to read `getScope(row)` and pass it in the POST body.
+The existing `attach(button)` for the Run button is extended to read `getScope(row)` and pass it in the POST body, then navigate to `/runs/<run_id>/view` (already does this since #251 — Tier 2 just adds the `?from=<workflow>` query param if this run was chained from another).
+
+### `src/attune/ops/static/js/run_view.js` (NEW — run-view page logic)
+
+PR #251 inlines a small script in `run_view.html`. Tier 2 extracts it to its own file and adds:
+- `setupPillHandlers()` — `.log-workflow` pills get a click listener that POSTs `/workflows/<target>/run` with the current scope, then navigates to `/runs/<new_run_id>/view?from=<this-workflow>`
+- `renderRecommendationCard(payload)` — appends a `.recommendation-card` to `.run-view-recommendations` when a `recommendation` SSE event arrives
+- `setupRunViewHistory()` — fetches `/api/runs/<workflow>`, renders chips in `.run-view-history`. Clicking a chip is a same-tab navigation to that run's view (browser back works).
+- `renderChainedFromBadge()` — reads `?from=` from the URL, populates `.chained-from` if present
 
 ### `src/attune/ops/static/css/main.css`
 
 New selectors:
 - `.scope-picker`, `.scope-custom` — combobox styling matching the existing `.status-select`
 - `.scope-na` — disabled-looking inline span
-- `.recent-runs` — flex strip of chips
-- `.recent-run-chip` — clickable chip with outcome color
-- `.recommendation-card` — action card below log pane
+- `.recent-runs`, `.run-view-history` — flex strip of chips (same styling, two locations)
+- `.recent-run-chip` — clickable chip with outcome color (`chip-ok`/`chip-danger`/`chip-warn`)
+- `.recommendation-card` — action card in the run-view recommendations slot, hover/click states + severity color
+- `.chained-from` — small badge in the run-view header showing the source workflow
 
 ---
 

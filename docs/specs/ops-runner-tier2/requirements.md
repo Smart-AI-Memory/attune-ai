@@ -54,13 +54,14 @@ Acceptance:
 - The new run appears in the bug-predict row (not the code-review row)
 - A subtle "↩ from code-review on memory" badge appears in the new run's output header
 
-### US-5 — Inline run history per workflow
+### US-5 — Run history per workflow
 
 **As Pat, when I revisit the dashboard, I want to see "last 5 runs" for each workflow as a strip of clickable chips so I can see what's been happening without scrolling.**
 
 Acceptance:
-- Each row shows up to 5 most-recent chips: outcome (✓ / ✗), elapsed time, scope, age (e.g. "2m ago")
-- Clicking a chip expands the log pane showing that run's output (read-only, scrollable)
+- Each row on the Workflows tab shows up to 5 most-recent chips: outcome (✓ / ✗), elapsed time, scope, age (e.g. "2m ago")
+- The same chip strip also appears at the top of the run-view page (`/runs/<id>/view`) for the current run's workflow — lets the user switch between recent runs without leaving the page
+- Clicking any chip navigates to `/runs/<run_id>/view` (the full-page viewer from #251)
 - History persists across server restarts (writes to `~/.attune/ops/runs/<workflow>/<run-id>.json`)
 - The current "last 20 runs in memory" behavior is removed (persisted history supersedes it)
 
@@ -70,9 +71,9 @@ Acceptance:
 
 Acceptance:
 - A workflow opts in by emitting an SSE event with `event: recommendation` and a JSON payload like `{"kind": "next-workflow", "name": "bug-predict", "args": {"path": "src/foo"}, "label": "Run bug-predict to verify the fix"}`
-- The dashboard renders these as cards below the log pane (not inline in the log)
-- Clicking a card runs the named workflow with the given args
-- The Tier-1 regex parser stays as a fallback for non-opted-in workflows
+- The dashboard renders these as cards in the **run-view page**'s recommendations slot (below the log) — NOT inline in the log stream
+- Clicking a card runs the named workflow with the given args and navigates to the new run's view page
+- The Tier-1 regex parser stays as a fallback for non-opted-in workflows (parsed inline in the log)
 
 ---
 
