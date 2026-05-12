@@ -1,0 +1,24 @@
+{
+  "workflow": "security-audit",
+  "path": "src/attune/security",
+  "depth": "quick",
+  "elapsed_seconds": 18.470918457955122,
+  "success": false,
+  "stats": {
+    "assistant_calls": 1,
+    "assistant_bytes": 89,
+    "result_calls": 0,
+    "result_bytes": 0,
+    "messages_total": 29,
+    "tool_use_messages": 6,
+    "other_messages": 20
+  },
+  "cost_usd": 0.0,
+  "num_turns": null,
+  "session_id": null,
+  "duration_api_ms": null,
+  "subagent_transcripts_kb": 0,
+  "final_output_bytes": 4,
+  "summary_bytes": 0,
+  "intermediate_to_summary_ratio": 22.25
+}
