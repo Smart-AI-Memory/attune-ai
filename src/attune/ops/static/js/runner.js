@@ -77,40 +77,29 @@
       if (!row) return;
       button.disabled = true;
       setStatus(row, "starting…");
-      showLogPane(row);
-      var stopTick = null;
       try {
         var resp = await fetch("/workflows/" + encodeURIComponent(name) + "/run", {
           method: "POST",
         });
         if (!resp.ok) {
           var detail = await resp.text();
+          // Show the inline error on the workflows page — don't navigate
+          // away if the run never started, so the user can see why and
+          // retry without losing context.
+          showLogPane(row);
           appendLine(row, "[error] " + formatErrorDetail(resp.status, detail));
           setStatus(row, "error");
           button.disabled = false;
           return;
         }
         var body = await resp.json();
-        stopTick = startTick(row, "running");
-        var es = new EventSource(body.stream_url);
-        es.addEventListener("line", function (ev) {
-          appendLine(row, JSON.parse(ev.data));
-        });
-        es.addEventListener("done", function (ev) {
-          var info = JSON.parse(ev.data);
-          if (stopTick) stopTick();
-          setStatus(row, info.status + " (exit " + info.exit_code + ")");
-          es.close();
-          button.disabled = false;
-        });
-        es.addEventListener("error", function () {
-          if (stopTick) stopTick();
-          setStatus(row, "stream error");
-          es.close();
-          button.disabled = false;
-        });
+        // Run started successfully — navigate to the full-page run view.
+        // The view page reconnects to the same SSE stream and replays the
+        // buffered log on refresh, so the output survives a reload (the
+        // long-standing inline-log-pane refresh-loses-state bug).
+        window.location.assign("/runs/" + encodeURIComponent(body.run_id) + "/view");
       } catch (err) {
-        if (stopTick) stopTick();
+        showLogPane(row);
         appendLine(row, "[error] " + err);
         setStatus(row, "error");
         button.disabled = false;

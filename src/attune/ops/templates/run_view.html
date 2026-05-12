@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+{% block title %}{{ run.workflow }} — run {{ run.id[:8] }}{% endblock %}
+{% block content %}
+<section class="page-head run-view-head">
+  <p class="page-sub">
+    <a href="/workflows" class="link">← Back to workflows</a>
+  </p>
+  <h1>
+    <code>{{ run.workflow }}</code>
+    <span class="run-id-chip">run <code>{{ run.id[:12] }}</code></span>
+  </h1>
+  <p class="page-sub run-view-meta">
+    <span class="run-view-status chip" data-status>{{ run.status }}</span>
+    {% if run.exit_code is not none %}
+      <span class="run-view-exit">exit code <code>{{ run.exit_code }}</code></span>
+    {% endif %}
+    {% if run.started_at %}
+      <span class="run-view-started">started <code>{{ run.started_at }}</code></span>
+    {% endif %}
+  </p>
+</section>
+
+<pre class="log-output run-view-log" data-log></pre>
+
+<p class="meta run-view-foot">
+  This page reconnects to the run's stream automatically — refresh anytime
+  to see the latest output. Buffered output replays for new subscribers,
+  so you won't lose history.
+</p>
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+
+  // Server-rendered, escaped via Jinja autoescape — safe for use in JS.
+  var STREAM_URL = {{ stream_url|tojson }};
+  var INITIAL_STATUS = {{ run.status|tojson }};
+
+  var pre = document.querySelector("[data-log]");
+  var statusEl = document.querySelector("[data-status]");
+  var startedAt = Date.now();
+  var tickerId = null;
+
+  function setStatus(text) {
+    if (statusEl) statusEl.textContent = text;
+  }
+
+  function setStatusClass(extra) {
+    if (!statusEl) return;
+    statusEl.className = "run-view-status chip " + (extra || "");
+  }
+
+  function appendLine(line) {
+    pre.appendChild(document.createTextNode(line + "\n"));
+    pre.scrollTop = pre.scrollHeight;
+  }
+
+  function startTicker() {
+    if (tickerId) return;
+    tickerId = setInterval(function () {
+      var s = Math.floor((Date.now() - startedAt) / 1000);
+      var label;
+      if (s < 60) {
+        label = s + "s";
+      } else {
+        label = Math.floor(s / 60) + "m " + (s % 60) + "s";
+      }
+      setStatus("running " + label);
+    }, 1000);
+  }
+
+  function stopTicker() {
+    if (tickerId) {
+      clearInterval(tickerId);
+      tickerId = null;
+    }
+  }
+
+  // Always attach to the SSE stream. The runner replays buffered lines
+  // to new subscribers, so a refresh on an in-progress (or completed)
+  // run shows the full history before any new events.
+  var es = new EventSource(STREAM_URL);
+
+  if (INITIAL_STATUS === "running" || INITIAL_STATUS === "pending") {
+    startTicker();
+  } else {
+    setStatusClass(
+      INITIAL_STATUS === "completed" ? "chip-ok" :
+      INITIAL_STATUS === "failed" ? "chip-danger" :
+      "chip-muted"
+    );
+  }
+
+  es.addEventListener("line", function (ev) {
+    appendLine(JSON.parse(ev.data));
+  });
+
+  es.addEventListener("done", function (ev) {
+    var info = JSON.parse(ev.data);
+    stopTicker();
+    setStatus(info.status + " (exit " + info.exit_code + ")");
+    setStatusClass(
+      info.status === "completed" ? "chip-ok" :
+      info.status === "failed" ? "chip-danger" :
+      "chip-muted"
+    );
+    es.close();
+  });
+
+  es.addEventListener("error", function () {
+    stopTicker();
+    setStatus("stream error");
+    setStatusClass("chip-danger");
+    es.close();
+  });
+})();
+</script>
+{% endblock %}
