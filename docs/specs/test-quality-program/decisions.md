@@ -107,3 +107,39 @@ renames. The pattern is mature enough to script as a
 per-workflow template (e.g. `scripts/scaffold_sdk_workflow_tests.py`
 taking module path + subagent list as inputs). Flagged
 for the next cycle to consider; not committed.
+
+## workflows/perf_audit.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.606 (weight=4 × gap=0.651 × risk=1.0)
+**Picked because:** Top entry with measured `covered_pct`
+after `bug_predict.py` shipped. Third instance of the
+SDK-native shell pattern — same scaffold transferred
+verbatim with subagent + method-name renames.
+**Outcome:** 1 test file added (`test_perf_audit_execute.py`,
+23 tests including 2 for the inline `main()` CLI entry
+point). Coverage 34.8% → 96% line+branch. Only line 281
+(`if __name__ == "__main__"`) and one falsy-branch in
+`main()` remain uncovered. Zero production bugs
+surfaced. Three SDK-native shells now through the
+program; `refactor_plan` remains.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — sixth module under test-quality-program"
+
+Same body shape as the two prior SDK-native cycles
+with one twist: `perf_audit.py` ships an inline
+`main()` CLI entry point (lines 259-277) rather than
+delegating to a sibling `*_report.py` module. Two
+extra tests handle it — one happy path with a patched
+`query()` yielding a `ResultMessage`, one error path
+with `query()` raising `RuntimeError`. Both go through
+`capsys` to assert the printed banner.
+
+**Reuse signal (third consecutive cycle):** the test
+scaffold is now demonstrably reusable across all
+SDK-native shells. The remaining sibling
+(`refactor_plan.py`) should be a one-pass rename. If
+the inline-`main()` shape recurs there too, scripting
+a generator becomes more clearly justified than
+hand-renaming.

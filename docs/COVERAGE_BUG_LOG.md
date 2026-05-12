@@ -18,6 +18,48 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — sixth module under test-quality-program (Opus 4.7)
+
+Sixth module run. Third SDK-native workflow through the
+program. Selected via the rubric working set after
+`bug_predict.py` shipped: `workflows/perf_audit.py`,
+score 2.606. **0 production bugs surfaced.**
+
+- `workflows/perf_audit.py` (`PerformanceAuditWorkflow`)
+  — no bugs. Structurally identical to `bug_predict.py`
+  and `dependency_check.py`: thin async shell around
+  `claude_agent_sdk.query()`, depth → max_turns mapping,
+  three subagents (`complexity-analyzer`,
+  `bottleneck-finder`, `optimization-advisor`), specific
+  exception paths producing structured `_error_result`.
+  One unique element: an inline `main()` CLI entry point
+  (line 259) — covered with two additional tests
+  exercising the success path (printed
+  "Performance Audit Results" header) and the error path
+  (raised exception → printed "Error:" line).
+
+**Coverage delta:** 34.8% → 96% line+branch. The
+remaining 4% is the `if __name__ == "__main__"` guard
+at line 281 plus one branch on line 274 (`elif output:`
+when both `result.error` and `output` are falsy — a
+combination that doesn't arise via either success or
+failure path).
+
+**Tests:** 23 added under
+`tests/unit/workflows/test_perf_audit_execute.py`. Same
+real-SDK-dataclass fixtures as prior SDK-native cycles
+(per CLAUDE.md isinstance-collector lesson).
+
+**Reuse signal continues:** three consecutive cycles
+from the same test scaffold with single-pass renames
+(`_run_agent_check` → `_run_agent_predict` →
+`_run_agent_audit`). The shape and tests have stabilized
+enough that scripting a `scaffold_sdk_workflow_tests.py`
+generator is now a reasonable next step. Still not
+committed; flagged in decisions.md.
+
+---
+
 ## 2026-05-12 — fifth module under test-quality-program (Opus 4.7)
 
 Fifth module run. Second Agent SDK-native workflow through
