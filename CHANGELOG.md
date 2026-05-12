@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: sixth module through the playbook —
+  `workflows/perf_audit.py` (Agent SDK-native orchestrator).
+  Coverage 34.8% → 96% line+branch. 23 deterministic tests
+  added under `tests/unit/workflows/test_perf_audit_execute.py`.
+  Same scaffold as `test_dependency_check_execute.py` /
+  `test_bug_predict_execute.py`, plus two extra `main()` tests
+  for the inline CLI entry point (success + error paths via
+  patched `query()`). Subagents covered: `complexity-analyzer`,
+  `bottleneck-finder`, `optimization-advisor`. Zero production
+  bugs surfaced.
 - Test-quality-program: fifth module through the playbook —
   `workflows/bug_predict.py` (Agent SDK-native orchestrator).
   Coverage 47.3% → 97% line+branch. 21 deterministic tests
