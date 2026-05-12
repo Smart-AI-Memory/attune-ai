@@ -1,6 +1,6 @@
 # Spec: Decouple Redis from `attune-ai` Core
 
-**Status**: approved
+**Status**: partial — 2026-05-12 (P1 + P2 shipped via PRs #279, #281; full decoupling deferred per Phase A audit)
 **Created**: 2026-05-09
 **Sibling spec**: `docs/specs/ci-debt/` (in flight; this spec is its
 natural follow-up — Phase A's redis dep wrangling motivated the
