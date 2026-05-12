@@ -1,6 +1,6 @@
 # Tasks — Ops Dashboard Security Hardening
 
-**Status:** draft
+**Status:** complete (2026-05-12, pending Phase 5 smoke)
 
 Single-phase implementation (small enough to ship in one PR) plus a verification phase. See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -10,12 +10,12 @@ Single-phase implementation (small enough to ship in one PR) plus a verification
 
 Goal: DNS-rebinding attacks fail at the middleware layer.
 
-- [ ] **1.1** Add `trusted_hosts: tuple[str, ...] = ()` to `Config` dataclass. Add `trusted_hosts` param to `build_config()`.
-- [ ] **1.2** Add `--trusted-host` repeatable CLI flag to `cli.py`. Thread through to `build_config()`.
-- [ ] **1.3** Add startup warning for `--host 0.0.0.0` without `--trusted-host` (stderr, yellow if TTY).
-- [ ] **1.4** Create `src/attune/ops/middleware.py` with `TrustedHostMiddleware` and `compute_allowlist()`.
-- [ ] **1.5** Mount the middleware FIRST in `create_app()` (before any other middleware).
-- [ ] **1.6** Tests:
+- [x] **1.1** Add `trusted_hosts: tuple[str, ...] = ()` to `Config` dataclass. Add `trusted_hosts` param to `build_config()`.
+- [x] **1.2** Add `--trusted-host` repeatable CLI flag to `cli.py`. Thread through to `build_config()`.
+- [x] **1.3** Add startup warning for `--host 0.0.0.0` without `--trusted-host` (stderr, yellow if TTY).
+- [x] **1.4** Create `src/attune/ops/middleware.py` with `TrustedHostMiddleware` and `compute_allowlist()`.
+- [x] **1.5** Mount the middleware FIRST in `create_app()` (before any other middleware).
+- [x] **1.6** Tests:
       - `test_middleware_allows_loopback` — `Host: localhost:<port>` passes
       - `test_middleware_allows_127_0_0_1` — `Host: 127.0.0.1:<port>` passes
       - `test_middleware_rejects_unknown_host` — `Host: evil.com:8766` returns 400 with the expected detail
@@ -28,29 +28,29 @@ Goal: DNS-rebinding attacks fail at the middleware layer.
 
 ## Phase 2 — Queue bound
 
-- [ ] **2.1** One-line change in `runner.py`: `asyncio.Queue(maxsize=1000)`.
-- [ ] **2.2** Test: `test_subscriber_queue_drops_slow_subscriber` — push 1001+ events to a non-consuming subscriber, assert it's removed from `self.subscribers` after the QueueFull path fires.
-- [ ] **2.3** Test: `test_subscriber_queue_does_not_block_fast_subscribers` — one slow subscriber doesn't slow down a fast one.
+- [x] **2.1** One-line change in `runner.py`: `asyncio.Queue(maxsize=1000)`.
+- [x] **2.2** Test: `test_subscriber_queue_drops_slow_subscriber` — push 1001+ events to a non-consuming subscriber, assert it's removed from `self.subscribers` after the QueueFull path fires.
+- [x] **2.3** Test: `test_subscriber_queue_does_not_block_fast_subscribers` — one slow subscriber doesn't slow down a fast one.
 
 ## Phase 3 — Run-view logging
 
-- [ ] **3.1** Add `logger = logging.getLogger(__name__)` to `dashboard.py` if not present.
-- [ ] **3.2** Log at INFO on 404 path of `run_view_page` with `run_id` context.
-- [ ] **3.3** Log at WARN on invalid-run_id path with the (truncated) offending input.
-- [ ] **3.4** Test: `test_run_view_logs_404` — caplog captures the INFO line with run_id.
-- [ ] **3.5** Test: `test_run_view_logs_invalid_input` — caplog captures the WARN line with the bad input.
+- [x] **3.1** Add `logger = logging.getLogger(__name__)` to `dashboard.py` if not present.
+- [x] **3.2** Log at INFO on 404 path of `run_view_page` with `run_id` context.
+- [x] **3.3** Log at WARN on invalid-run_id path with the (truncated) offending input.
+- [x] **3.4** Test: `test_run_view_logs_404` — caplog captures the INFO line with run_id.
+- [x] **3.5** Test: `test_run_view_logs_invalid_input` — caplog captures the WARN line with the bad input.
 
 ## Phase 4 — End-to-end "output survives refresh" test
 
-- [ ] **4.1** Add `test_run_view_replays_full_output_after_completion` in `tests/unit/ops/test_runner.py`. Pattern:
+- [x] **4.1** Add `test_run_view_replays_full_output_after_completion` in `tests/unit/ops/test_runner.py`. Pattern:
       ```python
       # Start a run, wait for terminal, request /runs/<id>/view,
       # parse the stream_url out of the rendered HTML, attach to the
       # SSE stream, assert the replayed lines match the expected
       # output, and assert we get the terminal `done` event.
       ```
-- [ ] **4.2** Test must run async (the existing `_wait_terminal` helper expects it).
-- [ ] **4.3** Run the existing ops suite to confirm no regressions: `pytest tests/unit/ops/ --no-cov`.
+- [x] **4.2** Test must run async (the existing `_wait_terminal` helper expects it).
+- [x] **4.3** Run the existing ops suite to confirm no regressions: `pytest tests/unit/ops/ --no-cov`.
 
 ## Phase 5 — Manual verification
 

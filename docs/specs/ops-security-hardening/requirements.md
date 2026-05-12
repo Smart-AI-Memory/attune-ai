@@ -1,6 +1,6 @@
 # Requirements — Ops Dashboard Security Hardening
 
-**Status:** draft
+**Status:** complete (2026-05-12, pending Phase 5 smoke)
 
 See `decisions.md` for context, `design.md` for the implementation shape, `tasks.md` for the phase plan.
 

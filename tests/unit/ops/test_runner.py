@@ -382,3 +382,32 @@ async def test_subscriber_queue_drops_slow_subscriber(tmp_path, monkeypatch):
     assert (
         slow_queue not in run.subscribers
     ), "slow subscriber should have been dropped after queue filled up"
+
+
+async def test_subscriber_queue_does_not_block_fast_subscribers(tmp_path, monkeypatch):
+    # Regression guard: one slow subscriber must not slow down others.
+    # _broadcast is synchronous put_nowait per subscriber, so a backed-up
+    # queue triggers QueueFull on that subscriber only — the rest still
+    # receive the event in the same loop iteration.
+    import asyncio
+
+    from attune.ops.runner import Run
+
+    run = Run(id="test-isolation", workflow="echo")
+    # Slow subscriber — saturates after 3 events, is then dropped.
+    slow_queue: asyncio.Queue = asyncio.Queue(maxsize=3)
+    # Fast subscriber — well above the event count we'll send.
+    fast_queue: asyncio.Queue = asyncio.Queue(maxsize=100)
+    run.subscribers.add(slow_queue)
+    run.subscribers.add(fast_queue)
+
+    for i in range(10):
+        run._broadcast(("line", f"event-{i}"))
+
+    # Slow subscriber gets dropped per its own QueueFull, no impact on fast.
+    assert slow_queue not in run.subscribers
+    assert fast_queue in run.subscribers
+    # Fast subscriber received every event in order.
+    assert fast_queue.qsize() == 10
+    received = [fast_queue.get_nowait() for _ in range(10)]
+    assert received == [("line", f"event-{i}") for i in range(10)]
