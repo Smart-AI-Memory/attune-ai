@@ -20,79 +20,37 @@ deleting it — the history is useful for retros.
 
 ---
 
-## Track A — Test signal (sequential, critical path)
+## Track A — Test signal (finishing up)
 
-These specs feed each other; run in order.
+windows-memory-detection and ignored-tests both closed
+2026-05-12. Only one small thread remains on this track.
 
-### windows-memory-detection (NEW priority — replaces probes)
-
-- Status: approved — 4-phase plan, Phase 1.1 done; Phase 3.1
-  partially done in this worktree (encoding fix to
-  `_run_hook` in test_session_continuity_io.py).
-- Why first: The 4 actual Windows-only CI failures on main
-  fit this spec exactly. One of them (the hook subprocess
-  bug) is named in Phase 1.3 by test ID and the encoding
-  fix matches Phase 3.1's proposed solution.
-- Tasks
-  - [x] Phase 1.1 — push diagnostic run (done via PR #245)
-  - [ ] Phase 1.2 — promote hypotheses to root-cause notes
-  - [ ] Phase 1.3 — diagnose hook subprocess failure
-        (this worktree's fix may close it; verify on Windows CI)
-  - [ ] Phase 2 — fix memory-feature worker-crash cluster
-        (3 tests: redis_auto_detect, memory_features × 2)
-  - [ ] Phase 3 — fix hook subprocess wrapper + add guard
-        test (encoding fix shipped here; add guard test)
-  - [ ] Phase 4 — unblock PR #242 (rebase, ready, merge)
-- Spec: [windows-memory-detection](windows-memory-detection/)
-
-### coverage-canonical-pattern — PAUSED 2026-05-12
-
-- Status: paused — premise invalidated. Recent main CI
-  failures are Windows-only individual test bugs, NOT the
-  `[100%] PASSED → shutdown` OOM pattern the spec was
-  designed to fix. See spec's `decisions.md`.
-- Re-open only if the OOM/shutdown pattern recurs. Probes
-  0a/0b are NOT to be executed — Probe 0a's change is
-  already in `tests.yml` and Probe 0b's hypothesis no
-  longer matches reality.
-- Spec: [coverage-canonical-pattern](coverage-canonical-pattern/)
-
-### coverage-exclusion-policy (Phases 3B–3D)
+### coverage-exclusion-policy (Phases 3B–3D) — LEAD
 
 - Status: approved — 12 tasks, ~17% done (Phase 3A landed)
-- Why here: Small. Slot between canonical-pattern phases as a
-  context-switch break. Touches the same pytest config.
+- Why lead: Last open Track A thread. Touches the same
+  `pytest.ini`/`pyproject.toml` configuration we just
+  cleaned via ignored-tests. Three small phases.
 - Tasks
   - [ ] Phase 3B — audit 3 undocumented exclusions
   - [ ] Phase 3C — document or remove each
   - [ ] Phase 3D — enforcement script + CI gate
 - Spec: [coverage-exclusion-policy](coverage-exclusion-policy/)
 
-### ignored-tests
+### coverage-canonical-pattern — PAUSED 2026-05-12
 
-- Status: approved — 13 tasks, 0% done
-- Why here: Parent (`test-infrastructure`) is complete. Each
-  of the 4 quarantined files (88 failing tests) is
-  independently shippable, so ship them in any order once
-  Track A's coverage work is stable.
-- Tasks
-  - [ ] File 1 — triage repair/reconcile/retire
-  - [ ] File 2 — triage repair/reconcile/retire
-  - [ ] File 3 — triage repair/reconcile/retire
-  - [ ] File 4 — triage repair/reconcile/retire
-  - [ ] Update pytest.ini per-file outcomes
-  - [ ] Update decisions.md with rationale
-- Spec: [ignored-tests](ignored-tests/)
+- Status: paused — premise invalidated. Recent main CI
+  failures were Windows-only individual test bugs, NOT the
+  `[100%] PASSED → shutdown` OOM pattern the spec was
+  designed to fix. See spec's `decisions.md`.
+- Re-open only if the OOM/shutdown pattern recurs.
 
----
-
-### windows-xdist-honor
+### windows-xdist-honor — CONDITIONAL
 
 - Status: draft — 4-phase plan, 0% done
-- Why deferred: Adjacent concern (is `-n 1` honored on
-  Windows). Address only if windows-memory-detection fixes
-  alone don't yield 11+/12 green matrix jobs. Strict
-  3-iteration cap per the tar-pit trip-wire rule.
+- Do not pre-schedule. Open only if Windows CI regresses
+  with `-n auto` not honored. Strict 3-iteration cap per
+  the tar-pit trip-wire rule.
 - Spec: [windows-xdist-honor](windows-xdist-honor/)
 
 ---
@@ -112,6 +70,20 @@ run alongside Track A.
   - [ ] Decision gate — re-scope based on findings
   - [ ] (Later) Phase B+ — implementation
 - Spec: [redis-decoupling](redis-decoupling/)
+
+### ops-specs-features (Phase 0 unblock)
+
+- Status: approved & prioritized 2026-05-11; gate condition
+  0.1b now satisfied (main green as of `bb0d8aec`,
+  2026-05-12). Phase 0.5 re-check still pending.
+- Why here: Pure verification step (re-check usage and
+  scope) gates the port-of-features implementation work.
+  Cheap to close.
+- Tasks
+  - [ ] Phase 0.1b — confirm CI condition
+  - [ ] Phase 0.5 — re-check porting scope vs current usage
+  - [ ] Phase 1+ — implementation (after gate)
+- Spec: [ops-specs-features](ops-specs-features/)
 
 ---
 
@@ -165,6 +137,40 @@ natural pause.
 
 ---
 
+## Track D — Standing umbrella (opportunistic)
+
+No start/end date. Slot a module whenever there's spare
+context between bigger work. Use the rubric to pick.
+
+### test-quality-program
+
+- Status: approved — 8 phases, 0% done; umbrella spec
+  codifying the COVERAGE_BUG_LOG playbook (~22% bug-find
+  rate across 80 prior modules).
+- Why standing: Module-by-module, not a single deliverable.
+  Re-orients prior 100%-coverage chase to "meaningful
+  coverage on customer-facing paths + test-reliability
+  hardening."
+- Cadence: One module per session, picked by rubric.
+- Spec: [test-quality-program](test-quality-program/)
+
+---
+
+## Track E — Conditional / contingent (do not pre-schedule)
+
+Open only if a trigger condition fires.
+
+### larger-runners — draft
+
+- Status: draft, post-Probe-C revision. Originally rescue
+  for OOM; now about *headroom and speed*, not rescue.
+- Trigger: CI duration becomes a constraint, or a workflow
+  consistently hits worker-memory ceilings on default
+  runners.
+- Spec: [larger-runners](larger-runners/)
+
+---
+
 ## Sequencing rationale (positive reasons)
 
 - Track A first means every later spec lands against green,
@@ -181,13 +187,10 @@ natural pause.
 
 ## Today's recommended pick
 
-**windows-memory-detection Phase 2.** Three Windows worker
-crashes (`test_redis_auto_detect`, `test_memory_features`
-×2) likely share one root cause — a Unix-only probe in
-`MemoryFeatures.list_all_features()` or `is_redis_enabled()`.
-One fix probably closes all three tests. The hook subprocess
-fix (Phase 3.1) shipped in this worktree, so verifying it on
-Windows CI is the natural next step alongside Phase 2.
+**coverage-exclusion-policy Phase 3B** — audit the three
+undocumented `[tool.coverage.run] omit` entries in
+`pyproject.toml`. Smallest unit of forward progress, finishes
+the last open Track A thread, and sets up Phase 3D's CI gate.
 
 ---
 
@@ -197,3 +200,14 @@ Windows CI is the natural next step alongside Phase 2.
 - [docs/specs/telemetry](telemetry/) — complete
 - [docs/specs/test-infrastructure](test-infrastructure/) —
   core work complete 2026-05-09 (follow-up: `ignored-tests`)
+- [docs/specs/ignored-tests](ignored-tests/) — complete
+  2026-05-09; 3 files retired, 1 reconciled (single-fixture
+  fix), pytest.ini clean, +35 tests recovered. Docs closed
+  2026-05-12.
+- [docs/specs/windows-memory-detection](windows-memory-detection/) —
+  complete 2026-05-12. Four Windows-only test failures
+  resolved (PRs #260, #261). `-n auto` restored across the
+  matrix (PR #242).
+- [docs/specs/probe-c-memory-investigation](probe-c-memory-investigation/) —
+  ✓ resolved 2026-05-11; threading-patch fix in PR #212
+  commit `bcc6bdec` closed the OOM concern.
