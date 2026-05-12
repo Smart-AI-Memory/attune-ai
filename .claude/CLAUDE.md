@@ -225,22 +225,10 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   bridge. The website must explain this distinction or users assume
   overlap.
 
-- **Session hooks may be vestigial**: `session_end.py` saves near-empty
-  shells (zero tokens, no patterns detected). Verify they are wired to
-  collect meaningful data before building on top of them or advertising
-  session memory as a feature.
-
 - **ruff parses pytest.ini as Python**: When committing `pytest.ini`
   alongside `.py` files, ruff's pre-commit hook tries to parse it as
   Python and produces syntax errors. Commit `pytest.ini` in a separate
   commit from Python files so the ruff hook only sees valid Python.
-
-- **Read source before writing tests for tricky logic**: The inline-
-  comment check in `is_in_docstring_or_comment()` uses a ternary that
-  defaults to `True` for any line not containing `eval`. Tests written
-  against assumed behavior (expected `False`) failed. Always read the
-  actual implementation before asserting expected values for
-  non-obvious control flow.
 
 - **Background processes from previous sessions persist across
   restarts**: Long-running processes started by Claude (e.g.
@@ -832,16 +820,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   agent-generated inventories. This applies to any generated
   content that enumerates codebase entities.
 
-- **Skill frontmatter has a strict allowlist**: Claude Code
-  skills only support these YAML frontmatter fields:
-  `name`, `description`, `argument-hint`,
-  `disable-model-invocation`, `user-invocable`,
-  `compatibility`, `license`, `metadata`. Fields like
-  `allowed-tools`, `model`, `context`, `agent`, and `hooks`
-  are NOT valid for skills (they may apply to agents or
-  commands). The IDE linter catches these — always check
-  diagnostics after editing SKILL.md frontmatter.
-
 - **Commands are NOT namespaced in plugins, skills ARE**:
   A command named `attune` in `commands/attune.md` is
   invoked as `/attune` directly. A skill named
@@ -1135,8 +1113,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `user-invocable`, `allowed-tools`, `model`, `effort`, `context`,
   `agent`, `hooks`, `paths`, `shell`. Fields `compatibility`,
   `license`, and `metadata` are NOT in the official docs and should
-  not be used. The old lesson about a strict 8-field allowlist was
-  outdated.
+  not be used.
 
 - **`claude plugin install` is marketplace-only**: The `install`
   command does not accept local paths. For local testing use
@@ -1413,25 +1390,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   of the re-exported names. If nothing consumes them,
   delete the re-exports rather than carrying a hidden
   dependency.
-
-- **Verify optional dep boundaries with a `MetaPathFinder`,
-  not by uninstalling**: To prove a package imports cleanly
-  without an optional dep, install a custom finder on
-  `sys.meta_path` that raises `ImportError` for the target
-  module name, then attempt the imports. Cleaner than
-  `pip uninstall` (which mutates the venv), faster than
-  spinning up a fresh venv, and the same script works in
-  CI. Pattern:
-  ```python
-  class Block:
-      def find_module(self, name, path=None):
-          if name == "target_pkg" or name.startswith("target_pkg."):
-              return self
-      def load_module(self, name):
-          raise ImportError(f"BLOCKED: {name}")
-  sys.meta_path.insert(0, Block())
-  import my_pkg  # should succeed
-  ```
 
 - **Removing one workspace dep can cascade to remove
   others**: When `attune-ai` declared `attune-author` as a
@@ -1711,21 +1669,19 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (repo create → remote add → set-upstream → push) when
   spinning up a new workspace-sibling package.
 
-- **MetaPathFinder `find_module`/`load_module` is dead in
-  Python 3.12+ — use `sys.modules[name] = None` sentinel
-  instead**: The existing "Verify optional dep boundaries
-  with a MetaPathFinder" lesson is partially wrong. The
-  deprecated `find_module` / `load_module` hooks stopped
-  firing in 3.12's import machinery (which migrated to
+- **To prove a package imports cleanly without an optional
+  dep, use `sys.modules[name] = None`**: The deprecated
+  `find_module`/`load_module` MetaPathFinder hooks stopped
+  firing in Python 3.12+ (the import machinery migrated to
   `find_spec`/`create_module`/`exec_module` fully). Tests
   using the old Blocker pattern fall through to the real
   SDK silently on 3.12+ CI matrix lanes. Cross-version
   replacement: `sys.modules[name] = None` — Python's
   import machinery treats the sentinel as "module is
   unavailable" and raises `ImportError` on the next
-  `import name`. Works unchanged on 3.10-3.13. Remember
-  to snapshot+restore the original `sys.modules` entries
-  for the module and its dotted children.
+  `import name`. Works unchanged on 3.10–3.13. Snapshot
+  and restore the original `sys.modules` entries for the
+  module and its dotted children around the test.
 
 - **Apply lessons by problem, not by keyword**: The
   `sentence-transformers removed — 0.4% savings, 420MB`
