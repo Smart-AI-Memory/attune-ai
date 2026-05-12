@@ -18,6 +18,74 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — thirteenth module under test-quality-program (Opus 4.7)
+
+Thirteenth module run. Selected via the fresh
+rubric: `workflows/test_runner.py`, weight 3, score
+2.649, **11.7% covered**. **0 production bugs
+surfaced.**
+
+- `workflows/test_runner.py` (Tier 1 telemetry
+  wrappers) — no bugs. The module exposes three
+  primary functions:
+  - `run_tests_with_tracking()` — runs pytest via
+    subprocess, parses output for pass/fail/skip
+    counts, logs to `TelemetryStore`.
+  - `track_coverage()` — parses `coverage.xml`,
+    computes trend (improving/declining/stable) vs
+    previous, logs to store.
+  - `track_file_tests()` — runs per-file pytest,
+    classifies the result, detects staleness when
+    source mtime > test mtime.
+  Plus two thin wrappers (`get_file_test_status`,
+  `get_files_needing_tests`) that delegate to the
+  store.
+
+  All four exception paths (TimeoutExpired in main
+  runner, generic Exception in main runner, same
+  pair in `track_file_tests`) recover to a
+  best-effort error record without crashing.
+  Telemetry log failures are also caught with
+  warnings, never propagated — a deliberate design
+  choice given Tier 1 tracking is opt-in.
+
+**Coverage delta:** 11.7% → 92% line+branch.
+
+**Tests:** 24 added under
+`tests/unit/workflows/test_test_runner.py`. Mocks
+only `subprocess.run` (would actually run pytest)
+and `get_telemetry_store` (would write to
+`~/.attune/telemetry/...`); pytest-output parsing,
+coverage.xml parsing (via `xml.etree` /
+`defusedxml`), and `FileTestRecord` construction
+use real implementations.
+
+**Remaining 8%:** the `defusedxml` ImportError
+fallback (line 19-20) which would require
+selectively breaking defusedxml import (cross-test
+contamination risk per CLAUDE.md lesson), plus
+three classifier branches at lines 342-347
+(`errors > 0` / `skipped == total` / final else)
+that need precisely-shaped pytest output to
+trigger. Stopping at 92% — marginal cost exceeds
+marginal value for these specific branches.
+
+**Coverage-omit note (informational):** the
+`workflows/test_runner.py` filename starts with
+`test_` which the `*/test_*.py` omit pattern in
+pyproject.toml's `[tool.coverage.run]` config
+should match — but the fresh `coverage.xml` does
+record measurements for the file (line-rate
+0.1169). The omit appears to NOT match nested
+paths the way the lesson at the top of CLAUDE.md
+suggests. Either the lesson is outdated, the
+pattern matches only direct children, or coverage
+.py instruments the file but then excludes it from
+some other report path. Worth a follow-up
+investigation but not blocking this cycle.
+
+---
+
 ## 2026-05-12 — twelfth module under test-quality-program (Opus 4.7)
 
 Twelfth module run. First cycle this session that
