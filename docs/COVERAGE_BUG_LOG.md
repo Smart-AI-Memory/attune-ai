@@ -18,6 +18,38 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — third module under test-quality-program (Opus 4.7)
+
+Third module run, first weight-5 (user-typed entry) pick. Selected
+via the rubric working set after `memory/short_term/conflicts.py`
+shipped (`ops/cli.py`, score 3.19). **0 production bugs surfaced.**
+
+- `ops/cli.py` (`attune ops` entry) — no bugs. Module is a thin
+  argparse + uvicorn launcher (151 lines). Two minor style smells
+  noted but not fixed in this PR: (a) line 82 imports uvicorn just
+  to check availability and line 135 re-imports — redundant but
+  cheap due to Python's import cache; (b) line 146
+  `parser.parse_args(["ops", *sys.argv[1:]])` could double-inject
+  "ops" if a user runs `python -m attune.ops ops --port 8000`,
+  but the case is unrealistic. Not in scope.
+
+**Coverage delta:** 36.2% → 100.00% (line + branch).
+
+**Tests:** 19 added under `tests/unit/ops/test_cli.py`. Real
+argparse, real `build_config`, real `create_app`. Only `uvicorn.run`
+(would block) and `webbrowser.open` (would open real browser)
+patched. Determinism verified across 3 back-to-back runs and under
+`-n auto` alongside the full ops test subtree (142 passed, no
+cross-test interference).
+
+**Pattern observation:** weight-5 modules surfaced no bugs while
+weight-3 data-handling modules surfaced 1 in 2 sessions. Early but
+suggestive — customer-facing entry points tend to be defensively
+written. The bug-hunt yield concentrates in composed helpers, not
+in user-typed entry points. Worth re-evaluating after 5+ modules.
+
+---
+
 ## 2026-05-12 — second module under test-quality-program (Opus 4.7)
 
 Second module run after the PoC. Selected via the rubric working
