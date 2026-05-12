@@ -167,21 +167,22 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   accessible and triggering real I/O instead of the mocked error.
   Use `tmp_path` instead.
 
-- **Stop hooks inject stderr, not stdout**: Claude Code's Stop hook
-  with exit code 2 surfaces the hook's **stderr** as the feedback
-  message. Use `print(..., file=sys.stderr)` — `print()` writes to
-  stdout which is silently discarded.
-
-- **Stop hook ordering matters**: When multiple Stop hook groups are
-  configured, run state-saving hooks (exit 0) first and blocking
-  hooks (exit 2) last. A trailing exit-0 hook may override a
-  preceding exit-2 block.
-
-- **Stop hooks loop without a sentinel**: Exit code 2 blocks one
-  stop attempt but the next attempt triggers the hook again,
-  creating an infinite loop. Use a TTL sentinel file
-  (`~/.attune/lessons_reminded`) to fire the reminder only once
-  per session.
+- **Stop hook configuration — four interlocking rules**: (1)
+  **Output channel:** exit code 2 surfaces the hook's *stderr* as
+  the feedback message; stdout is silently discarded — use
+  `print(..., file=sys.stderr)`. (2) **Ordering:** with multiple
+  Stop hook groups, run state-saving hooks (exit 0) first and
+  blocking hooks (exit 2) last; a trailing exit-0 hook overrides
+  a preceding exit-2 block. (3) **Loop prevention:** exit code 2
+  blocks one stop attempt but re-fires on the next, creating an
+  infinite loop — use a TTL sentinel file (e.g.
+  `~/.attune/lessons_reminded`) so the reminder fires once per
+  session. (4) **Working directory:** hooks without `cd /abs/path
+  &&` inherit Claude Code's session cwd, which may not be the
+  repo root — always prefix with
+  `cd /Users/patrickroebuck/attune-ai &&` (or equivalent) so
+  hook commands run from the right tree regardless of where the
+  session was opened.
 
 - **Claude Code plugin is platform-specific**: Skills, hooks, and
   MCP config only work in Claude Code (CLI). They do not function
@@ -194,18 +195,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and markers leaking into code blocks. Use plain ASCII like
   `--- CODE START ---` / `--- CODE END ---` instead.
 
-- **Pre-commit stash conflict with auto-fix hooks**: When black/ruff
-  auto-fix staged files and there are also unstaged changes, the
-  pre-commit stash/restore cycle conflicts with the fixes. Fix: run
-  `uv run ruff check --fix <paths>` manually before committing so
-  the staged files are already clean when the hook runs.
-
-- **Stop hooks missing `cd` prefix inherit session cwd**: Stop hooks
-  without an explicit `cd /abs/path &&` prefix inherit whatever
-  directory Claude Code was started from — which may not be the repo
-  root. Always prefix Stop (and all) hook commands with
-  `cd /Users/patrickroebuck/attune-ai &&` to guarantee the correct
-  working directory regardless of where the session was opened.
+- **Pre-commit stash conflicts with auto-fix hooks — one
+  root cause, several symptoms**: When black/ruff auto-fix
+  staged files AND any tracked file is unstaged (even
+  unrelated — `uv.lock`, a JSON fixture, anything),
+  pre-commit's stash/restore cycle conflicts with the fixes
+  and the commit fails (sometimes silently, sometimes in a
+  loop). Three remediation patterns: (1) **Preempt the
+  hooks**: run `uv run --with pre-commit pre-commit run
+  black --files <files>` (pinned tool, not venv) and
+  `uv run ruff check --fix <files>` manually before
+  staging, so hooks see already-clean files. The pinned
+  pre-commit version is the one that will actually run, so
+  use it — venv versions can format differently. (2)
+  **Quarantine the unstaged**: `git add` all related files
+  OR `git stash push <unrelated files>` before committing,
+  then `git stash pop` after. (3) **Re-stage on hook
+  failure**: if a commit fails because black reformatted
+  staged files (commit succeeded format-wise but was
+  rejected because content changed), the reformatted files
+  are in the working tree but unstaged — `git add <files>`
+  again and retry. This is distinct from the stash-conflict
+  loop: here the hook ran successfully, the commit just
+  needs to be repeated.
 
 - **Next.js shared data libs prevent page duplication**: When multiple
   pages need the same data array (e.g. wizard list), extract it to
@@ -238,25 +250,12 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   feature, and check `ps aux` if unexpected behavior is observed
   (Chrome tabs opening, ports already in use, etc.).
 
-- **Twine cannot prompt for tokens in Claude Code's non-interactive
-  terminal**: `twine upload` hangs or raises `EOFError` when it tries
-  to prompt for a PyPI token. Pass the token via environment variable:
-  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
-
 - **`pytest.importorskip` triggers ruff E402**: Test files that call
   `pytest.importorskip(...)` before optional imports cause ruff to
   flag those imports as E402 (module level import not at top of file).
   Fix: add `# noqa: E402` to each import line after the `importorskip`
   call. The pattern is intentional and correct — ruff just can't see
   the skip logic.
-
-- **Pre-commit stash conflict when black/ruff fix files with unstaged
-  siblings**: When staging a subset of changed files and running
-  `git commit`, pre-commit stashes unstaged changes, auto-fixes staged
-  files, then tries to restore — causing a conflict if the same file
-  has both staged and unstaged changes. Fix: run
-  `uv run ruff check --fix <files>` and `uv run black <files>`
-  manually before staging, so the hook sees already-clean files.
 
 - **`**kwargs` collides with explicit params of the same name**: If a
   helper like `_result_from_plan(plan, status, **kwargs)` builds a
@@ -265,20 +264,34 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the function body. Fix: add an explicit `reason_codes: list[str] |
   None = None` parameter so the signature is unambiguous.
 
-- **Module-level optional imports enable clean test patching**: A
-  local `import anthropic` inside a function body can't be patched
-  with `unittest.mock.patch` because the name isn't bound at module
-  scope. Move to module-level with an availability guard
-  (`_anthropic = None`; `_ANTHROPIC_AVAILABLE = False`) and patch as
-  `module._anthropic`. This is the established pattern in adapters
-  (YAML guard) — apply it to any optional SDK dependency.
-
-- **New dataclass fields need both the class AND the parser updated**:
-  Adding a field (e.g. `local_python`) to a dataclass only updates
-  the in-memory model. If there's a `_parse_*()` helper that builds
-  the dataclass from raw YAML/JSON, the field stays silently empty
-  at runtime until the parser is also updated. Always grep for the
-  parser function when adding a new dataclass field.
+- **Patchable imports require module-level binding — four
+  techniques for four import shapes**: `unittest.mock.patch
+  ("module.Name")` looks up the attribute on the module
+  object at patch time, so any name imported INSIDE a
+  function body raises `AttributeError`. Pick the technique
+  by import shape: (1) **Optional SDK with availability
+  guard** — for `import optional_sdk` in function bodies,
+  hoist to module scope with a guard:
+  `_optional_sdk = None; _AVAILABLE = False` (set on
+  successful import), then patch `module._optional_sdk`.
+  Established pattern across our adapters. (2) **Plain
+  module-scope hoist** — for `from X import Y` deferred
+  inside a function, move the import to module scope and
+  patch `module.Y`. (3) **Patch the source module instead**
+  — when hoisting is undesirable (e.g.
+  `from ..real_tools import RealSecurityAuditor` inside a
+  function in `_strategies/base.py`), patch
+  `real_tools.RealSecurityAuditor` — the source module
+  where the name IS at module scope. The deferred import
+  resolves from the patched source at call time. Cleaner
+  than hoisting or `patch.dict`. (4) **`patch.dict("sys.modules",
+  ...)` for bare `import X`** — when a function does
+  `import attune` (bare module, not `from X import Y`),
+  neither (1) nor (3) applies. Build a fake:
+  `mock = types.ModuleType("attune"); mock.__version__ = "..."`,
+  then `patch.dict("sys.modules", {"attune": mock})`. Same
+  technique simulates `ImportError` if you set the entry to
+  `None`.
 
 - **Verify new dispatch branches with a known fixture, not just
   imports**: When adding a new runtime case (e.g. `local_python`)
@@ -286,35 +299,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   branch fires. Run `Executor.run()` directly with a spec whose
   `runtime` matches the new case and assert `result.status ==
   "success"` before considering the feature done.
-
-- **`patch()` requires the target name to exist at module scope at
-  patch time**: `unittest.mock.patch("module.Name")` fails with
-  `AttributeError` if `Name` is only imported inside a function
-  body (lazy/deferred import). The mock library looks up the
-  attribute on the module object immediately when the patch context
-  is entered. Move any import that needs to be patchable to module
-  level — even optional ones, using an availability guard pattern
-  if needed.
-
-- **Patch the source module for `from ..X import Y` in function
-  bodies**: When a function does `from ..real_tools import
-  RealSecurityAuditor`, patching
-  `_strategies.base.RealSecurityAuditor` fails (not at module
-  scope). Instead patch `real_tools.RealSecurityAuditor` — the
-  source module where the name IS at module scope. The deferred
-  import resolves from the (now-patched) source at call time.
-  This is cleaner than moving imports or using
-  `patch.dict("sys.modules")`.
-
-- **Mock a lazy `import X` with `types.ModuleType` +
-  `patch.dict("sys.modules")`**: When a function body does
-  `import attune` (bare module, not `from X import Y`),
-  `patch("module.attune")` fails (not at module scope) and
-  source-module patching doesn't apply. Fix: create
-  `mock = types.ModuleType("attune")`, set attributes like
-  `mock.__version__ = "1.0.0"`, then use
-  `patch.dict("sys.modules", {"attune": mock})`. The lazy
-  import inside the function resolves from `sys.modules`.
 
 - **Shadow directories at repo root break imports**: An `attune/`
   directory at the repo root (from prototyping) shadows the installed
@@ -370,14 +354,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `memory._client = MagicMock()`. Old tests using the direct
   path were all skipped with "Redis mocking API changed".
 
-- **Lazy imports inside function bodies can't be patched with
-  `patch("module.Name")`**: `HookEvent`, `HookRegistry`, and
-  similar names imported inside function bodies are never bound
-  at module scope. `patch("attune.commands.context.HookEvent")`
-  raises `AttributeError`. Use `patch.dict("sys.modules", ...)`
-  to simulate `ImportError`, or use the real value for happy-path
-  tests.
-
 - **Full coverage runs on 15k+ test suites timeout easily**:
   `pytest --cov=src/attune` with the full test suite takes 10+
   minutes. For development feedback, use targeted coverage:
@@ -430,13 +406,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to `docs/archive/` (excluded by mkdocs `exclude_docs`
   config) rather than fixing every dead link.
 
-- **dist/ can contain stale artifacts after version bumps**: The
-  `dist/` directory is not automatically rebuilt when
-  `pyproject.toml` version changes. Always run
-  `rm -rf dist/ && uv run python -m build` before publishing
-  and verify `ls dist/` shows the correct version. Publishing
-  stale artifacts uploads the old version to PyPI.
-
 - **MCP tool count tests are hardcoded**: When adding new MCP
   tools to `server.py`, grep tests for the old tool count
   (e.g., `assert len(tools) == 22`). The assertion in
@@ -459,14 +428,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   built-in slash commands first: `/batch`, `/compact`, `/config`,
   `/cost`, `/help`, `/init`, `/login`, `/logout`, `/memory`,
   `/permissions`, `/review`, `/status`, `/vim`.
-
-- **`CostReport` is a dataclass, not a dict**: The
-  `WorkflowBatchRunner._execute_one()` method used
-  `result.cost_report.get("total_cost", cost)` which fails with
-  `AttributeError: 'CostReport' object has no attribute 'get'`.
-  Fix: use `getattr(result.cost_report, "total_cost", cost)`.
-  Always check whether a result attribute is a dataclass or dict
-  before choosing `.get()` vs `getattr()`.
 
 - **Bug-predict `dangerous_eval` flags `subprocess_exec`**: The
   scanner's regex matches `create_subprocess_exec` as containing
@@ -491,16 +452,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   here there are no unstaged siblings, just the hook modifying
   staged files.
 
-- **Any unstaged file triggers pre-commit stash conflicts with
-  auto-fix**: Even unrelated unstaged files (e.g. `uv.lock`)
-  cause pre-commit to stash/restore. If auto-fix hooks modify
-  staged files during the stash, the restore conflicts and
-  rolls back the fixes — creating an infinite fail loop. Fix:
-  before committing, either `git add` all unstaged files or
-  `git stash push` them manually. Running `uv run black` and
-  `uv run ruff check --fix` on staged files beforehand doesn't
-  help if pre-commit still detects unstaged files to stash.
-
 - **`datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
   through the entire codebase**: Replacing `utcnow()` (naive) with
   `now(timezone.utc)` (aware) in source code causes `TypeError:
@@ -518,15 +469,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   becomes the invalid `+00:00+00:00`. After migrating to
   timezone-aware datetimes, grep for `.isoformat() + "Z"` and
   remove the suffix.
-
-- **`PurePosixPath.match()` doesn't support `**` in Python 3.10**:
-  `PurePosixPath("a/b/c.py").match("a/**")` returns `False` because
-  `match()` treats `*` as single-segment only (no recursive globbing).
-  Do NOT replace `**` with `*` in `fnmatch.fnmatch()` — fnmatch's
-  `*` matches `/`, so `src/attune/*` incorrectly matches
-  `src/attune-redis/foo.py`. Instead, convert globs to regex: map
-  `**` → `.*`, `*` → `[^/]*`, `?` → `[^/]`, then use
-  `re.fullmatch()`. See `_glob_match()` in `help/manifest.py`.
 
 - **`Path.cwd()` at module level captures import-time cwd**:
   `_DEFAULT = Path.cwd() / ".help"` evaluated at import time becomes
@@ -586,18 +528,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 - **GitHub protected tags cannot be force-updated**: Once a tag is
   pushed, `git push --force` fails if repository rules protect tags.
   Tag the correct commit before pushing — there's no easy fix after.
-
-- **Rebuild dist after README changes**: PyPI uses `README.md` as the
-  package description. If you update the README after the initial
-  build, run `rm -rf dist/ && uv run python -m build` again before
-  publishing or PyPI will show the old README.
-
-- **MCP handler: validate paths before importing workflows**: In
-  `server.py`, `_validate_file_path()` must run before the lazy
-  `from attune.workflows.X import XWorkflow` import. If the import
-  fails (wrong class name, missing dep), the path validation never
-  fires and the security check is bypassed. Always: validate first,
-  import second.
 
 - **`BugPredictionWorkflow` not `BugPredictWorkflow`**: The class in
   `attune.workflows.bug_predict` is `BugPredictionWorkflow`. The
@@ -719,19 +649,16 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   hardcoded duplicates in method bodies and metadata dicts.
 
 - **GPG signing fails in non-interactive terminals (VSCode
-  extension, Claude Code)**: `gpg` tries to open `/dev/tty` for
-  passphrase input, which doesn't exist in spawned subprocesses.
-  Fix: install `pinentry-mac` (`brew install pinentry-mac`), set
-  `pinentry-program /opt/homebrew/bin/pinentry-mac` in
-  `~/.gnupg/gpg-agent.conf` (remove any earlier `pinentry-tty`
-  lines — GPG uses the first match), then `gpgconf --kill
-  gpg-agent`. The passphrase must still be cached first by
-  running `echo "unlock" | gpg --clearsign` in a real terminal.
-
-- **Multiple `pinentry-program` lines in gpg-agent.conf — first
-  wins**: GPG uses the first `pinentry-program` directive it
-  finds. Appending a new line doesn't override earlier ones.
-  Always replace, don't append.
+  extension, Claude Code) — configure pinentry-mac**: `gpg`
+  tries to open `/dev/tty` for passphrase input, which doesn't
+  exist in spawned subprocesses. Fix: `brew install pinentry-mac`,
+  then *replace* (don't append) the `pinentry-program` directive
+  in `~/.gnupg/gpg-agent.conf` to point at
+  `/opt/homebrew/bin/pinentry-mac` — GPG uses the FIRST match,
+  so a stale `pinentry-tty` line earlier in the file silently
+  wins. Then `gpgconf --kill gpg-agent`. The passphrase must
+  also be cached first by running
+  `echo "unlock" | gpg --clearsign` in a real terminal.
 
 - **`pip-audit` fails on unpublished versions**: `pip-audit --strict`
   with a local editable install (`pip install -e .`) fails if the
@@ -753,14 +680,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   root level alongside `.claude-plugin/`. Use `claude --plugin-dir
   ./plugin` to test local plugins during development.
 
-- **`_validate_file_path` needed on reads too, not just writes**:
-  `load_state(user_id)` and `delete_state(user_id)` built paths
-  from user input without validation. Even though the existing
-  `save_state()` validated, the read and delete paths did not.
-  When adding path validation to a module, grep for ALL `open()`,
-  `.unlink()`, and `.read_text()` calls in the same file — not
-  just write operations.
-
 - **`importlib.import_module()` is an arbitrary code execution
   vector**: The hook executor's `_execute_python()` fell through
   to `importlib.import_module(module_path)` for any module not
@@ -775,13 +694,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   identity layer (Fix 5) before or alongside the authorization
   layer (Fix 4). Use `os.getlogin()` with fallback for
   non-interactive environments.
-
-- **Pre-commit black + unstaged files: re-stage after failure**:
-  When `git commit` fails because black reformatted staged files,
-  the reformatted files are in the working tree but unstaged. Run
-  `git add <files>` again before retrying the commit. This is
-  distinct from the stash conflict issue — here the hook succeeds
-  at formatting but the commit is rejected because files changed.
 
 - **New security features need dedicated tests before release**:
   v5.0.1 shipped with 4 new security controls (rate limiter,
@@ -880,21 +792,43 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that checks user-facing command strings against the actual
   registered CLI subcommands.
 
-- **New MCP handlers must match the validation pattern of
-  adjacent handlers**: `_run_test_generation` was the only
-  handler (out of 10) missing `_validate_file_path()` — easy
-  to miss because the handler worked fine without it. When
+- **Apply `_validate_file_path()` consistently across all
+  file operations — reads, writes, deletes, and BEFORE imports**:
+  Three corollaries of the same rule. (1) Reads need the same
+  validation writes do: `load_state(user_id)` and
+  `delete_state(user_id)` both built paths from user input;
+  `save_state()` already validated but the read/delete paths
+  didn't, leaving a half-secured module. Grep every `open()`,
+  `.unlink()`, `.read_text()`, `.write_text()` in a file when
+  adding validation, not just write callsites. (2) In MCP
+  handlers, validate BEFORE the lazy
+  `from attune.workflows.X import XWorkflow` import — if the
+  import fails (wrong class name, missing dep), the validation
+  never fires and the security check is bypassed. (3) When
   adding a new MCP tool handler, copy the validation block
-  from the nearest similar handler, not just the workflow
-  call pattern.
+  from the nearest similar handler, not just the workflow call
+  pattern. A new handler that skips validation looks fine in
+  isolation but breaks the file's invariant — easy to miss in
+  code review.
 
-- **Silent `pass` blocks in discovery/registry code hide
-  import failures**: Workflow discovery had 6 silent `pass`
-  blocks that swallowed `ImportError`/`AttributeError`. When
-  a workflow disappeared from `attune workflow list`, there
-  was no diagnostic output at any log level. Always use
-  `logger.warning()` in discovery paths so `--verbose` or
-  log inspection can surface the root cause.
+- **Passing tests don't prove integration — verify with
+  inbound-import grep, not test runs**: Dead code modules
+  ship with green test suites all the time. `socratic/
+  embeddings/` had 240 lines of passing tests and clean
+  exports in `__init__.py` but zero imports from any
+  workflow, CLI, or MCP path. `hot_reload/` was 1,038 lines
+  of production code plus 1,409 lines of passing tests —
+  also zero inbound imports outside its own package. When
+  evaluating whether a module is "alive," grep for imports
+  outside the module itself; tests passing is not evidence
+  of integration. Companion rule: discovery/registry paths
+  must NOT swallow `ImportError`/`AttributeError` with
+  silent `pass` blocks — workflow discovery once had 6 of
+  them, so when a workflow disappeared from
+  `attune workflow list` there was no diagnostic at any log
+  level. Use `logger.warning()` (or higher) on every
+  exception path in discovery code so `--verbose` or log
+  inspection surfaces the root cause.
 
 - **Semantic cache 70% hit rate claim was unmeasured**:
   Telemetry data (`~/.attune/telemetry/usage.jsonl`, 17,264
@@ -911,13 +845,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   caching with `sentence-transformers` (420MB dep) delivered
   0.4% savings vs Anthropic's automatic server-side caching.
   Removed in favor of the native solution.
-
-- **Dead code modules with full test suites look alive**:
-  `socratic/embeddings/` had 240 lines of passing tests, clean
-  exports in `__init__.py`, and conftest fixtures — but zero
-  imports from any workflow, CLI, or MCP path. Tests passing
-  is not evidence of integration. Grep for imports outside the
-  module itself before considering a feature "active".
 
 - **Changing user-facing output strings cascades through test
   assertions**: Replacing "Workflow completed" with voice layer
@@ -1026,32 +953,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   entry in the dispatch table itself. This caused 20+
   pre-existing test failures.
 
-- **Pre-commit stash conflicts when any tracked unstaged file
-  exists alongside staged files**: Even a single unrelated
-  unstaged tracked file (e.g. `memdocs_storage/test_key.json`)
-  triggers pre-commit's stash/restore cycle. If auto-fix hooks
-  (black, ruff) modify staged files during that cycle, the
-  restore conflicts and the commit fails. Fix: `git stash push`
-  the unstaged tracked files before committing, then
-  `git stash pop` after.
-
-- **`hot_reload/` subsystem was 1,038 lines of dead code**:
-  Zero inbound imports from any file outside the package, but
-  it had its own test suite (1,409 lines) that all passed —
-  making it look alive. Lesson: passing tests are not evidence
-  of integration. Always grep for imports outside the module
-  itself before considering a feature active. (This echoes the
-  existing `socratic/embeddings/` lesson but for a different
-  module.)
-
-- **`gh pr merge --admin` is blocked by in-progress required
-  checks**: The `--admin` flag only bypasses failed or missing
-  checks — it cannot override checks that are still running.
-  GitHub returns `Required status check "X" is in progress`.
-  You must wait for required checks to complete (or cancel
-  them) before even an admin merge is possible. Budget extra
-  time when the test matrix is large (12 platform combos ~15
-  min).
+- **GitHub branch protection and admin-merge — four
+  interlocking constraints**: (1) **Exact check names matter**:
+  required status checks must match GitHub's *exact* check
+  names (e.g. `Analyze (python)`, not `Analyze Python`).
+  Mismatched names silently block merges — the expected
+  check never appears, so the gate sits "pending" forever.
+  Always run `gh pr checks <PR>` first to see actual names
+  before adding them to branch protection. (2) **`--admin`
+  doesn't override in-progress checks**: the `--admin` flag
+  only bypasses failed or missing checks; it returns
+  `Required status check "X" is in progress` if a check is
+  still running. Wait for required checks (or cancel them)
+  before admin-merging. Budget for the matrix — a 12-platform
+  matrix takes ~15 min. (3) **`enforce_admins: true` blocks
+  solo-dev self-approval**: with `enforce_admins: true` and
+  `required_approving_review_count >= 1`, the repo owner
+  cannot self-approve and `--admin` also fails. The
+  auto-approve workflow's `GITHUB_TOKEN` can't approve the
+  PR author's own PRs. For solo-dev repos, use the
+  temp-remove-reviews dance: drop `required_approving_review_count`
+  to 0 via API, `gh pr merge --squash --admin`, then restore
+  to 1. The auto-approve workflow still handles Dependabot
+  and collaborator PRs correctly. (4) **Don't re-enable
+  reviews while `--auto` is queued**: setting
+  `gh pr merge --auto` while reviews are removed and
+  re-enabling before the merge fires blocks auto-merge (no
+  approval exists). Either wait for auto-merge to complete
+  before restoring reviews, or skip `--auto` entirely and
+  use the remove-merge-restore pattern synchronously.
 
 - **ClusterFuzzLite `--no-deps` misses transitive imports**:
   `.clusterfuzzlite/build.sh` used `pip3 install --no-deps`
@@ -1063,23 +993,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   don't install missing packages. Fix: explicitly `pip3
   install <dep>` for any dependency reachable from fuzz target
   imports.
-- **Required status check names must match GitHub's exact check
-  names**: We set `Analyze Python` as a required check, but the
-  actual name is `Analyze (python)` (with parentheses). Mismatched
-  names silently block merges because the expected check never
-  appears. Always run `gh pr checks <PR>` first to see the exact
-  check names before adding them to branch protection.
-
-- **`enforce_admins` + required reviews blocks solo-dev merges**:
-  With `enforce_admins: true` and `required_approving_review_count:
-  1`, the repo owner cannot self-approve PRs (`Review Can not
-  approve your own pull request`) and `--admin` merge also fails.
-  The auto-approve workflow's `GITHUB_TOKEN` also can't approve
-  the PR author's own PRs. For solo-dev repos: temporarily remove
-  the review requirement via API, merge, then re-enable. The
-  auto-approve workflow works correctly for PRs opened by other
-  actors (Dependabot, collaborators).
-
 - **OpenSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are
   process metrics, not code bugs**: They measure the ratio of
   approved/analyzed changesets over time. No single PR can fix
@@ -1095,13 +1008,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   as false positive since the deps ARE hash-pinned. The alerts
   recur on each Scorecard re-scan so expect to re-dismiss.
 
-- **Re-enabling required reviews kills queued auto-merge**: If you
-  set `gh pr merge --auto` while reviews are removed, then
-  re-enable `required_approving_review_count: 1` before the merge
-  fires, auto-merge is blocked (no approval exists). Fix: either
-  wait for auto-merge to complete before re-enabling reviews, or
-  skip auto-merge entirely and use the remove-reviews → admin-merge
-  → re-enable-reviews pattern.
 - **Skill descriptions must be under 250 characters**: Anthropic
   truncates skill descriptions longer than 250 chars, which breaks
   auto-triggering from natural language. Always check with
@@ -1207,12 +1113,20 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   dir → ... → repo root. Off-by-one silently resolves to `src/`
   instead of the repo root.
 
-- **`CostReport` fields are named, not positional**: The
-  `CostReport` dataclass requires `total_cost`, `baseline_cost`,
-  `savings`, `savings_percent`, and `by_stage`. Using
-  `total_input_tokens` or `total_output_tokens` raises
-  `TypeError` — those fields don't exist. Always check the
-  dataclass definition in `data_classes.py` before constructing.
+- **Dataclass changes require parser AND usage-site updates —
+  three failure modes**: (1) Adding a field only updates the
+  in-memory model; if there's a `_parse_*()` helper building the
+  dataclass from YAML/JSON, the field stays silently empty at
+  runtime until the parser is updated too. Always grep for the
+  parser when adding a field. (2) Reading from a dataclass uses
+  `getattr(obj, "name", default)`, not `obj.get("name", default)`
+  — `.get()` raises `AttributeError`. Always check whether the
+  return value is a dataclass or dict before picking the access
+  pattern. (3) Constructing a dataclass requires the exact field
+  names — passing `total_input_tokens` to a class that defines
+  `total_cost` raises `TypeError`. Read the dataclass definition
+  (`data_classes.py` or equivalent) before constructing; named
+  kwargs only, no positional bets.
 
 - **`# noqa: F401` re-exports break silently on satellite file
   deletion**: SDK-native workflows re-export constants from legacy
@@ -1229,20 +1143,24 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   re-export removal can cascade through 5+ test files. After removing
   any re-export, run `pytest -x` iteratively — each failure reveals
   the next test file to fix.
-- **Version bumps must update 7+ files, not just `pyproject.toml`**:
-  The version lives in `pyproject.toml`, `plugin/.claude-plugin/
-  plugin.json`, `plugin/.claude-plugin/marketplace.json` (two fields:
-  `metadata.version` and `plugins[0].version`), `plugin/core/
-  __init__.py`, `.claude-plugin/marketplace.json` (root-level),
-  `.claude/CLAUDE.md` (header and footer), AND
-  `docs/reference/API_REFERENCE.md` (header). The test
-  `test_all_versions_match` in `test_plugin_config_validation.py`
-  catches the plugin-config mismatches but NOT the API_REFERENCE
-  drift — that one has to be caught by hand. As of v6.3.0, API_REFERENCE
-  had silently lagged 2 minor versions (stayed at 5.3.2 through v6.0,
-  v6.1, v6.2, v6.3). Grep for the old version string across the whole
-  repo before committing a bump, and include `docs/reference/API_REFERENCE.md`
-  in every release-prep checklist.
+- **Version bumps touch 7+ files AND rebuild dist — full
+  release-prep checklist**: The version lives in
+  `pyproject.toml`, `plugin/.claude-plugin/plugin.json`,
+  `plugin/.claude-plugin/marketplace.json` (TWO fields:
+  `metadata.version` and `plugins[0].version`),
+  `plugin/core/__init__.py`, `.claude-plugin/marketplace.json`
+  (root-level), `.claude/CLAUDE.md` (header AND footer), and
+  `docs/reference/API_REFERENCE.md` (header AND footer). The
+  `test_all_versions_match` test catches plugin-config drift
+  but NOT API_REFERENCE — that one is on you. (API_REFERENCE
+  silently lagged 2 minor versions through v6.0–v6.3 before
+  this was caught.) Also rebuild `dist/`:
+  `rm -rf dist/ && uv run python -m build` before publishing
+  — the dist directory isn't auto-rebuilt on version change,
+  and stale artifacts upload the OLD version to PyPI. Same
+  rebuild applies after README changes, because PyPI renders
+  README.md from the built artifact. Grep for the old version
+  string across the whole repo before committing the bump.
 
 - **`.agents/skills/` must stay synced with `plugin/skills/`**: Adding
   a new skill directory under `plugin/skills/` without also creating
@@ -1268,37 +1186,42 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   where the atomic-write pattern wrote to `.json.tmp` then
   renamed to `.json`.
 
-- **Prefer GitHub Actions trusted publishing over local `twine`/`uv
-  publish`**: Local PyPI uploads can fail due to SSL cert mismatches
-  (VPN/proxy intercepting `upload.pypi.org`) or 504 Gateway Timeouts
-  on large wheels (~8MB). The repo has a trusted publishing workflow
-  at `.github/workflows/publish-pypi.yml` that uses OIDC — no tokens
-  needed. Trigger with `gh workflow run publish-pypi.yml --ref main`.
-  This runs on GitHub's infrastructure, bypassing local network
-  issues entirely.
+- **PyPI publishing: prefer GitHub Actions trusted publishing
+  (OIDC), not local tokens**: The repo has
+  `.github/workflows/publish-pypi.yml` configured with trusted
+  publishing — no tokens needed. Trigger with
+  `gh workflow run publish-pypi.yml --ref main`. This runs on
+  GitHub's infrastructure, bypassing local SSL cert mismatches
+  (VPN/proxy intercepting `upload.pypi.org`) and 504 Gateway
+  Timeouts on large wheels. Three corollaries: (1) the `pypi`
+  environment has a required-reviewer gate — after the build
+  job passes, the publish job sits as "running" but is actually
+  waiting for approval at the Actions run page (the approval
+  can be self-served via the API:
+  `gh api repos/X/Y/actions/runs/<id>/pending_deployments -X POST
+  -F "environment_ids[]=<env-id>" -F state=approved`). Without
+  approval the job hangs indefinitely, not a PyPI timeout.
+  (2) If you MUST use local `twine`, pass the token via env
+  var — `twine upload` hangs/EOFErrors when prompting in
+  Claude Code's non-interactive terminal. Use
+  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
+  (3) Never paste PyPI tokens into chat or logs — pasted tokens
+  are permanently exposed; if it happens, revoke immediately at
+  pypi.org/manage/account/token.
 
-- **`pypi` environment requires manual approval in GitHub Actions**:
-  The `publish-pypi.yml` workflow uses `environment: pypi` which has
-  a required reviewer gate. After the build job passes, the publish
-  job appears to be "running" but is actually waiting for approval
-  at the Actions run page. Go to the run URL, click "Review
-  deployments", and approve. Without approval the job hangs
-  indefinitely (not a PyPI timeout).
-
-- **Never paste PyPI tokens into chat or logs**: Tokens pasted into
-  a conversation are permanently exposed. Always use environment
-  variables set in a separate terminal, or use trusted publishing
-  (OIDC) to avoid tokens altogether. If a token is exposed, revoke
-  it immediately at pypi.org/manage/account/token.
-
-- **`Path.glob("dir/**")` matches directories, not files**: The
-  `**` pattern in `Path.glob()` matches directory entries only.
-  To match files recursively, use `dir/**/*`. This matters when
-  users write `src/auth/**` in config files (like
-  `.help/features.yaml`) — the code that resolves these globs
-  must append `/*` when the pattern ends with `**`. Discovered
-  when `compute_source_hash()` returned 0 matched files for all
-  14 features until the glob was corrected.
+- **`Path.glob()` and `PurePosixPath.match()` handle `**`
+  unexpectedly — convert to regex for cross-version reliability**:
+  Two distinct gotchas: (1) `Path.glob("dir/**")` matches DIRS
+  only, not files — use `dir/**/*` to match files recursively;
+  config-glob resolvers should append `/*` when a pattern ends
+  in `**`. (2) `PurePosixPath.match()` on Python 3.10 treats
+  `*` as single-segment, so `match("a/**")` returns `False` on
+  nested paths. Don't substitute `**` → `*` in `fnmatch.fnmatch()`
+  as a workaround — fnmatch's `*` greedily matches `/`, so
+  `src/attune/*` incorrectly matches `src/attune-redis/foo.py`.
+  Instead, convert globs to regex: `**` → `.*`, `*` → `[^/]*`,
+  `?` → `[^/]`, then `re.fullmatch()`. See `_glob_match()` in
+  `help/manifest.py`.
 - **`/coach` is the user-facing entry point for the `.help`
   system**: The skill was renamed from `/help` to `/coach`
   because Claude Code's built-in `/help` command shadows
