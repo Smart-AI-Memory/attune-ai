@@ -1,70 +1,43 @@
 ---
-type: concept
 feature: orchestration
 depth: concept
-generated_at: 2026-05-04T02:35:39.974459+00:00
-source_hash: 15dce809a43de06ae9f042882afecc50f3b625050abdca81b878a832140002f0
+generated_at: 2026-05-12T19:43:13.442907+00:00
+source_hash: 2725f174f20d390207993b0b3706b8aaa174cbf7fbfc3fbe24bea851e95249d2
 status: generated
 ---
 
 # Orchestration
 
-Orchestration coordinates multiple AI agents working together on complex tasks, automatically managing task distribution, conflict resolution, and result aggregation through Redis-backed coordination.
+## How it works
 
-## Core coordination patterns
+Dynamic teams, workflow composition, and agent models.
 
-The orchestration system supports six composition patterns for different collaboration scenarios:
+The main building blocks are:
 
-- **Sequential** — Agents work one after another, passing results down the chain
-- **Parallel** — Multiple agents work simultaneously on different parts
-- **Debate** — Agents propose competing solutions, then vote on the best approach
-- **Teaching** — Expert agents guide novice agents through complex workflows
-- **Refinement** — Agents iteratively improve each other's work across multiple passes
-- **Adaptive** — Dynamic team composition based on task requirements and agent availability
+- **`ToolEnhancedStrategy`** — Single agent with comprehensive tool access.
+- **`PromptCachedSequentialStrategy`** — Sequential execution with shared cached context.
+- **`DelegationChainStrategy`** — Hierarchical delegation with max depth enforcement.
+- **`ExecutionStrategy`** — Base class for agent composition strategies.
+- **`ConditionalStrategy`** — Conditional branching (if X then A else B).
 
-## Task distribution and coordination
+Under the hood, this feature spans 36 source
+files covering:
 
-**AgentCoordinator** serves as the central Redis-backed hub that:
-- Queues tasks with priority levels (1-10 scale)
-- Routes tasks to agents based on capabilities and availability
-- Tracks agent heartbeats and removes inactive agents after 5 minutes
-- Aggregates results from completed tasks by type
-- Broadcasts messages to all active team members
+- Execution strategies for agent composition patterns.
+- Advanced execution strategy patterns (11-13).
+- Base class for agent composition strategies.
 
-**AgentTask** represents individual work units with:
-- Task type and description
-- Assignment status (pending/claimed/completed)
-- Priority level and creation timestamp
-- Context data passed between agents
-- Result storage for completed work
+## What connects to it
 
-## Conflict resolution
+This feature relates to: orchestration, teams.
 
-When multiple agents produce competing solutions, **ConflictResolver** automatically chooses the best option using configurable strategies:
+Other parts of the codebase interact with
+orchestration through these interfaces:
 
-**Weighted scoring** considers:
-- Team priorities (readability 30%, performance 20%, security 30%, maintainability 20%)
-- Pattern types (security patterns score highest at 1.0, style patterns lowest at 0.5)
-- Confidence levels from each contributing agent
-
-**Resolution results** include the winning pattern, rejected alternatives, confidence score, and reasoning for the decision.
-
-## Team sessions
-
-**TeamSession** enables collaborative work through:
-- Shared data storage accessible to all session members
-- Signal broadcasting for real-time coordination
-- Session-scoped agent registration and management
-- Purpose tracking for focused collaboration
-
-Agents can share intermediate results, coordinate on subtasks, and signal completion or need for help within a session context.
-
-## Dynamic team assembly
-
-The system automatically assembles teams based on:
-- Task complexity (simple/moderate/complex)
-- Domain requirements (security, testing, documentation, etc.)
-- Available agent capabilities and current workload
-- Resource constraints and execution strategies
-
-Teams scale from single enhanced agents for simple tasks to multi-agent debate patterns for complex architectural decisions.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `ToolEnhancedStrategy` | Single agent with comprehensive tool access. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `PromptCachedSequentialStrategy` | Sequential execution with shared cached context. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `DelegationChainStrategy` | Hierarchical delegation with max depth enforcement. | `src/attune/orchestration/_strategies/advanced_strategies.py` |
+| `ExecutionStrategy` | Base class for agent composition strategies. | `src/attune/orchestration/_strategies/base.py` |
+| `ConditionalStrategy` | Conditional branching (if X then A else B). | `src/attune/orchestration/_strategies/conditional_strategies.py` |

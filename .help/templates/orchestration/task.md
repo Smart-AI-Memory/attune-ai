@@ -1,135 +1,58 @@
 ---
-type: task
 feature: orchestration
 depth: task
-generated_at: 2026-05-04T02:35:58.086720+00:00
-source_hash: 15dce809a43de06ae9f042882afecc50f3b625050abdca81b878a832140002f0
+generated_at: 2026-05-12T19:43:13.449100+00:00
+source_hash: 2725f174f20d390207993b0b3706b8aaa174cbf7fbfc3fbe24bea851e95249d2
 status: generated
 ---
 
 # Work with orchestration
 
-Use orchestration when you need to coordinate multi-agent teams, compose dynamic workflows, or manage distributed task execution.
+Use orchestration when you need to dynamic teams, workflow composition, and agent models.
 
 ## Prerequisites
 
 - Access to the project source code
-- Python development environment set up
-- Understanding of multi-agent patterns and workflow composition
+- Familiarity with the files under src/attune/orchestration/**
 
-## Configure the coordination layer
+## Steps
 
-1. **Set up an AgentCoordinator for your team.**
-   Create a Redis-backed coordinator to manage task distribution:
-   ```python
-   from attune.orchestration import AgentCoordinator, AgentTask
+1. **Understand the current behavior.**
+   Read the entry points to see what orchestration
+   does today before making changes.
+   The primary functions are:
+   - `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Get strategy instance by name.
+   - `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Register a strategy class by name.
+   - `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Register a workflow for nested references.
+   - `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Get a registered workflow by ID.
+   - `get_template()` in `src/attune/orchestration/agent_templates/registry.py` — Retrieve template by ID.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-   coordinator = AgentCoordinator(short_term_memory, team_id="my_team")
-   coordinator.register_agent("agent_1", capabilities=["analysis", "testing"])
-   ```
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-2. **Define tasks for agent execution.**
-   Create AgentTask instances with clear descriptions and priorities:
-   ```python
-   task = AgentTask(
-       task_id="analyze_code",
-       task_type="analysis",
-       description="Analyze Python code quality",
-       priority=3,
-       context={"file_path": "src/main.py"}
-   )
-   coordinator.add_task(task)
-   ```
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "orchestration"`.
 
-## Set up workflow strategies
+## Key files
 
-1. **Choose an execution strategy.**
-   Select from available strategies based on your coordination needs:
-   ```python
-   from attune.orchestration import get_strategy
+- `src/attune/orchestration/**`
+- `src/attune/coordination/**`
 
-   # For sequential processing
-   strategy = get_strategy("sequential")
+## Common modifications
 
-   # For parallel execution
-   strategy = get_strategy("parallel")
+Functions you are most likely to modify:
 
-   # For hierarchical delegation
-   strategy = get_strategy("delegation_chain")
-   ```
-
-2. **Register custom workflows if needed.**
-   Create reusable workflow definitions:
-   ```python
-   from attune.orchestration import register_workflow, WorkflowDefinition
-
-   workflow = WorkflowDefinition(
-       workflow_id="code_review",
-       steps=[...],  # Define your workflow steps
-   )
-   register_workflow(workflow)
-   ```
-
-## Manage agent templates
-
-1. **Retrieve agents by capability.**
-   Find agents suited for specific tasks:
-   ```python
-   from attune.orchestration import get_templates_by_capability
-
-   testing_agents = get_templates_by_capability("testing")
-   security_agents = get_templates_by_capability("security")
-   ```
-
-2. **Register custom agent templates.**
-   Add specialized agents to the registry:
-   ```python
-   from attune.orchestration import register_custom_template, AgentTemplate
-
-   custom_agent = AgentTemplate(
-       template_id="custom_analyzer",
-       capabilities=["custom_analysis"],
-       # ... other template properties
-   )
-   register_custom_template(custom_agent)
-   ```
-
-## Handle conflicts and priorities
-
-1. **Configure conflict resolution.**
-   Set up a ConflictResolver with team priorities:
-   ```python
-   from attune.orchestration import ConflictResolver, TeamPriorities
-
-   priorities = TeamPriorities(
-       security_weight=0.4,
-       performance_weight=0.3,
-       readability_weight=0.3
-   )
-   resolver = ConflictResolver(team_priorities=priorities)
-   ```
-
-2. **Resolve pattern conflicts.**
-   When multiple agents propose conflicting solutions:
-   ```python
-   resolution = resolver.resolve_patterns(
-       patterns=[pattern1, pattern2, pattern3],
-       context={"file_type": "python", "complexity": "high"}
-   )
-   print(f"Winning pattern: {resolution.winning_pattern}")
-   ```
-
-## Test your orchestration
-
-Run orchestration-specific tests to verify your setup:
-```bash
-pytest -k "orchestration" -v
-```
-
-## Verify success
-
-Your orchestration setup works correctly when:
-- Agents can claim and complete tasks through the coordinator
-- Workflows execute using your chosen strategy
-- Conflict resolution produces consistent, reasonable results
-- All orchestration tests pass without errors
+- `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
+- `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
+- `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
+- `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
+- `get_template()` in `src/attune/orchestration/agent_templates/registry.py`
+- `get_all_templates()` in `src/attune/orchestration/agent_templates/registry.py`
+- `get_templates_by_capability()` in `src/attune/orchestration/agent_templates/registry.py`
+- `get_templates_by_tier()` in `src/attune/orchestration/agent_templates/registry.py`
