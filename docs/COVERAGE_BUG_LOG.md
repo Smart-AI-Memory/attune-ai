@@ -18,6 +18,49 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — first PoC under test-quality-program spec (Opus 4.7)
+
+First module pair taken through the formalized playbook
+(`docs/specs/test-quality-program/`, spec PR #257).
+Paired PR: `memory/security/query.py` + `memory/security/reports.py`.
+Selected via rubric (top two scores in the working set: 3.99 and
+3.80, both data-handling 1.5× risk). **1 production bug surfaced.**
+
+- `memory/security/query.py` — **class 1** — a single audit log
+  line with a malformed `timestamp` aborted iteration. Inner
+  try-except caught only `JSONDecodeError`, so `ValueError` from
+  `datetime.fromisoformat()` propagated to the outer broad except
+  clause — the function logged once and returned whatever results
+  had accumulated so far. Symptom: a query with date filters
+  silently truncated its result set with no caller-visible
+  indication. Fix: per-line try/except for `(ValueError,
+  AttributeError)` inside the iteration loop, mirroring the
+  JSONDecodeError handler. Continues iteration on bad lines,
+  logs a warning per skip.
+
+**Coverage delta:**
+
+| Module | Before | After |
+|---|---|---|
+| `memory/security/query.py` | 11.2% | 100.00% |
+| `memory/security/reports.py` | 11.2% | 100.00% |
+
+**Tests:** 62 total (37 query, 25 reports). Real `AuditLogger`
+host instances against `tmp_path` — criterion-5 "real objects
+over mocks" of the meaningful-coverage definition. Determinism
+verified across 3 back-to-back runs and under `-n auto`
+alongside the full memory test subtree (1367 passed, no
+cross-test interference).
+
+**Notes on the second module:** `reports.py` surfaced no
+production bugs. Every defensive `.get(..., default)` path is
+real and reachable (the audit-log JSON shape isn't strictly
+enforced upstream so missing keys do happen in production). No
+Class 2 candidates. Demonstrates the spec's "absence of bugs is
+also data" observation from prior sessions.
+
+---
+
 ## 2026-05-09 — session 49e (Opus 4.7)
 
 Test-infrastructure spec executed (docs/specs/test-infrastructure/).

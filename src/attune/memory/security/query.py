@@ -90,13 +90,22 @@ class AuditQueryMixin:
                         if status and event.get("status") != status:
                             continue
 
-                        # Date range filtering
+                        # Date range filtering. A malformed timestamp on
+                        # one line must not abort iteration — without this
+                        # ValueError catch, a single bad event ends the
+                        # whole query and returns a silent partial result.
                         if start_date or end_date:
                             ts_raw = event.get("timestamp", "")
-                            # Handle both Z and +00:00 suffixes
-                            event_time = datetime.fromisoformat(
-                                ts_raw.replace("Z", "+00:00"),
-                            )
+                            try:
+                                event_time = datetime.fromisoformat(
+                                    ts_raw.replace("Z", "+00:00"),
+                                )
+                            except (ValueError, AttributeError):
+                                logger.warning(
+                                    "Skipping audit log line with " "malformed timestamp: %r",
+                                    ts_raw,
+                                )
+                                continue
                             if start_date and event_time < start_date:
                                 continue
                             if end_date and event_time > end_date:
