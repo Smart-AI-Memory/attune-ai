@@ -188,15 +188,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   like `assert any(e["event"] == "..." for e in cap)` fail
   with empty captures. The same mechanism makes the older
   `capsys`-based pattern unreliable, but the root cause is
-  the config leak, not the capture primitive. **Fix at the
-  leak site:** add an autouse fixture in the offending
-  test class that calls `structlog.reset_defaults()` after
-  each test — keeps the global state contained. Local
-  macOS xdist usually doesn't surface this because the
-  12-worker distribution rarely puts the polluting test
-  and the assertion test on the same worker in the
-  leak-then-read order; Linux CI scheduling is different
-  enough to hit it almost deterministically. Pair lesson:
+  the config leak, not the capture primitive. **Fix at
+  the READ site, not the leak site.** PR #265 spent three
+  commits trying to contain the leak (class-scoped
+  autouse → module-scoped autouse → still missed
+  `TestMain.test_main_*` which transitively calls
+  `_configure_logging` via `main()`). Each fix narrowed
+  scope but missed another caller — whack-a-mole. The
+  durable fix is in the assertion test itself: call
+  `structlog.reset_defaults()` immediately before the
+  `capture_logs()` context. That single line makes the
+  assertion resilient to ANY prior worker state — past,
+  present, and future polluting callers — and doesn't
+  require auditing every CLI entry point in the suite. As
+  belt-and-suspenders the module-level autouse in
+  `tests/unit/memory/test_control_panel_display.py`
+  stays, but the load-bearing fix is the in-test reset.
+  Local macOS xdist rarely surfaces this because the
+  12-worker distribution usually doesn't put the
+  polluting test and the assertion test on the same
+  worker in the leak-then-read order; Linux CI scheduling
+  is different enough to hit it almost
+  deterministically across all Python versions.
+  Pair lesson:
   **`structlog.testing.capture_logs()` is still the
   preferred capture primitive over `capsys`** because it
   bypasses I/O entirely (capsys is also vulnerable to
