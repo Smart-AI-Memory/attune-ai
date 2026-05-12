@@ -186,3 +186,59 @@ code unchanged.
 
 Push these changes and confirm 12/12 matrix green under `-n auto`.
 All 4 documented Windows failures should now be addressed.
+
+---
+
+## 2026-05-12 (later) — PR #242 surfaces 2 new failures on rebase
+
+After PRs #260 and #261 merged, PR #242 was rebased onto the new
+main (commits `5f55a451` and `f05727fe`, force-pushed) and marked
+ready. The post-rebase CI run revealed a NEW failure pattern that
+the original 4 didn't cover:
+
+| Test | Lanes failing | Lanes passing |
+|------|--------------|---------------|
+| `tests/unit/memory/short_term/test_conflicts.py::TestCreateConflictContext::test_logs_creation_event` | Ubuntu × 4, Windows × 3 (3.11–3.13) | macOS × 4, Windows 3.10 |
+| `tests/unit/memory/short_term/test_conflicts.py::TestResolveConflict::test_logs_resolution_event` | Same as above | Same |
+
+Both assert structlog output via `capsys` (`assert "conflict_..."
+in captured` where `captured == ""`). The tests landed on main
+earlier the same day via PR #263
+(`4d8f387c test(memory/short_term): meaningful coverage on
+conflicts.py`) AFTER PR #242 was originally opened. They pass
+under `-n 1` (main's current config) but fail under `-n auto`
+(what PR #242 restores) because structlog routing in xdist
+workers doesn't reach the worker's `capsys` stream.
+
+This is the exact "5th test surfaces during rebase" scenario
+Phase 4.3 of `tasks.md` anticipated. Per the spec's discipline:
+**do NOT merge PR #242** until these are resolved.
+
+### Resolution path (next session)
+
+Three options, in order of principled-ness:
+
+1. **Fix `test_conflicts.py` to be xdist-safe**. Replace `capsys`
+   assertions with pytest's `caplog` (xdist-aware) or a
+   structlog-specific test capture fixture. ~30 min, defensible
+   on its own merits as test quality. Adds `test_conflicts.py`
+   to the spec's scope as a 5th addressed test file.
+
+2. **Block similar patterns retroactively** with a lint rule
+   that catches `capsys.readouterr()` co-located with
+   `structlog`/`logger` in the same test module, and require
+   `caplog` instead. Out of scope for this spec; file separately.
+
+3. **Skipif under xdist** (Phase 5 fallback). Pragmatic but adds
+   debt and contradicts the spec's "don't skipif as first move"
+   principle.
+
+Recommend option 1 in the next session focused on PR #242. Spec
+remains open with one outstanding criterion (resolution-criteria
+item 3: all 12 platform lanes green under `-n auto`).
+
+### Lesson captured
+
+Restoring `-n auto` after a branch lag surfaces tests landed on
+main under `-n 1` that aren't xdist-safe. Generalization captured
+in CLAUDE.md.
