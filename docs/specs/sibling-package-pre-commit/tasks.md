@@ -1,29 +1,28 @@
 # Tasks: Sibling-Package Pre-commit Parity
 
-**Status**: draft (pending requirements approval)
+**Status**: approved — Phase 0 complete, Phase 1+ pending
 
 ---
 
-## Phase 0 — design decisions
+## Phase 0 — design decisions ✓ complete 2026-05-12
 
-1. **Lock the baseline hook list.** Confirm requirements'
-   "baseline" set (black, ruff, detect-secrets,
-   trailing-whitespace, eof-fixer, check-yaml/toml/json,
-   check-added-large-files, check-merge-conflict). Document
-   chosen hook versions in `decisions.md`. Match attune-ai's
-   pinned versions where possible — no churn from a sibling
-   running newer black than the umbrella.
+See [decisions.md](decisions.md) for D1 (baseline hook list +
+versions) and D2 (per-repo exclusion table).
 
-2. **Per-repo exclusions inventory.** For each sibling, list
-   what must NOT be auto-formatted:
-   - `attune-rag`: `tests/golden/`, `benchmarks/` fixtures
-   - `attune-author`: generated dirs (grep
-     pyproject.toml for `[tool.setuptools.package-data]`)
-   - `attune-help`: pre-baked `.help/templates/` content (if
-     any committed); check what's tracked vs generated
-   - `attune-gui`: static assets, any generated docs
+1. ✓ **Lock the baseline hook list.** D1 locked 11 hooks
+   pinned to attune-ai's currently-shipping versions (black
+   24.10.0, ruff v0.8.4, detect-secrets v1.5.0, pre-commit-
+   hooks v5.0.0). Bandit + mypy + repo-local hooks
+   explicitly excluded from baseline.
 
-   Capture as a table in `decisions.md`.
+2. ✓ **Per-repo exclusions inventory.** D2 documents
+   exclusions per sibling:
+   - `attune-rag`: `tests/golden/`, shipped HTML/JSON
+     templates
+   - `attune-author`: hallucination eval baselines, `.j2`
+     templates
+   - `attune-help`: `templates/**/*.{md,json}`, demos
+   - `attune-gui`: `editor-frontend/` (separate toolchain)
 
 ## Phase 1 — attune-rag (first; API contract source of truth)
 

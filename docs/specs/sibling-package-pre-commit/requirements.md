@@ -1,7 +1,8 @@
 # Spec: Sibling-Package Pre-commit Parity
 
-**Status**: draft
+**Status**: approved
 **Created**: 2026-05-12
+**Approved**: 2026-05-12
 **Origin**: Daily briefing carryover item — attune-ai ships a
 mature `.pre-commit-config.yaml` (black, ruff, bandit, detect-
 secrets, custom freshness checks). Its four sibling packages
