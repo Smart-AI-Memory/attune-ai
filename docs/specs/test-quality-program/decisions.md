@@ -143,3 +143,45 @@ SDK-native shells. The remaining sibling
 the inline-`main()` shape recurs there too, scripting
 a generator becomes more clearly justified than
 hand-renaming.
+
+## memory/short_term/caching.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.287 (weight=3 × gap=0.508 × risk=1.5)
+**Picked because:** Top entry with measured `covered_pct`
+after the SDK-native trio shipped today
+(`dependency_check`, `bug_predict`, `perf_audit`).
+`refactor_plan` was skipped — a parallel session had
+two open PRs on it (#267, #270); PR #270 merged
+during this cycle and took the "seventh module" slot
+in the log, so this entry is the eighth. First non-SDK
+pick in today's sequence; tests a pure-Python LRU cache.
+**Outcome:** 1 test file added (`test_caching.py`,
+28 tests). Coverage 49.2% → 100% line+branch. Zero
+production bugs surfaced.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — eighth module under test-quality-program"
+
+Test design diverges from the SDK-native scaffold:
+explicit branch coverage for the disabled-mode early
+returns in `get` / `add` / `contains`, the LRU
+eviction path triggered with a deliberately small
+3-entry cache, the `get_stats()` division-by-zero
+guard, and counter resets on `clear()`. `time.sleep(0.001)`
+between adds ensures `last_access` ordering for the
+LRU tests (single-process clock resolution is
+sufficient given the dict-stored float timestamps).
+
+**Picking pattern observation (informational):**
+SDK-native shells in `workflows/*` cluster around the
+same scaffold and ship in cycles ~5 minutes each. Pure
+data-structure modules in `memory/short_term/*` need
+distinct branch-coverage tests but ship just as fast
+because they're 100-300 lines of testable surface
+each. The rubric's current ordering surfaces these
+two clusters intermixed, which is fine — but a
+future refinement could tag rows by archetype
+(`sdk-shell`, `data-structure`, `cli-entry`,
+`async-pipeline`) so picks can be batched by scaffold.
+Flagged; not committed.
