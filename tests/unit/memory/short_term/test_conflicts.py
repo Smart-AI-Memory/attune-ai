@@ -234,14 +234,17 @@ class TestCreateConflictContext:
     ) -> None:
         # `structlog.testing.capture_logs()` is the canonical
         # capture primitive — bypasses I/O entirely and reads
-        # structured events directly. Earlier versions used
-        # `capsys` to read stdout, but structlog's WriteLogger
-        # caches `sys.stdout` at logger-creation time, so
-        # pytest's stdout monkey-patching (especially under
-        # `pytest-xdist` on Linux) intermittently sees empty
-        # output. The event record path is environment-stable.
+        # structured events directly. But it can return empty
+        # if a prior test on the same xdist worker mutated
+        # structlog's global wrapper class to a filtering one
+        # (e.g. via `structlog.configure(wrapper_class=...)`
+        # in an unrelated CLI test). Reset to a known-good
+        # default in-test so this assertion is resilient to
+        # cross-worker config leaks.
+        import structlog
         from structlog.testing import capture_logs
 
+        structlog.reset_defaults()
         with capture_logs() as cap:
             negotiation.create_conflict_context(
                 "c1",
@@ -406,11 +409,13 @@ class TestResolveConflict:
         contributor_creds: AgentCredentials,
         validator_creds: AgentCredentials,
     ) -> None:
-        # See `test_logs_creation_event` for why `capture_logs`
-        # is preferred over `capsys` here.
+        # See `test_logs_creation_event` for the same
+        # structlog defaults-reset + capture_logs rationale.
+        import structlog
         from structlog.testing import capture_logs
 
         negotiation.create_conflict_context("c1", {}, {}, credentials=contributor_creds)
+        structlog.reset_defaults()
         with capture_logs() as cap:
             negotiation.resolve_conflict("c1", "done", validator_creds)
         assert any(e.get("event") == "conflict_resolved" for e in cap)
