@@ -18,6 +18,65 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — fifth module under test-quality-program (Opus 4.7)
+
+Fifth module run. Second Agent SDK-native workflow through
+the program (sibling pattern to the `dependency_check`
+module shipped earlier today). Selected via the rubric
+working set: `workflows/bug_predict.py`, score 2.636 —
+top entry with measured coverage after the four `?`
+coverage-omit artifacts above it. **0 production bugs
+surfaced.**
+
+- `workflows/bug_predict.py` (`BugPredictionWorkflow`) —
+  no bugs. The module is a ~270-line thin async shell
+  around `claude_agent_sdk.query()`: validates `path`,
+  maps depth → max_turns, defines three `AgentDefinition`
+  subagents (`pattern-scanner`, `risk-correlator`,
+  `prevention-advisor`), collects `AssistantMessage` +
+  `ResultMessage` stream output via
+  `agent_sdk_adapter.collect_agent_output`, hands the
+  result to `AgentSDKResultAdapter.from_agent_output`.
+  Each specific exception type (`ImportError`,
+  `ConnectionError`, `TimeoutError`, generic `Exception`)
+  is converted to a structured `_error_result`. The
+  catch-all `except Exception` is documented intentional
+  with `# noqa: BLE001`. No dead code; no crash paths.
+  Structurally identical to `dependency_check.py` — the
+  test scaffold transferred with a one-pass rename
+  (`_run_agent_check` → `_run_agent_predict`, two
+  subagents → three, stage name "dependency-check" →
+  "bug-predict", task-prompt phrase swap).
+
+**Coverage delta:** 47.3% → 97% (line + branch). The
+one uncovered line (271) is the bottom-of-file
+`if __name__ == "__main__": main()` guard — standard
+untestable boilerplate.
+
+**Tests:** 21 added under
+`tests/unit/workflows/test_bug_predict_execute.py`,
+matching the shape established by
+`test_dependency_check_execute.py`. Only
+`claude_agent_sdk.query` is mocked; the
+`AssistantMessage`, `ResultMessage`, and `TextBlock`
+instances yielded by the fake generator are **real SDK
+dataclass instances** (per CLAUDE.md lesson on
+duck-typed fakes failing isinstance-based collectors).
+
+**Pattern observation (continues prior session):** the
+SDK-native shape is uniform across the four sibling
+workflows (`dependency_check`, `bug_predict`, plus
+unprocessed `perf_audit`, `refactor_plan`). Each ships
+zero production bugs and lifts coverage to 97-100% via
+the same test scaffold. After two consecutive cycles
+with this pattern (#265 + this PR), it's reusable
+enough to script as a per-workflow template; flagged
+for consideration but not blocking. Composed data-
+handling helpers (memory/security) remain the bug-rich
+shape; the SDK-native shells are pure plumbing.
+
+---
+
 ## 2026-05-12 — fourth module under test-quality-program (Opus 4.7)
 
 Fourth module run. First Agent SDK-native workflow through
