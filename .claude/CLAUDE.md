@@ -3191,3 +3191,39 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Doubles as a quick grep target when triaging Windows
   CI failures: `grep -r 'endswith("/' tests/` catches
   the antipattern.
+
+- **`gh pr merge --squash --admin` from a sub-
+  worktree exits non-zero but the remote merge
+  succeeds**: when running from
+  `.claude/worktrees/<name>/`, `gh pr merge` prints
+  `failed to run git: fatal: 'main' is already
+  used by worktree at '/Users/<...>/attune-ai'` —
+  the parent worktree owns `main` and the post-merge
+  local checkout step can't take it. The REMOTE
+  merge already succeeded by the time this error
+  fires. Distinct from the existing "fast-forward
+  warning when remote merge succeeds" lesson
+  (that's about the local fast-forward of `main`
+  failing after merge from a non-worktree). Always
+  verify with `gh pr view <PR> --json
+  state,mergedAt,mergeCommit` before retrying —
+  retry would 404 because the PR is already merged.
+
+- **When rebasing a long-lived branch, upstream
+  fixup commits can be missed**: PR #242's rebase
+  picked up PR #263 (which originally introduced a
+  fragile `capsys` assertion in `test_conflicts.py`)
+  but predated PR #265 (which fixed the assertion
+  to use `structlog.testing.capture_logs()` with
+  `reset_defaults()`). The rebased branch carried
+  the broken pre-#265 version and CI failed on
+  Ubuntu × 4 + Windows × 3 with the same capsys
+  assertion. Generalization: when a long-lived
+  branch is rebased, the presence of an upstream
+  merge in the rebase base doesn't imply its
+  follow-up fixes are also there. After rebase,
+  grep the touched files for known-fragile
+  patterns (`capsys` near structlog/logger,
+  network-probe helpers) and verify they match
+  current main, OR re-rebase before merge to pick
+  up any post-rebase upstream fixes.

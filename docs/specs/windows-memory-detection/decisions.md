@@ -1,8 +1,9 @@
 # Decisions — Windows Memory-Feature Detection
 
-**Status:** approved
+**Status:** complete (2026-05-12)
 **Owner:** Patrick
 **Opened:** 2026-05-11
+**Closed:** 2026-05-12 (PR #242 merged `5e364653`)
 **Predecessor:** `docs/specs/probe-c-memory-investigation/` (Phase 4 deferred — see PR #242)
 
 ---
@@ -186,3 +187,91 @@ code unchanged.
 
 Push these changes and confirm 12/12 matrix green under `-n auto`.
 All 4 documented Windows failures should now be addressed.
+
+---
+
+## 2026-05-12 (later) — PR #242 surfaces 2 new failures on rebase
+
+After PRs #260 and #261 merged, PR #242 was rebased onto the new
+main (commits `5f55a451` and `f05727fe`, force-pushed) and marked
+ready. The post-rebase CI run revealed a NEW failure pattern that
+the original 4 didn't cover:
+
+| Test | Lanes failing | Lanes passing |
+|------|--------------|---------------|
+| `tests/unit/memory/short_term/test_conflicts.py::TestCreateConflictContext::test_logs_creation_event` | Ubuntu × 4, Windows × 3 (3.11–3.13) | macOS × 4, Windows 3.10 |
+| `tests/unit/memory/short_term/test_conflicts.py::TestResolveConflict::test_logs_resolution_event` | Same as above | Same |
+
+Both assert structlog output via `capsys` (`assert "conflict_..."
+in captured` where `captured == ""`). The capsys version was on
+PR #242's branch — added originally by PR #263 (`4d8f387c`) earlier
+the same day. They pass under `-n 1` (the configuration PR #263
+shipped under) but fail under `-n auto` (what PR #242 restores)
+because structlog routing in xdist workers doesn't reach the
+worker's `capsys` stream.
+
+**Important correction**: main's current version of
+`test_conflicts.py` already uses the xdist-safe pattern
+(`structlog.testing.capture_logs()` with `reset_defaults()`).
+That fix landed via PR #265 (`21e7cefc`, merged 12:28 EDT today)
+AFTER PR #242's rebase ran (14:30 UTC). So PR #242's branch had
+the pre-#265 capsys version, and the rebase missed the fix
+because the rebase base predated it.
+
+This is the "5th test surfaces during rebase" scenario Phase 4.3
+of `tasks.md` anticipated, with a wrinkle: the fix already exists
+upstream; PR #242 just needs to pick it up.
+
+### Resolution
+
+The minimal fix is to restore main's version of `test_conflicts.py`
+on PR #242's branch (`git checkout origin/main --
+tests/unit/memory/short_term/test_conflicts.py`). Committed and
+pushed as `7eef6abc` on `feat/probe-c-phase4-restore-n-auto`. CI
+should now re-run with the xdist-safe version.
+
+Alternative (cleaner but more work): re-rebase PR #242 onto current
+main, which would naturally pick up #265's fix. Skipped because the
+surgical file-restore is equivalent and avoids another force-push.
+
+Recommend option 1 in the next session focused on PR #242. Spec
+remains open with one outstanding criterion (resolution-criteria
+item 3: all 12 platform lanes green under `-n auto`).
+
+### Lesson captured
+
+Restoring `-n auto` after a branch lag surfaces tests landed on
+main under `-n 1` that aren't xdist-safe. Generalization captured
+in CLAUDE.md.
+
+---
+
+## 2026-05-12 (final) — Spec closed
+
+PR #242 merged at `5e364653`. CI re-ran the full 12-lane matrix
+with the `test_conflicts.py` fix and all 12 lanes passed.
+
+**Resolution criteria — all satisfied:**
+
+1. ✅ Each of the 4 original failures has a root-cause line item
+   in this file (Phase 2 + 3.1 entries above).
+2. ✅ Fixes landed for all 4 — no skipif fallbacks needed.
+3. ✅ PR #242 rebased on the new main and **all 12 platform lanes
+   passed** under `-n auto`.
+4. ✅ Matrix wall time well under 10 min on the post-fix run.
+
+**PRs merged today (2026-05-12) closing this spec:**
+
+| PR | Title | Merge commit |
+|----|-------|--------------|
+| #260 | fix(ci): resolve 4 Windows-only test failures | `46492dc0` |
+| #261 | docs(lessons): three CI-debugging lessons | `9a82cbbc` |
+| #242 | ci(tests): restore `-n auto` — probe-c Phase 4 | `5e364653` |
+
+The `-n auto` win is now realized: ~3× faster CI matrix on Windows,
+~100+ compute-minutes saved per matrix run. All four Windows tests
+green, plus the late-surfacing `test_conflicts.py` capsys regression
+caught and fixed during PR #242's CI verification.
+
+Spec status: **complete**. Predecessor
+`probe-c-memory-investigation` Phase 4 also closes.
