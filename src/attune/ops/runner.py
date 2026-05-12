@@ -72,8 +72,11 @@ class Run:
             try:
                 q.put_nowait(event)
             except asyncio.QueueFull:
-                # INTENTIONAL: drop slow subscriber rather than block the run
-                pass
+                # INTENTIONAL: drop slow subscriber rather than block the run.
+                # Before the queue gained maxsize, this branch was dead code
+                # (unbounded queue → put_nowait never raises). See
+                # docs/specs/ops-security-hardening/.
+                self.subscribers.discard(q)
 
     def append_line(self, line: str) -> None:
         self.lines.append(line)
@@ -85,9 +88,16 @@ class Run:
         self.completed_at = datetime.now(timezone.utc)
         self._broadcast(("done", {"exit_code": exit_code, "status": self.status}))
 
+    # Per-subscriber queue size. Realistic runs are 1k-5k log lines; if a
+    # subscriber falls 1000 events behind, dropping it is correct. The
+    # `except QueueFull` block in `_broadcast` was dead code before this
+    # bound was added (unbounded queue → put_nowait never raises). See
+    # docs/specs/ops-security-hardening/.
+    _SUBSCRIBER_QUEUE_MAXSIZE = 1000
+
     async def subscribe(self) -> AsyncIterator[Event]:
         """Yield buffered + live events. Caller iterates until it sees ``done``."""
-        queue: asyncio.Queue[Event] = asyncio.Queue()
+        queue: asyncio.Queue[Event] = asyncio.Queue(maxsize=self._SUBSCRIBER_QUEUE_MAXSIZE)
         # Replay buffered state to this subscriber
         for line in self.lines:
             queue.put_nowait(("line", line))

@@ -20,6 +20,11 @@ class Config:
     # route resolves an empty tuple to `<project_root>/docs/specs/`. Multiple
     # roots supported for federated listing across project boundaries.
     specs_roots: tuple[Path, ...] = ()
+    # User-supplied additions to the Host: header allowlist. The default
+    # allowlist always includes `host:port` and loopback aliases; this lets
+    # users widen for tunneled / proxied setups (Cloudflare Tunnel,
+    # Tailscale, ssh -L, etc.). See docs/specs/ops-security-hardening/.
+    trusted_hosts: tuple[str, ...] = ()
 
     @property
     def telemetry_path(self) -> Path:
@@ -49,12 +54,17 @@ def build_config(
     port: int = 8765,
     allow_run: bool = False,
     specs_roots: tuple[Path, ...] | None = None,
+    trusted_hosts: tuple[str, ...] | None = None,
 ) -> Config:
     """Build a Config from inputs and environment defaults.
 
     ``specs_roots`` defaults to ``()``; the specs route resolves an empty
     tuple to ``<project_root>/docs/specs/`` so unconfigured installs pick up
     the standard layout automatically.
+
+    ``trusted_hosts`` defaults to ``()``; the middleware always includes
+    ``host:port`` and loopback aliases in its allowlist, so the default
+    works for local development without configuration.
     """
     root = (project_root or Path.cwd()).expanduser().resolve()
     return Config(
@@ -64,4 +74,5 @@ def build_config(
         port=port,
         allow_run=allow_run,
         specs_roots=tuple(specs_roots or ()),
+        trusted_hosts=tuple(trusted_hosts or ()),
     )

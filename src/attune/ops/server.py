@@ -33,6 +33,20 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         redoc_url=None,
     )
 
+    # Host header allowlist — DNS-rebinding defense. MUST be the first
+    # middleware so untrusted requests get rejected before any routing.
+    # See docs/specs/ops-security-hardening/.
+    from attune.ops.middleware import TrustedHostMiddleware, compute_allowlist
+
+    app.add_middleware(
+        TrustedHostMiddleware,
+        allowed_hosts=compute_allowlist(
+            host=config.host,
+            port=config.port,
+            extras=config.trusted_hosts,
+        ),
+    )
+
     templates_dir = _package_dir("templates")
     static_dir = _package_dir("static")
 

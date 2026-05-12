@@ -2,10 +2,14 @@
 
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
 from attune.ops import data
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -101,6 +105,9 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     )  # noqa: F811 — local re-import keeps the module-top imports lean
 
     if not _re.match(r"^[A-Za-z0-9_-]{1,64}$", run_id):
+        # Log at WARN since this is either a bug in the caller or a
+        # probe. Truncate the offending input to keep the log line bounded.
+        logger.warning("ops.run_view: invalid run_id input: %r", run_id[:64])
         raise HTTPException(status_code=400, detail="invalid run_id")
 
     runner = getattr(request.app.state, "runner", None)
@@ -108,6 +115,7 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
         raise HTTPException(status_code=503, detail="runner unavailable")
     run = runner.get(run_id)
     if run is None:
+        logger.info("ops.run_view: run not found: run_id=%s", run_id)
         raise HTTPException(
             status_code=404,
             detail=(
