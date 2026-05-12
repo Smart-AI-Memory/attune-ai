@@ -83,7 +83,10 @@ def test_sparkline_points_empty_for_all_zero():
 def test_home_renders_with_runner_recent_runs(tmp_path, monkeypatch):
     """Home page lists runs from the in-memory runner."""
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    config = build_config(project_root=tmp_path)
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
     runner = RunnerService()
     # Seed a completed run via the internal mapping (avoids subprocess)
     seeded = Run(id="abc123", workflow="code-review")
@@ -107,7 +110,10 @@ def test_home_renders_with_runner_recent_runs(tmp_path, monkeypatch):
 
 def test_home_shows_empty_state_when_no_runs(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    config = build_config(project_root=tmp_path)
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
     app = create_app(config)
     with TestClient(app) as client:
         resp = client.get("/")
@@ -126,7 +132,10 @@ def test_home_renders_sparkline_svg_when_costs_present(tmp_path, monkeypatch):
         encoding="utf-8",
     )
     monkeypatch.setenv("ATTUNE_HOME", str(home))
-    config = build_config(project_root=tmp_path)
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
     app = create_app(config)
     with TestClient(app) as client:
         resp = client.get("/")
@@ -137,7 +146,10 @@ def test_home_renders_sparkline_svg_when_costs_present(tmp_path, monkeypatch):
 
 def test_home_renders_attune_ai_version_tile(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    config = build_config(project_root=tmp_path)
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
     app = create_app(config)
     with TestClient(app) as client:
         resp = client.get("/")

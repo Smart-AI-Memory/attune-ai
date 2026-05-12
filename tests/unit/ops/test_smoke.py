@@ -21,7 +21,10 @@ from attune.ops.server import create_app  # noqa: E402
 def client(tmp_path, monkeypatch):
     """A TestClient pointed at an isolated attune-home."""
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    config = build_config(project_root=tmp_path)
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
     app = create_app(config)
     return TestClient(app)
 

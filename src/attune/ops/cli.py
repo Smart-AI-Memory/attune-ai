@@ -54,6 +54,18 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
             " <project-root>/docs/specs/"
         ),
     )
+    parser.add_argument(
+        "--trusted-host",
+        action="append",
+        default=None,
+        metavar="HOST",
+        help=(
+            "Repeatable. Hostname (optionally with :port) accepted in"
+            " the Host: header. Use when reaching the dashboard via a"
+            " tunnel, reverse proxy, or non-default hostname."
+            " Example: --trusted-host my-tunnel.example.com"
+        ),
+    )
     # Backwards-compat: --allow-run was the opt-IN flag before runs became
     # the default. Accept it silently as a no-op so existing scripts and
     # shell history keep working without prompting users to update.
@@ -83,12 +95,27 @@ def cmd_ops(args: argparse.Namespace) -> int:
     # --allow-run flag is accepted as a no-op (already the default).
     allow_run = not args.read_only
 
+    # Warn loudly when the user binds to all interfaces without an
+    # explicit trusted-host. The middleware will still reject any
+    # non-loopback Host header, but the user probably wanted to
+    # reach the dashboard from elsewhere and would otherwise get a
+    # confusing 400.
+    if args.host == "0.0.0.0" and not args.trusted_host:  # nosec B104
+        print(
+            "WARNING: Binding to 0.0.0.0 without --trusted-host means any"
+            " external hostname will be rejected by the security middleware."
+            "\n         Add --trusted-host <external-hostname> for each"
+            " hostname you intend to reach the dashboard at.",
+            file=sys.stderr,
+        )
+
     config = build_config(
         project_root=args.project_root,
         host=args.host,
         port=args.port,
         allow_run=allow_run,
         specs_roots=tuple(args.specs_root) if args.specs_root else None,
+        trusted_hosts=tuple(args.trusted_host) if args.trusted_host else None,
     )
     app = create_app(config)
 

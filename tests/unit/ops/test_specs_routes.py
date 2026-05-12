@@ -47,6 +47,7 @@ def _client(
         project_root=tmp_path,
         specs_roots=specs_roots,
         allow_run=allow_run,
+        trusted_hosts=("testserver", "test"),
     )
     return TestClient(create_app(config))
 

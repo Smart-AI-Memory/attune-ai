@@ -44,7 +44,15 @@ def _missing_cmd(_workflow: str) -> tuple[str, ...]:
 
 def _make_app(tmp_path, monkeypatch, *, allow_run, command_builder, executor=None):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    config = build_config(project_root=tmp_path, allow_run=allow_run)
+    # `testserver` is TestClient's default base_url host; `test` is the
+    # AsyncClient(base_url="http://test") host. Add both to the
+    # allowlist so the security middleware (PR #253-impl) doesn't 400
+    # every test request.
+    config = build_config(
+        project_root=tmp_path,
+        allow_run=allow_run,
+        trusted_hosts=("testserver", "test"),
+    )
     runner = RunnerService(command_builder=command_builder, executor=executor)
     app = create_app(config, runner=runner)
     return app, runner
@@ -264,3 +272,113 @@ def test_workflows_page_no_longer_starts_inline_streaming(tmp_path, monkeypatch)
     assert "window.location.assign" in r.text
     assert "/runs/" in r.text
     assert "/view" in r.text
+
+
+# --- security-hardening tests (#253 spec) ---
+
+
+async def test_run_view_replays_full_output_after_completion(tmp_path, monkeypatch):
+    """End-to-end "output survives refresh" — start a run, complete it,
+    request the /view URL, then attach to the streamed-out stream URL and
+    confirm full replay arrives.
+
+    This is the regression guard for the headline behavior of PR #251:
+    refreshing the run-view page after a run is done should still show
+    the full log because the runner replays buffered events to new
+    subscribers.
+    """
+    import json
+
+    app, runner = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        # 1. Start a run + wait for terminal so the buffer has all events.
+        started = (await client.post("/workflows/code-review/run")).json()
+        run_id = started["run_id"]
+        await _wait_terminal(runner, run_id)
+
+        # 2. Request the /view page (simulates the user navigating).
+        view = await client.get(f"/runs/{run_id}/view")
+        assert view.status_code == 200
+        # Page should embed the stream URL for the EventSource to consume.
+        assert f"/runs/{run_id}/stream" in view.text
+
+        # 3. Attach to the stream URL AFTER the run completed. The
+        # runner's `subscribe()` replays the buffered events for new
+        # subscribers — that's the mechanism that makes refresh work.
+        async with client.stream("GET", f"/runs/{run_id}/stream") as resp:
+            assert resp.status_code == 200
+            events: list[tuple[str, str]] = []
+            current_event = None
+            async for raw in resp.aiter_lines():
+                if not raw:
+                    current_event = None
+                    continue
+                if raw.startswith("event: "):
+                    current_event = raw[len("event: ") :]
+                elif raw.startswith("data: ") and current_event is not None:
+                    events.append((current_event, raw[len("data: ") :]))
+                    if current_event == "done":
+                        break
+
+    # Full replay should include both stdout lines AND the terminal `done`.
+    kinds = [k for k, _ in events]
+    assert "line" in kinds, f"no replayed lines: {events}"
+    assert kinds[-1] == "done", f"missing terminal done: {kinds}"
+    line_payloads = [json.loads(d) for k, d in events if k == "line"]
+    assert any("start code-review" in s for s in line_payloads if isinstance(s, str))
+    done = json.loads(events[-1][1])
+    assert done["status"] == "completed"
+    assert done["exit_code"] == 0
+
+
+def test_run_view_logs_404(tmp_path, monkeypatch, caplog):
+    """run_view 404 path emits an INFO log with the run_id."""
+    import logging
+
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    client = TestClient(app)
+    with caplog.at_level(logging.INFO, logger="attune.ops.routes.dashboard"):
+        r = client.get("/runs/nonexistent12345/view")
+    assert r.status_code == 404
+    assert any(
+        "nonexistent12345" in record.message and record.levelno == logging.INFO
+        for record in caplog.records
+    )
+
+
+def test_run_view_logs_invalid_input(tmp_path, monkeypatch, caplog):
+    """run_view 400 path emits a WARN log with the (truncated) bad input."""
+    import logging
+
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    client = TestClient(app)
+    with caplog.at_level(logging.WARNING, logger="attune.ops.routes.dashboard"):
+        r = client.get("/runs/with%20space/view")
+    assert r.status_code == 400
+    assert any(record.levelno == logging.WARNING for record in caplog.records)
+
+
+async def test_subscriber_queue_drops_slow_subscriber(tmp_path, monkeypatch):
+    """A subscriber that never consumes its queue gets dropped when the
+    bound (1000 events) is exceeded. Before this fix, the unbounded queue
+    grew indefinitely and the `except QueueFull` block was dead code."""
+    import asyncio
+
+    from attune.ops.runner import Run
+
+    run = Run(id="test-overflow", workflow="echo")
+    # Create a slow subscriber by manually adding a queue that we never
+    # consume from. Use a small maxsize for the test to keep it fast.
+    slow_queue: asyncio.Queue = asyncio.Queue(maxsize=5)
+    run.subscribers.add(slow_queue)
+
+    # Broadcast more events than the queue can hold.
+    for i in range(10):
+        run._broadcast(("line", f"event-{i}"))
+
+    # The slow subscriber should have been dropped from `run.subscribers`
+    # (the except QueueFull block calls subscribers.discard).
+    assert (
+        slow_queue not in run.subscribers
+    ), "slow subscriber should have been dropped after queue filled up"
