@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: thirteenth module through the playbook —
+  `workflows/test_runner.py` (Tier 1 test execution + coverage
+  tracking). Coverage 11.7% → 92% line+branch. 24 deterministic
+  tests added under `tests/unit/workflows/test_test_runner.py`
+  covering `run_tests_with_tracking()`, `track_coverage()`,
+  `track_file_tests()` (including staleness detection), and the
+  two thin wrappers (`get_file_test_status`,
+  `get_files_needing_tests`). Mocks only `subprocess.run` (would
+  actually run pytest) and `get_telemetry_store` (would write to
+  disk); pytest-output parsing, coverage.xml parsing, and
+  FileTestRecord construction use real implementations. Remaining
+  8% is the `defusedxml` ImportError fallback (line 19-20) plus
+  three classifier branches that need precisely-shaped pytest
+  output (`errors > 0` / `skipped == total` paths). Zero
+  production bugs surfaced.
 - Test-quality-program: twelfth module through the playbook —
   `cli_commands/help_commands.py` (`attune help` CLI entry).
   Coverage 5% → 100% line+branch. **Real bug surfaced and

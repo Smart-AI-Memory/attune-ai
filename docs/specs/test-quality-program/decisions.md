@@ -363,3 +363,59 @@ and revealed `cli_commands/help_commands.py` as the
 new top pick — a module that didn't appear at all
 in the morning csv's top 10. Worth automating in a
 session-start hook for future cycles.
+
+## workflows/test_runner.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.649 (weight=3 × gap=0.883 × risk=1.0)
+**Picked because:** Top entry in the fresh rubric after
+`cli_commands/help_commands.py` shipped (post-#287
+merge). The two zero-coverage rows above it
+(`workflows/test_lifecycle.py`,
+`workflows/test_maintenance_cli.py`, both score 3.0)
+were deferred — measured at 0.0% in the csv but the
+coverage-omit pattern is ambiguous on whether they
+should be measured at all; investigation flagged but
+not blocking.
+**Outcome:** 1 test file added (`test_test_runner.py`,
+24 tests). Coverage 11.7% → 92% line+branch.
+Zero production bugs surfaced. Stopped at 92%
+because the remaining branches (defusedxml
+ImportError fallback + three pytest-output
+classifier branches) have marginal-cost > marginal-
+value.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — thirteenth module under test-quality-program"
+
+This module presents a different test design than
+the prior cycles. Not an SDK shell (no
+`claude_agent_sdk.query()`) and not a pure
+data-structure (it shells out via `subprocess.run`).
+The right scaffold is "external-process tracker":
+mock the external boundary (`subprocess.run`,
+`get_telemetry_store`) and let the rest run real
+— pytest-output parsing, coverage.xml parsing,
+dataclass construction, staleness detection from
+mtimes.
+
+Three exception paths per public function:
+TimeoutExpired, generic Exception, and telemetry
+log failure — all caught with best-effort
+recovery. The pattern is consistent across the
+module's three primary functions; one fixture
+shape covers all of them.
+
+**Coverage-omit ambiguity (flagged for follow-up):**
+the `*/test_*.py` pattern in pyproject.toml's omit
+list should match `workflows/test_runner.py` per
+the CLAUDE.md lesson at line ~63, but fresh
+coverage.xml does record measurements (11.69%
+line-rate observed pre-cycle). Either the lesson
+is outdated, the pattern only matches direct
+children, or coverage.py instruments but excludes
+from certain report paths. Worth a one-cycle dive
+to clean up — the rubric's `?` entries from the
+morning csv may have been the omit firing, and
+the fresh measurements may be a recent
+configuration change. Not blocking this cycle.
