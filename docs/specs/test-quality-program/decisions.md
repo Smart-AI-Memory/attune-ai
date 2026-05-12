@@ -309,3 +309,57 @@ tests. Worth adding as an explicit branch in the
 playbook (design.md §Per-module loop): if existing
 coverage ≥85%, write a "fallback-paths" file rather
 than starting over.
+
+## cli_commands/help_commands.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 4.497 (weight=5 × gap=0.899 × risk=1.0)
+**Picked because:** Top measured-coverage entry in a
+**fresh** rubric refresh (the morning csv was 12+
+cycles stale; refreshed before pick). Weight=5
+user-typed entry point at only 10.1% covered — the
+biggest gap on the working set.
+**Outcome:** 1 production-side fix (added
+`python-frontmatter` to `[dev]` extra in
+`pyproject.toml`) + 1 test file added
+(`test_help_commands_gaps.py`, 15 tests). Coverage
+5% (effective 0%) → 100% line+branch.
+**Bug Class 3 — silently-skipped tests masquerading
+as test coverage.** First real bug surface in 12
+cycles.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — twelfth module under test-quality-program"
+
+The 10.1% coverage from the rubric was misleading:
+16 tests existed in
+`tests/unit/cli_commands/test_help_commands.py` but
+all were skipped via `pytest.importorskip("frontmatter")`
+in CI environments without `[author]` installed.
+`python-frontmatter` is only a transitive dep of
+`attune-help` / `attune-author`, which live in
+`[author]` (an optional extra not installed in
+default CI runs). The fix is one line in pyproject
++ a 2-line lockfile update; afterwards the existing
+16 tests run and lift coverage to 73%. The new
+15 tests cover the remaining 27% (mostly
+`_record_feedback()` which had zero coverage, plus
+`cmd_help()` routing branches).
+
+**Lesson added to CLAUDE.md:** when rubric points at
+a user-typed entry point with suspiciously low
+coverage AND nominal test files exist, grep for
+`pytest.importorskip` first. The dep is likely
+misclassified (should be in `[dev]`, not just
+`[author]`). Fix the gate before adding new tests
+or the new tests also silently skip.
+
+**Rubric staleness note (closes the open question
+from cycle #11):** the previous cycle flagged a stale
+csv; this cycle confirmed the fix is to re-run
+`scripts/score_test_quality.py` before each picking
+decision. Pre-cycle refresh added ~1 min of overhead
+and revealed `cli_commands/help_commands.py` as the
+new top pick — a module that didn't appear at all
+in the morning csv's top 10. Worth automating in a
+session-start hook for future cycles.

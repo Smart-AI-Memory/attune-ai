@@ -18,6 +18,81 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — twelfth module under test-quality-program (Opus 4.7)
+
+Twelfth module run. First cycle this session that
+surfaced a real production bug — and notably, it's
+exactly **Bug Class 3** from the log preamble:
+"Tests that mocked around the bug — tests pass
+because they mock the broken caller; coverage at
+100% looks fine, production code is wrong."
+
+Selected via a **fresh** rubric refresh (the morning
+csv was stale by ~12 cycles): top measured-coverage
+pick was `cli_commands/help_commands.py`, weight 5,
+score 4.497, **10.1% covered**. Closer inspection
+revealed the 10% was misleading: 16 tests existed in
+`tests/unit/cli_commands/test_help_commands.py` but
+all were silently skipped via
+`pytest.importorskip("frontmatter")` because
+`python-frontmatter` is only a transitive dep of
+`attune-help`/`attune-author` (in the `[author]`
+extra, NOT in `[dev]`).
+
+**Bug Class 3 — variant: silently-skipped tests
+masquerading as test coverage.** The 16 tests were
+written, reviewed, and merged, but never ran in CI.
+The `importorskip` guard was defensive (the module
+references `attune.help.engine.populate` which uses
+`frontmatter` internally), but the dep wasn't in any
+extra that CI installed. Net effect: a weight-5 CLI
+entry point shipped with effective 0% test coverage
+despite appearing to have 16 tests.
+
+**Fix (inline, sibling change):** added
+`python-frontmatter>=1.0.0,<2.0.0` to the `[dev]`
+extra in `pyproject.toml` with an inline comment
+documenting why. `uv lock` confirmed clean 2-line
+update to `uv.lock`. With the dep installed, the 16
+existing tests run and lift coverage 5% → 73%.
+
+**New tests (this PR):** 15 added under
+`tests/unit/cli_commands/test_help_commands_gaps.py`
+covering the remaining ~27%:
+- `_get_generated_dir()` path resolution
+- `_list_categories()` missing-category-dir +
+  no-cross-links branches
+- `_list_category()` empty-files branch
+- `_show_template()` prefixed-name-not-found branch
+- `_list_all_tags()` empty-tags branch
+- `_record_feedback()` invalid-rating + happy +
+  prefix-resolution branches (entire function had
+  zero coverage)
+- `cmd_help()` --feedback routing + missing-topic
+  branch
+- `cmd_help()` --deep / --detail verbosity branches
+
+Patches use the source-module pattern (e.g.
+`patch("attune.help.engine.list_tags", ...)`) per
+CLAUDE.md lesson on lazy-imported names not being
+patchable at the consuming module.
+
+**Coverage delta:** 5% (effective 0%) → 100%
+line+branch.
+
+**Lesson captured separately in CLAUDE.md:** when
+the rubric points at a "user-typed entry point" with
+suspiciously low coverage AND nominal test files
+exist, grep for `pytest.importorskip` in those test
+files first. If a test file gates the entire module
+on an `importorskip`, the dep is either misclassified
+(should be in `[dev]`) or the tests are
+defensive-only and never run in CI. Either way:
+fix the gate before adding new tests, otherwise the
+new tests also silently skip.
+
+---
+
 ## 2026-05-12 — eleventh module under test-quality-program (Opus 4.7)
 
 Eleventh module run. Second non-SDK pick after the

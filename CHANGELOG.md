@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: twelfth module through the playbook —
+  `cli_commands/help_commands.py` (`attune help` CLI entry).
+  Coverage 5% → 100% line+branch. **Real bug surfaced and
+  fixed inline:** the existing
+  `tests/unit/cli_commands/test_help_commands.py` (16 tests)
+  was guarded by `pytest.importorskip("frontmatter")` and
+  silently skipped all 16 tests in CI because
+  `python-frontmatter` is only a transitive dep of
+  `attune-help` / `attune-author` (which sit in the `[author]`
+  optional extra). Result: 0% effective coverage on a
+  user-typed entry point (weight 5) despite 16 tests
+  existing. Fix: added `python-frontmatter>=1.0.0,<2.0.0`
+  to the `[dev]` extra so CI installs it. Existing tests
+  now run (73% line+branch), and a new
+  `test_help_commands_gaps.py` adds 15 tests for the
+  remaining branches: `_record_feedback` (entire function),
+  `cmd_help` --feedback / --deep / --detail routing, and
+  several edge cases (missing category dirs, empty tag
+  lists, prefixed-name-not-found). Per-cycle bugfix
+  pattern documented in COVERAGE_BUG_LOG.md.
 - Test-quality-program: eleventh module through the playbook —
   `memory/control_panel.py` (`MemoryControlPanel`). Existing
   tests already covered 93% line+branch — this PR adds 7

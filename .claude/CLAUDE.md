@@ -3264,6 +3264,111 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / similar, set `ATTUNE_MAX_BUDGET_USD=0` or use
   `standard` ($10) depth.
 
+- **Patching `Path.stat` to raise breaks `Path.exists()`
+  before the test reaches the intended `.stat()` call**:
+  `pathlib.Path.exists()` is implemented as a `try:
+  self.stat(); return True except: return False`
+  wrapper, so monkeypatching the class's `stat` to
+  raise `PermissionError` makes every `exists()` check
+  on that Path subclass fail before any user code can
+  iterate the contents. Symptom: a test that intends
+  to break a `sum(f.stat().st_size for f in glob(...))`
+  comprehension never gets that far — the surrounding
+  `if storage_path.exists():` guard catches the
+  exception first and the inner sum never runs.
+  Workaround: patch a different surface
+  (`Path.glob` to raise, or override the `__iter__` on
+  the glob result) so `exists()` keeps working. Same
+  caveat applies to `Path.is_file()` / `Path.is_dir()`,
+  both of which call `.stat()` internally. Hit while
+  testing `MemoryControlPanel.get_statistics()` error
+  paths in PR #286.
+
+- **When existing coverage on a module is ≥85%, write
+  a focused "fallback-paths" test file rather than
+  rewriting the existing surface**: the test-quality-
+  program rubric surfaced `memory/control_panel.py`
+  at 93% with 2,723 lines of existing tests across 4
+  files. The right move was a 168-line targeted file
+  (`test_control_panel_error_paths.py`) that named the
+  remaining branches by line number in its docstring
+  and exercised each with strategic patching: storage_bytes
+  Exception fallback, long-term get_statistics() Exception
+  handler, health_check unavailable branch, _count_patterns
+  OSError handler. Coverage 93% → 99% (only `if __name__
+  == "__main__"` guard left) without touching 2.7k lines
+  of correct existing tests. Pattern: when rubric points
+  at a high-existing-coverage module, scan its missing
+  branches first (`coverage report -m`) and write a
+  targeted file naming each by line — don't start from
+  scratch.
+
+- **`rubric_cache.csv` for the test-quality-program
+  goes stale within a single working session**: the csv
+  is regenerated only when `scripts/score_test_quality.py`
+  runs against fresh `coverage.xml`. After ~6 cycles in
+  one session, the csv's per-module `covered_pct` values
+  are wildly off — `memory/control_panel.py` was
+  reported at 53.9% in the morning snapshot but was
+  93% by the time it was picked (existing test work had
+  landed earlier today). Operational fix: re-run
+  `scripts/score_test_quality.py` against a fresh
+  `pytest --cov=src/attune --cov-report=xml` before
+  picking each cycle's module, OR cross-check the csv's
+  `covered_pct` against actual coverage when the module
+  is opened. Don't waste a cycle re-confirming a module
+  that's already well-covered.
+
+- **The SDK-native workflow shell scaffold is reusable
+  across 6+ siblings — single-pass rename**: same
+  test scaffold (real `AssistantMessage`/`ResultMessage`/
+  `TextBlock` fixtures, validation/execute/depth-mapping/
+  exception/run_agent_X classes, `_error_result` shape
+  test) shipped verbatim across `dependency_check`,
+  `bug_predict`, `perf_audit`, `refactor_plan`,
+  `doc_audit/workflow`, and `document_gen/workflow`.
+  Renames needed: import path, patch path (e.g.
+  `attune.workflows.foo.claude_agent_sdk.query`),
+  subagent name strings (typically 2-3 per workflow),
+  the method name (`_run_agent_check` →
+  `_run_agent_predict` etc.), system-prompt substring
+  assertion, and the `stage.name` in TestErrorResult.
+  Each cycle ~5 min by hand from copy-paste. After 6
+  consecutive cycles the generator-script idea (script
+  it as `scripts/scaffold_sdk_workflow_tests.py`) keeps
+  surfacing but the cluster is now drained — defer until
+  a future rubric refresh surfaces ≥2 more.
+
+- **Edge cases unique to specific SDK shells (worth
+  remembering when reading the scaffold)**: (a)
+  `perf_audit.py` has an inline `main()` CLI entry
+  point — needs two extra tests (success + error paths
+  via `capsys`). (b) `document_gen/workflow.py` has a
+  `default_context()` classmethod for `WorkflowContext`
+  composition — three extra tests cover the
+  `PromptService` + `ParsingService` wire-up and the
+  `xml_config` kwarg path. (c) `bug_predict.py`
+  delegates its `main` to a sibling `bug_predict_report.py`
+  module — no inline `main()` to test. (d)
+  `dependency_check.py` uses two subagents while
+  `bug_predict` / `perf_audit` / `refactor_plan` /
+  `doc_audit` / `document_gen` each use three —
+  count subagents in the source before writing the
+  `test_passes_subagent_definitions` assertion.
+
+- **Parallel test-quality-program sessions cause
+  predictable three-file conflicts**: CHANGELOG.md,
+  docs/COVERAGE_BUG_LOG.md, and docs/specs/test-quality-
+  program/decisions.md are touched by every cycle. When
+  a parallel session ships first, the conflict shape is:
+  both sessions claim the same "Nth module" ordinal in
+  the bug log. Resolution: relabel mine as "(N+1)th" and
+  rebase. Took ~3 min for the caching/refactor_plan
+  collision in PR #275. The remote branch is also auto-
+  deleted on squash merge — push new cycles from a
+  fresh branch off `origin/main`, not the prior cycle's
+  branch.
+
 - **A spec's measurable premise should be probed in
   Phase 0 BEFORE implementation, even when the
   probe costs real API budget**: the Agent Surface
