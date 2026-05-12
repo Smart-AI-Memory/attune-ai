@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: eleventh module through the playbook —
+  `memory/control_panel.py` (`MemoryControlPanel`). Existing
+  tests already covered 93% line+branch — this PR adds 7
+  targeted tests under
+  `tests/unit/memory/test_control_panel_error_paths.py` for
+  the remaining error-handling fallbacks: storage_bytes
+  `OSError` recovery (lines 229-231), long-term
+  `get_statistics()` exception handler (241-242), health_check
+  "long_term not initialized" branch (415-419), and
+  `_count_patterns()` `OSError`/`PermissionError` handler
+  (491-493). Coverage 93% → 99% (only the
+  `if __name__ == "__main__"` guard at line 497 remains).
+  Rubric data was stale: csv reported 53.9% covered, actual
+  was 93%; flagged for a rubric refresh. Zero production
+  bugs surfaced.
 - Test-quality-program: tenth module through the playbook —
   `workflows/document_gen/workflow.py` (`DocumentGenerationWorkflow`).
   Coverage 46.4% → 100% line+branch. 24 deterministic tests

@@ -18,6 +18,63 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — eleventh module under test-quality-program (Opus 4.7)
+
+Eleventh module run. Second non-SDK pick after the
+six SDK-native cycles. Selected via the rubric:
+`memory/control_panel.py`, score 2.073. **0 production
+bugs surfaced.**
+
+**Rubric staleness flagged:** rubric_cache.csv from
+2026-05-12 morning reported `covered_pct=53.9` for
+this module, but at session time the existing
+`tests/memory/test_control_panel.py` (851 lines),
+`tests/memory/test_control_panel_security.py` (345),
+`tests/unit/memory/test_control_panel.py` (849), and
+`tests/unit/memory/test_control_panel_display.py`
+(678) — together 2,723 lines of existing tests —
+already gave 93% line+branch coverage. The csv
+snapshot pre-dates work that landed earlier today.
+Rubric refresh needed before the next cycle to avoid
+re-picking already-saturated modules.
+
+**Remaining 7% (this PR's target):** four
+error-handling fallback branches:
+
+- `get_statistics()` storage_bytes `Exception` →
+  fallback to 0 (lines 229-231). Exercised by patching
+  `Path.glob` to raise `OSError`.
+- `get_statistics()` long-term `get_statistics()`
+  `Exception` → log warning, leave counts at dataclass
+  defaults (241-242). Exercised by patching
+  `_get_long_term` to return a fake that raises.
+- `health_check()` long-term unavailable branch
+  (415-419). Exercised by pointing `storage_dir` at a
+  nonexistent path.
+- `_count_patterns()` `OSError`/`PermissionError`
+  handler (491-493). Exercised by patching
+  `Path.glob`.
+
+**Coverage delta:** 93% → 99% line+branch. Only line
+497 (`if __name__ == "__main__": main()`) remains
+uncovered.
+
+**Tests:** 7 added under
+`tests/unit/memory/test_control_panel_error_paths.py`.
+Uses `tmp_path` for real filesystem isolation;
+patches `Path.glob` / `_get_long_term` at strategic
+points to surface the fallback branches without
+mocking the whole subsystem.
+
+**Pattern observation:** When existing test files
+already cover the happy path well, the right move is
+a small targeted file that exercises the remaining
+error-handling branches by name (commented line
+references in the docstring). Cheaper than rewriting
+the existing tests, keeps the diff focused.
+
+---
+
 ## 2026-05-12 — tenth module under test-quality-program (Opus 4.7)
 
 Tenth module run. Sixth Agent SDK-native workflow

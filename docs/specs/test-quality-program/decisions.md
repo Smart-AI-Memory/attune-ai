@@ -268,3 +268,44 @@ recede from the working set. Re-evaluate if a rubric
 refresh surfaces two more SDK shells. Until then, the
 ~5-min-per-cycle cost of hand-transferring stays
 cheaper than the ~30-min generator investment.
+
+## memory/control_panel.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.073 (weight=3 × gap=0.461 × risk=1.5)
+**Picked because:** Top non-SDK entry in the rubric
+working set after the six SDK-shell cycles drained
+the `workflows/*` cluster. Score reflected `covered_pct=53.9`
+in the morning csv snapshot.
+**Outcome:** 1 test file added (`test_control_panel_error_paths.py`,
+7 tests) targeting the remaining 4 error-handling
+fallback branches. Coverage **93% → 99%** line+branch.
+Rubric staleness surfaced: csv snapshot pre-dated work
+landed earlier today that brought existing coverage to
+93%, not 53.9%. Zero production bugs surfaced.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — eleventh module under test-quality-program"
+
+**Rubric staleness flagged:** the rubric data is from
+this morning, but ~12 cycles have shipped since,
+plus a parallel session. Scores >12 hours old should
+be re-measured before picking. Cheap operational
+fix: re-run `scripts/score_test_quality.py` against
+fresh `coverage.xml` between cycles (or at least
+once per session). Not committed; next cycle should
+either refresh the rubric or pick from a known-fresh
+slice.
+
+**Pattern observation:** When existing tests already
+cover the happy path well (as here: 4 existing test
+files totaling 2,723 lines for a 497-line module),
+the right scaffold is NOT a wholesale rewrite — it's
+a small targeted file naming the remaining branches
+in its docstring and exercising each with focused
+patching. This kept the diff to 168 lines and
+avoided touching 2.7k lines of correct existing
+tests. Worth adding as an explicit branch in the
+playbook (design.md §Per-module loop): if existing
+coverage ≥85%, write a "fallback-paths" file rather
+than starting over.
