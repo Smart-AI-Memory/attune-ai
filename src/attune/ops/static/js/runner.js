@@ -35,6 +35,17 @@
     "Notes", "Note"
   ];
 
+  // Full regex-meta escape for any string going into a RegExp. Covers
+  // every regex metacharacter including backslash, so even if
+  // WORKFLOW_NAMES is ever populated from a less-trusted source, the
+  // regex semantics stay intact (no injection bypass via embedded
+  // metacharacters). CodeQL flagged the previous one-character version
+  // as "incomplete string escaping" — fair, even though today's input
+  // is a hardcoded safe array.
+  function reEscape(s) {
+    return s.replace(/[.*+?^${}()|[\]\\-]/g, "\\$&");
+  }
+
   // Build a single regex that matches a URL, file path, or workflow
   // name. Order in the alternation is important: URLs first (they
   // might contain dots), then file paths, then workflow names.
@@ -44,7 +55,7 @@
     "|" +
     "((?:[\\w][\\w./\\-]*\\/)?[\\w][\\w.\\-]*\\.(?:" + FILE_EXTS + ")(?::\\d+(?::\\d+)?)?)" +  // 2: file path
     "|" +
-    "\\b(" + WORKFLOW_NAMES.map(function (n) { return n.replace(/-/g, "\\-"); }).join("|") + ")\\b",  // 3: workflow name
+    "\\b(" + WORKFLOW_NAMES.map(reEscape).join("|") + ")\\b",                                 // 3: workflow name
     "g"
   );
 
