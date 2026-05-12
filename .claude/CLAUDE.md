@@ -3078,3 +3078,40 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   errors="replace"` on `subprocess.run` when the
   child may emit non-ASCII. Same fix shape as the
   `Path.read_text(encoding="utf-8")` lesson.
+
+- **`gh pr merge --squash --admin` from a sub-
+  worktree exits non-zero but the remote merge
+  succeeds**: when running from
+  `.claude/worktrees/<name>/`, `gh pr merge` prints
+  `failed to run git: fatal: 'main' is already
+  used by worktree at '/Users/<...>/attune-ai'` —
+  the parent worktree owns `main` and the post-merge
+  local checkout step can't take it. The REMOTE
+  merge already succeeded by the time this error
+  fires. Distinct from the existing "fast-forward
+  warning when remote merge succeeds" lesson
+  (that's about the local fast-forward of `main`
+  failing after merge from a non-worktree). Always
+  verify with `gh pr view <PR> --json
+  state,mergedAt,mergeCommit` before retrying —
+  retry would 404 because the PR is already merged.
+
+- **Restoring `-n auto` after a branch lag surfaces
+  tests landed on main under `-n 1` that aren't
+  xdist-safe**: PR #242 restored `-n auto`, was
+  rebased onto a main that had merged PR #263
+  earlier the same day. PR #263 added
+  `tests/unit/memory/short_term/test_conflicts.py`
+  with `capsys` assertions on structlog output —
+  the tests pass under `-n 1` but fail under
+  `-n auto` because structlog routing in xdist
+  workers doesn't reach the worker's `capsys`
+  stream (assertion sees empty string). Pattern:
+  ANY PR that changes parallelism mode must
+  rebase to current main AND grep the recent
+  commit range for new tests using `capsys` /
+  `caplog` / log-capture patterns — those are the
+  xdist-fragile surface. Fix template is to swap
+  `capsys` for pytest's `caplog` (xdist-aware) or
+  use a structlog-specific test capture fixture;
+  do NOT skipif as the first move.
