@@ -60,18 +60,19 @@ def test_compute_allowlist_zero_zero_zero_zero_bind():
 def test_compute_allowlist_extras_without_port_get_both_http_and_https():
     """A --trusted-host without :port adds both :80 and :443."""
     allowed = compute_allowlist("127.0.0.1", 8765, extras=["my.example.com"])
-    assert "my.example.com:80" in allowed
-    assert "my.example.com:443" in allowed
-    assert "my.example.com" in allowed  # also the bare form
+    # `allowed` is a set[str]; use issubset for exact-match membership
+    # (set `in` is exact match, but written this way to avoid CodeQL's
+    # py/incomplete-url-substring-sanitization false positive).
+    expected = {"my.example.com:80", "my.example.com:443", "my.example.com"}
+    assert expected.issubset(allowed)
 
 
 def test_compute_allowlist_extras_with_port_stay_exact():
     """A --trusted-host with :port is added as-is, NOT padded with 80/443."""
     allowed = compute_allowlist("127.0.0.1", 8765, extras=["my.example.com:8443"])
-    assert "my.example.com:8443" in allowed
+    assert {"my.example.com:8443"}.issubset(allowed)
     # Should NOT have added 80/443 — user specified a port already
-    assert "my.example.com:80" not in allowed
-    assert "my.example.com:443" not in allowed
+    assert allowed.isdisjoint({"my.example.com:80", "my.example.com:443"})
 
 
 def test_compute_allowlist_non_loopback_bind_does_not_add_loopback_aliases():
@@ -131,7 +132,14 @@ def test_middleware_logs_rejection(tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="attune.ops.middleware"):
         r = client.get("/api/info", headers={"host": "evil.com:8765"})
     assert r.status_code == 400
-    assert any("evil.com:8765" in record.message for record in caplog.records)
+    # Inspect record.args (the substituted log values) directly rather than
+    # the formatted message — exact equality, no substring search.
+    logged_hosts = [
+        record.args[0]
+        for record in caplog.records
+        if record.args and isinstance(record.args, tuple)
+    ]
+    assert "evil.com:8765" in logged_hosts
 
 
 def test_middleware_truncates_pathological_host_in_log(tmp_path, caplog):
@@ -141,11 +149,15 @@ def test_middleware_truncates_pathological_host_in_log(tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="attune.ops.middleware"):
         r = client.get("/api/info", headers={"host": huge_host})
     assert r.status_code == 400
-    # No record should contain more than 200 chars from the huge_host
-    for record in caplog.records:
-        if "a" * 200 in record.message:
-            # 200 chars is fine, but 500 chars would mean no truncation
-            assert "a" * 201 not in record.message
+    # Inspect the substituted host arg directly — must be ≤200 chars.
+    logged_hosts = [
+        record.args[0]
+        for record in caplog.records
+        if record.args and isinstance(record.args, tuple)
+    ]
+    assert logged_hosts, "expected a rejection log line"
+    for logged in logged_hosts:
+        assert len(logged) <= 200
 
 
 def test_trusted_host_flag_widens_allowlist(tmp_path):
