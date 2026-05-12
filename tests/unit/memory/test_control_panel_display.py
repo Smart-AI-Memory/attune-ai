@@ -259,6 +259,20 @@ class TestPrintHealth:
 
 @pytest.mark.unit
 class TestConfigureLogging:
+    # `_configure_logging` calls `structlog.configure(...)` which
+    # mutates global structlog state. Without a teardown, the
+    # WARNING-filter leaks into every subsequent test on the same
+    # xdist worker — silently filtering out `logger.info(...)` calls
+    # and breaking unrelated log-event assertion tests (notably
+    # `tests/unit/memory/short_term/test_conflicts.py`). Snapshot
+    # and restore.
+    @pytest.fixture(autouse=True)
+    def _restore_structlog_config(self):
+        import structlog
+
+        yield
+        structlog.reset_defaults()
+
     def test_verbose_passes_debug_to_basicconfig(self):
         import logging
 
