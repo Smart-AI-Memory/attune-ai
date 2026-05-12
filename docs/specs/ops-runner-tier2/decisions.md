@@ -3,7 +3,21 @@
 **Status:** draft
 **Owner:** Patrick
 **Opened:** 2026-05-11
-**Predecessor:** PR #247 (Tier 1 rich rendering — workflow output gets parsed links, file chips, workflow pills, headers)
+**Predecessors:**
+- PR #247 — Tier 1 rich rendering (workflow output gets parsed links, file chips, workflow pills, headers)
+- PR #251 — Full-page run view (output survives browser refresh; full viewport instead of cramped table-row pane)
+
+---
+
+## Amendment (2026-05-11, post-#251)
+
+The original Tier 2 spec assumed the **inline log pane** in the workflows table as the output surface for Phases 3–5. PR #251 replaced that with a dedicated `/runs/{run_id}/view` page. The spec's intent is unchanged — same phases, same outcomes — but the **rendering surface for Phases 3 (recent-runs history), 4 (pill-clicks chain runs), and 5 (recommendation cards) is now the run-view page, not the workflows-table row.**
+
+Phase 2 (the scope picker — your idea) remains on the Workflows tab. That's the launcher; scope belongs with the Run button. Once a run starts, the user navigates to `/runs/{run_id}/view` and that's where chains, history, and recommendations render.
+
+The recent-runs strip (Phase 3) appears on BOTH the workflows table (as a per-workflow history chip strip) AND the run-view page (as a "switch to another run for this workflow" navigator). Same data, two locations.
+
+See `design.md` "Run-view page integration" and `tasks.md` Phases 3–5 for the updated surfaces.
 
 ---
 

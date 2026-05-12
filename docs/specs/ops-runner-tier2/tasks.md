@@ -51,42 +51,48 @@ Goal: replace in-memory run history with disk-backed per-workflow history.
 - [ ] **3.4** New router `routes/runs_history.py`:
       - `GET /api/runs/{workflow}` → list 20 newest runs (metadata only)
       - `GET /api/runs/{workflow}/{run_id}` → full record + log
-- [ ] **3.5** `workflows.html`: add `<div class="recent-runs" data-recent-runs="{{ w.name }}">` below each log pane.
-- [ ] **3.6** `runner.js`: `setupRecentRuns(row)` fetches and renders chips. Click on a chip expands the log pane with that run's output.
-- [ ] **3.7** CSS: `.recent-runs`, `.recent-run-chip` (color by outcome: ✓ ok, ✗ danger).
-- [ ] **3.8** Tests:
+- [ ] **3.5** `workflows.html`: add `<div class="recent-runs" data-recent-runs="{{ w.name }}">` below each workflow row. Each chip is a link to `/runs/<run_id>/view` (the per-run page from #251).
+- [ ] **3.6** `run_view.html`: add `<div class="run-view-history" data-recent-runs="{{ run.workflow }}">` at the top of the run-view page — same data, second location, makes "switch between recent runs of this workflow" a one-click navigation.
+- [ ] **3.7** JS: `setupRecentRuns()` (on workflows.html via runner.js) and the same logic on run-view via the new `run_view.js` (Phase 4.1) — both fetch `/api/runs/<workflow>` and render chips that link to the run-view page.
+- [ ] **3.8** CSS: `.recent-runs`, `.run-view-history`, `.recent-run-chip` (color by outcome: ✓ ok, ✗ danger). Same chip class in both locations.
+- [ ] **3.9** Tests:
       - `test_run_persists_to_disk` — file written on completion
       - `test_run_persists_truncates_long_log` — 1MB log → 200KB on disk + marker
       - `test_run_skips_write_in_read_only` — `--read-only` doesn't write
       - `test_get_recent_runs_returns_sorted` — newest first
       - `test_get_run_rejects_path_traversal` — `run_id="../../etc/passwd"` returns 400
       - `test_prune_old_runs` — files older than 30 days are deleted at startup
+      - `test_run_view_history_renders` — run-view page shows last-5 chips for the same workflow
 
 ## Phase 4 — Workflow-name pills become buttons
 
-Goal: Tier 1 pills (inert today) trigger a follow-on run carrying the row's scope.
+Goal: Tier 1 pills (inert today) on the run-view page trigger a follow-on run carrying the source run's scope.
 
-- [ ] **4.1** `runner.js`: attach click handlers to `.log-workflow` pills. On click:
-      - Read the row's scope via `getScope(currentRow)`
-      - Find the target workflow row by name
+**Note:** Pills now live on the **run-view page** (introduced in #251), not the workflows-table log pane. The JS for pill handling moves into a new `run_view.js` file.
+
+- [ ] **4.1** Extract the inline `<script>` block from `run_view.html` into `src/attune/ops/static/js/run_view.js`. (Currently inline as a one-off — Tier 2 needs the file for testing + multiple features.)
+- [ ] **4.2** `run_view.js`: attach click handlers to `.log-workflow` pills. On click:
+      - Read the source run's scope from the page context (server-injected as `{{ run.scope|tojson }}` once Phase 2 lands)
       - POST `/workflows/<target>/run` with `{path: scope}`
-      - Auto-scroll to the target row, set status, attach SSE listener
-      - Render a "↩ from <source-workflow>" badge in the target row's output
-- [ ] **4.2** Handle read-only mode: pill click in `--read-only` shows a toast "Read-only mode: re-launch without --read-only to chain runs". No POST.
-- [ ] **4.3** Handle disabled target (already running): the existing 409 handler in `formatErrorDetail` already covers this; surface in the target row.
-- [ ] **4.4** CSS: pill hover state, `.pill-disabled` for `--read-only`, `.chained-from` badge styling.
-- [ ] **4.5** Tests:
-      - `test_runner_js_pills_clickable` — assert pills have `data-clickable` attribute
+      - On success, navigate to `/runs/<new_run_id>/view?from=<source-workflow>`
+      - On 409 (busy), surface inline above the log without navigating
+- [ ] **4.3** `run_view.js`: `renderChainedFromBadge()` — reads `?from=` from the URL, populates `.chained-from` in the page header if present. Renders as "↩ from <source-workflow>".
+- [ ] **4.4** Handle read-only mode: pill click in `--read-only` shows a toast "Read-only mode: re-launch without --read-only to chain runs". No POST.
+- [ ] **4.5** Handle disabled target (already running): the existing 409 handler in `formatErrorDetail` already covers this; surface above the log on the source run-view page (don't navigate away from a successful prior run).
+- [ ] **4.6** CSS: `.log-workflow` pill hover state, `.pill-disabled` for `--read-only`, `.chained-from` badge styling.
+- [ ] **4.7** Tests:
+      - `test_run_view_js_exists` — file is served at `/static/js/run_view.js`
+      - `test_run_view_page_loads_run_view_js` — template references the new file
       - `test_pill_click_carries_scope` (manual): visual smoke from the browser
       - `test_read_only_pill_returns_403` — POST while `--read-only` returns 403
 
 ## Phase 5 — Structured recommendation channel
 
-Goal: workflows can emit JSON recommendations rendered as action cards.
+Goal: workflows can emit JSON recommendations rendered as action cards on the run-view page.
 
 - [ ] **5.1** Extend SSE event types in `routes/runner.py`. Existing: `line`, `done`. New: `recommendation`.
 - [ ] **5.2** Server-side validation: `kind` must be in allowlist (`next-workflow`, `open-url`), `name` must be a registered workflow, `args.path` must pass `_validate_file_path`. Drop bad payloads with warning log.
-- [ ] **5.3** `runner.js`: listen for `recommendation` events. Render an action card below the log pane via `renderRecommendationCard(row, payload)`.
+- [ ] **5.3** `run_view.js`: listen for `recommendation` events. Render an action card into the page's `.run-view-recommendations` slot via `renderRecommendationCard(payload)`.
 - [ ] **5.4** Pick ONE workflow to demonstrate end-to-end. Candidate: `code-review` emitting `{"kind": "next-workflow", "name": "bug-predict", "args": {"path": "<same scope>"}, "label": "Run bug-predict to verify"}` when it finds CWE-style issues.
 - [ ] **5.5** CSS: `.recommendation-card` action card with hover/click states + severity color.
 - [ ] **5.6** Tests:
