@@ -231,20 +231,26 @@ class TestCreateConflictContext:
         self,
         negotiation: ConflictNegotiation,
         contributor_creds: AgentCredentials,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
-        # structlog writes to stdout by default (not Python's
-        # `logging` module), so capsys is the right capture
-        # fixture here — `caplog` returns empty records.
-        negotiation.create_conflict_context(
-            "c1",
-            {"a1": "x", "a2": "y"},
-            {},
-            credentials=contributor_creds,
-            batna="fallback",
-        )
-        captured = capsys.readouterr().out
-        assert "conflict_context_created" in captured
+        # `structlog.testing.capture_logs()` is the canonical
+        # capture primitive — bypasses I/O entirely and reads
+        # structured events directly. Earlier versions used
+        # `capsys` to read stdout, but structlog's WriteLogger
+        # caches `sys.stdout` at logger-creation time, so
+        # pytest's stdout monkey-patching (especially under
+        # `pytest-xdist` on Linux) intermittently sees empty
+        # output. The event record path is environment-stable.
+        from structlog.testing import capture_logs
+
+        with capture_logs() as cap:
+            negotiation.create_conflict_context(
+                "c1",
+                {"a1": "x", "a2": "y"},
+                {},
+                credentials=contributor_creds,
+                batna="fallback",
+            )
+        assert any(e.get("event") == "conflict_context_created" for e in cap)
 
 
 # ---------------------------------------------------------------------------
@@ -399,13 +405,15 @@ class TestResolveConflict:
         negotiation: ConflictNegotiation,
         contributor_creds: AgentCredentials,
         validator_creds: AgentCredentials,
-        capsys: pytest.CaptureFixture[str],
     ) -> None:
+        # See `test_logs_creation_event` for why `capture_logs`
+        # is preferred over `capsys` here.
+        from structlog.testing import capture_logs
+
         negotiation.create_conflict_context("c1", {}, {}, credentials=contributor_creds)
-        # Drain stdout from the create call so we only see the resolve event.
-        capsys.readouterr()
-        negotiation.resolve_conflict("c1", "done", validator_creds)
-        assert "conflict_resolved" in capsys.readouterr().out
+        with capture_logs() as cap:
+            negotiation.resolve_conflict("c1", "done", validator_creds)
+        assert any(e.get("event") == "conflict_resolved" for e in cap)
 
 
 # ---------------------------------------------------------------------------
