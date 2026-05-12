@@ -1,8 +1,9 @@
 # Decisions — Ops Dashboard Security Hardening
 
-**Status:** draft
+**Status:** complete (2026-05-12, pending Patrick's Phase 5 smoke)
 **Owner:** Patrick
 **Opened:** 2026-05-11
+**Closed:** 2026-05-12 — implementation landed via v6.7.1 (#254, #256) + Phase 2.3 test added today
 **Trigger:** Code-review report on PR #251 (2026-05-11) flagged the ops dashboard's command-execution endpoints as vulnerable to DNS-rebinding attacks. Verified real. Not introduced by #251 — pre-existing since the ops runner shipped.
 
 ---
@@ -87,3 +88,50 @@ Spec closes when:
 5. End-to-end test: start a run, complete it, GET `/runs/<id>/view`, parse the stream URL from the rendered HTML, connect, assert full log replays.
 6. Manual DNS-rebinding repro fails (e.g., `curl -H "Host: evil.com:8766" http://localhost:8766/api/info` returns 400).
 7. CI green on all 12 platform lanes.
+
+---
+
+## 2026-05-12 — Spec closed
+
+All implementation work landed across three PRs during the May 11–12
+window:
+
+| PR | Title | What landed |
+|----|-------|-------------|
+| #254 | feat(ops): security hardening — DNS-rebinding fix + cluster | Middleware, Config field, CLI flag, startup warning, queue bound, dashboard logging, e2e test |
+| #256 | release: v6.7.1 — DNS-rebinding fix for ops dashboard | Cut release; CHANGELOG entry satisfies Phase 6.4 |
+| (today) | Phase 2.3 missing test added | `test_subscriber_queue_does_not_block_fast_subscribers` regression guard for queue isolation |
+
+**Resolution criteria — all satisfied in code:**
+
+1. ✅ `TrustedHostMiddleware` mounted in `create_app()` via
+   `server.py:41 add_middleware(...)`.
+2. ✅ `--trusted-host` repeatable CLI flag in
+   `cli.py:58`; threaded through `build_config()`.
+3. ✅ Queue bound: `runner.py:100 asyncio.Queue(maxsize=_SUBSCRIBER_QUEUE_MAXSIZE)`
+   with two tests now covering both drop-on-overflow and fast-subscriber
+   isolation.
+4. ✅ `run_view_page` logs 404 at INFO (`dashboard.py:118`) and 400 at
+   WARN (`dashboard.py:110`).
+5. ✅ E2E test: `test_run_view_replays_full_output_after_completion`
+   in `tests/unit/ops/test_runner.py:280`.
+6. 🟡 Phase 5 smoke tests (Patrick's manual run, interactive).
+7. ✅ CI green: all 12 platform lanes pass; 142 ops tests in
+   `tests/unit/ops/`.
+
+**Spec is closeable upon Patrick's Phase 5 smoke pass.** All
+remaining work is the manual verification step (`curl` checks +
+browser-load).
+
+### What's left as a follow-up (not blocking)
+
+Per the spec's own out-of-scope list — these were always deferred,
+not regressions:
+
+- HTTPS / TLS for the dashboard
+- Auth tokens / OAuth
+- Per-workflow capability gating
+- Audit log of all runs
+- Subprocess sandboxing
+
+Open follow-up specs only when one becomes a real ask.
