@@ -48,9 +48,12 @@ jobs:
       # they require live services (Claude API, Redis, etc.). Run them
       # separately via `pytest -m integration` against a configured env.
       #
-      # `-n 1` overrides pytest.ini's `-n auto` in CI. Branch-coverage +
-      # xdist + 14k tests hits the 16 GB Linux / 7 GB macOS ceilings;
-      # single worker eliminates the multiplier. Local dev keeps -n auto.
+      # `-n auto` (restored 2026-05-11 via probe-c Phase 4). The earlier
+      # `-n 1` cap (PR #212) was a misdiagnosis: the OOM root cause was
+      # one test's zombie thread allocating ~100k MagicMocks, not xdist
+      # worker multiplication. Once the leaked thread was fixed (patch
+      # to threading.Thread in test_subscribe_adds_to_subscriptions_dict),
+      # parallel runs are safe again and ~3x faster.
       #
       # Coverage is intentionally NOT collected in this matrix — see the
       # dedicated `coverage:` job below. The matrix's job is to confirm
@@ -69,7 +72,7 @@ jobs:
           MEM_MONITOR_PID=$!
           trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
         fi
-        pytest -n 1 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
         if [ "${{ runner.os }}" = "Linux" ]; then
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
         fi
@@ -81,11 +84,12 @@ jobs:
 
   coverage:
     # Dedicated coverage job — runs once on Linux 3.11 with branch
-    # coverage on. Split out of the matrix because branch-coverage +
-    # xdist + 14k tests hits the 16 GB OOM ceiling on the matrix's
-    # default ubuntu-latest. With the redis-detection cluster
-    # excluded (--ignore below) the suite memory profile fits
-    # comfortably. File tracking + codecov upload live here.
+    # coverage on. Split out of the matrix to keep branch-coverage
+    # signal centralized (one source of truth for the codecov upload)
+    # and to avoid running it 12× across the platform matrix when one
+    # run is sufficient. With the pubsub-thread leak fixed (probe-c)
+    # and `-n auto` restored, this job runs in parallel like the
+    # matrix tests.
     runs-on: ubuntu-latest
     timeout-minutes: 75
     steps:
@@ -108,7 +112,7 @@ jobs:
         (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
         MEM_MONITOR_PID=$!
         trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        pytest -n 1 --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
       env:
         ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}

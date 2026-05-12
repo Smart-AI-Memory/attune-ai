@@ -3078,3 +3078,116 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   errors="replace"` on `subprocess.run` when the
   child may emit non-ASCII. Same fix shape as the
   `Path.read_text(encoding="utf-8")` lesson.
+
+- **`gh workflow run --ref <tag>` validates the
+  `workflow_dispatch` trigger against the workflow file
+  at the SPECIFIED REF, not at the default branch**:
+  Adding `workflow_dispatch:` to `.github/workflows/foo.yml`
+  on `main` does NOT enable manual dispatch against
+  pre-existing tags. `gh workflow run --ref v0.11.1`
+  still returns `HTTP 422: Workflow does not have
+  'workflow_dispatch' trigger` because the workflow file
+  on the v0.11.1 tag still lacks the trigger. Fix:
+  `--ref main` (the version in `pyproject.toml` is what
+  determines the published wheel name, not the ref). For
+  any release-triggered publish workflow, add
+  `workflow_dispatch` BEFORE cutting the tag, not after.
+
+- **PyPI run-level "failure" can hide a successful wheel
+  upload that subsequent retries surface as "File
+  already exists"**: A `release: published`-triggered
+  publish job that wraps `twine upload` plus downstream
+  steps (attestations, sigstore, slack notify) can have
+  the upload succeed and a downstream step fail. The
+  GitHub Actions run shows `conclusion: failure`, making
+  it look like nothing was published. Diagnosis: a
+  retry returns `400 File already exists` on the wheel
+  filename. Cross-check
+  `curl https://pypi.org/pypi/<pkg>/<ver>/json` — if it
+  returns a valid release JSON, the upload landed.
+  Compare the JSON's `upload_time` against the run's
+  start time to confirm. Don't keep chasing "the publish
+  failed" — the publish succeeded; only a later step did.
+
+- **Py 3.10 doesn't reliably bind submodule attributes
+  from `from .submodule import X` in `__init__.py`,
+  breaking `patch.dict("pkg.submodule.__dict__", ...)`**:
+  `mock`'s `_get_target` resolves
+  `"attune.routing.chain_executor.__dict__"` via
+  `getattr(attune.routing, 'chain_executor')`. On Python
+  3.11+ this works because import side-effects bind the
+  submodule onto its parent package; on 3.10 the binding
+  is unreliable and the getattr raises
+  `AttributeError: module 'attune.routing' has no
+  attribute 'chain_executor'. Did you mean:
+  'ChainExecutor'?`. Two fixes:
+  (1) `import attune.routing.chain_executor` at the
+  test-file top — explicit submodule import forces the
+  parent binding on 3.10 too; or
+  (2) if the `patch.dict` block is dead scaffolding
+  around an empty patch, just delete it. Distinct from
+  the existing "patch() requires target name to exist at
+  module scope" lesson — that one covers function-body
+  imports; this one is about package re-export semantics
+  differing between 3.10 and 3.11+.
+
+- **`pytest -n auto` can reshuffle module-level-state
+  flaky tests into passing**: Probe-c Phase 4 (PR #242)
+  flipped `-n 1` to `-n auto` and watched ALL Ubuntu +
+  macOS lanes turn green — including Py 3.10, which had
+  been failing on every PR for weeks due to
+  `test_chain_executor`'s `patch.dict("attune.routing.chain_executor.__dict__", ...)`
+  failing module-attribute lookup. The mechanism: each
+  xdist worker process gets a fresh interpreter and
+  re-runs imports independently. The submodule-binding
+  side-effect of `from .chain_executor import X` fires
+  reliably in a clean process where chain_executor is
+  the FIRST thing imported, but unreliably in a
+  long-running serial process where 18k tests have
+  already interacted with the parent package. Implication:
+  when a Py 3.10 flake appears under `-n 1` but vanishes
+  under `-n auto`, the root cause is almost always
+  module-level state from a prior test polluting the
+  parent package's `__dict__`. Either way, fix the test
+  (delete the dead `patch.dict`, or `import pkg.submodule`
+  explicitly at test-file top) rather than relying on
+  the parallel-execution side effect.
+
+- **Restoring parallelism exposes Windows xdist worker
+  crashes that `-n 1` was hiding by being too slow**:
+  When PR #242 flipped to `-n auto`, the Windows lanes
+  finished within timeout for the first time and
+  surfaced 4 worker crashes (`test_memory_features.py`
+  × 2, `test_redis_auto_detect.py`, plus 1
+  TypeError-NoneType in
+  `test_session_continuity_io.py`). With `-n 1`, those
+  tests would have hit the 75-min job timeout before
+  reaching them. Lesson: when restoring parallelism
+  after a sequential cap, expect to find platform-
+  specific failures that were hidden not by serial
+  execution itself but by the suite never completing
+  on the slower platforms. Plan for a dedicated
+  follow-up spec to characterize and fix the platform
+  fragility — don't iterate ad-hoc in the original
+  restoration PR. (Convert to draft + write a deferral
+  comment that enumerates each failure and links to a
+  separate investigation track.)
+
+- **`path.endswith("/docs/specs")` fails on Windows;
+  use `os.path.join("docs", "specs")` for cross-platform
+  suffix checks**: Path-suffix assertions in tests
+  routinely break on Windows because the resolved
+  filesystem paths use `\` separators. The bug doesn't
+  surface in Linux CI or local Mac dev, only when
+  Windows runners actually finish (which they sometimes
+  don't under `-n 1`). Fix pattern:
+  ```python
+  import os
+  assert body["root"].endswith(os.path.join("docs", "specs"))
+  ```
+  Generalize: any test asserting on path suffixes should
+  use `os.sep` or `os.path.join` for the platform-
+  agnostic separator, never a hardcoded literal `/`.
+  Doubles as a quick grep target when triaging Windows
+  CI failures: `grep -r 'endswith("/' tests/` catches
+  the antipattern.
