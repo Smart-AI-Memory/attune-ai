@@ -706,12 +706,9 @@ omit = [
     "*/core_modules/__init__.py",  # Core modules init
     # Models main entry
     "*/models/__main__.py",  # Models CLI entry point
-    # Standalone hook script (not importable via pytest)
-    "*/hooks/scripts/help_freshness_nudge.py",
-    # Interactive agent CLI (requires live Claude agent loop)
-    "*/meta_workflows/cli_commands/agent_commands.py",
-    # Shadowed by attune/config/ package — unreachable import
-    "*/attune/config.py",
+    "*/hooks/scripts/help_freshness_nudge.py",  # Standalone hook script (not importable via pytest)
+    "*/meta_workflows/cli_commands/agent_commands.py",  # Interactive agent CLI (requires live Claude agent loop)
+    "*/attune/config.py",  # Shadowed by attune/config/ package — unreachable import
 ]
 branch = true
 # parallel + concurrency: ensure xdist workers flush coverage data

@@ -1,6 +1,6 @@
 # Spec: Coverage Exclusion Policy
 
-**Status**: approved
+**Status**: complete (2026-05-12)
 **Created**: 2026-05-10
 **Origin**: Surfaced during reflection on the 100%-coverage workstream
 (see COVERAGE_BUG_LOG.md). Reframed the goal from "every module at
