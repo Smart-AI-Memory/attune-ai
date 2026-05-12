@@ -32,25 +32,46 @@ Goal: turn "worker crashed" into a concrete exception trace so we know what to f
 
 ## Phase 2 — Fix the memory-feature cluster
 
-The 3 worker crashes likely share a root cause (Linux-only probe in `MemoryFeatures.list_all_features()` or its `is_redis_enabled()` helper). One fix may close 3 tests.
+**Status (2026-05-12):** Hypothesis revised — actual root cause is
+network probe contention, not a Unix-only API. See `decisions.md`
+"2026-05-12 — Phase 2 + Phase 3.1 attempt".
 
-- [ ] **2.1** Locate the offending probe (`grep -rn "AF_UNIX\|os.uname\|/var/run\|/tmp/redis" src/attune/memory/`).
-- [ ] **2.2** Add platform-aware guards:
-      ```python
-      if sys.platform == "win32":
-          # skip the Unix-only probe; return a default or use the
-          # Windows-appropriate alternative
-      ```
-      Where the probe IS the feature (e.g. AF_UNIX socket detection), the Windows path is "always-unavailable, return `FeatureStatus.MISSING_DEPENDENCY` with an install hint".
-- [ ] **2.3** Add a regression test that exercises the new branch with `sys.platform` patched, so we don't lose coverage on Linux.
-- [ ] **2.4** Verify with the Phase 1 diagnostic command — the 3 tests should pass on Windows.
+- [x] **2.1** Locate the offending probe — `grep` returned NO hits
+      for `AF_UNIX|os.uname|/var/run|/tmp/redis` in `src/attune/memory/`.
+      Real root cause: `list_all_features()` called `is_redis_running()`
+      5× per invocation, each a real socket probe to localhost:6379
+      with 1s timeout. Under xdist on Windows the cumulative socket
+      pressure crashed workers.
+- [x] **2.2** Fix: dedupe the probe in `list_all_features()` to once
+      per call. Behavior unchanged (result wouldn't differ across the
+      5 calls within one invocation). No platform-aware guard needed.
+- [x] **2.3** Regression test added:
+      `test_list_all_features_probes_redis_once` in
+      `tests/unit/test_memory_features.py` asserts `is_redis_available`
+      and `is_redis_running` each called exactly once per
+      `list_all_features()` invocation.
+- [x] **2.4 (extended)** Also fixed `test_respects_redis_enabled_true`
+      via a test-only change. Root cause was different from the other
+      two: `BaseOperations.__init__` calls `_create_client_with_retry`
+      which blocks for up to 17s (3 retries × 5s socket timeout) when
+      no Redis server is running. The test relied on `try/except` to
+      swallow the failure, but under xdist on Windows the 17s blocking
+      I/O × 12 workers crashed worker processes. Fix: patch
+      `_create_client_with_retry` to return `None`. The test still
+      verifies `auto_detect_redis.assert_not_called()` — the actual
+      client connection was incidental to the test's purpose.
+- [ ] **2.5** Verify all 3 memory-cluster tests pass on Windows
+      under `-n auto`. (Push pending.)
 
 ## Phase 3 — Fix the hook subprocess wrapper
 
-- [ ] **3.1** Once Phase 1.3 tells us what's `None`, write a targeted fix. Likely one of:
-      - Add `text=True, encoding="utf-8"` to `subprocess.run` calls in `_run_hook()`
-      - Switch the hook script invocation to `[sys.executable, str(script_path), ...]` instead of relying on shebang resolution
-      - Pass `shell=False` explicitly (Windows default differs)
+- [x] **3.1** Fix applied: replaced `text=True` with
+      `encoding="utf-8", errors="replace"` on all three `subprocess.run`
+      calls in `tests/unit/hooks/test_session_continuity_io.py`
+      (the `_run_hook` helper plus two open-coded calls). The hook
+      emits `⚠️` (U+26A0); Windows default cp1252 decoding is the most
+      likely culprit. Matches the existing CLAUDE.md lesson on Windows
+      encoding for `Path.read_text`. Verification on Windows CI pending.
 - [ ] **3.2** Add a guard test that asserts `result.stdout is not None` after `_run_hook()` returns, regardless of platform. Fast fail if the wrapper breaks again.
 
 ## Phase 4 — Unblock PR #242

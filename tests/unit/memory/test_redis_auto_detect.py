@@ -390,18 +390,22 @@ class TestBaseOperationsBackwardCompat:
 
     def test_respects_redis_enabled_true(self):
         """Test that REDIS_ENABLED=true bypasses auto-detection."""
-        with patch.dict("os.environ", {"REDIS_ENABLED": "true"}):
-            from attune.memory.short_term.base import BaseOperations
+        from attune.memory.short_term.base import BaseOperations
 
-            # Should not call auto_detect_redis at all
-            with patch("attune.memory.redis_auto_detect.auto_detect_redis") as mock_detect:
-                try:
-                    BaseOperations()
-                except Exception:
-                    # INTENTIONAL: Connection may fail — we only care that
-                    # auto-detect was NOT called
-                    pass
-                mock_detect.assert_not_called()
+        # Patch _create_client_with_retry to avoid the real Redis
+        # connection attempt. With REDIS_ENABLED=true and no server
+        # running, the unpatched constructor blocks for ~17s
+        # (3 retries × 5s socket timeout) and on Windows under xdist
+        # that crashed workers. The test only cares that
+        # auto_detect_redis was NOT called — the actual client is
+        # incidental.
+        with (
+            patch.dict("os.environ", {"REDIS_ENABLED": "true"}),
+            patch.object(BaseOperations, "_create_client_with_retry", return_value=None),
+            patch("attune.memory.redis_auto_detect.auto_detect_redis") as mock_detect,
+        ):
+            BaseOperations()
+            mock_detect.assert_not_called()
 
     def test_respects_redis_enabled_false(self):
         """Test that REDIS_ENABLED=false forces mock mode."""

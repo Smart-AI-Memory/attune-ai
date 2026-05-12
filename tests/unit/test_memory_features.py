@@ -166,3 +166,17 @@ class TestMemoryFeatures:
             info = MemoryFeatures.get_feature_status(feature)
             assert info.status == FeatureStatus.AVAILABLE
             assert "Core feature" in info.message or "always available" in info.message
+
+    def test_list_all_features_probes_redis_once(self):
+        # Per-feature probing previously called is_redis_running() 5 times
+        # per list_all_features() invocation. Under xdist on Windows, the
+        # concurrent localhost socket probes crashed workers. The fix caches
+        # the result for the duration of one call.
+        with (
+            patch.object(MemoryFeatures, "is_redis_available", return_value=True) as mock_avail,
+            patch.object(MemoryFeatures, "is_redis_running", return_value=False) as mock_running,
+        ):
+            MemoryFeatures.list_all_features()
+
+        assert mock_avail.call_count == 1
+        assert mock_running.call_count == 1

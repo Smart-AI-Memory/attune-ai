@@ -220,14 +220,14 @@ class MemoryFeatures:
             ...     print(f"{name}: {info.status.value}")
 
         """
-        features = [
-            # Redis-dependent features
-            "short_term",
-            "cross_session",
-            "event_streaming",
-            "agent_heartbeats",
-            "control_panel",
-            # Core features
+        redis_features = {
+            "short_term": "Short-term memory (Redis-based)",
+            "cross_session": "Cross-session coordination",
+            "event_streaming": "Real-time event streaming",
+            "agent_heartbeats": "Agent liveness tracking",
+            "control_panel": "Memory control panel",
+        }
+        core_features = [
             "long_term",
             "file_session",
             "security",
@@ -235,4 +235,39 @@ class MemoryFeatures:
             "encryption",
         ]
 
-        return {feature: MemoryFeatures.get_feature_status(feature) for feature in features}
+        # Probe Redis ONCE up front. is_redis_running() does a real
+        # network ping at localhost:6379 with a 1s connect timeout —
+        # calling it per-feature meant 5 probes per list_all_features()
+        # call. Under xdist on Windows with 12 workers hitting the
+        # closed port simultaneously, that contention crashed workers
+        # (see docs/specs/windows-memory-detection/decisions.md).
+        redis_pkg_available = MemoryFeatures.is_redis_available()
+        redis_server_running = redis_pkg_available and MemoryFeatures.is_redis_running()
+
+        def _redis_feature_info(name: str, display: str) -> FeatureInfo:
+            if not redis_pkg_available:
+                return FeatureInfo(
+                    name=display,
+                    status=FeatureStatus.MISSING_DEPENDENCY,
+                    message="Redis package not installed",
+                    install_command="pip install 'attune-ai[memory]'",
+                )
+            if not redis_server_running:
+                return FeatureInfo(
+                    name=display,
+                    status=FeatureStatus.NOT_CONFIGURED,
+                    message="Redis server not running",
+                    install_command="Install Redis: https://redis.io/docs/install/",
+                )
+            return FeatureInfo(
+                name=display,
+                status=FeatureStatus.AVAILABLE,
+                message=f"{display} is available",
+            )
+
+        result: dict[str, FeatureInfo] = {
+            name: _redis_feature_info(name, display) for name, display in redis_features.items()
+        }
+        for name in core_features:
+            result[name] = MemoryFeatures.get_feature_status(name)
+        return result

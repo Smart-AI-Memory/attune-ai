@@ -45,7 +45,8 @@ def _run_hook(
         [sys.executable, str(script)],
         input=json.dumps(payload),
         capture_output=True,
-        text=True,
+        encoding="utf-8",
+        errors="replace",
         env=env,
         timeout=10,
     )
@@ -110,7 +111,8 @@ class TestSpecOrient:
             [sys.executable, str(_SPEC_ORIENT)],
             input="not-json",
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             env={
                 **os.environ,
                 "ATTUNE_AI_WORKSPACE_ROOTS": str(tmp_path),
@@ -196,7 +198,8 @@ class TestCompactWarning:
             [sys.executable, str(_COMPACT_WARNING)],
             input="<not json>",
             capture_output=True,
-            text=True,
+            encoding="utf-8",
+            errors="replace",
             env=os.environ.copy(),
             timeout=10,
         )

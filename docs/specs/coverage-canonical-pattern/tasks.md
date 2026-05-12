@@ -1,6 +1,6 @@
 # Tasks: Canonical Coverage Pattern
 
-**Status**: draft
+**Status**: paused 2026-05-12 — premise invalidated, see decisions.md
 
 ---
 
