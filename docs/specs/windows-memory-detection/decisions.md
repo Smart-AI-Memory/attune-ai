@@ -202,36 +202,36 @@ the original 4 didn't cover:
 | `tests/unit/memory/short_term/test_conflicts.py::TestResolveConflict::test_logs_resolution_event` | Same as above | Same |
 
 Both assert structlog output via `capsys` (`assert "conflict_..."
-in captured` where `captured == ""`). The tests landed on main
-earlier the same day via PR #263
-(`4d8f387c test(memory/short_term): meaningful coverage on
-conflicts.py`) AFTER PR #242 was originally opened. They pass
-under `-n 1` (main's current config) but fail under `-n auto`
-(what PR #242 restores) because structlog routing in xdist
-workers doesn't reach the worker's `capsys` stream.
+in captured` where `captured == ""`). The capsys version was on
+PR #242's branch — added originally by PR #263 (`4d8f387c`) earlier
+the same day. They pass under `-n 1` (the configuration PR #263
+shipped under) but fail under `-n auto` (what PR #242 restores)
+because structlog routing in xdist workers doesn't reach the
+worker's `capsys` stream.
 
-This is the exact "5th test surfaces during rebase" scenario
-Phase 4.3 of `tasks.md` anticipated. Per the spec's discipline:
-**do NOT merge PR #242** until these are resolved.
+**Important correction**: main's current version of
+`test_conflicts.py` already uses the xdist-safe pattern
+(`structlog.testing.capture_logs()` with `reset_defaults()`).
+That fix landed via PR #265 (`21e7cefc`, merged 12:28 EDT today)
+AFTER PR #242's rebase ran (14:30 UTC). So PR #242's branch had
+the pre-#265 capsys version, and the rebase missed the fix
+because the rebase base predated it.
 
-### Resolution path (next session)
+This is the "5th test surfaces during rebase" scenario Phase 4.3
+of `tasks.md` anticipated, with a wrinkle: the fix already exists
+upstream; PR #242 just needs to pick it up.
 
-Three options, in order of principled-ness:
+### Resolution
 
-1. **Fix `test_conflicts.py` to be xdist-safe**. Replace `capsys`
-   assertions with pytest's `caplog` (xdist-aware) or a
-   structlog-specific test capture fixture. ~30 min, defensible
-   on its own merits as test quality. Adds `test_conflicts.py`
-   to the spec's scope as a 5th addressed test file.
+The minimal fix is to restore main's version of `test_conflicts.py`
+on PR #242's branch (`git checkout origin/main --
+tests/unit/memory/short_term/test_conflicts.py`). Committed and
+pushed as `7eef6abc` on `feat/probe-c-phase4-restore-n-auto`. CI
+should now re-run with the xdist-safe version.
 
-2. **Block similar patterns retroactively** with a lint rule
-   that catches `capsys.readouterr()` co-located with
-   `structlog`/`logger` in the same test module, and require
-   `caplog` instead. Out of scope for this spec; file separately.
-
-3. **Skipif under xdist** (Phase 5 fallback). Pragmatic but adds
-   debt and contradicts the spec's "don't skipif as first move"
-   principle.
+Alternative (cleaner but more work): re-rebase PR #242 onto current
+main, which would naturally pick up #265's fix. Skipped because the
+surgical file-restore is equivalent and avoids another force-push.
 
 Recommend option 1 in the next session focused on PR #242. Spec
 remains open with one outstanding criterion (resolution-criteria

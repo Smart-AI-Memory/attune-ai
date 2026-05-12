@@ -3097,21 +3097,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   retry would 404 because the PR is already merged.
 
 - **Restoring `-n auto` after a branch lag surfaces
-  tests landed on main under `-n 1` that aren't
-  xdist-safe**: PR #242 restored `-n auto`, was
-  rebased onto a main that had merged PR #263
-  earlier the same day. PR #263 added
-  `tests/unit/memory/short_term/test_conflicts.py`
-  with `capsys` assertions on structlog output —
-  the tests pass under `-n 1` but fail under
-  `-n auto` because structlog routing in xdist
-  workers doesn't reach the worker's `capsys`
-  stream (assertion sees empty string). Pattern:
-  ANY PR that changes parallelism mode must
-  rebase to current main AND grep the recent
-  commit range for new tests using `capsys` /
-  `caplog` / log-capture patterns — those are the
-  xdist-fragile surface. Fix template is to swap
-  `capsys` for pytest's `caplog` (xdist-aware) or
-  use a structlog-specific test capture fixture;
+  xdist-fragile tests AND can miss upstream fixes
+  for them**: PR #242 restored `-n auto`, rebased
+  onto a main that had recently merged PR #263 —
+  which originally added `test_conflicts.py` with
+  `capsys` assertions on structlog output (passes
+  under `-n 1`, fails under `-n auto` because
+  structlog routing in xdist workers doesn't reach
+  the worker's `capsys` stream). PR #265 fixed those
+  assertions to use `structlog.testing.capture_logs()`
+  with `reset_defaults()`, but #265 merged AFTER
+  #242's rebase, so the rebased branch still carried
+  the broken pre-#265 version. Two patterns:
+  (1) ANY PR that changes parallelism mode must
+  grep the recent commit range for tests using
+  `capsys` / `caplog` / log-capture and verify
+  they're using the xdist-safe variant;
+  (2) when rebasing a long-lived branch, the
+  presence of an upstream merge doesn't mean its
+  follow-ups are also in — check that any
+  test-fragility introduced by the merge has its
+  fixup commit included. Fix template for
+  structlog tests: `capture_logs()` with
+  explicit `structlog.reset_defaults()` before the
+  context manager, not `capsys`;
   do NOT skipif as the first move.
