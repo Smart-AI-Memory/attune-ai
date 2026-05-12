@@ -279,11 +279,25 @@ def _atomic_write(target: Path, text: str) -> None:
 def _rewrite_status_line(original: str, status: str) -> str:
     """Return ``original`` with its first **Status** line replaced by ``status``.
 
-    If no recognized status line exists, inserts ``**Status:** {status}`` near
-    the top (after the first ``# `` heading if present).
+    Preserves any trailing annotation after the canonical status token —
+    so ``**Status:** approved (2026-05-09) — Phase A`` flipping to
+    ``in-review`` becomes ``**Status:** in-review (2026-05-09) — Phase A``,
+    not just ``**Status:** in-review``. The annotation is whatever follows
+    the first delimiter (em-dash, hyphen-with-spaces, open-paren, or
+    comma) in the previous value.
+
+    If no recognized status line exists, inserts ``**Status:** {status}``
+    near the top (after the first ``# `` heading if present).
     """
-    if _STATUS_RE.search(original):
-        return _STATUS_RE.sub(f"**Status:** {status}", original, count=1)
+    match = _STATUS_RE.search(original)
+    if match:
+        old_value = match.group(1)
+        annotation = _extract_status_annotation(old_value)
+        new_value = (status + annotation) if annotation else status
+        # Use a lambda for sub() so the replacement is treated as a
+        # literal — `\g<...>` / numeric backrefs in annotations can't
+        # accidentally trigger expansion.
+        return _STATUS_RE.sub(lambda _m: f"**Status:** {new_value}", original, count=1)
     lines = original.splitlines()
     insert_at = 1 if lines and lines[0].startswith("# ") else 0
     lines.insert(insert_at, f"\n**Status:** {status}\n")
@@ -291,6 +305,35 @@ def _rewrite_status_line(original: str, status: str) -> str:
     if not new_text.endswith("\n"):
         new_text += "\n"
     return new_text
+
+
+def _extract_status_annotation(old_value: str) -> str:
+    """Return the trailing annotation portion of a status value.
+
+    The annotation is everything from the first delimiter onward,
+    preserving leading whitespace. Returns ``""`` if no delimiter found
+    or the annotation contains only whitespace.
+
+    Examples:
+        "draft" -> ""
+        "approved (2026-05-09)" -> " (2026-05-09)"
+        "complete (2026-05-10) — Phase A" -> " (2026-05-10) — Phase A"
+        "in-review — needs review" -> " — needs review"
+        "approved, see notes" -> ", see notes"
+    """
+    # Scan ALL delimiters and pick the EARLIEST match — otherwise
+    # "approved (2026) — Phase A" would split on " — " and lose " (2026)"
+    # from the annotation. The em-dash-vs-hyphen tie-break only matters
+    # if they're at the same position, which doesn't happen in practice.
+    earliest = -1
+    for delim in (" — ", " (", " - ", ", "):
+        idx = old_value.find(delim)
+        if idx >= 0 and (earliest < 0 or idx < earliest):
+            earliest = idx
+    if earliest < 0:
+        return ""
+    annotation = old_value[earliest:]
+    return annotation if annotation.strip() else ""
 
 
 @router.put("/{slug}/{phase}/status")

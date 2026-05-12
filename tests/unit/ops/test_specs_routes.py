@@ -415,3 +415,126 @@ def test_put_status_first_root_wins_on_collision(tmp_path, monkeypatch):
     assert (root_b / "shared" / "tasks.md").read_text(encoding="utf-8") == (
         "**Status:** approved\n"
     )
+
+
+# ---------------------------------------------------------------------------
+# PUT preserves trailing annotation on the status line (fix for lossy
+# canonical-token replacement that wiped date/note context).
+# ---------------------------------------------------------------------------
+
+
+def test_put_status_preserves_date_annotation(tmp_path, monkeypatch):
+    """`**Status:** approved (2026-05-09)` → flip to `in-review` keeps the date."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(
+        root,
+        "alpha",
+        files={"tasks.md": "**Status:** approved (2026-05-09)\n"},
+    )
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "in-review"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** in-review (2026-05-09)" in updated
+    assert "approved" not in updated
+
+
+def test_put_status_preserves_em_dash_annotation(tmp_path, monkeypatch):
+    """em-dash annotation (` — Phase A 68f19b90`) survives the flip."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(
+        root,
+        "alpha",
+        files={"tasks.md": "**Status:** complete (2026-05-10) — Phase A 68f19b90\n"},
+    )
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "in-review"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** in-review (2026-05-10) — Phase A 68f19b90" in updated
+
+
+def test_put_status_preserves_em_dash_only_annotation(tmp_path, monkeypatch):
+    """em-dash-only annotation (no parens) survives."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(
+        root,
+        "alpha",
+        files={"tasks.md": "**Status:** approved — see Resolution section below\n"},
+    )
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "in-review"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** in-review — see Resolution section below" in updated
+
+
+def test_put_status_preserves_comma_annotation(tmp_path, monkeypatch):
+    """Comma-delimited annotation survives."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(
+        root,
+        "alpha",
+        files={"tasks.md": "**Status:** approved, owner=Patrick\n"},
+    )
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "complete"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** complete, owner=Patrick" in updated
+
+
+def test_put_status_no_annotation_is_unchanged(tmp_path, monkeypatch):
+    """Bare status (no annotation) still works — annotation is just empty."""
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "approved"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** approved" in updated
+    # Make sure we didn't accidentally append extra whitespace or chars.
+    status_line = next(line for line in updated.splitlines() if line.startswith("**Status:"))
+    assert status_line == "**Status:** approved"
+
+
+def test_put_status_decorator_prefix_is_replaced(tmp_path, monkeypatch):
+    """A leading decorator like `✓ Resolved` is treated as the old token
+    and replaced — but trailing date+note are preserved.
+    Reproduces Patrick's actual scenario:
+      `**Status:** ✓ Resolved (2026-05-11) — see Resolution section below`
+      → flip to `complete`
+      → `**Status:** complete (2026-05-11) — see Resolution section below`
+    """
+    monkeypatch.chdir(tmp_path)
+    root = tmp_path / "specs"
+    _make_spec(
+        root,
+        "alpha",
+        files={
+            "tasks.md": ("**Status:** ✓ Resolved (2026-05-11) — see Resolution section below\n")
+        },
+    )
+    client = _client(tmp_path, specs_roots=(root,), allow_run=True)
+
+    r = client.put("/api/specs/alpha/tasks/status", json={"status": "complete"})
+
+    assert r.status_code == 200, r.text
+    updated = (root / "alpha" / "tasks.md").read_text(encoding="utf-8")
+    assert "**Status:** complete (2026-05-11) — see Resolution section below" in updated
+    assert "✓ Resolved" not in updated
