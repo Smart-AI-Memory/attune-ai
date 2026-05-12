@@ -580,3 +580,39 @@ a.kpi:hover {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* Run-view page — full-width log viewer. URL-bound so refresh works. */
+.run-view-head h1 {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+.run-id-chip {
+  font-size: 12px;
+  font-weight: normal;
+  color: var(--fg-muted);
+}
+.run-view-meta {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+.run-view-status {
+  font-size: 12px;
+}
+.run-view-exit,
+.run-view-started {
+  color: var(--fg-muted);
+  font-size: 12px;
+}
+.run-view-log {
+  max-height: 70vh;  /* full-page version — much more vertical room */
+  font-size: 13px;
+}
+.run-view-foot {
+  margin-top: 12px;
+  color: var(--fg-subtle);
+  font-size: 12px;
+}

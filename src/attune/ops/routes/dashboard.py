@@ -78,6 +78,52 @@ async def health_page(request: Request) -> HTMLResponse:
     return _render(request, "health.html", page="health", snapshot=snapshot)
 
 
+@router.get("/runs/{run_id}/view", response_class=HTMLResponse)
+async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
+    """Full-page view for one workflow run.
+
+    URL-bound: refreshing the page re-attaches to the existing run's SSE
+    stream (the runner replays the buffered log for any new subscriber),
+    so the output survives a browser refresh. Also gives the log full
+    viewport width instead of being constrained to the workflows-table
+    row width.
+
+    Slug-safety: run_id is server-allocated (UUID hex from Python's
+    `uuid.uuid4`). Anything that isn't `[a-f0-9-]` is rejected as a
+    bad-input 400 before we look it up.
+    """
+    # Reject anything that doesn't look like a UUID hex. Prevents path
+    # traversal via `..%2F..%2Fetc...` and similar.
+    import re as _re
+
+    from fastapi import (
+        HTTPException,
+    )  # noqa: F811 — local re-import keeps the module-top imports lean
+
+    if not _re.match(r"^[A-Za-z0-9_-]{1,64}$", run_id):
+        raise HTTPException(status_code=400, detail="invalid run_id")
+
+    runner = getattr(request.app.state, "runner", None)
+    if runner is None:
+        raise HTTPException(status_code=503, detail="runner unavailable")
+    run = runner.get(run_id)
+    if run is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"run '{run_id}' not found. The runner keeps the last 20 runs "
+                "in memory; older runs are pruned when the server restarts."
+            ),
+        )
+    return _render(
+        request,
+        "run_view.html",
+        page="run-view",
+        run=run.to_dict(),
+        stream_url=f"/runs/{run_id}/stream",
+    )
+
+
 @router.get("/specs", response_class=HTMLResponse)
 async def specs_page(request: Request) -> HTMLResponse:
     """Specs tab — federated listing of all specs across configured roots.

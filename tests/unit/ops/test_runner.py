@@ -201,3 +201,66 @@ async def test_stream_replays_buffered_lines(tmp_path, monkeypatch):
     done_payload = json.loads(events[-1][1])
     assert done_payload["status"] == "completed"
     assert done_payload["exit_code"] == 0
+
+
+# --- run-view page tests ---
+
+
+def test_run_view_page_renders_for_existing_run(tmp_path, monkeypatch):
+    """`/runs/{run_id}/view` renders the full-page log viewer for a real run."""
+    app, runner = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    client = TestClient(app)
+    started = client.post("/workflows/code-review/run").json()
+    run_id = started["run_id"]
+
+    r = client.get(f"/runs/{run_id}/view")
+    assert r.status_code == 200
+    # Page chrome — confirms the template rendered, not raw JSON
+    assert "Back to workflows" in r.text
+    # Stream URL is embedded for the page's EventSource to consume
+    assert f"/runs/{run_id}/stream" in r.text
+    # Workflow name shows in the heading
+    assert "code-review" in r.text
+
+
+def test_run_view_page_unknown_run_returns_404(tmp_path, monkeypatch):
+    """Unknown run_id → 404. The server's custom 404 handler renders
+    404.html so we check status code only; the body is page chrome."""
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    client = TestClient(app)
+    # Use a UUID-shape that passes the validation regex but doesn't exist.
+    r = client.get("/runs/abcdef1234567890/view")
+    assert r.status_code == 404
+
+
+@pytest.mark.parametrize(
+    "bad_id",
+    ["../escape", "%2F..%2Fetc", "weird/slash", "back\\slash", "with space", "a" * 100],
+)
+def test_run_view_page_rejects_invalid_run_id(tmp_path, monkeypatch, bad_id):
+    """Path-traversal or overlong run_ids return 400 (or 404 if FastAPI
+    rejects the route match before our handler runs)."""
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    client = TestClient(app)
+    r = client.get(f"/runs/{bad_id}/view")
+    assert r.status_code in (
+        400,
+        404,
+    ), f"bad_id={bad_id!r} got {r.status_code}: {r.text}"
+
+
+def test_workflows_page_no_longer_starts_inline_streaming(tmp_path, monkeypatch):
+    """The runner.js change: clicking Run navigates to the run-view page
+    instead of streaming inline. The Workflows template should still
+    render run buttons (so the page works) — visual smoke is by-eye in
+    the browser; here we just confirm the JS file we ship references
+    `window.location.assign`."""
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True, command_builder=_echo_cmd)
+    # Fetch the actual JS asset the page loads; assert it has the
+    # navigation call instead of the old `appendLine + EventSource` path.
+    client = TestClient(app)
+    r = client.get("/static/js/runner.js")
+    assert r.status_code == 200
+    assert "window.location.assign" in r.text
+    assert "/runs/" in r.text
+    assert "/view" in r.text
