@@ -3369,6 +3369,167 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   fresh branch off `origin/main`, not the prior cycle's
   branch.
 
+- **Diagnostic for the rubric: low coverage + nominal
+  test file → grep for `pytest.importorskip` FIRST**:
+  three test-quality-program cycles in a row hit
+  modules where the rubric reported low coverage but
+  the gap was an artifact, not a coverage need.
+  Combined with the existing "codecov/patch 0%" and
+  "Tests for optional-dep code" lessons, the rule
+  is: when the rubric picks a module with surprisingly
+  low `covered_pct` AND a non-trivial test file
+  exists in `tests/`, run
+  `grep -l "pytest.importorskip" tests/<path>` BEFORE
+  writing new tests. If the existing tests gate the
+  whole module on an `importorskip("X")` and X isn't
+  in `[dev]`, the fix is one line in pyproject.toml
+  (add X to `[dev]`) — 16 existing tests start
+  running, coverage jumps 60+ percentage points
+  without writing anything new. Hit in PR #287
+  (`cli_commands/help_commands.py`,
+  `python-frontmatter` was only in `[author]`,
+  CI's `--extra dev --extra developer` didn't
+  install it → all 16 tests silently skipped). The
+  diagnostic also reveals "dead code wearing
+  defensive clothes" — if there's no test file at
+  all, check inbound imports (`grep -rn
+  "from ...module" src/`) before writing tests.
+
+- **Coverage rubric needs a usage signal, not just
+  a coverage-gap signal**: the formula
+  `weight × gap × risk` ranks modules purely by
+  "user value × untested surface," which is exactly
+  right for healthy code but wrong for dead/skipped
+  code. Three consecutive cycles surfaced
+  unused-or-silently-skipped modules as top picks:
+  (a) `cli_commands/help_commands.py` 16 tests
+  silently skip in CI (#287),
+  (b) `workflows/test_lifecycle.py` +
+  `test_maintenance_cli.py` 0% covered, zero
+  inbound imports outside each other, source
+  comments mark "Removed",
+  (c) `workflows/test_runner_helpers.py` 2% gap is
+  dead defensive try/except. Proposed refinement
+  (flagged in `docs/specs/test-quality-program/decisions.md`,
+  not committed): add inbound-import count to
+  `scripts/score_test_quality.py`. Modules with 0
+  external consumers should auto-flag as
+  retirement candidates rather than coverage
+  targets. The score formula should multiply by
+  `min(1.0, inbound_imports / 5)` or similar to
+  push orphan modules off the top of the working
+  set.
+
+- **Test scaffold archetype for external-process
+  trackers**: `workflows/test_runner.py` (PR #288)
+  established a third scaffold archetype after
+  "SDK shell" and "data structure". For modules
+  that shell out via `subprocess.run` and write to
+  a telemetry/persistence store, mock only those
+  two boundaries; let everything else run real
+  (pytest-output regex parsing, coverage.xml
+  parsing, dataclass construction, mtime-based
+  staleness detection via real `os.utime`).
+  Three exception paths per public function are
+  the norm: `TimeoutExpired`, generic `Exception`,
+  and telemetry log failure — all caught with
+  best-effort recovery. One fixture shape covers
+  all three. This is distinct from the SDK shell
+  pattern (where `claude_agent_sdk.query` is the
+  single mock boundary) and the data-structure
+  pattern (where no mocks are needed).
+
+- **Bug Class 2 (dead defensive code) is the most
+  common finding in modules that look like they
+  need tests but actually need cleanup**: in cycle
+  14 (PR #289), a 2% coverage gap on
+  `workflows/test_runner_helpers.py` was entirely
+  inside a `try/except (ValueError, IndexError):
+  pass` block where:
+  - `ValueError` was impossible (the surrounding
+    `if "src" in source_path.parts:` guard had
+    already confirmed presence)
+  - `IndexError` was impossible (Python's slice
+    `parts[a:b]` never raises IndexError)
+  The right action was to flag for a retirement /
+  cleanup PR, not write a test for an unreachable
+  branch. Test design rule: before writing a test
+  to close a coverage gap, prove the branch is
+  reachable. If you can't construct an input that
+  reaches it, the branch is dead — file a sibling
+  PR to delete it instead.
+
+- **Admin-merging a deletion PR without checking the
+  `build` docs check breaks main**: PR #279 deleted
+  `attune.coordination` and was admin-merged with all
+  tests green, but `docs/reference/multi-agent.md`
+  had `::: attune.coordination.ConflictResolver`
+  mkdocstrings autogen blocks. Main's `mkdocs build`
+  failed immediately, blocking the next PR in the
+  stack. The trap: every PR fails Vercel-attune-ai
+  permanently (legacy preview), so the "failures"
+  field in `gh pr view --json statusCheckRollup` is
+  always non-empty. When admin-merging a `feat!:` or
+  any deletion PR, **read each failure by name** —
+  `build`, `test (...)`, `Analyze (...)` are
+  fail-real, while `Vercel – attune-ai` is
+  fail-ignore. Concrete rule: before admin-merging a
+  deletion, also `grep -rn "::: <removed.module>"
+  docs/` and `grep -rn "<RemovedClass>" docs/` to
+  catch mkdocstrings autogen refs that won't resolve.
+  Fixing main mid-session via a hotfix branch
+  (\`hotfix/...\`) and a focused PR is the right
+  recovery path — don't try to bundle the fix into
+  the next stacked PR.
+
+- **Stacked PR rebase pattern after merging the
+  base**: when PR A and PR B both touch CHANGELOG
+  (each adding their own `### Removed (Breaking)` /
+  `### Changed (Breaking)` section under
+  `## [Unreleased]`) and A merges first, B's rebase
+  conflicts on the changelog. Resolution: keep BOTH
+  sections in the same Unreleased block, with the
+  earlier-merged PR's section first (severity-order:
+  Removed → Changed → Deprecated → Added → Fixed).
+  Same pattern works for `docs/specs/<spec>/tasks.md`
+  status rows — A's `**done**` overrides B's `todo`
+  for any row both touched. The `_sequencing.md`
+  "Today's recommended pick" section is the
+  exception: both sides are guaranteed stale by the
+  time you're resolving the conflict (the picks they
+  named both shipped). Don't pick one — replace with
+  a static pointer to "the most recent spec's
+  decisions.md."
+
+- **Batch-merging MERGEABLE PRs needs a draft filter
+  AND a fail-state read**: `gh pr list --json
+  mergeable` returns MERGEABLE for both
+  ready-to-merge AND draft PRs; the merge call
+  itself errors with "Pull Request is still a draft"
+  when you try. Filter the batch with `gh pr list
+  --json number,mergeable,isDraft --jq '.[] |
+  select(.mergeable=="MERGEABLE" and .isDraft==false)
+  | .number'` before iterating. Also: an
+  intentionally-failing diagnostic PR (like
+  `windows-memory-detection Phase 1`) marked draft
+  is a legitimate state — close, don't merge.
+  Diagnostic for "should this draft close?": does
+  the spec it served reference a closing PR? does a
+  successor PR ship the actual fix?
+
+- **Stale duplicate PRs: confirm via merged-commit
+  grep, then close with a pointer**: when two
+  parallel sessions ship the same test-quality-program
+  module, the slower one's PR ends up CONFLICTING
+  after the winner merges. Don't rebase — close with
+  a comment citing the merged commit. Verify before
+  closing: `git log --oneline --all | grep -iE
+  "<module>"` should show the winning PR's
+  merge-squash commit. If you only see the
+  duplicate's commits and no merge, the loser
+  actually has unique work — investigate before
+  closing.
+
 - **A spec's measurable premise should be probed in
   Phase 0 BEFORE implementation, even when the
   probe costs real API budget**: the Agent Surface

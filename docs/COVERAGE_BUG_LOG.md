@@ -18,6 +18,88 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — fourteenth module under test-quality-program (Opus 4.7)
+
+Fourteenth module run. Selected via the fresh
+rubric: `workflows/test_runner_helpers.py`, weight 3,
+score 2.125, **29.2% covered**. **Two Bug Class 2
+findings — neither fixed inline.**
+
+- `workflows/test_runner_helpers.py` (pytest output
+  parsing + coverage XML analysis + test discovery)
+  — primarily pure functions. Three helpers
+  (`_get_previous_coverage`, `_log_file_test`) touch
+  the telemetry store, mocked. `_find_test_file`
+  walks the real filesystem in `tmp_path` via
+  `monkeypatch.chdir`.
+
+**Bug Class 2 #1 (this module):** `_find_test_file`
+at lines 165-172 has a `try/except (ValueError,
+IndexError): pass` block guarding
+`source_path.parts.index("src")` and
+`source_path.parts[src_idx + 1 : -1]`. The
+surrounding `if "src" in source_path.parts:` guard
+makes the `ValueError` impossible (we already
+confirmed "src" is in parts). The slice operation
+`parts[a:b]` never raises `IndexError` in Python.
+Dead defensive code. The right fix is to drop the
+try/except — not write a test for an unreachable
+branch. Flagged for a sibling cleanup PR.
+
+**Bug Class 2 #2 (related modules — skipped this
+cycle):** `workflows/test_lifecycle.py` (535 lines,
+0% covered) and `workflows/test_maintenance_cli.py`
+(590 lines, 0% covered) are dead code.
+`workflows/__init__.py:328` says "test-maintenance:
+Removed — utility class, not a BaseWorkflow."
+Neither module is imported anywhere outside its
+sibling. Score 3.0 each on the rubric makes them
+top picks, but writing tests for unused code is
+exactly the trap the bug-log preamble warns
+against. Flagged for a retirement PR similar to
+`scaffolding` / `orchestrated_release_prep`
+(referenced in tasks.md §Out-of-scope follow-ups).
+
+**Coverage delta:** 29.2% → 98% line+branch on
+`workflows/test_runner_helpers.py`. The 2% gap is
+the dead-code try/except branch (line 171-172)
+documented above. Will close to 100% when the dead
+code is removed.
+
+**Tests:** 26 added under
+`tests/unit/workflows/test_test_runner_helpers.py`:
+- `_parse_pytest_output` (5 tests including
+  all-passing, mixed, errors, no-summary,
+  unparseable)
+- `_parse_pytest_failures` (4 tests including
+  malformed FAILED lines + 10-entry cap)
+- `_get_previous_coverage` (4 tests — 2-or-more
+  records, single, empty, store-exception)
+- `_analyze_coverage_files` (5 tests covering
+  well-covered/critical/untested/mid-coverage
+  thresholds + 10-entry caps)
+- `_find_test_file` (6 tests — __init__ skip,
+  module dir match, standard dir match, rglob
+  fallback, no-match, no-tests-dir)
+- `_log_file_test` (2 tests — happy + store
+  exception)
+
+**Pattern observation (informational):** This is
+the second consecutive cycle where the rubric's
+top measured-coverage picks were either dead code
+or already well-covered (existing 16 silent-skip
+tests in #287, dead defensive branches here). The
+working-set picks are getting harder to
+distinguish from "modules nobody actually uses."
+A useful rubric refinement would tag modules by
+**inbound-import count** — anything with zero
+external consumers should drop off the working
+set or get a retirement flag rather than a "low
+coverage" flag. Not committing the change here;
+flagged for a future rubric script update.
+
+---
+
 ## 2026-05-12 — thirteenth module under test-quality-program (Opus 4.7)
 
 Thirteenth module run. Selected via the fresh

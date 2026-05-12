@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: fourteenth module through the playbook —
+  `workflows/test_runner_helpers.py` (private helpers behind the
+  Tier 1 telemetry tracker). Coverage 29.2% → 98% line+branch.
+  26 deterministic tests added under
+  `tests/unit/workflows/test_test_runner_helpers.py` covering
+  `_parse_pytest_output`, `_parse_pytest_failures`,
+  `_get_previous_coverage` (with telemetry-store mock),
+  `_analyze_coverage_files` (real XML construction), and
+  `_find_test_file` (real filesystem in tmp_path).
+  **Bug Class 2 surfaced (not fixed):** the `except (ValueError,
+  IndexError): pass` block at lines 171-172 in `_find_test_file`
+  is dead defensive code — the surrounding `if "src" in
+  source_path.parts` guard prevents `ValueError` from `.index()`,
+  and the `[src_idx + 1 : -1]` slice can't raise `IndexError`.
+  Flagged in COVERAGE_BUG_LOG; deferred to a sibling cleanup PR.
+  Also flagged **Bug Class 2 deferral:**
+  `workflows/test_lifecycle.py` and
+  `workflows/test_maintenance_cli.py` (both 0% covered, both at
+  rubric score 3.0) have zero inbound imports outside each
+  other, and `workflows/__init__.py:328` notes test-maintenance
+  was removed. Skipped this cycle — they're dead code, not
+  coverage targets.
 - Test-quality-program: thirteenth module through the playbook —
   `workflows/test_runner.py` (Tier 1 test execution + coverage
   tracking). Coverage 11.7% → 92% line+branch. 24 deterministic
