@@ -2280,31 +2280,23 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   sibling publishes, then another sibling's lockfile
   refresh follows immediately.
 
-- **Research subagents can hallucinate SDK signatures —
-  introspect the real API before coding to it**: the
-  6.2.0 planning research claimed
+- **Research subagents can confabulate SDK signatures —
+  introspect before coding**: Research agents
+  reconstruct API shapes from documentation-style priors
+  without importing the code, so they can be confidently
+  wrong about types (e.g. 6.2.0 planning claimed
   `SystemPromptPreset(exclude_dynamic_sections=["cwd",
-  "git_status"])` would work. The actual
-  `claude_agent_sdk.types.SystemPromptPreset.__annotations__`
-  is `{type: Literal["preset"], preset:
-  Literal["claude_code"], append: NotRequired[str],
-  exclude_dynamic_sections: NotRequired[bool]}` — a
-  **boolean** toggle, not a list of section names, and
-  wraps only Claude Code's built-in `"claude_code"`
-  preset (no vehicle for custom system prompts).
-  Verifying the shape via `import inspect;
-  inspect.signature(obj)` + `.__annotations__` cost
-  ~1 minute and saved an entire task's worth of
-  misdirected code. Research agents can confabulate
-  API shapes from documentation-style priors without
-  importing the code. Pattern: before implementing any
-  task that depends on an SDK symbol the research
-  agent named, run a short introspection check
+  "git_status"])` — actually a boolean toggle, not a
+  list of section names). Cost of verifying with
+  `inspect.signature(obj)` + `.__annotations__`: ~1
+  minute. Cost of skipping: an entire task's worth of
+  misdirected code. Pattern: before implementing any
+  task that depends on an SDK symbol named by a research
+  agent, run a short introspection check
   (`hasattr`, `inspect.signature`, `__annotations__`)
-  as the first step of that task — especially for
-  typed-dict / kwarg-only classes where there's no
-  constructor signature to catch mistakes at
-  call-time.
+  as the first step — especially for TypedDict /
+  kwarg-only classes where there's no constructor
+  signature to catch mistakes at call time.
 
 - **`getattr(module, "name", None)` at call site is the
   clean degradation pattern for optional SDK surface**:
@@ -2647,55 +2639,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   output?), not by counting matches. Only code-
   path TODOs are real debt.
 
-- **Past-due deprecations are deletion targets,
-  not implementation targets — read the
-  DeprecationWarning before "fixing" the TODO**:
-  `ProgressiveTestGenWorkflow.__init__` raised a
-  `DeprecationWarning` since v5.3.0 announcing
-  removal in v6.0.0. The class carried through
-  v6.0.x and v6.2.0 unchanged, with its
-  `_execute_tier_impl` returning simulated (not
-  LLM-generated) test data behind a
-  `TODO(llm-integration)` comment. When the TODO
-  was triaged as a blocker, the instinct was
-  "wire the LLM." The better answer once the
-  deprecation comment was read: "honor the
-  removal promise" — delete the file, its tests,
-  and its demo. Preserve the migration alias
-  (`progressive-test-gen -> test-gen`) so CLI
-  users keep working. Generalization: before
-  spending effort to complete a placeholder, check
-  whether the containing class is already
-  deprecated with a stated removal date — a
-  past-due deprecation makes implementation
+- **Past-due deprecations are deletion targets, not
+  implementation targets — read the DeprecationWarning
+  before "fixing" the TODO**: When a placeholder TODO
+  (e.g. `TODO(llm-integration)` returning simulated data)
+  lives inside a class whose `__init__` already raises
+  `DeprecationWarning` with a stated removal date, the
+  right move is "honor the removal promise," not "wire
+  the implementation." `ProgressiveTestGenWorkflow`
+  carried this pattern from v5.3.0 (deprecated) through
+  v6.2.0 with the TODO untouched; the fix was deletion,
+  not implementation. Preserve a migration alias
+  (`progressive-test-gen -> test-gen`) so CLI users
+  aren't broken. Generalization: before spending effort
+  on a placeholder, check whether the containing class
+  is past-due deprecated — if yes, implementation is
   strictly wrong.
 
-- **Integration tests gated by `HAS_API_KEY` can
-  poison the whole CI matrix when Anthropic's
-  network is transiently unreachable**: PR #169
-  showed 7-15 test failures spread across most
-  matrix jobs with identical signature
-  `AllProvidersFailedError: All fallback options
-  exhausted. Last error: Connection error.` All
-  hits were in `tests/models/test_sonnet_opus_fallback.py`,
-  which guards with `needs_api_key =
-  pytest.mark.skipif(not HAS_API_KEY, ...)` and
-  makes real API calls when the key is set. When
-  the CI runner's network to `api.anthropic.com`
-  flakes, every platform that has the key
-  configured fails identically — making it look
-  like a code regression. Diagnosis signal: the
-  same test IDs fail across all OS/Python
-  combinations with the *same* error string, and
-  no unit tests fail. Proper fix: mock the
-  executor at the HTTP boundary, or add
-  `@pytest.mark.integration` and exclude from the
-  default `-m "not integration"` selector in
-  `tests.yml`. Short-circuit rule: if CI
-  "failures" all share the exact error string
-  and live only in files with a network-gated
-  skip, treat as infrastructure flake, not code
-  regression.
+- **`HAS_API_KEY`-gated integration tests poison the matrix
+  when Anthropic's network flakes**: Tests guarded with
+  `pytest.mark.skipif(not HAS_API_KEY, ...)` make real API
+  calls when the key is set, so a transient
+  `api.anthropic.com` outage fails identically on every
+  platform that has the key — looks like a code regression.
+  Diagnosis signal: same test IDs fail across all OS/Python
+  combinations with the *same* error string, and no unit
+  tests fail (saw `AllProvidersFailedError: ... Connection
+  error` on PR #169). Fix: either mock at the HTTP boundary
+  or add `@pytest.mark.integration` and exclude from the
+  default `-m "not integration"` selector. Short-circuit
+  rule: matched-string failures only in files with a
+  network-gated skip = infra flake, not code regression.
 
 - **`import X` inside a `try` block + `except X.SomeError`
   crashes with `UnboundLocalError` when the import fails**:
