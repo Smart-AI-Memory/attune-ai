@@ -1,6 +1,6 @@
 # Spec: Canonical Coverage Pattern for pytest-xdist CI
 
-**Status**: draft
+**Status**: paused 2026-05-12 — premise invalidated, see decisions.md
 **Created**: 2026-05-10
 **Origin**: PR #212 attempted the canonical pattern (commit 2651ce75)
 without all the required pieces and made CI worse, not better. The

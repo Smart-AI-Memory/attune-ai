@@ -33,4 +33,37 @@ feedback memory: `feedback_rank_proactive_first.md`.)
 
 ---
 
+## 2026-05-12 — Spec premise invalidated, paused
+
+Pre-execution diagnosis of recent main-branch CI runs found the spec's
+premise no longer matches reality:
+
+- **Original premise**: CI fails with `[100%] PASSED → runner shutdown`
+  pattern, caused by OOM during pytest-cov's IPC merge step.
+- **Current reality**: Last four main runs (releases v6.7.1 incl. #256,
+  #254, #253, #251) all fail Windows-only. Ubuntu and macOS pass.
+  Windows runs complete the suite (`18036 passed, 268 skipped` in
+  ~34 min) — no runner shutdown, no OOM at merge. Failures are:
+  - 1 real assertion bug in
+    `tests/unit/hooks/test_session_continuity_io.py` (encoding-related,
+    fixed in this session).
+  - 3 xdist worker crashes on Windows (`worker 'gw0/1/2' crashed`).
+    Likely belong in `windows-memory-detection` or `windows-xdist-honor`
+    specs.
+
+Either PR #212 (despite its incomplete canonical-coverage attempt) or
+some subsequent change resolved the original OOM/shutdown pattern.
+Phase 3A (sitecustomize.py + concurrency flags) would not fix any of
+the current failures.
+
+**Action**: pause this spec. Do NOT execute Probe 0a (already implicitly
+ran — `--cov-report=term-missing` is already absent from `tests.yml`)
+or Probe 0b. Re-open only if the runner-shutdown pattern recurs.
+
+**Status**: `paused` (not `complete` — original work was never done; not
+`partial` — never attempted Phase 3A locally; not `closed` — premise
+might recur and the design.md is still the right fix if it does).
+
+---
+
 (per-phase decisions appended as commits land)
