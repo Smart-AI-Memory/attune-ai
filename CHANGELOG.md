@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: ninth module through the playbook —
+  `workflows/doc_audit/workflow.py` (`DocAuditWorkflow`).
+  Coverage 43.1% → 100% line+branch. 21 deterministic tests
+  added under `tests/unit/workflows/doc_audit/test_workflow_execute.py`
+  using the same SDK-native scaffold as PRs #265 / #266 / #270 /
+  #273. Subagents covered: `staleness-checker`,
+  `accuracy-reviewer`, `gap-finder`. Zero production bugs
+  surfaced. Fifth SDK-native shell through the program — the
+  scaffold continues to transfer verbatim.
 - Test-quality-program: eighth module through the playbook —
   `memory/short_term/caching.py` (`CacheManager`). Coverage
   49.2% → 100% line+branch. 28 deterministic tests added under

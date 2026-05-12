@@ -18,6 +18,48 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — ninth module under test-quality-program (Opus 4.7)
+
+Ninth module run. Fifth Agent SDK-native workflow
+through the program — `doc_audit/workflow.py`. Same
+shell pattern as the four prior SDK cycles
+(`dependency_check`, `bug_predict`, `perf_audit`,
+`refactor_plan`). The scaffold transferred verbatim
+with a subagent-name rename. **0 production bugs
+surfaced.**
+
+- `workflows/doc_audit/workflow.py` (`DocAuditWorkflow`)
+  — no bugs. Thin async shell around
+  `claude_agent_sdk.query()` with three
+  `AgentDefinition` subagents (`staleness-checker`,
+  `accuracy-reviewer`, `gap-finder`). Validates `path`,
+  maps depth → max_turns, four-branch exception
+  handling (`ImportError` / `ConnectionError` /
+  `TimeoutError` / generic). Identical to its sibling
+  workflows.
+
+**Coverage delta:** 43.1% → 100% line+branch.
+
+**Tests:** 21 added under
+`tests/unit/workflows/doc_audit/test_workflow_execute.py`.
+Same real-SDK-dataclass fixtures pattern; only
+`claude_agent_sdk.query` mocked.
+
+**Pattern note:** This is the fifth consecutive cycle
+from the same scaffold (`dependency_check`,
+`bug_predict`, `perf_audit`, `refactor_plan`,
+`doc_audit`). The case for a generator script
+(`scripts/scaffold_sdk_workflow_tests.py` taking
+module path + subagent list as inputs) is increasingly
+strong but still flagged-not-committed — each cycle
+takes ~5 min by hand, so the script's payoff threshold
+hasn't been crossed for one-off uses. If
+`workflows/document_gen/workflow.py` (next obvious
+sibling on the rubric) follows the same shape, the
+script becomes a clear win.
+
+---
+
 ## 2026-05-12 — eighth module under test-quality-program (Opus 4.7)
 
 Eighth module run. First non-SDK cycle in today's

@@ -185,3 +185,42 @@ future refinement could tag rows by archetype
 (`sdk-shell`, `data-structure`, `cli-entry`,
 `async-pipeline`) so picks can be batched by scaffold.
 Flagged; not committed.
+
+## workflows/doc_audit/workflow.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.274 (weight=4 × gap=0.569 × risk=1.0)
+**Picked because:** Top entry with measured `covered_pct`
+after `memory/short_term/caching.py` shipped. Fifth
+SDK-native shell — the scaffold from PR #265 continues
+to transfer verbatim.
+**Outcome:** 1 test file added (`test_workflow_execute.py`,
+21 tests). Coverage 43.1% → 100% line+branch. Zero
+production bugs surfaced. Five SDK-native shells now
+through the program.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — ninth module under test-quality-program"
+
+Same body shape as the four prior SDK-native cycles.
+Three subagents (`staleness-checker`, `accuracy-reviewer`,
+`gap-finder`). The only adaptations needed were the
+import path (workflow lives under `doc_audit/`
+subdirectory, so test import is
+`from attune.workflows.doc_audit.workflow import DocAuditWorkflow`),
+patch paths (`attune.workflows.doc_audit.workflow.claude_agent_sdk.query`),
+subagent name strings, and the system-prompt
+substring check.
+
+**Generator-script ROI threshold:** Five consecutive
+cycles from the same scaffold. Per-cycle cost is now
+~5 min (test file generation + verification +
+docs/CHANGELOG/decisions updates), so a generator
+script's payoff is one cycle of work for ~5 modules
+of automation. `document_gen/workflow.py` is the next
+obvious SDK-native sibling on the rubric — if it
+ships under the same scaffold, the generator becomes
+a clear win. Still not committed; the cost of writing
+the generator (~30 min) is higher than the marginal
+savings until there are at least three more
+candidates queued.
