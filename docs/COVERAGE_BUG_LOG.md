@@ -18,6 +18,51 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — eighth module under test-quality-program (Opus 4.7)
+
+Eighth module run. First non-SDK cycle in today's
+sequence after four consecutive Agent SDK shells
+(`dependency_check`, `bug_predict`, `perf_audit`,
+`refactor_plan`). Selected via the rubric working set:
+`memory/short_term/caching.py`, score 2.287.
+**0 production bugs surfaced.**
+
+- `memory/short_term/caching.py` (`CacheManager`) — no
+  bugs. The module is a 233-line pure-Python LRU cache
+  with TTL fields (timestamps tracked but never expired
+  by the cache itself — callers handle TTL semantics).
+  Two-tier strategy: local in-memory dict-backed cache
+  sitting in front of Redis. The LRU eviction path
+  (`min(self._cache, key=lambda k: self._cache[k][2])`)
+  fires only when `len(self._cache) >= self.max_size`;
+  exercised with a 3-entry cache and a deliberate
+  access-order shuffle. Disabled-mode branches in
+  `get` / `add` / `contains` all return early. No dead
+  code; no crash paths.
+
+**Coverage delta:** 49.2% → 100% line+branch.
+
+**Tests:** 28 added under
+`tests/unit/memory/short_term/test_caching.py`. No
+mocks needed — pure stdlib `time.sleep(0.001)` between
+adds to ensure `last_access` ordering for the LRU
+eviction tests. `get_stats()` hit-rate computation
+exercised both with traffic (66.67%) and with zero
+requests (the `if total > 0 else 0.0` guard).
+
+**Pattern observation:** First module today where the
+test design wasn't a single-pass rename. The
+SDK-native scaffold doesn't transfer here — pure-Python
+state-machine classes need explicit branch coverage
+(disabled-mode return-early paths, division-by-zero
+guards, LRU ordering invariants). Worth noting for
+future rubric picks: SDK-native shells cluster in
+`workflows/*`; pure data-structure modules cluster in
+`memory/short_term/*`. The test scaffold should fork
+along that boundary.
+
+---
+
 ## 2026-05-12 — seventh module under test-quality-program (Opus 4.7)
 
 Seventh module run. Fourth (and final) Agent SDK-native

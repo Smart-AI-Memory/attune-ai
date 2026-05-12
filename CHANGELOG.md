@@ -9,6 +9,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: eighth module through the playbook —
+  `memory/short_term/caching.py` (`CacheManager`). Coverage
+  49.2% → 100% line+branch. 28 deterministic tests added under
+  `tests/unit/memory/short_term/test_caching.py` covering the
+  LRU eviction path (oldest `last_access` dropped on overflow),
+  disabled-mode branches (`get` / `add` / `contains`),
+  `clear()` counter reset, `get_stats()` hit-rate calculation
+  including the zero-requests guard, and the `__len__` /
+  `__contains__` dunders. Zero production bugs surfaced — the
+  module is a pure-Python LRU cache with no Redis or async
+  surface. First non-SDK cycle after four consecutive
+  SDK-native shells (`dependency_check`, `bug_predict`,
+  `perf_audit`, `refactor_plan`).
 - Test-quality-program: seventh module through the playbook —
   `workflows/refactor_plan.py` (Agent SDK-native orchestrator).
   Coverage 44.44% → 100% line+branch. 21 deterministic tests
