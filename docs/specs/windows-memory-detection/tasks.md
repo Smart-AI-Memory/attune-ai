@@ -1,8 +1,10 @@
 # Tasks — Windows Memory-Feature Detection
 
-**Status:** approved
+**Status:** complete (2026-05-12)
 
 Investigation + fix tasks for the 4 Windows-only failures surfaced by PR #242 (`-n auto` restore). See `decisions.md` for context.
+
+**Resolution:** PRs #260 + #242 merged 2026-05-12. All 12 platform lanes green under `-n auto`. All resolution criteria satisfied.
 
 ---
 
