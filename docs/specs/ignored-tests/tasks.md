@@ -1,6 +1,6 @@
 # Spec: Resolve `--ignore`-d Test Files
 
-**Status**: approved
+**Status**: complete (2026-05-09 — see `decisions.md`)
 
 ---
 
@@ -10,8 +10,8 @@
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1 | Create `docs/specs/ignored-tests/decisions.md` as an empty file with a one-line header. Each per-file resolution will append a paragraph here. | docs | todo | Append-only log; lives alongside the spec. |
-| 2 | Capture the **current** baseline: full unit suite green count under `-n auto`. Record in this spec as the reference number for Phase 3D regression checks. | test-infra | todo | Expected ~14,075 passed (2026-05-09 baseline). Re-run before starting in case anything has drifted. |
+| 1 | Create `docs/specs/ignored-tests/decisions.md` as an empty file with a one-line header. Each per-file resolution will append a paragraph here. | docs | **done** | Populated 2026-05-09 with all four per-file rationale entries. |
+| 2 | Capture the **current** baseline: full unit suite green count under `-n auto`. Record in this spec as the reference number for Phase 3D regression checks. | test-infra | **done** | Baseline 14,075 passed → final 14,110 passed (+35 recovered from composition reconcile). |
 
 ### Phase 3B — Per-file resolution
 
@@ -22,27 +22,27 @@ from the test-infrastructure audit and may need revision.
 
 | # | File | Path | Status | Notes |
 |---|------|------|--------|-------|
-| 3 | `tests/unit/workflows/test_orchestrated_release_prep.py` (5/35 fail) | **R1 REPAIR** | todo | Sample root cause from audit: `assert isinstance(result, AgentResult)` fires at `core_strategies.py:161` because real workflow execution returns non-`AgentResult`. Group all 5 failures by root cause first; if > 3 distinct causes, re-classify to R2. |
-| 4 | `tests/unit/models/test_execution_and_fallback_architecture.py` (41/52 fail) | **R3 RETIRE (with salvage)** | todo | File is explicit about being aspirational ("Coverage Target: 95%+ from 21-73%") and admits drift in code comments (`# NOTE: FallbackPolicy may not exist or have different API - Gap 3.2`). Salvage pass: walk the 8 invariants in the docstring; for each, check current production + check whether tested elsewhere. Write a small targeted file for any unique surviving invariants. |
-| 5 | `tests/unit/scaffolding/test_scaffolding_cli.py` (28/42 fail) | **R3 RETIRE (with salvage)** | todo | Re-classify after reading `src/attune/scaffolding/cli.py`. Heavy `sys.modules` mocking (`sys.modules["test_generator"] = MagicMock()`) is the smell — mocks have lost their target. If `cli.py` is small enough to test cleanly without sys.modules surgery, downgrade to R2 RECONCILE and rewrite. |
-| 6 | `tests/unit/orchestration/test_composition_patterns.py` (14/35 fail) | **R2 RECONCILE** | todo | First task: disambiguate (a) test-debt-only vs (b) production-regression. Method: `git log --oneline --since=2026-01-24 -- src/attune/orchestration/` and same for the test file. The "XFAIL TEST REMEDIATION - COMPLETED (2026-01-24)" header is the diagnostic. |
+| 3 | `tests/unit/workflows/test_orchestrated_release_prep.py` (5/35 fail) | **R3 RETIRE** (reclassified from R1) | **done** | Commit `f88afb08`. Reclassified after reading production: module is deprecated since v5.2.0 ("Remove in v6.0"); replacement `ReleasePrepTeamWorkflow` already has parallel coverage. File deleted, no salvage. See decisions.md. |
+| 4 | `tests/unit/models/test_execution_and_fallback_architecture.py` (41/52 fail) | **R3 RETIRE — no salvage** | **done** | Commit `90d33dce`. All 8 invariant categories already covered elsewhere (registry, executor, fallback, circuit breaker, cost tracking, routing, telemetry). File deleted. |
+| 5 | `tests/unit/scaffolding/test_scaffolding_cli.py` (28/42 fail) | **R3 RETIRE — no salvage** | **done** | Commit `b343fcbd`. Production CLI is deprecated (emits notice on every invocation); already excluded from coverage. Mock-driven tests had lost their targets. File deleted. |
+| 6 | `tests/unit/orchestration/test_composition_patterns.py` (14/35 fail) | **R2 RECONCILE** (confirmed) | **done** | Commit `fd80a8d0`. Single-fixture fix in `tests/unit/orchestration/conftest.py`: patch `ExecutionStrategy._execute_agent` at the class level so nested ParallelStrategy in DebateStrategy inherits the mock. All 35 tests now pass; no test method touched. |
 
 ### Phase 3C — pytest.ini cleanup
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 7 | After each per-file commit (#3–#6) lands, remove the corresponding `--ignore=tests/unit/...` line from `pytest.ini`. | pytest.ini | todo | Done as part of each per-file commit, not a separate commit. |
-| 8 | After all four files are resolved, update the explanatory comment block in `pytest.ini` (currently lines 29–39) to remove the audit findings and replace with a one-line note: "Only `--ignore=tests/integration/` remains — integration tests live behind their own runner. See `docs/specs/ignored-tests/`." | pytest.ini / docs | todo | Keep the comment short — it's history, not active context. |
+| 7 | After each per-file commit (#3–#6) lands, remove the corresponding `--ignore=tests/unit/...` line from `pytest.ini`. | pytest.ini | **done** | Folded into each per-file commit. |
+| 8 | After all four files are resolved, update the explanatory comment block in `pytest.ini` (currently lines 29–39) to remove the audit findings and replace with a one-line note: "Only `--ignore=tests/integration/` remains — integration tests live behind their own runner. See `docs/specs/ignored-tests/`." | pytest.ini / docs | **done** | Comment block in `pytest.ini` now points at this spec. |
 
 ### Phase 3D — Validation
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 9 | After each per-file commit, run `pytest tests/unit/ -n auto` and confirm: (a) the resolved file's tests now pass (or are deleted), (b) total green count is ≥ the baseline from #2, (c) zero new failures elsewhere. | manual | todo | Required before pushing each commit. Catches xdist interference (Risk 4). |
-| 10 | Final-state check: `grep -E "^\s*--ignore=tests/unit" pytest.ini` returns nothing. | manual | todo | Trivial but the canonical "are we done?" command. |
-| 11 | Final-state check: `git grep -n "import .*orchestrated_release_prep\|import .*composition_patterns\|import .*execution_and_fallback_architecture\|import .*scaffolding/cli" tests/` returns no broken imports from sibling test files. | manual | todo | If we deleted a test file that another file imported helpers from, this catches it. |
-| 12 | Update `docs/specs/test-infrastructure/tasks.md` task #10: change status from **deferred** → **done**, link to this spec's decisions.md. | docs | todo | Closes the loop with the parent spec. |
-| 13 | CI parity check: confirm CI runs are still green after the merged commits land on `main`. | CI | todo | Test debt resolution shouldn't affect CI behavior, but the sweep itself is the kind of thing that surfaces hidden coupling. |
+| 9 | After each per-file commit, run `pytest tests/unit/ -n auto` and confirm: (a) the resolved file's tests now pass (or are deleted), (b) total green count is ≥ the baseline from #2, (c) zero new failures elsewhere. | manual | **done** | Recorded inline in each commit; final count 14,110 passed. |
+| 10 | Final-state check: `grep -E "^\s*--ignore=tests/unit" pytest.ini` returns nothing. | manual | **done** | Verified 2026-05-12 — no matches. |
+| 11 | Final-state check: `git grep -n "import .*orchestrated_release_prep\|import .*composition_patterns\|import .*execution_and_fallback_architecture\|import .*scaffolding/cli" tests/` returns no broken imports from sibling test files. | manual | **done** | Verified 2026-05-12 — no matches. |
+| 12 | Update `docs/specs/test-infrastructure/tasks.md` task #10: change status from **deferred** → **done**, link to this spec's decisions.md. | docs | **done** | Commit `e872eae9`. Parent spec marked complete. |
+| 13 | CI parity check: confirm CI runs are still green after the merged commits land on `main`. | CI | **done** | All commits merged; main is clean and green as of `bb0d8aec` (2026-05-12). |
 
 ### Failure-to-deliver path
 

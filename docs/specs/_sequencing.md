@@ -68,24 +68,6 @@ These specs feed each other; run in order.
   - [ ] Phase 3D — enforcement script + CI gate
 - Spec: [coverage-exclusion-policy](coverage-exclusion-policy/)
 
-### ignored-tests
-
-- Status: approved — 13 tasks, 0% done
-- Why here: Parent (`test-infrastructure`) is complete. Each
-  of the 4 quarantined files (88 failing tests) is
-  independently shippable, so ship them in any order once
-  Track A's coverage work is stable.
-- Tasks
-  - [ ] File 1 — triage repair/reconcile/retire
-  - [ ] File 2 — triage repair/reconcile/retire
-  - [ ] File 3 — triage repair/reconcile/retire
-  - [ ] File 4 — triage repair/reconcile/retire
-  - [ ] Update pytest.ini per-file outcomes
-  - [ ] Update decisions.md with rationale
-- Spec: [ignored-tests](ignored-tests/)
-
----
-
 ### windows-xdist-honor
 
 - Status: draft — 4-phase plan, 0% done
@@ -197,3 +179,7 @@ Windows CI is the natural next step alongside Phase 2.
 - [docs/specs/telemetry](telemetry/) — complete
 - [docs/specs/test-infrastructure](test-infrastructure/) —
   core work complete 2026-05-09 (follow-up: `ignored-tests`)
+- [docs/specs/ignored-tests](ignored-tests/) — complete
+  2026-05-09; 3 files retired, 1 reconciled (single-fixture
+  fix), pytest.ini clean, +35 tests recovered. Docs closed
+  2026-05-12.
