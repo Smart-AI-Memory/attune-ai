@@ -1,6 +1,6 @@
 # Tasks: Coverage Exclusion Policy
 
-**Status**: approved — Phase 3A done; Phase 3B verified complete (2026-05-12, no code change required); Phase 3C remaining
+**Status**: complete (2026-05-12)
 
 ---
 
@@ -12,7 +12,7 @@
 |---|------|-------|--------|-------|
 | 1 | Add inline policy comment to `pyproject.toml` `[tool.coverage.run]` block. | pyproject.toml | done | This commit. |
 | 2 | Audit all current `omit` entries for documentation. | docs | done | 64 total: 4 meta-excludes (no comment needed), 57 documented, **3 production-code entries undocumented** (see decisions.md). |
-| 3 | Write `scripts/check_coverage_omits.py` enforcement script. | scripts | todo | Phase 3B. |
+| 3 | Write `scripts/check_coverage_omits.py` enforcement script. | scripts | **done** | Shipped in Phase 3C (task #7). |
 
 ### Phase 3B — Resolve the 3 undocumented entries
 
@@ -28,17 +28,17 @@ Each is its own commit. Investigate before documenting.
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 7 | Add `scripts/check_coverage_omits.py` (per design.md Artifact 3). | scripts | todo | After Phase 3B so the script doesn't immediately fail on existing entries. |
-| 8 | Add pre-commit hook entry in `.pre-commit-config.yaml`. | .pre-commit-config.yaml | todo | D3 decision. Lightweight; recommended now. |
-| 9 | Verify the enforcement script catches a deliberately-undocumented entry. | manual | todo | Add a test omit entry without comment, run the script, confirm it fires. Remove the test entry. |
+| 7 | Add `scripts/check_coverage_omits.py` (per design.md Artifact 3). | scripts | **done** | Line-based scanner; allowlists 4 meta-excludes; reports each offender with line number. Exit 0/1/2. Also normalized the 3 PR-#212 entries to inline comments to match the dominant convention (57 other entries use inline; design.md mandates inline). |
+| 8 | Add pre-commit hook entry in `.pre-commit-config.yaml`. | .pre-commit-config.yaml | **done** | Local hook `check-coverage-omits`, runs on changes to `pyproject.toml` only. |
+| 9 | Verify the enforcement script catches a deliberately-undocumented entry. | manual | **done** | Stripped the inline comment from `*/attune/config.py` temporarily; script reported "pyproject.toml:711: */attune/config.py" and exited 1. Comment restored; script exits 0. |
 
 ### Phase 3D — Spec close
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 10 | All 3 undocumented entries from Phase 3B resolved (documented or removed). | manual | todo | |
-| 11 | `python scripts/check_coverage_omits.py` exits 0 on a clean tree. | manual | todo | |
-| 12 | Mark spec status `complete` in all 4 .md files. | docs | todo | |
+| 10 | All 3 undocumented entries from Phase 3B resolved (documented or removed). | manual | **done** | 100% compliance (60/60 production-code entries). |
+| 11 | `python scripts/check_coverage_omits.py` exits 0 on a clean tree. | manual | **done** | Verified 2026-05-12. |
+| 12 | Mark spec status `complete` in all 4 .md files. | docs | **done** | This commit. |
 
 ### Failure-to-deliver path
 

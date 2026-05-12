@@ -1,6 +1,6 @@
 # Design: Coverage Exclusion Policy
 
-**Status**: approved
+**Status**: complete (2026-05-12)
 
 ---
 

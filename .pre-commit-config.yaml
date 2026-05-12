@@ -138,3 +138,15 @@ repos:
           ^plugin/skills/.*/SKILL\.md$|
           ^src/attune/mcp/tool_schemas\.py$
         stages: [pre-commit]
+
+      # Coverage exclusion policy enforcement
+      # Every production-code entry in pyproject.toml's
+      # [tool.coverage.run] omit block must have an inline `#` comment.
+      # See docs/specs/coverage-exclusion-policy/.
+      - id: check-coverage-omits
+        name: Check coverage omit entries are documented
+        entry: python scripts/check_coverage_omits.py
+        language: system
+        pass_filenames: false
+        files: ^pyproject\.toml$
+        stages: [pre-commit]

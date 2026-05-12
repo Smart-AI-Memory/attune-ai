@@ -96,3 +96,59 @@ sidestep the shadowing via `importlib.import_module("attune.config")`
 plus a `__file__` lookup, or via `pkgutil.iter_modules` discovery.
 None found in a quick sweep, but worth confirming under a real
 retirement spec.
+
+---
+
+## Phase 3C resolution (2026-05-12)
+
+### Outcome
+
+Shipped `scripts/check_coverage_omits.py` plus a pre-commit hook
+entry. Spec status flipped to `complete` in all four .md files.
+
+### What the script enforces
+
+- Locates the `[tool.coverage.run] omit = [...]` block in
+  `pyproject.toml` via line scan (resilient to comments and
+  whitespace between the section header and the `omit =` line).
+- For each quoted pattern inside the block, requires an inline
+  `#` comment on the same line *unless* the pattern is one of
+  the four meta-excludes: `*/tests/*`, `*/test_*.py`,
+  `*/__pycache__/*`, `*/site-packages/*`.
+- Exits 0 (clean), 1 (offenders listed to stderr with file:line
+  references), or 2 (block not locatable).
+
+### Side-effect of writing the enforcement: convention normalization
+
+PR #212 added the three previously-undocumented entries with their
+reasons on the *preceding* line rather than inline. That's a valid
+form of documentation but doesn't match the dominant convention
+in the file (57 of 60 production-code entries used inline) or the
+mandate in `design.md` ("inline `#` comment"). To make the
+enforcement script crisp, the three entries were normalized to
+inline form in this commit. No semantic change; identical reason
+text, just rearranged onto the same line as the pattern.
+
+### Pre-commit hook integration (D3)
+
+Added a local hook `check-coverage-omits` to
+`.pre-commit-config.yaml`. Scoped to changes in `pyproject.toml`
+only (no overhead on unrelated commits). Stage: `pre-commit` (runs
+on every commit by default, matching the surrounding hooks'
+behavior). Verified by running
+`uv run --with pre-commit pre-commit run check-coverage-omits
+--files pyproject.toml` — passes on the clean tree.
+
+### Task #9 verification
+
+Stripped the inline comment from `*/attune/config.py` as a
+deliberate violation. Script output:
+```
+Undocumented coverage-omit entries (each must have an inline
+`# reason` comment):
+  pyproject.toml:711: */attune/config.py
+
+See docs/specs/coverage-exclusion-policy/requirements.md for the
+reason-category taxonomy.
+```
+Exit 1 as expected. Comment restored; clean tree exits 0.
