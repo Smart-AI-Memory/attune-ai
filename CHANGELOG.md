@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.7.1] - 2026-05-12
+
+### Security — users running `attune ops` should upgrade
+
+This release fixes a DNS-rebinding vulnerability in the local ops
+dashboard. Any website a user visited could invoke ops dashboard
+endpoints (including endpoints that trigger workflow execution) on
+the local machine by binding a controlled hostname to `127.0.0.1`
+and issuing requests against the loopback origin. The flaw has
+existed since the ops runner first shipped — it was not introduced
+by recent work — and was found while hardening the ops runner.
+
+- **DNS-rebinding fix** (#254). Validates the `Host` header on
+  every ops dashboard request and rejects anything that isn't a
+  recognized loopback address (`127.0.0.1`, `localhost`, `[::1]`).
+- **Cluster mode hardening** (#254). Additional defense-in-depth
+  for multi-worker setups; see the
+  [ops-security-hardening spec](docs/specs/ops-security-hardening/)
+  for the full design.
+
+#### Upgrade path
+
+```
+pip install --upgrade 'attune-ai'
+```
+
+If you previously pinned `attune-ai==6.7.0`, bump to `6.7.1`.
+No config changes required — the fix is on by default.
+
+### Also in this release
+
+These changes shipped between v6.7.0 and v6.7.1 and are included
+here so the patch isn't a security-only bundle:
+
+- Tier 1 rich rendering for workflow output (#247).
+- Full-page run view — workflow output now survives refresh (#251).
+- Specs tab in the ops dashboard (#236, #239, #240).
+- UX cleanup: humanized 409 responses, redundant tabs removed
+  (#228, #231).
+- `attune ops` now runs with run-enabled mode by default;
+  `--read-only` opts out (#227).
+
 ## [6.7.0] - 2026-05-11
 
 ### CI stabilization release — main fixes for a healthier test matrix
