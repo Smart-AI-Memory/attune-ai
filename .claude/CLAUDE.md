@@ -3227,3 +3227,60 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   network-probe helpers) and verify they match
   current main, OR re-rebase before merge to pick
   up any post-rebase upstream fixes.
+
+- **MCP-invoked SDK workflows ALREADY isolate their
+  intermediate AssistantMessage stream from the
+  calling agent — don't draft specs to "fix" what's
+  already fixed**: when a plugin skill invokes an
+  MCP tool (e.g. `mcp__attune-ai__security_audit
+  (...)`), the workflow's `claude_agent_sdk.query()`
+  runs in its own SDK session. The orchestrator's
+  intermediate `AssistantMessage` text and subagent
+  transcripts STAY in that session and are
+  discarded when the tool returns. Only
+  `WorkflowResult.final_output` crosses into the
+  calling agent's context. Measured 2026-05-12 on
+  `src/attune/security/` (2 files, 134 LOC):
+  security-audit emitted 6,821 B of intermediate
+  orchestrator text + 19.66 KB of subagent
+  transcripts inside its SDK session, but only
+  3,710 B reached the main agent; refactor-plan:
+  4,914 B inside, 486 B out. The Agent Surface
+  Rebalance spec (`docs/specs/agent-surface-
+  rebalance/`) was drafted on the assumption that
+  the intermediate bytes reach the parent — they
+  don't, and the spec is paused for that reason.
+  Pair lesson: the `quick`-depth `$2`
+  `max_budget_usd` default in
+  `agent_sdk_adapter._DEFAULT_BUDGET_USD` is
+  functionally unusable for ANY multi-subagent
+  workflow on ANY target, because 4 subagents ×
+  even-modest-cost > $2 before the orchestrator
+  finishes spawning them. Surfaces as
+  `Exception: Claude Code returned an error
+  result: Reached maximum budget ($2)` from inside
+  `query.receive_messages()`. For real measurement
+  or production use of security-audit / code-review
+  / similar, set `ATTUNE_MAX_BUDGET_USD=0` or use
+  `standard` ($10) depth.
+
+- **A spec's measurable premise should be probed in
+  Phase 0 BEFORE implementation, even when the
+  probe costs real API budget**: the Agent Surface
+  Rebalance spec proposed converting analytical
+  skills to subagent-delegated to protect main-
+  agent context. Phase 0 measured $8.78 of real API
+  usage against `src/attune/security/` and revealed
+  the premise was wrong (MCP already isolates — see
+  prior lesson). $8.78 to invalidate the spec was
+  strictly cheaper than implementing a conversion
+  that would have saved zero bytes. General rule:
+  when a spec's value rests on a claim like "X
+  costs Y bytes/dollars/seconds," write an
+  instrument-and-measure Phase 0 task as the first
+  deliverable. Don't skip it because measurement
+  looks expensive — the implementation it might
+  avoid is more expensive. Keep the measurement
+  harness in-tree afterward (`scripts/phase0/
+  measure.py` lives on); it's reusable for any
+  future SDK-byte-cost question.

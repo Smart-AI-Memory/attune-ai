@@ -1,0 +1,24 @@
+{
+  "workflow": "refactor-plan",
+  "path": "src/attune/security",
+  "depth": "standard",
+  "elapsed_seconds": 120.29707779083401,
+  "success": true,
+  "stats": {
+    "assistant_calls": 1,
+    "assistant_bytes": 4914,
+    "result_calls": 1,
+    "result_bytes": 4914,
+    "messages_total": 128,
+    "tool_use_messages": 40,
+    "other_messages": 87
+  },
+  "cost_usd": 3.74903955,
+  "num_turns": 4,
+  "session_id": "80bc7519-a507-4412-8232-d1decabe7c1a",
+  "duration_api_ms": 194766,
+  "subagent_transcripts_kb": 0,
+  "final_output_bytes": 486,
+  "summary_bytes": 486,
+  "intermediate_to_summary_ratio": 10.11111111111111
+}
