@@ -18,45 +18,56 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
-## 2026-05-12 — sixth module under test-quality-program (Opus 4.7)
+## 2026-05-12 — seventh module under test-quality-program (Opus 4.7)
 
-Sixth module run. Third SDK-native workflow through the
-program. Selected via the rubric working set after
-`bug_predict.py` shipped: `workflows/perf_audit.py`,
-score 2.606. **0 production bugs surfaced.**
+Seventh module run. Fourth (and final) Agent SDK-native
+workflow through the program — direct sibling of
+`dependency_check.py` (PR #265), `bug_predict.py` (PR #266),
+and `perf_audit.py` (PR #273). Pattern transfer test: the
+test file was scaffolded by copying
+`test_dependency_check_execute.py` and renaming
+`DependencyCheck`/`inventory-assessor`/`update-advisor` →
+`RefactorPlan`/`debt-scanner`/`impact-analyzer`/`plan-generator`,
+adjusting the system prompt substring assertion, and bumping the
+subagent count from 2 to 3. Everything else (fixture shape,
+real-SDK-message construction, depth-mapping, exception
+handling, `_error_result` shape) carried over unchanged.
+**0 production bugs surfaced.**
 
-- `workflows/perf_audit.py` (`PerformanceAuditWorkflow`)
-  — no bugs. Structurally identical to `bug_predict.py`
-  and `dependency_check.py`: thin async shell around
-  `claude_agent_sdk.query()`, depth → max_turns mapping,
-  three subagents (`complexity-analyzer`,
-  `bottleneck-finder`, `optimization-advisor`), specific
-  exception paths producing structured `_error_result`.
-  One unique element: an inline `main()` CLI entry point
-  (line 259) — covered with two additional tests
-  exercising the success path (printed
-  "Performance Audit Results" header) and the error path
-  (raised exception → printed "Error:" line).
+- `workflows/refactor_plan.py` (`RefactorPlanWorkflow`) — no
+  bugs. The module is a ~260-line thin async shell around
+  `claude_agent_sdk.query()`: validates `path`, maps depth →
+  max_turns, defines three `AgentDefinition` subagents
+  (`debt-scanner`, `impact-analyzer`, `plan-generator`),
+  collects `AssistantMessage` + `ResultMessage` stream output
+  via `agent_sdk_adapter.collect_agent_output`, hands the
+  result to `AgentSDKResultAdapter.from_agent_output`. Same
+  four-branch exception conversion as `dependency_check`
+  (`ImportError` / `ConnectionError` / `TimeoutError` /
+  generic, with `# noqa: BLE001` on the catch-all). No dead
+  code, no crash paths.
 
-**Coverage delta:** 34.8% → 96% line+branch. The
-remaining 4% is the `if __name__ == "__main__"` guard
-at line 281 plus one branch on line 274 (`elif output:`
-when both `result.error` and `output` are falsy — a
-combination that doesn't arise via either success or
-failure path).
+**Coverage delta:** 44.44% → 100.00% (line + branch).
 
-**Tests:** 23 added under
-`tests/unit/workflows/test_perf_audit_execute.py`. Same
-real-SDK-dataclass fixtures as prior SDK-native cycles
-(per CLAUDE.md isinstance-collector lesson).
+**Tests:** 21 added under
+`tests/unit/workflows/test_refactor_plan_execute.py`. Same
+fixture/mocking shape as PRs #265, #266, #273: only
+`claude_agent_sdk.query` is patched, with real SDK dataclass
+instances (`AssistantMessage`, `ResultMessage`, `TextBlock`)
+yielded by the fake generator so isinstance-based collectors
+fire correctly. Determinism verified back-to-back and under
+the full `tests/unit/workflows/` selection.
 
-**Reuse signal continues:** three consecutive cycles
-from the same test scaffold with single-pass renames
-(`_run_agent_check` → `_run_agent_predict` →
-`_run_agent_audit`). The shape and tests have stabilized
-enough that scripting a `scaffold_sdk_workflow_tests.py`
-generator is now a reasonable next step. Still not
-committed; flagged in decisions.md.
+**Scaffold completion:** with `refactor_plan.py` shipped, all
+four SDK-native sibling workflows
+(`dependency_check`/`bug_predict`/`perf_audit`/`refactor_plan`)
+have reached 96-100% coverage from the same one-page test
+template. Four consecutive cycles with verbatim transfer makes
+the case for codifying the scaffold as
+`scripts/scaffold_sdk_workflow_tests.py` (flagged in
+decisions.md by the perf_audit cycle). Zero production bugs
+across all four — the pattern reliably finds nothing because
+the modules are pure plumbing.
 
 ---
 

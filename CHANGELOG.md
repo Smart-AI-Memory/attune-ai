@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: seventh module through the playbook —
+  `workflows/refactor_plan.py` (Agent SDK-native orchestrator).
+  Coverage 44.44% → 100% line+branch. 21 deterministic tests
+  added under `tests/unit/workflows/test_refactor_plan_execute.py`
+  exercising the `execute()` validation/exception paths and the
+  `_run_agent_plan()` async SDK loop with three subagents
+  (`debt-scanner`, `impact-analyzer`, `plan-generator`).
+  Scaffolded directly from PR #265's
+  `test_dependency_check_execute.py` shell — same SDK-native
+  pattern. Real `claude_agent_sdk.AssistantMessage` /
+  `ResultMessage` / `TextBlock` instances yielded by the patched
+  `query()` so the `isinstance` checks in
+  `agent_sdk_adapter.collect_agent_output` actually fire. Zero
+  production bugs surfaced; fourth and final SDK-native sibling
+  through the program (after PRs #265, #266, #273 covered
+  `dependency_check`, `bug_predict`, `perf_audit`). Four
+  consecutive cycles with verbatim scaffold transfer make the
+  case for codifying the template as
+  `scripts/scaffold_sdk_workflow_tests.py` (flagged in
+  decisions.md by the perf_audit cycle).
 - Test-quality-program: sixth module through the playbook —
   `workflows/perf_audit.py` (Agent SDK-native orchestrator).
   Coverage 34.8% → 96% line+branch. 23 deterministic tests
