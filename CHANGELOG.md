@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: third module through the playbook —
+  `ops/cli.py` (`attune ops` user-typed entry point).
+  Coverage 36.2% → 100% line+branch. 19 deterministic tests
+  added under `tests/unit/ops/test_cli.py` covering argparse
+  schema, uvicorn dependency handling (`ImportError` → exit
+  code 2), happy-path config construction, `--read-only` flag,
+  `0.0.0.0` bind warning behavior, browser launch / suppression
+  / best-effort failure swallow, `main()` standalone entry.
+  Zero production bugs surfaced.
 - Test-quality-program: second module through the playbook —
   `memory/short_term/conflicts.py` (`ConflictNegotiation`).
   Coverage 25.4% → 100% line+branch. 44 deterministic tests
