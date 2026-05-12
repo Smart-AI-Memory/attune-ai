@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: tenth module through the playbook —
+  `workflows/document_gen/workflow.py` (`DocumentGenerationWorkflow`).
+  Coverage 46.4% → 100% line+branch. 24 deterministic tests
+  added under `tests/unit/workflows/document_gen/test_workflow_execute.py`.
+  Same SDK-native scaffold as the five prior shells, plus three
+  extra tests for `default_context()` — a classmethod unique to
+  this workflow that wires up `PromptService` + `ParsingService`
+  into a `WorkflowContext`. Subagents covered: `outline-planner`,
+  `content-writer`, `polish-reviewer`. Zero production bugs
+  surfaced. Sixth SDK-native shell through the program.
 - Test-quality-program: ninth module through the playbook —
   `workflows/doc_audit/workflow.py` (`DocAuditWorkflow`).
   Coverage 43.1% → 100% line+branch. 21 deterministic tests
