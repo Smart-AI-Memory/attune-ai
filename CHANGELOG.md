@@ -9,6 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: fifth module through the playbook —
+  `workflows/bug_predict.py` (Agent SDK-native orchestrator).
+  Coverage 47.3% → 97% line+branch. 21 deterministic tests
+  added under `tests/unit/workflows/test_bug_predict_execute.py`
+  matching the scaffold established by
+  `test_dependency_check_execute.py`. Same isinstance-safe
+  real-SDK-dataclass fixtures. Zero production bugs surfaced —
+  the module is a thin async shell around `query()` with three
+  subagents (`pattern-scanner`, `risk-correlator`,
+  `prevention-advisor`). Pattern transfers verbatim from
+  `dependency_check.py`; reusable for the two remaining
+  sibling workflows (`perf_audit`, `refactor_plan`).
 - Test-quality-program: fourth module through the playbook —
   `workflows/dependency_check.py` (Agent SDK-native orchestrator).
   Coverage 41.67% → 100% line+branch. 21 deterministic tests
