@@ -234,7 +234,7 @@ class RedisAutoDetector:
         print("  persistent session memory in Attune AI.")
         print()
         print("  Install now?")
-        print("    pip install 'attune-ai[memory]'")
+        print("    pip install 'attune-ai[redis]'")
         print()
 
         try:
@@ -246,7 +246,7 @@ class RedisAutoDetector:
         if response in ("d", "dont", "don't"):
             self._save_preference("install_declined", True)
             print("  Won't ask again. Enable later with:")
-            print("    pip install 'attune-ai[memory]'")
+            print("    pip install 'attune-ai[redis]'")
             print("=" * 60)
             print()
             return False
@@ -268,7 +268,7 @@ class RedisAutoDetector:
                     "pip",
                     "install",
                     "--quiet",
-                    "attune-ai[memory]",
+                    "attune-ai[redis]",
                 ],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -284,7 +284,7 @@ class RedisAutoDetector:
             return self._prompt_server_install()
         except subprocess.CalledProcessError as e:
             print(f"  ✗ Installation failed: {e}")
-            print("  Install manually: pip install 'attune-ai[memory]'")
+            print("  Install manually: pip install 'attune-ai[redis]'")
             print("=" * 60)
             print()
             logger.error(f"Failed to install redis package: {e}")

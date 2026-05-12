@@ -286,7 +286,7 @@ We're exploring additional Redis capabilities:
 pip install attune-ai
 
 # Start memory server (auto-starts Redis)
-pip install 'attune-ai[memory]'
+pip install 'attune-ai[redis]'
 
 # Check status
 attune memory status

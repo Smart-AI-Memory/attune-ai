@@ -51,7 +51,7 @@ class TestTelemetryFeatures:
                 assert info.status == FeatureStatus.MISSING_DEPENDENCY
                 assert "Redis package not installed" in info.message
                 assert info.install_command is not None
-                assert "attune-ai[memory]" in info.install_command
+                assert "attune-ai[redis]" in info.install_command
 
     def test_get_feature_status_redis_features_available(self):
         """Test Redis-dependent features when Redis is available."""

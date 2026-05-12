@@ -93,7 +93,7 @@ class TelemetryFeatures:
                     name=redis_features[feature],
                     status=FeatureStatus.MISSING_DEPENDENCY,
                     message="Redis package not installed",
-                    install_command="pip install 'attune-ai[memory]'",
+                    install_command="pip install 'attune-ai[redis]'",
                 )
 
             return FeatureInfo(
@@ -135,7 +135,7 @@ class TelemetryFeatures:
         if not TelemetryFeatures.is_redis_available():
             raise ImportError(
                 f"{feature_name} requires Redis.\n"
-                f"Install: pip install 'attune-ai[memory]'\n"
+                f"Install: pip install 'attune-ai[redis]'\n"
                 f"See: https://redis.io/docs/install/",
             )
 

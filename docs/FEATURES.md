@@ -38,10 +38,10 @@ These features work without any additional dependencies beyond the base install 
 
 ## Optional Features (Require Redis)
 
-These features require Redis server and the `memory` extra:
+These features require Redis server and the `redis` extra:
 
 ```bash
-pip install 'attune-ai[memory]'
+pip install 'attune-ai[redis]'
 ```
 
 ### Memory - Redis-Enhanced
@@ -88,12 +88,12 @@ Feature                        Status          Details
 ✅ Long-term memory (file-based) Available       Core feature (always available)
 ✅ File session storage         Available       Core feature (always available)
 ⚠️ Short-term memory (Redis-based) Missing Dependency Redis package not installed
-                                Install: pip install 'attune-ai[memory]'
+                                Install: pip install 'attune-ai[redis]'
 ...
 
 💡 To enable Redis-enhanced features:
    1. Install Redis package:
-      pip install 'attune-ai[memory]'
+      pip install 'attune-ai[redis]'
 
    2. Install and start Redis server:
       • macOS: brew install redis && brew services start redis
@@ -212,7 +212,7 @@ pip install attune-ai
 
 ```bash
 # Option 1: Install with Redis support
-pip install 'attune-ai[memory]'
+pip install 'attune-ai[redis]'
 
 # Option 2: Install everything
 pip install 'attune-ai[all]'
@@ -236,7 +236,7 @@ pip install 'attune-ai[all]'
 
 | Extra | Features | Install Command |
 |-------|----------|-----------------|
-| `memory` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[memory]'` |
+| `redis` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[redis]'` |
 | `socratic` | Socratic workflow discovery | `pip install 'attune-ai[socratic]'` |
 | `crewai` | CrewAI integration (legacy) | `pip install 'attune-ai[crewai]'` |
 | `llm` | Anthropic LLM provider | `pip install 'attune-ai[llm]'` |
@@ -353,7 +353,7 @@ docker run -d --name attune-redis -p 6379:6379 redis:alpine
 **Solution:**
 
 ```bash
-pip install 'attune-ai[memory]'
+pip install 'attune-ai[redis]'
 ```
 
 ### "Redis server not running"
@@ -388,7 +388,7 @@ docker start attune-redis
 pip list | grep redis
 
 # If not installed, reinstall
-pip install --force-reinstall 'attune-ai[memory]'
+pip install --force-reinstall 'attune-ai[redis]'
 ```
 
 ### Connection errors
@@ -502,7 +502,7 @@ try:
 except ImportError as e:
     print(e)  # "Short-term memory requires Redis.\n
               #  Status: Redis package not installed\n
-              #  Install: pip install 'attune-ai[memory]'"
+              #  Install: pip install 'attune-ai[redis]'"
 ```
 
 **Recommended pattern:**

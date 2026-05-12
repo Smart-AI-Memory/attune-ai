@@ -20,6 +20,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   classes, pin `attune-ai<6.8.0` or copy them from the v6.7.x
   source tree.
 
+### Changed (Breaking)
+
+- `[memory]` install extra removed (now an empty no-op alias for backward
+  compatibility with `pip install 'attune-ai[memory]'`). It was redundant
+  with `[redis]` — both pulled `redis-py`. Users wanting Redis-backed
+  memory should install `'attune-ai[redis]'` (canonical opt-in for the
+  bundled `attune_redis` plugin). P2 deliverable of
+  `docs/specs/redis-decoupling/`.
+- `[developer]` extra no longer pulls `redis-py`. Users wanting the
+  bundled Redis plugin alongside the developer toolchain should install
+  `'attune-ai[developer,redis]'` explicitly.
+- User-facing install messages (in `memory/redis_auto_detect.py`,
+  `memory/features.py`, `telemetry/features.py`,
+  `cli_commands/utility_commands.py`) updated from `[memory]` to
+  `[redis]` to reflect the canonical name.
+
 ### Internal
 
 - Test-quality-program: thirteenth module through the playbook —

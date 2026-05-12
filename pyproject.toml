@@ -75,7 +75,8 @@ dependencies = [
     "attune-rag>=0.1.5,<0.2",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
-    # NOTE: redis moved to [memory] optional - not needed for CLI/skill usage
+    # NOTE: redis is opt-in via the [redis] extra (bundled attune_redis
+    # plugin). Vanilla `pip install attune-ai` is Redis-free.
 ]
 # NOTE: CrewAI dependency removed in v3.1.3 (deprecated since v4.4.0)
 # The "Crew" workflows use EmpathyLLMExecutor (Anthropic SDK) directly.
@@ -99,10 +100,15 @@ author = [
     "attune-author>=0.6.2,<0.12",
 ]
 
-# Memory subsystem (requires Redis server 8.4+ recommended)
-memory = [
-    "redis>=5.0.0,<8.0.0",  # redis-py 5.x-7.x for Redis server 8.4 support
-]
+# `[memory]` extra removed in v6.8.0 (P2 of redis-decoupling spec).
+# It was redundant with `[redis]` — both pulled `redis-py`. Empty no-op
+# kept for backward compat with `pip install 'attune-ai[memory]'`; users
+# who actually want Redis should use `[redis]` (canonical opt-in for the
+# bundled attune_redis plugin).
+memory = []
+
+# Redis Agent Memory Server runtime deps for the bundled `attune_redis`
+# plugin. Opt-in only — vanilla `pip install attune-ai` is Redis-free.
 redis = [
     "agent-memory-client>=0.14.0",
     "redis>=5.0.0,<8.0.0",
@@ -260,8 +266,9 @@ developer = [
     # Software development plugins
     "python-docx>=0.8.11,<2.0.0",
     "pyyaml>=6.0,<7.0",
-    # Memory subsystem (Redis server 8.4+ recommended)
-    "redis>=5.0.0,<8.0.0",
+    # NOTE: redis dropped from [developer] in v6.8.0 (P2 of redis-decoupling).
+    # Users who want the bundled attune_redis plugin should install
+    # 'attune-ai[developer,redis]' explicitly.
 ]
 
 # Teams/enterprises - backend + authentication + compliance (excludes healthcare)

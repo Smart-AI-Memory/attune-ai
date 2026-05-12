@@ -577,7 +577,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "pip install" in captured.out
-        assert "attune-ai[memory]" in captured.out
+        assert "attune-ai[redis]" in captured.out
 
     def test_features_redis_available_and_running(self, capsys: pytest.CaptureFixture) -> None:
         """Test cmd_features shows all-good when Redis is available and running."""
@@ -655,7 +655,7 @@ class TestCmdFeatures:
                 name="Short-term memory",
                 status=MemFeatureStatus.MISSING_DEPENDENCY,
                 message="Redis package not installed",
-                install_command="pip install 'attune-ai[memory]'",
+                install_command="pip install 'attune-ai[redis]'",
             ),
         }
 
@@ -688,7 +688,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "Install:" in captured.out
-        assert "attune-ai[memory]" in captured.out
+        assert "attune-ai[redis]" in captured.out
 
     def test_features_shows_header(self, capsys: pytest.CaptureFixture) -> None:
         """Test cmd_features shows the FEATURE AVAILABILITY header."""
@@ -756,7 +756,7 @@ class TestCmdFeatures:
         else:
             short_term_status = MemFeatureStatus.MISSING_DEPENDENCY
             short_term_msg = "Redis package not installed"
-            short_term_install = "pip install 'attune-ai[memory]'"
+            short_term_install = "pip install 'attune-ai[redis]'"
 
         return {
             "short_term": FeatureInfo(
@@ -796,6 +796,6 @@ class TestCmdFeatures:
                     if redis_available
                     else "Redis package not installed"
                 ),
-                install_command=None if redis_available else "pip install 'attune-ai[memory]'",
+                install_command=None if redis_available else "pip install 'attune-ai[redis]'",
             ),
         }
