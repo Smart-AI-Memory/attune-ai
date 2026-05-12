@@ -88,11 +88,11 @@ Banner component reads from `website/lib/migration-banner.ts`:
 export const MIGRATION_BANNER = {
   showFromVersion: "7.0.0",
   hideFromVersion: "7.1.0",  // exclusive — banner gone in 7.1
-  fallbackHideDate: "2026-07-01",  // safety net if version comparison fails
+  fallbackHideDate: "2026-06-15",  // safety net if version comparison fails
 };
 ```
 
-Build-time check fails if today's date is past `fallbackHideDate` AND the banner is still showing.
+Build-time check fails if today's date is past `fallbackHideDate` AND the banner is still showing. The date is intentionally tight (~5 weeks from spec-open) so any slip in the v7.0 → v7.1 cycle forces an explicit decision (extend the date or retire the banner) rather than letting it linger silently.
 
 ### C-5 — Changelog persona
 
