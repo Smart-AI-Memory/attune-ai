@@ -72,7 +72,13 @@ network probe contention, not a Unix-only API. See `decisions.md`
       emits `⚠️` (U+26A0); Windows default cp1252 decoding is the most
       likely culprit. Matches the existing CLAUDE.md lesson on Windows
       encoding for `Path.read_text`. Verification on Windows CI pending.
-- [ ] **3.2** Add a guard test that asserts `result.stdout is not None` after `_run_hook()` returns, regardless of platform. Fast fail if the wrapper breaks again.
+- [x] **3.2** Guard tests added in `TestRunHookWrapperGuards`:
+      `test_run_hook_stdout_is_always_string` asserts stdout/stderr
+      are both `str` (never None) regardless of platform.
+      `test_run_hook_captures_non_ascii_output` invokes the
+      compact-warning path that emits `⚠️` and asserts the non-ASCII
+      bytes round-trip through the wrapper. Fast fail if the
+      encoding regression is reintroduced.
 
 ## Phase 4 — Unblock PR #242
 

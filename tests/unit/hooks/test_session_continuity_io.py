@@ -225,3 +225,52 @@ class TestCompactWarning:
         assert result.returncode == 0
         # Default 0.70 is well above the tiny transcript's util → silent.
         assert result.stdout == ""
+
+
+# ── _run_hook wrapper guards ──────────────────────────────────
+
+
+class TestRunHookWrapperGuards:
+    # Phase 3.2 of docs/specs/windows-memory-detection: regression guard
+    # for the subprocess wrapper. Previously `text=True` (no explicit
+    # encoding) yielded `stdout=None` on Windows when the hook emitted
+    # non-ASCII bytes (⚠️), surfacing as a confusing `NoneType is not
+    # iterable` deep inside an unrelated assertion. These guards fail
+    # fast and clearly if the wrapper ever stops capturing stdout/stderr
+    # as strings.
+
+    def test_run_hook_stdout_is_always_string(self, tmp_path: Path) -> None:
+        # Even when the hook produces no output, stdout must be a str
+        # (possibly empty), never None — that's the property tests rely on.
+        result = _run_hook(
+            _SPEC_ORIENT,
+            {"source": "startup", "cwd": str(tmp_path)},
+            workspace_roots=tmp_path,
+        )
+        assert isinstance(result.stdout, str)
+        assert isinstance(result.stderr, str)
+
+    def test_run_hook_captures_non_ascii_output(self, tmp_path: Path) -> None:
+        # The compact-warning hook emits ⚠️ (U+26A0) when firing.
+        # Verify the wrapper round-trips non-ASCII without dropping
+        # bytes or producing None. This is the exact failure mode
+        # that hit Windows CI prior to the encoding fix.
+        transcript = tmp_path / "transcript.jsonl"
+        transcript.write_text(json.dumps({"role": "user", "content": "x" * 4000}) + "\n")
+        sentinel_dir = tmp_path / "sentinels"
+        sentinel_dir.mkdir()
+        result = _run_hook(
+            _COMPACT_WARNING,
+            {
+                "session_id": "guard-test",
+                "transcript_path": str(transcript),
+                "cwd": str(tmp_path),
+            },
+            env_overrides={
+                "ATTUNE_AI_SENTINEL_DIR": str(sentinel_dir),
+                "ATTUNE_AI_CONTEXT_WINDOW_TOKENS": "1000",
+                "ATTUNE_AI_COMPACT_WARNING_THRESHOLD": "0.50",
+            },
+        )
+        assert isinstance(result.stdout, str)
+        assert "⚠" in result.stdout or "context at" in result.stdout
