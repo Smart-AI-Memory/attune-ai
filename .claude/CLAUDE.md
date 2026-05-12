@@ -2697,48 +2697,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   skip, treat as infrastructure flake, not code
   regression.
 
-- **`import X` inside a `try` block + `except
-  X.SomeError` in the except clause crashes with
-  `UnboundLocalError` when the import fails**:
-  hit in `.clusterfuzzlite/fuzz_config_parsing.py`
-  where the fuzz target did
+- **`import X` inside a `try` block + `except X.SomeError`
+  crashes with `UnboundLocalError` when the import fails**:
+  Python evaluates the except expression only when an
+  exception is raised, so if the import itself raises
+  `ImportError`, the except clause runs with the imported
+  name never bound. Hit in fuzz targets built with
+  `pip install --no-deps` where an optional dep was missing;
+  libFuzzer reports "fuzz target exited" rather than the
+  underlying `UnboundLocalError`. Fix: hoist the import to
+  module scope behind an availability guard and bind the
+  exception class to a name that's always defined:
   ```python
   try:
       import yaml
-      yaml.safe_load(raw)
-  except (yaml.YAMLError, ValueError, TypeError):
-      pass
-  ```
-  Python evaluates the except expression only
-  when an exception is raised — so if
-  `import yaml` raises `ImportError`, the except
-  clause is evaluated with `yaml` never bound,
-  producing
-  `UnboundLocalError: cannot access local
-  variable 'yaml'` and crashing libFuzzer with
-  "fuzz target exited". This matters any time an
-  optional dep could be missing at runtime (fuzz
-  containers built with `pip install --no-deps`,
-  minimal CI environments, etc.). Fix pattern:
-  move the import to module scope behind an
-  availability guard and bind the exception class
-  to a name that is always defined:
-  ```python
-  try:
-      import yaml
-      _YAML_AVAILABLE = True
       _YAML_ERROR: type[Exception] = yaml.YAMLError
   except ImportError:
-      _YAML_AVAILABLE = False
-      _YAML_ERROR = ValueError  # placeholder
+      _YAML_ERROR = ValueError  # placeholder, never raised
   ```
-  Then the hot path checks `_YAML_AVAILABLE`
-  before calling `yaml.safe_load`, and the except
-  references `_YAML_ERROR` which is bound in
-  both branches. Scope: fuzz targets,
-  optional-dep SDK adapters, any code where the
-  exception type comes from a potentially-missing
-  package.
+  Hot paths check `_YAML_AVAILABLE` before calling the
+  optional code; except clauses reference `_YAML_ERROR`,
+  which is bound in both branches. Scope: fuzz targets,
+  optional-dep SDK adapters, any code where the exception
+  type comes from a potentially-missing package.
 
 - **Clusterfuzz Dockerfile copies `.` to
   `$SRC/<repo>` but also copies individual files
@@ -2762,112 +2743,60 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   first `COPY .`. Option (b) is less maintenance
   when adding more companion files over time.
 
-- **GitHub Copilot Autofix pushes commits
-  directly to PR branches when CodeQL finds
-  fixable issues — expect a rebase mid-session**:
-  during PR #169 remediation, a commit
-  `65321257 Potential fix for pull request
-  finding 'Empty except'` appeared on
-  `origin/feat/help-system-maintenance-2026-04-19`
-  with no action from me. Author was my own
-  account but co-authored-by "Copilot Autofix
-  powered by AI
-  <...@github-code-quality[bot]...>". The change
-  was a one-line explanatory comment on an empty
-  `except: pass` block — cosmetic, not logic. My
-  next `git push` rejected with "non-fast-forward";
-  fixed by `git pull --rebase` then
-  `git commit --amend -S --no-edit` (rebase
-  replays commits unsigned, per the existing
-  lesson) then re-push. Behaviors to expect:
-  (a) these commits land silently whenever
-  CodeQL emits a fixable finding the autofix
-  engine has a template for; (b) they're
-  usually comment additions or trivial guards,
-  not logic changes; (c) they can land between
-  your local push and any subsequent work, so
-  always `git fetch` + inspect before assuming
-  a push failure is a race with a human
-  collaborator. Autofix commits are safe to
-  keep — review the diff, confirm it's
-  cosmetic, rebase on top.
+- **GitHub Copilot Autofix pushes commits directly to PR
+  branches when CodeQL finds fixable issues — expect a
+  rebase mid-session**: Commits like `Potential fix for
+  pull request finding 'Empty except'` appear on the PR
+  branch with no local action; author shows as your account
+  but co-authored-by `Copilot Autofix powered by AI
+  <...@github-code-quality[bot]...>`. Usually cosmetic
+  (comment additions, trivial guards), not logic changes.
+  Your next `git push` rejects with non-fast-forward; fix
+  with `git pull --rebase` then `git commit --amend -S
+  --no-edit` (rebase replays commits unsigned, see the
+  signing lesson). Always `git fetch` and inspect before
+  assuming a push failure is a race with a human
+  collaborator — Autofix lands silently. The commits are
+  safe to keep; review the diff, confirm cosmetic, rebase
+  on top.
 
-- **Direct pushes to main are blocked by the
-  presence of `required_pull_request_reviews`, not
-  by its review count — dropping count to 0 or
-  DELETING the sub-resource doesn't free up direct
-  push**: tried to admin-push a release commit
-  directly to main with
-  `gh api -X PATCH ... -F required_approving_review_count=0`
-  first, then
-  `gh api -X DELETE
-  repos/.../branches/main/protection/required_pull_request_reviews`.
-  Both were accepted by the API, and both still
-  produced
-  ```
-  GH006: Protected branch update failed for refs/heads/main.
-  - Changes must be made through a pull request.
-  - Required status check "Analyze (python)" is expected.
-  ```
-  on push. The "must go through PR" rule appears
-  to be a derived property of having ANY
-  combination of `required_linear_history: true`,
-  `required_status_checks`, or `enforce_admins:
-  true` — not of `required_pull_request_reviews`
-  alone. For a release bump, always open a PR,
-  even for a trivial version-file-only change;
-  admin-merge it with the temp-remove-reviews
-  dance. Faster than fighting branch protection.
+- **"Must go through PR" is a derived property of branch
+  protection, not a single flag**: Dropping
+  `required_approving_review_count` to 0 (or DELETING the
+  whole `required_pull_request_reviews` sub-resource) does
+  NOT free up direct push to main. The "Changes must be
+  made through a pull request" rule appears to be derived
+  from having ANY combination of `required_linear_history:
+  true`, `required_status_checks`, or `enforce_admins:
+  true` — not just from review requirements. Direct pushes
+  return `GH006: Protected branch update failed [...]
+  Changes must be made through a pull request. Required
+  status check "X" is expected.` even with reviews fully
+  disabled. For a release bump, always open a PR — even
+  for a trivial version-file-only change — and admin-merge
+  with the temp-remove-reviews dance. Faster than fighting
+  the API.
 
-- **Two CodeQL setups can coexist in one repo and
-  deadlock merges silently**: `attune-ai` had
-  BOTH `.github/workflows/codeql.yml` (custom,
-  with `pull_request:` trigger) AND GitHub's
-  default CodeQL setup (`"schedule":"weekly"`, no
-  PR trigger). The custom workflow was disabled
-  manually at some point (probably when default
-  setup was enabled), leaving only the weekly
-  cron. Required merge gate was
-  `Analyze (python)` — which ONLY the custom
-  workflow produces on PRs. Result: PR #173 sat
-  with 24 passing checks + `Analyze (python)`
-  silently absent from the rollup, and
-  admin-merge couldn't bypass because the gate
-  was declared "expected" but missing.
-  Diagnosis commands:
-  `gh api repos/X/code-scanning/default-setup
-  --jq .schedule` (weekly/quarterly/etc.) +
-  `gh api repos/X/actions/workflows --jq
-  '.workflows[] | select(.path | contains("codeql"))'`
-  shows both and their `state`. Attempted fix that
-  DID NOT work: `gh workflow enable codeql.yml` +
-  `gh workflow run codeql.yml --ref <branch>` —
-  the re-enabled custom workflow DOES run, but
-  its SARIF upload step fails with
-  `##[error]Code Scanning could not process the
-  submitted SARIF file: CodeQL analyses from
-  advanced configurations cannot be processed
-  when the default setup is enabled`. The two
-  setups conflict at the code-scanning API layer:
-  default setup "owns" SARIF uploads for the
-  repo, and any competing analysis gets rejected.
-  Real fix is structural: pick ONE CodeQL setup
-  and stick with it. Either (a) drop the custom
-  workflow and remove the required-check rule
-  (default setup is simpler, weekly scans, no
-  merge gate); or (b) disable default setup via
-  `gh api repos/X/code-scanning/default-setup
-  -X PATCH -f state=not-configured` and keep the
-  custom workflow with its PR-level gate.
-  **Resolution in attune-ai (post-v6.3.0):**
-  option (a) — `.github/workflows/codeql.yml`
-  deleted, `Analyze (python)` removed from
-  required_status_checks, default setup remains
-  the sole code-scanning path. The on-demand
-  advice above is retained for OTHER repos that
-  haven't yet reconciled the conflict, since the
-  diagnostic sequence (SARIF error message,
-  surprised-empty rollup) is the same everywhere.
+- **Two CodeQL setups can coexist in one repo and deadlock
+  merges silently — pick ONE**: A custom
+  `.github/workflows/codeql.yml` and GitHub's default CodeQL
+  setup can both exist. They conflict at the code-scanning
+  API layer (default setup "owns" SARIF uploads; competing
+  analyses get rejected with `CodeQL analyses from advanced
+  configurations cannot be processed when the default setup
+  is enabled`). If the required merge gate (e.g.
+  `Analyze (python)`) is produced only by the custom workflow
+  but the custom workflow is disabled, the check sits
+  silently absent from the rollup forever and even
+  admin-merge fails. Diagnose with `gh api
+  repos/X/code-scanning/default-setup --jq .schedule` plus
+  `gh api repos/X/actions/workflows --jq '.workflows[] |
+  select(.path | contains("codeql"))'`. Fix structurally:
+  either (a) drop the custom workflow and the required-check
+  rule (default setup is simpler) or (b) disable default
+  setup via `gh api repos/X/code-scanning/default-setup
+  -X PATCH -f state=not-configured` and keep the custom
+  workflow's PR-level gate. attune-ai chose (a) post-v6.3.0.
 
 - **`mkdocs build` crashing with
   `AttributeError: 'NoneType' object has no
