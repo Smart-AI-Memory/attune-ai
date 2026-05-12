@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: fifth module through the playbook —
+  `workflows/refactor_plan.py` (`RefactorPlanWorkflow`,
+  Agent SDK-native orchestrator). Coverage 44.44% → 100%
+  line+branch. 23 deterministic tests added under
+  `tests/unit/workflows/test_refactor_plan_execute.py`
+  exercising the `execute()` validation/exception paths,
+  depth → `max_turns` mapping, and the `_run_agent_plan()`
+  async SDK loop wiring three subagents (`debt-scanner`,
+  `impact-analyzer`, `plan-generator`). Real
+  `claude_agent_sdk.AssistantMessage` / `ResultMessage` /
+  `TextBlock` instances per the established pattern; only
+  `claude_agent_sdk.query` is mocked. Two tests cover the
+  workflow's `__init__` default that opts in to
+  post-simplification (`_enable_post_simplification = True`).
+  Zero production bugs surfaced — validates the cycle-four
+  prediction that the SDK-native test shape transfers
+  cleanly across `bug_predict` / `perf_audit` /
+  `refactor_plan` with rename-only changes.
 - Test-quality-program: fourth module through the playbook —
   `workflows/dependency_check.py` (Agent SDK-native orchestrator).
   Coverage 41.67% → 100% line+branch. 21 deterministic tests
