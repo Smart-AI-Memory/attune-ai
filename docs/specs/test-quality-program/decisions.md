@@ -224,3 +224,47 @@ a clear win. Still not committed; the cost of writing
 the generator (~30 min) is higher than the marginal
 savings until there are at least three more
 candidates queued.
+
+## workflows/document_gen/workflow.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.143 (weight=4 × gap=0.536 × risk=1.0)
+**Picked because:** Top entry with measured `covered_pct`
+after `doc_audit/workflow.py` shipped. Sixth SDK-native
+shell — the test scaffold continues to transfer
+verbatim with subagent + method-name renames. Also
+the threshold case for the generator-script decision
+flagged in the doc_audit cycle.
+**Outcome:** 1 test file added (`test_workflow_execute.py`,
+24 tests including 3 for `default_context()`). Empty
+`__init__.py` added to mirror the `doc_audit/` test
+sub-package layout. Coverage 46.4% → 100% line+branch.
+Zero production bugs surfaced. Six SDK-native shells
+now through the program.
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — tenth module under test-quality-program"
+
+Same body shape as the five prior SDK-native cycles
+with one twist: `DocumentGenerationWorkflow` exposes
+a `default_context()` classmethod that wires up
+`PromptService` and `ParsingService` into a
+`WorkflowContext` for composition use. Three extra
+tests cover it: (a) returns a `WorkflowContext`
+instance with both services set, (b) `xml_config`
+kwarg is forwarded without raising, (c) `xml_config`
+defaults to `None`. Did not introspect the services'
+internal state — that's the consumers' contract, not
+this workflow's.
+
+**Generator-script decision (deferred):** Six
+consecutive SDK-shell cycles makes the case for
+codifying the scaffold quite strong. But the next
+likely rubric pick (`memory/control_panel.py`,
+weight=3, score 2.073, 53.9% covered) is a memory
+subsystem, not an SDK shell. Writing the generator
+now would optimize for a pattern that's about to
+recede from the working set. Re-evaluate if a rubric
+refresh surfaces two more SDK shells. Until then, the
+~5-min-per-cycle cost of hand-transferring stays
+cheaper than the ~30-min generator investment.

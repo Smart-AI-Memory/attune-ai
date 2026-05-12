@@ -18,6 +18,47 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — tenth module under test-quality-program (Opus 4.7)
+
+Tenth module run. Sixth Agent SDK-native workflow
+through the program — `document_gen/workflow.py`.
+Same shell pattern as the five prior SDK cycles
+(`dependency_check`, `bug_predict`, `perf_audit`,
+`refactor_plan`, `doc_audit`). One small divergence:
+this workflow exposes a `default_context()` classmethod
+for `WorkflowContext` composition (wires up
+`PromptService` + `ParsingService`); three extra tests
+cover it. **0 production bugs surfaced.**
+
+- `workflows/document_gen/workflow.py`
+  (`DocumentGenerationWorkflow`) — no bugs. Thin async
+  shell around `claude_agent_sdk.query()` with three
+  subagents (`outline-planner`, `content-writer`,
+  `polish-reviewer`). The `default_context()`
+  classmethod is a real composition surface but adds
+  no behavior beyond constructing the two services
+  with the given `xml_config` kwarg.
+
+**Coverage delta:** 46.4% → 100% line+branch.
+
+**Tests:** 24 added under
+`tests/unit/workflows/document_gen/test_workflow_execute.py`
+(21 SDK-shell + 3 `default_context()`). Also added
+empty `__init__.py` for the new test sub-package to
+match the existing `doc_audit/` layout.
+
+**Generator-script ROI threshold crossed (informational):**
+Six consecutive cycles from the same scaffold. The
+generator script case is now stronger but I'm deferring
+because the next likely module on the rubric
+(`memory/control_panel.py`, weight 3, score 2.073)
+isn't an SDK shell — it's a memory subsystem. Writing
+the generator now would optimize for a pattern that's
+about to recede from the working set. Re-evaluate if
+two more SDK shells surface in a future rubric refresh.
+
+---
+
 ## 2026-05-12 — ninth module under test-quality-program (Opus 4.7)
 
 Ninth module run. Fifth Agent SDK-native workflow
