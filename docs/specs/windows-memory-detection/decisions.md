@@ -1,8 +1,9 @@
 # Decisions — Windows Memory-Feature Detection
 
-**Status:** approved
+**Status:** complete (2026-05-12)
 **Owner:** Patrick
 **Opened:** 2026-05-11
+**Closed:** 2026-05-12 (PR #242 merged `5e364653`)
 **Predecessor:** `docs/specs/probe-c-memory-investigation/` (Phase 4 deferred — see PR #242)
 
 ---
@@ -242,3 +243,35 @@ item 3: all 12 platform lanes green under `-n auto`).
 Restoring `-n auto` after a branch lag surfaces tests landed on
 main under `-n 1` that aren't xdist-safe. Generalization captured
 in CLAUDE.md.
+
+---
+
+## 2026-05-12 (final) — Spec closed
+
+PR #242 merged at `5e364653`. CI re-ran the full 12-lane matrix
+with the `test_conflicts.py` fix and all 12 lanes passed.
+
+**Resolution criteria — all satisfied:**
+
+1. ✅ Each of the 4 original failures has a root-cause line item
+   in this file (Phase 2 + 3.1 entries above).
+2. ✅ Fixes landed for all 4 — no skipif fallbacks needed.
+3. ✅ PR #242 rebased on the new main and **all 12 platform lanes
+   passed** under `-n auto`.
+4. ✅ Matrix wall time well under 10 min on the post-fix run.
+
+**PRs merged today (2026-05-12) closing this spec:**
+
+| PR | Title | Merge commit |
+|----|-------|--------------|
+| #260 | fix(ci): resolve 4 Windows-only test failures | `46492dc0` |
+| #261 | docs(lessons): three CI-debugging lessons | `9a82cbbc` |
+| #242 | ci(tests): restore `-n auto` — probe-c Phase 4 | `5e364653` |
+
+The `-n auto` win is now realized: ~3× faster CI matrix on Windows,
+~100+ compute-minutes saved per matrix run. All four Windows tests
+green, plus the late-surfacing `test_conflicts.py` capsys regression
+caught and fixed during PR #242's CI verification.
+
+Spec status: **complete**. Predecessor
+`probe-c-memory-investigation` Phase 4 also closes.
