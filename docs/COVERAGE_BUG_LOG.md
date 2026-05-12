@@ -18,6 +18,56 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — memory/short_term/conflicts.py (Opus 4.7)
+
+Second module through the test-quality-program playbook.
+Selected as top non-`workflows/` row in `rubric_cache.csv`
+(score 3.355, data-handling 1.5× risk, no WIP overlap, no
+dedicated test file existed). **1 Class 4 bug surfaced** —
+comment-only, behavior unchanged.
+
+- `memory/short_term/conflicts.py` — **class 4 (load-bearing
+  comment nobody re-validated)** — `resolve_conflict` had a
+  comment "Keep resolved conflicts longer for audit" above the
+  re-stash call, but the TTL passed (`TTLStrategy.CONFLICT_CONTEXT
+  = 7d`) is the same as the one used for active contexts in
+  `create_conflict_context`. No "longer" anywhere. The comment
+  would mislead an operator reasoning about audit retention into
+  thinking Redis TTL was load-bearing for that. Fix: rewrote the
+  comment to state the actual behavior (same TTL) and note that
+  long-term audit lives in the stream (`STREAM_ENTRY`), not in
+  conflict key longevity. Runtime behavior unchanged.
+
+**Coverage delta:**
+
+| Module | Before | After |
+|---|---|---|
+| `memory/short_term/conflicts.py` | 25.4% | 100.00% (55/55 stmts, 22/22 branches) |
+
+**Tests:** 29 total across 7 test classes (init, create-validation,
+create-persistence, get, resolve, list-active, end-to-end).
+Real `BaseOperations(use_mock=True)` for storage — exercises
+the actual JSON serialization, key-prefix layout, and TTL
+plumbing end-to-end. Determinism verified across 3 back-to-back
+serial runs and under `-n auto` alongside the full unit memory
+subtree (1396 passed, 47 skipped, 3 xfailed, no cross-test
+interference).
+
+**Test observations worth keeping:**
+
+- `list_active_conflicts` accepts a `credentials` arg but never
+  reads it. Documented as expected ("any tier can read") in the
+  docstring; locked in by a test that calls with `observer`.
+- `resolve_conflict` checks permissions before checking conflict
+  existence. Observer on a non-existent conflict → PermissionError,
+  not False. Locked in by `test_permission_check_runs_before_existence_check`.
+- `list_active_conflicts` silently skips empty-string values at
+  conflict-prefixed keys (`if raw:` check). Test
+  `test_skips_keys_with_falsy_raw` documents the resilience but
+  doesn't change behavior.
+
+---
+
 ## 2026-05-12 — first PoC under test-quality-program spec (Opus 4.7)
 
 First module pair taken through the formalized playbook

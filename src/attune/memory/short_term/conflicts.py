@@ -234,7 +234,9 @@ class ConflictNegotiation:
         context.resolution = resolution
 
         key = f"{self.PREFIX_CONFLICT}{conflict_id}"
-        # Keep resolved conflicts longer for audit
+        # Resolved conflicts re-stash with the same TTL as active
+        # (TTLStrategy.CONFLICT_CONTEXT = 7d). Long-term audit is
+        # delegated to the audit stream, not Redis key longevity.
         self._base._set(key, json.dumps(context.to_dict()), TTLStrategy.CONFLICT_CONTEXT.value)
 
         logger.info(

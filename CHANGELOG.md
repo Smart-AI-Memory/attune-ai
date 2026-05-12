@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Tests
+
+- **memory/short_term/conflicts.py**: meaningful coverage —
+  29 tests covering `ConflictNegotiation` (init, create, get,
+  resolve, list_active). 25.4% → 100% line + branch coverage
+  via real `BaseOperations(use_mock=True)` (no mocking of the
+  storage layer). Part of the test-quality-program (see
+  [docs/specs/test-quality-program/](docs/specs/test-quality-program/)).
+
+### Fixed
+
+- **memory/short_term/conflicts.py**: load-bearing comment in
+  `resolve_conflict` claimed resolved conflicts get a longer
+  TTL for audit; in reality active and resolved share
+  `TTLStrategy.CONFLICT_CONTEXT` (7d). Updated the comment to
+  match runtime behavior and note that long-term audit lives
+  in the stream, not Redis key TTL. Behavior unchanged.
+
 ## [6.7.1] - 2026-05-12
 
 ### Security — users running `attune ops` should upgrade
