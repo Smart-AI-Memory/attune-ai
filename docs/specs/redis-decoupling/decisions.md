@@ -1,7 +1,27 @@
 # Per-decision log — Redis decoupling
 
+**Status:** GATED (2026-05-12 grooming pass)
+
 Append-only log. Pre-flight findings (Phase 3A tasks #1–#2) below.
 Per-phase execution decisions appended as commits land.
+
+---
+
+## Gate decision (2026-05-12)
+
+This spec is approved (Phase 3A done) but deliberately gated.
+**Don't implement until:** the memory backend abstraction shows
+real friction in production use — e.g., a user reports they want
+to swap Redis for another KV store, or a feature gets blocked by
+the current Redis coupling. Today, the coupling isn't blocking
+anything that's been asked for.
+
+If the trigger fires, pick this spec up from where Phase 3A left
+off; the analysis is still load-bearing.
+
+If the trigger never fires within ~6 months (by 2026-11-12),
+revisit whether the spec itself is still relevant or should move
+to archive.
 
 ---
 

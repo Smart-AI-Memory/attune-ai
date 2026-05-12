@@ -1,6 +1,7 @@
 # Decisions — Ops Dashboard Security Hardening
 
-**Status:** draft
+**Status:** complete (2026-05-12) — implemented in PR #254 (squash-merge `a5c50bd1`)
+**Archived:** 2026-05-12
 **Owner:** Patrick
 **Opened:** 2026-05-11
 **Trigger:** Code-review report on PR #251 (2026-05-11) flagged the ops dashboard's command-execution endpoints as vulnerable to DNS-rebinding attacks. Verified real. Not introduced by #251 — pre-existing since the ops runner shipped.
