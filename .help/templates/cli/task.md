@@ -1,57 +1,59 @@
 ---
-type: task
 feature: cli
 depth: task
-generated_at: 2026-05-04T02:34:05.644870+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-05-12T20:01:25.945974+00:00
+source_hash: 9b280c902cb899cdf4292fc1221ba1b77cb6c199e12090acd143692bd7817bd6
 status: generated
 ---
 
 # Work with cli
 
-Use the attune CLI when you need to access cost tracking, documentation help, or memory management from the command line.
+Use cli when you need to command-line interface and routing.
 
 ## Prerequisites
 
 - Access to the project source code
-- Basic familiarity with Python command-line argument parsing
-- Understanding of the attune project structure
+- Familiarity with the files under src/attune/cli_minimal.py
 
 ## Steps
 
-1. **Identify the command category you need to modify.**
-   The CLI is organized into three main areas:
-   - Cost commands (`src/attune/cli_commands/cost_commands.py`) for tracking usage costs
-   - Help commands (`src/attune/cli_commands/help_commands.py`) for browsing documentation
-   - Memory commands (`src/attune/cli_commands/memory_commands.py`) for managing lessons and cross-session memory
+1. **Understand the current behavior.**
+   Read the entry points to see what cli
+   does today before making changes.
+   The primary functions are:
+   - `get_version()` in `src/attune/cli_minimal.py` — Get package version.
+   - `create_parser()` in `src/attune/cli_minimal.py` — Create the argument parser.
+   - `main()` in `src/attune/cli_minimal.py` — Main entry point.
+   - `route_user_input()` in `src/attune/cli_router.py` — Quick routing helper.
+   - `is_slash_command()` in `src/attune/cli_router.py` — Check if text is a slash command.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Locate the specific command function.**
-   Each CLI command maps to a single function with a `cmd_` prefix:
-   - `cmd_costs()` — Show cost report for recent period
-   - `cmd_costs_today()` — Show today's cost summary
-   - `cmd_costs_export()` — Export cost data to file
-   - `cmd_costs_reset()` — Clear all cost tracking data
-   - `cmd_help()` — Handle the `attune help` command
-   - `cmd_remember()` — Add a lesson to the lessons file
-   - `cmd_forget()` — Remove a lesson by line number or keyword
-   - `cmd_lessons()` — List current lessons with line numbers
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-3. **Review the function signature and existing logic.**
-   Each command function takes an `argparse.Namespace` object and returns an integer exit code. Read the function's docstring and examine how it processes arguments and handles errors.
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "cli"`.
 
-4. **Implement your changes.**
-   Follow the established patterns in each file:
-   - Use the same argument validation approach
-   - Return `0` for success, non-zero for errors
-   - Handle exceptions gracefully with appropriate error messages
+## Key files
 
-5. **Test your command.**
-   Run the modified command directly: `python -m attune <your-command>` to verify it works as expected.
+- `src/attune/cli_minimal.py`
+- `src/attune/cli_router.py`
+- `src/attune/cli_commands/**`
 
-## Verify success
+## Common modifications
 
-Your CLI modification works correctly when:
-- The command executes without Python errors
-- The exit code is `0` for successful operations
-- Error messages are clear and actionable
-- The command behaves consistently with other attune CLI commands
+Functions you are most likely to modify:
+
+- `get_version()` in `src/attune/cli_minimal.py`
+- `create_parser()` in `src/attune/cli_minimal.py`
+- `main()` in `src/attune/cli_minimal.py`
+- `route_user_input()` in `src/attune/cli_router.py`
+- `is_slash_command()` in `src/attune/cli_router.py`
+- `cmd_costs()` in `src/attune/cli_commands/cost_commands.py`
+- `cmd_costs_today()` in `src/attune/cli_commands/cost_commands.py`
+- `cmd_costs_export()` in `src/attune/cli_commands/cost_commands.py`
