@@ -215,6 +215,14 @@ dev = [
     "httpx>=0.27.0,<1.0.0",  # For API testing
     "fastapi>=0.109.1,<1.0.0",  # For wizard API tests
     "requests>=2.28.0,<3.0.0",  # For notification tests
+    # YAML frontmatter parsing — used by attune.help.engine which
+    # backs the `attune help` CLI command. Only a transitive dep of
+    # attune-help/attune-author (which sit in the [author] extra),
+    # so without this line, tests/unit/cli_commands/test_help_commands.py
+    # silently pytest.importorskip's all 16 tests in CI environments
+    # that don't install [author]. Bug surfaced by test-quality-program
+    # cycle on src/attune/cli_commands/help_commands.py.
+    "python-frontmatter>=1.0.0,<2.0.0",
     # RAG integration test coverage — attune-rag is an
     # optional runtime dep but required for the rag_code_gen
     # and rag_knowledge_query test paths to exercise their
