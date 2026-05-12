@@ -78,15 +78,6 @@ if TYPE_CHECKING:
     # Type hints for IDE support (not evaluated at runtime)
     from .agent_monitoring import AgentMetrics, AgentMonitor, TeamMetrics
     from .config import AttuneConfig, EmpathyConfig, load_config
-    from .coordination import (
-        AgentCoordinator,
-        AgentTask,
-        ConflictResolver,
-        ResolutionResult,
-        ResolutionStrategy,
-        TeamPriorities,
-        TeamSession,
-    )
     from .core import EmpathyOS
     from .emergence import EmergenceDetector
     from .exceptions import (
@@ -161,14 +152,7 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "AttuneConfig": (".config", "AttuneConfig"),
     "EmpathyConfig": (".config", "EmpathyConfig"),
     "load_config": (".config", "load_config"),
-    # coordination
-    "AgentCoordinator": (".coordination", "AgentCoordinator"),
-    "AgentTask": (".coordination", "AgentTask"),
-    "ConflictResolver": (".coordination", "ConflictResolver"),
-    "ResolutionResult": (".coordination", "ResolutionResult"),
-    "ResolutionStrategy": (".coordination", "ResolutionStrategy"),
-    "TeamPriorities": (".coordination", "TeamPriorities"),
-    "TeamSession": (".coordination", "TeamSession"),
+    # coordination — removed in v6.8.0 (see src/attune/coordination.py shim)
     # core
     "EmpathyOS": (".core", "EmpathyOS"),
     # emergence
@@ -273,12 +257,10 @@ def __getattr__(name: str) -> object:
 
 __all__ = [
     "AccessTier",
-    "AgentCoordinator",
     "AgentCredentials",
     "AgentMetrics",
     # Monitoring (Multi-Agent)
     "AgentMonitor",
-    "AgentTask",
     "AuditEvent",
     # Security - Audit
     "AuditLogger",
@@ -290,8 +272,6 @@ __all__ = [
     "CollaborationStateError",
     "ConfidenceThresholdError",
     "ConflictContext",
-    # Coordination (Multi-Agent)
-    "ConflictResolver",
     "EmergenceDetector",
     # Configuration
     "AttuneConfig",
@@ -330,8 +310,6 @@ __all__ = [
     "PatternPersistence",
     # Redis Short-Term Memory
     "RedisShortTermMemory",
-    "ResolutionResult",
-    "ResolutionStrategy",
     "SecretDetection",
     "SecretType",
     # Security - Secrets
@@ -346,8 +324,6 @@ __all__ = [
     "StateManager",
     "TTLStrategy",
     "TeamMetrics",
-    "TeamPriorities",
-    "TeamSession",
     # Trust
     "TrustBuildingBehaviors",
     "TrustThresholdError",

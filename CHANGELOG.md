@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Removed (Breaking)
+
+- `attune.coordination` package — `AgentCoordinator`, `AgentTask`,
+  `ConflictResolver`, `ResolutionResult`, `ResolutionStrategy`,
+  `TeamPriorities`, `TeamSession`. These Redis-backed multi-agent
+  coordination primitives had no internal callers in attune-ai
+  itself and were blocking Redis-free installs. A deprecation shim
+  at `attune.coordination` raises `ImportError` with a clear
+  message on any attribute access. P1 deliverable of
+  `docs/specs/redis-decoupling/`. If you depended on these
+  classes, pin `attune-ai<6.8.0` or copy them from the v6.7.x
+  source tree.
+
 ### Internal
 
 - Test-quality-program: seventh module through the playbook —
