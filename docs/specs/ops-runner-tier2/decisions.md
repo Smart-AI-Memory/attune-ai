@@ -91,6 +91,29 @@ Some workflows take `--path` (`code-review`, `bug-predict`, `simplify-code`, `pe
 
 Investigation task: enumerate which workflows support `--path` and which don't. Disable the picker on the latter; surface a tooltip explaining the workflow runs project-wide by design.
 
+**Status (2026-05-12): CONFIRMED AND REFINED.** Phase 1 audit
+(see [audit.md](audit.md)) ran the enumeration and found the
+reality is **three-way**, not binary:
+
+- **Category A — 12 workflows** consume `kwargs.get("path", "")` directly. `--path` works as-is.
+- **Category B — 2 workflows** (`release-prep`, `secure-release`) accept `path: str = "."` as a signature kwarg. `--path` works as-is.
+- **Category C — 5 workflows** use a different kwarg name: `project_root` (health-check, orchestrated-health-check, doc-orchestrator), `src_path` (test-audit, required), `cwd` (rag-code-gen). The CLI's `path=...` kwarg lands in `**kwargs` but isn't consumed.
+
+The spec's H2 framing was partially wrong — `dependency-check`
+DOES take `--path` (Category A); `release-prep` DOES (Category B);
+only `health-check` matched the H2 prose.
+
+**Reframing for Phase 2:** Rather than a binary `supports_path[w] =
+False` with a "scope-na" UX (spec's original Phase 2.3 plan), the
+audit recommends a three-way `PATH_ARG_REGISTRY` that maps each
+Category C workflow to its actual kwarg name. The ops runner reads
+the registry and rewrites the kwarg before subprocess spawn. All 19
+workflows get the picker; users never see the inconsistency.
+
+Phase 1.3 deferred to a separate PR so reviewer can sign off on the
+shape (three-way registry vs spec's literal binary dict) before
+production code lands.
+
 ### H3 — Persistence belongs in the runner service, not a separate "Runs" tab
 
 The current `RunnerService` keeps runs in memory (last 20). Persistence means writing run metadata + truncated log to disk under `~/.attune/ops/runs/<id>.json`. The "Runs" tab idea from earlier conversation gets folded into per-workflow row history (chips next to the Run button) — simpler navigation, no extra page.
