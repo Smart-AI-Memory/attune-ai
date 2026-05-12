@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Internal
+
+- Test-quality-program: second module through the playbook —
+  `memory/short_term/conflicts.py` (`ConflictNegotiation`).
+  Coverage 25.4% → 100% line+branch. 44 deterministic tests
+  added under `tests/unit/memory/short_term/test_conflicts.py`
+  using the established `BaseOperations(use_mock=True)` host
+  pattern. Zero production bugs surfaced; module's input
+  validation, permission gating, and storage round-tripping
+  are all well-defended. Per
+  `docs/specs/test-quality-program/`.
+
 ## [6.7.1] - 2026-05-12
 
 ### Security — users running `attune ops` should upgrade

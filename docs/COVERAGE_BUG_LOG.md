@@ -18,6 +18,42 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — second module under test-quality-program (Opus 4.7)
+
+Second module run after the PoC. Selected via the rubric working
+set after the first pair shipped (score 3.35, third row at the
+time). **0 production bugs surfaced.**
+
+- `memory/short_term/conflicts.py` (`ConflictNegotiation`) —
+  no bugs. Every public method validates inputs (empty
+  conflict_id → `ValueError`, non-dict positions/interests →
+  `TypeError`), gates permissions (CONTRIBUTOR for create,
+  VALIDATOR for resolve, any tier for read), and round-trips
+  cleanly through `ConflictContext.to_dict/from_dict` with
+  documented TTLs. The 41 previously-uncovered lines were
+  legitimate uncovered behavior, not hidden defects.
+
+**Coverage delta:** 25.4% → 100.00% (line + branch).
+
+**Tests:** 44 added under
+`tests/unit/memory/short_term/test_conflicts.py`. Real
+`BaseOperations(use_mock=True)` host (the established
+short_term test pattern in `test_short_term.py`) composed
+with `ConflictNegotiation`. No mocks of storage — the
+mock-mode BaseOperations is a real in-memory store, faithful
+to production semantics. Determinism verified across 3
+back-to-back runs and under `-n auto` alongside the full
+memory test subtree (1411 passed, no cross-test interference).
+
+**Test-reliability note (class 5 nudge, not a bug):** structlog
+emits to stdout, not Python's `logging` module. The two
+log-event verification tests initially used `caplog`, which
+returned empty records. Switched to `capsys` per the existing
+CLAUDE.md lesson "structlog default output pollutes
+stdout-captured CLI tests." Fixed inline before commit.
+
+---
+
 ## 2026-05-12 — first PoC under test-quality-program spec (Opus 4.7)
 
 First module pair taken through the formalized playbook
