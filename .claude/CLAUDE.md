@@ -2930,3 +2930,69 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is cleaner than `--no-verify` and preserves
   CI-cleanliness if the branch is ever surfaced for
   review.
+
+- **Re-validate a spec's premise against current CI
+  before executing its probes/phases — specs go stale
+  in days, not weeks**: coverage-canonical-pattern
+  was drafted 2026-05-10 against a "[100%] PASSED →
+  runner shutdown" OOM hypothesis with Probe 0a
+  ("drop `--cov-report=term-missing`") as the first
+  cheap gate. Two days later the failure mode had
+  completely changed: PR #212 merged in the interim
+  and Probe 0a's change was already in `tests.yml`.
+  Current main CI failures were Windows-only
+  individual test bugs, not the runner-shutdown
+  pattern. Blindly executing Probe 0a would have
+  been a no-op against a closed PR. Pattern: before
+  running ANY spec phase that references "current
+  state" (failing PRs, broken workflows, observable
+  bugs), run a 5-minute re-diagnosis. Compare
+  current `gh run list` / `gh pr view` output
+  against the spec's stated premise. If they
+  diverge, pause the spec and re-frame before
+  writing code. The cheapest move is often "the
+  spec is partially obsolete" not "follow the spec
+  literally."
+
+- **xdist worker crashes on Windows can come from
+  repeated socket probes in fixture/helper code,
+  not from the test itself**:
+  `MemoryFeatures.list_all_features()` iterated 5
+  Redis features and called `is_redis_running()`
+  per feature. Each call opened a real socket to
+  localhost:6379 with a 1s connect timeout. Under
+  xdist on Windows with 12 workers concurrently
+  probing the same closed port, the cumulative
+  socket pressure crashed workers — pytest
+  reported `worker 'gw1' crashed` with no
+  traceback. Same pattern in
+  `BaseOperations.__init__` which blocks ~17s on
+  `_create_client_with_retry` (3 retries × 5s
+  socket timeout) when no Redis is running.
+  Fixes: (1) production-side, dedupe repeated
+  probes in feature-listing helpers (one probe
+  per call, not N); (2) test-side, patch
+  `_create_client_with_retry` to skip the retry
+  loop when the test doesn't care about
+  connection. Grep for `is_X_running` /
+  `_create_X_with_retry` patterns in any code
+  reached from unit tests under xdist — repeated
+  network probes are the smell.
+
+- **`subprocess.run(text=True, ...)` with no
+  explicit `encoding` on Windows can yield
+  `stdout=None`, not garbage and not exception**:
+  extends the existing Windows-encoding lesson
+  with a specific failure mode. When a subprocess
+  emits non-ASCII bytes (e.g. `⚠️` U+26A0) and the
+  parent reads with `subprocess.run(text=True,
+  capture_output=True)` but no explicit
+  `encoding`, the parent uses cp1252 by default on
+  Windows runners. Observed failure mode:
+  `CompletedProcess.stdout = None`, surfacing as
+  `TypeError: argument of type 'NoneType' is not
+  iterable` when the test asserts `"x" in
+  proc.stdout`. Always pass `encoding="utf-8",
+  errors="replace"` on `subprocess.run` when the
+  child may emit non-ASCII. Same fix shape as the
+  `Path.read_text(encoding="utf-8")` lesson.
