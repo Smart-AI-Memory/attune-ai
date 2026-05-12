@@ -1,6 +1,6 @@
 # Tasks: Coverage Exclusion Policy
 
-**Status**: approved (Phase 3A done in this commit)
+**Status**: approved — Phase 3A done; Phase 3B verified complete (2026-05-12, no code change required); Phase 3C remaining
 
 ---
 
@@ -20,9 +20,9 @@ Each is its own commit. Investigate before documenting.
 
 | # | Entry | Status | Notes |
 |---|-------|--------|-------|
-| 4 | `*/hooks/scripts/help_freshness_nudge.py` | todo | Likely Category 6 (standalone script). Confirm by reading the file's invocation pattern, then add `# Standalone hook script (runs as subprocess via Claude Code hook, not importable via pytest)` comment. |
-| 5 | `*/meta_workflows/cli_commands/agent_commands.py` | todo | Read the file. Sibling files in same dir are excluded with reason `# Interactive analytics`, `# Interactive templates` etc. (Category 1). If `agent_commands.py` follows the same shape, document with matching comment. If it doesn't, decision: cover with tests vs. document a non-Category-1 reason. |
-| 6 | `*/attune/config.py` | todo | **Highest-priority audit**. `config.py` is usually core production code; an undocumented exclusion here is a smell. Read the file. Three plausible outcomes: (a) it has env-var-dependent code that's not testable as-is → split file, cover the testable half, document the loader; (b) coverage was disabled during a refactor and never restored → write tests, remove from omit list; (c) the file is genuinely a thin re-export shim → document as Category 7-adjacent. |
+| 4 | `*/hooks/scripts/help_freshness_nudge.py` | **done** | Documented in PR #212 (`68b4bb1c`) as "Standalone hook script (not importable via pytest)". Category 6. Verified 2026-05-12. |
+| 5 | `*/meta_workflows/cli_commands/agent_commands.py` | **done** | Documented in PR #212 (`68b4bb1c`) as "Interactive agent CLI (requires live Claude agent loop)". Category 1, matches sibling-file wording. Verified 2026-05-12. |
+| 6 | `*/attune/config.py` | **done** | Documented in PR #212 (`68b4bb1c`) as "Shadowed by attune/config/ package — unreachable import". Verified empirically (Category 8): `import attune.config` resolves to the package's `__init__.py`, not the .py file. Out-of-scope follow-up: this is dead code at the import layer; deletion should be tracked under `deprecated-module-retirement` rather than carry a permanent exclusion. See decisions.md. |
 
 ### Phase 3C — Add enforcement
 
