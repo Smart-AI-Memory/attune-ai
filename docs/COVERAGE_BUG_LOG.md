@@ -18,6 +18,73 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-12 — fourth module under test-quality-program (Opus 4.7)
+
+Fourth module run. First Agent SDK-native workflow through
+the program. Selected via the rubric working set after
+`ops/cli.py` shipped (`workflows/dependency_check.py`,
+score 2.685 — top entry with measured coverage data; the
+score-4.0/3.0 rows above it are coverage-omit artifacts of
+the `*/test_*.py` pattern in `pyproject.toml`, see note
+below). **0 production bugs surfaced.**
+
+- `workflows/dependency_check.py`
+  (`DependencyCheckWorkflow`) — no bugs. The module is a
+  ~230-line thin async shell around
+  `claude_agent_sdk.query()`: validates `path`, maps depth
+  → max_turns, defines two `AgentDefinition` subagents
+  (`inventory-assessor`, `update-advisor`), collects
+  `AssistantMessage` + `ResultMessage` stream output via
+  `agent_sdk_adapter.collect_agent_output`, hands the
+  result to `AgentSDKResultAdapter.from_agent_output`.
+  Each specific exception type (`ImportError`,
+  `ConnectionError`, `TimeoutError`, generic `Exception`)
+  is converted to a structured `_error_result`. The
+  catch-all `except Exception` is documented intentional
+  with `# noqa: BLE001`. No dead code; no crash paths.
+
+**Coverage delta:** 41.67% → 100.00% (line + branch).
+
+**Tests:** 21 added under
+`tests/unit/workflows/test_dependency_check_execute.py`.
+Only `claude_agent_sdk.query` is mocked (would otherwise
+make real API calls); the `AssistantMessage`,
+`ResultMessage`, and `TextBlock` instances yielded by the
+fake generator are **real SDK dataclass instances**, not
+duck-typed `MagicMock`s — per the existing CLAUDE.md
+lesson "Duck-typed test fakes fail isinstance-based
+collectors silently." Determinism verified across 3
+back-to-back runs and under `-n auto` alongside the full
+`tests/unit/workflows/` + `tests/workflows/` subtree
+(2373 passed, no cross-test interference).
+
+**Rubric note (operational, not a bug):** the rubric's
+top 11 rows above `dependency_check` all sit at `?`
+covered_pct (scores 4.0 and 3.0 across
+`workflows/test_*.py` files and
+`workflows/test_gen/test_templates.py`). These are real
+production modules but coverage.py never measures them
+because the `*/test_*.py` omit pattern in
+`pyproject.toml` matches their filenames. The rubric
+should filter `?` covered_pct rows out of the
+working-set top, or the omit pattern should be tightened
+to `tests/test_*.py` so production modules with
+"test_" in their name remain measurable. Flagged for a
+follow-up rubric refinement; not blocking this cycle's
+ship.
+
+**Pattern observation (extends prior session's note):**
+the bug-find pattern continues — composed data-handling
+helpers (memory/security/query.py) surfaced 1 class-1
+crash bug, while customer-facing entry points
+(ops/cli.py) and now SDK-native orchestrators
+(workflows/dependency_check.py) surface zero. The
+SDK-native shape is uniform across `bug_predict`,
+`perf_audit`, `refactor_plan` and the test pattern
+established here should transfer with minor renames.
+
+---
+
 ## 2026-05-12 — third module under test-quality-program (Opus 4.7)
 
 Third module run, first weight-5 (user-typed entry) pick. Selected

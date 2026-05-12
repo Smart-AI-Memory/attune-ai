@@ -20,6 +20,33 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+
+# ---------------------------------------------------------------------------
+# Module-level structlog state isolation
+# ---------------------------------------------------------------------------
+# Several tests in this module exercise CLI entry points that
+# internally call `_configure_logging`, which calls
+# `structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(WARNING))`
+# and globally mutates structlog's wrapper class. Without a
+# teardown, that WARNING-filter leaks into every subsequent
+# test on the same xdist worker — silently filtering out
+# `logger.info(...)` calls and breaking unrelated log-event
+# assertion tests (notably `tests/unit/memory/short_term/
+# test_conflicts.py`, and any other test that uses
+# `structlog.testing.capture_logs()` on INFO events).
+#
+# An earlier scoped fixture on `TestConfigureLogging` missed
+# `TestMain` and other classes that call `main()` (which
+# transitively invokes `_configure_logging`). Module-level
+# autouse is the simplest containment that scales.
+@pytest.fixture(autouse=True)
+def _reset_structlog_after_each_test():
+    import structlog
+
+    yield
+    structlog.reset_defaults()
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -259,6 +286,11 @@ class TestPrintHealth:
 
 @pytest.mark.unit
 class TestConfigureLogging:
+    # Structlog state reset is now handled by the module-level
+    # `_reset_structlog_after_each_test` autouse fixture above,
+    # which covers both this class and `TestMain` (whose
+    # `main()` calls also reach `_configure_logging`).
+
     def test_verbose_passes_debug_to_basicconfig(self):
         import logging
 

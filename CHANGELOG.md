@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: fourth module through the playbook —
+  `workflows/dependency_check.py` (Agent SDK-native orchestrator).
+  Coverage 41.67% → 100% line+branch. 21 deterministic tests
+  added under `tests/unit/workflows/test_dependency_check_execute.py`
+  exercising the `execute()` validation/exception paths and the
+  `_run_agent_check()` async SDK loop. Real
+  `claude_agent_sdk.AssistantMessage` / `ResultMessage` /
+  `TextBlock` instances yielded by the patched `query()` so the
+  `isinstance` checks in `agent_sdk_adapter.collect_agent_output`
+  actually fire. Zero production bugs surfaced; the module is
+  a thin async SDK shell. First SDK-native workflow through the
+  program; the test pattern transfers cleanly to the three
+  sibling workflows of the same shape
+  (`bug_predict`, `perf_audit`, `refactor_plan`).
 - Test-quality-program: third module through the playbook —
   `ops/cli.py` (`attune ops` user-typed entry point).
   Coverage 36.2% → 100% line+branch. 19 deterministic tests

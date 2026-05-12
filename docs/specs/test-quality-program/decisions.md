@@ -22,3 +22,48 @@ why. Any surfaced production change deferred to a sibling PR.]
 ---
 
 <!-- First entry lands here when task #8 ships. -->
+
+## workflows/dependency_check.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.685 (weight=5 × gap=0.537 × risk=1.0)
+**Picked because:** First entry with measured `covered_pct`
+after `ops/cli.py` shipped. The 11 rows above it
+(scores 4.0 / 3.0, `workflows/test_*.py` files) are
+coverage-omit artifacts of the `*/test_*.py` pattern in
+`pyproject.toml` — coverage never measures them, so the
+rubric's `?` marker is informational, not a real gap.
+**Outcome:** 1 test file added (`test_dependency_check_execute.py`,
+21 tests). Coverage 41.67% → 100% line+branch. Zero
+production bugs surfaced. Pattern is reusable for
+sibling SDK-native workflows (`bug_predict`,
+`perf_audit`, `refactor_plan`).
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — fourth module under test-quality-program"
+
+The module is a thin async shell around
+`claude_agent_sdk.query()`. The uncovered slice was
+the entire `execute()` body (lines 127–166) and the
+`_run_agent_check()` async loop (lines 180–229). The
+only thing mocked in the new tests is `query()` itself;
+the messages it yields are real
+`claude_agent_sdk.AssistantMessage` and
+`ResultMessage` dataclasses so the `isinstance()`
+checks in `agent_sdk_adapter.collect_agent_output`
+fire correctly (this avoids the trap documented in
+CLAUDE.md: "Duck-typed test fakes fail
+isinstance-based collectors silently"). Depth
+mapping (quick=10 / standard=20 / deep=40), each
+specific exception path (`ImportError`,
+`ConnectionError`, `TimeoutError`, generic
+`Exception`), and the empty-stream "No results
+returned" fallback are all individually covered.
+
+**Rubric refinement flagged (not done here):** the
+`*/test_*.py` omit pattern hides four `workflows/test_*.py`
+production modules from coverage entirely. Either the
+pattern should tighten to `tests/test_*.py`, or the
+rubric script should drop `?` covered_pct rows from
+the working-set top. Surfaced as a follow-up; not in
+scope for this PR.

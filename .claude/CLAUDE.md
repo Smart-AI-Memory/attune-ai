@@ -154,6 +154,88 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ## Lessons Learned
 
+- **Coverage omit `*/test_*.py` silently hides production
+  modules named `test_*.py`**: `pyproject.toml`'s
+  `[tool.coverage.run]` omit pattern `*/test_*.py` matches
+  any file whose basename starts with `test_` — including
+  legitimate production modules like
+  `src/attune/workflows/test_gen/test_templates.py` and
+  six `src/attune/workflows/test_*.py` workflow source
+  files. coverage.py never measures them, so the rubric
+  script reports them with `?` covered_pct and a coverage
+  gap of 1.0. Two effects: (1) genuinely uncovered code
+  passes the 85% project gate because it's not counted in
+  the denominator; (2) the test-quality-program rubric
+  promotes these `?` rows to the top of the working set
+  with spuriously-high scores. Two fixes: tighten omit to
+  `tests/test_*.py` (root-anchored) or have the rubric
+  script drop `?` covered_pct rows from the working-set
+  top before surfacing picks. Discovered during the fourth
+  test-quality-program cycle when the top 11 rubric rows
+  were all coverage-omit artifacts.
+
+- **structlog config leaks via `structlog.configure(...)`
+  break unrelated log-event tests on the same xdist
+  worker**: any test that exercises a real call to
+  `structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(WARNING))`
+  (e.g. via a CLI's `_configure_logging` function) mutates
+  the GLOBAL structlog wrapper class, and that mutation
+  persists across the rest of the worker's test session.
+  Subsequent `logger.info(...)` calls are silently
+  filtered at the wrapper layer — before the
+  `structlog.testing.capture_logs()` processor can capture
+  them — so `capture_logs()` returns `[]` and assertions
+  like `assert any(e["event"] == "..." for e in cap)` fail
+  with empty captures. The same mechanism makes the older
+  `capsys`-based pattern unreliable, but the root cause is
+  the config leak, not the capture primitive. **Fix at
+  the READ site, not the leak site.** PR #265 spent three
+  commits trying to contain the leak (class-scoped
+  autouse → module-scoped autouse → still missed
+  `TestMain.test_main_*` which transitively calls
+  `_configure_logging` via `main()`). Each fix narrowed
+  scope but missed another caller — whack-a-mole. The
+  durable fix is in the assertion test itself: call
+  `structlog.reset_defaults()` immediately before the
+  `capture_logs()` context. That single line makes the
+  assertion resilient to ANY prior worker state — past,
+  present, and future polluting callers — and doesn't
+  require auditing every CLI entry point in the suite. As
+  belt-and-suspenders the module-level autouse in
+  `tests/unit/memory/test_control_panel_display.py`
+  stays, but the load-bearing fix is the in-test reset.
+  Local macOS xdist rarely surfaces this because the
+  12-worker distribution usually doesn't put the
+  polluting test and the assertion test on the same
+  worker in the leak-then-read order; Linux CI scheduling
+  is different enough to hit it almost
+  deterministically across all Python versions.
+  Pair lesson:
+  **`structlog.testing.capture_logs()` is still the
+  preferred capture primitive over `capsys`** because it
+  bypasses I/O entirely (capsys is also vulnerable to
+  structlog's `WriteLogger` caching `sys.stdout` at
+  logger-creation time). But `capture_logs()` alone
+  doesn't help if a leaked filtering wrapper drops the
+  event before it reaches the capture processor.
+
+- **`pytest --cov` triggers
+  `KeyError: 'pydantic.root_model'` via the workflows
+  conftest's `discover_workflows()`**: running `pytest`
+  with `--cov` enabled fails at conftest import time when
+  the project's `tests/conftest.py` calls
+  `attune.workflows.discover_workflows()`. The chain:
+  coverage instrumentation changes module import timing →
+  `mcp.types.JSONRPCMessage(RootModel[...])` triggers
+  pydantic's generic submodel creation → pydantic looks
+  up `sys.modules['pydantic.root_model']` which isn't
+  populated yet → `KeyError`. Workaround: skip
+  `pytest --cov` for ad-hoc measurement. Use
+  `coverage run -m pytest <targets>` then
+  `coverage combine && coverage report --include="..."`
+  instead — same coverage data, no instrumentation
+  interaction with conftest's lazy workflow loader.
+
 - **Windows CI encoding**: Always use `encoding="utf-8"` on
   `Path.read_text()` calls. Windows defaults to `cp1252` which
   fails on any file containing non-ASCII bytes.
