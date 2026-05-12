@@ -2861,3 +2861,72 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   they never existed. Avoids the "which version got
   what" confusion that two adjacent unreleased
   sections create.
+
+- **`uv run attune <cmd>` from a worktree serves the
+  MAIN repo's code, not the worktree's**: the
+  attune-ai editable install at
+  `.venv/lib/python3.10/site-packages/__editable___attune_ai_*_finder.py`
+  has `MAPPING['attune'] = '/Users/patrickroebuck/
+  attune-ai/src/attune'` — the main checkout, NOT
+  whatever worktree the command runs from. Symptom:
+  ops dashboard launched from
+  `.claude/worktrees/<name>` shows pre-recent-commit
+  state (e.g. missing Specs tab) because main is
+  behind origin/main even though the worktree is
+  current. Diagnosis: `curl -s
+  http://127.0.0.1:8765/api/info` returns the running
+  version; `ps -p <pid> -o command=` shows
+  `.venv/bin/attune` (always the main venv); `cat
+  .venv/lib/python*/site-packages/__editable__*_finder.py
+  | grep MAPPING` reveals the bound path. Fixes:
+  (a) update the main checkout via `git -C
+  /Users/patrickroebuck/attune-ai pull --ff-only
+  origin main` then restart the server; or (b) run
+  one-off from the worktree with `PYTHONPATH=$(pwd)/
+  src python -m attune.ops` to bypass the editable
+  install. Worktree-local code changes do NOT affect
+  the running editable install's resolution.
+
+- **`git diff --shortstat HEAD` vs
+  `git diff --shortstat origin/main`** — when the
+  numbers are identical on each modified file, the
+  local work is additive on top of either reference
+  (not stale state where upstream already absorbed
+  it). Pre-pull triage for a dirty tree when main is
+  behind: if `diff vs HEAD == diff vs origin/main`
+  for representative files, the work hasn't been
+  pushed anywhere and a rebase/merge will replay it.
+  If `diff vs origin/main` is empty but `diff vs
+  HEAD` is non-empty, upstream already has the
+  change and `git reset --hard origin/main` is safe.
+  Faster than reading commit history to guess
+  whether dirty work duplicates upstream.
+
+- **Pre-pull conflict-overlap check via `comm -12`**:
+  `comm -12 <(git diff --name-only HEAD..origin/main
+  | sort) <({ git diff --name-only HEAD; git
+  ls-files --others --exclude-standard; } | sort)`
+  returns the exact file set that's both touched
+  upstream AND dirty locally — i.e. the
+  rebase-conflict risk set. Empty result → ff-only
+  pull is safe even with a dirty tree (stash + pull
+  + pop won't conflict). Non-empty → resolve each
+  file individually (identical content = no real
+  conflict; different content = manual merge).
+  Faster than running the pull and discovering
+  conflicts.
+
+- **WIP-snapshot commits routinely hit
+  non-autofixable ruff errors (C408, F811)**: a
+  "save my dirty work to a branch" commit triggers
+  all pre-commit hooks, and WIP test files
+  frequently carry C408 (`dict(...)` instead of
+  literal) and F811 (duplicate class definitions
+  from copy-paste). C408 is fixable with `uv run
+  ruff check --fix --unsafe-fixes <file>`; F811
+  needs a manual rename or merge of the two class
+  bodies. Folding these surgical fixes into the WIP
+  commit (and documenting them in the commit body)
+  is cleaner than `--no-verify` and preserves
+  CI-cleanliness if the branch is ever surfaced for
+  review.
