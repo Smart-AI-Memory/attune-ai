@@ -169,25 +169,76 @@ class FindingSource(Protocol):
 # ---------------------------------------------------------------------------
 
 
-def _render_finding_line(f: Finding) -> str:
+# ANSI severity color map. Aligned with the project's existing
+# `attune.workflows.output` pattern (high=red / medium=yellow /
+# low=blue / info=dim) with critical bumped to bold-red to
+# differentiate from high.
+_SEVERITY_ANSI: dict[str, str] = {
+    "critical": "\x1b[1;31m",  # bold red
+    "high": "\x1b[31m",  # red
+    "medium": "\x1b[33m",  # yellow
+    "low": "\x1b[34m",  # blue
+    "info": "\x1b[2m",  # dim
+}
+_ANSI_RESET = "\x1b[0m"
+
+
+def _should_color() -> bool:
+    """True when ANSI escape codes should be injected into output.
+
+    Follows the ``NO_COLOR`` env convention (no-color.org) — any
+    non-empty value disables color. ``FORCE_COLOR=1`` overrides TTY
+    detection for tests and piped invocations that want color.
+    Otherwise, attaches color only when stdout is an interactive
+    terminal.
+    """
+    import os
+    import sys
+
+    if os.environ.get("NO_COLOR"):
+        return False
+    if os.environ.get("FORCE_COLOR"):
+        return True
+    return sys.stdout.isatty()
+
+
+def _severity_badge(severity: str, *, colored: bool) -> str:
+    """Return the bracketed ``[severity]`` badge, optionally colored."""
+    label = f"[{severity}]"
+    if not colored:
+        return label
+    code = _SEVERITY_ANSI.get(severity, "")
+    if not code:
+        return label
+    return f"{code}{label}{_ANSI_RESET}"
+
+
+def _render_finding_line(f: Finding, *, colored: bool = False) -> str:
     location = f.file or "(no file)"
     if f.line is not None:
         location = f"{location}:{f.line}"
-    return f"[{f.severity}] {location}\n  {f.title}\n  Source: {f.source}"
+    return f"{_severity_badge(f.severity, colored=colored)} {location}\n  {f.title}\n  Source: {f.source}"
 
 
 def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
     """Human-readable rendering used in ``WorkflowResult.final_output``.
 
-    The CLI surface in Phase 3 will replace this with rich formatting;
-    Phase 1 ships plain markdown so the engine works end-to-end before
-    polish work begins.
+    Severity badges (``[critical]``, ``[high]``, ``[medium]``,
+    ``[low]``, ``[info]``) are colored via ANSI escape codes when
+    stdout is a TTY (and ``NO_COLOR`` is unset). Non-TTY output —
+    pipes, CI logs, file redirects — gets plain brackets so logs
+    stay grep-friendly.
+
+    The check happens once per render via :func:`_should_color`
+    rather than per-finding, so a single tty-detection cost amortizes
+    across the whole report.
     """
+    colored = _should_color()
     out: list[str] = []
     out.append(f"## Queue ({len(result.queue)} findings)\n")
     if result.queue:
         for f in result.queue:
-            out.append(_render_finding_line(f))
+            out.append(_render_finding_line(f, colored=colored))
             if f.evidence:
                 out.append(f"  Evidence: {f.evidence}")
             out.append("")
@@ -197,7 +248,7 @@ def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
     out.append(f"## Questions ({len(result.questions)} findings)\n")
     if result.questions:
         for q in result.questions:
-            out.append(_render_finding_line(q.finding))
+            out.append(_render_finding_line(q.finding, colored=colored))
             out.append(f"  Why a question: {q.reason}")
             out.append(f"  Next step: {q.next_step}")
             out.append("")
@@ -207,7 +258,7 @@ def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
     if verbose:
         out.append(f"## Rejected ({len(result.rejected)} findings)\n")
         for r in result.rejected:
-            out.append(_render_finding_line(r.finding))
+            out.append(_render_finding_line(r.finding, colored=colored))
             out.append(f"  Rule: {r.rule}")
             out.append("")
     else:
