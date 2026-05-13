@@ -22,6 +22,7 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
+import ast
 import logging
 import re
 from dataclasses import dataclass, field
@@ -34,6 +35,66 @@ logger = logging.getLogger(__name__)
 
 _QUOTE_CHARS: frozenset[str] = frozenset({'"', "'", "`"})
 _NOQA_BLE001_RE = re.compile(r"#\s*noqa\s*:\s*[^#\n]*\bBLE001\b", re.IGNORECASE)
+
+# (start_line, start_col, end_line, end_col) — all 1-indexed lines,
+# 0-indexed columns, matching CPython's ``ast`` convention.
+_StringSpan = tuple[int, int, int, int]
+
+
+def _collect_string_spans(content: str) -> list[_StringSpan] | None:
+    """Return spans of every string literal in ``content`` via :mod:`ast`.
+
+    Each span is ``(start_line, start_col, end_line, end_col)`` using the
+    same indexing as :mod:`ast` (lines 1-indexed, cols 0-indexed). The
+    spans include single-line and multi-line strings, docstrings,
+    bytes-literals, and the literal fragments of f-strings (CPython
+    emits each f-string fragment as its own :class:`ast.Constant` child).
+
+    Returns ``None`` when ``content`` fails to parse. Callers should fall
+    back to the line-local quote walk in that case so files with syntax
+    errors still get pattern-scanned.
+    """
+    try:
+        tree = ast.parse(content)
+    except (SyntaxError, ValueError):
+        return None
+    spans: list[_StringSpan] = []
+    for node in ast.walk(tree):
+        if not isinstance(node, ast.Constant):
+            continue
+        if not isinstance(node.value, str | bytes):
+            continue
+        if (
+            node.lineno is None
+            or node.col_offset is None
+            or node.end_lineno is None
+            or node.end_col_offset is None
+        ):
+            continue
+        spans.append((node.lineno, node.col_offset, node.end_lineno, node.end_col_offset))
+    return spans
+
+
+def _is_inside_string_span(spans: list[_StringSpan], line: int, col: int) -> bool:
+    """True if ``(line, col)`` falls inside any string span.
+
+    Linear scan over ``spans`` — fine for typical modules (a few hundred
+    string nodes at most). Lines strictly between ``start_line`` and
+    ``end_line`` of a span are always inside.
+    """
+    for start_line, start_col, end_line, end_col in spans:
+        if start_line < line < end_line:
+            return True
+        if start_line == line and end_line == line:
+            if start_col <= col < end_col:
+                return True
+        elif start_line == line:
+            if col >= start_col:
+                return True
+        elif end_line == line:
+            if col < end_col:
+                return True
+    return False
 
 
 def _is_inside_quoted_region(line: str, match_start: int) -> bool:
@@ -234,18 +295,29 @@ class PatternScanSource:
             except ValueError:
                 rel = str(file_path)
 
+        # Build a whole-file string-span map via ``ast`` so pattern tokens
+        # mentioned inside multi-line docstrings (the dominant false-
+        # positive shape from the 2026-05-13 dogfood audit) are filtered.
+        # ``None`` when the file fails to parse — the line-local fallback
+        # still applies in that case via the OR below.
+        spans = _collect_string_spans(content)
+
         findings: list[Finding] = []
         for lineno, line in enumerate(content.splitlines(), start=1):
             for spec in _PATTERNS:
                 match = spec.regex.search(line)
                 if not match:
                     continue
-                if _is_inside_quoted_region(line, match.start()):
-                    # Pattern token sits inside a string literal /
-                    # backtick code-span / docstring fragment on this
-                    # line. Skip: bug-predict's `_is_detection_code_line`
-                    # filters the same shape (see
-                    # `.claude/rules/attune/scanner-patterns.md`).
+                # Skip if EITHER the AST says the token is inside a real
+                # string literal (catches multi-line docstrings) OR the
+                # line-local quote walk says it's inside a quoted region
+                # on this line (catches same-line literals AND prose
+                # inside ``# "..."`` comment text, which AST never sees).
+                # OR semantics preserve Phase 1's comment-text filtering.
+                in_ast_string = spans is not None and _is_inside_string_span(
+                    spans, lineno, match.start()
+                )
+                if in_ast_string or _is_inside_quoted_region(line, match.start()):
                     continue
                 if spec.pattern_name == "broad_exception" and _has_noqa_ble001(line):
                     # Project coding standards waive `except Exception:`
