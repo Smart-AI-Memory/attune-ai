@@ -58,6 +58,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` P2.3 — `DependencyCheckSource` LLM adapter
+  wrapping `DependencyCheckWorkflow`. Same pattern as P2.1/P2.2
+  (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via a new
+  `system_prompt_suffix` kwarg on
+  `DependencyCheckWorkflow.__init__`) with `budget_multiplier=0.5`
+  per Phase 1.5's default ratios (security=4 / deps=0.5 /
+  default=1) — the two-subagent CVE-feed-heavy workflow has a
+  narrower spend profile than the default. Wired into
+  `default_sources()`. Integration coverage marked
+  `@pytest.mark.integration`.
+
 - `discovery-sweep` P2.2 — `SecurityAuditSource` LLM adapter
   wrapping `SecurityAuditWorkflow`. Same pattern as P2.1
   (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via a new
