@@ -98,33 +98,47 @@ natural pause.
   - [ ] Phase 5 — structured recommendations
 - Spec: [ops-runner-tier2](ops-runner-tier2/)
 
-### discovery-sweep — Phase 1 in review
+### discovery-sweep — done 2026-05-13
 
-- Status: spec approved 2026-05-13. Phase 1 (engine, FindingSource
-  Protocol, verification rules, PatternScanSource adapter, CLI
-  registration) submitted as a draft PR 2026-05-13. Phase 1 DECIDE
-  callouts resolved (severity threshold = medium+, confidence
-  threshold = 0.5, asyncio.gather fan-out, Category A in
-  PATH_ARG_REGISTRY, default budget $10.00). Phase 2 callouts
-  still open.
-- Why on Track C: New user-facing capability — a meta-workflow
-  that fans out across audit-family workflows (bug-predict,
-  security-audit, dependency-check, perf-audit, doc-audit) and
-  triages findings into queue / questions / rejected buckets.
-  Independent of test-signal and audit tracks.
-- Coordination note: P2.4 retirement evaluation may shrink the
-  audit-family workflow surface — coordinate with ops-runner-
-  tier2 if any retired workflow appears in `PATH_ARG_REGISTRY`.
+- Status: **feature-complete on `main`**. Phase 1, 1.5, 2A, 2B
+  (P2.1–P2.6), 3, P2.7 all shipped. Phase 4 (CLI deprecation)
+  closes empty — P2.7 surface-evaluation returned zero
+  deprecation candidates (KEEP all six standalone audit
+  workflows). Phase 3.2 (severity-colored badges) shipped as a
+  polish follow-up.
 - Tasks
-  - [ ] Phase 1 — Engine + PatternScanSource (non-LLM floor) — **in review** 2026-05-13
-  - [ ] Phase 2A — Shared LLM adapter base
-  - [ ] Phase 2B — Per-source adapters (P2.1–P2.6, includes
-        retirement eval P2.4)
-  - [ ] Phase 3 — Output polish + JSON mode
-  - [ ] Phase 4 — Ops dashboard integration (may split out)
-  - [ ] Phase 5 — Retirement execution (conditional on P2.4)
+  - [x] Phase 1 — Engine + PatternScanSource (non-LLM floor)
+  - [x] Phase 1.5 — Second-pass design landings
+  - [x] Phase 2A — Shared LLM adapter base
+  - [x] Phase 2B — Six adapters (P2.1 bug-predict, P2.2
+        security-audit, P2.3 dependency-check, P2.4 perf-audit,
+        P2.5 doc-audit, P2.6 test-audit)
+  - [x] P2.7 — Surface evaluation (KEEP all)
+  - [x] Phase 3 — Output polish + JSON mode
+  - [x] Phase 3.2 — Severity-colored badges
+  - [⊘] Phase 4 — CLI deprecation (closes empty)
+  - [→] Ops dashboard integration → carved out as
+        `discovery-sweep-ops-integration` follow-up spec
 - Spec: [discovery-sweep](discovery-sweep/)
+- Surface evaluation: [surface-evaluation.md](discovery-sweep/surface-evaluation.md)
 - Plan: [.claude/plans/discovery-sweep.md](../../.claude/plans/discovery-sweep.md)
+
+### discovery-sweep-ops-integration — drafted
+
+- Status: spec drafted 2026-05-13. Not yet open for
+  implementation — blocks on `ops-runner-tier2` Phase 2 (SSE
+  event stream + workflow-list dashboard surface).
+- Why on Track C: Carved out of the parent discovery-sweep spec
+  because the ops-dashboard integration depends on
+  `ops-runner-tier2` Phase 2 primitives, while the parent spec
+  is consumable today via CLI + JSON. Splitting let the parent
+  ship as DONE without stalling on this consumer.
+- Tasks
+  - [ ] Phase 1 — Engine telemetry hooks (per-source event sink)
+  - [ ] Phase 2 — Daemon HTTP / SSE plumbing
+  - [ ] Phase 3 — Dashboard UI (chips, live progress, drill-in)
+  - [ ] Phase 4 — Docs + sequencing
+- Spec: [discovery-sweep-ops-integration](discovery-sweep-ops-integration/)
 
 ### website-update-dashboard-and-fold (Phase 1)
 
