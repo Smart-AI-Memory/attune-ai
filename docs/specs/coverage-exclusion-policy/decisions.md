@@ -1,5 +1,8 @@
 # Per-decision log — Coverage exclusion policy
 
+**Status:** approved
+
+
 Append-only log. Phase 3A audit findings + per-entry resolution as
 Phase 3B commits land.
 

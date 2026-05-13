@@ -1,7 +1,5 @@
 # Spec: Test Infrastructure Reliability
-
-**Status**: draft
-
+**Status:** approved
 ---
 
 ## Phase 1: Requirements

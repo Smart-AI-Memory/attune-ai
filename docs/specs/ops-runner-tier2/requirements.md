@@ -1,7 +1,5 @@
 # Requirements — Ops Runner Tier 2
-
-**Status:** draft
-
+**Status:** approved
 User-facing stories and the contracts they imply. See `decisions.md` for context, `design.md` for the technical shape, `tasks.md` for the phase plan.
 
 ---

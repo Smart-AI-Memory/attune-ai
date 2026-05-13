@@ -1,7 +1,5 @@
 # Design — Website update: dashboard maturity + fold-back
-
-**Status:** draft
-
+**Status:** approved
 Technical shape, mitigations, and durable fixes. See `decisions.md` for context, `requirements.md` for user stories, `tasks.md` for the phase plan.
 
 ---
