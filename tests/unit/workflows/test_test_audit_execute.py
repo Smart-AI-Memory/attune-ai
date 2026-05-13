@@ -244,12 +244,23 @@ class TestExecutePathKwarg:
         assert result.success is True
 
     def test_execute_both_kwargs_path_wins(self, workflow, _mock_sdk):
-        """execute(path=A, src_path=B) uses A and warns about the conflict."""
+        """execute(path=A, src_path=B) uses A and warns about the conflict.
+
+        The conflict warning is the load-bearing assertion. We don't
+        check the exact resolved-path string in metadata because
+        `Path.resolve()` prepends a drive letter on Windows (e.g.
+        `/tmp/via_path` → `D:\\tmp\\via_path`), per the cross-platform
+        lesson in CLAUDE.md. We assert instead that the LEGACY value
+        did not make it through.
+        """
         with pytest.warns(DeprecationWarning, match="both"):
             result = asyncio.run(workflow.execute(path="/tmp/via_path", src_path="/tmp/legacy"))
         assert result.success is True
-        # Resolved path in metadata reflects the `path=` value.
-        assert "/tmp/via_path" in str(result.metadata.get("src_path", ""))
+        resolved = str(result.metadata.get("src_path", ""))
+        assert "legacy" not in resolved, (
+            f"`src_path=` should have been overridden by `path=`; "
+            f"resolved metadata path was: {resolved!r}"
+        )
 
     def test_execute_no_path_returns_required_error(self, workflow):
         """execute() with no path returns the required-arg error.
