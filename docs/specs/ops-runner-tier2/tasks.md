@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** draft
+**Status:** Phase 1 audit done 2026-05-12 (see audit.md); Phase 1.3 + Phases 2–5 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -10,18 +10,9 @@ Phased plan. Each phase is independently shippable + reversible (single-commit r
 
 Goal: turn hypothesis H2 ("Workflow `--path` support is unevenly implemented") into a hard fact, populating the `SUPPORTS_PATH_ARG` registry from real inspection.
 
-- [ ] **1.1** Grep each workflow class's `execute()` signature and CLI handler for `--path` / `paths` argument acceptance:
-      ```
-      for w in bug-predict code-review deep-review dependency-check doc-audit doc-gen doc-orchestrator health-check orchestrated-health-check perf-audit rag-code-gen refactor-plan release-prep research-synthesis secure-release security-audit simplify-code test-audit test-gen; do
-        echo "=== $w ==="
-        grep -l "name.*$w\|workflow.*$w" src/attune/workflows/*.py | head -1 | xargs grep -nE "path|paths" | head -5
-      done
-      ```
-- [ ] **1.2** Manually verify by running each workflow with `--help` from the CLI:
-      ```
-      python -m attune.cli_minimal workflow run <name> --help
-      ```
-- [ ] **1.3** Record findings as `SUPPORTS_PATH_ARG` dict in `src/attune/ops/data.py`. Drift-guard test in `tests/unit/ops/test_path_support_registry.py` asserts every workflow has an entry.
+- [x] **1.1** Grep each workflow class's `execute()` signature and CLI handler for `--path` / `paths` argument acceptance. **Done 2026-05-12** — see [audit.md](audit.md). The grep recipe in the spec needed adapting (it scoped to `src/attune/workflows/*.py` but 4 workflows live in package subdirs like `src/attune/workflows/doc_audit/workflow.py`).
+- [x] **1.2** Manually verify by running each workflow with `--help` from the CLI. **Done 2026-05-12.** Key finding: the CLI surface `attune workflow run --help` accepts `--path` UNIFORMLY for all workflows; it becomes a `path=...` kwarg in `workflow.execute(**input_data)`. Whether the workflow consumes that kwarg is the real question — answered per-workflow in audit.md.
+- [ ] **1.3** Record findings as `PATH_ARG_REGISTRY` dict (Option 2 from audit.md) in `src/attune/ops/data.py`. Drift-guard test in `tests/unit/ops/test_path_support_registry.py` asserts every workflow has an entry AND that the entry's `kwarg` matches the actual kwarg name in the workflow source. **Pending user approval** to write production code — audit complete; implementation deferred to a separate PR so reviewer can sign off on the three-way (not binary) registry shape.
 
 ## Phase 2 — Scope picker (headline feature)
 
