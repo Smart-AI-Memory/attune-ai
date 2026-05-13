@@ -16,7 +16,7 @@ from attune.workflows.discovery_sweep.sources.pattern_scan import (
 
 
 def _scan(tmp_path: Path) -> list[Finding]:
-    return asyncio.run(PatternScanSource().discover(str(tmp_path), 0.0))
+    return asyncio.run(PatternScanSource().discover([str(tmp_path)], 0.0))
 
 
 class TestProtocolConformance:
@@ -28,6 +28,10 @@ class TestProtocolConformance:
 
     def test_name_is_pattern_scan(self) -> None:
         assert PatternScanSource().name == "pattern-scan"
+
+    def test_budget_multiplier_is_zero(self) -> None:
+        # Non-LLM sources claim no share of the budget pool.
+        assert PatternScanSource().budget_multiplier == 0.0
 
 
 class TestPatternDetection:
@@ -90,7 +94,7 @@ class TestTraversal:
 
     def test_nonexistent_path_returns_empty(self, tmp_path: Path) -> None:
         missing = tmp_path / "does-not-exist"
-        findings = asyncio.run(PatternScanSource().discover(str(missing), 0.0))
+        findings = asyncio.run(PatternScanSource().discover([str(missing)], 0.0))
         assert findings == []
 
     def test_single_file_path_scans_just_that_file(self, tmp_path: Path) -> None:
@@ -98,9 +102,29 @@ class TestTraversal:
             "def f():\n    try:\n        pass\n    except:\n        pass\n",
             encoding="utf-8",
         )
-        findings = asyncio.run(PatternScanSource().discover(str(tmp_path / "x.py"), 0.0))
+        findings = asyncio.run(PatternScanSource().discover([str(tmp_path / "x.py")], 0.0))
         assert len(findings) >= 1
         assert all(f.file is not None for f in findings)
+
+    def test_multiple_paths_all_scanned(self, tmp_path: Path) -> None:
+        # Engine glob-expands to a list; the source must visit every
+        # entry, not just the first.
+        a = tmp_path / "a"
+        b = tmp_path / "b"
+        a.mkdir()
+        b.mkdir()
+        (a / "alpha.py").write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        (b / "beta.py").write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        findings = asyncio.run(PatternScanSource().discover([str(a), str(b)], 0.0))
+        files = {f.file for f in findings}
+        assert "alpha.py" in files
+        assert "beta.py" in files
 
 
 class TestBudget:
@@ -109,8 +133,8 @@ class TestBudget:
             "def f():\n    try:\n        pass\n    except:\n        pass\n",
             encoding="utf-8",
         )
-        zero = asyncio.run(PatternScanSource().discover(str(tmp_path), 0.0))
-        big = asyncio.run(PatternScanSource().discover(str(tmp_path), 999.0))
+        zero = asyncio.run(PatternScanSource().discover([str(tmp_path)], 0.0))
+        big = asyncio.run(PatternScanSource().discover([str(tmp_path)], 999.0))
         assert len(zero) == len(big)
 
 
@@ -307,7 +331,7 @@ class TestPathRendering:
             "def f():\n    try:\n        pass\n    except:\n        pass\n",
             encoding="utf-8",
         )
-        findings = asyncio.run(PatternScanSource().discover(str(tmp_path / "alpha.py"), 0.0))
+        findings = asyncio.run(PatternScanSource().discover([str(tmp_path / "alpha.py")], 0.0))
         assert len(findings) == 1
         assert findings[0].file == "alpha.py"
 

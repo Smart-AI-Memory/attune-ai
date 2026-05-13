@@ -19,6 +19,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import asyncio
+import glob as _glob
 import logging
 import time
 from dataclasses import dataclass, field
@@ -125,26 +126,40 @@ class SweepResult:
 class FindingSource(Protocol):
     """Contract every discovery-sweep source adapter implements.
 
-    Two attributes plus one async method. ``name`` is used in finding
-    metadata and CLI output; ``is_llm`` lets the engine filter sources
-    for the ``--no-llm`` flag (defaults to True for adapters that
-    spend API budget; non-LLM adapters like ``PatternScanSource`` set
-    it to False).
+    Three attributes plus one async method:
+
+    - ``name`` — surfaced in finding metadata and CLI output.
+    - ``is_llm`` — lets the engine filter sources for ``--no-llm``.
+      Non-LLM adapters (e.g. :class:`PatternScanSource`) set it False.
+    - ``budget_multiplier`` — proportional share of the total sweep
+      budget this source claims. The engine sums multipliers across
+      active sources and allocates ``budget_usd * (mult / total)`` to
+      each. Non-LLM sources set ``0.0`` (they ignore budget anyway);
+      LLM sources scale by their expected spend (1.0 default,
+      4.0 for multi-subagent security-audit, 0.5 for CVE-feed-heavy
+      dependency-check, etc.).
+
+    The engine glob-expands the user's ``--path`` upstream and passes
+    every source the same concrete ``paths`` list; sources never see
+    raw glob syntax.
     """
 
     name: str
     is_llm: bool
+    budget_multiplier: float
 
     async def discover(
         self,
-        path: str,
+        paths: list[str],
         budget_usd: float,
     ) -> list[Finding]:
-        """Discover findings in ``path``.
+        """Discover findings under ``paths``.
 
-        Implementations must respect ``budget_usd``: return partial
-        findings (with an ``info``-severity Finding noting the cap)
-        rather than overspending or raising.
+        ``paths`` is a list of concrete files or directories (glob
+        expansion happens in the engine). Implementations must respect
+        ``budget_usd``: return partial findings (with an ``info``-
+        severity Finding noting the cap) rather than overspending or
+        raising.
         """
         ...
 
@@ -214,7 +229,7 @@ def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
 
 async def _run_source(
     source: FindingSource,
-    path: str,
+    paths: list[str],
     budget_usd: float,
 ) -> tuple[str, list[Finding] | BaseException]:
     """Wrap a single source.discover() so the gather() never raises.
@@ -225,12 +240,31 @@ async def _run_source(
     keeps source-failure rendering in one place.
     """
     try:
-        findings = await source.discover(path, budget_usd)
+        findings = await source.discover(paths, budget_usd)
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: per spec NFR-1, source failures must not abort
         # the sweep; convert them to a questions entry downstream.
         return source.name, exc
     return source.name, findings
+
+
+_GLOB_CHARS: frozenset[str] = frozenset("*?[")
+
+
+def _expand_path(path: str) -> list[str]:
+    """Glob-expand ``path`` into a concrete list for fan-out.
+
+    The engine expands once and passes the same list to every source so
+    LLM and non-LLM adapters share an identical scope. If ``path``
+    contains no glob characters it is returned as a single-element list.
+    Recursive ``**`` is supported. Returns ``[path]`` when expansion
+    yields nothing so sources can still emit a "no files matched"
+    finding.
+    """
+    if not any(c in path for c in _GLOB_CHARS):
+        return [path]
+    matches = sorted(_glob.glob(path, recursive=True))
+    return matches if matches else [path]
 
 
 def _failure_to_question(source_name: str, exc: BaseException) -> QuestionFinding:
@@ -313,13 +347,14 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         if not sources:
             return self._error_result("no sources to run (use --source or drop --no-llm)")
 
-        per_source_budget = self._allocate_budget(sources, budget_usd)
+        allocations = self._allocate_budget(sources, budget_usd)
+        paths = _expand_path(path)
 
         started_at = datetime.now()
         t0 = time.perf_counter()
 
         gathered = await asyncio.gather(
-            *(_run_source(s, path, per_source_budget) for s in sources),
+            *(_run_source(s, paths, allocations[s.name]) for s in sources),
             return_exceptions=False,
         )
 
@@ -364,18 +399,23 @@ class DiscoverySweepWorkflow(BaseWorkflow):
     def _allocate_budget(
         sources: list[FindingSource],
         budget_usd: float,
-    ) -> float:
-        """Per-source budget = total / number of LLM sources.
+    ) -> dict[str, float]:
+        """Allocate ``budget_usd`` proportionally by ``budget_multiplier``.
 
-        Non-LLM sources don't consume budget, so dividing by all
-        sources would under-allocate to the LLM ones. Falling back to
-        the full budget when there are zero LLM sources keeps the
-        signal simple (PatternScanSource ignores it anyway).
+        Each source receives
+        ``budget_usd * (its_multiplier / sum_of_multipliers)``. Non-LLM
+        adapters set ``budget_multiplier=0.0`` and receive ``$0`` (they
+        ignore budget anyway). When no source claims a positive
+        multiplier the engine passes the full budget through to every
+        source as a no-op signal so pattern-only sweeps still work.
         """
-        llm_count = sum(1 for s in sources if getattr(s, "is_llm", True))
-        if llm_count == 0:
-            return budget_usd
-        return budget_usd / llm_count
+        total_mult = sum(getattr(s, "budget_multiplier", 0.0) for s in sources)
+        if total_mult <= 0.0:
+            return {s.name: budget_usd for s in sources}
+        return {
+            s.name: budget_usd * (getattr(s, "budget_multiplier", 0.0) / total_mult)
+            for s in sources
+        }
 
     @staticmethod
     def _build_sweep_result(

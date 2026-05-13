@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `discovery-sweep` Phase 1.5 — second-pass design landings.
+  `FindingSource` Protocol gains a `budget_multiplier: float`
+  attribute; the engine allocates `budget_usd` proportionally
+  rather than equal-split (security-audit will claim 4x, dependency-
+  check 0.5x, others 1.0–1.5x once their adapters land). Protocol
+  signature widened to `discover(paths: list[str], budget_usd:
+  float)` — the engine glob-expands the user's `--path` upstream
+  so every source sees the same concrete file list. Surface
+  evaluation reframed (not workflow retirement) and moved to
+  P2.7 (last) after all six adapters ship; test-audit joins the
+  six wrapped workflows as a distinct test-quality lens. Phase 4
+  is now CLI surface deprecation (ops-dashboard integration
+  deferred to a follow-up spec).
+
 ### Fixed
 
 - `discovery-sweep` PatternScanSource — port two false-positive
