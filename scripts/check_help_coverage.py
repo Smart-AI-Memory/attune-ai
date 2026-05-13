@@ -39,6 +39,7 @@ ALIASES: dict[str, str] = {
 # a real entry to features.yaml when the feature is user-facing.
 KNOWN_GAPS: set[str] = {
     "dependency-check",
+    "discovery-sweep",
     "doc-audit",
     "doc-orchestrator",
     "perf-audit",

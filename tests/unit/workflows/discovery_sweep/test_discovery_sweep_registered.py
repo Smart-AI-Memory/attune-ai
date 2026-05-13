@@ -32,9 +32,7 @@ def test_lazy_class_attribute() -> None:
 
 
 def test_list_workflows_entry_shape() -> None:
-    entries = [
-        w for w in workflows_pkg.list_workflows() if w["name"] == "discovery-sweep"
-    ]
+    entries = [w for w in workflows_pkg.list_workflows() if w["name"] == "discovery-sweep"]
     assert len(entries) == 1
     entry = entries[0]
     assert entry["class"] == "DiscoverySweepWorkflow"
