@@ -107,7 +107,8 @@ scoped fixes to a shipped feature, not new feature work.
 - [x] PR #306 opened (draft)
 - [x] Dogfood audit run + written up
 - [x] Starter prompt written
-- [ ] PR #306 CI green (in flight when session paused)
-- [ ] PR #306 merged
-- [ ] Real-signal fix (`specs.py:274`) — next session
-- [ ] AST string-region filter — next session
+- [x] PR #306 CI green
+- [x] PR #306 merged
+- [x] Real-signal fix (`specs.py:274`) — PR #307 merged 2026-05-13
+- [x] AST string-region filter — PR #309 merged 2026-05-13
+- [x] Whole-tree dogfood re-verified: queue = 0 on `src/attune`
