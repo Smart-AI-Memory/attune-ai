@@ -18,6 +18,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "src_path argument is required" to "path argument is required
   (was: src_path)" to bridge the rename.
 
+### Internal
+
+- Test-quality-program: fifteenth module through the playbook —
+  `memory/short_term/transactions.py` (TransactionManager:
+  atomic Redis pattern promotion via WATCH/MULTI/EXEC).
+  Coverage 55.7% → 96.30% line+branch.
+  17 deterministic tests added under
+  `tests/unit/memory/short_term/test_transactions.py` covering
+  input-validation guards, authorization gate (observer /
+  contributor / steward), mock-mode branches, real-Redis client
+  branches via the `base._client = MagicMock()` injection
+  pattern, `redis.WatchError` race handler, and the
+  best-effort `unwatch()` exception in `finally`.
+  **No bugs surfaced.** Module is small (61 statements) with
+  a clean single-public-method API and explicit validation.
+
 ### Removed (Breaking)
 
 - `attune.coordination` package — `AgentCoordinator`, `AgentTask`,
