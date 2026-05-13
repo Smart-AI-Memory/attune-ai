@@ -17,6 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (a path is still required). Error message text updated from
   "src_path argument is required" to "path argument is required
   (was: src_path)" to bridge the rename.
+- `RagCodeGenWorkflow.execute(cwd=...)` — use
+  `execute(path=...)` instead. Legacy kwarg emits a
+  `DeprecationWarning` and will be removed in v7.0. PR-4 of
+  `docs/specs/workflow-path-arg-unification/`; Phase 0.2
+  confirmed `cwd` and `path` are semantically identical for
+  this workflow (both bound the Agent SDK's filesystem-tool
+  reach via `ClaudeAgentOptions(cwd=...)`).
 
 ### Internal
 

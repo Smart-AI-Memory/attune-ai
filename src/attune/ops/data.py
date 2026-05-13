@@ -94,7 +94,10 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     # workflow-path-arg-unification PR-1 (2026-05-13).
     "health-check": PathArgSpec(kwarg="path"),
     "orchestrated-health-check": PathArgSpec(kwarg="path"),
-    "rag-code-gen": PathArgSpec(kwarg="cwd"),
+    # rag-code-gen migrated to `path` in workflow-path-arg-unification
+    # PR-4 (2026-05-13); `cwd` and `path` are semantically identical
+    # for this workflow per Phase 0.2 confirmation in #296.
+    "rag-code-gen": PathArgSpec(kwarg="path"),
     # test-audit migrated to `path` in workflow-path-arg-unification
     # PR-3 (2026-05-13); required=True preserved (workflow errors
     # when missing).

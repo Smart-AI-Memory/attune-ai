@@ -79,13 +79,15 @@ class RagCodeGenWorkflow(BaseWorkflow):
             records feedback on every cited template via
             ``record_template_feedback`` (Phase 4.1).
         model (str): Optional model override for generation.
-        cwd (str): Working directory passed to the Claude Agent
-            SDK for ``Read``/``Glob``/``Grep`` tool calls.
+        path (str): Working directory / scope for the Claude Agent
+            SDK's ``Read``/``Glob``/``Grep`` tool calls.
             Defaults to ``os.getcwd()`` at execute time so the
             agent cannot escape the caller's invocation
             directory via a prompt-injected path. Matches the
             ``cwd=resolved_path`` pattern used in
             ``security_audit.py``.
+        cwd (str): Deprecated alias for ``path``; emits
+            ``DeprecationWarning``. Removed in v7.0.
     """
 
     name = "rag-code-gen"
@@ -119,6 +121,8 @@ class RagCodeGenWorkflow(BaseWorkflow):
         return self._pipeline
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
+        import warnings as _warnings  # local to keep formatter from stripping
+
         query: str = kwargs.get("query", "")
         k: int = int(kwargs.get("k", 3))
         depth: str = kwargs.get("depth", "standard")
@@ -127,8 +131,29 @@ class RagCodeGenWorkflow(BaseWorkflow):
         # Default cwd to the caller's invocation directory so the
         # SDK's Read/Glob/Grep tools cannot climb outside via a
         # prompt-injected path; mirror security_audit.py's
-        # resolved-path scoping.
-        cwd: str = kwargs.get("cwd") or os.getcwd()
+        # resolved-path scoping. `path` is the new canonical kwarg
+        # name (workflow-path-arg-unification PR-4, 2026-05-13);
+        # `cwd` is preserved as a deprecated alias because they
+        # are semantically identical for this workflow.
+        legacy_cwd = kwargs.get("cwd")
+        new_path = kwargs.get("path")
+        if legacy_cwd and not new_path:
+            _warnings.warn(
+                "RagCodeGenWorkflow.execute(cwd=...) is deprecated; "
+                "use execute(path=...) instead. The legacy kwarg "
+                "will be removed in v7.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        elif legacy_cwd and new_path:
+            _warnings.warn(
+                "RagCodeGenWorkflow.execute(): both `path=` and "
+                "`cwd=` supplied; `path=` takes precedence and "
+                "`cwd=` is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        cwd: str = new_path or legacy_cwd or os.getcwd()
 
         if not query or not query.strip():
             return self._error_result("query argument is required")
