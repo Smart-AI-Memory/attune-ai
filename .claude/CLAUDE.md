@@ -3646,3 +3646,57 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   becomes wrong the moment the version passes; treat
   migration docs as having a shelf life tied to the
   marker's target version.
+
+- **Adding a workflow to `_DEFAULT_WORKFLOW_NAMES`
+  has FOUR drift-guard gates, not one**: registering
+  in `src/attune/workflows/__init__.py` (three sites:
+  `_LAZY_WORKFLOW_IMPORTS`, `_DEFAULT_WORKFLOW_NAMES`,
+  `__all__`) is necessary but not sufficient. Three
+  more gates fail CI immediately if missed:
+  (1) `PATH_ARG_REGISTRY` in `src/attune/ops/data.py`
+  — the ops scope-picker drift-guard
+  (`tests/unit/ops/test_path_support_registry.py`)
+  requires an entry naming the kwarg the workflow's
+  `execute()` consumes;
+  (2) `KNOWN_GAPS` set in
+  `scripts/check_help_coverage.py` (or a real entry
+  in `.help/features.yaml`) — the
+  `test_no_new_workflow_drift` test in
+  `tests/unit/help/test_coverage_script.py` asserts
+  every registered workflow is documented or
+  explicitly waived;
+  (3) `WORKFLOW_NAMES` array in
+  `src/attune/ops/static/js/runner.js` — the
+  `test_workflow_names_match_canonical_list` test in
+  `tests/unit/ops/test_runner_js_parsing.py` keeps
+  the dashboard's pill-rendering list in sync with
+  the Python registry. Mirrors the "plugin skill has
+  three gates" lesson but distinct site set.
+  Discovered when discovery-sweep Phase 1 PR #303
+  passed local tests then failed three CI checks on
+  push.
+
+- **PatternScanSource (discovery-sweep) has known
+  self-match false positives**: the dangerous-eval /
+  dangerous-exec regexes match `eval(` / `exec(`
+  inside the scanner's OWN string literals — its
+  module docstring and `_PatternSpec` title strings
+  (`title="Use of eval() — may execute arbitrary
+  code"`). Verification rules can't catch them —
+  they're medium+ severity, located, high-confidence;
+  no rule fires. The existing `bug-predict`
+  workflow's `_is_dangerous_eval_usage()` in
+  `bug_predict_patterns.py` filters this exact case
+  via `_all_eval_in_fixtures()` and
+  `_is_detection_code_line()` heuristics, but
+  PatternScanSource was intentionally simpler in
+  Phase 1 and does NOT inherit those filters. First
+  dogfood run on
+  `src/attune/workflows/discovery_sweep/` produced 3
+  queue findings, all false positives. Two fix paths:
+  (a) port the bug-predict filter into
+  PatternScanSource, or (b) add a verification rule
+  that rejects findings where the evidence line
+  contains the pattern name as a string. Use the
+  discovery_sweep dir itself as a regression fixture
+  — known false positives = stable baseline.

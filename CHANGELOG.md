@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `discovery-sweep` PatternScanSource — port two false-positive
+  filters from `bug-predict`'s
+  `bug_predict_patterns.py`:
+  (1) skip findings where the matched pattern token sits inside a
+  same-line quoted region (Python string literal, Markdown backtick
+  code-span, or docstring fragment) — eliminates scanner self-match
+  noise where `_PatternSpec` title strings like `"Use of eval() —
+  may execute arbitrary code"` were matching their own regex;
+  (2) skip `broad_exception` findings when the line carries an
+  explicit `# noqa: BLE001` annotation — the project coding
+  standards waive intentional broad-except blocks. Plus a path
+  rendering fix: single-file scans now render `foo.py:42` instead
+  of `.:42` (the `relative_to(root)` returned `.` when input was a
+  file rather than a directory). Surfaced via dogfood runs against
+  four targets; queue noise dropped from 8 false positives to 0.
+
 ### Added
 
 - `discovery-sweep` meta-workflow (Phase 1) — fans out across audit

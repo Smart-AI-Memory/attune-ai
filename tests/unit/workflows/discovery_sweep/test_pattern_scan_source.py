@@ -112,3 +112,116 @@ class TestBudget:
         zero = asyncio.run(PatternScanSource().discover(str(tmp_path), 0.0))
         big = asyncio.run(PatternScanSource().discover(str(tmp_path), 999.0))
         assert len(zero) == len(big)
+
+
+class TestFalsePositiveFilters:
+    """Filters that mirror bug-predict's `_is_acceptable_*` helpers.
+
+    Discovered via dogfood runs against
+    ``src/attune/workflows/discovery_sweep/`` (scanner self-match) and
+    ``src/attune/memory/short_term/`` (noqa BLE001 acknowledged
+    broad-except). See ``.claude/rules/attune/scanner-patterns.md``.
+    """
+
+    def test_eval_inside_double_quoted_string_skipped(self, tmp_path: Path) -> None:
+        # The scanner's own _PatternSpec uses this exact shape.
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(
+            f'TITLE = "Use of {keyword}() may execute code"\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_eval_inside_single_quoted_string_skipped(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(f"TITLE = 'Use of {keyword}() bad'\n", encoding="utf-8")
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_eval_inside_backtick_markdown_skipped(self, tmp_path: Path) -> None:
+        # Mimics module docstring lines like
+        # ``- ``dangerous_eval`` — ``eval(`` / ``exec(`` call``.
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(
+            f'"""docstring.\n\n- ``danger`` — ``{keyword}(`` call (HIGH)\n"""\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_real_eval_call_still_detected(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        (tmp_path / "a.py").write_text(f"def f(x):\n    return {keyword}(x)\n", encoding="utf-8")
+        findings = _scan(tmp_path)
+        assert len(findings) == 1
+        assert findings[0].severity == "high"
+        assert "dangerous_eval" in findings[0].tags
+
+    def test_broad_except_with_noqa_ble001_skipped(self, tmp_path: Path) -> None:
+        (tmp_path / "a.py").write_text(
+            "def f():\n"
+            "    try:\n"
+            "        risky()\n"
+            "    except Exception:  # noqa: BLE001\n"
+            "        # INTENTIONAL: graceful degradation\n"
+            "        pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        broad = [f for f in findings if "broad_exception" in f.tags]
+        assert broad == [], broad
+
+    def test_broad_except_without_noqa_still_detected(self, tmp_path: Path) -> None:
+        (tmp_path / "a.py").write_text(
+            "def f():\n"
+            "    try:\n"
+            "        risky()\n"
+            "    except Exception:\n"
+            "        pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        broad = [f for f in findings if "broad_exception" in f.tags]
+        assert len(broad) == 1
+
+    def test_bare_except_with_noqa_ble001_still_detected(self, tmp_path: Path) -> None:
+        # The noqa BLE001 waiver only applies to broad_exception,
+        # not to bare ``except:`` — bare except is a stronger
+        # antipattern and the waiver is for the broader form.
+        (tmp_path / "a.py").write_text(
+            "def f():\n"
+            "    try:\n"
+            "        risky()\n"
+            "    except:  # noqa: BLE001\n"
+            "        pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        bare = [f for f in findings if "bare_except" in f.tags]
+        assert len(bare) == 1
+
+
+class TestPathRendering:
+    """Single-file scans render the bare filename, not ``.``."""
+
+    def test_single_file_input_renders_filename(self, tmp_path: Path) -> None:
+        (tmp_path / "alpha.py").write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        findings = asyncio.run(PatternScanSource().discover(str(tmp_path / "alpha.py"), 0.0))
+        assert len(findings) == 1
+        assert findings[0].file == "alpha.py"
+
+    def test_directory_input_renders_relative_path(self, tmp_path: Path) -> None:
+        sub = tmp_path / "pkg"
+        sub.mkdir()
+        (sub / "beta.py").write_text(
+            "def f():\n    try:\n        pass\n    except:\n        pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert len(findings) == 1
+        # Path is relative to the input root.
+        assert findings[0].file in ("pkg/beta.py", "pkg\\beta.py")
