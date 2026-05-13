@@ -98,6 +98,29 @@ natural pause.
   - [ ] Phase 5 — structured recommendations
 - Spec: [ops-runner-tier2](ops-runner-tier2/)
 
+### discovery-sweep — approved
+
+- Status: approved 2026-05-13. Nothing shipped yet. Most DECIDE
+  callouts still open; default budget resolved to $10.00.
+- Why on Track C: New user-facing capability — a meta-workflow
+  that fans out across audit-family workflows (bug-predict,
+  security-audit, dependency-check, perf-audit, doc-audit) and
+  triages findings into queue / questions / rejected buckets.
+  Independent of test-signal and audit tracks.
+- Coordination note: P2.4 retirement evaluation may shrink the
+  audit-family workflow surface — coordinate with ops-runner-
+  tier2 if any retired workflow appears in `PATH_ARG_REGISTRY`.
+- Tasks
+  - [ ] Phase 1 — Engine + PatternScanSource (non-LLM floor)
+  - [ ] Phase 2A — Shared LLM adapter base
+  - [ ] Phase 2B — Per-source adapters (P2.1–P2.6, includes
+        retirement eval P2.4)
+  - [ ] Phase 3 — Output polish + JSON mode
+  - [ ] Phase 4 — Ops dashboard integration (may split out)
+  - [ ] Phase 5 — Retirement execution (conditional on P2.4)
+- Spec: [discovery-sweep](discovery-sweep/)
+- Plan: [.claude/plans/discovery-sweep.md](../../.claude/plans/discovery-sweep.md)
+
 ### website-update-dashboard-and-fold (Phase 1)
 
 - Status: approved — 41 tasks, 0% done
