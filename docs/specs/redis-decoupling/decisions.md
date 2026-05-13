@@ -103,3 +103,64 @@ Phase 3B (audit + replace internal callers) is unblocked from a
 research standpoint, but the recommended sequence remains: land
 PR #212 → use the named hung test from CI to inform the audit →
 then start Phase B.
+
+---
+
+## Phase 3B task #3 — audit complete (2026-05-12)
+
+See [audit.md](audit.md) for the full classification table. Summary:
+
+- **Three greps** ran (after fixing `--include` → pathspec). 155 +
+  55 + 38 raw hits; most are self-references inside the module
+  being audited.
+- **8 external callers** across 6 subsystems: `core_modules/`,
+  `mcp/memory_handlers`, `meta_workflows/session_context`,
+  `telemetry/{feedback_loop,approval_gates}`,
+  `agents/release/base_agent`, `memory/cross_session/`.
+- **2 callers with exotic requirements** (cross-process pub/sub):
+  `agents/release/base_agent.py` (`self.redis.publish(...)`) and
+  `memory/cross_session/coordinator.py` (`pubsub.subscribe(...)`).
+- Plus a soft pub/sub case: `core_modules/short_term_memory.py`'s
+  `send_signal`/`receive_signals` public methods.
+
+### Verdict: spec downgrades to partial
+
+The spec's prose said "AgentCoordinator and TeamSession aren't
+referenced internally." True for those two specific classes. But
+the **Redis-shaped APIs** (`stash`, `retrieve`, `stage_pattern`,
+`publish`/`subscribe`) extend across `core_modules/`, telemetry,
+session context, and cross-session coordination. Full decoupling
+isn't a delta on this spec — it's a memory-subsystem rewrite.
+
+Per the spec's own failure-to-deliver path, the audit triggers
+both the ">10 callers" threshold (borderline at 8) and the
+"exotic requirements" threshold (cross-process pub/sub).
+
+### Recommended partial scope
+
+Three deliverables, each tractable:
+
+1. **P1 — Delete `attune/coordination/` with deprecation shim.**
+   `AgentCoordinator` and `TeamSession` have no internal callers;
+   only the module itself references them. Path C1 (forced by
+   Phase 3A task #1).
+2. **P2 — Drop `[memory]` and `[redis]` extras from
+   `pyproject.toml`.** `[dev]` already pulls `redis` for tests.
+   Aggregator extras (`[full]`, `[enterprise]`, `[developer]`)
+   re-audited.
+3. **P3 — Delete tests covering the deleted surface.**
+   `tests/unit/coordination/`, `tests/unit/test_redis_fallback.py`,
+   `tests/unit/memory/test_pubsub_direct.py` (if PubSubManager is
+   no longer reachable). Expect ~60–80 test reduction, under the
+   spec's original "~100" target.
+
+Everything else (`RedisShortTermMemory` facade, unified memory,
+telemetry, MCP memory handlers, cross-session subsystem,
+agents/release pub/sub) stays Redis-dependent and is documented
+as "Redis-backed by design" rather than carried as debt.
+
+### Adjacent finding (not actioned here)
+
+`RedisAutoDetector` probing at import time is reachable as its
+own one-file mini-spec: convert to lazy detection on first
+`.stash()` call. Out of scope for this audit but worth flagging.
