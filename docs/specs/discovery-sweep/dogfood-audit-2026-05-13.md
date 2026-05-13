@@ -89,6 +89,10 @@ modes that show up the moment Phase 2A LLM sources ship and start
 emitting structured findings with column data that the engine
 expects to be reliable.
 
+**Decision (Patrick, 2026-05-13):** Approved — proceed with AST.
+Options 2 and 3 are off the table; next-session implementation
+should ship Option 1 directly without re-evaluating.
+
 ## What didn't surface
 
 The whole-tree scan turned up **zero**:

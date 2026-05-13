@@ -28,10 +28,14 @@ mentioned in **multi-line module docstrings** (the line containing
 `eval(` / `exec(` is just prose, the opening `"""` is many lines
 above, so the line-local quote walk falls through).
 
-Three fix options documented in the audit doc (§ Three fix options).
-**Recommended: AST-based string-region map** — parse each file with
-`ast.parse`, build set of `(line, col)` ranges inside string nodes,
-filter findings against that set. Robust, no new deps.
+**Decided (Patrick, 2026-05-13): AST-based string-region map.**
+Three options were enumerated in the audit doc (§ Three fix
+options); Patrick approved Option 1 inline. Implementation: parse
+each `.py` file with `ast.parse`, walk string nodes, build set of
+`(line, col)` ranges inside any string region, filter findings
+against that set. Robust against multi-line strings, f-strings,
+raw/b-strings. Stdlib `ast`, no new deps. Do not re-evaluate the
+other two options.
 
 The one real signal: `src/attune/ops/routes/specs.py:274` — cleanup
 broad-except missing the project-required `# noqa: BLE001` +
@@ -61,17 +65,20 @@ Two pieces of work, do them in this order:
     excepts — your call). One commit, small PR, fold the audit
     doc into the PR body.
 
-(B) Ship the AST-based string-region filter for PatternScanSource
-    so whole-tree sweeps stop producing the 14 multi-line-docstring
-    false positives. New module-private helper in
+(B) Ship the AST-based string-region filter for PatternScanSource.
+    Approved approach (don't re-evaluate alternatives): new module-
+    private helper in
     src/attune/workflows/discovery_sweep/sources/pattern_scan.py
-    that builds the (line, col)→inside-string set per file, replaces
-    the current line-local _is_inside_quoted_region for that
-    check. Keep the line-local helper as a fast-path fallback for
-    files that fail to parse. Add a test fixture with a known
-    multi-line docstring and assert zero queue findings on it. Then
-    re-run the whole-tree sweep and assert queue drops to 1 (just
-    the real signal from (A) — or 0 if (A) already merged).
+    that uses `ast.parse` to walk Constant/Str nodes and build a
+    set of (line, col)-range tuples representing string regions
+    per file. Filter findings whose (line, col) falls inside any
+    region. Keep the existing line-local _is_inside_quoted_region
+    as a fast-path fallback for files that fail to parse (SyntaxError
+    or otherwise — never let a malformed file crash the scan).
+    Add a test fixture with a known multi-line docstring and assert
+    zero queue findings on it. Then re-run the whole-tree sweep and
+    assert queue drops to 1 (just the real signal from (A) — or 0
+    if (A) already merged).
 
 Phase 2A (LLM source adapters) is still NOT started — don't drift
 into it. The DECIDE callouts for Phase 2A are in
