@@ -12,6 +12,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from .sources.bug_predict import BugPredictSource
+from .sources.dependency_check import DependencyCheckSource
 from .sources.pattern_scan import PatternScanSource
 from .sources.security_audit import SecurityAuditSource
 from .workflow import FindingSource
@@ -30,6 +31,7 @@ def default_sources() -> list[FindingSource]:
         PatternScanSource(),
         BugPredictSource(),
         SecurityAuditSource(),
+        DependencyCheckSource(),
     ]
 
 
