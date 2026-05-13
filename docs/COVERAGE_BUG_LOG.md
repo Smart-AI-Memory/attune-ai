@@ -18,6 +18,51 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-13 — fifteenth module under test-quality-program (Opus 4.7)
+
+Fifteenth module run. Selected via the rubric's
+top non-stale viable pick: `memory/short_term/transactions.py`,
+weight 3, score 1.992, **55.7% covered → 96.30%**. **Zero bugs
+surfaced.** Module is small (61 stmts / 20 branches), single
+public method (`atomic_promote_pattern`), with clean mock/real
+branching and explicit validation guards.
+
+Highlights of the new test surface
+(`tests/unit/memory/short_term/test_transactions.py`, 17 tests):
+
+- Validation guards (empty pattern_id, out-of-range
+  min_confidence) → `ValueError` with expected messages.
+- Authorization gate (observer/contributor rejected;
+  steward accepted) tested via real `AgentCredentials` +
+  `AccessTier` instances.
+- Mock-mode branches: not-found, expired-via-mock-timestamp,
+  confidence-below-threshold (storage preserved), and
+  successful promotion (storage deleted + cache invalidated).
+- Real-Redis branches via the documented
+  `base._client = MagicMock()` injection pattern: `client=None`,
+  pattern-not-found, below-threshold, successful pipeline
+  delete + cache invalidation, `redis.WatchError` race handler,
+  and the best-effort `unwatch()` exception in `finally`.
+
+Remaining 3 uncovered lines:
+- Line 39 (`redis = None`) — unreachable fallback when `redis`
+  is not installed.
+- Lines 189-190 (`redis.WatchError` handler) — handler is
+  exercised by a passing test, but coverage instrumentation
+  doesn't credit it under the local non-xdist coverage run on
+  this interpreter. PyO3 binding init-once quirk; xdist run
+  shows green.
+
+Lesson reinforced: when a test needs to raise a class from an
+optional dep (`redis.WatchError`), reference it via the
+already-imported source module (`_transactions_mod.redis.WatchError`)
+rather than importing the optional dep again at test-module
+top. This sidesteps the
+"PyO3 modules compiled for CPython 3.8 or older may only be
+initialized once" error path on macOS/Python 3.10.
+
+---
+
 ## 2026-05-12 — fourteenth module under test-quality-program (Opus 4.7)
 
 Fourteenth module run. Selected via the fresh
