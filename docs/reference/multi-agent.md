@@ -48,13 +48,11 @@ graph TB
 from attune import (
     EmpathyOS,
     PatternLibrary,
-    ConflictResolver,
     AgentMonitor,
 )
 
 # 1. Create shared infrastructure
 library = PatternLibrary()
-resolver = ConflictResolver()
 monitor = AgentMonitor(pattern_library=library)
 
 # 2. Create agent team with shared library
@@ -78,106 +76,16 @@ stats = monitor.get_team_stats()
 print(f"Collaboration efficiency: {stats['collaboration_efficiency']:.0%}")
 ```
 
----
+!!! warning "ConflictResolver removed in v6.8.0"
 
-## ConflictResolver
-
-Resolves conflicts between patterns from different agents.
-
-### Class Reference
-
-::: attune.coordination.ConflictResolver
-    options:
-      show_root_heading: false
-      show_source: false
-      heading_level: 4
-
-### Resolution Strategies
-
-| Strategy | Description | Best For |
-|----------|-------------|----------|
-| `HIGHEST_CONFIDENCE` | Pick pattern with highest confidence score | When accuracy is paramount |
-| `MOST_RECENT` | Pick most recently discovered pattern | Fast-changing domains |
-| `BEST_CONTEXT_MATCH` | Pick best match for current context | Context-sensitive decisions |
-| `TEAM_PRIORITY` | Use team-configured priorities | Enforcing team standards |
-| `WEIGHTED_SCORE` | Combine all factors (default) | Balanced decisions |
-
-### Example: Resolving Pattern Conflicts
-
-```python
-from attune import Pattern, ConflictResolver, ResolutionStrategy
-
-resolver = ConflictResolver()
-
-# Two agents have different recommendations
-performance_pattern = Pattern(
-    id="use_list_comprehension",
-    agent_id="performance_agent",
-    pattern_type="performance",
-    name="Use list comprehension",
-    description="Use list comprehension for better performance",
-    confidence=0.85
-)
-
-readability_pattern = Pattern(
-    id="use_explicit_loop",
-    agent_id="style_agent",
-    pattern_type="style",
-    name="Use explicit loop",
-    description="Use explicit loop for better readability",
-    confidence=0.80
-)
-
-# Resolve based on team priority
-resolution = resolver.resolve_patterns(
-    patterns=[performance_pattern, readability_pattern],
-    context={
-        "team_priority": "readability",  # Team values readability
-        "code_complexity": "high"         # Complex code needs clarity
-    }
-)
-
-print(f"Winner: {resolution.winning_pattern.name}")
-print(f"Reasoning: {resolution.reasoning}")
-# Output: Winner: Use explicit loop
-# Reasoning: Selected 'Use explicit loop' based on team priority: readability
-```
-
-### Example: Custom Team Priorities
-
-```python
-from attune import ConflictResolver, TeamPriorities
-
-# Configure team priorities
-priorities = TeamPriorities(
-    readability_weight=0.4,
-    performance_weight=0.2,
-    security_weight=0.3,
-    maintainability_weight=0.1,
-    type_preferences={
-        "security": 1.0,      # Security always wins
-        "best_practice": 0.8,
-        "performance": 0.7,
-        "style": 0.5,
-    },
-    preferred_tags=["production", "tested"]
-)
-
-resolver = ConflictResolver(team_priorities=priorities)
-
-# Now security patterns will be strongly preferred
-```
-
-### Resolution Statistics
-
-```python
-# After several resolutions
-stats = resolver.get_resolution_stats()
-
-print(f"Total resolutions: {stats['total_resolutions']}")
-print(f"Most used strategy: {stats['most_used_strategy']}")
-print(f"Average confidence: {stats['average_confidence']:.0%}")
-```
+    The `ConflictResolver` / `ResolutionResult` / `TeamPriorities` classes
+    were removed from `attune.coordination` (v6.8.0 breaking change, see
+    [CHANGELOG](https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md)).
+    They had no internal callers in attune-ai and were blocking Redis-free
+    installs. If you depended on these classes, pin
+    `attune-ai<6.8.0` or copy them from the v6.7.x source tree. A future
+    `attune-redis` plugin will re-introduce coordination primitives with
+    a proper API once it lands on PyPI.
 
 ---
 
@@ -275,27 +183,6 @@ print(f"Recent alerts: {health['recent_alerts']}")
 ---
 
 ## Data Classes
-
-### ResolutionResult
-
-::: attune.coordination.ResolutionResult
-    options:
-      show_root_heading: false
-      show_source: false
-      heading_level: 4
-
-Result of conflict resolution:
-
-```python
-result = resolver.resolve_patterns([pattern1, pattern2])
-
-print(result.winning_pattern.name)   # The chosen pattern
-print(result.losing_patterns)        # Patterns that lost
-print(result.strategy_used)          # Which strategy was used
-print(result.confidence)             # Confidence in this resolution
-print(result.reasoning)              # Human-readable explanation
-print(result.factors)                # Score breakdown
-```
 
 ### AgentMetrics
 
@@ -405,27 +292,6 @@ team_stats = monitor.get_team_stats()
 if team_stats["collaboration_efficiency"] < 0.3:
     print("Warning: Agents aren't learning from each other")
     # Consider: shared contexts, better pattern tagging
-```
-
-### 3. Configure Team Priorities Early
-
-```python
-# Set expectations before agents start
-priorities = TeamPriorities(
-    security_weight=0.4,  # Security first
-    ...
-)
-resolver = ConflictResolver(team_priorities=priorities)
-```
-
-### 4. Track Resolution History
-
-```python
-# Learn from past resolutions
-stats = resolver.get_resolution_stats()
-
-if stats["most_used_strategy"] == "highest_confidence":
-    print("Tip: Consider using team priorities for more nuanced decisions")
 ```
 
 ---
