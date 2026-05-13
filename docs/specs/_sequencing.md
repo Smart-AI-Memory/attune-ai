@@ -86,16 +86,18 @@ natural pause.
 
 ### ops-runner-tier2
 
-- Status: approved — 37 tasks, 0% done (largest spec)
+- Status: Phase 1 + Phase 2 shipped; Phases 3–5 pending
 - Why after security-hardening: 5 phases, each shippable.
   Phase 1 is pure inspection so it can start anytime. Phases
   3 and 4 ship together for the chaining UX.
 - Tasks
-  - [ ] Phase 1 — workflow registry verification
-  - [ ] Phase 2 — scope picker (dropdown + custom path)
+  - [x] Phase 1 — workflow registry verification (2026-05-13)
+  - [x] Phase 2 — scope picker (dropdown + custom path) (2026-05-14)
   - [ ] Phase 3 — persist recent runs
   - [ ] Phase 4 — clickable workflow-name pills
   - [ ] Phase 5 — structured recommendations
+- Phase 2 unblocks the discovery-sweep-ops-integration spec
+  (per its design dependency on the scope picker).
 - Spec: [ops-runner-tier2](ops-runner-tier2/)
 
 ### discovery-sweep — done 2026-05-13
@@ -239,19 +241,19 @@ Open only if a trigger condition fires.
 
 ## Today's recommended pick
 
-**ops-runner-tier2 Phase 1.3** — implement the
-`PATH_ARG_REGISTRY` dict per PR #285's audit. The audit
-proved hypothesis H2 right (workflow `--path` support is
-uneven) and proposed a three-way registry (Option 2) instead
-of the spec's literal binary. ~50 LoC: registry dict in
-`src/attune/ops/data.py` + drift-guard test in
-`tests/unit/ops/test_path_support_registry.py`. Once landed,
-Phases 2–5 of ops-runner-tier2 can read the registry and
-ship the scope picker.
+**ops-runner-tier2 Phase 3** — persist recent runs to disk
+so the dashboard survives a server restart without losing
+history. Bundle with Phase 4 (clickable workflow-name pills)
+for the chaining UX, per the spec's "3 and 4 ship together"
+note.
 
-Alternative: **test-quality-program** — continuous module-
-by-module work via the rubric. Slot whenever there's spare
-context between bigger work.
+Alternative: **discovery-sweep-ops-integration** — now
+unblocked by Phase 2's scope picker. Or **test-quality-program**
+as opportunistic filler.
+
+Recently shipped:
+- 2026-05-14 — ops-runner-tier2 Phase 2 (scope picker).
+- 2026-05-13 — ops-runner-tier2 Phase 1.3 (PATH_ARG_REGISTRY).
 
 ---
 

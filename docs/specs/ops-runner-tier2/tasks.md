@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phases 2–5 pending
+**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phases 3–5 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -18,19 +18,26 @@ Goal: turn hypothesis H2 ("Workflow `--path` support is unevenly implemented") i
 
 Goal: per-row dropdown that scopes the workflow run to one feature or custom path.
 
-- [ ] **2.1** Add `Feature` dataclass + `list_features()` to `src/attune/ops/data.py`. Reads `.help/features.yaml`, returns `[]` on missing/malformed. Caches result with mtime check.
-- [ ] **2.2** Pass `features` + `supports_path` to `workflows.html` from `dashboard.py`.
-- [ ] **2.3** Render the `<select>` + hidden `<input type="text">` per row in `workflows.html`. Show `<span class="scope-na">` for workflows where `supports_path[w.name] is False`.
-- [ ] **2.4** Update `RunRequest` body to accept `path: str | None` in `routes/runner.py`. Validate via `_validate_file_path`.
-- [ ] **2.5** Extend `RunnerService.start_run()` + `_default_command()` to thread `path` into the subprocess invocation.
-- [ ] **2.6** `runner.js`: add `getScope(row)`, wire the picker toggle UX (custom path input shows when "Custom path…" is selected), pass scope as POST body.
-- [ ] **2.7** CSS: `.scope-picker`, `.scope-custom`, `.scope-na` matching existing `.status-select` aesthetic.
-- [ ] **2.8** Tests:
-      - `test_list_features_*` — missing file, well-formed file, malformed YAML
-      - `test_run_with_path_arg` — POST with `path` ends up in subprocess command
-      - `test_run_rejects_invalid_path` — path traversal returns 400
-      - `test_run_rejects_path_for_no-path-workflow` — `release-prep` with path returns 400
-      - JS parsing: `test_runner_js_workflows_html_has_scope_picker` (assert the template renders the select for path-supporting workflows)
+**Shipped 2026-05-14.** 20 new tests in `tests/unit/ops/test_scope_picker.py`; full ops suite (189 tests) green.
+
+- [x] **2.1** `Feature` dataclass + `list_features()` in `src/attune/ops/data.py`. Reads `.help/features.yaml`, returns `[]` on missing/malformed. Module-level mtime cache `_FEATURES_CACHE` keyed by absolute YAML path. Path-derivation prefers `/**` directory globs over single-file entries; skips mid-name globs (`code_review_*.py`) — they're not addressable scopes.
+- [x] **2.2** `dashboard.py::workflows_page` reads `cfg.project_root`, calls `data.list_features()`, and builds `supports_path = {w.name: w.name in data.PATH_ARG_REGISTRY}` so the template can render either a picker or an `n/a` span.
+- [x] **2.3** `workflows.html` renders a `<select data-scope-picker>` with Project-wide + one option per feature with a usable path + "Custom path…", plus a hidden `<input data-scope-custom>`. `<span class="scope-na">` shown when `supports_path[w.name]` is False. A new "Scope" `<th>` sits between Description and Action; both columns are gated on `allow_run` so read-only mode keeps the existing layout.
+- [x] **2.4** `routes/runner.py::start_run` reads optional `{"path": "..."}` body via a new `_read_scope()` helper. Empty body / empty string / missing key → `None` (project-wide). Path is validated via `_validate_file_path(allowed_dir=cfg.project_root)`; traversal / outside-root / non-string / malformed-JSON all return 400 BEFORE the runner is touched.
+- [x] **2.5** `Run` gained a `path: str | None` field; `to_dict()` exposes it. `RunnerService.start(workflow, *, path=None)` records the scope. `_execute` appends `--path <scope>` after `_command_builder(workflow)` — test fixtures with `(str) → Sequence[str]` signatures keep working unchanged.
+- [x] **2.6** `runner.js` adds `getScope(row)` + `wireScopePickerToggle(row)`. Click handler builds `{path: scope}` body only when scope ≠ null; project-wide POSTs stay body-less so existing endpoints don't see a behavior change. Helpers exposed on `window.__attuneRunner`.
+- [x] **2.7** CSS `.scope-picker` / `.scope-custom` / `.scope-na` in `static/css/main.css` (matched against existing `.status-select` aesthetic — same arrow glyph, `6px` radius, max-width 220px).
+- [x] **2.8** Tests:
+      - `test_list_features_*` (6 tests) — missing file, well-formed, malformed YAML, non-mapping features key, glob-only feature → `path=None`, mtime cache invalidation
+      - `test_run_with_path_threads_into_subprocess` — `--path <validated>` shows up in the recorded command line
+      - `test_run_without_body_runs_project_wide` — no body → no `--path`
+      - `test_run_rejects_invalid_path_traversal` — `/etc/passwd` → 400
+      - `test_run_rejects_path_outside_project_root` — sibling dir → 400
+      - `test_run_rejects_path_for_no_path_workflow` — workflow absent from `PATH_ARG_REGISTRY` → 400
+      - `test_run_rejects_non_string_path` / `test_run_rejects_non_object_body` / `test_run_rejects_malformed_json` — input shape rejections
+      - `test_run_treats_empty_path_as_project_wide` — empty string → 201
+      - `test_workflows_page_renders_scope_picker_for_path_workflow` / `test_workflows_page_renders_n_a_for_no_path_workflow` / `test_workflows_page_no_scope_column_when_read_only` — template surface
+      - `test_runner_js_exports_get_scope_and_toggle` / `test_runner_js_default_post_is_no_body` — JS shape
 
 ## Phase 3 — Persistence (recent runs)
 
