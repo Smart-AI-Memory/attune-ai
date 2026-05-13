@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `discovery-sweep` meta-workflow (Phase 1). A new
+  `attune workflow run discovery-sweep --path X` fans out
+  across `FindingSource` adapters, runs deterministic
+  verification rules against the merged finding set, and
+  buckets results into `queue` (act on now), `questions`
+  (need human judgment), and `rejected` (filtered noise).
+  Phase 1 ships the engine, the `FindingSource` Protocol,
+  five routing rules (location-required, severity threshold,
+  confidence threshold, dedup-by-location, severity-conflict),
+  CLI registration including a `PATH_ARG_REGISTRY` entry,
+  and a non-LLM `PatternScanSource` adapter that scans for
+  bare-except, broad-Exception, eval/exec, subprocess
+  `shell=True`, and TODO/FIXME markers. LLM source adapters
+  (bug-predict, security-audit, dependency-check, perf-audit,
+  doc-audit) arrive in Phase 2. Spec:
+  `docs/specs/discovery-sweep/`.
+
 ### Deprecated
 
 - `TestAuditWorkflow.execute(src_path=...)` — use

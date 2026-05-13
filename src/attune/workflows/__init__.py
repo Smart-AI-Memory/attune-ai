@@ -180,6 +180,9 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # migration.py's "progressive-test-gen" -> "test-gen" alias).
     # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
     "DeepReviewAgentSDKWorkflow": (".deep_review", "DeepReviewAgentSDKWorkflow"),
+    # Discovery sweep meta-workflow (Phase 1 — non-LLM pattern source only).
+    # See docs/specs/discovery-sweep/.
+    "DiscoverySweepWorkflow": (".discovery_sweep", "DiscoverySweepWorkflow"),
     # Agent SDK adapters (v3.9.3)
     # SecurityAuditAgentSDKWorkflow: Merged into SecurityAuditWorkflow (v4.2.0)
     # PerfAuditAgentSDKWorkflow: Merged into PerformanceAuditWorkflow (v4.2.0)
@@ -304,6 +307,8 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "secure-release": "SecureReleasePipeline",
     # Meta-orchestration workflows (v4.0.0)
     "orchestrated-health-check": "OrchestratedHealthCheckWorkflow",
+    # Discovery sweep (Phase 1 — pattern-scan only; LLM sources in Phase 2)
+    "discovery-sweep": "DiscoverySweepWorkflow",
     # Release preparation (v5.2 — agent team is canonical)
     "release-prep": "ReleasePrepTeamWorkflow",
     # Research and synthesis workflows

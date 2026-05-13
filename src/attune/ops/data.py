@@ -77,6 +77,10 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     "code-review": PathArgSpec(kwarg="path"),
     "deep-review": PathArgSpec(kwarg="path"),
     "dependency-check": PathArgSpec(kwarg="path"),
+    # discovery-sweep ships as Category A (kwargs.get("path", "."))
+    # in Phase 1 of the discovery-sweep spec. See
+    # docs/specs/discovery-sweep/design.md § CLI integration.
+    "discovery-sweep": PathArgSpec(kwarg="path"),
     "doc-audit": PathArgSpec(kwarg="path"),
     "doc-gen": PathArgSpec(kwarg="path"),
     "perf-audit": PathArgSpec(kwarg="path"),
