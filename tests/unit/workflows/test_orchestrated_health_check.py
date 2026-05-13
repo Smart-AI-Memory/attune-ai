@@ -711,5 +711,98 @@ async def test_health_check_integration(tmp_path):
         assert report.grade in output
 
 
+class TestExecutePathKwarg:
+    """Tests for the `path=` kwarg migration in `execute()`.
+
+    PR-1 of workflow-path-arg-unification (2026-05-13) renames the
+    `project_root=` kwarg on `execute()` to `path=`, keeping the
+    legacy name as a deprecated alias for one major version.
+    """
+
+    @pytest.fixture
+    def _mock_strategy(self):
+        """Patch ParallelStrategy so execute() returns quickly."""
+        with patch("attune.workflows.orchestrated_health_check.ParallelStrategy") as mock_strategy:
+            mock_result = StrategyResult(
+                success=True,
+                outputs=[
+                    AgentResult(
+                        agent_id="security_auditor",
+                        success=True,
+                        output={"critical_issues": 0, "high_issues": 0, "medium_issues": 0},
+                        confidence=0.9,
+                        duration_seconds=0.1,
+                    ),
+                    AgentResult(
+                        agent_id="test_coverage_analyzer",
+                        success=True,
+                        output={"coverage_percent": 80.0},
+                        confidence=0.9,
+                        duration_seconds=0.1,
+                    ),
+                    AgentResult(
+                        agent_id="code_reviewer",
+                        success=True,
+                        output={"quality_score": 8.0},
+                        confidence=0.9,
+                        duration_seconds=0.1,
+                    ),
+                ],
+                aggregated_output={},
+                total_duration=0.3,
+            )
+            mock_strategy.return_value.execute = AsyncMock(return_value=mock_result)
+            yield mock_strategy
+
+    @pytest.mark.asyncio
+    async def test_execute_accepts_path_kwarg(self, tmp_path, _mock_strategy):
+        """execute(path=...) overrides self.project_root."""
+        other_root = tmp_path / "other"
+        other_root.mkdir()
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        await workflow.execute(path=str(other_root))
+
+        assert workflow.project_root == other_root.resolve()
+
+    @pytest.mark.asyncio
+    async def test_execute_legacy_project_root_warns(self, tmp_path, _mock_strategy):
+        """execute(project_root=...) emits DeprecationWarning AND still runs."""
+        other_root = tmp_path / "other"
+        other_root.mkdir()
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        with pytest.warns(DeprecationWarning, match="project_root"):
+            report = await workflow.execute(project_root=str(other_root))
+
+        assert workflow.project_root == other_root.resolve()
+        assert report.success is True
+
+    @pytest.mark.asyncio
+    async def test_execute_both_kwargs_path_wins(self, tmp_path, _mock_strategy):
+        """execute(path=A, project_root=B) uses A and warns about the conflict."""
+        path_root = tmp_path / "via_path"
+        path_root.mkdir()
+        legacy_root = tmp_path / "via_legacy"
+        legacy_root.mkdir()
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        with pytest.warns(DeprecationWarning, match="both"):
+            await workflow.execute(path=str(path_root), project_root=str(legacy_root))
+
+        assert workflow.project_root == path_root.resolve()
+
+    @pytest.mark.asyncio
+    async def test_target_still_maps_to_path(self, tmp_path, _mock_strategy):
+        """The VSCode-compat target= kwarg still routes to path."""
+        other_root = tmp_path / "via_target"
+        other_root.mkdir()
+        workflow = OrchestratedHealthCheckWorkflow(mode="daily", project_root=str(tmp_path))
+
+        await workflow.execute(target=str(other_root))
+
+        assert workflow.project_root == other_root.resolve()
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

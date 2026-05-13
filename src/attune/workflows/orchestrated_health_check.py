@@ -28,7 +28,7 @@ Quality Criteria (weighted):
 
 Example:
     >>> workflow = OrchestratedHealthCheckWorkflow(mode="weekly")
-    >>> report = await workflow.execute(project_root=".")
+    >>> report = await workflow.execute(path=".")
     >>> print(f"{report.overall_health_score}/100 ({report.grade})")
     85/100 (B)
 
@@ -40,6 +40,7 @@ Licensed under the Apache License, Version 2.0
 import asyncio
 import logging
 import time
+import warnings
 from pathlib import Path
 from typing import Any
 
@@ -98,7 +99,7 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         >>> workflow = OrchestratedHealthCheckWorkflow(
         ...     mode="weekly"
         ... )
-        >>> report = await workflow.execute(project_root=".")
+        >>> report = await workflow.execute(path=".")
         >>> if report.overall_health_score >= 80:
         ...     print("Project is healthy!")
 
@@ -177,6 +178,8 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
 
     async def execute(
         self,
+        path: str | None = None,
+        *,
         project_root: str | None = None,
         context: dict[str, Any] | None = None,
         **kwargs: Any,
@@ -184,25 +187,47 @@ class OrchestratedHealthCheckWorkflow(BaseWorkflow):
         """Execute health check workflow.
 
         Args:
-            project_root: Optional project root (overrides init
-                value)
+            path: Optional project root (overrides init value).
+                Replaces the deprecated `project_root=` kwarg.
+            project_root: Deprecated alias for `path`. Emits
+                `DeprecationWarning`; will be removed in v7.0.
             context: Additional context for agents
             **kwargs: Extra parameters (ignored, for VSCode/CLI
-                compatibility)
+                compatibility). The `target=` kwarg is still
+                accepted as an alias for `path=`.
 
         Returns:
             HealthCheckReport with comprehensive health
             assessment
 
         Raises:
-            ValueError: If project_root is invalid
+            ValueError: If path is invalid
 
         """
-        # Map 'target' to 'project_root' for VSCode compat
-        if "target" in kwargs and not project_root:
-            project_root = kwargs["target"]
-        if project_root:
-            self.project_root = Path(project_root).resolve()
+        # Migrate the deprecated `project_root=` kwarg → `path=`.
+        if project_root is not None and path is None:
+            warnings.warn(
+                "OrchestratedHealthCheckWorkflow.execute(project_root=...) "
+                "is deprecated; use execute(path=...) instead. "
+                "The legacy kwarg will be removed in v7.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            path = project_root
+        elif project_root is not None and path is not None:
+            warnings.warn(
+                "OrchestratedHealthCheckWorkflow.execute(): both "
+                "`path=` and `project_root=` supplied; `path=` "
+                "takes precedence and `project_root=` is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+
+        # Map 'target' to 'path' for VSCode compat.
+        if "target" in kwargs and path is None:
+            path = kwargs["target"]
+        if path is not None:
+            self.project_root = Path(path).resolve()
 
         if not self.project_root.exists():
             raise ValueError(f"Project root does not exist: {self.project_root}")
