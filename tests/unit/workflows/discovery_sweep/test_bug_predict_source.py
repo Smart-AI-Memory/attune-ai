@@ -4,7 +4,7 @@ Mocks ``BugPredictionWorkflow`` at its source module (per the
 existing CLAUDE.md lesson on deferred imports) so no
 ``claude_agent_sdk`` traffic happens during these tests. Integration
 coverage gated on a real API key lives in
-``tests/integration/workflows/test_discovery_sweep_bug_predict_integration.py``.
+``tests/integration/test_discovery_sweep_bug_predict_integration.py``.
 """
 
 from __future__ import annotations
