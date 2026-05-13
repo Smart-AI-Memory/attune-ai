@@ -58,6 +58,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` P2.5 — `DocAuditSource` LLM adapter wrapping
+  `DocAuditWorkflow`. Same pattern as P2.1–P2.4 (workflow-INSTANCE
+  level `STRUCTURED_EMIT_FOOTER` via a new `system_prompt_suffix`
+  kwarg on `DocAuditWorkflow.__init__`) with the default
+  `budget_multiplier=1.0` from `LLMSource` (doc-audit sits at the
+  default slot in the Phase 1.5 ratios). Wired into
+  `default_sources()`. Integration coverage marked
+  `@pytest.mark.integration`.
+
 - `discovery-sweep` P2.4 — `PerfAuditSource` LLM adapter
   wrapping `PerformanceAuditWorkflow`. Same pattern as P2.1–P2.3
   (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via a new
