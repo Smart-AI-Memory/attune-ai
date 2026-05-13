@@ -1,14 +1,24 @@
 # Tasks — Website update: dashboard maturity + fold-back
 
-**Status:** draft
+**Status:** draft — pre-Phase-1 audit done 2026-05-12 ([phase0-audit.md](phase0-audit.md))
 
-Two-phase plan. Phase 1 ships everything that doesn't depend on the fold-back; Phase 2 swaps install commands + adds redirects + automated screenshots once the fold lands. See `decisions.md`, `requirements.md`, `design.md` for context.
+Two-phase plan. Phase 1 ships everything that doesn't depend on the fold-back; Phase 2 swaps install commands + adds redirects + automated screenshots once the fold lands. See `decisions.md`, `requirements.md`, `design.md` for context, and `phase0-audit.md` for the current-state inventory + three implementation nuances the spec didn't flag (narrow `pip install` replacement scope, dashboard-mention reuse on homepage, changelog lives in root `CHANGELOG.md`).
 
 ---
 
 ## Phase 1 — Pre-fold (ship now, with current install command)
 
 Goal: Dashboard story is visible on the site using today's install command. Pre-announce the fold so existing attune-gui users see it coming.
+
+**Audit-driven sequencing recommendation** (see `phase0-audit.md`):
+Split Phase 1 into two PRs for cleaner review:
+- **PR-A** (Foundation): 1.1, 1.4, 1.5, 1.6.1 — helper file, FAQ entries, migration page. ~12 files, no screenshot dependency.
+- **PR-B** (Dashboard surface): 1.2, 1.3, 1.6.2 — dashboard page, homepage updates, banner. Depends on PR-A.
+
+**Three implementation nuances** flagged by the audit:
+- 1.1.1 — Replace `pip install` only in `website/app/*.tsx` (~10 places), not in `website/content/blog/*.mdx` (~18 places). Blog posts are time-stamped historical artifacts.
+- 1.3.1 — Reuse the existing homepage "local dashboard" copy (lines 26-27, 198, 291 of `app/page.tsx`) rather than adding a parallel mention.
+- 1.4.1 — Changelog entries land in **root `CHANGELOG.md`**, which `website/app/changelog/page.tsx:25` renders. No website-source changelog file exists.
 
 ### 1.1 — Foundation
 
