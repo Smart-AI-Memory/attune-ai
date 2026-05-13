@@ -93,7 +93,10 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     "health-check": PathArgSpec(kwarg="project_root"),
     "orchestrated-health-check": PathArgSpec(kwarg="project_root"),
     "rag-code-gen": PathArgSpec(kwarg="cwd"),
-    "test-audit": PathArgSpec(kwarg="src_path", required=True),
+    # test-audit migrated to `path` in workflow-path-arg-unification
+    # PR-3 (2026-05-13); required=True preserved (workflow errors
+    # when missing).
+    "test-audit": PathArgSpec(kwarg="path", required=True),
 }
 
 

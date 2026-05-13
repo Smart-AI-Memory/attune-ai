@@ -45,18 +45,18 @@ def mock_result_message():
 class TestTestAuditExecute:
     """Tests for TestAuditWorkflow.execute()."""
 
-    def test_execute_missing_src_path_returns_error(self, workflow):
-        """execute() with no src_path returns error result."""
+    def test_execute_missing_path_returns_error(self, workflow):
+        """execute() with no path returns error result."""
         result = asyncio.run(workflow.execute())
         assert isinstance(result, WorkflowResult)
         assert result.success is False
-        assert "src_path argument is required" in result.error
+        assert "path argument is required" in result.error
 
-    def test_execute_empty_src_path_returns_error(self, workflow):
-        """execute() with empty src_path returns error result."""
-        result = asyncio.run(workflow.execute(src_path=""))
+    def test_execute_empty_path_returns_error(self, workflow):
+        """execute() with empty path returns error result."""
+        result = asyncio.run(workflow.execute(path=""))
         assert result.success is False
-        assert "src_path argument is required" in result.error
+        assert "path argument is required" in result.error
 
     @patch("attune.workflows.test_audit.workflow.claude_agent_sdk")
     def test_execute_success(self, mock_sdk, workflow, mock_result_message):
@@ -201,3 +201,63 @@ class TestTestAuditErrorResult:
         after = datetime.now()
         assert before <= result.started_at <= after
         assert before <= result.completed_at <= after
+
+
+class TestExecutePathKwarg:
+    """Tests for the `path=` kwarg migration in `execute()`.
+
+    PR-3 of workflow-path-arg-unification (2026-05-13) renames the
+    `src_path=` kwarg to `path=`, keeping the legacy name as a
+    deprecated alias for one major version. The `required=True`
+    semantic in `PATH_ARG_REGISTRY` is preserved — calling
+    `execute()` with no path still returns an error.
+    """
+
+    @pytest.fixture
+    def _mock_sdk(self, mock_result_message):
+        """Patch claude_agent_sdk.query to short-circuit the audit."""
+        with patch("attune.workflows.test_audit.workflow.claude_agent_sdk") as mock_sdk:
+
+            async def fake_query(**_kwargs):
+                yield mock_result_message
+
+            mock_sdk.query = fake_query
+            mock_sdk.ClaudeAgentOptions = MagicMock()
+            mock_sdk.AgentDefinition = MagicMock()
+            yield mock_sdk
+
+    def test_execute_accepts_path_kwarg(self, workflow, _mock_sdk):
+        """execute(path=...) runs without DeprecationWarning."""
+        import warnings as _warnings
+
+        with _warnings.catch_warnings(record=True) as captured:
+            _warnings.simplefilter("always")
+            result = asyncio.run(workflow.execute(path="/tmp/test"))
+        deprecations = [w for w in captured if issubclass(w.category, DeprecationWarning)]
+        assert deprecations == []
+        assert result.success is True
+
+    def test_execute_legacy_src_path_warns(self, workflow, _mock_sdk):
+        """execute(src_path=...) emits DeprecationWarning AND still runs."""
+        with pytest.warns(DeprecationWarning, match="src_path"):
+            result = asyncio.run(workflow.execute(src_path="/tmp/test"))
+        assert result.success is True
+
+    def test_execute_both_kwargs_path_wins(self, workflow, _mock_sdk):
+        """execute(path=A, src_path=B) uses A and warns about the conflict."""
+        with pytest.warns(DeprecationWarning, match="both"):
+            result = asyncio.run(workflow.execute(path="/tmp/via_path", src_path="/tmp/legacy"))
+        assert result.success is True
+        # Resolved path in metadata reflects the `path=` value.
+        assert "/tmp/via_path" in str(result.metadata.get("src_path", ""))
+
+    def test_execute_no_path_returns_required_error(self, workflow):
+        """execute() with no path returns the required-arg error.
+
+        Confirms `PATH_ARG_REGISTRY`'s `required=True` semantic
+        carries into the workflow body: a path is still required
+        after the rename.
+        """
+        result = asyncio.run(workflow.execute())
+        assert result.success is False
+        assert "path argument is required" in result.error
