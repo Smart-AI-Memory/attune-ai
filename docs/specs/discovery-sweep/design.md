@@ -17,12 +17,13 @@ Technical shape of the work. See `requirements.md` for what we're building, `tas
 │ DiscoverySweepWorkflow (workflow.py)                        │
 │                                                             │
 │  execute(path, budget_usd):                                 │
-│   1. sources = default_sources()                            │
-│   2. allocate per-source budget                             │
-│   3. fan out: run each source.discover() in parallel        │
-│   4. collect findings (handle source failures)              │
-│   5. apply verification rules → bucket each finding         │
-│   6. return SweepResult{ queue, questions, rejected,        │
+│   1. expand --path → list[str] of files (glob, dir, or 1)   │
+│   2. sources = default_sources()                            │
+│   3. allocate per-source budget by budget_multiplier        │
+│   4. fan out: run each source.discover(paths) in parallel   │
+│   5. collect findings (handle source failures)              │
+│   6. apply verification rules → bucket each finding         │
+│   7. return SweepResult{ queue, questions, rejected,        │
 │                          metadata }                         │
 └────────┬──────────────────────────────────┬─────────────────┘
          │                                  │
@@ -32,9 +33,11 @@ Technical shape of the work. See `requirements.md` for what we're building, `tas
 │  Protocol            │         │  (deterministic, not LLM)    │
 │                      │         │                              │
 │  name: str           │         │  - dedup_by_location()       │
-│  discover(path,      │         │  - severity_threshold()      │
-│           budget) -> │         │  - resolve_conflicts() →     │
-│       list[Finding]  │         │    routes to questions       │
+│  budget_multiplier   │         │  - severity_threshold()      │
+│  is_llm: bool        │         │  - resolve_conflicts() →     │
+│  discover(paths,     │         │    routes to questions       │
+│           budget) -> │         │                              │
+│       list[Finding]  │         │                              │
 └──────┬───────────────┘         │  - location_missing() →      │
        │                         │    routes to questions       │
        ▼                         └──────────────────────────────┘
@@ -47,11 +50,11 @@ Technical shape of the work. See `requirements.md` for what we're building, `tas
 │  DependencyCheckSource(wraps DependencyCheckWflw)│
 │  PerfAuditSource      (wraps PerformanceAuditW.) │
 │  DocAuditSource       (wraps DocAuditWorkflow)   │
+│  TestAuditSource      (wraps TestAuditWorkflow)  │
 └──────────────────────────────────────────────────┘
 ```
 
-> **DECIDE:** Parallel vs serial fan-out. Initial pick: `asyncio.gather` across sources, since each adapter is an `async def discover(...)` and the wrapped workflows already use `claude_agent_sdk.query()` which is async. Source-level isolation via `return_exceptions=True` — a crashed source becomes one questions entry, not a failed sweep.
-asyncio.gather sound good
+**Resolved 2026-05-13:** Fan out with `asyncio.gather` — each adapter is an `async def discover(...)` and the wrapped workflows already use `claude_agent_sdk.query()` which is async. Source-level isolation via `return_exceptions=True` — a crashed source becomes one questions entry, not a failed sweep.
 
 ---
 
@@ -121,13 +124,20 @@ from typing import Protocol, runtime_checkable
 @runtime_checkable
 class FindingSource(Protocol):
     name: str
+    budget_multiplier: float       # default 1.0; security-audit declares 4.0
+    is_llm: bool                   # False for PatternScanSource
 
     async def discover(
         self,
-        path: str,
+        paths: list[str],
         budget_usd: float,
     ) -> list[Finding]:
-        """Discover findings in `path`. Must respect budget_usd.
+        """Discover findings in `paths`. Must respect budget_usd.
+
+        `paths` is a list of repo-relative file paths produced by the engine's
+        glob-expansion of the user's `--path` argument. Sources receive a
+        concrete list of files, NOT a glob — the engine resolves all glob /
+        directory inputs upstream so every source sees the same file set.
 
         Implementations should:
         - Return early (with partial findings) if budget is exhausted
@@ -189,7 +199,9 @@ return [Finding(
 
 This is what guarantees engine progress even when the LLM ignores the JSON instruction: one low-confidence finding ends up in `questions`, the user sees that the adapter degraded, and the sweep moves on.
 
-> **DECIDE:** Exact JSON schema. Sketch above is a starting point — finalize during P2.1.
+**Augmentation happens at the workflow-instance level, never the class.** Adapters construct a workflow instance with the augmented prompt at call time, leaving the workflow class untouched. Mutating the class's prompt attribute would break the wrapped workflow's own tests (which assert on the unaugmented prompt) and contaminate any non-sweep callers of the same workflow.
+
+**Resolved 2026-05-13 (deferred):** Sketch above is the starting point. Finalize the exact schema during P2.1, based on what `BugPredictionWorkflow` actually emits when prompted with `STRUCTURED_EMIT_FOOTER`.
 
 ---
 
@@ -229,7 +241,15 @@ def route(finding: Finding, all_findings: list[Finding]) -> Bucket:
     return Queue()
 ```
 
-> **DECIDE:** Threshold values. Initial: medium severity, 0.5 confidence. Tune after dogfood.
+**Resolved 2026-05-13:** Thresholds are `severity ≥ medium` and `confidence ≥ 0.5`. Codify in `verification.py`:
+
+```python
+SEVERITY_RANK = {"critical": 5, "high": 4, "medium": 3, "low": 2, "info": 1}
+QUEUE_SEVERITY_MIN = "medium"        # rank ≥ 3
+QUEUE_CONFIDENCE_MIN = 0.5
+```
+
+Asymmetry by design: `low`-severity routes to `rejected` (known noise), but `low`-confidence routes to `questions` (might be a high-severity finding the source isn't sure about — worth asking, not discarding). Tune after dogfood.
 
 ---
 
@@ -247,12 +267,13 @@ def default_sources() -> list[FindingSource]:
         DependencyCheckSource(),
         PerfAuditSource(),
         DocAuditSource(),
+        TestAuditSource(),
     ]
 ```
 
 The `--no-llm` flag filters to `[s for s in default_sources() if not isinstance(s, LLMSource)]` — relies on a marker mixin or duck-type check on a `is_llm: bool` attribute.
 
-> **DECIDE:** `--source <name>` filter. Cheap addition; defer if not needed.
+**Resolved 2026-05-13:** Yes — add `--source <name>` filter as part of Phase 3 CLI flags (P3.5). Filters `default_sources()` to a single adapter, useful for debugging which source raised a given finding.
 
 ---
 
@@ -275,7 +296,7 @@ def __getattr__(name):
 
 CLI surface (`attune workflow run discovery-sweep ...`) is already uniform per the recent path-arg unification work — no `cli_minimal.py` changes needed beyond ensuring `discovery-sweep` accepts the `--path`, `--budget`, `--verbose`, `--json`, `--no-llm` kwargs.
 
-> **DECIDE:** Whether `discovery-sweep` joins `PATH_ARG_REGISTRY` in `src/attune/ops/data.py`. Yes — required for ops-dashboard scope picker to work. Add as part of P1.3.
+**Resolved 2026-05-13:** Yes — `discovery-sweep` joins `PATH_ARG_REGISTRY` in `src/attune/ops/data.py` as **Category A** with `kwarg="path"`, `required=False`. Required for the ops-runner-tier2 scope picker to render. Added as part of task **P1.7** (registration), not P1.3 (Protocol definition).
 
 ---
 
@@ -294,7 +315,8 @@ src/attune/workflows/discovery_sweep/
 │   ├── security_audit.py        # SecurityAuditSource
 │   ├── dependency_check.py      # DependencyCheckSource
 │   ├── perf_audit.py            # PerfAuditSource
-│   └── doc_audit.py             # DocAuditSource
+│   ├── doc_audit.py             # DocAuditSource
+│   └── test_audit.py            # TestAuditSource
 └── llm_source_base.py           # shared parser + structured-emit prompt helper
 ```
 

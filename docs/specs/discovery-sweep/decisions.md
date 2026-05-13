@@ -40,7 +40,7 @@ Every sweep emits findings into exactly one of:
 
 The `questions` bucket is the load-bearing piece. It's what lets the engine ship aggressively into `queue` without false positives — anything ambiguous routes to `questions` instead of either accept-or-drop.
 
-> **DECIDE:** Severity threshold for queue. Initial guess: medium+ goes to queue, low goes to rejected, anything missing a location field goes to questions. Revisit after first dogfood run.
+**Resolved 2026-05-13:** Severity threshold for queue is `medium+`. `low` and `info` route to `rejected` (noise tier). Findings missing a location route to `questions` regardless of severity — even a `critical` finding can't be acted on without a file:line. Tunable in v2 if dogfood reveals the threshold is wrong.
 
 ---
 
@@ -58,7 +58,7 @@ A meta-workflow that wraps each audit as a `FindingSource` adapter:
 - Allocates `budget_usd` across sources (default: equal split, override per source)
 - Receives findings as typed `Finding` objects from each adapter
 - Runs verification rules on the merged finding set
-- Returns structured output that the CLI can present, the ops dashboard can render as chips, and the retirement evaluation (P2.4) can compare against single-workflow outputs
+- Returns structured output that the CLI can present, the ops dashboard can render as chips, and the surface evaluation (P2.7) can compare against single-workflow outputs
 
 ---
 
@@ -71,13 +71,13 @@ Adapters wrap LLM-driven workflows whose final_output is prose. Two options to e
 
 Choose **structured emit**. Costs: one extra paragraph in each wrapped workflow's system prompt, a parser per adapter (≈30 lines), and a fallback path when the JSON block is missing or malformed (degrade gracefully to "one low-confidence text-only finding"). Benefit: every adapter parses the same way, drift is caught by a single parse-failure test, and we don't depend on the LLM's prose stability.
 
-> **DECIDE:** Exact JSON schema for the emitted findings block. Sketch in `design.md`; finalize once the first adapter is being implemented (P2.1). OK
+**Resolved 2026-05-13 (deferred):** Sketch in `design.md` accepted. Finalize the exact schema when implementing the first adapter (P2.1), based on what the wrapped workflow actually emits.
 
 ---
 
 ## Why a Protocol, not a base class
 
-The adapter contract is one method: `discover(path: str, budget_usd: float) -> list[Finding]`. There's no shared state, no lifecycle, no template-method override pattern. A `typing.Protocol` is the right shape:
+The adapter contract is one method: `discover(paths: list[str], budget_usd: float) -> list[Finding]`. There's no shared state, no lifecycle, no template-method override pattern. A `typing.Protocol` is the right shape:
 
 - Adapters don't need to inherit anything — `PatternScanSource` (non-LLM, wraps a regex scanner) and `BugPredictSource` (LLM, wraps a SDK-native workflow) implement the same Protocol without sharing an ancestor.
 - Tests can use trivial fake sources (`@dataclass class FakeSource: name: str; ... def discover(...)`)
@@ -93,30 +93,49 @@ good
 
 `discovery-sweep` is system-driven: "find everything worth flagging across all my analysis lenses, hand me back a triaged queue." It fans out, it dedupes, it triages, it surfaces questions. Different shape, different output contract.
 
-Existing workflows that share `discovery-sweep`'s "find issues" intent: `bug-predict`, `security-audit`, `dependency-check`, `perf-audit`, `doc-audit`, `test-audit`. These are the candidates for wrapping (P2.1–P2.5) and for retirement evaluation (P2.4).
+Existing workflows that share `discovery-sweep`'s "find issues" intent: `bug-predict`, `security-audit`, `dependency-check`, `perf-audit`, `doc-audit`, `test-audit`. **All six** are wrapped as adapters (P2.1–P2.3, P2.5–P2.7) and contribute to the default source set.
 
-> **DECIDE:** The five LLM adapters. Initial pick: bug-predict, security-audit, dependency-check, perf-audit, doc-audit. `test-audit` is excluded from the source set and instead becomes the retirement-evaluation candidate in P2.4 — the question is whether the other five collectively surface what test-audit was finding (test gaps in test files), making test-audit redundant. Alternate framing (wrap all six, retire none) is also live; revisit after P2.1 ships.
+**Resolved 2026-05-13:** Wrap all six. Each lens is genuinely distinct — test-audit's test-quality scoring is not subsumed by bug-predict's pattern matching, dependency-check's CVE feed is not subsumed by security-audit's prompt analysis, etc. Trying to thin the set on a "redundancy" theory is the wrong question; the right question is whether the sweep's UX supersedes running each standalone (see "Why surface evaluation is a phase" below).
 
 ---
 
-## Why retirement evaluation is a phase, not an open question
+## Why surface evaluation is a phase, not an open question
 
-When `discovery-sweep` ships, individual audit workflows still exist. They have CLI entries, MCP tool exposure, ops-dashboard rows, and docs. Two failure modes if we don't evaluate retirement:
+When `discovery-sweep` ships, individual audit workflows still exist. They have CLI entries (`attune workflow run bug-predict ...`), MCP tool exposure, ops-dashboard rows, and docs. Two failure modes if we don't evaluate the surface area:
 
-1. **Surface bloat** — users see seven discovery-style workflows where one would do, and pick wrong.
+1. **Surface bloat** — users see seven discovery-style workflows where one entry point would do, and pick wrong.
 2. **Stale wrappers** — bug fixes in the underlying workflow have to be made twice (in the workflow + in any adapter-specific quirks).
 
-P2.4 is an empirical evaluation: run both the sweep and each candidate workflow on a real scope, compare outputs, recommend RETIRE / KEEP / DEFER per workflow. Output is a markdown doc with recommendations, not code changes. Deletion happens later (and only if the evaluation supports it) under a separate spec or PR. --sounds  like a  good recommendation
+P2.4 is an empirical evaluation: run both the sweep and each underlying workflow on a real scope, compare outputs, recommend per workflow:
+
+- **DEPRECATE CLI** — the standalone CLI invocation is now redundant; deprecate it but keep the workflow class (the sweep still uses it as an adapter)
+- **KEEP CLI** — the workflow has a use case the sweep doesn't serve (e.g., interactive depth tuning, single-source debugging) and the CLI stays
+- **DEFER** — not enough data, re-evaluate after more dogfood
+
+Output is a markdown doc with recommendations, not code changes. Actual deprecation lands in Phase 4 under separate PRs.
 
 ---
 
 ## Cost discipline
 
-`budget_usd` is hard-capped at the sweep level. The engine allocates per-source and **does not exceed the total** even if some sources come in under their share. The adapter for each LLM workflow passes its allocated budget through to the wrapped workflow's `max_budget_usd` knob.
+`budget_usd` is hard-capped at the sweep level. The engine allocates per-source proportionally to each source's `budget_multiplier` and **does not exceed the total** even if some sources come in under their share. The adapter for each LLM workflow passes its allocated budget through to the wrapped workflow's `max_budget_usd` knob.
+
+**Per-source budget multipliers.** Sources vary in real cost — `security-audit` fans out across 4–5 subagents and needs ~$10 alone at standard depth (per the CLAUDE.md lesson on silent budget-cap termination), while `bug-predict` and `dependency-check` are cheaper. Each `FindingSource` declares a `budget_multiplier: float` (default `1.0`); the engine sums the multipliers across LLM sources and allocates `budget_usd × multiplier / sum_multipliers` to each. Initial values:
+
+| Source | multiplier | Rationale |
+|---|---|---|
+| `BugPredictSource` | 1.0 | Single agent loop |
+| `SecurityAuditSource` | 4.0 | 4–5 subagents, expensive synthesis |
+| `DependencyCheckSource` | 0.5 | Mostly deterministic CVE feed + thin LLM layer |
+| `PerfAuditSource` | 1.5 | 2–3 subagents |
+| `DocAuditSource` | 1.0 | Single agent loop |
+| `TestAuditSource` | 1.5 | 2 subagents (scoring + recommendation) |
+
+Sum = 9.5. At default `$10` budget: security gets ~$4.21, perf/test get ~$1.58, bug/doc get ~$1.05, deps gets ~$0.53. Tune after dogfood.
 
 For the pattern adapter (PatternScanSource, no LLM), `budget_usd` is ignored — pattern scanning is effectively free. Engine logs this for telemetry but doesn't redistribute the freed budget to LLM sources (would require a second pass; not worth it for v1).
 
-> **DECIDE:** Default total budget for `attune workflow run discovery-sweep` without an explicit `--budget` flag. Sketch: $10.00 — enough for a meaningful sweep at standard depth across 5 LLM adapters ($1/each), well above the bad-default $2.00 ceiling that surfaced in the existing CLAUDE.md lesson about silent budget-cap termination.
+**Resolved 2026-05-13:** Default total budget is **$10.00** — enough for a meaningful sweep at standard depth across the LLM adapters (~$1–$2 each), well above the bad-default $2.00 ceiling that surfaced in the existing CLAUDE.md lesson about silent budget-cap termination.
 
 ---
 

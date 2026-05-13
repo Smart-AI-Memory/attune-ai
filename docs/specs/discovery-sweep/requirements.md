@@ -82,16 +82,16 @@ Acceptance:
 - Each finding has a stable schema (see design.md for the dataclass shape)
 - The metadata block is sufficient for cost trending without parsing the findings
 
-### US-6 — Retirement evaluation is reproducible
+### US-6 — Surface evaluation is reproducible
 
-**As Pat, when I want to know whether `test-audit` is redundant with the sweep, I want a documented procedure I can re-run when sources change.**
+**As Pat, when I want to know whether any standalone audit CLI can be deprecated in favor of the sweep, I want a documented procedure I can re-run when sources change.**
 
 Acceptance:
 
-- A script or documented procedure runs both the sweep and the candidate workflow on the same path
-- Findings are cross-referenced — every candidate-workflow finding must map to one or more sweep findings (queue OR questions, not rejected)
-- Output is a markdown table per candidate with RETIRE / KEEP / DEFER recommendations
-- Lives in `docs/specs/discovery-sweep/retirement-evaluation.md` (see P2.4)
+- A script or documented procedure runs both the sweep and each underlying workflow standalone on the same path
+- Findings are cross-referenced — every standalone-workflow finding must map to one or more sweep findings (queue OR questions, not rejected)
+- Output is a markdown table per workflow with DEPRECATE CLI / KEEP CLI / DEFER recommendations
+- Lives in `docs/specs/discovery-sweep/surface-evaluation.md` (see P2.7)
 
 ---
 
@@ -162,6 +162,6 @@ The verification rules and triage routing are deterministic code, not an LLM cal
 
 ## Open requirement questions
 
-1. Should `--path` accept globs (`src/attune/**/*.py`)? (Default: pass through to sources; some may glob-expand internally, others won't.) I'm concerned about sometimes it working and not others.
-2. Should the sweep accept a `--source` flag to restrict to one source? (Useful for debugging; cheap to add.) yes
+1. **Resolved 2026-05-13:** `--path` accepts globs, directories, or single files. The engine resolves the user's input into a concrete `list[str]` of file paths BEFORE fan-out, then every source receives the same expanded list via `discover(paths, budget_usd)`. No per-source glob handling, no inconsistency. See design.md § FindingSource Protocol.
+2. **Resolved 2026-05-13:** Yes — `--source <name>` flag in Phase 3. See design.md § Default sources list.
 3. Should the sweep emit SSE events to the ops dashboard so progress is live? (Out of scope for v1; CLI-only.) ok out of scope

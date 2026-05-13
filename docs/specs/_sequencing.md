@@ -113,11 +113,13 @@ natural pause.
 - Tasks
   - [ ] Phase 1 — Engine + PatternScanSource (non-LLM floor)
   - [ ] Phase 2A — Shared LLM adapter base
-  - [ ] Phase 2B — Per-source adapters (P2.1–P2.6, includes
-        retirement eval P2.4)
+  - [ ] Phase 2B — Per-source adapters P2.1–P2.6 (six LLM
+        sources) + P2.7 surface evaluation (runs last)
   - [ ] Phase 3 — Output polish + JSON mode
-  - [ ] Phase 4 — Ops dashboard integration (may split out)
-  - [ ] Phase 5 — Retirement execution (conditional on P2.4)
+  - [ ] Phase 4 — CLI surface deprecation (conditional on P2.7)
+- Out of scope (post-spec): ops dashboard integration
+  deferred to follow-up spec `discovery-sweep-ops-integration`
+  once ops-runner-tier2 Phase 2 ships
 - Spec: [discovery-sweep](discovery-sweep/)
 - Plan: [.claude/plans/discovery-sweep.md](../../.claude/plans/discovery-sweep.md)
 

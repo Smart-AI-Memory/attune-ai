@@ -14,26 +14,28 @@ Goal: prove the engine + Protocol + verification rules + CLI integration end-to-
 
 - [ ] **1.1** Create `src/attune/workflows/discovery_sweep/` package skeleton. Empty `__init__.py`, stub `workflow.py`, stub `cli_workflow.py`, `sources/` subpackage.
 - [ ] **1.2** Define `Finding`, `QuestionFinding`, `RejectedFinding`, `SweepResult`, `SweepMetadata` dataclasses in `workflow.py`. All frozen where appropriate.
-- [ ] **1.3** Define `FindingSource` Protocol in `workflow.py` (`@runtime_checkable`, async `discover(path, budget_usd) -> list[Finding]`).
+- [ ] **1.3** Define `FindingSource` Protocol in `workflow.py` per design.md § FindingSource Protocol. `@runtime_checkable`, with attributes `name: str`, `budget_multiplier: float`, `is_llm: bool`, and async method `discover(paths: list[str], budget_usd: float) -> list[Finding]`. **Important:** `discover` takes `paths: list[str]` (engine has already glob-expanded), NOT `path: str`.
 - [ ] **1.4** Implement `verification.py` — the five routing rules from `design.md` § Verification rules. Pure functions, no I/O, no LLM. Unit tests cover each rule + interactions.
 - [ ] **1.5** Implement `DiscoverySweepWorkflow.execute()` in `workflow.py`:
-      - Accept `path`, `budget_usd` (default 10.00), `sources` (default `None` → use `default_sources()`), `no_llm` (default False).
-      - Allocate budget across sources, `asyncio.gather` with `return_exceptions=True`.
+      - Accept `path: str` (the user's raw input — may be a glob, directory, or file), `budget_usd` (default 10.00), `sources` (default `None` → use `default_sources()`), `no_llm` (default False).
+      - **Glob-expand `path`** into a concrete `list[str]` of files BEFORE fan-out. Sources receive the expanded list, never the raw input. Use `pathlib.Path.glob` or equivalent; handle directory→recursive-file-list and single-file→one-element-list as natural cases.
+      - **Allocate budget proportionally** by source `budget_multiplier`: each LLM source gets `budget_usd × (source.budget_multiplier / sum_of_llm_multipliers)`. Non-LLM sources get `budget_usd=0.0` (they ignore it anyway). See decisions.md cost-discipline table for the multiplier values.
+      - Fan out with `asyncio.gather`, `return_exceptions=True` — a crashed source becomes one questions entry, not a failed sweep.
       - Run verification, build `SweepResult`.
       - Return `WorkflowResult` whose `final_output` is the human-readable markdown rendering AND whose `metadata` carries the structured `SweepResult` for JSON output.
-- [ ] **1.6** Implement `PatternScanSource` in `sources/pattern_scan.py`. Wraps existing pattern scanning (find the existing scanner — likely in `src/attune/workflows/bug_predict_patterns.py` or `src/attune/security/` — and adapt). `name = "pattern-scan"`, `is_llm = False`. Returns `Finding` objects directly. Ignores `budget_usd`.
+- [ ] **1.6** Implement `PatternScanSource` in `sources/pattern_scan.py`. Wraps existing pattern scanning (find the existing scanner — likely in `src/attune/workflows/bug_predict_patterns.py` or `src/attune/security/` — and adapt). `name = "pattern-scan"`, `is_llm = False`, `budget_multiplier = 0.0` (non-LLM, doesn't consume budget). Iterates the `paths` list directly, returns `Finding` objects.
 - [ ] **1.7** Register `DiscoverySweepWorkflow` in `src/attune/workflows/__init__.py` (lazy import + `_DEFAULT_WORKFLOW_NAMES`). Add to `PATH_ARG_REGISTRY` in `src/attune/ops/data.py` (Category A: takes `path` kwarg).
-- [ ] **1.8** CLI smoke test: `attune workflow run discovery-sweep --path tests/fixtures/ --no-llm` returns a SweepResult with at least one finding from the pattern source.
+- [ ] **1.8** CLI smoke test: `attune workflow run discovery-sweep --path tests/fixtures/ --no-llm` returns a SweepResult with at least one finding from the pattern source. Verify glob expansion works: `--path "tests/fixtures/**/*.py"` produces the same or larger finding set as `--path tests/fixtures/`.
 - [ ] **1.9** Tests:
-      - `test_engine.py` — happy path with two fake sources, one returning findings, one raising
+      - `test_engine.py` — happy path with two fake sources, one returning findings, one raising; budget allocation by multiplier (mock two LLM sources with multipliers 1.0 and 3.0, assert each receives `budget × ratio`); glob expansion (pass `"tests/fixtures/**/*.py"`, assert sources receive an expanded `list[str]`)
       - `test_verification.py` — each rule in isolation + the routing-order interaction
-      - `test_pattern_scan_source.py` — runs against a fixture file with a known pattern hit
+      - `test_pattern_scan_source.py` — runs against a fixture file with a known pattern hit; verify it iterates `paths: list[str]` correctly
       - `test_discovery_sweep_registered.py` — drift guard: workflow appears in `list_workflows()` and `PATH_ARG_REGISTRY`
 - [ ] **1.10** Update CHANGELOG `[Unreleased]` § Added: discovery-sweep engine + PatternScanSource (no LLM).
 
 ---
 
-## Phase 2 — LLM source adapters + retirement evaluation
+## Phase 2 — LLM source adapters + surface evaluation
 
 Goal: wrap each audit-family workflow as a `FindingSource`. Each is an independent sub-PR.
 
@@ -56,17 +58,21 @@ Each sub-task ships an adapter that:
 4. Parses findings via `parse_findings_json`
 5. Adds itself to `default_sources()`
 
-- [ ] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. Unit tests mock `BugPredictionWorkflow.execute()`. Integration test gated on `HAS_API_KEY`. Update CHANGELOG.
-- [ ] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. Same pattern as P2.1.
-- [ ] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. Same pattern.
-- [ ] **P2.4** **Retirement evaluation (empirical, no code).** Run `attune workflow run discovery-sweep --path src/attune/security/` and `attune workflow run discovery-sweep --path src/attune/workflows/`. For each scope, also run candidate workflows that *might* be redundant (initial candidates: `test-audit`; later add others as P2.1–P2.3, P2.5 reveal subsumption). Cross-reference findings.
-      - Output: `docs/specs/discovery-sweep/retirement-evaluation.md` with per-workflow RETIRE / KEEP / DEFER recommendation.
-      - For RETIRE candidates, draft the deprecation path (lazy-import shim per the existing PEP 562 lesson, CHANGELOG entry, migration alias).
-      - Do NOT delete anything in this task — recommendation only. Deletion is a separate PR.
-- [ ] **P2.5** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. Same pattern as P2.1.
-- [ ] **P2.6** `DocAuditSource` wrapping `DocAuditWorkflow`. Same pattern as P2.1.
+- [ ] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. Unit tests mock `BugPredictionWorkflow.execute()`. **Integration test uses `@pytest.mark.integration` marker (default-excluded), NOT `pytest.mark.skipif(not HAS_API_KEY)` — see CLAUDE.md lesson on poisoning the matrix when Anthropic flakes.** Establishes the pattern P2.2–P2.6 inherit. `budget_multiplier = 1.0`. Update CHANGELOG.
+- [ ] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. Same pattern as P2.1. `budget_multiplier = 4.0` (multi-subagent fan-out — see decisions.md cost discipline).
+- [ ] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. Same pattern. `budget_multiplier = 0.5`. **Note: hybrid source.** `DependencyCheckWorkflow` runs `pip-audit` (deterministic CVE feed) alongside LLM analysis. The adapter should pass through whatever the workflow emits, but if dogfood reveals the CVE half could short-circuit the LLM half entirely, that's a v1.1 optimization.
+- [ ] **P2.4** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. Same pattern as P2.1. `budget_multiplier = 1.5`.
+- [ ] **P2.5** `DocAuditSource` wrapping `DocAuditWorkflow`. Same pattern as P2.1. `budget_multiplier = 1.0`.
+- [ ] **P2.6** `TestAuditSource` wrapping `TestAuditWorkflow`. Same pattern as P2.1. `budget_multiplier = 1.5`. Test-quality scoring is a distinct lens not covered by the other five — see decisions.md.
+- [ ] **P2.7** **Surface evaluation (empirical, no code).** Runs AFTER all six LLM adapters ship so the eval has full-coverage signal. Run `attune workflow run discovery-sweep --path src/attune/security/` and `attune workflow run discovery-sweep --path src/attune/workflows/`. For each scope, also run each underlying workflow standalone (`attune workflow run bug-predict --path X`, etc.). Cross-reference findings.
+      - Output: `docs/specs/discovery-sweep/surface-evaluation.md` with per-workflow recommendation:
+        - **DEPRECATE CLI** — standalone CLI invocation is redundant; keep the workflow class (the sweep uses it as an adapter), deprecate the CLI entry
+        - **KEEP CLI** — workflow has a use case the sweep doesn't serve (depth tuning, single-source debug, MCP-only consumers)
+        - **DEFER** — not enough data; re-evaluate after more dogfood
+      - For DEPRECATE candidates, draft the deprecation path (CHANGELOG entry, migration message in routing, timeline for actual removal).
+      - Do NOT deprecate or delete anything in this task — recommendation only. Execution lives in Phase 4.
 
-> **DECIDE:** Order of P2.1–P2.6. The user's original prompts suggested P2.1=bug-predict first, then security-audit, then retirement eval (P2.4) — but the eval needs *some* LLM sources shipped to be meaningful, hence P2.4 placement here (after P2.1–P2.3 give us 3 LLM sources to evaluate). Revisit if dogfood shows the eval can run with fewer sources.
+**Order resolved 2026-05-13:** P2.1 → P2.2 → P2.3 → P2.4 → P2.5 → P2.6 → P2.7. Surface eval (P2.7) runs LAST so it has full-coverage signal; Phase 4 then acts on it in a single pass. P2.1 is the prototype that establishes the structured-emit pattern for P2.2–P2.6 to follow.
 
 ---
 
@@ -86,27 +92,14 @@ Goal: turn the markdown rendering into something pleasant and machine-readable.
 
 ---
 
-## Phase 4 — Ops dashboard integration
+## Phase 4 — CLI surface deprecation
 
-Goal: surface sweep results in the ops dashboard from ops-runner-tier2.
+Goal: act on the surface-evaluation recommendations from P2.7. Only opens if P2.7 returns any DEPRECATE CLI recommendations.
 
-- [ ] **4.1** Discovery-sweep row in `workflows.html` honors the scope picker (already supported via `PATH_ARG_REGISTRY` from P1.7).
-- [ ] **4.2** Sweep results render as colored chips per bucket (queue/questions/rejected counts) in the row.
-- [ ] **4.3** Clicking a chip opens a detail view that lists findings (re-uses the existing run-view page).
-- [ ] **4.4** SSE event stream emits per-source progress (`source X started`, `source X finished with N findings`) so the dashboard shows a live progress bar.
-
-> **DECIDE:** Phase 4 scope. Could be deferred to a follow-up spec (`discovery-sweep-ops-integration`) if ops-runner-tier2 isn't far enough along. Revisit when Phase 3 ships.
-
----
-
-## Phase 5 — Retirement execution
-
-Goal: act on the retirement recommendations from P2.4. Only opens if P2.4 returns any RETIRE recommendations.
-
-- [ ] **5.1** For each RETIRE candidate, implement the deprecation shim (PEP 562 module-level `__getattr__` with `DeprecationWarning` per the existing CLAUDE.md lesson).
-- [ ] **5.2** CHANGELOG `### Deprecated` entries.
-- [ ] **5.3** Migration alias in routing if the workflow had a short CLI name (e.g. `test-audit` → `discovery-sweep`).
-- [ ] **5.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect retirements.
+- [ ] **4.1** For each DEPRECATE CLI candidate, mark the standalone CLI invocation deprecated. The workflow class stays (the sweep still uses it as an adapter); only the user-facing `attune workflow run <name>` entry shows a deprecation warning pointing at `discovery-sweep`.
+- [ ] **4.2** CHANGELOG `### Deprecated` entries.
+- [ ] **4.3** Migration message in `cli_minimal.py` workflow routing — when the user types a deprecated workflow name, print a note + run anyway (don't break).
+- [ ] **4.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect the deprecations.
 
 ---
 
@@ -114,16 +107,16 @@ Goal: act on the retirement recommendations from P2.4. Only opens if P2.4 return
 
 The spec is complete when:
 
-- Phase 1 + 2A + at least 3 of P2.1–P2.6 + Phase 3 have shipped
-- Phase 4 has either shipped OR been deferred to a named follow-up spec
-- Phase 5 has either shipped OR P2.4 returned zero RETIRE recommendations
+- Phase 1 + 2A + all six of P2.1–P2.6 + P2.7 surface eval + Phase 3 have shipped
+- Phase 4 has either shipped OR P2.7 returned zero DEPRECATE CLI recommendations
 - `discovery-sweep` appears in the `docs/specs/_sequencing.md` "Done" section
-- Phase 2 retirement evaluation is published
+- P2.7 surface evaluation document is published
 
 ---
 
 ## Out of scope (post-spec follow-ups)
 
+- **Ops dashboard integration** — deferred to a follow-up spec `discovery-sweep-ops-integration`, triggered when `ops-runner-tier2` Phase 2 (scope picker) ships. Includes: row in `workflows.html`, colored chips per bucket, SSE per-source progress events, detail view re-using the run-view page.
 - MCP tool exposure (`mcp__attune-ai__discovery_sweep`)
 - Caching by git SHA
 - Auto-fix / agentic remediation
