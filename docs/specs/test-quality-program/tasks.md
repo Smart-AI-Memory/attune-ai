@@ -28,6 +28,31 @@
 |---|------|-------|--------|-------|
 | 9+ | Per-module cycles, one per session. Each cycle: pick from working set → run loop → ship. Refresh rubric (`scripts/score_test_quality.py`) when output is >2 weeks stale or after any large refactor. | various | recurring | No closure condition. Each cycle's deliverable is a merged PR + log entry. |
 
+### Phase 4 — Rubric refinement: usage signal
+
+Three consecutive cycles on 2026-05-12 (cycles 12, 13, 14) surfaced
+unused-or-silently-skipped modules as top rubric picks:
+
+| PR | Module | Issue |
+|----|--------|-------|
+| #287 | `cli_commands/help_commands.py` | 16 silently-skipped tests via `pytest.importorskip("frontmatter")` |
+| (n/a) | `workflows/test_lifecycle.py` + `test_maintenance_cli.py` | Orphan modules with zero inbound imports; source-marked "Removed" |
+| #289 | `workflows/test_runner_helpers.py` | Dead defensive `try/except` block (the 2% coverage gap was unreachable code) |
+
+The current score formula `weight × coverage_gap × risk_multiplier`
+ranks modules by "user value × untested surface" — exactly right for
+healthy code but wrong for dead/skipped code. The program needs a
+**usage signal** to deprioritize orphan modules.
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 10 | Add inbound-import count to `scripts/score_test_quality.py`. For each module, count distinct importing files outside its own package (`grep -rln "from attune.<module> " src/` or `grep -rln "import attune.<module>" src/`). Output a new `inbound_imports` column in `rubric_cache.csv`. | scripts | todo | Stdlib only; ~30 lines of Python. No behavior change to the score yet — this task just measures. |
+| 11 | Add a usage-discount factor to the score formula. Proposed: `score = weight × gap × risk × min(1.0, inbound_imports / N)` where `N` is tunable (start with 5). Document the threshold choice in `design.md §Prioritization rubric`. | scripts + design.md | todo | Apply to `rubric_cache.csv` and verify the three modules flagged above drop off the top of the working set. |
+| 12 | Update playbook in `design.md §Per-module loop` with the "diagnostic for the rubric" pattern from CLAUDE.md: when a picked module has surprisingly low `covered_pct` AND a non-trivial test file exists, grep for `pytest.importorskip` BEFORE writing tests. If a test file gates the module on an `importorskip("X")` and X isn't in `[dev]`, the fix is one line in pyproject.toml. | design.md | todo | One-paragraph addition; not a full phase. |
+
+Closes once tasks 10-12 ship and the next rubric refresh shows the
+flagged modules no longer in the top 20.
+
 ### Done-state for this spec
 
 This spec is a **standing program**, not a one-shot deliverable.
