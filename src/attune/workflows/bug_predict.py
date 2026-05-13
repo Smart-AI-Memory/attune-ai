@@ -210,7 +210,11 @@ class BugPredictionWorkflow(BaseWorkflow):
         assistant_parts: list[str] = []
         result_parts: list[str] = []
         run_result = AgentRunResult(result_text="No results returned.")
-        system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
+        system_prompt = (
+            f"{_SYSTEM_PROMPT}\n\n{self._system_prompt_suffix}"
+            if self._system_prompt_suffix
+            else _SYSTEM_PROMPT
+        )
         async for message in claude_agent_sdk.query(
             prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
