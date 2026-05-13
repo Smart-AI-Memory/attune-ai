@@ -50,7 +50,7 @@ class TestMemoryFeatures:
             assert info.status == FeatureStatus.MISSING_DEPENDENCY
             assert info.install_command is not None
             assert "pip install" in info.install_command
-            assert "attune-ai[memory]" in info.install_command
+            assert "attune-ai[redis]" in info.install_command
 
     def test_get_feature_status_redis_feature_available(self):
         """Test Redis feature status when Redis is available and running."""

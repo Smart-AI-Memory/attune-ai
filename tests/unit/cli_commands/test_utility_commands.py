@@ -880,7 +880,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "enable Redis-enhanced features" in captured.out
-        assert "attune-ai[memory]" in captured.out
+        assert "attune-ai[redis]" in captured.out
 
     def test_redis_available_and_running(
         self,
@@ -935,7 +935,7 @@ class TestCmdFeatures:
             name="Redis Memory",
             status="not_installed",
             message="Not available",
-            install_command="pip install 'attune-ai[memory]'",
+            install_command="pip install 'attune-ai[redis]'",
         )
 
         mock_mem = MagicMock()
@@ -950,7 +950,7 @@ class TestCmdFeatures:
 
         captured = capsys.readouterr()
         assert "Install:" in captured.out
-        assert "attune-ai[memory]" in captured.out
+        assert "attune-ai[redis]" in captured.out
 
 
 # ---------------------------------------------------------------------------

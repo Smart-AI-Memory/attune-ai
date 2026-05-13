@@ -105,8 +105,7 @@ orchestration, and a unified memory system.
 ```bash
 pip install attune-ai                # Core
 pip install 'attune-ai[developer]'   # Developer extras
-pip install 'attune-ai[memory]'      # Memory extras
-pip install 'attune-ai[redis]'       # Redis support
+pip install 'attune-ai[redis]'       # Redis-backed memory + AMS plugin
 ```
 
 ---

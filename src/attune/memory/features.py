@@ -141,7 +141,7 @@ class MemoryFeatures:
                     name=redis_features[feature],
                     status=FeatureStatus.MISSING_DEPENDENCY,
                     message="Redis package not installed",
-                    install_command="pip install 'attune-ai[memory]'",
+                    install_command="pip install 'attune-ai[redis]'",
                 )
 
             if not MemoryFeatures.is_redis_running():
@@ -250,7 +250,7 @@ class MemoryFeatures:
                     name=display,
                     status=FeatureStatus.MISSING_DEPENDENCY,
                     message="Redis package not installed",
-                    install_command="pip install 'attune-ai[memory]'",
+                    install_command="pip install 'attune-ai[redis]'",
                 )
             if not redis_server_running:
                 return FeatureInfo(

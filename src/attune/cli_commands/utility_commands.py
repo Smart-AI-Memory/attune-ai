@@ -296,7 +296,7 @@ def cmd_features(args: Namespace) -> int:
     if not redis_available:
         print("\n💡 To enable Redis-enhanced features:")
         print("   1. Install Redis package:")
-        print("      pip install 'attune-ai[memory]'")
+        print("      pip install 'attune-ai[redis]'")
         print("\n   2. Install and start Redis server:")
         print("      • macOS: brew install redis && brew services start redis")
         print("      • Linux: sudo apt install redis-server")
