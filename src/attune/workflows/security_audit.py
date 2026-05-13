@@ -104,13 +104,21 @@ class SecurityAuditWorkflow(BaseWorkflow):
     stages = ["agent-audit"]
     tier_map = {"agent-audit": ModelTier.CAPABLE}
 
-    def __init__(self, **kwargs: Any) -> None:
+    def __init__(self, *, system_prompt_suffix: str = "", **kwargs: Any) -> None:
         """Initialize workflow.
 
         Args:
+            system_prompt_suffix: Optional string appended to the
+                orchestrator's system prompt at call time. Lets a
+                wrapping caller (e.g. discovery-sweep's
+                ``SecurityAuditSource``) augment the prompt at the
+                workflow-INSTANCE level without mutating the class
+                template. Empty string (default) preserves prior
+                behavior for every other caller.
             **kwargs: Passed to BaseWorkflow.__init__().
         """
         super().__init__(**kwargs)
+        self._system_prompt_suffix = system_prompt_suffix
 
     async def execute(self, **kwargs: Any) -> WorkflowResult:
         """Execute the Agent SDK security audit.
@@ -212,10 +220,11 @@ class SecurityAuditWorkflow(BaseWorkflow):
             extra_opts["thinking"] = thinking
             extra_opts["effort"] = "high"
 
+        system_prompt = _SYSTEM_PROMPT + (self._system_prompt_suffix or "")
         async for message in claude_agent_sdk.query(
             prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
-                system_prompt=_SYSTEM_PROMPT,
+                system_prompt=system_prompt,
                 cwd=resolved_path,
                 max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Agent"],

@@ -177,13 +177,14 @@ class TestPathExpansion:
         assert all(p.endswith(".py") for p in src.received_paths)
         assert len(src.received_paths) == 2
 
-    def test_glob_with_no_matches_does_not_run_sources(self) -> None:
+    def test_glob_with_no_matches_forwards_raw_glob_to_sources(self) -> None:
+        """Unmatched glob → raw path forwarded so sources can emit a
+        "no files matched" finding (see ``_expand_path`` docstring)."""
         src = FakeSource(name="s", is_llm=True, findings=[])
         wf = DiscoverySweepWorkflow()
         res = asyncio.run(wf.execute(path="nonexistent/**/*.zzz", sources=[src]))
         sweep: SweepResult = res.metadata["sweep"]
-        # An unmatched glob should not be forwarded as a raw path to sources.
-        assert src.received_paths is None
+        assert src.received_paths == ["nonexistent/**/*.zzz"]
         assert sweep.queue == []
 
 
