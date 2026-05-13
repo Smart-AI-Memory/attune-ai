@@ -115,6 +115,22 @@ natural pause.
   - [ ] Enable automated screenshots
 - Spec: [website-update-dashboard-and-fold](website-update-dashboard-and-fold/)
 
+### workflow-path-arg-unification
+
+- Status: draft 2026-05-13 — 5 small PRs (~50 LoC each)
+- Why here: Follow-up to ops-runner-tier2 Phase 1's bridge
+  registry (PR #294). Migrates 5 workflows from
+  `project_root` / `src_path` / `cwd` → `path`. After all 5
+  land, `PATH_ARG_REGISTRY` collapses to a flat
+  `frozenset[str]`.
+- Tasks
+  - [ ] PR-1 — health-check + orchestrated-health-check
+  - [ ] PR-2 — doc-orchestrator
+  - [ ] PR-3 — test-audit (with required-flag handling)
+  - [ ] PR-4 — rag-code-gen (semantic clarification)
+  - [ ] PR-5 — registry simplification (gated)
+- Spec: [workflow-path-arg-unification](workflow-path-arg-unification/)
+
 ---
 
 ## Track D — Standing umbrella (opportunistic)

@@ -121,6 +121,13 @@ internal `project_root` / `src_path` / `cwd`. Cleanest long-term, but
 out of scope for this spec — it's a refactor of 5 workflow files. The
 ops runner would then need no registry at all.
 
+**Follow-up spec drafted 2026-05-13** —
+[`workflow-path-arg-unification`](../workflow-path-arg-unification/)
+covers this work as 4 per-workflow migration PRs + a 5th
+registry-simplification PR. Bridge solution (Option 2 / PR #294) is
+in place; Option 3 is the cleanup that simplifies the registry to a
+flat `frozenset[str]`.
+
 ### Recommendation
 
 **Option 2 (three-way registry with kwarg-name remapping).** Reasons:
