@@ -35,6 +35,69 @@ class WorkflowEntry:
 
 
 @dataclass(frozen=True)
+class PathArgSpec:
+    """How a workflow accepts a scope path on the CLI.
+
+    The CLI's ``attune workflow run --path`` always sends ``path=<value>``
+    into ``workflow.execute(**input_data)``. Most workflows consume it
+    directly. A few use a different kwarg name (``project_root``,
+    ``src_path``, ``cwd``). The ops runner uses this registry to rewrite
+    the kwarg name before subprocess spawn so the scope picker works
+    uniformly across all workflows.
+
+    Attributes:
+        kwarg: The kwarg name the workflow's ``execute()`` actually
+            consumes. ``"path"`` for the majority; one of
+            ``"project_root"``, ``"src_path"``, ``"cwd"`` for the
+            aliased minority.
+        required: True if the workflow errors when the kwarg is missing.
+            The ops runner should not submit a scope-less run for these
+            (``test-audit`` is the current example).
+    """
+
+    kwarg: str
+    required: bool = False
+
+
+# Per-workflow path-arg registry. Source: docs/specs/ops-runner-tier2/audit.md.
+#
+# Three categories surfaced by the audit:
+#   A — 12 workflows consume ``kwargs.get("path", "")`` directly.
+#   B —  2 workflows (release-prep, secure-release) declare ``path`` as a
+#         signature kwarg.
+#   C —  5 workflows use a different kwarg name.
+#
+# A + B share ``kwarg="path"`` in this registry; C carries the actual name.
+# The drift-guard test in tests/unit/ops/test_path_support_registry.py
+# asserts (a) every registered workflow has an entry, and (b) each entry's
+# kwarg name actually appears in the workflow's execute() source.
+PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
+    # Category A — kwargs.get("path", "")
+    "bug-predict": PathArgSpec(kwarg="path"),
+    "code-review": PathArgSpec(kwarg="path"),
+    "deep-review": PathArgSpec(kwarg="path"),
+    "dependency-check": PathArgSpec(kwarg="path"),
+    "doc-audit": PathArgSpec(kwarg="path"),
+    "doc-gen": PathArgSpec(kwarg="path"),
+    "perf-audit": PathArgSpec(kwarg="path"),
+    "refactor-plan": PathArgSpec(kwarg="path"),
+    "research-synthesis": PathArgSpec(kwarg="path"),
+    "security-audit": PathArgSpec(kwarg="path"),
+    "simplify-code": PathArgSpec(kwarg="path"),
+    "test-gen": PathArgSpec(kwarg="path"),
+    # Category B — direct signature kwarg ``path: str = "."``
+    "release-prep": PathArgSpec(kwarg="path"),
+    "secure-release": PathArgSpec(kwarg="path"),
+    # Category C — aliased to a different kwarg name
+    "doc-orchestrator": PathArgSpec(kwarg="project_root"),
+    "health-check": PathArgSpec(kwarg="project_root"),
+    "orchestrated-health-check": PathArgSpec(kwarg="project_root"),
+    "rag-code-gen": PathArgSpec(kwarg="cwd"),
+    "test-audit": PathArgSpec(kwarg="src_path", required=True),
+}
+
+
+@dataclass(frozen=True)
 class FamilyVersion:
     package: str
     version: str | None
