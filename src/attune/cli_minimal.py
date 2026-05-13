@@ -167,6 +167,11 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
         "--source",
         help="Discovery-sweep: run only the named source (e.g. bug-predict)",
     )
+    run_parser.add_argument(
+        "--depth",
+        choices=["quick", "standard", "deep"],
+        help="Analysis depth (workflow-specific); defaults to 'standard'",
+    )
 
 
 def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
