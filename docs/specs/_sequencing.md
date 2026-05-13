@@ -134,6 +134,20 @@ context between bigger work. Use the rubric to pick.
 - Cadence: One module per session, picked by rubric.
 - Spec: [test-quality-program](test-quality-program/)
 
+### integration-coverage — draft
+
+- Status: draft 2026-05-13; complement to
+  test-quality-program. Phase 0 audit gates whether a
+  framework gets built at all.
+- Why standing: Per-module coverage has known structural
+  blind spots (cross-module integration, real LLM
+  behavior, concurrency, process-shaped bugs). Phase 0
+  classifies the last 30 days of bugs to test whether
+  any mechanism justifies its cost.
+- Cadence: Phase 0 is a one-shot audit (~3 hours); Phase
+  1+ designed only after the audit data lands.
+- Spec: [integration-coverage](integration-coverage/)
+
 ---
 
 ## Track E — Conditional / contingent (do not pre-schedule)
