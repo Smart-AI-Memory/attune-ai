@@ -213,3 +213,112 @@ class TestValidation:
         res = asyncio.run(wf.execute(sources=[]))
         assert res.success is False
         assert "path argument is required" in (res.error or "")
+
+
+class TestSourceNameFilter:
+    """Phase 3 P3.5 — ``source`` kwarg narrows fan-out to one adapter."""
+
+    def test_source_filter_runs_only_named_source(self) -> None:
+        bug = FakeSource(name="bug-predict", is_llm=True, findings=[_finding()])
+        sec = FakeSource(name="security-audit", is_llm=True, findings=[_finding()])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[bug, sec], source="bug-predict"))
+        sweep: SweepResult = res.metadata["sweep"]
+        assert sweep.metadata.sources == ["bug-predict"]
+
+    def test_source_filter_unknown_name_errors(self) -> None:
+        bug = FakeSource(name="bug-predict", is_llm=True, findings=[])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[bug], source="missing"))
+        assert res.success is False
+        assert "no sources to run" in (res.error or "")
+
+    def test_source_and_no_llm_combine(self) -> None:
+        """``no_llm`` applies first, then ``source`` filters survivors."""
+        bug = FakeSource(name="bug-predict", is_llm=True, findings=[])
+        pat = FakeSource(name="pattern-scan", is_llm=False, findings=[])
+        wf = DiscoverySweepWorkflow()
+        # no-LLM keeps only pat; source="bug-predict" then matches nothing.
+        res = asyncio.run(
+            wf.execute(
+                path="src/",
+                sources=[bug, pat],
+                no_llm=True,
+                source="bug-predict",
+            )
+        )
+        assert res.success is False
+
+
+class TestOutputFormatJson:
+    """Phase 3 P3.1 — ``output_format='json'`` renders SweepResult as JSON."""
+
+    def test_json_output_is_parseable_with_expected_top_level(self) -> None:
+        import json as _json
+
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="high", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src], output_format="json"))
+        payload = _json.loads(res.final_output)
+        assert set(payload.keys()) == {"queue", "questions", "rejected", "metadata"}
+        assert len(payload["queue"]) == 1
+        assert payload["queue"][0]["severity"] == "high"
+        assert payload["queue"][0]["file"] == "a.py"
+        assert payload["metadata"]["sources"] == ["s"]
+
+    def test_json_output_serializes_tuple_tags_as_array(self) -> None:
+        import json as _json
+
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[
+                _finding(
+                    severity="medium",
+                    file="b.py",
+                    line=2,
+                    tags=("cwe-95", "review-me"),
+                )
+            ],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src], output_format="json"))
+        payload = _json.loads(res.final_output)
+        assert payload["queue"][0]["tags"] == ["cwe-95", "review-me"]
+
+    def test_markdown_is_the_default_output_format(self) -> None:
+        src = FakeSource(name="s", is_llm=False, findings=[_finding()])
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        assert "## Queue" in res.final_output
+        assert not res.final_output.lstrip().startswith("{")
+
+
+class TestVerboseFlag:
+    """Phase 3 P3.3 — ``verbose=True`` includes rejected bucket in markdown."""
+
+    def test_verbose_false_hides_rejected_details(self) -> None:
+        # Severity below threshold (info) → routed to rejected.
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="info", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        assert "use --verbose to see" in res.final_output
+
+    def test_verbose_true_shows_rejected_details(self) -> None:
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="info", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src], verbose=True))
+        assert "## Rejected" in res.final_output
+        assert "Rule:" in res.final_output

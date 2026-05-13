@@ -110,6 +110,21 @@ def cmd_workflow_run(args: Namespace) -> int:
     if args.target:
         input_data["target"] = args.target
 
+    # Discovery-sweep flags (no-op for workflows that don't accept them
+    # since execute() takes **kwargs — extra keys are dropped silently).
+    if getattr(args, "verbose", False):
+        input_data["verbose"] = True
+    if getattr(args, "no_llm", False):
+        input_data["no_llm"] = True
+    if getattr(args, "source", None):
+        input_data["source"] = args.source
+    if getattr(args, "json", False):
+        # Let workflows that honor it render their own JSON via
+        # ``final_output`` rather than the generic ``json.dumps(result)``
+        # at the bottom of this function (which produces awkward output
+        # for nested dataclasses).
+        input_data["output_format"] = "json"
+
     print(f"\n🚀 Running workflow: {name}\n")
 
     try:
@@ -123,7 +138,15 @@ def cmd_workflow_run(args: Namespace) -> int:
 
         # Output result
         if args.json:
-            print(json.dumps(result, indent=2, default=str))
+            # Prefer the workflow's own JSON rendering in
+            # ``final_output`` when it honored ``output_format="json"``
+            # (cleaner than ``json.dumps(WorkflowResult)`` which serializes
+            # the stages/cost metadata too).
+            final_output = getattr(result, "final_output", "") or ""
+            if final_output.lstrip().startswith(("{", "[")):
+                print(final_output)
+            else:
+                print(json.dumps(result, indent=2, default=str))
         else:
             _print_workflow_result(result, workflow_name=name)
 
