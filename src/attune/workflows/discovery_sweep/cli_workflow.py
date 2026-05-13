@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from .sources.bug_predict import BugPredictSource
 from .sources.dependency_check import DependencyCheckSource
+from .sources.doc_audit import DocAuditSource
 from .sources.pattern_scan import PatternScanSource
 from .sources.perf_audit import PerfAuditSource
 from .sources.security_audit import SecurityAuditSource
@@ -34,6 +35,7 @@ def default_sources() -> list[FindingSource]:
         SecurityAuditSource(),
         DependencyCheckSource(),
         PerfAuditSource(),
+        DocAuditSource(),
     ]
 
 
