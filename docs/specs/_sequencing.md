@@ -20,22 +20,13 @@ deleting it — the history is useful for retros.
 
 ---
 
-## Track A — Test signal (finishing up)
+## Track A — Test signal (closed)
 
-windows-memory-detection and ignored-tests both closed
-2026-05-12. Only one small thread remains on this track.
-
-### coverage-exclusion-policy (Phases 3B–3D) — LEAD
-
-- Status: approved — 12 tasks, ~17% done (Phase 3A landed)
-- Why lead: Last open Track A thread. Touches the same
-  `pytest.ini`/`pyproject.toml` configuration we just
-  cleaned via ignored-tests. Three small phases.
-- Tasks
-  - [ ] Phase 3B — audit 3 undocumented exclusions
-  - [ ] Phase 3C — document or remove each
-  - [ ] Phase 3D — enforcement script + CI gate
-- Spec: [coverage-exclusion-policy](coverage-exclusion-policy/)
+All Track A specs are now done:
+windows-memory-detection (2026-05-12), ignored-tests
+(2026-05-12), and coverage-exclusion-policy (2026-05-12).
+Two specs remain on the track only as paused/conditional
+guardrails — no active work.
 
 ### coverage-canonical-pattern — PAUSED 2026-05-12
 
@@ -187,10 +178,18 @@ Open only if a trigger condition fires.
 
 ## Today's recommended pick
 
-**coverage-exclusion-policy Phase 3B** — audit the three
-undocumented `[tool.coverage.run] omit` entries in
-`pyproject.toml`. Smallest unit of forward progress, finishes
-the last open Track A thread, and sets up Phase 3D's CI gate.
+**redis-decoupling Phase 3A** — pure audit, no code. Walk
+internal callers of the Redis facade (`RedisShortTermMemory`
+and its 15 submodules, plus `RedisAutoDetector`) and produce
+a count + categorization. Output is a decision-doc update.
+Findings likely shrink the spec — if internal callers are
+fewer than feared, Phase B's implementation budget drops.
+
+Why this over a Track C pick: Track A's just-closed Phase 3C
+script gives us a clean enforcement loop on coverage debt, so
+audit-mode work is the next-cheapest lever. Track C starts
+shipping real product surface — better to start that *after*
+the Redis scope is known.
 
 ---
 
@@ -211,3 +210,8 @@ the last open Track A thread, and sets up Phase 3D's CI gate.
 - [docs/specs/probe-c-memory-investigation](probe-c-memory-investigation/) —
   ✓ resolved 2026-05-11; threading-patch fix in PR #212
   commit `bcc6bdec` closed the OOM concern.
+- [docs/specs/coverage-exclusion-policy](coverage-exclusion-policy/) —
+  complete 2026-05-12 (PR #272). Inline-comment policy + audit
+  resolution + enforcement script (`scripts/check_coverage_omits.py`)
+  + pre-commit hook. 60/60 production-code `omit` entries
+  documented (100% compliance).
