@@ -177,12 +177,14 @@ class TestPathExpansion:
         assert all(p.endswith(".py") for p in src.received_paths)
         assert len(src.received_paths) == 2
 
-    def test_glob_with_no_matches_falls_back_to_pattern(self) -> None:
-        src = FakeSource(name="s", findings=[])
+    def test_glob_with_no_matches_does_not_run_sources(self) -> None:
+        src = FakeSource(name="s", is_llm=True, findings=[])
         wf = DiscoverySweepWorkflow()
-        asyncio.run(wf.execute(path="nonexistent/**/*.zzz", sources=[src]))
-        # Falls back to the raw pattern so sources can report it.
-        assert src.received_paths == ["nonexistent/**/*.zzz"]
+        res = asyncio.run(wf.execute(path="nonexistent/**/*.zzz", sources=[src]))
+        sweep: SweepResult = res.metadata["sweep"]
+        # An unmatched glob should not be forwarded as a raw path to sources.
+        assert src.received_paths is None
+        assert sweep.queue == []
 
 
 class TestSourceFiltering:

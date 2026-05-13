@@ -43,6 +43,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` P2.1 — `BugPredictSource` LLM adapter wrapping
+  `BugPredictionWorkflow`. Constructs the wrapped workflow per call
+  with `STRUCTURED_EMIT_FOOTER` passed via a new
+  `system_prompt_suffix` kwarg on `BugPredictionWorkflow.__init__`
+  (workflow-INSTANCE level augmentation per `design.md`), invokes
+  `execute()` once per path, and parses each result's `final_output`
+  via `parse_findings_json`. Wired into `default_sources()`. Source
+  failures (raises, `success=False`, unparseable output) degrade
+  to info-findings rather than aborting the sweep. Integration
+  coverage marked `@pytest.mark.integration` per Phase 1.5 design
+  decision #7.
+
 - `discovery-sweep` Phase 2A — shared LLM adapter base
   (`STRUCTURED_EMIT_FOOTER`, `parse_findings_json`, `LLMSource`).
   No user-visible behavior change; unblocks P2.1–P2.6.

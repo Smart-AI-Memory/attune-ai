@@ -1,0 +1,149 @@
+"""``BugPredictSource`` — LLM adapter wrapping ``BugPredictionWorkflow``.
+
+Per ``docs/specs/discovery-sweep/design.md`` § "Prompt augmentation
+lives at the workflow-instance level, NEVER class": this adapter
+constructs a fresh :class:`BugPredictionWorkflow` per call with
+:data:`STRUCTURED_EMIT_FOOTER` passed as the ``system_prompt_suffix``
+kwarg, invokes ``execute()`` once per path, and parses each
+workflow's ``final_output`` via :func:`parse_findings_json`. The
+wrapped workflow is unchanged for every other caller.
+
+The ``claude_agent_sdk`` import lives inside :meth:`discover` so the
+module is mock-friendly and importing this file doesn't drag the
+SDK into the import graph of every test that touches the engine.
+
+Copyright 2026 Smart-AI-Memory
+Licensed under the Apache License, Version 2.0
+"""
+
+from __future__ import annotations
+
+import logging
+from dataclasses import dataclass
+
+from ..llm_source_base import STRUCTURED_EMIT_FOOTER, LLMSource, parse_findings_json
+from ..workflow import Finding
+
+logger = logging.getLogger(__name__)
+
+
+@dataclass
+class BugPredictSource(LLMSource):
+    """Discovery-sweep adapter for :class:`BugPredictionWorkflow`.
+
+    Three structural attributes (``name``, ``is_llm``,
+    ``budget_multiplier``) satisfy the :class:`FindingSource`
+    Protocol; ``LLMSource`` is inherited for the
+    ``--no-llm``-filter marker and the default ``budget_multiplier``.
+
+    ``depth`` is configurable per-instance and defaults to
+    ``"standard"`` — the same default as standalone
+    ``attune workflow run bug-predict``. Sweep callers that want a
+    cheaper pass can construct with ``depth="quick"``.
+    """
+
+    name: str = "bug-predict"
+    depth: str = "standard"
+
+    async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
+        """Run BugPredictionWorkflow on each path and parse findings.
+
+        ``budget_usd`` is informational for v1 — the wrapped workflow
+        self-limits via the SDK's own ``max_budget_usd`` derived from
+        ``depth`` (see :func:`get_max_budget_usd`). A later PR can
+        plumb the per-source share down once the wrapped workflows
+        accept an explicit per-call cap.
+        """
+        del budget_usd  # See docstring — wrapped workflow caps itself.
+
+        if not paths:
+            logger.warning("bug-predict: no paths to scan")
+            return [_empty_paths_finding(self.name)]
+
+        # Late import keeps ``claude_agent_sdk`` out of this module's
+        # import graph and lets unit tests patch the workflow class at
+        # its source module per the existing CLAUDE.md lesson.
+        from attune.workflows.bug_predict import BugPredictionWorkflow
+
+        findings: list[Finding] = []
+        for path in paths:
+            workflow = BugPredictionWorkflow(
+                system_prompt_suffix=STRUCTURED_EMIT_FOOTER,
+            )
+            try:
+                result = await workflow.execute(path=path, depth=self.depth)
+            except Exception as exc:  # noqa: BLE001
+                # INTENTIONAL: per spec NFR-1 a single path failure
+                # must not abort the whole source — log and continue,
+                # surfacing an info-finding so the engine can route
+                # it to ``questions``.
+                logger.exception("bug-predict execute() failed for %s", path)
+                findings.append(_path_failed_finding(self.name, path, exc))
+                continue
+
+            if not getattr(result, "success", False):
+                findings.append(_workflow_unsuccessful_finding(self.name, path, result))
+                continue
+
+            findings.extend(parse_findings_json(result.final_output or "", self.name))
+
+        return findings
+
+
+def _empty_paths_finding(source_name: str) -> Finding:
+    """Surfacing finding when the engine handed in an empty paths list."""
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name} received no paths to scan",
+        description=(
+            "The engine passed an empty paths list to this source; "
+            "the wrapped workflow was not invoked."
+        ),
+        file=None,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("source-failure",),
+    )
+
+
+def _path_failed_finding(source_name: str, path: str, exc: BaseException) -> Finding:
+    """Per-path failure marker so one bad input doesn't abort the source."""
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name} failed on path {path}",
+        description=(
+            f"Wrapped workflow raised {type(exc).__name__}: {exc}. "
+            f"Other paths (if any) were still attempted."
+        ),
+        file=path,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("source-failure",),
+    )
+
+
+def _workflow_unsuccessful_finding(
+    source_name: str,
+    path: str,
+    result: object,
+) -> Finding:
+    """Marker for a clean WorkflowResult whose ``success`` came back False."""
+    detail = getattr(result, "final_output", "") or "(no detail returned)"
+    return Finding(
+        source=source_name,
+        severity="info",
+        title=f"{source_name} returned an unsuccessful result for {path}",
+        description=(
+            "Wrapped workflow completed without raising but reported "
+            f"success=False. Detail: {detail[:200]}"
+        ),
+        file=path,
+        line=None,
+        evidence=None,
+        confidence=1.0,
+        tags=("source-failure",),
+    )
