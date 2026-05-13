@@ -58,6 +58,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` P2.6 — `TestAuditSource` LLM adapter wrapping
+  `TestAuditWorkflow`. Final Phase 2B adapter; same pattern as
+  P2.1–P2.5 (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via
+  a new `system_prompt_suffix` kwarg on
+  `TestAuditWorkflow.__init__`) with the default
+  `budget_multiplier=1.0` from `LLMSource`. Wired into
+  `default_sources()`, which now ships all six audit-family
+  adapters plus `PatternScanSource`. Integration coverage marked
+  `@pytest.mark.integration`. Phase 2B is now complete.
+
 - `discovery-sweep` P2.5 — `DocAuditSource` LLM adapter wrapping
   `DocAuditWorkflow`. Same pattern as P2.1–P2.4 (workflow-INSTANCE
   level `STRUCTURED_EMIT_FOOTER` via a new `system_prompt_suffix`
