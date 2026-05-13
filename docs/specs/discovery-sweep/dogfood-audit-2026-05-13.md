@@ -133,3 +133,20 @@ the cross-package docstring shape evades it.
 - Two new lessons in `.claude/CLAUDE.md` (workflow registration
   has FOUR drift-guard gates; PatternScanSource self-match was the
   driver for #306).
+
+## Resolution
+
+**Resolved 2026-05-13** by PR
+[#307](https://github.com/Smart-AI-Memory/attune-ai/pull/307) +
+[#309](https://github.com/Smart-AI-Memory/attune-ai/pull/309).
+Whole-tree sweep on `src/attune` now returns **queue=0**.
+
+- PR #307 added the missing `# noqa: BLE001  # INTENTIONAL: cleanup`
+  annotation at [src/attune/ops/routes/specs.py:274](src/attune/ops/routes/specs.py#L274) —
+  the single real signal.
+- PR #309 added the AST-based string-region filter
+  (`_collect_string_spans` + `_is_inside_string_span`) OR'd with
+  the existing line-local quote walk, eliminating all 14 multi-
+  line-docstring false positives. The OR preserves Phase 1's
+  comment-text filtering so the three `bug_predict_patterns.py`
+  comment-text findings stay suppressed.
