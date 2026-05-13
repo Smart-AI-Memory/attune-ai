@@ -90,8 +90,10 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     "secure-release": PathArgSpec(kwarg="path"),
     # Category C — aliased to a different kwarg name
     "doc-orchestrator": PathArgSpec(kwarg="project_root"),
-    "health-check": PathArgSpec(kwarg="project_root"),
-    "orchestrated-health-check": PathArgSpec(kwarg="project_root"),
+    # health-check + orchestrated-health-check migrated to `path` in
+    # workflow-path-arg-unification PR-1 (2026-05-13).
+    "health-check": PathArgSpec(kwarg="path"),
+    "orchestrated-health-check": PathArgSpec(kwarg="path"),
     "rag-code-gen": PathArgSpec(kwarg="cwd"),
     "test-audit": PathArgSpec(kwarg="src_path", required=True),
 }

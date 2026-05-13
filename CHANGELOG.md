@@ -20,6 +20,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   classes, pin `attune-ai<6.8.0` or copy them from the v6.7.x
   source tree.
 
+### Deprecated
+
+- `OrchestratedHealthCheckWorkflow.execute(project_root=...)` —
+  use `execute(path=...)` instead. The legacy kwarg emits a
+  `DeprecationWarning` and will be removed in v7.0. First PR
+  of `docs/specs/workflow-path-arg-unification/` (PR-1 of 5);
+  unifies the path-arg kwarg name across all workflows for the
+  ops-runner-tier2 scope picker. The `target=` kwarg (VSCode
+  compat) still works and now maps to `path` internally.
+
 ### Changed (Breaking)
 
 - `[memory]` install extra removed (now an empty no-op alias for backward
