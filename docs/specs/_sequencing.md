@@ -86,16 +86,17 @@ natural pause.
 
 ### ops-runner-tier2
 
-- Status: Phase 1 + Phase 2 shipped; Phases 3–5 pending
-- Why after security-hardening: 5 phases, each shippable.
+- Status: Phases 1–4 shipped; Phases 5–6 pending
+- Why after security-hardening: 6 phases, each shippable.
   Phase 1 is pure inspection so it can start anytime. Phases
-  3 and 4 ship together for the chaining UX.
+  3 and 4 shipped together (2026-05-14) for the chaining UX.
 - Tasks
   - [x] Phase 1 — workflow registry verification (2026-05-13)
   - [x] Phase 2 — scope picker (dropdown + custom path) (2026-05-14)
-  - [ ] Phase 3 — persist recent runs
-  - [ ] Phase 4 — clickable workflow-name pills
+  - [x] Phase 3 — persist recent runs (2026-05-14, with Phase 4)
+  - [x] Phase 4 — clickable workflow-name pills (2026-05-14, with Phase 3)
   - [ ] Phase 5 — structured recommendations
+  - [ ] Phase 6 — telemetry + close
 - Phase 2 unblocks the discovery-sweep-ops-integration spec
   (per its design dependency on the scope picker).
 - Spec: [ops-runner-tier2](ops-runner-tier2/)
@@ -241,17 +242,21 @@ Open only if a trigger condition fires.
 
 ## Today's recommended pick
 
-**ops-runner-tier2 Phase 3** — persist recent runs to disk
-so the dashboard survives a server restart without losing
-history. Bundle with Phase 4 (clickable workflow-name pills)
-for the chaining UX, per the spec's "3 and 4 ship together"
-note.
+**Release prep** — 16+ merges since last release (Phase 1
+PATH_ARG_REGISTRY, Phase 2 scope picker, Phase 3 persistence,
+Phase 4 chainable pills, discovery-sweep P2.x series + Phase 3).
+A minor bump on `attune-ai` is overdue.
 
-Alternative: **discovery-sweep-ops-integration** — now
-unblocked by Phase 2's scope picker. Or **test-quality-program**
-as opportunistic filler.
+Alternatives:
+- **ops-runner-tier2 Phase 5** — structured recommendation
+  channel (SSE `recommendation` events). Smaller scope; ship
+  if you'd rather keep coding than release.
+- **discovery-sweep-ops-integration** — unblocked by Phase 2.
+- **test-quality-program** — opportunistic filler.
 
 Recently shipped:
+- 2026-05-14 — ops-runner-tier2 Phase 3 + Phase 4
+  (persistence + chainable pills, shipped together).
 - 2026-05-14 — ops-runner-tier2 Phase 2 (scope picker).
 - 2026-05-13 — ops-runner-tier2 Phase 1.3 (PATH_ARG_REGISTRY).
 

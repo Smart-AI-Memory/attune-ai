@@ -137,6 +137,7 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
         page="run-view",
         run=run.to_dict(),
         stream_url=f"/runs/{run_id}/stream",
+        allow_run=request.app.state.config.allow_run,
     )
 
 

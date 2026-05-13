@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phases 3–5 pending
+**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 + Phase 6 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -41,48 +41,46 @@ Goal: per-row dropdown that scopes the workflow run to one feature or custom pat
 
 ## Phase 3 — Persistence (recent runs)
 
-Goal: replace in-memory run history with disk-backed per-workflow history.
+**Shipped 2026-05-14** alongside Phase 4 (per the spec's "Phases 3 and 4 ship together" guidance). 32 new tests in `tests/unit/ops/test_persistence_and_history.py`; full ops suite 221 green (was 189 after Phase 2).
 
-- [ ] **3.1** Extend `Run.to_dict()` to include `scope` and `command` fields. Add `from_dict()` for reload.
-- [ ] **3.2** On run completion, write `~/.attune/ops/runs/<workflow>/<run-id>.json`. Truncate log to first 200 KB with a `<TRUNCATED — N bytes more>` marker. Skip writes in `--read-only` mode.
-- [ ] **3.3** Startup task: prune runs older than 30 days (configurable via `--runs-retention-days`).
-- [ ] **3.4** New router `routes/runs_history.py`:
-      - `GET /api/runs/{workflow}` → list 20 newest runs (metadata only)
-      - `GET /api/runs/{workflow}/{run_id}` → full record + log
-- [ ] **3.5** `workflows.html`: add `<div class="recent-runs" data-recent-runs="{{ w.name }}">` below each workflow row. Each chip is a link to `/runs/<run_id>/view` (the per-run page from #251).
-- [ ] **3.6** `run_view.html`: add `<div class="run-view-history" data-recent-runs="{{ run.workflow }}">` at the top of the run-view page — same data, second location, makes "switch between recent runs of this workflow" a one-click navigation.
-- [ ] **3.7** JS: `setupRecentRuns()` (on workflows.html via runner.js) and the same logic on run-view via the new `run_view.js` (Phase 4.1) — both fetch `/api/runs/<workflow>` and render chips that link to the run-view page.
-- [ ] **3.8** CSS: `.recent-runs`, `.run-view-history`, `.recent-run-chip` (color by outcome: ✓ ok, ✗ danger). Same chip class in both locations.
-- [ ] **3.9** Tests:
-      - `test_run_persists_to_disk` — file written on completion
-      - `test_run_persists_truncates_long_log` — 1MB log → 200KB on disk + marker
-      - `test_run_skips_write_in_read_only` — `--read-only` doesn't write
-      - `test_get_recent_runs_returns_sorted` — newest first
-      - `test_get_run_rejects_path_traversal` — `run_id="../../etc/passwd"` returns 400
-      - `test_prune_old_runs` — files older than 30 days are deleted at startup
-      - `test_run_view_history_renders` — run-view page shows last-5 chips for the same workflow
+- [x] **3.1** `Run.command` field; `to_record()` / `from_record()` round-trip used by the disk writer + the reload path. `to_dict()` already carried `path` from Phase 2; persistence uses `to_record()` which adds the line buffer.
+- [x] **3.2** `_persist_run()` in `runner.py` writes `<runs_dir>/<workflow>/<run-id>.json` atomically (`.json.tmp` → `replace`). 200 KB log cap via `_truncate_lines_for_persist()` with a trailing `<TRUNCATED — N bytes more>` marker. Read-only mode is enforced at the `RunnerService` constructor level — `_build_default_runner()` in `server.py` only passes `persistence_dir` when `config.allow_run` is True.
+- [x] **3.3** `prune_old_runs()` is called at `create_app()` time when `allow_run` is True. Retention window comes from `config.runs_retention_days` (`--runs-retention-days` CLI flag, default 30). `0` disables the sweep; missing dir is a no-op.
+- [x] **3.4** New router `routes/runs_history.py` with `GET /api/runs/{workflow}` (newest 20 metadata-only) and `GET /api/runs/{workflow}/{run_id}` (full record incl. log). List combines in-memory entries (preserves live status) with disk records (dedup by id). Bad workflow names + bad run-ids return 400 BEFORE any disk lookup. The global 404 handler now dispatches JSON for `/api/*` paths so the dashboard JS can parse errors uniformly.
+- [x] **3.5** `workflows.html` adds `<div class="recent-runs" data-recent-runs="{{ w.name }}" hidden>` below each workflow's description cell. The strip stays hidden until the JS fetches and populates it.
+- [x] **3.6** `run_view.html` adds `<div class="run-view-history" data-recent-runs="{{ run.workflow }}" hidden>` at the top of the page (below the meta line, above the log).
+- [x] **3.7** `setupRecentRuns()` + `renderRecentRunsInto()` + `statusClass()` live in `runner.js`. The run-view page loads `runner.js` BEFORE `run_view.js`; `run_view.js` calls the same helper through `window.__attuneRunner.setupRecentRuns`. Failure modes (404, network) leave the strip hidden — history is best-effort and never blocks rendering. `runner.js` is now loaded unconditionally on `/workflows` (was gated on `allow_run`) so read-only users still get the recent-runs strip.
+- [x] **3.8** CSS in `static/css/main.css`: `.recent-runs` / `.run-view-history` (flex row, gap 6px) + `.recent-run-chip` (rounded pill, color by status using existing `chip-ok` / `chip-danger` / `chip-warn` / `chip-muted` palette) + `.recent-run-status` muted-text addendum. Hover state borders to `--accent`.
+- [x] **3.9** Tests:
+      - `test_run_to_record_round_trip` / `test_from_record_tolerates_missing_fields` / `test_from_record_bad_status_defaults_to_completed`
+      - `test_truncate_short_log_is_passthrough` / `test_truncate_long_log_appends_marker`
+      - `test_persist_run_writes_json` / `test_persist_run_rejects_bad_workflow_name` / `test_persist_run_rejects_bad_run_id` / `test_persist_run_truncates_long_log`
+      - `test_runner_writes_record_on_completion` (subprocess → JSON on disk) / `test_runner_skips_persistence_when_dir_is_none`
+      - `test_prune_old_runs_deletes_files_past_cutoff` / `test_prune_old_runs_zero_days_disables_sweep` / `test_prune_old_runs_missing_dir_is_noop`
+      - `test_list_persisted_runs_returns_newest_first` / `test_list_persisted_runs_rejects_bad_workflow` / `test_load_run_record_rejects_bad_run_id`
+      - `test_list_runs_rejects_bad_workflow_name` / `test_list_runs_empty_when_no_history` / `test_list_runs_combines_in_memory_and_disk`
+      - `test_get_run_record_rejects_path_traversal` / `test_get_run_record_returns_404_for_missing` / `test_get_run_record_returns_full_log`
+      - `test_read_only_mode_disables_persistence` (no writes + no `runs_dir` creation)
+      - `test_workflows_page_includes_recent_runs_strip` / `test_workflows_page_loads_runner_js_in_read_only_too`
 
 ## Phase 4 — Workflow-name pills become buttons
 
-Goal: Tier 1 pills (inert today) on the run-view page trigger a follow-on run carrying the source run's scope.
+**Shipped 2026-05-14** alongside Phase 3.
 
-**Note:** Pills now live on the **run-view page** (introduced in #251), not the workflows-table log pane. The JS for pill handling moves into a new `run_view.js` file.
+**Note:** Pills live on the **run-view page** (introduced in #251), not the workflows-table log pane. JS for pill handling lives in `static/js/run_view.js`.
 
-- [ ] **4.1** Extract the inline `<script>` block from `run_view.html` into `src/attune/ops/static/js/run_view.js`. (Currently inline as a one-off — Tier 2 needs the file for testing + multiple features.)
-- [ ] **4.2** `run_view.js`: attach click handlers to `.log-workflow` pills. On click:
-      - Read the source run's scope from the page context (server-injected as `{{ run.scope|tojson }}` once Phase 2 lands)
-      - POST `/workflows/<target>/run` with `{path: scope}`
-      - On success, navigate to `/runs/<new_run_id>/view?from=<source-workflow>`
-      - On 409 (busy), surface inline above the log without navigating
-- [ ] **4.3** `run_view.js`: `renderChainedFromBadge()` — reads `?from=` from the URL, populates `.chained-from` in the page header if present. Renders as "↩ from <source-workflow>".
-- [ ] **4.4** Handle read-only mode: pill click in `--read-only` shows a toast "Read-only mode: re-launch without --read-only to chain runs". No POST.
-- [ ] **4.5** Handle disabled target (already running): the existing 409 handler in `formatErrorDetail` already covers this; surface above the log on the source run-view page (don't navigate away from a successful prior run).
-- [ ] **4.6** CSS: `.log-workflow` pill hover state, `.pill-disabled` for `--read-only`, `.chained-from` badge styling.
-- [ ] **4.7** Tests:
-      - `test_run_view_js_exists` — file is served at `/static/js/run_view.js`
-      - `test_run_view_page_loads_run_view_js` — template references the new file
-      - `test_pill_click_carries_scope` (manual): visual smoke from the browser
-      - `test_read_only_pill_returns_403` — POST while `--read-only` returns 403
+- [x] **4.1** Extracted the inline `<script>` block from `run_view.html` into `src/attune/ops/static/js/run_view.js`. Server-injected config flows through a tagged `<script type="application/json" id="run-view-data">` block instead of inline `var STREAM_URL = {{ ... }}` statements — cleaner data/code separation, devtools-inspectable.
+- [x] **4.2** `run_view.js::handlePillClick` is wired as a delegated `click` listener on the log container. On match (closest `.log-workflow`): reads `SOURCE_PATH` from the injected config, POSTs `/workflows/<target>/run` with `{path: SOURCE_PATH}`. On 201 → navigates to `/runs/<new_run_id>/view?from=<SOURCE_WORKFLOW>`. On 409 → surfaces an inline `.run-view-error` above the log, doesn't navigate. The clicked pill gets a `.pill-disabled` class for the duration of the request to prevent double-clicks.
+- [x] **4.3** `renderChainedFromBadge()` reads `?from=` via `URLSearchParams`, validates the value against the workflow-name regex (rejects `<script>` and similar), and populates the existing `<span class="chained-from" data-chained-from>` slot in the page header with `↩ from <code>name</code>`.
+- [x] **4.4** Read-only mode (config `allow_run=False`) is passed through to the JS via the run-view-data block. The click handler short-circuits without POSTing and shows an inline error: "Read-only mode — restart attune ops without --read-only to chain runs."
+- [x] **4.5** Handled implicitly — same 409 path as 4.2's busy case, plus a 403 fallback for the rare race where allow_run flips during a session.
+- [x] **4.6** CSS: `.log-workflow` gains `cursor: pointer` + hover border + `transition`. `.pill-disabled` dims to 0.55 opacity with a progress cursor. `.run-view-error` styled with `--danger-soft`/`--danger` colors.
+- [x] **4.7** Tests:
+      - `test_run_view_page_loads_both_js_files` — template references `runner.js` + `run_view.js` and embeds the JSON data block
+      - `test_run_view_js_exists_and_exposes_helpers` — checks file presence + `handlePillClick` / `renderChainedFromBadge` / `pillTargetFromEvent` exports
+      - `test_run_view_js_validates_from_param` — confirms the regex literal is present for `?from=` validation
+      - `test_run_view_data_block_contains_allow_run_and_path` / `test_run_view_data_block_allow_run_false_in_read_only` — JSON block surfaces both keys correctly
+      - `test_read_only_mode_disables_persistence` already covers the runner-side guarantee that a pill click can't sneak in via the runner when `allow_run=False`
 
 ## Phase 5 — Structured recommendation channel
 
