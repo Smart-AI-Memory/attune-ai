@@ -3646,3 +3646,82 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   becomes wrong the moment the version passes; treat
   migration docs as having a shelf life tied to the
   marker's target version.
+
+- **`git stash pop` after fast-forwarding to upstream
+  inverts `--ours` / `--theirs` semantics — and the
+  most common conflict shape is a spec status field
+  that upstream changed since the stash**: classic
+  flow during the "merge + restore wip" dance when
+  the main checkout has uncommitted spec edits.
+  Stash → ff merge → pop → conflicts on any file
+  where both sides edited the same line. During the
+  pop, the merge base is HEAD (the just-merged
+  upstream content), so `--ours` = upstream (HEAD),
+  `--theirs` = the stashed content. This is INVERTED
+  from a regular merge. Concretely, hit on
+  2026-05-12 with spec status field collisions —
+  upstream had moved `coverage-canonical-pattern`
+  to "paused 2026-05-12" while the stash had stale
+  "approved" edits. `git checkout --ours <file>`
+  on each conflicted file took the upstream
+  (correct) version. ALWAYS follow a deliberate-
+  discard resolution with `git stash drop` to clear
+  the stash entry — otherwise it lingers with stale
+  content and is easy to revive later by mistake.
+  The conflict shape (status fields, sometimes
+  status-line + decisions reference) is predictable
+  enough that a one-line resolution checklist works:
+  `git checkout --ours <conflicted files> && git add
+  <files> && git stash drop`.
+
+- **Scheduled-tasks display time uses Claude Code's
+  configured local timezone, NOT the timezone you
+  passed in the ISO offset — verify by reading the
+  display in the user's local time, not by trusting
+  the offset you specified**: passed
+  `fireAt="2026-05-12T19:30:00-07:00"` (intending 7:30
+  PM Pacific). Display showed "5/12/2026, 10:30:00
+  PM" — which is 7:30 PM Pacific rendered in Eastern
+  time (the user's locale). The stored ISO is
+  canonical; the display is just rendered for the
+  user. If user said "7:30 PM" and the display shows
+  a different hour, the schedule is wrong for THEIR
+  intent. Confirm user's timezone separately (their
+  daily-briefing cron `fireAt` minus the cron
+  `cronExpression` time-of-day gives the local
+  offset). Update via
+  `update_scheduled_task(fireAt="<correct-offset>")`.
+
+- **Subagent-vs-Batches questions need a Phase 0
+  measurement before drafting the full spec**: when
+  considering whether to replace a Batches API pipeline
+  with subagent fan-out (e.g., per-kind polish
+  specialization in attune-author), the prior is that
+  Batches already wins on speed/cost — 50% discount
+  plus automatic parallelism. The only axis where
+  subagents can beat Batches is *quality
+  differentiation* (different prompts, models, or
+  strategies per task type). Don't draft a full spec
+  on that prior alone. Phase 0 design: run the same
+  fixed corpus through three arms — (1) status quo
+  Batches with global prompt, (2) subagents with
+  regular API per-kind (no batching — worst case for
+  subagents, exposes the discount loss), (3) subagents
+  that each submit their own Batches call (preserves
+  discount, isolates the per-kind effect). Capture
+  wall-clock, input/output tokens, total $, and 5
+  sampled outputs per arm for quality eyeball.
+  Pre-commit a decision matrix to
+  `docs/specs/<spec>/decisions.md` BEFORE running so
+  the result routes the decision cleanly without
+  goalpost-moving (see the existing "Pre-committed
+  decision matrices survive contact with data"
+  lesson). Same pattern as the Agent Surface
+  Rebalance retirement (2026-05-12): $8.78 of
+  measurement was strictly cheaper than implementing
+  a conversion that would have saved zero bytes. Test
+  budget here is similarly cheap (~$5-15 for a 12-
+  template corpus on Sonnet). Generalize: any "swap
+  Anthropic-native infrastructure for orchestration
+  layer above it" question in this ecosystem needs
+  Phase 0 measurement first.
