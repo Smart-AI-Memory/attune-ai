@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     from .config import DEFAULT_MODELS, ModelConfig, WorkflowConfig
     from .deep_review import DeepReviewAgentSDKWorkflow
     from .dependency_check import DependencyCheckWorkflow
+    from .discovery_sweep import DiscoverySweepWorkflow
 
     # DependencyCheckAgentSDKWorkflow: Merged into DependencyCheckWorkflow (v4.2.0)
     from .doc_audit import DocAuditWorkflow
@@ -144,6 +145,7 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     "DocAuditWorkflow": (".doc_audit", "DocAuditWorkflow"),
     "CodeReviewWorkflow": (".code_review", "CodeReviewWorkflow"),
     "DependencyCheckWorkflow": (".dependency_check", "DependencyCheckWorkflow"),
+    "DiscoverySweepWorkflow": (".discovery_sweep", "DiscoverySweepWorkflow"),
     "DocumentGenerationWorkflow": (".document_gen", "DocumentGenerationWorkflow"),
     "DocumentManagerWorkflow": (".document_manager", "DocumentManagerWorkflow"),
     "DocumentationOrchestrator": (".documentation_orchestrator", "DocumentationOrchestrator"),
@@ -282,6 +284,8 @@ def _load_cli_commands() -> None:
 _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     # Core workflows
     "code-review": "CodeReviewWorkflow",
+    # Discovery meta-workflow (Phase 1 — pattern source only)
+    "discovery-sweep": "DiscoverySweepWorkflow",
     # Documentation workflows
     "doc-audit": "DocAuditWorkflow",
     "doc-gen": "DocumentGenerationWorkflow",
@@ -607,6 +611,7 @@ __all__ = [
     "CodeReviewWorkflow",
     "CostReport",
     "DependencyCheckWorkflow",
+    "DiscoverySweepWorkflow",
     "DocAuditWorkflow",
     "DocumentGenerationWorkflow",
     "DocumentManagerWorkflow",

@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `discovery-sweep` meta-workflow (Phase 1) — fans out across audit
+  sources and triages findings into three buckets: `queue` (act on),
+  `questions` (need human judgment), `rejected` (filtered noise).
+  Ships the engine, `FindingSource` Protocol, deterministic
+  verification rules (location / severity / confidence / dedup /
+  severity-conflict), and a non-LLM `PatternScanSource` adapter for
+  canonical regex patterns (bare-except, broad-exception, eval/exec,
+  subprocess shell=True, TODO/FIXME). Registered in
+  `_DEFAULT_WORKFLOW_NAMES` and `PATH_ARG_REGISTRY` (Category A).
+  LLM source adapters (bug-predict, security-audit, dependency-check,
+  perf-audit, doc-audit) land in Phase 2A. Spec at
+  `docs/specs/discovery-sweep/`.
+
 ### Deprecated
 
 - `TestAuditWorkflow.execute(src_path=...)` — use

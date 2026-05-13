@@ -16,11 +16,11 @@
   // dependency, but worth a periodic glance.
   var WORKFLOW_NAMES = [
     "bug-predict", "code-review", "deep-review", "dependency-check",
-    "doc-audit", "doc-gen", "doc-orchestrator", "health-check",
-    "orchestrated-health-check", "perf-audit", "rag-code-gen",
-    "refactor-plan", "release-prep", "research-synthesis",
-    "secure-release", "security-audit", "simplify-code",
-    "test-audit", "test-gen"
+    "discovery-sweep", "doc-audit", "doc-gen", "doc-orchestrator",
+    "health-check", "orchestrated-health-check", "perf-audit",
+    "rag-code-gen", "refactor-plan", "release-prep",
+    "research-synthesis", "secure-release", "security-audit",
+    "simplify-code", "test-audit", "test-gen"
   ];
 
   // Section headers (line-leader text) that get bolded/colored so users
