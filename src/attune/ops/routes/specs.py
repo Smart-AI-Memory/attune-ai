@@ -271,7 +271,10 @@ def _atomic_write(target: Path, text: str) -> None:
         with os.fdopen(fd, "w", encoding="utf-8") as f:
             f.write(text)
         os.replace(tmp, target)
-    except Exception:
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: cleanup path — remove the temp file regardless of
+        # which write/replace step raised, then re-raise so the caller
+        # still sees the original failure.
         Path(tmp).unlink(missing_ok=True)
         raise
 
