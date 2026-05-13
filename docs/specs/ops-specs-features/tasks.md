@@ -1,6 +1,6 @@
 # Tasks — Port spec-handling features from attune-gui to attune ops
 
-**Status:** Approved & Prioritized (2026-05-11) — gate relaxed; ready when next main CI settles
+**Status:** Phases 1–3 complete (PRs #236, #239, #249); Phase 4 reflection cycle awaiting 2 weeks of usage (target: 2026-05-25). Phase 0 gate verified 2026-05-12 — see [phase0-audit.md](phase0-audit.md).
 
 ---
 
@@ -13,40 +13,51 @@ are sized to what actually matters for ops-specs-features
 specifically.
 
 - [x] **0.1a** PR #212 merged
-- [ ] **0.1b** Most-recent merge cycle's settled CI run on `main`
+- [x] **0.1b** Most-recent merge cycle's settled CI run on `main`
       shows only known-pre-existing failures (Py 3.10
       test_chain_executor AttributeError, Windows xdist tracked
-      in #232). No new failure modes.
+      in #232). No new failure modes. **Verified 2026-05-12** —
+      runs `fca8c2d7` and `7d988f52` both green; one earlier
+      flaky-timeout failure not a new mode.
 - [x] **0.2** PRs #227, #228 merged + verified in production
 - [x] **0.3** No critical open `ops`-labeled issues
 - [x] **0.4** (Optional) PR #226 larger runners landed
-- [ ] **0.5** Re-check decisions.md "What we port / what we do
+- [x] **0.5** Re-check decisions.md "What we port / what we do
       NOT port" — has Patrick's usage of attune ops changed in
-      the interim such that the scope should adjust?
-
-When 0.1b clears, Phase 1 starts.
+      the interim such that the scope should adjust? **Verified
+      2026-05-12** — scope did NOT need adjustment; the
+      originally-decided scope was fully implemented in the
+      interim (PRs #236, #239, #249). See `phase0-audit.md`.
 
 ## Phase 1 — Federated spec listing read-side
 
 Mirrors `attune-gui sidecar/attune_gui/routes/cowork_specs.py`
 GET endpoints. Backend first; frontend follows.
 
-- [ ] **1.1** Add `src/attune/ops/routes/specs.py` with:
+- [x] **1.1** Add `src/attune/ops/routes/specs.py` with:
   - `GET /api/specs` — list all spec dirs across configured
     roots, with phase status for each
   - `GET /api/specs/{slug}` — return content of phase files
     for one spec (read-only)
-- [ ] **1.2** Add `--specs-root` flag to `attune ops` CLI;
+
+  **Shipped via PR #236** (`d6d29642`). Routes at `specs.py:159,186`.
+- [x] **1.2** Add `--specs-root` flag to `attune ops` CLI;
   default to `docs/specs/` relative to `--project-root`.
   Accept multiple values for multi-root listing (matching
   attune-gui PR #30 pattern).
-- [ ] **1.3** Tests at parity with existing ops routes:
+
+  **Shipped via PR #236.** CLI flag at `cli.py:45`; config plumbing at
+  `cli.py:117` (`specs_roots=tuple(...)`).
+- [x] **1.3** Tests at parity with existing ops routes:
   - Empty roots
   - Single root with multiple specs
-  - Multi-root with naming collisions (later root wins?
-    error? — decide and document)
+  - Multi-root with naming collisions (first-root wins,
+    documented)
   - Phase file missing
   - Malformed phase file (no `**Status**:` line)
+
+  **Shipped via PR #236.** 54 tests in `tests/unit/ops/test_specs_routes.py`
+  + `test_specs_dashboard.py` — all green as of 2026-05-12.
 
 ## Phase 2 — Status-flip write-side
 
