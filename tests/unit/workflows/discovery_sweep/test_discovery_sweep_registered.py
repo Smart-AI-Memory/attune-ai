@@ -13,11 +13,10 @@ from __future__ import annotations
 
 import attune.workflows as workflows_pkg
 from attune.ops.data import PATH_ARG_REGISTRY, PathArgSpec
-from attune.workflows import list_workflows
 
 
 def test_workflow_listed() -> None:
-    names = {w["name"] for w in list_workflows()}
+    names = {w["name"] for w in workflows_pkg.list_workflows()}
     assert "discovery-sweep" in names
 
 
@@ -33,7 +32,9 @@ def test_lazy_class_attribute() -> None:
 
 
 def test_list_workflows_entry_shape() -> None:
-    entries = [w for w in list_workflows() if w["name"] == "discovery-sweep"]
+    entries = [
+        w for w in workflows_pkg.list_workflows() if w["name"] == "discovery-sweep"
+    ]
     assert len(entries) == 1
     entry = entries[0]
     assert entry["class"] == "DiscoverySweepWorkflow"
