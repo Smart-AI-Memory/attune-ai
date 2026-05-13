@@ -419,3 +419,47 @@ to clean up — the rubric's `?` entries from the
 morning csv may have been the omit firing, and
 the fresh measurements may be a recent
 configuration change. Not blocking this cycle.
+
+## workflows/test_runner_helpers.py
+
+**Date:** 2026-05-12
+**Rubric score at pick time:** 2.125 (weight=3 × gap=0.708 × risk=1.0)
+**Picked because:** Top entry in the fresh rubric after
+`workflows/test_runner.py` shipped (post-#288 merge).
+The two 0%-covered rows above it
+(`workflows/test_lifecycle.py`,
+`workflows/test_maintenance_cli.py`) are dead code —
+flagged for retirement, not coverage.
+**Outcome:** 1 test file added
+(`test_test_runner_helpers.py`, 26 tests). Coverage
+29.2% → 98% line+branch. **Two Bug Class 2 findings
+surfaced — neither fixed inline.**
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-12 — fourteenth module under test-quality-program"
+
+**Findings (not fixed in this PR — separate PRs):**
+
+1. `_find_test_file` lines 165-172: dead defensive
+   try/except (`ValueError, IndexError`) around code
+   that can't raise either. The 2% coverage gap on
+   this module IS this dead branch. Will close to
+   100% when removed.
+
+2. `workflows/test_lifecycle.py` (535 lines, 0%) and
+   `workflows/test_maintenance_cli.py` (590 lines,
+   0%) — both orphan modules with zero inbound
+   imports outside each other. Already flagged in
+   the source as "Removed" in `workflows/__init__.py:328`.
+   Top picks on the rubric purely because the score
+   formula doesn't penalize dead code.
+
+**Rubric refinement (flagged not committed):** add an
+"inbound-import count" column to
+`scripts/score_test_quality.py`. Modules with 0
+external consumers should auto-flag as retirement
+candidates rather than coverage targets. This is the
+third cycle in a row where the working-set head
+turned out to be unused or silently-skipped — the
+rubric needs a usage signal, not just a coverage-gap
+signal.
