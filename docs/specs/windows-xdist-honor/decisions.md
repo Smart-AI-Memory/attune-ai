@@ -1,6 +1,5 @@
 # Decisions — Windows xdist `-n 1` Honor
-
-**Status:** Draft (2026-05-11)
+**Status:** approved (2026-05-11)
 **Owner:** Patrick
 **Predecessors:** Probe B (coverage-canonical-pattern), Probe C
 (probe-c-memory-investigation)

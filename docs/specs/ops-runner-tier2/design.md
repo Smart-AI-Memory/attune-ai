@@ -1,7 +1,5 @@
 # Design — Ops Runner Tier 2
-
-**Status:** draft
-
+**Status:** approved
 Technical shape of the work. See `requirements.md` for what we're building, `tasks.md` for the phase plan.
 
 ---

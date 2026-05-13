@@ -1,5 +1,8 @@
 # Per-module decisions — Test Quality Program
 
+**Status:** approved
+
+
 Append-only log. One section per module as it's worked. See
 `requirements.md`, `design.md`, `tasks.md` for the framework.
 

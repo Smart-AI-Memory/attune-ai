@@ -1,6 +1,5 @@
 # Decisions — Website update: dashboard maturity + fold-back
-
-**Status:** draft
+**Status:** approved
 **Owner:** Patrick
 **Opened:** 2026-05-10
 **Companion specs:**

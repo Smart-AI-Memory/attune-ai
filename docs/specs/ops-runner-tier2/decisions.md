@@ -1,6 +1,5 @@
 # Decisions — Ops Runner Tier 2
-
-**Status:** draft
+**Status:** approved
 **Owner:** Patrick
 **Opened:** 2026-05-11
 **Predecessors:**

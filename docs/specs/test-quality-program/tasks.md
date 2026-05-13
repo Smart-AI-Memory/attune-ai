@@ -1,7 +1,5 @@
 # Tasks: Test Quality Program
-
-**Status**: draft
-
+**Status:** approved
 ---
 
 ## Phase 3: Tasks

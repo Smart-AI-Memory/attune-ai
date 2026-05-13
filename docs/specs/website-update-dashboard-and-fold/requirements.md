@@ -1,7 +1,5 @@
 # Requirements — Website update: dashboard maturity + fold-back
-
-**Status:** draft
-
+**Status:** approved
 User-facing stories and contracts. See `decisions.md` for context, `design.md` for mitigations, `tasks.md` for the phase plan.
 
 ---
