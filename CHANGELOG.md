@@ -25,6 +25,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Fixed
 
+- `discovery-sweep` test suite — repair two tests broken by
+  Copilot Autofix commits that landed in #314's squash merge:
+  (1) `test_structured_emit_footer_documents_findings_schema`
+  was rewritten to `json.loads` the example footer, but the
+  example intentionally uses pseudo-JSON union syntax
+  (`"severity": "high" | "medium" | ...`) to document allowed
+  values and is not round-trippable — reverted to field-name
+  substring assertions; (2)
+  `test_glob_with_no_matches_does_not_run_sources` asserted
+  `received_paths is None`, but `_expand_path` documents that
+  unmatched globs are forwarded as raw paths so sources can
+  emit a "no files matched" finding — renamed to
+  `..._forwards_raw_glob_to_sources` and asserted the actual
+  contract. Broke main after #314 merged.
+
 - `discovery-sweep` PatternScanSource — port two false-positive
   filters from `bug-predict`'s
   `bug_predict_patterns.py`:
@@ -42,6 +57,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   four targets; queue noise dropped from 8 false positives to 0.
 
 ### Added
+
+- `discovery-sweep` P2.2 — `SecurityAuditSource` LLM adapter
+  wrapping `SecurityAuditWorkflow`. Same pattern as P2.1
+  (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via a new
+  `system_prompt_suffix` kwarg on `SecurityAuditWorkflow.__init__`)
+  with `budget_multiplier=4.0` to reflect the four-subagent spend
+  profile per Phase 1.5's default ratios (security=4 / deps=0.5 /
+  default=1). Wired into `default_sources()`. Integration
+  coverage marked `@pytest.mark.integration`.
 
 - `discovery-sweep` P2.1 — `BugPredictSource` LLM adapter wrapping
   `BugPredictionWorkflow`. Constructs the wrapped workflow per call

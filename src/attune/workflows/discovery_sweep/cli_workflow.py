@@ -13,6 +13,7 @@ from __future__ import annotations
 
 from .sources.bug_predict import BugPredictSource
 from .sources.pattern_scan import PatternScanSource
+from .sources.security_audit import SecurityAuditSource
 from .workflow import FindingSource
 
 
@@ -28,6 +29,7 @@ def default_sources() -> list[FindingSource]:
     return [
         PatternScanSource(),
         BugPredictSource(),
+        SecurityAuditSource(),
     ]
 
 
