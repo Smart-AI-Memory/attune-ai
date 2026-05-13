@@ -56,17 +56,13 @@ Each sub-task ships an adapter that:
 4. Parses findings via `parse_findings_json`
 5. Adds itself to `default_sources()`
 
-- [ ] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. `budget_multiplier=1.5`. Unit tests mock `BugPredictionWorkflow.execute()`. Integration test uses `@pytest.mark.integration` (the project-standard gate) — **not** `HAS_API_KEY` skipif, which masked code regressions as Anthropic network flakes (see the `HAS_API_KEY`-gated lesson in CLAUDE.md). Update CHANGELOG.
-- [ ] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. `budget_multiplier=4.0` (multi-subagent fan-out). Same test pattern as P2.1.
-- [ ] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. `budget_multiplier=0.5` (mostly deterministic CVE feed). Same test pattern as P2.1.
-- [ ] **P2.4** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. `budget_multiplier=1.5`. Same test pattern as P2.1.
-- [ ] **P2.5** `DocAuditSource` wrapping `DocAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1.
-- [ ] **P2.6** `TestAuditSource` wrapping `TestAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1. (Distinct lens — see `decisions.md`: test-quality scoring is not subsumed by bug-predict or doc-audit.)
-- [ ] **P2.7** **Surface evaluation (empirical, no code) — runs LAST.** After P2.1–P2.6 have all shipped, run `attune workflow run discovery-sweep --path src/attune/security/` and `attune workflow run discovery-sweep --path src/attune/workflows/`. For each scope, also run the standalone CLI invocations of every wrapped workflow on the same path. Cross-reference findings.
-      - Output: `docs/specs/discovery-sweep/surface-evaluation.md` with per-CLI-entry DEPRECATE / KEEP / DEFER recommendation.
-      - **Surface evaluation, not workflow retirement.** The workflow classes (`BugPredictionWorkflow`, …) stay — adapters wrap them. Only the standalone CLI entries (`attune workflow run bug-predict`) are candidates for deprecation.
-      - For DEPRECATE candidates, draft the deprecation path (PEP 562 lazy-import shim, CHANGELOG entry, migration alias if needed).
-      - Do NOT delete anything in this task — recommendation only. CLI deprecation execution lives in Phase 4.
+- [x] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. `budget_multiplier=1.5`. Unit tests mock `BugPredictionWorkflow.execute()`. Integration test uses `@pytest.mark.integration` (the project-standard gate) — **not** `HAS_API_KEY` skipif, which masked code regressions as Anthropic network flakes (see the `HAS_API_KEY`-gated lesson in CLAUDE.md). Update CHANGELOG.
+- [x] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. `budget_multiplier=4.0` (multi-subagent fan-out). Same test pattern as P2.1.
+- [x] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. `budget_multiplier=0.5` (mostly deterministic CVE feed). Same test pattern as P2.1.
+- [x] **P2.4** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. `budget_multiplier=1.0` (default — shipped this rather than 1.5 per implementation review). Same test pattern as P2.1.
+- [x] **P2.5** `DocAuditSource` wrapping `DocAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1.
+- [x] **P2.6** `TestAuditSource` wrapping `TestAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1. (Distinct lens — see `decisions.md`: test-quality scoring is not subsumed by bug-predict or doc-audit.)
+- [x] **P2.7** **Surface evaluation — complete (2026-05-13).** Published at `docs/specs/discovery-sweep/surface-evaluation.md`. **Decision: KEEP all six standalone audit workflows alongside discovery-sweep. Zero deprecation candidates.** Reasoning is analytical (the adapter wrappers don't change wrapped-workflow behavior, so functional equivalence is structural; the retirement question reduces to UX, and three distinct user journeys justify keeping the standalones). Empirical pass attempted (test-audit standalone vs sweep-wrapped on `src/attune/security/` at `--depth quick`) but blocked by an SDK nested-CLI-execution issue — see the doc's "SDK infrastructure block" section. The empirical pass DID validate the engine's defense-in-depth around adapter failures (spec NFR-1). **Phase 4 (CLI deprecation) closes empty.**
 
 ---
 
@@ -92,10 +88,12 @@ Goal: act on the surface-evaluation recommendations from P2.7. Only opens if P2.
 
 **Resolved (2026-05-13, Phase 1.5):** Old Phase 4 (ops-dashboard integration) is **deferred to a follow-up spec** — `discovery-sweep-ops-integration` — to be opened once `ops-runner-tier2` Phase 2 lands. The CLI deprecation work (previously Phase 5) is promoted to Phase 4 because it follows directly from P2.7 and ships under this spec.
 
-- [ ] **4.1** For each DEPRECATE candidate (a standalone CLI entry, e.g. `attune workflow run bug-predict`), implement the deprecation shim (PEP 562 module-level `__getattr__` with `DeprecationWarning` per the existing CLAUDE.md lesson). The underlying workflow class stays.
-- [ ] **4.2** CHANGELOG `### Deprecated` entries for each affected CLI entry.
-- [ ] **4.3** Migration alias in routing — e.g. `attune workflow run bug-predict --path X` continues to work for one release with a deprecation warning, recommending `attune workflow run discovery-sweep --path X --source bug-predict`.
-- [ ] **4.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect the deprecations.
+**Closed empty (2026-05-13):** P2.7 surface evaluation returned zero DEPRECATE recommendations — see `surface-evaluation.md`. All six standalone audit workflows KEEP. Phase 4 has nothing to delete; the "Phase 4 has either shipped OR P2.7 returned zero DEPRECATE recommendations" definition-of-done clause fires. The 4.1–4.4 subtasks below are preserved as a record of what *would* have shipped had retirement been recommended; they are not actionable.
+
+- [ ] ~~**4.1** For each DEPRECATE candidate (a standalone CLI entry, e.g. `attune workflow run bug-predict`), implement the deprecation shim (PEP 562 module-level `__getattr__` with `DeprecationWarning` per the existing CLAUDE.md lesson). The underlying workflow class stays.~~ (No candidates.)
+- [ ] ~~**4.2** CHANGELOG `### Deprecated` entries for each affected CLI entry.~~ (No deprecations.)
+- [ ] ~~**4.3** Migration alias in routing — e.g. `attune workflow run bug-predict --path X` continues to work for one release with a deprecation warning, recommending `attune workflow run discovery-sweep --path X --source bug-predict`.~~ (No migrations.)
+- [ ] ~~**4.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect the deprecations.~~ (Sequencing already reflects the spec as complete.)
 
 ---
 

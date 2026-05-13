@@ -360,6 +360,7 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         source_filter: str | None = kwargs.get("source")
         verbose: bool = bool(kwargs.get("verbose", False))
         output_format: str = str(kwargs.get("output_format", "markdown"))
+        depth: str | None = kwargs.get("depth")
 
         if not path:
             return self._error_result("path argument is required")
@@ -377,6 +378,17 @@ class DiscoverySweepWorkflow(BaseWorkflow):
 
         if source_filter:
             sources = [s for s in sources if s.name == source_filter]
+
+        if depth is not None:
+            # Apply user-requested depth to every adapter that carries
+            # one (all LLMSource subclasses have ``depth: str``;
+            # PatternScanSource doesn't and gets skipped). Mutating
+            # plain dataclass fields in place is the smallest hop —
+            # adapters are constructed per-sweep by default_sources()
+            # so the change doesn't leak across calls.
+            for s in sources:
+                if hasattr(s, "depth"):
+                    s.depth = depth
 
         if not sources:
             return self._error_result(

@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `discovery-sweep` P2.7 — surface evaluation published at
+  `docs/specs/discovery-sweep/surface-evaluation.md`. Decision:
+  **KEEP all six standalone audit workflows alongside
+  discovery-sweep — zero deprecation candidates.** Reasoning is
+  primarily analytical (the adapter wrappers don't change
+  wrapped-workflow behavior, so the retirement question reduces
+  to UX); three user journeys justify keeping the standalones
+  (focused single-audit deep dive, budget-bounded pre-release
+  check, MCP tool reuse from non-attune callers). Empirical pass
+  attempted but blocked by SDK nested-CLI execution context —
+  documented in the doc. **Phase 4 (CLI deprecation) closes
+  empty.** With this, the discovery-sweep spec is feature-complete
+  on `main`: Phase 1 + 1.5 + 2A + 2B (P2.1–P2.6) + 3 + P2.7
+  shipped; the only outstanding work is Phase 3.2 polish
+  (severity-colored badges) and the deferred ops-dashboard
+  follow-up spec.
+
+- `attune workflow run --depth <quick|standard|deep>` — CLI flag
+  exposing the workflow-level depth knob that previously was only
+  accessible by passing `--input '{"depth":"quick"}'`. For
+  discovery-sweep specifically, the flag propagates to every LLM
+  adapter's `depth` attribute before fan-out so a single
+  `--depth quick` sweeps cheaply across all sources. Workflows
+  that don't accept `depth` get the kwarg via their `**kwargs`
+  swallow (no-op).
+
 ### Changed
 
 - `discovery-sweep` Phase 1.5 — second-pass design landings.

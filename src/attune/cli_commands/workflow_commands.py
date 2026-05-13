@@ -118,6 +118,8 @@ def cmd_workflow_run(args: Namespace) -> int:
         input_data["no_llm"] = True
     if getattr(args, "source", None):
         input_data["source"] = args.source
+    if getattr(args, "depth", None):
+        input_data["depth"] = args.depth
     if getattr(args, "json", False):
         # Let workflows that honor it render their own JSON via
         # ``final_output`` rather than the generic ``json.dumps(result)``
