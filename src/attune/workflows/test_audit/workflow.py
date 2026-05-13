@@ -91,7 +91,7 @@ class TestAuditWorkflow(BaseWorkflow):
     Usage::
 
         workflow = TestAuditWorkflow()
-        result = await workflow.execute(src_path="src/", depth="standard")
+        result = await workflow.execute(path="src/", depth="standard")
     """
 
     name = "test-audit"
@@ -104,20 +104,43 @@ class TestAuditWorkflow(BaseWorkflow):
 
         Args:
             **kwargs: Keyword arguments.
-                src_path (str): Required. Directory or file to audit.
+                path (str): Required. Directory or file to audit.
+                src_path (str): Deprecated alias for ``path``;
+                    emits ``DeprecationWarning``. Removed in v7.0.
                 depth (str): Audit depth — "quick", "standard",
                     or "deep". Defaults to "standard".
 
         Returns:
             WorkflowResult with findings, suggestions, and metadata.
         """
-        src_path_arg: str = kwargs.get("src_path", "")
+        import warnings as _warnings  # local to keep formatter from stripping
+
+        path_arg: str = kwargs.get("path", "") or kwargs.get("src_path", "")
         depth: str = kwargs.get("depth", "standard")
 
-        if not src_path_arg:
-            return self._error_result("src_path argument is required")
+        legacy_set = bool(kwargs.get("src_path"))
+        new_set = bool(kwargs.get("path"))
+        if legacy_set and not new_set:
+            _warnings.warn(
+                "TestAuditWorkflow.execute(src_path=...) is deprecated; "
+                "use execute(path=...) instead. The legacy kwarg will "
+                "be removed in v7.0.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        elif legacy_set and new_set:
+            _warnings.warn(
+                "TestAuditWorkflow.execute(): both `path=` and "
+                "`src_path=` supplied; `path=` takes precedence and "
+                "`src_path=` is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
 
-        resolved_path = str(Path(src_path_arg).resolve())
+        if not path_arg:
+            return self._error_result("path argument is required (was: src_path)")
+
+        resolved_path = str(Path(path_arg).resolve())
         max_turns = _DEPTH_MAX_TURNS.get(depth, 20)
 
         started_at = datetime.now()

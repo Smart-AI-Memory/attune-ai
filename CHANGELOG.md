@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Deprecated
+
+- `TestAuditWorkflow.execute(src_path=...)` — use
+  `execute(path=...)` instead. Legacy kwarg emits a
+  `DeprecationWarning` and will be removed in v7.0. PR-3 of
+  `docs/specs/workflow-path-arg-unification/`; the
+  `required=True` semantic in `PATH_ARG_REGISTRY` is preserved
+  (a path is still required). Error message text updated from
+  "src_path argument is required" to "path argument is required
+  (was: src_path)" to bridge the rename.
+
 ### Removed (Breaking)
 
 - `attune.coordination` package — `AgentCoordinator`, `AgentTask`,
