@@ -222,6 +222,26 @@ def _render_markdown(result: SweepResult, *, verbose: bool = False) -> str:
     return "\n".join(out)
 
 
+def _render_json(result: SweepResult) -> str:
+    """JSON rendering of a sweep result matching ``design.md`` § Data model.
+
+    Uses :func:`dataclasses.asdict` which recursively converts the
+    frozen Finding / QuestionFinding / RejectedFinding dataclasses
+    into plain dicts; tuple fields (notably ``Finding.tags``) become
+    JSON arrays. Top-level shape is
+    ``{"queue": [...], "questions": [...], "rejected": [...],
+    "metadata": {...}}`` — directly consumable by CI tooling and
+    the ops dashboard.
+
+    Imports are function-scoped so the existing markdown-only call
+    path doesn't pay for ``json`` / ``asdict`` at module import.
+    """
+    import json
+    from dataclasses import asdict
+
+    return json.dumps(asdict(result), indent=2, default=str)
+
+
 # ---------------------------------------------------------------------------
 # Engine
 # ---------------------------------------------------------------------------
@@ -320,15 +340,26 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 :data:`DEFAULT_BUDGET_USD` ($10.00).
             sources: Optional explicit list of :class:`FindingSource`
                 adapters; defaults to :func:`default_sources`.
-            no_llm: If True, filter to non-LLM sources only.
+            no_llm: If True, filter to non-LLM sources only
+                (``is_llm = False`` adapters survive the filter).
+            source: Optional source-name filter — only the named
+                source runs. Mutually exclusive with ``no_llm``;
+                if both are passed, ``no_llm`` applies first then
+                ``source`` filters within the survivors.
             verbose: If True, include the rejected bucket in the
                 rendered ``final_output`` markdown.
+            output_format: ``"markdown"`` (default, human-readable)
+                or ``"json"`` (machine-readable, matches design.md
+                § Data model). ``verbose`` is implied for ``"json"``
+                — JSON output always carries all three buckets.
         """
         path: str = kwargs.get("path", "")
         budget_usd: float = float(kwargs.get("budget_usd", DEFAULT_BUDGET_USD))
         sources: list[FindingSource] | None = kwargs.get("sources")
         no_llm: bool = bool(kwargs.get("no_llm", False))
+        source_filter: str | None = kwargs.get("source")
         verbose: bool = bool(kwargs.get("verbose", False))
+        output_format: str = str(kwargs.get("output_format", "markdown"))
 
         if not path:
             return self._error_result("path argument is required")
@@ -344,8 +375,13 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         if no_llm:
             sources = [s for s in sources if not getattr(s, "is_llm", True)]
 
+        if source_filter:
+            sources = [s for s in sources if s.name == source_filter]
+
         if not sources:
-            return self._error_result("no sources to run (use --source or drop --no-llm)")
+            return self._error_result(
+                "no sources to run (check --source name, drop --no-llm, or both)"
+            )
 
         allocations = self._allocate_budget(sources, budget_usd)
         paths = _expand_path(path)
@@ -376,7 +412,11 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                     description=self.description,
                 )
             ],
-            final_output=_render_markdown(sweep, verbose=verbose),
+            final_output=(
+                _render_json(sweep)
+                if output_format == "json"
+                else _render_markdown(sweep, verbose=verbose)
+            ),
             cost_report=CostReport(
                 total_cost=sweep.metadata.spent_usd,
                 baseline_cost=sweep.metadata.budget_usd,

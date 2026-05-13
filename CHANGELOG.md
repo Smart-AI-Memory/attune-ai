@@ -58,6 +58,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 3 — CLI output polish + JSON mode.
+  `attune workflow run discovery-sweep` learns three new flags:
+  `--verbose` (include the rejected bucket in markdown output),
+  `--no-llm` (filter to non-LLM sources only — only
+  `PatternScanSource` survives), and `--source <name>` (run only
+  one source by name; useful for debugging single adapters).
+  Existing `--json` flag now produces a clean structured payload
+  matching `design.md` § Data model: `{"queue": [...],
+  "questions": [...], "rejected": [...], "metadata": {...}}` with
+  every Finding's tuple `tags` serialized as JSON arrays. The
+  workflow's `execute()` learns an `output_format` kwarg
+  (`"markdown"` default, `"json"` opt-in) so library callers can
+  request either rendering without going through the CLI. Phase
+  3.2 (severity-colored badges) deferred to a follow-up — the
+  spec calls it polish; the markdown rendering ships as-is.
+
 - `discovery-sweep` P2.6 — `TestAuditSource` LLM adapter wrapping
   `TestAuditWorkflow`. Final Phase 2B adapter; same pattern as
   P2.1–P2.5 (workflow-INSTANCE level `STRUCTURED_EMIT_FOOTER` via

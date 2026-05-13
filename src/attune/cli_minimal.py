@@ -151,6 +151,22 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
     )
     run_parser.add_argument("--target", "-t", help="Target value (e.g., coverage target)")
     run_parser.add_argument("--json", "-j", action="store_true", help="Output as JSON")
+    run_parser.add_argument(
+        "--verbose",
+        "-v",
+        action="store_true",
+        help="Discovery-sweep: include rejected bucket in markdown output",
+    )
+    run_parser.add_argument(
+        "--no-llm",
+        dest="no_llm",
+        action="store_true",
+        help="Discovery-sweep: filter to non-LLM sources only (pattern scan)",
+    )
+    run_parser.add_argument(
+        "--source",
+        help="Discovery-sweep: run only the named source (e.g. bug-predict)",
+    )
 
 
 def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
