@@ -1,6 +1,6 @@
 # Spec: Decouple Redis from `attune-ai` Core
 
-**Status**: approved
+**Status**: partial — 2026-05-12 (see tasks.md for per-phase outcome)
 
 ---
 

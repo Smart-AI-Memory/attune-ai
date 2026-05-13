@@ -3389,3 +3389,99 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   harness in-tree afterward (`scripts/phase0/
   measure.py` lives on); it's reusable for any
   future SDK-byte-cost question.
+
+- **PEP 562 module-level `__getattr__` is the right
+  tool for deprecation shims that replace a deleted
+  package**: when deleting `src/attune/coordination/`
+  (a package directory), replace it with a single
+  `src/attune/coordination.py` file containing a
+  module-level `__getattr__(name: str)` that raises
+  `ImportError` with a migration message for names
+  in a `_REMOVED_NAMES` frozenset, and
+  `AttributeError` for unknown names. Python's
+  import machinery auto-converts `AttributeError` →
+  `ImportError` when invoked via
+  `from module import X`, so `from
+  attune.coordination import RandomName` and `from
+  attune.coordination import AgentCoordinator` both
+  surface as `ImportError` (the latter with our
+  helpful message). The shim costs ~50 LoC and
+  preserves `import attune.coordination` (returns
+  the shim module) while breaking attribute access.
+
+- **In-repo sibling packages get bundled into the
+  parent wheel via setuptools `where = ["src", "."]`**:
+  `attune_redis/` has its own `pyproject.toml` and
+  looks like an independent package, but it ships
+  inside `attune-ai`'s wheel because
+  `[tool.setuptools.packages.find]` searches both
+  `src/` (for `attune/`) and `.` (catches
+  `attune_redis/` and `attune_software/`). Verify
+  with `pip install -e . && python -c "import
+  attune_redis; print(attune_redis.__file__)"` —
+  resolves inside the repo. The implication for
+  `pip install attune-ai`: nested sibling packages
+  are present at import time but their RUNTIME deps
+  (e.g. `redis-py`, `agent-memory-client`) are NOT
+  pulled unless their entry-point extra is selected.
+  Plan extras accordingly: the entry-point name in
+  `[project.entry-points.<group>]` should match the
+  extra name so users can connect "I need this
+  plugin" → "I install this extra."
+
+- **Editable-install package paths leak into `pip
+  list` output and break naive grep checks**: when
+  verifying "no redis runtime deps installed" via
+  `pip list | grep -iE "redis|agent-memory"`, the
+  output included `attune-ai 6.7.1
+  /path/to/worktree/redis-p2-extras` because the
+  WORKTREE PATH contains "redis". For strict
+  package-name matching, use `pip list | awk
+  '{print $1}' | grep -ixE
+  "redis|agent-memory-client"` — strip the version +
+  path columns first, then case-insensitive exact
+  match. Same gotcha shape as: any pip-list-scraping
+  diagnostic that doesn't anchor to the
+  package-name column will false-positive on path
+  metadata.
+
+- **Audits with "possibly delete if X" qualifiers
+  require verifying both X and the alternative**:
+  the redis-decoupling Phase A audit flagged
+  `test_pubsub_direct.py` for deletion "if
+  PubSubManager is no longer reachable" and
+  `test_redis_fallback.py` "if it tests deleted
+  coordination classes." When P3 ran, both
+  conditions evaluated false — `PubSubManager` is
+  still part of `attune.memory.short_term` (audit
+  explicitly kept it Redis-coupled), and
+  `test_redis_fallback.py` tests
+  `RedisShortTermMemory`, not
+  `AgentCoordinator`/`TeamSession`. The audit's
+  caution was correct; my job was to verify each
+  condition before deleting. Pattern: when an audit
+  says "delete if X," re-read the file's actual
+  imports and class names against the current
+  module graph before acting. The audit is a
+  hypothesis; the verification is the check.
+
+- **`REMOVE IN vX.0.0` deprecation markers rot
+  silently past their version**: found
+  `src/attune/redis_memory.py` (and 4 siblings) with
+  `REMOVE IN v4.0.0` comments while attune-ai is at
+  v6.7.1 — three major versions overdue. No CI gate
+  enforces deprecation timelines; the markers are
+  documentation, not contracts. Two implications:
+  (1) don't trust `REMOVE IN vX.0.0` markers as
+  evidence of an imminent deletion — they're often
+  aspirational; (2) for any future deletion-gated
+  spec, write an enforcement script alongside the
+  marker (`scripts/check_deprecation_markers.py`
+  that fails CI when current version > marker
+  version). Without enforcement, "we'll delete this
+  later" becomes "this lives forever." The migration
+  doc that references such markers
+  (`docs/migration/redis-plugin-migration.md` here)
+  becomes wrong the moment the version passes; treat
+  migration docs as having a shelf life tied to the
+  marker's target version.

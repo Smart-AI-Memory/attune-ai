@@ -51,17 +51,6 @@ guardrails — no active work.
 Inspection only. Output is a decision doc, not code. Safe to
 run alongside Track A.
 
-### redis-decoupling (Phase 3A only for now)
-
-- Status: approved — 12 tasks, ~17% done
-- Why parallel: Phase 3A is pure audit; findings may shrink
-  the spec if internal callers are fewer than feared.
-- Tasks
-  - [ ] Phase 3A — audit internal Redis usage
-  - [ ] Decision gate — re-scope based on findings
-  - [ ] (Later) Phase B+ — implementation
-- Spec: [redis-decoupling](redis-decoupling/)
-
 ### ops-specs-features (Phase 0 unblock)
 
 - Status: approved & prioritized 2026-05-11; gate condition
@@ -178,18 +167,19 @@ Open only if a trigger condition fires.
 
 ## Today's recommended pick
 
-**redis-decoupling Phase 3A** — pure audit, no code. Walk
-internal callers of the Redis facade (`RedisShortTermMemory`
-and its 15 submodules, plus `RedisAutoDetector`) and produce
-a count + categorization. Output is a decision-doc update.
-Findings likely shrink the spec — if internal callers are
-fewer than feared, Phase B's implementation budget drops.
+**ops-runner-tier2 Phase 1.3** — implement the
+`PATH_ARG_REGISTRY` dict per PR #285's audit. The audit
+proved hypothesis H2 right (workflow `--path` support is
+uneven) and proposed a three-way registry (Option 2) instead
+of the spec's literal binary. ~50 LoC: registry dict in
+`src/attune/ops/data.py` + drift-guard test in
+`tests/unit/ops/test_path_support_registry.py`. Once landed,
+Phases 2–5 of ops-runner-tier2 can read the registry and
+ship the scope picker.
 
-Why this over a Track C pick: Track A's just-closed Phase 3C
-script gives us a clean enforcement loop on coverage debt, so
-audit-mode work is the next-cheapest lever. Track C starts
-shipping real product surface — better to start that *after*
-the Redis scope is known.
+Alternative: **test-quality-program** — continuous module-
+by-module work via the rubric. Slot whenever there's spare
+context between bigger work.
 
 ---
 
@@ -215,3 +205,17 @@ the Redis scope is known.
   resolution + enforcement script (`scripts/check_coverage_omits.py`)
   + pre-commit hook. 60/60 production-code `omit` entries
   documented (100% compliance).
+- [docs/specs/redis-decoupling](redis-decoupling/) — **partial**
+  2026-05-12. P1 (PR #279) deleted `attune.coordination/` with
+  deprecation shim. P2 (PR #281) dropped `[memory]` extra,
+  slimmed `[developer]`. P3 audited as mostly no-op (P1 already
+  covered the test deletions necessary for green CI). Full
+  decoupling deferred per Phase A audit (would require a
+  memory-subsystem rewrite, not a delta).
+- [docs/specs/ops-specs-features](ops-specs-features/) —
+  Phases 1–3 complete (PRs #236, #239, #249); Phase 4
+  reflection cycle awaiting 2 weeks of usage data (target:
+  2026-05-25). Phase 0 audit verified 2026-05-12 (PR #290).
+- [docs/specs/ops-security-hardening](ops-security-hardening/) —
+  complete 2026-05-12 (PR #280). DNS-rebinding fix cluster
+  + subscriber queue binding + structured logging.
