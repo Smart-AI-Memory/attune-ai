@@ -21,6 +21,7 @@
         <th class="num">Stages</th>
         <th>Tier map</th>
         <th>Description</th>
+        {% if allow_run %}<th>Scope</th>{% endif %}
         {% if allow_run %}<th class="num">Action</th>{% endif %}
       </tr>
     </thead>
@@ -42,6 +43,24 @@
             </div>
           </td>
           {% if allow_run %}
+            <td class="scope-cell">
+              {% if supports_path[w.name] %}
+                <select class="scope-picker" data-scope-picker aria-label="Scope for {{ w.name }}">
+                  <option value="">Project-wide</option>
+                  {% for f in features %}
+                    {% if f.path %}
+                      <option value="{{ f.path }}" title="{{ f.description }}">{{ f.name }}</option>
+                    {% endif %}
+                  {% endfor %}
+                  <option value="__custom__">Custom path…</option>
+                </select>
+                <input type="text" class="scope-custom" data-scope-custom hidden
+                       placeholder="e.g. src/attune/security/"
+                       aria-label="Custom scope path for {{ w.name }}">
+              {% else %}
+                <span class="scope-na" title="This workflow doesn't accept a path argument">n/a</span>
+              {% endif %}
+            </td>
             <td class="num">
               <button class="btn btn-run" type="button" data-run-button data-workflow="{{ w.name }}">Run</button>
             </td>

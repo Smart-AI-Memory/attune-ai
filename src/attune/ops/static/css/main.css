@@ -570,6 +570,55 @@ a.kpi:hover {
   transition: outline 0.3s ease-out;
 }
 
+/* Workflow scope picker (ops-runner-tier2 Phase 2). */
+.scope-cell {
+  white-space: nowrap;
+}
+.scope-picker {
+  font-size: 12px;
+  padding: 3px 22px 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-soft);
+  color: var(--fg);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  background-image: linear-gradient(45deg, transparent 50%, currentColor 50%),
+                    linear-gradient(135deg, currentColor 50%, transparent 50%);
+  background-position:
+    calc(100% - 12px) 50%,
+    calc(100% - 7px) 50%;
+  background-size: 5px 5px, 5px 5px;
+  background-repeat: no-repeat;
+  max-width: 220px;
+}
+.scope-picker:hover {
+  border-color: var(--accent);
+}
+.scope-custom {
+  display: block;
+  margin-top: 4px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-soft);
+  color: var(--fg);
+  width: 220px;
+  max-width: 100%;
+}
+.scope-custom:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+.scope-na {
+  font-size: 12px;
+  color: var(--fg-subtle);
+  font-style: italic;
+}
+
 /* Spec drill-in: phase body in a readable monospace block. */
 .spec-phase {
   margin-bottom: 2rem;
