@@ -180,6 +180,11 @@ _LAZY_WORKFLOW_IMPORTS: dict[str, tuple[str, str]] = {
     # migration.py's "progressive-test-gen" -> "test-gen" alias).
     # AgentCodeReviewWorkflow: Merged into CodeReviewWorkflow (v4.2.0)
     "DeepReviewAgentSDKWorkflow": (".deep_review", "DeepReviewAgentSDKWorkflow"),
+    # Discovery sweep orchestrator (Phase 2A)
+    "DiscoverySweepWorkflow": (
+        ".discovery_sweep.cli_workflow",
+        "DiscoverySweepWorkflow",
+    ),
     # Agent SDK adapters (v3.9.3)
     # SecurityAuditAgentSDKWorkflow: Merged into SecurityAuditWorkflow (v4.2.0)
     # PerfAuditAgentSDKWorkflow: Merged into PerformanceAuditWorkflow (v4.2.0)
@@ -291,6 +296,7 @@ _DEFAULT_WORKFLOW_NAMES: dict[str, str] = {
     "security-audit": "SecurityAuditWorkflow",
     "rag-code-gen": "RagCodeGenWorkflow",
     "perf-audit": "PerformanceAuditWorkflow",
+    "discovery-sweep": "DiscoverySweepWorkflow",
     # Generation workflows
     "test-audit": "TestAuditWorkflow",
     "test-gen": "TestGenerationWorkflow",

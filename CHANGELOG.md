@@ -7,6 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `discovery-sweep` workflow (Phase 1 + Phase 2A) — read-only
+  discovery orchestrator that runs N sub-workflows on a
+  bounded path, filters findings through a verification rule
+  engine grounded in `CLAUDE.md` lessons, and produces a
+  curated queue tagged by resolution complexity. Resolution
+  stays interactive.
+  - **Phase 1** ships the engine as a Python API
+    (`DiscoverySweepEngine`) with verification rules,
+    complexity classifier, budget tracker, and serialization
+    layer.
+  - **Phase 2A** registers `discovery-sweep` in the workflow
+    registry so `attune workflow run discovery-sweep --path
+    <module>` works end-to-end. Ships the first adapter,
+    `PatternScanSource` — a deterministic, zero-LLM-cost
+    line-level scanner for bare except, dangerous-eval/exec,
+    subprocess shell=True, and TODO/FIXME markers. Its raw
+    output is filtered by the verification engine's REJECT
+    rules before reaching the queue.
+  - LLM-wrapping adapters (bug_predict, security_audit, etc.)
+    plus auto-fix, retirement evaluation, multi-module
+    parallelism, and RAG-grounded verification remain Phase
+    2B. See `docs/workflows/discovery-sweep.md` and
+    `docs/specs/discovery-sweep/`. 127 tests total.
+
 ### Deprecated
 
 - `TestAuditWorkflow.execute(src_path=...)` — use

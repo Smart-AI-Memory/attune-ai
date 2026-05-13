@@ -252,6 +252,11 @@ dashboard/dist/
 # Generated benchmark cache (regenerates on every cache-writer run)
 .help/benchmarks/
 
+# Discovery-sweep ephemeral output (queue / rejected / questions)
+# Per .claude/plans/discovery-sweep.md — gitignored by default;
+# commit a specific queue file by-path if an audit trail is wanted.
+.claude/discovery-queue/
+
 # Test leak — tests that stringify a MagicMock into a filesystem path
 # create stray MagicMock/mock.attune_dir/<id>/ trees. Ignore them as a
 # safety net; ideally the underlying tests should be fixed to use tmp_path.
