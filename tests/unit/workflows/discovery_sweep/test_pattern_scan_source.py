@@ -202,6 +202,103 @@ class TestFalsePositiveFilters:
         assert len(bare) == 1
 
 
+class TestMultiLineDocstringFilter:
+    """AST-based string-region filter — added 2026-05-13.
+
+    The whole-tree dogfood audit on 2026-05-13 surfaced 14 false
+    positives where pattern keywords were mentioned in **multi-line**
+    module docstrings. The pre-existing line-local quote walk only
+    catches same-line literals — a docstring whose opening ``\"\"\"``
+    is on line 1 and whose ``eval(`` mention is on line 12 falls
+    through. The AST helper rejects those by collecting every string-
+    literal node's span up front and filtering finding coordinates
+    against the span set.
+
+    See ``docs/specs/discovery-sweep/dogfood-audit-2026-05-13.md``.
+    """
+
+    def test_eval_inside_multiline_module_docstring_skipped(self, tmp_path: Path) -> None:
+        keyword = "ev" + "al"
+        # Module docstring opens on line 1, mentions ``eval(`` on line 4
+        # (in prose). Pre-AST filter would miss this; the AST helper
+        # treats lines 1-6 inclusive as inside-string territory.
+        (tmp_path / "a.py").write_text(
+            '"""Module docstring.\n'
+            "\n"
+            "Coding standards:\n"
+            f"- No {keyword}() or exec() usage\n"
+            "- All operators whitelisted\n"
+            '"""\n'
+            "\n"
+            "def safe(): return 1\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_exec_inside_multiline_class_docstring_skipped(self, tmp_path: Path) -> None:
+        keyword = "ex" + "ec"
+        (tmp_path / "b.py").write_text(
+            "class Foo:\n"
+            '    """One liner.\n'
+            "\n"
+            f"    Does not use {keyword}() anywhere.\n"
+            '    """\n'
+            "\n"
+            "    def bar(self):\n"
+            "        return 1\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+    def test_real_eval_outside_string_still_detected(self, tmp_path: Path) -> None:
+        """AST filter must not suppress legitimate calls."""
+        keyword = "ev" + "al"
+        (tmp_path / "c.py").write_text(
+            '"""Module docstring with no pattern keyword."""\n'
+            "\n"
+            "def unsafe(x):\n"
+            f"    return {keyword}(x)\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert len(findings) == 1
+        assert "dangerous_eval" in findings[0].tags
+        assert findings[0].line == 4
+
+    def test_syntax_error_falls_back_to_line_local_filter(self, tmp_path: Path) -> None:
+        """Files that fail to ast.parse still get same-line filtering.
+
+        The fallback path catches same-line string literals (the
+        original Phase 1 behavior) so single-line scanner self-matches
+        keep getting filtered even when the file has invalid syntax.
+        """
+        keyword = "ev" + "al"
+        # Truly broken syntax (unbalanced bracket on a real statement)
+        # — AST will refuse to parse, scanner falls back. The string
+        # literal on the line is still recognized by the line-local
+        # quote walk.
+        (tmp_path / "d.py").write_text(
+            f'TITLE = "Use of {keyword}() bad"\n' "def broken(:\n    pass\n",
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        # Same-line string filter still applies via the fallback path.
+        assert findings == [], findings
+
+    def test_eval_in_fstring_literal_fragment_skipped(self, tmp_path: Path) -> None:
+        """f-string literal fragments are ``ast.Constant`` children and
+        should be treated as inside-string by the AST helper."""
+        keyword = "ev" + "al"
+        (tmp_path / "e.py").write_text(
+            f'def f(): return f"prose mentioning {keyword}() in middle"\n',
+            encoding="utf-8",
+        )
+        findings = _scan(tmp_path)
+        assert findings == [], findings
+
+
 class TestPathRendering:
     """Single-file scans render the bare filename, not ``.``."""
 
