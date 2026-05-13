@@ -322,3 +322,80 @@ class TestVerboseFlag:
         res = asyncio.run(wf.execute(path="src/", sources=[src], verbose=True))
         assert "## Rejected" in res.final_output
         assert "Rule:" in res.final_output
+
+
+class TestSeverityColorBadges:
+    """Phase 3.2 — ANSI severity badges when stdout is a TTY.
+
+    ``NO_COLOR`` and ``FORCE_COLOR`` both follow no-color.org
+    convention. Tests use ``monkeypatch`` on env so they're
+    deterministic regardless of where they run (TTY-on local,
+    TTY-off CI).
+    """
+
+    def test_no_color_env_forces_plain_brackets(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.setenv("NO_COLOR", "1")
+        monkeypatch.delenv("FORCE_COLOR", raising=False)
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="high", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        # Plain bracket with no ANSI escape codes.
+        assert "[high]" in res.final_output
+        assert "\x1b[" not in res.final_output
+
+    def test_force_color_injects_ansi_codes(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        monkeypatch.delenv("NO_COLOR", raising=False)
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="high", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        # Red severity wrapped in ANSI codes.
+        assert "\x1b[31m[high]\x1b[0m" in res.final_output
+
+    def test_force_color_critical_is_bold_red(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Critical is bumped to bold-red (`\\x1b[1;31m`) to distinguish from high."""
+        monkeypatch.delenv("NO_COLOR", raising=False)
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="critical", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        assert "\x1b[1;31m[critical]\x1b[0m" in res.final_output
+
+    def test_no_color_takes_precedence_over_force_color(
+        self, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        """NO_COLOR wins (per no-color.org); FORCE_COLOR doesn't override it."""
+        monkeypatch.setenv("NO_COLOR", "1")
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="high", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src]))
+        assert "\x1b[" not in res.final_output
+
+    def test_json_output_never_includes_ansi_codes(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Even with FORCE_COLOR, the JSON path must stay clean."""
+        monkeypatch.setenv("FORCE_COLOR", "1")
+        src = FakeSource(
+            name="s",
+            is_llm=False,
+            findings=[_finding(severity="high", file="a.py", line=1)],
+        )
+        wf = DiscoverySweepWorkflow()
+        res = asyncio.run(wf.execute(path="src/", sources=[src], output_format="json"))
+        assert "\x1b[" not in res.final_output

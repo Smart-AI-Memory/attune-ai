@@ -9,6 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 3.2 — severity-colored badges in
+  markdown output. Findings render with ANSI-colored
+  `[critical]` (bold red), `[high]` (red), `[medium]` (yellow),
+  `[low]` (blue), and `[info]` (dim) badges when stdout is an
+  interactive terminal. Pipes, CI logs, and file redirects get
+  plain brackets (no ANSI codes) so logs stay grep-friendly.
+  Follows no-color.org: `NO_COLOR=1` forces plain output,
+  `FORCE_COLOR=1` forces color (NO_COLOR wins on conflict). JSON
+  output (`--json` / `output_format="json"`) is unaffected — no
+  codes ever leak into structured output.
+
 - `discovery-sweep` P2.7 — surface evaluation published at
   `docs/specs/discovery-sweep/surface-evaluation.md`. Decision:
   **KEEP all six standalone audit workflows alongside
