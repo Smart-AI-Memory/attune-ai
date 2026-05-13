@@ -32,6 +32,60 @@ from ..workflow import Finding, Severity
 
 logger = logging.getLogger(__name__)
 
+_QUOTE_CHARS: frozenset[str] = frozenset({'"', "'", "`"})
+_NOQA_BLE001_RE = re.compile(r"#\s*noqa\s*:\s*[^#\n]*\bBLE001\b", re.IGNORECASE)
+
+
+def _is_inside_quoted_region(line: str, match_start: int) -> bool:
+    """True if ``match_start`` falls inside a quoted region on ``line``.
+
+    Treats maximal runs of ``"`` / ``'`` / `` ` `` as single toggles so
+    Python triple-quoted strings (``\"\"\"``) and Markdown double-backtick
+    code-spans (``...``) flip state correctly. Catches scanner self-match
+    false positives where a pattern (e.g. ``eval(``) appears inside a
+    docstring or a Python string literal on the same line.
+    """
+    state: str | None = None
+    i = 0
+    n = len(line)
+    while i < n:
+        ch = line[i]
+        if ch in _QUOTE_CHARS:
+            run = ch
+            j = i
+            while j < n and line[j] == run:
+                j += 1
+            if j > match_start >= i:
+                # The match position lands inside the quote run itself
+                # (unlikely for our patterns but safe to call it
+                # quoted).
+                return True
+            if i >= match_start:
+                break
+            if state is None:
+                state = run
+            elif state == run:
+                state = None
+            i = j
+            continue
+        i += 1
+        if i > match_start:
+            break
+    return state is not None
+
+
+def _has_noqa_ble001(line: str) -> bool:
+    """True if ``line`` carries an explicit ``# noqa: BLE001`` waiver.
+
+    The project's coding standards require this annotation on every
+    intentional ``except Exception:`` block (paired with an
+    ``# INTENTIONAL:`` comment). When the annotation is present, the
+    broad-except pattern is acknowledged team policy rather than a
+    finding.
+    """
+    return bool(_NOQA_BLE001_RE.search(line))
+
+
 _EXCLUDE_DIRS: frozenset[str] = frozenset(
     {
         "__pycache__",
@@ -168,30 +222,50 @@ class PatternScanSource:
             logger.debug("pattern-scan: cannot read %s: %s", file_path, exc)
             return []
 
-        try:
-            rel = str(file_path.relative_to(root))
-        except ValueError:
-            # File outside root (shouldn't happen when root is a dir,
-            # but file-root mode lands here).
-            rel = str(file_path)
+        # Render the file's display path. When the input was a single
+        # file (root == file_path), ``relative_to`` returns ``.``; fall
+        # back to the bare filename so output shows ``foo.py:42`` rather
+        # than ``.:42``.
+        if file_path == root:
+            rel = file_path.name
+        else:
+            try:
+                rel = str(file_path.relative_to(root))
+            except ValueError:
+                rel = str(file_path)
 
         findings: list[Finding] = []
         for lineno, line in enumerate(content.splitlines(), start=1):
             for spec in _PATTERNS:
-                if spec.regex.search(line):
-                    findings.append(
-                        Finding(
-                            source=self.name,
-                            severity=spec.severity,
-                            title=spec.title,
-                            description=(
-                                f"Pattern `{spec.pattern_name}` matched at " f"{rel}:{lineno}."
-                            ),
-                            file=rel,
-                            line=lineno,
-                            evidence=line.strip()[:200],
-                            confidence=0.7,
-                            tags=(spec.pattern_name,),
-                        )
+                match = spec.regex.search(line)
+                if not match:
+                    continue
+                if _is_inside_quoted_region(line, match.start()):
+                    # Pattern token sits inside a string literal /
+                    # backtick code-span / docstring fragment on this
+                    # line. Skip: bug-predict's `_is_detection_code_line`
+                    # filters the same shape (see
+                    # `.claude/rules/attune/scanner-patterns.md`).
+                    continue
+                if spec.pattern_name == "broad_exception" and _has_noqa_ble001(line):
+                    # Project coding standards waive `except Exception:`
+                    # when the line carries an explicit `# noqa: BLE001`
+                    # annotation (paired with an `# INTENTIONAL:`
+                    # comment).
+                    continue
+                findings.append(
+                    Finding(
+                        source=self.name,
+                        severity=spec.severity,
+                        title=spec.title,
+                        description=(
+                            f"Pattern `{spec.pattern_name}` matched at " f"{rel}:{lineno}."
+                        ),
+                        file=rel,
+                        line=lineno,
+                        evidence=line.strip()[:200],
+                        confidence=0.7,
+                        tags=(spec.pattern_name,),
                     )
+                )
         return findings
