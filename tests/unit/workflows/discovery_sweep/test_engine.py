@@ -26,16 +26,27 @@ from attune.workflows.discovery_sweep import (
 
 @dataclass
 class FakeSource:
-    """Test double conforming structurally to FindingSource."""
+    """Test double conforming structurally to FindingSource.
+
+    ``budget_multiplier`` defaults to ``1.0`` for LLM sources and
+    ``0.0`` for non-LLM sources via ``__post_init__`` so tests can omit
+    it unless they want a specific share.
+    """
 
     name: str
     is_llm: bool = True
+    budget_multiplier: float | None = None
     findings: list[Finding] | None = None
     raises: BaseException | None = None
     received_budget: float | None = None
+    received_paths: list[str] | None = None
 
-    async def discover(self, path: str, budget_usd: float) -> list[Finding]:
-        del path
+    def __post_init__(self) -> None:
+        if self.budget_multiplier is None:
+            self.budget_multiplier = 1.0 if self.is_llm else 0.0
+
+    async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
+        self.received_paths = list(paths)
         self.received_budget = budget_usd
         if self.raises is not None:
             raise self.raises
@@ -96,6 +107,8 @@ class TestExecuteHappyPath:
 
 class TestBudgetAllocation:
     def test_per_source_budget_splits_across_llm_only(self) -> None:
+        # Two LLM sources with default multiplier=1.0; one non-LLM
+        # source with multiplier=0.0 (excluded from the pool).
         llm_a = FakeSource(name="llm-a", is_llm=True, findings=[])
         llm_b = FakeSource(name="llm-b", is_llm=True, findings=[])
         non_llm = FakeSource(name="pattern", is_llm=False, findings=[])
@@ -107,19 +120,69 @@ class TestBudgetAllocation:
                 sources=[llm_a, llm_b, non_llm],
             )
         )
-        # 10.00 / 2 LLM sources = 5.00 each. Non-LLM gets the same
-        # signal (it ignores budget_usd anyway).
+        # 10.00 * (1.0 / 2.0) = 5.00 to each LLM source.
         assert llm_a.received_budget == pytest.approx(5.0)
         assert llm_b.received_budget == pytest.approx(5.0)
+        # Non-LLM gets 0.0 — it sums to a zero share of the pool.
+        assert non_llm.received_budget == pytest.approx(0.0)
+
+    def test_proportional_allocation_by_multiplier(self) -> None:
+        # Mirrors the spec defaults: security-audit gets a 4x share,
+        # dependency-check 0.5x, default 1.0x.
+        heavy = FakeSource(name="security", is_llm=True, budget_multiplier=4.0, findings=[])
+        light = FakeSource(name="deps", is_llm=True, budget_multiplier=0.5, findings=[])
+        default = FakeSource(name="bug", is_llm=True, budget_multiplier=1.0, findings=[])
+        wf = DiscoverySweepWorkflow()
+        asyncio.run(
+            wf.execute(path="src/", budget_usd=11.0, sources=[heavy, light, default]),
+        )
+        total = 4.0 + 0.5 + 1.0
+        assert heavy.received_budget == pytest.approx(11.0 * 4.0 / total)
+        assert light.received_budget == pytest.approx(11.0 * 0.5 / total)
+        assert default.received_budget == pytest.approx(11.0 * 1.0 / total)
 
     def test_no_llm_sources_passes_full_budget(self) -> None:
         non_llm = FakeSource(name="pattern", is_llm=False, findings=[])
         wf = DiscoverySweepWorkflow()
         asyncio.run(wf.execute(path="src/", budget_usd=7.50, sources=[non_llm]))
+        # With no positive-multiplier sources, the engine passes the
+        # full budget through as a signal — non-LLM ignores it anyway.
         assert non_llm.received_budget == pytest.approx(7.50)
 
     def test_default_budget_is_ten_dollars(self) -> None:
         assert DEFAULT_BUDGET_USD == 10.00
+
+
+class TestPathExpansion:
+    def test_non_glob_path_passed_through(self) -> None:
+        src = FakeSource(name="s", findings=[])
+        wf = DiscoverySweepWorkflow()
+        asyncio.run(wf.execute(path="src/attune/", sources=[src]))
+        assert src.received_paths == ["src/attune/"]
+
+    def test_glob_pattern_expanded(self, tmp_path: object) -> None:
+        # Build two files matching a glob, one not.
+        from pathlib import Path as _P
+
+        base = _P(str(tmp_path))
+        (base / "a.py").write_text("x = 1\n", encoding="utf-8")
+        (base / "b.py").write_text("x = 1\n", encoding="utf-8")
+        (base / "c.txt").write_text("ignore\n", encoding="utf-8")
+
+        src = FakeSource(name="s", findings=[])
+        wf = DiscoverySweepWorkflow()
+        asyncio.run(wf.execute(path=str(base / "*.py"), sources=[src]))
+        assert src.received_paths is not None
+        # Sorted glob result. Only .py files matched.
+        assert all(p.endswith(".py") for p in src.received_paths)
+        assert len(src.received_paths) == 2
+
+    def test_glob_with_no_matches_falls_back_to_pattern(self) -> None:
+        src = FakeSource(name="s", findings=[])
+        wf = DiscoverySweepWorkflow()
+        asyncio.run(wf.execute(path="nonexistent/**/*.zzz", sources=[src]))
+        # Falls back to the raw pattern so sources can report it.
+        assert src.received_paths == ["nonexistent/**/*.zzz"]
 
 
 class TestSourceFiltering:

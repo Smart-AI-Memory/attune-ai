@@ -235,25 +235,33 @@ class PatternScanSource:
 
     name: str = "pattern-scan"
     is_llm: bool = False
+    # Non-LLM sources don't consume budget; the engine still includes
+    # them in fan-out but allocates $0 from the total budget pool.
+    budget_multiplier: float = 0.0
     exclude_dirs: frozenset[str] = field(default_factory=lambda: _EXCLUDE_DIRS)
 
     # Surfaced for tests that need to enumerate the supported patterns
     # without parsing the regex tuple themselves.
     PATTERN_NAMES: ClassVar[tuple[str, ...]] = tuple(p.pattern_name for p in _PATTERNS)
 
-    async def discover(self, path: str, budget_usd: float) -> list[Finding]:
-        """Walk ``path`` and emit findings. ``budget_usd`` ignored."""
+    async def discover(self, paths: list[str], budget_usd: float) -> list[Finding]:
+        """Walk each path in ``paths`` and emit findings.
+
+        ``budget_usd`` is ignored — pattern scanning is free. The engine
+        glob-expands the user's ``--path`` upstream so every entry in
+        ``paths`` is a concrete file or directory.
+        """
         del budget_usd  # Pattern scanning is free.
 
-        root = Path(path)
-        if not root.exists():
-            logger.warning("pattern-scan: path does not exist: %s", path)
-            return []
-
-        files = self._iter_python_files(root)
         findings: list[Finding] = []
-        for file_path in files:
-            findings.extend(self._scan_file(file_path, root))
+        for path in paths:
+            root = Path(path)
+            if not root.exists():
+                logger.warning("pattern-scan: path does not exist: %s", path)
+                continue
+            files = self._iter_python_files(root)
+            for file_path in files:
+                findings.extend(self._scan_file(file_path, root))
         return findings
 
     def _iter_python_files(self, root: Path) -> list[Path]:

@@ -120,13 +120,19 @@ from typing import Protocol, runtime_checkable
 @runtime_checkable
 class FindingSource(Protocol):
     name: str
+    is_llm: bool
+    budget_multiplier: float
 
     async def discover(
         self,
-        path: str,
+        paths: list[str],
         budget_usd: float,
     ) -> list[Finding]:
-        """Discover findings in `path`. Must respect budget_usd.
+        """Discover findings under `paths`. Must respect budget_usd.
+
+        `paths` is a list of concrete files or directories — the engine
+        glob-expands the user's `--path` upstream so every source sees
+        the same scope.
 
         Implementations should:
         - Return early (with partial findings) if budget is exhausted
@@ -137,6 +143,8 @@ class FindingSource(Protocol):
         """
         ...
 ```
+
+`budget_multiplier` is the source's proportional claim on the total budget pool. The engine sums multipliers across active sources and allocates `budget_usd * (mult / total)` to each. Non-LLM sources set `0.0`. See `decisions.md` § Cost discipline for defaults.
 
 Adapters are constructed by `default_sources()` (or a test-only `make_sources(...)` helper). The engine never instantiates them directly — keeps source-list management out of `DiscoverySweepWorkflow`.
 
@@ -189,6 +197,12 @@ return [Finding(
 This is what guarantees engine progress even when the LLM ignores the JSON instruction: one low-confidence finding ends up in `questions`, the user sees that the adapter degraded, and the sweep moves on.
 
 > **DECIDE:** Exact JSON schema. Sketch above is a starting point — finalize during P2.1.
+
+### Prompt augmentation lives at the workflow-instance level, NEVER class
+
+Adapters must build a per-call workflow instance and append `STRUCTURED_EMIT_FOOTER` to the instance's prompt before invoking `execute()`. Mutating the workflow class's prompt template would leak into every other caller (standalone `attune workflow run bug-predict`, MCP `mcp__attune-ai__bug_predict`, the ops dashboard, etc.) and force them to parse the JSON footer they didn't ask for. The augmentation is a discovery-sweep concern; everyone else sees the unmodified workflow.
+
+Concretely: each adapter's `discover()` constructs the wrapped workflow with the augmented system prompt as an instance attribute (or kwargs to `__init__` if the workflow supports it), runs it, and discards the instance. No global state, no monkey-patching of the workflow class.
 
 ---
 
@@ -246,10 +260,11 @@ def default_sources() -> list[FindingSource]:
         DependencyCheckSource(),
         PerfAuditSource(),
         DocAuditSource(),
+        TestAuditSource(),
     ]
 ```
 
-The `--no-llm` flag filters to `[s for s in default_sources() if not isinstance(s, LLMSource)]` — relies on a marker mixin or duck-type check on a `is_llm: bool` attribute.
+All six audit-family workflows get an adapter (see `decisions.md` § "Why this isn't `code-review` or `deep-review`"). The `--no-llm` flag filters to `[s for s in default_sources() if not s.is_llm]`.
 
 > **DECIDE:** `--source <name>` filter. Cheap addition; defer if not needed.
 
@@ -293,7 +308,8 @@ src/attune/workflows/discovery_sweep/
 │   ├── security_audit.py        # SecurityAuditSource
 │   ├── dependency_check.py      # DependencyCheckSource
 │   ├── perf_audit.py            # PerfAuditSource
-│   └── doc_audit.py             # DocAuditSource
+│   ├── doc_audit.py             # DocAuditSource
+│   └── test_audit.py            # TestAuditSource
 └── llm_source_base.py           # shared parser + structured-emit prompt helper
 ```
 
@@ -314,7 +330,7 @@ src/attune/workflows/discovery_sweep/
 | `tests/unit/workflows/discovery_sweep/test_pattern_scan_source.py` | PatternScanSource on real files in `tests/fixtures/` |
 | `tests/unit/workflows/discovery_sweep/test_bug_predict_source.py` | Mocks `BugPredictionWorkflow.execute`, asserts Finding parsing |
 | `tests/unit/workflows/discovery_sweep/test_llm_source_base.py` | `parse_findings_json` happy path + malformed JSON + missing block |
-| `tests/integration/workflows/test_discovery_sweep_integration.py` | `@pytest.mark.skipif(not HAS_API_KEY)` — real sweep on a tiny fixture path |
+| `tests/integration/workflows/test_discovery_sweep_integration.py` | `@pytest.mark.integration` — real sweep on a tiny fixture path (see `tasks.md` P2.1 for the rationale: integration mark is the project-standard gate, replacing the older `HAS_API_KEY` skipif pattern that masked code regressions as Anthropic network flakes) |
 
 ---
 

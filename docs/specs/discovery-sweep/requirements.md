@@ -82,16 +82,17 @@ Acceptance:
 - Each finding has a stable schema (see design.md for the dataclass shape)
 - The metadata block is sufficient for cost trending without parsing the findings
 
-### US-6 — Retirement evaluation is reproducible
+### US-6 — Surface evaluation is reproducible
 
-**As Pat, when I want to know whether `test-audit` is redundant with the sweep, I want a documented procedure I can re-run when sources change.**
+**As Pat, when I want to know whether the standalone `attune workflow run bug-predict` (etc.) CLI entries are redundant now that `discovery-sweep` wraps them, I want a documented procedure I can re-run when sources change.**
 
 Acceptance:
 
-- A script or documented procedure runs both the sweep and the candidate workflow on the same path
-- Findings are cross-referenced — every candidate-workflow finding must map to one or more sweep findings (queue OR questions, not rejected)
-- Output is a markdown table per candidate with RETIRE / KEEP / DEFER recommendations
-- Lives in `docs/specs/discovery-sweep/retirement-evaluation.md` (see P2.4)
+- A script or documented procedure runs both the sweep and each candidate standalone CLI entry on the same path
+- Findings are cross-referenced — every candidate-CLI finding must map to one or more sweep findings (queue OR questions, not rejected)
+- Output is a markdown table per CLI entry with DEPRECATE / KEEP / DEFER recommendations
+- Lives in `docs/specs/discovery-sweep/surface-evaluation.md` (see P2.7) — runs LAST, after all six adapters (P2.1–P2.6) ship
+- The evaluation targets CLI surface deprecation only — the workflow classes themselves stay (adapters wrap them)
 
 ---
 
@@ -162,6 +163,6 @@ The verification rules and triage routing are deterministic code, not an LLM cal
 
 ## Open requirement questions
 
-1. Should `--path` accept globs (`src/attune/**/*.py`)? (Default: pass through to sources; some may glob-expand internally, others won't.) I'm concerned about sometimes it working and not others.
+1. ~~Should `--path` accept globs?~~ **Resolved (2026-05-13, Phase 1.5):** Yes. The engine glob-expands `--path` upstream into a `list[str]` and passes the same list to every source. No per-source glob drift — a path either matches files for every source or for none.
 2. Should the sweep accept a `--source` flag to restrict to one source? (Useful for debugging; cheap to add.) yes
-3. Should the sweep emit SSE events to the ops dashboard so progress is live? (Out of scope for v1; CLI-only.) ok out of scope
+3. Should the sweep emit SSE events to the ops dashboard so progress is live? (Out of scope for v1; CLI-only — moved to `discovery-sweep-ops-integration` follow-up spec.) ok out of scope

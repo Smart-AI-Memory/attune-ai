@@ -50,23 +50,23 @@ Goal: wrap each audit-family workflow as a `FindingSource`. Each is an independe
 
 Each sub-task ships an adapter that:
 
-1. Inherits/conforms to `FindingSource` Protocol + `LLMSource` marker
-2. Augments the wrapped workflow's prompt with `STRUCTURED_EMIT_FOOTER`
+1. Conforms to `FindingSource` Protocol + sets `is_llm = True` and an appropriate `budget_multiplier` (see `decisions.md` § Cost discipline for defaults)
+2. Augments the wrapped workflow's prompt with `STRUCTURED_EMIT_FOOTER` **at the workflow-instance level** — see `design.md` § "Prompt augmentation lives at the workflow-instance level"
 3. Invokes the wrapped workflow (mocks-friendly — no `claude_agent_sdk` imports at module scope)
 4. Parses findings via `parse_findings_json`
 5. Adds itself to `default_sources()`
 
-- [ ] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. Unit tests mock `BugPredictionWorkflow.execute()`. Integration test gated on `HAS_API_KEY`. Update CHANGELOG.
-- [ ] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. Same pattern as P2.1.
-- [ ] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. Same pattern.
-- [ ] **P2.4** **Retirement evaluation (empirical, no code).** Run `attune workflow run discovery-sweep --path src/attune/security/` and `attune workflow run discovery-sweep --path src/attune/workflows/`. For each scope, also run candidate workflows that *might* be redundant (initial candidates: `test-audit`; later add others as P2.1–P2.3, P2.5 reveal subsumption). Cross-reference findings.
-      - Output: `docs/specs/discovery-sweep/retirement-evaluation.md` with per-workflow RETIRE / KEEP / DEFER recommendation.
-      - For RETIRE candidates, draft the deprecation path (lazy-import shim per the existing PEP 562 lesson, CHANGELOG entry, migration alias).
-      - Do NOT delete anything in this task — recommendation only. Deletion is a separate PR.
-- [ ] **P2.5** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. Same pattern as P2.1.
-- [ ] **P2.6** `DocAuditSource` wrapping `DocAuditWorkflow`. Same pattern as P2.1.
-
-> **DECIDE:** Order of P2.1–P2.6. The user's original prompts suggested P2.1=bug-predict first, then security-audit, then retirement eval (P2.4) — but the eval needs *some* LLM sources shipped to be meaningful, hence P2.4 placement here (after P2.1–P2.3 give us 3 LLM sources to evaluate). Revisit if dogfood shows the eval can run with fewer sources.
+- [ ] **P2.1** `BugPredictSource` wrapping `BugPredictionWorkflow` in `src/attune/workflows/bug_predict.py`. `budget_multiplier=1.5`. Unit tests mock `BugPredictionWorkflow.execute()`. Integration test uses `@pytest.mark.integration` (the project-standard gate) — **not** `HAS_API_KEY` skipif, which masked code regressions as Anthropic network flakes (see the `HAS_API_KEY`-gated lesson in CLAUDE.md). Update CHANGELOG.
+- [ ] **P2.2** `SecurityAuditSource` wrapping `SecurityAuditWorkflow` in `src/attune/workflows/security_audit.py`. `budget_multiplier=4.0` (multi-subagent fan-out). Same test pattern as P2.1.
+- [ ] **P2.3** `DependencyCheckSource` wrapping `DependencyCheckWorkflow`. `budget_multiplier=0.5` (mostly deterministic CVE feed). Same test pattern as P2.1.
+- [ ] **P2.4** `PerfAuditSource` wrapping `PerformanceAuditWorkflow`. `budget_multiplier=1.5`. Same test pattern as P2.1.
+- [ ] **P2.5** `DocAuditSource` wrapping `DocAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1.
+- [ ] **P2.6** `TestAuditSource` wrapping `TestAuditWorkflow`. `budget_multiplier=1.0`. Same test pattern as P2.1. (Distinct lens — see `decisions.md`: test-quality scoring is not subsumed by bug-predict or doc-audit.)
+- [ ] **P2.7** **Surface evaluation (empirical, no code) — runs LAST.** After P2.1–P2.6 have all shipped, run `attune workflow run discovery-sweep --path src/attune/security/` and `attune workflow run discovery-sweep --path src/attune/workflows/`. For each scope, also run the standalone CLI invocations of every wrapped workflow on the same path. Cross-reference findings.
+      - Output: `docs/specs/discovery-sweep/surface-evaluation.md` with per-CLI-entry DEPRECATE / KEEP / DEFER recommendation.
+      - **Surface evaluation, not workflow retirement.** The workflow classes (`BugPredictionWorkflow`, …) stay — adapters wrap them. Only the standalone CLI entries (`attune workflow run bug-predict`) are candidates for deprecation.
+      - For DEPRECATE candidates, draft the deprecation path (PEP 562 lazy-import shim, CHANGELOG entry, migration alias if needed).
+      - Do NOT delete anything in this task — recommendation only. CLI deprecation execution lives in Phase 4.
 
 ---
 
@@ -86,27 +86,27 @@ Goal: turn the markdown rendering into something pleasant and machine-readable.
 
 ---
 
-## Phase 4 — Ops dashboard integration
+## Phase 4 — CLI surface deprecation
 
-Goal: surface sweep results in the ops dashboard from ops-runner-tier2.
+Goal: act on the surface-evaluation recommendations from P2.7. Only opens if P2.7 returns any DEPRECATE recommendations.
 
-- [ ] **4.1** Discovery-sweep row in `workflows.html` honors the scope picker (already supported via `PATH_ARG_REGISTRY` from P1.7).
-- [ ] **4.2** Sweep results render as colored chips per bucket (queue/questions/rejected counts) in the row.
-- [ ] **4.3** Clicking a chip opens a detail view that lists findings (re-uses the existing run-view page).
-- [ ] **4.4** SSE event stream emits per-source progress (`source X started`, `source X finished with N findings`) so the dashboard shows a live progress bar.
+**Resolved (2026-05-13, Phase 1.5):** Old Phase 4 (ops-dashboard integration) is **deferred to a follow-up spec** — `discovery-sweep-ops-integration` — to be opened once `ops-runner-tier2` Phase 2 lands. The CLI deprecation work (previously Phase 5) is promoted to Phase 4 because it follows directly from P2.7 and ships under this spec.
 
-> **DECIDE:** Phase 4 scope. Could be deferred to a follow-up spec (`discovery-sweep-ops-integration`) if ops-runner-tier2 isn't far enough along. Revisit when Phase 3 ships.
+- [ ] **4.1** For each DEPRECATE candidate (a standalone CLI entry, e.g. `attune workflow run bug-predict`), implement the deprecation shim (PEP 562 module-level `__getattr__` with `DeprecationWarning` per the existing CLAUDE.md lesson). The underlying workflow class stays.
+- [ ] **4.2** CHANGELOG `### Deprecated` entries for each affected CLI entry.
+- [ ] **4.3** Migration alias in routing — e.g. `attune workflow run bug-predict --path X` continues to work for one release with a deprecation warning, recommending `attune workflow run discovery-sweep --path X --source bug-predict`.
+- [ ] **4.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect the deprecations.
 
 ---
 
-## Phase 5 — Retirement execution
+## Out-of-scope (follow-up spec) — Ops dashboard integration
 
-Goal: act on the retirement recommendations from P2.4. Only opens if P2.4 returns any RETIRE recommendations.
+Deferred from this spec on 2026-05-13. To land in a separate `discovery-sweep-ops-integration` spec once `ops-runner-tier2` Phase 2 ships. Originally:
 
-- [ ] **5.1** For each RETIRE candidate, implement the deprecation shim (PEP 562 module-level `__getattr__` with `DeprecationWarning` per the existing CLAUDE.md lesson).
-- [ ] **5.2** CHANGELOG `### Deprecated` entries.
-- [ ] **5.3** Migration alias in routing if the workflow had a short CLI name (e.g. `test-audit` → `discovery-sweep`).
-- [ ] **5.4** Update `.claude/plans/*` and `docs/specs/_sequencing.md` to reflect retirements.
+- Discovery-sweep row in `workflows.html` honors the scope picker (already supported via `PATH_ARG_REGISTRY` from P1.7).
+- Sweep results render as colored chips per bucket (queue/questions/rejected counts) in the row.
+- Clicking a chip opens a detail view that lists findings (re-uses the existing run-view page).
+- SSE event stream emits per-source progress so the dashboard shows a live progress bar.
 
 ---
 
@@ -114,11 +114,11 @@ Goal: act on the retirement recommendations from P2.4. Only opens if P2.4 return
 
 The spec is complete when:
 
-- Phase 1 + 2A + at least 3 of P2.1–P2.6 + Phase 3 have shipped
-- Phase 4 has either shipped OR been deferred to a named follow-up spec
-- Phase 5 has either shipped OR P2.4 returned zero RETIRE recommendations
+- Phase 1 + 1.5 + 2A + all six of P2.1–P2.6 + P2.7 + Phase 3 have shipped
+- Phase 4 (CLI deprecation) has either shipped OR P2.7 returned zero DEPRECATE recommendations
+- The ops-dashboard follow-up spec (`discovery-sweep-ops-integration`) is open or shipped
 - `discovery-sweep` appears in the `docs/specs/_sequencing.md` "Done" section
-- Phase 2 retirement evaluation is published
+- P2.7 surface evaluation is published at `docs/specs/discovery-sweep/surface-evaluation.md`
 
 ---
 

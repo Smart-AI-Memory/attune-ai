@@ -93,26 +93,44 @@ good
 
 `discovery-sweep` is system-driven: "find everything worth flagging across all my analysis lenses, hand me back a triaged queue." It fans out, it dedupes, it triages, it surfaces questions. Different shape, different output contract.
 
-Existing workflows that share `discovery-sweep`'s "find issues" intent: `bug-predict`, `security-audit`, `dependency-check`, `perf-audit`, `doc-audit`, `test-audit`. These are the candidates for wrapping (P2.1–P2.5) and for retirement evaluation (P2.4).
+Existing workflows that share `discovery-sweep`'s "find issues" intent: `bug-predict`, `security-audit`, `dependency-check`, `perf-audit`, `doc-audit`, `test-audit`. All six get a wrapping adapter (P2.1–P2.6).
 
-> **DECIDE:** The five LLM adapters. Initial pick: bug-predict, security-audit, dependency-check, perf-audit, doc-audit. `test-audit` is excluded from the source set and instead becomes the retirement-evaluation candidate in P2.4 — the question is whether the other five collectively surface what test-audit was finding (test gaps in test files), making test-audit redundant. Alternate framing (wrap all six, retire none) is also live; revisit after P2.1 ships.
+**Resolved (2026-05-13, Phase 1.5):** Wrap **all six** audit-family workflows, including `test-audit`. Earlier framing treated `test-audit` as a retirement candidate because its scope (test files) seemed subsumable by bug-predict + doc-audit. Second-pass review concluded the test-quality lens is genuinely distinct — bug-predict scores test files the same way it scores any code (bugs/patterns), but `test-audit` scores them on test-specific dimensions (rubric coverage, dead-mock detection, fixture quality) that no other source emits. Six adapters, evaluated for surface deprecation in P2.7.
 
 ---
 
-## Why retirement evaluation is a phase, not an open question
+## Why surface evaluation runs last
 
-When `discovery-sweep` ships, individual audit workflows still exist. They have CLI entries, MCP tool exposure, ops-dashboard rows, and docs. Two failure modes if we don't evaluate retirement:
+When `discovery-sweep` ships, individual audit workflows still exist. They have CLI entries, MCP tool exposure, ops-dashboard rows, and docs. Two failure modes if we don't evaluate the CLI surface:
 
 1. **Surface bloat** — users see seven discovery-style workflows where one would do, and pick wrong.
 2. **Stale wrappers** — bug fixes in the underlying workflow have to be made twice (in the workflow + in any adapter-specific quirks).
 
-P2.4 is an empirical evaluation: run both the sweep and each candidate workflow on a real scope, compare outputs, recommend RETIRE / KEEP / DEFER per workflow. Output is a markdown doc with recommendations, not code changes. Deletion happens later (and only if the evaluation supports it) under a separate spec or PR. --sounds  like a  good recommendation
+**Resolved (2026-05-13, Phase 1.5):** This is a **surface evaluation**, not a workflow retirement. The workflow classes (`BugPredictionWorkflow`, `SecurityAuditWorkflow`, …) stay — they're what the adapters wrap. Only the standalone CLI entries (`attune workflow run bug-predict`) are candidates for deprecation in favor of `attune workflow run discovery-sweep`. The evaluation runs as **P2.7 (LAST)** after every adapter (P2.1–P2.6) has shipped so the comparison has every lens available.
+
+P2.7 is an empirical evaluation: run both the sweep and each candidate CLI entry on a real scope, compare outputs, recommend DEPRECATE / KEEP / DEFER per CLI surface. Output is a markdown doc with recommendations, not code changes. CLI deprecation (Phase 4) happens later, only if the evaluation supports it.
 
 ---
 
 ## Cost discipline
 
 `budget_usd` is hard-capped at the sweep level. The engine allocates per-source and **does not exceed the total** even if some sources come in under their share. The adapter for each LLM workflow passes its allocated budget through to the wrapped workflow's `max_budget_usd` knob.
+
+**Resolved (2026-05-13, Phase 1.5):** Per-source allocation is **proportional to a `budget_multiplier: float` attribute on the Protocol**, not equal-split. The engine sums multipliers across active sources and gives each source `budget_usd * (its_multiplier / sum_of_multipliers)`. Defaults:
+
+| Source | `budget_multiplier` | Why |
+|---|---|---|
+| `security-audit` | 4.0 | Multi-subagent fan-out, highest per-run cost |
+| `bug-predict` | 1.5 | Single agent but multi-pattern analysis |
+| `perf-audit` | 1.5 | Similar shape to bug-predict |
+| `doc-audit` | 1.0 | Single agent, narrower scope |
+| `test-audit` | 1.0 | Single agent, narrower scope |
+| `dependency-check` | 0.5 | Mostly deterministic CVE feed, low LLM cost |
+| `pattern-scan` | 0.0 | Non-LLM, no spend |
+
+Equal-split was rejected because the per-source costs differ by ~10x in practice; equal allocation either starves security-audit or wastes budget on dependency-check. Proportional allocation matches reality and stays in a single function (no per-source overrides scattered through CLI flags).
+
+**Resolved (2026-05-13, Phase 1.5):** The engine **glob-expands the user's `--path` upstream** into a `list[str]` and passes that same list to every source's `discover(paths, budget_usd)` call. Globs in `--path` (e.g. `src/**/*.py`) are resolved once; bare directory or file paths become a single-element list. This guarantees every source sees identical scope — no per-source glob-resolution drift. The Protocol signature is `discover(paths: list[str], budget_usd: float)`.
 
 For the pattern adapter (PatternScanSource, no LLM), `budget_usd` is ignored — pattern scanning is effectively free. Engine logs this for telemetry but doesn't redistribute the freed budget to LLM sources (would require a second pass; not worth it for v1).
 
