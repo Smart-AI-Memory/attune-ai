@@ -38,6 +38,7 @@
           <td>
             {{ w.description }}
             <div class="run-status"><span data-status></span></div>
+            <div class="recent-runs" data-recent-runs="{{ w.name }}" hidden></div>
             <div class="log-pane" data-log-pane hidden>
               <pre data-log class="log-output"></pre>
             </div>
@@ -75,7 +76,10 @@
 {% endblock %}
 
 {% block scripts %}
-{% if allow_run %}
-  <script src="{{ url_for('static', path='js/runner.js') }}"></script>
-{% endif %}
+{# runner.js is loaded unconditionally so the recent-runs strip
+   renders in both run and read-only modes. The script's
+   DOMContentLoaded handler queries for run-button / scope-picker
+   elements that only exist when allow_run is True, so the read-only
+   page sees a no-op for those features. #}
+<script src="{{ url_for('static', path='js/runner.js') }}"></script>
 {% endblock %}

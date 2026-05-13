@@ -66,6 +66,17 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
             " Example: --trusted-host my-tunnel.example.com"
         ),
     )
+    parser.add_argument(
+        "--runs-retention-days",
+        type=int,
+        default=30,
+        metavar="DAYS",
+        help=(
+            "Delete persisted run files older than this many days at"
+            " startup. Set to 0 to disable pruning. Persisted runs"
+            " live under <attune-home>/ops/runs/. Default: 30."
+        ),
+    )
     # Backwards-compat: --allow-run was the opt-IN flag before runs became
     # the default. Accept it silently as a no-op so existing scripts and
     # shell history keep working without prompting users to update.
@@ -116,6 +127,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         allow_run=allow_run,
         specs_roots=tuple(args.specs_root) if args.specs_root else None,
         trusted_hosts=tuple(args.trusted_host) if args.trusted_host else None,
+        runs_retention_days=args.runs_retention_days,
     )
     app = create_app(config)
 

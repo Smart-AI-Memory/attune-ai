@@ -25,10 +25,20 @@ class Config:
     # users widen for tunneled / proxied setups (Cloudflare Tunnel,
     # Tailscale, ssh -L, etc.). See docs/specs/ops-security-hardening/.
     trusted_hosts: tuple[str, ...] = ()
+    # How many days of completed runs to keep on disk under
+    # ``<attune_home>/ops/runs/``. The startup sweep deletes anything
+    # older. 30 days is enough to span a typical sprint; bump via
+    # ``--runs-retention-days`` if you want longer history.
+    runs_retention_days: int = 30
 
     @property
     def telemetry_path(self) -> Path:
         return self.attune_home / "telemetry" / "usage.jsonl"
+
+    @property
+    def runs_dir(self) -> Path:
+        """Disk root for persisted ops runs. May not exist until first write."""
+        return self.attune_home / "ops" / "runs"
 
     @property
     def memory_dir(self) -> Path:
@@ -55,6 +65,7 @@ def build_config(
     allow_run: bool = False,
     specs_roots: tuple[Path, ...] | None = None,
     trusted_hosts: tuple[str, ...] | None = None,
+    runs_retention_days: int = 30,
 ) -> Config:
     """Build a Config from inputs and environment defaults.
 
@@ -75,4 +86,5 @@ def build_config(
         allow_run=allow_run,
         specs_roots=tuple(specs_roots or ()),
         trusted_hosts=tuple(trusted_hosts or ()),
+        runs_retention_days=max(0, int(runs_retention_days)),
     )

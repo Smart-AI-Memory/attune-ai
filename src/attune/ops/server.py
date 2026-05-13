@@ -14,8 +14,9 @@ from attune import __version__
 from attune.ops.config import Config
 from attune.ops.routes import dashboard
 from attune.ops.routes import runner as runner_routes
+from attune.ops.routes import runs_history as runs_history_routes
 from attune.ops.routes import specs as specs_routes
-from attune.ops.runner import RunnerService
+from attune.ops.runner import RunnerService, prune_old_runs
 
 
 def _package_dir(name: str) -> Path:
@@ -23,8 +24,30 @@ def _package_dir(name: str) -> Path:
     return Path(str(files("attune.ops").joinpath(name)))
 
 
+def _build_default_runner(config: Config) -> RunnerService:
+    """Construct the runner with persistence enabled when runs are allowed.
+
+    Read-only mode (``allow_run=False``) disables disk writes entirely —
+    a read-only dashboard should not modify the user's ``~/.attune``.
+    """
+    if not config.allow_run:
+        return RunnerService()
+    return RunnerService(persistence_dir=config.runs_dir)
+
+
 def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAPI:
     """Build the FastAPI app, wiring config + templates into request state."""
+    # Sweep stale persisted runs before serving any traffic. Bounded by
+    # `runs_retention_days` (CLI flag), `0` disables the sweep entirely.
+    if config.allow_run and config.runs_retention_days > 0:
+        try:
+            prune_old_runs(config.runs_dir, days=config.runs_retention_days)
+        except OSError:
+            # INTENTIONAL: best-effort sweep; never block startup on a
+            # filesystem hiccup. The helper itself swallows per-file
+            # errors; this only catches the outer iterdir failure.
+            pass
+
     app = FastAPI(
         title="attune ops",
         version=__version__,
@@ -63,10 +86,11 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
     app.state.config = config
     app.state.templates = templates
-    app.state.runner = runner if runner is not None else RunnerService()
+    app.state.runner = runner if runner is not None else _build_default_runner(config)
 
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
+    app.include_router(runs_history_routes.router)
     app.include_router(specs_routes.router)
 
     @app.get("/api/info", response_class=JSONResponse)
@@ -80,6 +104,13 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
 
     @app.exception_handler(404)
     async def not_found(request: Request, exc):  # type: ignore[no-untyped-def]
+        # API paths get JSON so client-side error parsing works; HTML
+        # pages get the styled 404 template. ``getattr`` shields against
+        # the case where ``exc`` is a Starlette HTTPException (which has
+        # ``.detail``) vs a bare 404 (which doesn't).
+        detail = getattr(exc, "detail", None) or "not found"
+        if request.url.path.startswith("/api/"):
+            return JSONResponse(status_code=404, content={"detail": detail})
         templates = request.app.state.templates
         cfg: Config = request.app.state.config
         return HTMLResponse(
