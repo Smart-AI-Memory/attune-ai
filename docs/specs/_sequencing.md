@@ -98,6 +98,30 @@ natural pause.
   - [ ] Phase 5 — structured recommendations
 - Spec: [ops-runner-tier2](ops-runner-tier2/)
 
+### discovery-sweep — Phase 1 + 2A shipped
+
+- Status: Phase 1 + Phase 2A shipped 2026-05-13. `attune
+  workflow run discovery-sweep --path <module>` works
+  end-to-end with the deterministic `PatternScanSource`
+  adapter. Phase 2B (LLM-wrapping adapters, retirement eval,
+  auto-fix) remains.
+- Why on Track C: New user-facing capability — a read-only
+  discovery orchestrator that fans out across sub-workflows
+  and triages findings into queue / rejected / questions
+  buckets. Independent of test-signal and audit tracks.
+- Tasks
+  - [x] Phase 1 — `DiscoverySweepEngine`, verification
+        rules, complexity classifier, budget tracker,
+        serialization, schema
+  - [x] Phase 2A — `PatternScanSource` adapter,
+        `DiscoverySweepWorkflow` BaseWorkflow wrapper,
+        registry registration, `PATH_ARG_REGISTRY` entry
+  - [ ] Phase 2B — LLM-wrapping adapters (bug_predict,
+        security_audit, …), retirement eval, auto-fix,
+        multi-module parallelism, RAG-grounded verification
+- Spec: [discovery-sweep](discovery-sweep/)
+- Plan: [.claude/plans/discovery-sweep.md](../../.claude/plans/discovery-sweep.md)
+
 ### website-update-dashboard-and-fold (Phase 1)
 
 - Status: approved — 41 tasks, 0% done
