@@ -43,6 +43,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 2A — shared LLM adapter base
+  (`STRUCTURED_EMIT_FOOTER`, `parse_findings_json`, `LLMSource`).
+  No user-visible behavior change; unblocks P2.1–P2.6.
+
 - `discovery-sweep` meta-workflow (Phase 1) — fans out across audit
   sources and triages findings into three buckets: `queue` (act on),
   `questions` (need human judgment), `rejected` (filtered noise).
