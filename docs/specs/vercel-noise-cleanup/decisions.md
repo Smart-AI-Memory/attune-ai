@@ -245,6 +245,117 @@ unblocks writing it.
 
 ---
 
+## Addendum — investigation update 2026-05-14
+
+The premise above was mostly right but missed two important pieces
+of context that change the cleanup scope. Findings from re-running
+the investigation with `curl` + `gh api`:
+
+### Finding 1 — `attune-ai.vercel.app` is squatted by a different company
+
+`curl -L https://attune-ai.vercel.app/` returns HTTP 200 with the
+HTML `<title>Attune AI - Your 24/7 AI-Powered Customer Support
+Champion</title>` and `<link rel="canonical" href="https://www.attune.ai/">`.
+That is a **different company's** customer-support SaaS product
+that happens to share the name. The `*.vercel.app` namespace is
+first-come-first-serve and someone else owns the `attune-ai`
+subdomain. Our `empathy-framework`-team Vercel project named
+`attune-ai` therefore does NOT control that public URL — it only
+controls its own preview deployments, which all fail at build time
+because the repo root has no `package.json` (verified:
+`git ls-tree -r origin/main` returns zero matches for `^vercel\.json$`,
+`^package\.json$`, or `^next\.config\.(js|ts|mjs)$`).
+
+The team's actual catch-all subdomain is
+`https://empathy-framework.vercel.app` (HTTP 200,
+`<title>Living Docs, Rooted in Code — Attune AI</title>`). That is
+our real production preview. The `Vercel – website` check is what
+keeps it updated.
+
+**Implication:** the `attune-ai` Vercel project has **no live
+public URL we control** — its checks fail, its preview URLs nobody
+sees, and the canonical-sounding `attune-ai.vercel.app` is not
+ours. Option B (disconnect) is safe with no production dependency.
+The deletion question in DECIDE-3 is really only about preserving
+Vercel-internal deployment history.
+
+### Finding 2 — `.github/workflows/smoke-tests.yml` is failing daily on the same broken assumption
+
+`smoke-tests.yml` runs on push-to-main, manual dispatch, AND a
+daily 9 AM UTC cron. Its `PRODUCTION_URL` defaults to
+`https://attune-ai.vercel.app` — the squatted other-company URL.
+The workflow has failed on every run since at least 2026-05-11
+(`gh run list --workflow=smoke-tests.yml --limit 5` shows 5/5
+failures). The test docstring in `tests/test_production_smoke.py`
+contradicts the workflow default: it says the production URL is
+`https://empathy-framework.vercel.app` (our real preview).
+
+So the smoke tests have been testing the wrong company's product
+daily, asserting "Memory-Enhanced Debugging" exists on a customer-
+support SaaS landing page, and failing — silently, because nobody
+watches scheduled-job failures. This is the same class of CI noise
+as `Vercel – attune-ai`: a permanent failure documented nowhere,
+ignored by humans, polluting status rollups.
+
+**Implication:** the cleanup PR scope is larger than the spec
+originally proposed. Either fix the workflow's `PRODUCTION_URL`
+default to point at the right preview domain, or delete both
+`smoke-tests.yml` and `tests/test_production_smoke.py` if Patrick
+doesn't actively use production smoke tests.
+
+### Finding 3 — Branch protection has zero required status checks
+
+`gh api repos/Smart-AI-Memory/attune-ai/branches/main/protection`
+returns `required_status_checks.contexts: []`. So even if the
+`Vercel – attune-ai` check disappears, no branch-protection
+plumbing breaks. NFR-1 is already trivially satisfied.
+
+---
+
+## Updated DECIDE callouts
+
+- **DECIDE-1:** No longer needed — the investigation confirmed via
+  static evidence (zero root-level Next.js artifacts on `origin/main`,
+  squatted public URL, working sibling project at `website/`) that
+  the `attune-ai` Vercel project is a legacy preview pointing at a
+  deleted layout. Patrick can skip the dashboard check unless he
+  wants to verify before acting.
+
+- **DECIDE-2:** Resolved. The `attune-ai` Vercel project's public
+  URL (`attune-ai.vercel.app`) is owned by a different company, not
+  us. There is no repo, issue-template, or bookmark dependency on
+  our `attune-ai` Vercel project's deployment URL. The smoke-tests
+  workflow's reference to that URL is itself a bug to fix (see
+  Finding 2), not a dependency to preserve.
+
+- **DECIDE-3 (recommendation):** **Option B (disconnect the GitHub
+  repository from the `attune-ai` Vercel project)**, not Option C
+  (delete). Rationale: Option B is reversible in one click if it
+  turns out the project's deployment history mattered; Option C is
+  not. Build minutes are negligible at this scale either way. After
+  Option B, the cleanup PR ships the workflow + test-file fix
+  (Finding 2) and the CLAUDE.md lesson update — three small edits,
+  one PR.
+
+### Updated decision tree (post-investigation)
+
+```
+Patrick action in Vercel dashboard
+(empathy-framework team → attune-ai project → Settings → Git):
+  → Disconnect GitHub repository.
+
+Then cleanup PR (this branch, after merging the spec):
+  → Fix smoke-tests.yml PRODUCTION_URL default
+      OR delete smoke-tests.yml + test_production_smoke.py.
+  → Remove the "Vercel – attune-ai is fail-ignore" clause
+      from `.claude/CLAUDE.md` Lessons Learned.
+```
+
+The Vercel UI action is the only step I (Claude) cannot perform.
+Everything downstream is a small repo edit.
+
+---
+
 ## Relevant CLAUDE.md lesson (verbatim)
 
 The following lesson appears in `.claude/CLAUDE.md` under
