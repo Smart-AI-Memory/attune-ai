@@ -48,6 +48,21 @@ short summaries and copy-pasteable starter prompts is the UX win.
 - A "Sessions older than 3 days are hidden" footer note so users
   understand the filter (not actively pruned from disk — Claude
   Code owns that).
+- **"Resume most recent" prominent action.** The single newest
+  session (by mtime) for the current project gets a dedicated
+  card at the top of the page — separate from the rest-of-list
+  treatment. Includes:
+  - The Haiku-summarized starter prompt rendered in full (not
+    truncated)
+  - A one-click "Copy starter prompt" button
+  - A "Resume in a new Claude Code session" hint that walks
+    the user through pasting the prompt into a fresh session
+  - When the in-progress Claude Code session ID is detectable
+    (via `CLAUDE_SESSION_ID` env var, `~/.claude/__last_session`
+    pointer, or equivalent — investigate during design phase),
+    the card flips to show "You're currently in this session"
+    with no starter-prompt needed; suppresses the duplicate row
+    further down the list.
 
 **Out of scope:**
 
@@ -64,6 +79,15 @@ short summaries and copy-pasteable starter prompts is the UX win.
 2. Each session row shows id, started time, duration, message
    count, and a Haiku-generated starter prompt.
 3. Sessions older than 3 days are not shown.
+3a. The newest session renders in the "Resume most recent" card
+   at the top, with its full Haiku-summarized starter prompt and
+   a copy-to-clipboard button. The same session does NOT also
+   appear in the list below.
+3b. When the dashboard is launched from inside a Claude Code
+   session and that session's id can be resolved against the
+   project's session directory, the "Resume most recent" card
+   labels itself "You're currently in this session" instead of
+   surfacing a resume prompt.
 4. Sessions with empty / unreadable JSONL files are skipped
    (logged at WARN, not surfaced as broken rows).
 5. The Haiku summarization is gated by `ATTUNE_OPS_SESSIONS_LLM=1`

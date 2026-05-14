@@ -22,6 +22,9 @@
 | Expand-on-click body | Server-side render the first user message; full transcript stays at the JSONL file on disk (no in-page transcript viewer) | Keeps the page light. Users who want the full transcript can `cat` the JSONL. |
 | Empty state | "No sessions in the last 3 days for this project. Older sessions are at `<path>`." | Tells the user where the data lives instead of pretending it doesn't. |
 | Failure mode for unreadable JSONL | Skip with WARN log, don't surface as broken row | An unreadable file is a Claude Code internal issue, not something the user can fix from the dashboard. |
+| "Resume most recent" card | **Yes — prominent top-of-page card** | Patrick approved 2026-05-14. The newest session by mtime gets full-card treatment with the full Haiku summary, a copy button, and a resume-in-new-session hint. Dedupes against the list below it. |
+| Live-session detection sources | (1) `CLAUDE_SESSION_ID` env var (if Claude Code sets one — verify during design); (2) `~/.claude/__last_session` pointer if it exists; (3) match by mtime within last 5 min as a fallback heuristic | Layered fallbacks so the feature works even when the primary signal isn't available. |
+| Live-session card behavior | "You're currently in this session" label, suppress the duplicate row in the list below | Avoids surfacing a "resume" prompt for a session that doesn't need resuming. |
 
 ---
 
@@ -43,6 +46,13 @@
    API keys, file paths, or other sensitive info. The Haiku
    summary should not echo these verbatim. Add a redaction pass
    or rely on Haiku's natural summarization to drop specifics?
+
+4. **Live-session detection mechanism — verify during design.**
+   Does Claude Code expose `CLAUDE_SESSION_ID` (or equivalent)
+   in subprocess env? Does `~/.claude/__last_session` exist as
+   a file or pointer? Run a quick check from inside a Claude
+   Code session before committing to a specific signal. The
+   mtime-based fallback (5-min window) works either way.
 
 ---
 
