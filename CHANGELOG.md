@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `discovery-sweep` Phase 2A (ops-integration spec) — scope-keyed
+  storage primitives. New module `src/attune/ops/sweep_results.py`
+  ships `scope_hash()` (canonicalized sha256, 16 hex chars),
+  `parse_lines()` (walks captured stdout for `ATTUNE_DS` records,
+  returns the final SweepResult JSON), `persist_result()` (atomic
+  write via tempfile + `os.replace` to
+  `~/.attune/ops/sweep-results/<hash>.json`), `read_result()`, and
+  `persist_from_lines()` (composition wrapper the upcoming Phase 2B
+  daemon hook calls). Parser refuses unknown `ATTUNE_DS_VERSION`
+  values so the daemon never persists data it might be reading
+  wrong. Feature flag `ATTUNE_OPS_SWEEP_RESULTS=1` for Phase 2B's
+  auto-persist; Phase 2A is library-only (no daemon wiring, no
+  HTTP route — both deferred until conflict-prone runner files
+  unblock). 24 new tests in `tests/unit/ops/test_sweep_results.py`
+  (92.16% coverage on the new module): persistence-flag gate,
+  scope_hash canonicalization, parse_lines round-trips + edge
+  cases, persist+read with latest-only semantics, atomic write
+  (no .tmp leftovers), and the `persist_from_lines` composition.
+  See `docs/specs/discovery-sweep-ops-integration/` Phase 2A.
+
 ### 2026-05-10 — Dashboard becomes a real workspace
 
 If you're returning after a couple of releases, the
