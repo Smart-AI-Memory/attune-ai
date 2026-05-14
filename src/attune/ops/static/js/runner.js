@@ -173,7 +173,6 @@
       statusClass: statusClass,
       loadSavedScope: loadSavedScope,
       saveScope: saveScope,
-      readScopePickerConfig: readScopePickerConfig,
       applyScopeToRow: applyScopeToRow,
       restoreScopeOnLoad: restoreScopeOnLoad,
       wireScopeSave: wireScopeSave,
@@ -332,27 +331,23 @@
     }
   }
 
-  // Read the server-injected scope-picker config block. Returns an
-  // object with ``firstFeaturePath`` (alphabetically-first feature with
-  // a path; "" when no path-bearing feature exists) and ``allCodePath``
-  // (fallback for the empty-features case; "" if the server didn't send
-  // it). Both fields default to "" when the config block is missing,
-  // unparseable, or malformed.
+  // Read the server-injected scope-picker config block. After Phase
+  // A3, the only field this block carries is ``workspaceRoot`` (used
+  // for cross-worktree validation of saved localStorage scopes).
+  // First-paint defaults moved to per-row ``data-scope-default``
+  // attributes, so the previous ``firstFeaturePath`` / ``allCodePath``
+  // fields are gone.
   function readScopePickerConfig() {
     var el = document.getElementById("scope-picker-config");
-    if (!el) return { firstFeaturePath: "", allCodePath: "", workspaceRoot: "" };
+    if (!el) return { workspaceRoot: "" };
     try {
       var cfg = JSON.parse(el.textContent || "{}");
       return {
-        firstFeaturePath:
-          typeof cfg.firstFeaturePath === "string" ? cfg.firstFeaturePath : "",
-        allCodePath:
-          typeof cfg.allCodePath === "string" ? cfg.allCodePath : "",
         workspaceRoot:
           typeof cfg.workspaceRoot === "string" ? cfg.workspaceRoot : ""
       };
     } catch (e) {
-      return { firstFeaturePath: "", allCodePath: "", workspaceRoot: "" };
+      return { workspaceRoot: "" };
     }
   }
 
@@ -414,39 +409,43 @@
     }
   }
 
-  // Restore the saved scope (or the first-load fallback) on every
-  // picker row at page load. Fallback chain:
-  //   1. localStorage has a saved scope (could be "") — use it.
-  //   2. Else, alphabetically-first feature path exists — use it.
-  //   3. Else (no path-bearing features) — use the "All code" path.
-  //   4. If even "All code" is missing — leave the picker at the
-  //      template's Project-wide default (no-op).
+  // Restore the saved scope (or the per-row first-load default) on
+  // every picker row at page load. Per-row resolution:
+  //   1. localStorage has a saved scope (could be "") — apply it to
+  //      every row (preserves PR #344's "remember last-used scope"
+  //      contract; the saved value is a global last-used, not
+  //      per-workflow).
+  //   2. Else, read each row's ``data-scope-default`` (server-rendered
+  //      from features.yaml by workflow_default_scope). Empty string
+  //      means project-wide — leave that row at the template default.
   function restoreScopeOnLoad() {
     var cfg = readScopePickerConfig();
     var saved = loadSavedScope();
-    var value;
-    if (saved !== null && isScopeInWorkspace(saved, cfg.workspaceRoot)) {
-      value = saved;
-    } else {
-      if (saved !== null && !isScopeInWorkspace(saved, cfg.workspaceRoot)) {
-        // Stale absolute path from another worktree / workspace.
-        // Discard so the run endpoint never sees it and so the next
-        // save (after the user picks something) overwrites cleanly.
-        try {
-          window.localStorage.removeItem(SCOPE_STORAGE_KEY);
-        } catch (e) {
-          // INTENTIONAL: best-effort. If localStorage is unavailable
-          // the picker just falls back to defaults on each load.
-        }
-        console.warn(
-          "attune-ops: discarded stale scope (" + saved +
-          ") — not under workspace " + cfg.workspaceRoot
-        );
+    // Workspace validation: if the saved scope is an absolute path
+    // that's not under this workspace's root, discard it (stale from
+    // a different worktree). Done once before the per-row loop so the
+    // warning logs exactly once per page load.
+    if (saved !== null && !isScopeInWorkspace(saved, cfg.workspaceRoot)) {
+      try {
+        window.localStorage.removeItem(SCOPE_STORAGE_KEY);
+      } catch (e) {
+        // INTENTIONAL: best-effort. If localStorage is unavailable
+        // the picker just falls back to defaults on each load.
       }
-      value = cfg.firstFeaturePath || cfg.allCodePath;
+      console.warn(
+        "attune-ops: discarded stale scope (" + saved +
+        ") — not under workspace " + cfg.workspaceRoot
+      );
+      saved = null;
     }
-    if (value === "") return; // Project-wide is the template default.
     document.querySelectorAll("tr[data-workflow]").forEach(function (row) {
+      var value;
+      if (saved !== null) {
+        value = saved;
+      } else {
+        value = row.getAttribute("data-scope-default") || "";
+      }
+      if (value === "") return; // Project-wide is the template default.
       applyScopeToRow(row, value);
     });
   }

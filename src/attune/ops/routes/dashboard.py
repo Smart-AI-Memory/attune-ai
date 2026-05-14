@@ -76,11 +76,19 @@ async def workflows_page(request: Request) -> HTMLResponse:
     # "n/a" span. Future-proofed: a new workflow without a registry
     # entry shows as n/a until the registry is updated.
     supports_path = {w.name: w.name in data.PATH_ARG_REGISTRY for w in workflows}
-    # Alphabetically-first feature path is the primary picker fallback
-    # when localStorage is empty. When no path-bearing feature exists,
-    # the JS falls through to ALL_CODE_PATH.
-    first = data.first_feature(cfg.project_root)
-    first_feature_path = first.path if first else ""
+    # Per-workflow first-paint default scope, auto-derived from
+    # features.yaml by exact name match. Each workflow row gets its
+    # own ``data-scope-default`` so the JS can restore a
+    # workflow-appropriate scope (e.g. ``security-audit`` →
+    # ``src/attune/security``) instead of applying one
+    # alphabetical-first fallback to every row. Workflows with no
+    # matching feature get ``""`` and default to project-wide, which
+    # is the safe choice over surfacing an irrelevant scope.
+    # localStorage from PR #344 still wins on day 2+; this only
+    # affects the empty-localStorage / first-paint case.
+    default_scopes = {
+        w.name: data.workflow_default_scope(w.name, cfg.project_root) for w in workflows
+    }
     return _render(
         request,
         "workflows.html",
@@ -89,7 +97,7 @@ async def workflows_page(request: Request) -> HTMLResponse:
         allow_run=cfg.allow_run,
         features=features,
         supports_path=supports_path,
-        first_feature_path=first_feature_path,
+        default_scopes=default_scopes,
         all_code_path=data.ALL_CODE_PATH,
         # Absolute workspace root used by the scope picker to validate
         # localStorage-restored paths. A saved scope from a previous
