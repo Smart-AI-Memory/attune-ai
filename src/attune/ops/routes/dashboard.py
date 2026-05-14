@@ -201,6 +201,24 @@ async def specs_page(request: Request) -> HTMLResponse:
     )
 
 
+def _render_markdown_safe(text: str) -> str:
+    """Render markdown to HTML with raw-HTML disabled (XSS-safe).
+
+    Spec files are repo-author-controlled but we still don't accept
+    embedded ``<script>`` tags — CommonMark mode (the markdown-it-py
+    default) renders raw HTML as escaped text rather than evaluating
+    it, which is the safety property we want.
+    """
+    from markdown_it import MarkdownIt
+
+    md = (
+        MarkdownIt("commonmark", {"html": False, "linkify": True, "typographer": False})
+        .enable("table")
+        .enable("strikethrough")
+    )
+    return md.render(text)
+
+
 @router.get("/specs/{slug}", response_class=HTMLResponse)
 async def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
     """Drill-in for a single spec: show every phase file's content (read-only)."""
@@ -219,16 +237,28 @@ async def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
         if not spec_dir.is_dir():
             continue
         phases = _scan_spec_dir(spec_dir)
-        contents: dict[str, str] = {}
+        # ``rendered`` holds the HTML-rendered phase bodies (markdown
+        # → CommonMark HTML, raw HTML disabled). Template uses these
+        # with ``|safe`` so headings, lists, tables, and code fences
+        # render as the user expects — replaces the prior raw-text
+        # ``<pre>`` dump (P1-2 in the 2026-05-14 QA punch list).
+        rendered: dict[str, str] = {}
         for phase in phases:
             if not phase.exists:
                 continue
             try:
-                contents[phase.name] = (spec_dir / phase.file).read_text(encoding="utf-8")
+                text = (spec_dir / phase.file).read_text(encoding="utf-8")
             except OSError:
-                # INTENTIONAL: an unreadable phase file is omitted from the
-                # contents map rather than aborting the whole drill-in.
+                # INTENTIONAL: an unreadable phase file is omitted from
+                # the rendered map rather than aborting the whole drill-in.
                 continue
+            try:
+                rendered[phase.name] = _render_markdown_safe(text)
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: fall back to escaped raw text rather than
+                # 500ing the whole page if markdown-it chokes on something
+                # unexpected. ``|e`` in the template handles the escape.
+                rendered[phase.name] = ""
         return _render(
             request,
             "spec_detail.html",
@@ -236,7 +266,7 @@ async def spec_detail_page(slug: str, request: Request) -> HTMLResponse:
             slug=slug,
             root=str(root),
             phases=phases,
-            contents=contents,
+            rendered=rendered,
             allow_run=cfg.allow_run,
         )
     raise HTTPException(status_code=404, detail=f"spec '{slug}' not found")

@@ -486,6 +486,12 @@
     if (!container) return;
     var workflow = container.getAttribute("data-recent-runs");
     if (!workflow) return;
+    // Optional: when rendered on /runs/<id>/view, the page sets
+    // data-exclude-run-id to the current run's id so the strip shows
+    // *other* recent runs of this workflow rather than including the
+    // run the user is already looking at (P1-5 in the 2026-05-14 QA
+    // punch list).
+    var excludeRunId = container.getAttribute("data-exclude-run-id") || "";
     fetch("/api/runs/" + encodeURIComponent(workflow), {
       headers: { Accept: "application/json" }
     })
@@ -495,7 +501,12 @@
       })
       .then(function (body) {
         if (!body || !body.runs || body.runs.length === 0) return;
-        renderRecentRunsInto(container, body.runs.slice(0, 5));
+        var runs = body.runs;
+        if (excludeRunId) {
+          runs = runs.filter(function (r) { return r.id !== excludeRunId; });
+        }
+        if (runs.length === 0) return;
+        renderRecentRunsInto(container, runs.slice(0, 5));
       })
       .catch(function () {
         // INTENTIONAL: history is a nice-to-have; a failed fetch
