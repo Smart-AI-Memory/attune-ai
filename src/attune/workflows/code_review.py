@@ -32,6 +32,7 @@ from .agent_sdk_adapter import (
     get_subagent_model,
     get_task_budget,
     get_thinking_config,
+    sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -193,12 +194,19 @@ class CodeReviewWorkflow(BaseWorkflow):
         except Exception as exc:  # noqa: BLE001
             # INTENTIONAL: Catch-all for unknown SDK errors to
             # return a structured WorkflowResult rather than
-            # crashing the CLI.
+            # crashing the CLI. The helper classifies the failure
+            # by exception type and elapsed time so the message
+            # names the most-likely cause (auth, budget, network,
+            # …) instead of leaking the SDK's opaque
+            # "Command failed with exit code 1" string.
             logger.exception(
                 "Agent SDK code review failed: %s",
                 type(exc).__name__,
             )
-            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+            duration = (datetime.now() - started_at).total_seconds()
+            return self._error_result(
+                sdk_error_message(exc, duration_seconds=duration, depth=depth)
+            )
 
     async def _run_agent_review(
         self, resolved_path: str, max_turns: int, depth: str = "standard"

@@ -24,6 +24,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -179,7 +180,10 @@ class DependencyCheckWorkflow(BaseWorkflow):
             # INTENTIONAL: Catch-all for unknown SDK errors to return
             # a structured WorkflowResult rather than crashing.
             logger.exception("Agent SDK dependency check failed: %s", type(exc).__name__)
-            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+            duration = (datetime.now() - started_at).total_seconds()
+            return self._error_result(
+                sdk_error_message(exc, duration_seconds=duration, depth=depth)
+            )
 
     async def _run_agent_check(
         self, resolved_path: str, max_turns: int, depth: str = "standard"

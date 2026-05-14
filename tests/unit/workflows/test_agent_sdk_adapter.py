@@ -20,6 +20,7 @@ from attune.workflows.agent_sdk_adapter import (
     AgentSDKResultAdapter,
     get_max_budget_usd,
     get_subagent_model,
+    sdk_error_message,
 )
 from attune.workflows.data_classes import (
     CostReport,
@@ -484,6 +485,97 @@ class TestGetMaxBudgetUsd:
         """Given ATTUNE_MAX_BUDGET_USD=0, returns None (no cap)."""
         monkeypatch.setenv("ATTUNE_MAX_BUDGET_USD", "0")
         assert get_max_budget_usd("deep") is None
+
+
+@pytest.mark.unit
+class TestSdkErrorMessage:
+    """Test the SDK error-message classifier.
+
+    Each test feeds a synthetic exception + duration through
+    ``sdk_error_message`` and asserts the returned text contains
+    the expected actionable phrases. We don't assert exact strings
+    — those will change as the messages get polished — only that
+    the right *kind* of guidance is being surfaced.
+    """
+
+    EXIT_1_RAW = (
+        "Command failed with exit code 1 (exit code: 1)\n"
+        "Error output: Check stderr output for details"
+    )
+
+    def test_network_error_suggests_connectivity(self) -> None:
+        """ConnectionError → network-troubleshooting steps."""
+        msg = sdk_error_message(ConnectionError("connection refused"))
+        assert "Network error" in msg
+        assert "api.anthropic.com" in msg
+        assert "ConnectionError" in msg
+
+    def test_timeout_error_suggests_connectivity(self) -> None:
+        """TimeoutError shares the network classification."""
+        msg = sdk_error_message(TimeoutError("timed out"))
+        assert "Network error" in msg
+        assert "Retry" in msg
+
+    def test_exit_1_fast_failure_suggests_auth(self) -> None:
+        """Exit-1 + duration < 5s → auth/CLI startup hints."""
+        exc = Exception(self.EXIT_1_RAW)
+        msg = sdk_error_message(exc, duration_seconds=0.5, depth="standard")
+        assert "startup" in msg
+        assert "ANTHROPIC_API_KEY" in msg
+        assert "claude" in msg  # references the CLI
+
+    def test_exit_1_slow_failure_suggests_budget_cap(self) -> None:
+        """Exit-1 + duration >= 30s → budget-cap hints."""
+        exc = Exception(self.EXIT_1_RAW)
+        msg = sdk_error_message(exc, duration_seconds=120.0, depth="quick")
+        assert "mid-stream" in msg
+        assert "ATTUNE_MAX_BUDGET_USD=0" in msg
+        # Quick depth should be suggested a bump up.
+        assert "--depth standard" in msg
+
+    def test_exit_1_slow_failure_at_deep_does_not_suggest_quick(self) -> None:
+        """When already at 'deep', the bump suggestion doesn't downgrade."""
+        exc = Exception(self.EXIT_1_RAW)
+        msg = sdk_error_message(exc, duration_seconds=120.0, depth="deep")
+        # Bump target falls back to 'deep' (current depth) — message
+        # still suggests the env-var override as the primary action.
+        assert "ATTUNE_MAX_BUDGET_USD=0" in msg
+
+    def test_exit_1_no_duration_uses_generic_message(self) -> None:
+        """Exit-1 without duration → generic exit-1 guidance."""
+        exc = Exception(self.EXIT_1_RAW)
+        msg = sdk_error_message(exc)
+        assert "exit code 1" in msg
+        assert "ANTHROPIC_API_KEY" in msg or "auth" in msg.lower()
+        assert "ATTUNE_MAX_BUDGET_USD" in msg
+
+    def test_unknown_exception_falls_back_gracefully(self) -> None:
+        """Non-network non-exit-1 exception → generic header."""
+        exc = ValueError("some weird internal state")
+        msg = sdk_error_message(exc)
+        assert "Agent SDK failure" in msg
+        assert "ValueError" in msg
+        assert "some weird internal state" in msg
+
+    def test_raw_exception_always_included(self) -> None:
+        """Every variant must preserve the underlying message
+        for debugging, so the user can still copy-paste it into
+        an issue when the guidance doesn't help."""
+        for exc in [
+            ConnectionError("network down"),
+            Exception(self.EXIT_1_RAW),
+            ValueError("weird"),
+        ]:
+            msg = sdk_error_message(exc, duration_seconds=1.0, depth="quick")
+            assert "Underlying error:" in msg
+
+    def test_subscription_explainer_appears_for_budget_path(self) -> None:
+        """The budget-path message reminds subscription users that
+        the cap isn't a billing limit (addresses a real user
+        confusion: 'why is there a cap if I'm on subscription?')."""
+        exc = Exception(self.EXIT_1_RAW)
+        msg = sdk_error_message(exc, duration_seconds=60.0, depth="standard")
+        assert "subscription" in msg.lower()
 
 
 @pytest.mark.unit

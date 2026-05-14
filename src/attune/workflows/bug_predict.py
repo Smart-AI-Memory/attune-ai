@@ -28,6 +28,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
 from .bug_predict_patterns import (
@@ -193,7 +194,10 @@ class BugPredictionWorkflow(BaseWorkflow):
                 "Agent SDK bug prediction failed: %s",
                 type(exc).__name__,
             )
-            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+            duration = (datetime.now() - started_at).total_seconds()
+            return self._error_result(
+                sdk_error_message(exc, duration_seconds=duration, depth=depth)
+            )
 
     async def _run_agent_predict(
         self, resolved_path: str, max_turns: int, depth: str = "standard"

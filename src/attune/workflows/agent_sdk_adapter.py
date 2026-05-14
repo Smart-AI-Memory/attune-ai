@@ -350,6 +350,124 @@ def get_thinking_config(depth: str = "standard") -> Any:
     return cfg_cls()
 
 
+def sdk_error_message(
+    exc: BaseException,
+    *,
+    duration_seconds: float | None = None,
+    depth: str | None = None,
+) -> str:
+    """Translate a ``claude_agent_sdk`` failure into actionable text.
+
+    The SDK surfaces several failure modes as a generic
+    ``Exception("Command failed with exit code 1 (exit code: 1)\\n
+    Error output: Check stderr output for details")`` — the message
+    is opaque, the user doesn't know what to do. This helper
+    inspects the exception type, message, and the wall-clock
+    duration of the run to classify the failure and produce a
+    message that names the most likely cause and a concrete next
+    step.
+
+    Args:
+        exc: The exception raised by ``claude_agent_sdk.query()``
+            (or one of its async iterators).
+        duration_seconds: Wall-clock seconds the run was alive
+            before the exception. Optional. When provided, used
+            to discriminate between startup-time failures
+            (auth, CLI availability) and mid-stream failures
+            (budget exhaustion, network blip).
+        depth: The workflow depth that was running ("quick" /
+            "standard" / "deep"). Used to suggest a depth bump
+            when the failure smells budget-related.
+
+    Returns:
+        A one-paragraph error message suitable for embedding in
+        a ``WorkflowResult`` error field. Always includes the
+        original exception's raw string at the end so debugging
+        information isn't lost.
+
+    Patterns detected:
+
+    * Startup failure (exit 1 + duration < 5s) → auth / CLI /
+      version mismatch.
+    * Mid-stream exit 1 (duration ≥ 30s) → likely budget cap
+      hit during streaming.
+    * ConnectionError / TimeoutError → upstream network.
+    * Unrecognized → generic header + raw exception message.
+    """
+    raw_message = str(exc)
+    raw_type = type(exc).__name__
+    raw_tail = f"  Underlying error: {raw_type}: {raw_message}"
+
+    if isinstance(exc, ConnectionError | TimeoutError):
+        return (
+            "Network error talking to the Anthropic API.\n"
+            "Next steps:\n"
+            "  - Check your internet connection.\n"
+            "  - Verify api.anthropic.com isn't blocked by a "
+            "firewall, VPN, or corporate proxy.\n"
+            "  - Retry — transient API hiccups self-heal in seconds.\n"
+            f"{raw_tail}"
+        )
+
+    is_exit_1 = "Command failed with exit code 1" in raw_message
+
+    if is_exit_1 and duration_seconds is not None and duration_seconds < 5.0:
+        return (
+            "The `claude` CLI subprocess failed at startup "
+            f"(only {duration_seconds:.1f}s elapsed). Most likely:\n"
+            "  - `ANTHROPIC_API_KEY` is unset, expired, or invalid. "
+            "Test it: `echo $ANTHROPIC_API_KEY` and try `claude` "
+            "interactively.\n"
+            "  - The `claude` CLI isn't installed or isn't on PATH. "
+            "Install: `npm install -g @anthropic-ai/claude-code`.\n"
+            "  - `claude-agent-sdk` version is incompatible with "
+            "the installed `claude` CLI. Try upgrading both.\n"
+            f"{raw_tail}"
+        )
+
+    if is_exit_1 and duration_seconds is not None and duration_seconds >= 30.0:
+        suggested_depth = "standard" if depth == "quick" else "deep"
+        return (
+            "The `claude` CLI subprocess died mid-stream after "
+            f"{duration_seconds:.1f}s. Most likely cause: budget "
+            "cap exhausted during a multi-subagent run "
+            "(security-audit, code-review, deep-review fan out "
+            "to 3-5 parallel Opus subagents).\n"
+            "Next steps:\n"
+            f"  - Re-run with a higher cap: `ATTUNE_MAX_BUDGET_USD=0 "
+            f"attune workflow run <name> --path <path>` to disable "
+            f"the cap entirely.\n"
+            f"  - Or bump depth: `--depth {suggested_depth}` (current "
+            f"cap is ${_DEFAULT_BUDGET_USD.get(depth or 'standard', 10.0):.0f} "
+            f"at `{depth or 'standard'}`).\n"
+            "  - Subscription users pay no per-request cost; the cap "
+            "is a complexity bound, not a billing limit.\n"
+            f"{raw_tail}"
+        )
+
+    if is_exit_1:
+        return (
+            "The `claude` CLI subprocess failed (exit code 1). "
+            "Common causes: missing or invalid `ANTHROPIC_API_KEY`, "
+            "missing `claude` CLI, budget cap exhaustion, or a "
+            "transient API failure.\n"
+            "Next steps:\n"
+            "  - Verify auth: try `claude` interactively or check "
+            "`echo $ANTHROPIC_API_KEY`.\n"
+            "  - For multi-subagent workflows, try `ATTUNE_MAX_BUDGET_USD=0` "
+            "to rule out budget exhaustion.\n"
+            "  - Check the stderr output in your terminal for the "
+            "actual subprocess error.\n"
+            f"{raw_tail}"
+        )
+
+    return (
+        f"Agent SDK failure ({raw_type}). "
+        "If this recurs, check the stderr output for the underlying "
+        f"error and consider opening an issue.\n{raw_tail}"
+    )
+
+
 def get_max_budget_usd(depth: str = "standard") -> float | None:
     """Get budget cap for a workflow depth.
 

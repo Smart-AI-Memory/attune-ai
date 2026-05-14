@@ -32,6 +32,7 @@ from .agent_sdk_adapter import (
     get_max_budget_usd,
     get_task_budget,
     get_thinking_config,
+    sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -194,7 +195,10 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 "RAG generation failed: %s",
                 type(exc).__name__,
             )
-            return self._error_result(f"Agent SDK error: {type(exc).__name__}: {exc}")
+            duration = (datetime.now() - started_at).total_seconds()
+            return self._error_result(
+                sdk_error_message(exc, duration_seconds=duration, depth=depth)
+            )
 
         completed_at = datetime.now()
 
