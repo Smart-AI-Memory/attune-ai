@@ -57,11 +57,11 @@ TrustedHostMiddleware  ──── rejects unlisted Host headers
    │    list_features() ──> Feature[]           │
    │    first_feature() ──> Feature | None      │
    │                                            │
-   │  POST /run                                 │
+   │  POST /workflows/{name}/run                │
    │    RunnerService.start()                   │
    │      ├── RunnerBusyError (409 if busy)     │
    │      └── Run (new execution)               │
-   │            └── SSE stream  (/run/{id}/log) │
+   │            └── SSE  /runs/{run_id}/stream  │
    │                                            │
    │  GET /specs                                │
    │    SpecRecord[]                            │
@@ -102,4 +102,8 @@ Workflow execution is disabled by default (`allow_run = False`). This is an expl
 - **Extend the scope picker:** add entries to `.help/features.yaml` in the project root. `list_features()` and `first_feature()` parse this file; no code changes are needed for new features.
 - **Add a new run backend:** replace or subclass `RunnerService`. The concurrency contract is: raise `RunnerBusyError` if a run is already active, return a `Run` instance otherwise. SSE consumers depend on `Run`'s broadcast interface.
 
-For usage and configuration details, see the `attune ops` reference documentation.
+## See also
+
+- [How-to: use the ops dashboard](../how-to/ops-dashboard.md) — task-focused recipes for the dashboard's core API
+- [Tutorial: ops-dashboard walkthrough](../tutorials/ops-dashboard.md) — end-to-end first run
+- [Reference: ops-dashboard CLI](../reference/ops-dashboard.md) — every command-line flag, environment variable, and exit code

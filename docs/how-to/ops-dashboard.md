@@ -23,7 +23,7 @@ Or launch it directly as a Python module:
 python -m attune.ops
 ```
 
-The dashboard starts a blocking server at `http://127.0.0.1:8765`. Open that URL to see the home page with today's KPIs, a cost sparkline, and the workflow catalog.
+The dashboard starts a blocking server at `http://127.0.0.1:8765`. Open that URL to see the home page with today's KPIs, a cost sparkline, and the workflow catalog. Press `Ctrl+C` in the terminal to stop the server.
 
 ## Core API
 
@@ -81,7 +81,7 @@ The `ATTUNE_OPS_SWEEP_RESULTS` environment variable must be set to a non-empty v
 
 ### Building a config and launching the app programmatically
 
-When you want to embed the dashboard inside a larger process rather than use the CLI, build a `Config` explicitly and pass it to `create_app()`:
+When you want to embed the dashboard inside a larger process rather than use the CLI, build a `Config` explicitly and pass it to `create_app()`. Keep the bind on `127.0.0.1` so the dashboard isn't reachable from outside the local machine:
 
 ```python
 from pathlib import Path
@@ -89,10 +89,9 @@ from attune.ops import build_config, create_app
 
 config = build_config(
     project_root=Path("/path/to/your/project"),
-    host="0.0.0.0",
+    host="127.0.0.1",
     port=9000,
     allow_run=True,
-    trusted_hosts=("myhost.internal",),
 )
 
 app = create_app(config)
@@ -101,6 +100,8 @@ app = create_app(config)
 import uvicorn
 uvicorn.run(app, host=config.host, port=config.port)
 ```
+
+If you genuinely need to reach the dashboard from another machine, prefer an SSH tunnel (`ssh -L 8765:127.0.0.1:8765 user@host`) or a reverse proxy that handles auth — do not bind the server to `0.0.0.0` directly. The dashboard has no built-in authentication.
 
 ### Reading telemetry and KPIs without starting the server
 
@@ -121,8 +122,8 @@ print(f"7-day savings: ${kpis.seven_day_savings:.4f}")
 
 ## See also
 
-- Concept: Template design patterns — understand how `.help/features.yaml` entries that `list_features()` reads are structured
-- Reference: attune ops CLI — complete flag listing for `attune ops`
-- How-to: Persisting sweep results — configure `ATTUNE_OPS_SWEEP_RESULTS` and use `watch_and_persist()`
+- [Tutorial: ops-dashboard walkthrough](../tutorials/ops-dashboard.md) — end-to-end first run, including the workflow runner and scope picker
+- [Reference: ops-dashboard API](../reference/ops-dashboard.md) — full symbol-by-symbol API listing
+- [Architecture: ops-dashboard](../architecture/ops-dashboard.md) — how the configuration, FastAPI app, and persistence layers fit together
 
 <!-- attune-generated: source_hash=395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42 feature=ops-dashboard kind=how-to generated_at=2026-05-14 -->

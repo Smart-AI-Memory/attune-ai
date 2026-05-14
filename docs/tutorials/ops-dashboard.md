@@ -73,8 +73,7 @@ Before starting the server, confirm that the dashboard can find your project's f
 `list_features` reads `.help/features.yaml` from your project root and returns a list of `Feature` objects — one per entry in that file:
 
 ```python
-from attune.ops import build_config
-from attune.ops._readers import list_features, first_feature
+from attune.ops.data import list_features, first_feature
 
 features = list_features(config.project_root)
 for f in features:
@@ -147,8 +146,7 @@ While the server is running, step back and look at how the home page numbers are
 
 ```python
 from datetime import date
-from attune.ops._readers import home_kpis
-from attune.ops._models import TelemetrySummary
+from attune.ops.data import home_kpis, TelemetrySummary
 
 # Construct a minimal summary to see the shape of the output
 summary = TelemetrySummary(
@@ -182,6 +180,8 @@ print(kpis.sparkline)          # list[DailyCost]
 
 ## Next steps
 
-Read the `attune.ops` reference to see every `Config` field, the full `TelemetrySummary` schema, and the complete list of URL routes the dashboard registers — that's the right place to look when you need to customise retention, add trusted hosts, or integrate the dashboard into a larger application.
+- [How-to: use the ops dashboard](../how-to/ops-dashboard.md) — task-focused recipes for the dashboard's core API
+- [Reference: ops-dashboard CLI](../reference/ops-dashboard.md) — every command-line flag, environment variable, and exit code
+- [Architecture: ops-dashboard](../architecture/ops-dashboard.md) — design decisions, key classes, and the data-flow diagram
 
 <!-- attune-generated: source_hash=395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42 feature=ops-dashboard kind=tutorial generated_at=2026-05-14 -->

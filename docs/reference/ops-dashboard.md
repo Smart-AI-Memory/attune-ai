@@ -9,8 +9,9 @@ Local operations dashboard — workflow runner with per-feature scope picker, pe
 ## Usage
 
 ```
-attune ops [--host HOST] [--port PORT] [--allow-run] [--specs-root PATH]
-           [--trusted-host HOST] [--runs-retention-days DAYS]
+attune ops [--host HOST] [--port PORT] [--project-root PATH] [--no-browser]
+           [--read-only] [--specs-root PATH] [--trusted-host HOST]
+           [--runs-retention-days DAYS]
 ```
 
 ## Options
@@ -19,10 +20,12 @@ attune ops [--host HOST] [--port PORT] [--allow-run] [--specs-root PATH]
 |--------|---------|-------------|
 | `--host HOST` | `127.0.0.1` | Interface address the dashboard server binds to |
 | `--port PORT` | `8765` | TCP port the dashboard server listens on |
-| `--allow-run` | `False` | Permit the dashboard to trigger workflow runs |
+| `--project-root PATH` | cwd | Project directory to inspect |
+| `--no-browser` | (off) | Don't auto-open a browser tab on startup |
+| `--read-only` | (off) | Disable workflow execution from the dashboard. Runs are enabled by default; pass this flag to make the dashboard purely observational. |
 | `--specs-root PATH` | — | Add a root directory to the federated spec listing; repeatable |
-| `--trusted-host HOST` | — | Add a host to the `Host`-header allowlist; repeatable |
-| `--runs-retention-days DAYS` | `30` | Delete persisted run files older than this many days |
+| `--trusted-host HOST` | — | Add a hostname (optionally `host:port`) to the `Host`-header allowlist; repeatable. Use when reaching the dashboard via a tunnel or reverse proxy. |
+| `--runs-retention-days DAYS` | `30` | Delete persisted run files older than this many days at startup. Set to `0` to disable pruning. |
 
 ## Output
 
@@ -66,7 +69,13 @@ The dashboard UI is then available in your browser at the printed URL. API respo
 
 ## Related commands
 
-- `attune help-docs` — browse the full template library, including `--tag`-filtered searches across all 498 templates
+- `attune help-docs` — browse the help template library with optional `--tag` filters
 - `python -m attune.ops` — standalone entry point; equivalent to `attune ops` without the main CLI parser
+
+## See also
+
+- [How-to: use the ops dashboard](../how-to/ops-dashboard.md) — quick start, programmatic API, and integration patterns
+- [Tutorial: ops-dashboard walkthrough](../tutorials/ops-dashboard.md) — end-to-end first run with the workflow runner and scope picker
+- [Architecture: ops-dashboard](../architecture/ops-dashboard.md) — design decisions and the data-flow diagram
 
 <!-- attune-generated: source_hash=395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42 feature=ops-dashboard kind=cli-reference generated_at=2026-05-14 -->
