@@ -379,11 +379,33 @@ def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> Telemetry
     except OSError:
         return TelemetrySummary(0, 0.0, 0.0, [], [], None)
 
-    by_workflow = sorted(
-        ((k, by_workflow_count[k], round(by_workflow_cost[k], 4)) for k in by_workflow_count),
-        key=lambda row: row[2],
-        reverse=True,
-    )[:20]
+    # Filter test fixtures, demo stubs, and removed workflows from the
+    # top-list. The telemetry file accumulates entries from every
+    # workflow that ever ran, so old test fixtures (e.g. those listed
+    # in .claude/rules/attune/bug-patterns.md sync logs:
+    # "test-tier-fallback", "new-sample-workflow1") pollute the top
+    # spenders rollup and distort the "where did my money go?" signal.
+    # The current registry is the source of truth — anything not in it
+    # is either a removed workflow or a stub from local development.
+    # (P2-8 in the 2026-05-14 QA punch list.)
+    try:
+        canonical_names = {w.name for w in list_workflows()}
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: if the registry introspection fails, fall back
+        # to showing everything rather than hiding all data.
+        canonical_names = None
+
+    def _is_canonical(name: str) -> bool:
+        if canonical_names is None:
+            return True
+        return name in canonical_names
+
+    filtered = [
+        (k, by_workflow_count[k], round(by_workflow_cost[k], 4))
+        for k in by_workflow_count
+        if _is_canonical(k)
+    ]
+    by_workflow = sorted(filtered, key=lambda row: row[2], reverse=True)[:20]
 
     today = date.today()
     cutoff = today.toordinal() - recent_days

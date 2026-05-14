@@ -520,7 +520,10 @@
       idTxt.textContent = String(run.id).slice(0, 8);
       a.appendChild(idTxt);
       if (run.path) {
-        a.title = "scope: " + run.path;
+        // Fast CSS tooltip (matches the system used on Specs and
+        // the topbar — P2-1 rollout).
+        a.setAttribute("data-tooltip", "scope: " + run.path);
+        a.setAttribute("aria-label", "scope: " + run.path);
       }
       a.appendChild(document.createTextNode(" "));
       var statusTxt = document.createElement("span");

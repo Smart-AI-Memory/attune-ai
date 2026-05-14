@@ -29,7 +29,20 @@
       {% for w in workflows %}
         <tr data-workflow="{{ w.name }}">
           <td><code>{{ w.name }}</code></td>
-          <td class="num">{{ w.stages }}</td>
+          {# Stages=0 means the workflow doesn't expose a stages array
+             (typical for meta-orchestration workflows that compose
+             other workflows rather than declaring an explicit pipeline).
+             Render '—' with a tooltip so users don't read it as
+             "this workflow has zero stages" (P2-4 in the QA punch list). #}
+          <td class="num">
+            {% if w.stages > 0 %}
+              {{ w.stages }}
+            {% else %}
+              <span class="muted"
+                    data-tooltip="Workflow doesn't expose a stages array. Meta-orchestration workflows compose other workflows rather than declaring an explicit pipeline."
+                    aria-label="Stages not declared">—</span>
+            {% endif %}
+          </td>
           <td>
             {% for stage, tier in w.tier_map.items() %}
               <span class="chip chip-{{ tier|lower }}">{{ stage }}: {{ tier }}</span>
@@ -60,7 +73,9 @@
                        placeholder="e.g. src/attune/security/"
                        aria-label="Custom scope path for {{ w.name }}">
               {% else %}
-                <span class="scope-na" title="This workflow doesn't accept a path argument">n/a</span>
+                <span class="scope-na"
+                      data-tooltip="This workflow doesn't accept a path argument"
+                      aria-label="This workflow doesn't accept a path argument">n/a</span>
               {% endif %}
             </td>
             <td class="num">
