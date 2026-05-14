@@ -4124,3 +4124,78 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   worktree's slug. Works for any `python -m <pkg>`
   invocation where you want sibling-venv deps +
   non-installed source.
+
+- **`overflow: hidden` on a parent clips CSS `::after`
+  tooltip pseudo-elements — move the clip to an inner
+  child instead**: hit during the Specs page redesign
+  (PR #358). Designing a CSS-only tooltip via
+  `[data-tooltip]::after` positioned above a `.status-
+  pill`, with `overflow: hidden` on the pill itself for
+  text-overflow:ellipsis. Result: the tooltip rendered
+  invisibly because the pill's overflow-hidden clipped
+  it. The trigger was firing (`:hover` styles applied,
+  pseudo-element generated, `opacity:1`) but the box
+  was outside the pill's clip region and dropped. Fix:
+  move `overflow: hidden` + `text-overflow: ellipsis`
+  to an inner `.status-code` span with `min-width: 0`
+  and `flex: 1 1 auto`. The outer pill keeps visible
+  overflow so the tooltip pseudo-element can escape
+  above it; the inner span still ellipsizes long text
+  within the pill's `max-width: 100%`. Generalizable:
+  any element using a CSS `::after` for tooltips,
+  popovers, badges, or annotations MUST have visible
+  overflow itself; clipping happens on an inner child.
+  Same applies to the cell containing the element —
+  set `position: relative` and visible overflow on the
+  cell so the positioned pseudo-element escapes upward.
+  Companion diagnostic: when a tooltip doesn't appear
+  but DevTools shows the `::after` rule is matched and
+  the element is hovered, suspect overflow clipping —
+  not selector specificity or transition timing.
+
+- **The worktree's `.venv` is missing optional extras
+  (e.g. `[ops]`) that the main checkout's `.venv` has —
+  PYTHONPATH-overriding via the main venv is the cheap
+  preview path**: hit when starting the ops dashboard
+  to preview Specs-page changes from a worktree. The
+  worktree's `uv sync` baseline runs with `--extra dev
+  --extra developer` (no `[ops]`), so `fastapi` /
+  `uvicorn[standard]` / `jinja2` are absent. Running
+  `.venv/bin/python -m attune.ops` fails with
+  `ModuleNotFoundError: No module named 'fastapi'`.
+  Workaround that pairs cleanly with the existing
+  worktree-PYTHONPATH lesson: use the MAIN checkout's
+  venv (which usually has all extras installed from
+  ongoing dev work) while pointing PYTHONPATH at the
+  worktree's `src`:
+
+  ```
+  PYTHONPATH=$(pwd)/src \
+    /Users/patrickroebuck/attune-ai/.venv/bin/python \
+    -m attune.ops --port 8775 --no-browser \
+    --project-root /Users/patrickroebuck/attune-ai
+  ```
+
+  This is the inverse of the editable-install lesson:
+  that one was about the editable install pointing at
+  MAIN's source from a worktree command; this one is
+  about the worktree's venv lacking deps the main venv
+  has. Pattern works for any optional-extra-gated
+  subcommand (`ops`, potentially `backend`, `lsp`).
+
+- **Cache-buster query string on linked CSS unblocks
+  iteration when static files lack `Cache-Control`**:
+  when iterating on `static/css/main.css` during dev,
+  even `Cmd+Shift+R` sometimes fails to bust the
+  browser's heuristic cache because the response has
+  no `Cache-Control` header (matches the existing
+  `/static/*.js` lesson). Adding
+  `?v={{ range(100000, 999999) | random }}` to the
+  `<link rel="stylesheet">` href in `base.html` forces
+  every page render to request a unique URL — the
+  browser cannot reuse a cached copy. Acceptable for
+  dev/preview; in production it defeats caching, so
+  the long-term fix remains setting `Cache-Control` +
+  a content-hash filename pattern. Add the buster
+  during a UI-iteration session, then remove it when
+  shipping the PR (or gate on a `dev` flag).
