@@ -1,11 +1,23 @@
 # Design — Discovery-Sweep Ops Dashboard Integration
 
-**Status:** draft (2026-05-13)
+**Status:** revised 2026-05-13 to Option A (see
+[`audit-2026-05-13.md`](audit-2026-05-13.md))
 **Requirements:** `requirements.md`
 **Parent code:** `docs/specs/discovery-sweep/` (feature-complete on
 `main`)
-**Builds on:** `docs/specs/ops-runner-tier2/` (SSE event stream +
-workflow-list dashboard surface — must ship first)
+**Builds on:** `docs/specs/ops-runner-tier2/` (subprocess runner +
+per-run SSE stream — shipped via PRs #324 / #326 on `release/v6.8.0`)
+
+> The pre-audit draft of this design assumed an in-process daemon
+> with a shared `/events` SSE stream. That design didn't match the
+> actually-shipped runner (subprocess + per-run stream). The Phase 0
+> audit replaced it with **Option A**: workflow emits `ATTUNE_DS`
+> prefix lines to stdout, daemon parses its own stdout buffer at
+> run completion, daemon writes scope-keyed JSON the dashboard
+> reads. Subprocess + single-run invariants preserved. The engine
+> also gains an in-process `event_sink` callback for tests and
+> future programmatic consumers (not load-bearing for the
+> dashboard).
 
 ---
 
@@ -13,53 +25,70 @@ workflow-list dashboard surface — must ship first)
 
 ```
 ┌────────────────────────────────────────────────────────────────┐
-│  Ops dashboard (workflows.html)                                │
+│  Ops dashboard (workflows.html + run_view.html)                │
 │                                                                │
 │  Workflow list row                                             │
 │   ┌──────────────────────────────────────────────────────┐    │
 │   │ discovery-sweep    [scope picker]  [Run] [chips: 12🔴│ ◀── chip click →
 │   │                                          3🟡 27⚪]    │      detail view
 │   └──────────────────────────────────────────────────────┘    │
+│   - chips read GET /workflows/discovery-sweep/results/<hash>   │
 │                                                                │
 │  Progress (live during a run)                                  │
 │   ┌──────────────────────────────────────────────────────┐    │
 │   │ ✓ pattern-scan      ✓ bug-predict   ⏳ security-audit │   │
-│   │                                                       │   │
-│   │ Findings so far: 8 queue, 2 questions, 4 rejected    │   │
 │   └──────────────────────────────────────────────────────┘    │
+│   - reads existing /runs/<run_id>/stream; parses ATTUNE_DS     │
+│     prefix lines client-side                                   │
 └────────┬───────────────────────────────────────────────────────┘
-         │ SSE: source_started / source_finished events
+         │ HTTP / SSE
          ▼
 ┌────────────────────────────────────────────────────────────────┐
-│  Ops daemon (from ops-runner-tier2)                            │
+│  Ops daemon (RunnerService — existing)                         │
 │                                                                │
-│  - HTTP endpoint: POST /workflows/discovery-sweep/run          │
-│    body: {path, depth?, no_llm?, source?, verbose?}            │
-│  - SSE stream: GET /events                                     │
-│    emits source_started, source_finished, source_failed        │
-│  - Static JSON: GET /workflows/discovery-sweep/results/<hash>  │
-│    returns the most recent sweep's JSON                        │
+│  - existing: spawns subprocess, captures stdout line-by-line,  │
+│    broadcasts via /runs/<run_id>/stream                        │
+│  - NEW (Phase 2): post-run hook keyed by workflow name. When   │
+│    `discovery-sweep` finishes, parse ATTUNE_DS lines from      │
+│    `run.lines` and persist                                     │
+│    ~/.attune/ops/sweep-results/<scope-hash>.json (atomic)      │
+│  - NEW (Phase 2): GET /workflows/discovery-sweep/results/<hash>│
+│    (404 if no sweep has run for that scope)                    │
 └────────┬───────────────────────────────────────────────────────┘
-         │ asyncio.create_task(workflow.execute(...))
+         │ stdout (already captured)
          ▼
 ┌────────────────────────────────────────────────────────────────┐
-│  DiscoverySweepWorkflow.execute()                              │
-│   (already shipped — Phase 1–3)                                │
+│  attune workflow run discovery-sweep --path <P> [--json]       │
 │                                                                │
-│  Engine fan-out via asyncio.gather(per-source tasks)           │
-│  This spec adds: per-source telemetry hooks fired around       │
-│  each task — emit "source_started" before, "source_finished"   │
-│  or "source_failed" after.                                     │
+│  - existing: --json flag produces the final                    │
+│    {queue, questions, rejected, metadata} blob.                │
+│  - NEW (Phase 1, engine API): event_sink callback fires        │
+│    source_started / source_finished / source_failed events.    │
+│    In-process consumers (tests, future programmatic callers)   │
+│    pass a sink; CLI invocations get None and unchanged output. │
+│  - NEW (Phase 1b, stdout): when stdout is NOT a TTY, engine    │
+│    also writes one ATTUNE_DS line per source event so the      │
+│    daemon (which captures stdout) can parse it. TTY users see  │
+│    nothing extra.                                              │
 └────────────────────────────────────────────────────────────────┘
 ```
 
-**Resolved (Phase 1.5 of parent spec):** SSE event stream is a
-core deliverable of ops-runner-tier2. This spec reuses that stream
-rather than building a parallel one.
+**Resolved (Phase 0 audit):** No shared `/events` SSE stream and no
+in-process workflow execution. The existing per-run `/runs/<id>/stream`
+SSE carries the lines; dashboard parses `ATTUNE_DS` lines client-side
+for live progress; daemon writes scope-keyed JSON at run-complete
+for static chip counts.
 
 ---
 
-## SSE event shape
+## Engine event shape (in-process `event_sink` API)
+
+The engine's `event_sink` callback receives plain dicts (not
+dataclasses, to keep the surface minimal and JSON-serializable
+without extra glue). The same shape doubles as the payload for
+`ATTUNE_DS` stdout lines in Phase 1b.
+
+## SSE event shape (deprecated — see audit)
 
 ```python
 @dataclass
@@ -92,6 +121,14 @@ class SourceFailedEvent:
 
 Three events per source per sweep. With 7 sources (pattern-scan +
 6 LLM) that's ~21 events per sweep — trivial to render.
+
+> **Per Option A revision:** the `sweep_id` field on the dataclasses
+> above remains in the engine's emitted event shape (engine doesn't
+> know it's running inside a daemon vs. the CLI). Daemon-side
+> callers pass `sweep_id=run_id` so the event shape stays
+> compatible; CLI callers leave it `None` and the engine emits
+> `sweep_id=None` (or omits the key — both behaviors are
+> acceptable to downstream parsers).
 
 ---
 
@@ -166,12 +203,33 @@ Daemon writes the JSON output of each sweep to:
 ```
 ~/.attune/ops/sweep-results/
   <scope-hash>.json       # latest sweep result for this scope
-  <scope-hash>.meta.json  # {path, depth, ts, sweep_id}
+  <scope-hash>.meta.json  # {path, depth, ts, run_id}
 ```
 
 `<scope-hash> = sha256(canonicalized_scope_path)[:16]` so two
 different paths get distinct files. Latest-only for v1 (history
-deferred per the requirements DECIDE callout).
+deferred per the requirements DECIDE callout). Only the daemon
+writes these files (Phase 2); the CLI never touches them, so the
+race the original spec worried about can't happen.
+
+## `ATTUNE_DS` stdout-line format (Phase 1b → Phase 2)
+
+When the engine detects a non-TTY stdout (i.e. the subprocess
+runner has captured `stdout=PIPE`), it writes one line per source
+event in this shape:
+
+```
+ATTUNE_DS source_started   bug-predict     ts=2026-05-13T12:34:56+00:00
+ATTUNE_DS source_finished  bug-predict     ts=2026-05-13T12:35:04+00:00 findings=7
+ATTUNE_DS source_failed    security-audit  ts=2026-05-13T12:35:05+00:00 error=BudgetExceededError
+ATTUNE_DS final            {<json of the SweepResult>}
+```
+
+Whitespace-separated, key=value tail. Parser is one regex per kind,
+trivial. The `final` line carries the full JSON blob (the same one
+`--json` already produces) so the daemon doesn't need to invoke
+`--json` separately — the markdown path emits the JSON as a
+sidecar line whenever it sees a non-TTY parent.
 
 ---
 
@@ -212,18 +270,19 @@ dashboard visually consistent.
 
 ## Detail view (drill-in)
 
-Clicking a chip navigates to the existing
-`ops-runner-tier2`-shipped run-detail page with a query param
-narrowing the bucket:
+Clicking a chip navigates to a detail view scoped to the scope-hash
+(not a run-id), with a bucket filter:
 
 ```
-/workflows/discovery-sweep/<sweep-id>?bucket=queue
+/workflows/discovery-sweep/results/<scope-hash>?bucket=queue
 ```
 
-The detail page reads the same `<scope-hash>.json`, filters to
-the requested bucket, and renders each Finding via a generic
-finding-row component (created here, generalized later by
-ops-runner-tier2 if more workflows adopt the JSON-emit pattern).
+The detail page reads `<scope-hash>.json`, filters to the requested
+bucket, and renders each Finding via a generic finding-row
+component. This is *different from* `ops-runner-tier2`'s
+`/runs/<run_id>` view (which shows captured stdout lines for one
+specific run); the scope-keyed view shows the *current state* for
+a scope regardless of which run produced it.
 
 ---
 
@@ -242,8 +301,9 @@ ops-runner-tier2 if more workflows adopt the JSON-emit pattern).
 
 | Risk | Severity | Mitigation |
 |---|---|---|
-| SSE listener stalls block source execution (race between fan-out and slow consumer) | medium | NFR-2: event sink is fire-and-forget via `asyncio.create_task`; never `await`ed inline. |
+| Event-sink listener stalls block source execution | medium | NFR-2: event sink is fire-and-forget via `asyncio.create_task`; never `await`ed inline. |
 | JSON storage grows unboundedly across many scopes | low | Latest-only-per-scope semantics cap storage; manual cleanup or LRU-eviction is post-v1. |
-| Daemon and CLI write the same JSON file simultaneously (race) | low | Atomic write via `tempfile.NamedTemporaryFile` + `os.replace` in the same dir. CLI runs typically don't touch the daemon's storage path, but make the write safe in case they do. |
-| Dashboard listens stale SSE events from a prior sweep | low | `sweep_id` correlates events; the dashboard filters by the most recent sweep_id and ignores older. |
-| ops-runner-tier2 Phase 2 ships in a shape that doesn't match this spec's assumptions | high | This spec is a draft; finalize the SSE shape + storage layout against ops-runner-tier2's actual surface before opening implementation PRs. |
+| Daemon parser is fragile to format drift in `ATTUNE_DS` lines | medium | One regex per event kind, locked behind a schema-version line emitted first: `ATTUNE_DS_VERSION 1`. Parser refuses unknown versions. |
+| Dashboard caches stale chip counts across run boundaries | low | Workflow row's chip-count endpoint is uncached; sub-second fetch on each render. Phase 2 picks a sensible HTTP cache header. |
+| Engine emits `ATTUNE_DS` lines into a TTY by accident | low | `sys.stdout.isatty()` gate at the call site; tested via `FORCE_COLOR`-style override toggling. |
+| ~~ops-runner-tier2 Phase 2 ships in a shape that doesn't match this spec's assumptions~~ | resolved | The Phase 0 audit confirmed the actually-shipped shape and revised this design to fit it (Option A). |
