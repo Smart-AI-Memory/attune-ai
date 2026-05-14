@@ -67,7 +67,6 @@ WORKFLOWS_REQUIRING_CONCURRENCY = {
     "docs.yml",
     "security.yml",
     "security-scan.yml",
-    "smoke-tests.yml",
     "tier-pattern-analysis.yml",
 }
 
@@ -80,7 +79,6 @@ WORKFLOWS_FORBIDDING_CONCURRENCY = {
 PIP_CACHE_EXCEPTIONS = {
     ("tests.yml", "platform-compat"),
     ("tests.yml", "build"),
-    ("smoke-tests.yml", "smoke-tests"),
 }
 
 SHA_PATTERN = re.compile(r"[0-9a-f]{40}")

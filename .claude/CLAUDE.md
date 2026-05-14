@@ -3466,21 +3466,22 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   had `::: attune.coordination.ConflictResolver`
   mkdocstrings autogen blocks. Main's `mkdocs build`
   failed immediately, blocking the next PR in the
-  stack. The trap: every PR fails Vercel-attune-ai
-  permanently (legacy preview), so the "failures"
-  field in `gh pr view --json statusCheckRollup` is
-  always non-empty. When admin-merging a `feat!:` or
-  any deletion PR, **read each failure by name** —
-  `build`, `test (...)`, `Analyze (...)` are
-  fail-real, while `Vercel – attune-ai` is
-  fail-ignore. Concrete rule: before admin-merging a
-  deletion, also `grep -rn "::: <removed.module>"
-  docs/` and `grep -rn "<RemovedClass>" docs/` to
-  catch mkdocstrings autogen refs that won't resolve.
-  Fixing main mid-session via a hotfix branch
-  (\`hotfix/...\`) and a focused PR is the right
-  recovery path — don't try to bundle the fix into
-  the next stacked PR.
+  stack. When admin-merging a `feat!:` or any deletion
+  PR, **read each failure by name** — `build`,
+  `test (...)`, `Analyze (...)` are fail-real.
+  Concrete rule: before admin-merging a deletion, also
+  `grep -rn "::: <removed.module>" docs/` and
+  `grep -rn "<RemovedClass>" docs/` to catch
+  mkdocstrings autogen refs that won't resolve. Fixing
+  main mid-session via a hotfix branch (\`hotfix/...\`)
+  and a focused PR is the right recovery path — don't
+  try to bundle the fix into the next stacked PR.
+  (Historical note: pre-2026-05-14, this repo carried a
+  permanent `Vercel – attune-ai` failure from a legacy
+  Vercel project; agents had to learn to ignore it.
+  The project was deleted on 2026-05-14, so this trap
+  is now resolved — see [docs/specs/vercel-noise-cleanup/](../docs/specs/vercel-noise-cleanup/)
+  for the spec.)
 
 - **Stacked PR rebase pattern after merging the
   base**: when PR A and PR B both touch CHANGELOG
