@@ -203,7 +203,7 @@ if [[ $TOTAL -gt $SOFT_CAP ]]; then
 fi
 echo ""
 
-if [[ ${#RISK_ROWS[@]:-0} -gt 0 ]]; then
+if [[ ${RISK_ROWS[@]+x} ]]; then
     echo "### 🚨 At-risk (${#RISK_ROWS[@]}) — inspect before removing"
     echo ""
     echo "| Worktree | Branch | PR | State |"
@@ -221,7 +221,7 @@ if [[ ${#RISK_ROWS[@]:-0} -gt 0 ]]; then
     echo ""
 fi
 
-if [[ ${#SAFE_ROWS[@]:-0} -gt 0 ]]; then
+if [[ ${SAFE_ROWS[@]+x} ]]; then
     echo "### ✅ Safe to remove (${#SAFE_ROWS[@]})"
     echo ""
     echo "\`\`\`"
@@ -242,7 +242,7 @@ if [[ ${#SAFE_ROWS[@]:-0} -gt 0 ]]; then
     echo ""
 fi
 
-if [[ ${#ACTIVE_ROWS[@]:-0} -gt 0 ]]; then
+if [[ ${ACTIVE_ROWS[@]+x} ]]; then
     echo "### 🔵 Active (${#ACTIVE_ROWS[@]}) — open PR"
     echo ""
     for row in "${ACTIVE_ROWS[@]}"; do
