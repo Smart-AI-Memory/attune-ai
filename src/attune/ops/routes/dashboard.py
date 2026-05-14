@@ -59,12 +59,20 @@ async def home(request: Request) -> HTMLResponse:
 async def workflows_page(request: Request) -> HTMLResponse:
     workflows = data.list_workflows()
     cfg = request.app.state.config
+    features = data.list_features(cfg.project_root)
+    # supports_path[name] is True iff the workflow has a PATH_ARG_REGISTRY
+    # entry. The template uses this to render the scope picker vs an
+    # "n/a" span. Future-proofed: a new workflow without a registry
+    # entry shows as n/a until the registry is updated.
+    supports_path = {w.name: w.name in data.PATH_ARG_REGISTRY for w in workflows}
     return _render(
         request,
         "workflows.html",
         page="workflows",
         workflows=workflows,
         allow_run=cfg.allow_run,
+        features=features,
+        supports_path=supports_path,
     )
 
 

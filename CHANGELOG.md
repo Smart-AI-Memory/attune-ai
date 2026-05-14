@@ -136,6 +136,25 @@ Two follow-up beats already in flight:
   non-blocking. Spec:
   `docs/specs/discovery-sweep-ops-integration/`.
 
+- Ops dashboard scope picker (ops-runner-tier2 Phase 2) — each
+  workflow row in `/workflows` now has a per-row dropdown that
+  scopes the run to one feature (parsed from
+  `.help/features.yaml`) or a custom path. The picker passes
+  `{"path": "..."}` as the POST body to
+  `/workflows/<name>/run`; the runner threads that into
+  `--path <value>` on the subprocess invocation. Workflows
+  without a `PATH_ARG_REGISTRY` entry render an inline "n/a"
+  span instead of a picker. Path validation goes through
+  `_validate_file_path(allowed_dir=project_root)`, so traversal
+  attempts (`/etc/passwd`, `../outside`) return 400 before the
+  subprocess is spawned. `Run.path` is included in `to_dict()`
+  and replayed in the run log preamble so the executed command
+  is visible end-to-end. 20 new tests cover feature parsing
+  (well-formed, malformed, missing, glob-only edge case),
+  mtime cache invalidation, run-with-path subprocess wiring,
+  path validation rejections, no-path-workflow rejection, and
+  template rendering in both run and read-only modes.
+
 - `discovery-sweep` Phase 3.2 — severity-colored badges in
   markdown output. Findings render with ANSI-colored
   `[critical]` (bold red), `[high]` (red), `[medium]` (yellow),

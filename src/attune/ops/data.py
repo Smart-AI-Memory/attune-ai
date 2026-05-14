@@ -11,6 +11,7 @@ import json
 from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
+from pathlib import Path
 from typing import Any
 
 from attune.ops.config import Config
@@ -104,6 +105,110 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     # when missing).
     "test-audit": PathArgSpec(kwarg="path", required=True),
 }
+
+
+@dataclass(frozen=True)
+class Feature:
+    """One feature from ``.help/features.yaml`` for the scope picker.
+
+    ``path`` is a single representative repo-relative path derived from
+    the feature's ``files`` list: prefer a directory glob (entry ending
+    in ``/**``, stripped of the suffix); otherwise the first non-glob
+    entry. ``None`` when the feature has no addressable scope (empty
+    ``files`` or only mid-name globs like ``code_review_*.py``).
+    """
+
+    name: str
+    description: str
+    path: str | None
+    tags: tuple[str, ...] = ()
+
+
+# Per-yaml-file mtime cache: {abs_path: (mtime_ns, features)}. Keeps the
+# dashboard responsive on repeated requests within one server run.
+_FEATURES_CACHE: dict[str, tuple[int, list[Feature]]] = {}
+
+
+def _derive_feature_path(files: list[str]) -> str | None:
+    """Pick a representative scope path from a feature's files list.
+
+    Preference order:
+      1. First entry ending in ``/**`` (a directory scope) — strip the suffix.
+      2. First entry with no glob metacharacters (a single file).
+      3. ``None`` otherwise.
+    """
+    for entry in files:
+        if entry.endswith("/**"):
+            return entry[: -len("/**")]
+    for entry in files:
+        if "*" not in entry and "?" not in entry and "[" not in entry:
+            return entry
+    return None
+
+
+def list_features(project_root: Path | str) -> list[Feature]:
+    """Return features parsed from ``<project_root>/.help/features.yaml``.
+
+    Returns ``[]`` on missing file, unreadable file, or malformed YAML.
+    Result is sorted by feature name and cached by mtime so repeated
+    calls within one server run skip the YAML parse.
+    """
+    root = Path(project_root).expanduser().resolve()
+    yaml_path = root / ".help" / "features.yaml"
+    if not yaml_path.is_file():
+        return []
+
+    try:
+        mtime_ns = yaml_path.stat().st_mtime_ns
+    except OSError:
+        return []
+
+    cache_key = str(yaml_path)
+    cached = _FEATURES_CACHE.get(cache_key)
+    if cached is not None and cached[0] == mtime_ns:
+        return cached[1]
+
+    try:
+        import yaml as _yaml
+    except ImportError:
+        return []
+    try:
+        text = yaml_path.read_text(encoding="utf-8")
+        raw = _yaml.safe_load(text)
+    except (OSError, _yaml.YAMLError):
+        return []
+
+    if not isinstance(raw, dict):
+        return []
+    raw_features = raw.get("features")
+    if not isinstance(raw_features, dict):
+        return []
+
+    out: list[Feature] = []
+    for name, spec in raw_features.items():
+        if not isinstance(spec, dict):
+            continue
+        files_raw = spec.get("files") or []
+        files = (
+            [str(f) for f in files_raw if isinstance(f, str)] if isinstance(files_raw, list) else []
+        )
+        tags_raw = spec.get("tags") or []
+        tags = (
+            tuple(str(t) for t in tags_raw if isinstance(t, str))
+            if isinstance(tags_raw, list)
+            else ()
+        )
+        out.append(
+            Feature(
+                name=str(name),
+                description=str(spec.get("description") or ""),
+                path=_derive_feature_path(files),
+                tags=tags,
+            )
+        )
+    out.sort(key=lambda f: f.name)
+    _FEATURES_CACHE[cache_key] = (mtime_ns, out)
+    return out
 
 
 @dataclass(frozen=True)

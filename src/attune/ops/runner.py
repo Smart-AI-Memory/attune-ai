@@ -42,6 +42,10 @@ class Run:
     exit_code: int | None = None
     started_at: datetime | None = None
     completed_at: datetime | None = None
+    # Optional scope path passed to the workflow as ``--path <value>``.
+    # ``None`` means the workflow runs project-wide (no ``--path`` flag).
+    # See docs/specs/ops-runner-tier2/ Phase 2.
+    path: str | None = None
     lines: list[str] = field(default_factory=list)
     subscribers: set[asyncio.Queue[Event]] = field(default_factory=set)
 
@@ -65,6 +69,7 @@ class Run:
             "completed_at": self.completed_at.isoformat() if self.completed_at else None,
             "duration_seconds": self.duration_seconds,
             "line_count": len(self.lines),
+            "path": self.path,
         }
 
     def _broadcast(self, event: Event) -> None:
@@ -126,6 +131,10 @@ def _default_command(workflow: str) -> Sequence[str]:
     silently runs old code, which is the kind of bug that wastes 30 minutes
     of debugging before someone notices ``which attune`` doesn't point where
     they think it does.
+
+    Scope (``--path``) is appended by :meth:`RunnerService._execute` after
+    the builder's output, so custom builders (test fixtures, alternative
+    CLIs) don't need to know about it.
     """
     return (sys.executable, "-m", "attune.cli_minimal", "workflow", "run", workflow)
 
@@ -159,12 +168,12 @@ class RunnerService:
     def recent(self, limit: int = 5) -> list[Run]:
         return list(reversed(list(self._runs.values())))[:limit]
 
-    async def start(self, workflow: str) -> Run:
+    async def start(self, workflow: str, *, path: str | None = None) -> Run:
         async with self._lock:
             current = self.current
             if current is not None:
                 raise RunnerBusyError(current.id)
-            run = Run(id=uuid.uuid4().hex[:12], workflow=workflow)
+            run = Run(id=uuid.uuid4().hex[:12], workflow=workflow, path=path)
             self._runs[run.id] = run
             while len(self._runs) > self._history_limit:
                 self._runs.popitem(last=False)
@@ -176,6 +185,13 @@ class RunnerService:
         run.status = "running"
         run.started_at = datetime.now(timezone.utc)
         cmd = list(self._command_builder(run.workflow))
+        # Append ``--path <scope>`` after the builder's output so test
+        # fixtures (with simple ``workflow -> command`` signatures) don't
+        # need to know about scoping. The CLI accepts ``--path`` uniformly
+        # and rewrites it into the workflow-specific kwarg via
+        # PATH_ARG_REGISTRY at the workflow layer.
+        if run.path:
+            cmd.extend(["--path", run.path])
         run.append_line(f"$ {' '.join(shlex.quote(c) for c in cmd)}")
         try:
             proc = await asyncio.create_subprocess_exec(

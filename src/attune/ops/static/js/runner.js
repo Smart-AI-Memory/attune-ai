@@ -161,6 +161,8 @@
       detectSectionHeader: detectSectionHeader,
       appendInline: appendInline,
       appendLine: appendLine,
+      getScope: getScope,
+      wireScopePickerToggle: wireScopePickerToggle,
       WORKFLOW_NAMES: WORKFLOW_NAMES,
       SECTION_HEADERS: SECTION_HEADERS
     };
@@ -209,6 +211,46 @@
     return function stop() { clearInterval(id); };
   }
 
+  // Read the scope the user picked for this workflow row.
+  // Returns null for "Project-wide" (default) or workflows that don't
+  // support --path (no picker in the row). Returns the string value of
+  // the dropdown for a feature pick, or the custom text input's value
+  // when the user picked "Custom path…". Trims whitespace; an empty
+  // custom value falls back to project-wide (null).
+  function getScope(row) {
+    var picker = row.querySelector("[data-scope-picker]");
+    if (!picker) return null;
+    var val = picker.value;
+    if (val === "" || val === null || val === undefined) return null;
+    if (val === "__custom__") {
+      var custom = row.querySelector("[data-scope-custom]");
+      if (!custom) return null;
+      var trimmed = (custom.value || "").trim();
+      return trimmed === "" ? null : trimmed;
+    }
+    return val;
+  }
+
+  // Toggle the custom-path text input based on the picker's value. Shown
+  // when "Custom path…" is selected, hidden otherwise.
+  function wireScopePickerToggle(row) {
+    var picker = row.querySelector("[data-scope-picker]");
+    var custom = row.querySelector("[data-scope-custom]");
+    if (!picker || !custom) return;
+    picker.addEventListener("change", function () {
+      if (picker.value === "__custom__") {
+        custom.hidden = false;
+        custom.focus();
+      } else {
+        custom.hidden = true;
+      }
+    });
+  }
+
+  // Export getScope for tests (alongside the existing rendering helpers).
+  // Note: window.__attuneRunner is populated farther below, after these
+  // helpers are defined; the assignment block lives at the same scope.
+
   function attach(button) {
     button.addEventListener("click", async function () {
       var name = button.dataset.workflow;
@@ -217,9 +259,13 @@
       button.disabled = true;
       setStatus(row, "starting…");
       try {
-        var resp = await fetch("/workflows/" + encodeURIComponent(name) + "/run", {
-          method: "POST",
-        });
+        var scope = getScope(row);
+        var fetchOpts = { method: "POST" };
+        if (scope !== null) {
+          fetchOpts.headers = { "Content-Type": "application/json" };
+          fetchOpts.body = JSON.stringify({ path: scope });
+        }
+        var resp = await fetch("/workflows/" + encodeURIComponent(name) + "/run", fetchOpts);
         if (!resp.ok) {
           var detail = await resp.text();
           // Show the inline error on the workflows page — don't navigate
@@ -248,5 +294,6 @@
 
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("[data-run-button]").forEach(attach);
+    document.querySelectorAll("tr[data-workflow]").forEach(wireScopePickerToggle);
   });
 })();
