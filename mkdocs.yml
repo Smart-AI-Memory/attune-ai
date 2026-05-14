@@ -36,6 +36,7 @@ exclude_docs: |
   archive/
   generated/
   architecture/
+  !architecture/ops-dashboard.md
   development-logs/
   development/
   specs/
@@ -183,6 +184,7 @@ nav:
       - tutorials/index.md
       - Build a Workflow: tutorials/build-a-workflow.md
       - Meta-Orchestration: tutorials/META_ORCHESTRATION_TUTORIAL.md
+      - Ops Dashboard: tutorials/ops-dashboard.md
       - Examples:
           - Code Review Assistant: tutorials/examples/simple-chatbot.md
           - Multi-Agent Teams: tutorials/examples/multi-agent-team-coordination.md
@@ -216,6 +218,8 @@ nav:
           - Learning and Patterns: how-to/learning-and-patterns.md
       - Observability:
           - Telemetry and Signals: how-to/telemetry-and-signals.md
+      - Operations:
+          - Ops Dashboard: how-to/ops-dashboard.md
       - Help System:
           - Maintenance: how-to/help-system-maintenance.md
       - Prerequisites: how-to/prerequisites.md
@@ -246,6 +250,7 @@ nav:
           - Multi-Agent: reference/multi-agent.md
           - Persistence: reference/persistence.md
           - LLM Toolkit: reference/llm-toolkit.md
+          - Ops Dashboard: reference/ops-dashboard.md
       - Wizards:
           - Getting Started: guides/wizards-getting-started.md
           - Architecture: guides/wizard-architecture.md
@@ -256,7 +261,9 @@ nav:
           - Glossary: reference/glossary.md
           - User Guide: reference/USER_GUIDE.md
           - Short-Term Memory: reference/SHORT_TERM_MEMORY.md
-      - Architecture: ARCHITECTURE.md
+      - Architecture:
+          - Overview: ARCHITECTURE.md
+          - Ops Dashboard: architecture/ops-dashboard.md
       - Features: FEATURES.md
 
   - Contributing:
