@@ -362,6 +362,93 @@ def test_workflows_page_no_scope_column_when_read_only(tmp_path, monkeypatch):
     assert ">Scope<" not in resp.text
 
 
+def test_workflows_page_scope_textbox_renders_with_hidden_attr(tmp_path, monkeypatch):
+    """The custom-path textbox ships with ``hidden`` set on first paint.
+
+    Regression guard for the QA finding where every workflow row showed
+    an empty path textbox because the template's ``hidden`` attribute
+    was overridden by a ``.scope-custom { display: block }`` CSS rule.
+    The HTML side here is unchanged — what we assert is that the
+    template still emits the attribute so the CSS fix can take effect.
+    """
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  security-audit:
+    description: Scan
+    files: [src/attune/security/**]
+    tags: [security]
+""",
+    )
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
+    with TestClient(app) as client:
+        resp = client.get("/workflows")
+    assert resp.status_code == 200
+    body = resp.text
+    # The input has both data-scope-custom (for JS wiring) and the
+    # ``hidden`` attribute (for CSS-driven visibility). Both must be
+    # present together on the same element — searching for the pair
+    # is more robust than two independent assertions.
+    assert (
+        "data-scope-custom hidden" in body
+        or "hidden data-scope-custom" in body
+        or (
+            "data-scope-custom" in body
+            and " hidden " in body.split("data-scope-custom")[1].split(">")[0]
+        )
+    )
+
+
+def test_main_css_respects_scope_custom_hidden_attribute():
+    """``[hidden]`` must beat ``.scope-custom`` so the input is hidden
+    by default — without this, the textbox renders visibly under every
+    workflow row on first paint.
+
+    The fix splits the visual styling from the display rule and gates
+    the ``display: block`` on ``:not([hidden])``, which has higher
+    specificity than the user-agent ``[hidden] { display: none }`` AND
+    correctly defers to the ``hidden`` attribute. Either approach (a
+    ``[hidden]``-targeted display:none rule OR the ``:not([hidden])``
+    gating used here) would satisfy the regression — we assert the
+    presence of the ``:not([hidden])`` form because that's the
+    chosen pattern; if someone changes to the other style, this test
+    is the canary that flags the intentional swap.
+    """
+    css_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "css"
+        / "main.css"
+    )
+    raw_text = css_path.read_text(encoding="utf-8")
+    # Strip CSS block comments before matching so the explanatory
+    # comment we left on the fix (which mentions the buggy rule
+    # verbatim for future readers) doesn't trip the regex below.
+    import re
+
+    text = re.sub(r"/\*.*?\*/", "", raw_text, flags=re.DOTALL)
+    bare_display_block = re.search(r"\.scope-custom\s*\{[^}]*\bdisplay:\s*block\b", text)
+    assert bare_display_block is None, (
+        "The bare ``.scope-custom { display: block }`` rule is back. "
+        "This overrides the HTML ``hidden`` attribute and makes the "
+        "custom-path textbox render under every workflow row on first "
+        "paint. Move display to a ``:not([hidden])`` or ``[hidden]`` "
+        "guard so the attribute behaves as intended."
+    )
+    # And the guard rule (or an equivalent) must exist.
+    has_not_hidden_rule = re.search(r"\.scope-custom:not\(\[hidden\]\)\s*\{[^}]*\bdisplay:", text)
+    has_hidden_rule = re.search(r"\.scope-custom\[hidden\]\s*\{[^}]*\bdisplay:\s*none\b", text)
+    assert has_not_hidden_rule or has_hidden_rule, (
+        "Expected either ``.scope-custom:not([hidden]) { display: ... }``"
+        " or ``.scope-custom[hidden] { display: none }`` to make the "
+        "HTML ``hidden`` attribute effective. Found neither."
+    )
+
+
 # ----------------------------------------------------------------------
 # runner.js — scope helpers exported
 # ----------------------------------------------------------------------

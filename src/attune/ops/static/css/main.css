@@ -861,7 +861,15 @@ a.kpi:hover {
   border-color: var(--accent);
 }
 .scope-custom {
-  display: block;
+  /* Visibility split from base styling: the input ships with the HTML
+     ``hidden`` attribute set in the template, and specs.js toggles
+     that attribute when the user picks "Custom path…". The bare
+     ``.scope-custom { display: block }`` rule used to override the
+     user-agent ``[hidden] { display: none }`` stylesheet (author CSS
+     beats UA CSS at equal specificity), so the textbox rendered
+     visibly under every workflow row on first paint. The split below
+     keeps the visual styling and switches display to ``:not([hidden])``
+     so the ``hidden`` attribute behaves as intended. */
   margin-top: 4px;
   font-family: var(--font-mono);
   font-size: 12px;
@@ -872,6 +880,9 @@ a.kpi:hover {
   color: var(--fg);
   width: 220px;
   max-width: 100%;
+}
+.scope-custom:not([hidden]) {
+  display: block;
 }
 .scope-custom:focus {
   outline: none;
