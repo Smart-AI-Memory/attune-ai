@@ -1,56 +1,46 @@
 ---
-type: reference
 feature: plugin
 depth: reference
-generated_at: 2026-05-04T02:38:49.851215+00:00
-source_hash: b0ee9918b90b55b1b86413bf2ab78f0a590fb78eae098da3ba2886258d9db841
+generated_at: 2026-05-14T00:09:29.502628+00:00
+source_hash: dad4ff4d931be93483178512f305df4124786c91adacb4cc3420e7e53450f49d
 status: generated
 ---
 
 # Plugin reference
 
-Runtime hooks and security policies for Claude Code integration.
+## Classes
+
+| Class | Description | File |
+|-------|-------------|------|
+| `SpecInfo` | One in-flight spec discovered under a workspace root. | `plugin/hooks/_state.py` |
+| `GitState` | Snapshot of the worktree's git state at hook fire time. | `plugin/hooks/_state.py` |
 
 ## Functions
 
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `main` | | `None` | Read tool result from stdin, format Python files |
-| `main` | | `None` | Check help template freshness on session start |
-| `main` | | `None` | Read PostToolUse payload and suggest help if applicable |
-| `main` | | `None` | Check for stale help after git commit |
-| `validate_bash_command` | `command: str` | `tuple[bool, str]` | Validate a Bash command against security policies |
-| `validate_file_path` | `file_path: str` | `tuple[bool, str]` | Validate a file path against security policies |
-| `main` | `context: dict[str, Any]` | `dict[str, Any]` | Validate a tool call against security policies |
-| `main` | | `None` | Print welcome message to stderr (Claude Code surfaces stderr) |
+| Function | Description | File |
+|----------|-------------|------|
+| `main()` | — | `plugin/hooks/_handoff_cli.py` |
+| `build_resume_prompt()` | Render the user-facing resume prompt body. | `plugin/hooks/_resume_prompt.py` |
+| `discover_specs()` | Walk ``specs/`` directories under each root for in-flight specs. | `plugin/hooks/_state.py` |
+| `git_state()` | Return branch, last commit, and uncommitted files for ``cwd``. | `plugin/hooks/_state.py` |
+| `session_sentinel_path()` | Path to the once-per-session compact-warning sentinel. | `plugin/hooks/_state.py` |
+| `prune_stale_sentinels()` | Delete sentinel files older than the TTL. | `plugin/hooks/_state.py` |
+| `workspace_roots()` | Best-effort guess at workspace roots to scan for specs. | `plugin/hooks/_state.py` |
+| `estimate_utilization()` | Return estimated context utilization in ``[0.0, 1.0]``. | `plugin/hooks/_transcript_size.py` |
+| `format_warning()` | Compose the user-facing warning + resume prompt. | `plugin/hooks/compact_warning.py` |
+| `main()` | Entry point — never raises. | `plugin/hooks/compact_warning.py` |
+| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
+| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
+| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
+| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
+| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
+| `validate_file_path()` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
+| `main()` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |
+| `format_orientation()` | Short markdown list of in-flight specs for non-compact starts. | `plugin/hooks/spec_orient.py` |
+| `render_spec_pin()` | Render a spec body for post-compact context restoration. | `plugin/hooks/spec_orient.py` |
+| `main()` | Entry point — branches on ``source``, never raises. | `plugin/hooks/spec_orient.py` |
+| `main()` | Print welcome message to stderr (Claude Code surfaces stderr). | `plugin/hooks/welcome.py` |
 
-### validate_bash_command returns
-
-```
-(True, '')
-```
-
-### validate_file_path returns
-
-```
-(True, '')
-```
-
-### main (security_guard) returns
-
-```
-{
-    'allowed': True
-}
-```
-
-## Constants
-
-| Constant | Type | Values |
-|----------|------|---------|
-| `__version__` | `str` | `'6.3.0'` |
-| `SYSTEM_DIRECTORIES` | `frozenset` | `{'/etc', '/sys', '/proc', '/dev', '/boot', '/sbin', '/usr/sbin', '/private/etc', '/private/var'}` |
-| `SEARCH_COMMAND_PREFIXES` | `frozenset` | `{'grep', 'rg', 'ack', 'ag', 'git grep', 'git log', 'git diff'}` |
 
 ## Source files
 

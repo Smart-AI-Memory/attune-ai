@@ -1,57 +1,57 @@
 ---
-type: task
 feature: plugin
 depth: task
-generated_at: 2026-05-04T02:38:37.974666+00:00
-source_hash: b0ee9918b90b55b1b86413bf2ab78f0a590fb78eae098da3ba2886258d9db841
+generated_at: 2026-05-14T00:09:29.497930+00:00
+source_hash: dad4ff4d931be93483178512f305df4124786c91adacb4cc3420e7e53450f49d
 status: generated
 ---
 
 # Work with plugin
 
-Use the plugin system when you need to modify Claude Code's bundled runtime capabilities, including auto-formatting hooks, help system maintenance, or security validation.
+Use plugin when you need to claude code plugin — skills, hooks, commands, and mcp config.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under `plugin/`
-- Understanding of the specific hook or validation function you need to modify
+- Familiarity with the files under plugin/**
 
-## Identify the right module
+## Steps
 
-1. **Examine the plugin structure.**
-   The plugin directory contains specialized modules:
-   - `plugin/hooks/format_on_save.py` — Auto-formats Python files after Write/Edit operations
-   - `plugin/hooks/help_freshness_check.py` — Validates help template currency on session start
-   - `plugin/hooks/help_on_error.py` — Suggests relevant help when Bash commands fail
-   - `plugin/hooks/help_post_commit.py` — Maintains help directory after git commits
-   - `plugin/hooks/security_guard.py` — Validates tool calls against security policies
-   - `plugin/hooks/welcome.py` — Displays welcome messages to stderr
+1. **Understand the current behavior.**
+   Read the entry points to see what plugin
+   does today before making changes.
+   The primary functions are:
+   - `main()` in `plugin/hooks/_handoff_cli.py`
+   - `build_resume_prompt()` in `plugin/hooks/_resume_prompt.py` — Render the user-facing resume prompt body.
+   - `discover_specs()` in `plugin/hooks/_state.py` — Walk ``specs/`` directories under each root for in-flight specs.
+   - `git_state()` in `plugin/hooks/_state.py` — Return branch, last commit, and uncommitted files for ``cwd``.
+   - `session_sentinel_path()` in `plugin/hooks/_state.py` — Path to the once-per-session compact-warning sentinel.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Read the target function's signature.**
-   Each module exposes specific functions with distinct responsibilities:
-   - `validate_bash_command(command: str)` — Returns `(True, '')` for allowed commands
-   - `validate_file_path(file_path: str)` — Returns `(True, '')` for safe paths
-   - `main(context: dict[str, Any])` — Returns `{'allowed': True}` for permitted operations
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-## Modify the plugin behavior
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "plugin"`.
 
-3. **Locate the specific function.**
-   Open the relevant module and find the function that handles your use case. Check its docstring and parameters to confirm it owns the behavior you need to change.
+## Key files
 
-4. **Update the implementation.**
-   Modify the function while preserving its return type and error handling patterns. Use the existing constant values like `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` for consistency.
+- `plugin/**`
 
-5. **Test your changes.**
-   Run targeted tests to verify your modifications work correctly:
-   ```bash
-   pytest -k "plugin"
-   ```
+## Common modifications
 
-## Verify the plugin works
+Functions you are most likely to modify:
 
-Your plugin modification is successful when:
-- The specific hook triggers at the expected time (save, session start, command failure, or commit)
-- Security validations return the correct boolean and message tuple
-- No test failures appear in the plugin test suite
-- The plugin integrates seamlessly with Claude Code's existing workflow
+- `main()` in `plugin/hooks/_handoff_cli.py`
+- `build_resume_prompt()` in `plugin/hooks/_resume_prompt.py`
+- `discover_specs()` in `plugin/hooks/_state.py`
+- `git_state()` in `plugin/hooks/_state.py`
+- `session_sentinel_path()` in `plugin/hooks/_state.py`
+- `prune_stale_sentinels()` in `plugin/hooks/_state.py`
+- `workspace_roots()` in `plugin/hooks/_state.py`
+- `estimate_utilization()` in `plugin/hooks/_transcript_size.py`

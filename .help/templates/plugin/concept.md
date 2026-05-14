@@ -1,45 +1,37 @@
 ---
-type: concept
 feature: plugin
 depth: concept
-generated_at: 2026-05-04T02:38:26.322979+00:00
-source_hash: b0ee9918b90b55b1b86413bf2ab78f0a590fb78eae098da3ba2886258d9db841
+generated_at: 2026-05-14T00:09:29.490567+00:00
+source_hash: dad4ff4d931be93483178512f305df4124786c91adacb4cc3420e7e53450f49d
 status: generated
 ---
 
 # Plugin
 
-The plugin system provides automated assistance during your Claude Code sessions through event-driven hooks and security validation.
+## How it works
 
-## Core capabilities
+Claude Code plugin — skills, hooks, commands, and MCP config.
 
-The plugin system operates through five specialized hooks that respond to specific events:
+The main building blocks are:
 
-**Code formatting** — Automatically formats Python files after you use Write or Edit tools, keeping your code style consistent without manual intervention.
+- **`SpecInfo`** — One in-flight spec discovered under a workspace root.
+- **`GitState`** — Snapshot of the worktree's git state at hook fire time.
 
-**Help maintenance** — Checks help template freshness when sessions start and suggests relevant help content when Bash commands fail, ensuring you have current guidance.
+Under the hood, this feature spans 964 source
+files covering:
 
-**Repository awareness** — Detects stale help content after git commits and prompts updates, keeping documentation synchronized with code changes.
+- CLI wrapper for the ``/handoff`` slash command.
+- Resume-prompt builder — single source of truth for the format.
+- Shared state-discovery helpers for session-continuity hooks.
 
-**Security validation** — Validates Bash commands and file paths against security policies before execution, preventing access to system directories like `/etc`, `/sys`, and `/proc`.
+## What connects to it
 
-## Event-driven architecture
+This feature relates to: plugin, claude-code.
 
-The plugin system uses hooks that trigger automatically:
+Other parts of the codebase interact with
+plugin through these interfaces:
 
-| Hook type | When it runs | What it does |
-|-----------|--------------|--------------|
-| **PostToolUse** | After Write/Edit tools | Formats Python files with standard style |
-| **SessionStart** | When Claude Code session begins | Checks help template freshness |
-| **PostToolUse** | After Bash commands fail | Suggests relevant help content |
-| **PostToolUse** | After git commits | Detects and flags stale help |
-
-## Security boundaries
-
-The security system maintains a whitelist approach — commands and paths are validated against known-safe patterns. Search commands like `grep`, `rg`, and `git grep` are permitted, while access to system directories is blocked.
-
-The validation functions return simple boolean results: either a command is allowed (`True, ''`) or blocked with an explanation. This keeps the security model predictable and transparent.
-
-## Bundled runtime
-
-The plugin includes the attune-ai core as a bundled runtime, enabling standalone operation without external dependencies. This ensures consistent behavior across different development environments and eliminates version conflicts with system-wide installations.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `SpecInfo` | One in-flight spec discovered under a workspace root. | `plugin/hooks/_state.py` |
+| `GitState` | Snapshot of the worktree's git state at hook fire time. | `plugin/hooks/_state.py` |
