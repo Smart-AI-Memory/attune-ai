@@ -225,23 +225,34 @@ def list_features(project_root: Path | str) -> list[Feature]:
     return sorted(_features_in_yaml_order(project_root), key=lambda f: f.name)
 
 
-def most_recent_feature(project_root: Path | str) -> Feature | None:
-    """Return the most recently added feature with a renderable scope path.
+def first_feature(project_root: Path | str) -> Feature | None:
+    """Return the alphabetically-first feature with a renderable scope.
 
-    Used by the ops dashboard scope picker as the first-load fallback when
-    ``localStorage`` has no saved scope. "Most recently added" means the
-    last entry in ``features.yaml`` insertion order; the picker's display
-    order is alphabetical (see :func:`list_features`) and unaffected.
+    Used by the ops dashboard scope picker as the primary first-load
+    fallback when ``localStorage`` has no saved scope. Predictable +
+    stable: the same feature is returned regardless of YAML ordering
+    changes, so the picker doesn't surprise the user by jumping around
+    when features are reordered.
 
     Only features with a non-``None`` ``path`` are considered, since
-    those are the only ones rendered as picker options. Returns ``None``
+    those are the only ones rendered as picker options. When no
+    path-bearing feature exists, the dashboard falls through to the
+    "All code" option (see :data:`ALL_CODE_PATH`). Returns ``None``
     if ``features.yaml`` is missing, empty, or has no path-bearing
     entries.
     """
-    for feature in reversed(_features_in_yaml_order(project_root)):
+    for feature in list_features(project_root):
         if feature.path:
             return feature
     return None
+
+
+# Path passed to workflows when the user picks the "All code" picker
+# option. Hardcoded for attune-ai's ``src/`` layout. Downstream projects
+# with different code roots can override by editing this constant or by
+# threading a config value through the dashboard route — kept simple
+# for the v1 ship.
+ALL_CODE_PATH = "src/"
 
 
 @dataclass(frozen=True)

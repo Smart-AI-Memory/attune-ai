@@ -173,7 +173,7 @@
       statusClass: statusClass,
       loadSavedScope: loadSavedScope,
       saveScope: saveScope,
-      readMostRecentFeaturePath: readMostRecentFeaturePath,
+      readScopePickerConfig: readScopePickerConfig,
       applyScopeToRow: applyScopeToRow,
       restoreScopeOnLoad: restoreScopeOnLoad,
       wireScopeSave: wireScopeSave,
@@ -286,18 +286,25 @@
     }
   }
 
-  // Read the server-injected most-recent-feature path from the inline
-  // JSON config block. Used as the first-load fallback when
-  // localStorage is empty. Returns "" if the config block is missing,
-  // unparseable, or carries no path.
-  function readMostRecentFeaturePath() {
+  // Read the server-injected scope-picker config block. Returns an
+  // object with ``firstFeaturePath`` (alphabetically-first feature with
+  // a path; "" when no path-bearing feature exists) and ``allCodePath``
+  // (fallback for the empty-features case; "" if the server didn't send
+  // it). Both fields default to "" when the config block is missing,
+  // unparseable, or malformed.
+  function readScopePickerConfig() {
     var el = document.getElementById("scope-picker-config");
-    if (!el) return "";
+    if (!el) return { firstFeaturePath: "", allCodePath: "" };
     try {
       var cfg = JSON.parse(el.textContent || "{}");
-      return typeof cfg.mostRecentFeaturePath === "string" ? cfg.mostRecentFeaturePath : "";
+      return {
+        firstFeaturePath:
+          typeof cfg.firstFeaturePath === "string" ? cfg.firstFeaturePath : "",
+        allCodePath:
+          typeof cfg.allCodePath === "string" ? cfg.allCodePath : ""
+      };
     } catch (e) {
-      return "";
+      return { firstFeaturePath: "", allCodePath: "" };
     }
   }
 
@@ -336,17 +343,20 @@
   }
 
   // Restore the saved scope (or the first-load fallback) on every
-  // picker row at page load. Saved value wins (including saved "" for
-  // explicit Project-wide); falls back to the server-injected
-  // most-recent-feature path when storage is empty; final fallback is
-  // the template's Project-wide default (no-op).
+  // picker row at page load. Fallback chain:
+  //   1. localStorage has a saved scope (could be "") — use it.
+  //   2. Else, alphabetically-first feature path exists — use it.
+  //   3. Else (no path-bearing features) — use the "All code" path.
+  //   4. If even "All code" is missing — leave the picker at the
+  //      template's Project-wide default (no-op).
   function restoreScopeOnLoad() {
     var saved = loadSavedScope();
     var value;
     if (saved !== null) {
       value = saved;
     } else {
-      value = readMostRecentFeaturePath();
+      var cfg = readScopePickerConfig();
+      value = cfg.firstFeaturePath || cfg.allCodePath;
     }
     if (value === "") return; // Project-wide is the template default.
     document.querySelectorAll("tr[data-workflow]").forEach(function (row) {

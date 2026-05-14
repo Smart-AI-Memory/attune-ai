@@ -16,18 +16,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `localStorage` key (`attune-ops:lastScope`) — the user's working
   scope is a session-level fact, not a per-workflow fact. Save fires
   on picker `change` (or custom-input `change` for typed paths). For
-  first-time users with empty storage, the fallback is the
-  most-recently-added feature from `.help/features.yaml` (last entry
-  in YAML insertion order, with a renderable path), exposed via a new
-  `data.most_recent_feature()` helper and threaded into the template
-  through an inline JSON config block. Saved paths that no longer
-  match any feature option (feature removed from `features.yaml` since
-  the user last saved) fall to `Custom path…` with the saved string
-  pre-filled — no silent drops. 8 new tests in
-  `tests/unit/ops/test_scope_picker.py` cover the YAML-order fallback,
-  cache sharing with `list_features()`, JSON config block rendering,
-  and the JS exports + storage-error-swallowing + unmatched-path
-  recovery behaviors. Full ops suite stays green (275 tests).
+  first-time users with empty storage, the fallback chain is:
+  alphabetically-first feature with a path (via a new
+  `data.first_feature()` helper), then the new "All code" picker
+  option (`src/`), then the template's Project-wide default if
+  neither is available. Picker now includes the "All code" option
+  between the feature list and Custom path… as a sensible
+  broad-but-not-everything scope. Saved paths that no longer match
+  any feature option (feature removed from `features.yaml` since the
+  user last saved) fall to `Custom path…` with the saved string
+  pre-filled — no silent drops. 10 new tests in
+  `tests/unit/ops/test_scope_picker.py` cover the alphabetic-first
+  fallback, glob-only-skip semantics, cache sharing with
+  `list_features()`, JSON config block rendering, All code option
+  placement, and the JS exports + storage-error-swallowing +
+  unmatched-path recovery behaviors. Full ops suite stays green
+  (277 tests).
 
 ## [6.8.0] — 2026-05-14
 

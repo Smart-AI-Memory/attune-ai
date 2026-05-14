@@ -73,48 +73,86 @@ event:
   empty Custom path is functionally Project-wide per existing
   `getScope()` semantics in `runner.js:223-235`).
 
-### First-load fallback: most-recent-feature-added
+### First-load fallback chain
 
-When `localStorage` is empty (new user, cleared cache), the fallback is
-NOT `Project-wide`. It's the feature most recently added to the
-registry. Rationale: a new contributor's first dashboard view shouldn't
-default to "scan the whole repo"; it should default to "here's the
-newest thing being worked on, start here."
+**Revised 2026-05-14 in response to design feedback.** The original
+proposal used the YAML-order LAST feature ("most recently added"); we
+switched to the alphabetically FIRST feature plus a new "All code"
+option. Rationale: alphabetic-first is more predictable and less
+brittle to YAML reordering than "most recently added," and the new
+"All code" option gives users a sensible broad scope that's narrower
+than `Project-wide`.
 
-**Implementation:** add a sibling helper to `data.py`:
+The fallback chain on page load is:
+
+1. `localStorage` has a saved scope → use it (could be a feature path,
+   a custom path, or `""` for explicit Project-wide).
+2. Empty storage, alphabetically-first feature with a path exists →
+   pre-select that feature.
+3. Empty storage, no path-bearing feature in `features.yaml` →
+   pre-select the new **"All code"** option (`value="src/"`).
+4. Edge: "All code" is itself a picker option, reachable as a manual
+   choice in cases 1 or 2 as well.
+
+**Implementation:** rename the proposed helper from
+`most_recent_feature()` to `first_feature()`:
 
 ```python
-def most_recent_feature_name(project_root: Path | str) -> str | None:
-    """Return the LAST feature name in features.yaml insertion order.
+def first_feature(project_root: Path | str) -> Feature | None:
+    """Return the alphabetically-first feature with a renderable scope.
 
-    Used by the ops dashboard as the first-load fallback for the
-    scope picker when localStorage is empty. Returns None if
-    features.yaml is missing or empty.
+    Used by the ops dashboard scope picker as the primary first-load
+    fallback when localStorage has no saved scope. Falls back to the
+    new "All code" option (src/) when no path-bearing features exist.
     """
-    # Re-uses the same parse path as list_features() but reads from
-    # the cached raw dict pre-sort, returning the last key.
+    for feature in list_features(project_root):
+        if feature.path:
+            return feature
+    return None
 ```
 
-The picker display order stays alphabetical (current
-`list_features().sort(key=lambda f: f.name)` behavior) — findability in a
-long list matters. Only the *fallback selection* uses insertion order.
+The picker display order stays alphabetical (existing
+`list_features().sort(key=lambda f: f.name)` behavior).
 
-Server passes `most_recent_feature_name(project_root)` to the template
-as a separate context variable, rendered into a tiny JSON config block:
+### Picker option order — revised
+
+The picker now carries a new "All code" option positioned between the
+feature list and `Custom path…`:
+
+```
+Project-wide                  (the explicit "scan everything" option)
+<features, alphabetical>      (feature-scoped runs)
+All code (src/)               (NEW — broad-but-not-everything default)
+Custom path…                  (toggle, reveals text input)
+```
+
+"Custom path…" stays anchored at the bottom as the structurally
+different "go beyond the menu" option. "All code" precedes it because
+fixed options conventionally come before the input-toggle option.
+
+### Server-injected config
+
+The dashboard route passes two paths into a single JSON config block:
 
 ```html
 <script id="scope-picker-config" type="application/json">
-{"mostRecentFeature": "{{ most_recent_feature_path }}"}
+{"firstFeaturePath": "{{ first_feature_path }}",
+ "allCodePath": "{{ all_code_path }}"}
 </script>
 ```
 
-The JS reads this on page load and uses it when `localStorage` is empty.
+`firstFeaturePath` is the empty string when no path-bearing feature
+exists; the JS falls through to `allCodePath` in that case.
+`allCodePath` is `"src/"` for attune-ai; future projects with
+different code roots can override via configuration without touching
+the JS.
 
 ### Edge cases (confirmed 2026-05-14)
 
 | Case | Behavior |
 |------|----------|
-| First load, empty `localStorage` | Default to most-recent-feature-added (feature path). |
+| First load, empty `localStorage`, features exist | Default to alphabetically-first feature with a path. |
+| First load, empty `localStorage`, no features | Default to "All code" (`src/`). |
 | User picks `Project-wide` | Saved like any other. They meant it. |
 | User picks a feature option | Saved as that feature's path. |
 | User picks `Custom path…` and types | Saved as the literal trimmed string. |
@@ -125,9 +163,10 @@ The JS reads this on page load and uses it when `localStorage` is empty.
 
 ## Acceptance criteria
 
-1. On a fresh browser profile (no `localStorage`), loading `/workflows`
-   pre-selects the most-recent-feature-added in every path-supporting
-   row.
+1. On a fresh browser profile (no `localStorage`) with features defined,
+   loading `/workflows` pre-selects the alphabetically-first feature
+   with a path in every path-supporting row. When no path-bearing
+   feature exists, the picker pre-selects the "All code" option.
 2. After picking a feature in any row and reloading, every
    path-supporting row defaults to that feature.
 3. After picking `Custom path…` with a typed string and reloading, every

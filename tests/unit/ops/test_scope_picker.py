@@ -408,12 +408,13 @@ def test_runner_js_default_post_is_no_body():
 
 
 # ----------------------------------------------------------------------
-# most_recent_feature() — first-load fallback for the scope picker
+# first_feature() — primary first-load fallback for the scope picker
 # ----------------------------------------------------------------------
 
 
-def test_most_recent_feature_returns_last_yaml_entry(tmp_path):
-    """Returns the LAST feature in YAML insertion order, not alphabetical."""
+def test_first_feature_returns_alphabetically_first(tmp_path):
+    """Returns the alphabetically-first feature with a path, regardless
+    of YAML insertion order."""
     _write_features_yaml(
         tmp_path,
         """
@@ -422,67 +423,71 @@ features:
     description: First in YAML
     files: [src/zeta/**]
   alpha-audit:
-    description: Second in YAML, last seen
+    description: Second in YAML but alphabetically first.
     files: [src/alpha/**]
 """,
     )
-    # list_features() sorts alphabetically — alpha-audit comes first.
     listed = data.list_features(tmp_path)
     assert [f.name for f in listed] == ["alpha-audit", "zeta-audit"]
-    # most_recent_feature() returns YAML-order LAST — alpha-audit.
-    recent = data.most_recent_feature(tmp_path)
-    assert recent is not None
-    assert recent.name == "alpha-audit"
-    assert recent.path == "src/alpha"
+    first = data.first_feature(tmp_path)
+    assert first is not None
+    assert first.name == "alpha-audit"
+    assert first.path == "src/alpha"
 
 
-def test_most_recent_feature_missing_file_returns_none(tmp_path):
+def test_first_feature_missing_file_returns_none(tmp_path):
     """No features.yaml → None, not an exception."""
-    assert data.most_recent_feature(tmp_path) is None
+    assert data.first_feature(tmp_path) is None
 
 
-def test_most_recent_feature_empty_features_returns_none(tmp_path):
+def test_first_feature_empty_features_returns_none(tmp_path):
     """features.yaml exists but has no `features:` key → None."""
     _write_features_yaml(tmp_path, "version: 1\n")
-    assert data.most_recent_feature(tmp_path) is None
+    assert data.first_feature(tmp_path) is None
 
 
-def test_most_recent_feature_skips_glob_only_entries(tmp_path):
-    """A trailing glob-only feature (path=None) is skipped; the most
-    recent feature WITH a renderable path is returned."""
+def test_first_feature_skips_glob_only_entries(tmp_path):
+    """A feature with only mid-name globs (path=None) is skipped even
+    when alphabetically first; first_feature returns the first feature
+    WITH a renderable path."""
     _write_features_yaml(
         tmp_path,
         """
 features:
-  has-path:
-    description: First, has a directory scope
-    files: [src/has_path/**]
-  glob-only:
-    description: Last, but only mid-name globs → path=None
+  aaa-glob-only:
+    description: Alphabetically first BUT no path.
     files:
       - src/attune/workflows/code_review_*.py
+  bbb-has-path:
+    description: Alphabetically second but has a scope.
+    files: [src/bbb/**]
 """,
     )
-    recent = data.most_recent_feature(tmp_path)
-    assert recent is not None
-    assert recent.name == "has-path"
+    first = data.first_feature(tmp_path)
+    assert first is not None
+    assert first.name == "bbb-has-path"
 
 
-def test_most_recent_feature_shares_cache_with_list_features(tmp_path):
+def test_first_feature_shares_cache_with_list_features(tmp_path):
     """Both helpers share the mtime-keyed parse cache — only one parse
     per file per server lifetime under stable mtime."""
     _write_features_yaml(
         tmp_path,
         "features:\n  only:\n    description: x\n    files: [src/only/**]\n",
     )
-    # Prime via list_features().
     data.list_features(tmp_path)
     cache_key = str(tmp_path.resolve() / ".help" / "features.yaml")
     assert cache_key in data._FEATURES_CACHE
-    # most_recent_feature() reads the same cache — no second parse needed.
-    recent = data.most_recent_feature(tmp_path)
-    assert recent is not None
-    assert recent.name == "only"
+    first = data.first_feature(tmp_path)
+    assert first is not None
+    assert first.name == "only"
+
+
+def test_all_code_path_is_src():
+    """ALL_CODE_PATH is the hardcoded fallback for the "All code"
+    picker option. attune-ai's source root is src/; downstream
+    projects with different layouts can override."""
+    assert data.ALL_CODE_PATH == "src/"
 
 
 # ----------------------------------------------------------------------
@@ -491,41 +496,69 @@ def test_most_recent_feature_shares_cache_with_list_features(tmp_path):
 
 
 def test_workflows_page_renders_scope_picker_config_block(tmp_path, monkeypatch):
-    """The page injects a JSON config block carrying the most-recent
-    feature path so runner.js can use it as the first-load fallback."""
+    """The page injects a JSON config block carrying the
+    alphabetically-first feature path and the "All code" fallback
+    path so runner.js can use them as the first-load fallback chain."""
     _write_features_yaml(
         tmp_path,
         """
 features:
-  alpha:
-    description: Sorted-first, NOT the most recent.
-    files: [src/alpha/**]
   zeta:
-    description: Last in YAML — most recent.
+    description: First in YAML order but alphabetically last.
     files: [src/zeta/**]
+  alpha:
+    description: Last in YAML order but alphabetically first.
+    files: [src/alpha/**]
 """,
     )
     app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
-    # The config block exists.
     assert 'id="scope-picker-config"' in resp.text
     assert 'type="application/json"' in resp.text
-    # And carries the YAML-order LAST feature's path, not the alphabetical one.
-    assert '"mostRecentFeaturePath": "src/zeta"' in resp.text
-    assert '"mostRecentFeaturePath": "src/alpha"' not in resp.text
+    # Carries the ALPHABETIC FIRST feature's path, not the YAML-order one.
+    assert '"firstFeaturePath": "src/alpha"' in resp.text
+    assert '"firstFeaturePath": "src/zeta"' not in resp.text
+    # And the All code fallback path.
+    assert '"allCodePath": "src/"' in resp.text
 
 
-def test_workflows_page_config_block_empty_when_no_features(tmp_path, monkeypatch):
-    """No features.yaml → config block carries empty string (JS treats
-    as "no fallback, leave Project-wide as default")."""
+def test_workflows_page_config_block_empty_first_feature_when_no_features(tmp_path, monkeypatch):
+    """No features.yaml → firstFeaturePath is "" but allCodePath is
+    still set, so the JS falls through to All code as the empty-
+    features fallback."""
     app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
     assert 'id="scope-picker-config"' in resp.text
-    assert '"mostRecentFeaturePath": ""' in resp.text
+    assert '"firstFeaturePath": ""' in resp.text
+    assert '"allCodePath": "src/"' in resp.text
+
+
+def test_workflows_page_renders_all_code_option(tmp_path, monkeypatch):
+    """The picker carries an "All code" option positioned between the
+    feature list and Custom path…, with the configured path as its
+    value and a descriptive label."""
+    _write_features_yaml(
+        tmp_path,
+        "features:\n  feat:\n    description: x\n    files: [src/feat/**]\n",
+    )
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
+    with TestClient(app) as client:
+        resp = client.get("/workflows")
+    assert resp.status_code == 200
+    # Option exists with the configured path as its value.
+    assert '<option value="src/"' in resp.text
+    assert "All code (src/)" in resp.text
+    # And precedes Custom path… in the markup (bottom-of-fixed-options
+    # placement; Custom path stays as the input-toggle anchor at the
+    # very end).
+    all_code_idx = resp.text.find("All code (src/)")
+    custom_idx = resp.text.find("Custom path")
+    assert all_code_idx > 0 and custom_idx > 0
+    assert all_code_idx < custom_idx
 
 
 # ----------------------------------------------------------------------
@@ -551,14 +584,14 @@ def test_runner_js_exports_scope_storage_helpers():
     # All new helper functions exist
     assert "function loadSavedScope(" in text
     assert "function saveScope(" in text
-    assert "function readMostRecentFeaturePath(" in text
+    assert "function readScopePickerConfig(" in text
     assert "function applyScopeToRow(" in text
     assert "function restoreScopeOnLoad(" in text
     assert "function wireScopeSave(" in text
     # All exported via window.__attuneRunner
     assert "loadSavedScope: loadSavedScope" in text
     assert "saveScope: saveScope" in text
-    assert "readMostRecentFeaturePath: readMostRecentFeaturePath" in text
+    assert "readScopePickerConfig: readScopePickerConfig" in text
     assert "applyScopeToRow: applyScopeToRow" in text
     assert "restoreScopeOnLoad: restoreScopeOnLoad" in text
     assert "wireScopeSave: wireScopeSave" in text
@@ -608,7 +641,7 @@ def test_runner_js_localstorage_errors_are_swallowed():
     assert "try" in load_body and "catch" in load_body
     # Find saveScope body
     save_start = text.find("function saveScope(")
-    save_end = text.find("function readMostRecentFeaturePath(", save_start)
+    save_end = text.find("function readScopePickerConfig(", save_start)
     save_body = text[save_start:save_end]
     assert "try" in save_body and "catch" in save_body
 

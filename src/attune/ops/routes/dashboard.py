@@ -65,12 +65,11 @@ async def workflows_page(request: Request) -> HTMLResponse:
     # "n/a" span. Future-proofed: a new workflow without a registry
     # entry shows as n/a until the registry is updated.
     supports_path = {w.name: w.name in data.PATH_ARG_REGISTRY for w in workflows}
-    # Most-recently-added feature path becomes the picker's first-load
-    # fallback when localStorage is empty. Empty string when no
-    # path-bearing feature exists; the JS treats that as "no fallback,
-    # leave Project-wide selected."
-    most_recent = data.most_recent_feature(cfg.project_root)
-    most_recent_feature_path = most_recent.path if most_recent else ""
+    # Alphabetically-first feature path is the primary picker fallback
+    # when localStorage is empty. When no path-bearing feature exists,
+    # the JS falls through to ALL_CODE_PATH.
+    first = data.first_feature(cfg.project_root)
+    first_feature_path = first.path if first else ""
     return _render(
         request,
         "workflows.html",
@@ -79,7 +78,8 @@ async def workflows_page(request: Request) -> HTMLResponse:
         allow_run=cfg.allow_run,
         features=features,
         supports_path=supports_path,
-        most_recent_feature_path=most_recent_feature_path,
+        first_feature_path=first_feature_path,
+        all_code_path=data.ALL_CODE_PATH,
     )
 
 
