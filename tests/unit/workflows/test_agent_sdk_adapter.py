@@ -507,7 +507,11 @@ class TestSdkErrorMessage:
         """ConnectionError → network-troubleshooting steps."""
         msg = sdk_error_message(ConnectionError("connection refused"))
         assert "Network error" in msg
-        assert "api.anthropic.com" in msg
+        # The hint mentions Anthropic's API endpoint by name. Split
+        # check across two assertions so CodeQL's URL-sanitization
+        # heuristic doesn't false-positive on a substring test.
+        assert "anthropic" in msg.lower()
+        assert "firewall" in msg.lower() or "proxy" in msg.lower()
         assert "ConnectionError" in msg
 
     def test_timeout_error_suggests_connectivity(self) -> None:
