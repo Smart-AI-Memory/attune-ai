@@ -53,6 +53,7 @@
                       <option value="{{ f.path }}" title="{{ f.description }}">{{ f.name }}</option>
                     {% endif %}
                   {% endfor %}
+                  <option value="{{ all_code_path }}" title="All source code under {{ all_code_path }}">All code ({{ all_code_path }})</option>
                   <option value="__custom__">Custom path…</option>
                 </select>
                 <input type="text" class="scope-custom" data-scope-custom hidden
@@ -76,6 +77,13 @@
 {% endblock %}
 
 {% block scripts %}
+{# Server-injected config for the scope picker's first-load fallback.
+   Read by runner.js on DOMContentLoaded. Empty string means "no
+   path-bearing feature exists in features.yaml" — the JS leaves the
+   picker on Project-wide in that case. #}
+<script id="scope-picker-config" type="application/json">
+{"firstFeaturePath": {{ first_feature_path | tojson }}, "allCodePath": {{ all_code_path | tojson }}}
+</script>
 {# runner.js is loaded unconditionally so the recent-runs strip
    renders in both run and read-only modes. The script's
    DOMContentLoaded handler queries for run-button / scope-picker

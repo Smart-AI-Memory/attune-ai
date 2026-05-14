@@ -35,6 +35,11 @@
     "Notes", "Note"
   ];
 
+  // localStorage key for the user's most-recently-picked scope. Shared
+  // across all workflow rows on the page — the user's working scope is
+  // a session-level fact, not a per-workflow fact.
+  var SCOPE_STORAGE_KEY = "attune-ops:lastScope";
+
   // Full regex-meta escape for any string going into a RegExp. Covers
   // every regex metacharacter including backslash, so even if
   // WORKFLOW_NAMES is ever populated from a less-trusted source, the
@@ -166,6 +171,13 @@
       setupRecentRuns: setupRecentRuns,
       renderRecentRunsInto: renderRecentRunsInto,
       statusClass: statusClass,
+      loadSavedScope: loadSavedScope,
+      saveScope: saveScope,
+      readScopePickerConfig: readScopePickerConfig,
+      applyScopeToRow: applyScopeToRow,
+      restoreScopeOnLoad: restoreScopeOnLoad,
+      wireScopeSave: wireScopeSave,
+      SCOPE_STORAGE_KEY: SCOPE_STORAGE_KEY,
       WORKFLOW_NAMES: WORKFLOW_NAMES,
       SECTION_HEADERS: SECTION_HEADERS
     };
@@ -248,6 +260,134 @@
         custom.hidden = true;
       }
     });
+  }
+
+  // Read the saved scope from localStorage. Returns the stored string
+  // (which may be "" for an explicit Project-wide pick), or null if the
+  // key was never set OR localStorage is unavailable. Never throws.
+  function loadSavedScope() {
+    try {
+      return window.localStorage.getItem(SCOPE_STORAGE_KEY);
+    } catch (e) {
+      // INTENTIONAL: localStorage disabled / quota exceeded / sandboxed.
+      // Degrade gracefully — picker stays at its server-rendered default.
+      return null;
+    }
+  }
+
+  // Save the resolved scope to localStorage. ``value`` is the literal
+  // picker value to remember ("" for Project-wide, a feature path, or
+  // a custom path string). Never throws.
+  function saveScope(value) {
+    try {
+      window.localStorage.setItem(SCOPE_STORAGE_KEY, value == null ? "" : String(value));
+    } catch (e) {
+      // INTENTIONAL: best-effort write. Same degradation as loadSavedScope.
+    }
+  }
+
+  // Read the server-injected scope-picker config block. Returns an
+  // object with ``firstFeaturePath`` (alphabetically-first feature with
+  // a path; "" when no path-bearing feature exists) and ``allCodePath``
+  // (fallback for the empty-features case; "" if the server didn't send
+  // it). Both fields default to "" when the config block is missing,
+  // unparseable, or malformed.
+  function readScopePickerConfig() {
+    var el = document.getElementById("scope-picker-config");
+    if (!el) return { firstFeaturePath: "", allCodePath: "" };
+    try {
+      var cfg = JSON.parse(el.textContent || "{}");
+      return {
+        firstFeaturePath:
+          typeof cfg.firstFeaturePath === "string" ? cfg.firstFeaturePath : "",
+        allCodePath:
+          typeof cfg.allCodePath === "string" ? cfg.allCodePath : ""
+      };
+    } catch (e) {
+      return { firstFeaturePath: "", allCodePath: "" };
+    }
+  }
+
+  // Apply a scope value to a single row's picker. ``value`` is:
+  //   - "" (Project-wide)             — select the empty-value option.
+  //   - matches a feature option      — select that option directly.
+  //   - any other non-empty string    — select "Custom path…" and
+  //                                     pre-fill the custom input.
+  // Also syncs the custom input's visibility with the picker state so
+  // wireScopePickerToggle's invariant holds without a synthetic event.
+  function applyScopeToRow(row, value) {
+    var picker = row.querySelector("[data-scope-picker]");
+    if (!picker) return;
+    var custom = row.querySelector("[data-scope-custom]");
+
+    var matched = false;
+    for (var i = 0; i < picker.options.length; i++) {
+      if (picker.options[i].value === value) {
+        picker.value = value;
+        matched = true;
+        break;
+      }
+    }
+    if (!matched && value !== "") {
+      // Saved path doesn't match any feature option — fall to Custom
+      // path… with the saved string pre-filled. Handles features
+      // removed from features.yaml since the user last saved.
+      picker.value = "__custom__";
+      if (custom) {
+        custom.value = value;
+      }
+    }
+    if (custom) {
+      custom.hidden = picker.value !== "__custom__";
+    }
+  }
+
+  // Restore the saved scope (or the first-load fallback) on every
+  // picker row at page load. Fallback chain:
+  //   1. localStorage has a saved scope (could be "") — use it.
+  //   2. Else, alphabetically-first feature path exists — use it.
+  //   3. Else (no path-bearing features) — use the "All code" path.
+  //   4. If even "All code" is missing — leave the picker at the
+  //      template's Project-wide default (no-op).
+  function restoreScopeOnLoad() {
+    var saved = loadSavedScope();
+    var value;
+    if (saved !== null) {
+      value = saved;
+    } else {
+      var cfg = readScopePickerConfig();
+      value = cfg.firstFeaturePath || cfg.allCodePath;
+    }
+    if (value === "") return; // Project-wide is the template default.
+    document.querySelectorAll("tr[data-workflow]").forEach(function (row) {
+      applyScopeToRow(row, value);
+    });
+  }
+
+  // Persist the scope whenever the user changes the picker dropdown or
+  // the custom-path input. Picker change saves directly unless the
+  // selection is "__custom__", in which case we wait for the custom
+  // input's own change event so we save the actual typed value, not an
+  // empty placeholder.
+  function wireScopeSave(row) {
+    var picker = row.querySelector("[data-scope-picker]");
+    var custom = row.querySelector("[data-scope-custom]");
+    if (!picker) return;
+    picker.addEventListener("change", function () {
+      if (picker.value === "__custom__") return;
+      saveScope(picker.value);
+    });
+    if (custom) {
+      custom.addEventListener("change", function () {
+        // Guard: only save if the picker is still on Custom path. The
+        // user might have moved on between typing and the change event
+        // firing (race with picker.change).
+        if (picker.value !== "__custom__") return;
+        var trimmed = (custom.value || "").trim();
+        if (trimmed === "") return; // Blank custom is Project-wide; skip.
+        saveScope(trimmed);
+      });
+    }
   }
 
   // Fetch /api/runs/<workflow> and render up to 5 chips into the
@@ -360,6 +500,8 @@
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("[data-run-button]").forEach(attach);
     document.querySelectorAll("tr[data-workflow]").forEach(wireScopePickerToggle);
+    document.querySelectorAll("tr[data-workflow]").forEach(wireScopeSave);
+    restoreScopeOnLoad();
     document.querySelectorAll("[data-recent-runs]").forEach(setupRecentRuns);
   });
 })();

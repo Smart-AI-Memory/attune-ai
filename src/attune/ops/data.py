@@ -124,8 +124,9 @@ class Feature:
     tags: tuple[str, ...] = ()
 
 
-# Per-yaml-file mtime cache: {abs_path: (mtime_ns, features)}. Keeps the
-# dashboard responsive on repeated requests within one server run.
+# Per-yaml-file mtime cache: {abs_path: (mtime_ns, features_in_yaml_order)}.
+# Stores features in YAML insertion order; ``list_features()`` returns a
+# sorted copy, ``most_recent_feature()`` reads the cache directly.
 _FEATURES_CACHE: dict[str, tuple[int, list[Feature]]] = {}
 
 
@@ -146,12 +147,15 @@ def _derive_feature_path(files: list[str]) -> str | None:
     return None
 
 
-def list_features(project_root: Path | str) -> list[Feature]:
-    """Return features parsed from ``<project_root>/.help/features.yaml``.
+def _features_in_yaml_order(project_root: Path | str) -> list[Feature]:
+    """Parse ``features.yaml`` and return features in YAML insertion order.
+
+    Internal helper. Callers wanting alphabetical display use
+    :func:`list_features`; callers wanting the most-recently-added feature
+    use :func:`most_recent_feature`. Both share this cached parse.
 
     Returns ``[]`` on missing file, unreadable file, or malformed YAML.
-    Result is sorted by feature name and cached by mtime so repeated
-    calls within one server run skip the YAML parse.
+    Cached by mtime so repeated calls within one server run skip the parse.
     """
     root = Path(project_root).expanduser().resolve()
     yaml_path = root / ".help" / "features.yaml"
@@ -206,9 +210,49 @@ def list_features(project_root: Path | str) -> list[Feature]:
                 tags=tags,
             )
         )
-    out.sort(key=lambda f: f.name)
     _FEATURES_CACHE[cache_key] = (mtime_ns, out)
     return out
+
+
+def list_features(project_root: Path | str) -> list[Feature]:
+    """Return features parsed from ``<project_root>/.help/features.yaml``.
+
+    Returns ``[]`` on missing file, unreadable file, or malformed YAML.
+    Result is sorted alphabetically by feature name (findability in the
+    picker dropdown). Backed by a mtime-keyed cache shared with
+    :func:`most_recent_feature`.
+    """
+    return sorted(_features_in_yaml_order(project_root), key=lambda f: f.name)
+
+
+def first_feature(project_root: Path | str) -> Feature | None:
+    """Return the alphabetically-first feature with a renderable scope.
+
+    Used by the ops dashboard scope picker as the primary first-load
+    fallback when ``localStorage`` has no saved scope. Predictable +
+    stable: the same feature is returned regardless of YAML ordering
+    changes, so the picker doesn't surprise the user by jumping around
+    when features are reordered.
+
+    Only features with a non-``None`` ``path`` are considered, since
+    those are the only ones rendered as picker options. When no
+    path-bearing feature exists, the dashboard falls through to the
+    "All code" option (see :data:`ALL_CODE_PATH`). Returns ``None``
+    if ``features.yaml`` is missing, empty, or has no path-bearing
+    entries.
+    """
+    for feature in list_features(project_root):
+        if feature.path:
+            return feature
+    return None
+
+
+# Path passed to workflows when the user picks the "All code" picker
+# option. Hardcoded for attune-ai's ``src/`` layout. Downstream projects
+# with different code roots can override by editing this constant or by
+# threading a config value through the dashboard route — kept simple
+# for the v1 ship.
+ALL_CODE_PATH = "src/"
 
 
 @dataclass(frozen=True)
