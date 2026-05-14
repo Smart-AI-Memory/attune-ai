@@ -3951,3 +3951,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   'possibly delete if X' qualifiers require verifying
   both X and the alternative before acting" lesson —
   same shape, different mechanism.
+
+- **`gh pr merge <base> --squash --admin --delete-branch`
+  permanently orphans stacked PRs whose base is that
+  branch — they auto-close and CANNOT be reopened**: hit
+  2026-05-14 when admin-merging #324 (Phase 2 scope
+  picker) with `--delete-branch`. #326 (Phases 3+4) was
+  stacked on `feat/ops-runner-tier2-phase2` as its base
+  branch, not on `main`. GitHub auto-closed #326 the
+  moment the base branch was deleted. The fatal kicker:
+  `gh api .../pulls/326 -X PATCH -f state=open` returns
+  HTTP 422 with `"state cannot be changed. The
+  feat/ops-runner-tier2-phase2 branch has been
+  deleted"`. Force-pushing a rebased commit to the
+  stacked PR's branch doesn't help — GitHub's PR view
+  stays stuck at the OLD headRefOid even though the
+  branch ref on origin moved to the new SHA, because
+  the PR machinery is detached from the orphaned base.
+  Recovery: open a fresh PR with the same content
+  targeting `main` (`gh pr create --base main --head
+  <branch> --title ... --body ...`); reference the
+  orphaned PR in the body. Prevention: BEFORE admin-
+  merging a base PR with `--delete-branch`, re-target
+  every stacked PR to `main` via
+  `gh pr edit <stacked> --base main`. Alternative:
+  omit `--delete-branch` from the base merge and clean
+  up the branch manually after all dependents have
+  re-targeted or merged. Quick check before merging
+  any PR with `--delete-branch`:
+  `gh pr list --base <branch> --state open --json
+  number,headRefName --jq '.[] | "#\(.number)
+  \(.headRefName)"'` — if non-empty, retarget those
+  PRs first.
