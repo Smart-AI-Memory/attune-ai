@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: `memory/short_term/queues.py`
+  (`QueueManager`) coverage 62.1% → **100.00%** line + branch.
+  24 deterministic tests in
+  `tests/unit/memory/short_term/test_queues.py` cover both the
+  mock-mode path (already exercised by sibling suites, locked
+  down here) and the real-Redis branches that previously had
+  no coverage at all: push priority/normal (lpush vs rpush),
+  pop blocking/non-blocking with and without result, length
+  llen, peek lrange, and all four `client is None` defensive
+  returns. Real `BaseOperations` host with `MagicMock()`
+  swapped onto `_base._client` — exercises every behavior
+  including the auto-detect override (CLAUDE.md "Redis
+  auto-detect" lesson applied via explicit `base.use_mock =
+  False` after construction). Zero production bugs surfaced.
 - Test-quality-program: `memory/security/secrets_detector.py`
   coverage 90.96% → **100.00%** line + branch. 9 focused
   fallback-paths tests in

@@ -512,3 +512,31 @@ covered.
 **PR:** _(filled in after merge)_
 **Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
 "2026-05-14 — sixteenth module under test-quality-program"
+
+
+## memory/short_term/queues.py
+
+**Date:** 2026-05-14
+**Rubric score at pick time:** 1.71 (weight=3 × gap=0.38 × risk=1.5)
+**Picked because:** Top viable pick from the corrected-scope
+rubric refresh (post-PR #348). Tied at 1.71 with
+`workflows/release_prep.py` but lower active-development
+collision risk — `workflows/` had concurrent discovery-sweep
+work in flight; `memory/short_term/` was quiet. No existing
+dedicated test file; the 62.1% reported coverage came from
+sibling tests indirectly hitting mock-mode paths.
+**Outcome:** 1 test file added (`test_queues.py`, 24 tests).
+Coverage 62.1% → 100.00% line + branch. **Zero production
+bugs surfaced.** First explicit coverage of the real-Redis
+branches (push/pop/length/peek) via real BaseOperations +
+MagicMock client.
+
+**Implementation note logged in COVERAGE_BUG_LOG.md:**
+`BaseOperations(use_mock=False)` auto-flips to True when Redis
+auto-detect fails. Tests needing real-Redis branches against a
+fake client must force `base.use_mock = False` post-init.
+Documented in the fixture docstrings for future readers.
+
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-14 — seventeenth module under test-quality-program"

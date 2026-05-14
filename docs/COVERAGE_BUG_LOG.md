@@ -18,6 +18,56 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-14 — seventeenth module under test-quality-program (Opus 4.7)
+
+Second cycle of the day, after the docstring fix on the rubric
+script (PR #348) corrected the coverage-XML scope. Selected via
+fresh rubric (now using `pytest tests/` not `pytest tests/unit/`):
+`memory/short_term/queues.py`, score 1.71 (W=3 × gap=0.38 ×
+risk=1.5 data-handling), **62.1% covered → 100.00%**. **Zero
+production bugs surfaced.**
+
+- `memory/short_term/queues.py` (`QueueManager`) — no bugs.
+  Module is small (66 statements, 32 branches) and structurally
+  symmetric: every public method has a mock-mode branch
+  (covered by sibling tests transitively) and a real-Redis
+  branch (previously uncovered, now covered via real
+  `BaseOperations` + `MagicMock()` `_client`). All 4 `client
+  is None` defensive returns behave correctly.
+
+**Coverage delta:** 62.1% → 100.00% (line + branch).
+
+**Tests:** 24 added under
+`tests/unit/memory/short_term/test_queues.py`. Real
+`BaseOperations` host, two-mode fixtures:
+- `mock_base` / `mock_queue` — `use_mock=True` for in-memory
+  round-trip tests
+- `real_base_with_client` — `use_mock=False` patched past the
+  auto-detect override (see implementation note below), with a
+  `MagicMock` client for behavior assertions on lpush/rpush/
+  lpop/blpop/llen/lrange
+- `real_base_no_client` — `_client=None` for the four
+  defensive-return branches
+
+Determinism verified across 3 back-to-back runs and under `-n
+auto` alongside the full memory test subtree (1487 passed, no
+cross-test interference).
+
+### Implementation note: BaseOperations auto-flips use_mock
+
+`BaseOperations(use_mock=False)` silently flips `use_mock` to
+`True` when Redis auto-detect finds the server unreachable
+(seen in `redis_auto_detect_unavailable` log line during
+fixture init). For tests that need the real-Redis branches to
+fire against a fake client, explicit `base.use_mock = False`
+after construction is required. Documented inline in the
+fixture docstrings. This pairs with the existing CLAUDE.md
+"xdist worker crashes on Windows can come from repeated socket
+probes" lesson — both are consequences of BaseOperations doing
+real network work at init time.
+
+---
+
 ## 2026-05-14 — sixteenth module under test-quality-program (Opus 4.7)
 
 Sixteenth module run, first after returning from a multi-day
