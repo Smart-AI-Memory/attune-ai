@@ -40,10 +40,59 @@
     statusEl.className = "run-view-status chip " + (extra || "");
   }
 
+  // Accumulates raw log content for the post-run error-token scan.
+  // We append to the DOM (textNode) for display AND to a plain string
+  // so the "done" handler can heuristically detect uncaught exceptions
+  // hidden inside an exit-0 run (P0-2 of the 2026-05-14 punch list).
+  var logBuffer = "";
+  var LOG_BUFFER_MAX = 256 * 1024; // 256 KB cap — enough for typical runs
+
   function appendLine(line) {
     if (!pre) return;
     pre.appendChild(document.createTextNode(line + "\n"));
     pre.scrollTop = pre.scrollHeight;
+    // Keep the buffer bounded — for very long-running workflows we
+    // only need recent content to detect failure-leak patterns. The
+    // common patterns (Traceback, NameError, etc.) appear near the
+    // point of failure, which is usually near the end of the log.
+    if (logBuffer.length < LOG_BUFFER_MAX) {
+      logBuffer += line + "\n";
+    }
+  }
+
+  // Returns the first matching error-leak token found in ``content``,
+  // or null if none. Used to detect runs that exited 0 (so the CLI
+  // didn't propagate the failure) but emitted an uncaught exception
+  // or workflow-acknowledged error. Patterns are intentionally
+  // conservative — they only match strong, unambiguous signals so
+  // we don't false-positive on docstrings or success-state output
+  // that happens to discuss errors.
+  function detectLogErrorLeak(content) {
+    if (!content) return null;
+    // 1. Python traceback header — a definitive uncaught-exception
+    //    marker. Never appears in well-behaved workflow output.
+    if (content.indexOf("Traceback (most recent call last):") !== -1) {
+      return "Python traceback";
+    }
+    // 2. Workflow-emitted "What Went Wrong" section header.
+    //    The voice-layer formatter emits this when WorkflowResult
+    //    .success is False — but the SDK swallows the upstream
+    //    Exception and the run still exits 0 (P0-2 root cause).
+    if (
+      content.indexOf("What Went Wrong") !== -1 ||
+      content.indexOf("This one didn't go as planned") !== -1
+    ) {
+      return "workflow reported failure";
+    }
+    // 3. Line-anchored Python exception class. Match against lines
+    //    starting with PascalCase + ``Error:`` or ``Exception:`` —
+    //    catches ``ValueError: foo``, ``RuntimeError: bar``, etc.
+    //    A plain regex over the buffer (no /m flag) anchors with
+    //    explicit "\n".
+    if (/(?:^|\n)[A-Z][A-Za-z0-9_]*(?:Error|Exception): /.test(content)) {
+      return "uncaught exception";
+    }
+    return null;
   }
 
   function startTicker() {
@@ -90,12 +139,36 @@
     es.addEventListener("done", function (ev) {
       var info = JSON.parse(ev.data);
       stopTicker();
-      setStatus(info.status + " (exit " + info.exit_code + ")");
-      setStatusClass(
-        info.status === "completed" ? "chip-ok" :
-        info.status === "failed" ? "chip-danger" :
-        "chip-muted"
-      );
+
+      // Defense in depth for P0-2: a run that exits 0 but emitted an
+      // uncaught Python exception, a workflow-reported failure block,
+      // or a similar error-leak signal should not render with a green
+      // "completed" chip. The CLI side ought to propagate the failure
+      // as exit code != 0 — that's tracked separately — but until it
+      // does, scan the captured log here and downgrade the chip.
+      var leak = info.status === "completed" && info.exit_code === 0
+        ? detectLogErrorLeak(logBuffer)
+        : null;
+
+      if (leak) {
+        setStatus("completed with errors (" + leak + ")");
+        setStatusClass("chip-warn");
+        if (statusEl) {
+          statusEl.setAttribute(
+            "data-tooltip",
+            "The run exited 0 but the log contains a " + leak + ". " +
+            "The underlying CLI may have swallowed an exception. " +
+            "See P0-2 in docs/specs/ops-dashboard-qa-2026-05-14/punch-list.md."
+          );
+        }
+      } else {
+        setStatus(info.status + " (exit " + info.exit_code + ")");
+        setStatusClass(
+          info.status === "completed" ? "chip-ok" :
+          info.status === "failed" ? "chip-danger" :
+          "chip-muted"
+        );
+      }
       es.close();
     });
 
