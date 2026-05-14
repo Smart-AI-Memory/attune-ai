@@ -405,3 +405,236 @@ def test_runner_js_default_post_is_no_body():
     text = js_path.read_text(encoding="utf-8")
     # The code must guard body assignment behind a scope != null check
     assert "scope !== null" in text
+
+
+# ----------------------------------------------------------------------
+# most_recent_feature() — first-load fallback for the scope picker
+# ----------------------------------------------------------------------
+
+
+def test_most_recent_feature_returns_last_yaml_entry(tmp_path):
+    """Returns the LAST feature in YAML insertion order, not alphabetical."""
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  zeta-audit:
+    description: First in YAML
+    files: [src/zeta/**]
+  alpha-audit:
+    description: Second in YAML, last seen
+    files: [src/alpha/**]
+""",
+    )
+    # list_features() sorts alphabetically — alpha-audit comes first.
+    listed = data.list_features(tmp_path)
+    assert [f.name for f in listed] == ["alpha-audit", "zeta-audit"]
+    # most_recent_feature() returns YAML-order LAST — alpha-audit.
+    recent = data.most_recent_feature(tmp_path)
+    assert recent is not None
+    assert recent.name == "alpha-audit"
+    assert recent.path == "src/alpha"
+
+
+def test_most_recent_feature_missing_file_returns_none(tmp_path):
+    """No features.yaml → None, not an exception."""
+    assert data.most_recent_feature(tmp_path) is None
+
+
+def test_most_recent_feature_empty_features_returns_none(tmp_path):
+    """features.yaml exists but has no `features:` key → None."""
+    _write_features_yaml(tmp_path, "version: 1\n")
+    assert data.most_recent_feature(tmp_path) is None
+
+
+def test_most_recent_feature_skips_glob_only_entries(tmp_path):
+    """A trailing glob-only feature (path=None) is skipped; the most
+    recent feature WITH a renderable path is returned."""
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  has-path:
+    description: First, has a directory scope
+    files: [src/has_path/**]
+  glob-only:
+    description: Last, but only mid-name globs → path=None
+    files:
+      - src/attune/workflows/code_review_*.py
+""",
+    )
+    recent = data.most_recent_feature(tmp_path)
+    assert recent is not None
+    assert recent.name == "has-path"
+
+
+def test_most_recent_feature_shares_cache_with_list_features(tmp_path):
+    """Both helpers share the mtime-keyed parse cache — only one parse
+    per file per server lifetime under stable mtime."""
+    _write_features_yaml(
+        tmp_path,
+        "features:\n  only:\n    description: x\n    files: [src/only/**]\n",
+    )
+    # Prime via list_features().
+    data.list_features(tmp_path)
+    cache_key = str(tmp_path.resolve() / ".help" / "features.yaml")
+    assert cache_key in data._FEATURES_CACHE
+    # most_recent_feature() reads the same cache — no second parse needed.
+    recent = data.most_recent_feature(tmp_path)
+    assert recent is not None
+    assert recent.name == "only"
+
+
+# ----------------------------------------------------------------------
+# /workflows template — scope-picker config block rendering
+# ----------------------------------------------------------------------
+
+
+def test_workflows_page_renders_scope_picker_config_block(tmp_path, monkeypatch):
+    """The page injects a JSON config block carrying the most-recent
+    feature path so runner.js can use it as the first-load fallback."""
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  alpha:
+    description: Sorted-first, NOT the most recent.
+    files: [src/alpha/**]
+  zeta:
+    description: Last in YAML — most recent.
+    files: [src/zeta/**]
+""",
+    )
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
+    with TestClient(app) as client:
+        resp = client.get("/workflows")
+    assert resp.status_code == 200
+    # The config block exists.
+    assert 'id="scope-picker-config"' in resp.text
+    assert 'type="application/json"' in resp.text
+    # And carries the YAML-order LAST feature's path, not the alphabetical one.
+    assert '"mostRecentFeaturePath": "src/zeta"' in resp.text
+    assert '"mostRecentFeaturePath": "src/alpha"' not in resp.text
+
+
+def test_workflows_page_config_block_empty_when_no_features(tmp_path, monkeypatch):
+    """No features.yaml → config block carries empty string (JS treats
+    as "no fallback, leave Project-wide as default")."""
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
+    with TestClient(app) as client:
+        resp = client.get("/workflows")
+    assert resp.status_code == 200
+    assert 'id="scope-picker-config"' in resp.text
+    assert '"mostRecentFeaturePath": ""' in resp.text
+
+
+# ----------------------------------------------------------------------
+# runner.js — localStorage save/restore + first-load fallback
+# ----------------------------------------------------------------------
+
+
+def test_runner_js_exports_scope_storage_helpers():
+    """The new helpers and the storage key are exported on
+    ``window.__attuneRunner`` for browser-based testing."""
+    js_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "runner.js"
+    )
+    text = js_path.read_text(encoding="utf-8")
+    # Storage key constant
+    assert 'SCOPE_STORAGE_KEY = "attune-ops:lastScope"' in text
+    # All new helper functions exist
+    assert "function loadSavedScope(" in text
+    assert "function saveScope(" in text
+    assert "function readMostRecentFeaturePath(" in text
+    assert "function applyScopeToRow(" in text
+    assert "function restoreScopeOnLoad(" in text
+    assert "function wireScopeSave(" in text
+    # All exported via window.__attuneRunner
+    assert "loadSavedScope: loadSavedScope" in text
+    assert "saveScope: saveScope" in text
+    assert "readMostRecentFeaturePath: readMostRecentFeaturePath" in text
+    assert "applyScopeToRow: applyScopeToRow" in text
+    assert "restoreScopeOnLoad: restoreScopeOnLoad" in text
+    assert "wireScopeSave: wireScopeSave" in text
+    assert "SCOPE_STORAGE_KEY: SCOPE_STORAGE_KEY" in text
+
+
+def test_runner_js_dom_content_loaded_wires_scope_restore():
+    """The DOMContentLoaded handler calls ``restoreScopeOnLoad`` and
+    wires ``wireScopeSave`` per row so save+restore round-trip works."""
+    js_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "runner.js"
+    )
+    text = js_path.read_text(encoding="utf-8")
+    # Find the DOMContentLoaded body
+    dcl_idx = text.find('DOMContentLoaded"')
+    assert dcl_idx > 0
+    # Both new behaviors are wired
+    after = text[dcl_idx:]
+    assert "wireScopeSave" in after
+    assert "restoreScopeOnLoad()" in after
+
+
+def test_runner_js_localstorage_errors_are_swallowed():
+    """``loadSavedScope`` and ``saveScope`` must wrap localStorage calls
+    in try/catch — if storage is disabled (Safari private mode, etc.)
+    the picker should degrade gracefully, not throw."""
+    js_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "runner.js"
+    )
+    text = js_path.read_text(encoding="utf-8")
+    # Find loadSavedScope body
+    load_start = text.find("function loadSavedScope(")
+    load_end = text.find("function saveScope(", load_start)
+    load_body = text[load_start:load_end]
+    assert "try" in load_body and "catch" in load_body
+    # Find saveScope body
+    save_start = text.find("function saveScope(")
+    save_end = text.find("function readMostRecentFeaturePath(", save_start)
+    save_body = text[save_start:save_end]
+    assert "try" in save_body and "catch" in save_body
+
+
+def test_runner_js_unmatched_path_falls_to_custom():
+    """When the saved scope doesn't match any picker option AND isn't
+    empty, ``applyScopeToRow`` selects ``__custom__`` and pre-fills the
+    custom input. This is the "feature removed from features.yaml since
+    user last saved" recovery path."""
+    js_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "runner.js"
+    )
+    text = js_path.read_text(encoding="utf-8")
+    apply_start = text.find("function applyScopeToRow(")
+    apply_end = text.find("function restoreScopeOnLoad(", apply_start)
+    apply_body = text[apply_start:apply_end]
+    # Unmatched value triggers __custom__ selection
+    assert "__custom__" in apply_body
+    # And the custom input is pre-filled with the unmatched value
+    assert "custom.value = value" in apply_body
+    # Empty value is NOT treated as unmatched (the picker has a "" option
+    # for Project-wide that should match cleanly).
+    assert 'value !== ""' in apply_body

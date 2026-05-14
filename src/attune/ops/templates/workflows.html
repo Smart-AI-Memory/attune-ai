@@ -76,6 +76,13 @@
 {% endblock %}
 
 {% block scripts %}
+{# Server-injected config for the scope picker's first-load fallback.
+   Read by runner.js on DOMContentLoaded. Empty string means "no
+   path-bearing feature exists in features.yaml" — the JS leaves the
+   picker on Project-wide in that case. #}
+<script id="scope-picker-config" type="application/json">
+{"mostRecentFeaturePath": {{ most_recent_feature_path | tojson }}}
+</script>
 {# runner.js is loaded unconditionally so the recent-runs strip
    renders in both run and read-only modes. The script's
    DOMContentLoaded handler queries for run-button / scope-picker
