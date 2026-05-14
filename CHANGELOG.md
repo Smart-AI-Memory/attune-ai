@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### 2026-05-10 — Dashboard becomes a real workspace
+
+If you're returning after a couple of releases, the
+`attune-gui` dashboard is now where the workflow actually
+tells you what to do next. Four user-visible changes
+shipped together:
+
+- **Living Docs** — the dashboard now shows a table of your
+  project's docs with state badges (fresh / stale / missing)
+  and inline regenerate actions. You see what's drifted
+  from the code without leaving the browser.
+- **One-click polish-corpus** — the polish job runs from
+  the dashboard and produces the path-keyed summaries the
+  RAG retriever uses for boost scoring. No more shelling
+  into a Python script.
+- **`rag-query` results page** — search a polished corpus
+  and get a results page with linked hits, scores, and
+  surrounding context. Useful both for "what does this
+  feature do?" and for sanity-checking retrieval quality.
+- **Commands inline result panel** — running a command
+  (e.g. an audit) renders the result in-page rather than
+  dumping into a separate scrollback area. Easier to copy,
+  share, and act on.
+
+### Coming next — quality polish and the fold-back
+
+Two follow-up beats already in flight:
+
+- A dashboard-quality-pass spec is in review. When it
+  lands, sentence-case copy, humanised timestamps, a
+  generic command-result renderer, and a few sidecar
+  fixes ship together.
+- The `attune-gui` package is folding back into
+  `attune-ai` as an extra. After the fold ships,
+  `pip install attune-gui` becomes
+  `pip install attune-ai[gui]`. One product, one install,
+  two faces. See `/migrate` for what changes (pre-fold
+  heads-up; post-fold details added on v7.0 release day).
+
 ### Added
 
 - `discovery-sweep` Phase 1 (ops-integration spec) — engine

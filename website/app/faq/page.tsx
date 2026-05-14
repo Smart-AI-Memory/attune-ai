@@ -36,6 +36,32 @@ const faqData: FAQCategory[] = [
         question: 'What is Dynamic Team Composition?',
         answer: 'Dynamic Team Composition allows you to build agent teams at runtime from 13 pre-built templates or custom configurations. Teams can execute with different strategies (parallel, sequential, two-phase, delegation) and enforce quality gates. You can also compose entire workflows into teams using the WorkflowComposer.',
       },
+      {
+        question: "What's the difference between attune-ai and attune-gui?",
+        answer: (
+          <>
+            Two packages today, one workflow. <code className="font-mono">attune-ai</code> is the framework — workflows, agents, the CLI. <code className="font-mono">attune-gui</code> is the local dashboard that sits on top of it: Living Docs, RAG search, the commands surface, summaries. You install them separately right now (<code className="font-mono">pip install attune-ai</code> and <code className="font-mono">pip install attune-gui</code>) and they talk to the same project directory. In an upcoming release they fold into one install (<code className="font-mono">pip install attune-ai[gui]</code>);{' '}
+            <Link href="/migrate" className="text-[var(--primary)] hover:underline">
+              see the migration page
+            </Link>{' '}
+            for the heads-up.
+          </>
+        ),
+        answerText: "Two packages today, one workflow. attune-ai is the framework — workflows, agents, the CLI. attune-gui is the local dashboard that sits on top of it: Living Docs, RAG search, the commands surface, summaries. You install them separately right now (pip install attune-ai and pip install attune-gui) and they talk to the same project directory. In an upcoming release they fold into one install (pip install attune-ai[gui]); see /migrate for the heads-up.",
+      },
+      {
+        question: 'Do I need the dashboard?',
+        answer: (
+          <>
+            No &mdash; the CLI does everything on its own. But the dashboard is where the workflow tells you what to do next: which docs have drifted, which summaries need re-polishing, which commands you ran recently and what they produced. If you&rsquo;re just running one-off workflows, the CLI is fine. If you&rsquo;re maintaining a living help system or iterating on a corpus, the dashboard saves real time.{' '}
+            <Link href="/migrate" className="text-[var(--primary)] hover:underline">
+              Migration heads-up here
+            </Link>{' '}
+            if you have <code className="font-mono">attune-gui</code> installed today.
+          </>
+        ),
+        answerText: "No — the CLI does everything on its own. But the dashboard is where the workflow tells you what to do next: which docs have drifted, which summaries need re-polishing, which commands you ran recently and what they produced. If you're just running one-off workflows, the CLI is fine. If you're maintaining a living help system or iterating on a corpus, the dashboard saves real time. Migration heads-up at /migrate if you have attune-gui installed today.",
+      },
     ],
   },
   {
