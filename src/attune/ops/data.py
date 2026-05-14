@@ -357,7 +357,11 @@ def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> Telemetry
                 cost = float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
                 savings = float(event.get("savings", 0.0) or 0.0)
                 workflow = str(event.get("workflow") or event.get("event_type") or "unknown")
-                ts = str(event.get("timestamp") or "")
+                # `ts` is the canonical field name in usage.jsonl
+                # (verified 2026-05-14: 19k+ events use `ts`, none use
+                # `timestamp`). Accept `timestamp` as a defensive fallback
+                # for any future writer that picks the other convention.
+                ts = str(event.get("ts") or event.get("timestamp") or "")
 
                 total_requests += 1
                 total_cost += cost
