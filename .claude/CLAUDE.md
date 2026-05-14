@@ -3925,3 +3925,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   infrastructure for orchestration layer above it"
   question in this ecosystem needs Phase 0
   measurement first.
+
+- **`git diff --stat` on an abandoned branch shows
+  working-tree-vs-branch-HEAD, not vs current main —
+  the insert/delete counts mislead when assessing
+  "what's worth salvaging" from a stale branch**: hit
+  during 2026-05-14's worktree audit on
+  `silly-shamir-a723b0` (PR #262 CLOSED, dirty). The
+  `git status` showed `M` on 3 files in
+  `.help/templates/memory/` and the `--stat` reported
+  214 inserts / 264 deletes — a substantial-looking
+  rewrite. But that diff was working-tree-vs-the-
+  branch's-OWN-old-base. The actual diff vs current
+  main was 6 lines per file: just regenerated
+  frontmatter (`generated_at` timestamp +
+  `source_hash`). Body content was identical because
+  the templates auto-regenerate from `src/attune/
+  memory/` source and main had a NEWER regeneration.
+  Pattern: when evaluating whether to "salvage"
+  uncommitted work from an abandoned branch, always
+  `diff <worktree-file> <main-file>` directly, not
+  `git diff --stat` inside the worktree. The latter
+  compares against a base that's typically weeks
+  behind main. Pairs with the existing "Audits with
+  'possibly delete if X' qualifiers require verifying
+  both X and the alternative before acting" lesson —
+  same shape, different mechanism.
