@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Internal
+
+- Test-quality-program: `memory/security/secrets_detector.py`
+  coverage 90.96% → **100.00%** line + branch. 9 focused
+  fallback-paths tests in
+  `tests/security/test_secrets_detector_edge_paths.py` close
+  the remaining gap (context-snippet bounds + long-line
+  truncation edges, `_calculate_entropy` empty-string fast
+  path, `_filter_overlapping_detections` different-line
+  continue branch). Per the "focused fallback-paths" pattern
+  in `docs/specs/test-quality-program/` — leaves the existing
+  28-test surface untouched. Zero production bugs surfaced.
+
 ### Added
 
 - Ops dashboard scope picker now remembers the user's most recently

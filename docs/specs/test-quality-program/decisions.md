@@ -466,3 +466,49 @@ third cycle in a row where the working-set head
 turned out to be unused or silently-skipped — the
 rubric needs a usage signal, not just a coverage-gap
 signal.
+
+
+## memory/security/secrets_detector.py
+
+**Date:** 2026-05-14
+**Rubric score at pick time:** 1.79 (rubric-reported,
+weight=3 × gap=0.40 × risk=1.5)
+**Picked because:** Cleanest non-collision pick from the
+fresh rubric. The top entries by score were either new
+in-flight modules from concurrent sessions
+(`ops/routes/runs_history.py`, `discovery_sweep/*`) or
+known retirement candidates (`workflows/test_lifecycle.py`,
+`test_maintenance_cli.py`). secrets_detector was an
+established, data-handling-risk module with no recent PR
+activity touching it.
+**Outcome:** 1 test file added
+(`tests/security/test_secrets_detector_edge_paths.py`, 9
+tests). Coverage 90.96% → 100.00% line+branch. **Zero
+production bugs surfaced.**
+
+**Meta-finding (logged in COVERAGE_BUG_LOG.md):** the
+rubric reported 60.3% coverage but actual was 90.96%
+because the rubric input `coverage.xml` was generated
+with `pytest tests/unit/` only — `tests/security/` was
+outside scope. The "focused fallback-paths" pattern
+applied (existing surface had 28 tests covering the
+real-content matching paths; the gap was 4 specific
+defensive edges):
+- `_create_context_snippet` line-number bounds + long-line
+  truncation (both left-edge and right-edge cases,
+  including the asymmetric `end < len(line)` where end
+  is bounded by len(redacted_line))
+- `_calculate_entropy` empty-string fast path
+- `_filter_overlapping_detections` different-line
+  continue branch
+
+**Rubric refinement:** the next rubric refresh should
+use `pytest tests/` (not `tests/unit/`) to avoid
+falsely-low coverage scores for modules tested under
+`tests/security/`, `tests/integration/`, etc. Easy to
+miss — leads to picking modules that are already well
+covered.
+
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-14 — sixteenth module under test-quality-program"

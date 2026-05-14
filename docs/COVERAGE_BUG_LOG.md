@@ -18,6 +18,57 @@ Format: most recent session at top. Per bug: `module — class — one-liner`.
 
 ---
 
+## 2026-05-14 — sixteenth module under test-quality-program (Opus 4.7)
+
+Sixteenth module run, first after returning from a multi-day
+gap. Selected via fresh rubric scoring:
+`memory/security/secrets_detector.py`, weight 3, score 1.79
+(rubric-reported 60.3% covered, actual 90.96% — see meta-finding
+below). **Zero production bugs surfaced.**
+
+- `memory/security/secrets_detector.py` — no bugs. Module's 28
+  existing tests (`tests/security/test_secrets_detector.py`)
+  already cover the real-content pattern-matching surface
+  well. The remaining 4 spots were defensive edge cases:
+  - `_create_context_snippet` invalid-line-number guard
+  - `_create_context_snippet` long-line truncation (both
+    left-edge and right-edge ellipsis branches, including the
+    asymmetric `end < len(line)` comparison where end is
+    bounded by `len(redacted_line)`)
+  - `_calculate_entropy` empty-string `return 0.0` fast path
+  - `_filter_overlapping_detections` different-line continue
+    branch (loop skip when entropy and pattern detections sit
+    on different lines)
+
+**Coverage delta:** 90.96% → 100.00% (line + branch).
+
+**Tests:** 9 added under
+`tests/security/test_secrets_detector_edge_paths.py`. Per the
+"focused fallback-paths" pattern from the test-quality-program
+CLAUDE.md lesson — left the existing 435-line test file
+untouched. Determinism verified across 3 back-to-back runs and
+under `-n auto` alongside the full `tests/security/` subtree
+(321 passed in 10.37s, no cross-test interference).
+
+### Meta-finding: rubric input must include ALL test dirs
+
+The rubric reported `secrets_detector.py` at 60.3% but the
+actual coverage from `tests/security/test_secrets_detector.py`
+running alone was 90.96%. Root cause: the rubric input
+`coverage.xml` was generated with `pytest tests/unit/` only,
+omitting `tests/security/`, `tests/integration/`, and other
+non-unit subdirs. Any module whose primary tests live outside
+`tests/unit/` shows up with spuriously low coverage in
+`rubric_cache.csv`.
+
+**Fix for next rubric refresh:** run coverage against `tests/`
+(not `tests/unit/`) to capture all test paths. The default
+`testpaths = ["tests"]` in `pyproject.toml` is already correct
+for full collection; only the rubric-input command needs the
+path widening.
+
+---
+
 ## 2026-05-13 — fifteenth module under test-quality-program (Opus 4.7)
 
 Fifteenth module run. Selected via the rubric's
