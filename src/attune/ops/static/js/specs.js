@@ -154,7 +154,14 @@
     if (!seen && prev) {
       var custom = document.createElement("option");
       custom.value = prev;
-      custom.textContent = prev + " (current)";
+      // Truncate the displayed text — a long custom status like
+      // "phase 0 complete + skills survey complete; **spec retired**"
+      // would otherwise widen the <select> past its cell. The full
+      // value is still in option.value so the form submits correctly,
+      // and the title shows it on hover.
+      var label = prev.length > 12 ? prev.substring(0, 10) + "…" : prev;
+      custom.textContent = label + " (current)";
+      custom.title = prev;
       custom.selected = true;
       select.appendChild(custom);
     }
@@ -209,7 +216,68 @@
     });
   }
 
+  // Relative-time rendering for the Last-modified column.
+  // Server provides ISO 8601 UTC in data-mtime; we render "2h ago"
+  // style strings client-side so the user's local clock is the
+  // reference. data-tooltip already holds the absolute string for
+  // hover via the CSS tooltip layer.
+  function relativeTime(isoString) {
+    var then = Date.parse(isoString);
+    if (isNaN(then)) return "?";
+    var now = Date.now();
+    var secs = Math.round((now - then) / 1000);
+    if (secs < 0) return "in the future";
+    if (secs < 60) return "just now";
+    var mins = Math.round(secs / 60);
+    if (mins < 60) return mins + "m ago";
+    var hours = Math.round(mins / 60);
+    if (hours < 24) return hours + "h ago";
+    var days = Math.round(hours / 24);
+    if (days < 14) return days + "d ago";
+    var weeks = Math.round(days / 7);
+    if (weeks < 9) return weeks + "w ago";
+    var months = Math.round(days / 30);
+    if (months < 18) return months + "mo ago";
+    var years = (days / 365).toFixed(1);
+    return years + "y ago";
+  }
+
+  // Browser-localized absolute timestamp for the tooltip — replaces
+  // the raw ISO string the server emits with something readable in
+  // the user's locale, e.g. "May 12, 2026, 3:05 PM" in en-US or
+  // "12. Mai 2026 um 15:05" in de-DE. Falls back to the raw ISO if
+  // parsing fails.
+  function localizedAbsolute(isoString) {
+    var d = new Date(isoString);
+    if (isNaN(d.getTime())) return isoString;
+    try {
+      return d.toLocaleString(undefined, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      });
+    } catch (_) {
+      return d.toLocaleString();
+    }
+  }
+
+  function renderMtime(el) {
+    var iso = el.getAttribute("data-mtime");
+    if (!iso) return;
+    var rel = relativeTime(iso);
+    var abs = localizedAbsolute(iso);
+    el.textContent = rel;
+    // Browser-localized absolute timestamp for the hover tooltip
+    // (replaces the raw ISO that the server emitted).
+    el.setAttribute("data-tooltip", abs);
+    // Keep aria-label in sync with the visible relative time so screen
+    // readers announce "Updated 2h ago" instead of the raw ISO string.
+    // The absolute timestamp remains accessible via the datetime
+    // attribute on <time> and the data-tooltip on hover.
+    el.setAttribute("aria-label", "Updated " + rel + " (" + abs + ")");
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll(".status-pill-editable").forEach(attach);
+    document.querySelectorAll(".spec-mtime[data-mtime]").forEach(renderMtime);
   });
 })();

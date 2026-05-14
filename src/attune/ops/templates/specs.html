@@ -55,7 +55,8 @@
   <table class="data-table specs-table">
     <thead>
       <tr>
-        <th class="col-slug">Slug</th>
+        <th class="col-slug">Spec</th>
+        <th class="col-mtime">Updated</th>
         {% for phase_name in ("decisions", "requirements", "design", "tasks") %}
           <th class="col-phase">{{ phase_name|capitalize }}</th>
         {% endfor %}
@@ -66,6 +67,20 @@
         <tr data-slug="{{ s.slug }}">
           <td class="col-slug">
             <a href="/specs/{{ s.slug }}" class="link spec-slug" data-tooltip="{{ s.slug }}" aria-label="{{ s.slug }}"><code>{{ s.slug }}</code></a>
+          </td>
+          <td class="col-mtime">
+            {% if s.last_modified %}
+              {# <time> element + datetime attr: assistive tools can recognise
+                 this as a timestamp; screen readers that support the time role
+                 announce it as a date/time. specs.js syncs aria-label to the
+                 visible relative-time on render so screen readers hear the
+                 friendly "Updated 2h ago" instead of the raw ISO string. #}
+              <time class="spec-mtime" datetime="{{ s.last_modified }}" data-mtime="{{ s.last_modified }}" data-tooltip="{{ s.last_modified }}" aria-label="Updated {{ s.last_modified }}">—</time>
+            {% else %}
+              {# aria-label replaces the visible em-dash for screen readers
+                 so the cell is announced as meaningful text, not punctuation. #}
+              <span class="spec-mtime spec-mtime-empty" aria-label="No update time recorded">—</span>
+            {% endif %}
           </td>
           {% for phase in s.phases %}
             <td class="col-phase" data-phase="{{ phase.name }}">

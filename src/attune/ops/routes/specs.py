@@ -91,6 +91,12 @@ class SpecRecord:
     root: str  # absolute path of the containing root
     path: str  # absolute path of the spec directory
     phases: list[SpecPhase]
+    # ISO-8601 timestamp of the most recently modified *.md file in the
+    # spec directory (any kind — `decisions.md`, `_sequencing.md`,
+    # `audit.md`, etc.). None if the directory has no .md files at all
+    # (which shouldn't happen since _list_specs_in_root requires at
+    # least one canonical phase file, but handled defensively).
+    last_modified: str | None = None
 
 
 def _extract_status(text: str) -> str | None:
@@ -123,6 +129,28 @@ def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
     return phases
 
 
+def _newest_md_mtime(spec_dir: Path) -> str | None:
+    """Return the newest mtime across all `.md` files in the spec dir,
+    formatted as a UTC ISO-8601 string. Catches edits to canonical phase
+    files AND auxiliary content (`_sequencing.md`, `audit.md`, etc.)."""
+    from datetime import datetime, timezone
+
+    newest: float | None = None
+    try:
+        for md in spec_dir.glob("*.md"):
+            try:
+                mt = md.stat().st_mtime
+            except OSError:
+                continue
+            if newest is None or mt > newest:
+                newest = mt
+    except OSError:
+        return None
+    if newest is None:
+        return None
+    return datetime.fromtimestamp(newest, tz=timezone.utc).isoformat()
+
+
 def _list_specs_in_root(root: Path) -> list[SpecRecord]:
     """Find all spec directories under one root, with phase statuses."""
     if not root.is_dir():
@@ -142,6 +170,7 @@ def _list_specs_in_root(root: Path) -> list[SpecRecord]:
                 root=str(root),
                 path=str(child),
                 phases=_scan_spec_dir(child),
+                last_modified=_newest_md_mtime(child),
             )
         )
     return records

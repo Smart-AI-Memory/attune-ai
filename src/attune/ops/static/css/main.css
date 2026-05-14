@@ -610,9 +610,11 @@ a.kpi:hover {
   padding: 6px 6px;
 }
 .specs-table .col-slug {
+  /* Let the spec column absorb whatever's left after the four fixed
+     phase columns. On wide monitors that means more readable spec
+     names; on narrow ones the min-width keeps it usable. */
   width: auto;
   min-width: 180px;
-  max-width: 320px;
 }
 .specs-table td {
   /* Needed so CSS tooltips position correctly against each cell. */
@@ -625,6 +627,27 @@ a.kpi:hover {
      Pill itself has overflow:hidden so we don't need it on the cell —
      keeping the cell overflow visible so CSS tooltips can escape. */
   width: 130px;
+}
+.specs-table .col-mtime {
+  /* Wide enough for relative strings like "2 weeks ago" without
+     wrapping. Tooltip on hover surfaces the absolute ISO timestamp. */
+  width: 110px;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.spec-mtime {
+  /* Dotted-underline hover affordance (matches the dotted-underline
+     rule from feedback_color_and_hover_affordances: tooltip available,
+     non-state info, but no link color because it's not navigation). */
+  text-decoration: underline dotted;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+.spec-mtime-empty {
+  text-decoration: none;
+  color: var(--fg-subtle);
 }
 .spec-slug {
   display: inline-block;
@@ -728,6 +751,11 @@ a.kpi:hover {
   border-radius: 6px;
   background-color: var(--bg);
   color: var(--fg);
+  /* Don't let a long "(current)" option text widen the select past
+     its cell — clip the displayed value, dropdown still shows full
+     option text when opened. */
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 /* ---------- CSS tooltips (data-tooltip="...") ----------
