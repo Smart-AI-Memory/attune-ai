@@ -1,6 +1,6 @@
 # Tasks — Discovery-Sweep Ops Dashboard Integration
 
-**Status:** Phase 0 audit shipped 2026-05-13; Phase 1 in progress.
+**Status:** Phase 0 audit + Phase 1 + Phase 1b shipped 2026-05-13. Phase 2 in progress — 2A (storage primitives) up as [#334](https://github.com/Smart-AI-Memory/attune-ai/pull/334); 2B (daemon wiring) blocks on [#324](https://github.com/Smart-AI-Memory/attune-ai/pull/324) / [#326](https://github.com/Smart-AI-Memory/attune-ai/pull/326) / [#328](https://github.com/Smart-AI-Memory/attune-ai/pull/328).
 **Spec docs:** `requirements.md`, `design.md`, `decisions.md`,
 [`audit-2026-05-13.md`](audit-2026-05-13.md)
 **Implementation path:** Option A (stdout-emit + sidecar parser)
@@ -30,21 +30,21 @@ Phase 3 (UI) will build on. No daemon-visible behavior change for
 existing CLI callers — both new surfaces are opt-in (event_sink
 defaults to None; stdout emission gated on non-TTY detection).
 
-- [ ] **1.1** Add an `EventSink` type alias
+- [x] **1.1** Add an `EventSink` type alias
       (`Callable[[dict[str, Any]], Awaitable[None]]`) and a
       threaded `event_sink: EventSink | None = None` kwarg through
       `DiscoverySweepWorkflow.execute()` → `_run_source()`.
-- [ ] **1.2** Add a `sweep_id: str | None = None` kwarg. Engine
+- [x] **1.2** Add a `sweep_id: str | None = None` kwarg. Engine
       doesn't generate it; daemon callers pass `run_id`; CLI
       leaves it None.
-- [ ] **1.3** Implement `source_started` / `source_finished` /
+- [x] **1.3** Implement `source_started` / `source_finished` /
       `source_failed` event emission inside `_run_source` via a
       `_safe_emit()` wrapper that catches sink exceptions and uses
       `asyncio.create_task` for fire-and-forget delivery (NFR-2).
-- [ ] **1.4** Add an `_iso_now()` helper
+- [x] **1.4** Add an `_iso_now()` helper
       (`datetime.now(timezone.utc).isoformat()`) used by all event
       timestamps.
-- [ ] **1.5** Tests in `tests/unit/workflows/discovery_sweep/test_event_sink.py`:
+- [x] **1.5** Tests in `tests/unit/workflows/discovery_sweep/test_event_sink.py`:
       - `event_sink=None` is a no-op (preserves today's behavior).
       - Sink fires exactly once per source per outcome
         (`started` + (`finished` xor `failed`)).
@@ -52,7 +52,7 @@ defaults to None; stdout emission gated on non-TTY detection).
         ts/findings_count|error).
       - A sink that raises doesn't propagate into the sweep.
       - A slow sink doesn't block other sources' execution.
-- [ ] **1.6** CHANGELOG entry under `### Added`.
+- [x] **1.6** CHANGELOG entry under `### Added`.
 
 ### Phase 1b — `ATTUNE_DS` stdout emission — **shipped 2026-05-13**
 
