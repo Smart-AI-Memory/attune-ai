@@ -4200,3 +4200,90 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   a content-hash filename pattern. Add the buster
   during a UI-iteration session, then remove it when
   shipping the PR (or gate on a `dev` flag).
+
+- **Parallel Claude Code sessions can push to the same
+  PR branch silently — `git push` returning "Everything
+  up-to-date" can mean the peer beat you to it, not
+  that there's nothing to push**: hit 2026-05-14 on
+  PR #358. I had a local commit `e4d8cca9` ready to
+  push; parallel session pushed an extended version
+  (`e4d8cca9 + 4de6a819`) while I was talking with
+  the user, so by the time I ran `git push origin
+  fix/ops-specs-page-width`, my local branch was
+  actually 1 commit BEHIND origin and the push was a
+  no-op. The "Everything up-to-date" message is
+  identical for both "already pushed" and "your local
+  is behind origin." Disambiguation: after the
+  unexpected "up-to-date," always run `git fetch
+  origin <branch> && git log
+  origin/<branch>..HEAD <space>HEAD..origin/<branch>`
+  — if origin/HEAD has commits HEAD doesn't, a peer
+  pushed in the gap. Pairs with the existing
+  "Background processes from previous sessions
+  persist across restarts" lesson — both are
+  multi-agent / multi-session coordination gotchas
+  where the wall-clock between your read and your
+  write isn't a vacuum.
+
+- **Worktree venv bring-up recipe for QA-via-preview**:
+  Cowork-spawned worktrees often ship with a `.venv`
+  that has `attune` installed editable (pointing at
+  the worktree's own `src/`) but is missing the
+  optional `[ops]` and `[dev]` extras. Symptom: `uv
+  run python -m attune.ops` raises
+  `ModuleNotFoundError: No module named 'fastapi'`,
+  and `python -m pytest` raises `ModuleNotFoundError:
+  No module named 'pytest'`. The minimum bring-up
+  for both the ops server AND test runs is:
+  ```bash
+  cd /path/to/worktree
+  uv pip install -q fastapi 'uvicorn[standard]' \
+    jinja2 python-multipart pytest pytest-xdist \
+    pytest-asyncio httpx
+  ```
+  Quote `'uvicorn[standard]'` — zsh's bracket
+  globbing eats the unquoted form (see the existing
+  "Always quote pip install extras" lesson). Caveat
+  per the existing "`uv sync` wipes packages
+  installed via `pip install`" lesson: any later
+  `uv sync` against this venv erases these. For
+  one-shot QA work that's fine; for repeatable
+  per-worktree environments, add the deps to
+  `pyproject.toml`'s `[dev]` extra instead. Solves
+  the previously-painful step where you can't
+  preview-from-worktree because the editable install
+  finder beats PYTHONPATH and the only way to make
+  the server resolve to the worktree's code is to
+  use the worktree's own venv.
+
+- **CI matrix-wide red on a feature PR is usually
+  one root-cause test, not N independent bugs —
+  diagnose the count BEFORE diagnosing the failures**:
+  PR #358 showed 12-of-12 platform×Python test cells
+  failing plus the coverage check. Reading the output
+  naively suggests a major regression. Actual count
+  of *unique* failing tests across the whole matrix:
+  **one** —
+  `tests/unit/ops/test_specs_dashboard.py::
+  test_specs_page_writeable_mode_shows_dropdowns`,
+  failing identically on every cell because PR #358
+  intentionally replaced the inline `<select>`
+  markup the test asserted on. Diagnosis pattern:
+  before opening any CI log, run
+  ```bash
+  gh run view <run-id> --log-failed --job <job-id> \
+    | grep -oE 'FAILED tests/[^[:space:]]+' \
+    | sort -u
+  ```
+  on one cell. If the unique failure count is small
+  (often 1), the matrix-wide spread is a
+  multiplier-on-one-bug, not many bugs. Pairs with
+  the existing "Markdown-asserting test breaks on UI
+  redesign" pattern — markup-asserting tests are
+  *especially* prone to this matrix-wide-from-one-
+  failure shape because the assertion runs on every
+  platform but the production change is platform-
+  independent. Operational rule: a markup change in a
+  feature PR's production code should update the
+  markup-asserting tests in the same commit, or CI
+  will be 100% red until you do.
