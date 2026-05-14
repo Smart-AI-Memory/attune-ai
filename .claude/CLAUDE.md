@@ -3983,3 +3983,53 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   number,headRefName --jq '.[] | "#\(.number)
   \(.headRefName)"'` — if non-empty, retarget those
   PRs first.
+
+- **`uv run python -m build` fails with `No module named
+  build` — use `uv run --with build python -m build`
+  instead**: the project's `.venv` does NOT include the
+  `build` PEP-517 frontend (it's not in `pyproject.toml`'s
+  `[dev]` or `[developer]` extras). The release-prep
+  checklist in `chore(release): X.Y.Z` PR bodies says
+  `rm -rf dist/ && uv run python -m build`, but that
+  command bombs unless `build` is somehow already on
+  PATH. The fix is the explicit `--with build` flag:
+  `rm -rf dist/ && uv run --with build python -m build`.
+  Verified during the v6.8.0 release ceremony 2026-05-14
+  — produced `attune_ai-6.8.0-py3-none-any.whl` (1.78 MB)
+  and `attune_ai-6.8.0.tar.gz` (1.75 MB) cleanly. The
+  build step is verification-only since PyPI trusted
+  publishing re-builds the wheel inside the
+  `publish-pypi.yml` workflow on the tag; locally-built
+  artifacts in `dist/` never get uploaded. Either update
+  the release-prep PR template to use `--with build` or
+  add `build` to the `[dev]` extra so the plain command
+  works.
+
+- **`git rebase origin/main` on a stacked PR after its
+  BASE PR has been squash-merged tries to replay the
+  OLD pre-squash commit and conflicts — use `git rebase
+  --onto origin/main <old-base-commit>` to skip past
+  it**: when a base PR (say #324, with branch commit
+  `08c56ecf`) gets squash-merged into main as a new SHA
+  (`cc9f6913`), the stacked PR's branch still has the
+  OLD `08c56ecf` as part of its ancestry. A plain `git
+  rebase origin/main` will try to replay `08c56ecf`
+  first — even though its content is already absorbed
+  into main via the squash — and will conflict because
+  the file-level changes in main came from a different
+  SHA. The fix is `git rebase --onto origin/main
+  <old-base-commit>` which tells git "replay only the
+  commits AFTER `<old-base-commit>` on top of main."
+  Concretely on 2026-05-14:
+  ```
+  # Wrong (replays 2 commits, both conflict)
+  git rebase origin/main
+  # Right (replays only the stacked PR's commits)
+  git rebase --onto origin/main 08c56ecf
+  ```
+  Conflict surface collapses dramatically — in this
+  case from 6 files to 2 files. Pairs with the existing
+  "Stacked PR rebase pattern after merging the base"
+  lesson; that one covers CHANGELOG/tasks.md/
+  _sequencing.md content patterns, this one covers the
+  rebase invocation itself.
