@@ -140,6 +140,42 @@ a:hover {
   color: var(--accent);
 }
 
+.running-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+  margin-right: 12px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  background: #fef3c7;
+  color: #92400e;
+  font-size: 12px;
+  font-weight: 500;
+  text-decoration: none;
+  border: 1px solid #fcd34d;
+}
+.running-badge:hover {
+  background: #fde68a;
+  text-decoration: none;
+}
+.running-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d97706;
+  animation: running-pulse 1.4s ease-in-out infinite;
+}
+.running-workflow {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-size: 11px;
+  color: inherit;
+}
+@keyframes running-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.35; }
+}
+
 .env {
   display: flex;
   align-items: center;

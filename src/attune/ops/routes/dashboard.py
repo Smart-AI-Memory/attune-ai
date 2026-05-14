@@ -16,11 +16,22 @@ router = APIRouter()
 
 def _ctx(request: Request, page: str, **extra) -> dict:
     cfg = request.app.state.config
+    runner = getattr(request.app.state, "runner", None)
+    current_run = None
+    if runner is not None:
+        active = runner.current
+        if active is not None:
+            current_run = {
+                "id": active.id,
+                "workflow": active.workflow,
+                "status": active.status,
+            }
     return {
         "request": request,
         "page": page,
         "project_root": str(cfg.project_root),
         "attune_home": str(cfg.attune_home),
+        "current_run": current_run,
         **extra,
     }
 
