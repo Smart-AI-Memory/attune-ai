@@ -77,6 +77,12 @@ features:
       - src/attune/agents/release/**
     tags: [release, publishing, quality]
 
+  ops-dashboard:
+    description: Local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming
+    files:
+      - src/attune/ops/**
+    tags: [ops, dashboard, runner, workflows, scope-picker, persistence, sse]
+
   refactor-plan:
     description: Detect code smells and generate a prioritized refactoring roadmap
     files:
