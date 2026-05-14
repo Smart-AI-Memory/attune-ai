@@ -3801,3 +3801,47 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   names like `ATTUNE_OPS_DAEMON=1`), so future
   non-daemon consumers can opt in without semantic
   collision.
+
+- **Python bound methods don't preserve identity across
+  attribute lookups — `obj.method is obj.method` is False**:
+  every attribute access on an instance creates a fresh
+  bound-method object. Tests that try to verify "this
+  method was/wasn't wrapped" via `assert runner.start is
+  original_start` will fail even when the original is
+  unchanged. Symptom is confusing: `assert start is start`
+  with the two `start`s being printed as the same name.
+  Fix: assert on side effect, not identity — call the
+  method and check whether the wrap's side effects fired
+  (e.g. mock the wrapped function and check `called`).
+  Hit while testing the Phase 2B server.py runner.start
+  wrap; fixed by switching from identity comparison to
+  behavioral assertion via a mocked watcher target.
+
+- **Monkey-patching a service instance method at construction
+  point is a low-friction wiring trick for feature-flagged
+  side effects across conflict-prone files**: when you need
+  to add per-call behavior to a service class method but
+  can't modify the class file (in-flight PRs touching it,
+  sibling-package boundaries, want to keep the addition
+  behind a feature flag without touching core code), wrap
+  the bound method on the instance at the construction
+  point. Example from discovery-sweep Phase 2B
+  (`src/attune/ops/server.py`):
+  ```python
+  if feature_flag_enabled():
+      _original_start = app.state.runner.start
+      async def _start_with_hook(workflow, *args, **kwargs):
+          run = await _original_start(workflow, *args, **kwargs)
+          if workflow == "X":
+              asyncio.create_task(side_effect(run, config))
+          return run
+      app.state.runner.start = _start_with_hook  # type: ignore[method-assign]
+  ```
+  Properties: opt-in (gated on flag), local (only this
+  app instance is patched, not the class), reversible
+  (delete the block to revert), and ideally migrates to
+  a proper hook once the underlying class can accept
+  one. The `*args, **kwargs` passthrough also future-
+  proofs against signature additions in the wrapped
+  method (e.g. PR #324 adding `path=None` to
+  `RunnerService.start`).
