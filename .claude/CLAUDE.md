@@ -4033,3 +4033,94 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   lesson; that one covers CHANGELOG/tasks.md/
   _sequencing.md content patterns, this one covers the
   rebase invocation itself.
+
+- **`/static/*.js` is served without `Cache-Control`, so
+  returning users keep the OLD JS after a release — any
+  feature whose new code lives in the JS exports block
+  goes silently dark for them**: `attune.ops` serves
+  `runner.js` with `etag` + `last-modified` but no
+  `Cache-Control` header. Browsers default to heuristic
+  freshness and skip even the conditional GET for a
+  while. After PR #344 added a 17-key
+  `window.__attuneRunner` export block (was 5 keys), a
+  session that had loaded the dashboard pre-6.8.0 kept
+  the cached 5-key runner.js; `restoreScopeOnLoad` and
+  the rest of the scope-picker logic never ran, picker
+  silently always defaulted to Project-wide, and
+  localStorage values sat unused. Diagnosis tell:
+  `Object.keys(window.__attuneRunner).length` mismatches
+  a fresh `fetch("/static/js/runner.js?bust=...")` count.
+  Two fixes: (1) version-bust the static URL in
+  `base.html` via
+  `<script src="{{ url_for('static', path='js/runner.js') }}?v={{ attune.__version__ }}">`,
+  invalidates per release; (2) ship `Cache-Control:
+  no-cache, must-revalidate` on `/static/*` so browsers
+  always conditional-GET. (1) is preferred — keeps
+  cache headers permissive but bumps the URL on each
+  release. Generalizes to any dashboard whose feature
+  rollout depends on JS changes shipping atomically
+  with Python changes.
+
+- **`/runs/<id>/view` 404s on refresh once the run is
+  evicted from `RunnerService._runs` (history_limit=20),
+  even though the JSON record exists on disk** — the
+  route only calls `runner.get(run_id)` (in-memory dict
+  lookup, `runner.py:270`) and doesn't fall back to
+  `~/.attune/ops/runs/<wf>/<id>.json`. After ~20 runs in
+  a session OR a server restart, "refresh the run page"
+  loses the run from the user's POV. Pairs with the
+  surrounding UX gaps that compound the cost: Home's
+  "Recent runs" table at `home.html:46-59` has plain
+  `<td>` cells with no link to `/runs/<id>/view`, the
+  409 "runner busy" response embeds the running
+  `run_id` as text not a link
+  (`runner.js:190-204`), and the top nav has no global
+  "currently running" indicator. Net effect: a user who
+  navigates away from `/runs/<id>/view`, or refreshes
+  after eviction, can't get back to the run, clicks Run
+  again, spawns a fresh subprocess via
+  `attune.cli_minimal workflow run <name>`, and pays
+  the Anthropic API cost twice. Smallest fix: make
+  Home's recent-runs rows `<a>` elements + link the
+  `run_id` in the 409 message + add disk-fallback to
+  the run_view route. All three together are ~30 LOC.
+
+- **Home's 7-day spend / today's events always show 0
+  because `read_telemetry_summary` reads the wrong field
+  name** — `data.py:360` does `event.get("timestamp")`
+  but every entry in `~/.attune/telemetry/usage.jsonl`
+  uses `"ts"` (verified 2026-05-14: 19,014 events with
+  `ts`, 0 with `timestamp`). The per-workflow rollup on
+  the Telemetry tab works because it doesn't rely on
+  date bucketing — only Home's KPIs and the daily
+  activity table read `summary.by_day`, which is empty.
+  Fix is a one-line rename:
+  `event.get("ts") or event.get("timestamp")` to be
+  defensive about both field names. Check for the same
+  pattern anywhere `usage.jsonl` is read — the canonical
+  field has been `ts` since the v1.0 schema; `timestamp`
+  was never a key our writers emitted.
+
+- **Launching `attune.ops` from a worktree when the
+  main checkout is behind origin/main — use main's venv
+  with `PYTHONPATH` override, NOT `uv run` from the
+  worktree**: the existing "`uv run attune` from a
+  worktree serves the MAIN repo's code" lesson covers
+  the routing problem but not the fix when main is
+  stale. Two specific pitfalls: (1) `uv run python -m
+  attune.ops` from the worktree resolves to the
+  worktree's own `.venv` which doesn't have `fastapi`
+  etc.; (2) `uv run --project /main` uses main's venv
+  but main's editable-install MAPPING still points at
+  main's `src/`, so worktree code is invisible. The
+  working invocation is
+  `/path/to/main/.venv/bin/python -m attune.ops
+  --project-root /path/to/main --port 8765
+  --no-browser` with
+  `PYTHONPATH=/path/to/worktree/src` in the env.
+  `--project-root` overrides the cwd-based default so
+  the dashboard's PROJECT label and `cfg.project_root`
+  resolve to the main directory instead of the
+  worktree's slug. Works for any `python -m <pkg>`
+  invocation where you want sibling-venv deps +
+  non-installed source.
