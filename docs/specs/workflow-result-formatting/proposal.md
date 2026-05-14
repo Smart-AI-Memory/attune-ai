@@ -212,6 +212,32 @@ class FindingsSection(Section):
     kind: ClassVar[str] = "findings"
 
 @dataclass
+class NextAction:
+    """A single forward-looking step the user can take after this report.
+
+    `text` is always present and reads as the bullet's main line.
+    `command` is an optional shell command the dashboard can wire to
+    a one-click run button (and the CLI prints syntax-highlighted).
+    `file` is an optional ``path[:line]`` reference the dashboard
+    turns into a clickable link (and the CLI prints as inline code).
+    """
+    text: str
+    command: str | None = None
+    file: str | None = None
+
+@dataclass
+class NextStepsSection(Section):
+    """Forward-momentum section every report should end on when
+    non-empty. Always rendered last in summary mode. Tier is always
+    ``"essential"`` by convention — next steps are the whole point of
+    bothering to make the report scannable. Omitted from the rendered
+    output entirely when ``items`` is empty (don't render an empty
+    ``"Next steps:"`` header).
+    """
+    items: list[NextAction]
+    kind: ClassVar[str] = "next-steps"
+
+@dataclass
 class WorkflowReport:
     title: str
     summary: str = ""
@@ -288,6 +314,32 @@ def _to_workflow_report(rrr: ReleaseReadinessReport) -> WorkflowReport:
         sections.append(ListSection(
             title="Warnings", tier="essential", items=rrr.warnings))
 
+    # Forward momentum — what the user should do next. Outcome-
+    # conditional: success path nudges to the release ceremony,
+    # failure path names a concrete recovery action.
+    next_steps: list[NextAction] = []
+    if rrr.approved:
+        next_steps.append(NextAction(
+            text="All gates pass. Cut the release.",
+            command="attune release prep",
+        ))
+        if undoc_count := _undoc_count_from(rrr):
+            next_steps.append(NextAction(
+                text=f"{undoc_count} undocumented functions — not blocking, "
+                     "but worth closing before users see them.",
+                command="attune workflow run doc-gen --path src/attune/memory/",
+            ))
+    else:
+        # Blockers reference the file/line that failed; surface them
+        # as actionable items, not just status.
+        for b in rrr.blockers:
+            next_steps.append(NextAction(
+                text=f"Resolve blocker: {b.message}",
+                file=b.file_line if b.file_line else None,
+            ))
+    sections.append(NextStepsSection(
+        title="Next steps", tier="essential", items=next_steps))
+
     return WorkflowReport(
         title="Release readiness",
         summary=f"Release {verdict} — confidence: {rrr.confidence}",
@@ -303,9 +355,15 @@ Every section gets a `tier`:
 
 | Tier | Goes where | Example sections |
 |---|---|---|
-| **essential** | Always shown. Drives user's next action. | Verdict callout, quality gates table, blockers, warnings |
+| **essential** | Always shown. Drives user's next action. | Verdict callout, quality gates table, blockers, warnings, **next steps** |
 | **useful** | Shown in summary mode (below essentials). Adds context. | Top-N samples of larger lists, top-level score callouts |
 | **detail** | Hidden in summary mode, shown in `full` mode (= `<details>` on dashboard, `--verbose` on CLI). | Per-agent breakdown, full undocumented-function list, raw findings dicts |
+
+`NextStepsSection` is special — it's always last in `summary` mode and
+always `tier="essential"` when present. A report without forward-
+looking steps is technically valid but unusual; the renderer omits the
+section header entirely when `items` is empty so empty "Next steps:"
+labels never appear.
 
 Internal plumbing (`agent_id`, `mode="rule_based"`, `escalated: bool`,
 `confidence: 0.5`, `tier_used: <Tier.CHEAP: 'cheap'>`) never makes it
@@ -343,6 +401,22 @@ markdown emitter:
 - `ListSection` → unordered list.
 - `FindingsSection` → markdown table sorted by severity, with
   `file:line` formatted as inline code.
+- `NextStepsSection` → bulleted list, last in summary order. Each
+  `NextAction` renders as one bullet:
+  - `text` alone → plain bullet text.
+  - `text` + `command` → bullet followed by a fenced one-liner
+    code block with the command. CLI: `rich` syntax-highlights it
+    so the user can copy. Dashboard: parses the markdown but also
+    augments the rendered HTML with a "Run" button that POSTs to
+    `/workflows/<name>/run` (re-using the existing runner
+    infrastructure) when the command parses as an `attune
+    workflow run <name> …` invocation.
+  - `text` + `file` → bullet with `path:line` as inline code.
+    Dashboard turns it into a link (vscode:// or the existing
+    `file:line` linking pattern in the line renderer). CLI just
+    shows it as inline code.
+  - Both `command` and `file` are independent; either, both, or
+    neither can be present.
 
 Detail-tier sections in `summary` mode get wrapped in `<details>`:
 
@@ -542,10 +616,9 @@ properties that matter.
   a starting point; future PRs tweak.
 - Dashboard structured-panel CSS — visual treatment of the section
   containers, how `<details>` blocks animate when expanded.
-- Whether the voice layer's "What I'd do next" suggestion output
-  (which already exists) becomes a `ProseSection(tier="useful")` at
-  the bottom of every report, or stays as a separate post-report
-  block. Probably the former, but worth a moment in plan.
+- The exact HTML/CSS shape of dashboard "Run" buttons attached to
+  `NextAction` items whose `command` parses as `attune workflow run
+  <name> …`. Plan picks a starting point; dashboard styling refines.
 - Migration order beyond "release-prep first." Heuristic: run
   frequency from telemetry × current output ugliness.
 - The exact config flag name for `show_cost_metrics` — naming
@@ -621,6 +694,18 @@ subscription user):
 - … (41 more)
 
 </details>
+
+## Next steps
+
+- All gates pass. Cut the release.
+  ```
+  attune release prep
+  ```
+- 44 undocumented functions — not blocking, but worth closing before
+  users see them.
+  ```
+  attune workflow run doc-gen --path src/attune/memory/
+  ```
 ````
 
 **What each surface does with that:**
@@ -659,12 +744,12 @@ Brainstorm conversation settled the following premises:
 1. **Reuse `WorkflowReport`, don't invent a new type.** The
    `RenderedReport(summary, details)` shape proposed earlier was
    dropped in favor of growing `WorkflowReport.sections: list[Section]`.
-   `Section` is an ABC with five concrete subclasses
+   `Section` is an ABC with six concrete subclasses
    (`CalloutSection`, `ProseSection`, `TableSection`, `ListSection`,
-   `FindingsSection`). Each section carries its own `tier`. Findings
-   migrate from a top-level field into `FindingsSection`; a `.findings`
-   property + `.from_findings()` constructor preserve the existing
-   ergonomics.
+   `FindingsSection`, `NextStepsSection`). Each section carries its
+   own `tier`. Findings migrate from a top-level field into
+   `FindingsSection`; a `.findings` property + `.from_findings()`
+   constructor preserve the existing ergonomics.
 
 2. **Markdown is the wire format.** A single renderer function turns
    `WorkflowReport` into markdown. Surfaces adapt it (CLI: rich-rendered
@@ -685,6 +770,18 @@ Brainstorm conversation settled the following premises:
    TTY-aware terminal output (color, table layout) that auto-strips
    on pipe-to-file. Markdown stays the source; rich just renders it
    at print time.
+
+6. **Every report ends on forward momentum.** A new `NextStepsSection`
+   carrying `list[NextAction]` is the canonical place for "what the
+   user should do next." Each `NextAction` is `(text, command?, file?)`:
+   the dashboard turns commands into one-click run buttons (re-using
+   the runner infrastructure) and files into clickable links; the CLI
+   prints commands as syntax-highlighted code blocks and files as
+   `file:line` inline code. Reports without forward-looking steps just
+   omit the section. Surfaced as a separate premise (vs. squeezing
+   into `WorkflowReport.suggestions`) because forward momentum is a
+   first-class element of report design — not metadata, not a
+   footnote.
 
 ## Next step
 
