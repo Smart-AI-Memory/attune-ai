@@ -356,6 +356,54 @@ Everything downstream is a small repo edit.
 
 ---
 
+## Resolution — 2026-05-14
+
+Patrick chose **Option C (delete)** rather than Option B
+(disconnect). The `attune-ai` project was removed from the
+`empathy-framework` Vercel team.
+
+**Verification** (commit `69f66714` on `spec/vercel-noise-cleanup`,
+new commit pushed post-deletion):
+
+```
+Vercel: success              → empathy-framework/website/<deploy>
+Vercel Preview Comments: pass
+Vercel Agent Review: skipping
+```
+
+Before: two Vercel commit-status entries — `Vercel – attune-ai`
+(failure on every push) and `Vercel – website` (success). After:
+one entry named simply `Vercel` (success). When only a single
+Vercel project posts statuses to a repo, GitHub doesn't
+disambiguate with the project-name suffix.
+
+**Acceptance criteria from `requirements.md`:**
+
+| # | Criterion | Result |
+|---|-----------|--------|
+| AC-1 | Zero `Vercel – attune-ai` failure statuses on new PRs | ✅ |
+| AC-2 | Working preview check still posts success on new PRs | ✅ |
+| AC-3 | Production site reachable | ✅ (`empathy-framework.vercel.app`) |
+| AC-4 | No required check pointing at `Vercel – attune-ai` | ✅ (none existed) |
+
+**Note on existing PRs:** Pre-existing commits on other open PRs
+(#357, #356, #351, #209) and on `main` retain their historic
+`Vercel – attune-ai: failure` statuses because GitHub commit
+statuses are immutable per-SHA. Those rollups will heal naturally
+on the next push to each branch. No force-push needed.
+
+**Follow-up cleanup PR** (separate from this spec PR) will:
+
+1. Fix `.github/workflows/smoke-tests.yml` — change the
+   `PRODUCTION_URL` default from the squatted
+   `https://attune-ai.vercel.app` to
+   `https://empathy-framework.vercel.app`. This also fixes the
+   silent daily cron failures since at least 2026-05-11.
+2. Remove the obsolete "Vercel – attune-ai is fail-ignore" clause
+   from the `.claude/CLAUDE.md` Lessons Learned section.
+
+---
+
 ## Relevant CLAUDE.md lesson (verbatim)
 
 The following lesson appears in `.claude/CLAUDE.md` under
