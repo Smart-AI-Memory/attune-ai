@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 1 (ops-integration spec) — engine
+  `event_sink` API. `DiscoverySweepWorkflow.execute()` now accepts
+  optional `event_sink` (async callback) and `sweep_id` (correlation
+  id) kwargs. When `event_sink` is provided, the engine emits
+  `source_started` / `source_finished` / `source_failed` events as
+  plain dicts around each per-source `discover()` call. Delivery is
+  fire-and-forget via `asyncio.create_task`; a slow or raising sink
+  never stalls the sweep (sink exceptions are caught + logged, not
+  propagated). CLI behavior is unchanged — both kwargs default to
+  None and existing callers see no observable difference. Surface
+  designed for in-process consumers (tests, future ops-daemon
+  bridge); the ops dashboard reads the daemon's captured stdout
+  via the upcoming `ATTUNE_DS` line format (Phase 1b). 11 new
+  tests in `tests/unit/workflows/discovery_sweep/test_event_sink.py`
+  cover sink wiring, payload shape, fault tolerance, and slow-sink
+  non-blocking. Spec:
+  `docs/specs/discovery-sweep-ops-integration/`.
+
 - `discovery-sweep` Phase 3.2 — severity-colored badges in
   markdown output. Findings render with ANSI-colored
   `[critical]` (bold red), `[high]` (red), `[medium]` (yellow),
