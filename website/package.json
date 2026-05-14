@@ -4,10 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "npm run build:docs && next build",
-    "build:vercel": "next build",
-    "build:railway": "next build",
+    "build": "npm run check:migration-banner && npm run build:docs && next build",
+    "build:vercel": "npm run check:migration-banner && next build",
+    "build:railway": "npm run check:migration-banner && next build",
     "build:docs": "cd .. && mkdocs build --clean && rm -rf website/public/framework-docs && cp -r site website/public/framework-docs",
+    "check:migration-banner": "tsx scripts/check-migration-banner.ts",
     "start": "next start",
     "lint": "eslint"
   },
@@ -49,6 +50,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.5.9",
     "tailwindcss": "^4",
+    "tsx": "^4.19.2",
     "typescript": "5.9.3"
   }
 }

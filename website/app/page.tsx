@@ -4,6 +4,7 @@ import Footer from '@/components/Footer';
 import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
+import { installCommand } from '@/lib/install-command';
 
 // Doc-toolchain code sample. attune-ai is the parent
 // framework (headlined in the hero); the four packages
@@ -24,7 +25,7 @@ engine = HelpEngine(template_dir=".help/templates")
 print(engine.lookup("security-audit"))
 
 # 4. attune-gui — local dashboard tying it all together.
-#    pip install attune-gui && attune-gui --open`;
+#    ${installCommand()} && attune-gui --open`;
 
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
