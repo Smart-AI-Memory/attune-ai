@@ -24,54 +24,86 @@
 {% endif %}
 
 {% if specs %}
-  <table class="data-table">
+  {# Compact status display: dot + 3-letter code for known statuses,
+     truncated text + dotted underline for custom strings. Full status
+     in title attribute (native tooltip). Click on editable pills swaps
+     to <select> via specs.js. #}
+  {% macro status_code(st) -%}
+    {%- set s = (st or '')|lower|trim -%}
+    {%- if s == 'draft' -%}drf
+    {%- elif s in ('in-review', 'review') -%}rvw
+    {%- elif s == 'approved' -%}apv
+    {%- elif s in ('complete', 'completed', 'done') -%}cpl
+    {%- elif s|length > 8 -%}{{ s[:8] }}…
+    {%- else -%}{{ s }}
+    {%- endif -%}
+  {%- endmacro %}
+  {% macro chip_cls(st) -%}
+    {%- set s = (st or '')|lower|trim -%}
+    {%- if s in ('approved', 'complete', 'completed', 'done') -%}chip-ok
+    {%- elif s in ('in-review', 'review') -%}chip-warn
+    {%- elif s == 'draft' -%}chip-muted
+    {%- else -%}chip-custom
+    {%- endif -%}
+  {%- endmacro %}
+  {% macro is_custom(st) -%}
+    {%- set s = (st or '')|lower|trim -%}
+    {%- if s and s not in ('draft', 'in-review', 'review', 'approved', 'complete', 'completed', 'done') -%}1
+    {%- else -%}0
+    {%- endif -%}
+  {%- endmacro %}
+  <table class="data-table specs-table">
     <thead>
       <tr>
-        <th>Slug</th>
+        <th class="col-slug">Spec</th>
+        <th class="col-mtime">Updated</th>
         {% for phase_name in ("decisions", "requirements", "design", "tasks") %}
-          <th>{{ phase_name|capitalize }}</th>
+          <th class="col-phase">{{ phase_name|capitalize }}</th>
         {% endfor %}
       </tr>
     </thead>
     <tbody>
       {% for s in specs %}
         <tr data-slug="{{ s.slug }}">
-          <td>
-            <a href="/specs/{{ s.slug }}" class="link"><code>{{ s.slug }}</code></a>
+          <td class="col-slug">
+            <a href="/specs/{{ s.slug }}" class="link spec-slug" data-tooltip="{{ s.slug }}" aria-label="{{ s.slug }}"><code>{{ s.slug }}</code></a>
+          </td>
+          <td class="col-mtime">
+            {% if s.last_modified %}
+              {# <time> element + datetime attr: assistive tools can recognise
+                 this as a timestamp; screen readers that support the time role
+                 announce it as a date/time. specs.js syncs aria-label to the
+                 visible relative-time on render so screen readers hear the
+                 friendly "Updated 2h ago" instead of the raw ISO string. #}
+              <time class="spec-mtime" datetime="{{ s.last_modified }}" data-mtime="{{ s.last_modified }}" data-tooltip="{{ s.last_modified }}" aria-label="Updated {{ s.last_modified }}">—</time>
+            {% else %}
+              {# aria-label replaces the visible em-dash for screen readers
+                 so the cell is announced as meaningful text, not punctuation. #}
+              <span class="spec-mtime spec-mtime-empty" aria-label="No update time recorded">—</span>
+            {% endif %}
           </td>
           {% for phase in s.phases %}
-            <td data-phase="{{ phase.name }}">
+            <td class="col-phase" data-phase="{{ phase.name }}">
               {% if not phase.exists %}
-                <span class="chip chip-muted">—</span>
+                <span class="status-pill chip-muted" data-tooltip="No {{ phase.name }}.md file" aria-label="No {{ phase.name }}.md file">—</span>
               {% else %}
-                {% set st = (phase.status or '')|lower %}
-                {% if st in ('approved', 'complete', 'completed', 'done') %}
-                  {% set chip_cls = 'chip-ok' %}
-                {% elif st in ('in-review', 'review') %}
-                  {% set chip_cls = 'chip-warn' %}
-                {% elif st == 'draft' %}
-                  {% set chip_cls = 'chip-muted' %}
-                {% else %}
-                  {% set chip_cls = 'chip' %}
-                {% endif %}
-                {% if allow_run %}
-                  <select
-                    class="status-select {{ chip_cls }}"
-                    data-slug="{{ s.slug }}"
-                    data-phase="{{ phase.name }}"
-                    data-original="{{ phase.status or '' }}"
-                    aria-label="Status for {{ phase.name }} of {{ s.slug }}"
-                  >
-                    {% for opt in ('draft', 'in-review', 'approved', 'complete') %}
-                      <option value="{{ opt }}"{% if (phase.status or '')|lower == opt %} selected{% endif %}>{{ opt }}</option>
-                    {% endfor %}
-                    {% if phase.status and (phase.status|lower) not in ('draft', 'in-review', 'approved', 'complete') %}
-                      <option value="{{ phase.status }}" selected>{{ phase.status }}</option>
-                    {% endif %}
-                  </select>
-                {% else %}
-                  <span class="chip {{ chip_cls }}">{{ phase.status or '(no status)' }}</span>
-                {% endif %}
+                {% set cls = chip_cls(phase.status)|trim %}
+                {% set code = status_code(phase.status)|trim %}
+                {% set custom = is_custom(phase.status)|trim == '1' %}
+                <span
+                  class="status-pill {{ cls }}{% if custom %} status-pill-custom{% endif %}{% if allow_run %} status-pill-editable{% endif %}"
+                  data-tooltip="{{ phase.status or '(no status)' }}"
+                  {% if allow_run %}
+                  data-slug="{{ s.slug }}"
+                  data-phase="{{ phase.name }}"
+                  data-original="{{ phase.status or '' }}"
+                  role="button"
+                  tabindex="0"
+                  aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}. Click to edit."
+                  {% else %}
+                  aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}"
+                  {% endif %}
+                ><span class="status-dot" aria-hidden="true"></span><span class="status-code">{{ code or '(none)' }}</span></span>
               {% endif %}
             </td>
           {% endfor %}

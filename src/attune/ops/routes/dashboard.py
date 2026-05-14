@@ -91,6 +91,13 @@ async def workflows_page(request: Request) -> HTMLResponse:
         supports_path=supports_path,
         first_feature_path=first_feature_path,
         all_code_path=data.ALL_CODE_PATH,
+        # Absolute workspace root used by the scope picker to validate
+        # localStorage-restored paths. A saved scope from a previous
+        # session (possibly a different worktree) that doesn't share
+        # this prefix is treated as stale and discarded — prevents
+        # the run endpoint from getting a cross-workspace path that
+        # will only fail at validation time.
+        workspace_root=str(cfg.project_root),
     )
 
 
@@ -181,6 +188,7 @@ async def specs_page(request: Request) -> HTMLResponse:
                     "root": record.root,
                     "path": record.path,
                     "phases": [asdict(p) for p in record.phases],
+                    "last_modified": record.last_modified,
                 }
             )
     return _render(

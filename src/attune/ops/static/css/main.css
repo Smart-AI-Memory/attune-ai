@@ -597,6 +597,213 @@ a.kpi:hover {
   background-size: 5px 5px, 5px 5px;
   background-repeat: no-repeat;
 }
+
+/* ---------- Specs page: compact status pills ---------- */
+.specs-table {
+  table-layout: fixed;
+  width: 100%;
+}
+.specs-table th,
+.specs-table td {
+  /* Tighter than the default .data-table padding so each phase
+     column can fit a ~10-char code without overlapping neighbors. */
+  padding: 6px 6px;
+}
+.specs-table .col-slug {
+  /* Let the spec column absorb whatever's left after the four fixed
+     phase columns. On wide monitors that means more readable spec
+     names; on narrow ones the min-width keeps it usable. */
+  width: auto;
+  min-width: 180px;
+}
+.specs-table td {
+  /* Needed so CSS tooltips position correctly against each cell. */
+  position: relative;
+}
+.specs-table .col-phase {
+  /* 130px = ~10-char truncated code (8 chars + ellipsis) +
+     dot + gap + pill padding + cell padding + breathing room.
+     Prevents inline-flex pills from spilling into adjacent cells.
+     Pill itself has overflow:hidden so we don't need it on the cell —
+     keeping the cell overflow visible so CSS tooltips can escape. */
+  width: 130px;
+}
+.specs-table .col-mtime {
+  /* Wide enough for relative strings like "2 weeks ago" without
+     wrapping. Tooltip on hover surfaces the absolute ISO timestamp. */
+  width: 110px;
+  white-space: nowrap;
+  color: var(--fg-muted);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+.spec-mtime {
+  /* Dotted-underline hover affordance (matches the dotted-underline
+     rule from feedback_color_and_hover_affordances: tooltip available,
+     non-state info, but no link color because it's not navigation). */
+  text-decoration: underline dotted;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 2px;
+}
+.spec-mtime-empty {
+  text-decoration: none;
+  color: var(--fg-subtle);
+}
+.spec-slug {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  font-family: var(--font-mono);
+  padding: 2px 8px;
+  border-radius: 99px;
+  background-color: var(--bg-soft);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  line-height: 1.4;
+  user-select: none;
+  /* Constrain to the cell so siblings stay aligned, but DO NOT clip
+     here — the [data-tooltip]::after pseudo-element sits above the
+     pill and would be clipped by overflow:hidden. We clip on the
+     inner .status-code span instead (with min-width:0 so the flex
+     child can actually shrink for text-overflow:ellipsis). */
+  max-width: 100%;
+  white-space: nowrap;
+}
+.status-pill .status-dot {
+  flex: 0 0 auto;
+}
+.status-pill .status-code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+.status-pill .status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.8;
+  flex-shrink: 0;
+}
+.status-pill .status-code {
+  letter-spacing: 0.02em;
+}
+.status-pill.chip-ok {
+  background-color: var(--ok-soft);
+  border-color: var(--ok-soft);
+  color: var(--ok);
+}
+.status-pill.chip-warn {
+  background-color: var(--warn-soft);
+  border-color: var(--warn-soft);
+  color: var(--warn);
+}
+.status-pill.chip-muted {
+  background-color: var(--bg-soft);
+  border-color: var(--border);
+  color: var(--fg-muted);
+}
+.status-pill.chip-custom {
+  background-color: var(--bg-soft);
+  border-color: var(--border);
+  color: var(--fg);
+}
+.status-pill-custom .status-code {
+  text-decoration: underline dotted;
+  text-decoration-color: var(--fg-muted);
+  text-underline-offset: 2px;
+}
+.status-pill-editable {
+  cursor: pointer;
+  transition: border-color 0.12s ease;
+}
+.status-pill-editable:hover,
+.status-pill-editable:focus-visible {
+  border-color: var(--accent);
+  outline: none;
+}
+.status-pill.flash-ok {
+  outline: 2px solid var(--ok);
+  outline-offset: 1px;
+  transition: outline 0.3s ease-out;
+}
+.status-pill.flash-err {
+  outline: 2px solid var(--danger);
+  outline-offset: 1px;
+  transition: outline 0.3s ease-out;
+}
+.status-edit-select {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 2px 4px;
+  border: 1px solid var(--accent);
+  border-radius: 6px;
+  background-color: var(--bg);
+  color: var(--fg);
+  /* Don't let a long "(current)" option text widen the select past
+     its cell — clip the displayed value, dropdown still shows full
+     option text when opened. */
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* ---------- CSS tooltips (data-tooltip="...") ----------
+   Replaces native `title` attribute for the Specs page so hover
+   feedback is fast (~100ms) and consistent across browsers. Native
+   `title` has ~500-1500ms delays depending on the browser — too slow
+   to feel responsive when scanning a table.
+   For accessibility, callers should pair `data-tooltip` with
+   `aria-label` (which screen readers read regardless of styling). */
+[data-tooltip] {
+  position: relative;
+}
+[data-tooltip]::after {
+  content: attr(data-tooltip);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--fg);
+  color: var(--bg);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  line-height: 1.4;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 280px;
+  width: max-content;
+  text-align: center;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: opacity 120ms ease, visibility 120ms;
+  transition-delay: 100ms;
+}
+[data-tooltip]:hover::after,
+[data-tooltip]:focus-visible::after {
+  opacity: 1;
+  visibility: visible;
+}
+/* Suppress the tooltip while the pill is in edit mode (the inline
+   <select> takes over — a competing tooltip would be confusing). */
+.status-pill[data-editing="1"]::after {
+  display: none;
+}
 .status-select:disabled {
   opacity: 0.6;
   cursor: wait;

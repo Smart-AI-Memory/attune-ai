@@ -340,18 +340,44 @@
   // unparseable, or malformed.
   function readScopePickerConfig() {
     var el = document.getElementById("scope-picker-config");
-    if (!el) return { firstFeaturePath: "", allCodePath: "" };
+    if (!el) return { firstFeaturePath: "", allCodePath: "", workspaceRoot: "" };
     try {
       var cfg = JSON.parse(el.textContent || "{}");
       return {
         firstFeaturePath:
           typeof cfg.firstFeaturePath === "string" ? cfg.firstFeaturePath : "",
         allCodePath:
-          typeof cfg.allCodePath === "string" ? cfg.allCodePath : ""
+          typeof cfg.allCodePath === "string" ? cfg.allCodePath : "",
+        workspaceRoot:
+          typeof cfg.workspaceRoot === "string" ? cfg.workspaceRoot : ""
       };
     } catch (e) {
-      return { firstFeaturePath: "", allCodePath: "" };
+      return { firstFeaturePath: "", allCodePath: "", workspaceRoot: "" };
     }
+  }
+
+  // Returns true if ``value`` is a scope this workspace can actually
+  // accept at run-trigger time. Catches stale localStorage from a
+  // previous session in a different worktree — the run endpoint would
+  // reject it with "outside allowed directory" anyway, but the scope
+  // picker should never restore a value that's structurally invalid
+  // for the current workspace.
+  //
+  // Rules:
+  //   - "" (Project-wide) is always valid.
+  //   - A relative path (no leading "/") is always treated as valid;
+  //     the server resolves it against project_root at run time.
+  //   - An absolute path is valid iff it equals workspaceRoot or sits
+  //     beneath it (prefix match guarded by trailing-slash to avoid
+  //     "/foo" matching "/foobar").
+  //   - If workspaceRoot is empty (server didn't emit it — old build),
+  //     accept all values to preserve previous behavior.
+  function isScopeInWorkspace(value, workspaceRoot) {
+    if (value === "" || value == null) return true;
+    if (!workspaceRoot) return true;
+    if (value.charAt(0) !== "/") return true;
+    if (value === workspaceRoot) return true;
+    return value.indexOf(workspaceRoot + "/") === 0;
   }
 
   // Apply a scope value to a single row's picker. ``value`` is:
@@ -396,12 +422,27 @@
   //   4. If even "All code" is missing — leave the picker at the
   //      template's Project-wide default (no-op).
   function restoreScopeOnLoad() {
+    var cfg = readScopePickerConfig();
     var saved = loadSavedScope();
     var value;
-    if (saved !== null) {
+    if (saved !== null && isScopeInWorkspace(saved, cfg.workspaceRoot)) {
       value = saved;
     } else {
-      var cfg = readScopePickerConfig();
+      if (saved !== null && !isScopeInWorkspace(saved, cfg.workspaceRoot)) {
+        // Stale absolute path from another worktree / workspace.
+        // Discard so the run endpoint never sees it and so the next
+        // save (after the user picks something) overwrites cleanly.
+        try {
+          window.localStorage.removeItem(SCOPE_STORAGE_KEY);
+        } catch (e) {
+          // INTENTIONAL: best-effort. If localStorage is unavailable
+          // the picker just falls back to defaults on each load.
+        }
+        console.warn(
+          "attune-ops: discarded stale scope (" + saved +
+          ") — not under workspace " + cfg.workspaceRoot
+        );
+      }
       value = cfg.firstFeaturePath || cfg.allCodePath;
     }
     if (value === "") return; // Project-wide is the template default.
