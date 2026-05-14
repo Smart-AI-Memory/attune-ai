@@ -18,6 +18,13 @@
           <a href="{{ href }}" class="nav-link {% if request.url.path == href %}is-active{% endif %}">{{ label }}</a>
         {% endfor %}
       </nav>
+      {% if current_run %}
+        <a class="running-badge" href="/runs/{{ current_run.id }}/view" title="A workflow is running — click to view its output">
+          <span class="running-dot" aria-hidden="true"></span>
+          <span class="running-label">running</span>
+          <code class="running-workflow">{{ current_run.workflow }}</code>
+        </a>
+      {% endif %}
       <div class="env">
         <span class="env-label">project</span>
         <code class="env-value" title="{{ project_root }}">{{ project_root.split('/')[-1] }}</code>

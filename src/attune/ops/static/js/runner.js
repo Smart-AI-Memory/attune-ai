@@ -179,7 +179,8 @@
       wireScopeSave: wireScopeSave,
       SCOPE_STORAGE_KEY: SCOPE_STORAGE_KEY,
       WORKFLOW_NAMES: WORKFLOW_NAMES,
-      SECTION_HEADERS: SECTION_HEADERS
+      SECTION_HEADERS: SECTION_HEADERS,
+      appendBusyErrorLine: appendBusyErrorLine
     };
   }
 
@@ -201,6 +202,51 @@
       }
     }
     return rawText;
+  }
+
+  // Render a 409 "runner busy" error inline with a clickable link to the
+  // currently-running run's view page. Falls back to plain-text rendering
+  // when the payload can't be parsed or the run_id doesn't match our
+  // expected shape (defensive against injection: the href is only
+  // constructed from a value matching ``^[A-Za-z0-9_-]{1,64}$``, which
+  // mirrors the server-side validator at ``dashboard.py:run_view_page``).
+  function appendBusyErrorLine(row, rawText) {
+    var pre = row.querySelector("[data-log]");
+    if (!pre) return;
+    var msg = "another workflow is running";
+    var runId = "";
+    try {
+      var parsed = JSON.parse(rawText);
+      var detail = parsed && parsed.detail ? parsed.detail : {};
+      if (detail.message) msg = String(detail.message);
+      if (detail.current_run_id) runId = String(detail.current_run_id);
+    } catch (e) {
+      // Fall through — plain text rendering below.
+    }
+    // Strict run-id shape check before building the href. Mirrors the
+    // server-side regex; anything else degrades to a plain text run id
+    // without a clickable link.
+    var safeRunId = /^[A-Za-z0-9_-]{1,64}$/.test(runId) ? runId : "";
+    var leader = document.createElement("span");
+    leader.textContent = "[error] " + msg.charAt(0).toUpperCase() + msg.slice(1);
+    pre.appendChild(leader);
+    if (runId) {
+      pre.appendChild(document.createTextNode(" (run "));
+      if (safeRunId) {
+        var link = document.createElement("a");
+        link.href = "/runs/" + encodeURIComponent(safeRunId) + "/view";
+        link.className = "link";
+        var code = document.createElement("code");
+        code.textContent = safeRunId;
+        link.appendChild(code);
+        pre.appendChild(link);
+      } else {
+        pre.appendChild(document.createTextNode(runId));
+      }
+      pre.appendChild(document.createTextNode(")"));
+    }
+    pre.appendChild(document.createTextNode(". Wait for it to finish, then try again.\n"));
+    pre.scrollTop = pre.scrollHeight;
   }
 
   // Format an elapsed-seconds count as "Xs" or "Xm Ys" for readability.
@@ -477,7 +523,13 @@
           // away if the run never started, so the user can see why and
           // retry without losing context.
           showLogPane(row);
-          appendLine(row, "[error] " + formatErrorDetail(resp.status, detail));
+          if (resp.status === 409) {
+            // Render with a clickable link to the in-flight run so the
+            // user can jump back instead of starting a duplicate run.
+            appendBusyErrorLine(row, detail);
+          } else {
+            appendLine(row, "[error] " + formatErrorDetail(resp.status, detail));
+          }
           setStatus(row, "error");
           button.disabled = false;
           return;

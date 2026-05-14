@@ -43,12 +43,13 @@
 <section class="panel">
   <h2>Recent runs</h2>
   {% if recent_runs %}
-    <table class="data-table">
-      <thead><tr><th>Workflow</th><th>Status</th><th class="num">Duration</th><th>Started</th><th class="num">Lines</th></tr></thead>
+    <table class="data-table recent-runs-table">
+      <thead><tr><th>Workflow</th><th>Run</th><th>Status</th><th class="num">Duration</th><th>Started</th><th class="num">Lines</th></tr></thead>
       <tbody>
         {% for r in recent_runs %}
           <tr>
-            <td><code>{{ r.workflow }}</code></td>
+            <td><a href="/runs/{{ r.id }}/view" class="link"><code>{{ r.workflow }}</code></a></td>
+            <td><a href="/runs/{{ r.id }}/view" class="link"><code>{{ r.id[:8] }}</code></a></td>
             <td><span class="chip chip-{{ r.status }}">{{ r.status }}</span></td>
             <td class="num">{% if r.duration_seconds is not none %}{{ '%.1fs'|format(r.duration_seconds) }}{% else %}—{% endif %}</td>
             <td><code class="started">{{ r.started_at[:19] if r.started_at else '—' }}</code></td>
