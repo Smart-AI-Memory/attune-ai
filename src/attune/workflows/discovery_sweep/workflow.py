@@ -31,7 +31,7 @@ from attune.models import ModelTier
 from attune.workflows.base import BaseWorkflow
 from attune.workflows.data_classes import CostReport, WorkflowResult, WorkflowStage
 
-from . import verification
+from . import ds_stdout, verification
 
 logger = logging.getLogger(__name__)
 
@@ -401,7 +401,16 @@ async def _run_source(
 
 
 def _emit_event(sink: EventSink | None, event: dict[str, Any]) -> None:
-    """Fire-and-forget event emission. No-op when ``sink`` is None."""
+    """Fire-and-forget event emission to the in-process sink, with an
+    optional daemon-parseable stdout side-channel (Phase 1b).
+
+    Stdout emission is gated by ``ATTUNE_DS_EMIT=1`` (see
+    :mod:`.ds_stdout`); the daemon sets that when spawning the
+    subprocess. Other invocations (CLI users piping to a file, tests,
+    in-process callers) see no extra output.
+    """
+    if ds_stdout.is_emission_enabled():
+        ds_stdout.emit_event_line(event)
     if sink is None:
         return
     asyncio.create_task(_safe_emit(sink, event))
@@ -551,6 +560,13 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         allocations = self._allocate_budget(sources, budget_usd)
         paths = _expand_path(path)
 
+        # Phase 1b: write the daemon-parseable schema-version line as
+        # the first thing on stdout when emission is enabled. The
+        # daemon's parser refuses unknown versions, so the version
+        # line must precede any event line.
+        if ds_stdout.is_emission_enabled():
+            ds_stdout.emit_version_line()
+
         started_at = datetime.now()
         t0 = time.perf_counter()
 
@@ -576,6 +592,13 @@ class DiscoverySweepWorkflow(BaseWorkflow):
             budget_usd=budget_usd,
             duration_ms=duration_ms,
         )
+
+        # Phase 1b: emit the final SweepResult JSON as the last
+        # ATTUNE_DS line when emission is enabled. Always one line
+        # (newlines stripped by emit_final_line); always the same
+        # JSON shape ``--json`` / ``output_format="json"`` produces.
+        if ds_stdout.is_emission_enabled():
+            ds_stdout.emit_final_line(_render_json(sweep))
 
         return WorkflowResult(
             success=True,

@@ -66,10 +66,11 @@ per-run SSE stream — shipped via PRs #324 / #326 on `release/v6.8.0`)
 │    source_started / source_finished / source_failed events.    │
 │    In-process consumers (tests, future programmatic callers)   │
 │    pass a sink; CLI invocations get None and unchanged output. │
-│  - NEW (Phase 1b, stdout): when stdout is NOT a TTY, engine    │
-│    also writes one ATTUNE_DS line per source event so the      │
-│    daemon (which captures stdout) can parse it. TTY users see  │
-│    nothing extra.                                              │
+│  - NEW (Phase 1b, stdout): when `ATTUNE_DS_EMIT=1` is set in   │
+│    the environment, engine also writes one ATTUNE_DS line per  │
+│    source event so the daemon (which captures stdout) can      │
+│    parse it. CLI users — including pipe-to-file — see nothing  │
+│    extra. (Env-var gate, not TTY detection: see decision #10.) │
 └────────────────────────────────────────────────────────────────┘
 ```
 
@@ -214,9 +215,8 @@ race the original spec worried about can't happen.
 
 ## `ATTUNE_DS` stdout-line format (Phase 1b → Phase 2)
 
-When the engine detects a non-TTY stdout (i.e. the subprocess
-runner has captured `stdout=PIPE`), it writes one line per source
-event in this shape:
+When `ATTUNE_DS_EMIT=1` is set in the environment, the engine
+writes one line per source event in this shape:
 
 ```
 ATTUNE_DS source_started   bug-predict     ts=2026-05-13T12:34:56+00:00
