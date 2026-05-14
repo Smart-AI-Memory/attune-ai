@@ -139,3 +139,52 @@ discovery-sweep detail view.
   title + evidence collapsed) to render in the shared template.
 - If other workflows adopt the structured-emit JSON pattern
   later, the shared run-view extends to them too.
+
+**Revised (Decision #9):** The drill-in view ends up scope-keyed
+(`/workflows/discovery-sweep/results/<scope-hash>?bucket=queue`),
+not run-keyed. The run-view page shown for a discovery-sweep run
+still displays its captured stdout lines (existing
+ops-runner-tier2 behavior); the scope-keyed view is a separate
+template that surfaces "current state for this scope" regardless
+of which run produced it.
+
+---
+
+## 9. Adopt Option A — stdout-emit + sidecar parser (2026-05-13)
+
+**Decision:** After the Phase 0 audit
+([`audit-2026-05-13.md`](audit-2026-05-13.md)) revealed that the
+shipped ops-runner-tier2 surface is subprocess + per-run SSE
+(not the in-process daemon + shared `/events` stream the original
+draft assumed), adopt Option A: engine emits `ATTUNE_DS` prefix
+lines on stdout; daemon parses its own captured stdout at run
+completion; daemon writes scope-keyed JSON the dashboard reads
+for chip counts.
+
+**Q1 — Adopt Option A?** Yes (user approval, 2026-05-13).
+
+**Q2 — Refactor `design.md` / `tasks.md`?** Yes, in the Phase 1
+implementation PR (where the engine API surface ships and the
+shape becomes concrete in code).
+
+**Q3 — Keep `event_sink` in Phase 1?** Yes. Not load-bearing for
+the dashboard, but cheap to add and useful for tests + future
+in-process callers (a hypothetical wizard runner, an embedded
+sweep API for users with their own daemon, etc.).
+
+**Reasoning for Option A over Option B (in-process exec):**
+
+- Preserves the subprocess invariant for the runner. Flipping one
+  workflow to in-process would set a precedent every future
+  workflow has to argue about.
+- Preserves the single-run lock and `run_id` correlation (no
+  `sweep_id` needed).
+- Daemon-side parsing is one regex per event kind; ~50 LoC.
+- The CLI's existing `--json` flag remains the canonical
+  machine-readable surface; the stdout-line format is strictly
+  additive.
+
+**Consequence:** the engine's `event_sink` callback is not how
+the daemon hears about per-source progress. The daemon hears
+stdout. `event_sink` is a parallel surface for in-process
+callers only.

@@ -22,8 +22,9 @@ import asyncio
 import glob as _glob
 import logging
 import time
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Literal, Protocol, runtime_checkable
 
 from attune.models import ModelTier
@@ -37,6 +38,47 @@ logger = logging.getLogger(__name__)
 Severity = Literal["critical", "high", "medium", "low", "info"]
 
 DEFAULT_BUDGET_USD: float = 10.00
+
+
+# ---------------------------------------------------------------------------
+# Per-source telemetry (Phase 1 of discovery-sweep-ops-integration)
+# ---------------------------------------------------------------------------
+#
+# The engine emits source_started / source_finished / source_failed events
+# via an optional `event_sink` callback. Defaults to None — CLI callers
+# get exactly today's behavior; daemon callers (Phase 2) pass a sink that
+# bridges to the ops dashboard's SSE stream.
+#
+# Fire-and-forget delivery: a slow or raising sink must not stall the
+# sweep (NFR-2 in the spec). `_safe_emit` wraps the sink so exceptions
+# are logged, not propagated.
+
+EventSink = Callable[[dict[str, Any]], Awaitable[None]]
+
+
+def _iso_now() -> str:
+    """Timezone-aware ISO-8601 timestamp used for every event."""
+    return datetime.now(timezone.utc).isoformat()
+
+
+async def _safe_emit(sink: EventSink, event: dict[str, Any]) -> None:
+    """Await ``sink(event)`` and swallow + log any exception.
+
+    Run as a fire-and-forget task via :func:`asyncio.create_task`, so
+    the sweep never waits on the sink. A raising sink logs at
+    exception level and is silently dropped — observability never
+    breaks correctness.
+    """
+    try:
+        await sink(event)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: event delivery is best-effort observability;
+        # sink failures must not propagate into the sweep.
+        logger.exception(
+            "event_sink failed for event %s source %s",
+            event.get("event"),
+            event.get("source"),
+        )
 
 
 # ---------------------------------------------------------------------------
@@ -302,6 +344,9 @@ async def _run_source(
     source: FindingSource,
     paths: list[str],
     budget_usd: float,
+    *,
+    event_sink: EventSink | None = None,
+    sweep_id: str | None = None,
 ) -> tuple[str, list[Finding] | BaseException]:
     """Wrap a single source.discover() so the gather() never raises.
 
@@ -309,14 +354,57 @@ async def _run_source(
     either the source's findings list or the exception it raised.
     Centralizing this here keeps the engine's gather call clean and
     keeps source-failure rendering in one place.
+
+    When ``event_sink`` is provided, emits ``source_started`` before
+    ``source.discover()``, then ``source_finished`` (with
+    ``findings_count``) or ``source_failed`` (with ``error`` =
+    exception class name). Events are delivered fire-and-forget via
+    :func:`asyncio.create_task` so sink latency never stalls the
+    sweep; sink exceptions are caught + logged by :func:`_safe_emit`.
     """
+    _emit_event(
+        event_sink,
+        {
+            "event": "source_started",
+            "source": source.name,
+            "sweep_id": sweep_id,
+            "ts": _iso_now(),
+        },
+    )
     try:
         findings = await source.discover(paths, budget_usd)
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: per spec NFR-1, source failures must not abort
         # the sweep; convert them to a questions entry downstream.
+        _emit_event(
+            event_sink,
+            {
+                "event": "source_failed",
+                "source": source.name,
+                "sweep_id": sweep_id,
+                "ts": _iso_now(),
+                "error": type(exc).__name__,
+            },
+        )
         return source.name, exc
+    _emit_event(
+        event_sink,
+        {
+            "event": "source_finished",
+            "source": source.name,
+            "sweep_id": sweep_id,
+            "ts": _iso_now(),
+            "findings_count": len(findings),
+        },
+    )
     return source.name, findings
+
+
+def _emit_event(sink: EventSink | None, event: dict[str, Any]) -> None:
+    """Fire-and-forget event emission. No-op when ``sink`` is None."""
+    if sink is None:
+        return
+    asyncio.create_task(_safe_emit(sink, event))
 
 
 _GLOB_CHARS: frozenset[str] = frozenset("*?[")
@@ -403,6 +491,18 @@ class DiscoverySweepWorkflow(BaseWorkflow):
                 or ``"json"`` (machine-readable, matches design.md
                 § Data model). ``verbose`` is implied for ``"json"``
                 — JSON output always carries all three buckets.
+            event_sink: Optional async callback receiving per-source
+                ``source_started`` / ``source_finished`` /
+                ``source_failed`` events as plain dicts. Fire-and-
+                forget delivery — a slow or raising sink never
+                stalls the sweep. Defaults to None (no emission).
+                See ``docs/specs/discovery-sweep-ops-integration/
+                design.md`` for the event shape.
+            sweep_id: Optional correlation id propagated into every
+                event. Engine does not generate it; callers supply
+                one if they need to correlate events across runs
+                (the ops daemon passes its ``run_id``; CLI leaves
+                it None).
         """
         path: str = kwargs.get("path", "")
         budget_usd: float = float(kwargs.get("budget_usd", DEFAULT_BUDGET_USD))
@@ -412,6 +512,8 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         verbose: bool = bool(kwargs.get("verbose", False))
         output_format: str = str(kwargs.get("output_format", "markdown"))
         depth: str | None = kwargs.get("depth")
+        event_sink: EventSink | None = kwargs.get("event_sink")
+        sweep_id: str | None = kwargs.get("sweep_id")
 
         if not path:
             return self._error_result("path argument is required")
@@ -453,7 +555,16 @@ class DiscoverySweepWorkflow(BaseWorkflow):
         t0 = time.perf_counter()
 
         gathered = await asyncio.gather(
-            *(_run_source(s, paths, allocations[s.name]) for s in sources),
+            *(
+                _run_source(
+                    s,
+                    paths,
+                    allocations[s.name],
+                    event_sink=event_sink,
+                    sweep_id=sweep_id,
+                )
+                for s in sources
+            ),
             return_exceptions=False,
         )
 
