@@ -179,6 +179,29 @@ class TestFaultTolerance:
         # Logged the failure for the operator.
         assert any("persistence failed" in r.getMessage() for r in caplog.records)
 
+    def test_subscription_exception_is_caught(
+        self, cfg: Config, caplog: pytest.LogCaptureFixture
+    ) -> None:
+        # Run.subscribe() doesn't realistically raise (it's a generator
+        # backed by an asyncio.Queue), but the watcher's defensive
+        # try/except needs coverage. Replace subscribe with a function
+        # that raises and assert: no exception propagates, persistence
+        # is skipped, the failure is logged at exception level.
+        class _BrokenRun:
+            workflow = "discovery-sweep"
+            id = "broken-1"
+            exit_code = 0
+            lines: list[str] = []
+
+            def subscribe(self):
+                raise RuntimeError("queue collapsed")
+
+        with patch("attune.ops.sweep_results_watcher.sweep_results.persist_from_lines") as persist:
+            with caplog.at_level("ERROR"):
+                asyncio.run(watch_and_persist(_BrokenRun(), cfg))  # type: ignore[arg-type]
+        persist.assert_not_called()
+        assert any("subscription failed" in r.getMessage() for r in caplog.records)
+
     def test_no_final_line_logs_info_but_no_crash(
         self, cfg: Config, caplog: pytest.LogCaptureFixture
     ) -> None:
