@@ -72,17 +72,31 @@ def test_specs_page_lists_specs_with_status_chips(tmp_path):
     assert "draft" in r.text
 
 
-def test_specs_page_writeable_mode_shows_dropdowns(tmp_path):
-    """allow_run=True → status renders as a <select> not a <span>."""
+def test_specs_page_writeable_mode_shows_editable_pills(tmp_path):
+    """allow_run=True → status renders as an editable pill (click-to-edit).
+
+    Earlier versions rendered inline ``<select>`` dropdowns server-side.
+    PR #358 swapped that for compact status pills that swap to a select
+    on click via specs.js. We verify the writeable-mode markers
+    (status-pill-editable class, role=button, tabindex, data attributes)
+    are present, and that no inline ``<select>`` is rendered until the
+    user clicks the pill.
+    """
     root = tmp_path / "specs"
     _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
     client = _client(tmp_path, specs_roots=(root,), allow_run=True)
     r = client.get("/specs")
     assert r.status_code == 200
-    assert "<select" in r.text
-    assert "status-select" in r.text
+    # No inline <select> — that's now created client-side on click.
+    assert "<select" not in r.text
+    # Pills carry the writeable markers so specs.js can wire click-to-edit.
+    assert "status-pill-editable" in r.text
+    assert 'role="button"' in r.text
+    assert 'tabindex="0"' in r.text
+    # Per-cell data attributes feed the PUT /api/specs/.../status call.
     assert 'data-slug="alpha"' in r.text
     assert 'data-phase="tasks"' in r.text
+    assert 'data-original="draft"' in r.text
 
 
 def test_specs_page_readonly_mode_no_dropdowns(tmp_path):
