@@ -1,12 +1,18 @@
 # Tasks — Discovery-Sweep Ops Dashboard Integration
 
 **Status:** draft (2026-05-13) — not yet open for implementation
-**Spec docs:** `requirements.md`, `design.md`, `decisions.md`
-**Blocks on:** `docs/specs/ops-runner-tier2/` Phase 2
+**Spec docs:** `requirements.md`, `design.md`, `decisions.md`,
+[`audit-2026-05-13.md`](audit-2026-05-13.md)
+**Blocks on:** Decision Q1–Q3 in the audit doc (see below).
 
-> **Open this spec for implementation** when ops-runner-tier2
-> Phase 2 lands and provides the SSE event stream + the dashboard
-> workflow-list page this spec builds on.
+> **Open this spec for implementation** once the Phase 0 audit
+> ([`audit-2026-05-13.md`](audit-2026-05-13.md)) is approved.
+> The audit re-verified the spec against the actually-shipped
+> ops-runner-tier2 surface and proposes a revised design (Option A
+> — stdout-emit + sidecar parser) that the original `design.md`
+> and Phases 1–2 need to be aligned to. Until the audit's decision
+> questions are resolved, do not open implementation PRs against
+> the un-revised `tasks.md` below.
 
 ---
 
