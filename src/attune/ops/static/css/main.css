@@ -485,6 +485,27 @@ a.kpi:hover {
   font-family: var(--font-mono);
   font-size: 11px;
   font-weight: 500;
+  cursor: pointer;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+}
+.log-output .log-workflow:hover {
+  border-color: var(--accent);
+  background-color: var(--accent-soft);
+}
+.log-output .log-workflow.pill-disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
+/* Inline error surfaced when a pill click can't start a run (busy,
+   read-only, etc.). Sits in the run-view-head section above the log. */
+.run-view-error {
+  margin-top: 8px;
+  padding: 6px 10px;
+  background: var(--danger-soft);
+  color: var(--danger);
+  border: 1px solid var(--danger-soft);
+  border-radius: var(--radius-sm, 6px);
+  font-size: 12px;
 }
 .log-output .log-header {
   font-weight: 600;
@@ -617,6 +638,82 @@ a.kpi:hover {
   font-size: 12px;
   color: var(--fg-subtle);
   font-style: italic;
+}
+
+/* Recent-runs strip (ops-runner-tier2 Phase 3). Shown below each
+   workflow row and at the top of the run-view page. */
+.recent-runs,
+.run-view-history {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+  margin-top: 8px;
+  font-size: 11px;
+}
+.run-view-history {
+  margin: 12px 0 8px 0;
+}
+.recent-runs-label {
+  color: var(--fg-subtle);
+  font-style: italic;
+  margin-right: 2px;
+}
+.recent-run-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background-color: var(--bg-soft);
+  color: var(--fg);
+  text-decoration: none;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  transition: background-color 0.12s ease, border-color 0.12s ease;
+}
+.recent-run-chip:hover {
+  border-color: var(--accent);
+  background-color: var(--accent-soft, var(--bg-soft));
+  text-decoration: none;
+}
+.recent-run-chip.chip-ok {
+  border-color: var(--ok-soft);
+  background-color: var(--ok-soft);
+  color: var(--ok);
+}
+.recent-run-chip.chip-danger {
+  border-color: var(--danger-soft, var(--bg-soft));
+  background-color: var(--danger-soft, var(--bg-soft));
+  color: var(--danger);
+}
+.recent-run-chip.chip-warn {
+  border-color: var(--warn-soft);
+  background-color: var(--warn-soft);
+  color: var(--warn);
+}
+.recent-run-chip.chip-muted {
+  color: var(--fg-muted);
+}
+.recent-run-status {
+  font-size: 10px;
+  opacity: 0.7;
+  text-transform: lowercase;
+}
+.run-view-scope {
+  color: var(--fg-muted);
+}
+.chained-from {
+  font-size: 12px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono);
+  margin-left: 8px;
+}
+.chained-from a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 /* Spec drill-in: phase body in a readable monospace block. */

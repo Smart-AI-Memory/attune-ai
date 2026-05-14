@@ -8,6 +8,7 @@
   <h1>
     <code>{{ run.workflow }}</code>
     <span class="run-id-chip">run <code>{{ run.id[:12] }}</code></span>
+    <span class="chained-from" data-chained-from hidden></span>
   </h1>
   <p class="page-sub run-view-meta">
     <span class="run-view-status chip" data-status>{{ run.status }}</span>
@@ -17,7 +18,11 @@
     {% if run.started_at %}
       <span class="run-view-started">started <code>{{ run.started_at }}</code></span>
     {% endif %}
+    {% if run.path %}
+      <span class="run-view-scope">scope <code>{{ run.path }}</code></span>
+    {% endif %}
   </p>
+  <div class="run-view-history" data-recent-runs="{{ run.workflow }}" hidden></div>
 </section>
 
 <pre class="log-output run-view-log" data-log></pre>
@@ -30,91 +35,21 @@
 {% endblock %}
 
 {% block scripts %}
-<script>
-(function () {
-  "use strict";
-
-  // Server-rendered, escaped via Jinja autoescape — safe for use in JS.
-  var STREAM_URL = {{ stream_url|tojson }};
-  var INITIAL_STATUS = {{ run.status|tojson }};
-
-  var pre = document.querySelector("[data-log]");
-  var statusEl = document.querySelector("[data-status]");
-  var startedAt = Date.now();
-  var tickerId = null;
-
-  function setStatus(text) {
-    if (statusEl) statusEl.textContent = text;
-  }
-
-  function setStatusClass(extra) {
-    if (!statusEl) return;
-    statusEl.className = "run-view-status chip " + (extra || "");
-  }
-
-  function appendLine(line) {
-    pre.appendChild(document.createTextNode(line + "\n"));
-    pre.scrollTop = pre.scrollHeight;
-  }
-
-  function startTicker() {
-    if (tickerId) return;
-    tickerId = setInterval(function () {
-      var s = Math.floor((Date.now() - startedAt) / 1000);
-      var label;
-      if (s < 60) {
-        label = s + "s";
-      } else {
-        label = Math.floor(s / 60) + "m " + (s % 60) + "s";
-      }
-      setStatus("running " + label);
-    }, 1000);
-  }
-
-  function stopTicker() {
-    if (tickerId) {
-      clearInterval(tickerId);
-      tickerId = null;
-    }
-  }
-
-  // Always attach to the SSE stream. The runner replays buffered lines
-  // to new subscribers, so a refresh on an in-progress (or completed)
-  // run shows the full history before any new events.
-  var es = new EventSource(STREAM_URL);
-
-  if (INITIAL_STATUS === "running" || INITIAL_STATUS === "pending") {
-    startTicker();
-  } else {
-    setStatusClass(
-      INITIAL_STATUS === "completed" ? "chip-ok" :
-      INITIAL_STATUS === "failed" ? "chip-danger" :
-      "chip-muted"
-    );
-  }
-
-  es.addEventListener("line", function (ev) {
-    appendLine(JSON.parse(ev.data));
-  });
-
-  es.addEventListener("done", function (ev) {
-    var info = JSON.parse(ev.data);
-    stopTicker();
-    setStatus(info.status + " (exit " + info.exit_code + ")");
-    setStatusClass(
-      info.status === "completed" ? "chip-ok" :
-      info.status === "failed" ? "chip-danger" :
-      "chip-muted"
-    );
-    es.close();
-  });
-
-  es.addEventListener("error", function () {
-    stopTicker();
-    setStatus("stream error");
-    setStatusClass("chip-danger");
-    es.close();
-  });
-})();
+{# Server-injected configuration for run_view.js. Using a tagged
+   JSON block avoids global-namespace pollution and is unambiguously
+   data (not a script). #}
+<script id="run-view-data" type="application/json">
+{
+  "stream_url": {{ stream_url|tojson }},
+  "initial_status": {{ run.status|tojson }},
+  "workflow": {{ run.workflow|tojson }},
+  "path": {{ run.path|tojson }},
+  "allow_run": {{ allow_run|tojson }}
+}
 </script>
+{# runner.js provides the shared setupRecentRuns helper that
+   run_view.js calls. Loaded BEFORE run_view.js so the helper is
+   available when run_view.js initializes. #}
+<script src="{{ url_for('static', path='js/runner.js') }}"></script>
+<script src="{{ url_for('static', path='js/run_view.js') }}"></script>
 {% endblock %}

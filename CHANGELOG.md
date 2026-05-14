@@ -136,6 +136,34 @@ Two follow-up beats already in flight:
   non-blocking. Spec:
   `docs/specs/discovery-sweep-ops-integration/`.
 
+- Ops dashboard persisted run history + chainable workflow pills
+  (ops-runner-tier2 Phase 3 + Phase 4). Completed runs are now
+  written to `<attune_home>/ops/runs/<workflow>/<run-id>.json`
+  atomically (write to `.json.tmp` → `replace`) with the log
+  buffer capped at 200 KB and a `<TRUNCATED — N bytes more>`
+  marker. A startup sweep (`--runs-retention-days`, default 30,
+  `0` disables) deletes records older than the retention window.
+  Read-only mode (`--read-only`) disables persistence entirely so
+  a read-only dashboard never writes to `~/.attune/`. New
+  read-only API endpoints `GET /api/runs/{workflow}` (newest 20,
+  metadata only) and `GET /api/runs/{workflow}/{run_id}` (full
+  record including log) back a recent-runs strip below each
+  workflow row and at the top of the run-view page. The strip
+  renders one chip per run with status-colored borders + a
+  scope tooltip; clicking a chip navigates to the run-view page.
+  Phase 4 makes `.log-workflow` pills inside the streaming log
+  clickable: a click POSTs `/workflows/<target>/run` carrying the
+  source run's scope path and navigates to the new run's view
+  with `?from=<source-workflow>` so a "↩ from <name>" badge
+  shows in the header. The inline run-view script was extracted
+  to `static/js/run_view.js`; server-injected config flows
+  through a `<script type="application/json" id="run-view-data">`
+  block instead of inline JS. The global 404 handler now
+  dispatches JSON for `/api/*` paths and HTML otherwise. 32 new
+  tests cover the persistence write/read paths, log truncation,
+  pruning, the history API (in-memory + on-disk merge, bad-name
+  rejection, traversal rejection), and template + JS surface
+  shape.
 - Ops dashboard scope picker (ops-runner-tier2 Phase 2) — each
   workflow row in `/workflows` now has a per-row dropdown that
   scopes the run to one feature (parsed from

@@ -163,6 +163,9 @@
       appendLine: appendLine,
       getScope: getScope,
       wireScopePickerToggle: wireScopePickerToggle,
+      setupRecentRuns: setupRecentRuns,
+      renderRecentRunsInto: renderRecentRunsInto,
+      statusClass: statusClass,
       WORKFLOW_NAMES: WORKFLOW_NAMES,
       SECTION_HEADERS: SECTION_HEADERS
     };
@@ -247,6 +250,68 @@
     });
   }
 
+  // Fetch /api/runs/<workflow> and render up to 5 chips into the
+  // container element. Each chip is a real anchor element (no
+  // innerHTML — workflow name and run id are user-controlled enough
+  // that we'd rather treat them as untrusted, and DOM nodes are
+  // unambiguous about that).
+  function setupRecentRuns(container) {
+    if (!container) return;
+    var workflow = container.getAttribute("data-recent-runs");
+    if (!workflow) return;
+    fetch("/api/runs/" + encodeURIComponent(workflow), {
+      headers: { Accept: "application/json" }
+    })
+      .then(function (resp) {
+        if (!resp.ok) return null;
+        return resp.json();
+      })
+      .then(function (body) {
+        if (!body || !body.runs || body.runs.length === 0) return;
+        renderRecentRunsInto(container, body.runs.slice(0, 5));
+      })
+      .catch(function () {
+        // INTENTIONAL: history is a nice-to-have; a failed fetch
+        // leaves the container hidden (its default state) so the
+        // page renders normally without it.
+      });
+  }
+
+  function renderRecentRunsInto(container, runs) {
+    while (container.firstChild) container.removeChild(container.firstChild);
+    var label = document.createElement("span");
+    label.className = "recent-runs-label";
+    label.textContent = "Recent: ";
+    container.appendChild(label);
+    runs.forEach(function (run) {
+      var a = document.createElement("a");
+      a.className = "recent-run-chip chip-" + statusClass(run.status);
+      a.href = "/runs/" + encodeURIComponent(run.id) + "/view";
+      // Compact label: short id + scope marker. Status conveyed via
+      // chip color, not extra text — keeps the strip narrow.
+      var idTxt = document.createElement("code");
+      idTxt.textContent = String(run.id).slice(0, 8);
+      a.appendChild(idTxt);
+      if (run.path) {
+        a.title = "scope: " + run.path;
+      }
+      a.appendChild(document.createTextNode(" "));
+      var statusTxt = document.createElement("span");
+      statusTxt.className = "recent-run-status";
+      statusTxt.textContent = String(run.status || "?");
+      a.appendChild(statusTxt);
+      container.appendChild(a);
+    });
+    container.hidden = false;
+  }
+
+  function statusClass(status) {
+    if (status === "completed") return "ok";
+    if (status === "failed") return "danger";
+    if (status === "running" || status === "pending") return "warn";
+    return "muted";
+  }
+
   // Export getScope for tests (alongside the existing rendering helpers).
   // Note: window.__attuneRunner is populated farther below, after these
   // helpers are defined; the assignment block lives at the same scope.
@@ -295,5 +360,6 @@
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("[data-run-button]").forEach(attach);
     document.querySelectorAll("tr[data-workflow]").forEach(wireScopePickerToggle);
+    document.querySelectorAll("[data-recent-runs]").forEach(setupRecentRuns);
   });
 })();
