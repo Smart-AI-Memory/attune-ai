@@ -357,7 +357,12 @@ def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> Telemetry
                 cost = float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
                 savings = float(event.get("savings", 0.0) or 0.0)
                 workflow = str(event.get("workflow") or event.get("event_type") or "unknown")
-                ts = str(event.get("timestamp") or "")
+                # ``usage.jsonl`` events use the ``ts`` key (v1.0 schema in
+                # UsageTracker._format_entry); ``timestamp`` is kept as a
+                # legacy fallback for any rotated archives that predate the
+                # rename. Without this fallback every event silently misses
+                # the by_day bucketing and Home's KPI tiles read zero.
+                ts = str(event.get("ts") or event.get("timestamp") or "")
 
                 total_requests += 1
                 total_cost += cost
