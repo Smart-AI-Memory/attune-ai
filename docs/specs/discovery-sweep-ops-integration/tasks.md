@@ -77,33 +77,61 @@ the right points in `execute()` and `_emit_event`.
 
 ---
 
-## Phase 2 — Daemon-side parser + scope-keyed persistence
+## Phase 2A — Sweep-results storage primitives — **shipped 2026-05-13**
 
-Goal: teach the ops daemon to recognize discovery-sweep runs,
-parse `ATTUNE_DS` lines from captured stdout, and persist a
-scope-keyed JSON the dashboard reads. **Lands behind a feature
-flag** so it's revertable to read-only mode.
+Goal: ship the scope-keyed persistence module as a pure utility
+that anyone can compose, without touching the runner. The
+auto-persist hook + HTTP route + server wiring split off into
+Phase 2B (blocked until PRs #324 / #326 / #328 land on `main` and
+unblock the conflict-prone files).
 
-- [ ] **2.1** Add a post-run hook to `RunnerService._execute`
-      keyed by workflow name. When `run.workflow ==
-      "discovery-sweep"` AND `run.exit_code == 0`, invoke the
-      `ATTUNE_DS` parser.
-- [ ] **2.2** Parser module under `src/attune/ops/` (NEW file —
-      avoids touching the conflict-prone `runner.py`). Parses
-      `run.lines` into a list of events + final JSON. Refuses
-      unknown `ATTUNE_DS_VERSION` values.
-- [ ] **2.3** Atomic write of `<scope-hash>.json` to
-      `~/.attune/ops/sweep-results/` (tempfile + os.replace).
-      `<scope-hash> = sha256(canonicalized_path)[:16]`.
-- [ ] **2.4** Add `GET /workflows/discovery-sweep/results/<hash>`
-      route in a NEW router module under `src/attune/ops/routes/`
-      (NEW file — avoids touching the conflict-prone
-      `routes/runner.py`). 404 if no sweep has run.
-- [ ] **2.5** Feature flag: `ATTUNE_OPS_SWEEP_RESULTS=1` env var
-      to enable the post-run hook and route. Off by default.
-- [ ] **2.6** Tests: parser round-trip; missing file → 404;
-      malformed sidecar → 500 with diagnostic; concurrent writes
-      to different scopes don't collide.
+- [x] **2A.1** Parser + persistence primitives in NEW file
+      `src/attune/ops/sweep_results.py`:
+      - `scope_hash(path)` — sha256 of canonicalized path, first
+        16 hex chars. Equivalent paths (`./src`, `src/`,
+        absolute) collapse to the same digest.
+      - `parse_lines(lines)` — walks captured stdout, returns the
+        final SweepResult JSON dict or `None`. Refuses unknown
+        `ATTUNE_DS_VERSION` values.
+      - `persist_result(scope_path, sweep_dict, config)` — atomic
+        write via tempfile + `os.replace` in the same dir, so a
+        partial write never corrupts the read side.
+      - `read_result(digest, config)` — reads `<hash>.json` or
+        returns `None`.
+      - `persist_from_lines(scope_path, lines, config)` —
+        composition wrapper the Phase 2B daemon hook will call.
+      - `is_persistence_enabled()` — feature flag
+        (`ATTUNE_OPS_SWEEP_RESULTS=1`).
+- [x] **2A.2** Storage layout: `~/.attune/ops/sweep-results/`,
+      one `<hash>.json` per scope. Latest-only semantics (history
+      deferred per decisions.md #3).
+- [x] **2A.3** Tests in `tests/unit/ops/test_sweep_results.py`
+      (24 cases): persistence-flag gate (3), scope_hash
+      canonicalization + collision properties (5), parse_lines
+      round-trips + edge cases (6), persist+read +
+      latest-only-semantics + atomic write (8), persist_from_lines
+      composition (2). 92.16% coverage; only defensive error
+      branches uncovered.
+
+## Phase 2B — Daemon-side wiring + HTTP route (deferred)
+
+Goal: auto-persist on run-complete + expose results via HTTP.
+**Blocked** on PRs #324 (scope picker), #326 (persistence +
+pills), #328 (release 6.8.0) merging to `main`, which unblocks
+the conflict-prone runner / template files.
+
+- [ ] **2B.1** Wire the auto-persist hook. Two options to
+      evaluate when this opens: (a) wrapper around
+      `RunnerService._executor` (modifies `runner.py`); (b)
+      external subscriber via `Run.subscribe()` spawned from the
+      POST run route (modifies `routes/runner.py`). Option (b) is
+      preferred — it's a smaller surface.
+- [ ] **2B.2** Add `GET /workflows/discovery-sweep/results/<hash>`
+      in a NEW router module `src/attune/ops/routes/sweep_results.py`.
+      404 if no sweep has run for that scope.
+- [ ] **2B.3** Register the new router in `server.py`.
+- [ ] **2B.4** Tests: end-to-end run → file lands; missing file
+      → 404; malformed sidecar → 500 with diagnostic.
 
 ---
 
