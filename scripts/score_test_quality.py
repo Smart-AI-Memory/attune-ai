@@ -13,7 +13,25 @@ Output:
 If coverage.xml is missing, every module gets coverage_gap=1.0.
 The relative ordering of customer_weight × risk_multiplier still
 surfaces a defensible first working set; refresh after a fresh
-`pytest --cov=src/attune --cov-report=xml` for sharper gap data.
+coverage run for sharper gap data.
+
+How to refresh coverage.xml correctly
+-------------------------------------
+
+    pytest --cov=src/attune --cov-report=xml:/tmp/coverage.xml -q \\
+      -m "not network and not integration"
+    python scripts/score_test_quality.py /tmp/coverage.xml
+
+The `pytest` invocation MUST collect from the whole `tests/`
+directory (the default via `testpaths = ["tests"]` in
+`pyproject.toml`) — NOT scoped to `tests/unit/` alone. Modules
+whose primary tests live in `tests/security/`,
+`tests/integration/`, etc. otherwise show up with spuriously-low
+`covered_pct` in the cache, and the rubric promotes already-
+well-covered modules as picks. Verified failure mode 2026-05-14:
+`memory/security/secrets_detector.py` reported 60.3% from a
+`tests/unit/`-only run, actual 90.96% under `tests/`. See
+`docs/COVERAGE_BUG_LOG.md` 2026-05-14 entry.
 """
 
 from __future__ import annotations
