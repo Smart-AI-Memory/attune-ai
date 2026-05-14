@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}attune ops{% endblock %} · attune ops</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}" />
+    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}?v={{ range(100000, 999999) | random }}" />
   </head>
   <body data-page="{{ page }}">
     <header class="topbar">
