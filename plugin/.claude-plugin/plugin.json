@@ -1,6 +1,6 @@
 {
   "name": "attune-ai",
-  "version": "6.7.1",
+  "version": "6.8.0",
   "description": "Developer workflow tools for Claude Code — run security audits, code reviews, test generation, and release preparation from /attune",
   "author": {
     "name": "Smart AI Memory",
