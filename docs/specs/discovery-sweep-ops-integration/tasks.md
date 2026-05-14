@@ -54,21 +54,26 @@ defaults to None; stdout emission gated on non-TTY detection).
       - A slow sink doesn't block other sources' execution.
 - [ ] **1.6** CHANGELOG entry under `### Added`.
 
-### Phase 1b — `ATTUNE_DS` stdout emission (deferred to follow-up PR)
+### Phase 1b — `ATTUNE_DS` stdout emission — **shipped 2026-05-13**
 
-The stdout-line format ships once the engine event_sink API is in
-place. Splitting these keeps Phase 1 a pure API addition that
-existing callers don't observe.
+New `src/attune/workflows/discovery_sweep/ds_stdout.py` module owns
+the format. Engine wires `ds_stdout.is_emission_enabled()` →
+`emit_version_line()` / `emit_event_line()` / `emit_final_line()` at
+the right points in `execute()` and `_emit_event`.
 
-- [ ] **1b.1** When `sys.stdout.isatty()` is False, also write one
-      `ATTUNE_DS <kind> <source> ts=... [findings=N|error=Cls]`
-      line per event to stdout.
-- [ ] **1b.2** Emit `ATTUNE_DS_VERSION 1` as the first line.
-- [ ] **1b.3** Emit `ATTUNE_DS final <json>` once the sweep
-      completes (carries the same JSON `--json` produces).
-- [ ] **1b.4** Tests: lines only emitted when not a TTY; format
-      matches the design.md grammar; daemon-style parser round-
-      trips the emitted lines back to the same event dicts.
+- [x] **1b.1** Emission gated on the **`ATTUNE_DS_EMIT=1`** env var
+      (not `sys.stdout.isatty()` — that would pollute the
+      legitimate `attune workflow run … > out.md` pipe-to-file
+      UX). Daemon sets the env var when spawning. See decision #10.
+- [x] **1b.2** `ATTUNE_DS_VERSION 1` emitted as the first line.
+- [x] **1b.3** `ATTUNE_DS final <json>` emitted once the sweep
+      completes (single-line; embedded newlines stripped).
+- [x] **1b.4** Tests in `test_ds_stdout.py` (18 cases): formatter /
+      parser round-trips for every event kind, emission gate
+      semantics, engine wiring (version-line-first, per-source
+      events, failed source emits source_failed, final line carries
+      SweepResult JSON, user event_sink + stdout side-channel
+      co-exist).
 
 ---
 

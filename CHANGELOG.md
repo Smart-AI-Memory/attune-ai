@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 1b (ops-integration spec) — `ATTUNE_DS`
+  daemon-parseable stdout side-channel. When `ATTUNE_DS_EMIT=1`
+  is set in the environment, the engine writes a schema-version
+  line (`ATTUNE_DS_VERSION 1`) at start, one ATTUNE_DS line per
+  per-source event (`source_started` / `source_finished` /
+  `source_failed`), and a final `ATTUNE_DS final <json>` line
+  carrying the same SweepResult JSON `--json` produces. The gate
+  is an env var rather than non-TTY detection so legitimate
+  pipe-to-file invocations (`attune workflow run discovery-sweep
+  > out.md`) keep producing clean markdown. New module
+  `src/attune/workflows/discovery_sweep/ds_stdout.py` owns the
+  format + a `parse_line()` helper that round-trips the emitted
+  lines back to event dicts (used by tests today and by the
+  upcoming Phase 2 daemon-side parser). 18 new tests in
+  `tests/unit/workflows/discovery_sweep/test_ds_stdout.py` cover
+  formatter / parser round-trips, the emission gate, and engine
+  wiring (version-line-first, event ordering, final-line JSON
+  shape, co-existence with the in-process event_sink). Coverage
+  on the new module is 100%. See decision #10 in
+  `docs/specs/discovery-sweep-ops-integration/decisions.md` for
+  the env-var-vs-TTY rationale.
+
 - `discovery-sweep` Phase 1 (ops-integration spec) — engine
   `event_sink` API. `DiscoverySweepWorkflow.execute()` now accepts
   optional `event_sink` (async callback) and `sweep_id` (correlation

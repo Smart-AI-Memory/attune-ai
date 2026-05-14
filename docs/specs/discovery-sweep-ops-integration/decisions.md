@@ -188,3 +188,36 @@ sweep API for users with their own daemon, etc.).
 the daemon hears about per-source progress. The daemon hears
 stdout. `event_sink` is a parallel surface for in-process
 callers only.
+
+---
+
+## 10. Gate stdout emission on `ATTUNE_DS_EMIT=1`, not non-TTY (2026-05-13, Phase 1b)
+
+**Decision:** The Phase 1b `ATTUNE_DS` stdout side-channel is
+emitted only when the `ATTUNE_DS_EMIT` environment variable is
+set to a non-empty value. The daemon sets it when spawning the
+subprocess; nobody else does.
+
+**What the original draft said:** "Emit when `sys.stdout.isatty()`
+is False (the subprocess parent has captured stdout)." This was
+shorthand for "emit when the daemon is parsing us, but not when
+a TTY user is reading us."
+
+**Why that shorthand is wrong:** non-TTY also covers the
+legitimate user workflow of `attune workflow run discovery-sweep
+> out.md`. That redirects stdout to a file (not a TTY), but the
+user wants clean markdown in `out.md`, NOT ATTUNE_DS lines
+interleaved with the markdown. The TTY check would silently
+pollute that output.
+
+**Env-var gate is precise:** only the daemon opts in. CLI users —
+whether typing in a terminal, piping to a file, or running under
+CI capture — see exactly today's output. The env var is also
+forward-compatible: any future runner (cron job, external script)
+that wants to consume the structured stream can opt in the same
+way without negotiating a new flag.
+
+**Naming:** `ATTUNE_DS_EMIT` (not `ATTUNE_OPS_DAEMON`) so the
+toggle name describes what it does, not who flips it. A future
+non-ops consumer can use the same env var without semantic
+collision.
