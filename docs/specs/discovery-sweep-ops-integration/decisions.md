@@ -221,3 +221,43 @@ way without negotiating a new flag.
 toggle name describes what it does, not who flips it. A future
 non-ops consumer can use the same env var without semantic
 collision.
+
+---
+
+## 11. Split Phase 2 into 2A (storage primitives) + 2B (daemon wiring) (2026-05-13)
+
+**Decision:** Ship Phase 2 in two PRs rather than one. 2A
+introduces `src/attune/ops/sweep_results.py` as a pure utility
+module (parser + scope_hash + atomic persist + read). 2B wires
+the daemon's post-run hook, the HTTP route, and the feature
+flag.
+
+**Reasoning:**
+
+- 2A is all-new files — zero risk of regression, independently
+  reviewable, can land while the conflict-prone `runner.py` and
+  `routes/runner.py` are tied up in [#324](https://github.com/Smart-AI-Memory/attune-ai/pull/324)
+  / [#326](https://github.com/Smart-AI-Memory/attune-ai/pull/326)
+  / [#328](https://github.com/Smart-AI-Memory/attune-ai/pull/328).
+- 2B touches the very files those PRs modify. Attempting both
+  in one PR would create avoidable conflicts and force re-merge
+  cycles.
+- The 2A surface is independently useful today — any script or
+  test can compose the primitives without waiting for 2B.
+- Atomic persist + read semantics are testable in isolation
+  without spinning up the daemon.
+
+**Scope confirmation:** PR [#334](https://github.com/Smart-AI-Memory/attune-ai/pull/334)
+is the 2A landing and stays within this spec (not a new spec).
+It implements `tasks.md` items 2.2 (parser), 2.3 (atomic write
+to `<scope-hash>.json`), and the prerequisite primitives for
+2.5 (feature flag exposed via `is_persistence_enabled()`).
+Items 2.1 (post-run hook), 2.4 (HTTP route), and 2.6 (end-to-
+end tests) move to a Phase 2B PR once the runner-tier2 PRs
+land.
+
+**Consequence:** `tasks.md` Phase 2 status: in progress. 2A in
+flight; 2B blocked on [#324](https://github.com/Smart-AI-Memory/attune-ai/pull/324)
+/ [#326](https://github.com/Smart-AI-Memory/attune-ai/pull/326)
+/ [#328](https://github.com/Smart-AI-Memory/attune-ai/pull/328)
+landing.
