@@ -3757,3 +3757,47 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   state alone**. Single-file and small-package dog-
   food can mask this — only whole-tree contact with
   real production docstrings surfaces the gap.
+
+- **`gh pr checks <PR> --watch --fail-fast` exits
+  prematurely (exit 0) on cancelled-but-tagged-"fail"
+  guard jobs**: `--fail-fast` triggers on any row
+  whose status column reads `fail`, even when the
+  underlying job conclusion is `cancelled` (zero
+  steps executed — e.g. a dependabot-only guard
+  skipping on a regular PR). On this repo `Run
+  Security Scanner` fires this pattern and made the
+  watcher exit ~1 minute into a 15-minute CI run.
+  Worst part: exit code is 0, so it looks like every
+  check passed. Two workarounds: (a) drop
+  `--fail-fast` entirely — cost is waiting the full
+  matrix even on real failures, fine at solo-dev
+  pace; (b) post-process the output to ignore rows
+  where the actual conclusion (via
+  `gh api .../jobs/<id>`) is `cancelled`. Always
+  re-fetch `gh pr checks <PR>` after a
+  `--watch --fail-fast` exits to confirm what truly
+  finished — never trust the watcher's exit code
+  alone as a "CI is done" signal.
+
+- **Daemon-parseable structured stdout should gate
+  on an explicit env var, not `sys.stdout.isatty()`**:
+  the intuitive design ("emit machine-readable lines
+  when stdout isn't a TTY; TTY users see clean
+  output") looks right but breaks legitimate
+  pipe-to-file usage — `attune workflow run … >
+  out.md` is also non-TTY, and the user wants clean
+  markdown in `out.md`, NOT structured lines mixed
+  in. Env-var gate (e.g. `ATTUNE_DS_EMIT=1`) lets
+  the daemon opt in explicitly without polluting any
+  other invocation path: terminal, pipe-to-file, CI
+  capture all stay pristine; only the daemon (which
+  controls the spawn env) sees the stream.
+  Discovered correcting the discovery-sweep Phase 1b
+  spec text in flight after noticing the pipe-to-
+  file hazard during implementation. Generalizes to
+  ANY structured-output side-channel for daemon
+  consumers — name the env var after what it does
+  (`<FEATURE>_EMIT=1`), not who flips it (avoid
+  names like `ATTUNE_OPS_DAEMON=1`), so future
+  non-daemon consumers can opt in without semantic
+  collision.
