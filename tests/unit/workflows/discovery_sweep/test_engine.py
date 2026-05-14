@@ -399,3 +399,17 @@ class TestSeverityColorBadges:
         wf = DiscoverySweepWorkflow()
         res = asyncio.run(wf.execute(path="src/", sources=[src], output_format="json"))
         assert "\x1b[" not in res.final_output
+
+    def test_unknown_severity_falls_back_to_plain_bracket(self) -> None:
+        """Unknown severities skip the ANSI lookup miss and return plain brackets.
+
+        ``_SEVERITY_ANSI`` only covers the five canonical levels. If a future
+        source emits a custom severity string, ``_severity_badge`` must still
+        produce a readable label rather than crashing or returning empty.
+        """
+        from attune.workflows.discovery_sweep.workflow import _severity_badge
+
+        # colored=True + severity not in the ANSI map → plain bracket (no codes).
+        assert _severity_badge("unknown", colored=True) == "[unknown]"
+        # colored=False short-circuits before the lookup, also plain.
+        assert _severity_badge("unknown", colored=False) == "[unknown]"
