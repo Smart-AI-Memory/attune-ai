@@ -41,6 +41,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import logging
+import time
 import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
@@ -347,7 +348,7 @@ class OrchestratedReleasePrepWorkflow:
             raise ValueError("path must be a non-empty string")
 
         logger.info(f"Starting orchestrated release prep for: {path}")
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         # Prepare context
         full_context = {
@@ -390,7 +391,7 @@ class OrchestratedReleasePrepWorkflow:
         report = await self._create_report(strategy_result, execution_plan.agents, full_context)
 
         # Set duration
-        end_time = asyncio.get_event_loop().time()
+        end_time = time.monotonic()
         report.total_duration = end_time - start_time
 
         logger.info(

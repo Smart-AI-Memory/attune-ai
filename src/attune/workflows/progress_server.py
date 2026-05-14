@@ -242,16 +242,14 @@ class ProgressServer:
 
         def callback(update: ProgressUpdate) -> None:
             """Queue a broadcast in the event loop for sync callers."""
-            # Schedule broadcast in event loop
+            # Schedule broadcast on the running loop, if any.
+            # Sync callers without a running loop are best-effort no-ops.
             try:
-                loop = asyncio.get_event_loop()
-                if loop.is_running():
-                    asyncio.create_task(self.broadcast(update))
-                else:
-                    loop.run_until_complete(self.broadcast(update))
+                loop = asyncio.get_running_loop()
             except RuntimeError:
-                # No event loop, skip
-                pass
+                # No running loop in this thread, skip
+                return
+            loop.create_task(self.broadcast(update))
 
         return callback
 
@@ -297,7 +295,7 @@ async def run_server(host: str = "localhost", port: int = 8766) -> None:
     server = ProgressServer(config)
 
     # Handle shutdown signals
-    loop = asyncio.get_event_loop()
+    loop = asyncio.get_running_loop()
     for sig in (signal.SIGTERM, signal.SIGINT):
         loop.add_signal_handler(sig, lambda: asyncio.create_task(server.stop()))
 

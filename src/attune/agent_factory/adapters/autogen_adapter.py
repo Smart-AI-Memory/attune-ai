@@ -67,7 +67,7 @@ class AutoGenAgent(BaseAgent):
 
         try:
             # AutoGen uses synchronous chat, wrap in executor
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
 
             def sync_chat():
                 """Run AutoGen generate_reply synchronously."""
@@ -137,7 +137,7 @@ class AutoGenWorkflow(BaseWorkflow):
             message = input_data.get("input", str(input_data))
 
         try:
-            loop = asyncio.get_event_loop()
+            loop = asyncio.get_running_loop()
 
             def sync_chat():
                 """Run AutoGen group chat synchronously."""

@@ -232,7 +232,7 @@ class HookExecutor:
         if asyncio.iscoroutinefunction(handler):
             return await handler(**context)
         # Run sync function in thread pool
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         return await loop.run_in_executor(None, lambda: handler(**context))
 
     async def _execute_webhook(

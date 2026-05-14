@@ -148,7 +148,7 @@ class ReleasePrepTeam:
         logger.info(f"Starting release readiness assessment: {codebase_path}")
 
         # Execute all agents in parallel
-        loop = asyncio.get_event_loop()
+        loop = asyncio.get_running_loop()
         tasks = [loop.run_in_executor(None, agent.process, codebase_path) for agent in self.agents]
         results: list[ReleaseAgentResult] = await asyncio.gather(*tasks)
 

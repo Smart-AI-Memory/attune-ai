@@ -459,11 +459,12 @@ async def run_mcp_server():
     server = SocraticMCPServer()
 
     # Read from stdin, write to stdout
+    loop = asyncio.get_running_loop()
     reader = asyncio.StreamReader()
     protocol = asyncio.StreamReaderProtocol(reader)
-    await asyncio.get_event_loop().connect_read_pipe(lambda: protocol, sys.stdin)
+    await loop.connect_read_pipe(lambda: protocol, sys.stdin)
 
-    writer_transport, writer_protocol = await asyncio.get_event_loop().connect_write_pipe(
+    writer_transport, writer_protocol = await loop.connect_write_pipe(
         asyncio.streams.FlowControlMixin,
         sys.stdout,
     )
@@ -471,7 +472,7 @@ async def run_mcp_server():
         writer_transport,
         writer_protocol,
         reader,
-        asyncio.get_event_loop(),
+        loop,
     )
 
     async def send_response(response: dict):

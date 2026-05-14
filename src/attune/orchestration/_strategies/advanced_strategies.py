@@ -11,8 +11,8 @@ Licensed under the Apache License, Version 2.0
 
 from __future__ import annotations
 
-import asyncio
 import logging
+import time
 from typing import Any
 
 from ..agent_templates import AgentTemplate
@@ -82,13 +82,13 @@ class ToolEnhancedStrategy(ExecutionStrategy):
             )
 
         agent = agents[0]  # Use first agent only
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         # Execute with tool access
         try:
             result = await self._execute_with_tools(agent=agent, context=context, tools=self.tools)
 
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
 
             return StrategyResult(
                 success=result["success"],
@@ -106,7 +106,7 @@ class ToolEnhancedStrategy(ExecutionStrategy):
             )
         except Exception as e:  # noqa: BLE001
             logger.exception(f"Tool-enhanced execution failed: {e}")
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
             return StrategyResult(
                 success=False,
                 outputs=[],
@@ -189,7 +189,7 @@ class PromptCachedSequentialStrategy(ExecutionStrategy):
         client = LLMClient()
         outputs = []
         current_output = context.get("input", {})
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         for agent in agents:
             try:
@@ -237,7 +237,7 @@ Your role: {agent.role}"""
                 )
                 outputs.append(result)
 
-        duration = asyncio.get_event_loop().time() - start_time
+        duration = time.monotonic() - start_time
 
         return StrategyResult(
             success=all(r.success for r in outputs),
@@ -314,7 +314,7 @@ class DelegationChainStrategy(ExecutionStrategy):
                 errors=["No agents provided for delegation"],
             )
 
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         # Execute coordinator (first agent)
         coordinator = agents[0]
@@ -356,7 +356,7 @@ class DelegationChainStrategy(ExecutionStrategy):
                 original_task=context.get("task", ""),
             )
 
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
 
             return StrategyResult(
                 success=True,
@@ -367,7 +367,7 @@ class DelegationChainStrategy(ExecutionStrategy):
 
         except Exception as e:  # noqa: BLE001
             logger.exception(f"Delegation chain failed: {e}")
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
             return StrategyResult(
                 success=False,
                 outputs=[],
@@ -435,7 +435,7 @@ Return JSON:
         from attune.models import LLMClient
 
         client = LLMClient()
-        start_time = asyncio.get_event_loop().time()
+        start_time = time.monotonic()
 
         try:
             response = await client.call(
@@ -445,7 +445,7 @@ Return JSON:
                 workflow_id=f"specialist:{specialist.agent_id}",
             )
 
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
 
             return AgentResult(
                 agent_id=specialist.agent_id,
@@ -456,7 +456,7 @@ Return JSON:
             )
         except Exception as e:  # noqa: BLE001
             logger.exception(f"Specialist {specialist.agent_id} failed: {e}")
-            duration = asyncio.get_event_loop().time() - start_time
+            duration = time.monotonic() - start_time
             return AgentResult(
                 agent_id=specialist.agent_id,
                 success=False,
