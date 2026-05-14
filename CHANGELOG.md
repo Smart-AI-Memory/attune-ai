@@ -9,6 +9,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `discovery-sweep` Phase 2B (ops-integration spec) — daemon-side
+  auto-persist watcher + read API. New file
+  `src/attune/ops/sweep_results_watcher.py` ships
+  `watch_and_persist(run, config)`, a coroutine that subscribes
+  to a discovery-sweep `Run`'s event stream and writes the
+  scope-keyed sidecar JSON on successful completion via
+  `sweep_results.persist_from_lines`. New file
+  `src/attune/ops/routes/sweep_results.py` adds
+  `GET /workflows/discovery-sweep/results/{scope_hash}` returning
+  the latest persisted result (400 on malformed hash, 404 on
+  missing or corrupt). `server.py` wires both behind the
+  `ATTUNE_OPS_SWEEP_RESULTS=1` feature flag: the route registers
+  unconditionally (read-only when no data exists), the watcher
+  attaches by monkey-patching `app.state.runner.start` post-
+  construction — chosen over modifying `runner.py` so this PR
+  doesn't conflict with the in-flight ops-runner-tier2 PRs. The
+  watcher reads scope via `getattr(run, "path", None)` so it
+  gracefully no-ops on today's path-less main and activates
+  automatically once PR #324 (Run.path) lands. 14 new tests in
+  `tests/unit/ops/test_sweep_results_watcher.py` (workflow-name
+  filter, success-persists, no-op on failure / missing path /
+  empty path, fault tolerance) and `test_sweep_results_route.py`
+  (400 on 4 malformed shapes, 404 on missing, success round-trip,
+  404 on corrupt). Coverage: watcher 90.24%, route 100%. Full
+  ops + discovery_sweep suite 391 tests green.
+
 - `discovery-sweep` Phase 2A (ops-integration spec) — scope-keyed
   storage primitives. New module `src/attune/ops/sweep_results.py`
   ships `scope_hash()` (canonicalized sha256, 16 hex chars),

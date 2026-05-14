@@ -113,25 +113,48 @@ unblock the conflict-prone files).
       composition (2). 92.16% coverage; only defensive error
       branches uncovered.
 
-## Phase 2B — Daemon-side wiring + HTTP route (deferred)
+## Phase 2B — Daemon-side wiring + HTTP route — **shipped 2026-05-13**
 
 Goal: auto-persist on run-complete + expose results via HTTP.
-**Blocked** on PRs #324 (scope picker), #326 (persistence +
-pills), #328 (release 6.8.0) merging to `main`, which unblocks
-the conflict-prone runner / template files.
+Shipped despite PRs #324 / #326 / #328 still being open by using
+option (c) below — a `server.py`-only wiring that monkey-patches
+`runner.start` post-construction. No touch on the conflict-prone
+`runner.py` / `routes/runner.py`.
 
-- [ ] **2B.1** Wire the auto-persist hook. Two options to
-      evaluate when this opens: (a) wrapper around
-      `RunnerService._executor` (modifies `runner.py`); (b)
-      external subscriber via `Run.subscribe()` spawned from the
-      POST run route (modifies `routes/runner.py`). Option (b) is
-      preferred — it's a smaller surface.
-- [ ] **2B.2** Add `GET /workflows/discovery-sweep/results/<hash>`
-      in a NEW router module `src/attune/ops/routes/sweep_results.py`.
-      404 if no sweep has run for that scope.
-- [ ] **2B.3** Register the new router in `server.py`.
-- [ ] **2B.4** Tests: end-to-end run → file lands; missing file
-      → 404; malformed sidecar → 500 with diagnostic.
+- [x] **2B.1** Auto-persist wiring. **Option (c) chosen** over
+      the original (a) / (b): wrap `app.state.runner.start` at
+      app-construction time in `server.py`. The wrap spawns
+      `watch_and_persist(run, config)` as a background task for
+      every `discovery-sweep` run. Watcher lives in NEW file
+      `src/attune/ops/sweep_results_watcher.py` so the logic is
+      testable in isolation. `getattr(run, "path", None)` lets
+      the watcher gracefully no-op on today's path-less `main`;
+      persistence activates automatically once PR #324 (which
+      adds `Run.path`) lands.
+- [x] **2B.2** GET endpoint added in NEW file
+      `src/attune/ops/routes/sweep_results.py`. Path parameter
+      validated as 16 lowercase hex chars (400 if not); 404 on
+      missing file or corrupt JSON.
+- [x] **2B.3** Router registered in `server.py` (one new
+      `app.include_router` line + the `runner.start` wrap, both
+      gated by `sweep_results.is_persistence_enabled()`).
+- [x] **2B.4** Tests:
+      - `tests/unit/ops/test_sweep_results_watcher.py` (10 cases)
+        — workflow-name filtering, success-persists,
+        no-op-on-failure / no-path / empty-path, fault
+        tolerance (persist exception caught, missing final line
+        logs info no crash).
+      - `tests/unit/ops/test_sweep_results_route.py` (4 cases)
+        — malformed hash → 400 (4 variants), missing → 404,
+        success round-trip, corrupt sidecar → 404.
+
+**Coverage:** `sweep_results_watcher.py` 90.24%, `routes/sweep_results.py`
+100%. Only the watcher's defensive subscription-exception branch
+is uncovered (Run.subscribe() doesn't realistically raise).
+
+**Feature flag:** `ATTUNE_OPS_SWEEP_RESULTS=1` env var. When unset,
+the runner-start wrap and the route are both effectively dormant
+(route still registered but read-only; watcher never spawned).
 
 ---
 

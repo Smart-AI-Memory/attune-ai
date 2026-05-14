@@ -11,11 +11,14 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from attune import __version__
+from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
 from attune.ops.routes import dashboard
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import specs as specs_routes
+from attune.ops.routes import sweep_results as sweep_results_routes
 from attune.ops.runner import RunnerService
+from attune.ops.sweep_results_watcher import watch_and_persist
 
 
 def _package_dir(name: str) -> Path:
@@ -68,6 +71,26 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
     app.include_router(specs_routes.router)
+    app.include_router(sweep_results_routes.router)
+
+    # Phase 2B of discovery-sweep-ops-integration: when sweep-result
+    # persistence is enabled, wrap the runner's start() so each
+    # discovery-sweep run gets a watcher task that persists the
+    # captured ATTUNE_DS stream to ~/.attune/ops/sweep-results/.
+    # Wrap goes here (not in runner.py) to avoid touching the
+    # conflict-prone runner module.
+    if sweep_results_mod.is_persistence_enabled():
+        _original_start = app.state.runner.start
+
+        async def _start_with_sweep_watcher(workflow, *args, **kwargs):
+            import asyncio
+
+            run = await _original_start(workflow, *args, **kwargs)
+            if workflow == "discovery-sweep":
+                asyncio.create_task(watch_and_persist(run, config))
+            return run
+
+        app.state.runner.start = _start_with_sweep_watcher  # type: ignore[method-assign]
 
     @app.get("/api/info", response_class=JSONResponse)
     async def info(request: Request):
