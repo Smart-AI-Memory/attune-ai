@@ -4,7 +4,13 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{% block title %}attune ops{% endblock %} · attune ops</title>
-    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}?v={{ range(100000, 999999) | random }}" />
+    {# Release-keyed cache-bust: version pinning lets browsers cache the
+       file BETWEEN requests within a release while busting reliably on
+       upgrade. Replaces the previous ``random`` dev-iteration hack
+       (which busted every page render and defeated browser caching in
+       production). For dev work where the random buster was useful,
+       Cmd+Shift+R / DevTools "Disable cache" still does the job. #}
+    <link rel="stylesheet" href="{{ url_for('static', path='css/main.css') }}?v={{ attune_version }}" />
   </head>
   <body data-page="{{ page }}">
     <header class="topbar">

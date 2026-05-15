@@ -122,6 +122,6 @@
 
 {% block scripts %}
 {% if allow_run %}
-  <script src="{{ url_for('static', path='js/specs.js') }}"></script>
+  <script src="{{ url_for('static', path='js/specs.js') }}?v={{ attune_version }}"></script>
 {% endif %}
 {% endblock %}
