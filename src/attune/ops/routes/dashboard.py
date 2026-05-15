@@ -130,6 +130,35 @@ async def health_page(request: Request) -> HTMLResponse:
     return _render(request, "health.html", page="health", snapshot=snapshot)
 
 
+@router.get("/sessions", response_class=HTMLResponse)
+async def sessions_page(request: Request) -> HTMLResponse:
+    """Sessions page — recent Claude Code sessions for this project.
+
+    Currently scaffolding-only (S1 of the ops-sessions-page spec); the
+    page renders the empty-state copy regardless of disk state. S2
+    will read ``~/.claude/projects/<encoded-project-root>/*.jsonl``,
+    list sessions from the last 3 days, and render heuristic starter
+    prompts. S3 adds Haiku-summarized prompts with a budget cap.
+
+    Each slice is independently shippable; this one closes the
+    user-visible ``/sessions → 404`` gap from the QA punch list
+    (P1-4) while the richer features ship behind it.
+    """
+    cfg = request.app.state.config
+    # Where the sessions WOULD live — surfaced in the empty-state so
+    # users can `cat` the JSONLs directly while the real listing is
+    # being built. The encoding matches Claude Code's convention
+    # (forward-slash → hyphen).
+    encoded_project = str(cfg.project_root).replace("/", "-")
+    sessions_dir = f"~/.claude/projects/{encoded_project}"
+    return _render(
+        request,
+        "sessions.html",
+        page="sessions",
+        sessions_dir=sessions_dir,
+    )
+
+
 @router.get("/runs/{run_id}/view", response_class=HTMLResponse)
 async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     """Full-page view for one workflow run.
