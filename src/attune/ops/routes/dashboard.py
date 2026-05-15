@@ -30,6 +30,13 @@ def _ctx(request: Request, page: str, **extra) -> dict:
         "request": request,
         "page": page,
         "project_root": str(cfg.project_root),
+        # Human-readable project name for the topbar chip. Reads
+        # ``[project].name`` from pyproject.toml when available, falls
+        # back to the directory basename. Without this, a dashboard
+        # launched against a worktree (e.g.
+        # ``.claude/worktrees/reverent-brown-937823``) renders the
+        # worktree slug as the project name — confusing for users.
+        "project_name": data.derive_project_name(cfg.project_root),
         "attune_home": str(cfg.attune_home),
         "current_run": current_run,
         **extra,

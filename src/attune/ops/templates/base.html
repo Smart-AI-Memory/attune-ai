@@ -39,10 +39,17 @@
       {% endif %}
       <div class="env">
         <span class="env-label">project</span>
+        {# project_name reads ``[project].name`` from
+           ``<project_root>/pyproject.toml`` so worktree-launched
+           dashboards display the package name (``attune-ai``)
+           instead of the worktree directory's slug
+           (``reverent-brown-937823``). Falls back to the basename
+           when no pyproject is present. Tooltip + aria-label still
+           expose the full path for users who need it. #}
         <code class="env-value"
               data-tooltip="{{ project_root }}"
               data-tooltip-position="bottom"
-              aria-label="Project root: {{ project_root }}">{{ project_root.split('/')[-1] }}</code>
+              aria-label="Project root: {{ project_root }}">{{ project_name }}</code>
       </div>
     </header>
     <main class="main">{% block content %}{% endblock %}</main>
