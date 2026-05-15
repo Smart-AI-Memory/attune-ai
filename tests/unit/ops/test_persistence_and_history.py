@@ -217,6 +217,117 @@ async def test_runner_skips_persistence_when_dir_is_none(tmp_path):
 
 
 # ---------------------------------------------------------------------------
+# RunnerService.get_or_load (Phase B2: in-memory miss → disk fallback)
+# ---------------------------------------------------------------------------
+
+
+def _write_disk_record(runs_dir: Path, workflow: str, run_id: str, **fields) -> Path:
+    """Write a minimal Run record at the conventional path."""
+    workflow_dir = runs_dir / workflow
+    workflow_dir.mkdir(parents=True, exist_ok=True)
+    record = {"id": run_id, "workflow": workflow, "status": "completed", **fields}
+    path = workflow_dir / f"{run_id}.json"
+    path.write_text(json.dumps(record), encoding="utf-8")
+    return path
+
+
+def test_get_or_load_returns_in_memory_run_first(tmp_path):
+    """In-memory hit short-circuits — disk is never consulted.
+
+    Critical because the in-memory Run carries live subscribers and a
+    running executor; the from-disk reconstruction can't replace it.
+    """
+    runs_dir = tmp_path / "runs"
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    live = Run(id="abc12345", workflow="security-audit", status="running")
+    svc._runs[live.id] = live
+    # Disk record with a different status — proving we got the in-memory one
+    _write_disk_record(runs_dir, "security-audit", "abc12345", status="failed")
+
+    result = svc.get_or_load("abc12345")
+    assert result is live  # identity, not equality — same object
+
+
+def test_get_or_load_falls_back_to_disk_on_memory_miss(tmp_path):
+    """The bug being fixed: a run that was pruned from the 20-item
+    in-memory ring buffer is still on disk; the route should find it."""
+    runs_dir = tmp_path / "runs"
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    _write_disk_record(
+        runs_dir,
+        "security-audit",
+        "deadbeef0001",
+        exit_code=0,
+        lines=["finding 1", "finding 2"],
+    )
+
+    result = svc.get_or_load("deadbeef0001")
+    assert result is not None
+    assert result.id == "deadbeef0001"
+    assert result.workflow == "security-audit"
+    assert result.status == "completed"
+    assert result.lines == ["finding 1", "finding 2"]
+    # Disk-loaded runs come back without live subscribers — the route
+    # layer must skip SSE attachment because the executor is gone.
+    assert result.subscribers == set()
+
+
+def test_get_or_load_returns_none_when_both_miss(tmp_path):
+    """Genuinely-missing run → None (route turns this into 404)."""
+    runs_dir = tmp_path / "runs"
+    runs_dir.mkdir()
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    assert svc.get_or_load("nonexistent12") is None
+
+
+def test_get_or_load_returns_none_when_no_persistence_dir(tmp_path):
+    """Read-only mode (no persistence) + memory miss → None.
+
+    Read-only mode disables disk writes entirely, so there's nothing
+    on disk to fall back to — but get_or_load should still not raise.
+    """
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=None)
+    assert svc.get_or_load("anything") is None
+
+
+def test_get_or_load_tolerates_malformed_json(tmp_path, caplog):
+    """A corrupt record on disk → None + WARN log, not a 500."""
+    import logging
+
+    runs_dir = tmp_path / "runs"
+    workflow_dir = runs_dir / "security-audit"
+    workflow_dir.mkdir(parents=True)
+    bad = workflow_dir / "corrupt12345.json"
+    bad.write_text("{not valid json", encoding="utf-8")
+
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    with caplog.at_level(logging.WARNING, logger="attune.ops.runner"):
+        assert svc.get_or_load("corrupt12345") is None
+    # WARN was logged so the operator can investigate the corrupt record
+    assert any(
+        "failed to read" in record.message.lower() or "malformed" in record.message.lower()
+        for record in caplog.records
+    )
+
+
+def test_get_or_load_walks_multiple_workflow_subdirs(tmp_path):
+    """Walks subdirectories — the run_id alone doesn't say which
+    workflow folder it lives in, so we scan."""
+    runs_dir = tmp_path / "runs"
+    # Distractor workflows
+    _write_disk_record(runs_dir, "code-review", "other000001", status="completed")
+    _write_disk_record(runs_dir, "deep-review", "other000002", status="completed")
+    # Target — should still be found
+    _write_disk_record(runs_dir, "security-audit", "target000003", status="failed")
+
+    svc = RunnerService(command_builder=_echo_cmd, persistence_dir=runs_dir)
+    result = svc.get_or_load("target000003")
+    assert result is not None
+    assert result.workflow == "security-audit"
+    assert result.status == "failed"
+
+
+# ---------------------------------------------------------------------------
 # prune_old_runs
 # ---------------------------------------------------------------------------
 
@@ -483,6 +594,14 @@ def test_run_view_js_exists_and_exposes_helpers():
     assert "Read-only mode" in text
     # Phase 4.2: 409 surfaces inline, doesn't navigate
     assert "current_run_id" in text
+    # Phase B2: disk-loaded runs ship with an empty stream_url; the JS
+    # must NOT open an EventSource against ``""``. The wrapping
+    # ``if (STREAM_URL)`` block is the gate; the ``else`` branch
+    # styles the status chip server-rendered-only.
+    assert "if (STREAM_URL)" in text
+    # And the else-branch comment markers the empty-stream-url path
+    # (so a future refactor that drops the branch loses the test).
+    assert "Disk-loaded terminal run" in text
 
 
 def test_run_view_js_validates_from_param():
@@ -534,3 +653,124 @@ async def test_run_view_data_block_allow_run_false_in_read_only(tmp_path, monkey
     block = body[block_open:block_close].strip()
     parsed = json.loads(block)
     assert parsed["allow_run"] is False
+
+
+# ---------------------------------------------------------------------------
+# Phase B2 — run-view route falls back to disk for evicted runs
+# ---------------------------------------------------------------------------
+
+
+def test_run_view_renders_disk_only_run(tmp_path, monkeypatch):
+    """The bug fix: a run that's been pruned from memory but still on
+    disk renders cleanly instead of 404'ing.
+
+    Sets up a runs/ directory with a record but does NOT register
+    anything in the runner's in-memory dict — mirrors the "older runs
+    are pruned when the server restarts" scenario from the QA punch
+    list.
+    """
+    app, _runner, config = _make_app(tmp_path, monkeypatch, allow_run=True)
+    # Pre-populate disk; runner._runs stays empty.
+    _write_disk_record(
+        config.runs_dir,
+        "security-audit",
+        "evicted00001",
+        exit_code=0,
+        started_at="2026-05-14T18:00:00+00:00",
+        completed_at="2026-05-14T18:02:30+00:00",
+        lines=["line one", "line two", "scan complete"],
+    )
+
+    with TestClient(app) as client:
+        resp = client.get("/runs/evicted00001/view")
+
+    assert resp.status_code == 200, resp.text
+    body = resp.text
+    # Run metadata shows up
+    assert "security-audit" in body
+    assert "evicted00001"[:12] in body  # template slices id[:12]
+    # Log lines were rendered server-side (NOT just left blank for SSE)
+    assert "line one" in body
+    assert "line two" in body
+    assert "scan complete" in body
+
+
+def test_run_view_disk_run_emits_empty_stream_url(tmp_path, monkeypatch):
+    """A disk-loaded run gets ``stream_url=""`` in the JSON config
+    block so run_view.js skips EventSource creation. Without this,
+    the JS would attempt to connect to a stream that 404s and the
+    page would show a "stream error" chip."""
+    app, _runner, config = _make_app(tmp_path, monkeypatch, allow_run=True)
+    _write_disk_record(
+        config.runs_dir,
+        "code-review",
+        "evicted00002",
+        exit_code=0,
+        lines=["one"],
+    )
+
+    with TestClient(app) as client:
+        resp = client.get("/runs/evicted00002/view")
+
+    assert resp.status_code == 200
+    body = resp.text
+    start = body.index('id="run-view-data"')
+    block_open = body.index(">", start) + 1
+    block_close = body.index("</script>", block_open)
+    parsed = json.loads(body[block_open:block_close].strip())
+    assert parsed["stream_url"] == ""
+    assert parsed["workflow"] == "code-review"
+
+
+@pytest.mark.asyncio
+async def test_run_view_still_works_for_in_memory_run(tmp_path, monkeypatch):
+    """Regression guard: the disk-fallback change must not break the
+    SSE-attached behavior for currently-in-memory runs.
+
+    Starts a real subprocess so the runner has the run in _runs, then
+    requests the view. Stream URL must be populated and the log must
+    NOT be pre-rendered (SSE replay fills it client-side).
+    """
+    app, runner, _config = _make_app(tmp_path, monkeypatch, allow_run=True)
+    run = await runner.start("security-audit")
+    await _wait_terminal(runner, run.id)
+
+    with TestClient(app) as client:
+        resp = client.get(f"/runs/{run.id}/view")
+
+    assert resp.status_code == 200
+    body = resp.text
+    start = body.index('id="run-view-data"')
+    block_open = body.index(">", start) + 1
+    block_close = body.index("</script>", block_open)
+    parsed = json.loads(body[block_open:block_close].strip())
+    # In-memory runs still get a stream_url so the JS replays via SSE.
+    assert parsed["stream_url"] == f"/runs/{run.id}/stream"
+    # And the log pane is empty server-side (SSE will fill it).
+    # The <pre data-log> appears in the body but contains no log lines.
+    import re
+
+    pre_match = re.search(r"<pre[^>]*data-log[^>]*>(.*?)</pre>", body, re.DOTALL)
+    assert pre_match is not None
+    pre_content = pre_match.group(1).strip()
+    # Tolerate whitespace; assert no actual log content
+    assert "start security-audit" not in pre_content
+    assert "end security-audit" not in pre_content
+
+
+def test_run_view_404_when_neither_memory_nor_disk_has_run(tmp_path, monkeypatch):
+    """No memory + no disk → 404 (preserves the old behavior for
+    genuinely missing runs)."""
+    app, _runner, _config = _make_app(tmp_path, monkeypatch, allow_run=True)
+
+    with TestClient(app) as client:
+        resp = client.get("/runs/genuinely0000/view")
+
+    assert resp.status_code == 404
+    # NOTE: the HTTPException's ``detail`` string ("not found in memory
+    # or on disk") doesn't currently surface in the rendered HTML — the
+    # app's exception handler returns a generic 404 page. The detail is
+    # still useful in server logs but isn't visible to the browser. The
+    # generic HTML / detail-lost-on-render gap is worth a separate fix
+    # (a custom 404.html that interpolates exc.detail); not part of
+    # B2's scope. Status code is what users perceive as "not found."

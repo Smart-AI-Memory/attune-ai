@@ -28,12 +28,23 @@
   <div class="run-view-history" data-recent-runs="{{ run.workflow }}" data-exclude-run-id="{{ run.id }}" hidden></div>
 </section>
 
-<pre class="log-output run-view-log" data-log></pre>
+{# When stream_url is empty, this run was loaded from disk (older than
+   the runner's in-memory ring buffer). Server pre-fills the log here
+   so the page renders without SSE — run_view.js detects the empty
+   stream_url and skips EventSource creation. #}
+<pre class="log-output run-view-log" data-log>{% for line in server_rendered_lines %}{{ line }}
+{% endfor %}</pre>
 
 <p class="meta run-view-foot">
-  This page reconnects to the run's stream automatically — refresh anytime
-  to see the latest output. Buffered output replays for new subscribers,
-  so you won't lose history.
+  {% if stream_url %}
+    This page reconnects to the run's stream automatically — refresh anytime
+    to see the latest output. Buffered output replays for new subscribers,
+    so you won't lose history.
+  {% else %}
+    This run was loaded from disk; the log shown above is its final
+    captured output. Live streaming is not attached because the run is
+    no longer in the runner's in-memory ring buffer.
+  {% endif %}
 </p>
 {% endblock %}
 

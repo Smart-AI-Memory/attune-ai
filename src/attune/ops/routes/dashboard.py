@@ -154,23 +154,40 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     runner = getattr(request.app.state, "runner", None)
     if runner is None:
         raise HTTPException(status_code=503, detail="runner unavailable")
-    run = runner.get(run_id)
+    # In-memory first, then disk fallback. Distinguishing the two is
+    # load-bearing on the SSE wiring below: an in-memory Run has a live
+    # subscribers set and the executor is still streaming events;
+    # a disk-loaded Run is reconstructed without subscribers and has
+    # no live executor, so the SSE endpoint would loop indefinitely
+    # against it with nothing to stream. We render the log server-side
+    # for the disk case and signal the JS to skip EventSource.
+    in_memory_run = runner.get(run_id)
+    run = in_memory_run if in_memory_run is not None else runner.get_or_load(run_id)
     if run is None:
         logger.info("ops.run_view: run not found: run_id=%s", run_id)
         raise HTTPException(
             status_code=404,
             detail=(
-                f"run '{run_id}' not found. The runner keeps the last 20 runs "
-                "in memory; older runs are pruned when the server restarts."
+                f"run '{run_id}' not found in memory or on disk. The run "
+                "may have been pruned or never persisted."
             ),
         )
+    loaded_from_disk = in_memory_run is None
+    # SSE is only useful when the executor is live or buffered. For
+    # disk-loaded terminal runs we skip the stream entirely; the
+    # template renders the full log server-side from ``run.lines``.
+    stream_url = "" if loaded_from_disk else f"/runs/{run_id}/stream"
+    # Live runs get an empty list — the SSE replay fills the pre on
+    # subscribe. Disk-loaded runs ship their captured log inline.
+    server_rendered_lines = list(run.lines) if loaded_from_disk else []
     return _render(
         request,
         "run_view.html",
         page="run-view",
         run=run.to_dict(),
-        stream_url=f"/runs/{run_id}/stream",
+        stream_url=stream_url,
         allow_run=request.app.state.config.allow_run,
+        server_rendered_lines=server_rendered_lines,
     )
 
 
