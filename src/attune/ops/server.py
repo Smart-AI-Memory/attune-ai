@@ -82,6 +82,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/", "Home"),
         ("/workflows", "Workflows"),
         ("/specs", "Specs"),
+        ("/sessions", "Sessions"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
     ]

@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}Sessions{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Sessions</h1>
+  <p class="page-sub">
+    Recent Claude Code sessions for this project — summarized starter
+    prompts to help you resume work.
+  </p>
+</section>
+
+{# Sessions S1 — scaffolding-only. The data layer (read JSONL files,
+   build session list, generate starter prompts) lands in S2; this
+   slice just stops the page from 404'ing and shows the user where
+   the data lives. The empty-state copy here matches the spec's
+   exact phrasing for the legitimate "no sessions in 3 days" case
+   so S2 can reuse it unchanged. #}
+<section class="panel">
+  <p class="empty">
+    No sessions in the last 3 days for
+    <code>{{ project_name | default(project_root.split('/')[-1]) }}</code>.
+    Older sessions are at <code>{{ sessions_dir }}</code>.
+  </p>
+  <p class="meta">
+    The full Sessions implementation (Haiku-summarized starter prompts,
+    resume-most-recent card, live-session detection) is being staged.
+    See <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/specs/ops-sessions-page/decisions.md" class="link">docs/specs/ops-sessions-page</a> for the spec.
+  </p>
+</section>
+{% endblock %}
