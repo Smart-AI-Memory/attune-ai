@@ -41,30 +41,30 @@ def test_encoded_project_path_matches_claude_code_convention(tmp_path):
     treated as an absolute path (silently discarding the prefix).
     """
     encoded = data._encoded_project_path(tmp_path)
-    expected_suffix = str(tmp_path).replace("/", "-").replace("\\", "-")
+    expected_suffix = str(tmp_path).replace("/", "-").replace("\\", "-").replace(":", "-")
     assert encoded.endswith(expected_suffix)
     assert "/" not in encoded
     assert "\\" not in encoded
+    assert ":" not in encoded
 
 
-def test_encoded_project_path_strips_windows_backslashes():
-    """Regression test for the Windows CI failure observed 2026-05-15.
+def test_encoded_project_path_strips_windows_separators_and_colon():
+    """Regression test for the two Windows CI failures observed
+    2026-05-15: (1) PR #382 round, backslashes survived ``str
+    .replace("/", "-")`` and pathlib treated the resulting ``D:\\``
+    prefix as absolute; (2) post-#382 round, the backslash fix
+    revealed the next layer — drive-letter colons survived and
+    pathlib treated the resulting ``D:-...`` segment as a drive
+    specifier on Windows.
 
-    Passes a path string containing literal backslashes — on POSIX
-    this is a single relative filename with backslashes inside it;
-    on Windows it's a real path. Either way, the encoder must
-    return a string with NO backslashes so the caller's
-    ``Path.home() / ".claude" / "projects" / encoded`` stays a
-    single path segment.
-
-    Without the fix, the resolved POSIX form is
-    ``<cwd>/fake\\windows\\path`` and the encoder leaves backslashes
-    intact (only ``/`` → ``-``). With the fix both separators map
-    to ``-``.
+    Passes a string with both Windows separators AND a colon. On
+    POSIX the encoder still has to scrub all three so the regression
+    is catchable without a Windows runner.
     """
-    encoded = data._encoded_project_path("fake\\windows\\path")
+    encoded = data._encoded_project_path("C:\\Users\\Test\\project")
     assert "\\" not in encoded, f"backslash survived encoding: {encoded!r}"
     assert "/" not in encoded, f"forward slash survived encoding: {encoded!r}"
+    assert ":" not in encoded, f"colon survived encoding: {encoded!r}"
 
 
 def test_claude_sessions_dir_is_under_user_home(tmp_path):
@@ -75,16 +75,19 @@ def test_claude_sessions_dir_is_under_user_home(tmp_path):
 
 
 def test_claude_sessions_dir_under_user_home_with_windows_style_input():
-    """Cross-platform regression: even when project_root contains
-    backslashes (real on Windows, literal on POSIX), the resulting
-    sessions dir must still nest under ``~/.claude/projects/``.
+    """Cross-platform regression: even when project_root looks like
+    a Windows absolute path (drive letter + backslashes), the
+    resulting sessions dir must still nest under
+    ``~/.claude/projects/``.
 
-    Before the fix, the backslash-laden encoded segment was treated
-    as an absolute path on Windows path concatenation, so
-    ``sessions_dir.parent.parent.name`` was something inside the
-    tmp tree (``pytest-0`` on the failing CI run), not ``.claude``.
+    Before the colon fix, ``str(Path("C:\\Users\\X\\p").resolve())``
+    on Windows produced ``C:\\Users\\X\\p``; the backslashes mapped
+    to ``-`` but the leading ``C:`` survived. The encoded segment
+    ``C:-Users-X-p`` is treated as a drive specifier when
+    concatenated as a path part, so the result rooted at ``C:``
+    instead of under ``.claude/projects/``.
     """
-    sessions_dir = data.claude_sessions_dir("fake\\drive\\project")
+    sessions_dir = data.claude_sessions_dir("C:\\Users\\Test\\project")
     assert sessions_dir.parent.parent.name == ".claude"
     assert sessions_dir.parent.name == "projects"
 
