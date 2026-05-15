@@ -362,6 +362,49 @@ def test_workflows_page_no_scope_column_when_read_only(tmp_path, monkeypatch):
     assert ">Scope<" not in resp.text
 
 
+def test_workflows_run_button_has_per_workflow_aria_label(tmp_path, monkeypatch):
+    """Every Run button carries an ``aria-label`` that names the
+    workflow it triggers.
+
+    Regression guard for the QA finding where all 20 Run buttons had
+    the same accessible name ("Run") — a screen-reader user couldn't
+    distinguish "Run for bug-predict" from "Run for code-review".
+    Visible text stays "Run" (compact UI); the aria-label gives
+    assistive tech the disambiguator.
+    """
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  security-audit:
+    description: Scan
+    files: [src/attune/security/**]
+""",
+    )
+    app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
+    with TestClient(app) as client:
+        resp = client.get("/workflows")
+    assert resp.status_code == 200
+    body = resp.text
+    # The button must carry aria-label="Run <workflow-name>" for at
+    # least one known workflow (security-audit is in the default
+    # PATH_ARG_REGISTRY so it always renders).
+    assert 'aria-label="Run security-audit"' in body
+    # Sanity: visible text didn't change — the visual "Run" label is
+    # what sighted users still see.
+    import re
+
+    button_re = re.compile(
+        r'<button[^>]*data-run-button[^>]*data-workflow="security-audit"[^>]*>([^<]*)</button>'
+    )
+    match = button_re.search(body)
+    assert match is not None, "Expected a Run button for security-audit"
+    assert match.group(1).strip() == "Run", (
+        "Visible button text should still be plain 'Run'; aria-label "
+        "carries the workflow disambiguator."
+    )
+
+
 def test_workflows_page_scope_textbox_renders_with_hidden_attr(tmp_path, monkeypatch):
     """The custom-path textbox ships with ``hidden`` set on first paint.
 
