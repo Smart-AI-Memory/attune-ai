@@ -2870,11 +2870,17 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   fence). Before wasting time investigating local doc
   changes, check with `git stash && mkdocs build` on
   the pre-change tree — if it still crashes, you've
-  ruled out the current PR. Fix direction (not done
-  this session): pin compatible `pygments` /
-  `pymdown-extensions` versions in the docs extra, or
-  find the specific markdown file whose fence
-  triggers the None filename.
+  ruled out the current PR. **Fix landed in PR #346
+  (2026-05-14): bump `pymdown-extensions>=10.21,<11.0`
+  in the docs extra. 10.20.x passes `title=None`
+  through as `filename`; 10.21.0 is the upstream fix.**
+  Companion finding: CI was never broken — PyPI fresh
+  installs picked up 10.21.3 cleanly. Only stale local
+  venvs locked to 10.20.x via `uv.lock` hit the crash.
+  Diagnostic when troubleshooting: read the CI build's
+  install log for the pymdown-extensions version; if
+  it's ≥ 10.21 and the build succeeded, your local
+  venv is the problem, not the repo.
 
 - **Orphan top-level `docs/` directories stay
   invisible to readers until wired into `mkdocs.yml`
@@ -4454,3 +4460,66 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   its exit-code semantics before downstream
   consumers (dashboards, CI scripts, IDE
   integrations) inherit the bug.
+
+- **attune-author polish-pass hallucinations have six
+  distinct shapes — automated verification beats manual
+  editorial review at scale**: empirical regression
+  fixture from a single feature regen (ops-dashboard,
+  15 templates + 4 published docs, 2026-05-14 via
+  attune-ai PR #351). The polish pass invented (1) a
+  CLI flag with inverted semantics (`--allow-run` when
+  real is `--read-only`), (2) two private-module
+  imports (`from attune.ops._readers import …`,
+  `_models` — both `ModuleNotFoundError`), (3) four
+  "See also" cross-references to non-existent docs,
+  (4) a numeric count (`498 templates` vs real 259),
+  (5) two wrong route paths (`POST /run` vs real
+  `POST /workflows/{name}/run`), and (6) an insecure
+  example (`host="0.0.0.0"` without an auth callout).
+  Three of the six actively break readers who follow
+  the docs literally. **Root cause: the polish pass
+  has source as context but isn't *constrained* to
+  it — the LLM is free to invent surrounding
+  scaffolding from priors that "sounds right."** Four
+  interventions ranked by leverage (see
+  attune-author#27 umbrella spec for full design):
+  (a) AST-based post-generation fact-check
+  (Python-import resolution + CLI-flag-vs-`--help` +
+  Markdown-link-target + numeric-claim verification —
+  cheapest, no LLM cost, catches 5 of 6 fixture
+  errors); (b) inject ground-truth context (rendered
+  `--help`, `__all__`, dataclass fields) into the
+  polish prompt under sentinel tags; (c) reuse
+  `attune_rag.eval.faithfulness.FaithfulnessJudge` as
+  a post-step (catches missing-content errors like
+  the security callout that AST can't see); (d)
+  static-analysis (`mypy --strict`) of tutorial code
+  fences specifically — execution of LLM-generated
+  code is explicitly deferred for security reasons.
+  Pattern generalizes beyond attune-author: any
+  LLM-driven content-generation pipeline (doc gen,
+  README polish, blog draft) needs post-generation
+  verification proportional to how much surface
+  detail (names, flags, paths) the output references.
+
+- **`git stash pop` silently skips overwriting tracked
+  files when the destination branch tracks files the
+  stash treated as untracked**: hit 2026-05-14 when
+  stashing untracked-on-branch-A files (because branch
+  A predated their addition to main), switching to a
+  new branch off origin/main (where they ARE tracked),
+  and popping. The stash entry was retained ("kept in
+  case you need it again") but 3 of 11 files in the
+  stash were silently dropped from the working tree —
+  the tracked versions from the new branch's HEAD
+  stayed in place, my stashed regenerated versions
+  vanished. No conflict marker, no warning. Diagnostic
+  to catch the silent skip: after `git stash pop`,
+  diff the affected files against the stash with
+  `git diff stash@{0} -- <path>` before dropping. If
+  there's a non-empty diff and `git status` shows the
+  file unchanged, the pop silently skipped it.
+  Mitigation when planning the stash: if you know the
+  destination branch tracks files your source branch
+  doesn't, pop with `git checkout stash@{0} -- <files>`
+  to force the overwrite, then drop manually.
