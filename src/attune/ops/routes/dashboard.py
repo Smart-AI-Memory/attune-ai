@@ -130,6 +130,38 @@ async def health_page(request: Request) -> HTMLResponse:
     return _render(request, "health.html", page="health", snapshot=snapshot)
 
 
+@router.get("/sessions", response_class=HTMLResponse)
+async def sessions_page(request: Request) -> HTMLResponse:
+    """Sessions page — recent Claude Code sessions for this project.
+
+    S2: reads ``~/.claude/projects/<encoded-project-root>/*.jsonl``
+    and surfaces sessions whose mtime is within the last 3 days,
+    each with a heuristic starter-prompt (first user prompt,
+    truncated to ~200 chars). S3 will replace the heuristic with
+    Haiku-summarized prompts and a per-page budget cap; S4 adds the
+    resume-most-recent card; S5 marks the live session.
+
+    Failure modes are silent fall-throughs to the empty state: no
+    Claude Code dir, all sessions older than 3 days, all JSONLs
+    unreadable — none surface as errors. The point is to be useful
+    on a fresh install, not to debug Claude Code's internal state.
+    """
+    cfg = request.app.state.config
+    sessions = data.list_recent_sessions(cfg.project_root, days=3)
+    # Where the sessions live — surfaced in the empty-state so users
+    # can ``cat`` the JSONLs directly if they want to inspect more
+    # than the page shows.
+    encoded_project = str(cfg.project_root).replace("/", "-")
+    sessions_dir = f"~/.claude/projects/{encoded_project}"
+    return _render(
+        request,
+        "sessions.html",
+        page="sessions",
+        sessions=sessions,
+        sessions_dir=sessions_dir,
+    )
+
+
 @router.get("/runs/{run_id}/view", response_class=HTMLResponse)
 async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
     """Full-page view for one workflow run.

@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block title %}Sessions{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Sessions</h1>
+  <p class="page-sub">
+    Recent Claude Code sessions for this project — summarized starter
+    prompts to help you resume work.
+  </p>
+</section>
+
+{# Sessions S2 — data layer. Reads Claude Code's per-project JSONL
+   logs, surfaces last-3-days sessions with a heuristic starter
+   prompt (first user message, truncated). S3 will replace the
+   heuristic with Haiku-summarized prompts; S4 lifts the most-recent
+   session into a prominent resume card; S5 marks the live session.
+   The empty-state copy below matches the spec's exact phrasing so
+   the legitimate "no sessions in 3 days" case stays clean. #}
+<section class="panel">
+  {% if sessions %}
+    <table class="data-table sessions-table">
+      <thead>
+        <tr>
+          <th>Session</th>
+          <th>Last activity</th>
+          <th class="num">Duration</th>
+          <th class="num">Prompts</th>
+          <th>Starter prompt</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+          <tr>
+            <td><code class="session-id">{{ s.id[:8] }}</code></td>
+            <td><code class="session-ts" data-tooltip="{{ s.last_activity }}" aria-label="Last activity {{ s.last_activity }}">{{ s.last_activity[:19] }}</code></td>
+            <td class="num">{% if s.duration_seconds > 0 %}{{ '%.0fs'|format(s.duration_seconds) if s.duration_seconds < 60 else '%.0fm'|format(s.duration_seconds / 60) }}{% else %}—{% endif %}</td>
+            <td class="num">{{ s.message_count }}</td>
+            <td class="session-prompt">{{ s.starter_prompt }}</td>
+            <td><span class="chip chip-muted" data-tooltip="{% if s.source == 'heuristic' %}First user prompt, truncated{% else %}LLM-summarized starter prompt{% endif %}" aria-label="Source: {{ s.source }}">{{ s.source }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="meta">
+      Older sessions (beyond 3 days) stay on disk at
+      <code>{{ sessions_dir }}</code> but aren't surfaced here.
+    </p>
+  {% else %}
+    <p class="empty">
+      No sessions in the last 3 days for
+      <code>{{ project_name | default(project_root.split('/')[-1]) }}</code>.
+      Older sessions are at <code>{{ sessions_dir }}</code>.
+    </p>
+  {% endif %}
+</section>
+{% endblock %}
