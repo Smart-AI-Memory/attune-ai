@@ -22,7 +22,10 @@
       <span class="run-view-scope">scope <code>{{ run.path }}</code></span>
     {% endif %}
   </p>
-  <div class="run-view-history" data-recent-runs="{{ run.workflow }}" hidden></div>
+  {# data-exclude-run-id filters this strip down to OTHER runs of the
+     same workflow. Without it, the current run would appear as one
+     of its own "Recent" siblings (P1-5 in the 2026-05-14 QA punch list). #}
+  <div class="run-view-history" data-recent-runs="{{ run.workflow }}" data-exclude-run-id="{{ run.id }}" hidden></div>
 </section>
 
 <pre class="log-output run-view-log" data-log></pre>

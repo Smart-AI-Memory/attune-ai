@@ -32,10 +32,14 @@
       {% endif %}
     </h2>
     {% if phase.exists %}
-      {% if contents.get(phase.name) %}
-        <pre class="log-output spec-phase-body">{{ contents[phase.name] }}</pre>
+      {% if rendered.get(phase.name) %}
+        {# Server-side renders markdown to CommonMark HTML with raw
+           HTML disabled (P1-2 fix). ``|safe`` is safe because the
+           rendering function explicitly escapes any embedded
+           ``<script>``-style tags before reaching this point. #}
+        <div class="spec-phase-body markdown-body">{{ rendered[phase.name] | safe }}</div>
       {% else %}
-        <p class="empty">File exists but could not be read.</p>
+        <p class="empty">File exists but could not be read or rendered.</p>
       {% endif %}
     {% else %}
       <p class="empty"><code>{{ phase.file }}</code> doesn't exist yet.</p>
