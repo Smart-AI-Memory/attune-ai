@@ -4523,3 +4523,138 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   destination branch tracks files your source branch
   doesn't, pop with `git checkout stash@{0} -- <files>`
   to force the overwrite, then drop manually.
+
+- **`mergeStateStatus: DIRTY` and `mergeStateStatus:
+  UNSTABLE` look identical in the GitHub UI ("This
+  branch cannot be merged") but need different
+  remedies — diagnose with `gh pr view` BEFORE
+  reading CI logs**: hit 2026-05-14 on PR #365. The
+  user asked me to "resolve issues" with the PR. My
+  instinct was to read failing test logs and find a
+  regression. But `gh pr view 365 --json
+  mergeStateStatus,statusCheckRollup` showed
+  `mergeStateStatus: DIRTY` with zero failing
+  checks — main had moved underneath the branch and
+  the conflict was structural, not behavioral. Fix
+  is `git fetch origin main && git rebase
+  origin/main` + resolve conflicts, not "find the
+  failing test." Recognition shape:
+  - **DIRTY** = textual merge conflict with the
+    target branch. Fix: rebase + resolve.
+  - **UNSTABLE** = mergeable but ≥1 required check
+    is failing OR fail-ignore-tolerable. Fix:
+    address the failing checks (or admin-merge if
+    they're structural fail-ignore guards).
+  - **BEHIND** = no conflicts but base branch moved;
+    GitHub wants a fast-forward update before
+    merge.
+  - **BLOCKED** = waiting on review or other
+    required gates.
+  The default `gh pr view` JSON output exposes this
+  field cleanly — make it the first read when a PR
+  "can't merge," not the last.
+
+- **CSS / static-file regex tests for "this rule
+  must not exist" need comment stripping before
+  matching**: when a guard test asserts that a
+  buggy CSS rule has been removed (e.g. via
+  `re.search(r"\.scope-custom\s*\{[^}]*\bdisplay:
+  \s*block\b", text)`), the explanatory comment we
+  leave on the fix — which often quotes the old
+  buggy rule verbatim for future readers — will
+  trip the regex. Strip CSS block comments first:
+  `text = re.sub(r"/\*.*?\*/", "", raw_text,
+  flags=re.DOTALL)`. Without this, the test false-
+  positives on the comment that documents WHY the
+  rule was removed. Hit on PR #363 (Phase A2,
+  scope-textbox CSS fix); the same shape applies
+  to any absence-assertion against a static text
+  file where comments may quote the forbidden
+  pattern.
+
+- **Rebase conflict shape — when your PR removes a
+  structure that main has added a new orthogonal
+  feature to, the right resolution is the union,
+  not either side wholesale**: hit 2026-05-14 on
+  PR #365. My branch deleted the
+  ``<script id="scope-picker-config">`` block from
+  workflows.html entirely (replacing
+  ``firstFeaturePath`` / ``allCodePath`` with
+  per-row ``data-scope-default`` attributes). While
+  my branch was open, main's PR #344 follow-up
+  added a NEW field ``workspaceRoot`` to that same
+  script block for cross-worktree localStorage
+  validation — orthogonal feature, also
+  load-bearing on ``runner.js``. The auto-merger
+  surfaced this as a textual conflict but couldn't
+  infer which side should "win." Neither extreme
+  was right: taking HEAD undoes my A3 work, taking
+  theirs drops main's workspaceRoot validation.
+  Correct resolution: KEEP the block, REMOVE only
+  the fields my PR specifically targeted
+  (``firstFeaturePath``, ``allCodePath``),
+  PRESERVE the new orthogonal field
+  (``workspaceRoot``). Test surface gets stronger
+  as a side effect (288 ops tests post-rebase vs
+  282 pre-rebase because main's new tests came
+  along too). Generalize: when a rebase conflict
+  spans "my PR removes X / main extends X,"
+  diagnose whether the extension is the same
+  concern (collapse it) or orthogonal (preserve
+  the orthogonal parts). The conflict markers
+  don't tell you which — but the commit messages
+  on both sides usually do.
+
+- **When main is actively churning, expect to
+  re-rebase between resolving conflicts and merging
+  — check origin/main once more right before
+  push**: hit 2026-05-14 on PR #356. Sequence:
+  rebased on origin/main, resolved CLAUDE.md
+  conflict, force-pushed, checked PR state — still
+  DIRTY. Why? Origin/main had moved 4 more commits
+  (#366, #367, #368, #369) during the ~5 minutes I
+  spent resolving the first rebase. The newly-
+  arrived PRs included another CLAUDE.md append
+  (the #368 lessons PR), which re-introduced the
+  same conflict shape. Had to rebase a second time.
+  Generalizable rule: in any "rebase + force-push"
+  cycle on an active main, the cycle isn't complete
+  until your push lands AND no new commits have
+  appeared on origin/main since you started. The
+  pragmatic recipe: `git fetch origin main` right
+  before `git push --force-with-lease`; if `git log
+  HEAD..origin/main` is non-empty, you need to
+  rebase again before pushing. Multi-agent /
+  multi-session repos can produce N concurrent
+  appends to the same file, and each one may
+  invalidate the previous rebase. Pairs with the
+  existing "Parallel Claude Code sessions can push
+  to the same PR branch silently" lesson — both
+  are symptoms of the same root cause (the wall-
+  clock between your fetch and your push is not a
+  vacuum).
+
+- **CLAUDE.md is now 4500+ lines — grep the topic
+  before appending a new lesson to avoid silent
+  duplicates from parallel sessions**: hit
+  2026-05-14 when I noticed that origin/main has
+  TWO lessons on the same topic: "`overflow:
+  hidden` on a parent clips CSS `::after` tooltip
+  pseudo-elements" (added in an earlier session)
+  and "CSS `[data-tooltip]::after` pseudo-element
+  gets silently clipped by `overflow: hidden` on
+  the parent" (added by PR #368, different
+  session). Same gotcha, different wording, both
+  authored by Patrick across different agent
+  contexts. Neither session grepped the existing
+  lessons before appending, and the lesson file
+  has grown beyond the point where a casual scan
+  catches near-duplicates. Curation discipline:
+  before appending a new lesson, run a quick
+  `grep -i '<key phrase>' .claude/CLAUDE.md` and
+  spot-check the matches. If a near-duplicate
+  exists, either extend the existing lesson with
+  a "Pairs with…" reference or skip the new
+  append. The `consolidate-memory` skill exists
+  for periodic cleanup but it's reactive — pre-
+  flight grep is the cheaper proactive control.
