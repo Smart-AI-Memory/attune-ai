@@ -4830,3 +4830,87 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that cite them) need this treatment from day one**,
   otherwise the first push surfaces it and costs a
   force-push or per-secret unblock.
+
+- **Cross-platform path handling has at least FOUR Windows-
+  specific surfaces, not one — plan to hit all of them at
+  once or expect N rounds of CI**: extends the existing
+  ``str.replace("/", X)`` and ``Path.resolve() drive
+  letter`` lessons. Iterating on the ops-sessions-page
+  Windows fix on 2026-05-15 took **three rounds** of CI
+  (~13 min each) because each fix unblocked the next layer:
+  (1) **Backslash separators in resolved paths** — POSIX
+  `/` and Windows `\\` need to be replaced. (2) **Drive-
+  letter colons** — `C:` survives backslash replacement
+  and triggers pathlib's drive-specifier handling on
+  subsequent path concatenation (silent prefix discard).
+  Strip `:` too. (3) **`str(Path)` produces native
+  separators** — on Windows, ``str(some_path)`` returns
+  backslash form. Any code that builds a DISPLAY string
+  from a Path via ``str()`` will show backslashes on
+  Windows; tests asserting forward-slash output will fail.
+  Fix: ``.as_posix()`` for display paths. (4) **`Path.home
+  ()` reads `USERPROFILE`, not `HOME`, on Windows** — a
+  test that does ``monkeypatch.setenv("HOME", ...)`` will
+  work on POSIX but silently no-op on Windows, leaving
+  ``Path.home()`` to return the real user-profile dir.
+  Fix: set BOTH env vars (helper function with one call).
+  Pattern recognition: when you're starting the SECOND
+  Windows-fix iteration, stop and either (a) plan all
+  four mitigations preemptively, or (b) spin up a fast-
+  feedback channel (workflow_dispatch one-shot or local
+  Windows VM). The amortized cost flips after round 3.
+  See the "Windows debug one-shot" workflow (#386) for
+  the workflow_dispatch route. Also: a defensive encoder
+  shape like ``re.sub(r"[\\\\/:]", "-", resolved)`` is
+  preferable to chained ``.replace()`` calls because new
+  Windows-special chars (CRLF in test fixtures, MAX_PATH
+  long-path quirks, NTFS reserved names) get caught by
+  the same surface.
+
+- **`workflow_dispatch` requires the workflow file to be
+  on the default branch (main) before it can fire against
+  any ref**: discovered 2026-05-15 designing the Windows
+  debug workflow (PR #386). A `workflow_dispatch` job
+  defined ONLY on a feature branch is not callable —
+  ``gh workflow run windows-debug.yml --ref <branch>``
+  errors with "Workflow does not have 'workflow_dispatch'
+  trigger". Even if the branch HEAD has the workflow file,
+  GitHub looks for it on the default branch first. Implication
+  for debug-workflow design: if you build a workflow to
+  debug a failing PR, you can't use it ON that PR — you have
+  to merge the workflow to main FIRST, then dispatch against
+  the failing PR's branch. Practical cycle: open a small
+  prep-PR for the debug workflow → admin-merge to main →
+  THEN ``gh workflow run`` against any subsequent debugging
+  branch. Pair this with the existing ``gh workflow run
+  --ref <tag>`` lesson — same root cause, opposite direction
+  (that one is about tags, this one is about feature branches).
+
+- **In-repo "no hardcoded secrets" scanners trip on
+  detection modules themselves — the regex-based
+  detector and the regex-based blocker look identical
+  to a third-party scanner**: hit 2026-05-15 when the
+  session-redaction module (PR #384) shipped with a
+  comment block like ``# Matches assignment forms like
+  ``<password-keyword> = "value16+chars"``. The project's
+  own ``test_no_hardcoded_secrets`` test (which scans
+  src/ for ``password\s*=\s*"..."`` patterns and excludes
+  files matching ``secrets_detector`` or ``secrets_types``)
+  found my docstring example and failed CI on every OS
+  lane. The exclusion list at the test site is whitelist-
+  by-filename, not exclusion-by-context. Two paths
+  forward: (a) name your new detection module to match
+  the existing whitelist patterns (``*secrets_detector*``
+  / ``*secrets_types*``); (b) sanitize any prose that
+  describes the patterns so it doesn't contain a literal
+  ``<keyword> = "..."`` shape — use abstract descriptions
+  like ``<keyword> + equals + quoted-string`` instead.
+  Option (b) is cleaner because the detection module isn't
+  always *named* like a detector (here:
+  ``session_redaction.py`` — accurate to the function but
+  not to the pattern detection it does). Pair with the
+  existing "Detect-secrets test pragma" lesson — same
+  shape (regex-detection module looks like a hardcoded-
+  secret site) but a different scanner (in-repo test vs
+  pre-commit hook vs GitHub push protection — three
+  separate gates).
