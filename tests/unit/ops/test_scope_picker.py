@@ -578,50 +578,115 @@ def test_all_code_path_is_src():
 
 
 # ----------------------------------------------------------------------
-# /workflows template — scope-picker config block rendering
+# data.workflow_default_scope() — per-workflow first-paint default
 # ----------------------------------------------------------------------
 
 
-def test_workflows_page_renders_scope_picker_config_block(tmp_path, monkeypatch):
-    """The page injects a JSON config block carrying the
-    alphabetically-first feature path and the "All code" fallback
-    path so runner.js can use them as the first-load fallback chain."""
+def test_workflow_default_scope_returns_path_for_name_match(tmp_path):
+    """A workflow whose name matches a feature with a path returns
+    that feature's path."""
     _write_features_yaml(
         tmp_path,
         """
 features:
-  zeta:
-    description: First in YAML order but alphabetically last.
-    files: [src/zeta/**]
-  alpha:
-    description: Last in YAML order but alphabetically first.
-    files: [src/alpha/**]
+  security-audit:
+    description: Scan
+    files: [src/attune/workflows/security_audit.py, src/attune/security/**]
+""",
+    )
+    assert data.workflow_default_scope("security-audit", tmp_path) == "src/attune/security"
+
+
+def test_workflow_default_scope_returns_empty_when_no_match(tmp_path):
+    """A workflow with no matching feature defaults to project-wide
+    (empty string), which the picker renders as the first option."""
+    _write_features_yaml(
+        tmp_path,
+        "features:\n  other:\n    description: x\n    files: [src/other/**]\n",
+    )
+    assert data.workflow_default_scope("release-prep", tmp_path) == ""
+
+
+def test_workflow_default_scope_returns_empty_when_features_yaml_missing(tmp_path):
+    """No features.yaml → empty (graceful fallback, never raises)."""
+    assert data.workflow_default_scope("any-workflow", tmp_path) == ""
+
+
+def test_workflow_default_scope_returns_empty_when_match_has_no_path(tmp_path):
+    """A matching feature whose ``path=None`` (only glob-with-stars
+    files) yields empty, not None — keeps the API return type
+    consistent for the template renderer."""
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  code-quality:
+    description: Mid-name globs only, no addressable scope
+    files: [src/attune/workflows/code_review_*.py]
+""",
+    )
+    assert data.workflow_default_scope("code-quality", tmp_path) == ""
+
+
+# ----------------------------------------------------------------------
+# /workflows template — per-row data-scope-default attribute
+# ----------------------------------------------------------------------
+
+
+def test_workflows_page_renders_per_row_data_scope_default(tmp_path, monkeypatch):
+    """Each workflow row carries a ``data-scope-default`` attribute
+    auto-derived from features.yaml — workflows with a matching
+    feature get that feature's path; workflows without a match get
+    an empty string and default to project-wide."""
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  security-audit:
+    description: Scan
+    files: [src/attune/security/**]
 """,
     )
     app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
-    assert 'id="scope-picker-config"' in resp.text
-    assert 'type="application/json"' in resp.text
-    # Carries the ALPHABETIC FIRST feature's path, not the YAML-order one.
-    assert '"firstFeaturePath": "src/alpha"' in resp.text
-    assert '"firstFeaturePath": "src/zeta"' not in resp.text
-    # And the All code fallback path.
-    assert '"allCodePath": "src/"' in resp.text
+    # security-audit has a matching feature with a path.
+    assert (
+        'data-scope-default="src/attune/security"' in resp.text
+    ), "Expected per-row default scope for security-audit"
+    # release-prep has no matching feature — empty default,
+    # explicit so the JS knows to leave the picker at project-wide.
+    import re
+
+    release_prep_row = re.search(r'<tr[^>]*data-workflow="release-prep"[^>]*>', resp.text)
+    assert release_prep_row is not None
+    assert 'data-scope-default=""' in release_prep_row.group(0)
 
 
-def test_workflows_page_config_block_empty_first_feature_when_no_features(tmp_path, monkeypatch):
-    """No features.yaml → firstFeaturePath is "" but allCodePath is
-    still set, so the JS falls through to All code as the empty-
-    features fallback."""
+def test_workflows_page_scope_picker_config_no_longer_carries_fallback_paths(tmp_path, monkeypatch):
+    """The ``<script id="scope-picker-config">`` block survives because
+    the workspace-root validation for cross-worktree localStorage
+    cleanup still needs to read ``workspaceRoot`` from it. But the
+    old ``firstFeaturePath`` / ``allCodePath`` first-paint fallback
+    fields are gone — per-row ``data-scope-default`` attributes
+    replaced them."""
+    _write_features_yaml(
+        tmp_path,
+        "features:\n  feat:\n    description: x\n    files: [src/feat/**]\n",
+    )
     app, _ = _make_app(tmp_path, monkeypatch, allow_run=True)
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
+    # workspaceRoot field still ships (kept for cross-worktree
+    # localStorage validation).
     assert 'id="scope-picker-config"' in resp.text
-    assert '"firstFeaturePath": ""' in resp.text
-    assert '"allCodePath": "src/"' in resp.text
+    assert '"workspaceRoot":' in resp.text
+    # The first-paint fallback fields are gone (moved to per-row
+    # ``data-scope-default`` attributes on each row).
+    assert "firstFeaturePath" not in resp.text
+    assert "allCodePath" not in resp.text
 
 
 def test_workflows_page_renders_all_code_option(tmp_path, monkeypatch):
@@ -668,7 +733,11 @@ def test_runner_js_exports_scope_storage_helpers():
     text = js_path.read_text(encoding="utf-8")
     # Storage key constant
     assert 'SCOPE_STORAGE_KEY = "attune-ops:lastScope"' in text
-    # All new helper functions exist
+    # All helper functions exist. Phase A3 dropped the firstFeaturePath
+    # / allCodePath fields from the server-injected config block but
+    # kept ``readScopePickerConfig`` itself — the function still parses
+    # the block to expose ``workspaceRoot`` for the cross-worktree
+    # localStorage validation added on main alongside this PR.
     assert "function loadSavedScope(" in text
     assert "function saveScope(" in text
     assert "function readScopePickerConfig(" in text
@@ -678,7 +747,6 @@ def test_runner_js_exports_scope_storage_helpers():
     # All exported via window.__attuneRunner
     assert "loadSavedScope: loadSavedScope" in text
     assert "saveScope: saveScope" in text
-    assert "readScopePickerConfig: readScopePickerConfig" in text
     assert "applyScopeToRow: applyScopeToRow" in text
     assert "restoreScopeOnLoad: restoreScopeOnLoad" in text
     assert "wireScopeSave: wireScopeSave" in text
@@ -726,7 +794,10 @@ def test_runner_js_localstorage_errors_are_swallowed():
     load_end = text.find("function saveScope(", load_start)
     load_body = text[load_start:load_end]
     assert "try" in load_body and "catch" in load_body
-    # Find saveScope body
+    # Find saveScope body. The next function definition is
+    # ``readScopePickerConfig`` (kept for workspaceRoot parsing even
+    # though Phase A3 dropped the firstFeaturePath / allCodePath
+    # fields from the block).
     save_start = text.find("function saveScope(")
     save_end = text.find("function readScopePickerConfig(", save_start)
     save_body = text[save_start:save_end]
@@ -758,3 +829,37 @@ def test_runner_js_unmatched_path_falls_to_custom():
     # Empty value is NOT treated as unmatched (the picker has a "" option
     # for Project-wide that should match cleanly).
     assert 'value !== ""' in apply_body
+
+
+def test_runner_js_restore_reads_per_row_data_scope_default():
+    """``restoreScopeOnLoad`` reads each row's ``data-scope-default``
+    when localStorage is empty (Phase A3). Replaces the old global
+    scope-picker-config block + ``firstFeaturePath`` fallback."""
+    js_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "runner.js"
+    )
+    text = js_path.read_text(encoding="utf-8")
+    restore_start = text.find("function restoreScopeOnLoad(")
+    # The next function definition or closing brace bounds the body.
+    # ``wireScopeSave`` is the next function defined per current order.
+    restore_end = text.find("function wireScopeSave(", restore_start)
+    restore_body = text[restore_start:restore_end]
+    # Reads per-row attribute (the new contract)
+    assert 'getAttribute("data-scope-default")' in restore_body
+    # localStorage saved value still wins (preserves PR #344's contract)
+    assert "loadSavedScope" in restore_body
+    # Walks rows (not a global single-value application)
+    assert 'querySelectorAll("tr[data-workflow]")' in restore_body
+    # The old first-paint fallback symbols are gone.
+    assert "firstFeaturePath" not in restore_body
+    assert "allCodePath" not in restore_body
+    # ``readScopePickerConfig`` itself is still called — it parses the
+    # config block for ``workspaceRoot`` (the cross-worktree
+    # localStorage validation needs it). Only the firstFeaturePath /
+    # allCodePath fields of that block are gone, not the block-reader.

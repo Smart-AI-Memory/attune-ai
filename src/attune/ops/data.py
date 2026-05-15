@@ -247,6 +247,41 @@ def first_feature(project_root: Path | str) -> Feature | None:
     return None
 
 
+def workflow_default_scope(workflow_name: str, project_root: Path | str) -> str:
+    """Return the default scope for one workflow on first paint.
+
+    Auto-derives by exact-name match against ``features.yaml``: if a
+    feature with the same name as the workflow exists and has a
+    renderable ``path``, that path is the default. Otherwise returns
+    ``""`` (project-wide), which is the safe fallback the picker
+    template already renders as the first option.
+
+    Used by the dashboard route to render a per-row
+    ``data-scope-default`` attribute on each workflow row, so the JS
+    can restore a workflow-appropriate scope on first load instead of
+    defaulting every row to the alphabetically-first feature.
+
+    Example match table for the attune-ai ``features.yaml``:
+
+    - ``security-audit`` workflow → ``src/attune/security`` (matches
+      the ``security-audit`` feature's ``files: [..., src/attune/
+      security/**]`` entry).
+    - ``release-prep`` workflow → ``""`` (no matching feature, so
+      project-wide is the default — explicitly chosen over surfacing
+      an irrelevant scope).
+    - ``bug-predict`` workflow → first non-glob ``files`` entry of
+      the ``bug-predict`` feature, if any.
+
+    Returns ``""`` when ``features.yaml`` is missing, when there's no
+    matching feature, or when the matching feature has ``path=None``
+    (e.g. its ``files`` are all mid-name globs).
+    """
+    for feature in list_features(project_root):
+        if feature.name == workflow_name and feature.path:
+            return feature.path
+    return ""
+
+
 # Path passed to workflows when the user picks the "All code" picker
 # option. Hardcoded for attune-ai's ``src/`` layout. Downstream projects
 # with different code roots can override by editing this constant or by

@@ -27,7 +27,15 @@
     </thead>
     <tbody>
       {% for w in workflows %}
-        <tr data-workflow="{{ w.name }}">
+        {# data-scope-default carries the first-paint default scope
+           for this workflow, auto-derived server-side from
+           features.yaml. runner.js reads it on DOMContentLoaded if
+           localStorage has no saved scope. Empty string means
+           "project-wide is the default" — explicitly chosen for
+           workflows like release-prep / health-check that don't map
+           to a single feature. #}
+        <tr data-workflow="{{ w.name }}"
+            data-scope-default="{{ default_scopes[w.name] if allow_run and supports_path[w.name] else '' }}">
           <td><code>{{ w.name }}</code></td>
           <td class="num">{{ w.stages }}</td>
           <td>
@@ -77,12 +85,14 @@
 {% endblock %}
 
 {% block scripts %}
-{# Server-injected config for the scope picker's first-load fallback.
-   Read by runner.js on DOMContentLoaded. Empty string means "no
-   path-bearing feature exists in features.yaml" — the JS leaves the
-   picker on Project-wide in that case. #}
+{# Server-injected workspace root, read by runner.js to validate that
+   a saved scope from localStorage is still under this workspace
+   (catches stale scopes from a different worktree). The old
+   firstFeaturePath / allCodePath fields used to live here too but
+   moved to per-row ``data-scope-default`` attributes (rendered above)
+   so each workflow can default to its own most-relevant scope. #}
 <script id="scope-picker-config" type="application/json">
-{"firstFeaturePath": {{ first_feature_path | tojson }}, "allCodePath": {{ all_code_path | tojson }}, "workspaceRoot": {{ workspace_root | tojson }}}
+{"workspaceRoot": {{ workspace_root | tojson }}}
 </script>
 {# runner.js is loaded unconditionally so the recent-runs strip
    renders in both run and read-only modes. The script's
