@@ -323,6 +323,37 @@ a.kpi:hover {
 .data-table tbody tr:hover {
   background: var(--bg-soft);
 }
+
+/* Recent-runs row click affordance (Phase B4). Each cell wraps its
+   content in an ``<a class="row-link">`` linking to the run-view
+   page; the link is display:block + fills the cell's padding (the
+   .data-table padding moves from the <td> to the <a> for these
+   rows). Result: clicking anywhere in the cell — including the
+   padding strip — opens the run. ``color: inherit`` keeps chip /
+   monospace text rendering normal; ``text-decoration: none``
+   prevents the row from looking like a row of underlined links.
+   ``cursor: pointer`` on the row signals clickability before the
+   user lands on a specific cell. Only the first per-row link is
+   in tab order (``tabindex="-1"`` on the others) so keyboard nav
+   gets ONE focus stop per run, not six. */
+.recent-runs-table tbody tr.recent-run-row {
+  cursor: pointer;
+}
+.recent-runs-table tbody tr.recent-run-row > td {
+  padding: 0;  /* moved into the <a> below so it's part of the
+                  click target */
+}
+.recent-runs-table tbody td a.row-link {
+  display: block;
+  padding: 8px 10px;
+  color: inherit;
+  text-decoration: none;
+}
+.recent-runs-table tbody td a.row-link:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+  border-radius: 4px;
+}
 .data-table .num {
   text-align: right;
   font-variant-numeric: tabular-nums;

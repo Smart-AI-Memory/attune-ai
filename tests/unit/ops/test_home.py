@@ -108,6 +108,113 @@ def test_home_renders_with_runner_recent_runs(tmp_path, monkeypatch):
     assert "completed" in resp.text
 
 
+def test_home_recent_runs_each_cell_links_to_run_view(tmp_path, monkeypatch):
+    """Phase B4: every cell in a Recent-runs row is clickable.
+
+    Pre-B4, only the workflow-name and run-id cells had ``<a>``
+    wrappers — clicking the status chip, duration, started-at, or
+    line-count cells did nothing. Users who tried to "click the
+    row" missed unless they hit one of the two link cells.
+
+    Regression guard: each of the SIX cells must wrap its content
+    in an ``<a class="row-link" href="/runs/<id>/view">`` so the
+    entire row is mouse-clickable. Keyboard nav gets ONE focus
+    stop per row (the first link); the rest use ``tabindex="-1"``
+    to stay out of tab order while remaining mouse-clickable.
+    """
+    import re
+
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
+    runner = RunnerService()
+    seeded = Run(id="abc12345", workflow="code-review")
+    seeded.status = "completed"
+    seeded.exit_code = 0
+    from datetime import datetime, timezone
+
+    seeded.started_at = datetime(2026, 5, 6, 12, 0, 0, tzinfo=timezone.utc)
+    seeded.completed_at = datetime(2026, 5, 6, 12, 0, 5, tzinfo=timezone.utc)
+    seeded.lines = ["line one", "line two"]
+    runner._runs[seeded.id] = seeded  # noqa: SLF001
+
+    app = create_app(config, runner=runner)
+    with TestClient(app) as client:
+        resp = client.get("/")
+    assert resp.status_code == 200
+    body = resp.text
+
+    # Isolate the seeded run's <tr> — we only want THIS row, not other
+    # runs the server might have surfaced. The row carries the
+    # ``recent-run-row`` class added in B4.
+    row_re = re.compile(
+        r'<tr class="recent-run-row">(.*?)</tr>',
+        re.DOTALL,
+    )
+    row_match = row_re.search(body)
+    assert row_match is not None, (
+        "Recent-runs table doesn't render a row with class "
+        "``recent-run-row`` — the B4 click-target class is missing"
+    )
+    row_html = row_match.group(1)
+    # Count <a class="row-link"> openings pointing at the run-view.
+    # Attribute order on the rendered tag is template-author-dependent
+    # (today: href first, class second), so match the tag opening then
+    # check both attributes are present inside it, rather than
+    # constraining their order in the regex.
+    a_opens = re.findall(r"<a\b[^>]*>", row_html)
+    row_links = [
+        tag for tag in a_opens if 'class="row-link"' in tag and 'href="/runs/abc12345/view"' in tag
+    ]
+    assert len(row_links) == 6, (
+        f"Expected 6 row-link <a> elements (one per cell) inside the "
+        f"seeded run's row; found {len(row_links)}. Cells: workflow, "
+        f"run id, status, duration, started, lines."
+    )
+    # Only the first link is in tab order. The other five carry
+    # ``tabindex="-1"`` so keyboard nav doesn't have to stop 6 times
+    # per row. This is the keyboard-accessibility part of the design.
+    tabindex_neg = [tag for tag in row_links if 'tabindex="-1"' in tag]
+    assert len(tabindex_neg) == 5, (
+        "Expected 5 of the 6 row-link <a>s to carry tabindex='-1' "
+        "(only the first stays in tab order); found a different count"
+    )
+    # The first cell-link is also the one carrying the descriptive
+    # aria-label that screen readers announce for the row.
+    assert (
+        'aria-label="Open run abc12345 for code-review"' in row_html
+    ), "First row-link should carry a descriptive aria-label"
+
+
+def test_home_recent_runs_css_makes_row_clickable():
+    """The CSS hook for B4 (``recent-runs-table tbody td a.row-link``)
+    must exist in main.css. The visual cue (``cursor: pointer`` on
+    the row) is part of the design promise — without it users don't
+    discover the whole-row click target."""
+    from pathlib import Path
+
+    css_path = (
+        Path(__file__).resolve().parents[3]
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "css"
+        / "main.css"
+    )
+    text = css_path.read_text(encoding="utf-8")
+    # The cursor cue
+    assert "tr.recent-run-row" in text
+    assert "cursor: pointer" in text
+    # The link-styling rule that makes <a> fill the cell
+    assert ".recent-runs-table tbody td a.row-link" in text
+    assert "display: block" in text
+    assert "color: inherit" in text
+    assert "text-decoration: none" in text
+
+
 def test_home_shows_empty_state_when_no_runs(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
     config = build_config(

@@ -43,17 +43,26 @@
 <section class="panel">
   <h2>Recent runs</h2>
   {% if recent_runs %}
+    {# Each cell wraps its content in an ``<a class="row-link">``
+       linking to ``/runs/<id>/view`` so the entire row is clickable —
+       not just the workflow-name and run-id cells. Per-cell ``<a>``
+       (rather than an absolutely-positioned overlay or a JS click
+       handler) keeps the row keyboard-accessible without scripts and
+       avoids the table-row ``position: relative`` quirks on older
+       browsers. CSS in main.css makes ``.row-link`` display:block +
+       color:inherit + text-decoration:none so the existing chip /
+       monospace styling stays visible. #}
     <table class="data-table recent-runs-table">
       <thead><tr><th>Workflow</th><th>Run</th><th>Status</th><th class="num">Duration</th><th>Started</th><th class="num">Lines</th></tr></thead>
       <tbody>
         {% for r in recent_runs %}
-          <tr>
-            <td><a href="/runs/{{ r.id }}/view" class="link"><code>{{ r.workflow }}</code></a></td>
-            <td><a href="/runs/{{ r.id }}/view" class="link"><code>{{ r.id[:8] }}</code></a></td>
-            <td><span class="chip chip-{{ r.status }}">{{ r.status }}</span></td>
-            <td class="num">{% if r.duration_seconds is not none %}{{ '%.1fs'|format(r.duration_seconds) }}{% else %}—{% endif %}</td>
-            <td><code class="started">{{ r.started_at[:19] if r.started_at else '—' }}</code></td>
-            <td class="num">{{ r.line_count }}</td>
+          <tr class="recent-run-row">
+            <td><a href="/runs/{{ r.id }}/view" class="row-link" aria-label="Open run {{ r.id[:8] }} for {{ r.workflow }}"><code>{{ r.workflow }}</code></a></td>
+            <td><a href="/runs/{{ r.id }}/view" class="row-link" tabindex="-1"><code>{{ r.id[:8] }}</code></a></td>
+            <td><a href="/runs/{{ r.id }}/view" class="row-link" tabindex="-1"><span class="chip chip-{{ r.status }}">{{ r.status }}</span></a></td>
+            <td class="num"><a href="/runs/{{ r.id }}/view" class="row-link" tabindex="-1">{% if r.duration_seconds is not none %}{{ '%.1fs'|format(r.duration_seconds) }}{% else %}—{% endif %}</a></td>
+            <td><a href="/runs/{{ r.id }}/view" class="row-link" tabindex="-1"><code class="started">{{ r.started_at[:19] if r.started_at else '—' }}</code></a></td>
+            <td class="num"><a href="/runs/{{ r.id }}/view" class="row-link" tabindex="-1">{{ r.line_count }}</a></td>
           </tr>
         {% endfor %}
       </tbody>
