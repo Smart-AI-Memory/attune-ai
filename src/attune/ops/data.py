@@ -367,8 +367,15 @@ def _encoded_project_path(project_root: Path | str) -> str:
     Resolves to absolute first so a relative ``project_root`` arg
     still matches the on-disk encoding. Returns the encoded
     basename only — the caller prepends ``~/.claude/projects/``.
+
+    On Windows ``Path.resolve()`` produces backslash separators, so
+    both separators are mapped to ``-`` — otherwise the encoded
+    string contains a literal ``D:\\...`` that pathlib treats as an
+    absolute path on subsequent concatenation, silently discarding
+    the ``~/.claude/projects/`` prefix.
     """
-    return str(Path(project_root).expanduser().resolve()).replace("/", "-")
+    resolved = str(Path(project_root).expanduser().resolve())
+    return resolved.replace("/", "-").replace("\\", "-")
 
 
 def claude_sessions_dir(project_root: Path | str) -> Path:

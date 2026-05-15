@@ -33,15 +33,58 @@ from attune.ops.server import create_app  # noqa: E402
 
 def test_encoded_project_path_matches_claude_code_convention(tmp_path):
     """The encoding is ``str(resolved_path).replace('/', '-')``. We assert
-    on the basename only since ``resolve()`` adds the absolute prefix."""
+    on the basename only since ``resolve()`` adds the absolute prefix.
+
+    Also asserts no backslashes survive — Windows ``Path.resolve()``
+    produces backslash separators, and any backslash left in the
+    encoded segment causes the subsequent ``Path / encoded`` to be
+    treated as an absolute path (silently discarding the prefix).
+    """
     encoded = data._encoded_project_path(tmp_path)
-    assert encoded.endswith(str(tmp_path).replace("/", "-"))
+    expected_suffix = str(tmp_path).replace("/", "-").replace("\\", "-")
+    assert encoded.endswith(expected_suffix)
     assert "/" not in encoded
+    assert "\\" not in encoded
+
+
+def test_encoded_project_path_strips_windows_backslashes():
+    """Regression test for the Windows CI failure observed 2026-05-15.
+
+    Passes a path string containing literal backslashes — on POSIX
+    this is a single relative filename with backslashes inside it;
+    on Windows it's a real path. Either way, the encoder must
+    return a string with NO backslashes so the caller's
+    ``Path.home() / ".claude" / "projects" / encoded`` stays a
+    single path segment.
+
+    Without the fix, the resolved POSIX form is
+    ``<cwd>/fake\\windows\\path`` and the encoder leaves backslashes
+    intact (only ``/`` → ``-``). With the fix both separators map
+    to ``-``.
+    """
+    encoded = data._encoded_project_path("fake\\windows\\path")
+    assert "\\" not in encoded, f"backslash survived encoding: {encoded!r}"
+    assert "/" not in encoded, f"forward slash survived encoding: {encoded!r}"
 
 
 def test_claude_sessions_dir_is_under_user_home(tmp_path):
     """The dir is rooted at ``~/.claude/projects/<encoded>/``."""
     sessions_dir = data.claude_sessions_dir(tmp_path)
+    assert sessions_dir.parent.parent.name == ".claude"
+    assert sessions_dir.parent.name == "projects"
+
+
+def test_claude_sessions_dir_under_user_home_with_windows_style_input():
+    """Cross-platform regression: even when project_root contains
+    backslashes (real on Windows, literal on POSIX), the resulting
+    sessions dir must still nest under ``~/.claude/projects/``.
+
+    Before the fix, the backslash-laden encoded segment was treated
+    as an absolute path on Windows path concatenation, so
+    ``sessions_dir.parent.parent.name`` was something inside the
+    tmp tree (``pytest-0`` on the failing CI run), not ``.claude``.
+    """
+    sessions_dir = data.claude_sessions_dir("fake\\drive\\project")
     assert sessions_dir.parent.parent.name == ".claude"
     assert sessions_dir.parent.name == "projects"
 
