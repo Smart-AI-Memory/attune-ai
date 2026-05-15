@@ -195,3 +195,106 @@ def test_specs_page_specs_js_has_version_cache_bust(client):
         )
         assert m is not None, "specs.js is referenced but without a ?v= cache-bust"
         assert m.group(1) == attune_version
+
+
+# ---------------------------------------------------------------------------
+# Phase D5 — project-name derived from pyproject.toml, not basename
+# ---------------------------------------------------------------------------
+
+
+def test_derive_project_name_reads_pyproject_name(tmp_path):
+    """A ``pyproject.toml`` with ``[project].name`` returns that name,
+    not the directory basename. This is the load-bearing case: a
+    dashboard launched against a worktree should display the
+    package name (``attune-ai``) not the worktree slug
+    (``reverent-brown-937823``)."""
+    from attune.ops.data import derive_project_name
+
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "my-package"\nversion = "1.0.0"\n',
+        encoding="utf-8",
+    )
+    assert derive_project_name(tmp_path) == "my-package"
+
+
+def test_derive_project_name_falls_back_to_basename_without_pyproject(tmp_path):
+    """No pyproject.toml → directory basename. Sensible for Node /
+    plain directories."""
+    from attune.ops.data import derive_project_name
+
+    worktree = tmp_path / "reverent-brown-937823"
+    worktree.mkdir()
+    assert derive_project_name(worktree) == "reverent-brown-937823"
+
+
+def test_derive_project_name_handles_malformed_toml(tmp_path):
+    """Malformed pyproject.toml → basename, no crash. The dashboard
+    must keep rendering even when the project config is broken."""
+    from attune.ops.data import derive_project_name
+
+    (tmp_path / "pyproject.toml").write_text("not [ valid {{{ toml", encoding="utf-8")
+    assert derive_project_name(tmp_path) == tmp_path.name
+
+
+def test_derive_project_name_handles_missing_project_table(tmp_path):
+    """pyproject.toml with no ``[project]`` table → basename. Some
+    pyprojects exist for tooling config only (ruff, black) without
+    a package definition."""
+    from attune.ops.data import derive_project_name
+
+    (tmp_path / "pyproject.toml").write_text("[tool.ruff]\nline-length = 100\n", encoding="utf-8")
+    assert derive_project_name(tmp_path) == tmp_path.name
+
+
+def test_derive_project_name_handles_empty_name(tmp_path):
+    """``[project]`` table present but ``name`` is empty → basename
+    (rendering an empty chip would be worse than the slug)."""
+    from attune.ops.data import derive_project_name
+
+    (tmp_path / "pyproject.toml").write_text('[project]\nname = ""\n', encoding="utf-8")
+    assert derive_project_name(tmp_path) == tmp_path.name
+
+
+def test_dashboard_topbar_chip_shows_package_name_not_slug(tmp_path, monkeypatch):
+    """End-to-end: a dashboard launched against a worktree-style path
+    (basename = slug) with a pyproject naming the package shows the
+    package name in the topbar chip, NOT the basename.
+
+    Mirrors the user-visible defect QA flagged as P3-11a.
+    """
+    worktree = tmp_path / "reverent-brown-937823"
+    worktree.mkdir()
+    (worktree / "pyproject.toml").write_text(
+        '[project]\nname = "attune-ai"\nversion = "6.8.0"\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    config = build_config(
+        project_root=worktree,
+        trusted_hosts=("testserver", "test"),
+    )
+    app = create_app(config)
+    with TestClient(app) as client:
+        resp = client.get("/")
+    assert resp.status_code == 200
+    body = resp.text
+    # The env-value chip in base.html now renders project_name.
+    # The package name must appear inside the chip:
+    import re
+
+    chip_re = re.compile(
+        r'<code class="env-value"[^>]*>([^<]+)</code>',
+        re.DOTALL,
+    )
+    chip = chip_re.search(body)
+    assert chip is not None, "env-value chip not found in topbar"
+    assert chip.group(1).strip() == "attune-ai", (
+        f"Expected topbar chip to show 'attune-ai' (the package name), "
+        f"got {chip.group(1).strip()!r}. The worktree-slug bug is back."
+    )
+    # The tooltip / aria-label still expose the full path so users
+    # who need it can hover or screen-read.
+    assert "reverent-brown-937823" in body, (
+        "Full project path should still be visible somewhere (tooltip "
+        "/ aria-label) — only the chip's visible text is shortened"
+    )

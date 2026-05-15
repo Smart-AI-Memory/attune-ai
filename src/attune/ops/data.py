@@ -282,6 +282,59 @@ def workflow_default_scope(workflow_name: str, project_root: Path | str) -> str:
     return ""
 
 
+def derive_project_name(project_root: Path | str) -> str:
+    """Return a human-readable project name for the dashboard header.
+
+    Reads the ``[project]`` table's ``name`` field from
+    ``<project_root>/pyproject.toml`` when present; falls back to the
+    directory basename otherwise. The fallback gives sensible output
+    for projects without a ``pyproject.toml`` (Node.js, plain
+    directories) while the pyproject path means worktree-launched
+    dashboards display the package name (e.g. ``attune-ai``) instead
+    of the worktree slug (e.g. ``reverent-brown-937823``).
+
+    Defensive failure modes — none of these surface to the user; the
+    dashboard just renders the basename:
+
+    - Missing ``pyproject.toml`` → basename.
+    - Unreadable file (perm error, OSError) → basename.
+    - Malformed TOML → basename.
+    - ``[project]`` table missing or ``name`` field missing → basename.
+    - Empty ``name`` value → basename (don't render blank header).
+
+    No-pyproject fallback chain isn't extended to ancestor
+    directories: the dashboard's ``--project-root`` is supposed to
+    BE the project root. Walking up could surface a parent
+    workspace's name (e.g. ``Users``) which is worse than the
+    worktree slug.
+    """
+    root = Path(project_root).expanduser().resolve()
+    pyproject = root / "pyproject.toml"
+    if pyproject.is_file():
+        try:
+            text = pyproject.read_text(encoding="utf-8")
+        except OSError:
+            return root.name
+        # Python 3.11+ ships tomllib; fall back to the stdlib parser.
+        try:
+            import tomllib
+        except ImportError:  # pragma: no cover — Python < 3.11
+            try:
+                import tomli as tomllib  # type: ignore[no-redef]
+            except ImportError:
+                return root.name
+        try:
+            parsed = tomllib.loads(text)
+        except tomllib.TOMLDecodeError:
+            return root.name
+        project_table = parsed.get("project")
+        if isinstance(project_table, dict):
+            name = project_table.get("name")
+            if isinstance(name, str) and name.strip():
+                return name.strip()
+    return root.name
+
+
 # Path passed to workflows when the user picks the "All code" picker
 # option. Hardcoded for attune-ai's ``src/`` layout. Downstream projects
 # with different code roots can override by editing this constant or by
