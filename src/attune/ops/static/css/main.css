@@ -733,6 +733,23 @@ a.kpi:hover {
   border-color: var(--accent);
   outline: none;
 }
+/* WCAG 2.5.5 AA target size — the visible pill is intentionally
+   compact (~18-22px tall) but the click target needs ≥24×24px. The
+   pseudo-element expands the hit area around the pill without
+   changing its visual size. ``z-index: -1`` keeps it behind the
+   visible content so it doesn't intercept hover for the ::after
+   tooltip; ``inset: -3px`` adds 3px of click area on each side
+   (≈ 24px tall total at default font, padding-bounded above 24px
+   wide for codes like "drf"). */
+.status-pill-editable::before {
+  content: "";
+  position: absolute;
+  inset: -3px;
+  min-width: 24px;
+  min-height: 24px;
+  border-radius: 99px;
+  z-index: -1;
+}
 .status-pill.flash-ok {
   outline: 2px solid var(--ok);
   outline-offset: 1px;
@@ -798,6 +815,13 @@ a.kpi:hover {
 [data-tooltip]:focus-visible::after {
   opacity: 1;
   visibility: visible;
+}
+/* Flip tooltip below the element. Use for items in the sticky
+   topbar where the default above-the-element position would
+   render outside the viewport. */
+[data-tooltip][data-tooltip-position="bottom"]::after {
+  bottom: auto;
+  top: calc(100% + 6px);
 }
 /* Suppress the tooltip while the pill is in edit mode (the inline
    <select> takes over — a competing tooltip would be confusing). */

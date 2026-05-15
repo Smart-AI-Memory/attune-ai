@@ -19,7 +19,13 @@
         {% endfor %}
       </nav>
       {% if current_run %}
-        <a class="running-badge" href="/runs/{{ current_run.id }}/view" title="A workflow is running — click to view its output">
+        {# data-tooltip + data-tooltip-position=bottom: fast CSS tooltip
+           positioned below the topbar so it doesn't render above the
+           viewport. aria-label keeps the cue accessible to screen readers. #}
+        <a class="running-badge" href="/runs/{{ current_run.id }}/view"
+           data-tooltip="A workflow is running — click to view its output"
+           data-tooltip-position="bottom"
+           aria-label="A workflow is running — click to view its output">
           <span class="running-dot" aria-hidden="true"></span>
           <span class="running-label">running</span>
           <code class="running-workflow">{{ current_run.workflow }}</code>
@@ -27,7 +33,10 @@
       {% endif %}
       <div class="env">
         <span class="env-label">project</span>
-        <code class="env-value" title="{{ project_root }}">{{ project_root.split('/')[-1] }}</code>
+        <code class="env-value"
+              data-tooltip="{{ project_root }}"
+              data-tooltip-position="bottom"
+              aria-label="Project root: {{ project_root }}">{{ project_root.split('/')[-1] }}</code>
       </div>
     </header>
     <main class="main">{% block content %}{% endblock %}</main>
