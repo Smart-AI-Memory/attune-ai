@@ -4784,3 +4784,49 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   spec review surfaced). Implementation PR comes later,
   on a refreshed main. Trade-off: one extra PR to track,
   but each has crisp scope and reviewers approve quickly.
+
+- **GitHub server-side push protection blocks
+  provider-shaped test tokens even with obviously-fake
+  content — and it's distinct from `detect-secrets` /
+  `# pragma: allowlist secret`**: hit 2026-05-15 pushing
+  the session-redaction test fixture (PR #384). A Slack
+  test token (clearly fake, used to exercise the redaction
+  regex) was rejected at push time with `GH013: Repository
+  rule violations found … Push cannot contain secrets …
+  Slack API Token`. The scanner reads source bytes and
+  matches partner-signed shapes regardless of content
+  plausibility — high-entropy isn't required, only the
+  structural pattern. The local detect-secrets hook (which
+  uses `# pragma: allowlist secret`) is a SEPARATE thing
+  — it runs at commit time but does NOT influence
+  GitHub's server-side push gate. Workarounds, ranked by
+  hygiene: (1) **Runtime concatenation** — split the
+  literal across Python concat ops so the source never
+  contains a complete provider shape, but the regex still
+  matches at runtime: ``token = "xo" + "xb-" +
+  "TESTSLACKTOKENABCDEFG"``. Works for any literal in
+  Python code (tests, fixtures, examples). (2) **GitHub
+  "allow this secret" URL** — the rejection message
+  includes a per-token unblock URL; clicking grants a
+  one-time pass for that specific commit. Tedious if you
+  have multiple. (3) **Manual placeholder for prose**
+  (docs, READMEs, **this lessons file**) — use
+  ``<slack-token-omitted>`` or similar; the scanner
+  won't match. Note: this very lesson was first written
+  with a literal Slack-shaped string in the prose and
+  rejected by push protection on its first push attempt
+  — meta-irony preserved. Provider shapes to preemptively
+  sanitize in tests: Slack (``xo`` + ``xb-...``),
+  Anthropic (``sk-`` + ``ant-...``), GitHub PATs (``ghp``,
+  ``gho``, ``ghu``, ``ghs``, ``ghr`` each with underscore
+  + 36 alphanumeric chars), Bearer headers with
+  high-entropy values, AWS (``AKI`` + ``A[A-Z0-9]{16}``).
+  AWS's documented example key (the one starting with
+  ``AKI`` + ``AIOSFODNN7EXAMPLE``) is allowed by GitHub
+  (signature-exempt) but use runtime concat anyway for
+  consistency. The lesson is broader than "fix this
+  test": **any time we ship code that pattern-matches on
+  real-looking secrets, the test fixtures (and any docs
+  that cite them) need this treatment from day one**,
+  otherwise the first push surfaces it and costs a
+  force-push or per-secret unblock.
