@@ -143,6 +143,26 @@ def _write_session_jsonl(
     return path
 
 
+def _patch_home(monkeypatch, home_path) -> None:
+    """Patch ``Path.home()`` to return ``home_path`` on every platform.
+
+    Python's ``pathlib.Path.home()`` consults different env vars per OS:
+
+    - POSIX: ``HOME``
+    - Windows: ``USERPROFILE`` (falls back to ``HOMEDRIVE``+``HOMEPATH``)
+
+    A test that patches only ``HOME`` will work on POSIX runners but
+    silently no-op on Windows — ``Path.home()`` will still return the
+    real user-profile directory, and any code under test that writes
+    sessions to a monkeypatched home location won't be found.
+
+    Setting both env vars covers the cross-platform case with one call.
+    """
+    home_str = str(home_path)
+    monkeypatch.setenv("HOME", home_str)
+    monkeypatch.setenv("USERPROFILE", home_str)
+
+
 def test_list_recent_sessions_returns_empty_when_dir_missing(tmp_path, monkeypatch):
     """No ``~/.claude/projects/<encoded>/`` dir → empty list, not error.
 
@@ -150,7 +170,7 @@ def test_list_recent_sessions_returns_empty_when_dir_missing(tmp_path, monkeypat
     Code from looks like this. The dashboard must render the empty
     state, not crash.
     """
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    _patch_home(monkeypatch, tmp_path / "home")
     assert data.list_recent_sessions(tmp_path / "project") == []
 
 
@@ -158,7 +178,7 @@ def test_list_recent_sessions_reads_jsonl(tmp_path, monkeypatch):
     """A JSONL with one user prompt → one Session record with that
     prompt as the heuristic starter."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     _write_session_jsonl(
         sessions_dir,
@@ -204,7 +224,7 @@ def test_list_recent_sessions_reads_jsonl(tmp_path, monkeypatch):
 def test_list_recent_sessions_filters_by_mtime(tmp_path, monkeypatch):
     """Files older than ``days`` are excluded by mtime."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
 
     now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
@@ -233,7 +253,7 @@ def test_list_recent_sessions_filters_by_mtime(tmp_path, monkeypatch):
 def test_list_recent_sessions_sorts_most_recent_first(tmp_path, monkeypatch):
     """Sessions sort by ``last_activity`` desc."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
 
     _write_session_jsonl(
@@ -258,7 +278,7 @@ def test_list_recent_sessions_skips_malformed_lines(tmp_path, monkeypatch):
     Session record built from the good line; the parse error is
     per-line, not fatal."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     sessions_dir.mkdir(parents=True)
     (sessions_dir / "mixed.jsonl").write_text(
@@ -279,7 +299,7 @@ def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
     """A session with no events that have ``content`` (e.g. dequeue-only,
     attachment-only) yields a record with placeholder starter prompt."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     _write_session_jsonl(
         sessions_dir,
@@ -308,7 +328,7 @@ def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
 
 def _make_app(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    _patch_home(monkeypatch, tmp_path / "home")
     config = build_config(
         project_root=tmp_path / "project",
         trusted_hosts=("testserver", "test"),

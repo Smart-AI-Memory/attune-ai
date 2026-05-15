@@ -155,7 +155,13 @@ async def sessions_page(request: Request) -> HTMLResponse:
     # rendered path matches what ``list_recent_sessions`` reads
     # from disk — naive ``str.replace("/", "-")`` here leaves
     # Windows backslashes and drive-letter colons unencoded.
-    sessions_dir = "~/" + str(data.claude_sessions_dir(cfg.project_root).relative_to(Path.home()))
+    # ``as_posix()`` so the rendered path uses ``/`` separators on every
+    # platform — on Windows ``str(Path)`` produces native backslashes,
+    # which look wrong in the UI and break tests that assert on the
+    # POSIX-style path string.
+    sessions_dir = (
+        "~/" + data.claude_sessions_dir(cfg.project_root).relative_to(Path.home()).as_posix()
+    )
     return _render(
         request,
         "sessions.html",
