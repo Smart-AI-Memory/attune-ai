@@ -4687,3 +4687,100 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (no merges, no protection changes — just `gh pr
   checks` reads) pass the classifier fine and are the
   right home for unattended logic during long CI waits.
+
+- **`str.replace("/", X)` on a resolved `Path` is silently
+  broken on Windows — and the downstream `Path / encoded`
+  concatenation silently discards the prefix**: pairs with
+  the existing "Windows `Path.resolve()` prepends the drive
+  letter" lesson but covers a sharper failure mode. Code
+  like `str(Path(p).resolve()).replace("/", "-")` (used to
+  encode project paths to match Claude Code's
+  `~/.claude/projects/<encoded>/` convention) works on POSIX
+  but produces a string with literal backslashes on Windows.
+  The subtle kill: when that backslash-laden "encoded" string
+  is then used as `Path.home() / ".claude" / "projects" /
+  encoded`, pathlib sees the `D:\` prefix INSIDE the rightmost
+  segment and treats the whole thing as an absolute path —
+  silently discarding the `~/.claude/projects/` prefix. No
+  exception, no warning. Observed symptom in CI:
+  `assert sessions_dir.parent.parent.name == ".claude"` →
+  `AssertionError: assert 'pytest-0' == '.claude'` (the dir
+  resolved to the tmp tree itself, not under `.claude/`).
+  Fix: replace BOTH separators —
+  `.replace("/", "-").replace("\\", "-")`. POSIX paths have
+  no backslashes so this is a no-op there. Cross-platform
+  regression test pattern: pass a literal-backslash input
+  string (e.g. `"fake\\drive\\project"`) — on POSIX it's a
+  single filename containing backslashes, on Windows it's a
+  real path; either way the encoder must return a string
+  with no surviving separators. Lands in PR #382 alongside
+  the fix to `src/attune/ops/data.py::_encoded_project_path`.
+
+- **Admin-merging a PR before Windows lanes complete buries
+  a real bug on main**: extends the existing "Admin-merging
+  a deletion PR without checking the `build` docs check"
+  lesson. PR #379 (S2 data layer for ops-sessions-page) was
+  admin-merged after macOS/Ubuntu lanes turned green; the 4
+  Windows lanes hadn't finished. They eventually failed
+  with the production bug above, but by then the squash was
+  on main and every subsequent PR's CI surfaced the same
+  failure. Procedural rule: when admin-merging a PR that
+  includes new Windows-relevant code (path handling,
+  subprocess, encoding, anything that touches the
+  filesystem), wait for **all** OS lanes — not just the
+  fast ones — or accept that you'll open a hotfix PR
+  within a day. The Windows matrix is ~13 min vs ~3 min on
+  macOS/Ubuntu; budget for it. Companion observation: a
+  docs-only PR opened the next day surfaced the bug
+  instantly because it ran the same matrix against the new
+  HEAD. CI debt has a short half-life.
+
+- **Claude Code's live-session env var is
+  `CLAUDE_CODE_SESSION_ID` (with `CODE_` infix), not
+  `CLAUDE_SESSION_ID`; the `~/.claude/__last_session`
+  pointer-file does not exist**: empirical probe from
+  inside a Claude Code session 2026-05-15. The CC desktop
+  app exposes `CLAUDE_CODE_SESSION_ID` as an env var
+  matching the on-disk JSONL filename in
+  `~/.claude/projects/<encoded>/<session-id>.jsonl`. Spec
+  drafts that guess at the variable name (or hypothesize a
+  pointer file under `~/.claude/`) without probing end up
+  wrong; the cost of probing is one `env | grep CLAUDE`
+  call. Useful for any dashboard/CLI that needs to
+  identify "this session" vs "other sessions in the same
+  project."
+
+- **Cowork-spawned worktrees produce a per-worktree encoded
+  key under `~/.claude/projects/`, not a single key per
+  logical project**: scan on 2026-05-15 of attune-ai's
+  encoded keys found 1 canonical
+  (`-Users-patrickroebuck-attune-ai`, 44 sessions) plus 47
+  worktree-encoded keys
+  (`-Users-patrickroebuck-attune-ai--claude-worktrees-<slug>`,
+  57 sessions; 93 total in last 3 days across all keys).
+  Implication for any code walking `~/.claude/projects/`
+  looking for "this project's sessions": canonical-key-only
+  lookup misses the majority of recent activity in a
+  worktree-heavy dev pattern. Right shape is **prefix
+  glob**: `~/.claude/projects/<encoded-canonical>*`,
+  accepting dirs whose name equals `<encoded>` exactly OR
+  starts with `<encoded>-` (the `-` separator guards
+  against sibling-project false matches like
+  `attune-ai-foo`). Dedup sessions by id (JSONL filename
+  stem) across keys; newest-mtime wins on collision +
+  WARN log.
+
+- **Spec refinement as docs-only PR lets resolved decisions
+  land independently of implementation**: when a long spec
+  has 4+ open design questions and the answers shake out
+  during a focused review session, opening a docs-only PR
+  for `decisions.md` (rather than bundling with the
+  eventual implementation PR) gets the decisions on main
+  quickly so future sessions see the final state. Mirrors
+  the audit-doc-fidelity discipline. Sequence observed on
+  ops-sessions-page 2026-05-15: PR #380 (docs-only, 5
+  resolutions + 4 prior question answers) + PR #381
+  (sibling spec split-out) + PR #382 (Windows hotfix the
+  spec review surfaced). Implementation PR comes later,
+  on a refreshed main. Trade-off: one extra PR to track,
+  but each has crisp scope and reviewers approve quickly.
