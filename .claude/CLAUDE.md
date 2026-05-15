@@ -4287,3 +4287,170 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   feature PR's production code should update the
   markup-asserting tests in the same commit, or CI
   will be 100% red until you do.
+
+- **CSS `[data-tooltip]::after` pseudo-element gets
+  silently clipped by `overflow: hidden` on the
+  parent — move the clip to an inner element**: the
+  custom tooltip system uses an `::after` pseudo-
+  element positioned above (or below) the trigger
+  element. The pseudo-element IS in the trigger's
+  box-tree, so any `overflow: hidden` on the trigger
+  itself crops the tooltip to nothing. Tooltips
+  fire (CSS rules evaluate) but render invisibly.
+  Diagnostic: hover the element, inspect the DOM,
+  see the `::after` rendered with `opacity: 1` but
+  visually absent. Fix: for an inline-flex pill that
+  needs `text-overflow: ellipsis` clipping AND
+  tooltip escape, put `overflow: hidden` on an
+  *inner* span (the text content), not the pill
+  itself. The flex item needs `min-width: 0`
+  paired with `text-overflow: ellipsis` for the
+  ellipsis to actually engage on a flex child.
+  Discovered 2026-05-14 during the Specs page
+  pill redesign — `.status-pill` originally clipped
+  itself; tooltips invisible until clipping moved
+  to `.status-pill .status-code`.
+
+- **Server-side markdown rendering is a 3-piece
+  change: render function (XSS-safe mode), template,
+  AND companion CSS**: adding markdown rendering to
+  a Jinja-served page (e.g. the spec_detail page's
+  P1-2 fix) is more than swapping `<pre>` for a
+  `|safe` div. Three pieces have to land together:
+  (1) **Server**: `markdown_it.MarkdownIt("commonmark",
+  {"html": False})` is the XSS-safe default — raw
+  `<script>` tags get escaped to text rather than
+  evaluated. Even when input is repo-author-
+  controlled (e.g. markdown files in `docs/specs/`),
+  keep `html=False` as defense in depth. Wrap the
+  render call in try/except and fall back to empty
+  body rather than 500ing on malformed markdown.
+  (2) **Template**: use `{{ rendered | safe }}` inside
+  a class-tagged div (e.g. `.markdown-body`) — the
+  class is the CSS hook. (3) **CSS**: add rules for
+  `h1`-`h4`, `p`, `ul`/`ol`, `code`, `pre`, `table`,
+  `blockquote`, `hr`, `a` under `.markdown-body`
+  selectors. Without these, the rendered HTML
+  inherits the dashboard's terse defaults and looks
+  broken (h2 same size as p, no margins, raw `<pre>`
+  styling). The CSS is ~60-80 lines but skipping it
+  means users see "rendered markdown" that looks
+  worse than the previous `<pre>` raw dump.
+
+- **`data-tooltip-position="bottom"` variant is
+  required for any tooltip-bearing element in a
+  sticky topbar / navbar / fixed header**: the
+  default `[data-tooltip]::after` positions
+  ABOVE the element (`bottom: calc(100% + 6px)`).
+  For elements in a sticky topbar (`.topbar` with
+  `position: sticky; top: 0`), the tooltip renders
+  outside the viewport at the top and is invisible.
+  Defensive design: add the bottom-variant rule
+  whenever introducing tooltips, even if the first
+  use is below-the-fold:
+  ```css
+  [data-tooltip][data-tooltip-position="bottom"]::after {
+    bottom: auto;
+    top: calc(100% + 6px);
+  }
+  ```
+  Hit during P2-1 tooltip rollout — the running-
+  badge and project-root chips in `base.html` are
+  inside `.topbar` and need this variant.
+
+- **WCAG 2.5.5 AA hit target enlargement via
+  invisible `::before` overlay preserves visual
+  compactness**: the spec requires interactive
+  elements to have ≥24×24px hit targets, but
+  compact UI patterns (e.g. 18px-tall status pills)
+  intentionally violate that visually. Pattern:
+  ```css
+  .pill-editable::before {
+    content: "";
+    position: absolute;
+    inset: -3px;
+    min-width: 24px;
+    min-height: 24px;
+    border-radius: 99px;
+    z-index: -1;
+  }
+  ```
+  `inset: -3px` expands the click area 3px in each
+  direction (covers 18+6=24px minimum at typical
+  font sizes); `z-index: -1` keeps it behind the
+  visible content so it doesn't intercept hover
+  for sibling `::after` tooltips. Parent needs
+  `position: relative` (which `[data-tooltip]` rule
+  already provides). The pseudo-element is invisible
+  but click-able — visual size stays compact, hit
+  target meets WCAG.
+
+- **Two parallel QA passes from different worktrees
+  produce parallel findings docs that need
+  reconciliation BEFORE further QA cycles**:
+  2026-05-14 generated both
+  `docs/specs/ops-dashboard-qa-2026-05-14/findings.md`
+  (this worktree, 224 lines, 9 items) AND
+  `docs/specs/ops-dashboard-qa-2026-05-14/punch-list.md`
+  (sibling worktree, 502 lines, 25+ items P0–P3).
+  The punch-list was strictly more comprehensive and
+  better organized. Lesson: when QA gets delegated
+  across worktrees in parallel, the first cycle's
+  artifact LOCATION matters more than its content —
+  the second worker should ADD to the existing
+  artifact, not create a parallel one. Operational
+  rule: before starting QA work in a worktree, grep
+  the repo for any existing `docs/specs/*-qa-YYYY-MM-DD/`
+  artifact and add to it; only create a new one if
+  none exists. Closing the parallel artifact takes
+  a separate PR (e.g. attune-ai PR #366 deleted
+  findings.md once punch-list was confirmed canonical).
+
+- **`run_view_page` route returns 404 for disk-
+  persisted runs after server restart — in-memory
+  runner state needs disk fallback**: the route at
+  `src/attune/ops/routes/dashboard.py:run_view_page`
+  calls `runner.get(run_id)` which only checks
+  `RunnerService._runs` (in-memory, capped at 20
+  newest). The Recent strip on Home / Workflows
+  populates from `/api/runs/{workflow}` which reads
+  DISK (`~/.attune/ops/runs/<wf>/<id>.json`), so
+  it surfaces older runs that the in-memory runner
+  doesn't have. Click → 404 with message "older
+  runs are pruned when the server restarts."
+  Documented in QA punch list as P0-2-adjacent (B1
+  in deprecated findings.md, P3-2 in punch-list.md).
+  Fix path: `run_view_page` falls back to disk read
+  on in-memory miss; render a static view (no SSE
+  reconnect — run is completed). ~30 lines in
+  `dashboard.py:run_view_page`. Generalizes: any
+  ops dashboard route reading `runner.X()` should
+  audit whether disk fallback is needed.
+
+- **`attune workflow run` exits 0 even when the
+  underlying workflow's `WorkflowResult.success` is
+  False — defense in depth at the dashboard layer
+  is necessary until CLI fix lands**: the CLI
+  dispatcher silently swallows SDK exceptions and
+  returns exit 0, so the ops dashboard's chip
+  classifier (which looks at `status=completed +
+  exit_code=0`) renders failed runs as green
+  "completed". User-visible impact: someone could
+  think a workflow succeeded when it crashed.
+  Symptoms in the log include Python tracebacks,
+  workflow-emitted "What Went Wrong" voice-layer
+  blocks, or `<XxxError>: ` line-anchored exception
+  classes. Two-lane fix: (a) CLI side propagates
+  exit-1 on `WorkflowResult.success=False` and
+  exit-2 on uncaught exception — spec at
+  `docs/specs/workflow-failure-exit-propagation/`;
+  (b) dashboard side scans the captured log for
+  the listed signals and downgrades the chip to
+  chip-warn (yellow) with an explanatory tooltip
+  — shipped in PR #366 as defense in depth. Plan
+  to retire the dashboard log-scan one release
+  after the CLI fix lands. Generalization: any
+  CLI that calls into an Agent SDK should validate
+  its exit-code semantics before downstream
+  consumers (dashboards, CI scripts, IDE
+  integrations) inherit the bug.
