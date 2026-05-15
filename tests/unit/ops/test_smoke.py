@@ -126,3 +126,72 @@ def test_family_versions_at_least_attune_ai():
     versions = data.family_versions()
     names = {v.package for v in versions}
     assert "attune-ai" in names
+
+
+# ---------------------------------------------------------------------------
+# Phase B3 — release-keyed cache-bust on static asset URLs
+# ---------------------------------------------------------------------------
+
+
+def test_static_assets_have_version_cache_bust(client):
+    """Every ``<script src>`` and ``<link rel="stylesheet">`` URL on
+    the dashboard carries a ``?v=<attune_version>`` query string.
+
+    Regression guard for the dashboard-iteration problem documented
+    in CLAUDE.md: a release that updates a JS file (e.g. adding a
+    new export to runner.js) used to blank out for returning users
+    because browsers held the old cached copy with no
+    ``Cache-Control`` discipline to force a recheck. Version-keyed
+    cache-bust solves it: the URL changes on release, the cached
+    copy doesn't match, the browser fetches fresh — but stays
+    cached BETWEEN releases for snappy navigation.
+
+    The previous CSS rule used ``range(100000, 999999) | random``
+    which busted every page render — useful for dev iteration,
+    bad for production caching. That random buster is gone too.
+    """
+    import re
+
+    from attune import __version__ as attune_version
+
+    response = client.get("/workflows")
+    assert response.status_code == 200
+    body = response.text
+    # All four pages share base.html so checking one is enough for
+    # CSS; we also want JS specifically (one per page).
+    # The random-buster antipattern must not return:
+    assert "range(100000" not in body
+    # CSS link carries the version
+    css_link_re = re.compile(
+        r'<link[^>]+rel="stylesheet"[^>]+href="[^"]+/css/main\.css\?v=([^"]+)"'
+    )
+    css_match = css_link_re.search(body)
+    assert (
+        css_match is not None
+    ), "Expected <link rel=stylesheet> for main.css with ?v= query string"
+    assert css_match.group(1) == attune_version
+    # JS script tag carries the version (runner.js on the Workflows page)
+    js_script_re = re.compile(r'<script[^>]+src="[^"]+/js/runner\.js\?v=([^"]+)"')
+    js_match = js_script_re.search(body)
+    assert js_match is not None, "Expected runner.js with ?v= query string"
+    assert js_match.group(1) == attune_version
+
+
+def test_specs_page_specs_js_has_version_cache_bust(client):
+    """The Specs page's specs.js script tag carries the version too —
+    distinct from runner.js since it only loads when allow_run is
+    true on the Specs page."""
+    import re
+
+    from attune import __version__ as attune_version
+
+    response = client.get("/specs")
+    assert response.status_code == 200
+    # Only assert if specs.js shows up — read-only mode omits it.
+    if "specs.js" in response.text:
+        m = re.search(
+            r'<script[^>]+src="[^"]+/js/specs\.js\?v=([^"]+)"',
+            response.text,
+        )
+        assert m is not None, "specs.js is referenced but without a ?v= cache-bust"
+        assert m.group(1) == attune_version

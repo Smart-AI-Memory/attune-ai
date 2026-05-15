@@ -114,5 +114,5 @@
    DOMContentLoaded handler queries for run-button / scope-picker
    elements that only exist when allow_run is True, so the read-only
    page sees a no-op for those features. #}
-<script src="{{ url_for('static', path='js/runner.js') }}"></script>
+<script src="{{ url_for('static', path='js/runner.js') }}?v={{ attune_version }}"></script>
 {% endblock %}

@@ -64,6 +64,6 @@
 {# runner.js provides the shared setupRecentRuns helper that
    run_view.js calls. Loaded BEFORE run_view.js so the helper is
    available when run_view.js initializes. #}
-<script src="{{ url_for('static', path='js/runner.js') }}"></script>
-<script src="{{ url_for('static', path='js/run_view.js') }}"></script>
+<script src="{{ url_for('static', path='js/runner.js') }}?v={{ attune_version }}"></script>
+<script src="{{ url_for('static', path='js/run_view.js') }}?v={{ attune_version }}"></script>
 {% endblock %}
