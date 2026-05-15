@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: task
-generated_at: 2026-05-14T14:00:01.189332+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-15T11:24:19.642864+00:00
+source_hash: 55ce9290506b249ccc67bc94cb823e906686e4c1c3e8534a515406908f54aedf
 status: generated
 ---
 
