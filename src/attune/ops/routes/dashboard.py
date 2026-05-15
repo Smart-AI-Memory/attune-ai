@@ -134,27 +134,30 @@ async def health_page(request: Request) -> HTMLResponse:
 async def sessions_page(request: Request) -> HTMLResponse:
     """Sessions page — recent Claude Code sessions for this project.
 
-    Currently scaffolding-only (S1 of the ops-sessions-page spec); the
-    page renders the empty-state copy regardless of disk state. S2
-    will read ``~/.claude/projects/<encoded-project-root>/*.jsonl``,
-    list sessions from the last 3 days, and render heuristic starter
-    prompts. S3 adds Haiku-summarized prompts with a budget cap.
+    S2: reads ``~/.claude/projects/<encoded-project-root>/*.jsonl``
+    and surfaces sessions whose mtime is within the last 3 days,
+    each with a heuristic starter-prompt (first user prompt,
+    truncated to ~200 chars). S3 will replace the heuristic with
+    Haiku-summarized prompts and a per-page budget cap; S4 adds the
+    resume-most-recent card; S5 marks the live session.
 
-    Each slice is independently shippable; this one closes the
-    user-visible ``/sessions → 404`` gap from the QA punch list
-    (P1-4) while the richer features ship behind it.
+    Failure modes are silent fall-throughs to the empty state: no
+    Claude Code dir, all sessions older than 3 days, all JSONLs
+    unreadable — none surface as errors. The point is to be useful
+    on a fresh install, not to debug Claude Code's internal state.
     """
     cfg = request.app.state.config
-    # Where the sessions WOULD live — surfaced in the empty-state so
-    # users can `cat` the JSONLs directly while the real listing is
-    # being built. The encoding matches Claude Code's convention
-    # (forward-slash → hyphen).
+    sessions = data.list_recent_sessions(cfg.project_root, days=3)
+    # Where the sessions live — surfaced in the empty-state so users
+    # can ``cat`` the JSONLs directly if they want to inspect more
+    # than the page shows.
     encoded_project = str(cfg.project_root).replace("/", "-")
     sessions_dir = f"~/.claude/projects/{encoded_project}"
     return _render(
         request,
         "sessions.html",
         page="sessions",
+        sessions=sessions,
         sessions_dir=sessions_dir,
     )
 

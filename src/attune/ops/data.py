@@ -335,6 +335,199 @@ def derive_project_name(project_root: Path | str) -> str:
     return root.name
 
 
+@dataclass(frozen=True)
+class Session:
+    """One Claude Code session — what surfaces on the dashboard's /sessions page.
+
+    Built from a JSONL file in
+    ``~/.claude/projects/<encoded-project-root>/<session-id>.jsonl``.
+    The JSONL is an event log of queue operations + attachments; we
+    care about events with a ``content`` field (the user's prompts)
+    for heuristic starter-prompt generation.
+
+    ``source`` is ``"heuristic"`` for S2 (this slice's only path).
+    S3 will introduce ``"haiku"`` and ``"cached"`` for LLM-summarized
+    prompts and cache hits respectively. Surfacing the source in the
+    JSON contract from day 1 means the UI can show a badge later
+    without a model-field migration.
+    """
+
+    id: str
+    started_at: str
+    last_activity: str
+    duration_seconds: float
+    message_count: int
+    starter_prompt: str
+    source: str = "heuristic"
+
+
+def _encoded_project_path(project_root: Path | str) -> str:
+    """Claude Code encodes its project subdir as ``path.replace('/', '-')``.
+
+    Resolves to absolute first so a relative ``project_root`` arg
+    still matches the on-disk encoding. Returns the encoded
+    basename only — the caller prepends ``~/.claude/projects/``.
+    """
+    return str(Path(project_root).expanduser().resolve()).replace("/", "-")
+
+
+def claude_sessions_dir(project_root: Path | str) -> Path:
+    """Return the directory Claude Code stores sessions for this project in.
+
+    Doesn't check existence — callers should treat a non-existent
+    dir as "no sessions yet" rather than an error condition (the
+    dir is created on first session, which the user may not have
+    started in this project).
+    """
+    return Path.home() / ".claude" / "projects" / _encoded_project_path(project_root)
+
+
+def _heuristic_starter_prompt(content: str, *, char_limit: int = 200) -> str:
+    """Truncate a user's first-prompt content to ~``char_limit`` chars.
+
+    Spec calls for first user prompt + last assistant turn, both
+    truncated. The Claude Code JSONL we observed only carries the
+    user-prompt side via queue-operation enqueue events; there's no
+    assistant-turn signal in this event log. S2 ships with the
+    user-prompt-only heuristic; S3's Haiku path produces the
+    fuller summary independently of this code path.
+
+    Truncation strategy: cut at a word boundary if one falls within
+    ``char_limit - 20`` of the limit so we don't slice mid-word.
+    Ellipsis appended when truncated.
+    """
+    s = (content or "").strip().replace("\n", " ")
+    # Collapse runs of whitespace so the preview doesn't have gaps.
+    s = " ".join(s.split())
+    if len(s) <= char_limit:
+        return s
+    cut = s[:char_limit]
+    last_space = cut.rfind(" ")
+    if last_space > char_limit - 20:
+        cut = cut[:last_space]
+    return cut.rstrip() + "…"
+
+
+def _parse_session(jsonl_path: Path) -> Session | None:
+    """Build a :class:`Session` from one JSONL file. Returns None on
+    unreadable file (callers skip rather than crash the listing).
+
+    Robust per-line: a malformed JSON line is skipped, not fatal.
+    A file with zero parseable lines yields a Session with empty
+    timestamps and a "(empty session)" starter prompt — the
+    template can render the row OR the caller can filter; we
+    surface rather than hide.
+    """
+    session_id = jsonl_path.stem
+    first_ts: str | None = None
+    last_ts: str | None = None
+    prompt_count = 0
+    starter_prompt = ""
+    try:
+        with jsonl_path.open(encoding="utf-8") as fh:
+            for raw in fh:
+                line = raw.strip()
+                if not line:
+                    continue
+                try:
+                    event = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(event, dict):
+                    continue
+                ts = event.get("timestamp")
+                if isinstance(ts, str) and ts:
+                    if first_ts is None:
+                        first_ts = ts
+                    last_ts = ts
+                content = event.get("content")
+                if isinstance(content, str) and content:
+                    prompt_count += 1
+                    if not starter_prompt:
+                        starter_prompt = _heuristic_starter_prompt(content)
+    except OSError:
+        return None
+    duration = _duration_seconds(first_ts, last_ts)
+    return Session(
+        id=session_id,
+        started_at=first_ts or "",
+        last_activity=last_ts or first_ts or "",
+        duration_seconds=duration,
+        message_count=prompt_count,
+        starter_prompt=starter_prompt or "(no prompt recorded)",
+        source="heuristic",
+    )
+
+
+def _duration_seconds(first: str | None, last: str | None) -> float:
+    """ISO 8601 strings → elapsed seconds; ``0.0`` if either is unparseable."""
+    if not first or not last:
+        return 0.0
+    try:
+        a = datetime.fromisoformat(first.replace("Z", "+00:00"))
+        b = datetime.fromisoformat(last.replace("Z", "+00:00"))
+    except ValueError:
+        return 0.0
+    return max((b - a).total_seconds(), 0.0)
+
+
+def list_recent_sessions(
+    project_root: Path | str,
+    *,
+    days: int = 3,
+    now: datetime | None = None,
+) -> list[Session]:
+    """Return Session records for this project's last ``days`` of activity.
+
+    Reads ``~/.claude/projects/<encoded-project-root>/*.jsonl`` and
+    filters to files whose mtime is within ``days`` of ``now``
+    (default: current UTC time). Sorts most-recently-active first.
+
+    Returns ``[]`` for any failure mode that doesn't raise:
+    - Sessions dir doesn't exist (user never ran Claude Code here)
+    - Sessions dir exists but is empty
+    - All JSONLs are older than the cutoff
+    - All JSONLs are unreadable (perm, IO)
+
+    A single corrupt file is skipped with a WARN log; the rest of
+    the listing still renders. The spec's failure-mode decision:
+    "Skip with WARN log, don't surface as broken row — an unreadable
+    file is a Claude Code internal issue, not something the user
+    can fix from the dashboard."
+    """
+    # Local import: a module-level ``timedelta`` import was reverted by
+    # the formatter (likely ruff isort considering it unused at the
+    # module scope since only this function references it). Re-importing
+    # locally is the pragmatic dodge — the cost is negligible because
+    # ``from datetime import ...`` is cached after first use anyway.
+    from datetime import timedelta
+
+    sessions_dir = claude_sessions_dir(project_root)
+    if not sessions_dir.is_dir():
+        return []
+    if now is None:
+        now = datetime.now(timezone.utc)
+    cutoff = now - timedelta(days=days)
+    out: list[Session] = []
+    try:
+        candidates = list(sessions_dir.glob("*.jsonl"))
+    except OSError:
+        return []
+    for jsonl in candidates:
+        try:
+            mtime = datetime.fromtimestamp(jsonl.stat().st_mtime, tz=timezone.utc)
+        except OSError:
+            continue
+        if mtime < cutoff:
+            continue
+        session = _parse_session(jsonl)
+        if session is None:
+            continue
+        out.append(session)
+    out.sort(key=lambda s: s.last_activity or "", reverse=True)
+    return out
+
+
 # Path passed to workflows when the user picks the "All code" picker
 # option. Hardcoded for attune-ai's ``src/`` layout. Downstream projects
 # with different code roots can override by editing this constant or by

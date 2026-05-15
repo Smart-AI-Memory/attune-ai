@@ -9,22 +9,49 @@
   </p>
 </section>
 
-{# Sessions S1 — scaffolding-only. The data layer (read JSONL files,
-   build session list, generate starter prompts) lands in S2; this
-   slice just stops the page from 404'ing and shows the user where
-   the data lives. The empty-state copy here matches the spec's
-   exact phrasing for the legitimate "no sessions in 3 days" case
-   so S2 can reuse it unchanged. #}
+{# Sessions S2 — data layer. Reads Claude Code's per-project JSONL
+   logs, surfaces last-3-days sessions with a heuristic starter
+   prompt (first user message, truncated). S3 will replace the
+   heuristic with Haiku-summarized prompts; S4 lifts the most-recent
+   session into a prominent resume card; S5 marks the live session.
+   The empty-state copy below matches the spec's exact phrasing so
+   the legitimate "no sessions in 3 days" case stays clean. #}
 <section class="panel">
-  <p class="empty">
-    No sessions in the last 3 days for
-    <code>{{ project_name | default(project_root.split('/')[-1]) }}</code>.
-    Older sessions are at <code>{{ sessions_dir }}</code>.
-  </p>
-  <p class="meta">
-    The full Sessions implementation (Haiku-summarized starter prompts,
-    resume-most-recent card, live-session detection) is being staged.
-    See <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/specs/ops-sessions-page/decisions.md" class="link">docs/specs/ops-sessions-page</a> for the spec.
-  </p>
+  {% if sessions %}
+    <table class="data-table sessions-table">
+      <thead>
+        <tr>
+          <th>Session</th>
+          <th>Last activity</th>
+          <th class="num">Duration</th>
+          <th class="num">Prompts</th>
+          <th>Starter prompt</th>
+          <th>Source</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in sessions %}
+          <tr>
+            <td><code class="session-id">{{ s.id[:8] }}</code></td>
+            <td><code class="session-ts" data-tooltip="{{ s.last_activity }}" aria-label="Last activity {{ s.last_activity }}">{{ s.last_activity[:19] }}</code></td>
+            <td class="num">{% if s.duration_seconds > 0 %}{{ '%.0fs'|format(s.duration_seconds) if s.duration_seconds < 60 else '%.0fm'|format(s.duration_seconds / 60) }}{% else %}—{% endif %}</td>
+            <td class="num">{{ s.message_count }}</td>
+            <td class="session-prompt">{{ s.starter_prompt }}</td>
+            <td><span class="chip chip-muted" data-tooltip="{% if s.source == 'heuristic' %}First user prompt, truncated{% else %}LLM-summarized starter prompt{% endif %}" aria-label="Source: {{ s.source }}">{{ s.source }}</span></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <p class="meta">
+      Older sessions (beyond 3 days) stay on disk at
+      <code>{{ sessions_dir }}</code> but aren't surfaced here.
+    </p>
+  {% else %}
+    <p class="empty">
+      No sessions in the last 3 days for
+      <code>{{ project_name | default(project_root.split('/')[-1]) }}</code>.
+      Older sessions are at <code>{{ sessions_dir }}</code>.
+    </p>
+  {% endif %}
 </section>
 {% endblock %}

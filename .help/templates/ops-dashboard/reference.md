@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-14T14:00:01.194125+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-15T11:24:19.647648+00:00
+source_hash: 55ce9290506b249ccc67bc94cb823e906686e4c1c3e8534a515406908f54aedf
 status: generated
 ---
 
@@ -40,6 +40,7 @@ status: generated
 | `build_config()` | Build a Config from inputs and environment defaults. | `src/attune/ops/config.py` |
 | `list_features()` | Return features parsed from ``<project_root>/.help/features.yaml``. | `src/attune/ops/data.py` |
 | `first_feature()` | Return the alphabetically-first feature with a renderable scope. | `src/attune/ops/data.py` |
+| `workflow_default_scope()` | Return the default scope for one workflow on first paint. | `src/attune/ops/data.py` |
 | `home_kpis()` | Derive home-page KPIs from a telemetry summary. | `src/attune/ops/data.py` |
 | `sparkline_points()` | Render values as an SVG ``polyline`` ``points`` string. | `src/attune/ops/data.py` |
 | `read_telemetry_summary()` | Aggregate ``usage.jsonl`` into a UI-friendly summary. | `src/attune/ops/data.py` |
@@ -51,6 +52,7 @@ status: generated
 | `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `health_page()` | — | `src/attune/ops/routes/dashboard.py` |
+| `sessions_page()` | Sessions page — recent Claude Code sessions for this project. | `src/attune/ops/routes/dashboard.py` |
 | `run_view_page()` | Full-page view for one workflow run. | `src/attune/ops/routes/dashboard.py` |
 | `specs_page()` | Specs tab — federated listing of all specs across configured roots. | `src/attune/ops/routes/dashboard.py` |
 | `spec_detail_page()` | Drill-in for a single spec: show every phase file's content (read-only). | `src/attune/ops/routes/dashboard.py` |
