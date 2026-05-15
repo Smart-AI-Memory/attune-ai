@@ -178,6 +178,15 @@
       setStatusClass("chip-danger");
       es.close();
     });
+  } else {
+    // Disk-loaded terminal run — no SSE. The log is already rendered
+    // server-side in the <pre data-log>; we just style the status chip
+    // (the SSE-attached branch sets the chip class on terminal events).
+    setStatusClass(
+      INITIAL_STATUS === "completed" ? "chip-ok" :
+      INITIAL_STATUS === "failed" ? "chip-danger" :
+      "chip-muted"
+    );
   }
 
   // ----------------------------------------------------------------

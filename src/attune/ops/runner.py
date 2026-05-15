@@ -270,6 +270,77 @@ class RunnerService:
     def get(self, run_id: str) -> Run | None:
         return self._runs.get(run_id)
 
+    def get_or_load(self, run_id: str) -> Run | None:
+        """Return ``run_id``'s Run from memory, falling back to disk.
+
+        The dashboard's ``/runs/{id}/view`` route used to 404 whenever a
+        run was evicted from the in-memory ring buffer
+        (``_history_limit``, default 20) or after a server restart —
+        even though the recent-runs strip on Home / Workflows still
+        surfaced those runs because it reads disk directly. The disk
+        record (``<persistence_dir>/<workflow>/<run-id>.json``) holds
+        everything the route needs (status, exit_code, log lines, etc.)
+        via :meth:`Run.from_record`.
+
+        Returns ``None`` if neither the in-memory dict nor the
+        ``<persistence_dir>/*/<run-id>.json`` lookup finds the run.
+        Failures during disk read (missing perm, malformed JSON) are
+        logged at WARN and treated as cache miss — the route's 404
+        path is preferred over crashing on a corrupt record.
+
+        Note on subscribers: a Run rebuilt from disk has no
+        ``subscribers`` set and no live executor attached, so SSE
+        replay against it would loop with no events. Callers should
+        check ``run.is_terminal`` and skip the stream attempt when
+        the run is loaded from disk; the route layer does this by
+        emitting an empty ``stream_url`` when ``get()`` returns None
+        but ``get_or_load()`` finds a record.
+
+        Performance: walks
+        ``<persistence_dir>/<workflow>/<run-id>.json`` across all
+        workflow subdirectories on miss. O(workflows-with-runs) per
+        call — at the ~20-workflow scale of attune-ai this is well
+        under 1ms, so no index file is maintained. If it ever becomes
+        a hot path, the cheapest fix is a workflow-name lookup table
+        keyed by ``run_id`` populated lazily on first miss.
+        """
+        run = self._runs.get(run_id)
+        if run is not None:
+            return run
+        if self._persistence_dir is None:
+            return None
+        if not self._persistence_dir.is_dir():
+            return None
+        target_filename = f"{run_id}.json"
+        for workflow_dir in self._persistence_dir.iterdir():
+            if not workflow_dir.is_dir():
+                continue
+            candidate = workflow_dir / target_filename
+            if not candidate.is_file():
+                continue
+            try:
+                with candidate.open(encoding="utf-8") as fh:
+                    record = json.load(fh)
+            except (OSError, json.JSONDecodeError) as exc:
+                logger.warning(
+                    "ops.runner.get_or_load: failed to read %s: %s",
+                    candidate,
+                    exc,
+                )
+                return None
+            if not isinstance(record, dict):
+                return None
+            try:
+                return Run.from_record(record)
+            except (TypeError, ValueError) as exc:
+                logger.warning(
+                    "ops.runner.get_or_load: malformed record %s: %s",
+                    candidate,
+                    exc,
+                )
+                return None
+        return None
+
     def recent(self, limit: int = 5) -> list[Run]:
         return list(reversed(list(self._runs.values())))[:limit]
 
