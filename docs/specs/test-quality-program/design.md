@@ -114,6 +114,23 @@ touches >1 module. If a bug requires public-API change, **stop
 and surface** — don't fold silently. Test-reliability bugs
 (Class 5) get fixed alongside.
 
+Two corollaries that follow from the Class 2 definition but
+deserve to be explicit:
+
+- **Dead defensive code → delete. Do not test it.** A Class 2
+  branch is unreachable; writing a test for it requires
+  contorting inputs in ways production code can't produce.
+  Delete the branch, re-run coverage, and accept that the
+  module's *natural ceiling* has moved up. The ceiling is
+  wherever genuinely-reachable branches end — typically
+  ~98% on modules with unreachable post-import code
+  (dotenv/tiktoken try-imports), 100% on most others.
+- **Never contort tests to hit a coverage number.** The
+  rubric optimizes meaningful coverage, not line %. Step
+  (f) writes tests for uncovered *behaviors*, not for
+  uncovered lines. If a line resists testing, it's a (d)
+  candidate (delete or fix), not an (f) candidate.
+
 **(e) Triage existing tests.**
 
 | Existing test shape | Action |
