@@ -368,14 +368,25 @@ def _encoded_project_path(project_root: Path | str) -> str:
     still matches the on-disk encoding. Returns the encoded
     basename only — the caller prepends ``~/.claude/projects/``.
 
-    On Windows ``Path.resolve()`` produces backslash separators, so
-    both separators are mapped to ``-`` — otherwise the encoded
-    string contains a literal ``D:\\...`` that pathlib treats as an
-    absolute path on subsequent concatenation, silently discarding
-    the ``~/.claude/projects/`` prefix.
+    Three characters are mapped to ``-`` so the resulting string is
+    safe to concatenate as a single path segment on every platform:
+
+    - ``/`` — POSIX path separator (matches Claude Code's documented
+      encoding).
+    - ``\\`` — Windows path separator. ``Path.resolve()`` produces
+      backslashes on Windows.
+    - ``:`` — Windows drive-letter delimiter (``D:``). Without
+      this, the encoded string contains a literal ``D:`` prefix that
+      pathlib treats as a drive specifier on subsequent
+      ``Path / encoded`` concatenation, silently discarding the
+      ``~/.claude/projects/`` prefix and rooting the result at the
+      bogus drive.
+
+    POSIX paths never contain backslash or colon, so the two
+    Windows-only replacements are no-ops there.
     """
     resolved = str(Path(project_root).expanduser().resolve())
-    return resolved.replace("/", "-").replace("\\", "-")
+    return resolved.replace("/", "-").replace("\\", "-").replace(":", "-")
 
 
 def claude_sessions_dir(project_root: Path | str) -> Path:

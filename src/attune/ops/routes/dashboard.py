@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
@@ -150,9 +151,17 @@ async def sessions_page(request: Request) -> HTMLResponse:
     sessions = data.list_recent_sessions(cfg.project_root, days=3)
     # Where the sessions live — surfaced in the empty-state so users
     # can ``cat`` the JSONLs directly if they want to inspect more
-    # than the page shows.
-    encoded_project = str(cfg.project_root).replace("/", "-")
-    sessions_dir = f"~/.claude/projects/{encoded_project}"
+    # than the page shows. Reuses ``claude_sessions_dir`` so the
+    # rendered path matches what ``list_recent_sessions`` reads
+    # from disk — naive ``str.replace("/", "-")`` here leaves
+    # Windows backslashes and drive-letter colons unencoded.
+    # ``as_posix()`` so the rendered path uses ``/`` separators on every
+    # platform — on Windows ``str(Path)`` produces native backslashes,
+    # which look wrong in the UI and break tests that assert on the
+    # POSIX-style path string.
+    sessions_dir = (
+        "~/" + data.claude_sessions_dir(cfg.project_root).relative_to(Path.home()).as_posix()
+    )
     return _render(
         request,
         "sessions.html",

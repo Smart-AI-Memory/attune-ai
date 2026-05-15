@@ -41,30 +41,30 @@ def test_encoded_project_path_matches_claude_code_convention(tmp_path):
     treated as an absolute path (silently discarding the prefix).
     """
     encoded = data._encoded_project_path(tmp_path)
-    expected_suffix = str(tmp_path).replace("/", "-").replace("\\", "-")
+    expected_suffix = str(tmp_path).replace("/", "-").replace("\\", "-").replace(":", "-")
     assert encoded.endswith(expected_suffix)
     assert "/" not in encoded
     assert "\\" not in encoded
+    assert ":" not in encoded
 
 
-def test_encoded_project_path_strips_windows_backslashes():
-    """Regression test for the Windows CI failure observed 2026-05-15.
+def test_encoded_project_path_strips_windows_separators_and_colon():
+    """Regression test for the two Windows CI failures observed
+    2026-05-15: (1) PR #382 round, backslashes survived ``str
+    .replace("/", "-")`` and pathlib treated the resulting ``D:\\``
+    prefix as absolute; (2) post-#382 round, the backslash fix
+    revealed the next layer — drive-letter colons survived and
+    pathlib treated the resulting ``D:-...`` segment as a drive
+    specifier on Windows.
 
-    Passes a path string containing literal backslashes — on POSIX
-    this is a single relative filename with backslashes inside it;
-    on Windows it's a real path. Either way, the encoder must
-    return a string with NO backslashes so the caller's
-    ``Path.home() / ".claude" / "projects" / encoded`` stays a
-    single path segment.
-
-    Without the fix, the resolved POSIX form is
-    ``<cwd>/fake\\windows\\path`` and the encoder leaves backslashes
-    intact (only ``/`` → ``-``). With the fix both separators map
-    to ``-``.
+    Passes a string with both Windows separators AND a colon. On
+    POSIX the encoder still has to scrub all three so the regression
+    is catchable without a Windows runner.
     """
-    encoded = data._encoded_project_path("fake\\windows\\path")
+    encoded = data._encoded_project_path("C:\\Users\\Test\\project")
     assert "\\" not in encoded, f"backslash survived encoding: {encoded!r}"
     assert "/" not in encoded, f"forward slash survived encoding: {encoded!r}"
+    assert ":" not in encoded, f"colon survived encoding: {encoded!r}"
 
 
 def test_claude_sessions_dir_is_under_user_home(tmp_path):
@@ -75,16 +75,19 @@ def test_claude_sessions_dir_is_under_user_home(tmp_path):
 
 
 def test_claude_sessions_dir_under_user_home_with_windows_style_input():
-    """Cross-platform regression: even when project_root contains
-    backslashes (real on Windows, literal on POSIX), the resulting
-    sessions dir must still nest under ``~/.claude/projects/``.
+    """Cross-platform regression: even when project_root looks like
+    a Windows absolute path (drive letter + backslashes), the
+    resulting sessions dir must still nest under
+    ``~/.claude/projects/``.
 
-    Before the fix, the backslash-laden encoded segment was treated
-    as an absolute path on Windows path concatenation, so
-    ``sessions_dir.parent.parent.name`` was something inside the
-    tmp tree (``pytest-0`` on the failing CI run), not ``.claude``.
+    Before the colon fix, ``str(Path("C:\\Users\\X\\p").resolve())``
+    on Windows produced ``C:\\Users\\X\\p``; the backslashes mapped
+    to ``-`` but the leading ``C:`` survived. The encoded segment
+    ``C:-Users-X-p`` is treated as a drive specifier when
+    concatenated as a path part, so the result rooted at ``C:``
+    instead of under ``.claude/projects/``.
     """
-    sessions_dir = data.claude_sessions_dir("fake\\drive\\project")
+    sessions_dir = data.claude_sessions_dir("C:\\Users\\Test\\project")
     assert sessions_dir.parent.parent.name == ".claude"
     assert sessions_dir.parent.name == "projects"
 
@@ -140,6 +143,26 @@ def _write_session_jsonl(
     return path
 
 
+def _patch_home(monkeypatch, home_path) -> None:
+    """Patch ``Path.home()`` to return ``home_path`` on every platform.
+
+    Python's ``pathlib.Path.home()`` consults different env vars per OS:
+
+    - POSIX: ``HOME``
+    - Windows: ``USERPROFILE`` (falls back to ``HOMEDRIVE``+``HOMEPATH``)
+
+    A test that patches only ``HOME`` will work on POSIX runners but
+    silently no-op on Windows — ``Path.home()`` will still return the
+    real user-profile directory, and any code under test that writes
+    sessions to a monkeypatched home location won't be found.
+
+    Setting both env vars covers the cross-platform case with one call.
+    """
+    home_str = str(home_path)
+    monkeypatch.setenv("HOME", home_str)
+    monkeypatch.setenv("USERPROFILE", home_str)
+
+
 def test_list_recent_sessions_returns_empty_when_dir_missing(tmp_path, monkeypatch):
     """No ``~/.claude/projects/<encoded>/`` dir → empty list, not error.
 
@@ -147,7 +170,7 @@ def test_list_recent_sessions_returns_empty_when_dir_missing(tmp_path, monkeypat
     Code from looks like this. The dashboard must render the empty
     state, not crash.
     """
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    _patch_home(monkeypatch, tmp_path / "home")
     assert data.list_recent_sessions(tmp_path / "project") == []
 
 
@@ -155,7 +178,7 @@ def test_list_recent_sessions_reads_jsonl(tmp_path, monkeypatch):
     """A JSONL with one user prompt → one Session record with that
     prompt as the heuristic starter."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     _write_session_jsonl(
         sessions_dir,
@@ -201,7 +224,7 @@ def test_list_recent_sessions_reads_jsonl(tmp_path, monkeypatch):
 def test_list_recent_sessions_filters_by_mtime(tmp_path, monkeypatch):
     """Files older than ``days`` are excluded by mtime."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
 
     now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
@@ -230,7 +253,7 @@ def test_list_recent_sessions_filters_by_mtime(tmp_path, monkeypatch):
 def test_list_recent_sessions_sorts_most_recent_first(tmp_path, monkeypatch):
     """Sessions sort by ``last_activity`` desc."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
 
     _write_session_jsonl(
@@ -255,7 +278,7 @@ def test_list_recent_sessions_skips_malformed_lines(tmp_path, monkeypatch):
     Session record built from the good line; the parse error is
     per-line, not fatal."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     sessions_dir.mkdir(parents=True)
     (sessions_dir / "mixed.jsonl").write_text(
@@ -276,7 +299,7 @@ def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
     """A session with no events that have ``content`` (e.g. dequeue-only,
     attachment-only) yields a record with placeholder starter prompt."""
     home = tmp_path / "home"
-    monkeypatch.setenv("HOME", str(home))
+    _patch_home(monkeypatch, home)
     sessions_dir = data.claude_sessions_dir(tmp_path / "project")
     _write_session_jsonl(
         sessions_dir,
@@ -305,7 +328,7 @@ def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
 
 def _make_app(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
-    monkeypatch.setenv("HOME", str(tmp_path / "home"))
+    _patch_home(monkeypatch, tmp_path / "home")
     config = build_config(
         project_root=tmp_path / "project",
         trusted_hosts=("testserver", "test"),
