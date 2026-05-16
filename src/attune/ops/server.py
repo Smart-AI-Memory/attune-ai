@@ -16,6 +16,7 @@ from attune.ops.config import Config
 from attune.ops.routes import dashboard
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import runs_history as runs_history_routes
+from attune.ops.routes import sessions as sessions_routes
 from attune.ops.routes import specs as specs_routes
 from attune.ops.routes import sweep_results as sweep_results_routes
 from attune.ops.runner import RunnerService, prune_old_runs
@@ -95,6 +96,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
     app.include_router(runs_history_routes.router)
+    app.include_router(sessions_routes.router)
     app.include_router(specs_routes.router)
     app.include_router(sweep_results_routes.router)
 

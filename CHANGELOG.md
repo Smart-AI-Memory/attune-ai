@@ -7,6 +7,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Ops `/sessions` page now uses Haiku-summarized starter prompts
+  (S3b of `docs/specs/ops-sessions-page/`). Wires the existing
+  `session_redaction` + `session_summary_cache` modules behind a
+  new `session_summarizer.summarize_session()` entry point.
+  Discipline: **redact first, then send to Haiku, then cache** —
+  sensitive material never enters the LLM provider's context or
+  the on-disk cache. Each row's `source` chip surfaces which
+  lane produced the text (`heuristic`, `haiku`, or `cached`).
+  Per-page-load budget cap (default $0.05, override via
+  `ATTUNE_OPS_SESSIONS_BUDGET_USD`); breached rows fall back to
+  the heuristic with a one-time "over budget" marker. Disable
+  the Haiku path entirely with `ATTUNE_OPS_SESSIONS_LLM=0`.
+- `GET /api/sessions` JSON endpoint mirroring the HTML page's
+  enrichment (shape: `{sessions: [...], meta: {budget_exceeded,
+  llm_enabled}}`). Same enrichment helper as the page so the two
+  surfaces can't drift.
+- `GET /sessions?compare=1` dev affordance — renders heuristic
+  and Haiku columns side-by-side for pre-launch eyeball
+  validation. No UI button; discoverable only by URL. Same
+  budget + redaction + caching applies.
+- `scripts/build_session_fixtures.py` — dry-run-by-default
+  helper for assembling the calibration fixture set. Walks
+  `~/.claude/projects/<encoded>*` for the chosen project,
+  applies `session_redaction.redact()` per-event, and writes
+  redacted JSONLs to `tests/fixtures/ops/session_summaries/`.
+  Patrick reviews each fixture interactively before committing
+  (per decisions.md Decision 8). Snapshot test + committed
+  fixtures defer to a post-S3 follow-up.
+
 ### Internal
 
 - Test-quality-program: `memory/short_term/queues.py`

@@ -558,53 +558,25 @@ def _duration_seconds(first: str | None, last: str | None) -> float:
 DEFAULT_SESSION_LIST_CAP = 20
 
 
-def list_recent_sessions(
+def list_recent_sessions_with_paths(
     project_root: Path | str,
     *,
     days: int = 3,
     limit: int | None = DEFAULT_SESSION_LIST_CAP,
     now: datetime | None = None,
     parser: Callable[[Path], Session | None] | None = None,
-) -> list[Session]:
-    """Return Session records for this project's last ``days`` of activity.
+) -> list[tuple[Session, Path]]:
+    """Same as :func:`list_recent_sessions` but also returns each
+    session's source JSONL path.
 
-    Reads ``*.jsonl`` files from every encoded-key directory belonging
-    to this logical project (canonical key plus per-worktree keys —
-    see :func:`enumerate_project_encoded_keys`) and filters to files
-    whose mtime is within ``days`` of ``now`` (default: current UTC
-    time). Sessions are deduplicated by id (the JSONL filename's
-    stem) — when the same id appears under multiple encoded keys
-    (rare; suggests a worktree that was renamed or re-created), the
-    newest-mtime copy wins and a WARN log records the conflict.
-    Output is sorted most-recently-active first and capped at
-    ``limit`` (default :data:`DEFAULT_SESSION_LIST_CAP`).
+    Needed by S3b's Haiku wire-up: the summarizer requires the
+    on-disk path to compute the last-4KB cache key. Returning the
+    path alongside the parsed :class:`Session` avoids re-walking
+    the encoded-key dirs for every summarization call.
 
-    Args:
-        project_root: The dashboard's project root. Used to compute
-            the encoded-key prefix.
-        days: Time window for filtering by JSONL mtime.
-        limit: Maximum number of sessions to return. ``None`` returns
-            all matches (unbounded — only reasonable for callers that
-            already know the size, e.g. tests). The list cap exists
-            because each session may incur an LLM-summarization spend
-            on first render; capping bounds worst-case page-load cost
-            (decisions.md Decision 5).
-        now: Override the current time (test hook).
-        parser: Override the per-file parser (test hook). Defaults to
-            :func:`_parse_session`. The parser receives the JSONL
-            :class:`Path` and returns a :class:`Session` or ``None``.
-
-    Returns ``[]`` for any failure mode that doesn't raise:
-    - No matching encoded-key dirs (user never ran Claude Code here)
-    - All matched dirs are empty
-    - All JSONLs are older than the cutoff
-    - All JSONLs are unreadable (perm, IO)
-
-    A single corrupt file is skipped with a WARN log; the rest of
-    the listing still renders. The spec's failure-mode decision:
-    "Skip with WARN log, don't surface as broken row — an unreadable
-    file is a Claude Code internal issue, not something the user
-    can fix from the dashboard."
+    Same arguments and failure modes as :func:`list_recent_sessions`.
+    Result is sorted by ``last_activity`` desc and capped at
+    ``limit``.
     """
     # Local import: a module-level ``timedelta`` import was reverted by
     # the formatter (likely ruff isort considering it unused at the
@@ -666,16 +638,77 @@ def list_recent_sessions(
                     mtime.isoformat(),
                 )
 
-    out: list[Session] = []
+    out: list[tuple[Session, Path]] = []
     for _mtime, jsonl in by_id.values():
         session = parse(jsonl)
         if session is None:
             continue
-        out.append(session)
-    out.sort(key=lambda s: s.last_activity or "", reverse=True)
+        out.append((session, jsonl))
+    out.sort(key=lambda item: item[0].last_activity or "", reverse=True)
     if limit is not None and limit >= 0:
         out = out[:limit]
     return out
+
+
+def list_recent_sessions(
+    project_root: Path | str,
+    *,
+    days: int = 3,
+    limit: int | None = DEFAULT_SESSION_LIST_CAP,
+    now: datetime | None = None,
+    parser: Callable[[Path], Session | None] | None = None,
+) -> list[Session]:
+    """Return Session records for this project's last ``days`` of activity.
+
+    Thin wrapper over :func:`list_recent_sessions_with_paths`;
+    drops the on-disk path so callers that don't need it (the
+    JSON API, the existing test suite) keep the simpler return
+    shape.
+
+    Reads ``*.jsonl`` files from every encoded-key directory belonging
+    to this logical project (canonical key plus per-worktree keys —
+    see :func:`enumerate_project_encoded_keys`) and filters to files
+    whose mtime is within ``days`` of ``now`` (default: current UTC
+    time). Sessions are deduplicated by id (the JSONL filename's
+    stem) — when the same id appears under multiple encoded keys
+    (rare; suggests a worktree that was renamed or re-created), the
+    newest-mtime copy wins and a WARN log records the conflict.
+    Output is sorted most-recently-active first and capped at
+    ``limit`` (default :data:`DEFAULT_SESSION_LIST_CAP`).
+
+    Args:
+        project_root: The dashboard's project root. Used to compute
+            the encoded-key prefix.
+        days: Time window for filtering by JSONL mtime.
+        limit: Maximum number of sessions to return. ``None`` returns
+            all matches (unbounded — only reasonable for callers that
+            already know the size, e.g. tests). The list cap exists
+            because each session may incur an LLM-summarization spend
+            on first render; capping bounds worst-case page-load cost
+            (decisions.md Decision 5).
+        now: Override the current time (test hook).
+        parser: Override the per-file parser (test hook). Defaults to
+            :func:`_parse_session`. The parser receives the JSONL
+            :class:`Path` and returns a :class:`Session` or ``None``.
+
+    Returns ``[]`` for any failure mode that doesn't raise:
+    - No matching encoded-key dirs (user never ran Claude Code here)
+    - All matched dirs are empty
+    - All JSONLs are older than the cutoff
+    - All JSONLs are unreadable (perm, IO)
+
+    A single corrupt file is skipped with a WARN log; the rest of
+    the listing still renders. The spec's failure-mode decision:
+    "Skip with WARN log, don't surface as broken row — an unreadable
+    file is a Claude Code internal issue, not something the user
+    can fix from the dashboard."
+    """
+    return [
+        session
+        for session, _path in list_recent_sessions_with_paths(
+            project_root, days=days, limit=limit, now=now, parser=parser
+        )
+    ]
 
 
 # Path passed to workflows when the user picks the "All code" picker
