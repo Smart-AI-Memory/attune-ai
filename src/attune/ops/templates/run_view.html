@@ -28,6 +28,26 @@
   <div class="run-view-history" data-recent-runs="{{ run.workflow }}" data-exclude-run-id="{{ run.id }}" hidden></div>
 </section>
 
+{# Phase 3.3 — live progress for discovery-sweep. Hidden unless the
+   workflow name matches; run_view.js populates the per-source state
+   from ATTUNE_DS lines on the SSE stream. The static markup orders
+   sources alphabetically so the layout stays stable; the JS only
+   flips status without moving DOM nodes. #}
+{% if run.workflow == "discovery-sweep" %}
+  <section class="sweep-progress" data-sweep-progress hidden>
+    <h2 class="sweep-progress-head">Sources</h2>
+    <ul class="sweep-progress-list">
+      {% for src in ["bug-predict", "dependency-check", "doc-audit", "pattern-scan", "perf-audit", "security-audit", "test-audit"] %}
+        <li class="sweep-progress-item" data-source="{{ src }}" data-state="pending">
+          <span class="sweep-progress-glyph" aria-hidden="true">⌛</span>
+          <code class="sweep-progress-name">{{ src }}</code>
+          <span class="sweep-progress-detail muted" data-source-detail></span>
+        </li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
 {# When stream_url is empty, this run was loaded from disk (older than
    the runner's in-memory ring buffer). Server pre-fills the log here
    so the page renders without SSE — run_view.js detects the empty

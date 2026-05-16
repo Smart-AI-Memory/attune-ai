@@ -892,6 +892,49 @@ def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> Telemetry
     )
 
 
+@dataclass(frozen=True)
+class SweepChipCounts:
+    """Per-bucket counts loaded from a persisted discovery-sweep result.
+
+    Used by the workflows-page chip renderer. ``has_result`` distinguishes
+    "no sweep has run yet" (all zeros, has_result False) from "the sweep
+    ran and produced zero findings" (all zeros, has_result True), so the
+    UI can render an empty state vs a "looks clean" state.
+    """
+
+    scope_hash: str
+    queue: int
+    questions: int
+    rejected: int
+    has_result: bool
+
+
+def read_sweep_chip_counts(scope_path: str, config: Config) -> SweepChipCounts:
+    """Read the latest persisted sweep result for ``scope_path`` and tally chips.
+
+    Missing or corrupt sidecar returns all-zero counts with
+    ``has_result=False``. The same is true when the sidecar has the
+    expected shape but lists empty buckets (an empty sweep is still
+    "ran"; ``has_result=True``). Never raises — this powers a UI that
+    must render even when no sweep has ever been recorded.
+    """
+    from attune.ops import sweep_results
+
+    digest = sweep_results.scope_hash(scope_path)
+    data = sweep_results.read_result(digest, config)
+    if data is None:
+        return SweepChipCounts(
+            scope_hash=digest, queue=0, questions=0, rejected=0, has_result=False
+        )
+    return SweepChipCounts(
+        scope_hash=digest,
+        queue=len(data.get("queue") or []),
+        questions=len(data.get("questions") or []),
+        rejected=len(data.get("rejected") or []),
+        has_result=True,
+    )
+
+
 def list_workflows() -> list[WorkflowEntry]:
     """Return the registered workflow catalog. Empty if the registry is unavailable."""
     try:

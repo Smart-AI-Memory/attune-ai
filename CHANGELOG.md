@@ -9,6 +9,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Discovery-sweep ops-dashboard integration — Phases 3 + 4
+  shipped.** The `discovery-sweep` row on `/workflows` now renders
+  per-bucket chips (queue / questions / rejected) for the
+  currently-picked scope; counts refresh asynchronously when the
+  scope changes via the new
+  `GET /api/workflows/discovery-sweep/chips` endpoint. The
+  `/runs/<id>/view` page surfaces a live source-by-source
+  progress panel for discovery-sweep runs by parsing `ATTUNE_DS`
+  events from the SSE stream. Clicking a chip opens a scope-keyed
+  drill-in detail page at
+  `/workflows/discovery-sweep/results/<scope-hash>?bucket=<key>`
+  with severity badges, file:line links, and collapsed evidence
+  per finding. The previously-shipped JSON read endpoint moved to
+  `/api/workflows/discovery-sweep/results/<scope-hash>` so the
+  bare URL is free for the HTML detail page. All surface gated by
+  the existing `ATTUNE_OPS_SWEEP_RESULTS=1` env flag; with the flag
+  off (default), chips render zeros, the progress panel stays
+  hidden, and the detail page returns 404. User docs:
+  [`docs/how-to/discovery-sweep-on-the-dashboard.md`](docs/how-to/discovery-sweep-on-the-dashboard.md).
+  Closes the
+  [discovery-sweep-ops-integration](docs/specs/discovery-sweep-ops-integration/)
+  spec.
 - `scripts/calibrate_session_summary.py` + companion CI gate
   `tests/unit/ops/test_calibration_snapshot.py` — closes the
   calibration loop for the `/sessions` Haiku summarizer. The

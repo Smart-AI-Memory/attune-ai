@@ -79,6 +79,14 @@ async def workflows_page(request: Request) -> HTMLResponse:
     workflows = data.list_workflows()
     cfg = request.app.state.config
     features = data.list_features(cfg.project_root)
+    # Server-side first-paint of the discovery-sweep chip counts.
+    # JS refreshes these via /api/workflows/discovery-sweep/chips
+    # when the user changes the scope picker; the initial render
+    # uses each row's default scope (or the project root) so chips
+    # appear immediately without a fetch round-trip.
+    sweep_default_scope = data.workflow_default_scope("discovery-sweep", cfg.project_root)
+    sweep_scope_path = sweep_default_scope or str(cfg.project_root)
+    sweep_chips = data.read_sweep_chip_counts(sweep_scope_path, cfg)
     # supports_path[name] is True iff the workflow has a PATH_ARG_REGISTRY
     # entry. The template uses this to render the scope picker vs an
     # "n/a" span. Future-proofed: a new workflow without a registry
@@ -107,6 +115,7 @@ async def workflows_page(request: Request) -> HTMLResponse:
         supports_path=supports_path,
         default_scopes=default_scopes,
         all_code_path=data.ALL_CODE_PATH,
+        sweep_chips=sweep_chips,
         # Absolute workspace root used by the scope picker to validate
         # localStorage-restored paths. A saved scope from a previous
         # session (possibly a different worktree) that doesn't share

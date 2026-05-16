@@ -133,7 +133,16 @@
     es.addEventListener("line", function (ev) {
       // The raw line is broadcast verbatim; wrap in JSON.parse to
       // unwrap the JSON-string the server emits.
-      appendLine(JSON.parse(ev.data));
+      var line = JSON.parse(ev.data);
+      appendLine(line);
+      // Phase 3.3 — extract sweep source progress events from
+      // ATTUNE_DS lines. parseSweepEventLine returns null for
+      // non-matching lines, so we pay only a cheap startsWith check
+      // on the hot path.
+      if (typeof line === "string" && line.indexOf("ATTUNE_DS ") === 0) {
+        var event = parseSweepEventLine(line);
+        if (event) updateSweepProgress(event);
+      }
     });
 
     es.addEventListener("done", function (ev) {
@@ -325,12 +334,90 @@
       .forEach(runner.setupRecentRuns);
   }
 
+  // ----------------------------------------------------------------
+  // Phase 3.3 — live sweep progress (ATTUNE_DS line parser)
+  // ----------------------------------------------------------------
+
+  // Parse a single ATTUNE_DS event line into a normalized object, or
+  // null if the line isn't a per-source event (e.g. version line,
+  // final JSON line, malformed). The wire format is space-separated
+  // ``ATTUNE_DS <event> <source> ts=<iso> [key=value ...]`` per
+  // ds_stdout.py. We accept anything reasonable rather than hard-fail
+  // — the engine's emitter is the source of truth, but a forward-
+  // compat parser is cheap insurance.
+  function parseSweepEventLine(line) {
+    if (typeof line !== "string") return null;
+    var parts = line.trim().split(/\s+/);
+    if (parts.length < 3) return null;
+    if (parts[0] !== "ATTUNE_DS") return null;
+    var event = parts[1];
+    if (event !== "source_started" && event !== "source_finished" && event !== "source_failed") {
+      return null;
+    }
+    var source = parts[2];
+    var meta = {};
+    for (var i = 3; i < parts.length; i++) {
+      var pair = parts[i];
+      var eq = pair.indexOf("=");
+      if (eq <= 0) continue;
+      meta[pair.slice(0, eq)] = pair.slice(eq + 1);
+    }
+    return { event: event, source: source, meta: meta };
+  }
+
+  // Reveal the progress panel on first event and flip the matching
+  // <li>'s state. The DOM order is fixed at server-render time so we
+  // never reflow the list; we only change ``data-state`` (CSS owns
+  // the glyph/color) and update the detail text.
+  function updateSweepProgress(event) {
+    var panel = document.querySelector("[data-sweep-progress]");
+    if (!panel) return;
+    panel.hidden = false;
+    var item = panel.querySelector('[data-source="' + cssEscape(event.source) + '"]');
+    if (!item) return;
+    var glyph = item.querySelector(".sweep-progress-glyph");
+    var detail = item.querySelector("[data-source-detail]");
+    var state = "pending";
+    var glyphChar = "⌛";
+    var detailText = "";
+    if (event.event === "source_started") {
+      state = "running";
+      glyphChar = "⏳";
+      detailText = "running…";
+    } else if (event.event === "source_finished") {
+      state = "finished";
+      glyphChar = "✓";
+      var count = event.meta && event.meta.findings;
+      detailText = count != null ? count + " finding(s)" : "done";
+    } else if (event.event === "source_failed") {
+      state = "failed";
+      glyphChar = "✗";
+      detailText = (event.meta && event.meta.error) || "failed";
+    }
+    item.setAttribute("data-state", state);
+    if (glyph) glyph.textContent = glyphChar;
+    if (detail) detail.textContent = detailText;
+  }
+
+  // CSS.escape() is widely supported but not universal; fall back to
+  // a minimal escape that handles the source names the engine emits
+  // (lowercase letters and hyphens only) so this works in older
+  // browser environments and headless test harnesses.
+  function cssEscape(value) {
+    if (typeof CSS !== "undefined" && typeof CSS.escape === "function") {
+      return CSS.escape(value);
+    }
+    return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
+  }
+
   // Expose internals for tests.
   if (typeof window !== "undefined") {
     window.__attuneRunView = {
       handlePillClick: handlePillClick,
       renderChainedFromBadge: renderChainedFromBadge,
       pillTargetFromEvent: pillTargetFromEvent,
+      parseSweepEventLine: parseSweepEventLine,
+      updateSweepProgress: updateSweepProgress,
       DATA: DATA
     };
   }

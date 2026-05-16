@@ -59,6 +59,35 @@
           <td>
             {{ w.description }}
             <div class="run-status"><span data-status></span></div>
+            {% if w.name == "discovery-sweep" %}
+              {# Phase 3 chips. Server-rendered for first paint; runner.js
+                 refreshes them on scope-picker change via
+                 /api/workflows/discovery-sweep/chips. Anchor hrefs link to
+                 the scope-keyed detail page filtered by bucket. #}
+              <div class="sweep-chip-row" data-sweep-chips
+                   data-scope-hash="{{ sweep_chips.scope_hash }}"
+                   data-has-result="{{ '1' if sweep_chips.has_result else '0' }}">
+                <a class="chip chip-danger" data-chip="queue"
+                   href="/workflows/discovery-sweep/results/{{ sweep_chips.scope_hash }}?bucket=queue"
+                   data-tooltip="Findings ready for review">
+                  queue: <span data-chip-count>{{ sweep_chips.queue }}</span>
+                </a>
+                <a class="chip chip-warn" data-chip="questions"
+                   href="/workflows/discovery-sweep/results/{{ sweep_chips.scope_hash }}?bucket=questions"
+                   data-tooltip="Findings the engine couldn't auto-route">
+                  questions: <span data-chip-count>{{ sweep_chips.questions }}</span>
+                </a>
+                <a class="chip chip-muted" data-chip="rejected"
+                   href="/workflows/discovery-sweep/results/{{ sweep_chips.scope_hash }}?bucket=rejected"
+                   data-tooltip="Findings filtered out by deterministic rules">
+                  rejected: <span data-chip-count>{{ sweep_chips.rejected }}</span>
+                </a>
+                <span class="sweep-chip-status muted" data-sweep-chip-status
+                      {% if not sweep_chips.has_result %}data-empty="1"{% endif %}>
+                  {% if sweep_chips.has_result %}latest result{% else %}no sweep recorded for this scope yet{% endif %}
+                </span>
+              </div>
+            {% endif %}
             <div class="recent-runs" data-recent-runs="{{ w.name }}" hidden></div>
             <div class="log-pane" data-log-pane hidden>
               <pre data-log class="log-output"></pre>

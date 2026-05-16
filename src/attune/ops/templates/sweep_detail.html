@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}discovery-sweep — {{ scope_hash[:8] }}{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="page-sub">
+    <a href="/workflows" class="link">← Back to workflows</a>
+  </p>
+  <h1>
+    <code>discovery-sweep</code>
+    <span class="run-id-chip">scope <code>{{ scope_hash[:12] }}</code></span>
+  </h1>
+  <p class="page-sub">
+    <span class="chip chip-danger">queue: {{ totals.queue }}</span>
+    <span class="chip chip-warn">questions: {{ totals.questions }}</span>
+    <span class="chip chip-muted">rejected: {{ totals.rejected }}</span>
+    {% if metadata %}
+      {% if metadata.spent_usd is defined %}
+        <span class="run-view-exit">spend <code>${{ "%.4f"|format(metadata.spent_usd|float) }}</code></span>
+      {% endif %}
+      {% if metadata.duration_ms is defined %}
+        <span class="run-view-exit">duration <code>{{ metadata.duration_ms }}ms</code></span>
+      {% endif %}
+      {% if metadata.failures %}
+        <span class="chip chip-danger" data-tooltip="Failed sources: {{ metadata.failures|join(', ') }}">{{ metadata.failures|length }} source failure(s)</span>
+      {% endif %}
+    {% endif %}
+  </p>
+
+  <nav class="sweep-bucket-nav">
+    <a class="bucket-link {% if not bucket_filter %}is-active{% endif %}"
+       href="/workflows/discovery-sweep/results/{{ scope_hash }}">All</a>
+    {% for key, label in all_section_meta %}
+      <a class="bucket-link {% if bucket_filter == key %}is-active{% endif %}"
+         href="/workflows/discovery-sweep/results/{{ scope_hash }}?bucket={{ key }}">{{ label }} ({{ totals[key] }})</a>
+    {% endfor %}
+  </nav>
+</section>
+
+{% for key, label, rows, blurb in sections %}
+  <section class="sweep-bucket" id="bucket-{{ key }}">
+    <h2>{{ label }} <span class="muted">({{ rows|length }})</span></h2>
+    <p class="page-sub">{{ blurb }}</p>
+    {% if rows %}
+      <ul class="finding-list">
+        {% for row in rows %}
+          <li class="finding-row">
+            <header class="finding-row-head">
+              <span class="chip {{ row.severity_chip }}">{{ row.severity or "—" }}</span>
+              <span class="chip chip-muted">{{ row.source }}</span>
+              <span class="finding-title">{{ row.title }}</span>
+              {% if row.confidence is not none %}
+                <span class="muted finding-confidence" data-tooltip="confidence">conf {{ "%.2f"|format(row.confidence|float) }}</span>
+              {% endif %}
+            </header>
+            {% if row.description %}
+              <p class="finding-desc">{{ row.description }}</p>
+            {% endif %}
+            <p class="finding-meta">
+              {% if row.file %}
+                <code class="log-file">{{ row.file }}{% if row.line %}:{{ row.line }}{% endif %}</code>
+              {% endif %}
+              {% for tag in row.tags %}
+                <span class="chip chip-muted">{{ tag }}</span>
+              {% endfor %}
+            </p>
+            {% if row.extra %}
+              <p class="finding-extra">
+                <strong>{{ row.extra.label }}:</strong> <code>{{ row.extra.value }}</code>
+                {% if row.extra.follow_up %}
+                  — {{ row.extra.follow_up }}
+                {% endif %}
+              </p>
+            {% endif %}
+            {% if row.evidence %}
+              <details class="finding-evidence">
+                <summary>Evidence</summary>
+                <pre class="log-output">{{ row.evidence }}</pre>
+              </details>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="empty">No findings in this bucket.</p>
+    {% endif %}
+  </section>
+{% endfor %}
+{% endblock %}

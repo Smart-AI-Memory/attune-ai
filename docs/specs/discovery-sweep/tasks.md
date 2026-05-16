@@ -12,7 +12,7 @@
 | Phase 3 — Output polish + JSON | done | [#320](https://github.com/Smart-AI-Memory/attune-ai/pull/320) (3.1/3.3/3.4/3.5), [#322](https://github.com/Smart-AI-Memory/attune-ai/pull/322) (3.2 ANSI badges) |
 | Phase 4 — CLI deprecation | closed empty | P2.7 decision: zero deprecation candidates |
 
-Ops-dashboard integration (originally bundled into Phase 4) carved out to follow-up spec [`discovery-sweep-ops-integration`](../discovery-sweep-ops-integration/).
+Ops-dashboard integration (originally bundled into Phase 4) carved out to follow-up spec [`discovery-sweep-ops-integration`](../discovery-sweep-ops-integration/) — **completed 2026-05-16**. Dashboard renders per-bucket chips on the workflows page, live source-by-source progress on the run_view page, and a scope-keyed drill-in detail page.
 
 Phased plan. Each phase is independently shippable. See `decisions.md`, `requirements.md`, `design.md` for context.
 

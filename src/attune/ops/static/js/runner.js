@@ -179,7 +179,10 @@
       SCOPE_STORAGE_KEY: SCOPE_STORAGE_KEY,
       WORKFLOW_NAMES: WORKFLOW_NAMES,
       SECTION_HEADERS: SECTION_HEADERS,
-      appendBusyErrorLine: appendBusyErrorLine
+      appendBusyErrorLine: appendBusyErrorLine,
+      applyChipCounts: applyChipCounts,
+      refreshSweepChips: refreshSweepChips,
+      wireSweepChipRefresh: wireSweepChipRefresh
     };
   }
 
@@ -603,11 +606,96 @@
     });
   }
 
+  // ----------------------------------------------------------------
+  // Phase 3 (discovery-sweep) — chip refresh on scope-picker change
+  // ----------------------------------------------------------------
+  //
+  // Server first-paints chip counts from the row's default scope. When
+  // the user picks a different scope (or types a custom path), refresh
+  // the chips via the chips API so they reflect the new scope's
+  // persisted sweep result. Failure modes fall through to "no sweep
+  // recorded" — never throws, never blocks the picker.
+  function refreshSweepChips(row) {
+    var chipRow = row.querySelector("[data-sweep-chips]");
+    if (!chipRow) return;
+    var scope = getScope(row);
+    var params = new URLSearchParams();
+    if (scope !== null) params.set("scope", scope);
+    fetch("/api/workflows/discovery-sweep/chips?" + params.toString(), {
+      headers: { Accept: "application/json" }
+    })
+      .then(function (resp) {
+        if (!resp.ok) return null;
+        return resp.json();
+      })
+      .then(function (body) {
+        if (!body) return;
+        applyChipCounts(chipRow, body);
+      })
+      .catch(function () {
+        // INTENTIONAL: chip refresh is best-effort. Stale counts are
+        // better than an error message blocking the picker.
+      });
+  }
+
+  function applyChipCounts(chipRow, body) {
+    var hash = String(body.scope_hash || "");
+    chipRow.setAttribute("data-scope-hash", hash);
+    chipRow.setAttribute("data-has-result", body.has_result ? "1" : "0");
+    ["queue", "questions", "rejected"].forEach(function (bucket) {
+      var anchor = chipRow.querySelector('[data-chip="' + bucket + '"]');
+      if (!anchor) return;
+      var count = body[bucket];
+      if (typeof count !== "number") count = 0;
+      var span = anchor.querySelector("[data-chip-count]");
+      if (span) span.textContent = String(count);
+      // Update href so detail-page navigation lands on the new scope.
+      // /^[0-9a-f]{16}$/ guard mirrors the server route's validation
+      // so a garbled API payload doesn't yield a broken link.
+      if (/^[0-9a-f]{16}$/.test(hash)) {
+        anchor.href = "/workflows/discovery-sweep/results/" + hash + "?bucket=" + bucket;
+      }
+    });
+    var status = chipRow.querySelector("[data-sweep-chip-status]");
+    if (status) {
+      if (body.has_result) {
+        status.textContent = "latest result";
+        status.removeAttribute("data-empty");
+      } else {
+        status.textContent = "no sweep recorded for this scope yet";
+        status.setAttribute("data-empty", "1");
+      }
+    }
+  }
+
+  function wireSweepChipRefresh(row) {
+    if (row.getAttribute("data-workflow") !== "discovery-sweep") return;
+    var picker = row.querySelector("[data-scope-picker]");
+    var custom = row.querySelector("[data-scope-custom]");
+    if (picker) {
+      picker.addEventListener("change", function () {
+        // Defer until any wireScopePickerToggle effects settle.
+        if (picker.value !== "__custom__") refreshSweepChips(row);
+      });
+    }
+    if (custom) {
+      custom.addEventListener("change", function () {
+        refreshSweepChips(row);
+      });
+    }
+  }
+
   document.addEventListener("DOMContentLoaded", function () {
     document.querySelectorAll("[data-run-button]").forEach(attach);
     document.querySelectorAll("tr[data-workflow]").forEach(wireScopePickerToggle);
     document.querySelectorAll("tr[data-workflow]").forEach(wireScopeSave);
+    document.querySelectorAll("tr[data-workflow]").forEach(wireSweepChipRefresh);
     restoreScopeOnLoad();
     document.querySelectorAll("[data-recent-runs]").forEach(setupRecentRuns);
+    // After scope restoration, refresh chips once so a localStorage-restored
+    // scope (different from the server's default-scope first paint) shows
+    // its own counts.
+    var sweepRow = document.querySelector('tr[data-workflow="discovery-sweep"]');
+    if (sweepRow) refreshSweepChips(sweepRow);
   });
 })();
