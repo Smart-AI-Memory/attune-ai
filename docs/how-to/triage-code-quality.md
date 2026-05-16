@@ -1,13 +1,6 @@
----
-type: task
-feature: code-quality
-depth: task
-generated_at: 2026-05-14T00:00:00+00:00
-source_hash: 0d2aa6913a2dae27ec39d314c14f1f9a65365582fb2ba40d7060f571d73ca77e
-status: hand_authored
----
-
 # Triage a code-quality report
+
+> **Canonical source:** [`.help/templates/code-quality/task.md`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/.help/templates/code-quality/task.md). Edit there; mirror here.
 
 Use this procedure after running `/code-quality` to decide what to fix now, what to fix in this PR, what to defer, and what to ignore.
 
@@ -67,9 +60,3 @@ Triage is complete when:
 - Quality findings split cleanly into "fixed in this PR" and "tracked in issue/backlog."
 - Performance and Architecture findings are either fixed, deferred with a link, or explicitly accepted.
 - A fresh `/code-quality` run on the same scope shows no new findings introduced by your fixes.
-
-## Source files
-
-- `src/attune/workflows/code_review.py`
-
-**Tags:** `review`, `quality`, `triage`, `bugs`, `report`
