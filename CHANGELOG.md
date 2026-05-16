@@ -903,34 +903,106 @@ job with reduced `--cov=` scope if branch signal is needed.
 - 16 multi-agent workflows
 - 41 MCP tools
 
-## [7.0.0] - planned (couples with the 100%-coverage milestone release)
+## [7.0.0] - planned
+
+> **Scope rewritten 2026-05-16.** The previous framing — "couples with
+> the 100%-coverage milestone release" — has been retired as
+> unreasonable; per-module 100% coverage continues opportunistically as
+> a code-quality practice, but the project's CI gate stays at
+> `fail_under = 85` (line + branch) and that's the realistic floor.
+> v7.0 now ships when the two queued breaking-change tracks are
+> complete: (1) retirement of the two long-deprecated modules
+> (already on `main` as of PR #209), and (2) full completion of
+> [`workflow-path-arg-unification`](docs/specs/workflow-path-arg-unification/)
+> including removal of the legacy kwarg compat code that currently
+> emits `DeprecationWarning`. No date pinned; v7.0 ships when the
+> tracks below close.
+
+### Status (status of v7.0 gates as of 2026-05-16)
+
+| Gate | Status |
+|---|---|
+| Deprecated module retirement (orchestrated_release_prep, scaffolding) | ✅ Done — removed from `main` via PR #209 (commit `e71782a7`). User-visible at v7.0 publish. |
+| Workflow path-arg unification PR-1 (orchestrated-health-check) | ✅ Merged (#297) |
+| Workflow path-arg unification PR-2 (doc-orchestrator) | ⏳ Pending |
+| Workflow path-arg unification PR-3 (test-audit) | ✅ Merged (#298) |
+| Workflow path-arg unification PR-4 (rag-code-gen) | ✅ Merged (#300) |
+| Workflow path-arg unification PR-5 (registry simplification) | ⏳ Pending — gated on PR-2 |
+| Remove `DeprecationWarning` compat code paths for legacy kwargs | ⏳ Pending — touches `orchestrated_health_check.py`, `rag_code_gen.py`, `doc_orchestrator.py` (after PR-2), `test_audit.py`, plus the `PATH_ARG_REGISTRY` cleanup |
+| Sibling-package consumer audit (`attune-author`, `attune-help`, `attune-rag`, `attune-software`) for legacy-kwarg usage | ⏳ Pending — per spec Phase 0.1 |
 
 ### Removed — BREAKING
 
-Two long-deprecated modules whose tests were retired in the
-ignored-tests cleanup (2026-05-09), leaving them with zero coverage
-and zero internal callers. See
-`docs/specs/deprecated-module-retirement/` for the full retirement
-spec and rationale.
+**1. Two long-deprecated modules.** Both already removed from `main`
+via PR #209 (2026-05-16); v7.0 is the version where the removals
+become user-visible. Full retirement spec at
+[`docs/specs/deprecated-module-retirement/`](docs/specs/deprecated-module-retirement/).
 
 - **`attune.workflows.orchestrated_release_prep`** (entire module).
-  Deprecated since v5.2.0; scheduled for removal in v6.0; six minor
-  versions overdue.
+  Deprecated since v5.2.0; six minor versions overdue.
   *Migration*: use `ReleasePrepTeamWorkflow` from
   `attune.agents.release` (drop-in replacement: same constructor,
   same `execute()` signature, same `ReleaseReadinessReport` return
   type). The CLI path `attune workflow run release-prep` already
   invokes the new workflow.
-  Symbols removed from `attune.workflows.__all__`:
+  *Symbols removed from `attune.workflows.__all__`*:
   `OrchestratedReleasePrepWorkflow`, `ReleaseReadinessReport`.
   (`ReleaseReadinessReport` remains exported from
   `attune.agents.release`.)
 - **`attune.scaffolding`** (entire CLI package). Deprecated since
-  2026-02-21 (commit 3833d5d6, PR #60); `__main__.py` has emitted
-  a runtime deprecation notice on every invocation.
+  2026-02-21 (commit `3833d5d6`, PR #60); `__main__.py` had been
+  emitting a runtime deprecation notice on every invocation.
   *Migration*: use `attune workflow run <workflow-name>` instead of
-  `python -m attune.scaffolding create ...`. There is no Python-API
+  `python -m attune.scaffolding create ...`. No Python-API
   replacement; the scaffolding surface was always a CLI.
+
+**2. Legacy workflow kwargs.** Five workflows accepted a workflow-
+specific kwarg name (`project_root=`, `src_path=`, `cwd=`) alongside
+the canonical `path=`; the legacy names emit `DeprecationWarning` in
+v6.x and become a `TypeError` in v7.0. Full unification spec at
+[`docs/specs/workflow-path-arg-unification/`](docs/specs/workflow-path-arg-unification/).
+
+- **`OrchestratedHealthCheckWorkflow.execute(cwd=...)`** removed.
+  *Migration*: `execute(path=...)`. Identical semantics.
+- **`TestAuditWorkflow.execute(project_root=...)`** removed.
+  *Migration*: `execute(path=...)`. Identical semantics.
+- **`RagCodeGenWorkflow.execute(cwd=...)`** removed.
+  *Migration*: `execute(path=...)`. Identical semantics
+  (Phase 0.2 of the spec confirmed `cwd` and `path` bound the same
+  Agent SDK filesystem-tool scope on this workflow).
+- **`DocOrchestratorWorkflow.execute(<TBD>=...)`** removed (pending
+  PR-2 of the unification spec). *Migration*: `execute(path=...)`.
+- **`PATH_ARG_REGISTRY`** simplified (PR-5, gated on PR-2). The
+  three-way alias bridge introduced in PR #294 collapses to a single
+  canonical mapping. No public-API impact for callers already using
+  `path=`.
+
+### Changed — non-breaking
+
+- **CHANGELOG framing**: v7.0's release gate is the two breaking-
+  change tracks above, not a coverage milestone.
+
+### Migration summary
+
+For Python-API callers:
+
+```python
+# v6.x (legacy, emits DeprecationWarning):
+workflow.execute(cwd="/path/to/project")
+workflow.execute(project_root="/path/to/project")
+workflow.execute(src_path="/path/to/project")
+
+# v7.0+ (canonical, no warning):
+workflow.execute(path="/path/to/project")
+```
+
+For CLI callers: no change. The `attune workflow run <name>` CLI
+already passes through `--path` to all workflows.
+
+For attune-author / attune-help / attune-rag / attune-software:
+the spec's Phase 0.1 audit runs before v7.0 ships. Any legacy-kwarg
+usage in those sibling packages will be flagged + migrated as a
+gating step for the release.
 
 ## [6.6.0] - 2026-05-09
 
