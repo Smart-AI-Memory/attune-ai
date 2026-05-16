@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: concept
-generated_at: 2026-05-16T02:33:13.007361+00:00
-source_hash: 3847cb81bf0f98356695799e284a8b9b602fccfe6225cd45d19f8f054d716b7e
+generated_at: 2026-05-16T05:27:24.597686+00:00
+source_hash: 5f495ad9acf50a2a9adfe8615f144eda920bca96f5d4172dcb4e358deaa8af3b
 status: generated
 ---
 
@@ -14,18 +14,18 @@ Local operations dashboard — workflow runner with per-feature scope picker, pe
 
 The main building blocks are:
 
+- **`Candidate`** — One completion-candidate spec returned by the detector.
 - **`Config`** — Where attune ops reads project + attune state from.
 - **`TelemetrySummary`** — core component
 - **`WorkflowEntry`** — core component
 - **`PathArgSpec`** — How a workflow accepts a scope path on the CLI.
-- **`Feature`** — One feature from ``.help/features.yaml`` for the scope picker.
 
-Under the hood, this feature spans 34 source
+Under the hood, this feature spans 38 source
 files covering:
 
 - Run via ``python -m attune.ops``.
 - CLI entrypoint for ``attune ops``.
-- Runtime configuration for attune ops.
+- Detector for spec completion candidates.
 
 ## What connects to it
 
@@ -36,8 +36,8 @@ ops dashboard through these interfaces:
 
 | Interface | Purpose | File |
 |-----------|---------|------|
+| `Candidate` | One completion-candidate spec returned by the detector. | `src/attune/ops/completion_candidates.py` |
 | `Config` | Where attune ops reads project + attune state from. | `src/attune/ops/config.py` |
 | `TelemetrySummary` | — | `src/attune/ops/data.py` |
 | `WorkflowEntry` | — | `src/attune/ops/data.py` |
 | `PathArgSpec` | How a workflow accepts a scope path on the CLI. | `src/attune/ops/data.py` |
-| `Feature` | One feature from ``.help/features.yaml`` for the scope picker. | `src/attune/ops/data.py` |

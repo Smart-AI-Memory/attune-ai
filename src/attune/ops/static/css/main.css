@@ -1149,3 +1149,105 @@ a.kpi:hover {
   color: var(--fg-subtle);
   font-size: 12px;
 }
+
+/* ---------- Completion candidates section ("Ready to close?") ---------- */
+/* Server-rendered shell at the top of /specs, populated by
+   completion_candidates.js. Hidden when there are no candidates so
+   the page is uncluttered for users with nothing to act on. */
+.candidates-section {
+  margin: 16px 0 24px;
+  padding: 16px 18px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+  /* Visible overflow so candidate-card tooltips (Dismiss button)
+     aren't clipped at the section boundary. See the existing
+     CLAUDE.md lesson about ::after pseudo-element clipping. */
+  overflow: visible;
+}
+.candidates-head {
+  margin-bottom: 12px;
+}
+.candidates-head h2 {
+  margin: 0 0 4px;
+  font-size: 17px;
+}
+.candidates-count {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 8px;
+  border-radius: 99px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+.candidates-sub {
+  margin: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+.candidates-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.candidate-card {
+  padding: 12px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  /* Visible overflow so the inner Dismiss tooltip can escape. */
+  overflow: visible;
+}
+.candidate-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.candidate-slug {
+  font-family: var(--font-mono, ui-monospace, monospace);
+  font-weight: 600;
+}
+.candidate-current {
+  font-size: 11px;
+}
+.candidate-evidence {
+  list-style: none;
+  margin: 0 0 10px;
+  padding: 0;
+  color: var(--fg-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+.candidate-evidence li {
+  padding-left: 2px;
+}
+.candidate-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-confirm {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+.btn-dismiss {
+  /* Secondary action — same .btn base, no extra color emphasis. */
+}
+.candidate-error {
+  margin-top: 10px;
+  padding: 8px 10px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border-strong);
+  border-left: 3px solid #d97706; /* amber, matches chip-warn intent */
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  color: var(--fg);
+}

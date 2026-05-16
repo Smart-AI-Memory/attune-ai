@@ -30,6 +30,12 @@ class Config:
     # older. 30 days is enough to span a typical sprint; bump via
     # ``--runs-retention-days`` if you want longer history.
     runs_retention_days: int = 30
+    # Whether the Specs page surfaces "Ready to close?" completion
+    # candidates. Opt-in default-off per
+    # ``docs/specs/ops-specs-completion-candidates/`` (Q6). Toggled
+    # via ``--specs-candidates`` / ``--no-specs-candidates`` and
+    # persisted to ``<attune_home>/ops/config.json``.
+    specs_candidates_enabled: bool = False
 
     @property
     def telemetry_path(self) -> Path:
@@ -66,6 +72,7 @@ def build_config(
     specs_roots: tuple[Path, ...] | None = None,
     trusted_hosts: tuple[str, ...] | None = None,
     runs_retention_days: int = 30,
+    specs_candidates_enabled: bool = False,
 ) -> Config:
     """Build a Config from inputs and environment defaults.
 
@@ -76,6 +83,10 @@ def build_config(
     ``trusted_hosts`` defaults to ``()``; the middleware always includes
     ``host:port`` and loopback aliases in its allowlist, so the default
     works for local development without configuration.
+
+    ``specs_candidates_enabled`` defaults to False; the CLI resolver
+    (:func:`attune.ops.ops_config_store.resolve_specs_candidates_enabled`)
+    overlays persisted state when the caller has computed it.
     """
     root = (project_root or Path.cwd()).expanduser().resolve()
     return Config(
@@ -87,4 +98,5 @@ def build_config(
         specs_roots=tuple(specs_roots or ()),
         trusted_hosts=tuple(trusted_hosts or ()),
         runs_retention_days=max(0, int(runs_retention_days)),
+        specs_candidates_enabled=specs_candidates_enabled,
     )

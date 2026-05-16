@@ -29,7 +29,20 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
 
+from attune.ops import dismiss_store
+
 router = APIRouter(prefix="/api/specs", tags=["specs"])
+
+# Statuses that count as "completion-like" for dismiss-clear purposes.
+# A status PUT to anything OUTSIDE this set clears any dismiss entry for
+# the spec — re-completion can then re-surface naturally. See
+# docs/specs/ops-specs-completion-candidates/ (Phase 2 dismiss semantics).
+_COMPLETE_LIKE_STATUSES: frozenset[str] = frozenset({"complete", "completed", "done"})
+
+# SHA-256 hex strings are 64 chars of [0-9a-f]. Validate body inputs to
+# the dismiss endpoint match this shape — guards against arbitrary
+# string content landing in the persisted store.
+_SNAPSHOT_HASH_RE = re.compile(r"^[0-9a-f]{64}$")
 
 
 # Phase files we recognize. Match attune-gui's convention; decisions.md is
@@ -208,6 +221,46 @@ async def list_specs(request: Request) -> dict:
                 "phases": [asdict(p) for p in s.phases],
             }
             for s in specs
+        ],
+    }
+
+
+@router.get("/completion-candidates")
+async def list_completion_candidates(request: Request) -> dict:
+    """Return "Ready to close?" candidates for the Specs page.
+
+    Gated on BOTH ``config.specs_candidates_enabled`` AND
+    ``config.allow_run`` — read-only mode hides the section entirely
+    (no point surfacing confirm buttons that would 403). When either
+    is off, returns ``{"enabled": false, "candidates": []}`` without
+    invoking the detector (zero gh-API cost on disabled servers).
+
+    Detector caches results for 5 minutes in-memory per the spec's
+    Q2 resolution; repeated calls within that window are cheap.
+
+    See ``docs/specs/ops-specs-completion-candidates/`` for the
+    detector design.
+    """
+    from attune.ops.completion_candidates import detect_candidates
+
+    config = request.app.state.config
+    if not getattr(config, "specs_candidates_enabled", False):
+        return {"enabled": False, "candidates": []}
+    if not getattr(config, "allow_run", False):
+        return {"enabled": False, "candidates": []}
+
+    candidates = detect_candidates(config)
+    return {
+        "enabled": True,
+        "candidates": [
+            {
+                "slug": c.slug,
+                "path": c.path,
+                "current_status": c.current_status,
+                "evidence": c.evidence,
+                "snapshot_hash": c.snapshot_hash,
+            }
+            for c in candidates
         ],
     }
 
@@ -427,6 +480,19 @@ async def update_phase_status(
     except OSError as exc:
         raise HTTPException(status_code=500, detail=f"write failed: {exc}") from exc
 
+    # On successful flip AWAY from a complete-like status, clear any
+    # dismiss entry for this slug. Re-completion can then re-surface
+    # the candidate naturally. See docs/specs/ops-specs-completion-
+    # candidates/ (Phase 2 dismiss semantics).
+    if status.lower() not in _COMPLETE_LIKE_STATUSES:
+        try:
+            dismiss_store.clear(slug, config)
+        except OSError:
+            # Best-effort: failing to clear the dismiss doesn't
+            # roll back the status write. Logged at WARN by the
+            # store's own atomic-write path.
+            pass
+
     return {
         "slug": slug,
         "phase": phase,
@@ -435,3 +501,45 @@ async def update_phase_status(
         "root": str(matched_root),
         "path": str(target),
     }
+
+
+@router.post("/{slug}/completion-candidates/dismiss")
+async def dismiss_completion_candidate(
+    slug: str,
+    request: Request,
+    body: dict[str, Any] = Body(...),  # noqa: B008
+) -> dict[str, Any]:
+    """Suppress a completion candidate for the default TTL (14 days).
+
+    Body: ``{"snapshot_hash": "<64-hex-chars>"}``.
+
+    The hash comes from the client (echoed back from the GET response)
+    so we can guarantee the dismiss-state aligns with what the user
+    actually saw. Race-defends against new signal landing between GET
+    and POST — if signal changed, the dismissed snapshot won't match
+    the next detector run's snapshot and the candidate re-surfaces.
+
+    Gated on ``config.allow_run`` — read-only mode returns 403, same
+    as the existing status-flip endpoint.
+    """
+    config = request.app.state.config
+    if not getattr(config, "allow_run", False):
+        raise HTTPException(
+            status_code=403,
+            detail="server is read-only; dismiss is disabled",
+        )
+
+    _validate_slug(slug)
+
+    snapshot_hash = body.get("snapshot_hash")
+    if not isinstance(snapshot_hash, str) or not _SNAPSHOT_HASH_RE.match(snapshot_hash):
+        raise HTTPException(
+            status_code=422,
+            detail="body must include `snapshot_hash` (64-char hex string)",
+        )
+
+    try:
+        dismiss_store.save(slug, snapshot_hash, config)
+    except OSError as exc:
+        raise HTTPException(status_code=500, detail=f"dismiss persist failed: {exc}") from exc
+    return {"ok": True}
