@@ -312,6 +312,7 @@ async def specs_page(request: Request) -> HTMLResponse:
         specs=specs,
         roots=[str(r) for r in roots],
         allow_run=cfg.allow_run,
+        specs_candidates_enabled=cfg.specs_candidates_enabled,
     )
 
 

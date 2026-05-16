@@ -5183,3 +5183,90 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   topical naming like `Codex-results.txt`). The
   transcript is permanent; revocation is the
   only recovery.
+
+- **Coverage measurement on worktree code requires
+  bypassing the project's coverage rcfile**: extends the
+  existing PYTHONPATH worktree lesson with a new failure
+  mode specific to coverage tooling. When running
+  ``coverage run -m pytest`` from a worktree, the
+  ``pyproject.toml`` ``[tool.coverage.run] source =
+  ["attune", "attune_software"]`` filter records 0%
+  coverage even though tests demonstrably hit the module
+  (verified via ``module.__file__`` resolving to the
+  worktree path AND a direct ``coverage run`` script that
+  imports and calls the module). Coverage's source-name
+  filter doesn't resolve worktree paths to the configured
+  package name because the editable-install MAPPING points
+  to the main checkout. The file appears in the report
+  with all-statements-missed, which looks like "tests
+  never ran" but is actually "tests ran but coverage
+  didn't record the hits." Workaround:
+  ``cd /tmp && rm -f .coverage &&
+  PYTHONPATH=$(repo)/src
+  PYTEST_ADDOPTS="-p no:xdist -o addopts="
+  /path/to/.venv/bin/python -m coverage run
+  --rcfile=/dev/null --source=attune.ops.<modname> -m
+  pytest $(repo)/tests/...`` — cwd in /tmp avoids
+  auto-loading the rcfile, ``--rcfile=/dev/null`` is
+  explicit, ``--source`` filters to the new module by
+  dotted name, and ``PYTEST_ADDOPTS`` strips the
+  ``-n auto`` and ``--cov`` that pytest.ini injects (both
+  break this measurement). Test execution itself doesn't
+  need any of this — ``python -m pytest tests/...`` from
+  the worktree works fine; this is only for coverage
+  measurement of new modules during worktree-based
+  feature work.
+
+- **Modules with subprocess wrappers need direct
+  ``subprocess.run``-mocked tests as a standard coverage
+  practice**: when a module exposes 1–3 subprocess wrapper
+  functions (e.g. ``_run_gh_pr_view``,
+  ``_run_git_remote_origin``) that are mocked at the
+  wrapper layer in every behavioral test (the right shape
+  for testing the module's logic), the wrapper internals
+  contribute a fixed coverage gap proportional to their
+  combined line count. In one ops-specs-completion-
+  candidates measurement, three wrappers ate ~50 of ~244
+  statements — 81% before adding wrapper-specific tests,
+  95% after. Write the wrapper tests as part of the
+  initial test file, not as a reactive fix when coverage
+  misses the gate. The per-wrapper test set is mechanical
+  and small (~5 tests each covering: success path,
+  non-zero exit, OSError, TimeoutExpired, malformed JSON
+  / non-dict / non-list payloads). Helper:
+  ``_completed(returncode, stdout, stderr)`` returning a
+  ``subprocess.CompletedProcess`` stand-in keeps each
+  test to one or two lines. Pattern also surfaces real
+  bugs — the ``returncode != 0`` branch in a wrapper is
+  easy to write wrong and easy to forget to test.
+
+- **argparse three-state CLI flag for "explicit-on,
+  explicit-off, or use-persisted-default"**: when a CLI
+  flag has a persisted-state fallback (e.g. a feature
+  toggle that reads from ``~/.attune/ops/config.json``
+  when absent), the standard ``action="store_true"``
+  collapses "no flag" and "explicitly false" into the
+  same value, which loses the signal the resolver needs.
+  The clean pattern is a mutually-exclusive group of two
+  flags with the same ``dest`` using
+  ``action="store_const"``:
+  ```python
+  g = parser.add_mutually_exclusive_group()
+  g.add_argument("--specs-candidates",
+                 dest="specs_candidates",
+                 action="store_const", const=True,
+                 default=None, help="...")
+  g.add_argument("--no-specs-candidates",
+                 dest="specs_candidates",
+                 action="store_const", const=False,
+                 default=None, help="...")
+  ```
+  Produces three observable states in
+  ``args.specs_candidates``: ``True`` (positive flag),
+  ``False`` (negative flag), ``None`` (neither). The
+  resolver branches on ``None`` to read persisted state.
+  The mutex group catches "both flags" with a clean
+  ``SystemExit``. Generalizes to any toggle with
+  persistence (theme prefs, feature flags, debug
+  switches) — never use ``store_true`` alone when a
+  persisted fallback exists.

@@ -85,6 +85,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ops dashboard "Ready to close?" completion-candidates section on
+  the Specs page — opt-in default-off via `--specs-candidates`
+  (persisted to `~/.attune/ops/config.json`). Surfaces `approved`
+  specs whose work appears to have shipped, with per-spec evidence
+  bullets (tasks complete, referenced PRs merged, no open issues
+  citing the slug, edit-age past the 24h floor). Confirm-complete
+  uses the existing status PUT; Dismiss suppresses for 14 days but
+  re-surfaces immediately if any signal changes (new PR merge,
+  tasks.md edit). The detector NEVER writes — Patrick keeps
+  authority over the status field — and only `approved → complete`
+  is auto-detected (the four non-binary states `partial / paused /
+  retired / draft` remain manual). Zero-false-positive design: all
+  five checks must pass, any parser ambiguity falls toward false-
+  negative. Read-only mode hides the section entirely. Two new API
+  routes (`GET /api/specs/completion-candidates`,
+  `POST /api/specs/{slug}/completion-candidates/dismiss`) gated
+  on both `allow_run` AND `specs_candidates_enabled`. Audit script
+  at `scripts/audit_completion_candidates.py` runs the detector
+  read-only against the live corpus (0 false positives confirmed
+  on attune-ai's current 32-spec corpus). 188 new tests across
+  five test files; full ops surface stays green (~590 passing).
+  Spec: `docs/specs/ops-specs-completion-candidates/`.
+
 - Ops dashboard scope picker now remembers the user's most recently
   picked scope and pre-selects it on every path-supporting row at page
   load (ops-scope-picker-ia proposal, see

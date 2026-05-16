@@ -347,3 +347,101 @@ class TestMain:
         with patch.dict(sys.modules, {"uvicorn": None}):
             rc = ops_cli.main()
         assert rc == 2
+
+
+# ---------------------------------------------------------------------------
+# cmd_ops — --specs-candidates flag (T3 integration with persistence)
+# ---------------------------------------------------------------------------
+
+
+class TestCmdOpsSpecsCandidates:
+    """End-to-end: CLI flag → resolver → build_config → banner."""
+
+    def test_flag_on_persists_and_shows_on_in_banner(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Redirect ATTUNE_HOME so the resolver writes into tmp_path.
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        parser = _make_parser()
+        args = parser.parse_args(
+            [
+                "ops",
+                "--no-browser",
+                "--specs-candidates",
+                "--project-root",
+                str(tmp_path),
+            ]
+        )
+        with patch("uvicorn.run"):
+            rc = ops_cli.cmd_ops(args)
+        assert rc == 0
+        assert "specs-candidates: on" in capsys.readouterr().out
+
+        # Persisted to disk under the redirected ATTUNE_HOME.
+        from attune.ops import ops_config_store
+
+        assert ops_config_store.load_settings(tmp_path) == {"specs_candidates_enabled": True}
+
+    def test_no_flag_reads_persisted_true(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        # Pre-seed persisted state.
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        from attune.ops import ops_config_store
+
+        ops_config_store.save_setting(tmp_path, "specs_candidates_enabled", True)
+
+        parser = _make_parser()
+        args = parser.parse_args(["ops", "--no-browser", "--project-root", str(tmp_path)])
+        with patch("uvicorn.run"):
+            ops_cli.cmd_ops(args)
+        assert "specs-candidates: on" in capsys.readouterr().out
+
+    def test_flag_off_persists_false_after_prior_true(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        from attune.ops import ops_config_store
+
+        ops_config_store.save_setting(tmp_path, "specs_candidates_enabled", True)
+
+        parser = _make_parser()
+        args = parser.parse_args(
+            [
+                "ops",
+                "--no-browser",
+                "--no-specs-candidates",
+                "--project-root",
+                str(tmp_path),
+            ]
+        )
+        with patch("uvicorn.run"):
+            ops_cli.cmd_ops(args)
+        assert "specs-candidates: off" in capsys.readouterr().out
+        assert ops_config_store.load_settings(tmp_path) == {"specs_candidates_enabled": False}
+
+    def test_default_off_when_no_persistence(
+        self,
+        tmp_path: Path,
+        monkeypatch: pytest.MonkeyPatch,
+        capsys: pytest.CaptureFixture[str],
+    ) -> None:
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path))
+        parser = _make_parser()
+        args = parser.parse_args(["ops", "--no-browser", "--project-root", str(tmp_path)])
+        with patch("uvicorn.run"):
+            ops_cli.cmd_ops(args)
+        assert "specs-candidates: off" in capsys.readouterr().out
+        # No write happened on the read-only path.
+        from attune.ops import ops_config_store
+
+        assert not ops_config_store.settings_path(tmp_path).exists()

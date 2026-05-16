@@ -23,6 +23,25 @@
   </p>
 {% endif %}
 
+{# "Ready to close?" section — server-rendered shell, populated by
+   completion_candidates.js on page load. Hidden until the GET returns
+   at least one candidate, so users with zero candidates see no
+   visual clutter. Gated server-side on both feature flag AND allow_run
+   per docs/specs/ops-specs-completion-candidates/ (Phase 2). #}
+{% if allow_run and specs_candidates_enabled %}
+<section id="completion-candidates" class="candidates-section" hidden aria-label="Specs that look complete">
+  <header class="candidates-head">
+    <h2>Ready to close? <span class="candidates-count" id="cc-count">0</span></h2>
+    <p class="candidates-sub">
+      Specs where all signals indicate the work is done. Confirm to
+      flip status to <code>complete</code>, or dismiss for 14 days
+      (re-surfaces immediately if new signal lands).
+    </p>
+  </header>
+  <ul class="candidates-list" id="cc-list" role="list"></ul>
+</section>
+{% endif %}
+
 {% if specs %}
   {# Compact status display: dot + 3-letter code for known statuses,
      truncated text + dotted underline for custom strings. Full status
@@ -123,5 +142,8 @@
 {% block scripts %}
 {% if allow_run %}
   <script src="{{ url_for('static', path='js/specs.js') }}?v={{ attune_version }}"></script>
+  {% if specs_candidates_enabled %}
+    <script src="{{ url_for('static', path='js/completion_candidates.js') }}?v={{ attune_version }}"></script>
+  {% endif %}
 {% endif %}
 {% endblock %}

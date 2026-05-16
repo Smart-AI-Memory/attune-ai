@@ -77,6 +77,33 @@ def add_subparser(subparsers: argparse._SubParsersAction) -> None:
             " live under <attune-home>/ops/runs/. Default: 30."
         ),
     )
+    # Specs page "Ready to close?" candidates surface — opt-in default-off.
+    # Mutually exclusive on/off flags so the user can re-disable from the
+    # CLI; both default to None so we can distinguish "no flag" (use
+    # persisted state) from "explicit value" (overwrite persisted).
+    # See docs/specs/ops-specs-completion-candidates/.
+    candidates_group = parser.add_mutually_exclusive_group()
+    candidates_group.add_argument(
+        "--specs-candidates",
+        dest="specs_candidates",
+        action="store_const",
+        const=True,
+        default=None,
+        help=(
+            "Surface completion candidates on the Specs page. Requires"
+            " 'gh auth login' for PR + open-issue verification. Setting"
+            " persists across launches via <attune-home>/ops/config.json."
+        ),
+    )
+    candidates_group.add_argument(
+        "--no-specs-candidates",
+        dest="specs_candidates",
+        action="store_const",
+        const=False,
+        default=None,
+        help="Hide the completion-candidates section and clear the persisted toggle.",
+    )
+
     # Backwards-compat: --allow-run was the opt-IN flag before runs became
     # the default. Accept it silently as a no-op so existing scripts and
     # shell history keep working without prompting users to update.
@@ -99,12 +126,21 @@ def cmd_ops(args: argparse.Namespace) -> int:
         )
         return 2
 
-    from attune.ops.config import build_config
+    from attune.ops.config import attune_home, build_config
+    from attune.ops.ops_config_store import resolve_specs_candidates_enabled
     from attune.ops.server import create_app
 
     # Runs are enabled by default; --read-only opts out. The legacy
     # --allow-run flag is accepted as a no-op (already the default).
     allow_run = not args.read_only
+
+    # Combine CLI flag with persisted setting. Resolver writes back when
+    # the CLI flag is explicit; "no flag" returns whatever was persisted
+    # (default False). This must happen BEFORE build_config so we have
+    # the final value to pass in.
+    specs_candidates_enabled = resolve_specs_candidates_enabled(
+        args.specs_candidates, attune_home()
+    )
 
     # Warn loudly when the user binds to all interfaces without an
     # explicit trusted-host. The middleware will still reject any
@@ -128,6 +164,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
         specs_roots=tuple(args.specs_root) if args.specs_root else None,
         trusted_hosts=tuple(args.trusted_host) if args.trusted_host else None,
         runs_retention_days=args.runs_retention_days,
+        specs_candidates_enabled=specs_candidates_enabled,
     )
     app = create_app(config)
 
@@ -136,6 +173,7 @@ def cmd_ops(args: argparse.Namespace) -> int:
     print(f"  project: {config.project_root}")
     print(f"  attune-home: {config.attune_home}")
     print(f"  allow-run: {'on' if config.allow_run else 'off (read-only)'}")
+    print(f"  specs-candidates: {'on' if config.specs_candidates_enabled else 'off'}")
 
     if not args.no_browser:
         try:
