@@ -5270,3 +5270,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   persistence (theme prefs, feature flags, debug
   switches) — never use ``store_true`` alone when a
   persisted fallback exists.
+
+- **Pre-flight ``ruff check`` on changed Python files
+  before ``git add``** — companion to the existing
+  "Pre-flight pre-commit's pinned black/ruff" lesson,
+  but for the LINT side, not the format side. The
+  ruff lint pass catches issues (F841 unused locals,
+  E402 import order, etc.) that aren't auto-fixable
+  and that pre-commit will surface AFTER you've
+  staged + drafted a commit message. Each hook-fail
+  cycle costs ~30s for the fix + re-stage + re-commit
+  retry. Mitigation: before any commit that touches
+  ``.py`` files, run
+  ``uv run ruff check <files>`` (or
+  ``uv run --with pre-commit pre-commit run ruff
+  --files <files>`` for the pinned version per the
+  existing format-side lesson). Common F841 trigger:
+  rebinding a helper return value to a local that
+  the test no longer uses after a refactor (e.g.
+  ``spec_dir = _make_spec(...)`` when the test
+  removed the reference to ``spec_dir`` in a later
+  edit). Fix is one line — drop the assignment,
+  keep the call. Hit twice in the ops-specs-
+  completion-candidates session: T2 had it for an
+  import strip, T1+T2 tests had two F841s caught at
+  PR-creation time. Cumulative cost: two ~30s
+  hook-fail retries; cost of preflight: ~1s.
