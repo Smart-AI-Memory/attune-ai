@@ -1,6 +1,6 @@
 # Decisions — Ops Dashboard Security Hardening
 
-**Status:** complete (2026-05-12, pending Patrick's Phase 5 smoke)
+**Status:** complete (2026-05-16)
 **Owner:** Patrick
 **Opened:** 2026-05-11
 **Closed:** 2026-05-12 — implementation landed via v6.7.1 (#254, #256) + Phase 2.3 test added today
