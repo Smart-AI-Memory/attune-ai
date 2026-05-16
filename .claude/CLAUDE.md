@@ -5053,3 +5053,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   starter-prompt was Haiku output. Pattern generalizes
   to any cap-based skip-logic: API call budgets, retry
   counts, attempt limits, per-page query budgets.
+
+- **Cache invalidation for monotonic-growth log files: hash
+  the TAIL, not the head — and pair it with mtime + filename
+  in the key**: hit while building the on-disk cache for
+  ops-sessions-page S3 (``session_summary_cache.py``). The
+  intuitive cache key is ``(filename, mtime, sha256_of_first_4kb)``
+  — but a JSONL session log grows monotonically, so the
+  opening block is byte-identical for the file's lifetime.
+  Two sessions whose initial prompts look similar share their
+  first-4KB digest, and the mtime in the key is the only
+  distinguishing signal. mtime ticks spuriously on filesystem
+  touches (cleanup tools, indexers, accidental ``touch``), so
+  a stale-but-mtime-bumped cache read fires and the user sees
+  the wrong summary. **Hash the LAST 4 KiB instead**:
+  ``fh.seek(size - 4096); fh.read(4096)``. Single seek, same
+  I/O cost as hashing the head, but the digest changes every
+  time the session does. Edge case: files smaller than the
+  tail window get fully hashed (collapses to "hash the file"
+  — correct for the short-session case). The full key stays
+  3-tuple ``(filename, mtime_ns, sha256_of_tail)`` because
+  all three failure modes (file rename, file replaced in
+  place, content append) are then individually detectable.
+  Generalizes to any append-only log (CDC streams, audit
+  logs, transaction logs) where you want O(1) staleness
+  detection without re-hashing megabytes of unchanged
+  history.
