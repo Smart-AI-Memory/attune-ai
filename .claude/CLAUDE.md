@@ -5296,3 +5296,56 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   import strip, T1+T2 tests had two F841s caught at
   PR-creation time. Cumulative cost: two ~30s
   hook-fail retries; cost of preflight: ~1s.
+
+- **Two `.help/templates/` regen pipelines coexist
+  in attune-ai and produce qualitatively divergent
+  output**: the recently-landed
+  `scripts/regenerate_help_templates.py` emits thin
+  class-enumeration stubs (frontmatter + "## How it
+  works" + bullet list of class names from source).
+  `attune-author generate <feat> --all-kinds` runs
+  the polish-pass pipeline that produces concrete
+  prose naming actual symbols and explaining their
+  relationships. When both run on overlapping
+  features, rebase conflicts surface as content
+  collisions on `concept.md`, `reference.md`,
+  `task.md` — and the auto-resolver has no way to
+  pick the better version. Diagnostic: look for
+  `## How it works` followed by a bullet list of
+  "core component" placeholders — that's the stub
+  pipeline. For real user-facing docs always prefer
+  the attune-author version. Until one pipeline is
+  designated canonical (or the bulk script is taught
+  to call attune-author), expect manual
+  `git checkout --theirs <files>` on the polished
+  side during rebases. Hit 2026-05-16 resolving PR
+  #402 — 3 ops-dashboard files conflicted after
+  main's bulk regen landed; main's stub listed
+  `WorkflowEntry — core component` while the
+  attune-author version named `Config`,
+  `TelemetrySummary`, `HomeKpis`,
+  `TrustedHostMiddleware` with full prose
+  explaining their roles.
+
+- **attune-author CLI does NOT auto-load
+  `~/.attune/anthropic.env` — every shell
+  invocation needs an inline source**: the existing
+  MCP-server lesson ("MCP server process doesn't
+  inherit `.env` variables") covers the long-lived
+  server which calls `load_dotenv()` in `main()`.
+  The `attune-author` CLI binary has no equivalent;
+  invoking it without `ANTHROPIC_API_KEY` already
+  exported fails inside the polish-pass with
+  `PolishError: Polish pass failed for '<feat>'
+  (type='error'): ANTHROPIC_API_KEY not set`. The
+  failure is per-future inside a
+  `ThreadPoolExecutor` so the traceback is
+  verbose. Each Bash tool call in Claude Code
+  spawns a fresh shell, so exports do not persist
+  across calls — must inline-source on every regen
+  invocation:
+  `set -a && source ~/.attune/anthropic.env && set +a
+  && attune-author generate <feat> --help-dir .help
+  --project-root . --all-kinds`. Parallel regens
+  via `&` background jobs work fine; the env is
+  inherited by the children of the same Bash call.
