@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-16T02:33:13.018650+00:00
-source_hash: 3847cb81bf0f98356695799e284a8b9b602fccfe6225cd45d19f8f054d716b7e
+generated_at: 2026-05-16T05:27:24.610550+00:00
+source_hash: 5f495ad9acf50a2a9adfe8615f144eda920bca96f5d4172dcb4e358deaa8af3b
 status: generated
 ---
 
@@ -12,6 +12,7 @@ status: generated
 
 | Class | Description | File |
 |-------|-------------|------|
+| `Candidate` | One completion-candidate spec returned by the detector. | `src/attune/ops/completion_candidates.py` |
 | `Config` | Where attune ops reads project + attune state from. | `src/attune/ops/config.py` |
 | `TelemetrySummary` | — | `src/attune/ops/data.py` |
 | `WorkflowEntry` | — | `src/attune/ops/data.py` |
@@ -21,6 +22,7 @@ status: generated
 | `FamilyVersion` | — | `src/attune/ops/data.py` |
 | `DailyCost` | One day's cost for the home-page sparkline. | `src/attune/ops/data.py` |
 | `HomeKpis` | Summary numbers shown above the fold on the home page. | `src/attune/ops/data.py` |
+| `DismissEntry` | One dismissed candidate's persisted state. | `src/attune/ops/dismiss_store.py` |
 | `TrustedHostMiddleware` | Reject requests whose ``Host`` header isn't on the allowlist. | `src/attune/ops/middleware.py` |
 | `SpecPhase` | One phase file's status snapshot. | `src/attune/ops/routes/specs.py` |
 | `SpecRecord` | One spec's summary — directory + status of each phase file present. | `src/attune/ops/routes/specs.py` |
@@ -42,6 +44,8 @@ status: generated
 | `add_subparser()` | Register the `ops` subparser on the main attune CLI parser. | `src/attune/ops/cli.py` |
 | `cmd_ops()` | Run the dashboard server (blocking). | `src/attune/ops/cli.py` |
 | `main()` | Standalone entry: ``python -m attune.ops``. | `src/attune/ops/cli.py` |
+| `clear_cache()` | Reset the in-memory caches. Test helper. | `src/attune/ops/completion_candidates.py` |
+| `detect_candidates()` | Return all completion candidates across the configured spec roots. | `src/attune/ops/completion_candidates.py` |
 | `attune_home()` | Resolve the user's attune home dir (env override -> ~/.attune). | `src/attune/ops/config.py` |
 | `build_config()` | Build a Config from inputs and environment defaults. | `src/attune/ops/config.py` |
 | `list_features()` | Return features parsed from ``<project_root>/.help/features.yaml``. | `src/attune/ops/data.py` |
@@ -58,7 +62,16 @@ status: generated
 | `list_workflows()` | Return the registered workflow catalog. Empty if the registry is unavailable. | `src/attune/ops/data.py` |
 | `family_versions()` | Resolve installed versions for every related attune package. | `src/attune/ops/data.py` |
 | `env_health()` | Lightweight environment snapshot for the Health page. | `src/attune/ops/data.py` |
+| `store_path()` | Return the absolute path to the dismiss-store JSON file. | `src/attune/ops/dismiss_store.py` |
+| `load()` | Read the dismiss store. Missing or corrupt file → ``{}``. | `src/attune/ops/dismiss_store.py` |
+| `save()` | Persist a dismiss entry for ``slug`` (overwrites prior entry). | `src/attune/ops/dismiss_store.py` |
+| `clear()` | Remove the entry for ``slug``. No-op if absent. | `src/attune/ops/dismiss_store.py` |
+| `is_active()` | True iff a dismiss for ``slug`` is currently suppressing it. | `src/attune/ops/dismiss_store.py` |
 | `compute_allowlist()` | Compute the default + user-supplied Host allowlist. | `src/attune/ops/middleware.py` |
+| `settings_path()` | Return the absolute path to the ops settings file. | `src/attune/ops/ops_config_store.py` |
+| `load_settings()` | Read persisted ops settings. Missing or corrupt file → ``{}``. | `src/attune/ops/ops_config_store.py` |
+| `save_setting()` | Persist a single setting; returns True on success, False on failure. | `src/attune/ops/ops_config_store.py` |
+| `resolve_specs_candidates_enabled()` | Resolve the ``specs_candidates_enabled`` setting. | `src/attune/ops/ops_config_store.py` |
 | `home()` | — | `src/attune/ops/routes/dashboard.py` |
 | `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
@@ -75,13 +88,16 @@ status: generated
 | `enrich_with_summaries()` | Public helper used by both the JSON route and the HTML page. | `src/attune/ops/routes/sessions.py` |
 | `list_sessions()` | ``GET /api/sessions`` — JSON listing of recent sessions. | `src/attune/ops/routes/sessions.py` |
 | `list_specs()` | Federated listing across all configured spec roots. | `src/attune/ops/routes/specs.py` |
+| `list_completion_candidates()` | Return "Ready to close?" candidates for the Specs page. | `src/attune/ops/routes/specs.py` |
 | `get_spec()` | Return phase-file contents for one spec. | `src/attune/ops/routes/specs.py` |
 | `update_phase_status()` | Rewrite the ``**Status**`` line in the named phase file. | `src/attune/ops/routes/specs.py` |
+| `dismiss_completion_candidate()` | Suppress a completion candidate for the default TTL (14 days). | `src/attune/ops/routes/specs.py` |
 | `get_sweep_result()` | Return the latest sweep result for a scope-hash, or 404. | `src/attune/ops/routes/sweep_results.py` |
 | `echo_command_builder()` | Test helper: produce a portable subprocess that prints two lines + exits 0. | `src/attune/ops/runner.py` |
 | `prune_old_runs()` | Delete persisted run files older than ``days``. Returns the deletion count. | `src/attune/ops/runner.py` |
 | `create_app()` | Build the FastAPI app, wiring config + templates into request state. | `src/attune/ops/server.py` |
 | `redact()` | Run all redaction passes over ``text`` and return the result. | `src/attune/ops/session_redaction.py` |
+| `redact_json_line()` | Redact one JSON-serialized line in-place, preserving structure. | `src/attune/ops/session_redaction.py` |
 | `new_budget()` | Build a :class:`Budget` from the env override or default. | `src/attune/ops/session_summarizer.py` |
 | `llm_enabled()` | Return True iff the Haiku path is enabled this run. | `src/attune/ops/session_summarizer.py` |
 | `summarize_session()` | Return a Haiku-or-cached summary for one session JSONL. | `src/attune/ops/session_summarizer.py` |

@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: task
-generated_at: 2026-05-16T02:33:13.013855+00:00
-source_hash: 3847cb81bf0f98356695799e284a8b9b602fccfe6225cd45d19f8f054d716b7e
+generated_at: 2026-05-16T05:27:24.604417+00:00
+source_hash: 5f495ad9acf50a2a9adfe8615f144eda920bca96f5d4172dcb4e358deaa8af3b
 status: generated
 ---
 
@@ -52,6 +52,6 @@ Functions you are most likely to modify:
 - `add_subparser()` in `src/attune/ops/cli.py`
 - `cmd_ops()` in `src/attune/ops/cli.py`
 - `main()` in `src/attune/ops/cli.py`
+- `clear_cache()` in `src/attune/ops/completion_candidates.py`
+- `detect_candidates()` in `src/attune/ops/completion_candidates.py`
 - `attune_home()` in `src/attune/ops/config.py`
-- `build_config()` in `src/attune/ops/config.py`
-- `list_features()` in `src/attune/ops/data.py`
