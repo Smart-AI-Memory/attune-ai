@@ -14,11 +14,33 @@ the user didn't authorize as identifying themselves.
 
 Discipline: redact FIRST, then summarize, then cache. Cache hits
 return the redacted form — no re-redaction needed on read.
+
+Two entry points:
+
+- :func:`redact` — generic text redaction. Caller is responsible
+  for the input's structure / encoding. Use this for plain user
+  prompts.
+- :func:`redact_json_line` — for structured logs (Claude Code's
+  ``~/.claude/projects/<encoded>/*.jsonl``, audit trails, anything
+  where conversation content is nested under structured fields).
+  Operates on the JSON-serialized form so every nested string —
+  including ``message.content[].text``, ``toolUseResult.stdout``,
+  arbitrary tool-call payloads — gets covered. Validates that
+  redaction didn't break JSON parsability and returns ``None`` on
+  breakage so callers can skip-with-warning rather than ship
+  malformed fixtures or cache entries.
+
+The structured-log entry point exists because the naive
+"walk top-level fields, redact strings I find" pattern misses
+everything that matters in a Claude Code JSONL — discovered as a
+near-miss 2026-05-15 when a real Anthropic API key + thousands
+of unredacted home paths showed up in a fixture-harvest scan.
 """
 
 from __future__ import annotations
 
 import ipaddress
+import json
 import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
@@ -38,6 +60,10 @@ _EMAIL_ALLOWLIST: frozenset[str] = frozenset(
         "silversurfer562@gmail.com",
         "admin@smartaimemory.com",
         "patrick.roebuck@smartaimemory.com",
+        # GPG co-author trailer used in every Claude-Code-generated
+        # commit. Appears thousands of times in session JSONLs;
+        # redacting would add noise without value.
+        "noreply@anthropic.com",
     }
 )
 
@@ -100,8 +126,16 @@ _USER_HOME_PATTERNS: tuple[re.Pattern[str], ...] = (
 
 # Email address — RFC 5322 simplified. Matched, then checked against
 # the allowlist before redacting.
+#
+# Local part requires **2+ chars** to suppress a noisy false-positive
+# class: JSON-escaped strings like ``"\\t@router.get"`` (tab escape +
+# Python decorator) match a single-char local part regex and the
+# subsequent placeholder substitution leaves an invalid ``\\<``
+# escape sequence in the output. Real-world single-character-local
+# emails (``t@x.com``) are vanishingly rare and worth losing for
+# the precision win.
 _EMAIL_PATTERN = re.compile(
-    r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b",
+    r"\b[A-Za-z0-9._%+\-]{2,}@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b",
 )
 
 # IP addresses — match candidate, validate with ipaddress.ip_address.
@@ -213,3 +247,71 @@ def redact(
         counts["ip"] = redacted_ips
 
     return RedactionResult(text=out, counts=counts)
+
+
+def redact_json_line(
+    line: str,
+    *,
+    email_allowlist: Iterable[str] | None = None,
+) -> RedactionResult | None:
+    """Redact one JSON-serialized line in-place, preserving structure.
+
+    The structured-log entry point. Operates on the JSON-serialized
+    text — meaning every nested string in the document gets covered
+    by the same patterns :func:`redact` knows. Critical for Claude
+    Code's session JSONLs where conversation content lives several
+    levels deep under fields like ``message.content[].text``,
+    ``toolUseResult.stdout``, and arbitrary tool-call payloads.
+
+    Why text-level on the serialized form (vs. a recursive walk):
+
+    - Placeholders (``<redacted>``, ``<user-home>``, etc.) contain
+      no JSON-special characters — no quotes, backslashes, or
+      control codes — so a substring substitution inside a JSON
+      string literal stays a valid string literal.
+    - The patterns don't need to know the document's shape; new
+      nested fields added by upstream Claude Code releases are
+      covered for free.
+    - Implementation is one regex pass over the line plus one
+      re-parse, vs. a recursive walk that has to special-case
+      every container type.
+
+    The one failure mode this function defends against: redaction
+    consuming a JSON escape sequence boundary. Concrete example
+    seen in the wild — a Python decorator inside a JSON string
+    serialized as ``"\\\\t@router.get(...)"`` (tab + ``@router.get``).
+    The email regex matches ``t@router.get`` as an apparent email,
+    leaves ``\\\\<redacted-email>`` in the output, and the resulting
+    ``\\\\<`` is not a valid JSON escape. The 2-char-minimum local
+    part on the email regex closes the most common case; the
+    re-parse catches the rest.
+
+    Args:
+        line: One JSON-serialized line (typically from a
+            line-delimited JSON log). Must be a valid JSON value
+            on its own; mixed-content lines are rejected.
+        email_allowlist: Override for the default email allowlist.
+
+    Returns:
+        A :class:`RedactionResult` whose ``text`` is the redacted
+        JSON line (re-validated, parses cleanly), or ``None`` if
+        either (a) the input wasn't valid JSON to begin with, or
+        (b) redaction would have produced invalid JSON. Callers
+        should treat ``None`` as "skip this line with a warning"
+        — never substitute the unredacted original on a failure
+        path; that defeats the purpose.
+    """
+    if not line:
+        return RedactionResult(text=line, counts={})
+    try:
+        json.loads(line)
+    except json.JSONDecodeError:
+        return None
+
+    result = redact(line, email_allowlist=email_allowlist)
+
+    try:
+        json.loads(result.text)
+    except json.JSONDecodeError:
+        return None
+    return result
