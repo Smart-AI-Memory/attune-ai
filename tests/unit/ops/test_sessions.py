@@ -295,6 +295,203 @@ def test_list_recent_sessions_skips_malformed_lines(tmp_path, monkeypatch):
     assert result[0].message_count == 1
 
 
+# ---------------------------------------------------------------------------
+# enumerate_project_encoded_keys — multi-key resolution
+# ---------------------------------------------------------------------------
+
+
+def test_enumerate_project_encoded_keys_returns_empty_when_projects_root_missing(
+    tmp_path, monkeypatch
+):
+    """No ``~/.claude/projects/`` dir → empty list, not error."""
+    _patch_home(monkeypatch, tmp_path / "home")
+    assert data.enumerate_project_encoded_keys(tmp_path / "project") == []
+
+
+def test_enumerate_project_encoded_keys_finds_canonical_key(tmp_path, monkeypatch):
+    """Canonical encoded-key dir is matched exactly."""
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    canonical = data.claude_sessions_dir(project_root)
+    canonical.mkdir(parents=True)
+
+    matches = data.enumerate_project_encoded_keys(project_root)
+    assert canonical in matches
+    assert len(matches) == 1
+
+
+def test_enumerate_project_encoded_keys_finds_worktree_keys(tmp_path, monkeypatch):
+    """Sibling dirs starting with ``<encoded>-`` are matched as worktree keys.
+
+    Mirrors the empirical attune-ai layout: one canonical key plus
+    several ``<encoded>--claude-worktrees-<slug>`` dirs.
+    """
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    encoded = data._encoded_project_path(project_root)
+    projects_root = tmp_path / "home" / ".claude" / "projects"
+    projects_root.mkdir(parents=True)
+
+    canonical = projects_root / encoded
+    worktree_a = projects_root / f"{encoded}--claude-worktrees-foo"
+    worktree_b = projects_root / f"{encoded}--claude-worktrees-bar"
+    canonical.mkdir()
+    worktree_a.mkdir()
+    worktree_b.mkdir()
+
+    matches = data.enumerate_project_encoded_keys(project_root)
+    assert set(matches) == {canonical, worktree_a, worktree_b}
+
+
+def test_enumerate_project_encoded_keys_rejects_sibling_project_false_match(tmp_path, monkeypatch):
+    """A dir whose name starts with ``<encoded>`` but no trailing
+    ``-`` separator (e.g. a sibling project ``attune-ai-foo`` vs
+    ``attune-ai``) must NOT match.
+
+    The trailing-dash separator is the explicit guard against this
+    in the spec (Decision 1).
+    """
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    encoded = data._encoded_project_path(project_root)
+    projects_root = tmp_path / "home" / ".claude" / "projects"
+    projects_root.mkdir(parents=True)
+
+    canonical = projects_root / encoded
+    sibling_no_dash = projects_root / f"{encoded}xyz"  # no separator
+    canonical.mkdir()
+    sibling_no_dash.mkdir()
+
+    matches = data.enumerate_project_encoded_keys(project_root)
+    assert canonical in matches
+    assert sibling_no_dash not in matches
+
+
+def test_list_recent_sessions_dedups_across_encoded_keys_newest_wins(tmp_path, monkeypatch):
+    """Same session id under canonical AND worktree key → newest mtime wins.
+
+    Rare in practice (suggests a worktree was renamed or recreated)
+    but the spec requires WARN log + newest-wins resolution.
+    """
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    encoded = data._encoded_project_path(project_root)
+    projects_root = tmp_path / "home" / ".claude" / "projects"
+    canonical = projects_root / encoded
+    worktree = projects_root / f"{encoded}--claude-worktrees-foo"
+
+    now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
+    older = (now - timedelta(days=2)).timestamp()
+    newer = (now - timedelta(hours=1)).timestamp()
+
+    _write_session_jsonl(
+        canonical,
+        "shared-id",
+        events=[{"timestamp": "2026-05-12T12:00:00Z", "content": "old version"}],
+        mtime=older,
+    )
+    _write_session_jsonl(
+        worktree,
+        "shared-id",
+        events=[{"timestamp": "2026-05-14T11:00:00Z", "content": "new version"}],
+        mtime=newer,
+    )
+
+    result = data.list_recent_sessions(project_root, now=now)
+    assert len(result) == 1
+    assert result[0].id == "shared-id"
+    # The newer worktree copy should win — its prompt is the one rendered.
+    assert result[0].starter_prompt.startswith("new version")
+
+
+def test_list_recent_sessions_aggregates_across_encoded_keys(tmp_path, monkeypatch):
+    """Sessions from multiple encoded keys are aggregated into one list."""
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    encoded = data._encoded_project_path(project_root)
+    projects_root = tmp_path / "home" / ".claude" / "projects"
+    canonical = projects_root / encoded
+    worktree_a = projects_root / f"{encoded}--claude-worktrees-aaa"
+    worktree_b = projects_root / f"{encoded}--claude-worktrees-bbb"
+
+    _write_session_jsonl(
+        canonical,
+        "from-canonical",
+        events=[{"timestamp": "2026-05-14T10:00:00Z", "content": "canonical session"}],
+    )
+    _write_session_jsonl(
+        worktree_a,
+        "from-worktree-a",
+        events=[{"timestamp": "2026-05-14T10:30:00Z", "content": "worktree-a session"}],
+    )
+    _write_session_jsonl(
+        worktree_b,
+        "from-worktree-b",
+        events=[{"timestamp": "2026-05-14T11:00:00Z", "content": "worktree-b session"}],
+    )
+
+    now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
+    result = data.list_recent_sessions(project_root, now=now)
+    ids = {s.id for s in result}
+    assert ids == {"from-canonical", "from-worktree-a", "from-worktree-b"}
+
+
+def test_list_recent_sessions_caps_at_default_limit(tmp_path, monkeypatch):
+    """The list cap (DEFAULT_SESSION_LIST_CAP) bounds the result size.
+
+    Decision 5 (decisions.md): cap at 20 most-recent sessions for
+    budget-cap math (~$0.02 worst case at $0.001/session).
+    """
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    sessions_dir = data.claude_sessions_dir(project_root)
+
+    # Write 25 sessions, each with a slightly different mtime so the
+    # sort is deterministic.
+    base_ts = datetime(2026, 5, 14, 10, 0, 0, tzinfo=timezone.utc).timestamp()
+    for i in range(25):
+        _write_session_jsonl(
+            sessions_dir,
+            f"session-{i:02d}",
+            events=[
+                {
+                    "timestamp": f"2026-05-14T10:{i:02d}:00Z",
+                    "content": f"prompt {i}",
+                }
+            ],
+            mtime=base_ts + i * 60,
+        )
+
+    now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
+    result = data.list_recent_sessions(project_root, now=now)
+    assert len(result) == data.DEFAULT_SESSION_LIST_CAP == 20
+    # Newest-first sort + cap → the 20 highest indexes survive.
+    surviving_ids = {s.id for s in result}
+    assert "session-24" in surviving_ids
+    assert "session-05" in surviving_ids
+    assert "session-04" not in surviving_ids
+
+
+def test_list_recent_sessions_limit_none_returns_all(tmp_path, monkeypatch):
+    """``limit=None`` disables the cap (test hook)."""
+    _patch_home(monkeypatch, tmp_path / "home")
+    project_root = tmp_path / "project"
+    sessions_dir = data.claude_sessions_dir(project_root)
+
+    base_ts = datetime(2026, 5, 14, 10, 0, 0, tzinfo=timezone.utc).timestamp()
+    for i in range(25):
+        _write_session_jsonl(
+            sessions_dir,
+            f"session-{i:02d}",
+            events=[{"timestamp": "2026-05-14T10:00:00Z", "content": f"prompt {i}"}],
+            mtime=base_ts + i * 60,
+        )
+
+    now = datetime(2026, 5, 14, 12, 0, 0, tzinfo=timezone.utc)
+    result = data.list_recent_sessions(project_root, limit=None, now=now)
+    assert len(result) == 25
+
+
 def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
     """A session with no events that have ``content`` (e.g. dequeue-only,
     attachment-only) yields a record with placeholder starter prompt."""

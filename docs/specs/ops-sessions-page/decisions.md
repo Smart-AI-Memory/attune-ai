@@ -289,7 +289,7 @@ reader knows it's not part of the user-facing surface.
 
 | Decision | First PR / Commit | Status |
 |---|---|---|
-| Data source (encoded-canonical glob) | #377 (S1+S2) — `~/.claude/projects/` literal lookup | partial — multi-key resolution lands in S3 |
+| Data source (encoded-canonical glob) | #377 (S1+S2) — `~/.claude/projects/` literal lookup; multi-key resolution in S3a (data layer) | shipped — multi-key in S3a |
 | Time window (3 days) | #377 | shipped |
 | Project scope (current project only) | #377 | shipped |
 | Listing route (`GET /sessions`) | #377 (page) | partial — JSON route in S3 |
@@ -297,9 +297,9 @@ reader knows it's not part of the user-facing surface.
 | Empty state copy | #377 | shipped |
 | Failure mode (skip unreadable JSONL) | #377 | shipped |
 | Heuristic fallback (S2 implementation) | #377 (S2 squash a577a7e8) | shipped |
-| Cache key (last-4KB) | TBD (S3) | pending |
-| Cache location / TTL | TBD (S3) | pending |
-| List cap (N=20) | TBD (S3) | pending |
+| Cache key (last-4KB) | S3a — `session_summary_cache.compute_cache_key()` | shipped (cache module; Haiku wire-up in S3b) |
+| Cache location / TTL | S3a — `<attune_home>/ops/session_summaries/<id>.json`, mtime-bound | shipped (module); first write happens in S3b |
+| List cap (N=20) | S3a — `DEFAULT_SESSION_LIST_CAP` in `list_recent_sessions()` | shipped |
 | Starter-prompt generation (Haiku) | TBD (S3) | pending |
 | Budget cap ($0.05) | TBD (S3) | pending |
 | Source field semantics (heuristic/haiku/cached) | #377 (`heuristic` only) | partial — `haiku`/`cached` in S3 |
@@ -342,6 +342,17 @@ To be filled in during implementation:
   shipped in PR #377 prior to these resolutions; the
   multi-key fix applies to whichever future slice rewires
   `list_recent_sessions()` (S3 design pulls it forward).
+- 2026-05-15 (S3 split) — S3 implementation broken into two
+  PRs at Patrick's direction: **S3a** ships the data-layer
+  foundation (multi-key `enumerate_project_encoded_keys()`,
+  `list_recent_sessions()` rewire with newest-mtime dedup,
+  `session_summary_cache` module with last-4KB SHA-256 key,
+  `DEFAULT_SESSION_LIST_CAP = 20`) with no LLM calls. **S3b**
+  adds the Haiku summarizer + redaction wire-up + budget cap
+  (soft warning when breached) + `?compare=1` dev mode +
+  fixture-build script for calibration. Snapshot-test +
+  committed redacted fixtures defer to a post-S3 follow-up
+  pending Patrick's interactive fixture curation pass.
 - 2026-05-15 (later same day) — Pre-S3 design tightening
   pass. Five more decisions captured after interactive
   review: list cap N=20 (budget-cap math invalidated by
