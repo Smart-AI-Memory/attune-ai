@@ -251,6 +251,19 @@ context between bigger work. Use the rubric to pick.
   starting OR if matrix routes to RETIRE.
 - Spec: [doc-stack-reference-subtypes](doc-stack-reference-subtypes/)
 
+### recursing-montalcini-stash-triage — draft
+
+- Status: draft 2026-05-16. Phase 0 (read-only per-file
+  classification of `stash@{3}` — 19 files, 1374 insertions
+  across 4 themes) gates whether salvage is worth the per-theme
+  PR overhead. Auto-retires if salvageable line count < 200.
+- Why standing: One-time cleanup of substantive WIP that
+  almost-got-dropped during 2026-05-16 stash safety triage.
+  Not blocking anything; runs at its own pace.
+- Cadence: Phase 0 (~1 hour read-only) → Phase 1 plan → up to
+  4 themed salvage PRs. 60-day window before auto-retire.
+- Spec: [recursing-montalcini-stash-triage](recursing-montalcini-stash-triage/)
+
 ---
 
 ## Track E — Conditional / contingent (do not pre-schedule)
