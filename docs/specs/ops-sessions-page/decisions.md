@@ -306,7 +306,7 @@ reader knows it's not part of the user-facing surface.
 | Resume card (current-worktree → canonical) | TBD (S4) | pending |
 | Live-session detection | TBD (S5) | pending |
 | Compare mode (`?compare=1`) | S3b — `sessions_page` route query param + template branch | shipped |
-| Calibration harness | S3b (partial) — `scripts/build_session_fixtures.py` ships dry-run + write paths; committed fixtures + snapshot test defer to post-S3 follow-up pending interactive curation | partial |
+| Calibration harness | S3b — `scripts/build_session_fixtures.py` (build), #393 — 12 committed redacted fixtures + `tests/unit/ops/test_session_redaction_snapshot.py` (redaction gate), post-S3 follow-up — `scripts/calibrate_session_summary.py` + `tests/unit/ops/test_calibration_snapshot.py` (Haiku cost/length gate) + `docs/specs/ops-sessions-page/calibration-runbook.md` | shipped |
 | Expand-on-click body | TBD (S4 or later) | pending |
 
 ---
