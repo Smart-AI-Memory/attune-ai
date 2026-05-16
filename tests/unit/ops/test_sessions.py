@@ -574,3 +574,172 @@ def test_sessions_page_renders_empty_state_when_no_sessions(tmp_path, monkeypatc
     body = resp.text
     assert "No sessions in the last 3 days" in body
     assert "sessions-table" not in body
+
+
+# ---------------------------------------------------------------------------
+# /sessions route — Haiku gate, compare mode, budget banner
+# ---------------------------------------------------------------------------
+
+
+def _seed_one_session(tmp_path, project_root):
+    """Helper: write one fresh session under the canonical encoded key."""
+    sessions_dir = (
+        Path(tmp_path) / "home" / ".claude" / "projects" / data._encoded_project_path(project_root)
+    )
+    return _write_session_jsonl(
+        sessions_dir,
+        "abcdef12-c539-4057-ba26-24ce3dffec27",
+        events=[
+            {
+                "type": "queue-operation",
+                "operation": "enqueue",
+                "timestamp": "2026-05-15T10:00:00Z",
+                "content": "Help me debug the failing test on Windows.",
+            }
+        ],
+    )
+
+
+def test_sessions_page_off_by_default_uses_heuristic(tmp_path, monkeypatch):
+    """Without ATTUNE_OPS_SESSIONS_LLM set, the route never calls the LLM
+    and rows render with their heuristic prompts."""
+    monkeypatch.delenv("ATTUNE_OPS_SESSIONS_LLM", raising=False)
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    from attune.ops import session_summary_llm
+
+    def boom(*a, **kw):
+        raise AssertionError("LLM was called with the gate OFF")
+
+    monkeypatch.setattr(session_summary_llm, "summarize", boom)
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions")
+    assert resp.status_code == 200
+    assert "heuristic" in resp.text
+    assert "Heuristic (compare)" not in resp.text
+
+
+def test_sessions_page_with_gate_on_calls_llm_and_marks_haiku(tmp_path, monkeypatch):
+    """ATTUNE_OPS_SESSIONS_LLM=1 → LLM is invoked and rows mark source=haiku."""
+    monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "1")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fa" + "ke-key")  # pragma: allowlist secret
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    from attune.ops import session_summary_llm
+
+    captured: list[str] = []
+
+    def fake_summarize(text, *, api_key=None):
+        captured.append(text)
+        return session_summary_llm.SummaryResult(
+            text="HAIKU SUMMARY: debug test",
+            tokens_in=200,
+            tokens_out=80,
+            cost_usd=0.0006,
+        )
+
+    monkeypatch.setattr(session_summary_llm, "summarize", fake_summarize)
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "HAIKU SUMMARY: debug test" in body
+    assert "haiku" in body
+    assert "Heuristic (compare)" not in body
+    assert captured, "summarize was not invoked"
+
+
+def test_sessions_page_compare_mode_renders_both_columns(tmp_path, monkeypatch):
+    """?compare=1 with the gate on renders heuristic AND Haiku columns."""
+    monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "1")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fa" + "ke-key")  # pragma: allowlist secret
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    from attune.ops import session_summary_llm
+
+    monkeypatch.setattr(
+        session_summary_llm,
+        "summarize",
+        lambda text, *, api_key=None: session_summary_llm.SummaryResult(
+            text="HAIKU REPLACEMENT", tokens_in=10, tokens_out=10, cost_usd=0.0001
+        ),
+    )
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions?compare=1")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "Heuristic (compare)" in body
+    assert "HAIKU REPLACEMENT" in body
+    assert "Help me debug" in body
+
+
+def test_sessions_page_compare_param_ignored_when_gate_off(tmp_path, monkeypatch):
+    """?compare=1 is a no-op when the LLM gate is off — no extra column."""
+    monkeypatch.delenv("ATTUNE_OPS_SESSIONS_LLM", raising=False)
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions?compare=1")
+    assert resp.status_code == 200
+    assert "Heuristic (compare)" not in resp.text
+
+
+def test_sessions_page_warns_on_missing_api_key(tmp_path, monkeypatch):
+    """Gate on but no API key → banner rendered, falls back to heuristic."""
+    monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "1")
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "ANTHROPIC_API_KEY" in body
+    assert "Help me debug" in body
+    assert "heuristic" in body
+
+
+def test_sessions_page_renders_budget_banner_when_cap_exceeded(tmp_path, monkeypatch):
+    """Soft-cap breach renders a warning banner; render still succeeds."""
+    monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "1")
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "fa" + "ke-key")  # pragma: allowlist secret
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _seed_one_session(tmp_path, project_root)
+
+    from attune.ops import session_summary_llm
+
+    # Single call with cost > $0.05 trips the soft cap.
+    monkeypatch.setattr(
+        session_summary_llm,
+        "summarize",
+        lambda text, *, api_key=None: session_summary_llm.SummaryResult(
+            text="exp", tokens_in=10, tokens_out=10, cost_usd=0.10
+        ),
+    )
+
+    app = _make_app(tmp_path, monkeypatch)
+    with TestClient(app) as client:
+        resp = client.get("/sessions")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "exceeded the soft cap" in body
+    assert "exp" in body

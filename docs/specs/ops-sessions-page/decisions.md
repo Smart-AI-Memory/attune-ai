@@ -300,13 +300,13 @@ reader knows it's not part of the user-facing surface.
 | Cache key (last-4KB) | S3a — `session_summary_cache.compute_cache_key()` | shipped (cache module; Haiku wire-up in S3b) |
 | Cache location / TTL | S3a — `<attune_home>/ops/session_summaries/<id>.json`, mtime-bound | shipped (module); first write happens in S3b |
 | List cap (N=20) | S3a — `DEFAULT_SESSION_LIST_CAP` in `list_recent_sessions()` | shipped |
-| Starter-prompt generation (Haiku) | TBD (S3) | pending |
-| Budget cap ($0.05) | TBD (S3) | pending |
-| Source field semantics (heuristic/haiku/cached) | #377 (`heuristic` only) | partial — `haiku`/`cached` in S3 |
+| Starter-prompt generation (Haiku) | S3b — `session_summary_llm.summarize()` + `session_summary.summarize_for_session()` orchestrator | shipped |
+| Budget cap ($0.05) | S3b — `BudgetTracker` soft cap, banner on breach | shipped (soft cap per Patrick 2026-05-15) |
+| Source field semantics (heuristic/haiku/cached) | #377 (`heuristic` only); S3b adds `haiku`/`cached` via route layer | shipped |
 | Resume card (current-worktree → canonical) | TBD (S4) | pending |
 | Live-session detection | TBD (S5) | pending |
-| Compare mode (`?compare=1`) | TBD (S3) | pending |
-| Calibration harness | TBD (S3) | pending |
+| Compare mode (`?compare=1`) | S3b — query-param + template branch | shipped |
+| Calibration harness | S3b — `scripts/build_session_fixtures.py`; snapshot test + committed fixtures land in a follow-up after Patrick curates | partial — build script only |
 | Expand-on-click body | TBD (S4 or later) | pending |
 
 ---

@@ -3,16 +3,35 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from attune.ops import data
+from attune.ops import data, session_summary
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter()
+
+
+# Env gate for the Haiku summarizer. Defaults OFF — opt-in for the
+# first release per acceptance criterion #5 in requirements.md. When
+# off, every session row renders with its heuristic prompt (first
+# user message, truncated) and no LLM call is made.
+_LLM_GATE_ENV = "ATTUNE_OPS_SESSIONS_LLM"
+
+
+def _llm_gate_on() -> bool:
+    """Return True iff the Haiku-summarizer gate is enabled.
+
+    Accepts the canonical truthy values: ``1``, ``true``, ``yes``,
+    ``on`` (case-insensitive). Anything else (including unset)
+    keeps the gate off.
+    """
+    val = os.environ.get(_LLM_GATE_ENV, "").strip().lower()
+    return val in ("1", "true", "yes", "on")
 
 
 def _ctx(request: Request, page: str, **extra) -> dict:
@@ -132,23 +151,96 @@ async def health_page(request: Request) -> HTMLResponse:
 
 
 @router.get("/sessions", response_class=HTMLResponse)
-async def sessions_page(request: Request) -> HTMLResponse:
+async def sessions_page(request: Request, compare: int = 0) -> HTMLResponse:
     """Sessions page — recent Claude Code sessions for this project.
 
-    S2: reads ``~/.claude/projects/<encoded-project-root>/*.jsonl``
-    and surfaces sessions whose mtime is within the last 3 days,
-    each with a heuristic starter-prompt (first user prompt,
-    truncated to ~200 chars). S3 will replace the heuristic with
-    Haiku-summarized prompts and a per-page budget cap; S4 adds the
-    resume-most-recent card; S5 marks the live session.
+    S3a (PR #387): multi-key data layer + summary cache module —
+    landed without LLM calls. S3b (this slice): wires the Haiku
+    summarizer through, gated on ``ATTUNE_OPS_SESSIONS_LLM``. With
+    the gate off (default), every row renders with the heuristic
+    starter prompt; with it on, the route walks the cap-limited
+    session list, replaces each row's prompt with the Haiku /
+    cached summary, and tracks per-page-load spend against a soft
+    budget cap (decisions.md Decision 5).
 
-    Failure modes are silent fall-throughs to the empty state: no
-    Claude Code dir, all sessions older than 3 days, all JSONLs
-    unreadable — none surface as errors. The point is to be useful
-    on a fresh install, not to debug Claude Code's internal state.
+    Compare mode: ``?compare=1`` is a dev-only query parameter that
+    renders both the heuristic and Haiku prompts side-by-side for
+    pre-launch eyeball validation. No UI affordance for it —
+    discoverable only by knowing the URL (decisions.md Decision 9).
+    Doesn't bypass the budget cap or redaction.
+
+    Failure modes are silent fall-throughs to the empty state or
+    the heuristic prompt: no Claude Code dir, all sessions older
+    than 3 days, all JSONLs unreadable, LLM call errored — none
+    surface as errors. The point is to be useful on a fresh
+    install, not to debug Claude Code's internal state.
     """
     cfg = request.app.state.config
     sessions = data.list_recent_sessions(cfg.project_root, days=3)
+
+    llm_enabled = _llm_gate_on()
+    compare_mode = bool(compare) and llm_enabled  # compare requires LLM on
+    # Heuristic-only column lives in this dict when compare mode
+    # is active. Indexed by session id. None outside compare mode.
+    heuristic_by_id: dict[str, str] | None = None
+    budget_summary: dict | None = None
+    api_key_missing = False
+
+    if llm_enabled:
+        budget = session_summary.BudgetTracker()
+        if compare_mode:
+            # Snapshot the heuristic prompt for each session before
+            # replacing the row's prompt with the Haiku summary.
+            heuristic_by_id = {s.id: s.starter_prompt for s in sessions}
+
+        # Resolve each session's JSONL path so the orchestrator can
+        # compute cache keys. data.list_recent_sessions doesn't
+        # surface paths, so re-derive from the encoded-key dirs.
+        path_by_id = _resolve_session_jsonl_paths(cfg.project_root, sessions)
+
+        upgraded: list[data.Session] = []
+        for sess in sessions:
+            jsonl_path = path_by_id.get(sess.id)
+            if jsonl_path is None:
+                upgraded.append(sess)
+                continue
+            raw_text = session_summary.extract_summarizable_text(jsonl_path)
+            if not raw_text:
+                upgraded.append(sess)
+                continue
+            try:
+                summary = session_summary.summarize_for_session(
+                    jsonl_path,
+                    raw_text,
+                    attune_home=cfg.attune_home,
+                    budget=budget,
+                )
+            except session_summary.session_summary_llm.MissingApiKeyError:
+                api_key_missing = True
+                summary = None
+            if summary is None:
+                # Heuristic fallback: keep the row's existing
+                # heuristic prompt, leave source="heuristic".
+                upgraded.append(sess)
+                continue
+            upgraded.append(
+                data.Session(
+                    id=sess.id,
+                    started_at=sess.started_at,
+                    last_activity=sess.last_activity,
+                    duration_seconds=sess.duration_seconds,
+                    message_count=sess.message_count,
+                    starter_prompt=summary.text,
+                    source=summary.source,
+                )
+            )
+        sessions = upgraded
+        budget_summary = {
+            "spend_usd": round(budget.spend_usd, 4),
+            "cap_usd": budget.cap_usd,
+            "exceeded": budget.spend_usd > budget.cap_usd,
+        }
+
     # Where the sessions live — surfaced in the empty-state so users
     # can ``cat`` the JSONLs directly if they want to inspect more
     # than the page shows. Reuses ``claude_sessions_dir`` so the
@@ -168,7 +260,47 @@ async def sessions_page(request: Request) -> HTMLResponse:
         page="sessions",
         sessions=sessions,
         sessions_dir=sessions_dir,
+        llm_enabled=llm_enabled,
+        compare_mode=compare_mode,
+        heuristic_by_id=heuristic_by_id,
+        budget_summary=budget_summary,
+        api_key_missing=api_key_missing,
     )
+
+
+def _resolve_session_jsonl_paths(project_root: Path | str, sessions: list) -> dict[str, Path]:
+    """Map each session id to its JSONL file path on disk.
+
+    Walks every encoded-key dir from
+    :func:`attune.ops.data.enumerate_project_encoded_keys` and
+    matches by filename stem. When the same session id appears
+    under multiple keys (rare; same dedup case
+    :func:`list_recent_sessions` handles), keeps the
+    newest-mtime path to align with the list ordering.
+
+    Returns an empty mapping for any session whose JSONL has
+    vanished between listing and resolution — orchestrator will
+    treat that as "skip the LLM call" via the empty-text path.
+    """
+    wanted = {s.id for s in sessions}
+    out: dict[str, Path] = {}
+    out_mtime: dict[str, float] = {}
+    for sessions_dir in data.enumerate_project_encoded_keys(project_root):
+        try:
+            for jsonl in sessions_dir.glob("*.jsonl"):
+                stem = jsonl.stem
+                if stem not in wanted:
+                    continue
+                try:
+                    mt = jsonl.stat().st_mtime
+                except OSError:
+                    continue
+                if stem not in out or mt > out_mtime[stem]:
+                    out[stem] = jsonl
+                    out_mtime[stem] = mt
+        except OSError:
+            continue
+    return out
 
 
 @router.get("/runs/{run_id}/view", response_class=HTMLResponse)

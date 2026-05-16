@@ -9,14 +9,36 @@
   </p>
 </section>
 
-{# Sessions S2 — data layer. Reads Claude Code's per-project JSONL
-   logs, surfaces last-3-days sessions with a heuristic starter
-   prompt (first user message, truncated). S3 will replace the
-   heuristic with Haiku-summarized prompts; S4 lifts the most-recent
-   session into a prominent resume card; S5 marks the live session.
-   The empty-state copy below matches the spec's exact phrasing so
-   the legitimate "no sessions in 3 days" case stays clean. #}
+{# Sessions S3b — Haiku-summarized prompts gated on
+   ATTUNE_OPS_SESSIONS_LLM. With the gate off (default) every row
+   renders with the heuristic prompt. With it on the route walks
+   each row, redacts the JSONL content, calls Haiku, and writes
+   the redacted summary to the on-disk cache. ?compare=1 (dev
+   only) renders a second column with the heuristic prompt for
+   pre-launch eyeball validation. S4 lifts the most-recent
+   session into a prominent resume card; S5 marks the live
+   session. The empty-state copy below matches the spec's exact
+   phrasing so the legitimate "no sessions in 3 days" case stays
+   clean. #}
 <section class="panel">
+  {% if api_key_missing %}
+    <p class="banner banner-warn">
+      <strong>ATTUNE_OPS_SESSIONS_LLM</strong> is enabled but
+      <strong>ANTHROPIC_API_KEY</strong> is unset. Falling back to
+      heuristic prompts. Set the API key or unset the gate to
+      silence this notice.
+    </p>
+  {% endif %}
+  {% if budget_summary and budget_summary.exceeded %}
+    <p class="banner banner-warn">
+      Per-page-load Haiku spend
+      <strong>${{ '%.4f' | format(budget_summary.spend_usd) }}</strong>
+      exceeded the soft cap of
+      <strong>${{ '%.4f' | format(budget_summary.cap_usd) }}</strong>.
+      Rendering continued; consider lowering the list cap or
+      disabling <code>ATTUNE_OPS_SESSIONS_LLM</code> if this recurs.
+    </p>
+  {% endif %}
   {% if sessions %}
     <table class="data-table sessions-table">
       <thead>
@@ -26,6 +48,9 @@
           <th class="num">Duration</th>
           <th class="num">Prompts</th>
           <th>Starter prompt</th>
+          {% if compare_mode %}
+            <th>Heuristic (compare)</th>
+          {% endif %}
           <th>Source</th>
         </tr>
       </thead>
@@ -37,7 +62,10 @@
             <td class="num">{% if s.duration_seconds > 0 %}{{ '%.0fs'|format(s.duration_seconds) if s.duration_seconds < 60 else '%.0fm'|format(s.duration_seconds / 60) }}{% else %}—{% endif %}</td>
             <td class="num">{{ s.message_count }}</td>
             <td class="session-prompt">{{ s.starter_prompt }}</td>
-            <td><span class="chip chip-muted" data-tooltip="{% if s.source == 'heuristic' %}First user prompt, truncated{% else %}LLM-summarized starter prompt{% endif %}" aria-label="Source: {{ s.source }}">{{ s.source }}</span></td>
+            {% if compare_mode %}
+              <td class="session-prompt session-prompt-heuristic">{{ heuristic_by_id.get(s.id, '—') if heuristic_by_id else '—' }}</td>
+            {% endif %}
+            <td><span class="chip chip-muted" data-tooltip="{% if s.source == 'heuristic' %}First user prompt, truncated{% elif s.source == 'cached' %}Cached Haiku summary (no fresh LLM call){% else %}Fresh Haiku-summarized starter prompt{% endif %}" aria-label="Source: {{ s.source }}">{{ s.source }}</span></td>
           </tr>
         {% endfor %}
       </tbody>
@@ -45,6 +73,11 @@
     <p class="meta">
       Older sessions (beyond 3 days) stay on disk at
       <code>{{ sessions_dir }}</code> but aren't surfaced here.
+      {% if llm_enabled and budget_summary %}
+        Haiku spend this load:
+        <strong>${{ '%.4f' | format(budget_summary.spend_usd) }}</strong>
+        / ${{ '%.4f' | format(budget_summary.cap_usd) }} cap.
+      {% endif %}
     </p>
   {% else %}
     <p class="empty">
