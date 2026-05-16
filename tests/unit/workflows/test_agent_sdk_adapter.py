@@ -662,6 +662,119 @@ class TestSdkWorkflowsUseCwdHelper:
 
 
 @pytest.mark.unit
+class TestGetTaskBudgetCliProbe:
+    """Regression tests for the task_budget CLI feature-probe.
+
+    The SDK appends ``--task-budget <N>`` to the CLI command when
+    ``ClaudeAgentOptions.task_budget`` is set. Older CLIs (bundled
+    in claude-agent-sdk 0.1.63 and system ``claude`` 2.1.x) don't
+    recognize the flag and exit 1 at startup, surfacing as the
+    opaque ``Command failed with exit code 1``. ``get_task_budget``
+    now probes ``<cli> --help`` once and returns ``None`` when the
+    flag is absent.
+    """
+
+    def setup_method(self) -> None:
+        """Reset the module-level cache before each test."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        mod._CLI_SUPPORTS_TASK_BUDGET = None
+
+    def test_returns_none_when_cli_lacks_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Given a CLI whose --help omits --task-budget, returns None."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        fake_help = (
+            "Usage: claude [options]\n"
+            "  --max-budget-usd <amount>  Max dollars\n"
+            "  --print                    Non-interactive\n"
+        )
+
+        def fake_run(cmd, **kwargs):
+            class _R:
+                stdout = fake_help
+                stderr = ""
+
+            return _R()
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        monkeypatch.setattr(mod.shutil, "which", lambda _: "/usr/local/bin/claude")
+        # Avoid the bundled-CLI path so the shutil.which() fake is used.
+        monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
+
+        assert mod._cli_supports_task_budget() is False
+        assert mod.get_task_budget("standard") is None
+
+    def test_returns_budget_when_cli_supports_flag(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Given a CLI whose --help mentions --task-budget, returns a TaskBudget."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        fake_help = "  --task-budget <tokens>  Token cap per task\n"
+
+        def fake_run(cmd, **kwargs):
+            class _R:
+                stdout = fake_help
+                stderr = ""
+
+            return _R()
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        monkeypatch.setattr(mod.shutil, "which", lambda _: "/usr/local/bin/claude")
+        monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
+
+        assert mod._cli_supports_task_budget() is True
+        budget = mod.get_task_budget("standard")
+        assert budget is not None
+        assert budget["total"] == 80_000
+
+    def test_probe_result_is_cached(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """Probe runs at most once per process; subsequent calls hit cache."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        call_count = {"n": 0}
+
+        def fake_run(cmd, **kwargs):
+            call_count["n"] += 1
+
+            class _R:
+                stdout = "  --task-budget X\n"
+                stderr = ""
+
+            return _R()
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        monkeypatch.setattr(mod.shutil, "which", lambda _: "/usr/local/bin/claude")
+        monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
+
+        mod._cli_supports_task_budget()
+        mod._cli_supports_task_budget()
+        mod._cli_supports_task_budget()
+        assert call_count["n"] == 1
+
+    def test_probe_timeout_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """If the probe times out, treat the CLI as unsupported."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        def fake_run(cmd, **kwargs):
+            raise mod.subprocess.TimeoutExpired(cmd=cmd, timeout=5)
+
+        monkeypatch.setattr(mod.subprocess, "run", fake_run)
+        monkeypatch.setattr(mod.shutil, "which", lambda _: "/usr/local/bin/claude")
+        monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
+
+        assert mod._cli_supports_task_budget() is False
+
+    def test_missing_cli_disables_feature(self, monkeypatch: pytest.MonkeyPatch) -> None:
+        """When no CLI is found anywhere, return False without probing."""
+        import attune.workflows.agent_sdk_adapter as mod
+
+        monkeypatch.setattr(mod.shutil, "which", lambda _: None)
+        monkeypatch.setattr(mod.Path, "is_file", lambda self: False)
+
+        assert mod._cli_supports_task_budget() is False
+
+
+@pytest.mark.unit
 class TestGetSubagentModel:
     """Test per-agent model selection helper."""
 
