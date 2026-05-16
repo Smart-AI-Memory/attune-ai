@@ -1,6 +1,6 @@
 # Tasks — Discovery-Sweep Ops Dashboard Integration
 
-**Status:** Phase 0 audit + Phase 1 + Phase 1b shipped 2026-05-13. Phase 2 in progress — 2A (storage primitives) up as [#334](https://github.com/Smart-AI-Memory/attune-ai/pull/334); 2B (daemon wiring) blocks on [#324](https://github.com/Smart-AI-Memory/attune-ai/pull/324) / [#326](https://github.com/Smart-AI-Memory/attune-ai/pull/326) / [#328](https://github.com/Smart-AI-Memory/attune-ai/pull/328).
+**Status:** DONE 2026-05-16. All four phases shipped. Phase 0 audit + Phase 1 + Phase 1b + Phase 2A + Phase 2B shipped 2026-05-13; Phase 3 (Dashboard UI) + Phase 4 (Documentation) shipped 2026-05-16.
 **Spec docs:** `requirements.md`, `design.md`, `decisions.md`,
 [`audit-2026-05-13.md`](audit-2026-05-13.md)
 **Implementation path:** Option A (stdout-emit + sidecar parser)
@@ -163,38 +163,58 @@ the runner-start wrap and the route are both effectively dormant
 Goal: render the discovery-sweep row + chips + live progress +
 drill-in in the workflows.html dashboard page.
 
-- [ ] **3.1** Discovery-sweep row honors the existing scope picker
-      (already supported via `PATH_ARG_REGISTRY` from parent spec
-      P1.7 — verify rendering only).
-- [ ] **3.2** Per-bucket colored chips on each row (queue / questions
-      / rejected). Empty buckets render as `0`, not hidden.
-- [ ] **3.3** Live progress bar while a sweep runs — reads SSE
-      events and renders `✓ pattern-scan ⏳ bug-predict ⌛ security-audit`
-      style sequential status.
-- [ ] **3.4** Chip click navigates to detail view with the bucket
-      filtered (`?bucket=queue` / `?bucket=questions` / `?bucket=rejected`).
-- [ ] **3.5** Detail view renders findings via the generic
-      finding-row component. Includes severity badges (same
-      Phase 3.2 color tokens), file:line link, evidence
-      collapsed by default.
-- [ ] **3.6** Tests:
-      - `test_workflow_list_chips.py` — chip count loader
-        (missing file → zeros, corrupt file → zeros + warning)
-      - Smoke test via Playwright (or whatever ops-runner-tier2
-        uses for UI testing) — chips render, click navigates,
-        detail page loads.
+- [x] **3.1** Discovery-sweep row honors the existing scope picker.
+      `PATH_ARG_REGISTRY["discovery-sweep"]` already routes the scope
+      through; verified rendering on the workflows page.
+- [x] **3.2** Per-bucket colored chips on the discovery-sweep row
+      (queue / questions / rejected). Server-rendered for first paint;
+      `runner.js` refreshes them on scope-picker change via
+      `/api/workflows/discovery-sweep/chips`. Empty buckets render as
+      `0`. The chip row carries a `data-has-result` attribute so the
+      template can dim chips when no sweep is recorded for the scope.
+- [x] **3.3** Live progress panel on `/runs/<id>/view` for
+      discovery-sweep runs. Static `<li>` per source emitted server-
+      side in alphabetical order; `run_view.js`'s
+      `parseSweepEventLine` + `updateSweepProgress` flip the
+      `data-state` attribute on each item as `ATTUNE_DS source_*`
+      events arrive on the SSE stream. Renders the four states
+      `pending / running / finished / failed` with glyph + detail
+      text (findings count for finished, error class for failed).
+- [x] **3.4** Chip click navigates to the detail page with the
+      bucket filtered:
+      `/workflows/discovery-sweep/results/<scope-hash>?bucket=<key>`.
+      Detail-page bucket nav also offers an "All" link to clear
+      the filter.
+- [x] **3.5** Detail page (`sweep_detail.html`) renders each finding
+      via a uniform row layout with severity chips, source chips,
+      file:line link, tags, routing metadata, and a collapsed
+      Evidence `<details>`. JSON read API moved to
+      `/api/workflows/discovery-sweep/results/<hash>` so the bare
+      URL serves HTML.
+- [x] **3.6** Tests in `tests/unit/ops/test_workflow_list_chips.py`
+      (9 cases) — chip-count loader (missing / corrupt / populated /
+      empty-fields), workflows-page rendering (chip block markers,
+      anchor hrefs, count reflection), JS-source guards (runner.js
+      exports + run_view.js source-event parser presence), and the
+      run_view progress panel markup with a disk-loaded discovery-
+      sweep run. Existing route tests expanded to cover the moved
+      JSON endpoint + the new chips API + the new HTML detail
+      route (24 cases total in `test_sweep_results_route.py`).
 
 ---
 
 ## Phase 4 — Documentation + sequencing
 
-- [ ] **4.1** Update `docs/specs/_sequencing.md` to mark
-      `discovery-sweep-ops-integration` as DONE.
-- [ ] **4.2** Update the parent `docs/specs/discovery-sweep/`
-      with a cross-link to this spec's completion.
-- [ ] **4.3** Add a "Using the dashboard" section to the user-
-      facing discovery-sweep docs (probably in `docs/workflows/`
-      or `.help/templates/`).
+- [x] **4.1** `docs/specs/_sequencing.md` marks this spec DONE
+      (2026-05-16).
+- [x] **4.2** Parent spec `docs/specs/discovery-sweep/tasks.md`
+      cross-link updated to note completion of the carved-out
+      ops-dashboard work.
+- [x] **4.3** User-facing guide added at
+      `docs/how-to/discovery-sweep-on-the-dashboard.md` covering
+      enabling persistence, triggering a sweep, reading chips,
+      watching live progress, drilling into findings, and a
+      troubleshooting section.
 
 ---
 

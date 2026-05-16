@@ -126,22 +126,29 @@ natural pause.
 - Surface evaluation: [surface-evaluation.md](discovery-sweep/surface-evaluation.md)
 - Plan: [.claude/plans/discovery-sweep.md](../../.claude/plans/discovery-sweep.md)
 
-### discovery-sweep-ops-integration — drafted
+### discovery-sweep-ops-integration — DONE 2026-05-16
 
-- Status: spec drafted 2026-05-13. Not yet open for
-  implementation — blocks on `ops-runner-tier2` Phase 2 (SSE
-  event stream + workflow-list dashboard surface).
+- Status: shipped. All four phases on `main`. Dashboard renders
+  the discovery-sweep row with per-bucket chips, the run_view
+  page surfaces live source-by-source progress for in-flight
+  sweeps, and chips link to a scope-keyed drill-in view that
+  filters by bucket.
 - Why on Track C: Carved out of the parent discovery-sweep spec
-  because the ops-dashboard integration depends on
+  because the ops-dashboard integration depended on
   `ops-runner-tier2` Phase 2 primitives, while the parent spec
-  is consumable today via CLI + JSON. Splitting let the parent
-  ship as DONE without stalling on this consumer.
+  was consumable via CLI + JSON. Splitting let the parent ship
+  DONE without stalling on this consumer.
 - Tasks
-  - [ ] Phase 1 — Engine telemetry hooks (per-source event sink)
-  - [ ] Phase 2 — Daemon HTTP / SSE plumbing
-  - [ ] Phase 3 — Dashboard UI (chips, live progress, drill-in)
-  - [ ] Phase 4 — Docs + sequencing
+  - [x] Phase 1 — Engine telemetry hooks (per-source event sink)
+  - [x] Phase 1b — `ATTUNE_DS` stdout emission
+  - [x] Phase 2A — Sweep-results storage primitives
+  - [x] Phase 2B — Daemon wiring + HTTP route
+  - [x] Phase 3 — Dashboard UI (chips, live progress, drill-in)
+  - [x] Phase 4 — Docs + sequencing
 - Spec: [discovery-sweep-ops-integration](discovery-sweep-ops-integration/)
+- Feature flag: `ATTUNE_OPS_SWEEP_RESULTS=1` gates persistence.
+  Chips render as zeros until a sweep has been recorded for the
+  current scope.
 
 ### website-update-dashboard-and-fold (Phase 1)
 

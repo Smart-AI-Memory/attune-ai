@@ -1251,3 +1251,164 @@ a.kpi:hover {
   font-size: 13px;
   color: var(--fg);
 }
+
+/* ---------- Discovery-sweep chips on workflow row ---------- */
+
+.sweep-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  margin-top: 8px;
+}
+.sweep-chip-row a.chip {
+  text-decoration: none;
+  border-style: dotted;
+}
+.sweep-chip-row a.chip:hover {
+  text-decoration: underline;
+}
+.sweep-chip-row[data-has-result="0"] a.chip {
+  opacity: 0.55;
+}
+.sweep-chip-status {
+  font-size: 11px;
+  margin-left: 4px;
+}
+.sweep-chip-status[data-empty="1"] {
+  font-style: italic;
+}
+
+/* ---------- Discovery-sweep progress panel (run_view) ---------- */
+
+.sweep-progress {
+  margin: 12px 0;
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.sweep-progress-head {
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+.sweep-progress-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 6px 12px;
+}
+.sweep-progress-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  padding: 2px 0;
+}
+.sweep-progress-glyph {
+  width: 18px;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+.sweep-progress-name {
+  font-weight: 500;
+}
+.sweep-progress-detail {
+  font-size: 12px;
+}
+.sweep-progress-item[data-state="pending"]   { color: var(--fg-subtle); }
+.sweep-progress-item[data-state="running"]   { color: var(--accent); }
+.sweep-progress-item[data-state="finished"]  { color: var(--ok); }
+.sweep-progress-item[data-state="failed"]    { color: var(--danger); }
+
+/* ---------- Discovery-sweep detail page ---------- */
+
+.sweep-bucket-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 6px;
+  margin-top: 10px;
+}
+.sweep-bucket-nav .bucket-link {
+  padding: 2px 10px;
+  border-radius: 99px;
+  border: 1px solid var(--border);
+  background: var(--bg-soft);
+  color: var(--fg-muted);
+  font-size: 12px;
+  text-decoration: none;
+}
+.sweep-bucket-nav .bucket-link.is-active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  border-color: var(--accent-soft);
+}
+.sweep-bucket {
+  margin-top: 20px;
+}
+.sweep-bucket h2 {
+  font-size: 16px;
+  margin: 0 0 4px 0;
+}
+.finding-list {
+  list-style: none;
+  margin: 8px 0 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.finding-row {
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg-elev);
+}
+.finding-row-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.finding-title {
+  font-weight: 600;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.finding-confidence {
+  font-size: 11px;
+}
+.finding-desc {
+  margin: 4px 0 0 0;
+  font-size: 13px;
+  color: var(--fg-muted);
+}
+.finding-meta {
+  margin: 6px 0 0 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  font-size: 12px;
+}
+.finding-extra {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.finding-evidence {
+  margin-top: 8px;
+}
+.finding-evidence summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+.finding-evidence pre {
+  margin: 6px 0 0 0;
+  font-size: 12px;
+  white-space: pre-wrap;
+  max-height: 240px;
+  overflow: auto;
+}
