@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `scripts/calibrate_session_summary.py` + companion CI gate
+  `tests/unit/ops/test_calibration_snapshot.py` — closes the
+  calibration loop for the `/sessions` Haiku summarizer. The
+  script runs Haiku over every committed fixture in
+  `tests/fixtures/ops/session_summaries/*.jsonl` and emits a
+  per-fixture `{tokens_in, tokens_out, cost_usd, summary,
+  summary_chars}` snapshot. Default mode regenerates the
+  snapshot; `--check` mode fails on drift past configurable
+  tolerances (±10% input tokens, ±50% output tokens, ±20% cost
+  per decisions.md Decision 8, ±50% summary length); `--dry-run`
+  lists fixtures + prompt fingerprint without API calls. The
+  CI test does **not** make real Haiku calls — it asserts the
+  committed snapshot is structurally sound + within plausible
+  cost bands + hash-consistent with the current
+  `SUMMARY_PROMPT`. Skips cleanly when the snapshot is absent
+  (fresh clone before first calibration). Runbook at
+  `docs/specs/ops-sessions-page/calibration-runbook.md`.
+
 - Ops `/sessions` page now uses Haiku-summarized starter prompts
   (S3b of `docs/specs/ops-sessions-page/`). Wires the existing
   `session_redaction` + `session_summary_cache` modules behind a
