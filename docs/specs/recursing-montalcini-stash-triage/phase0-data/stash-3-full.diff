@@ -1,0 +1,2893 @@
+diff --git a/.claude/CLAUDE.md b/.claude/CLAUDE.md
+index 157097b0..593fa077 100644
+--- a/.claude/CLAUDE.md
++++ b/.claude/CLAUDE.md
+@@ -98,6 +98,39 @@ abstraction.
+   simpler work (single-file edits, config changes, bug
+   fixes), plain descriptions are fine.
+
++### Spec / pipeline discipline (the three gates)
++
++Rationale + spec:
++[docs/specs/spec-pipeline-discipline/proposal.md](../docs/specs/spec-pipeline-discipline/proposal.md).
++Apply on every multi-phase spec execution:
++
++- **Patch coverage exit gate.** No phase claims "done" until
++  new code lines/branches hit >=90% patch coverage (or the
++  uncovered lines are explicitly documented defensive
++  paths). Run `pytest --cov=<paths> --cov-report=term-missing`
++  and report at phase close.
++- **Defer requires explicit override.** Any proposal to skip,
++  defer, or shrink a spec-named deliverable surfaces as a
++  flagged question to the user, not a soft option. The
++  default answer is "do it"; defer is the exception.
++- **Audit-doc fidelity on phase close.** If execution
++  revealed an error in the audit doc or prior-phase
++  artifacts, fix it before closing the current phase. Audit
++  drift breaks downstream phase planning.
++
++These exist as standing rules here AND as the system of
++record in the spec because both are needed: CLAUDE.md
++ensures visibility every session start, the spec tracks
++rationale + acceptance criteria. Visibility ≠ enforcement
++— apply the gates actively, don't just read them.
++
++### Phase numbering convention
++
++Phases in any spec start at 1, not 0. "Phase 0" is not a
++convention in this project. If a phase looks like it should
++be Phase 0 (audit / setup before "real work"), call it
++Phase 1 and shift the rest up.
++
+ ---
+
+ ## Socratic Interaction Rule
+@@ -4523,3 +4556,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
+   destination branch tracks files your source branch
+   doesn't, pop with `git checkout stash@{0} -- <files>`
+   to force the overwrite, then drop manually.
++
++- **Ops dashboard: two routing/ID gotchas that fail
++  silently in fixtures**: hit 2026-05-15 while
++  pre-seeding a demo run for the run-view panel. Both
++  worth capturing because the failure modes are quiet
++  enough to waste minutes on first encounter. (1)
++  `_RUN_ID_RE = ^[a-f0-9]{1,64}$` in
++  `src/attune/ops/runner.py` — only lowercase hex
++  chars. A "human-readable" demo id like
++  "demo123abc" with the letter 'm' fails the regex,
++  and `_load_run_record` returns None **with no log
++  message**. The disk-fallback route then 404s
++  identically to "file truly missing." When seeding
++  fixtures: use `uuid.uuid4().hex[:N]` for run_ids,
++  not human-readable strings. (2) `/api/runs/{workflow}`
++  (the workflow-list endpoint in `routes/runs_history.py`)
++  ≠ `/runs/{run_id}` (single-run JSON endpoint in
++  `routes/runner.py`). JS code fetching single-run data
++  must hit `/runs/<id>`, NOT `/api/runs/<id>` — the
++  latter matches the workflow-list pattern and returns
++  a list payload (or 404) keyed on `<id>` interpreted
++  as a workflow name. The `/api/` namespace prefix is
++  reserved for workflow-keyed history endpoints in
++  this codebase; single-run JSON intentionally lives
++  on the un-prefixed path. Pattern when writing JS
++  that consumes the dashboard API: read
++  `src/attune/ops/routes/` first to confirm the path
++  rather than guessing from convention.
+diff --git a/.claude/settings.json b/.claude/settings.json
+index 01a76b79..7776183b 100644
+--- a/.claude/settings.json
++++ b/.claude/settings.json
+@@ -22,6 +22,16 @@
+             "statusMessage": "Checking for lessons to record..."
+           }
+         ]
++      },
++      {
++        "hooks": [
++          {
++            "type": "command",
++            "command": "cd \"$(git rev-parse --show-toplevel)\" && PYTHONPATH=src python src/attune/hooks/scripts/defer_detector.py",
++            "timeout": 5,
++            "statusMessage": "Checking for unilateral defer proposals..."
++          }
++        ]
+       }
+     ],
+     "PreToolUse": [
+diff --git a/.pre-commit-config.yaml b/.pre-commit-config.yaml
+index 306f5f12..687fd84d 100644
+--- a/.pre-commit-config.yaml
++++ b/.pre-commit-config.yaml
+@@ -150,3 +150,20 @@ repos:
+         pass_filenames: false
+         files: ^pyproject\.toml$
+         stages: [pre-commit]
++
++      # Patch coverage gate (spec-pipeline-discipline rule 1).
++      # New Python code under src/attune/ must hit >=90% patch coverage.
++      # Bypass with `[coverage-exempt: <reason ≥8 chars>]` in commit msg.
++      # Default: manual stage — running pytest on every commit is
++      # too slow for the loop. CI is the primary enforcement (see
++      # .github/workflows/patch-coverage.yml); local is the fast
++      # feedback path when developers opt in with
++      # `pre-commit run patch-coverage`.
++      # See docs/specs/spec-pipeline-discipline/.
++      - id: patch-coverage
++        name: Patch coverage gate (>=90% on new code)
++        entry: python scripts/check_patch_coverage.py
++        language: system
++        pass_filenames: false
++        files: ^src/attune/.*\.py$
++        stages: [manual]
+diff --git a/src/attune/agents/release/release_models.py b/src/attune/agents/release/release_models.py
+index 5a1f2ad4..ded97117 100644
+--- a/src/attune/agents/release/release_models.py
++++ b/src/attune/agents/release/release_models.py
+@@ -201,6 +201,141 @@ class ReleaseReadinessReport:
+             "total_cost": self.total_cost,
+         }
+
++    def to_report(self):
++        """Convert to a generic ``WorkflowReport`` for the voice layer.
++
++        This is the migration entry point per the
++        workflow-result-formatting spec. The voice / CLI / dashboard /
++        MCP surfaces all consume ``WorkflowReport``; bespoke types
++        like this one stay as the workflow's INTERNAL data model and
++        cross the surface boundary via ``to_report()``.
++
++        Section tiering follows the design principle "scannable
++        first, readable second":
++
++        - **essential**: verdict callout, quality gates table,
++          blockers, warnings, next steps
++        - **detail**: per-agent breakdown (collapsed by default
++          on the dashboard, hidden behind ``--verbose`` on the CLI)
++
++        Returns:
++            ``WorkflowReport`` instance.
++        """
++        # Local import to avoid cycles at module load.
++        from attune.workflows.output import (
++            CalloutSection,
++            ListSection,
++            NextAction,
++            NextStepsSection,
++            TableSection,
++            WorkflowReport,
++        )
++
++        sections: list[Any] = []
++
++        # Verdict callout (essential)
++        verdict = "APPROVED" if self.approved else "BLOCKED"
++        emphasis = "ok" if self.approved else "danger"
++        sections.append(
++            CalloutSection(
++                title="Verdict",
++                tier="essential",
++                text=f"Release **{verdict}** — confidence: {self.confidence}",
++                emphasis=emphasis,
++            ),
++        )
++
++        # Quality gates table (essential) — only when there are gates
++        if self.quality_gates:
++            passed = sum(1 for g in self.quality_gates if g.passed)
++            total = len(self.quality_gates)
++            sections.append(
++                TableSection(
++                    title=f"Quality Gates ({passed}/{total} passed)",
++                    tier="essential",
++                    columns=["Gate", "Actual", "Threshold", "Pass"],
++                    rows=[
++                        {
++                            "Gate": g.name,
++                            "Actual": f"{g.actual:.1f}",
++                            "Threshold": f"{g.threshold:.1f}",
++                            "Pass": "X" if g.passed else "F",
++                        }
++                        for g in self.quality_gates
++                    ],
++                ),
++            )
++
++        # Blockers (essential) — only when present
++        if self.blockers:
++            sections.append(
++                ListSection(
++                    title="Blockers",
++                    tier="essential",
++                    items=list(self.blockers),
++                ),
++            )
++
++        # Warnings (essential) — only when present
++        if self.warnings:
++            sections.append(
++                ListSection(
++                    title="Warnings",
++                    tier="essential",
++                    items=list(self.warnings),
++                ),
++            )
++
++        # Per-agent breakdown (detail) — only when there are results
++        if self.agent_results:
++            sections.append(
++                TableSection(
++                    title="Per-agent breakdown",
++                    tier="detail",
++                    columns=["Agent", "Score", "Time"],
++                    rows=[
++                        {
++                            "Agent": r.agent_role,
++                            "Score": f"{r.score:.1f}",
++                            "Time": f"{r.execution_time_ms / 1000:.1f}s",
++                        }
++                        for r in self.agent_results
++                    ],
++                ),
++            )
++
++        # Next steps (essential) — outcome-conditional
++        next_steps: list[NextAction] = []
++        if self.approved:
++            next_steps.append(
++                NextAction(
++                    text="All gates pass. Cut the release.",
++                    command="attune release prep",
++                ),
++            )
++        else:
++            for blocker in self.blockers:
++                next_steps.append(NextAction(text=f"Resolve blocker: {blocker}"))
++        if next_steps:
++            sections.append(
++                NextStepsSection(
++                    title="Next steps",
++                    tier="essential",
++                    items=next_steps,
++                ),
++            )
++
++        return WorkflowReport(
++            title="Release readiness",
++            summary=self.summary or f"Release {verdict} — confidence: {self.confidence}",
++            sections=sections,
++            metadata={
++                "total_duration": self.total_duration,
++                "total_cost": self.total_cost,
++                "confidence": self.confidence,
++            },
++        )
++
+     def format_console_output(self) -> str:
+         """Format report for console display."""
+         lines = []
+diff --git a/src/attune/agents/release/release_prep_team.py b/src/attune/agents/release/release_prep_team.py
+index 541b1453..1d2dad90 100644
+--- a/src/attune/agents/release/release_prep_team.py
++++ b/src/attune/agents/release/release_prep_team.py
+@@ -400,7 +400,7 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
+         path: str = ".",
+         context: dict[str, Any] | None = None,
+         **kwargs: Any,
+-    ) -> ReleaseReadinessReport:
++    ) -> Any:
+         """Execute release preparation workflow.
+
+         Args:
+@@ -409,20 +409,44 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
+             **kwargs: Extra parameters (target, etc.)
+
+         Returns:
+-            ReleaseReadinessReport with consolidated results
++            ``WorkflowResult`` whose ``final_output`` is a
++            ``WorkflowReport`` rendered by the voice layer.
+
++            Migrated 2026-05-15 per workflow-result-formatting spec.
++            The bespoke ``ReleaseReadinessReport`` still exists
++            internally; ``.to_report()`` produces the surface-facing
++            ``WorkflowReport``.
+         """
++        from datetime import datetime, timezone
++
++        from attune.workflows.data_classes import CostReport, WorkflowResult
++
+         # Map 'target' to 'path' for VSCode/CLI compatibility
+         if "target" in kwargs and path == ".":
+             path = kwargs["target"]
+
+-        team = ReleasePrepTeam(
+-            quality_gates=self.quality_gates,
+-        )
+-
++        started = datetime.now(timezone.utc)
++        team = ReleasePrepTeam(quality_gates=self.quality_gates)
+         report = await team.assess_readiness(codebase_path=path)
++        completed = datetime.now(timezone.utc)
++
++        # Convert bespoke report → generic WorkflowReport. Voice
++        # layer renders the markdown; no direct print() here.
++        workflow_report = report.to_report()
+
+-        # Print formatted output for CLI users
+-        print(report.format_console_output())
++        cost_report = CostReport(
++            total_cost=report.total_cost,
++            baseline_cost=report.total_cost,
++            savings=0.0,
++            savings_percent=0.0,
++        )
+
+-        return report
++        return WorkflowResult(
++            success=report.approved,
++            stages=[],
++            final_output=workflow_report,
++            cost_report=cost_report,
++            started_at=started,
++            completed_at=completed,
++            total_duration_ms=int(report.total_duration * 1000),
++        )
+diff --git a/src/attune/cli_commands/workflow_commands.py b/src/attune/cli_commands/workflow_commands.py
+index 2d8563b5..056da08f 100644
+--- a/src/attune/cli_commands/workflow_commands.py
++++ b/src/attune/cli_commands/workflow_commands.py
+@@ -150,7 +150,14 @@ def cmd_workflow_run(args: Namespace) -> int:
+             else:
+                 print(json.dumps(result, indent=2, default=str))
+         else:
+-            _print_workflow_result(result, workflow_name=name)
++            disclosure = "full" if getattr(args, "verbose", False) else "summary"
++            show_cost = _resolve_show_cost_flag(args)
++            _print_workflow_result(
++                result,
++                workflow_name=name,
++                disclosure=disclosure,
++                show_cost=show_cost,
++            )
+
+         return 0
+
+@@ -163,9 +170,27 @@ def cmd_workflow_run(args: Namespace) -> int:
+         return 1
+
+
++def _resolve_show_cost_flag(args: object) -> bool | None:
++    """Translate ``--show-cost`` / ``--hide-cost`` argparse flags to
++    the tri-state expected by ``attune.voice.format_output``.
++
++    Returns:
++        True if ``--show-cost`` was passed, False if ``--hide-cost``
++        was passed, None if neither was passed (auto-detect path).
++    """
++    if getattr(args, "show_cost", False):
++        return True
++    if getattr(args, "hide_cost", False):
++        return False
++    return None
++
++
+ def _print_workflow_result(
+     result: object,
+     workflow_name: str = "unknown",
++    *,
++    disclosure: str = "summary",
++    show_cost: bool | None = None,
+ ) -> None:
+     """Print a workflow result using the unified voice layer.
+
+@@ -173,10 +198,69 @@ def _print_workflow_result(
+     personality, formatting, and contextual next-step suggestions.
+
+     Args:
+-        result: Workflow execution result (WorkflowResult, dict, or other)
+-        workflow_name: Name of the workflow that produced this result
+-
++        result: Workflow execution result (WorkflowResult, dict, or other).
++        workflow_name: Name of the workflow that produced this result.
++        disclosure: ``"summary"`` or ``"full"``. ``"full"`` inlines
++            detail-tier sections that would otherwise be in
++            ``<details>`` blocks. Driven by ``--verbose``.
++        show_cost: Explicit override for cost-line rendering. Driven
++            by ``--show-cost`` / ``--hide-cost``.
+     """
+     from attune.voice import format_output
+
+-    print(format_output(workflow_name, result))
++    _emit_report_sidecar(result)
++    print(
++        format_output(
++            workflow_name,
++            result,
++            disclosure=disclosure,
++            show_cost=show_cost,
++        )
++    )
++
++
++def _emit_report_sidecar(result: object) -> None:
++    """Write a structured ``WorkflowReport`` to the runner sidecar path.
++
++    When the ops runner spawns this CLI as a subprocess it sets
++    ``ATTUNE_REPORT_SIDECAR_PATH`` in the environment. If the
++    workflow returned a ``WorkflowReport`` (or wrapped one in a
++    ``WorkflowResult.final_output``), serialize it via ``to_dict``
++    and write to that path. The runner reads it after the subprocess
++    exits and stores it on the ``Run`` record for the dashboard.
++
++    Best-effort: failures are swallowed (with debug logging) so a
++    sidecar I/O issue never breaks the workflow run for the user.
++    No-op when the env var is unset (the normal CLI-only case).
++    """
++    import json
++    import os
++    from pathlib import Path
++
++    sidecar = os.environ.get("ATTUNE_REPORT_SIDECAR_PATH")
++    if not sidecar:
++        return
++
++    try:
++        from attune.workflows.output import WorkflowReport
++    except ImportError:
++        return
++
++    report: WorkflowReport | None = None
++    if isinstance(result, WorkflowReport):
++        report = result
++    else:
++        final_output = getattr(result, "final_output", None)
++        if isinstance(final_output, WorkflowReport):
++            report = final_output
++
++    if report is None:
++        return
++
++    try:
++        Path(sidecar).write_text(
++            json.dumps(report.to_dict()),
++            encoding="utf-8",
++        )
++    except (OSError, TypeError, ValueError) as exc:
++        logger.debug("Failed to write report sidecar %s: %s", sidecar, exc)
+diff --git a/src/attune/cli_minimal.py b/src/attune/cli_minimal.py
+index bb8d301f..8972dec8 100644
+--- a/src/attune/cli_minimal.py
++++ b/src/attune/cli_minimal.py
+@@ -172,6 +172,21 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
+         choices=["quick", "standard", "deep"],
+         help="Analysis depth (workflow-specific); defaults to 'standard'",
+     )
++    # Cost-metadata disclosure for workflow result rendering.
++    # Mutually exclusive — passing both is a config error.
++    cost_group = run_parser.add_mutually_exclusive_group()
++    cost_group.add_argument(
++        "--show-cost",
++        dest="show_cost",
++        action="store_true",
++        help="Show cost / duration / tier in the rendered report",
++    )
++    cost_group.add_argument(
++        "--hide-cost",
++        dest="hide_cost",
++        action="store_true",
++        help="Hide cost / duration / tier in the rendered report",
++    )
+
+
+ def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
+@@ -558,8 +573,7 @@ def _show_welcome() -> int:
+     except Exception:  # noqa: BLE001
+         # INTENTIONAL: version is non-critical for welcome message
+         ver = "?"
+-    print(
+-        f"""Attune AI v{ver} — AI-powered developer workflows
++    print(f"""Attune AI v{ver} — AI-powered developer workflows
+
+ Get started:
+   attune workflow list        See all available workflows
+@@ -573,8 +587,7 @@ For interactive development in Claude Code:
+   /testing      Run tests, coverage, generate tests
+   /wizard run   Guided multi-step wizards
+
+-More: attune --help | Docs: https://smartaimemory.com/framework-docs/"""
+-    )
++More: attune --help | Docs: https://smartaimemory.com/framework-docs/""")
+     return 0
+
+
+diff --git a/src/attune/ops/routes/dashboard.py b/src/attune/ops/routes/dashboard.py
+index 02108ecb..6033f99b 100644
+--- a/src/attune/ops/routes/dashboard.py
++++ b/src/attune/ops/routes/dashboard.py
+@@ -154,22 +154,33 @@ async def run_view_page(run_id: str, request: Request) -> HTMLResponse:
+     runner = getattr(request.app.state, "runner", None)
+     if runner is None:
+         raise HTTPException(status_code=503, detail="runner unavailable")
+-    run = runner.get(run_id)
++
++    # Check in-memory first; on miss, fall back to the persisted
++    # record on disk. The runner keeps the last 20 runs in memory,
++    # but older runs are still on disk under
++    # ``<runs_dir>/<workflow>/<id>.json`` — they should still be
++    # viewable. Fixes P3-2 in the 2026-05-14 QA punch list.
++    from attune.ops.routes.runner import _resolve_run
++
++    run = _resolve_run(request, run_id)
+     if run is None:
+         logger.info("ops.run_view: run not found: run_id=%s", run_id)
+         raise HTTPException(
+             status_code=404,
+-            detail=(
+-                f"run '{run_id}' not found. The runner keeps the last 20 runs "
+-                "in memory; older runs are pruned when the server restarts."
+-            ),
++            detail=f"run '{run_id}' not found in memory or on disk.",
+         )
++    # When the run was reconstructed from disk it's terminal — no
++    # SSE stream will be available. Pass a None stream_url so the
++    # template skips re-attaching.
++    is_live = runner.get(run_id) is not None
++    stream_url = f"/runs/{run_id}/stream" if is_live else None
+     return _render(
+         request,
+         "run_view.html",
+         page="run-view",
+         run=run.to_dict(),
+-        stream_url=f"/runs/{run_id}/stream",
++        run_lines=run.lines,
++        stream_url=stream_url,
+         allow_run=request.app.state.config.allow_run,
+     )
+
+diff --git a/src/attune/ops/routes/runner.py b/src/attune/ops/routes/runner.py
+index 9cb0d771..e3dfc81e 100644
+--- a/src/attune/ops/routes/runner.py
++++ b/src/attune/ops/routes/runner.py
+@@ -10,7 +10,7 @@ from fastapi import APIRouter, HTTPException, Request
+ from fastapi.responses import JSONResponse, StreamingResponse
+
+ from attune.ops import data
+-from attune.ops.runner import RunnerBusyError, RunnerService
++from attune.ops.runner import Run, RunnerBusyError, RunnerService, _load_run_record
+ from attune.security.path_validation import _validate_file_path
+
+ logger = logging.getLogger(__name__)
+@@ -25,6 +25,46 @@ def _service(request: Request) -> RunnerService:
+     return svc
+
+
++def _resolve_run(request: Request, run_id: str) -> Run | None:
++    """Look up a run by id, checking in-memory then disk.
++
++    The in-memory runner cache holds the last N runs (default 20).
++    Older runs are persisted to ``<runs_dir>/<workflow>/<id>.json``
++    by the runner service. This helper checks both, so refreshing
++    a run-view page after eviction (or after a server restart)
++    still finds the run instead of 404-ing — see P3-2 in the
++    2026-05-14 QA punch list.
++
++    Returns the live ``Run`` from memory when present, otherwise
++    a read-only ``Run`` reconstructed from disk (no subscribers,
++    no SSE — the run is terminal by definition).
++    """
++    svc = _service(request)
++    run = svc.get(run_id)
++    if run is not None:
++        return run
++
++    cfg = getattr(request.app.state, "config", None)
++    runs_dir = getattr(cfg, "runs_dir", None) if cfg is not None else None
++    if runs_dir is None:
++        return None
++
++    # _load_run_record needs (runs_dir, workflow, run_id). The route
++    # only has run_id, so we scan workflow subdirs for a matching
++    # file. Cost is bounded by the small number of workflow dirs
++    # (one per workflow ever persisted, ~10-20 in practice).
++    try:
++        for workflow_dir in runs_dir.iterdir():
++            if not workflow_dir.is_dir():
++                continue
++            record = _load_run_record(runs_dir, workflow_dir.name, run_id)
++            if record is not None:
++                return Run.from_record(record)
++    except (OSError, ValueError) as exc:
++        logger.debug("disk run lookup failed for %s: %s", run_id, exc)
++    return None
++
++
+ def _ensure_allowed(request: Request) -> None:
+     if not request.app.state.config.allow_run:
+         raise HTTPException(
+@@ -98,8 +138,7 @@ async def start_run(name: str, request: Request) -> JSONResponse:
+
+ @router.get("/runs/{run_id}")
+ async def get_run(run_id: str, request: Request) -> JSONResponse:
+-    svc = _service(request)
+-    run = svc.get(run_id)
++    run = _resolve_run(request, run_id)
+     if run is None:
+         raise HTTPException(status_code=404, detail="run not found")
+     return JSONResponse(content=run.to_dict())
+diff --git a/src/attune/ops/runner.py b/src/attune/ops/runner.py
+index 9621f29a..2b75337a 100644
+--- a/src/attune/ops/runner.py
++++ b/src/attune/ops/runner.py
+@@ -14,6 +14,7 @@ from __future__ import annotations
+ import asyncio
+ import json
+ import logging
++import os
+ import re
+ import shlex
+ import sys
+@@ -96,6 +97,11 @@ class Run:
+     command: list[str] | None = None
+     lines: list[str] = field(default_factory=list)
+     subscribers: set[asyncio.Queue[Event]] = field(default_factory=set)
++    # Structured WorkflowReport dict emitted by the subprocess via the
++    # report-sidecar channel (see :func:`_read_report_sidecar`). Populated
++    # after the subprocess exits if a sidecar JSON file was written.
++    # None when the workflow doesn't emit a structured report yet.
++    report: dict[str, object] | None = None
+
+     @property
+     def is_terminal(self) -> bool:
+@@ -119,6 +125,7 @@ class Run:
+             "line_count": len(self.lines),
+             "path": self.path,
+             "command": list(self.command) if self.command else None,
++            "report": self.report,
+         }
+
+     def to_record(self) -> dict[str, object]:
+@@ -131,6 +138,11 @@ class Run:
+         record["lines"] = list(self.lines)
+         return record
+
++    def restore_report(self, data: object) -> None:
++        """Populate ``self.report`` from a persisted record value."""
++        if isinstance(data, dict):
++            self.report = data
++
+     @classmethod
+     def from_record(cls, data: dict[str, object]) -> Run:
+         """Rebuild a Run from a persisted record.
+@@ -152,6 +164,8 @@ class Run:
+         lines = [str(line) for line in lines_raw] if isinstance(lines_raw, list) else []
+         command_raw = data.get("command")
+         command = [str(c) for c in command_raw] if isinstance(command_raw, list) else None
++        report_raw = data.get("report")
++        report = report_raw if isinstance(report_raw, dict) else None
+         return cls(
+             id=str(data.get("id", "")),
+             workflow=str(data.get("workflow", "")),
+@@ -162,6 +176,7 @@ class Run:
+             path=str(data["path"]) if isinstance(data.get("path"), str) else None,
+             command=command,
+             lines=lines,
++            report=report,
+         )
+
+     def _broadcast(self, event: Event) -> None:
+@@ -214,6 +229,55 @@ class Run:
+ CommandBuilder = Callable[[str], Sequence[str]]
+
+
++def _sidecar_dir() -> Path:
++    """Directory holding per-run report sidecar JSON files.
++
++    Created lazily on first use. Lives under the user's attune home
++    so it's writable by the subprocess regardless of cwd.
++    """
++    p = Path.home() / ".attune" / "ops" / "sidecars"
++    p.mkdir(parents=True, exist_ok=True)
++    return p
++
++
++def _sidecar_path_for_run(run_id: str) -> Path:
++    """Stable sidecar path for ``run_id``.
++
++    The subprocess receives this path via ``ATTUNE_REPORT_SIDECAR_PATH``
++    in its environment and writes ``WorkflowReport.to_dict()`` JSON
++    here on success. The runner reads it after the subprocess exits.
++    """
++    return _sidecar_dir() / f"{run_id}.json"
++
++
++def _read_report_sidecar(run: Run, path: Path) -> None:
++    """Populate ``run.report`` from the sidecar file, best-effort.
++
++    Failure modes (file missing, JSON parse error, unexpected type)
++    leave ``run.report = None`` and emit a debug log — they're not
++    fatal. The sidecar is missing for any workflow that hasn't yet
++    been migrated to emit ``WorkflowReport``; absence is the norm
++    until Phase 5 migrations land widely.
++
++    The sidecar file is removed after reading so the per-user
++    sidecar directory doesn't accumulate stale entries.
++    """
++    try:
++        if not path.is_file():
++            return
++        raw = path.read_text(encoding="utf-8")
++        data = json.loads(raw)
++        if isinstance(data, dict):
++            run.report = data
++    except (OSError, ValueError) as exc:
++        logger.debug("Failed to read report sidecar %s: %s", path, exc)
++    finally:
++        try:
++            path.unlink(missing_ok=True)
++        except OSError:
++            pass
++
++
+ def _default_command(workflow: str) -> Sequence[str]:
+     """Default subprocess command — runs the same attune that's hosting ops.
+
+@@ -312,11 +376,21 @@ class RunnerService:
+             cmd.extend(["--path", run.path])
+         run.command = list(cmd)
+         run.append_line(f"$ {' '.join(shlex.quote(c) for c in cmd)}")
++
++        # Report sidecar: when set, the CLI writes the
++        # ``WorkflowReport.to_dict()`` JSON to this path. The runner
++        # reads it after the subprocess exits and stores it on
++        # ``run.report``. Per the workflow-result-formatting spec.
++        sidecar_path = _sidecar_path_for_run(run.id)
++        env = os.environ.copy()
++        env["ATTUNE_REPORT_SIDECAR_PATH"] = str(sidecar_path)
++
+         try:
+             proc = await asyncio.create_subprocess_exec(
+                 *cmd,
+                 stdout=asyncio.subprocess.PIPE,
+                 stderr=asyncio.subprocess.STDOUT,
++                env=env,
+             )
+         except FileNotFoundError as exc:
+             run.append_line(f"[runner error] command not found: {exc}")
+@@ -335,6 +409,7 @@ class RunnerService:
+                     break
+                 run.append_line(raw.decode("utf-8", errors="replace").rstrip("\n"))
+             await proc.wait()
++            _read_report_sidecar(run, sidecar_path)
+             self._finish_run(run, proc.returncode if proc.returncode is not None else -1)
+         except Exception as exc:  # noqa: BLE001
+             run.append_line(f"[runner error] {exc}")
+diff --git a/src/attune/ops/static/css/main.css b/src/attune/ops/static/css/main.css
+index 2f18820e..1b3e7d35 100644
+--- a/src/attune/ops/static/css/main.css
++++ b/src/attune/ops/static/css/main.css
+@@ -1118,3 +1118,106 @@ a.kpi:hover {
+   color: var(--fg-subtle);
+   font-size: 12px;
+ }
++
++/* -----------------------------------------------------------------
++ * Structured report panel — workflow-result-formatting Phase 4.
++ * Rendered above the process log when the run emits a
++ * WorkflowReport via the sidecar channel.
++ * ----------------------------------------------------------------- */
++.run-report-panel {
++  margin-bottom: 16px;
++  padding: 16px 18px;
++  background: var(--bg);
++  border: 1px solid var(--border);
++  border-radius: var(--radius);
++}
++.run-report-panel .report-title {
++  margin: 0 0 8px 0;
++  font-size: 18px;
++}
++.run-report-panel .report-summary {
++  margin: 0 0 12px 0;
++  color: var(--fg-subtle);
++}
++.run-report-panel h2 {
++  margin: 14px 0 8px 0;
++  font-size: 14px;
++  text-transform: uppercase;
++  letter-spacing: 0.04em;
++  color: var(--fg-subtle);
++}
++.run-report-panel .report-callout {
++  margin: 0 0 12px 0;
++  padding: 8px 12px;
++  border-left: 3px solid var(--border);
++  background: var(--bg-soft);
++  font-size: 14px;
++}
++.run-report-panel .report-callout--ok {
++  border-left-color: var(--ok, #2da44e);
++}
++.run-report-panel .report-callout--warn {
++  border-left-color: var(--warn, #d49b00);
++}
++.run-report-panel .report-callout--danger {
++  border-left-color: var(--danger, #cf222e);
++}
++.run-report-panel table {
++  width: 100%;
++  border-collapse: collapse;
++  margin: 6px 0 12px 0;
++  font-size: 13px;
++}
++.run-report-panel th,
++.run-report-panel td {
++  text-align: left;
++  padding: 6px 10px;
++  border-bottom: 1px solid var(--border);
++}
++.run-report-panel th {
++  color: var(--fg-subtle);
++  font-weight: 500;
++}
++.run-report-panel .report-findings .severity {
++  font-family: var(--font-mono);
++  font-size: 11px;
++  font-weight: 600;
++}
++.run-report-panel .severity--high { color: var(--danger, #cf222e); }
++.run-report-panel .severity--medium { color: var(--warn, #d49b00); }
++.run-report-panel .severity--low { color: var(--accent); }
++.run-report-panel .severity--info { color: var(--fg-subtle); }
++.run-report-panel .report-detail {
++  margin: 8px 0;
++}
++.run-report-panel .report-detail > summary {
++  cursor: pointer;
++  color: var(--fg-subtle);
++  font-size: 13px;
++  padding: 4px 0;
++}
++.run-report-panel .report-next-steps ul {
++  margin: 0;
++  padding-left: 20px;
++}
++.run-report-panel .report-next-steps li {
++  margin: 6px 0;
++}
++.run-report-panel .report-command {
++  margin: 4px 0 6px 0;
++  padding: 6px 10px;
++  background: var(--bg-soft);
++  border: 1px solid var(--border);
++  border-radius: var(--radius-sm);
++  font: 12px var(--font-mono);
++  overflow-x: auto;
++}
++.run-log-toggle {
++  margin-top: 8px;
++}
++.run-log-toggle > summary {
++  cursor: pointer;
++  color: var(--fg-subtle);
++  font-size: 13px;
++  padding: 4px 0;
++}
+diff --git a/src/attune/ops/static/js/run_view.js b/src/attune/ops/static/js/run_view.js
+index 26e4b0e9..e719fe5f 100644
+--- a/src/attune/ops/static/js/run_view.js
++++ b/src/attune/ops/static/js/run_view.js
+@@ -19,12 +19,59 @@
+     DATA = {};
+   }
+
++  var RUN_ID = DATA.run_id || "";
+   var STREAM_URL = DATA.stream_url || "";
+   var INITIAL_STATUS = DATA.initial_status || "";
+   var SOURCE_WORKFLOW = DATA.workflow || "";
+   var SOURCE_PATH = DATA.path == null ? null : DATA.path;
+   var ALLOW_RUN = DATA.allow_run === true;
+
++  // ----------------------------------------------------------------
++  // Structured WorkflowReport panel (workflow-result-formatting Phase 4)
++  // ----------------------------------------------------------------
++  //
++  // After the run reaches a terminal state, fetch the run record and
++  // — if a structured ``report`` field is present — render it into
++  // the panel above the process log. The panel is hidden until a
++  // real report is available so unmigrated workflows show only the
++  // existing terminal-output pane (zero regression for those).
++  //
++  // Render uses AttuneReportRender.render() from report_render.js;
++  // no markdown parser dependency because the structured shape
++  // (sections + kind discriminator) is enough.
++  function loadAndRenderReport() {
++    if (!RUN_ID) return;
++    var panel = document.querySelector("[data-report]");
++    var logToggle = document.querySelector("[data-log-toggle]");
++    if (!panel) return;
++    // The single-run JSON endpoint lives at `/runs/<id>` (no `/api/`
++    // prefix — that namespace is the workflow-list endpoint).
++    fetch("/runs/" + encodeURIComponent(RUN_ID))
++      .then(function (resp) {
++        if (!resp.ok) return null;
++        return resp.json();
++      })
++      .then(function (data) {
++        if (!data || !data.report) return;
++        if (!window.AttuneReportRender || !window.AttuneReportRender.render) return;
++        var frag = window.AttuneReportRender.render(data.report, {
++          disclosure: "summary",
++        });
++        panel.innerHTML = "";
++        panel.appendChild(frag);
++        panel.hidden = false;
++        // When a structured report renders, the process log is
++        // secondary — collapse the toggle by default.
++        if (logToggle && logToggle.hasAttribute("open")) {
++          logToggle.removeAttribute("open");
++        }
++      })
++      .catch(function () {
++        // Best-effort. Network failure leaves the panel hidden;
++        // the existing terminal-output pane is unaffected.
++      });
++  }
++
+   var pre = document.querySelector("[data-log]");
+   var statusEl = document.querySelector("[data-status]");
+   var chainedFromEl = document.querySelector("[data-chained-from]");
+@@ -128,6 +175,9 @@
+         INITIAL_STATUS === "failed" ? "chip-danger" :
+         "chip-muted"
+       );
++      // Page loaded after the run already completed — fetch the
++      // structured report (if any) and render the panel now.
++      loadAndRenderReport();
+     }
+
+     es.addEventListener("line", function (ev) {
+@@ -170,6 +220,8 @@
+         );
+       }
+       es.close();
++      // Run is terminal — fetch + render the structured report panel.
++      loadAndRenderReport();
+     });
+
+     es.addEventListener("error", function () {
+diff --git a/src/attune/ops/templates/run_view.html b/src/attune/ops/templates/run_view.html
+index 5c20deb8..b35bffb1 100644
+--- a/src/attune/ops/templates/run_view.html
++++ b/src/attune/ops/templates/run_view.html
+@@ -28,7 +28,13 @@
+   <div class="run-view-history" data-recent-runs="{{ run.workflow }}" data-exclude-run-id="{{ run.id }}" hidden></div>
+ </section>
+
+-<pre class="log-output run-view-log" data-log></pre>
++<section class="run-report-panel" data-report hidden></section>
++
++<details class="run-log-toggle" data-log-toggle>
++  <summary>Process log</summary>
++  <pre class="log-output run-view-log" data-log>{% if run_lines %}{% for line in run_lines %}{{ line }}
++{% endfor %}{% endif %}</pre>
++</details>
+
+ <p class="meta run-view-foot">
+   This page reconnects to the run's stream automatically — refresh anytime
+@@ -43,6 +49,7 @@
+    data (not a script). #}
+ <script id="run-view-data" type="application/json">
+ {
++  "run_id": {{ run.id|tojson }},
+   "stream_url": {{ stream_url|tojson }},
+   "initial_status": {{ run.status|tojson }},
+   "workflow": {{ run.workflow|tojson }},
+@@ -52,7 +59,10 @@
+ </script>
+ {# runner.js provides the shared setupRecentRuns helper that
+    run_view.js calls. Loaded BEFORE run_view.js so the helper is
+-   available when run_view.js initializes. #}
++   available when run_view.js initializes.
++   report_render.js renders the structured WorkflowReport panel
++   when the run emits one via the sidecar channel. #}
+ <script src="{{ url_for('static', path='js/runner.js') }}"></script>
++<script src="{{ url_for('static', path='js/report_render.js') }}"></script>
+ <script src="{{ url_for('static', path='js/run_view.js') }}"></script>
+ {% endblock %}
+diff --git a/src/attune/voice/formatter.py b/src/attune/voice/formatter.py
+index 2c5dd7da..04a72ef7 100644
+--- a/src/attune/voice/formatter.py
++++ b/src/attune/voice/formatter.py
+@@ -11,20 +11,48 @@ Licensed under Apache 2.0
+ from __future__ import annotations
+
+ import logging
++import os
+ from types import SimpleNamespace
+ from typing import Any
+
+ from . import personality
++from .markdown_renderer import render as render_report
++from .markdown_renderer import render_unmigrated_fallback
+ from .next_steps import get_next_steps
+
+ logger = logging.getLogger(__name__)
+
+
++def _resolve_show_cost(explicit: bool | None = None) -> bool:
++    """Resolve whether to show cost / duration / tier metadata.
++
++    Precedence (highest to lowest):
++    1. Explicit caller override (e.g. CLI flag --show-cost / --hide-cost).
++    2. ``ATTUNE_SHOW_COST_METRICS`` env var if set (truthy → show).
++    3. Auto-detect from ``ANTHROPIC_API_KEY`` presence — pay-per-call
++       users see costs; subscription users don't.
++
++    Args:
++        explicit: When non-None, returned verbatim.
++
++    Returns:
++        True iff cost metadata should render.
++    """
++    if explicit is not None:
++        return explicit
++    env_override = os.environ.get("ATTUNE_SHOW_COST_METRICS")
++    if env_override is not None:
++        return env_override.strip().lower() in ("1", "true", "yes", "on")
++    return bool(os.environ.get("ANTHROPIC_API_KEY"))
++
++
+ def format_output(
+     workflow_name: str,
+     result: Any,
+     *,
+     compact: bool = False,
++    disclosure: str = "summary",
++    show_cost: bool | None = None,
+ ) -> str:
+     """Format a workflow result in the attune voice.
+
+@@ -35,6 +63,13 @@ def format_output(
+         workflow_name: Name of the workflow that produced this result.
+         result: WorkflowResult, dict, or string to format.
+         compact: If True, produce shorter output (for MCP responses).
++        disclosure: ``"summary"`` (default) shows essentials + wraps
++            detail-tier sections in ``<details>`` blocks. ``"full"``
++            inlines all sections. Only affects WorkflowReport results.
++        show_cost: Explicit override for cost/duration/tier metadata
++            rendering. ``None`` (default) auto-resolves via
++            ``ANTHROPIC_API_KEY`` presence + env vars (see
++            ``_resolve_show_cost``).
+
+     Returns:
+         Voiced, formatted output string ready for display.
+@@ -45,6 +80,8 @@ def format_output(
+     # --- Detect result type and extract data ---
+     success, score, report_text, cost_line, error_msg = _extract_result_data(
+         result,
++        disclosure=disclosure,
++        show_cost=show_cost,
+     )
+
+     # --- Opening line ---
+@@ -134,6 +171,63 @@ def format_error(
+     return "\n".join(lines)
+
+
++def mcp_envelope_for_report(
++    report: Any,
++    *,
++    show_cost: bool | None = None,
++    disclosure: str = "summary",
++) -> dict[str, Any]:
++    """Build an MCP response envelope from a ``WorkflowReport``.
++
++    Used by MCP tool handlers to package a structured workflow result
++    for Claude Code. The envelope contains:
++
++    - ``formatted_report``: rendered markdown (the human-readable
++      content; Claude Code's chat panel renders markdown natively)
++    - ``report``: structured JSON via ``WorkflowReport.to_dict``
++      (machine consumers can dispatch on section ``kind`` discriminators)
++    - ``score``: pulled from ``report.score`` when present
++    - ``success``: defaults to True; handlers override for error cases
++
++    Args:
++        report: A ``WorkflowReport`` instance.
++        show_cost: Explicit override for cost-line emission.
++        disclosure: ``"summary"`` (default) or ``"full"``.
++
++    Returns:
++        Dict suitable for returning from an MCP tool handler. Handlers
++        may extend the dict (add ``error``, ``error_type``, etc.) before
++        returning.
++    """
++    from attune.workflows.output import WorkflowReport
++
++    if not isinstance(report, WorkflowReport):
++        raise TypeError(
++            f"mcp_envelope_for_report requires a WorkflowReport, " f"got {type(report).__name__}",
++        )
++
++    try:
++        formatted = render_report(
++            report,
++            disclosure=disclosure,  # type: ignore[arg-type]
++            show_cost=_resolve_show_cost(show_cost),
++        )
++    except Exception as e:  # noqa: BLE001
++        # INTENTIONAL: renderer error must be visible, not silent.
++        logger.exception("Renderer error in mcp_envelope_for_report")
++        banner = f"⚠ Report renderer error: {type(e).__name__}: {e}\n\n"
++        formatted = banner + render_unmigrated_fallback(report)
++
++    envelope: dict[str, Any] = {
++        "success": True,
++        "formatted_report": formatted,
++        "report": report.to_dict(),
++    }
++    if report.score is not None:
++        envelope["score"] = report.score
++    return envelope
++
++
+ def format_mcp_response(
+     workflow_name: str,
+     response: dict[str, Any],
+@@ -187,11 +281,17 @@ def format_mcp_response(
+
+ def _extract_result_data(
+     result: Any,
++    *,
++    disclosure: str = "summary",
++    show_cost: bool | None = None,
+ ) -> tuple[bool, int | None, str | None, str | None, str | None]:
+     """Extract display data from various result types.
+
+     Args:
+         result: WorkflowResult, dict, or string.
++        disclosure: ``"summary"`` (default) or ``"full"``. Threaded to
++            the markdown renderer for ``WorkflowReport`` results.
++        show_cost: Explicit override for cost-line emission.
+
+     Returns:
+         Tuple of (success, score, report_text, cost_line, error_msg).
+@@ -204,7 +304,11 @@ def _extract_result_data(
+
+     if WorkflowResult is not None and isinstance(result, WorkflowResult):
+         try:
+-            return _extract_from_workflow_result(result)
++            return _extract_from_workflow_result(
++                result,
++                disclosure=disclosure,
++                show_cost=show_cost,
++            )
+         except Exception:  # noqa: BLE001
+             # INTENTIONAL: Degrade gracefully if result fields are unexpected
+             logger.debug("Failed to extract from WorkflowResult", exc_info=True)
+@@ -220,6 +324,9 @@ def _extract_result_data(
+
+ def _extract_from_workflow_result(
+     result: Any,
++    *,
++    disclosure: str = "summary",
++    show_cost: bool | None = None,
+ ) -> tuple[bool, int | None, str | None, str | None, str | None]:
+     """Extract data from a WorkflowResult dataclass.
+
+@@ -233,12 +340,50 @@ def _extract_from_workflow_result(
+     report_text = None
+     score = None
+
++    # WorkflowReport → call the markdown renderer. This is the
++    # canonical structured path; markdown is the canonical output
++    # shape. Renderer crashes surface as a visible error banner so
++    # bugs don't get swallowed.
++    try:
++        from attune.workflows.output import WorkflowReport
++    except ImportError:
++        WorkflowReport = None  # type: ignore[misc,assignment]
++
++    if WorkflowReport is not None and isinstance(result.final_output, WorkflowReport):
++        try:
++            # mypy: disclosure is validated to the Literal at the
++            # renderer boundary; the public format_output signature
++            # accepts str for ergonomics.
++            report_text = render_report(
++                result.final_output,
++                disclosure=disclosure,  # type: ignore[arg-type]
++                show_cost=_resolve_show_cost(show_cost),
++            )
++        except Exception as e:  # noqa: BLE001
++            # INTENTIONAL: renderer bugs must be visible at the surface,
++            # but we still emit a degraded view rather than the user
++            # seeing nothing.
++            logger.exception("Renderer error for WorkflowReport")
++            banner = f"⚠ Report renderer error: {type(e).__name__}: {e}\n\n"
++            report_text = banner + render_unmigrated_fallback(
++                result.final_output,
++            )
++        score = result.final_output.score
++        # The rendered markdown carries its own cost line (gated by
++        # show_cost). Suppress the voice-layer cost block to avoid
++        # double emission.
++        error_msg = result.error if not result.success else None
++        return (result.success, score, report_text, None, error_msg)
++
+     # Extract formatted report from final_output
+     if isinstance(result.final_output, dict):
+         report_text = result.final_output.get("formatted_report")
+         score = result.final_output.get("score")
+     elif result.final_output is not None:
+-        report_text = str(result.final_output)
++        # Safety net: any non-WorkflowReport, non-dict, non-None final
++        # output gets the unmigrated-fallback pretty-printer. This
++        # replaces the historical `str(final_output)` repr leak.
++        report_text = render_unmigrated_fallback(result.final_output)
+
+     # Fallback: use summary + metadata findings if report_text is sparse
+     if not report_text or len(report_text.strip()) < 50:
+diff --git a/src/attune/workflows/output.py b/src/attune/workflows/output.py
+index 3a283bbd..40c6e76c 100644
+--- a/src/attune/workflows/output.py
++++ b/src/attune/workflows/output.py
+@@ -1,437 +1,273 @@
+-"""Unified output formatting for workflows.
++"""Workflow result data model.
+
+-Provides consistent Rich-based output components for workflow results:
+-- WorkflowReport: Main report container with sections
+-- FindingsTable: Render findings as Rich Table or plain text
+-- MetricsPanel: Color-coded score display
+-- ReportSection: Individual report sections
++Defines ``WorkflowReport`` and its building blocks. Pure data — no
++rendering, no Rich imports, no markdown emission. Rendering lives in
++``attune.voice.markdown_renderer``.
+
+-Supports graceful fallback to plain text when Rich is unavailable.
++The data model is shaped around the workflow-result-formatting spec
++([docs/specs/workflow-result-formatting/proposal.md]). The previous
++contents of this file — a Rich-based rendering harness — had zero
++production callers and were replaced as part of Phase 2 of that spec.
+
+-Copyright 2025 Smart-AI-Memory
++Copyright 2026 Smart-AI-Memory
+ Licensed under the Apache License, Version 2.0
+ """
+
+ from __future__ import annotations
+
+-from dataclasses import dataclass, field
+-from typing import TYPE_CHECKING, Any
+-
+-# Rich imports with fallback
+-try:
+-    from rich.console import Console
+-    from rich.panel import Panel
+-    from rich.table import Table
+-    from rich.text import Text
+-
+-    RICH_AVAILABLE = True
+-except ImportError:
+-    RICH_AVAILABLE = False
+-    Console = None  # type: ignore[misc,assignment]
+-    Panel = None  # type: ignore[misc,assignment]
+-    Table = None  # type: ignore[misc,assignment]
+-    Text = None  # type: ignore[misc,assignment]
+-
+-if TYPE_CHECKING:
+-    from rich.console import Console as ConsoleType
+-
++from dataclasses import asdict, dataclass, field, is_dataclass
++from typing import Any, ClassVar, Literal
++
++__all__ = [
++    "CalloutSection",
++    "Finding",
++    "FindingsSection",
++    "ListSection",
++    "NextAction",
++    "NextStepsSection",
++    "ProseSection",
++    "Section",
++    "TableSection",
++    "Tier",
++    "WorkflowReport",
++]
++
++
++Tier = Literal["essential", "useful", "detail"]
++"""Visibility tier for a section.
++
++- ``essential``: always shown; drives the user's next action.
++- ``useful``: shown in summary mode below essentials.
++- ``detail``: hidden in summary mode (wrapped in collapsible blocks
++  on the dashboard, hidden behind ``--verbose`` on the CLI).
++"""
+
+-# =============================================================================
+-# DATA CLASSES
+-# =============================================================================
++Emphasis = Literal["info", "ok", "warn", "danger"]
++"""Emphasis level for ``CalloutSection`` — drives styling at render."""
+
+
+ @dataclass
+ class Finding:
+-    """Individual finding from a workflow."""
++    """A single issue, observation, or hit emitted by a workflow."""
+
+-    severity: str  # "high", "medium", "low", "info"
++    severity: str  # "high" | "medium" | "low" | "info"
+     file: str
+     line: int | None = None
+     message: str = ""
+     code: str | None = None
+
+-    @property
+-    def severity_icon(self) -> str:
+-        """Get icon for severity level."""
+-        icons = {
+-            "high": "[red]:x:[/red]" if RICH_AVAILABLE else "X",
+-            "medium": "[yellow]:warning:[/yellow]" if RICH_AVAILABLE else "!",
+-            "low": "[blue]:information:[/blue]" if RICH_AVAILABLE else "i",
+-            "info": "[dim]o[/dim]" if RICH_AVAILABLE else "o",
+-        }
+-        return icons.get(self.severity.lower(), "o")
+-
+     @property
+     def location(self) -> str:
+-        """Get file:line location string."""
+-        if self.line:
++        """``file:line`` if ``line`` is set, else ``file``."""
++        if self.line is not None:
+             return f"{self.file}:{self.line}"
+         return self.file
+
+
+ @dataclass
+-class ReportSection:
+-    """Individual section of a workflow report."""
++class NextAction:
++    """A single forward-looking step the user can take after a report.
+
+-    title: str
+-    content: Any  # str, list[Finding], dict, or Rich renderable
+-    collapsed: bool = False
+-    style: str = "default"  # "default", "success", "warning", "error"
++    ``text`` is always present and reads as the bullet's main line.
++    ``command`` is an optional shell command the dashboard can wire
++    to a one-click run button (and the CLI prints syntax-highlighted).
++    ``file`` is an optional ``path[:line]`` reference the dashboard
++    turns into a clickable link (and the CLI prints as inline code).
++
++    Both ``command`` and ``file`` are independent; either, both, or
++    neither can be present.
++    """
++
++    text: str
++    command: str | None = None
++    file: str | None = None
+
+
+ @dataclass
+-class WorkflowReport:
+-    """Main workflow report container."""
++class Section:
++    """Base class for content-bearing report sections.
++
++    Subclasses are matched by ``isinstance`` in the renderer. Each
++    subclass sets ``kind`` as a class-level constant — used for the
++    JSON envelope so structured consumers (MCP, dashboard) can pick
++    the right renderer without isinstance gymnastics.
++
++    Subclasses should not override ``__init__``; declare the
++    kind-specific fields on the subclass dataclass.
++    """
+
+     title: str
+-    summary: str = ""
+-    sections: list[ReportSection] = field(default_factory=list)
+-    score: int | None = None
+-    level: str = "info"  # "info", "success", "warning", "error"
+-    metadata: dict[str, Any] = field(default_factory=dict)
++    tier: Tier
++    kind: ClassVar[str] = "section"
+
+-    def add_section(
+-        self,
+-        title: str,
+-        content: Any,
+-        collapsed: bool = False,
+-        style: str = "default",
+-    ) -> None:
+-        """Add a section to the report."""
+-        self.sections.append(
+-            ReportSection(title=title, content=content, collapsed=collapsed, style=style),
+-        )
+
+-    def render(self, console: ConsoleType | None = None, use_rich: bool = True) -> str:
+-        """Render the report.
++@dataclass
++class CalloutSection(Section):
++    """A short banner-style block with an emphasis level.
++
++    Rendered as a fenced quote on markdown surfaces. The verdict line
++    on most reports is a callout.
++    """
+
+-        Args:
+-            console: Rich Console instance (optional)
+-            use_rich: Whether to use Rich formatting
++    text: str = ""
++    emphasis: Emphasis = "info"
++    kind: ClassVar[str] = "callout"
+
+-        Returns:
+-            Rendered report as string (for plain text) or prints to console (for Rich)
+
+-        """
+-        if use_rich and RICH_AVAILABLE and console is not None:
+-            self._render_rich(console)
+-            return ""
+-        return self._render_plain()
+-
+-    def _render_rich(self, console: ConsoleType) -> None:
+-        """Render report using Rich."""
+-        # Score panel (title shown via score panel)
+-        if self.score is not None:
+-            score_panel = MetricsPanel.render_score(self.score)
+-            console.print(score_panel)
+-
+-        if self.summary:
+-            console.print(f"\n{self.summary}\n")
+-
+-        # Sections
+-        for section in self.sections:
+-            self._render_section_rich(console, section)
+-
+-    def _render_section_rich(self, console: ConsoleType, section: ReportSection) -> None:
+-        """Render a single section using Rich."""
+-        border_style = {
+-            "success": "green",
+-            "warning": "yellow",
+-            "error": "red",
+-            "default": "blue",
+-        }.get(section.style, "blue")
+-
+-        if isinstance(section.content, str):
+-            console.print(Panel(section.content, title=section.title, border_style=border_style))
+-        elif isinstance(section.content, list) and all(
+-            isinstance(f, Finding) for f in section.content
+-        ):
+-            table = FindingsTable(section.content).to_rich_table()
+-            console.print(Panel(table, title=section.title, border_style=border_style))
+-        elif isinstance(section.content, dict):
+-            # Render dict as key-value table
+-            table = Table(show_header=False, box=None)
+-            table.add_column("Key", style="cyan")
+-            table.add_column("Value")
+-            for key, value in section.content.items():
+-                table.add_row(str(key), str(value))
+-            console.print(Panel(table, title=section.title, border_style=border_style))
+-        else:
+-            # Try to print directly (might be a Rich renderable)
+-            try:
+-                console.print(
+-                    Panel(section.content, title=section.title, border_style=border_style),
+-                )
+-            except Exception:  # noqa: BLE001
+-                # INTENTIONAL: Graceful fallback for unknown content types
+-                console.print(f"\n[bold]{section.title}[/bold]")
+-                console.print(str(section.content))
+-
+-    def _render_plain(self) -> str:
+-        """Render report as plain text."""
+-        lines = []
+-        separator = "=" * 60
+-
+-        # Header
+-        lines.append(separator)
+-        lines.append(self.title.upper())
+-        lines.append(separator)
+-
+-        if self.score is not None:
+-            level = MetricsPanel.get_level(self.score)
+-            lines.append(f"Score: {self.score}/100 ({level.upper()})")
+-            lines.append("")
+-
+-        if self.summary:
+-            lines.append(self.summary)
+-            lines.append("")
+-
+-        # Sections
+-        for section in self.sections:
+-            lines.append("-" * 60)
+-            lines.append(section.title.upper())
+-            lines.append("-" * 60)
++@dataclass
++class ProseSection(Section):
++    """A paragraph of prose. Multi-line text rendered verbatim."""
++
++    text: str = ""
++    kind: ClassVar[str] = "prose"
+
+-            if isinstance(section.content, str):
+-                lines.append(section.content)
+-            elif isinstance(section.content, list) and all(
+-                isinstance(f, Finding) for f in section.content
+-            ):
+-                lines.append(FindingsTable(section.content).to_plain())
+-            elif isinstance(section.content, dict):
+-                for key, value in section.content.items():
+-                    lines.append(f"  {key}: {value}")
+-            else:
+-                lines.append(str(section.content))
+
+-            lines.append("")
++@dataclass
++class TableSection(Section):
++    """A tabular block.
++
++    ``columns`` is the header order. Each row is a dict keyed by
++    column name; missing keys render as empty cells. Cell values may
++    be any type with a ``__str__`` — the renderer is responsible for
++    final stringification.
++    """
+
+-        lines.append(separator)
+-        return "\n".join(lines)
++    columns: list[str] = field(default_factory=list)
++    rows: list[dict[str, object]] = field(default_factory=list)
++    kind: ClassVar[str] = "table"
+
+
+-# =============================================================================
+-# FINDINGS TABLE
+-# =============================================================================
++@dataclass
++class ListSection(Section):
++    """An unordered list of plain strings."""
+
++    items: list[str] = field(default_factory=list)
++    kind: ClassVar[str] = "list"
+
+-class FindingsTable:
+-    """Render a list of Finding objects as a Rich Table or plain text.
+
+-    Args:
+-        findings: List of Finding objects to render.
++@dataclass
++class FindingsSection(Section):
++    """A section carrying a list of ``Finding`` objects.
+
++    Findings have a fixed shape (severity, file, line, message,
++    optional code). The renderer formats them as a table sorted by
++    severity with ``file:line`` rendered as inline code.
+     """
+
+-    def __init__(self, findings: list[Finding]) -> None:
+-        """Initialize with list of findings."""
+-        self.findings = findings
++    findings: list[Finding] = field(default_factory=list)
++    kind: ClassVar[str] = "findings"
+
+-    def to_rich_table(self) -> Table:
+-        """Convert findings to a color-coded Rich Table.
+
+-        Returns:
+-            Rich Table with Severity, Location, and Message columns.
++@dataclass
++class NextStepsSection(Section):
++    """Forward-momentum section every report ends on when non-empty.
++
++    Always rendered last in summary mode. ``tier`` is conventionally
++    ``"essential"`` — next steps are the whole point of bothering to
++    make the report scannable. The renderer omits the section
++    entirely when ``items`` is empty so empty ``Next steps:`` headers
++    never appear.
++    """
+
+-        """
+-        table = Table(show_header=True, header_style="bold magenta")
+-        table.add_column("Severity", style="bold", width=8)
+-        table.add_column("Location", style="cyan")
+-        table.add_column("Message")
+-
+-        for finding in self.findings:
+-            severity_style = {
+-                "high": "red",
+-                "medium": "yellow",
+-                "low": "blue",
+-                "info": "dim",
+-            }.get(finding.severity.lower(), "white")
+-
+-            table.add_row(
+-                Text(finding.severity.upper(), style=severity_style),
+-                finding.location,
+-                finding.message,
+-            )
+-
+-        return table
+-
+-    def to_plain(self) -> str:
+-        """Convert findings to indented plain text.
+-
+-        Returns:
+-            Multi-line string with ``[SEVERITY] file:line``
+-            format, or ``"  No findings."`` if empty.
++    items: list[NextAction] = field(default_factory=list)
++    kind: ClassVar[str] = "next-steps"
+
+-        """
+-        if not self.findings:
+-            return "  No findings."
+-
+-        lines = []
+-        for finding in self.findings:
+-            lines.append(f"  [{finding.severity.upper()}] {finding.location}")
+-            if finding.message:
+-                lines.append(f"      {finding.message}")
+-
+-        return "\n".join(lines)
+-
+-
+-# =============================================================================
+-# METRICS PANEL
+-# =============================================================================
+-
+-
+-class MetricsPanel:
+-    """Display score with color-coded indicator."""
+-
+-    @staticmethod
+-    def get_level(score: int) -> str:
+-        """Get level name for score."""
+-        if score >= 85:
+-            return "excellent"
+-        if score >= 70:
+-            return "good"
+-        if score >= 50:
+-            return "needs work"
+-        return "critical"
+-
+-    @staticmethod
+-    def get_style(score: int) -> str:
+-        """Get Rich style for score."""
+-        if score >= 85:
+-            return "green"
+-        if score >= 70:
+-            return "yellow"
+-        if score >= 50:
+-            return "orange1"
+-        return "red"
+-
+-    @staticmethod
+-    def get_icon(score: int) -> str:
+-        """Get icon for score."""
+-        if score >= 85:
+-            return "[green]:heavy_check_mark:[/green]"
+-        if score >= 70:
+-            return "[yellow]:large_yellow_circle:[/yellow]"
+-        if score >= 50:
+-            return "[orange1]:warning:[/orange1]"
+-        return "[red]:x:[/red]"
+-
+-    @staticmethod
+-    def get_plain_icon(score: int) -> str:
+-        """Get plain text icon for score."""
+-        if score >= 85:
+-            return "[OK]"
+-        if score >= 70:
+-            return "[--]"
+-        if score >= 50:
+-            return "[!!]"
+-        return "[XX]"
+
+-    @classmethod
+-    def render_score(cls, score: int, label: str = "Score") -> Panel:
+-        """Render score as Rich Panel.
++@dataclass
++class WorkflowReport:
++    """The structured result every workflow returns.
+
+-        Args:
+-            score: Score value (0-100)
+-            label: Label for the score
++    Workflows compose a report by appending ``Section`` instances.
++    The voice layer / CLI / dashboard / MCP all consume this shape
++    through ``attune.voice.markdown_renderer.render``; no surface
++    inspects the report fields directly for rendering.
+
+-        Returns:
+-            Rich Panel with formatted score
++    ``metadata`` carries side-channel data (cost, timing, confidence,
++    tier). The renderer reads it via ``show_cost`` config but most of
++    it is intended for ``--json`` consumers, not human readers.
+
+-        """
+-        if not RICH_AVAILABLE or Panel is None:
+-            raise RuntimeError("Rich library not available. Install with: pip install rich")
++    ``suggestions`` exists for backward compatibility with workflows
++    that emit project-aware suggestions through that field. New
++    workflows should prefer ``NextStepsSection`` for forward-looking
++    actions.
++    """
+
+-        style = cls.get_style(score)
+-        icon = cls.get_icon(score)
+-        level = cls.get_level(score)
++    title: str
++    summary: str = ""
++    score: int | None = None
++    metadata: dict[str, Any] = field(default_factory=dict)
++    suggestions: list[Any] = field(default_factory=list)
++    sections: list[Section] = field(default_factory=list)
+
+-        content = f"{icon} [bold]{score}[/bold]/100 ({level.upper()})"
+-        return Panel(content, title=f"[bold]{label}[/bold]", border_style=style)
++    @property
++    def findings(self) -> list[Finding]:
++        """Aggregate findings across every ``FindingsSection``.
++
++        Back-compat read accessor for workflows that previously
++        exposed ``report.findings`` as a top-level field. Assignment
++        to ``report.findings`` is no longer supported — append a
++        ``FindingsSection`` to ``report.sections`` instead.
++        """
++        out: list[Finding] = []
++        for section in self.sections:
++            if isinstance(section, FindingsSection):
++                out.extend(section.findings)
++        return out
+
+     @classmethod
+-    def render_plain(cls, score: int, label: str = "Score") -> str:
+-        """Render score as plain text.
++    def from_findings(
++        cls,
++        title: str,
++        findings: list[Finding],
++        *,
++        tier: Tier = "essential",
++        summary: str = "",
++        score: int | None = None,
++        metadata: dict[str, Any] | None = None,
++    ) -> WorkflowReport:
++        """Build a one-section report for findings-only workflows.
++
++        Convenience for the common case where a workflow's whole
++        output is a list of findings (e.g. ``bug-predict``,
++        ``security-audit``).
++        """
++        return cls(
++            title=title,
++            summary=summary,
++            score=score,
++            metadata=metadata or {},
++            sections=[
++                FindingsSection(title=title, tier=tier, findings=findings),
++            ],
++        )
+
+-        Args:
+-            score: Score value (0-100)
+-            label: Label for the score
++    def to_dict(self) -> dict[str, Any]:
++        """Serialize to JSON-compatible dict.
+
+-        Returns:
+-            Plain text score display
++        Used by MCP envelopes and the dashboard's structured panel.
++        Schema is load-bearing for downstream consumers; changes
++        require versioning.
+
++        Section serialization preserves the ``kind`` discriminator so
++        consumers can dispatch on it.
+         """
+-        icon = cls.get_plain_icon(score)
+-        level = cls.get_level(score)
+-        return f"{label}: {icon} {score}/100 ({level.upper()})"
+-
+-
+-# =============================================================================
+-# HELPER FUNCTIONS
+-# =============================================================================
+-
+-
+-def format_workflow_result(
+-    title: str,
+-    summary: str = "",
+-    findings: list[dict] | None = None,
+-    score: int | None = None,
+-    recommendations: str = "",
+-    metadata: dict[str, Any] | None = None,
+-    suggestions: list | None = None,
+-) -> WorkflowReport:
+-    """Create a standardized workflow report.
+-
+-    Args:
+-        title: Report title
+-        summary: Brief summary text
+-        findings: List of finding dicts with severity, file, line, message
+-        score: Overall score (0-100)
+-        recommendations: Recommendations text
+-        metadata: Additional metadata
+-        suggestions: List of NextAction for project-aware guidance
+-
+-    Returns:
+-        WorkflowReport instance
++        return {
++            "title": self.title,
++            "summary": self.summary,
++            "score": self.score,
++            "metadata": dict(self.metadata),
++            "suggestions": list(self.suggestions),
++            "sections": [_section_to_dict(s) for s in self.sections],
++        }
+
+-    """
+-    report = WorkflowReport(
+-        title=title,
+-        summary=summary,
+-        score=score,
+-        metadata=metadata or {},
+-    )
+-
+-    if findings:
+-        finding_objs = [
+-            Finding(
+-                severity=f.get("severity", "info"),
+-                file=f.get("file", "unknown"),
+-                line=f.get("line"),
+-                message=f.get("message", ""),
+-                code=f.get("code"),
+-            )
+-            for f in findings
+-        ]
+-        report.add_section("Findings", finding_objs)
+-
+-    if recommendations:
+-        report.add_section("Recommendations", recommendations)
+-
+-    # Project-aware guidance (v3.5)
+-    if suggestions:
+-        from .suggestions import format_suggestions_markdown
+-
+-        guidance_text = format_suggestions_markdown(suggestions)
+-        if guidance_text:
+-            report.add_section("What's Next", guidance_text, style="success")
+-
+-    return report
+-
+-
+-def get_console() -> Console | None:
+-    """Get Rich Console if available."""
+-    if RICH_AVAILABLE and Console is not None:
+-        return Console()
+-    return None
++
++def _section_to_dict(section: Section) -> dict[str, Any]:
++    """Serialize a section, preserving ``kind`` for dispatch."""
++    if not is_dataclass(section):
++        raise TypeError(
++            f"Section subclass {type(section).__name__} is not a dataclass; "
++            "all Section subclasses must be @dataclass-decorated.",
++        )
++    payload = asdict(section)
++    payload["kind"] = type(section).kind
++    return payload
+diff --git a/tests/unit/ops/test_runner.py b/tests/unit/ops/test_runner.py
+index ec951449..e986f48d 100644
+--- a/tests/unit/ops/test_runner.py
++++ b/tests/unit/ops/test_runner.py
+@@ -411,3 +411,157 @@ async def test_subscriber_queue_does_not_block_fast_subscribers(tmp_path, monkey
+     assert fast_queue.qsize() == 10
+     received = [fast_queue.get_nowait() for _ in range(10)]
+     assert received == [("line", f"event-{i}") for i in range(10)]
++
++
++# ============================================================================
++# Report sidecar (workflow-result-formatting Phase 4) — the channel by which
++# subprocess WorkflowReport.to_dict() crosses into the runner / dashboard.
++# ============================================================================
++
++
++class TestReportSidecar:
++    """Exercise the env-var → JSON-file → run.report channel."""
++
++    def test_sidecar_path_is_stable_for_run_id(self, tmp_path, monkeypatch):
++        from attune.ops.runner import _sidecar_path_for_run
++
++        monkeypatch.setenv("HOME", str(tmp_path))
++        p1 = _sidecar_path_for_run("abc123")
++        p2 = _sidecar_path_for_run("abc123")
++        assert p1 == p2
++        assert p1.name == "abc123.json"
++
++    def test_sidecar_dir_created_lazily(self, tmp_path, monkeypatch):
++        from attune.ops.runner import _sidecar_dir
++
++        monkeypatch.setenv("HOME", str(tmp_path))
++        d = _sidecar_dir()
++        assert d.is_dir()
++        assert d == tmp_path / ".attune" / "ops" / "sidecars"
++
++    def test_read_sidecar_populates_run_report(self, tmp_path):
++        from attune.ops.runner import Run, _read_report_sidecar
++
++        sidecar = tmp_path / "report.json"
++        sidecar.write_text(json.dumps({"title": "T", "sections": []}))
++        run = Run(id="r1", workflow="release-prep")
++        _read_report_sidecar(run, sidecar)
++        assert run.report == {"title": "T", "sections": []}
++
++    def test_read_sidecar_removes_file_after_read(self, tmp_path):
++        from attune.ops.runner import Run, _read_report_sidecar
++
++        sidecar = tmp_path / "report.json"
++        sidecar.write_text(json.dumps({"title": "T"}))
++        run = Run(id="r1", workflow="release-prep")
++        _read_report_sidecar(run, sidecar)
++        assert not sidecar.exists()
++
++    def test_read_sidecar_missing_file_is_noop(self, tmp_path):
++        from attune.ops.runner import Run, _read_report_sidecar
++
++        run = Run(id="r1", workflow="release-prep")
++        _read_report_sidecar(run, tmp_path / "does-not-exist.json")
++        assert run.report is None
++
++    def test_read_sidecar_invalid_json_leaves_report_none(self, tmp_path):
++        from attune.ops.runner import Run, _read_report_sidecar
++
++        sidecar = tmp_path / "report.json"
++        sidecar.write_text("not valid json {")
++        run = Run(id="r1", workflow="release-prep")
++        _read_report_sidecar(run, sidecar)
++        assert run.report is None
++        # Still cleaned up so the directory doesn't grow stale files.
++        assert not sidecar.exists()
++
++    def test_read_sidecar_non_dict_json_leaves_report_none(self, tmp_path):
++        from attune.ops.runner import Run, _read_report_sidecar
++
++        sidecar = tmp_path / "report.json"
++        sidecar.write_text(json.dumps(["a", "list", "not", "a", "dict"]))
++        run = Run(id="r1", workflow="release-prep")
++        _read_report_sidecar(run, sidecar)
++        assert run.report is None
++
++    def test_run_to_dict_includes_report(self):
++        from attune.ops.runner import Run
++
++        run = Run(id="r1", workflow="x")
++        run.report = {"title": "T"}
++        assert run.to_dict()["report"] == {"title": "T"}
++
++    def test_run_from_record_restores_report(self):
++        from attune.ops.runner import Run
++
++        record = {
++            "id": "r1",
++            "workflow": "x",
++            "status": "completed",
++            "report": {"title": "T", "sections": []},
++        }
++        restored = Run.from_record(record)
++        assert restored.report == {"title": "T", "sections": []}
++
++    def test_run_from_record_handles_missing_report(self):
++        from attune.ops.runner import Run
++
++        record = {"id": "r1", "workflow": "x", "status": "completed"}
++        restored = Run.from_record(record)
++        assert restored.report is None
++
++    def test_run_from_record_rejects_non_dict_report(self):
++        from attune.ops.runner import Run
++
++        record = {
++            "id": "r1",
++            "workflow": "x",
++            "status": "completed",
++            "report": "not a dict",
++        }
++        restored = Run.from_record(record)
++        assert restored.report is None
++
++    def test_restore_report_accepts_dict(self):
++        from attune.ops.runner import Run
++
++        run = Run(id="r1", workflow="x")
++        run.restore_report({"title": "T"})
++        assert run.report == {"title": "T"}
++
++    def test_restore_report_ignores_non_dict(self):
++        from attune.ops.runner import Run
++
++        run = Run(id="r1", workflow="x")
++        run.restore_report("not a dict")
++        assert run.report is None
++        run.restore_report(None)
++        assert run.report is None
++
++    @pytest.mark.asyncio
++    async def test_subprocess_sidecar_round_trip(self, tmp_path, monkeypatch):
++        """End-to-end: subprocess writes sidecar, runner picks it up.
++
++        Spawns a python -c that reads ``ATTUNE_REPORT_SIDECAR_PATH``
++        from env and writes a small report JSON — exactly what the
++        real CLI does. The runner should populate ``run.report``.
++        """
++        monkeypatch.setenv("HOME", str(tmp_path))
++
++        def cmd_builder(workflow: str) -> tuple[str, ...]:
++            script = (
++                "import json, os;"
++                "p = os.environ.get('ATTUNE_REPORT_SIDECAR_PATH');"
++                "open(p, 'w').write(json.dumps({'title': 'subprocess', 'sections': []}));"
++                "print('done')"
++            )
++            return (sys.executable, "-c", script)
++
++        svc = RunnerService(command_builder=cmd_builder, history_limit=5)
++        run = await svc.start("release-prep")
++        for _ in range(50):
++            if run.is_terminal:
++                break
++            await asyncio.sleep(0.05)
++        assert run.is_terminal, "subprocess never completed"
++        assert run.report == {"title": "subprocess", "sections": []}
+diff --git a/tests/unit/test_coverage_batch18.py b/tests/unit/test_coverage_batch18.py
+index be56e667..8570ac67 100644
+--- a/tests/unit/test_coverage_batch18.py
++++ b/tests/unit/test_coverage_batch18.py
+@@ -261,196 +261,6 @@ class TestGetModel:
+         assert isinstance(result, str)
+
+
+-# === Module: workflows/output ===
+-
+-
+-class TestFinding:
+-    def test_basic_construction(self):
+-        from attune.workflows.output import Finding
+-
+-        f = Finding(severity="high", file="src/app.py", line=42, message="null deref")
+-        assert f.severity == "high"
+-        assert f.file == "src/app.py"
+-        assert f.line == 42
+-
+-    def test_location_with_line(self):
+-        from attune.workflows.output import Finding
+-
+-        f = Finding(severity="medium", file="src/app.py", line=10)
+-        assert f.location == "src/app.py:10"
+-
+-    def test_location_without_line(self):
+-        from attune.workflows.output import Finding
+-
+-        f = Finding(severity="low", file="src/app.py")
+-        assert f.location == "src/app.py"
+-
+-    def test_severity_icon_high(self):
+-        from attune.workflows.output import Finding
+-
+-        f = Finding(severity="high", file="f.py")
+-        assert "x" in f.severity_icon.lower() or "X" in f.severity_icon
+-
+-    def test_severity_icon_info(self):
+-        from attune.workflows.output import Finding
+-
+-        f = Finding(severity="info", file="f.py")
+-        assert "o" in f.severity_icon.lower()
+-
+-
+-class TestWorkflowReport:
+-    def test_basic_construction(self):
+-        from attune.workflows.output import WorkflowReport
+-
+-        report = WorkflowReport(title="Test Report", summary="all good", score=90)
+-        assert report.title == "Test Report"
+-        assert report.score == 90
+-        assert report.sections == []
+-
+-    def test_add_section(self):
+-        from attune.workflows.output import WorkflowReport
+-
+-        report = WorkflowReport(title="Test")
+-        report.add_section("Section 1", "content here")
+-        assert len(report.sections) == 1
+-        assert report.sections[0].title == "Section 1"
+-
+-    def test_render_plain(self):
+-        from attune.workflows.output import WorkflowReport
+-
+-        report = WorkflowReport(title="My Report", summary="summary", score=75)
+-        report.add_section("Details", "some details")
+-        text = report.render(use_rich=False)
+-        assert "MY REPORT" in text
+-        assert "75" in text
+-        assert "Details".upper() in text
+-
+-    def test_render_plain_with_dict_section(self):
+-        from attune.workflows.output import WorkflowReport
+-
+-        report = WorkflowReport(title="Report")
+-        report.add_section("Stats", {"key": "value", "count": 5})
+-        text = report.render(use_rich=False)
+-        assert "key: value" in text
+-
+-    def test_render_plain_with_findings(self):
+-        from attune.workflows.output import Finding, WorkflowReport
+-
+-        report = WorkflowReport(title="Report")
+-        findings = [Finding(severity="high", file="app.py", line=1, message="bad")]
+-        report.add_section("Findings", findings)
+-        text = report.render(use_rich=False)
+-        assert "HIGH" in text
+-
+-    def test_render_plain_no_score(self):
+-        from attune.workflows.output import WorkflowReport
+-
+-        report = WorkflowReport(title="No Score Report")
+-        text = report.render(use_rich=False)
+-        assert "No Score Report".upper() in text
+-
+-
+-class TestFindingsTable:
+-    def test_to_plain_empty(self):
+-        from attune.workflows.output import FindingsTable
+-
+-        table = FindingsTable([])
+-        plain = table.to_plain()
+-        assert "No findings" in plain
+-
+-    def test_to_plain_with_findings(self):
+-        from attune.workflows.output import Finding, FindingsTable
+-
+-        findings = [
+-            Finding(severity="high", file="app.py", line=10, message="critical"),
+-            Finding(severity="low", file="util.py", message="minor"),
+-        ]
+-        table = FindingsTable(findings)
+-        plain = table.to_plain()
+-        assert "[HIGH]" in plain
+-        assert "[LOW]" in plain
+-        assert "app.py:10" in plain
+-        assert "critical" in plain
+-
+-
+-class TestMetricsPanel:
+-    def test_get_level_excellent(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_level(90) == "excellent"
+-
+-    def test_get_level_good(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_level(75) == "good"
+-
+-    def test_get_level_needs_work(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_level(60) == "needs work"
+-
+-    def test_get_level_critical(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_level(40) == "critical"
+-
+-    def test_get_style_green_for_high(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_style(90) == "green"
+-
+-    def test_get_style_red_for_low(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_style(30) == "red"
+-
+-    def test_get_plain_icon_ok(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_plain_icon(90) == "[OK]"
+-
+-    def test_get_plain_icon_critical(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        assert MetricsPanel.get_plain_icon(30) == "[XX]"
+-
+-    def test_render_plain(self):
+-        from attune.workflows.output import MetricsPanel
+-
+-        result = MetricsPanel.render_plain(75, label="Health")
+-        assert "Health" in result
+-        assert "75" in result
+-        assert "good" in result.lower()
+-
+-
+-class TestFormatWorkflowResult:
+-    def test_returns_workflow_report(self):
+-        from attune.workflows.output import WorkflowReport, format_workflow_result
+-
+-        report = format_workflow_result(
+-            title="My Report",
+-            summary="done",
+-            score=80,
+-        )
+-        assert isinstance(report, WorkflowReport)
+-        assert report.score == 80
+-
+-    def test_adds_findings_section(self):
+-        from attune.workflows.output import format_workflow_result
+-
+-        findings = [{"severity": "high", "file": "app.py", "line": 1, "message": "error"}]
+-        report = format_workflow_result("Report", findings=findings)
+-        section_titles = [s.title for s in report.sections]
+-        assert "Findings" in section_titles
+-
+-    def test_adds_recommendations_section(self):
+-        from attune.workflows.output import format_workflow_result
+-
+-        report = format_workflow_result("Report", recommendations="Fix everything")
+-        titles = [s.title for s in report.sections]
+-        assert "Recommendations" in titles
+-
+-
+ # === Module: workflows/migration ===
+
+
+diff --git a/tests/unit/test_coverage_batch5.py b/tests/unit/test_coverage_batch5.py
+index 5245c9ee..897fa317 100644
+--- a/tests/unit/test_coverage_batch5.py
++++ b/tests/unit/test_coverage_batch5.py
+@@ -20,15 +20,6 @@ import pytest
+
+ # Import WorkflowResult for secure_release tests
+ from attune.workflows.data_classes import CostReport, WorkflowResult
+-from attune.workflows.output import (
+-    Finding,
+-    FindingsTable,
+-    MetricsPanel,
+-    ReportSection,
+-    WorkflowReport,
+-    format_workflow_result,
+-    get_console,
+-)
+ from attune.workflows.parsing_mixin import ResponseParsingMixin
+ from attune.workflows.secure_release import (
+     SecureReleasePipeline,
+@@ -635,420 +626,6 @@ class TestFormatSecureReleaseReport:
+         assert "5678ms" in report
+
+
+-# ============================================================================
+-# Output Module - Finding Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestFinding:
+-    """Tests for Finding dataclass."""
+-
+-    def test_severity_icon_high(self) -> None:
+-        """Test high severity icon."""
+-        finding = Finding(severity="high", file="test.py")
+-        icon = finding.severity_icon
+-        assert icon  # Non-empty
+-
+-    def test_severity_icon_medium(self) -> None:
+-        """Test medium severity icon."""
+-        finding = Finding(severity="medium", file="test.py")
+-        icon = finding.severity_icon
+-        assert icon
+-
+-    def test_severity_icon_low(self) -> None:
+-        """Test low severity icon."""
+-        finding = Finding(severity="low", file="test.py")
+-        icon = finding.severity_icon
+-        assert icon
+-
+-    def test_severity_icon_info(self) -> None:
+-        """Test info severity icon."""
+-        finding = Finding(severity="info", file="test.py")
+-        icon = finding.severity_icon
+-        assert icon
+-
+-    def test_severity_icon_unknown(self) -> None:
+-        """Test unknown severity icon defaults to 'o'."""
+-        finding = Finding(severity="unknown", file="test.py")
+-        assert finding.severity_icon == "o"
+-
+-    def test_location_with_line(self) -> None:
+-        """Test location string with line number."""
+-        finding = Finding(severity="high", file="auth.py", line=42)
+-        assert finding.location == "auth.py:42"
+-
+-    def test_location_without_line(self) -> None:
+-        """Test location string without line number."""
+-        finding = Finding(severity="high", file="auth.py")
+-        assert finding.location == "auth.py"
+-
+-    def test_location_with_line_zero(self) -> None:
+-        """Test location string when line is 0 (falsy)."""
+-        finding = Finding(severity="high", file="auth.py", line=0)
+-        # 0 is falsy, so should return just file
+-        assert finding.location == "auth.py"
+-
+-
+-# ============================================================================
+-# Output Module - ReportSection Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestReportSection:
+-    """Tests for ReportSection dataclass."""
+-
+-    def test_create_default(self) -> None:
+-        """Test creating ReportSection with defaults."""
+-        section = ReportSection(title="Test", content="Content here")
+-        assert section.title == "Test"
+-        assert section.content == "Content here"
+-        assert section.collapsed is False
+-        assert section.style == "default"
+-
+-    def test_create_with_options(self) -> None:
+-        """Test creating ReportSection with all options."""
+-        section = ReportSection(
+-            title="Errors",
+-            content="Error details",
+-            collapsed=True,
+-            style="error",
+-        )
+-        assert section.collapsed is True
+-        assert section.style == "error"
+-
+-
+-# ============================================================================
+-# Output Module - WorkflowReport Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestWorkflowReport:
+-    """Tests for WorkflowReport class."""
+-
+-    def test_create_default(self) -> None:
+-        """Test creating WorkflowReport with defaults."""
+-        report = WorkflowReport(title="Test Report")
+-        assert report.title == "Test Report"
+-        assert report.summary == ""
+-        assert report.sections == []
+-        assert report.score is None
+-        assert report.level == "info"
+-
+-    def test_add_section(self) -> None:
+-        """Test adding sections to report."""
+-        report = WorkflowReport(title="Test")
+-        report.add_section("Section 1", "Content 1")
+-        report.add_section("Section 2", "Content 2", collapsed=True, style="warning")
+-
+-        assert len(report.sections) == 2
+-        assert report.sections[0].title == "Section 1"
+-        assert report.sections[1].collapsed is True
+-
+-    def test_render_plain_basic(self) -> None:
+-        """Test plain text rendering."""
+-        report = WorkflowReport(title="Test Report", summary="Summary text")
+-        report.add_section("Details", "Some details here")
+-        text = report.render(use_rich=False)
+-
+-        assert "TEST REPORT" in text
+-        assert "Summary text" in text
+-        assert "DETAILS" in text
+-        assert "Some details here" in text
+-
+-    def test_render_plain_with_score(self) -> None:
+-        """Test plain text rendering with score."""
+-        report = WorkflowReport(title="Review", score=85)
+-        text = report.render(use_rich=False)
+-        assert "Score: 85/100" in text
+-        assert "EXCELLENT" in text
+-
+-    def test_render_plain_with_findings(self) -> None:
+-        """Test plain text rendering with findings list."""
+-        findings = [
+-            Finding(severity="high", file="auth.py", line=10, message="SQL injection"),
+-            Finding(severity="low", file="utils.py", message="Style issue"),
+-        ]
+-        report = WorkflowReport(title="Scan")
+-        report.add_section("Findings", findings)
+-        text = report.render(use_rich=False)
+-
+-        assert "[HIGH] auth.py:10" in text
+-        assert "SQL injection" in text
+-        assert "[LOW] utils.py" in text
+-
+-    def test_render_plain_with_dict_section(self) -> None:
+-        """Test plain text rendering with dict content."""
+-        report = WorkflowReport(title="Stats")
+-        report.add_section("Metrics", {"files": 10, "issues": 3})
+-        text = report.render(use_rich=False)
+-        assert "files: 10" in text
+-        assert "issues: 3" in text
+-
+-    def test_render_plain_with_unknown_content(self) -> None:
+-        """Test plain text rendering with non-standard content."""
+-        report = WorkflowReport(title="Test")
+-        report.add_section("Data", 42)  # Just an integer
+-        text = report.render(use_rich=False)
+-        assert "42" in text
+-
+-    def test_render_no_rich_returns_plain(self) -> None:
+-        """Test render returns plain text when use_rich=False."""
+-        report = WorkflowReport(title="Test")
+-        result = report.render(use_rich=False)
+-        assert isinstance(result, str)
+-        assert "TEST" in result
+-
+-    def test_render_with_rich_console(self) -> None:
+-        """Test render with Rich console (if available)."""
+-        try:
+-            from rich.console import Console
+-
+-            console = Console(file=MagicMock())
+-            report = WorkflowReport(title="Test", score=90, summary="Good")
+-            report.add_section("Text Section", "Content")
+-            report.add_section(
+-                "Findings",
+-                [Finding(severity="high", file="a.py", message="Issue")],
+-            )
+-            report.add_section("Dict Section", {"key": "val"})
+-            report.add_section("Other", 123)
+-            result = report.render(console=console, use_rich=True)
+-            assert result == ""  # Rich printing returns empty string
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-    def test_render_rich_section_with_error_fallback(self) -> None:
+-        """Test Rich section rendering falls back on error."""
+-        try:
+-            from rich.console import Console
+-
+-            console = Console(file=MagicMock())
+-            report = WorkflowReport(title="Test")
+-
+-            # Create a section with content that will fail Panel rendering
+-            class BadContent:
+-                def __str__(self) -> str:
+-                    return "fallback string"
+-
+-                def __rich_console__(self, console: Any, options: Any) -> Any:
+-                    raise TypeError("Not renderable")
+-
+-            report.add_section("Bad", BadContent())
+-            # Should not raise - falls back gracefully
+-            report.render(console=console, use_rich=True)
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-
+-# ============================================================================
+-# Output Module - FindingsTable Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestFindingsTable:
+-    """Tests for FindingsTable class."""
+-
+-    def test_to_plain_empty(self) -> None:
+-        """Test plain rendering with no findings."""
+-        table = FindingsTable([])
+-        text = table.to_plain()
+-        assert "No findings" in text
+-
+-    def test_to_plain_with_findings(self) -> None:
+-        """Test plain rendering with findings."""
+-        findings = [
+-            Finding(severity="high", file="auth.py", line=10, message="SQL injection"),
+-            Finding(severity="medium", file="utils.py", line=20, message=""),
+-        ]
+-        table = FindingsTable(findings)
+-        text = table.to_plain()
+-        assert "[HIGH] auth.py:10" in text
+-        assert "SQL injection" in text
+-        assert "[MEDIUM] utils.py:20" in text
+-
+-    def test_to_rich_table(self) -> None:
+-        """Test Rich table generation."""
+-        try:
+-            from rich.table import Table as RichTable
+-
+-            findings = [
+-                Finding(severity="high", file="a.py", line=1, message="Issue"),
+-                Finding(severity="low", file="b.py", message="Minor"),
+-                Finding(severity="info", file="c.py", message="Info"),
+-                Finding(severity="unknown", file="d.py", message="Other"),
+-            ]
+-            table = FindingsTable(findings)
+-            result = table.to_rich_table()
+-            assert isinstance(result, RichTable)
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-
+-# ============================================================================
+-# Output Module - MetricsPanel Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestMetricsPanel:
+-    """Tests for MetricsPanel static methods."""
+-
+-    def test_get_level_excellent(self) -> None:
+-        """Test level is 'excellent' for score >= 85."""
+-        assert MetricsPanel.get_level(85) == "excellent"
+-        assert MetricsPanel.get_level(100) == "excellent"
+-
+-    def test_get_level_good(self) -> None:
+-        """Test level is 'good' for score 70-84."""
+-        assert MetricsPanel.get_level(70) == "good"
+-        assert MetricsPanel.get_level(84) == "good"
+-
+-    def test_get_level_needs_work(self) -> None:
+-        """Test level is 'needs work' for score 50-69."""
+-        assert MetricsPanel.get_level(50) == "needs work"
+-        assert MetricsPanel.get_level(69) == "needs work"
+-
+-    def test_get_level_critical(self) -> None:
+-        """Test level is 'critical' for score < 50."""
+-        assert MetricsPanel.get_level(49) == "critical"
+-        assert MetricsPanel.get_level(0) == "critical"
+-
+-    def test_get_style_ranges(self) -> None:
+-        """Test style returns correct colors for score ranges."""
+-        assert MetricsPanel.get_style(90) == "green"
+-        assert MetricsPanel.get_style(75) == "yellow"
+-        assert MetricsPanel.get_style(55) == "orange1"
+-        assert MetricsPanel.get_style(30) == "red"
+-
+-    def test_get_icon_ranges(self) -> None:
+-        """Test icon returns non-empty for all ranges."""
+-        for score in [90, 75, 55, 30]:
+-            assert MetricsPanel.get_icon(score)
+-
+-    def test_get_plain_icon_ranges(self) -> None:
+-        """Test plain icon returns correct text for each range."""
+-        assert MetricsPanel.get_plain_icon(90) == "[OK]"
+-        assert MetricsPanel.get_plain_icon(75) == "[--]"
+-        assert MetricsPanel.get_plain_icon(55) == "[!!]"
+-        assert MetricsPanel.get_plain_icon(30) == "[XX]"
+-
+-    def test_render_score(self) -> None:
+-        """Test render_score creates a Rich Panel."""
+-        try:
+-            from rich.panel import Panel as RichPanel
+-
+-            panel = MetricsPanel.render_score(85)
+-            assert isinstance(panel, RichPanel)
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-    def test_render_score_custom_label(self) -> None:
+-        """Test render_score with custom label."""
+-        try:
+-            from rich.panel import Panel as RichPanel
+-
+-            panel = MetricsPanel.render_score(50, label="Quality")
+-            assert isinstance(panel, RichPanel)
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-    def test_render_score_without_rich(self) -> None:
+-        """Test render_score raises when Rich is unavailable."""
+-        with patch("attune.workflows.output.RICH_AVAILABLE", False):
+-            with pytest.raises(RuntimeError, match="Rich library not available"):
+-                MetricsPanel.render_score(85)
+-
+-    def test_render_plain(self) -> None:
+-        """Test render_plain output format."""
+-        text = MetricsPanel.render_plain(85)
+-        assert "85/100" in text
+-        assert "EXCELLENT" in text
+-        assert "[OK]" in text
+-
+-    def test_render_plain_custom_label(self) -> None:
+-        """Test render_plain with custom label."""
+-        text = MetricsPanel.render_plain(60, label="Security")
+-        assert "Security:" in text
+-        assert "NEEDS WORK" in text
+-
+-
+-# ============================================================================
+-# Output Module - format_workflow_result Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestFormatWorkflowResult:
+-    """Tests for format_workflow_result helper function."""
+-
+-    def test_basic_report(self) -> None:
+-        """Test creating basic report."""
+-        report = format_workflow_result(title="Test", summary="A test report")
+-        assert report.title == "Test"
+-        assert report.summary == "A test report"
+-        assert report.sections == []
+-
+-    def test_report_with_findings(self) -> None:
+-        """Test report with finding dicts."""
+-        findings = [
+-            {"severity": "high", "file": "auth.py", "line": 10, "message": "Issue"},
+-            {"severity": "low", "file": "utils.py", "message": "Minor"},
+-        ]
+-        report = format_workflow_result(title="Scan", findings=findings, score=75)
+-        assert report.score == 75
+-        assert len(report.sections) == 1
+-        assert report.sections[0].title == "Findings"
+-
+-    def test_report_with_recommendations(self) -> None:
+-        """Test report with recommendations text."""
+-        report = format_workflow_result(
+-            title="Review",
+-            recommendations="Fix all high severity issues.",
+-        )
+-        assert len(report.sections) == 1
+-        assert report.sections[0].title == "Recommendations"
+-
+-    def test_report_with_metadata(self) -> None:
+-        """Test report with metadata."""
+-        report = format_workflow_result(
+-            title="Test",
+-            metadata={"workflow": "code-review", "duration": 1.5},
+-        )
+-        assert report.metadata["workflow"] == "code-review"
+-
+-    def test_report_with_no_metadata(self) -> None:
+-        """Test report defaults to empty metadata."""
+-        report = format_workflow_result(title="Test")
+-        assert report.metadata == {}
+-
+-
+-# ============================================================================
+-# Output Module - get_console Tests
+-# ============================================================================
+-
+-
+-@pytest.mark.unit
+-class TestGetConsole:
+-    """Tests for get_console helper function."""
+-
+-    def test_get_console_with_rich(self) -> None:
+-        """Test get_console returns Console when Rich is available."""
+-        try:
+-            from rich.console import Console as RichConsole
+-
+-            console = get_console()
+-            assert isinstance(console, RichConsole)
+-        except ImportError:
+-            pytest.skip("Rich not available")
+-
+-    def test_get_console_without_rich(self) -> None:
+-        """Test get_console returns None when Rich is unavailable."""
+-        with patch("attune.workflows.output.RICH_AVAILABLE", False):
+-            assert get_console() is None
+
+
+ # ============================================================================
+diff --git a/tests/unit/voice/test_formatter.py b/tests/unit/voice/test_formatter.py
+index 9ee5b14f..c8ec9043 100644
+--- a/tests/unit/voice/test_formatter.py
++++ b/tests/unit/voice/test_formatter.py
+@@ -259,3 +259,205 @@ class TestExtractResultData:
+         success, score, text, cost, error = _extract_result_data(None)
+         assert success is True
+         assert text is None
++
++
++# ============================================================================
++# WorkflowReport routing — added by workflow-result-formatting spec Phase 4.
++# Verifies the new branch in _extract_from_workflow_result that routes
++# WorkflowReport final_output through the markdown renderer instead of the
++# old str() repr leak.
++# ============================================================================
++
++
++class TestWorkflowReportRouting:
++    """The formatter must route WorkflowReport through the renderer."""
++
++    def _build_report(self):
++        from attune.workflows.output import (
++            CalloutSection,
++            TableSection,
++            WorkflowReport,
++        )
++
++        return WorkflowReport(
++            title="Release readiness",
++            sections=[
++                CalloutSection(
++                    title="V",
++                    tier="essential",
++                    text="APPROVED",
++                    emphasis="ok",
++                ),
++                TableSection(
++                    title="Gates",
++                    tier="essential",
++                    columns=["Gate", "Pass"],
++                    rows=[{"Gate": "Security", "Pass": "X"}],
++                ),
++            ],
++        )
++
++    @patch("attune.voice.formatter.get_next_steps", return_value=[])
++    def test_no_repr_leak_for_workflow_report(self, _mock):
++        result = _make_result(final_output=self._build_report())
++        out = format_output("release-prep", result)
++        # The historical repr leak would have produced this string.
++        assert "WorkflowReport(title=" not in out
++        assert "CalloutSection(title=" not in out
++
++    @patch("attune.voice.formatter.get_next_steps", return_value=[])
++    def test_markdown_table_emitted(self, _mock):
++        result = _make_result(final_output=self._build_report())
++        out = format_output("release-prep", result)
++        assert "| Gate | Pass |" in out
++        assert "Security" in out
++
++    @patch("attune.voice.formatter.get_next_steps", return_value=[])
++    def test_score_extracted_from_report(self, _mock):
++        from attune.workflows.output import WorkflowReport
++
++        result = _make_result(
++            final_output=WorkflowReport(title="t", score=88),
++        )
++        out = format_output("release-prep", result)
++        assert "88" in out
++
++    @patch("attune.voice.formatter.get_next_steps", return_value=[])
++    def test_cost_line_suppressed_for_workflow_report(self, _mock):
++        # WorkflowReport carries its own cost line (gated by show_cost).
++        # The voice-layer's separate cost block must not double-emit.
++        result = _make_result(
++            final_output=self._build_report(),
++            cost_report=CostReport(
++                total_cost=0.42,
++                baseline_cost=0.5,
++                savings=0.08,
++                savings_percent=16.0,
++            ),
++        )
++        out = format_output("release-prep", result)
++        # The voice layer's cost-block uses HEADER_COST. When the
++        # result is a WorkflowReport, that block must not appear.
++        # We check for the dollar-with-4-decimals signature the voice
++        # layer used (not the markdown renderer's 2-decimal format).
++        assert "$0.4200" not in out
++
++    @patch("attune.voice.formatter.get_next_steps", return_value=[])
++    def test_unmigrated_dataclass_uses_fallback(self, _mock):
++        from dataclasses import dataclass
++
++        @dataclass
++        class LegacyResult:
++            approved: bool
++            confidence: str
++
++        result = _make_result(final_output=LegacyResult(True, "high"))
++        out = format_output("legacy-wf", result)
++        # No raw repr leak
++        assert "LegacyResult(approved=True" not in out
++        # Banner present
++        assert "Renderer not yet migrated" in out
++        # Type name in banner
++        assert "LegacyResult" in out
++
++
++class TestMcpEnvelopeForReport:
++    """``mcp_envelope_for_report`` packages a WorkflowReport for MCP."""
++
++    def _make_report(self):
++        from attune.workflows.output import (
++            CalloutSection,
++            WorkflowReport,
++        )
++
++        return WorkflowReport(
++            title="Test",
++            score=88,
++            sections=[
++                CalloutSection(title="V", tier="essential", text="OK", emphasis="ok"),
++            ],
++        )
++
++    def test_returns_formatted_report(self):
++        from attune.voice.formatter import mcp_envelope_for_report
++
++        envelope = mcp_envelope_for_report(self._make_report())
++        assert "formatted_report" in envelope
++        # Markdown content is present
++        assert "# Test" in envelope["formatted_report"]
++
++    def test_returns_structured_dict(self):
++        from attune.voice.formatter import mcp_envelope_for_report
++
++        envelope = mcp_envelope_for_report(self._make_report())
++        assert "report" in envelope
++        # Structured shape preserved
++        assert envelope["report"]["title"] == "Test"
++        assert envelope["report"]["sections"][0]["kind"] == "callout"
++
++    def test_extracts_score(self):
++        from attune.voice.formatter import mcp_envelope_for_report
++
++        envelope = mcp_envelope_for_report(self._make_report())
++        assert envelope["score"] == 88
++
++    def test_defaults_to_success_true(self):
++        from attune.voice.formatter import mcp_envelope_for_report
++
++        envelope = mcp_envelope_for_report(self._make_report())
++        assert envelope["success"] is True
++
++    def test_rejects_non_workflow_report(self):
++        import pytest
++
++        from attune.voice.formatter import mcp_envelope_for_report
++
++        with pytest.raises(TypeError, match="WorkflowReport"):
++            mcp_envelope_for_report({"not": "a report"})
++
++    def test_disclosure_threaded_to_renderer(self):
++        from attune.voice.formatter import mcp_envelope_for_report
++        from attune.workflows.output import ProseSection, WorkflowReport
++
++        # Detail-tier section: in summary mode it gets <details> wrap;
++        # in full mode it inlines.
++        report = WorkflowReport(
++            title="t",
++            sections=[
++                ProseSection(title="Detail", tier="detail", text="hidden"),
++            ],
++        )
++        summary_env = mcp_envelope_for_report(report, disclosure="summary")
++        full_env = mcp_envelope_for_report(report, disclosure="full")
++        assert "<details>" in summary_env["formatted_report"]
++        assert "<details>" not in full_env["formatted_report"]
++
++
++class TestResolveShowCost:
++    """show_cost precedence: explicit > env override > API-key auto."""
++
++    def test_explicit_override_wins(self, monkeypatch):
++        from attune.voice.formatter import _resolve_show_cost
++
++        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")  # pragma: allowlist secret
++        assert _resolve_show_cost(explicit=False) is False
++        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
++        assert _resolve_show_cost(explicit=True) is True
++
++    def test_env_override_when_no_explicit(self, monkeypatch):
++        from attune.voice.formatter import _resolve_show_cost
++
++        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
++        monkeypatch.setenv("ATTUNE_SHOW_COST_METRICS", "1")
++        assert _resolve_show_cost() is True
++        monkeypatch.setenv("ATTUNE_SHOW_COST_METRICS", "false")
++        assert _resolve_show_cost() is False
++
++    def test_api_key_auto_detect(self, monkeypatch):
++        from attune.voice.formatter import _resolve_show_cost
++
++        monkeypatch.delenv("ATTUNE_SHOW_COST_METRICS", raising=False)
++        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
++        assert _resolve_show_cost() is False
++        monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-test")  # pragma: allowlist secret
++        assert _resolve_show_cost() is True
