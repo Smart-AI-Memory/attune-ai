@@ -1,46 +1,48 @@
 ---
 type: error
+name: security-audit-error
 feature: security-audit
 depth: error
-generated_at: 2026-04-19T18:43:37.750214+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.802002+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
 # Security Audit errors
 
-Security audit failures occur during vulnerability scanning, secret detection, or alert configuration for LLM telemetry monitoring.
-
 ## Common error signatures
 
-- **FileNotFoundError** — Path specified for audit doesn't exist or is inaccessible
-- **ValidationError** — Invalid webhook URL in alert configuration
-- **DatabaseError** — SQLite corruption in alert storage (`.attune/alerts.db`)
-- **TypeError** — Invalid metric or channel type passed to AlertEngine
-- **PermissionError** — Cannot read security audit target files
-- **ConnectionError** — OTEL endpoint unreachable for telemetry export
+Errors in the security audit feature fall into three broad categories: workflow execution failures in `SecurityAuditWorkflow.execute()`, subagent coordination failures across the four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`), and secrets/PII detection errors originating in the `SecretsDetector` or `PIIScrubber` classes.
+
+Concrete signatures to watch for:
+
+- **`ValueError`** — raised by `_validate_webhook_url` or `_validate_file_path` when an alert is misconfigured or a scan path is invalid.
+- **`SecurityViolation`** — raised by the security module when a policy boundary is crossed during scanning.
+- **`OSError` / `FileNotFoundError`** — raised when `SecurityAuditWorkflow.execute()` cannot access the target path passed via `--path`.
+- **Alert engine errors** — `AlertEngine.check_and_trigger()` may fail silently or raise if the SQLite database at `.attune/alerts.db` is missing, locked, or corrupted.
 
 ## Where errors originate
 
-Security audit errors typically stem from these components:
-
-- **SecurityAuditWorkflow.execute()** — Main workflow execution with four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner)
-- **AlertEngine methods** — Alert configuration errors from `add_alert()`, `check_and_trigger()`, and database operations
-- **TelemetryBackend operations** — Backend failures in `log_call()` and `log_workflow()` when recording audit runs
-- **OTELBackend.flush()** — Export failures when sending telemetry to OpenTelemetry collectors
-- **Path validation utilities** — File access errors during security scanning
+| Source file | Relevant entry point | What goes wrong |
+|---|---|---|
+| `src/attune/workflows/security_audit.py` | `SecurityAuditWorkflow.execute()` | Subagent coordination failure; bad `path` argument |
+| `src/attune/security/**` | `SecretsDetector`, `PIIScrubber`, `AuditLogger` | Pattern matching errors; `_validate_file_path` rejection |
+| `src/attune/monitoring/alerts_cli.py` | `watch()`, `init()` | Threshold or channel misconfiguration; missing DB |
+| `src/attune/monitoring/**` | `AlertEngine`, `MultiBackend` | SQLite errors; failed or degraded telemetry backends |
 
 ## How to diagnose
 
-1. **Check file paths first.** Most security audit failures are path-related. Verify the target directory exists and you have read permissions: `ls -la /path/to/scan`
+1. **Identify which layer failed.** A traceback rooted in `security_audit.py` points to the orchestrator or a subagent. A traceback rooted in `alerts_cli.py` or `AlertEngine` points to the monitoring layer, not the scan itself.
 
-2. **Examine alert database state.** If alert operations fail, check `.attune/alerts.db` exists and isn't corrupted. Run `attune alerts list` to verify basic database connectivity.
+2. **Check the scan path.** If `execute()` raises `OSError` or `FileNotFoundError`, confirm the path you passed to `attune workflow run security-audit --path` exists and is readable. `_validate_file_path` rejects paths that resolve outside the project root.
 
-3. **Test telemetry backends individually.** For OTEL export failures, verify the endpoint with `curl -X POST $OTEL_ENDPOINT`. Check `MultiBackend.get_failed_backends()` to isolate which backend is failing.
+3. **Verify alert configuration.** A `ValueError` from `_validate_webhook_url` means the webhook URL for your alert channel is malformed. Re-run `attune alerts init` and confirm the URL format for your chosen `AlertChannel`.
 
-4. **Validate webhook configurations.** Alert delivery failures often trace to malformed webhook URLs. Test the webhook endpoint directly before configuring alerts.
+4. **Check the SQLite database.** `AlertEngine` stores state in `.attune/alerts.db`. If `check_and_trigger()` or `get_alert_history()` fails, check that the file exists and is not locked by another process. Delete and reinitialize if the file is corrupted.
 
-5. **Run with workflow debugging.** Enable verbose logging to see which of the four security subagents fails: `attune workflow run security-audit --path "src/" --verbose`
+5. **Inspect failed telemetry backends.** If `MultiBackend` is logging scan results, call `get_failed_backends()` to identify which backends have stopped accepting writes. Use `reset_failures()` to clear transient errors, or remove the degraded backend with `remove_backend()`.
+
+6. **Check subagent output for partial failures.** `SecurityAuditWorkflow` coordinates four subagents. If the final report is missing a section (for example, no **Security** findings or no **Suggestions**), one subagent likely failed silently. Re-run with a smaller `--path` scope to isolate which domain (`vuln-scanner`, `secret-detector`, `auth-reviewer`, or `remediation-planner`) produced no output.
 
 ## Source files
 
@@ -48,4 +50,4 @@ Security audit errors typically stem from these components:
 - `src/attune/security/**`
 - `src/attune/monitoring/**`
 
-**Tags:** `security`, `audit`, `owasp`, `scanning`
+**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`

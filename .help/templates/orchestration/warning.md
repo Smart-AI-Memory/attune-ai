@@ -1,9 +1,10 @@
 ---
 type: warning
+name: orchestration-warning
 feature: orchestration
 depth: warning
-generated_at: 2026-04-14T15:17:38.164225+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.025029+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
@@ -11,47 +12,45 @@ status: generated
 
 ## What to watch for
 
-The orchestration system manages dynamic agent teams and workflow execution strategies. Several patterns can lead to runtime failures or unexpected behavior.
+The orchestration module composes `BaseWorkflow` instances using named strategies, a shared workflow registry, and a template registry. Mistakes in any of these three areas tend to surface late — often only when a pipeline runs under production conditions — because each component works correctly in isolation but interacts unexpectedly at composition time.
 
 ## Risk areas
 
-### Strategy registry collisions
+### `get_strategy()` raises on unregistered names at call time, not at definition time
 
-`get_strategy()` raises `ValueError` for unknown strategy names, but the error message only shows available strategies at registration time. If you register strategies conditionally or in different order across environments, the same code can succeed in development but fail in production.
+`get_strategy(strategy_name)` raises `ValueError: 'Unknown strategy: {...}. Available: {...}'` if the name has not been registered. Because strategy selection often happens inside a pipeline definition rather than at import time, this error appears only when the pipeline executes. Register all custom strategies with `register_strategy()` before any pipeline that depends on them runs — not after.
 
-**Mitigation:** Always register strategies before calling `get_strategy()`, and use consistent registration order across environments.
+### `DelegationChainStrategy` silently caps delegation depth
 
-### Workflow nesting depth bombs
+`DelegationChainStrategy` defaults to `max_depth=3`. If your agent graph requires deeper hierarchical delegation, tasks at depth 4 and beyond are cut off without an exception. Pass an explicit `max_depth` when constructing the strategy whenever your delegation graph exceeds three levels.
 
-`DelegationChainStrategy` and `NestedStrategy` enforce maximum depth limits (default 3), but nested workflows can still create exponential execution trees. A workflow that delegates to 3 sub-workflows, each delegating to 3 more, creates 9 execution paths at depth 2.
+### `PromptCachedSequentialStrategy` serves stale context after `cache_ttl` expires
 
-**Mitigation:** Set conservative `max_depth` values and monitor execution time in nested workflows.
+The default `cache_ttl` is 3600 seconds. A cached context that was valid at pipeline start may have expired by the time a later sequential stage reads it. In long-running pipelines or CI environments where the same cached context object is reused across runs, verify that `cache_ttl` matches your actual pipeline duration.
 
-### Template registry state leaks
+### `NestedStrategy` and `NestedSequentialStrategy` hit depth limits across composition layers
 
-`register_custom_template()` adds templates to a global registry that persists across test runs. Tests that register templates without cleanup can cause other tests to see unexpected templates or fail due to ID conflicts.
+Both classes accept a `max_depth` parameter (defaulting to `NestingContext.DEFAULT_MAX_DEPTH`). When you nest a workflow that itself contains nested steps — common in multi-pass patterns like Deep Review — the combined depth of all layers counts toward this limit. Plan your nesting depth explicitly; reaching the limit raises an error mid-execution rather than at registration time.
 
-**Mitigation:** Use `unregister_template()` in test teardown, or prefer dependency injection over global registry access.
+### Workflow registry and template registry are global, mutable state
 
-### Cached context staleness
+`register_workflow()`, `register_strategy()`, and `register_custom_template()` all modify module-level registries. In tests that share a process, one test's registration persists into the next. Use `unregister_template()` (returns `False` if the template ID is not found) to clean up in teardown. For workflow and strategy registries, structure tests so each one registers only what it needs and runs in isolation.
 
-`PromptCachedSequentialStrategy` caches context for `cache_ttl` seconds (default 3600). Long-running processes can serve stale cached context across workflow executions, causing agents to work with outdated information.
+### `get_workflow()` and `get_template()` fail silently or loudly depending on the call site
 
-**Mitigation:** Set appropriate TTL values for your use case, or use fresh strategy instances for workflows that require current context.
-
-### Conditional strategy branch misses
-
-`ConditionalStrategy` and `MultiConditionalStrategy` execute the `else_branch` or `default_branch` when conditions don't match. If you don't provide default branches, failed conditions result in no execution rather than an error.
-
-**Mitigation:** Always provide default branches in conditional strategies, even if they just log the unexpected condition.
+`get_workflow(workflow_id)` raises `ValueError` for unknown IDs; `get_template(template_id)` returns `None`. Code that passes a `get_template()` result directly into a strategy without a `None` check will fail later with a less informative error. Check the return value of `get_template()` before use.
 
 ## How to avoid problems
 
-1. **Initialize strategies explicitly.** Don't rely on lazy strategy registration - register all strategies your application needs during startup.
+1. **Register before you compose.** Call `register_strategy()`, `register_workflow()`, and `register_custom_template()` at application startup, before any pipeline definition references them. Deferred registration causes `ValueError` at execution time, not at startup.
 
-2. **Test with realistic nesting.** Nested workflows can behave differently at depth 1 versus depth 3. Test the maximum nesting depth your application will use.
+2. **Set depth limits explicitly.** Whenever you use `DelegationChainStrategy`, `NestedStrategy`, or `NestedSequentialStrategy`, pass `max_depth` as a named argument so the limit is visible at the call site rather than inherited from a default you may not remember.
 
-3. **Isolate test registry state.** Clear the template registry between tests that use `register_custom_template()` to prevent state leaks.
+3. **Isolate registry state in tests.** Because all registries are global, run orchestration tests with `pytest -k "orchestration"` in a subprocess or use explicit teardown (`unregister_template()`, or re-initialize the registry) to prevent cross-test contamination that passes locally but fails in CI.
+
+4. **Guard `get_template()` return values.** Treat `None` returns as a hard error in your code rather than propagating them into strategy constructors, where the failure message will not mention the missing template ID.
+
+5. **Depend only on the public API.** Names beginning with `_` — including internal registry helpers — can change without notice between releases. The stable surface is the set of names exported in each module's `__all__`.
 
 ## Source files
 

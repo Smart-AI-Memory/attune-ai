@@ -1,9 +1,10 @@
 ---
 type: note
+name: models-note
 feature: models
 depth: note
-generated_at: 2026-04-14T15:15:39.801514+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-16T06:19:45.856870+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
@@ -11,35 +12,42 @@ status: generated
 
 ## Context
 
-The models module handles LLM provider routing, authentication strategy management, and adaptive model selection based on performance telemetry.
+The `models` package handles three related concerns: authenticating with LLM providers, selecting the right model tier for a given task, and routing requests based on historical telemetry. These concerns are spread across four source files under `src/attune/models/`.
 
-## Model routing and performance
+## Package boundary
 
-Attune routes tasks to different models based on historical performance data. The `AdaptiveModelRouter` analyzes telemetry to recommend the best model for each workflow stage, considering factors like success rate, latency, and cost. Model performance metrics are tracked through the `ModelPerformance` dataclass, which calculates quality scores for ranking models.
+The package exposes two kinds of public symbols.
 
-The routing system includes circuit breaker functionality to temporarily disable failing providers and prevent cascading failures. When providers fail repeatedly, the circuit breaker opens to give them time to recover.
+**Classes** (defined in `adaptive_routing.py` and `auth_strategy.py`):
 
-## Authentication strategies
+| Class | File | Purpose |
+|---|---|---|
+| `ModelPerformance` | `adaptive_routing.py` | Holds per-task performance metrics: success rate, latency, cost, and a computed `quality_score` |
+| `AdaptiveModelRouter` | `adaptive_routing.py` | Selects the best model for a workflow stage using telemetry; supports cost and latency caps |
+| `SubscriptionTier` | `auth_strategy.py` | Enumerates Claude subscription tiers |
+| `AuthMode` | `auth_strategy.py` | Enumerates authentication mode options |
+| `AuthStrategy` | `auth_strategy.py` | Stores and persists the active authentication configuration |
 
-The module provides flexible authentication for Claude subscriptions versus API access. The `AuthStrategy` class determines the optimal authentication mode based on module size:
+**CLI entry points** (defined in `auth_cli.py`):
 
-- Small modules (under 500 lines): Prefer subscription-based access
-- Medium modules (500-2000 lines): Use automatic selection
-- Large modules (over 2000 lines): Typically use API access for better cost control
+| Function | Purpose |
+|---|---|
+| `cmd_auth_setup()` | Interactive first-time setup |
+| `cmd_auth_status()` | Displays current strategy configuration |
+| `cmd_auth_reset()` | Clears saved configuration |
+| `cmd_auth_recommend()` | Recommends an auth mode for a specific file |
+| `main()` | CLI entry point |
 
-Authentication configuration is managed through interactive CLI commands that guide users through setup based on their usage patterns and subscription tier.
+## Design relationship
 
-## Execution context
+The CLI functions and the `AuthStrategy` class are designed to compose. `AuthStrategy` owns the data model and persistence (`save()` / `load()`), while the `cmd_auth_*` functions in `auth_cli.py` wrap it for interactive use. Similarly, `AdaptiveModelRouter` consumes `ModelPerformance` records produced by the telemetry layer to make routing decisions.
 
-LLM calls are wrapped with execution context that tracks workflow information, user sessions, and task metadata. The `EmpathyLLMExecutor` serves as the default executor, combining model routing with standardized response formatting through the `LLMResponse` dataclass.
+The package also includes resilience infrastructure (`CircuitBreaker`, `ResilientExecutor`) and a standardized response envelope (`LLMResponse`) that all executors return, making provider-switching transparent to callers.
 
-## CLI interface
+## Source files
 
-The module can be run as a CLI tool for authentication management:
-
-- `cmd_auth_setup()`: Interactive first-time authentication setup
-- `cmd_auth_status()`: Display current configuration
-- `cmd_auth_recommend()`: Get authentication recommendations for specific files
-- `cmd_auth_reset()`: Clear existing configuration
+- `src/attune/models/adaptive_routing.py`
+- `src/attune/models/auth_strategy.py`
+- `src/attune/models/auth_cli.py`
 
 **Tags:** `models`, `auth`, `llm`

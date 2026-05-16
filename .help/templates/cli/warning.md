@@ -1,9 +1,10 @@
 ---
 type: warning
+name: cli-warning
 feature: cli
 depth: warning
-generated_at: 2026-04-14T15:11:40.212231+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-05-16T06:19:45.819463+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
@@ -11,41 +12,41 @@ status: generated
 
 ## What to watch for
 
-The Attune CLI combines traditional argument parsing with natural language routing, creating opportunities for unexpected behavior when commands don't resolve as expected.
+The `attune` CLI spans cost tracking, help browsing, lesson management, memory capture, and provider routing. The risks below are specific to how these commands interact with persistent state and the `HybridRouter` preference store.
 
 ## Risk areas
 
-### Routing ambiguity in natural language input
+### `cmd_costs_reset()` is irreversible
 
-The `HybridRouter` learns user preferences over time, which can cause the same input to route differently across sessions or users. A command that worked yesterday might invoke a different skill today if the router's confidence threshold shifts.
+`cmd_costs_reset()` clears **all** cost tracking data and always returns `0`, so a successful exit code gives you no confirmation that data existed before it was deleted. Run `cmd_costs_export()` to back up data before calling reset, especially in scripts where the call might be unintentional.
 
-**Mitigation:** Use explicit slash commands (`/skill-name`) when you need predictable routing, especially in scripts or automation.
+### `HybridRouter` preference drift over time
 
-### Cost tracking data persistence
+`HybridRouter.learn_preference()` writes to a file-backed store (default path controlled by `preferences_path`). Repeated calls with the same `keyword` accumulate `usage_count` and adjust `confidence`, which changes future routing decisions from `route()`. If you pass `None` for `preferences_path`, the router silently uses a default location — preferences learned in one environment carry over to another if that path is shared (for example, a mounted home directory in a container).
 
-Cost tracking commands (`cmd_costs_*`) maintain state between CLI invocations. The `cmd_costs_reset()` function irreversibly clears all historical data with no confirmation prompt.
+### Cost export overwrites without prompting
 
-**Mitigation:** Export cost data (`attune costs export`) before running reset operations, particularly in shared environments where other users depend on the tracking history.
+`cmd_costs_export()` exports cost data to a file. If the target file already exists, the command does not prompt for confirmation before overwriting it. Specify a unique or timestamped output path when automating exports.
 
-### Context leakage between router calls
+### Lesson and memory commands modify files in place
 
-The `route_user_input()` function accepts a context dictionary that persists learned preferences. Reusing context objects across unrelated routing calls can pollute the preference learning with incorrect associations.
+`cmd_remember()`, `cmd_forget()`, and `cmd_memory_capture()` all write to lesson or memory files directly. `cmd_forget()` removes entries by line number, so line numbers shift after each deletion — running it twice in a loop without re-querying `cmd_lessons()` between calls removes the wrong entries.
 
-**Mitigation:** Create fresh context dictionaries for independent routing operations, or explicitly clear context between unrelated command sequences.
+### `_CATEGORIES` is internal and subject to change
 
-### Argument parsing edge cases with natural language
-
-The CLI parser expects traditional flags and arguments, but users may input natural language that resembles valid arguments. This can cause the parser to misinterpret intent when routing falls back to conventional parsing.
-
-**Mitigation:** Validate user input with `is_slash_command()` before attempting argument parsing. Handle parsing exceptions gracefully when dealing with ambiguous input.
+The `_CATEGORIES` tuple (`errors`, `warnings`, `tips`, `references`) drives filtering in help commands. It is underscore-prefixed and not part of the public API. If your tooling parses CLI output and expects exactly these four category names, a refactor can break it silently.
 
 ## How to avoid problems
 
-1. **Test routing behavior explicitly.** The hybrid router's machine learning aspect means identical code can behave differently based on learned preferences. Test both fresh router instances and routers with various preference states.
+1. **Export before reset.** Always call `cmd_costs_export()` with a safe output path before `cmd_costs_reset()`. The reset returns `0` regardless of how much data it deletes.
 
-2. **Handle routing failures gracefully.** Natural language routing can fail in ways traditional CLI parsing cannot. Always check the routing result and provide fallback behavior for unrecognized input.
+2. **Pin `preferences_path` explicitly.** When constructing `HybridRouter` in tests or containerized environments, pass an explicit `preferences_path` pointing to a temporary or isolated file. Relying on the default path risks cross-environment preference bleed.
 
-3. **Isolate cost tracking in tests.** Use temporary preferences paths when testing router functionality to avoid polluting persistent cost data or learned preferences.
+3. **Re-query line numbers between `cmd_forget()` calls.** If you need to remove multiple lessons, call `cmd_lessons()` after each `cmd_forget()` to get the updated line numbers before the next deletion.
+
+4. **Use only public API functions.** Depend on the functions listed in `__all__` for each module. Private helpers — anything prefixed with `_`, including `_CATEGORIES` — can change without notice.
+
+5. **Scope cost-command tests carefully.** `cmd_costs_reset()` in a test that shares state with other tests will delete real data. Use a temporary directory or mock the storage layer when testing cost commands.
 
 ## Source files
 

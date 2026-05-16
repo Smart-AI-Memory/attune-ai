@@ -1,9 +1,10 @@
 ---
 type: warning
+name: smart-test-warning
 feature: smart-test
 depth: warning
-generated_at: 2026-04-14T14:43:28.542698+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.805234+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
@@ -11,38 +12,55 @@ status: generated
 
 ## What to watch for
 
-Smart-test generates pytest tests from AST analysis and runs parallel workflows with multiple LLM tiers. The automated nature of test generation creates specific risks around code correctness and resource consumption.
+Smart-test reads your coverage data, analyzes module structure with AST parsing, and generates pytest tests — all in a pipeline where a bad input at one stage silently degrades output at the next. The risks below are specific to that pipeline.
 
 ## Risk areas
 
-**Generated test code may not compile or run**
-The `generate_test_for_function()` and `generate_test_for_class()` functions produce executable Python code using template strings and type inference. When the AST analysis misidentifies parameter types or return types, the generated tests contain invalid assertions or import statements that cause pytest to fail.
+### `parse_coverage_json()` raises on missing or malformed coverage files
 
-**Coverage parsing fails silently on malformed JSON**
-The `parse_coverage_json()` function raises `ValueError` for invalid JSON structure, but the calling workflows may not handle this gracefully. If pytest-cov generates unexpected output format, test generation workflows can proceed with empty module lists, appearing to succeed while doing nothing.
+`parse_coverage_json()` raises `FileNotFoundError` if the coverage file doesn't exist and `ValueError` if the JSON is structurally unexpected — including a distinct error if the top-level `files` key is missing. If you run smart-test before generating coverage data (for example, before any `pytest --cov` run), you'll hit this immediately.
 
-**Parallel workflows consume excessive LLM tokens**
-`ParallelTestGenerationWorkflow` processes modules in configurable batches (default 10) and makes multiple API calls per module. With the default `top=200` modules, a single execution can generate thousands of LLM requests. Without proper rate limiting, this can exceed API quotas or incur unexpected costs.
+**Mitigation:** Run `pytest --cov=<your-src-dir> --cov-report=json` before invoking smart-test. Confirm `coverage.json` exists at the path you're passing.
 
-**Type hint inference produces unsafe test values**
-The `get_param_test_values()` function returns hardcoded test values like `"test_value"` for string parameters. For functions that expect specific formats (URLs, file paths, JSON), these generic values will cause the generated tests to fail or produce misleading results about actual code behavior.
+---
 
-**AST analysis misses runtime behavior**
-`ASTFunctionAnalyzer` determines complexity and side effects through static analysis only. Functions that make network calls, modify global state, or have dynamic behavior based on runtime conditions will be analyzed incorrectly, leading to insufficient test coverage in critical areas.
+### `prioritize_modules()` silently drops modules below the threshold
 
-## How to avoid problems
+`prioritize_modules()` filters out any module whose coverage is below `min_threshold` (default `50.0`). Modules with very low coverage — often the ones most in need of tests — are excluded from the output without any warning.
 
-**Validate generated tests before committing**
-Run `pytest` on the generated test files immediately after generation. The smart-test workflows create executable code, but compilation errors and import failures are common. Fix or discard any tests that don't run successfully.
+**Mitigation:** If the gap report looks shorter than expected, check whether your lowest-coverage modules are being filtered. You can lower or override `min_threshold` to include them.
 
-**Set conservative batch sizes for parallel generation**
-Start with `batch_size=5` or lower when using `ParallelTestGenerationWorkflow` to avoid overwhelming LLM APIs. Monitor token usage in your first few runs to establish appropriate limits for your codebase size.
+---
 
-**Review coverage JSON structure before parsing**
-Verify that your pytest-cov configuration produces the expected JSON format by examining a sample file before running test audit workflows. The parser expects a specific `"files"` key structure that can vary between coverage tool versions.
+### `group_into_batches()` caps output at five batches
 
-**Inspect generated assertions for type-specific logic**
-Check the test methods created by `generate_test_cases_for_params()` for parameters that require specific value formats. Replace generic test values with realistic data that exercises actual code paths in your functions.
+`group_into_batches()` groups modules by package path and caps the result at `max_batches=5`. In a large codebase, modules beyond that limit are silently omitted from test generation.
+
+**Mitigation:** For codebases with many low-coverage subsystems, run smart-test targeting specific subdirectories rather than the whole project at once. `ParallelTestGenerationWorkflow` supports a `top` parameter (default `200`) and a `batch_size` parameter (default `10`) for finer control.
+
+---
+
+### AST analysis produces incomplete signatures for dynamically constructed code
+
+`ASTFunctionAnalyzer` derives function signatures — parameters, return types, raised exceptions, decorators — from static AST inspection. Dynamically generated functions, heavily decorated callables, or code using `__getattr__` tricks may yield incomplete `FunctionSignature` or `ClassSignature` data, which causes `generate_test_for_function()` and `generate_test_for_class()` to produce tests with missing assertions or wrong instantiation patterns.
+
+**Mitigation:** Review generated tests for dynamic or heavily decorated functions before committing them. Treat generated tests as a starting point, not a finished suite.
+
+---
+
+### Generated tests use `"test_value"` as the default string parameter
+
+`get_param_test_values()` returns `"test_value"` as the literal test value for string parameters. Tests generated for functions that validate, transform, or reject specific string formats will pass the generation step but may assert incorrect behavior.
+
+**Mitigation:** After generation, search the output for `"test_value"` and replace it with domain-appropriate inputs — especially for functions that parse, sanitize, or pattern-match strings.
+
+---
+
+### Private helpers change without notice
+
+Internal functions and constants prefixed with `_` (including `_SUBAGENT_NAMES`, `_SYSTEM_PROMPT`, and `_TASK_PROMPT_TEMPLATE` in both workflow packages) are not part of the public API and can change between releases. Both `TestAuditWorkflow` and `TestGenerationWorkflow` expose only their `execute()` method as a stable entry point.
+
+**Mitigation:** Depend on `execute()` and the public exports listed in each package's `__all__`. Avoid referencing underscore-prefixed names in downstream code or tests.
 
 ## Source files
 

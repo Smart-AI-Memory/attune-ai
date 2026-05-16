@@ -1,46 +1,73 @@
 ---
 type: comparison
+name: bug-predict-comparison
 feature: bug-predict
 depth: comparison
-generated_at: 2026-04-14T14:49:08.896731+00:00
-source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
+generated_at: 2026-05-16T06:19:45.799901+00:00
+source_hash: c4c1270dc9f702985426a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Bug prediction vs static analysis tools
+# Comparison: Bug Prediction vs Security Audit vs Code Quality Review
 
-## What bug prediction does
+## What each tool does
 
-Bug prediction uses three specialized subagents to analyze your codebase and predict where bugs are most likely to occur. It combines pattern detection, risk correlation, and prevention advice into a unified report with severity scores and actionable recommendations.
+Bug prediction, security auditing, and code quality review all inspect your source code, but they answer different questions and operate at different scopes.
 
-## Feature comparison
+| Capability | Bug Prediction | Security Audit | Code Quality Review |
+|---|---|---|---|
+| **Primary question** | Where will production failures happen next? | What vulnerabilities exist? | How maintainable is this code? |
+| **Output** | Risk score (0–100) + prioritized finding list | Vulnerability report | Style, complexity, and coverage report |
+| **Severity tiers** | HIGH / MEDIUM / LOW | Typically CVE-severity | Usually no severity — all findings are peers |
+| **False-positive filtering** | Built-in (suppresses test fixtures, `regex.exec()`, `# INTENTIONAL:` comments, `# noqa: BLE001`) | Varies by tool | Rarely built-in |
+| **Actionable next step** | Named file + line number + plain-English description | Patch or configuration change | Refactor suggestion |
+| **Subagent architecture** | Three specialized subagents: `pattern-scanner`, `risk-correlator`, `prevention-advisor` | Single-pass scanner | Single-pass linter |
+| **Guided flow** | Yes — prompts for path and severity filter if you omit them | No | No |
 
-| Feature | Bug prediction | Traditional static analysis | IDE linters |
-|---------|---------------|----------------------------|-------------|
-| **Analysis depth** | Multi-agent synthesis across patterns, risk, and prevention | Rule-based pattern matching | Syntax and style checks |
-| **Output format** | Structured report with risk scores (0-100) and prevention strategies | Issue lists with severity levels | Inline warnings and errors |
-| **Context awareness** | Correlates findings across subagents for hotspot identification | Isolated rule violations | Local scope analysis |
-| **Prevention focus** | Actionable refactoring advice and testing recommendations | Fix suggestions for detected issues | Code formatting and basic fixes |
-| **Deployment** | CLI workflow or SDK integration | CI/CD pipeline integration | Real-time editor feedback |
+## What bug prediction detects
 
-## Use bug prediction when
+The three subagents coordinate to cover distinct risk surfaces:
 
-- You need **proactive risk assessment** before bugs manifest in production
-- You want **synthesized insights** that correlate multiple risk factors rather than isolated warnings
-- Your team benefits from **structured prevention strategies** with specific refactoring guidance
-- You're analyzing **larger codebases** where traditional tools produce too much noise to prioritize effectively
+- **`pattern-scanner`** — flags `dangerous_eval` (HIGH), `broad_exception` (MEDIUM), and `incomplete_code` (LOW) patterns
+- **`risk-correlator`** — weighs cyclomatic complexity, change frequency, and code smells (functions over 50 lines, excessive methods, duplicated logic)
+- **`prevention-advisor`** — produces prioritized refactoring advice and testing recommendations specific to the findings
 
-The key strength is the three-subagent approach: pattern-scanner finds suspicious code shapes, risk-correlator identifies interaction hotspots, and prevention-advisor suggests concrete mitigation steps.
+A security audit covers a wider vulnerability surface (dependency CVEs, authentication logic, data exposure) but does not correlate those findings with change frequency or complexity. Code quality review catches maintainability problems but assigns no severity and does not predict which issues are most likely to cause a runtime failure.
 
-## Use alternatives when
+## Tradeoffs
 
-- **Real-time feedback** is your priority — IDE linters catch issues as you type
-- **CI/CD integration** is the main requirement — traditional static analysis tools integrate more seamlessly with build pipelines
-- **Language-specific deep analysis** is needed — specialized tools like SpotBugs (Java) or Pylint (Python) have deeper domain knowledge
-- **Compliance reporting** is required — established static analysis tools have better audit trail support
+**Bug prediction wins when:**
+- You need a ranked, severity-ordered list of where failures are *most likely*, not an exhaustive catalog of every issue
+- You want automatic suppression of known-safe patterns so you aren't triaging noise
+- You're working against a deadline (pre-merge, pre-release) and need to know what to fix *first*
 
-## Decision framework
+**Bug prediction loses when:**
+- You need CVE references or dependency vulnerability data — use a security audit
+- You need compliance-oriented metrics (test coverage, documentation coverage, line-length rules) — use a code quality review
+- You're doing exploratory work on a throwaway script where the overhead of a three-subagent workflow isn't justified
 
-Choose bug prediction if you need strategic, forward-looking analysis that helps prioritize where to focus testing and refactoring efforts. Choose traditional static analysis for comprehensive rule enforcement and CI/CD integration. Choose IDE linters for immediate development feedback.
+## Feature entry points
 
-**Entry points:** Use `main()` for CLI workflows or `BugPredictionWorkflow.execute()` for SDK integration. The `format_bug_predict_report()` function handles human-readable output formatting.
+| Entry point | Source file | Use it when |
+|---|---|---|
+| `/bug-predict <path>` | `bug_predict.py` | Running interactively in Claude Code |
+| `format_bug_predict_report(result, input_data)` | `bug_predict_report.py` | Embedding a formatted report in another workflow |
+| `main()` | `bug_predict_report.py` | Running from the CLI outside Claude Code |
+
+## Use bug prediction when…
+
+- **Pre-merge review:** You're merging a large PR and want to focus human attention on the highest-risk changes, not every style warning.
+- **Unfamiliar code:** You've onboarded a new module and need a risk map before touching anything.
+- **Pre-release check:** You want confirmation that no new HIGH-severity patterns (`eval()` on user input, bare `except:`) crept in during the sprint.
+- **Recurring health check:** You run it weekly on high-churn modules to track whether risk scores are improving or drifting.
+
+**Use a security audit instead** when your concern is vulnerability classes that bug prediction doesn't model — CVEs in dependencies, insecure cryptography, or authentication bypass paths.
+
+**Use a code quality review instead** when your goal is maintainability metrics, compliance reporting, or enforcing team style conventions across the whole codebase.
+
+## Source files
+
+- `src/attune/workflows/bug_predict.py`
+- `src/attune/workflows/bug_predict_report.py`
+
+**Tags:** `bugs`, `prediction`, `scanning`, `race-condition`

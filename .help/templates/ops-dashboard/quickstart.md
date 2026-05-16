@@ -3,14 +3,14 @@ type: quickstart
 name: ops-dashboard-quickstart
 feature: ops-dashboard
 depth: quickstart
-generated_at: 2026-05-14T14:43:23.571481+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.813641+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
 # Quickstart: ops dashboard
 
-Start the local operations dashboard — a workflow runner with a per-feature scope picker, persisted run history, and live log streaming.
+Run the attune operations dashboard locally and open it in your browser.
 
 ```bash
 attune ops
@@ -23,44 +23,48 @@ The dashboard starts on `http://127.0.0.1:8765` by default.
 - attune is installed and your project is cloned locally
 - You are running the command from your project root
 
-## Step 1: Build a config
-
-```python
-from attune.ops import build_config
-
-config = build_config()
-print(config.host, config.port)
-# 127.0.0.1 8765
-```
-
-`build_config()` resolves your `project_root` and `attune_home` automatically. Override the defaults with keyword arguments — for example, `port=9000` or `allow_run=True` to enable workflow execution.
-
-## Step 2: Launch the server
+## Step 1: Start the server
 
 ```bash
 attune ops
 ```
 
-Or from Python:
+You should see the server bind to `127.0.0.1:8765`. Open that address in your browser to reach the home page, which shows today's event count, cost KPIs, and a 7-day cost sparkline.
+
+## Step 2: Configure host, port, or retention (optional)
+
+To change defaults, build a config explicitly before launching:
 
 ```python
-from attune.ops import create_app
+from attune.ops import build_config, create_app
 
-app = create_app()   # returns the FastAPI application object
+config = build_config(
+    host="0.0.0.0",
+    port=9000,
+    runs_retention_days=14,
+)
+app = create_app(config)
 ```
 
-The server blocks until you stop it. You should see output like:
+`build_config` resolves your project root and attune home directory automatically; override only what you need.
 
-```
-INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)
-```
+## Step 3: Explore the dashboard
 
-## Step 3: Open the dashboard
+| Page | What you see |
+|---|---|
+| Home | `HomeKpis` — today's events, 7-day cost, savings, sparkline |
+| Workflows | `WorkflowEntry` list with stage counts and scope picker |
+| Sessions | Summarised Claude Code sessions with resume prompts |
+| Telemetry | Request totals, cost, savings broken down by workflow and day |
 
-Navigate to `http://127.0.0.1:8765` in your browser. The home page shows today's event count, today's cost, seven-day cost, and a daily cost sparkline drawn from your telemetry data.
+Run a workflow by selecting a feature scope from the picker and clicking its entry. Live log output streams over SSE.
 
-To confirm the dashboard is reading your project's features, check that the scope picker lists entries from `.help/features.yaml` in your project root.
+## What you just did
+
+- Started the attune ops dashboard with one command
+- Learned where to override host, port, and retention settings
+- Located the four main dashboard pages and the data each surfaces
 
 ## Next:
 
-Read the `ops-dashboard` concept page to understand how telemetry summaries, run retention, and trusted-host middleware fit together — say **"what is the ops dashboard?"** to open it.
+Read the ops-dashboard concept page — say **"what is the ops dashboard?"** — to understand how run persistence, trusted-host enforcement, and workflow chaining fit together.

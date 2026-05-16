@@ -1,27 +1,19 @@
 ---
 type: tip
+name: models-tip
 feature: models
 depth: tip
-generated_at: 2026-04-14T15:15:33.214280+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-16T06:19:45.854797+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
-# Use AdaptiveModelRouter for intelligent model selection
+# Tip: working effectively with models
 
-## Recommendation
+Use `AdaptiveModelRouter.get_best_model()` to select a model rather than hardcoding model IDs — it ranks candidates by `quality_score` (derived from `success_rate`, `avg_latency_ms`, and `avg_cost`) against your actual telemetry, so routing improves automatically as your workflows accumulate history.
 
-Use `AdaptiveModelRouter` instead of hardcoding model choices in your workflows. It selects models based on historical performance data, cost constraints, and latency requirements.
+**Why:** Hardcoded model IDs bypass the circuit breaker and fallback chain, meaning a single provider outage can halt a workflow that `AdaptiveModelRouter` would have recovered from silently.
 
-```python
-router = AdaptiveModelRouter(telemetry)
-model = router.get_best_model("code_review", "analysis", max_cost=0.05)
-```
+**Tradeoff:** `get_best_model()` requires a `min_success_rate` threshold (default `0.8`) and a populated telemetry store. If your `sample_size` is too low, the router falls back to registry defaults anyway — so the benefit only compounds after enough runs to produce reliable `ModelPerformance` data.
 
-## Why this matters
-
-The router learns from real usage patterns and automatically routes tasks to models that perform best for your specific workflows, reducing both costs and failures compared to static model assignment.
-
-## The tradeoff
-
-You need telemetry data for the router to make good decisions — it starts with reasonable defaults but improves over time as it collects performance metrics from actual usage.
+**Tags:** `models`, `auth`, `llm`

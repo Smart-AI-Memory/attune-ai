@@ -1,9 +1,10 @@
 ---
 type: faq
+name: orchestration-faq
 feature: orchestration
 depth: faq
-generated_at: 2026-04-14T15:18:12.780943+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.029814+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
@@ -11,40 +12,46 @@ status: generated
 
 ## What is orchestration?
 
-The orchestration system manages how multiple agents work together to complete complex tasks. It provides strategies for coordinating agent execution, from simple sequential workflows to sophisticated delegation chains and conditional branching.
+Orchestration is the meta-orchestration system that composes `BaseWorkflow` instances into multi-agent pipelines using execution strategies. It covers dynamic team building, workflow composition, and agent template management.
 
-## When should I use orchestration?
+## When should I use orchestration instead of calling a workflow directly?
 
-Use orchestration when you need multiple agents to collaborate on a task. This includes scenarios like breaking down complex problems across specialized agents, implementing approval workflows, or creating dynamic teams that adapt based on task requirements.
+Use orchestration when you need two or more workflows to run together — for example, chaining a security audit into a release prep, or running code review and bug prediction in parallel. If you only need a single workflow, call it directly.
 
-## What execution strategies are available?
+## What composition patterns are available?
 
-You can choose from several built-in strategies:
+Six patterns: **Sequential**, **Parallel**, **Debate**, **Teaching**, **Refinement**, and **Adaptive**. You can also use the conditional variants (`ConditionalStrategy`, `MultiConditionalStrategy`) for if/else branching, and `NestedStrategy` or `NestedSequentialStrategy` when you need workflows nested inside other workflows.
 
-- **ToolEnhancedStrategy**: Single agent with comprehensive tool access
-- **PromptCachedSequentialStrategy**: Sequential execution with shared cached context
-- **DelegationChainStrategy**: Hierarchical delegation with depth limits
-- **ConditionalStrategy**: If-then-else branching logic
-- **MultiConditionalStrategy**: Switch-case pattern for multiple conditions
-- **NestedStrategy**: Execute workflows within workflows
+## How do I get a strategy instance?
 
-## How do I get started with orchestration?
+Call `get_strategy(strategy_name)`. It returns the corresponding `ExecutionStrategy` instance, or raises `ValueError` listing the available strategies if the name isn't recognized.
 
-Start with `get_strategy()` to retrieve a pre-built execution strategy by name. For custom workflows, use `register_workflow()` to define reusable agent compositions. If you need dynamic agent selection, explore the template registry functions like `get_templates_by_capability()`.
+## How do I add a custom strategy?
 
-## Can I create custom execution strategies?
+Call `register_strategy(name, strategy_class)` with your `ExecutionStrategy` subclass. After registration, `get_strategy(name)` will return an instance of your class.
 
-Yes. Extend the `ExecutionStrategy` base class and implement the `execute()` method. Then register your custom strategy with `register_strategy()` to make it available throughout your application.
+## How do I use nested workflows?
 
-## How does nested execution work?
+Register the workflow first with `register_workflow(workflow)`, then reference it by ID inside a `NestedStrategy` or `NestedSequentialStrategy`. Both accept a `max_depth` argument to prevent unbounded recursion.
 
-Nested strategies let you embed workflows within other workflows using `NestedStrategy` or `NestedSequentialStrategy`. Set `max_depth` to prevent infinite recursion. Each nested workflow receives context from its parent and can modify it for subsequent steps.
+## What happens if I pass an unknown strategy or workflow name?
 
-## How do I debug orchestration issues?
+- `get_strategy()` raises `ValueError: 'Unknown strategy: {...}. Available: {...}'`
+- `get_workflow()` raises `ValueError: 'Unknown workflow: {...}. Available: {...}'`
 
-Run `pytest -k "orchestration" -v` to verify the system works correctly. For runtime issues, add debug logging around strategy execution points. Check that your agents are properly registered and that workflow references point to existing definitions.
+The error message includes the list of registered names, so you can see exactly what's available.
 
-## Where are the source files?
+## How do I find agent templates for a given capability or tier?
 
-- `src/attune/orchestration/**` - Core orchestration system
-- `src/attune/coordination/**` - Agent coordination utilities
+Use `get_templates_by_capability(capability)` or `get_templates_by_tier(tier)`. To register your own template at runtime, call `register_custom_template(template)`. To remove one, call `unregister_template(template_id)` — it returns `False` if the ID wasn't found.
+
+## How do I debug an orchestration pipeline that isn't working?
+
+Run `pytest -k "orchestration" -v` first. If the tests pass but your pipeline still fails, add `logger.debug` calls around the `execute()` call on your strategy and re-run with logging enabled. Check that every workflow referenced by ID has been registered with `register_workflow()` before execution starts.
+
+## Where is the source code?
+
+- `src/attune/orchestration/` — meta-orchestration system, execution strategies, and agent templates
+- `src/attune/coordination/` — supporting coordination logic
+
+**Tags:** `orchestration`, `teams`

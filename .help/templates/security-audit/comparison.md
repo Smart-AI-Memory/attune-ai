@@ -1,76 +1,69 @@
 ---
 type: comparison
+name: security-audit-comparison
 feature: security-audit
 depth: comparison
-generated_at: 2026-04-19T18:45:07.189640+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.822543+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
-# Security audit approaches: workflow vs skill vs CLI
+# Security Audit: Workflow vs Skill
 
-You have three ways to run security audits in Attune AI. Each serves different use cases and integrates with different parts of your workflow.
+Attune exposes security auditing through two distinct entry points: the **`security-audit` workflow** (CLI / SDK) and the **`/security-audit` skill** (Claude Code conversation). Both scan for the same vulnerability classes — `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — but they differ in depth, output format, and how you integrate them.
 
 ## Feature comparison
 
-| Approach | Best for | Speed | Output format | Integration |
-|----------|----------|-------|---------------|-------------|
-| **Workflow** (`attune workflow run security-audit`) | CI/CD pipelines, automated scans | Fast batch processing | Severity-grouped findings with CWE IDs | Terminal, scripts |
-| **Skill** (`/security-audit`) | Interactive code review, ad-hoc scans | Interactive with follow-up | Structured results in conversation | Claude Code chat |
-| **Alert system** (`attune alerts init`) | Continuous monitoring, threshold alerts | Background monitoring | Notifications when metrics exceed limits | Email, webhooks |
+| Capability | `security-audit` workflow | `/security-audit` skill |
+|---|---|---|
+| **Entry point** | `attune workflow run security-audit --path "src/"` | `/security-audit <path>` in Claude Code |
+| **Output format** | Severity-grouped findings with CWE identifiers | Structured markdown in your conversation |
+| **Subagents** | Four specialized subagents: `vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner` | Single-pass pattern scan |
+| **Report sections** | Summary (security score 0–100), severity-grouped findings (CRITICAL → LOW), prioritized remediation with effort estimates | Findings listed in conversation |
+| **OWASP mapping** | Yes, via deep scan mode (~5 min) | No |
+| **Fix suggestions** | Yes — remediation planner subagent estimates effort per fix | No |
+| **CI / scripted use** | Yes — invoke from a script, pipeline, or SDK | No — requires an interactive Claude Code session |
+| **Scan depth control** | Quick (~30 s), Standard (~2 min), Deep (~5 min) | Single depth |
+| **Secrets detection** | `SecretDetector` / `SecretsDetector` with typed `SecretType` | Pattern-based |
+| **File + line citations** | Yes — orchestrator prompt requires file paths and line numbers | Best-effort |
 
-## Key differences
+## Vulnerability coverage
 
-**Scope and depth:**
-- The workflow runs four specialized subagents (vulnerability scanner, secret detector, authentication reviewer, remediation planner) for comprehensive coverage
-- The skill focuses on immediate findings you can act on during development
-- Alerts monitor ongoing telemetry patterns rather than scanning code directly
+Both entry points cover the same core categories:
 
-**Workflow integration:**
-- Workflow fits into automated pipelines and generates machine-readable output
-- Skill integrates with your coding conversation for real-time feedback
-- Alerts run continuously in the background and notify you when problems emerge
+| Category | Examples caught |
+|---|---|
+| **Code injection** | `eval()`, `exec()`, `compile()` on untrusted input |
+| **Path traversal** | File operations without path validation |
+| **Hardcoded secrets** | API keys, tokens, passwords committed to source |
+| **SQL / command injection** | String concatenation in queries or shell commands |
+| **SSRF** | HTTP requests to user-controlled URLs |
+| **Weak cryptography** | MD5/SHA1 for security, hardcoded IVs |
 
-**Output format:**
-- Workflow provides severity scores (0-100), CWE identifiers, and structured markdown
-- Skill gives clickable file links and conversational follow-up options
-- Alerts send notifications with metric values and threshold breaches
+## Tradeoffs
 
-## Use the workflow when...
+**The workflow is the stronger tool for most production use cases.** It runs four coordinated subagents, produces a scored report mapped to severity levels, and emits CWE identifiers that downstream tooling (tickets, dashboards) can consume. The skill trades depth for speed and convenience — useful when you want a quick sanity check without leaving your conversation.
 
-- You're setting up CI/CD security checks
-- You need comprehensive coverage with CWE mapping
-- You want automated batch processing of multiple files
-- You're generating reports for compliance or auditing
+The skill has no CI integration path and no OWASP mapping. If you need a repeatable, auditable artifact — for a release gate, a compliance review, or a PR check — the workflow is the right choice.
 
-```bash
-attune workflow run security-audit --path "src/"
-```
+## Use the `security-audit` workflow when…
 
-## Use the skill when...
+- You are running a pre-release security gate or CI check.
+- You need a scored report (0–100) with CWE identifiers and severity tiers.
+- You want OWASP-mapped findings or prioritized remediation steps with effort estimates.
+- You need to scan a large directory and control scan depth (quick / standard / deep).
+- You are invoking the audit from a script, SDK, or automated pipeline.
 
-- You're actively coding and want immediate feedback
-- You need to explore findings interactively
-- You want to ask follow-up questions about vulnerabilities
-- You prefer working within your Claude Code conversation
+## Use the `/security-audit` skill when…
 
-```
-/security-audit src/auth.py
-```
+- You are already in a Claude Code session and want a fast, interactive check on a file or small directory.
+- You do not need OWASP mapping, CWE identifiers, or a formal report.
+- You are doing exploratory work and a full workflow run would be overkill.
 
-## Use alerts when...
+## Source files
 
-- You want continuous monitoring of security metrics
-- You need notifications when vulnerability counts spike
-- You're tracking trends in code quality over time
-- You want automated alerts for threshold breaches
+- `src/attune/workflows/security_audit.py`
+- `src/attune/security/**`
+- `src/attune/monitoring/**`
 
-```bash
-attune alerts init --metric vulnerability_count --threshold 5
-```
-
-## Recommendation
-
-**Start with the skill** for day-to-day development — it's the fastest way to catch issues as you code. **Add the workflow** to your CI pipeline for comprehensive pre-deployment scanning. **Set up alerts** once you have baseline metrics to monitor ongoing security health.
-
-Most teams use all three: skills during development, workflows in CI/CD, and alerts for continuous monitoring.
+**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`

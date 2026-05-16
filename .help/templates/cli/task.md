@@ -1,59 +1,61 @@
 ---
+type: task
+name: cli-task
 feature: cli
 depth: task
-generated_at: 2026-05-12T20:01:25.945974+00:00
-source_hash: 9b280c902cb899cdf4292fc1221ba1b77cb6c199e12090acd143692bd7817bd6
+generated_at: 2026-05-16T06:19:45.804232+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# Work with cli
+# Work with the CLI
 
-Use cli when you need to command-line interface and routing.
+Use the attune CLI when you need to add, modify, or debug a CLI command — such as cost tracking, help browsing, memory management, or input routing.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/cli_minimal.py
+- A working Python environment with `pytest` available
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what cli
-   does today before making changes.
-   The primary functions are:
-   - `get_version()` in `src/attune/cli_minimal.py` — Get package version.
-   - `create_parser()` in `src/attune/cli_minimal.py` — Create the argument parser.
-   - `main()` in `src/attune/cli_minimal.py` — Main entry point.
-   - `route_user_input()` in `src/attune/cli_router.py` — Quick routing helper.
-   - `is_slash_command()` in `src/attune/cli_router.py` — Check if text is a slash command.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Identify the command you want to change.**
+   Locate the relevant function in the table below. Each function owns a single, named behavior:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   | Function | File | What it does |
+   |---|---|---|
+   | `cmd_costs()` | `cli_commands/cost_commands.py` | Show cost report for recent period |
+   | `cmd_costs_today()` | `cli_commands/cost_commands.py` | Show today's cost summary |
+   | `cmd_costs_export()` | `cli_commands/cost_commands.py` | Export cost data to a file |
+   | `cmd_costs_reset()` | `cli_commands/cost_commands.py` | Clear all cost tracking data |
+   | `cmd_help()` | `cli_commands/help_commands.py` | Handle the `attune help` command |
+   | `cmd_remember()` | `cli_commands/memory_commands.py` | Add a lesson to the lessons file |
+   | `cmd_forget()` | `cli_commands/memory_commands.py` | Remove a lesson by line number or keyword |
+   | `cmd_lessons()` | `cli_commands/memory_commands.py` | List current lessons with line numbers |
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "cli"`.
+   Read the function's docstring, parameters, and return type to confirm it owns the behavior you need.
+
+2. **Review the routing layer.**
+   Open `src/attune/cli_router.py` and check how `HybridRouter` dispatches input to the function you identified. If your change affects which skill gets invoked or how preferences are stored, update `route()` or `learn_preference()` accordingly.
+
+3. **Edit the function.**
+   Make your changes in the identified file. Match the naming conventions, error-handling style, and logging patterns used by the surrounding functions in that module.
+
+4. **Run the CLI tests.**
+   Execute the following command to catch regressions before they reach other developers:
+
+   ```bash
+   pytest -k "cli"
+   ```
 
 ## Key files
 
-- `src/attune/cli_minimal.py`
-- `src/attune/cli_router.py`
-- `src/attune/cli_commands/**`
+- `src/attune/cli_minimal.py` — entry point
+- `src/attune/cli_router.py` — `HybridRouter` routing and preference learning
+- `src/attune/cli_commands/cost_commands.py` — cost tracking commands
+- `src/attune/cli_commands/help_commands.py` — help browsing command
+- `src/attune/cli_commands/memory_commands.py` — lessons and memory commands
 
-## Common modifications
+## Verify your changes
 
-Functions you are most likely to modify:
-
-- `get_version()` in `src/attune/cli_minimal.py`
-- `create_parser()` in `src/attune/cli_minimal.py`
-- `main()` in `src/attune/cli_minimal.py`
-- `route_user_input()` in `src/attune/cli_router.py`
-- `is_slash_command()` in `src/attune/cli_router.py`
-- `cmd_costs()` in `src/attune/cli_commands/cost_commands.py`
-- `cmd_costs_today()` in `src/attune/cli_commands/cost_commands.py`
-- `cmd_costs_export()` in `src/attune/cli_commands/cost_commands.py`
+Run `pytest -k "cli"` and confirm all tests pass. Then invoke your changed command directly — for example, `attune help` or `attune costs` — and confirm it produces the expected output with no Python tracebacks.

@@ -1,59 +1,57 @@
 ---
 type: faq
+name: smart-test-faq
 feature: smart-test
 depth: faq
-generated_at: 2026-04-14T14:44:11.350773+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.810099+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
 # Smart Test FAQ
 
-## What is smart test?
+## What does smart-test do?
 
-Smart test analyzes your codebase to find untested code and automatically generates pytest tests with edge cases.
+It finds untested code in your Python project and generates pytest tests to cover it — including edge cases, error paths, and boundary values.
 
 ## When should I use it?
 
-Use smart test when you need to improve test coverage or generate tests for existing code. It's particularly helpful for:
-- Identifying modules with low test coverage
-- Creating comprehensive test suites for functions and classes
-- Generating edge cases you might miss writing tests manually
+Use smart-test when you want to catch coverage gaps before they become tech debt: after writing new modules, when coverage drops below your threshold, before a release, or to bootstrap tests for legacy code that has none.
 
-## What's the main entry point?
+If you need to fix tests that are already written but failing, use fix-test instead.
 
-The main workflows are:
+## What kinds of gaps does it find?
 
-- `TestGenerationWorkflow` — Generates tests using AI-powered analysis
-- `TestAuditWorkflow` — Audits existing test coverage and identifies gaps
-- `ParallelTestGenerationWorkflow` — Generates tests for multiple modules in parallel
+Smart-test identifies untested public functions, uncovered branches (`if`/`else` paths), exception handlers that are never triggered, boundary values (empty inputs, `None`, zero, max-length), and input combinations that would need `@pytest.mark.parametrize` coverage.
 
-For direct test generation, start with `generate_test_for_function()` or `generate_test_for_class()`.
+## What does it generate?
 
-## How do I analyze my code coverage?
+It produces a coverage gap report ranked by risk, working pytest functions with assertions, boundary and `None`-handling tests, exception tests, and parametrized test cases for input combinations.
 
-Use `parse_coverage_json()` to load pytest-cov coverage data, then `prioritize_modules()` to identify which modules need tests most urgently. The coverage threshold defaults to 50%.
+## Do I need an API key or extra budget?
 
-## Can I generate tests in batches?
+No. Smart-test runs on your existing Claude subscription.
 
-Yes. `ParallelTestGenerationWorkflow` can process multiple modules at once. Use the `batch_size` parameter to control how many modules to process simultaneously, and `top` to limit the total number of modules.
+## Will it generate tests for my entire codebase at once?
 
-## What types of test cases does it generate?
+Not by default. If you don't specify a target, it asks which module to focus on and whether you want gap analysis, test generation, or both. If you include the path upfront — for example, `/smart-test src/auth/` — it skips the questions and runs immediately.
 
-Smart test generates test cases based on function parameters and return types. It creates:
-- Type-specific test values (strings, numbers, booleans, etc.)
-- Edge cases for different parameter combinations
-- Assertions for return type validation
-- Tests for async functions and class methods
+## How does it decide which modules to prioritize?
 
-## How do I debug it?
+It parses your `coverage.json` output (produced by pytest-cov), scores each module by coverage percentage and statement count, and filters out modules above a minimum threshold (default 50%). Modules are then grouped by subsystem for batch processing.
 
-Run the related tests first: `pytest -k "smart-test" -v`. If they pass but your code still fails, check that your coverage.json file exists and is valid. The `parse_coverage_json()` function will raise specific errors if the file is missing or malformed.
+## What gets skipped automatically?
 
-## Where are the source files?
+Directories like `.git`, `__pycache__`, `venv`, `migrations`, `build`, `dist`, and similar non-source paths are excluded by default. You don't need to configure this.
 
-- `src/attune/workflows/test_gen/**`
-- `src/attune/workflows/test_audit/**`
-- `src/attune/workflows/test_gen_parallel.py`
+## Where is the source code for this feature?
 
-**Tags:** `tests`, `coverage`, `generation`
+- `src/attune/workflows/test_audit/` — coverage parsing, prioritization, and audit workflow
+- `src/attune/workflows/test_gen/` — test generation workflow and AST analysis
+- `src/attune/workflows/test_gen_parallel.py` — parallel generation across multiple modules
+
+## How do I debug smart-test if something goes wrong?
+
+Run `pytest -k "smart-test" -v` first to check whether the underlying tests pass. If they do but your output looks wrong, verify that your `coverage.json` file exists and contains a top-level `files` key — `parse_coverage_json()` raises a `ValueError` if that key is missing or malformed.
+
+**Tags:** `testing`, `coverage`, `generation`

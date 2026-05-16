@@ -1,55 +1,92 @@
 ---
 type: comparison
+name: orchestration-comparison
 feature: orchestration
 depth: comparison
-generated_at: 2026-04-14T15:19:00.027172+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.039272+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
-# Orchestration strategies comparison
+# Comparison: Orchestration vs alternatives
 
 ## Context
 
-The orchestration system provides multiple execution strategies for composing and coordinating agent teams. Each strategy handles different patterns of agent interaction, from simple sequential execution to complex hierarchical delegation and conditional branching.
+The orchestration module provides two complementary layers for composing agent work:
+
+- **Workflow orchestration** — runs named analysis workflows (Security Audit, Code Review, Deep Review, etc.) in sequence and combines their findings into a single scored report.
+- **Meta-orchestration** — composes `BaseWorkflow` instances using one of six execution strategies, controlling agent order, data flow between stages, and quality gates.
+
+Understanding which layer you need — and when a simpler alternative wins — is the goal of this page.
 
 ## Strategy comparison
 
-| Strategy | Best for | Execution pattern | Key limitation |
-|----------|----------|------------------|----------------|
-| **ToolEnhancedStrategy** | Single agent with comprehensive tool access | One agent + all available tools | No multi-agent coordination |
-| **PromptCachedSequentialStrategy** | Sequential tasks with shared context | Linear chain with cached results (1 hour TTL) | No parallelization or branching |
-| **DelegationChainStrategy** | Hierarchical task breakdown | Tree-like delegation (max 3 levels deep) | Fixed depth limit |
-| **ConditionalStrategy** | Simple if/then logic | Binary branching based on conditions | Only two branches supported |
-| **MultiConditionalStrategy** | Complex decision trees | Switch/case pattern with multiple branches | All conditions evaluated sequentially |
-| **NestedStrategy** | Workflow composition | Embeds complete workflows within workflows | Recursive depth limited by `max_depth` |
-| **NestedSequentialStrategy** | Mixed agent/workflow sequences | Linear execution mixing agents and nested workflows | No parallel execution within steps |
+The six composition patterns and the three advanced strategies each serve a distinct execution shape. Use this table to match your use case to the right strategy.
 
-## Performance characteristics
+| Strategy | Execution shape | Best for | Key constraint |
+|---|---|---|---|
+| `SequentialStrategy` | Agents run one after another; output flows forward | Pipelines where each stage depends on the previous result (e.g., `security_audit → dependency_check → release_prep`) | No parallelism; total time = sum of stage times |
+| `ParallelStrategy` | All agents run concurrently | Independent analyses where speed matters more than inter-stage data sharing | Agents cannot consume each other's output |
+| `DebateStrategy` | Agents argue positions; result is synthesized | Decisions requiring multiple perspectives (architecture trade-offs, risk assessment) | Higher token cost; not suitable for time-sensitive gates |
+| `TeachingStrategy` | One agent instructs others | Propagating patterns or constraints across a codebase | Assumes a clear "teacher" agent exists in your template set |
+| `RefinementStrategy` | Iterative passes until quality gate passes | Output quality is paramount and latency is acceptable | Can loop; set explicit exit conditions |
+| `AdaptiveStrategy` | Strategy is selected at runtime based on task requirements | Unknown or variable workload shapes | Requires `TaskRequirements` to be well-specified |
+| `ToolEnhancedStrategy` | Single agent with comprehensive tool access | One-agent tasks that need broad tool reach without multi-agent overhead | Single agent; no composition |
+| `PromptCachedSequentialStrategy` | Sequential with a shared cached context (default TTL: 3600 s) | Repeated sequential runs over the same large context (e.g., large codebase scans) | Cache invalidation is time-based, not content-based |
+| `DelegationChainStrategy` | Hierarchical delegation up to `max_depth` (default: 3) | Tasks that naturally decompose into sub-tasks with clear ownership | Depth cap enforced; exceeding it raises an error |
+| `ConditionalStrategy` | If condition → branch A, else → branch B | Routing based on a single gate (e.g., skip test generation if coverage > 80%) | Binary branching only |
+| `MultiConditionalStrategy` | Switch/case across multiple conditions | Multiple routing outcomes from a single decision point | Falls through to `default_branch` if no condition matches |
+| `NestedStrategy` / `NestedSequentialStrategy` | Workflows embedded inside workflows | Reusing a registered `WorkflowDefinition` as a step inside a larger pipeline | Nesting depth is capped by `NestingContext.DEFAULT_MAX_DEPTH` |
 
-**PromptCachedSequentialStrategy** is ~3x faster for repeated operations due to context caching, but the 1-hour TTL means cold starts for long-running workflows.
+## Workflow orchestration vs. calling workflows directly
 
-**ToolEnhancedStrategy** has the lowest coordination overhead since it uses a single agent, but cannot leverage specialized agent capabilities.
+| | Workflow orchestration | Direct workflow call |
+|---|---|---|
+| **Number of workflows** | Two or more in one pass | Exactly one |
+| **Report format** | Single combined report, findings grouped by severity | Workflow-native output |
+| **Setup** | Describe what you need; the skill selects and sequences workflows | Call the specific tool (e.g., `doc_orchestrator()`) |
+| **Typical time** | Additive (e.g., Security ~2 min + Test Audit ~2 min + Release Prep ~3 min = ~7 min) | Per-workflow time only |
+| **Best for** | Pre-release gates, comprehensive reviews, CI chains | Targeted, single-concern analysis |
 
-**DelegationChainStrategy** scales well for complex tasks but hits depth limits at 3 levels, making it unsuitable for deeply nested problem decomposition.
+If you only need one workflow, call it directly. Orchestration adds value when combining two or more passes, not as a general wrapper.
 
-## Use X when...
+## When to use orchestration
 
-**Use ToolEnhancedStrategy when** you have a single, capable agent that can handle the entire task with comprehensive tool access.
+Use the meta-orchestration strategies when:
 
-**Use PromptCachedSequentialStrategy when** you need sequential processing with expensive context computation that benefits from caching between runs.
+- Your task requires **multiple agents or analysis passes** whose results must be composed — for example, a Secure Release pipeline that runs `security_audit → dependency_check → release_prep` in sequence.
+- You need **conditional routing** at runtime — use `ConditionalStrategy` or `MultiConditionalStrategy` to branch based on quality gates or environment state.
+- You want to **reuse registered workflows** as steps inside a larger pipeline — `NestedStrategy` and `NestedSequentialStrategy` let you reference any `WorkflowDefinition` by ID.
+- You need **parallel throughput** for independent analyses — `ParallelStrategy` runs agents concurrently when their outputs are not interdependent.
+- You have a **repeated large-context workload** — `PromptCachedSequentialStrategy` amortizes context cost across runs within the cache TTL.
 
-**Use DelegationChainStrategy when** your task naturally decomposes into a hierarchy no more than 3 levels deep and you want automatic load distribution.
+Use workflow orchestration (the skill layer) when:
 
-**Use ConditionalStrategy when** you have simple binary decision logic that determines which agent or workflow branch to execute.
+- You want to combine two or more named analysis workflows (Security Audit, Code Review, Deep Review, etc.) and receive a single severity-grouped report.
+- You are setting up a **CI gate** (e.g., security + test audit blocking a PR) without writing strategy code.
+- You are **onboarding to a module** and want a combined doc audit + code review in one command.
 
-**Use MultiConditionalStrategy when** you need complex routing logic with multiple possible execution paths based on context evaluation.
+## When not to use orchestration
 
-**Use NestedStrategy when** you want to embed complete, reusable workflows within larger compositions.
+- **Single workflow, single concern** — call the specific tool directly (e.g., `doc_orchestrator()` for documentation maintenance). Adding a strategy layer for one agent introduces indirection with no benefit.
+- **Exploratory or throwaway analysis** — a direct workflow call or a one-off script is faster to set up and easier to discard.
+- **Behavior not exposed by the public API** — do not patch strategy internals. Use `register_strategy()` to add a custom `ExecutionStrategy` subclass, or `register_custom_template()` to extend the template registry.
+- **Unbounded nesting** — `NestedStrategy` and `DelegationChainStrategy` enforce depth limits. If your design requires deeper nesting, reconsider the pipeline shape rather than raising the cap.
 
-**Use NestedSequentialStrategy when** you need to mix individual agents and complete workflows in a linear sequence.
+## Decision guide
 
-For most applications, start with **PromptCachedSequentialStrategy** — it handles the common case of sequential agent coordination with good caching behavior. Upgrade to conditional or nested strategies only when you need explicit branching or workflow composition.
+| Situation | Recommended choice |
+|---|---|
+| One analysis workflow needed | Call the workflow directly |
+| Two or more workflows, want a combined report, no code | Workflow orchestration skill |
+| Deterministic multi-stage pipeline with data flow | `SequentialStrategy` or `PromptCachedSequentialStrategy` |
+| Independent analyses, speed is priority | `ParallelStrategy` |
+| Runtime branching on a condition | `ConditionalStrategy` / `MultiConditionalStrategy` |
+| Iterative refinement until quality bar is met | `RefinementStrategy` |
+| Reusing an existing workflow as a pipeline step | `NestedStrategy` / `NestedSequentialStrategy` |
+| Workload shape is unknown at design time | `AdaptiveStrategy` |
+| Single agent needs broad tool access | `ToolEnhancedStrategy` |
+| Hierarchical sub-task delegation | `DelegationChainStrategy` (watch `max_depth`) |
 
 ## Source files
 

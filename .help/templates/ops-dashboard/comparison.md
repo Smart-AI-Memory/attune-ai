@@ -3,8 +3,8 @@ type: comparison
 name: ops-dashboard-comparison
 feature: ops-dashboard
 depth: comparison
-generated_at: 2026-05-14T14:43:23.578213+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.820558+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
@@ -12,57 +12,50 @@ status: generated
 
 ## Context
 
-The ops dashboard is a locally-running web server (`attune ops` / `python -m attune.ops`) that combines four capabilities in one place: a per-feature scope picker backed by `.help/features.yaml`, a workflow runner with clickable stage chaining, persisted run history with configurable retention, and live SSE log streaming. Understanding what it does — and what it deliberately does not do — helps you decide whether to start it up or use a lighter alternative.
+The ops dashboard is a local web server (`attune ops` / `python -m attune.ops`) that surfaces workflow execution for a project. Its defining capabilities are a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It is built on FastAPI and runs on `127.0.0.1:8765` by default.
 
 ## Feature comparison
 
-| Capability | Ops dashboard | Ad-hoc script | Direct CLI workflow invocation |
+| Capability | Ops dashboard | CLI script | Throwaway script |
 |---|---|---|---|
-| **Scope picker UI** | Yes — reads `features.yaml`, resolves `Feature.path` per entry | Manual — you pass paths by hand | No — path is a positional argument |
-| **Run history & retention** | Persisted to `runs_dir`; configurable via `runs_retention_days` (default 30 days) | None unless you add it yourself | None |
-| **Live log streaming** | Server-sent events (SSE) pushed to the browser | Stdout only | Stdout only |
-| **Clickable workflow chaining** | Yes — next-stage links rendered in the UI | No | No |
-| **Telemetry & KPIs** | `HomeKpis` surfaced above the fold: today's events, cost, 7-day savings, sparkline | None | None |
-| **Host/port control** | `--host` / `--port`; default `127.0.0.1:8765` | N/A | N/A |
-| **Trusted-host enforcement** | `TrustedHostMiddleware` rejects unlisted `Host` headers | N/A | N/A |
-| **Workflow execution** | Only when `allow_run=True` (off by default) | Full control | Full control |
-| **Startup overhead** | FastAPI import deferred via `create_app()` lazy loader; still a server process | Near-zero | Near-zero |
-| **Best for** | Interactive, repeated work across multiple features | One-off or CI automation | Single workflow, no UI needed |
+| **Launch** | `attune ops` or `python -m attune.ops` | Any terminal command | Any terminal command |
+| **Workflow execution** | Interactive — scope picker drives `PathArgSpec` per workflow | Manual argument passing | Manual argument passing |
+| **Run history** | Persisted to disk; retained for `runs_retention_days` (default 30) | None | None |
+| **Log streaming** | Live SSE stream in browser | Terminal stdout | Terminal stdout |
+| **Session visibility** | `/sessions` page shows Claude Code sessions with duration, message count, and AI-generated resume prompt | None | None |
+| **Cost tracking** | Home page KPIs: today's cost, 7-day cost, 7-day savings, per-workflow and per-day breakdowns | None | None |
+| **Feature scoping** | Reads `.help/features.yaml`; `first_feature()` sets the default scope on first paint | N/A | N/A |
+| **Security** | `TrustedHostMiddleware` enforces `trusted_hosts` allowlist; `allow_run` gates execution | Process-level only | Process-level only |
+| **Setup cost** | Requires `build_config()` and a running server process | Zero | Zero |
 
-## Tradeoffs to weigh
+## Tradeoffs
 
-**Ops dashboard is stronger when:**
+**Ops dashboard strengths**
 
-- You switch between features frequently and the scope picker saves you from re-typing paths every time.
-- You want a persistent record of what ran, when it ran, and how much it cost — without building that bookkeeping yourself.
-- You need to observe long-running workflow stages in real time through SSE, rather than tailing a log file.
-- Telemetry summaries (`TelemetrySummary`, `HomeKpis`) matter to your team.
+- Run history survives process restarts. A throwaway script gives you nothing to look back at; the dashboard keeps `runs_retention_days` days of structured records under `Config.runs_dir`.
+- The scope picker removes argument-wiring boilerplate. Workflows that accept a `PathArgSpec` get a UI control automatically — no manual `--path` flags per invocation.
+- Cost and telemetry data (`TelemetrySummary`, `HomeKpis`, `DailyCost`) are aggregated and visible without writing any reporting code.
+- Session summaries use Claude Haiku to generate a one-sentence resume prompt per session, making it practical to context-switch across many Claude Code sessions in a day.
 
-**Ops dashboard is weaker when:**
+**Ops dashboard limitations**
 
-- You are running a single workflow once (for example, in CI). Starting a server process, binding a port, and configuring `trusted_hosts` is more ceremony than the job warrants.
-- You need `allow_run=True` in an automated context — the flag exists but is off by default precisely because remote execution carries risk; a direct CLI call is safer and more auditable.
-- You are doing exploratory, throwaway work. Wiring up `build_config()` and launching the server for a single invocation adds friction that a plain script avoids.
-- Your environment cannot expose a local port, or `TrustedHostMiddleware` conflicts with your network setup.
+- It is a server process. For a one-off task, starting `attune ops` and navigating to a browser is more friction than running a script directly.
+- It has no headless or CI mode. `cmd_ops()` blocks; `allow_run=False` by default means workflow execution must be explicitly enabled. It is not designed for unattended pipeline use.
+- The public API surface is intentionally narrow: `create_app`, `build_config`, and `Config` are the only exported names. Behavior not exposed through those three should not be patched internally.
 
-## Deciding which entry point to use
+## Use the ops dashboard when
 
-When you have decided to use the dashboard, there are two equivalent entry points:
+- You are running workflows repeatedly across multiple features and want a scope picker rather than hand-typing path arguments each time.
+- You need to review or compare past runs — cost, duration, or log output — without instrumenting anything yourself.
+- You are managing multiple Claude Code sessions and want AI-generated summaries to decide which to resume.
+- You want cost and savings telemetry (`seven_day_cost`, `seven_day_savings`) aggregated without writing reporting code.
 
-| Entry point | Use when |
-|---|---|
-| `attune ops` (via `add_subparser`) | You are already using the `attune` CLI for other subcommands |
-| `python -m attune.ops` (`main()`) | You want to launch the dashboard standalone, without the full `attune` CLI context |
+## Skip the ops dashboard when
 
-Both call `cmd_ops()`, which blocks until the server exits and returns `0`.
-
-## Use the ops dashboard when…
-
-- **You work interactively across multiple features day-to-day.** The scope picker, run history, and telemetry KPIs compound in value the more you use the dashboard — they are not worth the setup cost for a single run.
-- **You need live feedback on long workflow stages.** SSE streaming is the ops dashboard's clearest advantage over any CLI alternative; nothing else in this project surfaces real-time stage output in a browser.
-- **Run history matters.** If you or your team ever ask "what ran last Tuesday and what did it cost?", the persisted `runs_dir` with `runs_retention_days` is the only option here that answers that question without custom instrumentation.
-
-Skip the ops dashboard and invoke workflows directly when the job is automated, one-shot, or running in an environment where a local web server is impractical.
+- You are running a workflow once, or writing a throwaway script to explore an idea. A direct CLI invocation has zero setup cost.
+- You need the workflow to run in CI or another unattended context. The dashboard's blocking server model and browser-first UX are not a fit for pipelines.
+- Your problem spans multiple features and needs orchestration above the dashboard layer — call the orchestration layer directly rather than routing through the dashboard server.
+- You need behavior that `create_app`, `build_config`, or `Config` do not expose. File an issue or propose an extension point rather than reaching into unexported internals.
 
 ## Source files
 

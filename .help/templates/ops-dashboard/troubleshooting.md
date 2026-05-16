@@ -3,135 +3,103 @@ type: troubleshooting
 name: ops-dashboard-troubleshooting
 feature: ops-dashboard
 depth: troubleshooting
-generated_at: 2026-05-14T14:43:23.566706+00:00
-source_hash: 395f221f9a789d9b8851995c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.808757+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
 # Troubleshoot ops dashboard
 
-The ops dashboard is a local server (`attune ops`) that serves a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Use this page when the dashboard fails to start, returns unexpected results, or behaves inconsistently.
+## Before you start
+
+The ops dashboard is a local FastAPI server (`attune ops` / `python -m attune.ops`) that surfaces workflow execution, per-feature scope picking, persisted run history, and live SSE log streaming. Confirm the server is running before diagnosing anything else:
+
+```bash
+attune ops --host 127.0.0.1 --port 8765
+```
+
+If the process starts but the browser shows nothing, check that your `Host` header is on the `trusted_hosts` allowlist — `TrustedHostMiddleware` rejects requests whose `Host` header isn't in `Config.trusted_hosts`.
 
 ## Symptom table
 
 | If you observe | Check |
-|----------------|-------|
-| Dashboard won't start | Confirm the port is free: `lsof -i :8765`. Check that `project_root` and `attune_home` resolve to existing paths. |
-| `403` or connection refused from a remote host | Verify the client's `Host` header is listed in `trusted_hosts`. `TrustedHostMiddleware` rejects any host not on the allowlist. |
-| KPI numbers on the home page are missing or zero | Check that `Config.telemetry_path` exists and contains valid event records. Confirm `last_event_at` is not `None` in `TelemetrySummary`. |
-| Workflow list is empty or features don't appear | Confirm `.help/features.yaml` exists under `project_root`. Run `list_features(<project_root>)` directly in a Python shell to see what it returns. |
-| Run history is missing | Check that `Config.runs_dir` exists on disk. The directory is not created until the first write. Confirm `runs_retention_days` (default `30`) hasn't pruned entries you expect to see. |
-| SSE log stream stops or never starts | Check that `allow_run` is `True` in your config — the dashboard disables run execution when this flag is `False`. |
-| Server binds to the wrong address | `host` defaults to `127.0.0.1`. If you need LAN access, pass `--host 0.0.0.0` and add the client hostname to `trusted_hosts`. |
-| Intermittent failures after env changes | Check `ATTUNE_OPS_SWEEP_RESULTS` (`ENABLE_ENV`) and `ATTUNE_HOME`. Both are read at startup; stale values from a previous shell session can override your config. |
+|---|---|
+| Server refuses to start | Run `python -m attune.ops` directly and read the traceback. The most common cause is a missing or misconfigured `project_root` or `attune_home`. |
+| `403` / connection rejected from browser | Confirm your browser's `Host` header matches an entry in `Config.trusted_hosts`. Add your host via `--trusted-hosts` or `build_config(trusted_hosts=(...))`. |
+| Dashboard home page shows zero KPIs | Verify `Config.telemetry_path` exists and contains at least one event. The `HomeKpis` fields (`today_cost`, `seven_day_cost`, etc.) are all zero when no telemetry data is present. |
+| Workflow list is empty | Confirm `Config.specs_roots` points to directories that contain valid spec files. Pass `--specs-roots` on the CLI or set `specs_roots` in `build_config()`. |
+| Scope picker shows no features | Check that `<project_root>/.help/features.yaml` exists and is valid YAML. `list_features()` returns an empty list when the file is missing or unparseable. |
+| Run history missing or not persisting | Check that `Config.runs_dir` is writable. The directory is created on first write — if it doesn't exist yet, that is expected until the first run completes. Runs older than `runs_retention_days` (default: 30) are purged automatically. |
+| SSE log stream drops or never connects | Confirm nothing between the browser and the server (proxy, firewall) is buffering the response. SSE requires a persistent HTTP connection with chunked transfer. |
+| `allow_run` errors / workflow won't execute | `Config.allow_run` defaults to `False`. Pass `--allow-run` on the CLI or set `allow_run=True` in `build_config()`. |
 
 ## Diagnosis steps
 
-Work through these in order — earlier steps are faster and don't require code changes.
+Work through these in order — each step is cheaper than the next.
 
-### 1. Reproduce with the minimal command
+1. **Reproduce with the standalone entrypoint.**
+   Run `python -m attune.ops` with the same arguments you use in production. This isolates the failure from any wrapper script or environment the `attune` CLI adds.
 
-Run the dashboard directly to confirm the failure isn't caused by a wrapper or launcher:
+2. **Confirm `Config` values at startup.**
+   `build_config()` assembles every runtime value. Add a temporary print or log statement immediately after calling it to confirm `project_root`, `attune_home`, `host`, `port`, `specs_roots`, `trusted_hosts`, and `allow_run` all have the values you expect. Environment overrides (such as `ATTUNE_HOME`) silently take precedence over defaults.
 
-```bash
-python -m attune.ops
-```
+3. **Check the telemetry file directly.**
+   `Config.telemetry_path` resolves to a file under `attune_home`. If KPIs are wrong, open that file and verify it contains recent, well-formed events. An empty or corrupt file produces zero-value `TelemetrySummary` fields without raising an error.
 
-Or via the CLI:
+4. **Check the runs directory.**
+   `Config.runs_dir` may not exist until the first run completes. If you expect historical runs and the directory is absent or empty, either no runs have completed or `runs_retention_days` has purged them. Confirm with:
+   ```bash
+   ls -la "$(python -c "import attune.ops as o; print(o.build_config().runs_dir)")"
+   ```
 
-```bash
-attune ops
-```
+5. **Run the related tests.**
+   ```bash
+   pytest -k "ops" -v
+   ```
+   A failing test in this suite narrows the fault to a specific code path and gives you a reproducible fixture to work from.
 
-If the failure disappears, the problem is in how the surrounding context calls `cmd_ops()` or constructs its `argparse.Namespace`.
-
-### 2. Inspect the resolved config
-
-`build_config()` assembles every runtime path and flag. Print the config before the server starts to confirm all fields are what you expect:
-
-```python
-from attune.ops import build_config
-cfg = build_config()
-print(cfg)
-```
-
-Pay attention to `project_root`, `attune_home`, `host`, `port`, `allow_run`, `trusted_hosts`, and `runs_retention_days`. A wrong path here explains most startup and data-missing symptoms.
-
-### 3. Check that key directories exist
-
-The dashboard reads from several directories that may not exist until first use:
-
-```bash
-# Substitute your actual attune_home and project_root values
-ls ~/.attune/runs/
-ls ~/.attune/memory/
-ls ~/.attune/sessions/
-ls <project_root>/.help/features.yaml
-```
-
-`Config.runs_dir` and related paths are not created until the first write. Create them manually if needed:
-
-```bash
-mkdir -p ~/.attune/runs ~/.attune/memory ~/.attune/sessions
-```
-
-### 4. Enable debug logging
-
-Re-run with Python logging set to `DEBUG` to surface config resolution, middleware decisions, and telemetry reads:
-
-```bash
-PYTHONASYNCIODEBUG=1 python -m attune.ops
-```
-
-Or add this before calling `create_app()` in your own code:
-
-```python
-import logging
-logging.basicConfig(level=logging.DEBUG)
-```
-
-### 5. Run the related tests
-
-```bash
-pytest -k "ops" -v
-```
-
-If a test covers the failing path, its fixtures show you the minimal valid inputs. A newly failing test after a dependency upgrade points to an external change rather than a code bug.
+6. **Enable FastAPI/uvicorn debug logging.**
+   Set the log level before starting the server:
+   ```bash
+   UVICORN_LOG_LEVEL=debug attune ops
+   ```
+   Request-level logs will show whether `TrustedHostMiddleware` is rejecting connections and where routing fails.
 
 ## Common fixes
 
-**Port already in use**
-Change the port with `--port`:
+**Server won't start — `project_root` or `attune_home` not found**
+Pass explicit paths:
 ```bash
-attune ops --port 8766
+attune ops --project-root /path/to/project
 ```
-Or free the existing process: `kill $(lsof -ti :8765)`.
-
-**Host rejected by `TrustedHostMiddleware`**
-Add the client's hostname or IP to `trusted_hosts` when calling `build_config()`, or pass it on the CLI if your launcher supports it. The middleware compares the `Host` request header exactly — `localhost` and `127.0.0.1` are treated as distinct values.
-
-**Features not loading from `.help/features.yaml`**
-Confirm the file exists and is valid YAML. Call `list_features()` to test parsing independently:
-```python
-from attune.ops.accessors import list_features
-print(list_features("/path/to/project"))
-```
-
-**Runs pruned unexpectedly**
-`runs_retention_days` defaults to `30`. If you need longer history, pass a higher value to `build_config()`:
-```python
-cfg = build_config(runs_retention_days=90)
-```
-
-**Sweep results not appearing**
-The `ATTUNE_OPS_SWEEP_RESULTS` environment variable (`ENABLE_ENV`) must be set for sweep result data to be read. Results are stored under `ops/sweep-results/` within `attune_home`.
-
-**Dependency version drift**
-If the dashboard worked previously without a code change, check whether a recent `pip install` changed FastAPI or a related package:
+Or set the environment variable that `attune_home()` reads:
 ```bash
-pip show fastapi starlette
+export ATTUNE_HOME=/path/to/.attune
+attune ops
 ```
-Pin versions in your lockfile if the upgrade introduced a regression.
+
+**Scope picker empty — missing `features.yaml`**
+Create the file at `<project_root>/.help/features.yaml`. `list_features()` requires this file to exist and be valid YAML. `first_feature()` returns `None` when it is absent, leaving the scope picker blank.
+
+**Workflows not running — `allow_run` is `False`**
+```bash
+attune ops --allow-run
+```
+This sets `Config.allow_run = True`. Note that this change affects the entire dashboard session; there is no per-workflow override.
+
+**Stale runs cluttering history — retention too long**
+Lower the retention window:
+```bash
+attune ops --runs-retention-days 7
+```
+Runs older than the specified number of days are purged automatically on the next startup.
+
+**Dependency version mismatch — FastAPI or uvicorn behaves unexpectedly**
+`create_app()` lazy-imports FastAPI to avoid pulling it into every `attune` import. If FastAPI behaviour changed after an upgrade, confirm the installed version:
+```bash
+pip show fastapi uvicorn
+```
+Pin to a known-good version in your project's requirements if needed. This is a change outside `ops-dashboard` itself.
 
 ## Source files
 

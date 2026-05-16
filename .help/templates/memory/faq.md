@@ -1,57 +1,68 @@
 ---
 type: faq
+name: memory-faq
 feature: memory
 depth: faq
-generated_at: 2026-04-14T15:06:37.509869+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-05-16T06:14:13.799343+00:00
+source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
 status: generated
 ---
 
 # Memory FAQ
 
-## What is the memory feature?
+## What does the memory module do?
 
-The memory feature provides storage, retrieval, and security for AI agent data. It includes short-term memory backends (like Redis), Claude memory file integration, and enterprise-level security controls.
+It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (`MemoryBackend`, `SearchableMemoryBackend`), loads `CLAUDE.md` memory files via `ClaudeMemoryLoader`, and exposes an enterprise control panel (`MemoryControlPanel`) for managing patterns, statistics, and Redis lifecycle.
 
-## When should I use memory?
+## When should I use this module?
 
-Use memory when you need to:
-- Store and retrieve data between AI conversations
-- Load Claude memory files (CLAUDE.md) for context
-- Manage agent memory across sessions
-- Implement memory security and audit controls
+Use it when your code needs to stash or retrieve keyed values across agent sessions, load project-level memory from `CLAUDE.md` files, or manage memory patterns with access classification and audit logging. If you only need simple in-process state, you don't need this module.
 
-## What are the main classes I should know about?
+## What are the key entry points?
 
-Start with these core classes:
+| Function or class | Where it lives | What it does |
+|---|---|---|
+| `is_redis_available()` | `memory/__init__.py` | Checks whether Redis is available without importing it — safe to call at startup |
+| `get_redis_memory()` | `memory/__init__.py` | Creates a `RedisShortTermMemory` instance using environment-based config |
+| `get_railway_redis()` | `memory/__init__.py` | Creates a Redis instance pre-configured for Railway deployments |
+| `ClaudeMemoryLoader.load_all_memory()` | `memory/claude_memory.py` | Loads and merges all `CLAUDE.md` files for a project |
+| `create_default_project_memory()` | `memory/claude_memory.py` | Scaffolds a default `.claude/CLAUDE.md` for a new project |
+| `MemoryControlPanel` | `memory/control_panel.py` | Enterprise panel for status, stats, pattern management, and Redis control |
 
-- `MemoryBackend` — Protocol for implementing short-term memory storage
-- `ClaudeMemoryLoader` — Loads CLAUDE.md files for AI context
-- `MemoryControlPanel` — Enterprise management for memory operations
+Start with `is_redis_available()` if you're not sure whether your environment has Redis — it's safe to call without side effects.
 
-## How do I set up Redis memory?
+## What's the difference between `MemoryBackend` and `SearchableMemoryBackend`?
 
-Use `get_redis_memory()` to create a Redis backend with environment-based configuration. For Railway deployment, use `get_railway_redis()` which handles the REDIS_URL automatically.
+`MemoryBackend` is the base protocol: stash, retrieve, delete, list keys, check connection, and get stats. `SearchableMemoryBackend` extends it with `search()` for semantic queries and `promote()` to move session memory into longer-term storage. Use `SearchableMemoryBackend` when your backend needs to answer fuzzy or semantic queries, not just exact key lookups.
 
-## How do I load Claude memory files?
+## How do I check whether Redis is running?
 
-Create a `ClaudeMemoryLoader` and call `load_all_memory()`:
+Call `check_redis_connection()` — it returns a status dict without raising an exception. You can also call `is_redis_available()` for a simple boolean check that avoids importing the Redis subsystem entirely.
 
-```python
-loader = ClaudeMemoryLoader()
-memory_content = loader.load_all_memory(project_root="/path/to/project")
-```
+## What happens if Redis isn't available?
 
-## Can I check if Redis is available without connecting?
+`get_redis_memory()` accepts a `use_mock` parameter. When you set it to `True`, you get a mock backend instead of a live Redis connection, which is useful for testing. `get_railway_redis()` raises `OSError` with a message telling you to add Redis to your Railway project if `REDIS_URL` is not set.
 
-Yes, use `is_redis_available()` to check if the Redis subsystem is available without importing it or establishing a connection.
+## How do I configure Claude memory file loading?
+
+Pass a `ClaudeMemoryConfig` to `ClaudeMemoryLoader`. The key fields are:
+
+- `enabled` — must be `True` to load any files (defaults to `False`)
+- `load_enterprise`, `load_user`, `load_project` — control which memory levels are loaded
+- `max_import_depth` — limits recursive `CLAUDE.md` imports (default `5`)
+- `max_file_size_bytes` — skips files larger than this (default `1 000 000` bytes)
+- `validate_files` — toggles file validation before loading
 
 ## How do I debug memory issues?
 
-Run the memory tests first: `pytest -k "memory" -v`. If they pass but your code fails, check the Redis connection with `check_redis_connection()` and enable debug logging to trace memory operations.
+1. Call `is_redis_available()` or `check_redis_connection()` to confirm the backend is reachable.
+2. Run `pytest -k "memory" -v` to check whether the problem is in your code or the module itself.
+3. Call `MemoryControlPanel.health_check()` for a structured report of subsystem status.
+4. If a specific key is missing, use `MemoryBackend.keys(pattern)` to inspect what's actually stored.
+5. Add `logger.debug` at the point where `stash()` or `retrieve()` is called and re-run with logging enabled.
 
-## Where are the source files?
+## Where is the source code?
 
-- `src/attune/memory/**`
+All memory source files are under `src/attune/memory/`.
 
 **Tags:** `memory`, `storage`

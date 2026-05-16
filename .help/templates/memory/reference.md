@@ -1,159 +1,227 @@
 ---
+type: reference
+name: memory-reference
 feature: memory
 depth: reference
-generated_at: 2026-05-12T20:01:25.926122+00:00
-source_hash: f42c657508b8705e9411e006ff4a55425b1657952e6957339000b42557179ccb
+generated_at: 2026-05-16T06:14:13.784755+00:00
+source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
 status: generated
 ---
 
 # Memory reference
 
+Classes, functions, and constants for storing, retrieving, searching, and securing memory across sessions.
+
 ## Classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `MemoryBackend` | Protocol for short-term memory backends. | `src/attune/memory/backend.py` |
-| `SearchableMemoryBackend` | Extended protocol for backends with semantic search. | `src/attune/memory/backend.py` |
-| `ClaudeMemoryConfig` | Configuration for Claude memory integration | `src/attune/memory/claude_memory.py` |
-| `MemoryFile` | Represents a loaded CLAUDE.md memory file | `src/attune/memory/claude_memory.py` |
-| `ClaudeMemoryLoader` | Loads and manages Claude Code memory files (CLAUDE.md). | `src/attune/memory/claude_memory.py` |
-| `ControlPanelConfig` | Configuration for control panel. | `src/attune/memory/control_panel.py` |
-| `MemoryControlPanel` | Enterprise control panel for Empathy memory management. | `src/attune/memory/control_panel.py` |
-| `MemoryAPIHandler` | HTTP request handler for Memory Control Panel API. | `src/attune/memory/control_panel_api.py` |
-| `RateLimiter` | Simple in-memory rate limiter by IP address. | `src/attune/memory/control_panel_support.py` |
-| `APIKeyAuth` | Simple API key authentication. | `src/attune/memory/control_panel_support.py` |
-| `MemoryStats` | Statistics for memory system. | `src/attune/memory/control_panel_support.py` |
-| `CrossSessionCoordinator` | Coordinator for cross-session agent communication. | `src/attune/memory/cross_session/coordinator.py` |
-| `SessionType` | Type of session/agent. | `src/attune/memory/cross_session/models.py` |
-| `ConflictStrategy` | Strategy for resolving conflicts between agents. | `src/attune/memory/cross_session/models.py` |
-| `SessionInfo` | Information about an active session. | `src/attune/memory/cross_session/models.py` |
-| `ConflictResult` | Result of a conflict resolution. | `src/attune/memory/cross_session/models.py` |
-| `BackgroundService` | Background service daemon for cross-session coordination. | `src/attune/memory/cross_session/service.py` |
-| `EdgeType` | Types of relationships between nodes. | `src/attune/memory/edges.py` |
-| `Edge` | An edge connecting two nodes in the memory graph. | `src/attune/memory/edges.py` |
-| `EncryptionManager` | Manages encryption/decryption for SENSITIVE patterns. | `src/attune/memory/encryption.py` |
-| `FeatureStatus` | Status of an optional feature. | `src/attune/memory/features.py` |
-| `FeatureInfo` | Information about a memory feature. | `src/attune/memory/features.py` |
-| `MemoryFeatures` | Check availability of memory subsystem features. | `src/attune/memory/features.py` |
-| `FileSessionMemory` | File-based session memory with persistence. | `src/attune/memory/file_session.py` |
-| `FileSessionConfig` | Configuration for file-based session memory. | `src/attune/memory/file_session_models.py` |
-| `WorkingEntry` | Entry in working memory. | `src/attune/memory/file_session_models.py` |
-| `StagedPatternFile` | Pattern staged for validation (file-based version). | `src/attune/memory/file_session_models.py` |
-| `SessionState` | Complete state of a session. | `src/attune/memory/file_session_models.py` |
-| `PatternStagingMixin` | Mixin providing pattern staging operations. | `src/attune/memory/file_session_patterns.py` |
-| `PersistenceMixin` | Mixin providing session persistence operations. | `src/attune/memory/file_session_persistence.py` |
-| `MemoryGraph` | Knowledge graph for cross-workflow intelligence. | `src/attune/memory/graph.py` |
-| `LessonsManager` | Manages lessons learned from previous sessions. | `src/attune/memory/lessons.py` |
-| `SecureMemDocsIntegration` | Secure integration between Claude Memory and MemDocs. | `src/attune/memory/long_term_integration.py` |
-| `PatternOperationsMixin` | Mixin providing pattern list, delete, and statistics operations. | `src/attune/memory/long_term_operations.py` |
-| `PatternPipelineMixin` | Mixin providing store/retrieve pipeline helpers. | `src/attune/memory/long_term_pipelines.py` |
-| `Classification` | Three-tier classification system for MemDocs patterns | `src/attune/memory/long_term_types.py` |
-| `ClassificationRules` | Security rules for each classification level | `src/attune/memory/long_term_types.py` |
-| `PatternMetadata` | Metadata for stored MemDocs patterns | `src/attune/memory/long_term_types.py` |
-| `SecurePattern` | Represents a securely stored pattern | `src/attune/memory/long_term_types.py` |
-| `SecurityError` | Raised when security policy is violated | `src/attune/memory/long_term_types.py` |
-| `MemoryPermissionError` | Raised when access is denied. | `src/attune/memory/long_term_types.py` |
-| `BackendInitMixin` | Mixin providing backend initialization for UnifiedMemory. | `src/attune/memory/mixins/backend_init_mixin.py` |
-| `CapabilitiesMixin` | Mixin providing capability detection and health checks for UnifiedMemory. | `src/attune/memory/mixins/capabilities_mixin.py` |
-| `HandoffAndExportMixin` | Mixin providing session handoff and export capabilities for UnifiedMemory. | `src/attune/memory/mixins/handoff_mixin.py` |
-| `LifecycleMixin` | Mixin providing lifecycle management for UnifiedMemory. | `src/attune/memory/mixins/lifecycle_mixin.py` |
-| `LongTermOperationsMixin` | Mixin providing long-term memory operations for UnifiedMemory. | `src/attune/memory/mixins/long_term_mixin.py` |
-| `PatternPromotionMixin` | Mixin providing pattern promotion capabilities for UnifiedMemory. | `src/attune/memory/mixins/promotion_mixin.py` |
-| `ShortTermOperationsMixin` | Mixin providing short-term memory operations for UnifiedMemory. | `src/attune/memory/mixins/short_term_mixin.py` |
-| `NodeType` | Types of nodes in the memory graph. | `src/attune/memory/nodes.py` |
-| `Node` | A node in the memory graph. | `src/attune/memory/nodes.py` |
-| `BugNode` | Specialized node for bugs. | `src/attune/memory/nodes.py` |
-| `VulnerabilityNode` | Specialized node for security vulnerabilities. | `src/attune/memory/nodes.py` |
-| `PerformanceNode` | Specialized node for performance issues. | `src/attune/memory/nodes.py` |
-| `PatternNode` | Specialized node for code patterns. | `src/attune/memory/nodes.py` |
-| `PersonalMemory` | Store and retrieve personal cross-session memory. | `src/attune/memory/personal.py` |
-| `RedisDetectionResult` | Result of Redis auto-detection. | `src/attune/memory/redis_auto_detect.py` |
-| `RedisAutoDetector` | Auto-detect Redis availability and manage user preferences. | `src/attune/memory/redis_auto_detect.py` |
-| `RedisStartMethod` | Methods for starting Redis, in order of preference. | `src/attune/memory/redis_bootstrap.py` |
-| `RedisStatus` | Status of Redis connection/startup. | `src/attune/memory/redis_bootstrap.py` |
-| `AuditLogger` | Comprehensive audit logging for Attune AI. | `src/attune/memory/security/audit_logger.py` |
-| `AuditEvent` | Represents a single audit event. | `src/attune/memory/security/events.py` |
-| `SecurityViolation` | Represents a security policy violation. | `src/attune/memory/security/events.py` |
-| `AuditLogMethodsMixin` | Mixin that adds event-specific logging methods. | `src/attune/memory/security/log_methods.py` |
-| `PIIDetection` | Details about a detected PII instance. | `src/attune/memory/security/pii_scrubber.py` |
-| `PIIPattern` | Definition of a PII detection pattern. | `src/attune/memory/security/pii_scrubber.py` |
-| `PIIScrubber` | Comprehensive PII detection and scrubbing system. | `src/attune/memory/security/pii_scrubber.py` |
-| `AuditQueryMixin` | Mixin that adds query capabilities to AuditLogger. | `src/attune/memory/security/query.py` |
-| `AuditReportMixin` | Mixin that adds reporting capabilities to AuditLogger. | `src/attune/memory/security/reports.py` |
-| `SecretsDetector` | Detects secrets in text content using pattern matching and entropy analysis. | `src/attune/memory/security/secrets_detector.py` |
-| `SecretType` | Types of secrets that can be detected | `src/attune/memory/security/secrets_types.py` |
-| `Severity` | Severity levels for secret detections | `src/attune/memory/security/secrets_types.py` |
-| `SecretDetection` | Metadata about a detected secret. | `src/attune/memory/security/secrets_types.py` |
-| `BaseOperations` | Core CRUD operations and connection management. | `src/attune/memory/short_term/base.py` |
-| `BatchOperations` | Batch operations using Redis pipelines. | `src/attune/memory/short_term/batch.py` |
-| `CacheManager` | Local LRU cache manager for two-tier caching. | `src/attune/memory/short_term/caching.py` |
-| `ConflictNegotiation` | Conflict context and resolution operations. | `src/attune/memory/short_term/conflicts.py` |
-| `CrossSessionManager` | Cross-session coordination operations. | `src/attune/memory/short_term/cross_session.py` |
-| `RedisShortTermMemory` | Facade composing all short-term memory operations. | `src/attune/memory/short_term/facade.py` |
-| `Pagination` | SCAN-based pagination operations. | `src/attune/memory/short_term/pagination.py` |
-| `PatternStaging` | Pattern staging lifecycle operations. | `src/attune/memory/short_term/patterns.py` |
-| `PubSubManager` | Real-time publish/subscribe operations. | `src/attune/memory/short_term/pubsub.py` |
-| `QueueManager` | Redis list operations for task queues. | `src/attune/memory/short_term/queues.py` |
-| `DataSanitizer` | Handles data sanitization for short-term memory. | `src/attune/memory/short_term/security.py` |
-| `SessionManager` | Collaboration session operations. | `src/attune/memory/short_term/sessions.py` |
-| `StreamManager` | Redis Streams operations for audit trails and event logs. | `src/attune/memory/short_term/streams.py` |
-| `TimelineManager` | Redis sorted set operations for timeline queries. | `src/attune/memory/short_term/timelines.py` |
-| `TransactionManager` | Atomic operations using Redis transactions. | `src/attune/memory/short_term/transactions.py` |
-| `WorkingMemory` | Working memory operations for agent data storage. | `src/attune/memory/short_term/working.py` |
-| `LongTermMemory` | Simplified long-term persistent storage interface. | `src/attune/memory/simple_storage.py` |
-| `MemDocsStorage` | Mock/Simple MemDocs storage backend. | `src/attune/memory/storage_backend.py` |
-| `AgentContext` | Compact context package for sub-agent handoff. | `src/attune/memory/summary_index.py` |
-| `ConversationSummaryIndex` | Redis-backed conversation summary with topic indexing. | `src/attune/memory/summary_index.py` |
-| `AccessTier` | Role-based access tiers per EMPATHY_PHILOSOPHY.md | `src/attune/memory/types.py` |
-| `TTLStrategy` | TTL strategies for different memory types | `src/attune/memory/types.py` |
-| `RedisConfig` | Enhanced Redis configuration with SSL and retry support. | `src/attune/memory/types.py` |
-| `RedisMetrics` | Metrics for Redis operations. | `src/attune/memory/types.py` |
-| `PaginatedResult` | Result of a paginated query. | `src/attune/memory/types.py` |
-| `TimeWindowQuery` | Query parameters for time-window operations. | `src/attune/memory/types.py` |
-| `AgentCredentials` | Agent identity and access permissions | `src/attune/memory/types.py` |
-| `StagedPattern` | Pattern awaiting validation | `src/attune/memory/types.py` |
-| `ConflictContext` | Context for principled negotiation | `src/attune/memory/types.py` |
-| `SecurityError` | Raised when a security policy is violated (e.g., secrets detected in data). | `src/attune/memory/types.py` |
-| `Environment` | Deployment environment for storage configuration. | `src/attune/memory/unified.py` |
-| `MemoryConfig` | Configuration for unified memory system. | `src/attune/memory/unified.py` |
-| `UnifiedMemory` | Unified interface for short-term and long-term memory. | `src/attune/memory/unified.py` |
+| Class | Description |
+|-------|-------------|
+| `MemoryBackend` | Protocol for short-term memory backends. |
+| `SearchableMemoryBackend` | Extended protocol for backends with semantic search. |
+| `ClaudeMemoryConfig` | Configuration for Claude memory integration. |
+| `MemoryFile` | Represents a loaded CLAUDE.md memory file. |
+| `ClaudeMemoryLoader` | Loads and manages Claude Code memory files (CLAUDE.md). |
+| `ControlPanelConfig` | Configuration for the control panel. |
+| `MemoryControlPanel` | Enterprise control panel for Empathy memory management. |
+| `MemoryAPIHandler` | HTTP request handler for the Memory Control Panel API. |
+| `RateLimiter` | Simple in-memory rate limiter by IP address. |
+| `APIKeyAuth` | Simple API key authentication. |
+| `MemoryStats` | Statistics for the memory system. |
+| `CrossSessionCoordinator` | Coordinator for cross-session agent communication. |
+| `SessionType` | Type of session or agent. |
+| `ConflictStrategy` | Strategy for resolving conflicts between agents. |
+| `SessionInfo` | Information about an active session. |
+| `ConflictResult` | Result of a conflict resolution. |
+| `BackgroundService` | Background service daemon for cross-session coordination. |
+| `EdgeType` | Types of relationships between nodes. |
+| `Edge` | An edge connecting two nodes in the memory graph. |
+| `EncryptionManager` | Manages encryption and decryption for SENSITIVE patterns. |
+| `FeatureStatus` | Status of an optional feature. |
+| `FeatureInfo` | Information about a memory feature. |
+| `MemoryFeatures` | Check availability of memory subsystem features. |
+| `FileSessionMemory` | File-based session memory with persistence. |
+| `FileSessionConfig` | Configuration for file-based session memory. |
+| `WorkingEntry` | Entry in working memory. |
+| `StagedPatternFile` | Pattern staged for validation (file-based version). |
+| `SessionState` | Complete state of a session. |
+| `PatternStagingMixin` | Mixin providing pattern staging operations. |
+| `PersistenceMixin` | Mixin providing session persistence operations. |
+| `MemoryGraph` | Knowledge graph for cross-workflow intelligence. |
+| `LessonsManager` | Manages lessons learned from previous sessions. |
+| `SecureMemDocsIntegration` | Secure integration between Claude Memory and MemDocs. |
+| `PatternOperationsMixin` | Mixin providing pattern list, delete, and statistics operations. |
+| `PatternPipelineMixin` | Mixin providing store/retrieve pipeline helpers. |
+| `Classification` | Three-tier classification system for MemDocs patterns. |
+| `ClassificationRules` | Security rules for each classification level. |
+| `PatternMetadata` | Metadata for stored MemDocs patterns. |
+| `SecurePattern` | Represents a securely stored pattern. |
+| `SecurityError` | Raised when a security policy is violated. |
+| `MemoryPermissionError` | Raised when access is denied. |
+| `BackendInitMixin` | Mixin providing backend initialization for `UnifiedMemory`. |
+| `CapabilitiesMixin` | Mixin providing capability detection and health checks for `UnifiedMemory`. |
+| `HandoffAndExportMixin` | Mixin providing session handoff and export capabilities for `UnifiedMemory`. |
+| `LifecycleMixin` | Mixin providing lifecycle management for `UnifiedMemory`. |
+| `LongTermOperationsMixin` | Mixin providing long-term memory operations for `UnifiedMemory`. |
+| `PatternPromotionMixin` | Mixin providing pattern promotion capabilities for `UnifiedMemory`. |
+| `ShortTermOperationsMixin` | Mixin providing short-term memory operations for `UnifiedMemory`. |
+| `NodeType` | Types of nodes in the memory graph. |
+| `Node` | A node in the memory graph. |
+| `BugNode` | Specialized node for bugs. |
+| `VulnerabilityNode` | Specialized node for security vulnerabilities. |
+| `PerformanceNode` | Specialized node for performance issues. |
+| `PatternNode` | Specialized node for code patterns. |
+| `PersonalMemory` | Store and retrieve personal cross-session memory. |
+| `RedisDetectionResult` | Result of Redis auto-detection. |
+| `RedisAutoDetector` | Auto-detects Redis availability and manages user preferences. |
+| `RedisStartMethod` | Methods for starting Redis, in order of preference. |
+| `RedisStatus` | Status of a Redis connection or startup attempt. |
+| `AuditLogger` | Comprehensive audit logging for Attune AI. |
+| `AuditEvent` | Represents a single audit event. |
+| `SecurityViolation` | Represents a security policy violation. |
+| `AuditLogMethodsMixin` | Mixin that adds event-specific logging methods. |
+| `PIIDetection` | Details about a detected PII instance. |
+| `PIIPattern` | Definition of a PII detection pattern. |
+| `PIIScrubber` | Comprehensive PII detection and scrubbing system. |
+| `AuditQueryMixin` | Mixin that adds query capabilities to `AuditLogger`. |
+| `AuditReportMixin` | Mixin that adds reporting capabilities to `AuditLogger`. |
+| `SecretsDetector` | Detects secrets in text content using pattern matching and entropy analysis. |
+| `SecretType` | Types of secrets that can be detected. |
+| `Severity` | Severity levels for secret detections. |
+| `SecretDetection` | Metadata about a detected secret. |
+| `BaseOperations` | CRUD operations and connection management for short-term memory. |
+| `BatchOperations` | Batch operations using Redis pipelines. |
+| `CacheManager` | Local LRU cache manager for two-tier caching. |
+| `ConflictNegotiation` | Conflict context and resolution operations. |
+| `CrossSessionManager` | Cross-session coordination operations. |
+| `RedisShortTermMemory` | Facade composing all short-term memory operations. |
+| `Pagination` | SCAN-based pagination operations. |
+| `PatternStaging` | Pattern staging lifecycle operations. |
+| `PubSubManager` | Real-time publish/subscribe operations. |
+| `QueueManager` | Redis list operations for task queues. |
+| `DataSanitizer` | Handles data sanitization for short-term memory. |
+| `SessionManager` | Collaboration session operations. |
+| `StreamManager` | Redis Streams operations for audit trails and event logs. |
+| `TimelineManager` | Redis sorted set operations for timeline queries. |
+| `TransactionManager` | Atomic operations using Redis transactions. |
+| `WorkingMemory` | Working memory operations for agent data storage. |
+| `LongTermMemory` | Simplified long-term persistent storage interface. |
+| `MemDocsStorage` | Mock/simple MemDocs storage backend. |
+| `AgentContext` | Compact context package for sub-agent handoff. |
+| `ConversationSummaryIndex` | Redis-backed conversation summary with topic indexing. |
+| `AccessTier` | Role-based access tiers per EMPATHY_PHILOSOPHY.md. |
+| `TTLStrategy` | TTL strategies for different memory types. |
+| `RedisConfig` | Enhanced Redis configuration with SSL and retry support. |
+| `RedisMetrics` | Metrics for Redis operations. |
+| `PaginatedResult` | Result of a paginated query. |
+| `TimeWindowQuery` | Query parameters for time-window operations. |
+| `AgentCredentials` | Agent identity and access permissions. |
+| `StagedPattern` | Pattern awaiting validation. |
+| `ConflictContext` | Context for principled negotiation. |
+| `Environment` | Deployment environment for storage configuration. |
+| `MemoryConfig` | Configuration for the unified memory system. |
+| `UnifiedMemory` | Unified interface for short-term and long-term memory. |
+
+### `MemoryBackend` methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `stash` | `key: str, value: Any, ttl: int \| None = None, agent_id: str \| None = None` | `bool` | Store a value under the given key. |
+| `retrieve` | `key: str, agent_id: str \| None = None` | `Any \| None` | Retrieve a value by key. |
+| `delete` | `key: str` | `bool` | Delete the entry for a key. |
+| `keys` | `pattern: str = '*'` | `list[str]` | List keys matching a pattern. |
+| `is_connected` | — | `bool` | Return whether the backend is connected. |
+| `get_stats` | — | `dict` | Return backend statistics. |
+| `close` | — | — | Close the backend connection. |
+| `supports_realtime` | — | `bool` | Return whether the backend supports real-time operations. |
+| `supports_distributed` | — | `bool` | Return whether the backend supports distributed access. |
+
+### `SearchableMemoryBackend` methods
+
+`SearchableMemoryBackend` extends `MemoryBackend` with the following additional methods.
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `search` | `query: str, limit: int = 10, **filters: Any` | `list[dict]` | Search memory using a query string with optional filters. |
+| `promote` | `session_id: str \| None = None` | `bool` | Promote staged patterns to long-term memory. |
+
+### `ClaudeMemoryConfig` fields
+
+`ClaudeMemoryConfig` is a dataclass. Configuration for Claude memory integration.
+
+| Field | Type | Default |
+|-------|------|---------|
+| `enabled` | `bool` | `False` |
+| `load_enterprise` | `bool` | `True` |
+| `load_user` | `bool` | `True` |
+| `load_project` | `bool` | `True` |
+| `enterprise_memory_path` | `str \| None` | `None` |
+| `project_root` | `str \| None` | `None` |
+| `max_import_depth` | `int` | `5` |
+| `max_file_size_bytes` | `int` | `1000000` |
+| `validate_files` | `bool` | `True` |
+
+### `MemoryFile` fields
+
+`MemoryFile` is a dataclass. Represents a loaded CLAUDE.md memory file.
+
+| Field | Type | Default |
+|-------|------|---------|
+| `level` | `str` | — |
+| `path` | `str` | — |
+| `content` | `str` | — |
+| `imports` | `list[str]` | `field(default_factory=list)` |
+| `load_order` | `int` | `0` |
+
+### `ClaudeMemoryLoader` methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `__init__` | `config: ClaudeMemoryConfig \| None = None` | — | Initialize the loader with an optional configuration. |
+| `load_all_memory` | `project_root: str \| None = None` | `str` | Load all CLAUDE.md memory files and return combined content. |
+| `clear_cache` | — | — | Clear the loaded file cache. |
+| `get_loaded_files` | — | `list[str]` | Return the paths of all currently loaded files. |
+
+### `ControlPanelConfig` fields
+
+`ControlPanelConfig` is a dataclass. Configuration for the control panel.
+
+| Field | Type | Default |
+|-------|------|---------|
+| `redis_host` | `str` | `'localhost'` |
+| `redis_port` | `int` | `6379` |
+| `storage_dir` | `str` | `'./memdocs_storage'` |
+| `audit_dir` | `str` | `'./logs'` |
+| `auto_start_redis` | `bool` | `True` |
+
+### `MemoryControlPanel` methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `__init__` | `config: ControlPanelConfig \| None = None` | — | Initialize the control panel with an optional configuration. |
+| `status` | — | `dict[str, Any]` | Return current system status. |
+| `start_redis` | `verbose: bool = True` | `RedisStatus` | Start the Redis backend. |
+| `stop_redis` | — | `bool` | Stop the Redis backend. |
+| `get_statistics` | — | `MemoryStats` | Return memory system statistics. |
+| `list_patterns` | `classification: str \| None = None, limit: int = 100` | `list[dict[str, Any]]` | List stored patterns, optionally filtered by classification. |
+| `delete_pattern` | `pattern_id: str, user_id: str = 'admin@system'` | `bool` | Delete a pattern by ID. |
+| `clear_short_term` | `agent_id: str = 'admin'` | `int` | Clear short-term memory for an agent and return the count of cleared entries. |
+| `export_patterns` | `output_path: str, classification: str \| None = None` | `int` | Export patterns to a file and return the count exported. |
+| `health_check` | — | `dict[str, Any]` | Run a health check and return the results. |
 
 ## Functions
 
-| Function | Description | File |
-|----------|-------------|------|
-| `is_redis_available()` | Check if Redis subsystem is available without importing it. | `src/attune/memory/__init__.py` |
-| `create_default_project_memory()` | Create a default .claude/CLAUDE.md file for a project. | `src/attune/memory/claude_memory.py` |
-| `parse_redis_url()` | Parse Redis URL into connection parameters. | `src/attune/memory/config.py` |
-| `get_redis_config()` | Get Redis configuration from environment variables (legacy dict API). | `src/attune/memory/config.py` |
-| `get_redis_memory()` | Create a RedisShortTermMemory instance with environment-based config. | `src/attune/memory/config.py` |
-| `check_redis_connection()` | Check Redis connection and return status. | `src/attune/memory/config.py` |
-| `get_railway_redis()` | Get Redis configured for Railway deployment. | `src/attune/memory/config.py` |
-| `run_api_server()` | Run the Memory API server with security features. | `src/attune/memory/control_panel_api.py` |
-| `print_status()` | Print status in a formatted way. | `src/attune/memory/control_panel_display.py` |
-| `print_stats()` | Print statistics in a formatted way. | `src/attune/memory/control_panel_display.py` |
-| `print_health()` | Print health check in a formatted way. | `src/attune/memory/control_panel_display.py` |
-| `main()` | CLI entry point. | `src/attune/memory/control_panel_display.py` |
-| `resolve_by_priority()` | Resolve conflict using priority (access tier). | `src/attune/memory/cross_session/conflicts.py` |
-| `resolve_first_write()` | Resolve conflict using first-write-wins. | `src/attune/memory/cross_session/conflicts.py` |
-| `resolve_last_write()` | Resolve conflict using last-write-wins. | `src/attune/memory/cross_session/conflicts.py` |
-| `generate_agent_id()` | Generate a unique agent ID. | `src/attune/memory/cross_session/models.py` |
-| `check_redis_cross_session_support()` | Check if Redis supports cross-session communication. | `src/attune/memory/cross_session/service.py` |
-| `get_or_start_service()` | Get existing service or start a new one. | `src/attune/memory/cross_session/service.py` |
-| `get_file_session_memory()` | Create a file-based session memory instance. | `src/attune/memory/file_session.py` |
-| `classify_pattern()` | Auto-classify pattern based on content and type. | `src/attune/memory/long_term_classification.py` |
-| `check_access()` | Check if user has access to pattern based on classification. | `src/attune/memory/long_term_classification.py` |
-| `auto_detect_redis()` | Convenience function for auto-detecting Redis. | `src/attune/memory/redis_auto_detect.py` |
-| `ensure_redis()` | Ensure Redis is available, starting it if necessary. | `src/attune/memory/redis_bootstrap.py` |
-| `stop_redis()` | Stop Redis if we started it. | `src/attune/memory/redis_bootstrap.py` |
-| `get_redis_or_mock()` | Get a Redis connection, starting Redis if needed, or return mock. | `src/attune/memory/redis_bootstrap.py` |
-| `detect_secrets()` | Convenience function to detect secrets without creating a detector instance. | `src/attune/memory/security/secrets_detector.py` |
-
-
-## Source files
-
-- `src/attune/memory/**`
-
-## Tags
-
-`memory`, `storage`
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `is_redis_available` | — | `bool` | Check whether the Redis subsystem is available without importing it. |
+| `create_default_project_memory` | `project_root: str, framework: str = 'empathy'` | — | Create a default `.claude/CLAUDE.md` file for a project. |
+| `parse_redis_url` | `url: str` | `dict` | Parse a Redis URL into connection parameters. |
+| `get_redis_config` | — | `dict` | Get Redis configuration from environment variables (legacy dict API). |
+| `get_redis_memory` | `url: str \| None = None, use_mock: bool \| None = None` | `RedisShortTermMemory` | Create a `RedisShortTermMemory` instance using environment-based config. |
+| `check_redis_connection` | — | `dict` | Check the Redis connection and return status. |
+| `get_railway_redis` | — | `RedisShortTermMemory` | Get a Redis instance configured for Railway deployment. |
+| `run_api_server` | `panel: MemoryControlPanel, host: str = 'localhost', port: int = 8765, api_key: str \| None = None, enable_rate_limit: bool = True, rate_limit_requests: int = 100, rate_limit_window: int = 60, ssl_certfile: str \| None = None, ssl_keyfile: str \| None = None, allowed_origins: list[str] \| None = None` | — | Run the Memory API server with security features. |
+| `print_status` | `panel: MemoryControlPanel` | — | Print control panel status in a formatted way. |
+| `print_stats` | `panel: MemoryControlPanel` | — | Print memory statistics in a formatted way. |
+| `print_health` | `panel: MemoryControlPanel` | — | Print a health check report in a formatted way. |
+| `main` | — | — | CLI entry point. |
+| `resolve_by_priority` | `agent_id: str, access_tier: AccessTier, session_info: SessionInfo, resource_key: str, other_session: SessionInfo \| None` | `Con

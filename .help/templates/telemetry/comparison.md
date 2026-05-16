@@ -1,60 +1,63 @@
 ---
 type: comparison
+name: telemetry-comparison
 feature: telemetry
 depth: comparison
-generated_at: 2026-04-20T01:25:26.620997+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-16T06:19:45.856170+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
-# Telemetry vs other coordination options
+# Comparison: Telemetry vs alternatives
 
-Attune offers multiple ways to track agent activity and coordinate workflows. Telemetry provides the most comprehensive monitoring but comes with setup overhead that simpler alternatives avoid.
+## Context
 
-## Feature comparison
+The telemetry feature covers four distinct concerns that can each be addressed by different mechanisms: usage tracking, agent coordination, agent liveness monitoring, and human approval gating. This page helps you decide which telemetry subsystem — or alternative approach — fits your situation.
 
-| Capability | Telemetry | Direct Redis | Manual logging | No tracking |
-|---|---|---|---|---|
-| **Agent coordination** | TTL-based signals, heartbeats | Raw key operations | None | None |
-| **Human approval gates** | Built-in workflow control | Custom implementation required | Not supported | Not supported |
-| **Real-time streaming** | Redis Streams with typed events | Manual pub/sub setup | Log file tailing | None |
-| **Performance analytics** | Cost tracking, model tier analysis | Manual metric collection | Basic timing only | None |
-| **Setup complexity** | Moderate (Redis + structured classes) | Low (Redis only) | Low (file writes) | None |
-| **Memory overhead** | ~2MB per active coordinator | Minimal | Minimal | None |
-| **Debugging visibility** | Full workflow traces | Key inspection only | Text search in logs | None |
+## Feature breakdown
 
-## Use telemetry when you need
+| Capability | Telemetry subsystem | What it gives you | What it does not do |
+|---|---|---|---|
+| **Usage tracking** | `UsageTracker` / `FeedbackLoop` | Logs queries to `help_queries.jsonl`; computes per-template confidence scores via `good/(good+bad)` | Does not expose real-time streams; data is append-only JSONL |
+| **Agent coordination** | `CoordinationSignals` | TTL-based signals between named agents; targeted (`signal()`) or broadcast (`broadcast()`); blocking wait (`wait_for_signal()`) with configurable timeout | Signals expire after `ttl_seconds` (default 60 s); no delivery guarantee after TTL lapses |
+| **Agent liveness** | `HeartbeatCoordinator` | Tracks `status`, `progress`, and `current_task` per agent; detects stale agents beyond a configurable threshold (default 60 s) | Does not restart failed agents; detection only |
+| **Human approval gates** | `ApprovalGate` | Pauses workflow execution until a human calls `respond_to_approval()`; supports per-request timeouts | Synchronous blocking call — unsuitable for fire-and-forget workflows |
+| **Real-time event streaming** | `EventStreamer` | Publishes and consumes typed events via Redis Streams; supports backfill via `get_recent_events()` | Requires Redis; not a replacement for structured logging |
+| **CLI analysis** | `cmd_sonnet_opus_analysis()`, `cmd_tier1_status()`, `cmd_task_routing_report()`, etc. | Pre-built reports for cost savings, Tier 1 automation status, task routing, and test status | Read-only reporting; does not mutate state |
 
-**Multi-agent coordination at scale.** Telemetry's `CoordinationSignals` and `HeartbeatCoordinator` handle complex workflows where agents must wait for each other, track progress, and recover from failures. The TTL-based cleanup prevents orphaned processes that manual coordination often leaves behind.
+## When to use telemetry
 
-**Human-in-the-loop workflows.** `ApprovalGate` provides structured approval requests with timeouts and context. Unlike ad-hoc prompting, it maintains audit trails and handles concurrent approval requests without race conditions.
+Choose a telemetry subsystem when your work maps directly to one of the following:
 
-**Production monitoring with cost awareness.** The CLI analysis commands (`cmd_sonnet_opus_analysis`, `cmd_agent_performance`) give you model usage breakdowns and cost optimization insights that simple logging cannot provide.
+- **Template quality feedback** — You want to accumulate `good`/`bad` ratings and surface confidence scores that influence template ranking. Use `record_template_feedback()` and `get_template_confidence()`, or the CLI: `attune help-docs <id> --feedback good|bad`.
+- **Multi-agent coordination** — Two or more agents need to hand off work or wait on each other. `CoordinationSignals.signal()` sends to a specific agent; `CoordinationSignals.broadcast()` fans out to all listeners. TTL ensures stale signals self-clean.
+- **Agent health monitoring** — You need to know which agents are alive and what they are doing. `HeartbeatCoordinator.get_active_agents()` and `get_stale_agents(threshold_seconds=…)` answer both questions without polling custom state.
+- **Approval-gated workflows** — A workflow step must not proceed without an explicit human `approved: true` response. `ApprovalGate.request_approval()` blocks until a response arrives or the timeout expires.
+- **Operational reporting** — You need a snapshot of cost savings, test coverage by file, or task routing decisions. Run the appropriate CLI subcommand (`cmd_sonnet_opus_analysis`, `cmd_file_test_status`, etc.) rather than parsing raw logs yourself.
 
-## Use direct Redis when you need
+## When not to use telemetry
 
-**Simple coordination without structure.** If you're just setting flags or sharing small data between processes, Redis operations like `SET` with `EX` (expiration) give you the coordination benefits without telemetry's class overhead.
+- **Cross-feature orchestration** — If your logic needs to coordinate telemetry with other top-level features, use the orchestration layer above `src/attune/telemetry/` rather than wiring subsystems together directly.
+- **Ephemeral scripts** — Setting up `HeartbeatCoordinator` or `CoordinationSignals` for a one-off script adds overhead with no payoff. A simple log statement is sufficient for throwaway work.
+- **Guaranteed message delivery** — `CoordinationSignals` uses Redis TTL keys. If an agent is offline when a signal arrives and the TTL lapses, the signal is gone. If you need durable queuing, look outside this module.
+- **Agent remediation** — `HeartbeatCoordinator` tells you an agent is stale; it does not restart or reschedule it. Pair it with an external supervisor if you need automatic recovery.
+- **Replacing structured logging** — `EventStreamer` is designed for real-time coordination events, not audit trails. Do not use it as a general-purpose logger.
 
-**Custom data models.** Telemetry's dataclasses (`CoordinationSignal`, `AgentHeartbeat`) work well for common patterns but may not fit specialized coordination needs.
+## Decision rules
 
-## Use manual logging when you need
+| Situation | Use this |
+|---|---|
+| Rating a help template and influencing its ranking | `FeedbackLoop` / `record_template_feedback()` |
+| One agent needs to wake another agent | `CoordinationSignals.signal()` |
+| One agent needs to notify all agents | `CoordinationSignals.broadcast()` |
+| Checking whether a specific agent is still running | `HeartbeatCoordinator.is_agent_alive()` |
+| Finding all agents that have gone silent | `HeartbeatCoordinator.get_stale_agents()` |
+| Pausing a workflow for human sign-off | `ApprovalGate.request_approval()` |
+| Viewing cost or routing reports without writing code | `attune telemetry <subcommand>` CLI |
+| Durable, guaranteed message delivery between agents | Look outside `src/attune/telemetry/` |
 
-**Development debugging only.** File-based logs are sufficient for understanding single-agent behavior during development. The `logging` module is already configured and requires no additional dependencies.
+## Source files
 
-**Append-only audit trails.** If you need permanent records that survive Redis restarts, file logging with rotation gives you durability that in-memory coordination cannot.
+- `src/attune/telemetry/**`
 
-## Skip tracking entirely when
-
-**Prototyping or single-use scripts.** The coordination overhead isn't worth it for exploratory work or one-off tasks that won't run in production.
-
-**Performance is critical.** Even minimal telemetry adds latency to every coordination point. Pure computation without coordination needs avoids this entirely.
-
-## Recommendation
-
-**Start with telemetry if you have more than one agent or any human approval steps.** The structured approach scales better than growing from manual coordination. The CLI commands alone justify the setup cost for production systems.
-
-**Use direct Redis for simple producer/consumer patterns** where you're just passing data between processes without complex coordination logic.
-
-**Reserve manual logging for development debugging** and permanent audit requirements that survive system restarts.
-
-The telemetry feature is designed for production multi-agent systems. If you're unsure whether you need it, you probably don't — but when coordination complexity grows, migrating from manual approaches becomes significantly more work than starting with the structured telemetry classes.
+**Tags:** `telemetry`, `metrics`

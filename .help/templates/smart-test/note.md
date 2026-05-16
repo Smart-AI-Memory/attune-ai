@@ -1,46 +1,39 @@
 ---
 type: note
+name: smart-test-note
 feature: smart-test
 depth: note
-generated_at: 2026-04-14T14:44:46.669486+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.817118+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
-# Note: smart test
+# Note: smart-test internals
 
-## Context
+## How the feature is structured
 
-Smart Test identifies untested code paths and generates comprehensive pytest test suites with edge cases and error handling scenarios.
+Smart-test is implemented across two workflow packages:
 
-## Architecture overview
+- `src/attune/workflows/test_audit/` — the audit side: parses `coverage.json`, prioritizes modules by gap, and runs `TestAuditWorkflow`, which coordinates three Agent SDK subagents (`coverage-auditor`, `gap-analyzer`, `test-planner`).
+- `src/attune/workflows/test_gen/` — the generation side: uses `ASTFunctionAnalyzer` to extract `FunctionSignature` and `ClassSignature` data from source, then writes pytest output via `TestGenerationWorkflow`, which drives its own three subagents (`function-identifier`, `test-designer`, `test-writer`).
+- `src/attune/workflows/test_gen_parallel.py` — `ParallelTestGenerationWorkflow`, a higher-throughput variant that discovers low-coverage modules and processes them in configurable batches (default: 10 modules per batch, up to 200 modules).
 
-Smart Test operates through three distinct workflows that address different aspects of test coverage:
+## How the two sides compose
 
-**Test Generation Workflow** (`TestGenerationWorkflow`) uses three specialized subagents (function-identifier, test-designer, test-writer) to analyze code structure via AST parsing and generate targeted test cases.
+The audit and generation packages are designed to pipeline. `parse_coverage_json()` reads pytest-cov's `coverage.json` and returns a list of `ModuleCoverage` dataclasses. `prioritize_modules()` filters that list to modules below a coverage threshold (default: 50%) and sorts by gap size. `group_into_batches()` then groups the result by package path into up to five subsystem batches, which `TestGenerationWorkflow` or `ParallelTestGenerationWorkflow` consumes to drive test writing.
 
-**Test Audit Workflow** (`TestAuditWorkflow`) coordinates coverage analysis through three subagents (coverage-auditor, gap-analyzer, test-planner) to identify gaps in existing test suites and prioritize testing efforts.
+`ASTFunctionAnalyzer` sits at the boundary: it takes raw source and returns `FunctionSignature` and `ClassSignature` records that carry parameter types, return types, raised exceptions, async status, and cyclomatic complexity. `generate_test_for_function()` and `generate_test_for_class()` consume those records to produce executable pytest output.
 
-**Parallel Test Generation Workflow** (`ParallelTestGenerationWorkflow`) combines multi-tier LLM processing with batch operations to generate behavioral tests at scale, processing up to 200 modules in configurable batch sizes.
+## Audit orchestration
 
-## Core components
+`TestAuditWorkflow` uses the system prompt in `AUDIT_SYSTEM_PROMPT` to instruct a coverage-analyst agent to review module prioritization, then `PLAN_SYSTEM_PROMPT` to group modules into logical batches. Each batch is rendered with `BATCH_TASK_TEMPLATE`, which embeds source path, missing line summary, coverage target, and test class stubs in a structured XML prompt.
 
-The `ASTFunctionAnalyzer` extracts detailed function signatures including parameter types, return types, exception patterns, and complexity metrics. It produces `FunctionSignature` and `ClassSignature` dataclasses that capture all metadata needed for intelligent test generation.
-
-Coverage analysis builds on pytest-cov output through `parse_coverage_json()` and `prioritize_modules()`, which convert raw coverage data into `ModuleCoverage` objects ranked by priority scores.
-
-Test template generation uses type-aware parameter testing (`get_param_test_values()`) and return type assertions (`get_type_assertion()`) to create executable test cases that cover both happy paths and edge cases.
-
-## Integration patterns
-
-The system exposes both class-based and functional APIs. Functions like `generate_test_for_function()` and `generate_test_for_class()` provide direct access to test generation, while workflow classes orchestrate multi-step analysis and generation processes.
-
-The `DEFAULT_SKIP_PATTERNS` constant defines which directories to ignore during code discovery, covering common build artifacts, virtual environments, and IDE files.
+The final report from `_TASK_PROMPT_TEMPLATE` has four sections: **Summary** (health score 0–100), **Coverage**, **Test Gaps**, and **Suggestions** (prioritized, with effort estimates).
 
 ## Source files
 
-- `src/attune/workflows/test_gen/**`
-- `src/attune/workflows/test_audit/**`
+- `src/attune/workflows/test_audit/`
+- `src/attune/workflows/test_gen/`
 - `src/attune/workflows/test_gen_parallel.py`
 
 **Tags:** `tests`, `coverage`, `generation`

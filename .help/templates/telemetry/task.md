@@ -1,57 +1,73 @@
 ---
+type: task
+name: telemetry-task
 feature: telemetry
 depth: task
-generated_at: 2026-05-12T20:01:25.974335+00:00
-source_hash: 590fd017f021732dc1cad2f715e7eaaa2a436b4e8d7cd0434769d62d180dd966
+generated_at: 2026-05-16T06:19:45.827036+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
 # Work with telemetry
 
-Use telemetry when you need to usage tracking and feedback loops.
+Use the telemetry module when you need to query usage data, review cost savings, monitor agent performance, or extend the CLI with new reporting commands.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/telemetry/**
+- Familiarity with the files under `src/attune/telemetry/`
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what telemetry
-   does today before making changes.
-   The primary functions are:
-   - `main()` in `src/attune/telemetry/__main__.py` — Telemetry CLI entry point.
-   - `cmd_sonnet_opus_analysis()` in `src/attune/telemetry/cli_analysis.py` — Show Sonnet 4.5 -> Opus 4.5 fallback analysis and cost savings.
-   - `cmd_file_test_status()` in `src/attune/telemetry/cli_analysis.py` — Show per-file test status.
-   - `cmd_tier1_status()` in `src/attune/telemetry/cli_automation.py` — Show comprehensive Tier 1 automation status.
-   - `cmd_task_routing_report()` in `src/attune/telemetry/cli_automation.py` — Show detailed task routing report.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Identify the CLI command that covers your goal.**
+   Each subcommand has a single responsibility. Match your goal to the function that owns it:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   | Goal | Function | File |
+   |---|---|---|
+   | View recent telemetry entries | `cmd_telemetry_show()` | `cli_core.py` |
+   | Calculate cost savings | `cmd_telemetry_savings()` | `cli_core.py` |
+   | Review prompt cache performance | `cmd_telemetry_cache_stats()` | `cli_core.py` |
+   | Analyze Sonnet → Opus fallback costs | `cmd_sonnet_opus_analysis()` | `cli_analysis.py` |
+   | View per-file test status | `cmd_file_test_status()` | `cli_analysis.py` |
+   | View Tier 1 automation status | `cmd_tier1_status()` | `cli_automation.py` |
+   | View task routing report | `cmd_task_routing_report()` | `cli_automation.py` |
+   | View agent performance metrics | `cmd_agent_performance()` | `cli_automation.py` |
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "telemetry"`.
+2. **Read the function's docstring, parameters, and return type.**
+   Confirm that the function owns the exact behavior you need before proceeding. All CLI command functions return `int` (exit code `0` on success).
+
+3. **Run the existing telemetry tests to establish a baseline.**
+   ```
+   pytest -k "telemetry"
+   ```
+   All tests must pass before you make any changes.
+
+4. **Edit the target function.**
+   Apply your change — new logic, additional output fields, or updated filtering. Match the naming conventions, error-handling style, and logging patterns already present in that file.
+
+5. **Register any new subcommand in the CLI entry point.**
+   If you added a new `cmd_*` function, wire it up in `src/attune/telemetry/__main__.py` via `main()` so the CLI can dispatch to it.
+
+6. **Run the tests again.**
+   ```
+   pytest -k "telemetry"
+   ```
 
 ## Key files
 
-- `src/attune/telemetry/**`
+| File | Purpose |
+|---|---|
+| `src/attune/telemetry/__main__.py` | CLI entry point — `main()` dispatches all subcommands |
+| `src/attune/telemetry/cli_core.py` | Core telemetry display and savings commands |
+| `src/attune/telemetry/cli_analysis.py` | Cost and test-status analysis commands |
+| `src/attune/telemetry/cli_automation.py` | Tier 1, task routing, and agent performance commands |
 
-## Common modifications
+## Verify your changes
 
-Functions you are most likely to modify:
+Run the telemetry CLI directly and confirm your expected output appears:
 
-- `main()` in `src/attune/telemetry/__main__.py`
-- `cmd_sonnet_opus_analysis()` in `src/attune/telemetry/cli_analysis.py`
-- `cmd_file_test_status()` in `src/attune/telemetry/cli_analysis.py`
-- `cmd_tier1_status()` in `src/attune/telemetry/cli_automation.py`
-- `cmd_task_routing_report()` in `src/attune/telemetry/cli_automation.py`
-- `cmd_test_status()` in `src/attune/telemetry/cli_automation.py`
-- `cmd_agent_performance()` in `src/attune/telemetry/cli_automation.py`
-- `cmd_telemetry_show()` in `src/attune/telemetry/cli_core.py`
+```
+python -m attune.telemetry <subcommand>
+```
+
+A return code of `0` and the expected report printed to stdout confirms the command succeeded. Re-run `pytest -k "telemetry"` to confirm no regressions were introduced.

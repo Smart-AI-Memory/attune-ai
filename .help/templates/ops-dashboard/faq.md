@@ -3,8 +3,8 @@ type: faq
 name: ops-dashboard-faq
 feature: ops-dashboard
 depth: faq
-generated_at: 2026-05-14T14:43:23.569106+00:00
-source_hash: 395f221f9a789d9b8851995c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.811176+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
@@ -12,47 +12,47 @@ status: generated
 
 ## What is the ops dashboard?
 
-The ops dashboard is a local web server that lets you run workflows against a specific feature scope, stream live logs over SSE, and browse persisted run history — all from a browser UI. Start it with `attune ops` or `python -m attune.ops`.
+The ops dashboard is a local web UI for running attune workflows. It provides a per-feature scope picker, persisted run history, clickable workflow chaining, and live log streaming over SSE. You start it with `attune ops` or `python -m attune.ops`.
 
-## When should I use it?
+## How do I start the dashboard?
 
-Use the ops dashboard when you want to run and monitor attune workflows locally — for example, to pick a feature scope, chain workflows together by clicking through the UI, or review past run history. If you're looking to automate runs non-interactively, check the other features listed in your project's `.help/features.yaml`.
+Run `attune ops` from your project root. By default the server binds to `127.0.0.1:8765`. To change the host, port, or other settings, pass flags on the CLI or call `build_config()` directly.
 
-## What's the main entry point?
+## What does `allow_run` do?
 
-Run the server with the `attune ops` CLI command. Under the hood this calls `cmd_ops()`, which is blocking. The three public symbols you're most likely to use directly are:
+`allow_run` is a `Config` field that controls whether the dashboard is permitted to execute workflows. It defaults to `False`, so the UI is read-only unless you explicitly enable it.
 
-- `create_app()` — constructs the FastAPI application (lazy-imported so that importing `attune` doesn't pull in FastAPI)
-- `build_config()` — builds a `Config` from your inputs and environment defaults (host, port, `allow_run`, retention days, etc.)
-- `Config` — the dataclass that controls where the dashboard reads project and attune state from
+## How do I change the host or port?
 
-## How do I configure the server?
+Pass `--host` and `--port` when you run `attune ops`, or construct a `Config` manually using `build_config(host=..., port=...)`. The defaults are `127.0.0.1` and `8765`.
 
-Pass arguments to `build_config()`, or let it pick up environment defaults. The key fields on `Config` are:
+## What is `trusted_hosts` and when do I need it?
 
-| Field | Default | What it controls |
-|---|---|---|
-| `host` | `127.0.0.1` | Interface the server binds to |
-| `port` | `8765` | Port the server listens on |
-| `allow_run` | `False` | Whether the dashboard can trigger workflow runs |
-| `trusted_hosts` | `()` | Allowlist checked by `TrustedHostMiddleware` |
-| `runs_retention_days` | `30` | How long persisted run history is kept |
+`trusted_hosts` is a tuple of hostnames the `TrustedHostMiddleware` allows through. Requests whose `Host` header isn't on the list are rejected. You only need to set this if you expose the dashboard on a non-loopback address.
 
-## Where does the dashboard store its data?
+## Where does the dashboard look for workflows and features?
 
-All data lives under the paths exposed by `Config`:
+- **Features** — parsed from `<project_root>/.help/features.yaml` by `list_features()`.
+- **Workflow specs** — discovered under the paths in `Config.specs_roots`.
 
-- **Telemetry** — `Config.telemetry_path`
-- **Run history** — `Config.runs_dir` (created on first write)
-- **Memory** — `Config.memory_dir`
-- **Sessions** — `Config.sessions_dir`
+## What shows up on the home page?
 
-## How do I debug it?
+The home page displays `HomeKpis`: today's event count, today's cost, seven-day cost, seven-day savings, and a daily cost sparkline. These numbers come from the telemetry log at `Config.telemetry_path`.
 
-Run the related tests first with `pytest -k "ops-dashboard" -v`. If the tests pass but your code still fails, add a `logger.debug` call at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.
+## How long is run history kept?
 
-## Where are the source files?
+Persisted runs are stored under `Config.runs_dir` and retained for `runs_retention_days` days (default: 30). You can change the retention window via `build_config(runs_retention_days=...)`.
 
-All ops dashboard source files are under `src/attune/ops/`.
+## What appears on the `/sessions` page?
+
+Each entry is a `Session` — a recorded Claude Code session with its start time, duration, message count, and an AI-generated starter summary you can use to decide whether to resume it.
+
+## How do I debug the dashboard when something goes wrong?
+
+Run the related tests first: `pytest -k "ops-dashboard" -v`. If they pass but the dashboard still misbehaves, add a `logger.debug` call at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.
+
+## Where is the source code?
+
+All ops dashboard source lives under `src/attune/ops/`. The three public exports are `create_app`, `build_config`, and `Config` (see `__all__`).
 
 **Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`

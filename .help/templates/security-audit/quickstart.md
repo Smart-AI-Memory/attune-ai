@@ -1,46 +1,58 @@
 ---
 type: quickstart
+name: security-audit-quickstart
 feature: security-audit
 depth: quickstart
-generated_at: 2026-04-19T18:44:41.999441+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.815255+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
-# Quickstart: Security audit
+# Quickstart: Run a security audit
 
-Run a comprehensive security scan using four specialized subagents: vulnerability scanner, secret detector, authentication reviewer, and remediation planner.
+Scan your codebase for vulnerabilities — hardcoded secrets, injection risks, path traversal, and authentication flaws — using four specialized subagents.
 
-```python
-from attune.workflows import SecurityAuditWorkflow
-
-workflow = SecurityAuditWorkflow()
-result = workflow.execute(path="src/")
-print(result.content)
+```
+attune workflow run security-audit --path "src/"
 ```
 
-**Result:** Structured security report with severity-grouped findings, overall security score (0-100), and prioritized remediation steps.
+**Result:** A unified report with an overall security score, findings grouped by severity (CRITICAL, HIGH, MEDIUM, LOW), and prioritized remediation steps with estimated effort.
+
+## Prerequisites
+
+- `attune` installed and your project available locally
+- The codebase you want to scan accessible at a known path
 
 ## Steps
 
-1. **Create the workflow instance** with default settings
-2. **Execute the audit** on your target directory
-3. **Review the findings** organized by CRITICAL, HIGH, MEDIUM, LOW severity
+1. **Run the audit.** Point `--path` at the directory you want to scan:
+
+   ```
+   attune workflow run security-audit --path "src/"
+   ```
+
+2. **Review the report.** The output contains three sections:
+   - **Summary** — a 0–100 security score and a brief executive summary
+   - **Security** — consolidated findings from all four subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`), sorted by severity
+   - **Suggestions** — actionable remediation steps ordered by priority
+
+3. **Address critical findings first.** Each finding cites file paths and line numbers, so you can navigate directly to the affected code.
 
 ## Expected output
 
 ```
 ## Summary
-Security score: 85/100
-The codebase shows good security practices with minor improvements needed.
+Security score: 74/100
+Two hardcoded credentials and one path-traversal risk require immediate attention.
 
 ## Security
 ### CRITICAL
-- None found
+- src/api/auth.py:42 — Hardcoded API key detected (secret-detector)
+...
 
-### HIGH
-- Hardcoded API key detected in config/settings.py:23
+## Suggestions
+1. Rotate and externalize credentials in src/api/auth.py (effort: low)
 ...
 ```
 
-**Next:** Address critical and high-severity issues, then run `attune workflow run test-gen`.
+**Next:** Fix critical issues, then run `attune workflow run test-gen` to validate your changes.

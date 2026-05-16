@@ -1,58 +1,79 @@
 ---
 type: quickstart
+name: smart-test-quickstart
 feature: smart-test
 depth: quickstart
-generated_at: 2026-04-14T14:44:23.036453+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.812538+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
-# Generate tests for untested Python code
+# Quickstart: Smart Test
 
-Analyze your codebase and automatically create pytest tests for functions with low coverage.
+Find untested code and generate pytest tests with edge cases.
 
-```python
-from attune.workflows.test_gen import TestGenerationWorkflow
-
-# Generate tests for untested functions
-workflow = TestGenerationWorkflow()
-result = workflow.execute(path="src/myproject")
-print(result.content)
+```
+/smart-test <path or module to test>
 ```
 
-## Generate tests in three steps
+**Result:** A coverage gap report ranked by risk, plus working pytest functions with assertions for untested functions, branches, and error paths.
 
-1. **Run the test generator on your source code:**
+## Prerequisites
+
+- The project is cloned and installed locally
+- `pytest-cov` has produced a `coverage.json` file for your project
+
+## Steps
+
+1. **Parse your coverage report.** Point `parse_coverage_json()` at the JSON file that `pytest-cov` wrote:
+
    ```python
-   from attune.workflows.test_gen import TestGenerationWorkflow
+   from attune.workflows.test_audit.coverage_parser import parse_coverage_json, prioritize_modules
 
-   workflow = TestGenerationWorkflow()
-   result = workflow.execute(path="src/myproject")
+   modules = parse_coverage_json("coverage.json")
    ```
 
-2. **View the generated test files:** The workflow creates pytest-compatible test files in your specified output directory. Each test includes edge cases and parameter validation.
+   You'll get a list of `ModuleCoverage` objects, each with `path`, `stmts`, `covered`, `missing_lines`, and a `pct` score.
 
-3. **Run your new tests:** Execute `pytest tests/` to verify the generated tests pass and check your new coverage percentage.
+2. **Identify the highest-priority gaps.** Filter out modules above your coverage threshold (default 50%) and sort by priority:
 
-## Expected output
+   ```python
+   targets = prioritize_modules(modules)
+   print(targets[0].path, targets[0].pct)
+   # src/attune/help/engine.py  23.4
+   ```
 
-The workflow returns a structured report showing:
-- Functions analyzed and test files created
-- Coverage gaps identified and addressed
-- Specific test cases generated for each function
+   The module with the lowest coverage and the most uncovered statements appears first.
 
-```
-## Summary
-Analyzed 15 functions, designed 45 test cases, generated 8 test files.
+3. **Generate tests for the top module.** Run the test generation workflow against that path:
 
-## Coverage
-Current coverage: 67% → Target coverage: 85%
+   ```
+   attune workflow run test-gen --path src/attune/help/engine.py
+   ```
 
-## Test Gaps
-- payment_processor.py: Missing error handling tests
-- user_validator.py: No edge case coverage for email validation
-```
+   **Expected output:**
 
-## Next steps
+   ```
+   ## Summary
+   Analyzed 12 functions. Designed 31 test cases. Wrote 1 test file.
 
-Run `ParallelTestGenerationWorkflow` to generate tests for multiple modules simultaneously and speed up coverage improvement across your entire codebase.
+   ## Test Gaps
+   - engine.py: _resolve_template — no branch coverage on missing-key path
+   - engine.py: render — exception handler never triggered
+
+   ## Suggestions
+   1. Add parametrized tests for empty-input edge cases (low effort)
+   2. Add error-path test for FileNotFoundError in parse_coverage_json (low effort)
+   ```
+
+   The generated file is written to `tests/behavioral/generated/`.
+
+4. **Verify the tests pass.**
+
+   ```
+   pytest tests/behavioral/generated/ -v
+   ```
+
+   All generated tests should pass on the first run against your current codebase.
+
+**Next:** Run `pytest --cov` again and re-run `prioritize_modules()` to confirm coverage improved for the module you targeted.

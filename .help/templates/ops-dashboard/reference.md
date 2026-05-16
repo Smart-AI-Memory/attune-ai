@@ -1,124 +1,255 @@
 ---
+type: reference
+name: ops-dashboard-reference
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-16T05:27:24.610550+00:00
-source_hash: 5f495ad9acf50a2a9adfe8615f144eda920bca96f5d4172dcb4e358deaa8af3b
+generated_at: 2026-05-16T06:19:45.796093+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
 # Ops Dashboard reference
 
+Local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming.
+
+Run via `python -m attune.ops` or the `attune ops` CLI subcommand. The public surface exported from `attune.ops` is `create_app`, `build_config`, and `Config`.
+
 ## Classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `Candidate` | One completion-candidate spec returned by the detector. | `src/attune/ops/completion_candidates.py` |
-| `Config` | Where attune ops reads project + attune state from. | `src/attune/ops/config.py` |
-| `TelemetrySummary` | — | `src/attune/ops/data.py` |
-| `WorkflowEntry` | — | `src/attune/ops/data.py` |
-| `PathArgSpec` | How a workflow accepts a scope path on the CLI. | `src/attune/ops/data.py` |
-| `Feature` | One feature from ``.help/features.yaml`` for the scope picker. | `src/attune/ops/data.py` |
-| `Session` | One Claude Code session — what surfaces on the dashboard's /sessions page. | `src/attune/ops/data.py` |
-| `FamilyVersion` | — | `src/attune/ops/data.py` |
-| `DailyCost` | One day's cost for the home-page sparkline. | `src/attune/ops/data.py` |
-| `HomeKpis` | Summary numbers shown above the fold on the home page. | `src/attune/ops/data.py` |
-| `DismissEntry` | One dismissed candidate's persisted state. | `src/attune/ops/dismiss_store.py` |
-| `TrustedHostMiddleware` | Reject requests whose ``Host`` header isn't on the allowlist. | `src/attune/ops/middleware.py` |
-| `SpecPhase` | One phase file's status snapshot. | `src/attune/ops/routes/specs.py` |
-| `SpecRecord` | One spec's summary — directory + status of each phase file present. | `src/attune/ops/routes/specs.py` |
-| `RunnerBusyError` | Raised when a run is already pending/running. | `src/attune/ops/runner.py` |
-| `Run` | Single workflow execution + its broadcast state. | `src/attune/ops/runner.py` |
-| `RunnerService` | Owns the run history + concurrency lock. | `src/attune/ops/runner.py` |
-| `RedactionResult` | Outcome of a redaction pass. | `src/attune/ops/session_redaction.py` |
-| `SummaryResult` | One Haiku-or-cache result, ready to slot into a :class:`Session`. | `src/attune/ops/session_summarizer.py` |
-| `Budget` | Mutable spend ledger for one page-load summarization loop. | `src/attune/ops/session_summarizer.py` |
-| `CacheKey` | Stable key that invalidates a cached summary when the source moves. | `src/attune/ops/session_summary_cache.py` |
-| `CachedSummary` | One persisted session summary plus the metadata to validate it. | `src/attune/ops/session_summary_cache.py` |
+| Class | Description |
+|-------|-------------|
+| `Config` | Where attune ops reads project + attune state from. |
+| `TelemetrySummary` | Aggregated telemetry totals and breakdowns for the dashboard. |
+| `WorkflowEntry` | One entry in the registered workflow catalog. |
+| `PathArgSpec` | How a workflow accepts a scope path on the CLI. |
+| `Feature` | One feature from `.help/features.yaml` for the scope picker. |
+| `Session` | One Claude Code session — what surfaces on the dashboard's `/sessions` page. |
+| `FamilyVersion` | Installed version record for one related attune package. |
+| `DailyCost` | One day's cost for the home-page sparkline. |
+| `HomeKpis` | Summary numbers shown above the fold on the home page. |
+| `TrustedHostMiddleware` | Reject requests whose `Host` header isn't on the allowlist. |
+
+### `Config` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `project_root` | `Path` | — |
+| `attune_home` | `Path` | — |
+| `host` | `str` | `'127.0.0.1'` |
+| `port` | `int` | `8765` |
+| `allow_run` | `bool` | `False` |
+| `specs_roots` | `tuple[Path, ...]` | `()` |
+| `trusted_hosts` | `tuple[str, ...]` | `()` |
+| `runs_retention_days` | `int` | `30` |
+
+### `Config` properties
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `telemetry_path` | `Path` | Path to the telemetry data file. |
+| `runs_dir` | `Path` | Disk root for persisted ops runs. May not exist until first write. |
+| `memory_dir` | `Path` | Path to the attune memory directory. |
+| `sessions_dir` | `Path` | Path to the sessions directory. |
+
+### `TelemetrySummary` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `total_requests` | `int` | — |
+| `total_cost` | `float` | — |
+| `total_savings` | `float` | — |
+| `by_workflow` | `list[tuple[str, int, float]]` | — |
+| `by_day` | `list[tuple[str, int, float]]` | — |
+| `last_event_at` | `str | None` | — |
+
+### `WorkflowEntry` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `name` | `str` | — |
+| `description` | `str` | — |
+| `stages` | `int` | — |
+| `tier_map` | `dict[str, str]` | — |
+
+### `PathArgSpec` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `kwarg` | `str` | — |
+| `required` | `bool` | `False` |
+
+### `Feature` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `name` | `str` | — |
+| `description` | `str` | — |
+| `path` | `str | None` | — |
+| `tags` | `tuple[str, ...]` | `()` |
+
+### `Session` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `id` | `str` | — |
+| `started_at` | `str` | — |
+| `last_activity` | `str` | — |
+| `duration_seconds` | `float` | — |
+| `message_count` | `int` | — |
+| `starter_prompt` | `str` | — |
+| `source` | `str` | `'heuristic'` |
+
+### `FamilyVersion` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `package` | `str` | — |
+| `version` | `str | None` | — |
+| `source` | `str` | — |
+
+### `DailyCost` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `day` | `str` | — |
+| `events` | `int` | — |
+| `cost` | `float` | — |
+
+### `HomeKpis` fields
+
+| Field | Type | Default |
+|-------|------|---------|
+| `today_events` | `int` | — |
+| `today_cost` | `float` | — |
+| `seven_day_cost` | `float` | — |
+| `seven_day_savings` | `float` | — |
+| `sparkline` | `list[DailyCost]` | — |
+
+### `TrustedHostMiddleware` methods
+
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `__init__` | `app: object, *, allowed_hosts: Iterable[str]` | `None` | Construct the middleware with an explicit host allowlist. |
+| `dispatch` | `request: Request, call_next: Callable[[Request], Awaitable[Response]]` | `Response` | Enforce the allowlist; pass through or reject each request. |
 
 ## Functions
 
-| Function | Description | File |
-|----------|-------------|------|
-| `create_app()` | Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI. | `src/attune/ops/__init__.py` |
-| `build_config()` | Lazy import of the config builder. | `src/attune/ops/__init__.py` |
-| `add_subparser()` | Register the `ops` subparser on the main attune CLI parser. | `src/attune/ops/cli.py` |
-| `cmd_ops()` | Run the dashboard server (blocking). | `src/attune/ops/cli.py` |
-| `main()` | Standalone entry: ``python -m attune.ops``. | `src/attune/ops/cli.py` |
-| `clear_cache()` | Reset the in-memory caches. Test helper. | `src/attune/ops/completion_candidates.py` |
-| `detect_candidates()` | Return all completion candidates across the configured spec roots. | `src/attune/ops/completion_candidates.py` |
-| `attune_home()` | Resolve the user's attune home dir (env override -> ~/.attune). | `src/attune/ops/config.py` |
-| `build_config()` | Build a Config from inputs and environment defaults. | `src/attune/ops/config.py` |
-| `list_features()` | Return features parsed from ``<project_root>/.help/features.yaml``. | `src/attune/ops/data.py` |
-| `first_feature()` | Return the alphabetically-first feature with a renderable scope. | `src/attune/ops/data.py` |
-| `workflow_default_scope()` | Return the default scope for one workflow on first paint. | `src/attune/ops/data.py` |
-| `derive_project_name()` | Return a human-readable project name for the dashboard header. | `src/attune/ops/data.py` |
-| `claude_sessions_dir()` | Return the canonical directory Claude Code stores sessions for this project in. | `src/attune/ops/data.py` |
-| `enumerate_project_encoded_keys()` | Return all ``~/.claude/projects/`` dirs belonging to this logical project. | `src/attune/ops/data.py` |
-| `list_recent_sessions_with_paths()` | Same as :func:`list_recent_sessions` but also returns each | `src/attune/ops/data.py` |
-| `list_recent_sessions()` | Return Session records for this project's last ``days`` of activity. | `src/attune/ops/data.py` |
-| `home_kpis()` | Derive home-page KPIs from a telemetry summary. | `src/attune/ops/data.py` |
-| `sparkline_points()` | Render values as an SVG ``polyline`` ``points`` string. | `src/attune/ops/data.py` |
-| `read_telemetry_summary()` | Aggregate ``usage.jsonl`` into a UI-friendly summary. | `src/attune/ops/data.py` |
-| `list_workflows()` | Return the registered workflow catalog. Empty if the registry is unavailable. | `src/attune/ops/data.py` |
-| `family_versions()` | Resolve installed versions for every related attune package. | `src/attune/ops/data.py` |
-| `env_health()` | Lightweight environment snapshot for the Health page. | `src/attune/ops/data.py` |
-| `store_path()` | Return the absolute path to the dismiss-store JSON file. | `src/attune/ops/dismiss_store.py` |
-| `load()` | Read the dismiss store. Missing or corrupt file → ``{}``. | `src/attune/ops/dismiss_store.py` |
-| `save()` | Persist a dismiss entry for ``slug`` (overwrites prior entry). | `src/attune/ops/dismiss_store.py` |
-| `clear()` | Remove the entry for ``slug``. No-op if absent. | `src/attune/ops/dismiss_store.py` |
-| `is_active()` | True iff a dismiss for ``slug`` is currently suppressing it. | `src/attune/ops/dismiss_store.py` |
-| `compute_allowlist()` | Compute the default + user-supplied Host allowlist. | `src/attune/ops/middleware.py` |
-| `settings_path()` | Return the absolute path to the ops settings file. | `src/attune/ops/ops_config_store.py` |
-| `load_settings()` | Read persisted ops settings. Missing or corrupt file → ``{}``. | `src/attune/ops/ops_config_store.py` |
-| `save_setting()` | Persist a single setting; returns True on success, False on failure. | `src/attune/ops/ops_config_store.py` |
-| `resolve_specs_candidates_enabled()` | Resolve the ``specs_candidates_enabled`` setting. | `src/attune/ops/ops_config_store.py` |
-| `home()` | — | `src/attune/ops/routes/dashboard.py` |
-| `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
-| `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
-| `health_page()` | — | `src/attune/ops/routes/dashboard.py` |
-| `sessions_page()` | Sessions page — recent Claude Code sessions for this project. | `src/attune/ops/routes/dashboard.py` |
-| `run_view_page()` | Full-page view for one workflow run. | `src/attune/ops/routes/dashboard.py` |
-| `specs_page()` | Specs tab — federated listing of all specs across configured roots. | `src/attune/ops/routes/dashboard.py` |
-| `spec_detail_page()` | Drill-in for a single spec: show every phase file's content (read-only). | `src/attune/ops/routes/dashboard.py` |
-| `start_run()` | — | `src/attune/ops/routes/runner.py` |
-| `get_run()` | — | `src/attune/ops/routes/runner.py` |
-| `stream_run()` | — | `src/attune/ops/routes/runner.py` |
-| `list_runs()` | Return up to 20 newest runs for ``workflow``, newest first. | `src/attune/ops/routes/runs_history.py` |
-| `get_run_record()` | Return one persisted run record (metadata + log). | `src/attune/ops/routes/runs_history.py` |
-| `enrich_with_summaries()` | Public helper used by both the JSON route and the HTML page. | `src/attune/ops/routes/sessions.py` |
-| `list_sessions()` | ``GET /api/sessions`` — JSON listing of recent sessions. | `src/attune/ops/routes/sessions.py` |
-| `list_specs()` | Federated listing across all configured spec roots. | `src/attune/ops/routes/specs.py` |
-| `list_completion_candidates()` | Return "Ready to close?" candidates for the Specs page. | `src/attune/ops/routes/specs.py` |
-| `get_spec()` | Return phase-file contents for one spec. | `src/attune/ops/routes/specs.py` |
-| `update_phase_status()` | Rewrite the ``**Status**`` line in the named phase file. | `src/attune/ops/routes/specs.py` |
-| `dismiss_completion_candidate()` | Suppress a completion candidate for the default TTL (14 days). | `src/attune/ops/routes/specs.py` |
-| `get_sweep_result()` | Return the latest sweep result for a scope-hash, or 404. | `src/attune/ops/routes/sweep_results.py` |
-| `echo_command_builder()` | Test helper: produce a portable subprocess that prints two lines + exits 0. | `src/attune/ops/runner.py` |
-| `prune_old_runs()` | Delete persisted run files older than ``days``. Returns the deletion count. | `src/attune/ops/runner.py` |
-| `create_app()` | Build the FastAPI app, wiring config + templates into request state. | `src/attune/ops/server.py` |
-| `redact()` | Run all redaction passes over ``text`` and return the result. | `src/attune/ops/session_redaction.py` |
-| `redact_json_line()` | Redact one JSON-serialized line in-place, preserving structure. | `src/attune/ops/session_redaction.py` |
-| `new_budget()` | Build a :class:`Budget` from the env override or default. | `src/attune/ops/session_summarizer.py` |
-| `llm_enabled()` | Return True iff the Haiku path is enabled this run. | `src/attune/ops/session_summarizer.py` |
-| `summarize_session()` | Return a Haiku-or-cached summary for one session JSONL. | `src/attune/ops/session_summarizer.py` |
-| `compute_cache_key()` | Build a :class:`CacheKey` for one JSONL file. ``None`` on I/O failure. | `src/attune/ops/session_summary_cache.py` |
-| `cache_path_for()` | Return the on-disk cache path for one session id. | `src/attune/ops/session_summary_cache.py` |
-| `load()` | Return the cached summary iff the on-disk record matches ``expected``. | `src/attune/ops/session_summary_cache.py` |
-| `save()` | Write a summary to the on-disk cache, atomically. | `src/attune/ops/session_summary_cache.py` |
-| `is_persistence_enabled()` | True when ``ATTUNE_OPS_SWEEP_RESULTS`` is set to a non-empty value. | `src/attune/ops/sweep_results.py` |
-| `results_dir()` | Return ``<attune_home>/ops/sweep-results/`` (created if missing). | `src/attune/ops/sweep_results.py` |
-| `scope_hash()` | Hash a scope path to a fixed-length hex identifier. | `src/attune/ops/sweep_results.py` |
-| `parse_lines()` | Parse a captured stdout buffer into the final SweepResult JSON. | `src/attune/ops/sweep_results.py` |
-| `persist_result()` | Atomically write ``sweep_result`` to ``<results_dir>/<hash>.json``. | `src/attune/ops/sweep_results.py` |
-| `read_result()` | Read a previously-persisted result by its scope-hash digest. | `src/attune/ops/sweep_results.py` |
-| `persist_from_lines()` | Parse captured stdout lines and persist the result for ``scope_path``. | `src/attune/ops/sweep_results.py` |
-| `watch_and_persist()` | Subscribe to a discovery-sweep run; persist its result on success. | `src/attune/ops/sweep_results_watcher.py` |
+### Configuration
 
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `attune_home` | — | `Path` | Resolve the user's attune home dir (env override → `~/.attune`). |
+| `build_config` | `project_root: Path \| None = None, *, host: str = '127.0.0.1', port: int = 8765, allow_run: bool = False, specs_roots: tuple[Path, ...] \| None = None, trusted_hosts: tuple[str, ...] \| None = None, runs_retention_days: int = 30` | `Config` | Build a `Config` from inputs and environment defaults. |
 
-## Source files
+### CLI and entry points
 
-- `src/attune/ops/**`
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `add_subparser` | `subparsers: argparse._SubParsersAction` | `None` | Register the `ops` subparser on the main attune CLI parser. |
+| `cmd_ops` | `args: argparse.Namespace` | `int` | Run the dashboard server (blocking). Returns `0` on clean exit. |
+| `main` | — | `int` | Standalone entry point: `python -m attune.ops`. |
 
-## Tags
+### App factory
 
-`ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `create_app` | `config: Config, *, runner: RunnerService \| None = None` | `FastAPI` | Build the FastAPI app, wiring config + templates into request state. |
+
+### Feature and workflow data
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `list_features` | `project_root: Path \| str` | `list[Feature]` | Return features parsed from `<project_root>/.help/features.yaml`. |
+| `first_feature` | `project_root: Path \| str` | `Feature \| None` | Return the alphabetically-first feature with a renderable scope. |
+| `workflow_default_scope` | `workflow_name: str, project_root: Path \| str` | `str` | Return the default scope for one workflow on first paint. Returns `''` when no default applies. |
+| `list_workflows` | — | `list[WorkflowEntry]` | Return the registered workflow catalog. Empty if the registry is unavailable. |
+| `derive_project_name` | `project_root: Path \| str` | `str` | Return a human-readable project name for the dashboard header. |
+
+### Session data
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `claude_sessions_dir` | `project_root: Path \| str` | `Path` | Return the canonical directory Claude Code stores sessions for this project in. |
+| `enumerate_project_encoded_keys` | `project_root: Path \| str` | `list[Path]` | Return all `~/.claude/projects/` dirs belonging to this logical project. |
+| `list_recent_sessions` | `project_root: Path \| str, *, days: int = 3, limit: int \| None = DEFAULT_SESSION_LIST_CAP, now: datetime \| None = None, parser: Callable[[Path], Session \| None] \| None = None` | `list[Session]` | Return `Session` records for this project's last `days` of activity. |
+| `list_recent_sessions_with_paths` | `project_root: Path \| str, *, days: int = 3, limit: int \| None = DEFAULT_SESSION_LIST_CAP, now: datetime \| None = None, parser: Callable[[Path], Session \| None] \| None = None` | `list[tuple[Session, Path]]` | Same as `list_recent_sessions` but also returns each session's source path. |
+
+### Telemetry and KPIs
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `read_telemetry_summary` | `config: Config, *, recent_days: int = 7` | `TelemetrySummary` | Aggregate `usage.jsonl` into a UI-friendly summary. |
+| `home_kpis` | `summary: TelemetrySummary, *, today: date \| None = None` | `HomeKpis` | Derive home-page KPIs from a telemetry summary. |
+| `sparkline_points` | `values: list[float], *, width: int = 240, height: int = 40` | `str` | Render values as an SVG `polyline` `points` string. |
+| `family_versions` | — | `list[FamilyVersion]` | Resolve installed versions for every related attune package. |
+| `env_health` | `config: Config` | `dict[str, Any]` | Lightweight environment snapshot for the Health page. |
+
+### Middleware
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `compute_allowlist` | `host: str, port: int, extras: Iterable[str] = ()` | `set[str]` | Compute the default + user-supplied Host allowlist. |
+
+### Dashboard routes
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `home` | `request: Request` | `HTMLResponse` | Render the dashboard home page. |
+| `workflows_page` | `request: Request` | `HTMLResponse` | Render the workflows listing page. |
+| `telemetry_page` | `request: Request` | `HTMLResponse` | Render the telemetry page. |
+| `health_page` | `request: Request` | `HTMLResponse` | Render the health page. |
+| `sessions_page` | `request: Request` | `HTMLResponse` | Sessions page — recent Claude Code sessions for this project. |
+| `run_view_page` | `run_id: str, request: Request` | `HTMLResponse` | Full-page view for one workflow run. |
+| `specs_page` | `request: Request` | `HTMLResponse` | Specs tab — federated listing of all specs across configured roots. |
+| `spec_detail_page` | `slug: str, request: Request` | `HTMLResponse` | Drill-in for a single spec: show every phase file's content (read-only). |
+
+### Runner routes
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `start_run` | `name: str, request: Request` | `JSONResponse` | Start a named workflow run. |
+| `get_run` | `run_id: str, request: Request` | `JSONResponse` | Return current state for one run. |
+| `stream_run` | `run_id: str, request: Request` | `StreamingResponse` | Stream live SSE log output for one run. |
+
+### Run history routes
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `list_runs` | `workflow: str, request: Request` | `JSONResponse` | Return up to 20 newest runs for `workflow`, newest first. |
+| `get_run_record` | `workflow: str, run_id: str, request: Request` | `JSONResponse` | Return one persisted run record (metadata + log). |
+
+### Sessions route helpers
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `enrich_with_summaries` | `project_root, attune_home, *, days: int = 3, limit: int \| None = data.DEFAULT_SESSION_LIST_CAP, budget: session_summarizer.Budget \| None = None` | `tuple[list[data.Session], bool]` | Attach Haiku-or-cached summaries to a batch of sessions; used by both the JSON route and the HTML page. |
+| `list_sessions` | `request: Request` | `dict[str, Any]` | `GET /api/sessions` — JSON listing of recent sessions. |
+
+### Spec routes
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `list_specs` | `request: Request` | `dict` | Federated listing across all configured spec roots. |
+| `get_spec` | `slug: str, request: Request` | `dict` | Return phase-file contents for one spec. |
+| `update_phase_status` | `slug: str, phase: str, request: Request, body: dict[str, Any] = Body(...)` | `dict[str, Any]` | Rewrite the `**Status**` line in the named phase file. |
+
+### Sweep results
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `get_sweep_result` | `scope_hash: str, request: Request` | `JSONResponse` | Return the latest sweep result for a scope-hash, or 404. |
+| `is_persistence_enabled` | — | `bool` | True when `ATTUNE_OPS_SWEEP_RESULTS` is set to a non-empty value. |
+| `results_dir` | `config: Config` | `Path` | Return `<attune_home>/ops/sweep-results/` (created if missing). |
+| `scope_hash` | `scope_path: str` | `str` | Hash a scope path to a fixed-length hex identifier. |
+| `parse_lines` | `lines: list[str]` | `dict[str, Any] \| None` | Parse a captured stdout buffer into the final SweepResult JSON. |
+| `persist_result` | `scope_path: str, sweep_result: dict[str, Any], config: Config` | `Path` | Atomically write `sweep_result` to `<results_dir>/<hash>.json`. |
+| `read_result` | `digest: str, config: Config` | `dict[str, Any] \| None` | Read a previously-persisted result by its scope-hash digest. |
+| `persist_from_lines` | `scope_path: str, lines: list[str], config: Config` | `Path \| None` | Parse captured stdout lines and persist the result for `scope_path`. |
+| `watch_and_persist` | `run: Run, config: Config` | `None` | Subscribe to a discovery-sweep run; persist its result on success. |
+
+### Runner utilities
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `echo_command_builder` | `workflow: str` | `Sequence[str]` | Test helper: produce a portable subprocess that prints two lines and exits 0. |
+| `prune_old_runs` |

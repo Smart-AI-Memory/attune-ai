@@ -1,50 +1,51 @@
 ---
 type: error
+name: smart-test-error
 feature: smart-test
 depth: error
-generated_at: 2026-04-14T14:43:13.910169+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.799447+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
 # Smart Test errors
 
-Errors that occur during automated test generation, coverage analysis, and AST-based code inspection for Python projects.
-
 ## Common error signatures
 
-- `FileNotFoundError: Coverage file not found: {...}` — Coverage JSON file is missing or path is incorrect
-- `ValueError: Invalid coverage JSON at {...}: {...}` — Coverage JSON contains malformed data
-- `ValueError: Unexpected coverage JSON structure in {...}: 'files' key missing or not a dict` — Coverage JSON has unexpected structure
-- `SyntaxError` during AST parsing — Source code contains invalid Python syntax
-- `AttributeError` when analyzing AST nodes — Code structure doesn't match expected patterns
-- Import errors when generating test templates — Target modules can't be imported for analysis
+Most smart-test failures fall into two categories: coverage file problems and malformed source code that the AST analyzer cannot parse.
+
+| Exception | Message pattern | Likely cause |
+|-----------|----------------|--------------|
+| `FileNotFoundError` | `Coverage file not found: {path}` | `parse_coverage_json()` was called before `pytest --cov` produced a `coverage.json`, or the path passed to it is wrong |
+| `ValueError` | `Invalid coverage JSON at {path}: {detail}` | The `coverage.json` file exists but is not valid JSON — typically a truncated or partially written file |
+| `ValueError` | `Unexpected coverage JSON structure in {path}: 'files' key missing or not a dict` | The JSON is valid but doesn't match the expected pytest-cov schema — usually caused by a coverage.py version mismatch |
 
 ## Where errors originate
 
-Test generation failures typically start in these components:
+Failures in the coverage-parsing stage happen in `parse_coverage_json()` before any test generation begins. Failures in the generation stage come from `ASTFunctionAnalyzer`, `generate_test_for_function()`, or `generate_test_for_class()` when the source module has syntax the analyzer doesn't handle.
 
-- **Coverage parsing**: `parse_coverage_json()` fails when pytest-cov output is missing, corrupted, or has unexpected structure
-- **AST analysis**: `ASTFunctionAnalyzer.analyze()` encounters syntax errors or unsupported language constructs in source files
-- **Template generation**: `generate_test_for_function()` and `generate_test_for_class()` fail when function signatures contain complex type hints or decorators
-- **Workflow execution**: `TestGenerationWorkflow.execute()` and `ParallelTestGenerationWorkflow.execute()` encounter filesystem permissions issues or module import failures
+- `parse_coverage_json(json_path)` — reads and validates `coverage.json`; raises `FileNotFoundError` or `ValueError` (see above)
+- `prioritize_modules(modules, min_threshold)` — filters by coverage threshold; a completely empty result here means every module is above `min_threshold` (default `50.0`), not that parsing failed
+- `group_into_batches(modules, max_batches)` — groups by package path; an empty batch list means `prioritize_modules()` returned nothing
+- `generate_test_for_function(module, func)` — depends on `ASTFunctionAnalyzer.analyze()` having run first; if `func` is missing expected keys the output will be an empty or broken test stub
+- `TestAuditWorkflow.execute()` and `TestGenerationWorkflow.execute()` — orchestrate the subagents; errors from the functions above bubble up through these
 
 ## How to diagnose
 
-1. **Verify coverage data exists**. Check that `coverage.json` exists at the expected path and contains valid JSON. Run `pytest --cov=your_package --cov-report=json` to regenerate if needed.
+1. **Identify which stage failed.** Coverage-parsing errors (`FileNotFoundError`, `ValueError`) happen before any test generation. If you see one of the message patterns in the table above, the problem is in your `coverage.json`, not in your source code.
 
-2. **Test AST parsing separately**. If analysis fails, try parsing the problematic file with Python's `ast` module directly: `ast.parse(open('file.py').read())`. Syntax errors in the source will surface immediately.
+2. **Confirm `coverage.json` was generated.** Run `pytest --cov=<your_src_dir> --cov-report=json` and verify the file exists at the path you're passing to smart-test. If the file is missing, pytest-cov either wasn't installed or the run failed before producing output.
 
-3. **Check module importability**. Ensure target modules can be imported from the test generation environment. Missing dependencies or circular imports cause template generation to fail silently.
+3. **Check for a `'files'` key mismatch.** If you see the `'files' key missing` error, your `coverage.json` was generated by a coverage.py version that uses a different schema. Upgrade or pin `coverage` to a version compatible with pytest-cov 4.x and regenerate the file.
 
-4. **Validate file permissions**. Test generation workflows write output files. Verify the target directory exists and is writable, especially when using `output_dir` parameter.
+4. **Isolate an empty prioritization result.** If smart-test produces no modules to test, check the `min_threshold` in `prioritize_modules()` (default `50.0`). All your modules may already be above 50% coverage. Lower the threshold or target a specific module path directly.
 
-5. **Enable debug logging**. Set logging level to DEBUG before running workflows to see detailed AST traversal and template generation steps.
+5. **Debug AST analysis failures.** If test generation produces empty or malformed stubs, run `ASTFunctionAnalyzer().analyze(source_code, file_path)` directly on the failing module to see what `FunctionSignature` and `ClassSignature` objects it produces. Missing `raises`, empty `params`, or `complexity=1` on a clearly complex function indicate the analyzer couldn't parse that construct.
 
 ## Source files
 
-- `src/attune/workflows/test_gen/**`
-- `src/attune/workflows/test_audit/**`
+- `src/attune/workflows/test_audit/coverage_parser.py`
+- `src/attune/workflows/test_gen/`
 - `src/attune/workflows/test_gen_parallel.py`
 
 **Tags:** `tests`, `coverage`, `generation`

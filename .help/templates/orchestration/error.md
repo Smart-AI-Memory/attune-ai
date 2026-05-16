@@ -1,43 +1,45 @@
 ---
 type: error
+name: orchestration-error
 feature: orchestration
 depth: error
-generated_at: 2026-04-14T15:17:23.213307+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.018957+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
 # Orchestration errors
 
-Failures in agent composition strategies, workflow execution, and template management.
-
 ## Common error signatures
 
-- `ValueError: Unknown strategy: {...}. Available: {...}` — Strategy name not found in registry
-- `ValueError: Unknown workflow: {...}. Available: {...}` — Workflow ID not found in registry
-- `TypeError` — Invalid agent list or context passed to strategy execution
-- `RecursionError` — Nesting depth exceeded in delegation chains or nested workflows
-- `AttributeError` — Missing required fields in context or malformed strategy configuration
+Most orchestration failures are `ValueError` exceptions raised when a strategy name, workflow ID, or agent template cannot be resolved in the registry:
+
+- `ValueError: Unknown strategy: {name}. Available: {...}` — raised by `get_strategy()` when the requested strategy name is not registered.
+- `ValueError: Unknown workflow: {id}. Available: {...}` — raised by `get_workflow()` when a `WorkflowReference` points to a workflow ID that was never passed to `register_workflow()`.
+- `DelegationChainStrategy` silently enforces a `max_depth` (default: `3`); pipelines that exceed this depth are cut off rather than raising immediately, which can surface as incomplete results rather than an exception.
+- `NestedStrategy` and `NestedSequentialStrategy` share the same `NestingContext.DEFAULT_MAX_DEPTH` limit — exceeding it while composing workflows-within-workflows produces errors that name the offending `WorkflowReference`.
 
 ## Where errors originate
 
-- **Strategy lookup** — `get_strategy()` when requesting unregistered strategy names
-- **Workflow resolution** — `get_workflow()` when nested strategies reference unknown workflow IDs
-- **Template retrieval** — `get_template()` when agent composition requires missing templates
-- **Strategy execution** — All strategy `execute()` methods when processing invalid agent lists or context
-- **Registration conflicts** — `register_strategy()` and `register_workflow()` when names collide or types mismatch
+The following functions are the direct raise sites. Errors returned from `execute()` on any strategy class typically trace back to one of these resolution steps:
+
+- `get_strategy(strategy_name)` — looks up a registered `ExecutionStrategy` subclass by name; raises `ValueError` for unknown names.
+- `register_strategy(name, strategy_class)` — registers a custom strategy; incorrect `strategy_class` types cause failures at the next `get_strategy()` call.
+- `register_workflow(workflow)` — adds a `WorkflowDefinition` to `WORKFLOW_REGISTRY`; skipping this step before referencing the workflow causes `get_workflow()` to raise.
+- `get_workflow(workflow_id)` — resolves a workflow by ID for use in `NestedStrategy` or `NestedSequentialStrategy`; raises `ValueError` if the ID is absent from the registry.
+- `get_template(template_id)` — retrieves an `AgentTemplate` from the template registry; returns `None` rather than raising, so a missing template can produce subtle downstream failures in strategy execution.
 
 ## How to diagnose
 
-1. **Verify strategy and workflow names**. Check that all strategy names passed to `get_strategy()` match registered entries. Use the "Available" list in ValueError messages to see what's actually registered.
+1. **Read the `ValueError` message.** Both `get_strategy()` and `get_workflow()` include the full list of available names in the exception message. Compare that list against the name or ID you passed in — a typo or missing registration step is the most common cause.
 
-2. **Validate agent and context structures**. Strategy execution fails when agents list contains non-AgentTemplate objects or when required context keys are missing. Check that your agent list and context dictionary match the strategy's expectations.
+2. **Check registration order.** `NestedStrategy` and `NestedSequentialStrategy` resolve `WorkflowReference` objects at execution time, not at construction time. If `register_workflow()` was not called before `execute()` runs, `get_workflow()` raises even though the strategy object was created without error.
 
-3. **Check nesting depth limits**. DelegationChainStrategy and NestedStrategy enforce maximum depth limits (default 3). If you're hitting RecursionError, verify your delegation chains and nested workflows don't exceed configured limits.
+3. **Confirm `get_template()` returned a value, not `None`.** Unlike the strategy and workflow lookups, `get_template()` returns `None` for an unknown `template_id` instead of raising. If an agent step produces no output, verify the template ID with `get_all_templates()` and re-register with `register_custom_template()` if it is missing.
 
-4. **Trace workflow references**. Nested strategies depend on workflows being registered before execution. Ensure `register_workflow()` calls happen before strategies that reference those workflow IDs.
+4. **Verify `max_depth` for nested and delegation patterns.** `DelegationChainStrategy` defaults to `max_depth=3` and `NestedStrategy` defaults to `NestingContext.DEFAULT_MAX_DEPTH`. If your pipeline is deeper than these limits, pass an explicit `max_depth` at construction time.
 
-5. **Examine strategy initialization parameters**. Each strategy class has specific initialization requirements — tools for ToolEnhancedStrategy, conditions for ConditionalStrategy, steps for NestedSequentialStrategy. Mismatched parameters cause TypeError during strategy creation.
+5. **Identify the composition pattern in use.** The six patterns — Sequential, Parallel, Debate, Teaching, Refinement, and Adaptive — have different execution paths. Knowing which pattern your `MetaOrchestrator` selected narrows which strategy's `execute()` method to inspect.
 
 ## Source files
 

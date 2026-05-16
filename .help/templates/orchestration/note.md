@@ -1,36 +1,53 @@
 ---
 type: note
+name: orchestration-note
 feature: orchestration
 depth: note
-generated_at: 2026-04-14T15:18:50.457216+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.036834+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
-# Orchestration system
+# Note: orchestration
 
 ## Context
 
-The orchestration system enables dynamic composition of AI agents through execution strategies, workflow definitions, and agent templates. It handles everything from simple sequential execution to complex conditional branching and nested workflows.
+The `src/attune/orchestration/` module covers three related concerns: dynamic agent team composition, execution strategy selection, and workflow nesting. These are the building blocks that meta-orchestration patterns (Sequential, Parallel, Debate, Teaching, Refinement, Adaptive) are built on top of.
 
-## Architecture
+## How the package surface is structured
 
-The orchestration feature centers around the `ExecutionStrategy` base class, which defines how groups of agents work together. Concrete strategies implement specific composition patterns:
+The module exposes two complementary layers that are designed to compose with each other.
 
-- **ToolEnhancedStrategy** — Runs a single agent with comprehensive tool access
-- **SequentialStrategy** — Executes agents one after another, passing context forward
-- **ParallelStrategy** — Runs multiple agents concurrently
-- **ConditionalStrategy** — Branches execution based on runtime conditions
-- **NestedStrategy** — Embeds complete workflows within other workflows
+**Execution strategy classes** (defined under `_strategies/`) each extend `ExecutionStrategy` and implement a single `execute(agents, context) -> StrategyResult` signature:
 
-The system supports both simple strategies (single pattern execution) and advanced strategies that combine multiple patterns. For example, `DelegationChainStrategy` implements hierarchical delegation with depth limits to prevent infinite recursion.
+| Class | Where | What it does |
+|---|---|---|
+| `ExecutionStrategy` | `_strategies/base.py` | Abstract base for all composition strategies |
+| `ToolEnhancedStrategy` | `_strategies/advanced_strategies.py` | Runs a single agent with a full tool bundle |
+| `PromptCachedSequentialStrategy` | `_strategies/advanced_strategies.py` | Sequential execution with a shared cached context (default TTL: 3600 s) |
+| `DelegationChainStrategy` | `_strategies/advanced_strategies.py` | Hierarchical delegation with a configurable max depth (default: 3) |
+| `ConditionalStrategy` | `_strategies/conditional_strategies.py` | Branches on a single condition (if/else) |
+| `MultiConditionalStrategy` | `_strategies/conditional_strategies.py` | Branches on multiple conditions (switch/case) |
+| `NestedStrategy` | `_strategies/nesting.py` | Executes a referenced workflow as a nested unit |
+| `NestedSequentialStrategy` | `_strategies/nesting.py` | Sequential steps where each step can be an agent or a workflow reference |
 
-## Registration and discovery
+**Registry functions** provide name-based lookup and registration so strategies and workflows can be composed without direct imports:
 
-The orchestration system uses a registration pattern for both strategies and agent templates. You register strategies with `register_strategy()` and retrieve them with `get_strategy()`. Similarly, agent templates are registered and retrieved through functions like `get_template()` and `get_templates_by_capability()`.
+| Function | Source | What it does |
+|---|---|---|
+| `get_strategy(name)` | `_strategies/__init__.py` | Returns a strategy instance by name; raises `ValueError` for unknown names |
+| `register_strategy(name, cls)` | `_strategies/__init__.py` | Adds a custom `ExecutionStrategy` subclass to the registry |
+| `register_workflow(workflow)` | `_strategies/nesting.py` | Makes a `WorkflowDefinition` available for nested references |
+| `get_workflow(workflow_id)` | `_strategies/nesting.py` | Retrieves a registered workflow; raises `ValueError` if not found |
+| `get_template(template_id)` | `agent_templates/registry.py` | Retrieves an `AgentTemplate` by ID |
+| `register_custom_template(template)` | `agent_templates/registry.py` | Adds a user-defined template at runtime |
+| `unregister_template(template_id)` | `agent_templates/registry.py` | Removes a template; returns `False` if the ID is not found |
 
-This registration approach allows the system to dynamically compose teams at runtime based on available agents and their declared capabilities, rather than requiring hardcoded team configurations.
+The pattern throughout is consistent: strategy classes hold execution logic, and the registry functions let `MetaOrchestrator` wire them together by name at runtime.
 
-## Workflow nesting
+## Source files
 
-The system supports nested workflows through `WorkflowDefinition` and `WorkflowReference` types. You can register complete workflows with `register_workflow()` and reference them from within other workflows. The `NestingContext` enforces depth limits to prevent infinite recursion in nested compositions.
+- `src/attune/orchestration/**`
+- `src/attune/coordination/**`
+
+**Tags:** `orchestration`, `teams`

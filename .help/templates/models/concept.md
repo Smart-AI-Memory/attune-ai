@@ -1,60 +1,78 @@
 ---
 type: concept
-name: models
-tags: [models, auth, llm, routing, performance]
-source: developer-guidance
+name: models-concept
+feature: models
+depth: concept
+generated_at: 2026-05-16T06:19:45.824442+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+status: generated
 ---
 
 # Models
 
-The models system manages LLM provider routing, authentication strategies, and performance-based model selection across Attune's AI workflows.
+The `models` subsystem decides which LLM to call, how to authenticate, and whether to retry or fall back — so the rest of Attune can request a task type without hard-coding a provider or tier.
 
-## What it does
+## Mental model
 
-The models system solves three core problems in multi-provider LLM orchestration:
+Every LLM call in Attune passes through three layers:
 
-1. **Smart routing** — Automatically selects the best model for each task based on historical performance metrics like success rate, latency, and cost
-2. **Authentication strategy** — Determines whether to use Claude subscriptions or API keys based on your usage patterns and module size
-3. **Resilience** — Handles provider failures with circuit breakers and automatic fallbacks to keep workflows running
+1. **Task classification** — a task type (for example, `user_query` or `critical_fix`) is mapped to a cost tier (`CHEAP_TASKS`, `CAPABLE_TASKS`, or `PREMIUM_TASKS`) via `TASK_TIER_MAP`.
+2. **Adaptive routing** — `AdaptiveModelRouter` reads historical telemetry to pick the best concrete model for that tier, filtered by optional constraints such as `max_cost` or `max_latency_ms`.
+3. **Authentication** — `AuthStrategy` determines whether to use a Claude subscription or a direct API key, based on your `SubscriptionTier` and the size of the module being processed.
+
+These three layers operate independently, so you can change your subscription tier without touching routing logic, and routing can improve over time as telemetry accumulates without any code changes.
 
 ## Core components
 
-**Performance tracking and routing**
-- `ModelPerformance` tracks success rates, latency, cost, and failure counts for each model on specific tasks
-- `AdaptiveModelRouter` uses this telemetry to recommend the best model for each workflow stage, with constraints for maximum cost and latency
-- Circuit breakers (`CircuitBreaker`) temporarily disable failing providers and gradually re-enable them
+### Task-to-tier mapping
 
-**Authentication strategy management**
-- `AuthStrategy` determines whether to use Claude subscriptions vs API keys based on your code module size and usage patterns
-- Automatically recommends subscription mode for small modules (under 500 lines) and API mode for larger codebases
-- CLI commands handle interactive setup, status checking, and recommendations
+`TASK_TIER_MAP` and the `CHEAP_TASKS`, `CAPABLE_TASKS`, and `PREMIUM_TASKS` constants define which capability tier each task type requires. A separate constant, `REALTIME_REQUIRED_TASKS` (which includes `user_query`, `critical_fix`, and `emergency_response`), identifies tasks that cannot tolerate queuing delays.
 
-**Execution and response handling**
-- `EmpathyLLMExecutor` wraps the core LLM with intelligent routing and telemetry collection
-- `LLMResponse` provides a standardized interface across all providers with cost estimates, token counts, and performance metadata
-- `ExecutionContext` carries workflow information for routing decisions and telemetry tracking
+### Adaptive routing
 
-## How the pieces work together
+`AdaptiveModelRouter` selects a model at runtime using recorded `ModelPerformance` data — each of which tracks `success_rate`, `avg_latency_ms`, `avg_cost`, and `recent_failures` for a specific model–task combination. Its `quality_score` property combines those signals into a single ranking value.
 
-When you run an AI workflow:
+Call `get_best_model(workflow, stage)` to get the top-ranked model for a workflow stage. Pass `max_cost` or `max_latency_ms` to filter candidates. Call `recommend_tier_upgrade(workflow, stage)` when you want the router to tell you whether a higher-capability model would improve outcomes for that stage.
 
-1. The `EmpathyLLMExecutor` receives your task type (like "code_review" or "documentation")
-2. The `AdaptiveModelRouter` queries performance history and selects the best model within your cost/latency constraints
-3. The `AuthStrategy` determines whether to use subscription or API authentication based on your module size
-4. Circuit breakers check if the selected provider is healthy
-5. The LLM executes your task and returns a standardized `LLMResponse`
-6. Performance metrics are recorded to improve future routing decisions
+### Authentication strategy
 
-This creates a feedback loop where the system gets smarter about model selection as you use it more.
+`AuthStrategy` holds your authentication preferences — `subscription_tier`, `default_mode`, and thresholds such as `small_module_threshold` (500 lines) and `medium_module_threshold` (2000 lines). Given a module's line count, `get_recommended_mode()` returns the appropriate `AuthMode` (`AUTO`, or a subscription/API preference), and `estimate_cost()` computes projected spend for each mode so you can compare before committing.
 
-## Authentication strategy logic
+`AuthStrategy` is serializable: `save()` and `load()` persist configuration to disk, and `from_dict()` / `to_dict()` round-trip through plain dictionaries.
 
-The system automatically chooses between Claude subscription and API modes:
+### Circuit breaking and resilience
 
-| Module size | Recommended mode | Why |
-|-------------|------------------|-----|
-| < 500 lines | Subscription | Interactive features work better for small codebases |
-| 500-2000 lines | Auto-detect | Balances cost and functionality |
-| > 2000 lines | API | Better cost control for large batch operations |
+`CircuitBreaker` tracks per-provider failure counts. After `failure_threshold` consecutive failures, it marks that provider as unavailable for `recovery_timeout_seconds`, preventing cascading failures. `is_available(provider, tier)` is the check you call before routing; `record_success()` and `record_failure()` feed it signal. `ResilientExecutor`, `FallbackStrategy`, and `RetryPolicy` build on this to define ordered fallback chains (for example, `SONNET_TO_OPUS_FALLBACK`).
 
-You can override these defaults through the CLI or by modifying your `AuthStrategy` configuration.
+### Execution and responses
+
+`EmpathyLLMExecutor` is the default entry point for running a task. Call `run(task_type, prompt)` and receive an `LLMResponse` — a dataclass containing `content`, `model_id`, `tier`, token counts, `cost_estimate`, and `latency_ms`. The `success` property on `LLMResponse` returns `True` when `content` is non-empty, making it safe to branch on without inspecting status codes.
+
+`ExecutionContext` carries optional routing hints (`provider_hint`, `tier_hint`) and session metadata through the call stack without polluting function signatures.
+
+## How the pieces fit together
+
+```
+Task type
+   │
+   ▼
+TASK_TIER_MAP ──► tier (cheap / capable / premium)
+   │
+   ▼
+AdaptiveModelRouter ──► model_id   ◄── ModelPerformance (telemetry)
+   │
+   ▼
+EmpathyLLMExecutor ──► LLMResponse
+   │
+   ├── AuthStrategy (which credentials to use)
+   └── CircuitBreaker (is this provider healthy?)
+```
+
+Telemetry written by `log_llm_call` and `log_workflow_run` feeds back into `ModelPerformance`, closing the loop so routing improves as the system accumulates real usage data.
+
+## When this matters
+
+- You are adding a new workflow stage and need to choose a cost tier — consult `TASK_TIER_MAP` and `get_tier_for_task()`.
+- A provider is returning errors and you want to understand why calls are being skipped — check `CircuitBreaker.get_status()`.
+- You want to know whether your Claude subscription is cheaper than API-key access for a given file size — call `AuthStrategy.estimate_cost()` with the file's line count.
+- Routing feels stale or a model that was performing well is no longer selected — call `AdaptiveModelRouter.get_routing_stats(workflow, stage)` to inspect the last seven days of telemetry.

@@ -1,37 +1,31 @@
 ---
 type: note
+name: bug-predict-note
 feature: bug-predict
 depth: note
-generated_at: 2026-04-14T14:49:00.166872+00:00
-source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
+generated_at: 2026-05-16T06:19:45.797241+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Bug prediction workflow architecture
+# Note: Bug Prediction internals
 
-## Overview
+## How the workflow is structured
 
-The bug prediction feature uses a three-agent orchestration pattern to identify potential bug hotspots in codebases. The workflow combines pattern scanning, risk correlation, and prevention advice into a unified analysis.
+Bug prediction runs as an orchestrated workflow — `BugPredictionWorkflow` coordinates three subagents in sequence: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. Each subagent focuses on its own domain and returns structured markdown, which the orchestrator synthesizes into a single report with a Summary, Bugs, and Suggestions section.
 
-## Core components
+The public surface has two distinct roles:
 
-The `BugPredictionWorkflow` class coordinates three specialized subagents:
+- **`BugPredictionWorkflow`** (`src/attune/workflows/bug_predict.py`) — manages the Agent SDK lifecycle, accepts an optional `system_prompt_suffix` to extend the default orchestrator prompt, and returns a `WorkflowResult`.
+- **`format_bug_predict_report()`** and **`main()`** (`src/attune/workflows/bug_predict_report.py`) — handle presentation. `format_bug_predict_report()` converts the raw result dict into a human-readable report; `main()` is the CLI entry point that wires everything together.
 
-- **pattern-scanner** — Detects common bug-prone code patterns
-- **risk-correlator** — Analyzes relationships between code complexity and bug likelihood
-- **prevention-advisor** — Generates actionable remediation strategies
+## False-positive suppression
 
-Each subagent operates independently and reports findings as structured markdown. The workflow then synthesizes these findings into a single report with risk scoring (0-100), categorized bug predictions (HIGH/MEDIUM/LOW severity), and prioritized prevention suggestions.
+The scanner skips findings that match known-safe signals defined in `_INTENTIONAL_KEYWORDS` (`fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`) and test files matched by `_SCANNER_TEST_PATTERNS`. This means results reflect production code, not test fixtures or graceful-degradation paths.
 
-## Report generation
+## Source files
 
-The workflow produces two output formats:
+- `src/attune/workflows/bug_predict.py` — workflow orchestration
+- `src/attune/workflows/bug_predict_report.py` — report formatting and CLI entry point
 
-- **Programmatic**: A `WorkflowResult` object containing structured data
-- **Human-readable**: Formatted reports via `format_bug_predict_report()` with file paths, line numbers, and specific refactoring advice
-
-The CLI entry point (`main()`) provides direct command-line access to the workflow for integration with development tools.
-
-## Pattern detection
-
-The system recognizes intentional design patterns that might otherwise trigger false positives. Code marked with keywords like "fallback", "graceful", or "best effort" receives adjusted risk scoring to account for deliberate error handling strategies.
+**Tags:** `bugs`, `prediction`, `scanning`

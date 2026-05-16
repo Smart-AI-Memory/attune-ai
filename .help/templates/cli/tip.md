@@ -1,31 +1,26 @@
 ---
 type: tip
+name: cli-tip
 feature: cli
 depth: tip
-generated_at: 2026-04-14T15:12:31.654048+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-05-16T06:19:45.829217+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# Use the HybridRouter for mixed command types
+# Tip: Use `HybridRouter.learn_preference()` to reduce repetitive routing
 
-## Context
+Teach the router your shorthand once, and it stops asking you to spell out the same skill invocations repeatedly.
 
-The Attune CLI handles both structured commands (like `attune costs today`) and natural language input through a hybrid routing system.
+**Why it sticks:** `HybridRouter` accumulates `usage_count` and `confidence` per keyword, so the more you reinforce a preference, the more reliably it fires.
 
-## Recommendation
+Call `learn_preference(keyword, skill, args)` after any routing interaction you want to repeat. Then verify it with `get_suggestions(partial)` — if your keyword appears in the results, the router has it.
 
-Route user input through `route_user_input()` instead of parsing commands directly. This function automatically determines whether input is a slash command or natural language and delegates appropriately.
-
-The HybridRouter learns from usage patterns and builds routing preferences over time, making the CLI smarter with each interaction.
-
-## Why this matters
-
-Direct command parsing misses natural language input entirely, forcing users into rigid command syntax when they could express intent more naturally.
+**Tradeoff:** Preferences are stored at `preferences_path`. If you share a config directory across projects, preferences learned in one context will surface as suggestions in another. Use a project-scoped path if that bleed-over would be confusing.
 
 ## Source files
 
 - `src/attune/cli_router.py`
-- `src/attune/cli_minimal.py`
+- `src/attune/cli_commands/`
 
 **Tags:** `cli`, `commands`
