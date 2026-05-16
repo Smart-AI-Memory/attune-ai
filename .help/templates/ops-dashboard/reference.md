@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-15T11:24:19.647648+00:00
-source_hash: 55ce9290506b249ccc67bc94cb823e906686e4c1c3e8534a515406908f54aedf
+generated_at: 2026-05-16T02:33:13.018650+00:00
+source_hash: 3847cb81bf0f98356695799e284a8b9b602fccfe6225cd45d19f8f054d716b7e
 status: generated
 ---
 
@@ -17,6 +17,7 @@ status: generated
 | `WorkflowEntry` | — | `src/attune/ops/data.py` |
 | `PathArgSpec` | How a workflow accepts a scope path on the CLI. | `src/attune/ops/data.py` |
 | `Feature` | One feature from ``.help/features.yaml`` for the scope picker. | `src/attune/ops/data.py` |
+| `Session` | One Claude Code session — what surfaces on the dashboard's /sessions page. | `src/attune/ops/data.py` |
 | `FamilyVersion` | — | `src/attune/ops/data.py` |
 | `DailyCost` | One day's cost for the home-page sparkline. | `src/attune/ops/data.py` |
 | `HomeKpis` | Summary numbers shown above the fold on the home page. | `src/attune/ops/data.py` |
@@ -26,6 +27,11 @@ status: generated
 | `RunnerBusyError` | Raised when a run is already pending/running. | `src/attune/ops/runner.py` |
 | `Run` | Single workflow execution + its broadcast state. | `src/attune/ops/runner.py` |
 | `RunnerService` | Owns the run history + concurrency lock. | `src/attune/ops/runner.py` |
+| `RedactionResult` | Outcome of a redaction pass. | `src/attune/ops/session_redaction.py` |
+| `SummaryResult` | One Haiku-or-cache result, ready to slot into a :class:`Session`. | `src/attune/ops/session_summarizer.py` |
+| `Budget` | Mutable spend ledger for one page-load summarization loop. | `src/attune/ops/session_summarizer.py` |
+| `CacheKey` | Stable key that invalidates a cached summary when the source moves. | `src/attune/ops/session_summary_cache.py` |
+| `CachedSummary` | One persisted session summary plus the metadata to validate it. | `src/attune/ops/session_summary_cache.py` |
 
 ## Functions
 
@@ -41,6 +47,11 @@ status: generated
 | `list_features()` | Return features parsed from ``<project_root>/.help/features.yaml``. | `src/attune/ops/data.py` |
 | `first_feature()` | Return the alphabetically-first feature with a renderable scope. | `src/attune/ops/data.py` |
 | `workflow_default_scope()` | Return the default scope for one workflow on first paint. | `src/attune/ops/data.py` |
+| `derive_project_name()` | Return a human-readable project name for the dashboard header. | `src/attune/ops/data.py` |
+| `claude_sessions_dir()` | Return the canonical directory Claude Code stores sessions for this project in. | `src/attune/ops/data.py` |
+| `enumerate_project_encoded_keys()` | Return all ``~/.claude/projects/`` dirs belonging to this logical project. | `src/attune/ops/data.py` |
+| `list_recent_sessions_with_paths()` | Same as :func:`list_recent_sessions` but also returns each | `src/attune/ops/data.py` |
+| `list_recent_sessions()` | Return Session records for this project's last ``days`` of activity. | `src/attune/ops/data.py` |
 | `home_kpis()` | Derive home-page KPIs from a telemetry summary. | `src/attune/ops/data.py` |
 | `sparkline_points()` | Render values as an SVG ``polyline`` ``points`` string. | `src/attune/ops/data.py` |
 | `read_telemetry_summary()` | Aggregate ``usage.jsonl`` into a UI-friendly summary. | `src/attune/ops/data.py` |
@@ -61,6 +72,8 @@ status: generated
 | `stream_run()` | — | `src/attune/ops/routes/runner.py` |
 | `list_runs()` | Return up to 20 newest runs for ``workflow``, newest first. | `src/attune/ops/routes/runs_history.py` |
 | `get_run_record()` | Return one persisted run record (metadata + log). | `src/attune/ops/routes/runs_history.py` |
+| `enrich_with_summaries()` | Public helper used by both the JSON route and the HTML page. | `src/attune/ops/routes/sessions.py` |
+| `list_sessions()` | ``GET /api/sessions`` — JSON listing of recent sessions. | `src/attune/ops/routes/sessions.py` |
 | `list_specs()` | Federated listing across all configured spec roots. | `src/attune/ops/routes/specs.py` |
 | `get_spec()` | Return phase-file contents for one spec. | `src/attune/ops/routes/specs.py` |
 | `update_phase_status()` | Rewrite the ``**Status**`` line in the named phase file. | `src/attune/ops/routes/specs.py` |
@@ -68,6 +81,14 @@ status: generated
 | `echo_command_builder()` | Test helper: produce a portable subprocess that prints two lines + exits 0. | `src/attune/ops/runner.py` |
 | `prune_old_runs()` | Delete persisted run files older than ``days``. Returns the deletion count. | `src/attune/ops/runner.py` |
 | `create_app()` | Build the FastAPI app, wiring config + templates into request state. | `src/attune/ops/server.py` |
+| `redact()` | Run all redaction passes over ``text`` and return the result. | `src/attune/ops/session_redaction.py` |
+| `new_budget()` | Build a :class:`Budget` from the env override or default. | `src/attune/ops/session_summarizer.py` |
+| `llm_enabled()` | Return True iff the Haiku path is enabled this run. | `src/attune/ops/session_summarizer.py` |
+| `summarize_session()` | Return a Haiku-or-cached summary for one session JSONL. | `src/attune/ops/session_summarizer.py` |
+| `compute_cache_key()` | Build a :class:`CacheKey` for one JSONL file. ``None`` on I/O failure. | `src/attune/ops/session_summary_cache.py` |
+| `cache_path_for()` | Return the on-disk cache path for one session id. | `src/attune/ops/session_summary_cache.py` |
+| `load()` | Return the cached summary iff the on-disk record matches ``expected``. | `src/attune/ops/session_summary_cache.py` |
+| `save()` | Write a summary to the on-disk cache, atomically. | `src/attune/ops/session_summary_cache.py` |
 | `is_persistence_enabled()` | True when ``ATTUNE_OPS_SWEEP_RESULTS`` is set to a non-empty value. | `src/attune/ops/sweep_results.py` |
 | `results_dir()` | Return ``<attune_home>/ops/sweep-results/`` (created if missing). | `src/attune/ops/sweep_results.py` |
 | `scope_hash()` | Hash a scope path to a fixed-length hex identifier. | `src/attune/ops/sweep_results.py` |

@@ -135,20 +135,57 @@ async def health_page(request: Request) -> HTMLResponse:
 async def sessions_page(request: Request) -> HTMLResponse:
     """Sessions page — recent Claude Code sessions for this project.
 
-    S2: reads ``~/.claude/projects/<encoded-project-root>/*.jsonl``
-    and surfaces sessions whose mtime is within the last 3 days,
-    each with a heuristic starter-prompt (first user prompt,
-    truncated to ~200 chars). S3 will replace the heuristic with
-    Haiku-summarized prompts and a per-page budget cap; S4 adds the
-    resume-most-recent card; S5 marks the live session.
+    S3b: wires the Haiku summarizer + on-disk cache + redaction
+    behind the existing data layer. Each row's ``starter_prompt``
+    is the Haiku-or-cached summary when available, falling back
+    to the heuristic (first user prompt, truncated) when the LLM
+    is disabled, the budget is breached, or any failure path
+    fires. The ``source`` field on each :class:`Session` (one of
+    ``heuristic | haiku | cached``) tells the user which lane
+    produced the text.
+
+    Query params:
+
+    - ``?compare=1`` — dev mode. Runs the full enrichment AND
+      preserves the heuristic alongside, rendering both columns
+      side-by-side. No UI affordance (discoverable only by URL).
+      Same budget + redaction + caching applies.
 
     Failure modes are silent fall-throughs to the empty state: no
     Claude Code dir, all sessions older than 3 days, all JSONLs
     unreadable — none surface as errors. The point is to be useful
     on a fresh install, not to debug Claude Code's internal state.
+
+    S4 will add the resume-most-recent card; S5 marks the live
+    session.
     """
+    from attune.ops.routes.sessions import enrich_with_summaries
+    from attune.ops.session_summarizer import llm_enabled, new_budget
+
     cfg = request.app.state.config
-    sessions = data.list_recent_sessions(cfg.project_root, days=3)
+    compare_mode = request.query_params.get("compare") == "1"
+
+    if compare_mode:
+        # Compare mode renders both columns. Keep the heuristic
+        # version (paths-included call) and run the enrichment
+        # alongside on the same path list so the rows align.
+        pairs = data.list_recent_sessions_with_paths(cfg.project_root, days=3)
+        heuristic_sessions = [s for s, _ in pairs]
+        budget = new_budget()
+        from attune.ops.routes.sessions import _enrich_sessions
+
+        haiku_sessions, over_budget = _enrich_sessions(
+            pairs, attune_home=cfg.attune_home, budget=budget
+        )
+        sessions = heuristic_sessions
+        compare_columns = [
+            {"label": "Heuristic", "sessions": heuristic_sessions},
+            {"label": "Haiku", "sessions": haiku_sessions},
+        ]
+    else:
+        sessions, over_budget = enrich_with_summaries(cfg.project_root, cfg.attune_home)
+        compare_columns = None
+
     # Where the sessions live — surfaced in the empty-state so users
     # can ``cat`` the JSONLs directly if they want to inspect more
     # than the page shows. Reuses ``claude_sessions_dir`` so the
@@ -168,6 +205,10 @@ async def sessions_page(request: Request) -> HTMLResponse:
         page="sessions",
         sessions=sessions,
         sessions_dir=sessions_dir,
+        compare_mode=compare_mode,
+        compare_columns=compare_columns,
+        over_budget=over_budget,
+        llm_enabled=llm_enabled(),
     )
 
 

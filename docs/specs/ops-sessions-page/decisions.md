@@ -292,34 +292,49 @@ reader knows it's not part of the user-facing surface.
 | Data source (encoded-canonical glob) | #377 (S1+S2) — `~/.claude/projects/` literal lookup; multi-key resolution in S3a (data layer) | shipped — multi-key in S3a |
 | Time window (3 days) | #377 | shipped |
 | Project scope (current project only) | #377 | shipped |
-| Listing route (`GET /sessions`) | #377 (page) | partial — JSON route in S3 |
-| Listing JSON shape | #377 (template only) | partial — JSON API in S3 |
+| Listing route (`GET /sessions`) | #377 (page) + S3b — `GET /api/sessions` in `routes/sessions.py` | shipped |
+| Listing JSON shape | #377 (template only) + S3b — `routes/sessions.py::list_sessions` returns `{sessions, meta}` | shipped |
 | Empty state copy | #377 | shipped |
 | Failure mode (skip unreadable JSONL) | #377 | shipped |
 | Heuristic fallback (S2 implementation) | #377 (S2 squash a577a7e8) | shipped |
 | Cache key (last-4KB) | S3a — `session_summary_cache.compute_cache_key()` | shipped (cache module; Haiku wire-up in S3b) |
 | Cache location / TTL | S3a — `<attune_home>/ops/session_summaries/<id>.json`, mtime-bound | shipped (module); first write happens in S3b |
 | List cap (N=20) | S3a — `DEFAULT_SESSION_LIST_CAP` in `list_recent_sessions()` | shipped |
-| Starter-prompt generation (Haiku) | TBD (S3) | pending |
-| Budget cap ($0.05) | TBD (S3) | pending |
-| Source field semantics (heuristic/haiku/cached) | #377 (`heuristic` only) | partial — `haiku`/`cached` in S3 |
+| Starter-prompt generation (Haiku) | S3b — `session_summarizer.summarize_session()` + `routes/sessions.py::enrich_with_summaries` | shipped |
+| Budget cap ($0.05) | S3b — `session_summarizer.Budget` + `new_budget()` + `ATTUNE_OPS_SESSIONS_BUDGET_USD` | shipped (soft warning surfaced in template) |
+| Source field semantics (heuristic/haiku/cached) | #377 + S3b — all three values now possible | shipped |
 | Resume card (current-worktree → canonical) | TBD (S4) | pending |
 | Live-session detection | TBD (S5) | pending |
-| Compare mode (`?compare=1`) | TBD (S3) | pending |
-| Calibration harness | TBD (S3) | pending |
+| Compare mode (`?compare=1`) | S3b — `sessions_page` route query param + template branch | shipped |
+| Calibration harness | S3b (partial) — `scripts/build_session_fixtures.py` ships dry-run + write paths; committed fixtures + snapshot test defer to post-S3 follow-up pending interactive curation | partial |
 | Expand-on-click body | TBD (S4 or later) | pending |
 
 ---
 
 ## Calibration record
 
-To be filled in during implementation:
-
-- [ ] Haiku prompt template — finalized text and 5-session test
-  snapshot
-- [ ] Average tokens per summary (in / out)
-- [ ] Average cost per session summary
-- [ ] Whether the budget cap ever fires during normal usage
+- [x] Haiku prompt template — shipped as
+  ``attune.ops.session_summarizer.SUMMARY_PROMPT`` (S3b,
+  2026-05-15). Calibrated against decisions.md Decision 2's
+  target shape: numbered (1. one-sentence what-was-worked-on;
+  2. 0-3 open-threads bullets, skip if none; 3. ``Resume:``
+  one-sentence pasteable prompt). Explicit "no filler"
+  instruction; output capped at 256 tokens; input capped at
+  4KB of user-prompt content.
+- [x] First production-data eyeball (2026-05-15, attune-ai
+  worktree silly-ramanujan-a91ddb against
+  ``project_root=/Users/patrickroebuck/attune-ai``): Patrick's
+  reaction was "impressed that Haiku did such a good job —
+  bravo." Output reliably matched the target shape; quality
+  judged to justify the spend. Cleared for merge of PR #390.
+- [ ] Average tokens per summary (in / out) — measure once a
+  redacted-fixture set is committed and the snapshot test lands.
+- [ ] Average cost per session summary — derive from token
+  counts × registry rates ($1/$5 per million for Haiku 4.5).
+- [ ] Whether the budget cap ever fires during normal usage —
+  observe over the first ~week of production use. With N=20
+  cap and ~$0.001/session typical, the $0.05 per-load cap has
+  ~2.5× headroom; cap fires expected to be rare.
 
 ---
 
@@ -353,6 +368,18 @@ To be filled in during implementation:
   fixture-build script for calibration. Snapshot-test +
   committed redacted fixtures defer to a post-S3 follow-up
   pending Patrick's interactive fixture curation pass.
+- 2026-05-15 (S3b ship) — S3b lands the Haiku integration plus
+  redaction wire-up, on-disk cache hit/miss path, per-page-load
+  budget cap (default $0.05, override via
+  `ATTUNE_OPS_SESSIONS_BUDGET_USD`, effective off-switch at
+  cap=0), `?compare=1` dev mode, `GET /api/sessions` JSON
+  endpoint, and a dry-run-by-default fixture-build script
+  (`scripts/build_session_fixtures.py`). Snapshot test +
+  committed fixtures intentionally deferred — they require
+  Patrick's interactive curation pass over redacted real
+  sessions. Calibration record below stays blank pending
+  first real-session shakedown. Same-day pre-S3 design
+  tightening pass (entry below) followed by:
 - 2026-05-15 (later same day) — Pre-S3 design tightening
   pass. Five more decisions captured after interactive
   review: list cap N=20 (budget-cap math invalidated by
