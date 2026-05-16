@@ -77,7 +77,6 @@ class TestRegistryConsolidation:
 
         preserved_classes = [
             "DocumentManagerWorkflow",
-            "OrchestratedReleasePrepWorkflow",
         ]
         for cls_name in preserved_classes:
             assert (
@@ -141,19 +140,6 @@ class TestDeprecationWarnings:
             deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
             assert len(deprecation_warnings) >= 1
             assert "DocumentManagerWorkflow is deprecated" in str(deprecation_warnings[0].message)
-
-    def test_orchestrated_release_prep_warns(self):
-        """OrchestratedReleasePrepWorkflow should emit DeprecationWarning."""
-        from attune.workflows import OrchestratedReleasePrepWorkflow
-
-        with warnings.catch_warnings(record=True) as w:
-            warnings.simplefilter("always")
-            OrchestratedReleasePrepWorkflow()
-            deprecation_warnings = [x for x in w if issubclass(x.category, DeprecationWarning)]
-            assert len(deprecation_warnings) >= 1
-            assert "OrchestratedReleasePrepWorkflow is deprecated" in str(
-                deprecation_warnings[0].message,
-            )
 
 
 class TestListMigrations:

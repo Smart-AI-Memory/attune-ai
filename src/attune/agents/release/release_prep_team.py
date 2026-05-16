@@ -359,9 +359,6 @@ class ReleasePrepTeam:
 class ReleasePrepTeamWorkflow(BaseWorkflow):
     """Workflow wrapper that integrates ReleasePrepTeam with the CLI registry.
 
-    This class provides the same interface as OrchestratedReleasePrepWorkflow
-    so the workflow registry can use it as a drop-in replacement.
-
     Attributes:
         name: Workflow name for registry
         description: Human-readable description

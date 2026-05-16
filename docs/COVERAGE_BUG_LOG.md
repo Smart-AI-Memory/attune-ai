@@ -1,23 +1,3 @@
-# Coverage Bug Log
-
-Append-only log of bugs surfaced while pushing module coverage toward 100%.
-The thesis: branches that resist coverage are signal — almost always one of
-three patterns.
-
-**Bug classes**
-
-1. **Crash paths nobody triggered** — production code that throws on real
-   input but had no test exercising the path.
-2. **Dead code wearing defensive-coding clothes** — code that looks defensive
-   but is unreachable, which means it's also untested and couldn't actually
-   defend.
-3. **Tests that mocked around the bug** — tests pass because they mock the
-   broken caller; coverage at 100% looks fine, production code is wrong.
-
-Format: most recent session at top. Per bug: `module — class — one-liner`.
-
----
-
 ## 2026-05-14 — seventeenth module under test-quality-program (Opus 4.7)
 
 Second cycle of the day, after the docstring fix on the rubric
@@ -861,6 +841,70 @@ real and reachable (the audit-log JSON shape isn't strictly
 enforced upstream so missing keys do happen in production). No
 Class 2 candidates. Demonstrates the spec's "absence of bugs is
 also data" observation from prior sessions.
+
+---
+
+## 2026-05-09 — session 49f (Opus 4.7)
+
+Executed `docs/specs/deprecated-module-retirement/` (drafted earlier
+this session as the natural follow-on from the ignored-tests spec).
+**2 production modules retired** — both Class 5.
+
+### Bugs — Class 5 (deprecated production code outliving its tests)
+
+- `src/attune/workflows/orchestrated_release_prep.py` (637 lines).
+  Deprecated v5.2.0, scheduled for removal in v6.0, currently shipping
+  in v6.6.0 — six minor versions overdue. Its targeted-coverage tests
+  in `tests/unit/test_coverage_batch6.py` were retired here as part of
+  the same commit (the only thing keeping the module's coverage
+  numbers up). Replacement (`ReleasePrepTeamWorkflow` at
+  `src/attune/agents/release/release_prep_team.py:359`) has shipped
+  since v5.2.0 with its own live tests.
+- `src/attune/scaffolding/` (entire package — 9 files, 2,254 lines
+  including templates). Deprecated 2026-02-21 (PR #60); `__main__.py`
+  prints a runtime deprecation notice on every invocation pointing at
+  `attune workflow run`. Already excluded from coverage measurement
+  in `pyproject.toml`. Tests for the CLI were retired in the
+  ignored-tests spec (2026-05-09) on grounds of mock-driven decay
+  (`sys.modules["test_generator"] = MagicMock()`).
+
+### Why this deserves its own class
+
+In Class 1/2/3, the *bug* is in the code under coverage analysis —
+something that crashes, something unreachable, something the tests
+mock around. In Class 5, the code itself isn't broken; it does what
+it's supposed to do. The bug is the *survival* of the module past
+its scheduled removal date. Coverage analysis surfaces it because
+the module has either zero tests or only tests that exercise the
+deprecated surface (which then look like waste during a coverage
+push). The fix isn't a code change — it's a deletion.
+
+The detection signature: a module with `.. deprecated::` in its
+docstring, low-quality or no tests, and no callers in either the
+internal codebase or sibling repos. If the scheduled-removal version
+has already shipped, that's the strong signal.
+
+### Side cleanups picked up while removing the deprecated modules
+
+- `examples/orchestration/basic_usage.py` — Example 3 imported
+  `attune.workflows.test_coverage_boost`, a module deleted in an
+  earlier release. The example file had a dead import nobody
+  noticed because the file isn't imported by anything else
+  (examples aren't run by the test suite). Cleaned up as part of
+  the rewrite for D1.
+- `src/attune/agents/release/release_prep_team.py:362` — docstring
+  referenced "the same interface as `OrchestratedReleasePrepWorkflow`,"
+  a class about to be deleted. Updated.
+
+### Tally update
+
+| Class | Description | Count |
+|-------|-------------|-------|
+| 1 | Crash paths nobody triggered | 3 |
+| 2 | Dead defensive code | 13 |
+| 3 | Tests mocking around bugs | 1 |
+| 4 | Load-bearing comments nobody re-validated | 1 |
+| 5 | Deprecated production code outliving its tests | **2** |
 
 ---
 
