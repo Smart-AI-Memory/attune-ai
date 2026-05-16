@@ -1,6 +1,6 @@
 """Deprecated — use attune_redis for coordination.
 
-REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+REMOVE IN v8.0.0 — gated on redis-decoupling spec P3 (docs/specs/redis-decoupling/); migration path: docs/migration/redis-plugin-migration.md
 
 Legacy coordination mixins kept for backward compatibility.
 New code should use ``attune_redis.signals.RedisSignalBus``.

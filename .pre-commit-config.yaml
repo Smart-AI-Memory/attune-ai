@@ -166,3 +166,15 @@ repos:
         pass_filenames: false
         files: ^pyproject\.toml$
         stages: [pre-commit]
+
+      # Deprecation marker enforcement
+      # Modules tagged "REMOVE IN vX.Y.Z" must be removed before the
+      # codebase ships major X. Fails when any marker has rotted past
+      # the current major. See scripts/check_deprecation_markers.py.
+      - id: check-deprecation-markers
+        name: Check deprecation markers aren't past due
+        entry: python scripts/check_deprecation_markers.py
+        language: system
+        pass_filenames: false
+        files: ^(src/.*\.py|pyproject\.toml)$
+        stages: [pre-commit]

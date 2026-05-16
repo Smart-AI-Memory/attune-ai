@@ -1,6 +1,6 @@
 """Deprecated — use attune_redis.AMSMemoryBackend.
 
-REMOVE IN v4.0.0 — see docs/migration/redis-plugin-migration.md
+REMOVE IN v8.0.0 — gated on redis-decoupling spec P3 (docs/specs/redis-decoupling/); migration path: docs/migration/redis-plugin-migration.md
 
 Legacy storage engine kept for backward compatibility.
 New code should use ``attune_redis.memory.AMSMemoryBackend``.
