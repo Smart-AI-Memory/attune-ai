@@ -16,6 +16,23 @@ import pytest
 pytest.importorskip("claude_agent_sdk")
 
 
+@pytest.fixture(autouse=True)
+def _force_cli_supports_task_budget(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force the CLI feature-probe to return True for wiring tests.
+
+    ``get_task_budget()`` returns ``None`` when the resolved ``claude``
+    CLI doesn't accept ``--task-budget`` (current bundled CLI doesn't).
+    These tests are checking that workflows FORWARD ``task_budget`` to
+    the SDK when the helper returns a value — they should not depend
+    on which CLI happens to be installed. Override both the function
+    and the cached result so any code path returns True.
+    """
+    import attune.workflows.agent_sdk_adapter as mod
+
+    monkeypatch.setattr(mod, "_CLI_SUPPORTS_TASK_BUDGET", True)
+    monkeypatch.setattr(mod, "_cli_supports_task_budget", lambda: True)
+
+
 # --- Pure helper tests ----------------------------------------------------
 
 

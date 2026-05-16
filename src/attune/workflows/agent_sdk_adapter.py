@@ -12,6 +12,8 @@ from __future__ import annotations
 import logging
 import os
 import re
+import shutil
+import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -295,6 +297,63 @@ _DEFAULT_TASK_BUDGET_TOKENS: dict[str, int] = {
 }
 
 
+# Cache for the CLI's --task-budget support probe. None = not yet
+# probed; True/False = result. Probe is lazy + once-per-process.
+_CLI_SUPPORTS_TASK_BUDGET: bool | None = None
+
+
+def _cli_supports_task_budget() -> bool:
+    """Return True iff the resolved ``claude`` CLI accepts ``--task-budget``.
+
+    The SDK appends ``--task-budget <N>`` to the CLI command when
+    ``ClaudeAgentOptions.task_budget`` is set. Older CLI binaries
+    (including the bundled one in ``claude-agent-sdk`` 0.1.63 and
+    the system ``claude`` 2.1.x) don't recognize the flag and exit
+    with code 1 at startup — surfaced to the workflow as an
+    opaque ``Command failed with exit code 1`` with ``$0 cost /
+    1-2s elapsed``. This probe gates the feature off until both
+    sides catch up.
+
+    Probes by running ``<cli> --help`` once and grepping for
+    ``--task-budget``. Result is cached in
+    ``_CLI_SUPPORTS_TASK_BUDGET`` so the subprocess fires at most
+    once per Python process.
+
+    The CLI is resolved using the same precedence as the SDK
+    transport: prefer the SDK's bundled CLI when present,
+    fall back to ``shutil.which("claude")``.
+    """
+    global _CLI_SUPPORTS_TASK_BUDGET
+    if _CLI_SUPPORTS_TASK_BUDGET is not None:
+        return _CLI_SUPPORTS_TASK_BUDGET
+
+    # SDK's bundled CLI takes precedence over PATH.
+    sdk_dir = Path(claude_agent_sdk.__file__).resolve().parent
+    bundled = sdk_dir / "_bundled" / "claude"
+    cli_path = str(bundled) if bundled.is_file() else shutil.which("claude")
+
+    if not cli_path:
+        _CLI_SUPPORTS_TASK_BUDGET = False
+        return False
+
+    try:
+        result = subprocess.run(
+            [cli_path, "--help"],
+            capture_output=True,
+            text=True,
+            timeout=5,
+            check=False,
+        )
+        _CLI_SUPPORTS_TASK_BUDGET = "--task-budget" in (result.stdout + result.stderr)
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        logger.warning(
+            "task-budget CLI probe failed (%s); disabling task_budget",
+            type(exc).__name__,
+        )
+        _CLI_SUPPORTS_TASK_BUDGET = False
+    return _CLI_SUPPORTS_TASK_BUDGET
+
+
 def get_task_budget(depth: str = "standard") -> Any:
     """Build a token-aware ``TaskBudget`` for a workflow depth.
 
@@ -308,11 +367,17 @@ def get_task_budget(depth: str = "standard") -> Any:
     ``ATTUNE_TASK_BUDGET_TOKENS`` env var (positive integer;
     unset or 0 falls back to the depth default).
 
-    Returns ``None`` when the installed SDK doesn't expose
-    ``TaskBudget`` so callers can treat it as a no-op field.
+    Returns ``None`` when (a) the installed SDK doesn't expose
+    ``TaskBudget``, or (b) the resolved ``claude`` CLI doesn't
+    accept the ``--task-budget`` flag (SDK transport appends it
+    unconditionally; older CLIs reject the unknown arg and
+    exit 1 at subprocess startup). Callers can treat None as a
+    no-op field.
     """
     budget_cls = getattr(claude_agent_sdk, "TaskBudget", None)
     if budget_cls is None:
+        return None
+    if not _cli_supports_task_budget():
         return None
     override = os.environ.get("ATTUNE_TASK_BUDGET_TOKENS")
     if override:
