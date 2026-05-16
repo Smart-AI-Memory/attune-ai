@@ -1,0 +1,109 @@
+{
+  "fixtures": {
+    "02369664-ccce-4898-87a9-5cadd5444e01.jsonl": {
+      "cost_usd": 0.001107,
+      "source": "haiku",
+      "summary": "1. Fix `mkdocs build` crash from pygments/pymdown-extensions version mismatch in attune-ai repo.\n\nOpen threads:\n- Identify markdown file with code fence passing `filename=None`\n- Pin compatible pygments + pymdown-extensions versions in pyproject.toml\n\nResume: Search codebase for `filename=None` in markdown files or fix version pins in pyproject.toml docs extra, then verify `mkdocs build` exits cleanly.",
+      "summary_chars": 405,
+      "tokens_in": 552,
+      "tokens_out": 111
+    },
+    "07c12b92-310e-4477-96e0-0a27c2b7700a.jsonl": {
+      "cost_usd": 0.001699,
+      "source": "haiku",
+      "summary": "Implement BugPredictSource adapter wrapping BugPredictionWorkflow for discovery-sweep Phase 2B.\n\n- Parse LLM agent text output into Finding objects\n- Respect budget_usd ceiling in discover()\n- Add to default_sources() and update CHANGELOG\n\nResume: Read decisions.md constraints, then implement BugPredictSource conforming to FindingSource Protocol with structured output parsing.",
+      "summary_chars": 379,
+      "tokens_in": 1224,
+      "tokens_out": 95
+    },
+    "1059ba36-87e8-4b4f-a8aa-23852a06d20e.jsonl": {
+      "cost_usd": 0.000811,
+      "source": "haiku",
+      "summary": "Documentation requirements for product deliverables, punch list completion gating, workflow report formatting.\n\n- Punch list must complete before shipping reports\n- Documentation quality standards not yet formalized in requirements\n- User perception tied directly to doc quality and pride point\n\nResume: Push back on why documentation excellence isn't already a formal requirement in your definition of done.",
+      "summary_chars": 408,
+      "tokens_in": 436,
+      "tokens_out": 75
+    },
+    "2b0a6775-3a9b-48a5-b7ae-b99c446ee843.jsonl": {
+      "cost_usd": 0.002164,
+      "source": "haiku",
+      "summary": "Implementing S3 of ops-sessions-page: Haiku-summarized starter prompts for /sessions page.\n\n- Export `enumerate_project_encoded_keys()` helper for worktree-inventory sibling spec\n- Wire Haiku integration with redaction pass and last-4KB cache key\n- Ship calibration harness with 10 redacted fixtures and ?compare=1 dev mode\n\nResume: Read decisions.md and requirements.md, then implement S3 in order: enumerate_project_encoded_keys export, source field handling, cache key logic, list cap, Haiku integration, resume card scope, ?compare=1 mode.",
+      "summary_chars": 543,
+      "tokens_in": 1424,
+      "tokens_out": 148
+    },
+    "389eb901-e246-4366-9b50-de333293099c.jsonl": {
+      "cost_usd": 0.002163,
+      "source": "haiku",
+      "summary": "S3 implementation of ops-sessions-page: Haiku summarization with redaction and caching.\n\n- Export `enumerate_project_encoded_keys()` from data.py; unblocks worktree-inventory sibling spec.\n- Cache key: filename + mtime + sha256 of last 4KB; persist to `ops/session_summaries/<id>.json`.\n- Resume card scope: current-worktree-first, then canonical fallback; wire `?compare=1` dev mode.\n\nResume: Read specs/decisions.md and specs/requirements.md, then implement enumerate_project_encoded_keys() export first.",
+      "summary_chars": 506,
+      "tokens_in": 1428,
+      "tokens_out": 147
+    },
+    "3ccb79be-cd44-457e-81e8-78af88ccdc59.jsonl": {
+      "cost_usd": 0.001233,
+      "source": "haiku",
+      "summary": "QA pass on attune ops dashboard pages: Home, Workflows, Specs, Memory, Sessions, Health, Run history.\n\n- PR #358 Specs page width/styling changes in flight\n- Tooltip inconsistency: CSS tooltips on Specs vs native title attributes elsewhere\n- Dev server setup requires PYTHONPATH workaround to test worktree code\n\nResume: Continue QA walkthrough starting with Home page at 1366px and 1920px, checking width fit, empty states, overflow, tooltips, keyboard nav, console errors.",
+      "summary_chars": 474,
+      "tokens_in": 613,
+      "tokens_out": 124
+    },
+    "4f72af1a-1384-4ffb-b92c-3bf1fb2f58af.jsonl": {
+      "cost_usd": 0.001518,
+      "source": "haiku",
+      "summary": "Resume: Review the Codex retention analytics report and identify which metrics show genuine user adoption versus automation noise, then recommend high-impact improvements.",
+      "summary_chars": 171,
+      "tokens_in": 1358,
+      "tokens_out": 32
+    },
+    "58897a22-5965-4a9d-8c2c-33cc0deab343.jsonl": {
+      "cost_usd": 0.00133,
+      "source": "haiku",
+      "summary": "discovery-sweep false-positive filter and audit fixes.\n\n- PR 306 (false-positive filter) status unknown; may need merge before starting.\n- Two fixes: noqa comment in specs.py, then AST-based string-region filter for PatternScanSource.\n- Phase 2A (LLM adapters) blocked; don't start.\n\nResume: Check PR 306 status and git sync, then fix the audit signal and ship the AST string-region filter.",
+      "summary_chars": 390,
+      "tokens_in": 775,
+      "tokens_out": 111
+    },
+    "7e947fd7-ffc5-4029-872b-d211b4ee39bc.jsonl": {
+      "cost_usd": 0.000729,
+      "source": "haiku",
+      "summary": "doc-audit tool run on docs/ to separate stale formatting from stale facts.\n\n- Regenerate .help/ for memory and orchestration features after audit\n- Add missing ops-dashboard feature entry\n\nResume: Run doc-audit --path docs/ to categorize stale content, then selectively regenerate .help/ files for changed features.",
+      "summary_chars": 315,
+      "tokens_in": 344,
+      "tokens_out": 77
+    },
+    "9688160a-92ce-4e6b-9b46-6a6e0c7b707a.jsonl": {
+      "cost_usd": 0.000599,
+      "source": "haiku",
+      "summary": "Reviewing Attune-Author open pull requests.\n\n- PR #47: auth flow refactor, needs testing review\n- PR #52: docs updates, minor changes pending\n- PR #48: dependency bump, approval waiting\n\nResume: Continue reviewing the remaining open PRs, starting with priority assessment and test coverage.",
+      "summary_chars": 290,
+      "tokens_in": 249,
+      "tokens_out": 70
+    },
+    "accc710d-5f39-46bb-bf8b-06d779a03291.jsonl": {
+      "cost_usd": 0.002025,
+      "source": "haiku",
+      "summary": "polish-fact-check Phase 1 PR #28 ready to merge; dashboard punch list next.\n\n- Check CI on PR #28 before merging (matrix fixed in 722cf3e)\n- Dashboard punch list: review P2/P3 items, pick highest-leverage cluster\n- Ops dashboard demo may have died; restart on :8765 if needed\n\nResume: Check CI status on attune-author PR #28, merge if green, then tackle dashboard punch list P2/P3 items.",
+      "summary_chars": 387,
+      "tokens_in": 1440,
+      "tokens_out": 117
+    },
+    "b5f3facf-fea8-4a1c-af93-043f57dbe2b4.jsonl": {
+      "cost_usd": 0.000518,
+      "source": "haiku",
+      "summary": "Daily report script execution and worktree cleanup tasks started.\n\n- Daily report script status and output verification needed\n- Worktree list cleanup implementation pending\n\nResume: Continue running the daily report and cleaning up the worktree list output.",
+      "summary_chars": 258,
+      "tokens_in": 253,
+      "tokens_out": 53
+    }
+  },
+  "model": "claude-haiku-4-5-20251001",
+  "prompt_hash": "b837f64e77aa",
+  "totals": {
+    "cost_usd": 0.015896,
+    "fixtures": 12,
+    "succeeded": 12,
+    "tokens_in": 10096,
+    "tokens_out": 1160
+  }
+}
