@@ -313,13 +313,28 @@ reader knows it's not part of the user-facing surface.
 
 ## Calibration record
 
-To be filled in during implementation:
-
-- [ ] Haiku prompt template — finalized text and 5-session test
-  snapshot
-- [ ] Average tokens per summary (in / out)
-- [ ] Average cost per session summary
-- [ ] Whether the budget cap ever fires during normal usage
+- [x] Haiku prompt template — shipped as
+  ``attune.ops.session_summarizer.SUMMARY_PROMPT`` (S3b,
+  2026-05-15). Calibrated against decisions.md Decision 2's
+  target shape: numbered (1. one-sentence what-was-worked-on;
+  2. 0-3 open-threads bullets, skip if none; 3. ``Resume:``
+  one-sentence pasteable prompt). Explicit "no filler"
+  instruction; output capped at 256 tokens; input capped at
+  4KB of user-prompt content.
+- [x] First production-data eyeball (2026-05-15, attune-ai
+  worktree silly-ramanujan-a91ddb against
+  ``project_root=/Users/patrickroebuck/attune-ai``): Patrick's
+  reaction was "impressed that Haiku did such a good job —
+  bravo." Output reliably matched the target shape; quality
+  judged to justify the spend. Cleared for merge of PR #390.
+- [ ] Average tokens per summary (in / out) — measure once a
+  redacted-fixture set is committed and the snapshot test lands.
+- [ ] Average cost per session summary — derive from token
+  counts × registry rates ($1/$5 per million for Haiku 4.5).
+- [ ] Whether the budget cap ever fires during normal usage —
+  observe over the first ~week of production use. With N=20
+  cap and ~$0.001/session typical, the $0.05 per-load cap has
+  ~2.5× headroom; cap fires expected to be rare.
 
 ---
 
