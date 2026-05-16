@@ -20,6 +20,7 @@ from attune.workflows.agent_sdk_adapter import (
     AgentSDKResultAdapter,
     get_max_budget_usd,
     get_subagent_model,
+    resolve_cwd_for_path,
     sdk_error_message,
 )
 from attune.workflows.data_classes import (
@@ -580,6 +581,84 @@ class TestSdkErrorMessage:
         exc = Exception(self.EXIT_1_RAW)
         msg = sdk_error_message(exc, duration_seconds=60.0, depth="standard")
         assert "subscription" in msg.lower()
+
+
+@pytest.mark.unit
+class TestResolveCwdForPath:
+    """Regression tests for resolve_cwd_for_path().
+
+    The Claude Agent SDK's ``cwd=`` arg must be an existing
+    directory; passing a file path crashes the SDK subprocess
+    with ``CLIConnectionError: Not a directory`` (surfaced
+    opaquely as ``Command failed with exit code 1``). This
+    helper unblocks single-file workflow invocations.
+    """
+
+    def test_file_returns_parent_directory(self, tmp_path) -> None:
+        """Given a file path, returns its parent directory."""
+        file_path = tmp_path / "mod.py"
+        file_path.write_text("x = 1\n")
+        assert resolve_cwd_for_path(file_path) == tmp_path
+
+    def test_directory_returns_itself_unchanged(self, tmp_path) -> None:
+        """Given a directory path, returns it unchanged."""
+        assert resolve_cwd_for_path(tmp_path) == tmp_path
+
+    def test_accepts_string_input(self, tmp_path) -> None:
+        """Given a str path, coerces to Path and applies same rule."""
+        file_path = tmp_path / "mod.py"
+        file_path.write_text("x = 1\n")
+        assert resolve_cwd_for_path(str(file_path)) == tmp_path
+
+    def test_nonexistent_path_returned_unchanged(self, tmp_path) -> None:
+        """Given a nonexistent path, returns it unchanged (not a file)."""
+        ghost = tmp_path / "does_not_exist"
+        assert resolve_cwd_for_path(ghost) == ghost
+
+
+@pytest.mark.unit
+class TestSdkWorkflowsUseCwdHelper:
+    """Drift-guard: every SDK workflow's cwd= must use the helper.
+
+    Without this guard, a future workflow author would naturally
+    write ``cwd=resolved_path``, reintroducing the silent file-
+    path crash. Asserts the antipattern is absent across all 15
+    SDK-native workflows that take a path argument.
+    """
+
+    _SDK_WORKFLOW_FILES = [
+        "src/attune/workflows/bug_predict.py",
+        "src/attune/workflows/code_review.py",
+        "src/attune/workflows/deep_review.py",
+        "src/attune/workflows/dependency_check.py",
+        "src/attune/workflows/perf_audit.py",
+        "src/attune/workflows/rag_code_gen.py",
+        "src/attune/workflows/release_prep.py",
+        "src/attune/workflows/research_synthesis.py",
+        "src/attune/workflows/security_audit.py",
+        "src/attune/workflows/refactor_plan.py",
+        "src/attune/workflows/simplify_code.py",
+        "src/attune/workflows/document_gen/workflow.py",
+        "src/attune/workflows/doc_audit/workflow.py",
+        "src/attune/workflows/test_audit/workflow.py",
+        "src/attune/workflows/test_gen/workflow.py",
+    ]
+
+    def test_no_workflow_uses_raw_resolved_path_as_cwd(self) -> None:
+        """No SDK workflow may write ``cwd=resolved_path`` directly."""
+        from pathlib import Path
+
+        repo_root = Path(__file__).resolve().parents[3]
+        offenders: list[str] = []
+        for rel in self._SDK_WORKFLOW_FILES:
+            text = (repo_root / rel).read_text(encoding="utf-8")
+            if "cwd=resolved_path," in text:
+                offenders.append(rel)
+        assert not offenders, (
+            f"Workflows passing file paths as cwd to the Agent SDK "
+            f"crash at subprocess startup. Wrap with "
+            f"resolve_cwd_for_path(). Offenders: {offenders}"
+        )
 
 
 @pytest.mark.unit

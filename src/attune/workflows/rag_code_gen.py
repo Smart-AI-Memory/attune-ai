@@ -32,6 +32,7 @@ from .agent_sdk_adapter import (
     get_max_budget_usd,
     get_task_budget,
     get_thinking_config,
+    resolve_cwd_for_path,
     sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
@@ -275,7 +276,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
             "allowed_tools": ["Read", "Glob", "Grep"],
             "permission_mode": "default",
             "max_turns": max_turns,
-            "cwd": cwd,
+            "cwd": resolve_cwd_for_path(cwd),
         }
         if model:
             options_kwargs["model"] = model
