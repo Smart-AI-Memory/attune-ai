@@ -5349,3 +5349,47 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   --project-root . --all-kinds`. Parallel regens
   via `&` background jobs work fine; the env is
   inherited by the children of the same Bash call.
+
+- **Claude.app on macOS leaks ~6 processes per closed
+  Claude Code session — the launcher chain is never
+  reaped**: each Claude Code session spawns the chain
+  `Claude.app/Helpers/disclaimer → claude-code/.../claude
+  → uv tool uvx → uv run → python -m attune.mcp.server`
+  (the MCP server itself often spawns a second python
+  child). When the user closes a session, Claude.app
+  does NOT terminate this chain — every process stays
+  alive indefinitely, parented to the still-running
+  Claude.app root (`/Applications/Claude.app/Contents/
+  MacOS/Claude`). On 2026-05-14 a single host had 144
+  `attune.mcp.server` processes across 38 dead sessions
+  (~6 processes per session). Detection: `pgrep -f
+  attune.mcp.server | wc -l` — anything materially above
+  the count of currently-open Claude Code sessions × 2
+  is leaked. Cleanup approach (use carefully — the
+  agent's earlier ancestry-walking heuristic was denied
+  by the permission system for misclassification risk):
+  enumerate live launcher PIDs by inspecting MCP server
+  processes you KNOW belong to live sessions, trace
+  ancestry to find their `claude-code/.../claude`
+  launcher PIDs, build the set of dead launcher PIDs as
+  `(all claude-code launchers) - (known-live launchers)`,
+  BFS each dead launcher to collect all descendants,
+  then `kill -TERM` the lot. PPID=1 filtering catches
+  ZERO of them because the chain stays attached to the
+  live Claude.app root, not reparented to init. Two
+  scripting traps hit during the cleanup: (1) zsh
+  doesn't word-split unquoted variables by default, so
+  `for p in $list` in zsh treats `$list` as a single
+  value — run cleanup via explicit `bash -c '...'` to
+  get bash splitting semantics; (2) `pgrep -f
+  "claude-code/.*claude\.app/MacOS/claude "` matches
+  BOTH the launcher process AND its `disclaimer` parent
+  (which passes the launcher path as argv), so the match
+  returns pairs and you must protect both PIDs per live
+  session, not one. Final caveat: a new Claude Code
+  session opened between scan and kill won't be in the
+  protected set — verify after cleanup that all
+  currently-live sessions still respond to `kill -0`,
+  and accept that any survivors you didn't enumerate
+  upfront are likely additional live sessions, not
+  leaks.
