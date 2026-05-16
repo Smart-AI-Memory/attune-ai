@@ -2,9 +2,14 @@
 """Build redacted session-summary calibration fixtures from real JSONLs.
 
 Walks ``~/.claude/projects/<encoded>*`` for the chosen project,
-applies :func:`attune.ops.session_redaction.redact` to every event
-that carries a ``content`` field, and writes the redacted JSONL to
-the calibration fixture directory.
+applies :func:`attune.ops.session_redaction.redact_json_line` to
+every line, and writes the redacted JSONL to the calibration
+fixture directory. ``redact_json_line`` covers EVERY nested string
+in any tree shape (``message.content[].text``,
+``toolUseResult.stdout``, arbitrary tool-call payloads), not just
+top-level ``event["content"]`` — load-bearing per the security fix
+in #389 (real Anthropic API key + thousands of unredacted home
+paths nearly leaked from a top-level-only walk).
 
 **Dry-run by default.** Pass ``--write`` to persist. The redacted
 content is committed to git per decisions.md Decision 8
@@ -38,7 +43,6 @@ decisions.md Decision 8.
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from collections.abc import Iterable
 from pathlib import Path
@@ -75,13 +79,19 @@ def _enumerate_jsonls(project_root: Path) -> list[Path]:
 def _redact_jsonl(source: Path) -> tuple[list[str], dict[str, int]]:
     """Return ``(redacted_lines, counts)`` for one JSONL file.
 
-    Per-event redaction: only the ``content`` string is rewritten;
-    timestamps, types, and other metadata pass through unchanged.
-    Counts aggregate across all events in the file.
+    Uses :func:`attune.ops.session_redaction.redact_json_line` so
+    EVERY nested string in the document gets covered — including
+    ``message.content[].text``, ``toolUseResult.stdout``, and
+    arbitrary tool-call payloads where Claude Code's session JSONLs
+    nest the conversation content. The earlier top-level-only
+    ``event["content"]`` walk left REAL Anthropic API keys + 12,623
+    unredacted home paths in the harvest 2026-05-15 (#389).
 
-    Lines that aren't JSON or aren't dicts are emitted verbatim —
-    they have no addressable ``content`` field to redact and the
-    summarizer would skip them anyway.
+    Lines that fail the round-trip (invalid JSON in, or redaction
+    breaking a JSON escape boundary on the way out) are dropped
+    with a stderr warning rather than emitted verbatim — emitting
+    a line that failed redaction defeats the purpose. Counts
+    aggregate across all events in the file.
     """
     redacted_lines: list[str] = []
     total_counts: dict[str, int] = {}
@@ -92,21 +102,21 @@ def _redact_jsonl(source: Path) -> tuple[list[str], dict[str, int]]:
                 if not line.strip():
                     redacted_lines.append(line)
                     continue
-                try:
-                    event = json.loads(line)
-                except json.JSONDecodeError:
-                    redacted_lines.append(line)
+                result = session_redaction.redact_json_line(line)
+                if result is None:
+                    # Either the input wasn't valid JSON or
+                    # redaction would have produced invalid JSON
+                    # (escape-boundary collision). Drop the line
+                    # rather than ship a malformed fixture or
+                    # leave a leak in.
+                    print(
+                        f"  ! skipped malformed line in {source.name}",
+                        file=sys.stderr,
+                    )
                     continue
-                if not isinstance(event, dict):
-                    redacted_lines.append(line)
-                    continue
-                content = event.get("content")
-                if isinstance(content, str) and content:
-                    result = session_redaction.redact(content)
-                    event["content"] = result.text
-                    for k, v in result.counts.items():
-                        total_counts[k] = total_counts.get(k, 0) + v
-                redacted_lines.append(json.dumps(event, ensure_ascii=False))
+                for k, v in result.counts.items():
+                    total_counts[k] = total_counts.get(k, 0) + v
+                redacted_lines.append(result.text)
     except OSError as exc:
         print(f"  ERROR reading {source}: {exc}", file=sys.stderr)
         return [], {}
