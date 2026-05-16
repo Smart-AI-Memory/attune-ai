@@ -4914,3 +4914,78 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   secret site) but a different scanner (in-repo test vs
   pre-commit hook vs GitHub push protection — three
   separate gates).
+
+- **Redacting structured logs requires recursive content
+  traversal — top-level field redaction misses everything
+  that matters, and the bug is invisible until you hold a
+  realistic input next to a secret-pattern scanner**: hit
+  2026-05-15 building the fixture-build script for
+  ops-sessions-page S3. Symptoms surfaced as a near-miss
+  security incident — first harvest of 12 redacted Claude
+  Code session JSONLs contained a real Anthropic API key
+  (``sk-ant-api03-...``) plus 12,623 unredacted home paths
+  and 470 unredacted IPs. The unit tests for
+  ``session_redaction.py`` were ALL passing. Three interlocking
+  failure modes:
+
+  (1) **Top-level redaction misses nested content.** Naive
+  pattern: ``event = json.loads(line); event["content"] =
+  redact(event["content"])``. Works for a payload shape
+  where ``content`` is the only string-bearing field,
+  doesn't work for ANY real-world log format. Claude Code's
+  session JSONLs bury conversation content several levels
+  deep: ``message.content[].text``,
+  ``message.content[].content`` (yes, repeated — it's the
+  tool-result inner content), ``toolUseResult.stdout``. The
+  first-pass build script redacted only the top-level
+  ``content`` field — which is rarely populated in Claude
+  Code's schema — and confidently shipped fixtures with
+  real keys still inside the nested blocks. Fix: redact the
+  JSON-serialized line as text. The placeholders
+  (``<redacted>``, ``<user-home>``, etc.) contain no
+  JSON-special characters, so substring substitution inside
+  a JSON string literal stays a valid string literal. Costs
+  one regex pass + one re-parse, gets every nested string
+  for free, doesn't need to know the document's shape.
+
+  (2) **Text-level redaction can break JSON escape
+  boundaries.** Specific failure observed: a Python
+  decorator inside a JSON string serialized as
+  ``"\t@router.get(...)"`` (tab escape + Python decorator).
+  The email regex matched ``t@router.get`` as an apparent
+  email and replaced it, leaving ``\<redacted-email>`` in
+  the output — and ``\<`` is not a valid JSON escape. The
+  defensive ``json.loads()`` re-parse caught it; the new
+  ``redact_json_line()`` returns ``None`` to the caller on
+  this failure. Tightening the email regex local part to
+  require 2+ chars killed the most common case (single
+  letters become tab/newline/carriage-return JSON escapes).
+  Lesson generalizes: any text-level substitution into
+  JSON-serialized strings needs a re-parse gate, because
+  regex doesn't know about escape boundaries.
+
+  (3) **Unit tests for individual patterns aren't enough —
+  add a round-trip-on-realistic-shape regression test.**
+  All 30+ unit tests in ``test_session_redaction.py`` were
+  passing because each tested one pattern against a
+  hand-crafted minimal input. None tested "redact a
+  realistic Claude Code event with secrets at every nesting
+  depth and assert the output contains zero matches against
+  a secret-pattern panel." That's the test the fixture-
+  harvest scan turned out to be — except it ran AFTER
+  contents were already on disk, not as a CI gate. The fix
+  ships a ``_claude_code_event_with_nested_secrets()``
+  helper that builds an event with redactable material in
+  every realistic location, and tests assert the round-trip
+  output contains zero leaks. Future "I'll just walk
+  top-level fields" refactors break that test loudly in CI
+  before any fixture gets harvested.
+
+  Generalizes to ANY structured-log redaction: HTTP audit
+  logs (request headers nested under ``request.headers``),
+  CDC streams (payload keys variable), tracing spans
+  (attributes dict). The shape of the data is upstream's
+  contract; your redaction can't depend on knowing it.
+  Operate on the serialized form, validate parsability on
+  both sides, and keep at least one round-trip regression
+  test that mirrors real-world nesting depth.

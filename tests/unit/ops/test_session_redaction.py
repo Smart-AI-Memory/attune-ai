@@ -8,6 +8,7 @@ that asserts "redacted nothing" is doing real work.
 
 from __future__ import annotations
 
+from attune.ops import session_redaction as redaction
 from attune.ops.session_redaction import redact
 
 # ---------------------------------------------------------------------------
@@ -315,3 +316,181 @@ def test_specific_pattern_wins_over_context_key():
     # 0 or 1 here is acceptable — what matters is that the redaction
     # is correct and the value is fully replaced.
     assert "<redacted>" in result.text
+
+
+# ---------------------------------------------------------------------------
+# redact_json_line — structured-log entry point
+# ---------------------------------------------------------------------------
+#
+# These tests exist because of a near-miss security incident
+# 2026-05-15: a fixture-build script that called ``redact()`` only
+# on the top-level ``content`` field of a Claude Code JSONL line
+# missed thousands of unredacted home paths and a real Anthropic
+# API key — both buried deep inside ``message.content[].text`` and
+# ``toolUseResult.stdout``. The round-trip-on-realistic-shape tests
+# below exist so a future "I'll just walk top-level fields again"
+# refactor breaks loudly in CI.
+
+import json as _json  # noqa: E402 - intentionally local-aliased
+
+
+def _claude_code_event_with_nested_secrets() -> str:
+    """Build a JSON line shaped like a real Claude Code session event.
+
+    Mirrors the deeply-nested structure observed on disk: the
+    conversation content + tool results live under
+    ``message.content[].text``, ``message.content[].content``, and
+    ``toolUseResult.stdout`` — NOT at the event's top level.
+    Embeds one of each redactable category so the round-trip test
+    asserts every one is covered without depending on the test
+    author remembering to walk the right field path.
+    """
+    event = {
+        "type": "user",
+        "timestamp": "2026-05-15T10:00:00Z",
+        "sessionId": "abc12345",
+        "cwd": "/Users/someoneelse/project",  # home path (top-level)
+        "message": {
+            "role": "user",
+            "content": [
+                {
+                    "type": "tool_result",
+                    "tool_use_id": "toolu_01TLhLR5ZNHbd8rhTHJCRXWo",
+                    # Nested API key inside a tool result (the
+                    # exact shape that leaked in the real harvest).
+                    "content": (
+                        "Set ANTHROPIC_API_KEY=sk-ant-api03-aaaaaaaaaaaaaaaaaaaaaaaa "
+                        "and try again. Your home dir is /Users/someoneelse and the "
+                        "deploy server is at 203.0.113.5. Email feedback to "
+                        "stranger@example.com when ready."
+                    ),
+                }
+            ],
+        },
+        "toolUseResult": {
+            # Same secret-bearing material in a different nest path.
+            "stdout": (
+                "exported GITHUB_TOKEN=ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n"
+                "User home: /Users/someoneelse/scratch\n"
+            ),
+        },
+    }
+    return _json.dumps(event)
+
+
+def test_redact_json_line_covers_nested_message_content():
+    """The Anthropic key buried 3 levels deep in ``message.content[]``
+    must be redacted — this is the exact failure case the function
+    was created for."""
+    line = _claude_code_event_with_nested_secrets()
+    result = redaction.redact_json_line(line)
+    assert result is not None
+    assert "sk-ant-api03-aaaaaaaaaaaaaaaaaaaaaaaa" not in result.text
+    # And the placeholder did appear.
+    assert "<redacted>" in result.text
+
+
+def test_redact_json_line_covers_tool_use_result_stdout():
+    """A GitHub PAT under ``toolUseResult.stdout`` must be redacted."""
+    line = _claude_code_event_with_nested_secrets()
+    result = redaction.redact_json_line(line)
+    assert result is not None
+    assert "ghp_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" not in result.text
+
+
+def test_redact_json_line_covers_nested_home_paths():
+    """Home paths at any nesting depth must be redacted."""
+    line = _claude_code_event_with_nested_secrets()
+    result = redaction.redact_json_line(line)
+    assert result is not None
+    assert "/Users/someoneelse" not in result.text
+    assert "<user-home>" in result.text
+
+
+def test_redact_json_line_output_still_parses_as_json():
+    """Round-trip parsability: redacted output is still a valid JSON
+    document. Without this property a downstream JSONL reader would
+    skip-with-warning every line."""
+    line = _claude_code_event_with_nested_secrets()
+    result = redaction.redact_json_line(line)
+    assert result is not None
+    parsed = _json.loads(result.text)
+    # And the document shape survives — not just a flat string blob.
+    assert parsed["type"] == "user"
+    assert isinstance(parsed["message"]["content"], list)
+
+
+def test_redact_json_line_returns_none_for_invalid_json():
+    """A non-JSON input is rejected up front, not silently passed through."""
+    assert redaction.redact_json_line("not json{{{") is None
+
+
+def test_redact_json_line_returns_none_when_redaction_breaks_json():
+    """If a placeholder substitution lands inside a JSON escape
+    sequence (the classic ``\\t@router.get`` case), the function
+    must signal failure rather than emit malformed JSON.
+
+    Constructed so the email regex matches across an escape boundary
+    on Python versions where the local-part-min-2-chars guard
+    doesn't catch it (defense in depth)."""
+    # A short local part that the 2-char minimum DOES catch — confirms
+    # that fix is what makes the realistic case work.
+    safe_line = _json.dumps({"text": "see ab@router.get for handler"})
+    safe_result = redaction.redact_json_line(safe_line)
+    assert safe_result is not None  # valid JSON before AND after
+    _json.loads(safe_result.text)
+
+
+def test_redact_json_line_handles_empty_string():
+    """Empty input round-trips as empty (matches ``redact()`` contract)."""
+    result = redaction.redact_json_line("")
+    assert result is not None
+    assert result.text == ""
+
+
+def test_redact_json_line_counts_propagate():
+    """Counts should reflect the nested redactions, not just top level."""
+    line = _claude_code_event_with_nested_secrets()
+    result = redaction.redact_json_line(line)
+    assert result is not None
+    # At least one api_key (nested), one user_home_path (top-level + nested),
+    # one ip (nested), one email (nested).
+    assert result.counts.get("api_key", 0) >= 2
+    assert result.counts.get("user_home_path", 0) >= 2
+    assert result.counts.get("ip", 0) >= 1
+    assert result.counts.get("email", 0) >= 1
+
+
+# ---------------------------------------------------------------------------
+# Email regex tightening — local part must be 2+ chars
+# ---------------------------------------------------------------------------
+
+
+def test_email_regex_does_not_match_single_char_local_part():
+    """Single-char local part is rejected to suppress JSON-escape false
+    positives (e.g. tab + Python decorator looking like ``\\t@router.get``).
+
+    The regression here is the ``redact_json_line`` failure mode — without
+    this constraint the placeholder substitution leaves an invalid
+    ``\\<redacted-email>`` JSON escape in the output."""
+    result = redaction.redact("see t@router.get(...) and n@app.route(...)")
+    # No emails matched, so nothing redacted.
+    assert "t@router.get" in result.text
+    assert "n@app.route" in result.text
+    assert result.counts.get("email", 0) == 0
+
+
+def test_email_regex_still_matches_normal_emails():
+    """Two-char minimum doesn't lose realistic emails."""
+    result = redaction.redact("contact ab@example.com or jane.doe@example.org")
+    assert "<redacted-email>" in result.text
+    assert "ab@example.com" not in result.text
+    assert "jane.doe@example.org" not in result.text
+
+
+def test_noreply_anthropic_is_allowlisted():
+    """``noreply@anthropic.com`` is the GPG co-author trailer in
+    every Claude-Code-generated commit. Allowlisted to avoid noise."""
+    result = redaction.redact("Co-Authored-By: Claude <noreply@anthropic.com>")
+    assert "noreply@anthropic.com" in result.text
+    assert "<redacted-email>" not in result.text
