@@ -1,23 +1,23 @@
 ---
 type: tip
+name: memory-tip
 feature: memory
 depth: tip
-generated_at: 2026-04-14T15:06:58.444111+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-05-16T06:14:13.803950+00:00
+source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
 status: generated
 ---
 
-# Tip: working effectively with memory
+# Tip: Use `is_redis_available()` before constructing a memory backend
 
-Use `is_redis_available()` before importing Redis dependencies to avoid import errors when Redis isn't installed. This graceful degradation pattern prevents crashes and enables mock backends for testing.
+Call `is_redis_available()` before you call `get_redis_memory()` or `get_railway_redis()`. It checks whether the Redis subsystem is importable and reachable without triggering a heavy import chain — so a missing or unreachable Redis instance fails fast and clearly instead of raising deep inside a constructor.
 
-The memory module separates availability checks from actual Redis operations because Redis is an optional dependency. Import-time failures break the entire application, while runtime checks let you fall back to alternatives.
+**Why it sticks:** a one-line guard at startup is cheaper than debugging a `ConnectionRefusedError` mid-session.
 
-**Available checks:**
-- `is_redis_available()` — Returns bool without importing Redis
-- `check_redis_connection()` — Tests actual connectivity (imports Redis)
-- Backend `is_connected()` method — Tests live connections
+**Tradeoff:** `is_redis_available()` is a lightweight probe, not a guaranteed health check. A Redis instance that passes the probe can still become unavailable between the check and your first `stash()` call. For production reliability, also wire up `MemoryControlPanel.health_check()` and handle `MemoryBackend.is_connected()` returning `False` at runtime.
 
-**Source files:** `src/attune/memory/**`
+## Source files
+
+- `src/attune/memory/**`
 
 **Tags:** `memory`, `storage`

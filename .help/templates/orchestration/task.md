@@ -1,58 +1,54 @@
 ---
+type: task
+name: orchestration-task
 feature: orchestration
 depth: task
-generated_at: 2026-05-12T19:43:13.449100+00:00
-source_hash: 2725f174f20d390207993b0b3706b8aaa174cbf7fbfc3fbe24bea851e95249d2
+generated_at: 2026-05-16T06:14:24.010384+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
 # Work with orchestration
 
-Use orchestration when you need to dynamic teams, workflow composition, and agent models.
+Use orchestration when you need to compose dynamic agent teams, wire up execution strategies, and manage workflow and template registries.
 
 ## Prerequisites
 
-- Access to the project source code
-- Familiarity with the files under src/attune/orchestration/**
+- Access to the project source code under `src/attune/orchestration/`
+- Familiarity with the `ExecutionStrategy` base class and the `AgentTemplate` data model
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what orchestration
-   does today before making changes.
-   The primary functions are:
-   - `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Get strategy instance by name.
-   - `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py` — Register a strategy class by name.
-   - `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Register a workflow for nested references.
-   - `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py` — Get a registered workflow by ID.
-   - `get_template()` in `src/attune/orchestration/agent_templates/registry.py` — Retrieve template by ID.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Identify the entry point for your goal.**
+   Match your goal to the function that owns that responsibility:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   | Goal | Function | Location |
+   |---|---|---|
+   | Retrieve a strategy by name | `get_strategy()` | `src/attune/orchestration/_strategies/__init__.py` |
+   | Register a new strategy class | `register_strategy()` | `src/attune/orchestration/_strategies/__init__.py` |
+   | Register a workflow for nested references | `register_workflow()` | `src/attune/orchestration/_strategies/nesting.py` |
+   | Retrieve a registered workflow by ID | `get_workflow()` | `src/attune/orchestration/_strategies/nesting.py` |
+   | Retrieve an agent template by ID | `get_template()` | `src/attune/orchestration/agent_templates/registry.py` |
+   | List all registered templates | `get_all_templates()` | `src/attune/orchestration/agent_templates/registry.py` |
+   | Filter templates by capability | `get_templates_by_capability()` | `src/attune/orchestration/agent_templates/registry.py` |
+   | Filter templates by tier | `get_templates_by_tier()` | `src/attune/orchestration/agent_templates/registry.py` |
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "orchestration"`.
+2. **Read the function's signature and docstring.**
+   Confirm the parameter types, return type, and any exceptions the function raises. For example, `get_strategy()` raises `ValueError` with the message `'Unknown strategy: {...}. Available: {...}'` when the name is not registered, and `get_workflow()` raises a similar `ValueError` for unknown workflow IDs.
+
+3. **Make your change in the target function.**
+   Apply the naming conventions, error-handling style, and logging patterns already present in that file. If you are registering a new strategy, pass a `name` string and a class that subclasses `ExecutionStrategy`. If you are registering a workflow, pass a `WorkflowDefinition` instance.
+
+4. **Run the targeted test suite.**
+   Execute `pytest -k "orchestration"` to catch regressions before they affect other developers.
 
 ## Key files
 
-- `src/attune/orchestration/**`
-- `src/attune/coordination/**`
+- `src/attune/orchestration/_strategies/__init__.py` — strategy registry and `get_strategy` / `register_strategy`
+- `src/attune/orchestration/_strategies/nesting.py` — workflow registry and nested execution strategies
+- `src/attune/orchestration/agent_templates/registry.py` — agent template registry
+- `src/attune/coordination/` — coordination layer that consumes orchestration strategies
 
-## Common modifications
+## Verify success
 
-Functions you are most likely to modify:
-
-- `get_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
-- `register_strategy()` in `src/attune/orchestration/_strategies/__init__.py`
-- `register_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
-- `get_workflow()` in `src/attune/orchestration/_strategies/nesting.py`
-- `get_template()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_all_templates()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_templates_by_capability()` in `src/attune/orchestration/agent_templates/registry.py`
-- `get_templates_by_tier()` in `src/attune/orchestration/agent_templates/registry.py`
+After running `pytest -k "orchestration"`, all tests pass with no failures or errors. If you registered a new strategy, call `get_strategy("<your_strategy_name>")` in a Python REPL and confirm it returns an instance of your class without raising `ValueError`. If you registered a workflow, call `get_workflow("<your_workflow_id>")` and confirm it returns your `WorkflowDefinition`.

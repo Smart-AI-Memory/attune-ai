@@ -1,9 +1,10 @@
 ---
 type: note
+name: memory-note
 feature: memory
 depth: note
-generated_at: 2026-04-14T15:07:06.554871+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-05-16T06:14:13.805912+00:00
+source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
 status: generated
 ---
 
@@ -11,37 +12,37 @@ status: generated
 
 ## Context
 
-The memory subsystem provides storage, retrieval, and security capabilities for Attune AI. It supports both short-term caching and long-term pattern storage with enterprise-grade security features.
+The `memory` feature covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and enterprise memory management. Its source lives under `src/attune/memory/`.
 
-## Architecture
+## Public surface
 
-The memory system operates on two levels:
+The package exposes two layers at its boundary: protocols (abstract classes) and factory functions.
 
-**Protocol layer** — `MemoryBackend` and `SearchableMemoryBackend` define interfaces for storage implementations. The base protocol handles key-value operations with TTL support, while the searchable extension adds semantic search capabilities.
+**Protocols** (`src/attune/memory/backend.py`):
 
-**Implementation layer** — Redis provides the primary backend through `RedisShortTermMemory`, with file-based fallbacks for development environments.
+- `MemoryBackend` — the base protocol every short-term memory backend must implement. Key methods: `stash`, `retrieve`, `delete`, `keys`, `is_connected`, `get_stats`, `close`, `supports_realtime`, and `supports_distributed`.
+- `SearchableMemoryBackend` — extends `MemoryBackend` with `search` (semantic query) and `promote` (elevate a session's patterns to long-term storage).
 
-## Claude integration
+**Claude Code memory** (`src/attune/memory/claude_memory.py`):
 
-The `ClaudeMemoryLoader` manages CLAUDE.md files that contain project context and coding patterns. These files can be organized hierarchically:
+- `ClaudeMemoryConfig` — dataclass controlling which memory levels (`enterprise`, `user`, `project`) are loaded, file size limits, import depth, and validation. Defaults to `enabled: False`.
+- `MemoryFile` — dataclass representing a single loaded `CLAUDE.md` file, including its level, path, content, import list, and load order.
+- `ClaudeMemoryLoader` — loads and caches the full `CLAUDE.md` hierarchy for a project. Call `load_all_memory()` to get the merged content string; call `clear_cache()` to force a reload.
 
-- Enterprise level (`/enterprise/CLAUDE.md`)
-- Project level (`/project/CLAUDE.md`)
-- User level (`.claude/CLAUDE.md`)
+**Factory functions**:
 
-The loader respects import dependencies and validates file sizes to prevent memory exhaustion during large project scans.
+| Function | Module | Purpose |
+|---|---|---|
+| `is_redis_available()` | `__init__.py` | Checks Redis availability without importing the subsystem |
+| `create_default_project_memory()` | `claude_memory.py` | Writes a starter `.claude/CLAUDE.md` for a project |
+| `parse_redis_url()` | `config.py` | Parses a Redis URL string into connection parameters |
+| `get_redis_config()` | `config.py` | Reads Redis config from environment variables (legacy dict API) |
+| `get_redis_memory()` | `config.py` | Returns a configured `RedisShortTermMemory` instance |
 
-## Enterprise features
+## Composition pattern
 
-The `MemoryControlPanel` provides administrative controls for production deployments:
+The protocols and functions are designed to work together: factory functions like `get_redis_memory()` return objects that implement `MemoryBackend`, and `ClaudeMemoryLoader` accepts a `ClaudeMemoryConfig` instance to control its behavior. Code that consumes the memory package typically constructs a backend via a factory function, then passes it to higher-level components such as `UnifiedMemory` or `MemoryControlPanel`.
 
-- Pattern classification (healthcare, financial, proprietary)
-- Access control with audit logging
-- PII detection and scrubbing
-- Cross-session coordination for multi-agent environments
+## Version and deprecation
 
-Redis configuration supports Railway deployment through `get_railway_redis()`, which requires the `REDIS_URL` environment variable from Railway's database add-ons.
-
-## Security model
-
-Memory operations enforce classification rules based on content analysis. Sensitive patterns (clinical protocols, financial procedures) require elevated access tiers. The `EncryptionManager` handles encryption-at-rest when the cryptography library is available.
+The package is at version `2.2.0` (`__version__`). The Redis configuration module (`src/attune/memory/config.py`) is marked deprecated in favor of direct environment-based configuration via `get_redis_memory()`.

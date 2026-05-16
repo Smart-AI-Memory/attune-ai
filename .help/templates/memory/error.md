@@ -1,46 +1,59 @@
 ---
 type: error
+name: memory-error
 feature: memory
 depth: error
-generated_at: 2026-04-14T15:05:43.110764+00:00
-source_hash: becc5608c1ce3b9583965f538dce42193f013b114a01d1fbfa3234d4228db706
+generated_at: 2026-05-16T06:14:13.789040+00:00
+source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
 status: generated
 ---
 
 # Memory errors
 
-This page covers failures in Attune AI's memory subsystem, which handles short-term storage, Claude memory integration, long-term pattern storage, and control panel operations.
-
 ## Common error signatures
 
-- **`OSError: REDIS_URL not found`** — Raised by `get_railway_redis()` when Redis environment variables are missing on Railway deployments
-- **`MemoryPermissionError`** — Access denied for classified patterns or restricted memory operations
-- **`SecurityError`** — Pattern classification or encryption failures in secure memory operations
-- **`FileNotFoundError`** — Missing CLAUDE.md files during memory loading or invalid storage directories
-- **`ConnectionError`** — Redis connection failures or backend unavailability
-- **`ValueError`** — Invalid Redis URL format or malformed memory configuration
+Failures in the memory subsystem fall into three categories: Redis connectivity, CLAUDE.md file loading, and security/permission violations.
+
+**Redis connectivity**
+
+- `OSError: REDIS_URL not found. Make sure Redis is added to your Railway project.\nRun: railway add --database redis\nFor external access, use REDIS_PUBLIC_URL` — raised by `get_railway_redis()` when the `REDIS_URL` environment variable is absent. Add Redis to your Railway project or set `REDIS_URL` before calling this function.
+- `MemoryBackend.is_connected()` returns `False` — the backend initialized but cannot reach Redis. Check that your Redis host and port match the values in `ControlPanelConfig` (default: `localhost:6379`) or the URL passed to `get_redis_memory()`.
+
+**CLAUDE.md file loading**
+
+- Failures in `ClaudeMemoryLoader.load_all_memory()` typically involve missing or unreadable `CLAUDE.md` files. `ClaudeMemoryConfig.validate_files` controls whether files are checked before loading; `max_import_depth` (default: `5`) and `max_file_size_bytes` (default: `1 000 000`) bound the import graph — exceeding either silently truncates or raises depending on the backend.
+
+**Security and permissions**
+
+- `MemoryPermissionError` / `SecurityError` / `ShortTermSecurityError` — raised when a caller attempts an operation that violates the classification or access-tier rules defined in `ClassificationRules`. The pattern's `Classification` level determines which `AccessTier` is required.
 
 ## Where errors originate
 
-Memory failures typically start in these key functions:
+The following functions are the most common raise sites. Trace a failure back through the call stack to find which one is involved.
 
-- **`get_railway_redis()`** — Fails when `REDIS_URL` environment variable is missing on Railway deployments
-- **`get_redis_memory()`** — Connection errors when Redis backend is unavailable or misconfigured
-- **`ClaudeMemoryLoader.load_all_memory()`** — File system errors when CLAUDE.md files are missing or unreadable
-- **`MemoryControlPanel.start_redis()`** — Process startup failures when Redis cannot be launched locally
-- **`SecureMemDocsIntegration`** operations — Permission errors when accessing classified patterns without proper authorization
+| Function | Module | What goes wrong |
+|---|---|---|
+| `get_railway_redis()` | `memory/__init__.py` | Raises `OSError` when `REDIS_URL` is not set |
+| `get_redis_memory()` | `memory/config.py` | Fails if the URL is malformed or the environment is misconfigured |
+| `parse_redis_url()` | `memory/config.py` | Raises on an invalid Redis URL format |
+| `get_redis_config()` | `memory/config.py` | Returns stale or missing values when legacy environment variables are absent |
+| `ClaudeMemoryLoader.load_all_memory()` | `memory/claude_memory.py` | Fails on unreadable files, import cycles, or depth/size limit violations |
+| `MemoryControlPanel.health_check()` | `memory/control_panel.py` | Returns a degraded status dict when Redis or storage is unreachable |
+| `check_redis_connection()` | `memory/__init__.py` | Returns a status dict indicating connection failure; does not raise |
 
 ## How to diagnose
 
-1. **Check Redis connectivity first.** Run `check_redis_connection()` to verify your Redis backend is accessible. Connection failures are the most common cause of memory errors.
+1. **Check the exception type first.** `OSError` points to a missing environment variable or an unreachable host. `MemoryPermissionError` or `SecurityError` points to a classification mismatch. `ValueError` in `parse_redis_url()` points to a malformed connection string.
 
-2. **Verify environment variables for Railway deployments.** If you see "REDIS_URL not found", ensure Redis is added to your Railway project with `railway add --database redis`.
+2. **Verify Redis availability before anything else.** Call `is_redis_available()` — it checks the Redis subsystem without importing it, so it is safe to call early. Then call `check_redis_connection()` for a detailed status dict that includes host, port, and reachability.
 
-3. **Inspect memory file permissions.** When `ClaudeMemoryLoader` fails, check that CLAUDE.md files exist and are readable at the expected paths (`enterprise_memory_path`, project root).
+3. **Inspect `ControlPanelConfig` and environment variables.** Confirm that `redis_host`, `redis_port`, and `storage_dir` match your deployment. For Railway, confirm that `REDIS_URL` is set; `get_railway_redis()` raises immediately if it is not.
 
-4. **Review classification errors in secure operations.** `SecurityError` and `MemoryPermissionError` indicate pattern access violations — check if your operation requires higher privilege levels or different classification rules.
+4. **For CLAUDE.md failures, check `ClaudeMemoryConfig`.** Call `ClaudeMemoryLoader.get_loaded_files()` to see which files were successfully loaded before the failure. Check `max_import_depth` (default: `5`) if you have nested imports, and `max_file_size_bytes` (default: `1 000 000`) if you load large files.
 
-5. **Enable debug logging for detailed tracing.** Set logging level to `DEBUG` before calling memory operations to see connection attempts, file loading sequences, and permission checks.
+5. **For permission errors, check the pattern's classification.** `MemoryPermissionError` means the caller's `AccessTier` does not satisfy the pattern's `Classification`. Review the `ClassificationRules` in use and confirm the agent's credentials grant the required tier.
+
+6. **Run `MemoryControlPanel.health_check()`.** This returns a dict covering Redis status, storage directory access, and audit log availability. A degraded result here usually explains upstream failures in `stash()`, `retrieve()`, or `search()`.
 
 ## Source files
 

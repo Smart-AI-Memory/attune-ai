@@ -1,30 +1,36 @@
 ---
 type: tip
+name: orchestration-tip
 feature: orchestration
 depth: tip
-generated_at: 2026-04-14T15:18:39.749906+00:00
-source_hash: 91df7dc60aee10d161a92b560bea2ad2eff169c3358bca0dbb7cdbb283fc9705
+generated_at: 2026-05-16T06:14:24.034848+00:00
+source_hash: ea07a9fe2c597e0620947bda28929f02936ea17148cbff01940256571429e078
 status: generated
 ---
 
-# Tip: working effectively with orchestration
+# Tip: Choose your execution strategy before wiring agents together
 
-## Choose the right execution strategy for your workflow pattern
+Pick the right `ExecutionStrategy` subclass up front — swapping strategies later requires rethinking data flow between every agent in the pipeline.
 
-Start with `SequentialStrategy` for simple pipelines, then upgrade to specialized strategies when you need specific behaviors. Sequential execution handles most cases and provides clear error boundaries.
+**Why:** Each strategy defines not just execution order but also how results pass between stages, so the wrong choice compounds across every step.
 
-**Why:** Each strategy class optimizes for different composition patterns — `ToolEnhancedStrategy` for tool-heavy workflows, `DelegationChainStrategy` for hierarchical tasks, `ConditionalStrategy` for branching logic. Picking the wrong one early means retrofitting later.
+Use `get_strategy(strategy_name)` to retrieve a strategy by name rather than instantiating subclasses directly. If the name isn't registered, you get an explicit `ValueError` listing available options — far cheaper than a silent misconfiguration discovered mid-pipeline.
 
-**The tradeoff:** Specialized strategies add complexity but unlock powerful patterns like prompt caching (`PromptCachedSequentialStrategy`) and nested workflows (`NestedSequentialStrategy`).
+```python
+from attune.orchestration import get_strategy
 
-## Register strategies and templates before using them
+strategy = get_strategy("sequential")  # raises ValueError with available names if unknown
+```
 
-Call `register_strategy()` and `register_custom_template()` during initialization, not on-demand during execution. The registry functions expect resources to exist when workflows run.
+For pipelines that reuse the same context across many agents, prefer `PromptCachedSequentialStrategy` over a plain sequential approach — it shares a cached context with a configurable TTL (`cache_ttl`, default 3600 s), which avoids redundant computation on each agent call.
 
-**Why:** Runtime registration during strategy execution can cause race conditions in parallel workflows and makes debugging much harder when templates are missing.
+For hierarchical delegation, `DelegationChainStrategy` enforces a `max_depth` (default 3) that prevents runaway recursive delegation. If you find yourself raising that limit, treat it as a signal that the pipeline needs restructuring rather than a deeper chain.
 
-## Use workflow references for reusable composition patterns
+**Tradeoff:** `get_strategy()` returns a pre-configured instance. If you need non-default parameters — such as a custom `max_depth` for `DelegationChainStrategy` or a specific `cached_context` string — instantiate the class directly instead of going through the registry.
 
-Define complex agent sequences as `WorkflowDefinition` objects and reference them with `WorkflowReference` instead of duplicating agent lists across strategies.
+## Source files
 
-**Why:** Nested workflows let you build libraries of proven patterns while keeping individual strategies focused on their specific execution logic.
+- `src/attune/orchestration/_strategies/__init__.py`
+- `src/attune/orchestration/_strategies/nesting.py`
+
+**Tags:** `orchestration`, `teams`
