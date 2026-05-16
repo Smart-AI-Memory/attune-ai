@@ -4989,3 +4989,67 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Operate on the serialized form, validate parsability on
   both sides, and keep at least one round-trip regression
   test that mirrors real-world nesting depth.
+
+- **`PYTHONPATH=$(pwd)/src` in a launch one-liner silently
+  runs the WRONG version when the shell cwd has shifted
+  out of the worktree between the suggestion and the
+  paste**: extends the existing "worktree-venv bring-up"
+  lesson with a new failure mode. The recommended
+  worktree-test invocation
+  (`PYTHONPATH=$(pwd)/src /path/to/main/.venv/bin/python -m
+  attune.ops ...`) assumes the user's cwd IS the worktree
+  at the moment of execution. If the user `cd`'d back to
+  main between sessions (or pasted a multi-line command
+  whose `cd` step was removed in a follow-up), `$(pwd)/src`
+  resolves to main's source. The dashboard launches
+  cleanly, serves on the right port, looks identical to
+  the worktree version — and runs whatever code is
+  checked out on main's current branch. Hit 2026-05-15
+  during S3b preview: shell prompt showed `attune-ai
+  git:(docs/rubric-script-scope-fix)` (main on a different
+  branch) and the dashboard ran that branch's S2 code with
+  no S3b enrichment visible. Diagnostic: render-time tells
+  in the page (chip values, column count) are usually
+  enough to spot a wrong-version launch, but you have to
+  know what to look for. **Defensive fix:** use an
+  absolute worktree path in `PYTHONPATH`, never `$(pwd)`,
+  for any one-liner intended to preview branch-specific
+  code. Example for the silly-ramanujan-a91ddb worktree:
+  `PYTHONPATH=/Users/patrickroebuck/attune-ai/.claude/
+  worktrees/silly-ramanujan-a91ddb/src`.
+
+- **Budget/cap ledgers need `__post_init__` to latch
+  `cap <= 0` as immediately breached — naive
+  cap-then-record logic gives one "free" call**: when
+  implementing a soft-cap budget tracker as
+  `Budget(cap_usd, spent_usd=0, breached=False)` with
+  `should_skip()` returning `breached` and `record()`
+  flipping `breached` on cumulative crossing, a `cap=0`
+  initial state is `breached=False` until the first
+  `record()` call. That means the FIRST consumer always
+  proceeds (no breach yet), then the cumulative crosses
+  on its return, and subsequent consumers see the breach.
+  Counter-intuitive: users expect `cap=0` to mean "off
+  switch — no calls at all." Fix shape:
+  ```python
+  @dataclass
+  class Budget:
+      cap_usd: float
+      spent_usd: float = 0.0
+      breached: bool = False
+
+      def __post_init__(self) -> None:
+          if self.cap_usd <= 0:
+              self.breached = True  # off-switch semantics
+  ```
+  The latch makes `cap=0` a clean disable knob alongside
+  the env-var off-switch (`ATTUNE_OPS_SESSIONS_LLM=0` in
+  this case), useful for tests that want to assert the
+  over-budget code path without spending real money AND
+  for users who want heuristic-only mode without
+  unsetting `ANTHROPIC_API_KEY`. Discovered when the S3b
+  budget test asserted the over-budget marker should
+  fire for ALL rows at `cap=0` but the first row's
+  starter-prompt was Haiku output. Pattern generalizes
+  to any cap-based skip-logic: API call budgets, retry
+  counts, attempt limits, per-page query budgets.
