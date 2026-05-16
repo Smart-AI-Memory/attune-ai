@@ -139,6 +139,22 @@ repos:
           ^src/attune/mcp/tool_schemas\.py$
         stages: [pre-commit]
 
+      # .help/templates/ per-feature regeneration on source changes.
+      # Detects which features' source globs match the changed files in
+      # this commit (via `attune_author.load_manifest`), runs
+      # `attune-author generate <feature> --all-kinds` for each, and
+      # auto-stages the resulting `.help/templates/<feature>/`.
+      # Gated on ATTUNE_DOCS_AUTOREGEN=1 (matching check-docs-freshness)
+      # — warn-only otherwise. Never blocks the commit. See
+      # docs/specs/ops-specs-completion-candidates/ (B-real-1 follow-up).
+      - id: regenerate-help-templates
+        name: Regenerate .help/templates for changed source files
+        entry: uv run python scripts/regenerate_help_templates.py
+        language: system
+        pass_filenames: true
+        files: ^(src/.*\.py|\.help/features\.yaml)$
+        stages: [pre-commit]
+
       # Coverage exclusion policy enforcement
       # Every production-code entry in pyproject.toml's
       # [tool.coverage.run] omit block must have an inline `#` comment.
