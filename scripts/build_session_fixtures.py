@@ -41,7 +41,6 @@ representativeness rubric above.
 from __future__ import annotations
 
 import argparse
-import json
 import os
 import sys
 from datetime import datetime, timezone
@@ -54,12 +53,38 @@ sys.path.insert(0, str(_REPO_ROOT / "src"))
 from attune.ops import data, session_redaction  # noqa: E402
 
 
-def _redact_jsonl(src: Path, dst: Path) -> tuple[int, dict[str, int]]:
-    """Read ``src`` JSONL, redact each event's ``content``, write to ``dst``.
+def _redact_jsonl(
+    src: Path, dst: Path, *, max_events: int | None = None
+) -> tuple[int, dict[str, int]]:
+    """Read ``src`` JSONL, redact every line via ``redact_json_line``,
+    write the redacted form to ``dst``.
 
-    Returns ``(event_count, aggregate_counts)`` for the per-file
-    report. Aggregate counts sum per-category histogram across all
-    events in the file.
+    Uses :func:`attune.ops.session_redaction.redact_json_line` so
+    EVERY nested string in the document — including
+    ``message.content[].text``, ``toolUseResult.stdout``, arbitrary
+    tool-call payloads — gets covered. The earlier top-level-only
+    field walk left REAL Anthropic API keys and thousands of
+    unredacted home paths in the harvested fixtures (#389 fix).
+
+    Lines that fail the round-trip (redaction would have produced
+    invalid JSON — typically a JSON-escape boundary collision) are
+    dropped with a stderr warning rather than crashing the harvest.
+    Lines that fail the input parse are also skipped silently
+    (matches production reader behavior).
+
+    Args:
+        src: Source JSONL file.
+        dst: Output path. Parent dirs are created on first write.
+        max_events: When set, stop after writing N events. Real
+            Claude Code session JSONLs are megabytes; the
+            summarizer only consumes the first ~6 KB of content,
+            so a small N (e.g. 50) gives the snapshot test
+            identical input at a fraction of the git footprint.
+
+    Returns:
+        ``(events_written, per_category_counts)`` for the per-file
+        report. Per-category counts sum the redaction histogram
+        across all events in the file.
     """
     aggregate: dict[str, int] = {}
     events_written = 0
@@ -69,20 +94,24 @@ def _redact_jsonl(src: Path, dst: Path) -> tuple[int, dict[str, int]]:
             line = raw.strip()
             if not line:
                 continue
-            try:
-                event = json.loads(line)
-            except json.JSONDecodeError:
+            result = session_redaction.redact_json_line(line)
+            if result is None:
+                # Either input wasn't valid JSON (matches the
+                # production reader's per-line skip) or redaction
+                # produced invalid JSON (escape-boundary collision).
+                # Drop with a brief note so the harvest report
+                # surfaces the count.
+                print(
+                    f"  ! skipped malformed line in {src.name}",
+                    file=sys.stderr,
+                )
                 continue
-            if not isinstance(event, dict):
-                continue
-            content = event.get("content")
-            if isinstance(content, str) and content:
-                result = session_redaction.redact(content)
-                event["content"] = result.text
-                for k, v in result.counts.items():
-                    aggregate[k] = aggregate.get(k, 0) + v
-            w.write(json.dumps(event, ensure_ascii=False) + "\n")
+            for k, v in result.counts.items():
+                aggregate[k] = aggregate.get(k, 0) + v
+            w.write(result.text + "\n")
             events_written += 1
+            if max_events is not None and events_written >= max_events:
+                break
     return events_written, aggregate
 
 
@@ -133,6 +162,18 @@ def main() -> int:
         default=_REPO_ROOT / "tests" / "fixtures" / "ops" / "session_summaries",
         help="Output directory for redacted fixture JSONLs.",
     )
+    parser.add_argument(
+        "--max-events",
+        type=int,
+        default=None,
+        help=(
+            "Trim each fixture to its first N events after redaction. "
+            "Real Claude Code session JSONLs are megabytes; the summarizer "
+            "only consumes the first ~6 KB of content, so a small N (e.g. 50) "
+            "gives the snapshot test identical input at a fraction of the "
+            "git footprint. Default: no trimming (full session)."
+        ),
+    )
     args = parser.parse_args()
 
     project_root = args.project_root.expanduser().resolve()
@@ -155,7 +196,7 @@ def main() -> int:
     total_redactions: dict[str, int] = {}
     for src in candidates:
         dst = out_dir / src.name
-        events, counts = _redact_jsonl(src, dst)
+        events, counts = _redact_jsonl(src, dst, max_events=args.max_events)
         mtime = datetime.fromtimestamp(src.stat().st_mtime, tz=timezone.utc)
         per_file_counts = ", ".join(f"{k}={v}" for k, v in sorted(counts.items())) or "0"
         print(
