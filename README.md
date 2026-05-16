@@ -174,6 +174,8 @@ pip install 'attune-ai[developer]'
 | **doc-orchestrator** | inventory, outline, content, polish | Full-project documentation |
 | **secure-release** | security, health, dep-auditor, gater | Release pipeline with risk scoring |
 | **research-synthesis** | summarizer, pattern-analyst, writer | Multi-source research synthesis |
+| **discovery-sweep** | pattern-scanner, verifier | Repo-wide bug-pattern sweep with verification, dashboard chips, and run drill-in |
+| **rag-code-gen** | retriever, generator | Citation-forced code generation grounded in the local attune-help corpus |
 
 ---
 
@@ -248,7 +250,7 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 16 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 19 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 41 native tools | None | No | No |
 | **Auto-triggering skills** | 15 skills, natural language | None | None | None |
