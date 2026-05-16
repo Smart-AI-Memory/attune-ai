@@ -8,13 +8,17 @@ from __future__ import annotations
 
 import contextlib
 import json
+import logging
 from collections import defaultdict
+from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import Any
 
 from attune.ops.config import Config
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -390,14 +394,71 @@ def _encoded_project_path(project_root: Path | str) -> str:
 
 
 def claude_sessions_dir(project_root: Path | str) -> Path:
-    """Return the directory Claude Code stores sessions for this project in.
+    """Return the canonical directory Claude Code stores sessions for this project in.
 
     Doesn't check existence — callers should treat a non-existent
     dir as "no sessions yet" rather than an error condition (the
     dir is created on first session, which the user may not have
     started in this project).
+
+    Note: in a worktree-heavy dev setup, Claude Code creates a separate
+    encoded-key directory per worktree. Use
+    :func:`enumerate_project_encoded_keys` to get the full set of dirs
+    that belong to this logical project. This function returns only
+    the canonical (project-root) key.
     """
     return Path.home() / ".claude" / "projects" / _encoded_project_path(project_root)
+
+
+def enumerate_project_encoded_keys(project_root: Path | str) -> list[Path]:
+    """Return all ``~/.claude/projects/`` dirs belonging to this logical project.
+
+    Claude Code encodes each project-root path as a single directory
+    name under ``~/.claude/projects/`` by replacing path separators
+    (and Windows drive-letter colons) with ``-``. In a worktree-heavy
+    development setup this produces one encoded-key dir per worktree,
+    not one per logical project. The empirical scan on attune-ai
+    2026-05-15 found 1 canonical key with 44 sessions plus 47
+    worktree-encoded keys with 57 sessions — i.e. canonical-only
+    lookup misses the majority of recent activity.
+
+    Resolution rule (matches ``docs/specs/ops-sessions-page/decisions.md``
+    Decision 1):
+
+    1. Compute encoded prefix from the resolved project root.
+    2. Scan ``~/.claude/projects/`` and accept a child dir iff its
+       name equals the encoded prefix exactly, OR starts with
+       ``<encoded>-`` (the trailing ``-`` separator guards against
+       sibling-project false matches like ``attune-ai-something``).
+
+    Returns a list of absolute :class:`Path` objects, in arbitrary
+    order — callers that need stable ordering should sort. Returns
+    ``[]`` when the parent ``~/.claude/projects/`` directory doesn't
+    exist (fresh install with no Claude Code history) or when no
+    matching keys are found.
+
+    Cross-spec note: the worktree-inventory spec at
+    ``docs/specs/worktree-inventory/`` consumes this same helper.
+    The function is exported from ``attune.ops.data`` (no leading
+    underscore) so siblings can import it without dipping into a
+    private name.
+    """
+    projects_root = Path.home() / ".claude" / "projects"
+    if not projects_root.is_dir():
+        return []
+    encoded = _encoded_project_path(project_root)
+    matches: list[Path] = []
+    try:
+        children = list(projects_root.iterdir())
+    except OSError:
+        return []
+    for child in children:
+        if not child.is_dir():
+            continue
+        name = child.name
+        if name == encoded or name.startswith(f"{encoded}-"):
+            matches.append(child)
+    return matches
 
 
 def _heuristic_starter_prompt(content: str, *, char_limit: int = 200) -> str:
@@ -489,21 +550,53 @@ def _duration_seconds(first: str | None, last: str | None) -> float:
     return max((b - a).total_seconds(), 0.0)
 
 
+# Default cap on the number of sessions surfaced on the /sessions page.
+# Sized for the budget cap math (decisions.md Decision 5): 20 × ~$0.001/session
+# Haiku spend = ~$0.02 worst case, well under the $0.05 per-load cap. Older
+# sessions stay on disk for ``cat`` but aren't surfaced. The Resume-most-recent
+# card reads independently and is unaffected by this limit.
+DEFAULT_SESSION_LIST_CAP = 20
+
+
 def list_recent_sessions(
     project_root: Path | str,
     *,
     days: int = 3,
+    limit: int | None = DEFAULT_SESSION_LIST_CAP,
     now: datetime | None = None,
+    parser: Callable[[Path], Session | None] | None = None,
 ) -> list[Session]:
     """Return Session records for this project's last ``days`` of activity.
 
-    Reads ``~/.claude/projects/<encoded-project-root>/*.jsonl`` and
-    filters to files whose mtime is within ``days`` of ``now``
-    (default: current UTC time). Sorts most-recently-active first.
+    Reads ``*.jsonl`` files from every encoded-key directory belonging
+    to this logical project (canonical key plus per-worktree keys —
+    see :func:`enumerate_project_encoded_keys`) and filters to files
+    whose mtime is within ``days`` of ``now`` (default: current UTC
+    time). Sessions are deduplicated by id (the JSONL filename's
+    stem) — when the same id appears under multiple encoded keys
+    (rare; suggests a worktree that was renamed or re-created), the
+    newest-mtime copy wins and a WARN log records the conflict.
+    Output is sorted most-recently-active first and capped at
+    ``limit`` (default :data:`DEFAULT_SESSION_LIST_CAP`).
+
+    Args:
+        project_root: The dashboard's project root. Used to compute
+            the encoded-key prefix.
+        days: Time window for filtering by JSONL mtime.
+        limit: Maximum number of sessions to return. ``None`` returns
+            all matches (unbounded — only reasonable for callers that
+            already know the size, e.g. tests). The list cap exists
+            because each session may incur an LLM-summarization spend
+            on first render; capping bounds worst-case page-load cost
+            (decisions.md Decision 5).
+        now: Override the current time (test hook).
+        parser: Override the per-file parser (test hook). Defaults to
+            :func:`_parse_session`. The parser receives the JSONL
+            :class:`Path` and returns a :class:`Session` or ``None``.
 
     Returns ``[]`` for any failure mode that doesn't raise:
-    - Sessions dir doesn't exist (user never ran Claude Code here)
-    - Sessions dir exists but is empty
+    - No matching encoded-key dirs (user never ran Claude Code here)
+    - All matched dirs are empty
     - All JSONLs are older than the cutoff
     - All JSONLs are unreadable (perm, IO)
 
@@ -520,29 +613,68 @@ def list_recent_sessions(
     # ``from datetime import ...`` is cached after first use anyway.
     from datetime import timedelta
 
-    sessions_dir = claude_sessions_dir(project_root)
-    if not sessions_dir.is_dir():
-        return []
     if now is None:
         now = datetime.now(timezone.utc)
     cutoff = now - timedelta(days=days)
-    out: list[Session] = []
-    try:
-        candidates = list(sessions_dir.glob("*.jsonl"))
-    except OSError:
+    parse = parser or _parse_session
+
+    encoded_dirs = enumerate_project_encoded_keys(project_root)
+    if not encoded_dirs:
         return []
-    for jsonl in candidates:
+
+    # Per-id newest-mtime entry. Value is (mtime_utc, jsonl_path).
+    # Build this first so dedup can choose newest-mtime before parse.
+    by_id: dict[str, tuple[datetime, Path]] = {}
+    for sessions_dir in encoded_dirs:
         try:
-            mtime = datetime.fromtimestamp(jsonl.stat().st_mtime, tz=timezone.utc)
+            candidates = list(sessions_dir.glob("*.jsonl"))
         except OSError:
             continue
-        if mtime < cutoff:
-            continue
-        session = _parse_session(jsonl)
+        for jsonl in candidates:
+            try:
+                mtime = datetime.fromtimestamp(jsonl.stat().st_mtime, tz=timezone.utc)
+            except OSError:
+                continue
+            if mtime < cutoff:
+                continue
+            session_id = jsonl.stem
+            existing = by_id.get(session_id)
+            if existing is None:
+                by_id[session_id] = (mtime, jsonl)
+                continue
+            # Duplicate session-id across encoded keys (rare). Keep newest.
+            existing_mtime, existing_path = existing
+            if mtime > existing_mtime:
+                logger.warning(
+                    "ops.sessions: duplicate session id %s — keeping newer "
+                    "%s (mtime=%s) over %s (mtime=%s)",
+                    session_id,
+                    jsonl,
+                    mtime.isoformat(),
+                    existing_path,
+                    existing_mtime.isoformat(),
+                )
+                by_id[session_id] = (mtime, jsonl)
+            else:
+                logger.warning(
+                    "ops.sessions: duplicate session id %s — keeping existing "
+                    "%s (mtime=%s) over %s (mtime=%s)",
+                    session_id,
+                    existing_path,
+                    existing_mtime.isoformat(),
+                    jsonl,
+                    mtime.isoformat(),
+                )
+
+    out: list[Session] = []
+    for _mtime, jsonl in by_id.values():
+        session = parse(jsonl)
         if session is None:
             continue
         out.append(session)
     out.sort(key=lambda s: s.last_activity or "", reverse=True)
+    if limit is not None and limit >= 0:
+        out = out[:limit]
     return out
 
 
