@@ -35,8 +35,11 @@ def _build_default_runner(config: Config) -> RunnerService:
     a read-only dashboard should not modify the user's ``~/.attune``.
     """
     if not config.allow_run:
-        return RunnerService()
-    return RunnerService(persistence_dir=config.runs_dir)
+        return RunnerService(project_root=config.project_root)
+    return RunnerService(
+        persistence_dir=config.runs_dir,
+        project_root=config.project_root,
+    )
 
 
 def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAPI:

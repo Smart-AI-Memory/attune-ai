@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Structured recommendation channel on the ops dashboard's run-view
+  page. Workflows can emit JSON action cards by printing a stdout
+  line prefixed with `ATTUNE_REC ` followed by a JSON object. The
+  runner parses, validates against an allowlist (kind in
+  `{"next-workflow", "open-url"}`, registered workflow names,
+  path-traversal-safe `args.path`, http(s)-only URLs), and broadcasts
+  on a new `recommendation` SSE event channel. `run_view.js` renders
+  each payload as a clickable card; `next-workflow` POSTs to the
+  matching run endpoint and navigates to the new run, `open-url`
+  opens the URL with a final client-side scheme check. Closes Phase 5
+  infrastructure in [`docs/specs/ops-runner-tier2/`](docs/specs/ops-runner-tier2/);
+  Phase 5.4 (wiring one real workflow to emit recommendations) and
+  Phase 6 (telemetry + close) follow in separate PRs.
+
 ### Changed
 
 - Workflows page renders the scope picker in read-only mode
