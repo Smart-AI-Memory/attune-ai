@@ -1,49 +1,83 @@
 ---
 type: faq
+name: bug-predict-faq
 feature: bug-predict
 depth: faq
-generated_at: 2026-04-14T14:48:34.434172+00:00
-source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
+generated_at: 2026-05-16T06:19:45.790357+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
 # Bug Predict FAQ
 
-## What is bug predict?
+## What does bug prediction do?
 
-Bug predict analyzes your codebase to identify potential bug hotspots using pattern detection, risk correlation, and prevention strategies.
+It scans your codebase for patterns that historically cause production incidents — things like `eval()` on user input, silently swallowed exceptions, and unfinished code paths — then scores and ranks the results by severity so you know where to focus first.
 
-## When should I use bug predict?
+## When should I use it?
 
-Use bug predict when you want to proactively identify areas of your code that are likely to contain bugs before they manifest in production. It's particularly useful during code reviews, before major releases, or when working with legacy codebases.
+Use bug prediction before merging a large PR, during code review to focus attention on real risks, or before a release to confirm no new high-severity patterns crept in. It's also useful when you're onboarding to an unfamiliar codebase and want to map risk hotspots quickly.
 
-## How do I run bug predict?
+## How do I run it?
 
-You can run bug predict from the command line using the `main()` function, or programmatically by creating a `BugPredictionWorkflow` instance and calling its `execute()` method.
+Pass a file or directory to `/bug-predict`:
 
-## What does the output look like?
+```
+/bug-predict src/
+```
 
-Bug predict generates a structured report with three main sections:
-- **Summary**: Overall risk score (0-100) and executive summary of predicted bug hotspots
-- **Bugs**: Predicted bugs organized by severity (HIGH, MEDIUM, LOW) with file paths and line numbers
-- **Suggestions**: Actionable prevention strategies and refactoring advice
+You can also use natural language:
 
-## How accurate are the predictions?
+```
+predict bugs in src/
+where are bugs most likely in the auth package?
+```
 
-Bug predict uses three specialized subagents (pattern-scanner, risk-correlator, and prevention-advisor) to analyze your code from different angles. While it can't guarantee bugs will occur, it identifies patterns commonly associated with problematic code.
+If you don't specify a path, the skill prompts you to scope the scan before it runs.
 
-## Can I customize the analysis?
+## What patterns does it detect?
 
-Yes, you can configure the `BugPredictionWorkflow` by passing keyword arguments to its `__init__` method. The workflow will adapt its analysis based on your specific codebase characteristics.
+Three categories:
 
-## How do I debug issues with bug predict?
+| Pattern | Severity | Example |
+|---|---|---|
+| `dangerous_eval` | HIGH | `eval()` or `exec()` on user input |
+| `broad_exception` | MEDIUM | Bare `except:` that silently swallows errors |
+| `incomplete_code` | LOW | TODO, FIXME, HACK, or XXX comments |
 
-Run the related tests first with `pytest -k "test_bug_predict or test_scanner" -v`. If tests pass but you're still having issues, add debug logging at suspected failure points and check that your input data matches the expected format.
+Beyond pattern matching, the scanner also weighs cyclomatic complexity, how frequently a file changes, and general code smells like functions over 50 lines.
+
+## Will it flag false positives?
+
+It filters out several known-safe patterns automatically — for example, `eval()` inside test fixture strings, JavaScript's `regex.exec()` calls, and broad exceptions marked with `# INTENTIONAL:` or `# noqa: BLE001`. You can also signal intent through keywords like `fallback`, `graceful`, or `optional` in comments.
+
+## How do I read the report?
+
+Results are grouped by severity (HIGH → MEDIUM → LOW). Each finding shows the file path, line number, pattern type, and a plain-English description. File links are clickable so you can jump directly to the issue.
+
+The overall risk score runs from 0 to 100 and appears at the top of the report alongside a short executive summary of the biggest hotspots.
+
+## What should I do after I see the results?
+
+Fix HIGH findings first. You can ask directly — for example, `"fix the dangerous_eval in executor.py"` — to get a guided fix. After that, consider asking `"write tests for the flagged files"` to prevent regressions, or run a focused scan on a specific subdirectory to go deeper.
+
+## How do I generate a report programmatically?
+
+Call `format_bug_predict_report(result, input_data)` from `src/attune/workflows/bug_predict_report.py`. It takes the raw workflow result and the original input data, and returns a formatted string. For the CLI, use `main()` in the same module.
+
+## How do I debug a failing scan?
+
+Run the related tests first:
+
+```
+pytest -k "bug-predict" -v
+```
+
+If the tests pass but your scan still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. The three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) each report findings independently — checking their individual output can help you isolate which stage is failing.
 
 ## Where are the source files?
 
-The bug predict feature is implemented across these files:
-- `src/attune/workflows/bug_predict.py` — Main workflow class
-- `src/attune/workflows/bug_predict_report.py` — Report formatting and CLI entry point
+- `src/attune/workflows/bug_predict.py` — orchestration workflow and subagent coordination
+- `src/attune/workflows/bug_predict_report.py` — report formatting and CLI entry point
 
-**Tags:** `bugs`, `prediction`, `scanning`
+**Tags:** `bugs`, `scanning`, `security`

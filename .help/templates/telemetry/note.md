@@ -1,9 +1,10 @@
 ---
 type: note
+name: telemetry-note
 feature: telemetry
 depth: note
-generated_at: 2026-04-20T01:25:16.410611+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-16T06:19:45.853537+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
@@ -11,22 +12,23 @@ status: generated
 
 ## Context
 
-The telemetry feature provides usage tracking and feedback loops for Attune AI. It enables distributed agent coordination through TTL signals, heartbeat monitoring for agent health, human approval gates for workflow control, and real-time event streaming.
+The `attune.telemetry` package covers four distinct concerns that share a common infrastructure layer:
 
-## Content
+- **Usage tracking** — records help queries to `help_queries.jsonl` (log version `1.0`) and exposes cost and cache statistics via the CLI
+- **Agent coordination** — routes TTL-scoped signals between agents through `CoordinationSignals` (backed by Redis)
+- **Heartbeat tracking** — lets `HeartbeatCoordinator` detect stale agents using Redis TTL keys
+- **Human approval gates** — suspends workflow execution until a human responds via `ApprovalGate`
 
-The telemetry system consists of four main components:
+The feedback loop described in `concepts/feedback-loop.md` (`FeedbackLoop`, `FeedbackEntry`, `QualityStats`) is part of this package and is exported alongside the coordination and tracking classes.
 
-**Agent coordination** manages communication between distributed agents using Redis TTL keys. The `CoordinationSignals` class handles signal broadcasting and consumption, while `CoordinationSignal` represents individual messages with automatic expiration.
+## Design
 
-**Agent tracking** monitors the health and status of running agents. `HeartbeatCoordinator` manages periodic status updates, and `AgentHeartbeat` stores agent state including progress, current task, and metadata.
+The package exposes classes and CLI entry points at the same boundary. The CLI functions in `cli_analysis.py` and `cli_automation.py` (for example, `cmd_sonnet_opus_analysis`, `cmd_tier1_status`) operate on the same data structures that the classes produce — `AgentHeartbeat`, `CoordinationSignal`, `ApprovalRequest`, and their counterparts. Neither layer wraps the other; they share the underlying Redis-backed memory store passed at construction time.
 
-**Approval gates** pause workflows for human decisions. `ApprovalGate` creates approval requests that require manual intervention, using `ApprovalRequest` and `ApprovalResponse` to manage the interaction flow.
+`CoordinationSignal` carries a `ttl_seconds` field (default 60) that controls how long a signal remains visible to `wait_for_signal` and `check_signal`. Signals past their TTL are invisible to consumers but are not automatically deleted; `clear_signals()` must be called explicitly to remove them.
 
-**Event streaming** provides real-time telemetry through Redis Streams. `EventStreamer` publishes and consumes events, with `StreamEvent` representing individual telemetry data points.
+## Source
 
-The CLI interface exposes analysis and automation status through functions like `cmd_sonnet_opus_analysis()` for cost tracking and `cmd_tier1_status()` for automation health monitoring.
+`src/attune/telemetry/**` — 16 source files total.
 
-## Source files
-
-The implementation spans 16 files under `src/attune/telemetry/`, with the main entry point at `__main__.py` and component-specific modules for coordination, tracking, approval gates, and streaming functionality.
+**Tags:** `telemetry`, `metrics`

@@ -1,61 +1,97 @@
 ---
 type: quickstart
+name: models-quickstart
 feature: models
 depth: quickstart
-generated_at: 2026-04-14T15:15:23.302638+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-16T06:19:45.852411+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
-# Quickstart: models
+# Quickstart: Model Routing and Authentication
 
-Execute LLM tasks with intelligent model routing and authentication.
+Route your first LLM call through Attune's model registry and confirm the authentication strategy is configured correctly.
+
+```python
+from attune.models import get_auth_strategy, EmpathyLLMExecutor
+
+strategy = get_auth_strategy()
+print(strategy.to_dict())
+```
+
+Expected output (values reflect your local config):
+
+```
+{
+  "subscription_tier": "pro",
+  "default_mode": "auto",
+  "prefer_subscription": true,
+  "cost_optimization": true,
+  "setup_completed": true,
+  ...
+}
+```
+
+If `setup_completed` is `false`, complete step 1 before continuing.
+
+## Prerequisites
+
+- The project is cloned and installed locally
+- An Anthropic API key or Claude subscription
+
+## Step 1: Set up your authentication strategy
+
+Run the interactive setup to configure your subscription tier and cost preferences:
+
+```python
+from attune.models import configure_auth_interactive
+
+strategy = configure_auth_interactive(module_lines=1000)
+strategy.save()
+```
+
+The CLI equivalent is:
+
+```
+python -m attune.models auth setup
+```
+
+## Step 2: Run a task through the executor
+
+Create an `EmpathyLLMExecutor` and run a task. The executor automatically selects the best model for the task type:
 
 ```python
 from attune.models import EmpathyLLMExecutor
 
-# Run your first LLM task
-executor = EmpathyLLMExecutor()
+executor = EmpathyLLMExecutor(provider="anthropic")
 response = executor.run(
-    task_type="code_review",
-    prompt="Review this Python function for potential issues",
-    system="You are a senior Python developer"
+    task_type="user_query",
+    prompt="Summarize the purpose of adaptive model routing.",
 )
-print(f"Model used: {response.model_id}")
-print(f"Response: {response.content}")
+
+print(response.model_id)       # which model was selected
+print(response.cost_estimate)  # estimated cost in USD
+print(response.content)        # the response text
 ```
 
-Expected output:
-```
-Model used: claude-3-5-sonnet-20241022
-Response: I'd be happy to review the Python function...
-```
+## Step 3: Inspect routing statistics
 
-## Set up authentication
-
-Configure your API credentials for optimal routing:
-
-```bash
-python -m attune.models auth setup
-```
-
-This launches an interactive setup that configures authentication based on your subscription tier and usage patterns.
-
-## Route tasks by performance
-
-Use adaptive routing to automatically select the best model for each task:
+Check how the `AdaptiveModelRouter` scored models for your workflow:
 
 ```python
-from attune.models import AdaptiveModelRouter
-from attune.telemetry import get_telemetry_store
+from attune.models import AdaptiveModelRouter, get_telemetry_store
 
-router = AdaptiveModelRouter(get_telemetry_store())
-best_model = router.get_best_model(
-    workflow="code_analysis",
-    stage="review",
-    max_cost=0.05  # Maximum cost per request
-)
-print(f"Recommended model: {best_model}")
+router = AdaptiveModelRouter(telemetry=get_telemetry_store())
+stats = router.get_routing_stats(workflow="my_workflow", days=7)
+print(stats)
 ```
 
-**Next:** Configure provider settings with `python -m attune.models auth status` to see your current authentication strategy and optimize for your workflow.
+## What you just did
+
+- Loaded your `AuthStrategy` and confirmed it is configured
+- Ran a prompt through `EmpathyLLMExecutor`, which selected a model from the registry based on task type
+- Queried `AdaptiveModelRouter` for routing statistics drawn from historical telemetry
+
+## Next:
+
+Say **"how does adaptive model routing work?"** to understand how `ModelPerformance.quality_score`, success rates, and latency constraints combine to pick the best model for each task.

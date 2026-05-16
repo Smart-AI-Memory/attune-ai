@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: models-troubleshooting
 feature: models
 depth: troubleshooting
-generated_at: 2026-04-14T15:14:51.743899+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-16T06:19:45.847567+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
@@ -11,97 +12,103 @@ status: generated
 
 ## Before you start
 
-The models feature handles LLM authentication, adaptive routing between providers, and performance-based model selection. Issues often stem from authentication misconfiguration, circuit breaker states, or telemetry data problems.
+The `models` feature covers three interconnected concerns: LLM authentication strategy (`AuthStrategy`), adaptive model routing (`AdaptiveModelRouter`), and provider circuit-breaking (`CircuitBreaker`). A failure in any one of these can surface as a misrouted task, an unexpected provider error, or a silent wrong result.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Authentication errors or API failures | Run `python -m attune.models auth status` to verify your authentication strategy |
-| Models not routing to expected providers | Check `AdaptiveModelRouter.get_routing_stats()` for telemetry data and circuit breaker status |
-| High costs or slow responses | Examine `ModelPerformance` metrics and verify tier assignments match your workflow requirements |
-| Circuit breaker blocking requests | Use `CircuitBreaker.get_status()` to see which providers are marked as failing |
-| Silent failures with empty responses | Verify `LLMResponse.success` property and check for missing model configurations |
+| Wrong model selected for a task | `AdaptiveModelRouter.get_best_model()` — inspect the `workflow`, `stage`, and `max_cost`/`max_latency_ms` constraints you are passing |
+| All requests routed to a single provider | `CircuitBreaker.get_status()` — one or more providers may have an open circuit (`is_open: true`) |
+| `LLMResponse.success` is `False` or `content` is empty | Check `LLMResponse.model_id`, `provider`, and `latency_ms` — the executor may have hit a timeout or received an empty payload |
+| Cost or token estimates look wrong | `AuthStrategy.estimate_cost()` and `estimate_tokens()` — verify `loc_to_tokens_multiplier` (default `4.0`) and that `subscription_tier` matches your actual plan |
+| Auth setup appears complete but routing uses wrong mode | `cmd_auth_status` — confirm `setup_completed: true` and `default_mode` in the saved strategy file (`AUTH_STRATEGY_FILE`) |
+| Intermittent failures on one provider | `CircuitBreaker` state — check `failure_count` and `last_failure`; the breaker opens after 5 failures and stays open for 60 seconds by default |
+| `get_best_model()` raises or returns unexpected fallback | Telemetry store may lack sufficient samples — `ModelPerformance.sample_size` below threshold causes the router to fall back to defaults |
 
 ## Step-by-step diagnosis
 
-1. **Test authentication independently.**
-   Run the auth CLI commands to isolate configuration issues:
-   ```bash
-   python -m attune.models auth status
-   python -m attune.models auth recommend path/to/your/file.py
-   ```
+1. **Reproduce the failure in isolation.**
+   Strip the call to its required arguments. For routing issues, call `AdaptiveModelRouter.get_best_model(workflow, stage)` directly. For auth issues, call `get_auth_strategy()` and print the result. Confirm the failure occurs outside the surrounding workflow before going deeper.
 
-2. **Check circuit breaker states.**
-   When models fail intermittently, examine circuit breaker status:
+2. **Check circuit-breaker state.**
+   Call `CircuitBreaker.get_status()` and look for any provider where `is_open` is `True`. An open circuit silently redirects all traffic away from that provider:
+
    ```python
    from attune.models import CircuitBreaker
    cb = CircuitBreaker()
    print(cb.get_status())
    ```
 
-3. **Verify model registry and routing.**
-   Inspect available models and their performance data:
-   ```python
-   from attune.models import print_registry, AdaptiveModelRouter
-   print_registry()  # Show all available models
+   To reset a tripped breaker manually:
 
-   # Check routing decisions for your workflow
-   router = AdaptiveModelRouter(your_telemetry)
-   stats = router.get_routing_stats("your_workflow", "your_stage")
+   ```python
+   cb.reset(provider="anthropic")   # reset one provider
+   cb.reset()                        # reset all providers
    ```
 
-4. **Enable debug logging.**
-   Set logging to DEBUG to see routing decisions and API calls:
+3. **Inspect the auth strategy on disk.**
+   Run the CLI to see exactly what the saved strategy contains:
+
+   ```
+   attune auth status
+   ```
+
+   Or call `cmd_auth_status` directly. If `setup_completed` is `False` or the file is missing, re-run interactive setup:
+
+   ```
+   attune auth setup
+   ```
+
+4. **Check routing telemetry.**
+   Call `AdaptiveModelRouter.get_routing_stats(workflow, stage, days=7)` to see what the router knows about recent performance. If `sample_size` is 0 or very low, the router has no signal and falls back to tier defaults — this is expected behavior, not a bug.
+
+5. **Enable DEBUG logging and re-run.**
+   Set the log level before executing the failing call:
+
    ```python
    import logging
    logging.basicConfig(level=logging.DEBUG)
    ```
 
-5. **Test with minimal execution context.**
-   Create a basic `ExecutionContext` to isolate the failure:
-   ```python
-   from attune.models import EmpathyLLMExecutor, ExecutionContext
+   The executor logs model selection, latency, and cost estimates at DEBUG level. This often reveals which routing constraint (`max_cost`, `max_latency_ms`, or `min_success_rate`) is eliminating candidates.
 
-   executor = EmpathyLLMExecutor()
-   context = ExecutionContext(
-       workflow_name="test",
-       step_name="debug",
-       task_type="your_task_type"
-   )
-   response = executor.run("your_task", "test prompt", context=context)
+6. **Run the related tests.**
    ```
+   pytest -k "models" -v
+   ```
+   If a test covers the failing path, run it in isolation first. Passing tests confirm that the core logic is intact and the issue is likely in configuration or environment.
 
 ## Common fixes
 
-- **Reset authentication configuration.**
-  ```bash
-  python -m attune.models auth reset
-  python -m attune.models auth setup
+- **Open circuit breaker blocking a provider.**
+  Call `CircuitBreaker.reset(provider="<name>")` to re-enable the provider immediately. If it trips again quickly, the underlying provider is genuinely unhealthy — check API status or rotate credentials.
+
+- **Auth strategy file missing or corrupt.**
+  Delete the file at `AUTH_STRATEGY_FILE` and re-run setup:
+  ```
+  attune auth reset
+  attune auth setup
   ```
 
-- **Clear circuit breaker state.**
+- **Wrong subscription tier configured.**
+  If `AuthStrategy.subscription_tier` does not match your actual Claude plan, cost estimates and mode recommendations will be wrong. Update via `attune auth setup` or edit the strategy file and reload with `AuthStrategy.load()`.
+
+- **`get_best_model()` ignores a preferred model due to cost constraint.**
+  Lower or remove the `max_cost` argument to confirm the constraint is the cause. If the constraint is intentional, call `AdaptiveModelRouter.recommend_tier_upgrade(workflow, stage)` to see whether a tier upgrade would unblock routing.
+
+- **`min_success_rate` too high for available telemetry.**
+  The default is `0.8`. If your telemetry store is new or sparse, no model may meet this threshold. Pass a lower value explicitly until enough samples accumulate:
   ```python
-  from attune.models import CircuitBreaker
-  cb = CircuitBreaker()
-  cb.reset()  # Clear all provider states
-  cb.reset("anthropic")  # Clear specific provider
+  router.get_best_model(workflow, stage, min_success_rate=0.5)
   ```
 
-- **Update model performance data.**
-  Stale or missing telemetry can cause poor routing decisions. Verify your `TelemetryStore` has recent data for your workflows.
-
-- **Check authentication strategy thresholds.**
-  If costs are unexpectedly high, verify your `AuthStrategy` configuration:
-  ```python
-  from attune.models import get_auth_strategy
-  strategy = get_auth_strategy()
-  print(f"Small module threshold: {strategy.small_module_threshold}")
-  print(f"Prefer subscription: {strategy.prefer_subscription}")
+- **Dependency version mismatch.**
+  A `pip` upgrade can change provider client behavior. Confirm installed versions with:
   ```
-
-- **Verify task-to-tier mapping.**
-  Some tasks require specific model tiers. Check that your task type is mapped to an available tier in the registry.
+  pip show anthropic
+  ```
+  This change is outside the `models` feature itself — pin the version in your requirements file if the mismatch caused a regression.
 
 ## Source files
 

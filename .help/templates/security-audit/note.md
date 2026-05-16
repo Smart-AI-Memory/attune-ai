@@ -1,9 +1,10 @@
 ---
 type: note
+name: security-audit-note
 feature: security-audit
 depth: note
-generated_at: 2026-04-19T18:44:55.473918+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.819669+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
@@ -11,27 +12,31 @@ status: generated
 
 ## Context
 
-The security audit feature provides vulnerability scanning through both a workflow and monitoring system. The workflow scans code for common security issues including eval/exec usage, path traversal vulnerabilities, hardcoded secrets, and injection risks.
+The security audit feature scans a codebase for vulnerabilities including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks. It produces severity-grouped findings with CWE identifiers. See `concepts/tool-security-audit.md` for a full description of what it finds and how deep it goes.
 
-## Architecture
+## How the workflow is implemented
 
-The security audit spans two main components:
+`SecurityAuditWorkflow` (defined in `src/attune/workflows/security_audit.py`) coordinates four specialized subagents in sequence:
 
-**SecurityAuditWorkflow** orchestrates four specialized subagents (vuln-scanner, secret-detector, auth-reviewer, remediation-planner) to produce unified security reports. This agent-based approach allows each subagent to focus on specific vulnerability classes while maintaining comprehensive coverage.
+| Subagent | Role |
+|---|---|
+| `vuln-scanner` | Detects injection risks, path traversal, and unsafe builtins |
+| `secret-detector` | Finds hardcoded API keys, tokens, and passwords |
+| `auth-reviewer` | Reviews authentication and authorization patterns |
+| `remediation-planner` | Produces prioritized fix suggestions with effort estimates |
 
-**Alert monitoring** tracks LLM telemetry and workflow metrics through the AlertEngine, which stores configurations in SQLite and delivers notifications via multiple channels. The monitoring system supports configurable thresholds for metrics like token usage, error rates, and workflow performance.
+After the subagents finish, the orchestrator synthesizes their output into a single report with three sections: **Summary** (security score and executive overview), **Security** (findings by severity: CRITICAL, HIGH, MEDIUM, LOW), and **Suggestions** (remediation steps ordered by priority).
 
-## Key classes
+The system prompt instructs the orchestrator to cite file paths and line numbers wherever possible (`_SYSTEM_PROMPT`, `src/attune/workflows/security_audit.py`).
 
-- `SecurityAuditWorkflow` — The main workflow that coordinates four specialized security subagents
-- `AlertEngine` — Manages alert configurations, checks thresholds, and triggers notifications
-- `AlertConfig` — Dataclass defining alert rules with metrics, thresholds, and notification settings
-- `AlertEvent` — Records when alerts fire, including current values and severity levels
+## Relationship to the alert and telemetry systems
 
-## Integration points
+The security audit workflow sits alongside — but is separate from — the LLM telemetry monitoring system in `src/attune/monitoring/`. That subsystem (`AlertEngine`, `AlertMetric`, `AlertChannel`, `AlertSeverity`, `AlertConfig`) monitors runtime LLM call metrics and triggers threshold-based notifications. It is not invoked during a security audit scan; the two systems share the same package but serve different purposes.
 
-The workflow and monitoring systems work together through shared telemetry. Security audits generate workflow telemetry that the alert system can monitor, enabling automated notifications when security scans detect critical issues or when the audit workflow itself experiences performance problems.
+## Source files
 
-You can run security audits through the CLI (`attune workflow run security-audit`) or the Claude Code skill (`/security-audit`), with results formatted as severity-grouped findings that include CWE identifiers and clickable file links.
+- `src/attune/workflows/security_audit.py` — `SecurityAuditWorkflow` and subagent definitions
+- `src/attune/security/` — `SecretsDetector`, `PIIScrubber`, `AuditLogger`, and related types
+- `src/attune/monitoring/` — alert engine and telemetry collection (separate subsystem)
 
-**Tags:** `security`, `audit`, `owasp`, `scanning`
+**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`

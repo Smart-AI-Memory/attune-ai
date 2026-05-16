@@ -1,61 +1,55 @@
 ---
 type: faq
+name: models-faq
 feature: models
 depth: faq
-generated_at: 2026-04-14T15:15:09.063402+00:00
-source_hash: de302041f650efb4293949074bddd09934c2b7bde5a2f12db73f81a599c75353
+generated_at: 2026-05-16T06:19:45.849980+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
 # Models FAQ
 
-## What is the models feature?
+## What does the models feature do?
 
-The models feature provides intelligent model selection and authentication management for LLM operations. It automatically routes tasks to the best-performing models based on historical performance data and manages authentication strategies for Claude subscriptions versus API access.
+It provides a unified registry and routing layer for LLM providers. Specifically, it handles authentication strategy configuration, adaptive model routing based on historical telemetry, circuit breaking for failing providers, and cost estimation across subscription tiers.
 
-## When should I use models?
+## When do I need models versus something else?
 
-Use the models feature when you need to:
-- Automatically select the best model for your task type
-- Manage authentication between Claude subscription and API modes
-- Track model performance across different workflows
-- Implement circuit breakers for failing providers
-- Optimize costs and latency for LLM operations
+Use models when your code needs to select a model, authenticate with a provider, estimate costs, or recover from provider failures. If you only need to call an LLM directly without any routing or auth logic, check `.help/features.yaml` to see whether a simpler feature covers your use case.
 
-## How do I set up authentication?
+## What are the main entry points?
 
-Run `cmd_auth_setup()` to configure your authentication strategy interactively. This will help you choose between subscription and API modes based on your usage patterns and module size.
+For CLI use, start with the `cmd_auth_*` functions in `src/attune/models/auth_cli.py`:
 
-You can check your current setup with `cmd_auth_status()` or reset it entirely with `cmd_auth_reset()`.
+- `cmd_auth_setup()` — runs interactive first-time authentication setup
+- `cmd_auth_status()` — shows the current authentication strategy configuration
+- `cmd_auth_reset()` — clears the saved authentication strategy
+- `cmd_auth_recommend(args)` — recommends an auth mode for a specific file based on its line count
 
-## How does adaptive model routing work?
+For programmatic use, `get_auth_strategy()` returns the global `AuthStrategy` instance, and `EmpathyLLMExecutor` is the default executor that wraps routing and provider calls together.
 
-The `AdaptiveModelRouter` analyzes historical performance data to select the best model for each task. It considers success rates, latency, costs, and recent failures when making routing decisions.
+## How does adaptive routing work?
 
-Use `get_best_model()` with constraints like maximum cost or latency requirements, and the router will recommend the optimal model for your workflow stage.
+`AdaptiveModelRouter` reads historical telemetry to pick the best model for a given workflow and stage. You can pass `max_cost`, `max_latency_ms`, and `min_success_rate` constraints to `get_best_model()` to narrow the selection. Routing stats are available via `get_routing_stats()`.
 
-## What authentication modes are available?
+## What happens when a provider fails?
 
-The system supports automatic switching between:
-- **Subscription mode**: Uses your Claude Pro/Team subscription for smaller tasks
-- **API mode**: Uses Claude API tokens for larger or batch operations
-- **Auto mode**: Automatically chooses based on module size and cost optimization
+`CircuitBreaker` tracks failures per provider and tier. After `failure_threshold` failures (default: 5), it marks the provider unavailable for `recovery_timeout_seconds` (default: 60). Call `is_available()` before routing to a provider, and use `record_success()` / `record_failure()` to keep the state current. You can inspect all provider states with `get_status()` or reset a specific provider with `reset()`.
 
-The `AuthStrategy` class manages these preferences and provides cost estimates for different approaches.
+## How does the auth strategy decide which mode to use?
 
-## How do circuit breakers protect against failing models?
+`AuthStrategy.get_recommended_mode()` takes a module's line count and compares it against `small_module_threshold` (default: 500 lines) and `medium_module_threshold` (default: 2000 lines) to return an `AuthMode`. Use `estimate_cost()` and `get_pros_cons()` on the same instance to evaluate the tradeoff before committing to a mode.
 
-The `CircuitBreaker` temporarily disables models or providers that exceed failure thresholds. When a provider fails repeatedly, the circuit opens and routes traffic elsewhere until the provider recovers.
+## How do I debug a routing or auth failure?
 
-You can check circuit breaker status and reset failed providers as needed.
+Run `pytest -k "models" -v` first. If the tests pass but your code still fails:
 
-## How do I debug model routing issues?
+1. Call `cmd_auth_status()` (or `get_auth_strategy()`) to confirm the active configuration.
+2. Call `CircuitBreaker.get_status()` to check whether a provider is currently open.
+3. Add a `logger.debug` statement at the suspected failure point and re-run with logging enabled.
 
-First, run `pytest -k "models" -v` to verify the system is working correctly.
-
-Check routing statistics with `get_routing_stats()` to see which models are being selected and why. If models aren't performing as expected, examine the telemetry data that feeds into routing decisions.
-
-For authentication issues, use `cmd_auth_status()` to verify your current configuration matches your intended setup.
+For symptom-based diagnosis, see the troubleshooting page for this feature.
 
 ## Where are the source files?
 

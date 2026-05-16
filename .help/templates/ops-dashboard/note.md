@@ -3,8 +3,8 @@ type: note
 name: ops-dashboard-note
 feature: ops-dashboard
 depth: note
-generated_at: 2026-05-14T14:43:23.575771+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.818082+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106ba836
 status: generated
 ---
 
@@ -12,42 +12,45 @@ status: generated
 
 ## Context
 
-`attune ops` is a local operations dashboard for the workflow OS. It provides a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. You can start it as a CLI command (`attune ops`) or run it directly with `python -m attune.ops`.
+`attune ops` is a local operations dashboard that combines a workflow runner, a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It runs as a blocking HTTP server (default `127.0.0.1:8765`) and is reachable via `attune ops` on the CLI or `python -m attune.ops` as a standalone entry point.
 
-## Public API boundary
+## Public surface
 
-The package exposes three names at the top level (`__all__ = {'create_app', 'build_config', 'Config'}`), split between data classes and factory functions.
+The package exports three names at the boundary (`__all__ = {'create_app', 'build_config', 'Config'}`):
 
-**Data classes** (defined in `src/attune/ops/data.py` and `src/attune/ops/config.py`):
+| Name | Kind | Source | Role |
+|---|---|---|---|
+| `Config` | dataclass | `ops/config.py` | Holds every runtime setting the dashboard reads — paths, host/port, retention policy, trusted hosts |
+| `create_app` | function | `ops/__init__.py` | Lazy-imports the FastAPI factory; keeps the top-level `attune` import free of FastAPI |
+| `build_config` | function | `ops/__init__.py` | Lazy-imports the config builder; constructs a `Config` from CLI args and environment defaults |
 
-| Class | Purpose |
+Additional internal functions in `ops/cli.py` wire these together:
+
+- `add_subparser()` — registers the `ops` subparser on the main `attune` CLI parser
+- `cmd_ops()` — calls `build_config` and `create_app`, then serves the dashboard (blocking, returns `0`)
+- `main()` — thin wrapper used by the `python -m attune.ops` entry point
+
+## Data model
+
+The dashboard surfaces read-only data through a set of dataclasses in `ops/data.py`. None of these are mutable by callers.
+
+| Class | What it represents |
 |---|---|
-| `Config` | Holds project root, attune home, server address, and runtime flags. Also exposes computed paths such as `runs_dir`, `memory_dir`, and `sessions_dir`. |
-| `TelemetrySummary` | Aggregated request counts, costs, and savings, broken down by workflow and by day. |
-| `WorkflowEntry` | Name, description, stage count, and tier map for a single workflow. |
-| `PathArgSpec` | Describes how a workflow accepts a scope path argument on the CLI. |
-| `Feature` | One entry from `.help/features.yaml`, used to populate the scope picker. |
-| `HomeKpis` | Today's event count and cost, seven-day cost and savings, and a sparkline list — shown above the fold on the home page. |
+| `WorkflowEntry` | A single workflow — name, description, stage count, and tier map |
+| `PathArgSpec` | How a workflow accepts a scope path on the CLI (`kwarg`, `required`) |
+| `Feature` | One entry from `.help/features.yaml`, used to populate the scope picker |
+| `Session` | One Claude Code session surfaced on the `/sessions` page |
+| `HomeKpis` | Summary numbers shown above the fold on the home page |
+| `TelemetrySummary` | Aggregated request counts, costs, and savings across workflows and days |
+| `DailyCost` | One day's cost data, used for the home-page sparkline |
+| `FamilyVersion` | Package version info surfaced by the dashboard |
 
-**Factory functions** (defined in `src/attune/ops/__init__.py` and `src/attune/ops/cli.py`):
+## Security
 
-| Function | Purpose |
-|---|---|
-| `create_app()` | Lazily imports the FastAPI factory, so importing `attune` does not pull in FastAPI as a side effect. |
-| `build_config()` | Constructs a `Config` from explicit arguments and environment defaults, including an env-based attune home override. |
-| `add_subparser()` | Registers the `ops` subcommand on the main `attune` CLI parser. |
-| `cmd_ops()` | Starts the dashboard server (blocking). Returns `0` on clean exit. |
-| `main()` | Standalone entry point for `python -m attune.ops`. |
-
-## Design notes
-
-- **Lazy imports.** `create_app` and `build_config` defer their imports so that `import attune` stays lightweight even when FastAPI is installed.
-- **Host allowlist.** `TrustedHostMiddleware` rejects any request whose `Host` header is not in `Config.trusted_hosts`. The default bind address is `127.0.0.1:8765`.
-- **Run retention.** Persisted ops runs live under `Config.runs_dir` and are pruned after `runs_retention_days` days (default: 30). The directory is created on first write.
-- **Scope picker.** `list_features()` parses `.help/features.yaml` relative to the project root. `first_feature()` returns the alphabetically first entry that has a renderable scope, which the dashboard uses as the default selection.
+`TrustedHostMiddleware` (in `ops/`) rejects any request whose `Host` header is not on the `trusted_hosts` allowlist configured in `Config`. The default configuration binds only to `127.0.0.1`, so external exposure requires an explicit host and allowlist change.
 
 ## Source files
 
-- `src/attune/ops/**`
+`src/attune/ops/**`
 
 **Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`

@@ -1,33 +1,25 @@
 ---
 type: tip
+name: bug-predict-tip
 feature: bug-predict
 depth: tip
-generated_at: 2026-04-14T14:48:52.930870+00:00
-source_hash: bdce26567d10cd4bcfc419ff9a7191f2baac8f5a8e219c06d9ae6c6e38f95653
+generated_at: 2026-05-16T06:19:45.795174+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0021e8cde
 status: generated
 ---
 
-# Tip: working effectively with bug predict
+# Tip: Scan before you merge, not after you ship
 
-## Context
+Run `/bug-predict` on a pull request branch before merging, not as a post-incident retrospective. The scanner surfaces `dangerous_eval`, broad exception swallowing, and incomplete code paths that code review routinely misses — finding them at merge time costs minutes; finding them in production costs hours.
 
-Predict likely bug locations based on code patterns and complexity.
+## Why
 
-## Recommendations
+Bug prediction's three subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — synthesize a unified report with file paths, line numbers, and an overall risk score. That output is most actionable when you still have room to act on it.
 
-1. **Start with `format_bug_predict_report()` for readable output.** The raw `WorkflowResult` from `BugPredictionWorkflow.execute()` contains structured data that's hard to parse visually — the formatter converts it to organized markdown with severity levels and file paths.
+## Tradeoff
 
-2. **Use the CLI entry point for exploration.** Call `main()` to run bug prediction interactively before integrating the workflow into larger systems — it handles argument parsing and report formatting automatically.
+The risk score reflects pattern frequency and cyclomatic complexity, not runtime behavior. A file can score HIGH and never fail in practice if its broad exceptions carry `# INTENTIONAL:` markers or its `eval()` calls appear only in test fixtures. Treat HIGH findings as a prioritized review queue, not a definitive bug list.
 
-3. **Run tests with `pytest -k "test_bug_predict"` before changes.** The bug prediction workflow coordinates three subagents (pattern-scanner, risk-correlator, prevention-advisor), so integration issues are common when modifying the orchestration logic.
+## What to do next
 
-## Why this matters
-
-Bug prediction generates complex structured output that requires careful interpretation. Starting with the formatted report helps you understand what the workflow produces before you try to consume the raw results programmatically.
-
-## Source files
-
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_*.py`
-
-**Tags:** `bugs`, `prediction`, `scanning`
+After reviewing `/bug-predict` results, run `test-gen` to add coverage for flagged hotspots and `refactor-plan` to address the structural patterns driving the score.

@@ -1,59 +1,71 @@
 ---
 type: faq
+name: security-audit-faq
 feature: security-audit
 depth: faq
-generated_at: 2026-04-19T18:44:29.301094+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.812812+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
 # Security Audit FAQ
 
-## What is security audit?
+## What does a security audit check for?
 
-Security audit scans your code for vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks. It returns severity-grouped findings with CWE identifiers.
+It scans your codebase for six vulnerability categories: code injection (`eval()`, `exec()`, `compile()` on untrusted input), path traversal, hardcoded secrets, SQL and command injection, SSRF, and weak cryptography such as MD5 or SHA1 used for security purposes.
 
-## When should I use security audit?
+## When should I run a security audit?
 
-Use security audit before deploying code, after adding new dependencies, or when reviewing pull requests. Run it regularly as part of your CI/CD pipeline to catch security issues early.
+Run one before releasing a new version, after adding code that handles files or user input, when pulling in a new dependency, or as a CI gate on pull requests. See the [Security Audit concept page](concepts/tool-security-audit.md) for a full breakdown of timing and depth options.
 
 ## How do I run a security audit?
 
-You can run it as a workflow command or use the Claude Code skill:
+You have two options:
 
-```bash
-attune workflow run security-audit --path "src/"
-```
+- **CLI workflow:** `attune workflow run security-audit --path "src/"`
+- **Claude Code skill:** `/security-audit <path or directory to scan>`
 
-Or in Claude Code:
-```
-/security-audit src/
-```
+Both produce severity-grouped findings. The CLI workflow outputs CWE identifiers; the skill returns structured results in your Claude Code conversation.
+
+## How deep does the scan go?
+
+Depth is configurable:
+
+| Depth | Time | What you get |
+|-------|------|-------------|
+| **Quick** | ~30s | Surface scan — eval/exec, obvious secrets |
+| **Standard** | ~2 min | Full pattern matching with severity ratings |
+| **Deep** | ~5 min | Multi-pass review with OWASP mapping and fix suggestions |
 
 ## What does the output look like?
 
-You get a structured report with a security score and findings grouped by severity (Critical, High, Medium, Low). Each finding includes the file path, line number, description, and CWE identifier.
+The audit report has three sections: a **Summary** with an overall security score (0–100) and an executive overview, **Security** findings organized by severity (CRITICAL, HIGH, MEDIUM, LOW), and **Suggestions** with actionable remediation steps ordered by priority and estimated effort.
 
-## Can I scan specific files or directories?
+## Which subagents does the workflow use?
 
-Yes. You can scan a single file (`/security-audit src/auth.py`), a directory (`/security-audit src/`), or your entire project (`/security-audit .`).
+`SecurityAuditWorkflow` coordinates four specialized subagents: `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner`. Each focuses on its own domain, and the orchestrator synthesizes their findings into a single report.
 
-## How do I fix the issues it finds?
+## What should I do after a security audit?
 
-After reviewing the results, ask for fixes directly: "fix the critical findings" will generate patches. You can also ask for security tests: "write tests for the flagged files" to prevent regressions.
+Fix any CRITICAL and HIGH findings first, then run `attune workflow run test-gen` to generate tests that cover the corrected code paths.
 
-## What security issues does it detect?
+## How do I debug a failing audit?
 
-The audit checks for eval/exec usage, path traversal vulnerabilities, hardcoded secrets, SQL injection, command injection, SSRF risks, and other common security patterns based on OWASP guidelines.
+Run `pytest -k "security-audit" -v` first. If the tests pass but the audit still fails, check that the path you supplied exists and is readable, then re-run with debug logging enabled to see which subagent reported the error.
 
-## How do I debug security audit issues?
+## Where is the source code?
 
-Run the related tests first: `pytest -k "security-audit" -v`. If tests pass but your audit fails, check that your file paths are valid and accessible.
+- `src/attune/workflows/security_audit.py` — `SecurityAuditWorkflow` and subagent orchestration
+- `src/attune/security/` — secret detection, PII scrubbing, and audit logging
+- `src/attune/monitoring/` — alert engine and telemetry integration
 
-## Where are the source files?
+**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`
 
-- `src/attune/workflows/security_audit.py`
-- `src/attune/security/**`
-- `src/attune/monitoring/**`
+## Unresolved references
 
-**Tags:** `security`, `audit`, `owasp`, `scanning`
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 19 | error | `[Security Audit concept page](concepts/tool-security-audit.md)` — target does not exist |

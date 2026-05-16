@@ -1,59 +1,57 @@
 ---
 type: faq
+name: telemetry-faq
 feature: telemetry
 depth: faq
-generated_at: 2026-04-20T01:24:45.532404+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-16T06:19:45.846271+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
 # Telemetry FAQ
 
-## What is telemetry?
+## What does the telemetry feature do?
 
-Telemetry tracks how Attune AI agents perform, coordinate with each other, and use resources. It provides usage metrics, cost analysis, and quality feedback loops.
+It tracks usage, coordinates agents via TTL-based signals, monitors agent heartbeats, gates workflows on human approval, and streams real-time events through Redis Streams. It also records feedback and calculates cost savings from model-tier routing.
 
-## When should I use telemetry?
+## What can I track with telemetry?
 
-You need telemetry when you're monitoring agent performance, tracking costs, analyzing model usage patterns, or setting up approval workflows for automated tasks.
+You can track agent status and progress with `HeartbeatCoordinator`, send and receive inter-agent coordination signals with `CoordinationSignals`, stream and consume real-time events with `EventStreamer`, and collect human approval decisions with `ApprovalGate`.
 
-## How do I view telemetry data?
+## How do I start the telemetry CLI?
 
-Use the telemetry CLI commands:
-- `python -m attune.telemetry show` — recent telemetry entries
-- `python -m attune.telemetry savings` — cost savings analysis
-- `python -m attune.telemetry cache-stats` — prompt caching performance
-- `python -m attune.telemetry agent-performance` — agent metrics
+Call `main()` from `src/attune/telemetry/__main__.py`, or run the module directly with `python -m attune.telemetry`. From there you can run subcommands like `cmd_telemetry_show()` to view recent entries, `cmd_telemetry_savings()` to see cost savings, and `cmd_telemetry_cache_stats()` to check prompt-caching performance.
 
-## Can agents coordinate with each other?
+## What is a coordination signal and how long does it live?
 
-Yes. Use `CoordinationSignals` to send TTL-based messages between agents, `HeartbeatCoordinator` to track which agents are active, and `ApprovalGate` to require human approval for specific actions.
+A `CoordinationSignal` is a typed message sent from one agent to another (or broadcast to all agents). Its default TTL is 60 seconds. You can override that per signal using the `ttl_seconds` parameter on `CoordinationSignals.signal()` or `CoordinationSignals.broadcast()`.
 
-## How do I track agent status?
+## How do I check whether an agent is still running?
 
-Start a heartbeat when your agent begins work:
-```python
-coordinator = HeartbeatCoordinator()
-coordinator.start_heartbeat("my-agent", {"task": "processing"})
-coordinator.beat(status="running", progress=0.5)
-```
+Call `HeartbeatCoordinator.is_agent_alive(agent_id)`. To get full status, use `get_agent_status(agent_id)`, which returns an `AgentHeartbeat` with fields for `status`, `progress`, and `current_task`. To find agents that haven't sent a heartbeat recently, call `get_stale_agents(threshold_seconds=60.0)`.
 
-## What's the difference between signals and heartbeats?
+## How does human approval gating work?
 
-Signals are one-time messages between agents with TTL expiration. Heartbeats are continuous status updates that show an agent is alive and working. Use signals for coordination, heartbeats for monitoring.
+Your agent calls `ApprovalGate.request_approval()` with an `approval_type` and optional context dict. The call blocks until a human responds via `respond_to_approval()` or the request times out. The response is an `ApprovalResponse` with `approved`, `responder`, and an optional `reason`.
 
-## How do I set up human approval gates?
+## What happens to approval requests that time out?
 
-Create an approval request that blocks execution until a human responds:
-```python
-gate = ApprovalGate()
-response = gate.request_approval("deploy", {"target": "production"})
-if response.approved:
-    # proceed with action
-```
+They remain in storage with `status = 'pending'` until you explicitly remove them. Call `ApprovalGate.clear_expired_requests()` to purge them.
 
-## Where are the telemetry files?
+## How do I consume events from the stream?
 
-All telemetry code is in `src/attune/telemetry/`. The CLI entry point is `__main__.py`, coordination classes are in separate modules by function.
+Use `EventStreamer.consume_events()`, optionally filtering by a list of `event_types`. To look back at past events rather than waiting for new ones, call `get_recent_events(event_type, count=100)` instead.
+
+## Where is telemetry data stored by default?
+
+Help queries are logged to `help_queries.jsonl` (the value of `_DEFAULT_FILE`). Coordination signals and heartbeats use Redis TTL keys. Event streams are backed by Redis Streams.
+
+## How do I debug a telemetry problem?
+
+Run `pytest -k "telemetry" -v` first. If tests pass but your code still fails, enable debug logging and add a `logger.debug` statement at the suspected failure point. For symptom-based diagnosis, see the troubleshooting page for this feature.
+
+## Where are the source files?
+
+All telemetry source files live under `src/attune/telemetry/`.
 
 **Tags:** `telemetry`, `metrics`

@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: telemetry-troubleshooting
 feature: telemetry
 depth: troubleshooting
-generated_at: 2026-04-20T01:24:23.799440+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-16T06:19:45.843807+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
@@ -11,101 +12,121 @@ status: generated
 
 ## Before you start
 
-The telemetry system tracks usage, coordinates agents, manages heartbeats, and provides approval gates. Issues typically manifest as missing data, agent coordination failures, or blocked approval workflows.
+Attune's telemetry subsystem covers usage tracking, feedback loops, agent heartbeats, inter-agent coordination signals, human approval gates, and real-time event streaming. Symptoms can originate in any of these areas. Identify which component is affected before diving into code.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Telemetry commands fail with exceptions | Run with `--verbose` and check the Python traceback for the exact failure point |
-| Agent coordination signals not received | Verify Redis connection and check if TTL has expired using `CoordinationSignals.get_pending_signals()` |
-| Heartbeat tracking shows stale agents | Check Redis TTL keys and network connectivity between agents and Redis |
-| Approval requests timeout | Verify the `ApprovalGate` timeout settings and check for pending requests with `get_pending_approvals()` |
-| Event streaming stops working | Check Redis Stream health with `EventStreamer.get_stream_info()` |
-| Cost savings calculations are wrong | Verify prompt caching is enabled and check token counting in telemetry logs |
+| `attune telemetry` command exits with a traceback | Read the exception type and line number — most CLI failures surface in `main()` in `src/attune/telemetry/__main__.py` |
+| Cost-savings or cache-stats output is missing or wrong | Run `cmd_telemetry_savings()` and `cmd_telemetry_cache_stats()` directly and compare against raw entries from `cmd_telemetry_show()` |
+| Sonnet→Opus fallback analysis shows no data | Confirm telemetry entries exist: `attune telemetry show`; if the log is empty, check that `help_queries.jsonl` is being written |
+| An agent appears stuck or unresponsive | Call `HeartbeatCoordinator.get_stale_agents(threshold_seconds=60.0)` — any agent listed there has not called `beat()` within the TTL |
+| An agent shows `is_agent_alive()` returning `False` unexpectedly | Check that the agent's loop is calling `beat()` and that its `HeartbeatCoordinator` is connected to the same Redis memory instance |
+| A coordination signal is never received | Call `CoordinationSignals.get_pending_signals()` to see what is queued; verify `ttl_seconds` has not expired before `wait_for_signal()` polls |
+| An approval request times out without a response | Call `ApprovalGate.get_pending_approvals()` to confirm the request exists; check `timeout_seconds` on the `ApprovalRequest` and whether `clear_expired_requests()` already removed it |
+| Event stream consumers receive no events | Call `EventStreamer.get_stream_info(event_type)` to verify the stream exists and has entries; confirm `start_id` in `consume_events()` is not set past the last entry |
+| Intermittent signal or heartbeat loss | Check for Redis TTL expiry — `CoordinationSignal.ttl_seconds` defaults to 60 and `get_stale_agents()` uses a 60-second threshold; reduce poll intervals or increase TTLs |
 
-## Step-by-step diagnosis
+## Diagnosis steps
 
-1. **Test the telemetry CLI directly.**
-   Run `python -m attune.telemetry --help` to confirm the module loads. Then try specific commands:
+Follow these steps in order — each one is cheaper than the next.
+
+1. **Reproduce the failure with a minimal call.**
+   Strip the failing call down to its required arguments and run it outside the surrounding workflow. For CLI commands, run the subcommand directly:
+
+   ```
+   attune telemetry show
+   attune telemetry cache-stats
+   attune telemetry savings
+   ```
+
+   Confirm the failure occurs before adding complexity.
+
+2. **Check the telemetry log file.**
+   All CLI commands read from `help_queries.jsonl` (the `_DEFAULT_FILE` constant). Verify the file exists and contains recent entries:
+
    ```bash
-   python -m attune.telemetry telemetry-show
-   python -m attune.telemetry test-status
+   ls -lh help_queries.jsonl
+   tail -5 help_queries.jsonl
    ```
 
-2. **Check Redis connectivity.**
-   Most telemetry features depend on Redis for coordination, heartbeats, and events. Test the connection:
-   ```python
-   from attune.memory import get_redis_client
-   redis = get_redis_client()
-   redis.ping()  # Should return True
+   An empty or missing file explains missing output in `cmd_telemetry_show()`, `cmd_telemetry_savings()`, and `cmd_telemetry_cache_stats()`.
+
+3. **Enable DEBUG logging and re-run.**
+   Set the log level before invoking the failing command:
+
+   ```bash
+   ATTUNE_LOG_LEVEL=DEBUG attune telemetry show
    ```
 
-3. **Examine coordination signals.**
-   If agent coordination fails, check for pending signals and TTL expiration:
-   ```python
-   from attune.telemetry import CoordinationSignals
-   signals = CoordinationSignals()
-   pending = signals.get_pending_signals()
-   print(f"Pending signals: {len(pending)}")
+   Look for Redis connection errors, missing keys, or unexpected `None` returns from heartbeat or signal lookups.
+
+4. **Inspect the relevant entry point.**
+   Match your symptom to the function responsible:
+
+   - `main()` — CLI argument parsing and subcommand dispatch
+   - `cmd_telemetry_show()` — recent telemetry entries
+   - `cmd_telemetry_savings()` — cost-savings calculation
+   - `cmd_telemetry_cache_stats()` — prompt caching statistics
+   - `cmd_sonnet_opus_analysis()` — Sonnet 4.5 → Opus 4.5 fallback analysis
+   - `cmd_file_test_status()` / `cmd_test_status()` — per-file and overall test status
+   - `cmd_tier1_status()` / `cmd_task_routing_report()` — Tier 1 automation and task routing
+
+   Add a temporary `print()` or log statement at the function's first line to confirm it is being reached.
+
+5. **Run the telemetry test suite.**
+
+   ```bash
+   pytest -k "telemetry" -v
    ```
 
-4. **Verify heartbeat timing.**
-   For stale agent issues, check the heartbeat coordinator:
-   ```python
-   from attune.telemetry import HeartbeatCoordinator
-   hb = HeartbeatCoordinator()
-   stale = hb.get_stale_agents(threshold_seconds=60)
-   print(f"Stale agents: {[a.agent_id for a in stale]}")
-   ```
-
-5. **Review event streaming.**
-   If events aren't flowing, check stream status:
-   ```python
-   from attune.telemetry import EventStreamer
-   streamer = EventStreamer()
-   info = streamer.get_stream_info("coordination")
-   print(f"Stream length: {info.get('length', 'unknown')}")
-   ```
+   A failing test that exercises the broken path gives you a reproducible baseline and a fixture you can reuse when writing a fix.
 
 ## Common fixes
 
-- **Redis connection timeout.** Increase the Redis timeout in your configuration or check network connectivity between the client and Redis server.
+**Empty or missing `help_queries.jsonl`**
+The file is not created automatically if no queries have been recorded. Trigger a help query to initialize it, or create the file manually and verify its path matches `_DEFAULT_FILE`.
 
-- **Expired TTL signals.** If coordination signals disappear too quickly, increase `ttl_seconds` when calling `CoordinationSignals.signal()`:
-  ```python
-  signals.signal("task_complete", ttl_seconds=300)  # 5 minutes instead of default 60
-  ```
+**Heartbeat agent shows as stale immediately**
+The agent is not calling `beat()` frequently enough relative to the TTL. Either increase `ttl_seconds` when calling `start_heartbeat()`, or call `beat()` more frequently inside the agent loop:
 
-- **Stale agent cleanup.** Remove dead heartbeat entries:
-  ```python
-  hb = HeartbeatCoordinator()
-  hb.clear_expired_requests()
-  ```
+```python
+coordinator.beat(status='running', progress=0.5, current_task='processing')
+```
 
-- **Approval timeout.** Increase timeout for long-running approval workflows:
-  ```python
-  gate = ApprovalGate()
-  response = gate.request_approval("deploy", context, timeout=300.0)  # 5 minutes
-  ```
+**Coordination signal expires before it is consumed**
+Increase `ttl_seconds` when sending the signal, or reduce `poll_interval` in `wait_for_signal()`:
 
-- **Stream memory usage.** Trim old events to prevent Redis memory issues:
-  ```python
-  streamer = EventStreamer()
-  streamer.trim_stream("coordination", max_length=1000)
-  ```
+```python
+signals.signal(signal_type='ready', ttl_seconds=120)
+signals.wait_for_signal('ready', timeout=90.0, poll_interval=0.25)
+```
 
-- **Missing telemetry data.** Enable streaming when initializing components:
-  ```python
-  signals = CoordinationSignals(enable_streaming=True)
-  hb = HeartbeatCoordinator(enable_streaming=True)
-  ```
+**Approval request disappears before a human responds**
+`clear_expired_requests()` removes requests whose `timeout_seconds` has elapsed. Increase `timeout` when calling `request_approval()`, or call `get_pending_approvals()` immediately after to confirm the request was stored.
+
+**Event stream consumer receives nothing**
+The default `start_id='$'` in `consume_events()` means "events from now onward." To read existing events, use `get_recent_events()` instead:
+
+```python
+events = streamer.get_recent_events(event_type='my_event', count=50)
+```
+
+**Redis connection errors across all components**
+`HeartbeatCoordinator`, `CoordinationSignals`, `ApprovalGate`, and `EventStreamer` all accept a `memory` argument. If you pass `None`, each class uses its default connection. Confirm all components in the same workflow share the same Redis instance and that the connection is reachable.
+
+**Dependency version mismatch**
+A Redis client upgrade can change serialization behavior. Run:
+
+```bash
+pip show redis
+```
+
+and confirm the installed version is compatible with the version specified in your project's dependency file.
 
 ## Source files
 
-- `src/attune/telemetry/__main__.py` — CLI entry point
-- `src/attune/telemetry/coordination.py` — Agent coordination signals
-- `src/attune/telemetry/heartbeat.py` — Agent heartbeat tracking
-- `src/attune/telemetry/approval.py` — Human approval gates
-- `src/attune/telemetry/streaming.py` — Event streaming
-- `src/attune/telemetry/cli_*.py` — CLI command implementations
+- `src/attune/telemetry/**`
+
+**Tags:** `telemetry`, `metrics`

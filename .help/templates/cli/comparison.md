@@ -1,59 +1,76 @@
 ---
 type: comparison
+name: cli-comparison
 feature: cli
 depth: comparison
-generated_at: 2026-04-14T15:12:47.499119+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-05-16T06:19:45.834263+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# CLI command interface vs direct API calls
+# Comparison: CLI vs Claude Code for attune-ai
 
 ## Overview
 
-Attune offers two ways to interact with its functionality: through the hybrid CLI that combines slash commands with natural language routing, or by calling the underlying API functions directly in your code.
+attune-ai exposes two surfaces: a standalone CLI (`attune`) and Claude Code skills (invoked as slash commands inside a Claude Code conversation). Both surfaces can run workflows, track costs, and access help — but they are optimized for different working styles.
 
 ## Feature comparison
 
-| Aspect | CLI Interface | Direct API Calls |
-|--------|---------------|------------------|
-| **Input style** | Natural language + slash commands | Function calls with typed parameters |
-| **Routing** | Automatic via `HybridRouter` with learning | Manual function selection |
-| **Cost tracking** | Built-in commands (`costs`, `costs-today`, `costs-export`) | Requires separate implementation |
-| **Help system** | Interactive help with `cmd_help()` | Documentation lookup only |
-| **Learning** | Adapts routing preferences over time | Static behavior |
-| **Error handling** | Standardized CLI error codes | Custom exception handling |
-| **Batch operations** | Command chaining and scripting | Programmatic loops and conditions |
+| Capability | CLI (`attune`) | Claude Code skills |
+|---|---|---|
+| Invocation | `attune workflow run`, `attune costs`, etc. | `/security-audit` and similar slash commands |
+| Scoping | CLI flags and arguments | Socratic questions; Claude infers context |
+| Output rendering | Rich terminal (color panels, tables) | Markdown in the conversation thread |
+| Codebase awareness | No — operates on what you pass explicitly | Yes — sees your open files and project context |
+| CI/CD integration | Yes — scriptable, exits with standard codes | No |
+| Cost tracking | Built-in: `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` | Via MCP tools |
+| Follow-up interaction | Manual — re-run the command with new flags | Interactive — Claude can act on its own output ("fix this?") |
+| Memory / lessons | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall` | Not available directly |
+| Help browsing | `attune help-docs --tags`, `attune help-docs --tag <tag>` | Not available |
+| Setup | `pip install` + API key | Plugin install inside Claude Code |
 
-## Use the CLI when
+## Key tradeoffs
 
-- **You want natural language interaction**: The hybrid router lets you type "show me today's costs" instead of memorizing command syntax
-- **You need cost visibility**: Built-in cost tracking commands provide immediate usage insights without additional setup
-- **You're doing exploratory work**: The learning router adapts to your patterns, making repeated tasks faster over time
-- **You prefer command-line workflows**: Integrates naturally with shell scripts and terminal-based development
+**CLI strengths:**
+- Scriptable and automatable — suitable for pre-commit hooks, CI pipelines, and scheduled jobs.
+- Cost visibility is first-class: you can export cost data (`cmd_costs_export`) or reset it (`cmd_costs_reset`) without leaving the terminal.
+- Cross-session memory commands (`cmd_memory_capture`, `cmd_memory_recall`) let you persist lessons between sessions without a running conversation.
+- Help documentation is browsable offline with `attune help-docs`.
 
-Key entry points:
-- `main()` — Primary CLI entry point with full argument parsing
-- `route_user_input()` — Direct access to the hybrid routing system
-- `cmd_costs_*()` functions — Comprehensive cost analysis tools
+**CLI limitations:**
+- No codebase context — you must pass files and parameters explicitly; the CLI does not infer intent from an open editor.
+- No interactive follow-up — if a workflow result needs action, you write another command.
 
-## Use direct API calls when
+**Claude Code strengths:**
+- Context-aware from the start — Claude reads your open files, so scoping a skill invocation requires less explicit input.
+- Conversational follow-up — after a skill runs, you can ask Claude to act on the result immediately.
 
-- **You're building applications**: Direct function calls offer better error handling and type safety for programmatic use
-- **You need precise control**: Bypass the routing layer when you know exactly which functions to call
-- **You're writing libraries**: Other developers expect function APIs, not CLI subprocess calls
-- **Performance is critical**: Direct calls avoid the parsing and routing overhead (~10-20ms per command)
+**Claude Code limitations:**
+- Not scriptable — unsuitable for CI/CD or batch automation.
+- Cost tracking and memory commands are not available as native skills.
 
-## Recommendation
+## When to use each
 
-**Start with the CLI** for most use cases. The hybrid router's natural language processing and automatic learning make it significantly more usable than traditional command-line tools. The cost tracking and help systems are mature and immediately useful.
+**Use the CLI when you:**
+- Run attune in CI/CD pipelines or pre-commit hooks.
+- Need to export, review, or reset cost data programmatically.
+- Want to capture or search cross-session memory (`cmd_memory_capture`, `cmd_memory_recall`).
+- Browse or filter help documentation by tag (`attune help-docs --tag <tag>`).
+- Prefer deterministic, flag-driven invocation over conversational scoping.
 
-**Switch to direct API calls** only when you need the CLI's functionality embedded in larger applications or when you're building tools for other developers to consume programmatically.
+**Use Claude Code skills when you:**
+- Are actively editing code and want attune to operate with full file context.
+- Need to iterate quickly — running a skill and immediately asking Claude to act on the output.
+- Do not need cost exports, memory commands, or CI integration.
+
+For teams that script deployments or run security audits on every PR, the CLI is the right choice. For solo developers doing exploratory refactoring inside Claude Code, skills will feel more natural.
 
 ## Source files
 
 - `src/attune/cli_minimal.py`
 - `src/attune/cli_router.py`
-- `src/attune/cli_commands/**`
+- `src/attune/cli_commands/cost_commands.py`
+- `src/attune/cli_commands/help_commands.py`
+- `src/attune/cli_commands/` (remaining command modules)
 
 **Tags:** `cli`, `commands`

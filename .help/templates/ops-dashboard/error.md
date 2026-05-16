@@ -3,8 +3,8 @@ type: error
 name: ops-dashboard-error
 feature: ops-dashboard
 depth: error
-generated_at: 2026-05-14T14:43:23.558593+00:00
-source_hash: 395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42
+generated_at: 2026-05-16T06:19:45.800719+00:00
+source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
 status: generated
 ---
 
@@ -12,36 +12,39 @@ status: generated
 
 ## Common error signatures
 
-Errors in the ops dashboard typically fall into three categories:
+These failures occur when starting, configuring, or running the `attune ops` dashboard server.
 
-- **Configuration errors** — `build_config()` raises when required paths are missing or environment defaults cannot be resolved. Check that `project_root` exists and that `ATTUNE_HOME` (or `~/.attune`) is readable.
-- **Server startup errors** — `cmd_ops()` or `main()` fail to bind the FastAPI server. Common causes include the configured `host`/`port` (default `127.0.0.1:8765`) already being in use, or FastAPI not being installed in the current environment.
-- **Rejected requests (`403`)** — `TrustedHostMiddleware.dispatch()` rejects any request whose `Host` header is not in the `trusted_hosts` allowlist. Add the originating host to `trusted_hosts` in your `Config`.
-- **Missing data directories** — Accessors such as `Config.runs_dir`, `Config.memory_dir`, and `Config.sessions_dir` resolve paths under `attune_home` that may not exist until the first write. Code that reads from these paths before any run has completed can raise `FileNotFoundError`.
-- **Invalid spec phase status** — Phase file readers validate `status` against `_VALID_STATUSES`. A value outside `{'draft', 'in-review', 'approved', 'complete', 'completed', 'done'}` produces a validation error surfaced in the `SpecPhase` snapshot.
-- **Missing features file** — `list_features()` and `first_feature()` parse `<project_root>/.help/features.yaml`. If that file is absent or malformed, these functions raise and the scope picker cannot populate.
+| Symptom | Likely cause |
+|---|---|
+| `ImportError` on `attune ops` startup | `create_app()` triggers a lazy FastAPI import that fails — FastAPI is not installed or the import path is broken |
+| `OSError` or `FileNotFoundError` at boot | `build_config()` cannot resolve `project_root` or `attune_home`; the computed `runs_dir`, `memory_dir`, or `sessions_dir` path does not exist and cannot be created |
+| `400` / `403` response from the dashboard | `TrustedHostMiddleware.dispatch()` rejected a request whose `Host` header is not in `Config.trusted_hosts` |
+| Dashboard exits immediately with a non-zero code | `cmd_ops()` failed to bind to `Config.host`:`Config.port` (default `127.0.0.1:8765`), or an unhandled exception escaped the blocking server loop |
+| `KeyError` or `ValueError` reading features | `list_features()` could not parse `.help/features.yaml` under `project_root` — the file is missing, malformed, or contains an unrecognised field |
+| Empty scope on first workflow paint | `workflow_default_scope()` returned `''` — no feature with a renderable scope exists under `project_root` |
 
 ## Where errors originate
 
-| Entry point | What it does | Likely failure |
-|---|---|---|
-| `build_config()` | Assembles a `Config` from arguments and environment defaults | Bad paths, unresolvable `attune_home` |
-| `create_app()` | Lazily imports the FastAPI factory | `ImportError` if FastAPI is not installed |
-| `cmd_ops()` | Starts the blocking dashboard server | Port conflict, missing config values |
-| `main()` | Standalone entry (`python -m attune.ops`) | Any error from `cmd_ops()` propagates here |
-| `list_features()` / `first_feature()` | Reads `.help/features.yaml` | `FileNotFoundError`, YAML parse error |
+- **`build_config()`** — constructs the `Config` dataclass from CLI arguments and environment defaults. Failures here mean the dashboard never reaches the bind step.
+- **`create_app()`** — performs the lazy FastAPI import and wires middleware (including `TrustedHostMiddleware`). An `ImportError` here means no server starts.
+- **`cmd_ops()`** — the blocking entrypoint called by `attune ops`. Any uncaught exception propagates as a non-zero exit code.
+- **`main()`** — the `python -m attune.ops` entrypoint; delegates to `cmd_ops()` and returns its exit code.
+- **`list_features()` / `first_feature()`** — read `.help/features.yaml`; failures affect the scope picker but may also prevent the dashboard UI from rendering correctly.
 
 ## How to diagnose
 
-1. **Read the exception type and message first.** An `ImportError` pointing at FastAPI means the dependency is missing. An `OSError` or `FileNotFoundError` points to a path problem. A `400`/`403` HTTP status from `TrustedHostMiddleware` means a host header mismatch.
+1. **Locate the raise site.** Run `attune ops` in a terminal where you can see the full traceback. The file path and line number in the last frame identify whether the failure is in config building, server startup, or middleware.
 
-2. **Verify your `Config` values.** Print or log the `Config` dataclass after `build_config()` returns. Confirm that `project_root`, `attune_home`, `host`, and `port` match your environment. Remember that `runs_dir`, `memory_dir`, and `sessions_dir` are derived properties — they reflect whatever `attune_home` resolved to.
+2. **Check path resolution.** Most `OSError` failures trace back to a bad `project_root` or missing `attune_home`. Confirm that:
+   - `ATTUNE_HOME` (if set) points to a writable directory.
+   - `project_root` contains a `.help/features.yaml` file if the scope picker is used.
+   - `Config.runs_dir` (`<attune_home>/ops/runs`) is writable on first write.
 
-3. **Check whether the data directories exist.** If `Config.runs_dir` or `Config.sessions_dir` does not exist yet, any code that tries to read from them before the first write will fail. Create the directories manually or run the dashboard at least once to let it initialize them.
+3. **Verify host and port configuration.** If the server exits immediately without a traceback, another process may already hold `127.0.0.1:8765`. Pass `--host` and `--port` overrides to `build_config()`, or check with `lsof -i :8765`.
 
-4. **Confirm `trusted_hosts` covers your client.** If the dashboard returns `403`, compare the `Host` header your client sends against the `trusted_hosts` tuple in your `Config`. Add the missing host or adjust your client's request headers.
+4. **Check `trusted_hosts` when you get 400/403 responses.** `TrustedHostMiddleware` rejects any request whose `Host` header is absent from `Config.trusted_hosts`. Add the host you are accessing the dashboard from to the `trusted_hosts` tuple in your config.
 
-5. **Validate `.help/features.yaml`.** If the scope picker is blank or `list_features()` raises, open `<project_root>/.help/features.yaml` and confirm it is valid YAML. Each entry must supply at least `name` and `description`; `path` and `tags` are optional.
+5. **Inspect `.help/features.yaml` for parse errors.** If `list_features()` raises, open the file directly and confirm every entry has `name`, `description`, and an optional `path`. An unexpected key or a YAML syntax error will surface as a `KeyError` or a YAML parser exception.
 
 ## Source files
 

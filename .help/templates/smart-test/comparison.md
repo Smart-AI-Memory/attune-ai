@@ -1,65 +1,71 @@
 ---
 type: comparison
+name: smart-test-comparison
 feature: smart-test
 depth: comparison
-generated_at: 2026-04-14T14:44:59.646421+00:00
-source_hash: fba1c2a2d71f311df2cc2ff7847b4a7e0af065ff31f1020498301ed7bcfe4c56
+generated_at: 2026-05-16T06:19:45.819669+00:00
+source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
 status: generated
 ---
 
-# Smart Test vs alternatives
+# Smart Test vs Fix Test: Choosing the right testing tool
 
-## Context
+## Overview
 
-Generate comprehensive pytest tests for untested code using AST analysis and AI-powered test synthesis. The smart-test feature offers three distinct workflows for different testing scenarios.
+Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken and repairs them. Running them together covers the full testing lifecycle — but picking the wrong one for your situation wastes time.
 
 ## Feature comparison
 
-| Capability | TestGenerationWorkflow | TestAuditWorkflow | ParallelTestGenerationWorkflow |
-|------------|----------------------|-------------------|-------------------------------|
-| **Target use case** | Single-module test creation | Coverage gap analysis | Bulk test generation |
-| **Analysis method** | AST-based function/class parsing | Multi-agent coverage audit | Combined AST + AI synthesis |
-| **Parallelization** | No | No | Yes (batch processing) |
-| **AI integration** | Limited | 3 specialized subagents | 2-tier LLM approach |
-| **Coverage integration** | Manual | Built-in pytest-cov parsing | Automatic low-coverage discovery |
-| **Output format** | Individual test files | Structured audit report | Batch test generation |
-| **Best for projects** | < 50 modules | Any size | > 100 modules |
+| Capability | smart-test | fix-test |
+|---|---|---|
+| **Primary job** | Finds untested code and generates pytest tests | Diagnoses failing tests and applies targeted fixes |
+| **Starting condition** | Code exists; tests are absent or thin | Tests exist; they are failing |
+| **Coverage analysis** | Yes — parses `coverage.json`, ranks modules by gap size and risk | No — works from pytest tracebacks, not coverage data |
+| **AST-based code analysis** | Yes — `ASTFunctionAnalyzer` extracts function signatures, async status, raises, decorators, and complexity | No |
+| **Output** | New `.py` test files with assertions, edge cases, parametrized inputs, and error-path tests | Repaired existing test files |
+| **Parallelism** | `ParallelTestGenerationWorkflow` can process up to 200 low-coverage modules in configurable batches | Sequential: diagnose → fix → re-run, up to 3 retry attempts per test |
+| **Retry / self-healing** | No — generates once; you review | Yes — reruns after each fix, reports what still needs manual attention |
+| **Root-cause classification** | No | Yes — import errors, mock mismatches, assertion drift, type errors, missing fixtures, environment issues |
+| **Best scale** | Bootstrapping coverage across a whole codebase or auditing a new module | Repairing a specific failing test or a broken CI pipeline |
+| **Runs on** | Your Claude subscription — no extra API key | Your Claude subscription — no extra API key |
 
-## Performance characteristics
+## How each tool works internally
 
-- **TestGenerationWorkflow**: Generates ~10-15 test methods per function with comprehensive parameter testing
-- **TestAuditWorkflow**: Processes coverage.json files with 200+ modules in < 30 seconds
-- **ParallelTestGenerationWorkflow**: Handles 200 modules in configurable batches (default: 10 modules/batch)
+**smart-test** runs two coordinated workflows:
 
-## Use TestGenerationWorkflow when...
+1. `TestAuditWorkflow` — three subagents (`coverage-auditor`, `gap-analyzer`, `test-planner`) parse `coverage.json` via `parse_coverage_json()`, rank modules using `prioritize_modules()` (default threshold: 50% coverage), group them into subsystem batches with `group_into_batches()`, and produce a structured audit report.
+2. `TestGenerationWorkflow` (or `ParallelTestGenerationWorkflow` for large codebases) — three subagents (`function-identifier`, `test-designer`, `test-writer`) analyze each module's AST, then write pytest functions with assertions, boundary values, and `@pytest.mark.parametrize` blocks.
 
-- You need detailed, AST-accurate tests for specific functions or classes
-- Your codebase has complex type hints that require precise parameter testing
-- You want maximum control over test generation logic
-- You're working with < 20 modules at a time
+**fix-test** runs a tighter loop: run the failing test, classify the traceback into a known root-cause category, apply a fix, re-run, and repeat up to three times. It does not generate new coverage — it restores tests that a refactor or dependency upgrade broke.
 
-## Use TestAuditWorkflow when...
+## Tradeoffs to know before you choose
 
-- You need to understand where your test gaps are before writing tests
-- You have existing pytest-cov output to analyze
-- You want prioritized recommendations for which modules to test first
-- You need executive-level test health reporting
+- **smart-test is broader but not self-healing.** It can generate tests for 200 modules in parallel, but it won't automatically fix a test it generates that fails. Review generated tests before committing them.
+- **fix-test is precise but narrow.** It excels at the tedious read-traceback → edit → re-run loop, but it can't tell you what's untested — only what's broken.
+- **Coverage threshold matters for smart-test.** `prioritize_modules()` filters out modules already above 50% coverage by default. If your codebase is mostly well-covered, smart-test may produce a smaller report than you expect — that's by design, not a bug.
+- **For legacy codebases with no tests at all,** smart-test is the clear starting point. Fix-test has nothing to work with until tests exist.
 
-## Use ParallelTestGenerationWorkflow when...
+## Use smart-test when…
 
-- You're starting with low overall coverage (< 50%) across many modules
-- You need to generate tests for 50+ modules efficiently
-- You want AI-powered test completion that goes beyond basic parameter testing
-- You can trade some precision for speed and scale
+- You've written new public functions or modules and want tests before they ship.
+- Your coverage has dropped below the 80% threshold and you need to find exactly what's missing.
+- You're bootstrapping a test suite for a legacy codebase with little or no coverage.
+- You want to verify that error paths and boundary conditions are exercised before a release.
+- You need to generate tests across many modules at once — `ParallelTestGenerationWorkflow` handles batches of up to 200 modules.
 
-## Key tradeoffs
+## Use fix-test when…
 
-**Accuracy vs Speed**: TestGenerationWorkflow provides the most accurate AST analysis but processes one module at a time. ParallelTestGenerationWorkflow is ~10x faster but may miss edge cases in complex codebases.
+- `pytest` is showing failures after a refactor, dependency upgrade, or large migration.
+- CI is broken on tests you didn't intentionally change.
+- You want the read-traceback → edit → re-run loop automated with automatic retry.
+- You already have tests — they're just wrong after the code moved.
 
-**Coverage Integration**: Only TestAuditWorkflow and ParallelTestGenerationWorkflow automatically discover low-coverage modules. TestGenerationWorkflow requires manual module specification.
+**If you're unsure:** check whether tests *exist* for the code in question. If they don't, start with smart-test. If they do but they're red, start with fix-test.
 
-**AI Sophistication**: TestAuditWorkflow uses 3 specialized subagents for nuanced analysis. ParallelTestGenerationWorkflow uses a simpler 2-tier approach optimized for bulk generation.
+## Source files
 
-## Recommended approach
+- `src/attune/workflows/test_gen/**`
+- `src/attune/workflows/test_audit/**`
+- `src/attune/workflows/test_gen_parallel.py`
 
-For most projects, start with **TestAuditWorkflow** to identify your biggest test gaps, then use **ParallelTestGenerationWorkflow** to generate tests for the top 20-50 priority modules, and finally use **TestGenerationWorkflow** for any critical modules that need hand-tuned test precision.
+**Tags:** `tests`, `coverage`, `generation`

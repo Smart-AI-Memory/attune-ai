@@ -1,52 +1,68 @@
 ---
 type: warning
+name: telemetry-warning
 feature: telemetry
 depth: warning
-generated_at: 2026-04-20T01:24:07.636626+00:00
-source_hash: 6acf95560dfe49824641ad827861534eaea26c9226d58caa5c047e5a5c955c0d
+generated_at: 2026-05-16T06:19:45.841550+00:00
+source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
 status: generated
 ---
 
-# Telemetry Cautions
+# Telemetry cautions
 
 ## What to watch for
 
-Agent coordination signals and heartbeat tracking can create race conditions when agents share state across Redis TTL keys.
+The telemetry module does more than record metrics — it coordinates agents via TTL-based signals, tracks heartbeats through Redis TTL keys, gates workflow steps on human approval, and feeds quality scores back into template ranking through `FeedbackLoop`. Changes in one area can affect the others in ways that aren't visible until something silently stops working.
 
 ## Risk areas
 
-### Coordination signal timing
+### TTL-based coordination signals expire without warning
 
-`CoordinationSignals.wait_for_signal()` polls Redis with a default 0.5-second interval. Under high load, signals can expire before slow consumers read them, causing agents to hang indefinitely waiting for coordination that already happened.
+`CoordinationSignal` has a default `ttl_seconds` of 60. If a receiving agent calls `wait_for_signal()` or `check_signal()` after the TTL has elapsed, the signal is gone — no error is raised, and `check_signal()` returns `None`. Under load or in slow CI environments, 60 seconds can pass faster than expected. Set `ttl_seconds` explicitly for any signal that crosses a slow boundary, and treat a `None` return from `check_signal()` as a distinct case, not a "signal hasn't arrived yet" case.
 
-**Mitigation:** Set conservative TTL values (`ttl_seconds=300` instead of the default 60) for critical coordination points, and always specify shorter timeouts for `wait_for_signal()` calls.
+### Heartbeat staleness thresholds can mask dead agents
 
-### Heartbeat coordinator state drift
+`get_stale_agents()` uses a default `threshold_seconds` of 60.0. If your agent's `beat()` cadence is close to that threshold, transient delays can cause a live agent to appear stale. Conversely, `is_agent_alive()` trusts the Redis TTL key, so an agent that crashed between beats may still appear alive until the key expires. Don't treat `is_agent_alive()` as a real-time liveness check — use `get_agent_status()` and inspect `last_beat` directly when precision matters.
 
-`HeartbeatCoordinator.get_stale_agents()` relies on Redis TTL expiration, but network partitions or Redis failover can make agents appear stale when they're actually running. This leads to duplicate work or failed coordination.
+### Approval requests time out silently and block workflows
 
-**Mitigation:** Cross-check heartbeat status with multiple signals before marking an agent as failed. Use `is_agent_alive()` as a secondary confirmation rather than relying solely on `get_stale_agents()`.
+`ApprovalGate.request_approval()` blocks until a response arrives or `timeout_seconds` elapses. If the timeout fires, the calling workflow stalls at that gate. Expired requests accumulate until `clear_expired_requests()` is called explicitly — they are not cleaned up automatically. Monitor `get_pending_approvals()` in long-running workflows, and call `clear_expired_requests()` on a schedule to prevent stale requests from cluttering the queue.
 
-### Approval gate deadlocks
+### Feedback scores influence template ranking from the first rating
 
-`ApprovalGate.request_approval()` blocks indefinitely if no human responder is available and the timeout isn't set. Multiple agents waiting for approval can exhaust connection pools or cause cascade failures.
+`FeedbackLoop` computes confidence as `good / (good + bad)` and that score feeds into template ranking (see [Template feedback loop](concepts/feedback-loop.md)). A single early bad rating on a new template produces a very low confidence score. If you are testing a template or running integration exercises, use a separate feedback store rather than writing to the production `feedback.json`, or your test ratings will skew ranking for real users.
 
-**Mitigation:** Always set explicit timeouts (`timeout=300.0` for 5-minute maximum wait) and implement fallback behavior when approvals time out.
+### `EventStreamer.consume_events()` blocks when `block_ms` is set
 
-### Event stream memory growth
+Passing a non-`None` `block_ms` to `consume_events()` causes the call to block for up to `block_ms` milliseconds waiting for new Redis Stream entries. In a synchronous context this can stall the entire thread. Use `block_ms=None` (non-blocking) when you need to poll, and reserve blocking mode for dedicated consumer threads.
 
-`EventStreamer.publish_event()` writes to unbounded Redis streams that grow indefinitely unless trimmed. High-frequency telemetry events can exhaust Redis memory in production environments.
+### Private helpers in `src/attune/telemetry/` can change without notice
 
-**Mitigation:** Configure automatic stream trimming with `trim_stream(max_length=1000)` or implement retention policies based on event age rather than count.
+Names prefixed with `_` — including `_LOG_VERSION` and `_DEFAULT_FILE` — are not covered by the public API contract defined in `__all__`. Depending on them directly means a refactor can break your code silently.
 
 ## How to avoid problems
 
-1. **Test coordination under load.** Run multiple agent instances against shared Redis to verify signal timing works under realistic conditions.
+1. **Set TTLs explicitly for slow signal paths.** Don't rely on the 60-second default for `CoordinationSignal` when agents cross slow network boundaries or run in resource-constrained CI. Pass `ttl_seconds` to `CoordinationSignals.signal()` or `broadcast()` with a value that reflects your actual worst-case latency.
 
-2. **Monitor Redis memory usage.** Set up alerts for stream length and TTL key counts to catch runaway telemetry before it affects other systems.
+2. **Treat `None` returns from signal checks as expiry, not absence.** After a signal's TTL elapses, `check_signal()` and `wait_for_signal()` return `None`. Build your coordination logic to handle expiry explicitly rather than retrying indefinitely.
 
-3. **Use explicit timeouts everywhere.** Never rely on default timeout values for coordination primitives—always specify limits based on your workflow's requirements.
+3. **Isolate test feedback from production ratings.** Point `FeedbackLoop` at a temporary file during tests so that bad ratings generated during development don't lower confidence scores in the live ranking data.
+
+4. **Schedule `clear_expired_requests()` in long-running workflows.** Approval requests do not self-clean. Without periodic calls to `clear_expired_requests()`, `get_pending_approvals()` will return stale entries that have already timed out.
+
+5. **Run `pytest -k "telemetry"` before committing changes.** Module-level globals, Redis connection state, and environment variables can make telemetry behave differently in tests than in production. If tests pass locally but fail in CI, check for implicit shared state in the telemetry module first.
 
 ## Source files
 
 - `src/attune/telemetry/**`
+
+**Tags:** `telemetry`, `metrics`
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 33 | error | `[Template feedback loop](concepts/feedback-loop.md)` — target does not exist |

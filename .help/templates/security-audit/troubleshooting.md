@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: security-audit-troubleshooting
 feature: security-audit
 depth: troubleshooting
-generated_at: 2026-04-19T18:44:09.744562+00:00
-source_hash: 7561d25b90360cf091a4fb9961180c96361f86e49fed5a0d40830d980900d622
+generated_at: 2026-05-16T06:19:45.810325+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
@@ -11,73 +12,99 @@ status: generated
 
 ## Before you start
 
-The security audit feature scans your code for vulnerabilities including eval/exec usage, path traversal, hardcoded secrets, and injection risks. It uses four specialized subagents: vuln-scanner, secret-detector, auth-reviewer, and remediation-planner.
+The security audit scans your codebase for vulnerabilities — `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — using four specialized subagents: `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner`. Issues can arise in the workflow orchestration, individual subagents, or the telemetry and alert systems that surround them.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| `SecurityAuditWorkflow.execute()` raises an exception | Python's traceback shows the exact file and line — start there |
-| Audit completes but returns empty findings | Verify the scan path exists and contains readable files |
-| Missing critical vulnerabilities in results | Check if the target files contain patterns the subagents recognize |
-| Alert engine fails to trigger notifications | Confirm alert configuration with `attune alerts list` and verify webhook/email settings |
-| Slow audit performance on large codebases | Monitor which subagent is bottlenecking — each focuses on different file types |
+| Audit exits immediately with no findings | Confirm `--path` points to a directory that exists and is readable; an empty or inaccessible path returns zero findings without an error |
+| `WorkflowResult` is missing one or more report sections (Summary, Security, Suggestions) | A subagent likely failed silently — check which of the four subagent names (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) is absent from the raw output |
+| Hardcoded secrets not detected | Verify the file extensions in your scan path are supported; `secret-detector` works on text files and may skip binary or minified files |
+| Severity ratings missing or all show as `WARNING` | `AlertSeverity` defaults to `WARNING` when the severity field cannot be parsed — check that your `AlertConfig` is passing a valid `AlertSeverity` value |
+| Alert never triggers even though a threshold is exceeded | The cooldown window (`cooldown_seconds`, default 3600 s) may still be active — check `get_alert_history()` for a recent trigger on the same `alert_id` |
+| `check_and_trigger()` returns an empty list unexpectedly | Run `attune alerts metrics` to confirm the monitored metric has a current value; a metric with no telemetry data evaluates to zero |
+| OTEL backend drops spans | `OTELBackend.is_available()` returns `False` when the endpoint is unreachable — confirm your collector URL and network access |
+| `MultiBackend` silently skips a backend | Call `get_failed_backends()` to list backends that have errored; call `reset_failures()` to retry them |
 
 ## Step-by-step diagnosis
 
-1. **Test with a minimal scan target.**
-   Create a simple test file with known security issues (like `eval(input())`) and scan just that file. If this fails, the problem is in the audit engine itself.
-
-2. **Check the audit path and permissions.**
-   Verify the target path exists and is readable:
-   ```bash
-   ls -la /path/to/scan
-   stat /path/to/scan
+1. **Reproduce with a minimal path.**
+   Run the audit against a small, known directory first:
    ```
-
-3. **Run with debug logging.**
-   Enable verbose output to see which subagent is failing:
-   ```bash
-   export ATTUNE_LOG_LEVEL=DEBUG
    attune workflow run security-audit --path "src/"
    ```
+   If that succeeds, the issue is likely in a specific file type or subdirectory, not the workflow itself.
 
-4. **Inspect subagent execution.**
-   The audit uses four subagents. Check if specific ones are failing by examining the consolidated report structure — missing sections indicate subagent failures.
-
-5. **Test alert configuration.**
-   If alerts aren't working, verify your setup:
-   ```bash
-   attune alerts metrics
-   attune alerts list
+2. **Check current telemetry metrics.**
+   Before digging into code, confirm what the alert engine actually sees:
    ```
+   attune alerts metrics
+   ```
+   If the metric you expect to trigger an alert shows `0.0` or is absent, the problem is upstream in telemetry collection, not in the alert threshold logic.
+
+3. **Review alert history for the affected alert.**
+   A firing alert that stops re-triggering is usually in cooldown:
+   ```
+   attune alerts history --alert-id <your-alert-id>
+   ```
+   Check the `triggered_at` timestamp on the most recent `AlertEvent`. If it is within `cooldown_seconds` of now, the alert is suppressed by design.
+
+4. **Enable verbose logging and re-run.**
+   Set the log level to `DEBUG` and re-run the workflow. The orchestrator logs subagent names and their outputs, which tells you exactly which subagent produced unexpected results.
+
+5. **Run the related tests.**
+   ```
+   pytest -k "security_audit" -v
+   ```
+   If a test exercises the failing path, its fixtures give you a controlled starting point for narrowing down the root cause.
+
+6. **Inspect the SQLite alerts database directly.**
+   If `list_alerts()` or `get_alert()` returns unexpected results, inspect the backing store:
+   ```
+   sqlite3 .attune/alerts.db "SELECT * FROM alerts;"
+   ```
+   Corrupt or duplicate rows here explain mismatches between what you configured and what the engine evaluates.
 
 ## Common fixes
 
-- **Path not found errors:** Use absolute paths or verify your working directory. The audit expects valid filesystem paths, not patterns or globs.
-
-- **Empty scan results:** Ensure you're scanning source code files (`.py`, `.js`, `.java`, etc.). The subagents skip binary files and some extensions by design.
-
-- **Alert engine database issues:** Delete and reinitialize the alerts database:
-  ```bash
-  rm .attune/alerts.db
-  attune alerts init
+- **Audit returns no findings for a real vulnerability.** Confirm the scan depth. A quick scan (~30 s) only catches surface-level patterns like obvious `eval`/`exec` usage. For full pattern matching, use standard or deep depth:
+  ```
+  attune workflow run security-audit --path "src/" --depth deep
   ```
 
-- **OTEL backend connection failures:** Check if your OpenTelemetry collector endpoint is reachable. Disable OTEL if not needed:
+- **Alert was deleted accidentally.** Re-create it with the CLI:
+  ```
+  attune alerts init --metric <metric> --threshold <value> --channel <channel>
+  ```
+  Or non-interactively:
+  ```
+  attune alerts init --non-interactive --metric error_rate --threshold 0.05 --channel webhook --webhook-url https://hooks.example.com/...
+  ```
+
+- **Alert is disabled and not triggering.** Re-enable it by ID:
+  ```
+  attune alerts enable <alert-id>
+  ```
+
+- **OTEL backend unavailable.** `OTELBackend` requires a reachable collector endpoint. If you do not have one configured, remove the OTEL backend from your `MultiBackend` to prevent silent span loss. This change requires updating your telemetry configuration outside the security-audit feature itself.
+
+- **MultiBackend has a failed backend.** Reset failed backends so they are retried on the next call:
   ```python
-  # In your workflow config, use only local backends
-  backend = MultiBackend.from_config(storage_dir='.attune')
+  backend.reset_failures()
   ```
+  Then call `backend.flush()` to push any buffered records.
 
-- **Webhook delivery failures:** Test your webhook URL manually before configuring alerts. The system validates webhook URLs but doesn't test connectivity.
-
-- **Memory issues on large codebases:** Scan directories incrementally rather than the entire project at once. Each subagent processes files independently but all run concurrently.
+- **Stale alerts database.** If the `.attune/alerts.db` file is from a previous schema version, delete it and let `AlertEngine` recreate it:
+  ```
+  rm .attune/alerts.db
+  ```
+  All existing alert configurations will be lost; re-add them with `attune alerts init`.
 
 ## Source files
 
-- `src/attune/workflows/security_audit.py` — Main SecurityAuditWorkflow class
-- `src/attune/security/` — Security detection modules and utilities
-- `src/attune/monitoring/` — Alert engine and telemetry systems
+- `src/attune/workflows/security_audit.py`
+- `src/attune/security/**`
+- `src/attune/monitoring/**`
 
-**Tags:** `security`, `audit`, `owasp`, `scanning`
+**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`

@@ -1,38 +1,48 @@
 ---
 type: concept
+name: bug-predict-concept
 feature: bug-predict
 depth: concept
-generated_at: 2026-05-04T02:26:17.630042+00:00
-source_hash: 1686df43f96bd1cdf341101bfab34ee6e5f7f50c3733daf08c8827b94e8a7fef
+generated_at: 2026-05-16T06:19:45.764713+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Bug Predict
+# Bug Prediction
 
-Bug Predict analyzes your code to identify where bugs are most likely to occur before they reach production, using pattern detection and complexity analysis to surface high-risk areas.
+Bug prediction scans your codebase for code patterns and complexity signals that historically lead to production failures — before those failures happen.
 
-## How it orchestrates analysis
+## How it works
 
-The workflow coordinates three specialized subagents to produce comprehensive bug predictions:
+When you run `/bug-predict <path>`, a `BugPredictionWorkflow` orchestrates three specialized subagents in sequence:
 
-- **Pattern Scanner** — detects dangerous code patterns like `eval()` usage, broad exception handling, and incomplete code markers
-- **Risk Correlator** — analyzes complexity metrics, change frequency, and contextual signals that increase bug likelihood
-- **Prevention Advisor** — generates actionable recommendations for fixing identified risks and preventing similar issues
+- **pattern-scanner** — detects dangerous code patterns such as `eval()` on user input, bare `except:` blocks, and TODO/FIXME markers
+- **risk-correlator** — weighs contextual signals like cyclomatic complexity, file churn rate, and code smells to produce a risk score (0–100)
+- **prevention-advisor** — synthesizes findings into prioritized, actionable refactoring and testing recommendations
 
-This multi-agent approach ensures both breadth (catching various bug types) and depth (understanding why certain patterns are risky in context).
+After all three subagents finish, the workflow merges their output into a single structured report with a summary, per-finding severity table, and prevention strategies. The `format_bug_predict_report` function renders this as human-readable markdown with clickable file and line-number links.
 
-## Prediction methodology
+## Three-tier severity model
 
-The system builds risk assessments through several layers:
+Every finding lands in one of three severity buckets:
 
-**Code pattern detection** identifies three severity levels: HIGH patterns like `eval()` on user input create immediate security risks; MEDIUM patterns like broad exception handling can mask critical errors; LOW patterns like TODO comments indicate unfinished code paths that may break under edge cases.
+| Severity | Pattern | Example |
+|----------|---------|---------|
+| HIGH | `dangerous_eval` | `eval()` or `exec()` called on user-supplied input |
+| MEDIUM | `broad_exception` | Bare `except:` that silently swallows errors |
+| LOW | `incomplete_code` | `TODO`, `FIXME`, or `HACK` comments marking unfinished paths |
 
-**Contextual analysis** weighs factors beyond individual patterns — files with high cyclomatic complexity or frequent changes ("hot" files) receive higher risk scores, even for otherwise benign code.
+The scanner suppresses false positives automatically — for example, `eval()` inside test fixture strings, JavaScript's `regex.exec()`, and broad exceptions annotated with `# INTENTIONAL:` or `# noqa: BLE001` are all filtered out before results reach you.
 
-**Smart filtering** automatically suppresses false positives by recognizing safe contexts like `eval()` in test fixtures or JavaScript method calls, plus intentionally broad exceptions marked with specific comments.
+## When it matters
 
-## Workflow coordination
+Bug prediction is most valuable at transition points where new risk is most likely to enter the codebase:
 
-The `BugPredictionWorkflow` orchestrates the entire analysis through a structured prompt template that directs each subagent to focus on its domain expertise. After all subagents complete their analysis, the workflow synthesizes findings into a unified report with executive summary, severity-grouped bugs, and prioritized prevention strategies.
+- **Before merging a large PR** — surface patterns that escape manual review
+- **After inheriting unfamiliar code** — map risk hotspots quickly without reading every file
+- **Before a release** — confirm no new HIGH-severity patterns crept into hot files
+- **As a recurring health check** — track whether risk scores improve or drift over time
 
-The system prompt ensures consistent output formatting with file paths and line numbers, making results immediately actionable for developers reviewing the predictions.
+## Relationship to other tools
+
+Bug prediction focuses on *structural* risk — patterns and complexity that predict where bugs will occur. For *existing* security vulnerabilities, use a security audit instead (`"scan for security issues"`). For broader code quality concerns, use the code quality review (`"what is code quality?"`).

@@ -1,34 +1,45 @@
 ---
 type: note
+name: cli-note
 feature: cli
 depth: note
-generated_at: 2026-04-14T15:12:37.820329+00:00
-source_hash: 8dc008ad217367e499b9e8a37c6cdbb6a23f53f03d344c9793da916a7fb8ab3c
+generated_at: 2026-05-16T06:19:45.831425+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# Note: cli
+# Note: CLI package structure
 
 ## Context
 
-The Attune CLI provides a hybrid interface that combines traditional command-line parsing with natural language routing to AI skills.
+The `cli` feature spans three source locations: `src/attune/cli_minimal.py`, `src/attune/cli_router.py`, and the subpackage `src/attune/cli_commands/`. Together they cover command dispatch, cost tracking, help browsing, routing, and quick-memory lessons.
 
 ## Content
 
-The CLI architecture separates core functionality into two main components:
+The CLI surface combines two kinds of exports: classes in `cli_router.py` and top-level command functions spread across `cli_commands/`.
 
-**Routing System** (`HybridRouter` and `RoutingPreference`): The router interprets user input and directs it to appropriate skill invocations. It maintains learned preferences to improve routing accuracy over time. The `RoutingPreference` dataclass tracks user patterns with keywords, target skills, arguments, usage counts, and confidence scores.
+**Classes (`src/attune/cli_router.py`)**
 
-**Command Interface** (`main()`, `create_parser()`, and command handlers): Traditional CLI commands handle specific operations like cost tracking (`cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset`) and help browsing (`cmd_help`). The parser recognizes both explicit commands and natural language input for hybrid operation.
+| Class | Role |
+|---|---|
+| `RoutingPreference` | Dataclass holding a user's learned keyword-to-skill mapping, with usage count and confidence score. |
+| `HybridRouter` | Routes free-form user input to Claude Code skill invocations; learns new preferences via `learn_preference()` and surfaces autocomplete candidates via `get_suggestions()`. |
 
-**Integration Points**: The `route_user_input()` function provides the bridge between parsed input and skill execution. Slash commands receive special handling through `is_slash_command()` detection.
+**Command functions (`src/attune/cli_commands/`)**
 
-Cost tracking commands operate on usage data with export capabilities and reset functionality. Help commands browse documentation templates across predefined categories: errors, warnings, tips, and references.
+| Function | Module | Purpose |
+|---|---|---|
+| `cmd_costs()` | `cost_commands.py` | Show cost report for a recent period. |
+| `cmd_costs_today()` | `cost_commands.py` | Show today's cost summary. |
+| `cmd_costs_export()` | `cost_commands.py` | Export cost data to a file. |
+| `cmd_costs_reset()` | `cost_commands.py` | Clear all cost tracking data. |
+| `cmd_help()` | `help_commands.py` | Handle the `attune help` command. |
+| `cmd_remember()` | `memory_commands.py` | Add a lesson to the lessons file. |
+| `cmd_forget()` | `memory_commands.py` | Remove a lesson by line number or keyword. |
+| `cmd_lessons()` | `memory_commands.py` | List current lessons with line numbers. |
+| `cmd_memory_capture()` | `memory_commands.py` | Save content to personal cross-session memory. |
+| `cmd_memory_recall()` | `memory_commands.py` | Search personal cross-session memory. |
 
-## Source files
-
-- `src/attune/cli_minimal.py` — Core CLI entry point and argument parsing
-- `src/attune/cli_router.py` — Hybrid routing and preference learning
-- `src/attune/cli_commands/` — Individual command implementations
+The classes and functions are designed to compose: `HybridRouter` handles routing decisions, and command functions handle the resulting skill dispatch. `cmd_help()` drives the same template browsing surface described in `help_commands.py`, which exposes 34 filterable tags via `attune help-docs --tags`.
 
 **Tags:** `cli`, `commands`
