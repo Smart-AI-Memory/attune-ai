@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Workflows page renders the scope picker in read-only mode
+  (`--read-only`). Closes AC-6 of
+  [`docs/specs/ops-scope-picker-ia/`](docs/specs/ops-scope-picker-ia/proposal.md):
+  the saved scope now pre-selects on every load regardless of
+  run mode, so a user who toggles back into run mode keeps the
+  scope they picked. Only the Action column (Run button) hides
+  in read-only — the picker's state stays observable and is
+  persisted via the existing `attune-ops:lastScope` localStorage
+  entry. The template drops the `{% if allow_run %}` wrap on
+  the Scope column and the row's `data-scope-default`
+  attribute; the JS layer was already scope-mode-agnostic
+  (`restoreScopeOnLoad` + `wireScopeSave` no-op cleanly when
+  the picker is absent), so no runner.js changes were needed.
+
 ### Added
 
 - `scripts/calibrate_session_summary.py` + companion CI gate
