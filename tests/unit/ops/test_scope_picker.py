@@ -352,14 +352,38 @@ def test_workflows_page_renders_n_a_for_no_path_workflow(tmp_path, monkeypatch):
     assert "scope-na" in resp.text
 
 
-def test_workflows_page_no_scope_column_when_read_only(tmp_path, monkeypatch):
-    """``--read-only`` mode: no Scope header, no picker markup."""
+def test_workflows_page_renders_scope_picker_in_read_only_mode(tmp_path, monkeypatch):
+    """AC-6: ``--read-only`` mode still renders the scope picker so the
+    saved default pre-selects on every load. Only the Run button (and
+    its Action column) hides — the picker's state is observed and
+    remembered for when the user enables runs.
+    """
+    _write_features_yaml(
+        tmp_path,
+        """
+features:
+  security-audit:
+    description: Scan
+    files: [src/attune/security/**]
+""",
+    )
     app, _ = _make_app(tmp_path, monkeypatch, allow_run=False)
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
-    assert "data-scope-picker" not in resp.text
-    assert ">Scope<" not in resp.text
+    body = resp.text
+    # Scope column + picker markup must be present in read-only mode.
+    assert ">Scope<" in body
+    assert "data-scope-picker" in body
+    assert "Project-wide" in body
+    assert "Custom path…" in body
+    # The per-row default scope wires through regardless of run mode so
+    # that the saved-scope restore path works on first paint.
+    assert 'data-scope-default="src/attune/security"' in body
+    # The Run button + Action column stay hidden — read-only suppresses
+    # execution surfaces but preserves the picker's observability.
+    assert "data-run-button" not in body
+    assert ">Action<" not in body
 
 
 def test_workflows_run_button_has_per_workflow_aria_label(tmp_path, monkeypatch):

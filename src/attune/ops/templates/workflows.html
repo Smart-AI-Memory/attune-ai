@@ -21,7 +21,7 @@
         <th class="num">Stages</th>
         <th>Tier map</th>
         <th>Description</th>
-        {% if allow_run %}<th>Scope</th>{% endif %}
+        <th>Scope</th>
         {% if allow_run %}<th class="num">Action</th>{% endif %}
       </tr>
     </thead>
@@ -35,7 +35,7 @@
            workflows like release-prep / health-check that don't map
            to a single feature. #}
         <tr data-workflow="{{ w.name }}"
-            data-scope-default="{{ default_scopes[w.name] if allow_run and supports_path[w.name] else '' }}">
+            data-scope-default="{{ default_scopes[w.name] if supports_path[w.name] else '' }}">
           <td><code>{{ w.name }}</code></td>
           {# Stages=0 means the workflow doesn't expose a stages array
              (typical for meta-orchestration workflows that compose
@@ -64,28 +64,32 @@
               <pre data-log class="log-output"></pre>
             </div>
           </td>
+          {# Scope cell renders in both run and read-only modes (AC-6).
+             In read-only mode the picker still pre-selects the saved
+             scope so the choice persists for when the user enables
+             runs; only the Action column hides. #}
+          <td class="scope-cell">
+            {% if supports_path[w.name] %}
+              <select class="scope-picker" data-scope-picker aria-label="Scope for {{ w.name }}">
+                <option value="">Project-wide</option>
+                {% for f in features %}
+                  {% if f.path %}
+                    <option value="{{ f.path }}" title="{{ f.description }}">{{ f.name }}</option>
+                  {% endif %}
+                {% endfor %}
+                <option value="{{ all_code_path }}" title="All source code under {{ all_code_path }}">All code ({{ all_code_path }})</option>
+                <option value="__custom__">Custom path…</option>
+              </select>
+              <input type="text" class="scope-custom" data-scope-custom hidden
+                     placeholder="e.g. src/attune/security/"
+                     aria-label="Custom scope path for {{ w.name }}">
+            {% else %}
+              <span class="scope-na"
+                    data-tooltip="This workflow doesn't accept a path argument"
+                    aria-label="This workflow doesn't accept a path argument">n/a</span>
+            {% endif %}
+          </td>
           {% if allow_run %}
-            <td class="scope-cell">
-              {% if supports_path[w.name] %}
-                <select class="scope-picker" data-scope-picker aria-label="Scope for {{ w.name }}">
-                  <option value="">Project-wide</option>
-                  {% for f in features %}
-                    {% if f.path %}
-                      <option value="{{ f.path }}" title="{{ f.description }}">{{ f.name }}</option>
-                    {% endif %}
-                  {% endfor %}
-                  <option value="{{ all_code_path }}" title="All source code under {{ all_code_path }}">All code ({{ all_code_path }})</option>
-                  <option value="__custom__">Custom path…</option>
-                </select>
-                <input type="text" class="scope-custom" data-scope-custom hidden
-                       placeholder="e.g. src/attune/security/"
-                       aria-label="Custom scope path for {{ w.name }}">
-              {% else %}
-                <span class="scope-na"
-                      data-tooltip="This workflow doesn't accept a path argument"
-                      aria-label="This workflow doesn't accept a path argument">n/a</span>
-              {% endif %}
-            </td>
             <td class="num">
               <button class="btn btn-run" type="button" data-run-button data-workflow="{{ w.name }}" aria-label="Run {{ w.name }}">Run</button>
             </td>

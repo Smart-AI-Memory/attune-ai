@@ -1,8 +1,19 @@
 # Proposal: Ops dashboard scope-picker — remember last-used scope
 
-**Status:** Draft (2026-05-14)
+**Status:** Implemented (2026-05-16)
 **Author:** Patrick (with Claude as drafter)
 **Scope:** `src/attune/ops/` — workflow scope picker UX
+
+**Shipping history:**
+
+- AC-1 through AC-5 landed in PRs #344 (initial), #363, #365 (Phase A3,
+  per-workflow defaults from `features.yaml`).
+- AC-6 (picker renders in read-only mode) closed in the follow-up
+  `feat/ops-scope-picker-ia-impl` PR — template now drops the
+  `{% if allow_run %}` wrap on the Scope column and the row's
+  `data-scope-default` attribute. Only the Action column hides; the
+  picker observes and remembers state for when the user re-enables
+  runs.
 
 ---
 
