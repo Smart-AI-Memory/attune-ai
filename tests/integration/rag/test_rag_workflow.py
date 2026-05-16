@@ -268,7 +268,9 @@ def test_execute_surfaces_sdk_generic_exception_as_error_result() -> None:
 
     assert result.success is False
     assert result.error is not None
-    assert "Agent SDK error" in result.error
+    # PR #357 (2026-04-17) reshaped sdk_error_message output:
+    # "Agent SDK error" → "Agent SDK failure (<ExceptionType>)".
+    assert "Agent SDK failure" in result.error
     assert "ValueError" in result.error
 
 
@@ -327,7 +329,11 @@ def test_execute_passes_cwd_to_sdk_options() -> None:
     ):
         asyncio.run(workflow.execute(query="security audit", cwd="/explicit/cwd"))
 
-    assert captured.get("cwd") == "/explicit/cwd"
+    # PR #401 (2026-05-13) made resolve_cwd_for_path return Path,
+    # not str. Compare against the Path equivalent.
+    from pathlib import Path
+
+    assert captured.get("cwd") == Path("/explicit/cwd")
 
 
 def test_execute_defaults_cwd_to_current_dir() -> None:
@@ -356,7 +362,11 @@ def test_execute_defaults_cwd_to_current_dir() -> None:
     ):
         asyncio.run(workflow.execute(query="security audit"))
 
-    assert captured.get("cwd") == os.getcwd()
+    # PR #401 (2026-05-13) made resolve_cwd_for_path return Path,
+    # not str. Compare against the Path equivalent.
+    from pathlib import Path
+
+    assert captured.get("cwd") == Path(os.getcwd())
 
 
 def test_record_feedback_continues_after_individual_failure() -> None:
