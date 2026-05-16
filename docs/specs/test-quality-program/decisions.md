@@ -540,3 +540,38 @@ Documented in the fixture docstrings for future readers.
 **PR:** _(filled in after merge)_
 **Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
 "2026-05-14 — seventeenth module under test-quality-program"
+
+
+## workflows/release_prep.py
+
+**Date:** 2026-05-16
+**Rubric score at pick time:** 1.71 (weight=3 × gap=0.569 × risk=1.0)
+**Picked because:** Top viable pick (excluding `?` coverage-omit
+artifacts) from the 2026-05-14 rubric cache. Deferred two days ago
+in favor of `memory/short_term/queues.py` due to "active development
+collision risk" with discovery-sweep work — that work shipped (#411)
+and `workflows/release_prep.py` is now quiet. SDK-shell archetype:
+6 existing tests covered only class attributes; `execute()` and
+`_run_agent_prep()` had zero behavioral coverage. The reusable test
+scaffold pattern from CLAUDE.md ("SDK-native workflow shell scaffold
+is reusable across 6+ siblings — single-pass rename") applied
+cleanly; release-prep is the first 4-subagent variant in the family
+(siblings have 2 or 3).
+**Outcome:** 1 test file added
+(`tests/unit/workflows/test_release_prep_execute.py`, 22 tests).
+Coverage 43.1% → **100.00%** line + branch (52/52 statements,
+6/6 branches). **Zero production bugs surfaced.**
+
+**Pattern notes for future SDK-shell cycles:**
+- The 4-subagent count was the only meaningful adaptation from the
+  3-subagent sibling templates — system prompt + subagent set + the
+  `test_passes_subagent_definitions` assertion. Everything else
+  (depth mapping, exception handling, _error_result shape, real-SDK
+  message fixtures) carried over verbatim.
+- Stage name in `_error_result` returns `self.name` =
+  `"release-prep"` (the workflow's external name), not the internal
+  stage list value `"agent-prep"`. Test asserts on `"release-prep"`.
+
+**PR:** _(filled in after merge)_
+**Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
+"2026-05-16 — eighteenth module under test-quality-program"

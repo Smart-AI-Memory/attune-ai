@@ -112,6 +112,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Internal
 
+- Test-quality-program: `workflows/release_prep.py`
+  (`ReleasePreparationWorkflow`) coverage 43.1% → **100.00%**
+  line + branch. 22 tests added in
+  `tests/unit/workflows/test_release_prep_execute.py` covering
+  `execute()` argument validation, the depth → max_turns
+  mapping (quick/standard/deep/unknown/default), the four
+  exception branches (ImportError, ConnectionError,
+  TimeoutError, generic), `_run_agent_prep()` direct invocation
+  including the four-subagent definition wiring
+  (health-checker, security-scanner, changelog-generator,
+  release-assessor), and the `_error_result()` shape. Reuses
+  the SDK-shell test scaffold from sibling workflows
+  (refactor_plan, perf_audit, dependency_check, etc.) — release-prep
+  is the first 4-subagent variant in the family. Real
+  `claude_agent_sdk.AssistantMessage` / `ResultMessage` /
+  `TextBlock` instances per the existing CLAUDE.md lesson on
+  isinstance-based collectors. Zero production bugs surfaced.
 - Test-quality-program: `memory/short_term/queues.py`
   (`QueueManager`) coverage 62.1% → **100.00%** line + branch.
   24 deterministic tests in
