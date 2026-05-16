@@ -5079,3 +5079,95 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   logs, transaction logs) where you want O(1) staleness
   detection without re-hashing megabytes of unchanged
   history.
+
+- **Long-stale `uv.lock` + `uv lock` regen during
+  a release pulls in a dep cascade beyond the
+  version bump — defer the lock catch-up to a
+  separate PR**: hit 2026-05-15 releasing
+  attune-author 0.12.0. The lockfile had
+  `attune-author 0.6.1` (multiple minor versions
+  behind 0.11.1 current). Running `uv lock` to
+  refresh pulled in: attune-author 0.6.1 → 0.12.0
+  (expected), attune-help 0.10.1 → 0.11.0 (real
+  dep upgrade — unexpected during a release), AND
+  three new dev deps (pytest-asyncio, syrupy,
+  backports-asyncio-runner) added to pyproject
+  without re-locking. The attune-help bump
+  triggered a local snapshot-test failure via
+  sibling-workspace drift, almost derailing the
+  release. Lesson: **before running `uv lock`
+  during release ceremony, check `git diff
+  uv.lock --stat` for unexpected scope.** If the
+  lock is far behind, the catch-up resolution is
+  a separate concern from "ship the release" —
+  defer to a follow-up PR so the release commit
+  stays auditable as version-only. Counter-rule:
+  if CI uses `pip install -e ".[dev]"` (not `uv
+  sync`), uv.lock isn't on the release critical
+  path — PyPI consumers never see it, so the
+  defer is safe.
+
+- **Sibling-workspace drift causes local-only
+  snapshot test failures while CI is green —
+  diagnose by checking the editable sibling's
+  unreleased commits before suspecting your own
+  changes**: hit 2026-05-15 during attune-author
+  0.12.0 release prep.
+  `tests/test_generated_templates_golden.py::test_task_template_matches_snapshot`
+  failed locally with a snapshot mismatch on the
+  generated title (`# Work with auth` vs
+  `# Authenticate a user`). Same commit was green
+  on CI's 12-cell matrix. Root cause:
+  attune-author's `[tool.uv.sources]` declares
+  `attune-help = { path = "../attune-help",
+  editable = true }`. Local sibling at
+  `~/attune-help` was post-0.11.0-release with
+  unreleased template-generation changes. CI
+  installs via `pip install -e ".[dev]"` which
+  pulls attune-help from PyPI (clean 0.11.0
+  wheel), so CI sees the snapshot-matching
+  output. Diagnosis recipe: when a snapshot test
+  fails locally on a release commit that touches
+  only version files / CHANGELOG, **first** run
+  `python -c "import <sibling>;
+  print(<sibling>.__file__)"`. If it resolves to
+  a sibling working tree, run `cd ../<sibling> &&
+  git log <tag>..HEAD --oneline` to see the
+  drift. Three options:
+  (1) trust CI, skip the test locally;
+  (2) `cd ../<sibling> && git checkout <tag>`
+  to match PyPI;
+  (3) accept and regenerate the snapshot if the
+  drift represents a desired change.
+  Pairs with the existing "PR scope after commits
+  have already landed" lesson — both share the
+  pattern "CI is the authoritative truth, local
+  state may be ahead in ways CI can't see."
+
+- **Read/head/cat on untracked `.txt` files in a
+  repo working tree can leak secrets into the
+  conversation transcript — let the filename do
+  the smell test BEFORE the Read**: hit
+  2026-05-15 during attune-author release prep.
+  `git status` showed three untracked files
+  (`Codex-results.txt`, `attune.txt`,
+  `twilio.txt`). A reflexive `head -3` on all
+  three to "see what they are" echoed a live
+  `sk-ant-api03-...` Anthropic API key into the
+  conversation transcript. Required revoke +
+  rotate. Pairs with the existing "Never paste
+  PyPI tokens into chat" lesson — same failure
+  mode, different vector (file Read vs human
+  paste). Defensive rule: **filenames are the
+  smell test**. Untracked files whose names
+  suggest credentials (`attune.txt`, `twilio.txt`,
+  `*.env*`, `*creds*`, `*secrets*`, `*api*key*`,
+  `*token*`) should be treated as opaque — move
+  out of the working tree (`mv X
+  ~/.attune/scratch/`) or delete with `rm` based
+  on provenance, without opening. Reserve Read
+  for filenames whose shape suggests safe content
+  (`*.md`, `*.py`, output dumps with clear
+  topical naming like `Codex-results.txt`). The
+  transcript is permanent; revocation is the
+  only recovery.
