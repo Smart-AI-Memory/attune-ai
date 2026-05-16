@@ -326,7 +326,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             return {"success": False, "error": f"Unknown tool: {tool_name}"}
         except Exception as e:  # noqa: BLE001
             logger.exception("Tool execution failed: %s", tool_name)
-            return {"success": False, "error": f"Tool execution failed: {type(e).__name__}"}
+            detail = str(e)
+            msg = f"Tool execution failed: {type(e).__name__}"
+            if detail:
+                msg = f"{msg}: {detail}"
+            return {"success": False, "error": msg}
 
     async def call_tool(self, tool_name: str, arguments: dict[str, Any]) -> dict[str, Any]:
         """Execute a tool call with unified voice layer.
