@@ -55,8 +55,20 @@ class RunnerBusyError(RuntimeError):
 
 
 RunStatus = Literal["pending", "running", "completed", "failed"]
-EventKind = Literal["line", "done", "error"]
+EventKind = Literal["line", "done", "error", "recommendation"]
 Event = tuple[EventKind, object]
+
+# Workflows emit structured recommendations by printing a stdout line
+# prefixed with this marker followed by a JSON object. The runner
+# parses and routes these to the ``recommendation`` SSE channel; the
+# marker line itself is dropped from the visible log to keep the
+# user-facing output clean. See docs/specs/ops-runner-tier2/ Phase 5.
+_RECOMMENDATION_MARKER = "ATTUNE_REC "
+_VALID_REC_KINDS: frozenset[str] = frozenset(("next-workflow", "open-url"))
+# Open-URL recommendations are restricted to plain http(s) — no
+# javascript:, file://, data:, or vbscript: schemes. Defensive even
+# though the client also gates window.open on the same check.
+_VALID_URL_SCHEMES: tuple[str, ...] = ("http://", "https://")
 
 
 _VALID_STATUSES: frozenset[str] = frozenset(("pending", "running", "completed", "failed"))
@@ -95,6 +107,10 @@ class Run:
     # exactly what ran. ``None`` for runs that never executed.
     command: list[str] | None = None
     lines: list[str] = field(default_factory=list)
+    # Buffered recommendations replayed to late subscribers so a user
+    # who opens /runs/<id>/view after the run finished still sees the
+    # cards. Bounded to avoid unbounded growth on a misbehaving workflow.
+    recommendations: list[dict[str, object]] = field(default_factory=list)
     subscribers: set[asyncio.Queue[Event]] = field(default_factory=set)
 
     @property
@@ -185,6 +201,26 @@ class Run:
         self.completed_at = datetime.now(timezone.utc)
         self._broadcast(("done", {"exit_code": exit_code, "status": self.status}))
 
+    # Per-run recommendation cap. Workflows that hit this cap have
+    # something pathological going on (or are emitting one per finding
+    # without dedup). 50 is generous; the dashboard would already be
+    # unusable with that many cards.
+    _RECOMMENDATION_CAP = 50
+
+    def emit_recommendation(self, payload: dict[str, object]) -> None:
+        """Broadcast a validated recommendation payload to subscribers.
+
+        Validation happens at the :class:`RunnerService` layer (which
+        knows ``project_root`` for path validation) — by the time the
+        payload reaches this method it is trusted. The method exists
+        on :class:`Run` rather than the service so tests can drive the
+        SSE channel directly without spinning up a service.
+        """
+        if len(self.recommendations) >= self._RECOMMENDATION_CAP:
+            return
+        self.recommendations.append(payload)
+        self._broadcast(("recommendation", payload))
+
     # Per-subscriber queue size. Realistic runs are 1k-5k log lines; if a
     # subscriber falls 1000 events behind, dropping it is correct. The
     # `except QueueFull` block in `_broadcast` was dead code before this
@@ -198,6 +234,8 @@ class Run:
         # Replay buffered state to this subscriber
         for line in self.lines:
             queue.put_nowait(("line", line))
+        for rec in self.recommendations:
+            queue.put_nowait(("recommendation", rec))
         if self.is_terminal:
             queue.put_nowait(("done", {"exit_code": self.exit_code, "status": self.status}))
         self.subscribers.add(queue)
@@ -248,6 +286,7 @@ class RunnerService:
         command_builder: CommandBuilder | None = None,
         executor: Callable[[Run], Awaitable[None]] | None = None,
         persistence_dir: Path | None = None,
+        project_root: Path | None = None,
     ) -> None:
         self._runs: OrderedDict[str, Run] = OrderedDict()
         self._history_limit = history_limit
@@ -255,10 +294,125 @@ class RunnerService:
         self._lock = asyncio.Lock()
         self._executor = executor or self._execute
         self._persistence_dir = persistence_dir
+        # ``project_root`` is used to validate path-bearing recommendation
+        # payloads against the same allowed_dir the runner enforces for
+        # /workflows/<name>/run requests. ``None`` disables path
+        # validation, which is fine for test fixtures that only exercise
+        # the SSE channel; production wiring in ``server.py`` always
+        # supplies it.
+        self._project_root = project_root
 
     @property
     def persistence_dir(self) -> Path | None:
         return self._persistence_dir
+
+    def _validate_recommendation(self, payload: object) -> dict[str, object] | None:
+        """Return a sanitized recommendation payload or ``None`` if invalid.
+
+        Validation rules (see docs/specs/ops-runner-tier2/ Phase 5):
+
+        - ``payload`` must be a JSON object.
+        - ``kind`` must be one of :data:`_VALID_REC_KINDS`.
+        - For ``next-workflow``: ``name`` must be a registered workflow.
+          Optional ``args.path``, when present, must pass
+          ``_validate_file_path(allowed_dir=project_root)``.
+        - For ``open-url``: ``url`` must start with ``http://`` or
+          ``https://``.
+        - Optional ``label`` and ``severity`` fields are coerced to
+          str / lowercased and pass through.
+
+        Invalid payloads return ``None`` after a warning log — the
+        caller drops them silently from the SSE channel.
+        """
+        if not isinstance(payload, dict):
+            logger.warning("recommendation rejected: payload not a JSON object")
+            return None
+        kind = payload.get("kind")
+        if not isinstance(kind, str) or kind not in _VALID_REC_KINDS:
+            logger.warning("recommendation rejected: bad kind %r", kind)
+            return None
+
+        sanitized: dict[str, object] = {"kind": kind}
+        if "label" in payload and isinstance(payload["label"], str):
+            sanitized["label"] = payload["label"][:200]
+        if "severity" in payload and isinstance(payload["severity"], str):
+            sanitized["severity"] = payload["severity"].lower()[:20]
+
+        if kind == "next-workflow":
+            name = payload.get("name")
+            if not isinstance(name, str) or not name:
+                logger.warning("recommendation rejected: next-workflow name missing")
+                return None
+            # Verify against the live registry. Cheap: ~25 entries, no I/O.
+            from attune.ops import data as _data
+
+            valid_names = {w.name for w in _data.list_workflows()}
+            if name not in valid_names:
+                logger.warning("recommendation rejected: unknown workflow %r", name)
+                return None
+            sanitized["name"] = name
+
+            args = payload.get("args")
+            if args is not None and not isinstance(args, dict):
+                logger.warning("recommendation rejected: args not an object")
+                return None
+            if isinstance(args, dict):
+                sanitized_args: dict[str, object] = {}
+                if "path" in args:
+                    raw_path = args["path"]
+                    if not isinstance(raw_path, str) or not raw_path:
+                        logger.warning("recommendation rejected: bad args.path")
+                        return None
+                    if self._project_root is not None:
+                        from attune.security.path_validation import _validate_file_path
+
+                        try:
+                            validated = _validate_file_path(
+                                raw_path, allowed_dir=str(self._project_root)
+                            )
+                        except ValueError as exc:
+                            logger.warning(
+                                "recommendation rejected: args.path failed validation (%s)",
+                                exc,
+                            )
+                            return None
+                        sanitized_args["path"] = str(validated)
+                    else:
+                        sanitized_args["path"] = raw_path
+                if sanitized_args:
+                    sanitized["args"] = sanitized_args
+            return sanitized
+
+        # kind == "open-url"
+        url = payload.get("url")
+        if not isinstance(url, str) or not url.startswith(_VALID_URL_SCHEMES):
+            logger.warning("recommendation rejected: bad open-url url %r", url)
+            return None
+        sanitized["url"] = url
+        return sanitized
+
+    def handle_stdout_line(self, run: Run, line: str) -> None:
+        """Route a raw stdout line to either the log or the recommendation channel.
+
+        Lines prefixed with :data:`_RECOMMENDATION_MARKER` are parsed as
+        JSON, validated, and broadcast as a ``recommendation`` event.
+        Bad markers (parse error, validation failure) are dropped — they
+        do NOT pollute the visible log so workflows can iterate on the
+        protocol without leaking debug noise. Non-marker lines flow to
+        the normal append_line path.
+        """
+        if line.startswith(_RECOMMENDATION_MARKER):
+            raw = line[len(_RECOMMENDATION_MARKER) :]
+            try:
+                parsed = json.loads(raw)
+            except json.JSONDecodeError:
+                logger.warning("recommendation marker had malformed JSON")
+                return
+            sanitized = self._validate_recommendation(parsed)
+            if sanitized is not None:
+                run.emit_recommendation(sanitized)
+            return
+        run.append_line(line)
 
     @property
     def current(self) -> Run | None:
@@ -404,7 +558,7 @@ class RunnerService:
                 raw = await proc.stdout.readline()
                 if not raw:
                     break
-                run.append_line(raw.decode("utf-8", errors="replace").rstrip("\n"))
+                self.handle_stdout_line(run, raw.decode("utf-8", errors="replace").rstrip("\n"))
             await proc.wait()
             self._finish_run(run, proc.returncode if proc.returncode is not None else -1)
         except Exception as exc:  # noqa: BLE001

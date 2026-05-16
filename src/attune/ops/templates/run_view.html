@@ -26,6 +26,11 @@
      same workflow. Without it, the current run would appear as one
      of its own "Recent" siblings (P1-5 in the 2026-05-14 QA punch list). #}
   <div class="run-view-history" data-recent-runs="{{ run.workflow }}" data-exclude-run-id="{{ run.id }}" hidden></div>
+  {# Phase 5 — structured recommendation cards. Workflows emit
+     ATTUNE_REC <json> stdout lines; the runner parses, validates,
+     and broadcasts them on the recommendation SSE channel.
+     run_view.js renders each payload as an action card here. #}
+  <div class="run-view-recommendations" data-recommendations hidden></div>
 </section>
 
 {# Phase 3.3 — live progress for discovery-sweep. Hidden unless the

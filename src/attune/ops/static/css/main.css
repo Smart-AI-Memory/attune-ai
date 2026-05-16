@@ -1412,3 +1412,57 @@ a.kpi:hover {
   max-height: 240px;
   overflow: auto;
 }
+
+/* ---------- Phase 5 — recommendation action cards (run_view) ---------- */
+
+.run-view-recommendations {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 12px 0;
+}
+.recommendation-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 4px solid var(--accent);
+  border-radius: var(--radius-sm);
+}
+.recommendation-card[data-severity="critical"],
+.recommendation-card[data-severity="high"] {
+  border-left-color: var(--danger, #d33);
+}
+.recommendation-card[data-severity="medium"] {
+  border-left-color: var(--warn, #c80);
+}
+.recommendation-card[data-severity="low"],
+.recommendation-card[data-severity="info"] {
+  border-left-color: var(--muted, #888);
+}
+.recommendation-card-body {
+  flex: 1 1 auto;
+  font-size: 13px;
+  color: var(--fg);
+}
+.recommendation-card .btn-rec {
+  flex: 0 0 auto;
+  padding: 4px 12px;
+  font-size: 12px;
+  background: var(--accent);
+  color: #fff;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: opacity 120ms;
+}
+.recommendation-card .btn-rec:hover {
+  opacity: 0.88;
+}
+.recommendation-card .btn-rec:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}

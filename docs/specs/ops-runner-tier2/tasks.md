@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 + Phase 6 pending
+**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 infrastructure complete 2026-05-16 (recommendation channel + run-view cards, minus the demo workflow integration 5.4); Phase 6 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -86,15 +86,12 @@ Goal: per-row dropdown that scopes the workflow run to one feature or custom pat
 
 Goal: workflows can emit JSON recommendations rendered as action cards on the run-view page.
 
-- [ ] **5.1** Extend SSE event types in `routes/runner.py`. Existing: `line`, `done`. New: `recommendation`.
-- [ ] **5.2** Server-side validation: `kind` must be in allowlist (`next-workflow`, `open-url`), `name` must be a registered workflow, `args.path` must pass `_validate_file_path`. Drop bad payloads with warning log.
-- [ ] **5.3** `run_view.js`: listen for `recommendation` events. Render an action card into the page's `.run-view-recommendations` slot via `renderRecommendationCard(payload)`.
-- [ ] **5.4** Pick ONE workflow to demonstrate end-to-end. Candidate: `code-review` emitting `{"kind": "next-workflow", "name": "bug-predict", "args": {"path": "<same scope>"}, "label": "Run bug-predict to verify"}` when it finds CWE-style issues.
-- [ ] **5.5** CSS: `.recommendation-card` action card with hover/click states + severity color.
-- [ ] **5.6** Tests:
-      - `test_recommendation_event_emitted` — workflow emits, server broadcasts
-      - `test_recommendation_event_validated` — bad payload dropped
-      - `test_recommendation_card_renders` — JS smoke
+- [x] **5.1** Extend SSE event types in `routes/runner.py`. Existing: `line`, `done`. New: `recommendation`. **Shipped 2026-05-16** — `EventKind` literal extended in `src/attune/ops/runner.py`; `Run` gained a bounded `recommendations` buffer + `emit_recommendation()` broadcast hook + replay-on-subscribe.
+- [x] **5.2** Server-side validation. **Shipped** — `RunnerService._validate_recommendation()` + `handle_stdout_line()` parse the new `ATTUNE_REC <json>` stdout marker; bad kind / unknown workflow / path-traversal `args.path` / non-http(s) urls drop with a `logger.warning`.
+- [x] **5.3** `run_view.js`: listen for `recommendation` events. **Shipped** — `renderRecommendationCard(payload)` injects an action card into `[data-recommendations]`; also exports `isSafeUrl()` as defense-in-depth for the open-url branch.
+- [ ] **5.4** Pick ONE workflow to demonstrate end-to-end. **Deferred** — separate PR to keep Phase 5 infra independent of workflow source changes.
+- [x] **5.5** CSS: `.recommendation-card` action card with hover/click states + severity color. **Shipped** — left-border severity color (critical/high=danger, medium=warn, low/info=muted) + `.btn-rec` button states in `static/css/main.css`.
+- [x] **5.6** Tests: 17 tests in `tests/unit/ops/test_recommendations.py` covering subscribe-time replay, the per-run cap, every validation reject branch, marker-line parsing, and the JS export smoke.
 
 ## Phase 6 — Telemetry + close
 

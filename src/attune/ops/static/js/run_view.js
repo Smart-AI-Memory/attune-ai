@@ -181,6 +181,21 @@
       es.close();
     });
 
+    es.addEventListener("recommendation", function (ev) {
+      // Phase 5 — structured action cards. The server validated the
+      // payload before broadcasting; we trust it here but still apply
+      // a final client-side url-scheme check before window.open to
+      // defend against any future server bypass.
+      try {
+        var payload = JSON.parse(ev.data);
+        renderRecommendationCard(payload);
+      } catch (e) {
+        // INTENTIONAL: a malformed payload in the stream should not
+        // kill the page. Log and move on.
+        console.warn("attune-ops: recommendation parse failed", e);
+      }
+    });
+
     es.addEventListener("error", function () {
       stopTicker();
       setStatus("stream error");
@@ -410,6 +425,97 @@
     return String(value).replace(/[^a-zA-Z0-9_-]/g, "\\$&");
   }
 
+  // ------------------------------------------------------------------
+  // Phase 5 — recommendation cards
+  // ------------------------------------------------------------------
+
+  // Client-side defense in depth: even though the server validates the
+  // url scheme, re-check before window.open in case a future server
+  // bypass slips through.
+  function isSafeUrl(url) {
+    return typeof url === "string" &&
+      (url.indexOf("http://") === 0 || url.indexOf("https://") === 0);
+  }
+
+  function renderRecommendationCard(payload) {
+    if (!payload || typeof payload !== "object") return;
+    var slot = document.querySelector("[data-recommendations]");
+    if (!slot) return;
+    var kind = payload.kind;
+    if (kind !== "next-workflow" && kind !== "open-url") return;
+
+    var card = document.createElement("div");
+    card.className = "recommendation-card";
+    if (payload.severity) {
+      card.setAttribute("data-severity", String(payload.severity));
+    }
+
+    // Body text: prefer the explicit label; fall back to a sensible
+    // default that names the action.
+    var labelText = payload.label;
+    if (!labelText) {
+      labelText = kind === "next-workflow"
+        ? "Run " + (payload.name || "")
+        : "Open link";
+    }
+    var body = document.createElement("span");
+    body.className = "recommendation-card-body";
+    body.textContent = labelText;
+    card.appendChild(body);
+
+    var action = document.createElement("button");
+    action.className = "btn btn-rec";
+    action.type = "button";
+    action.textContent = kind === "next-workflow" ? "Run" : "Open";
+    action.addEventListener("click", function () {
+      action.disabled = true;
+      if (kind === "next-workflow") {
+        var name = payload.name;
+        if (!name) { action.disabled = false; return; }
+        var body_json = {};
+        if (payload.args && typeof payload.args.path === "string") {
+          body_json.path = payload.args.path;
+        }
+        fetch("/workflows/" + encodeURIComponent(name) + "/run", {
+          method: "POST",
+          headers: {"Content-Type": "application/json"},
+          body: JSON.stringify(body_json)
+        }).then(function (resp) {
+          if (resp.status === 201) {
+            return resp.json().then(function (data) {
+              window.location.href = "/runs/" + data.run_id +
+                "/view?from=" + encodeURIComponent(DATA.workflow || "");
+            });
+          }
+          if (resp.status === 409) {
+            return resp.json().then(function (data) {
+              showInlineError(
+                "Cannot start " + name + " — run " + data.detail.current_run_id +
+                " is still active."
+              );
+              action.disabled = false;
+            });
+          }
+          showInlineError("Could not start " + name + " (HTTP " + resp.status + ")");
+          action.disabled = false;
+        }).catch(function (err) {
+          showInlineError("Could not start " + name + ": " + err);
+          action.disabled = false;
+        });
+      } else {
+        // open-url
+        if (isSafeUrl(payload.url)) {
+          window.open(payload.url, "_blank", "noopener,noreferrer");
+        }
+        action.disabled = false;
+      }
+    });
+    card.appendChild(action);
+
+    slot.appendChild(card);
+    slot.hidden = false;
+  }
+
   // Expose internals for tests.
   if (typeof window !== "undefined") {
     window.__attuneRunView = {
@@ -418,6 +524,8 @@
       pillTargetFromEvent: pillTargetFromEvent,
       parseSweepEventLine: parseSweepEventLine,
       updateSweepProgress: updateSweepProgress,
+      renderRecommendationCard: renderRecommendationCard,
+      isSafeUrl: isSafeUrl,
       DATA: DATA
     };
   }
