@@ -273,3 +273,80 @@ class TestHtmlDetailPage:
         resp = client.get(_HTML + digest + "?bucket=garbage")
         assert resp.status_code == 200
         assert "Queue Q" in resp.text
+
+
+class TestNormalizeFindingsDefensiveFilters:
+    """Direct unit coverage for ``_normalize_findings`` skip branches.
+
+    Two defensive filters exist in the helper: top-level entries must
+    be dicts (queue/questions/rejected wrappers), and the inner
+    ``finding`` field of questions/rejected wrappers must also be a
+    dict. Bad payloads come from persisted JSON written by older
+    sweep versions or hand-edited results — the route must degrade
+    silently rather than 500.
+    """
+
+    def test_queue_skips_non_dict_entries(self) -> None:
+        """Top-level non-dict entries (str/None/int) are silently dropped."""
+        from attune.ops.routes.sweep_results import _normalize_findings
+
+        raw = [
+            "not a dict",
+            None,
+            42,
+            {
+                "source": "bug-predict",
+                "severity": "high",
+                "title": "valid",
+            },
+        ]
+        rows = _normalize_findings("queue", raw)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "valid"
+
+    def test_questions_skips_wrapper_with_non_dict_finding(self) -> None:
+        """Questions/rejected wrappers whose ``finding`` isn't a dict
+        are dropped — protects against malformed persisted payloads."""
+        from attune.ops.routes.sweep_results import _normalize_findings
+
+        raw = [
+            # Wrapper exists but finding field is the wrong shape.
+            {"finding": "not a dict", "reason": "x", "next_step": "y"},
+            {"finding": None, "reason": "x", "next_step": "y"},
+            # And a valid wrapper that should survive.
+            {
+                "finding": {
+                    "source": "security-audit",
+                    "severity": "medium",
+                    "title": "kept",
+                },
+                "reason": "r",
+                "next_step": "n",
+            },
+        ]
+        rows = _normalize_findings("questions", raw)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "kept"
+        assert rows[0]["extra"]["label"] == "Why"
+
+    def test_rejected_skips_wrapper_with_non_dict_finding(self) -> None:
+        """Same filter applies to the ``rejected`` bucket — the ``rule``
+        side of the branch (else clause) gets its own coverage tick."""
+        from attune.ops.routes.sweep_results import _normalize_findings
+
+        raw = [
+            {"finding": ["not", "a", "dict"], "rule": "x"},
+            {
+                "finding": {
+                    "source": "pattern-scan",
+                    "severity": "low",
+                    "title": "kept-rejected",
+                },
+                "rule": "SEVERITY_BELOW_THRESHOLD",
+            },
+        ]
+        rows = _normalize_findings("rejected", raw)
+        assert len(rows) == 1
+        assert rows[0]["title"] == "kept-rejected"
+        assert rows[0]["extra"]["label"] == "Rule"
+        assert rows[0]["extra"]["value"] == "SEVERITY_BELOW_THRESHOLD"
