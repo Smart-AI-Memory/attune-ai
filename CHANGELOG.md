@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `code-review` workflow now emits an `ATTUNE_REC` recommendation
+  suggesting a `bug-predict` run on the same scope when its synthesized
+  output mentions CWE/CVE identifiers, common vulnerability classes
+  (SQL/command injection, path traversal, XSS, CSRF, hardcoded
+  secrets, insecure deserialization/random), or direct `eval(`/`exec(`
+  calls. The ops dashboard's run-view page surfaces this as a
+  clickable action card per the channel shipped in [#413](https://github.com/Smart-AI-Memory/attune-ai/pull/413).
+  Closes Phase 5.4 of [`docs/specs/ops-runner-tier2/`](docs/specs/ops-runner-tier2/tasks.md);
+  Phase 6 (telemetry + close) follows.
+
 - Structured recommendation channel on the ops dashboard's run-view
   page. Workflows can emit JSON action cards by printing a stdout
   line prefixed with `ATTUNE_REC ` followed by a JSON object. The

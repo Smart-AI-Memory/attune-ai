@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 infrastructure complete 2026-05-16 (recommendation channel + run-view cards, minus the demo workflow integration 5.4); Phase 6 pending
+**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 complete 2026-05-16 (recommendation channel + run-view cards + `code-review` demo integration); Phase 6 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -89,7 +89,7 @@ Goal: workflows can emit JSON recommendations rendered as action cards on the ru
 - [x] **5.1** Extend SSE event types in `routes/runner.py`. Existing: `line`, `done`. New: `recommendation`. **Shipped 2026-05-16** — `EventKind` literal extended in `src/attune/ops/runner.py`; `Run` gained a bounded `recommendations` buffer + `emit_recommendation()` broadcast hook + replay-on-subscribe.
 - [x] **5.2** Server-side validation. **Shipped** — `RunnerService._validate_recommendation()` + `handle_stdout_line()` parse the new `ATTUNE_REC <json>` stdout marker; bad kind / unknown workflow / path-traversal `args.path` / non-http(s) urls drop with a `logger.warning`.
 - [x] **5.3** `run_view.js`: listen for `recommendation` events. **Shipped** — `renderRecommendationCard(payload)` injects an action card into `[data-recommendations]`; also exports `isSafeUrl()` as defense-in-depth for the open-url branch.
-- [ ] **5.4** Pick ONE workflow to demonstrate end-to-end. **Deferred** — separate PR to keep Phase 5 infra independent of workflow source changes.
+- [x] **5.4** Pick ONE workflow to demonstrate end-to-end. **Shipped 2026-05-16** — `code-review` (`src/attune/workflows/code_review.py`) gained `_emit_security_recommendation_if_warranted()`, called at the end of `execute()`. Scans the synthesized review for CWE/CVE ids + common vulnerability-class phrases (SQL/command injection, path traversal, XSS, CSRF, hardcoded secrets, insecure deserialization/random, `eval(`/`exec(`); on a hit it prints an `ATTUNE_REC` marker suggesting `bug-predict` on the same scope. 26 tests in `tests/unit/workflows/test_code_review_recommendations.py` including a runner-validation round-trip.
 - [x] **5.5** CSS: `.recommendation-card` action card with hover/click states + severity color. **Shipped** — left-border severity color (critical/high=danger, medium=warn, low/info=muted) + `.btn-rec` button states in `static/css/main.css`.
 - [x] **5.6** Tests: 17 tests in `tests/unit/ops/test_recommendations.py` covering subscribe-time replay, the per-run cap, every validation reject branch, marker-line parsing, and the JS export smoke.
 

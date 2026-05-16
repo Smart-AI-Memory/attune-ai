@@ -14,7 +14,10 @@ Copyright 2025-2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import json
 import logging
+import re
+import sys
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -55,6 +58,71 @@ _SUBAGENT_NAMES = [
     "perf-reviewer",
     "architect-reviewer",
 ]
+
+# Phase 5.4 — When the synthesized review mentions any of these terms,
+# emit an ATTUNE_REC recommending a bug-predict run on the same scope.
+# Picked as terms that signal "this finding is worth a deeper look,"
+# not "any incidental security mention." The regex is case-insensitive
+# and word-bounded to avoid matching code that just imports something
+# named "injection" or "xss". A single hit on any term triggers one
+# recommendation per run (the runner caps at 50 anyway).
+_SECURITY_TRIGGERS = re.compile(
+    r"\b(CWE-\d+|CVE-\d+|"
+    r"sql\s*injection|command\s*injection|path\s*traversal|"
+    r"xss|cross[- ]site\s*scripting|csrf|"
+    r"hardcoded\s*(secret|credential|password|token|api\s*key)|"
+    r"insecure\s*(deserializ|random)|"
+    r"eval\(|exec\()",
+    re.IGNORECASE,
+)
+
+
+def _emit_security_recommendation_if_warranted(
+    result_text: str | None,
+    scope_path: str,
+    *,
+    output_stream: Any = None,
+) -> bool:
+    """Print an ``ATTUNE_REC`` line to stdout when the review surfaces
+    security-shaped findings.
+
+    Suggests running ``bug-predict`` on the same scope — bug-predict's
+    pattern scanner catches eval/exec/path-traversal that code-review
+    might call out narratively without locating the exact line. The
+    two workflows complement each other: code-review reads, bug-predict
+    pinpoints. The runner parses ``ATTUNE_REC`` markers on the SSE
+    channel and renders an action card on the run-view page (Phase 5
+    infrastructure, PR #413).
+
+    Args:
+        result_text: The synthesized review output. ``None`` / empty
+            skips emission.
+        scope_path: The ``--path`` that code-review ran against; passed
+            through to bug-predict so the recommendation lands on the
+            same files.
+        output_stream: Stream to print to. Defaults to ``sys.stdout``
+            so the runner's stdout reader captures it. Override in
+            tests to capture without monkeypatching.
+
+    Returns:
+        True iff a recommendation was emitted. Useful for tests + as
+        a signal for upstream telemetry hooks.
+    """
+    if not result_text or not scope_path:
+        return False
+    if not _SECURITY_TRIGGERS.search(result_text):
+        return False
+    payload: dict[str, Any] = {
+        "kind": "next-workflow",
+        "name": "bug-predict",
+        "args": {"path": scope_path},
+        "label": "Run bug-predict to locate the specific lines",
+        "severity": "high",
+    }
+    stream = output_stream if output_stream is not None else sys.stdout
+    print("ATTUNE_REC " + json.dumps(payload), file=stream, flush=True)
+    return True
+
 
 _SYSTEM_PROMPT = """\
 You are a senior code review orchestrator. You coordinate four \
@@ -171,6 +239,12 @@ class CodeReviewWorkflow(BaseWorkflow):
                     if base_text and base_text != "No results returned."
                     else f"## Subagent findings\n\n{rendered_transcripts}"
                 )
+
+            # Phase 5.4 — emit an ATTUNE_REC marker when the synthesized
+            # review surfaces security/CWE-shaped findings, suggesting
+            # a bug-predict run on the same scope. The ops dashboard's
+            # runner parses this and renders an action card.
+            _emit_security_recommendation_if_warranted(run_result.result_text, resolved_path)
 
             return AgentSDKResultAdapter.from_agent_output(
                 result_text=run_result.result_text,
