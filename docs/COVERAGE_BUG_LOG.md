@@ -1,3 +1,62 @@
+## 2026-05-16 — eighteenth module under test-quality-program (Opus 4.7)
+
+First cycle after a two-day pause. Selected from the existing
+2026-05-14 rubric cache (`memory/short_term/queues.py` shipped two
+days ago; release_prep was the next-highest viable pick, deferred at
+the time due to discovery-sweep collision risk that has since
+cleared with #411): `workflows/release_prep.py`, score 1.71 (W=3 ×
+gap=0.569 × risk=1.0 — capable/orchestration tier), **43.1%
+covered → 100.00%**. **Zero production bugs surfaced.**
+
+- `workflows/release_prep.py` (`ReleasePreparationWorkflow`) — no
+  bugs. Module is the SDK-shell archetype documented in CLAUDE.md
+  ("SDK-native workflow shell scaffold is reusable across 6+
+  siblings — single-pass rename"). Existing test surface (6 tests)
+  covered only class attributes; `execute()` and `_run_agent_prep()`
+  had no behavioral coverage at all. The four execution branches
+  (success, validation error, depth mapping, exception handling) +
+  the SDK loop's two state branches (assistant_parts grows
+  vs. result-only) are now all measured.
+
+**Coverage delta:** 43.1% → 100.00% (line + branch, 52/52
+statements, 6/6 branches).
+
+**Tests:** 22 added under
+`tests/unit/workflows/test_release_prep_execute.py`. Real
+`claude_agent_sdk.AssistantMessage` / `ResultMessage` / `TextBlock`
+instances per the existing CLAUDE.md lesson on isinstance-based
+collectors; only `claude_agent_sdk.query` is mocked. Five test
+classes mirror the sibling scaffold:
+- `TestExecuteValidation` (2) — missing + empty path early-return
+- `TestExecuteSuccess` (4) — happy path, metadata, result-only,
+  empty-stream
+- `TestExecuteDepthMapping` (5) — quick/standard/deep/unknown/default
+- `TestExecuteExceptionHandling` (4) — ImportError, ConnectionError,
+  TimeoutError, RuntimeError
+- `TestRunAgentPrepDirect` (4) — collect path, empty path, all four
+  subagent definitions, default depth kwarg
+- `TestErrorResult` (3) — structure, stage metadata, timestamp bounds
+
+### Implementation note: 4-subagent variant of the SDK-shell family
+
+`release-prep` is the first 4-subagent variant in the SDK-native
+workflow family. Siblings split: `dependency_check` (2), then
+`bug_predict` / `perf_audit` / `refactor_plan` / `doc_audit` /
+`document_gen` (3 each). The CLAUDE.md lesson explicitly calls
+out "count subagents in the source before writing the
+`test_passes_subagent_definitions` assertion" — release-prep's
+4-subagent set (health-checker, security-scanner,
+changelog-generator, release-assessor) is the asymmetric case.
+The rest of the scaffold (depth mapping, exception branches,
+_error_result shape) is identical to the 3-subagent siblings.
+
+Stage name in `_error_result` returns `self.name = "release-prep"`
+(the workflow's external name from `name = "release-prep"`), NOT
+the internal stage list value `"agent-prep"` from `stages =
+["agent-prep"]`. Test asserts on `"release-prep"`.
+
+---
+
 ## 2026-05-14 — seventeenth module under test-quality-program (Opus 4.7)
 
 Second cycle of the day, after the docstring fix on the rubric
@@ -1141,10 +1200,10 @@ they predate this log.
 
 **Sessions where 0 bugs surfaced:** 1 (session 49b).
 
-**Bug-find rate:** 18 bugs across 80 modules pushed to 100% = ~22% of
+**Bug-find rate:** 18 bugs across 81 modules pushed to 100% = ~22% of
 modules contain at least one production bug surfaced by the coverage push.
 Plus 3 merge-artifact bugs surfaced by the test-infrastructure spec
 (version mismatch, commands-directory test, stale templates) that aren't
 strictly coverage-push finds but came from the same investigative posture.
 
-Modules at 100%: 80 (cumulative across all sessions).
+Modules at 100%: 81 (cumulative across all sessions).
