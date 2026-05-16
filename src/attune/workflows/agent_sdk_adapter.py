@@ -14,6 +14,7 @@ import os
 import re
 from dataclasses import dataclass
 from datetime import datetime
+from pathlib import Path
 from typing import Any
 
 import claude_agent_sdk
@@ -494,6 +495,27 @@ def get_max_budget_usd(depth: str = "standard") -> float | None:
         val = float(override)
         return val if val > 0 else None
     return _DEFAULT_BUDGET_USD.get(depth, 10.00)
+
+
+def resolve_cwd_for_path(path: str | Path) -> Path:
+    """Return a directory path suitable for the Agent SDK ``cwd=`` arg.
+
+    The Claude Agent SDK's ``cwd`` must be an existing directory.
+    Passing a file raises ``CLIConnectionError: Not a directory``
+    at subprocess startup, which the SDK surfaces opaquely as
+    ``Command failed with exit code 1``. When the caller's path
+    targets a single file (e.g. a per-module workflow run), the
+    file's parent directory is the correct ``cwd``.
+
+    Args:
+        path: File or directory path the workflow is targeting.
+
+    Returns:
+        ``Path(path).parent`` when ``path`` is an existing file;
+        otherwise ``Path(path)`` unchanged.
+    """
+    p = Path(path)
+    return p.parent if p.is_file() else p
 
 
 # Role-keyword to model mapping for subagents

@@ -2271,24 +2271,36 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / attune-help all share attune-help as a transitive
   dep with sometimes-divergent cap ranges.
 
-- **`attune workflow run code-review` and
-  `security-audit` require a DIRECTORY for `--path`, not
-  a single file — passing a file raises
-  `NotADirectoryError` deep inside the Claude Agent SDK
-  call**: discovered while trying to deep-review two
-  specific files (`rag_hook.py`, `rag_code_gen.py`).
-  Direct file paths fail after a few seconds of
-  spurious SDK spin-up (wasted API budget). Two ways to
-  adapt: (a) pass the parent directory and filter the
-  workflow's findings back down to your target file in
-  post-processing — noisy, scanner reports issues in
-  adjacent files as if they were in your scope; (b)
-  abandon the workflow for single-file reviews and do
-  direct reading + `grep`-based analysis — cheaper and
-  more precise. For targeted reviews of 1–3 files,
-  option (b) is strictly better. Reserve the workflow
-  for directory-scoped passes (module, package,
-  subsystem).
+- **SDK workflows accepting a file path used to crash
+  silently with `Command failed with exit code 1` —
+  fixed 2026-05-16 via `resolve_cwd_for_path()`
+  helper, but the underlying gotcha is broader**: the
+  Claude Agent SDK's `ClaudeAgentOptions(cwd=...)`
+  must be an existing directory; passing a file raises
+  `CLIConnectionError: [Errno 20] Not a directory` at
+  subprocess startup, which the SDK message reader
+  bubbles as the opaque `Command failed with exit
+  code 1` (no other diagnostic). All 15 SDK-native
+  workflows (`security_audit`, `code_review`,
+  `bug_predict`, `test_gen`, etc.) had the
+  `cwd=resolved_path` antipattern. Fix: every workflow
+  now wraps with `resolve_cwd_for_path(resolved_path)`
+  from `attune.workflows.agent_sdk_adapter`, which
+  returns `path.parent` when `path.is_file()` else
+  `path` unchanged. A drift-guard test
+  (`tests/unit/workflows/test_agent_sdk_adapter.py::
+  TestSdkWorkflowsUseCwdHelper`) asserts the
+  antipattern stays absent. The broader gotcha for
+  any future code calling `claude_agent_sdk.query()`:
+  always use `resolve_cwd_for_path()` for
+  user-supplied paths, even when the path "looks
+  like" a directory at the docstring level —
+  user invocations vary. Companion observation: when
+  workflows fail with `Command failed with exit
+  code 1` and `Cost & Time` shows `$0.0000 | 0.0s`,
+  the failure is at subprocess startup (cwd, auth,
+  CLI binary missing) — NOT a runtime budget/turn
+  issue. The `$0.0` is the diagnostic.
 
 - **Citation-forced prompting and prompt-injection
   resistance are separate threat models — solving one

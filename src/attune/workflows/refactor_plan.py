@@ -26,6 +26,7 @@ from .agent_sdk_adapter import (
     collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
+    resolve_cwd_for_path,
     sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
@@ -205,7 +206,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
             prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
                 system_prompt=_SYSTEM_PROMPT,
-                cwd=resolved_path,
+                cwd=resolve_cwd_for_path(resolved_path),
                 max_budget_usd=get_max_budget_usd(depth),
                 allowed_tools=["Read", "Glob", "Grep", "Agent"],
                 permission_mode="default",
