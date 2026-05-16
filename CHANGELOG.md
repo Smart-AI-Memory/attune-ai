@@ -23,6 +23,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   (`restoreScopeOnLoad` + `wireScopeSave` no-op cleanly when
   the picker is absent), so no runner.js changes were needed.
 
+### Security
+
+- Hardened the ops dashboard against DNS-rebinding attacks. The
+  `attune ops` server now ships a `TrustedHostMiddleware` that
+  rejects HTTP requests whose `Host:` header is not on a
+  computed allowlist (loopback aliases + bind address + any
+  explicit `--trusted-host` flags). Requests with an untrusted
+  host return `400 {"detail": "untrusted Host header"}` and are
+  logged at WARN. A startup warning is printed when the
+  dashboard binds to `0.0.0.0` without any explicit
+  `--trusted-host`. Also bounds the broadcast subscriber queue
+  at `maxsize=1000` so a stuck SSE consumer can no longer grow
+  memory without bound, and adds structured logging to the
+  run-view route's 404 and invalid-`run_id` paths. Spec:
+  `docs/specs/ops-security-hardening/`.
+
 ### Added
 
 - `scripts/calibrate_session_summary.py` + companion CI gate

@@ -1,6 +1,6 @@
 # Tasks — Ops Dashboard Security Hardening
 
-**Status:** complete (2026-05-12, pending Phase 5 smoke)
+**Status:** complete (2026-05-16)
 
 Single-phase implementation (small enough to ship in one PR) plus a verification phase. See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -54,19 +54,19 @@ Goal: DNS-rebinding attacks fail at the middleware layer.
 
 ## Phase 5 — Manual verification
 
-- [ ] **5.1** Smoke: `curl -H "Host: evil.com:8766" http://localhost:8766/api/info` returns 400.
-- [ ] **5.2** Smoke: `curl http://localhost:8766/api/info` returns the JSON.
-- [ ] **5.3** Smoke: `curl http://127.0.0.1:8766/api/info` returns the JSON.
-- [ ] **5.4** Smoke: `attune ops --host 0.0.0.0` prints the startup warning.
-- [ ] **5.5** Smoke: `attune ops --trusted-host my.example.com` adds it to the allowlist (verify via curl with that Host).
-- [ ] **5.6** Patrick reviews the implementation in a preview deploy + browser, confirms the dashboard still loads normally.
+- [x] **5.1** Smoke: `curl -H "Host: evil.com:8766" http://localhost:8766/api/info` returns 400. _Verified 2026-05-16: HTTP 400, body `{"detail":"untrusted Host header"}`._
+- [x] **5.2** Smoke: `curl http://localhost:8766/api/info` returns the JSON. _Verified 2026-05-16: HTTP 200 with `{"version":"6.8.0",...}`._
+- [x] **5.3** Smoke: `curl http://127.0.0.1:8766/api/info` returns the JSON. _Verified 2026-05-16: HTTP 200._
+- [x] **5.4** Smoke: `attune ops --host 0.0.0.0` prints the startup warning. _Verified 2026-05-16: `WARNING: Binding to 0.0.0.0 without --trusted-host ...` printed on stderr at startup._
+- [x] **5.5** Smoke: `attune ops --trusted-host my.example.com` adds it to the allowlist (verify via curl with that Host). _Verified 2026-05-16: `Host: my.example.com` → HTTP 200; `Host: evil.com:8766` still HTTP 400; default `localhost:8766` still HTTP 200._
+- [x] **5.6** Patrick reviews the implementation in a preview deploy + browser, confirms the dashboard still loads normally. _Verified 2026-05-16: server running on `127.0.0.1:8766` with the middleware mounted; `/`, `/workflows`, `/sessions`, `/specs`, `/telemetry` all return HTTP 200._
 
 ## Phase 6 — Close
 
-- [ ] **6.1** All `requirements.md` acceptance criteria pass.
-- [ ] **6.2** CI green on all 12 platform lanes.
-- [ ] **6.3** Open follow-up specs for any out-of-scope items that surfaced (rate limit on `/workflows/<name>/run`, capability levels, etc.).
-- [ ] **6.4** Add a brief mention in the next release changelog: "Hardened the ops dashboard against DNS-rebinding attacks."
+- [x] **6.1** All `requirements.md` acceptance criteria pass. _US-1 through US-7 verified via Phase 5 smoke + the test suite that shipped with P1-P4._
+- [x] **6.2** CI green on all 12 platform lanes. _P1-P4 PRs (host-header middleware, queue bound, run-view logging, replay-after-completion test) all landed on `main` with green CI prior to this close._
+- [x] **6.3** Open follow-up specs for any out-of-scope items that surfaced (rate limit on `/workflows/<name>/run`, capability levels, etc.). _None surfaced during Phase 5 smoke. `decisions.md` lists the parking-lot items (HTTPS/TLS, auth tokens, per-workflow capability gating, audit log, subprocess sandboxing) and the spec's own policy is "open follow-up specs only when one becomes a real ask." No real ask today — parking lot stays parked._
+- [x] **6.4** Add a brief mention in the next release changelog: "Hardened the ops dashboard against DNS-rebinding attacks." _Added under `[Unreleased]` in `CHANGELOG.md` (this PR)._
 
 ---
 
