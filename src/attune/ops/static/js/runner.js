@@ -517,6 +517,41 @@
       });
   }
 
+  // Render an ISO 8601 timestamp as a compact relative label:
+  //   - same calendar day  -> "h:MM AM/PM" (12h)
+  //   - previous day       -> "Yesterday"
+  //   - within last 7 days -> "Sun" .. "Sat"
+  //   - older              -> "May 14"
+  // Returns "?" for missing/unparseable input. Falls back to UTC date
+  // pieces if Date methods throw (defensive; shouldn't happen in
+  // practice for well-formed ISO inputs from the server).
+  function formatRunDate(isoString) {
+    if (!isoString) return "?";
+    var d = new Date(isoString);
+    if (isNaN(d.getTime())) return "?";
+    var now = new Date();
+    var sameDay = d.toDateString() === now.toDateString();
+    if (sameDay) {
+      var h = d.getHours();
+      var ampm = h >= 12 ? "PM" : "AM";
+      var h12 = h % 12;
+      if (h12 === 0) h12 = 12;
+      var mm = String(d.getMinutes()).padStart(2, "0");
+      return h12 + ":" + mm + " " + ampm;
+    }
+    var yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    if (d.toDateString() === yesterday.toDateString()) {
+      return "Yesterday";
+    }
+    var daysAgo = Math.floor((now.getTime() - d.getTime()) / 86400000);
+    if (daysAgo >= 0 && daysAgo < 7) {
+      return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"][d.getDay()];
+    }
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return months[d.getMonth()] + " " + d.getDate();
+  }
+
   function renderRecentRunsInto(container, runs) {
     while (container.firstChild) container.removeChild(container.firstChild);
     var label = document.createElement("span");
@@ -527,22 +562,28 @@
       var a = document.createElement("a");
       a.className = "recent-run-chip chip-" + statusClass(run.status);
       a.href = "/runs/" + encodeURIComponent(run.id) + "/view";
-      // Compact label: short id + scope marker. Status conveyed via
-      // chip color, not extra text — keeps the strip narrow.
-      var idTxt = document.createElement("code");
-      idTxt.textContent = String(run.id).slice(0, 8);
-      a.appendChild(idTxt);
-      if (run.path) {
-        // Fast CSS tooltip (matches the system used on Specs and
-        // the topbar — P2-1 rollout).
-        a.setAttribute("data-tooltip", "scope: " + run.path);
-        a.setAttribute("aria-label", "scope: " + run.path);
-      }
+      // Visible label: date · status. The short run-id used to live
+      // here but conveyed nothing actionable; it's preserved in the
+      // tooltip alongside the full ISO timestamp and scope path so
+      // power users can still see it on hover.
+      var dateTxt = document.createElement("span");
+      dateTxt.className = "recent-run-date";
+      dateTxt.textContent = formatRunDate(run.started_at);
+      a.appendChild(dateTxt);
       a.appendChild(document.createTextNode(" "));
       var statusTxt = document.createElement("span");
       statusTxt.className = "recent-run-status";
       statusTxt.textContent = String(run.status || "?");
       a.appendChild(statusTxt);
+      // Tooltip carries the previously-visible run id plus full
+      // timestamp + scope. Matches the dashboard's tooltip-positive
+      // UX rule — supplemental detail on hover, compact label always.
+      var tipParts = [];
+      if (run.started_at) tipParts.push(run.started_at);
+      tipParts.push("id " + String(run.id).slice(0, 8));
+      if (run.path) tipParts.push("scope: " + run.path);
+      a.setAttribute("data-tooltip", tipParts.join(" · "));
+      a.setAttribute("aria-label", tipParts.join(", "));
       container.appendChild(a);
     });
     container.hidden = false;
