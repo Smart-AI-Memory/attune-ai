@@ -1,4 +1,4 @@
-# Attune AI Framework v6.8.0
+# Attune AI Framework v7.0.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 6.8.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 7.0.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 
@@ -5326,6 +5326,56 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `TelemetrySummary`, `HomeKpis`,
   `TrustedHostMiddleware` with full prose
   explaining their roles.
+
+- **`/api/runs/<workflow>` returns a LIST; `/runs/<id>` (NOT
+  `/api/runs/<id>`) returns a SINGLE run — endpoint paths are
+  asymmetric and the wrong one fails silently in poll loops**:
+  the ops dashboard exposes `GET /api/runs/{workflow_name}`
+  (returns `{"workflow": ..., "runs": [...]}` — list of runs for
+  that workflow) AND `GET /runs/{run_id}` (returns one run by id).
+  A script polling `/api/runs/<run_id>` doesn't 404 — it matches
+  the workflow-list route on a workflow-name slug that happens to
+  resemble the id (e.g. the workflow runner accepted "f8ed53713add"
+  as a "workflow name" and returned an empty `runs:[]` list, no
+  `status` field). The poll's `.get("status", "")` then returns
+  empty forever, the loop hits its time cap, and the script moves
+  on while the actual workflow is still running — causing every
+  subsequent POST to return 409 "runner busy" because the previous
+  run never finished from the script's perspective. Hit during
+  the v7.0.0 workflows-tab review (2026-05-17) — first two runs
+  burned their full 8-min poll cap unnecessarily, then five more
+  workflows were skipped on 409. Fix: use `/runs/<id>` (singular,
+  no `/api/` prefix) for per-run status. Pre-flight with
+  `curl -s "$BASE/runs/$RID" | jq .status` before relying on the
+  endpoint in a script. Same shape as the existing "run_view_page
+  route returns 404 for disk-persisted runs after server restart"
+  lesson but a different failure mode (silent empty payload, not
+  404) — both are about the asymmetry between the workflow-list
+  and the per-id endpoints.
+
+- **`attune workflow run` on a mismatched input type (HTML to
+  code-review, etc.) exits 0 with a 2-second traceback that the
+  dashboard chip classifies as success**: a concrete instance of
+  the existing "exits 0 even when WorkflowResult.success is
+  False" lesson. Running code-review on
+  `src/attune/ops/templates/workflows.html` finished in 2.6s with
+  `exit_code: 0`; the persisted log shows
+  `ERROR:claude_agent_sdk._internal.query: Command failed with
+  exit code 1` followed by `code_review.py:226` raising in
+  `_run_agent_review`. The dashboard's defense-in-depth log-scan
+  (PR #366) should downgrade these to warn-yellow chips, but the
+  failure surfaces in <3 seconds with `exit_code=0` so a casual
+  glance at the recent-runs strip will see green. **Diagnostic
+  shortcut for "is this run a real run or a silent failure":
+  duration < 5 seconds on any LLM-backed workflow is essentially
+  always a startup failure.** Real workflow runs ALWAYS take at
+  least ~10s for the SDK handshake even on tiny inputs. Pair with
+  the existing "Workflow run-view route returns 404 ..." lesson:
+  both are dashboard surfaces where exit code 0 lies about real
+  success. Workflow operator preflight: before queueing a
+  code-review / doc-audit / test-audit run, eyeball the path
+  extension — these workflows assume Python source and will
+  silent-fail on `.html`, `.css`, `.md`, `.json`, etc.
 
 - **attune-author CLI does NOT auto-load
   `~/.attune/anthropic.env` — every shell

@@ -5,7 +5,34 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [7.0.0] — 2026-05-16
+
+### Removed — BREAKING
+
+Two long-deprecated modules whose tests were retired in the
+ignored-tests cleanup (2026-05-09), leaving them with zero coverage
+and zero internal callers. See
+`docs/specs/deprecated-module-retirement/` for the full retirement
+spec and rationale.
+
+- **`attune.workflows.orchestrated_release_prep`** (entire module).
+  Deprecated since v5.2.0; scheduled for removal in v6.0; six minor
+  versions overdue.
+  *Migration*: use `ReleasePrepTeamWorkflow` from
+  `attune.agents.release` (drop-in replacement: same constructor,
+  same `execute()` signature, same `ReleaseReadinessReport` return
+  type). The CLI path `attune workflow run release-prep` already
+  invokes the new workflow.
+  Symbols removed from `attune.workflows.__all__`:
+  `OrchestratedReleasePrepWorkflow`, `ReleaseReadinessReport`.
+  (`ReleaseReadinessReport` remains exported from
+  `attune.agents.release`.)
+- **`attune.scaffolding`** (entire CLI package). Deprecated since
+  2026-02-21 (commit 3833d5d6, PR #60); `__main__.py` has emitted
+  a runtime deprecation notice on every invocation.
+  *Migration*: use `attune workflow run <workflow-name>` instead of
+  `python -m attune.scaffolding create ...`. There is no Python-API
+  replacement; the scaffolding surface was always a CLI.
 
 ### Added
 
@@ -982,35 +1009,6 @@ job with reduced `--cov=` scope if branch signal is needed.
 - 15 auto-triggering Claude Code skills
 - 16 multi-agent workflows
 - 41 MCP tools
-
-## [7.0.0] - planned (couples with the 100%-coverage milestone release)
-
-### Removed — BREAKING
-
-Two long-deprecated modules whose tests were retired in the
-ignored-tests cleanup (2026-05-09), leaving them with zero coverage
-and zero internal callers. See
-`docs/specs/deprecated-module-retirement/` for the full retirement
-spec and rationale.
-
-- **`attune.workflows.orchestrated_release_prep`** (entire module).
-  Deprecated since v5.2.0; scheduled for removal in v6.0; six minor
-  versions overdue.
-  *Migration*: use `ReleasePrepTeamWorkflow` from
-  `attune.agents.release` (drop-in replacement: same constructor,
-  same `execute()` signature, same `ReleaseReadinessReport` return
-  type). The CLI path `attune workflow run release-prep` already
-  invokes the new workflow.
-  Symbols removed from `attune.workflows.__all__`:
-  `OrchestratedReleasePrepWorkflow`, `ReleaseReadinessReport`.
-  (`ReleaseReadinessReport` remains exported from
-  `attune.agents.release`.)
-- **`attune.scaffolding`** (entire CLI package). Deprecated since
-  2026-02-21 (commit 3833d5d6, PR #60); `__main__.py` has emitted
-  a runtime deprecation notice on every invocation.
-  *Migration*: use `attune workflow run <workflow-name>` instead of
-  `python -m attune.scaffolding create ...`. There is no Python-API
-  replacement; the scaffolding surface was always a CLI.
 
 ## [6.6.0] - 2026-05-09
 
@@ -4440,7 +4438,7 @@ This release combines **Phase 2 optimizations** (Redis caching, memory efficienc
   - 4 smart_router tests - pre-existing failures
   - Does not affect production functionality
 
-## [Unreleased - Previous]
+## [Historical pre-release notes]
 
 ### Added
 
@@ -5763,7 +5761,7 @@ print(result.generate_report())
 - Resolved 2 Ruff issues (F841, B007)
 - Added workflow execution timeout
 
-## [Unreleased]
+## [Historical pre-release notes — docs sprint]
 
 ### Added
 
