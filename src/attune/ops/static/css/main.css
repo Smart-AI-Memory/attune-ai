@@ -1466,3 +1466,47 @@ a.kpi:hover {
   opacity: 0.55;
   cursor: progress;
 }
+
+/* ---------- Suggestion chips ("What I'd Do Next" parsed from log) ---------- */
+
+.suggestion-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+}
+.suggestion-row-label {
+  color: var(--muted, #888);
+  margin-right: 4px;
+}
+.suggestion-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--fg);
+  border: 1px dotted var(--accent);
+  border-radius: 99px;
+  cursor: pointer;
+  transition: background 120ms, color 120ms, border-style 120ms;
+}
+.suggestion-chip:hover {
+  background: var(--accent);
+  color: #fff;
+  border-style: solid;
+}
+.suggestion-chip:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.suggestion-chip:disabled {
+  opacity: 0.55;
+  cursor: progress;
+}
