@@ -102,7 +102,7 @@ Direct Anthropic API call sites found:
 |---|---|---|
 | `attune-author` | `src/attune_author/doc_gen/_anthropic.py` (polish-pass) | `anthropic.Anthropic(api_key=...)` sync |
 | `attune-rag` | `src/attune_rag/eval/faithfulness.py` (judge) | `anthropic.AsyncAnthropic(api_key=...)` |
-| `attune-rag` | `src/attune_rag/runner.py` (RAG answer-generation) | `anthropic.AsyncAnthropic` — outside this spec's scope unless we also want to subscription-route generation |
+| `attune-rag` | `src/attune_rag/providers/claude.py` (`ClaudeProvider`, RAG answer-generation) | `anthropic.AsyncAnthropic` — outside this spec's scope unless we also want to subscription-route generation |
 | `attune-help` | _none observed_ | reader-only package; no LLM calls |
 | `attune-lite` | _none observed_ | minimal install variant |
 
