@@ -178,6 +178,11 @@
           "chip-muted"
         );
       }
+      // Scan the captured log for "What I'd Do Next" suggestions and
+      // render each as a clickable chip alongside any ATTUNE_REC cards.
+      // The marker pattern is stable across all SDK-native workflows
+      // (defined in attune.voice.personality.HEADER_NEXT_STEPS).
+      renderSuggestionChipsFromLog(logBuffer);
       es.close();
     });
 
@@ -211,6 +216,13 @@
       INITIAL_STATUS === "failed" ? "chip-danger" :
       "chip-muted"
     );
+    // Same suggestion-chip pass as the SSE "done" handler — disk-loaded
+    // runs should still surface "What I'd Do Next" suggestions from
+    // their pre-rendered <pre data-log> content.
+    var preEl = document.querySelector("[data-log]");
+    if (preEl) {
+      renderSuggestionChipsFromLog(preEl.textContent || "");
+    }
   }
 
   // ----------------------------------------------------------------
@@ -516,6 +528,126 @@
     slot.hidden = false;
   }
 
+  // ------------------------------------------------------------------
+  // Suggestion chips parsed from "What I'd Do Next" log lines
+  // ------------------------------------------------------------------
+
+  // Pattern: lines look like
+  //   I'd run `attune workflow run security-audit` next — Your spec ...
+  // The backtick-wrapped workflow name is the parsable signal. Free-form
+  // explanation after the em-dash is kept as the chip's tooltip text.
+  var _NEXT_STEP_RE = /attune workflow run\s+([a-z][a-z0-9-]+)/i;
+  var _VALID_WORKFLOW_NAME_RE = /^[a-z][a-z0-9-]+$/;
+
+  function parseSuggestions(logText) {
+    if (!logText || typeof logText !== "string") return [];
+    var lines = logText.split(/\r?\n/);
+    var inNextSteps = false;
+    var out = [];
+    var seen = {};
+    for (var i = 0; i < lines.length; i++) {
+      var raw = lines[i];
+      var line = raw.trim();
+      if (!line) continue;
+      // The voice layer emits the header literally as "What I'd Do Next".
+      if (line === "What I'd Do Next") {
+        inNextSteps = true;
+        continue;
+      }
+      if (!inNextSteps) continue;
+      // Other section headers end the block (e.g. "Cost & Time" appears
+      // BEFORE NextSteps, but a future workflow might emit another
+      // markdown heading after — guard defensively).
+      if (line.charAt(0) === "#") break;
+      var m = _NEXT_STEP_RE.exec(line);
+      if (!m) continue;
+      var name = m[1];
+      if (!_VALID_WORKFLOW_NAME_RE.test(name)) continue;
+      if (seen[name]) continue;
+      seen[name] = true;
+      // Tooltip: everything after the em-dash if present, else the
+      // whole line trimmed of the "I'd run … next —" preamble.
+      var emIdx = line.indexOf("—");
+      var tooltip = emIdx >= 0
+        ? line.substring(emIdx + 1).trim()
+        : line.replace(/^I'd run\s+`[^`]+`\s+next\s*—?\s*/i, "");
+      out.push({ name: name, tooltip: tooltip });
+    }
+    return out;
+  }
+
+  function renderSuggestionChipsFromLog(logText) {
+    var suggestions = parseSuggestions(logText);
+    if (!suggestions.length) return;
+    var slot = document.querySelector("[data-recommendations]");
+    if (!slot) return;
+    // Render under a single header so multi-suggestion runs feel like
+    // one group rather than N standalone cards.
+    var existing = slot.querySelector("[data-suggestion-row]");
+    if (existing) existing.remove();
+    var row = document.createElement("div");
+    row.className = "suggestion-row";
+    row.setAttribute("data-suggestion-row", "");
+    var label = document.createElement("span");
+    label.className = "suggestion-row-label";
+    label.textContent = "What I'd do next:";
+    row.appendChild(label);
+    for (var i = 0; i < suggestions.length; i++) {
+      row.appendChild(buildSuggestionChip(suggestions[i]));
+    }
+    slot.appendChild(row);
+    slot.hidden = false;
+  }
+
+  function buildSuggestionChip(suggestion) {
+    var chip = document.createElement("button");
+    chip.className = "suggestion-chip";
+    chip.type = "button";
+    chip.setAttribute("data-suggestion-chip", suggestion.name);
+    chip.textContent = suggestion.name;
+    if (suggestion.tooltip) {
+      chip.setAttribute("data-tooltip", suggestion.tooltip);
+      chip.setAttribute("aria-label", "Run " + suggestion.name + " — " + suggestion.tooltip);
+    } else {
+      chip.setAttribute("aria-label", "Run " + suggestion.name);
+    }
+    chip.addEventListener("click", function () {
+      chip.disabled = true;
+      var body = {};
+      if (DATA && typeof DATA.path === "string" && DATA.path) {
+        body.path = DATA.path;
+      }
+      fetch("/workflows/" + encodeURIComponent(suggestion.name) + "/run", {
+        method: "POST",
+        headers: {"Content-Type": "application/json"},
+        body: JSON.stringify(body)
+      }).then(function (resp) {
+        if (resp.status === 201) {
+          return resp.json().then(function (data) {
+            window.location.href = "/runs/" + data.run_id +
+              "/view?from=" + encodeURIComponent(DATA.workflow || "");
+          });
+        }
+        if (resp.status === 409) {
+          return resp.json().then(function (data) {
+            showInlineError(
+              "Cannot start " + suggestion.name + " — run " +
+              data.detail.current_run_id + " is still active."
+            );
+            chip.disabled = false;
+          });
+        }
+        showInlineError("Could not start " + suggestion.name +
+          " (HTTP " + resp.status + ")");
+        chip.disabled = false;
+      }).catch(function (err) {
+        showInlineError("Could not start " + suggestion.name + ": " + err);
+        chip.disabled = false;
+      });
+    });
+    return chip;
+  }
+
   // Expose internals for tests.
   if (typeof window !== "undefined") {
     window.__attuneRunView = {
@@ -526,6 +658,9 @@
       updateSweepProgress: updateSweepProgress,
       renderRecommendationCard: renderRecommendationCard,
       isSafeUrl: isSafeUrl,
+      parseSuggestions: parseSuggestions,
+      renderSuggestionChipsFromLog: renderSuggestionChipsFromLog,
+      buildSuggestionChip: buildSuggestionChip,
       DATA: DATA
     };
   }

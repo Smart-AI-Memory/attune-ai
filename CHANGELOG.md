@@ -36,6 +36,23 @@ spec and rationale.
 
 ### Added
 
+- Suggestion chips on the run-view page. The "What I'd Do Next" lines
+  every SDK-native workflow emits as plain text (e.g. "I'd run
+  `attune workflow run security-audit` next — …") now render as
+  clickable chips below the run header. Clicking a chip POSTs to
+  `/workflows/<name>/run` with the same scope path the current run
+  used and navigates to the new run with `?from=<source>` so the
+  chained-from badge fires. Both the live-SSE branch and the
+  disk-loaded run-view branch render chips, so completed runs viewed
+  later get the same affordance. Header marker is anchored to
+  `attune.voice.personality.HEADER_NEXT_STEPS` — a drift-guard test
+  fails if either side renames. Complements the `ATTUNE_REC`
+  recommendation cards shipped in [#413](https://github.com/Smart-AI-Memory/attune-ai/pull/413)
+  + [#415](https://github.com/Smart-AI-Memory/attune-ai/pull/415):
+  recommendations are workflow-emitted structured signals; chips are
+  parsed from existing voice-layer output and require no workflow
+  changes to surface.
+
 - `code-review` workflow now emits an `ATTUNE_REC` recommendation
   suggesting a `bug-predict` run on the same scope when its synthesized
   output mentions CWE/CVE identifiers, common vulnerability classes
