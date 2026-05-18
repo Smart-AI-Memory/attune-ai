@@ -5,6 +5,22 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Added
+
+- Copy-report button on the ops dashboard's run-view page. Renders
+  as a compact dotted-pill chip in the run header next to the run
+  ID; one click copies the full rendered report (the `<pre
+  data-log>` contents) to the clipboard via
+  `navigator.clipboard.writeText`. Works on both live-SSE runs and
+  disk-loaded completed runs since it reads from the canonical
+  `[data-log]` element. Flashes "Copied ✓" / "Copy failed" /
+  "Nothing to copy" for 1.5s with matching state classes so the
+  user gets immediate feedback. Graceful degradation when
+  `navigator.clipboard` is unavailable (old browsers, insecure
+  contexts) — surfaces the error rather than silently failing.
+
 ## [7.0.0] — 2026-05-16
 
 ### Removed — BREAKING

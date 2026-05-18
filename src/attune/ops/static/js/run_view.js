@@ -648,6 +648,73 @@
     return chip;
   }
 
+  // ------------------------------------------------------------------
+  // Copy report — clipboard handler for the [data-copy-report] button
+  // ------------------------------------------------------------------
+
+  function readReportText() {
+    var preEl = document.querySelector("[data-log]");
+    return preEl ? (preEl.textContent || "") : "";
+  }
+
+  function flashCopyState(btn, message, ok) {
+    var label = btn.querySelector(".btn-copy-report-label");
+    if (!label) return;
+    var prev = label.textContent;
+    label.textContent = message;
+    btn.classList.toggle("is-copied", !!ok);
+    btn.classList.toggle("is-failed", !ok);
+    setTimeout(function () {
+      label.textContent = prev;
+      btn.classList.remove("is-copied");
+      btn.classList.remove("is-failed");
+    }, 1500);
+  }
+
+  function copyReportToClipboard(btn) {
+    var text = readReportText();
+    if (!text) {
+      flashCopyState(btn, "Nothing to copy", false);
+      return Promise.resolve(false);
+    }
+    if (!navigator.clipboard || !navigator.clipboard.writeText) {
+      // Graceful fallback for old browsers / insecure contexts:
+      // surface the error so the user knows to retry over HTTPS or
+      // in a modern browser. We don't attempt the legacy
+      // execCommand("copy") path because it requires document.execCommand
+      // which is itself deprecated and security-conscious users have
+      // disabled clipboard JS API for a reason.
+      flashCopyState(btn, "Clipboard unavailable", false);
+      return Promise.resolve(false);
+    }
+    return navigator.clipboard.writeText(text).then(
+      function () {
+        flashCopyState(btn, "Copied ✓", true);
+        return true;
+      },
+      function () {
+        flashCopyState(btn, "Copy failed", false);
+        return false;
+      }
+    );
+  }
+
+  function wireCopyReportButton() {
+    var btn = document.querySelector("[data-copy-report]");
+    if (!btn) return;
+    btn.addEventListener("click", function () {
+      copyReportToClipboard(btn);
+    });
+  }
+
+  if (typeof document !== "undefined") {
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", wireCopyReportButton);
+    } else {
+      wireCopyReportButton();
+    }
+  }
+
   // Expose internals for tests.
   if (typeof window !== "undefined") {
     window.__attuneRunView = {
@@ -661,6 +728,9 @@
       parseSuggestions: parseSuggestions,
       renderSuggestionChipsFromLog: renderSuggestionChipsFromLog,
       buildSuggestionChip: buildSuggestionChip,
+      readReportText: readReportText,
+      copyReportToClipboard: copyReportToClipboard,
+      wireCopyReportButton: wireCopyReportButton,
       DATA: DATA
     };
   }

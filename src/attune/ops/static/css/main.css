@@ -1513,3 +1513,40 @@ a.kpi:hover {
   opacity: 0.55;
   cursor: progress;
 }
+
+/* ---------- Copy-report button (run-view header) ---------- */
+
+.btn-copy-report {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 12px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-family: inherit;
+  background: transparent;
+  color: var(--fg-muted, #888);
+  border: 1px dotted var(--border, #ccc);
+  border-radius: 99px;
+  cursor: pointer;
+  vertical-align: middle;
+  transition: background 120ms, color 120ms, border-style 120ms;
+}
+.btn-copy-report:hover {
+  background: var(--bg-soft, #f3f4f6);
+  color: var(--fg, #111);
+  border-style: solid;
+}
+.btn-copy-report:focus-visible {
+  outline: 2px solid var(--accent, #4f46e5);
+  outline-offset: 2px;
+}
+.btn-copy-report.is-copied {
+  color: var(--ok, #047857);
+  border-color: var(--ok, #047857);
+  border-style: solid;
+}
+.btn-copy-report.is-failed {
+  color: var(--danger, #b91c1c);
+  border-color: var(--danger, #b91c1c);
+  border-style: solid;
+}

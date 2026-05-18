@@ -9,6 +9,18 @@
     <code>{{ run.workflow }}</code>
     <span class="run-id-chip">run <code>{{ run.id[:12] }}</code></span>
     <span class="chained-from" data-chained-from hidden></span>
+    {# Copy-report button — copies the full report text (the <pre
+       data-log> contents) to the clipboard. Lives in the H1 so it
+       sits near the run identity, where users naturally look when
+       they want to share/save a report. Disabled gracefully when
+       navigator.clipboard is unavailable. #}
+    <button type="button"
+            class="btn-copy-report"
+            data-copy-report
+            data-tooltip="Copy the full report to clipboard"
+            aria-label="Copy report to clipboard">
+      <span class="btn-copy-report-label">Copy report</span>
+    </button>
   </h1>
   <p class="page-sub run-view-meta">
     <span class="run-view-status chip" data-status>{{ run.status }}</span>
