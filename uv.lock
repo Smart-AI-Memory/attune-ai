@@ -434,7 +434,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.12" },
+    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.14" },
     { name = "attune-rag", specifier = ">=0.1.5,<0.2" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.2" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
@@ -591,14 +591,14 @@ wheels = [
 
 [[package]]
 name = "attune-help"
-version = "0.10.0"
+version = "0.10.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-frontmatter" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/64/51/f05685a70095d8c0684a1a5073a1c755f0bced97e2f1bfa1cc10f9ac48b9/attune_help-0.10.0.tar.gz", hash = "sha256:de7be67343499333fbc1d6d70e5d91083429f98892fc5ad6e4f491d4d8f64980", size = 433748, upload-time = "2026-04-30T22:10:48.245Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/e8/37/6d0e0625d1ae19f39119d2a8ec6a84dd07467b1c7d4da64bc17eca8d3923/attune_help-0.10.2.tar.gz", hash = "sha256:08ad0ef92979cd194ec3570872c60e2c70c2aea244fbcb9e63aedfe11ef015df", size = 433558, upload-time = "2026-05-01T11:07:20.108Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/24/9b/5af199e744104df092054d47d987a6cc9e46dbd53c27cb1f3595b0d62000/attune_help-0.10.0-py3-none-any.whl", hash = "sha256:b8967de92580d6833950f007becb9a882abac11601b7b98a0bd8961bc0151d1e", size = 717277, upload-time = "2026-04-30T22:10:47.032Z" },
+    { url = "https://files.pythonhosted.org/packages/8e/99/641452d2ca4d7d518015e4324c4f9d44eddc41e557918b54ac1b4bd87ece/attune_help-0.10.2-py3-none-any.whl", hash = "sha256:fc201a6cce74dbaac339fd11c65f1bd7607becbbdc2724607e9281a1b92c9281", size = 717718, upload-time = "2026-05-01T11:07:18.156Z" },
 ]
 
 [[package]]
