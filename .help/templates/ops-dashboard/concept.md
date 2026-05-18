@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: concept
-generated_at: 2026-05-17T18:28:27.048023+00:00
-source_hash: 848a51e7aabcd39ac987255bff940539153d7b544651bdec566acd763432d775
+generated_at: 2026-05-18T05:24:12.363229+00:00
+source_hash: b6ca0aef7a04a6f5122f0108db8941b3fcbbd161578c24f5d23838793ec43ec1
 status: generated
 ---
 
@@ -20,7 +20,7 @@ The main building blocks are:
 - **`WorkflowEntry`** — core component
 - **`PathArgSpec`** — How a workflow accepts a scope path on the CLI.
 
-Under the hood, this feature spans 40 source
+Under the hood, this feature spans 42 source
 files covering:
 
 - Run via ``python -m attune.ops``.
