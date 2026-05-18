@@ -116,6 +116,45 @@ def test_load_admin_key_skips_comment_only_file(monkeypatch, tmp_path):
     assert anthropic_cost.load_admin_key() is None
 
 
+def test_load_admin_key_skips_empty_value_and_unknown_lines(monkeypatch, tmp_path):
+    """A KEY= with empty value falls through; unrelated lines are skipped.
+
+    Exercises the loop-continuation branches for both the empty-value
+    case (after stripping quotes) and a line matching neither prefix.
+    """
+    env_file = tmp_path / "anthropic-admin.env"
+    env_file.write_text(
+        'ANTHROPIC_ADMIN_API_KEY=""\n'
+        "some-unrelated-line\n"
+        "ANTHROPIC_ADMIN_API_KEY=sk-ant-admin01-real\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(anthropic_cost, "ADMIN_KEY_PATH", env_file)
+    assert anthropic_cost.load_admin_key() == "sk-ant-admin01-real"
+
+
+def test_load_admin_key_returns_none_on_oserror(monkeypatch, tmp_path, caplog):
+    """A non-FileNotFoundError OSError (e.g. PermissionError) returns None.
+
+    The function must log the path but never the key material and must
+    never raise.
+    """
+    target = tmp_path / "anthropic-admin.env"
+    target.write_text("ANTHROPIC_ADMIN_API_KEY=sk-ant-admin01-test\n", encoding="utf-8")
+    monkeypatch.setattr(anthropic_cost, "ADMIN_KEY_PATH", target)
+
+    def _raise_permission(self, *args, **kwargs):
+        raise PermissionError("denied")
+
+    monkeypatch.setattr("pathlib.Path.read_text", _raise_permission)
+
+    with caplog.at_level("WARNING", logger="attune.ops.anthropic_cost"):
+        result = anthropic_cost.load_admin_key()
+
+    assert result is None
+    assert any("cannot read" in r.getMessage() for r in caplog.records)
+
+
 # ---------------------------------------------------------------
 # Aggregation (_summarize)
 # ---------------------------------------------------------------
@@ -248,6 +287,22 @@ def test_summarize_empty_payload():
     assert s.today_usd == 0.0
     assert s.by_day == []
     assert s.source == "live"
+
+
+def test_summarize_excludes_buckets_older_than_thirty_days():
+    """A bucket beyond the 30-day window contributes to no totals."""
+    today = date(2026, 5, 18)
+    payload = {
+        "data": [
+            _bucket("2026-05-18", _row("1000")),  # today
+            _bucket("2026-03-01", _row("9999")),  # >30 days ago — OUT
+        ]
+    }
+    s = anthropic_cost._summarize(payload, today=today)
+    assert s.today_usd == 10.0
+    assert s.seven_day_usd == 10.0
+    assert s.month_to_date_usd == 10.0
+    assert s.thirty_day_usd == 10.0  # older bucket excluded
 
 
 # ---------------------------------------------------------------
@@ -420,6 +475,17 @@ def test_fetch_summary_5xx_returns_network(monkeypatch):
     summary, error = anthropic_cost.fetch_summary()
     assert summary is None
     assert error.kind == "network"
+
+
+def test_fetch_summary_unknown_status_code_returns_unknown(monkeypatch):
+    """A status that's not 200/401/403/429/5xx maps to kind='unknown'."""
+    monkeypatch.setenv("ANTHROPIC_ADMIN_API_KEY", "sk-ant-admin01-test")
+    _install_mock_client(monkeypatch, _mock_response(status_code=418))
+    summary, error = anthropic_cost.fetch_summary()
+    assert summary is None
+    assert error is not None
+    assert error.kind == "unknown"
+    assert "418" in error.message
 
 
 def test_fetch_summary_malformed_json_returns_unknown(monkeypatch):
