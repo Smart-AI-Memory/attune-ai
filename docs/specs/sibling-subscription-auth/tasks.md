@@ -1,6 +1,6 @@
 # Spec: Subscription-First Auth for Sibling Packages — Tasks
 
-**Status**: draft
+**Status**: approved — Phase 0 shipped (see `findings.md`); Phase 1 unblocked.
 
 > Phase 0 is mandatory and lands before any implementation. The
 > design rests on assumptions about how `claude_agent_sdk` and
@@ -16,23 +16,22 @@ findings doc. No production code changes.
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 0.1 | Probe: does `claude_agent_sdk.query()` work inside Claude Code without `ANTHROPIC_API_KEY`? | attune-ai | todo | Write the probe as a one-shot script under `scripts/probe_subscription_routing.py`. Run inside Claude Code; capture whether the call succeeds and what auth context it uses. |
-| 0.2 | Probe: same as 0.1, but from a child subprocess spawned by Claude Code (mimicking attune-author being invoked from Claude Code) | attune-ai | todo | Critical: confirms whether subscription auth is inherited across a process boundary or only available inside Claude Code's own process. |
-| 0.3 | Probe: identify env vars / config files Claude Code sets that advertise its presence | attune-ai | todo | Look for `CLAUDE_CODE_*`, `~/.claude/`, etc. Findings inform the detection step. |
-| 0.4 | Audit: list every sibling package that makes direct Anthropic API calls | attune-ai | todo | Grep `attune-author`, `attune-rag`, `attune-help`, `attune-lite`, `attune-software` for `anthropic.Anthropic`, `anthropic.AsyncAnthropic`. Confirm scope. |
-| 0.5 | Write `findings.md` in this spec dir | attune-ai | todo | One page; covers what the probes returned + which design option (A/B/C) the data supports. |
-| 0.6 | Pre-commit Phase 1 design decisions in `decisions.md` | attune-ai | todo | Detection default (opt-in vs opt-out), CLI/env-var override naming, telemetry message format. |
+| 0.1 | Probe: does `claude_agent_sdk.query()` work inside Claude Code without `ANTHROPIC_API_KEY`? | attune-ai | **done** | ✅ Yes. Probe succeeded with empty API key. See `findings.md` Q1. |
+| 0.2 | Probe: same as 0.1, but from a child subprocess spawned by Claude Code | attune-ai | **done** | ✅ Yes. Probe runs as a subprocess via the Bash tool; succeeded. Critical result. See `findings.md` Q2. |
+| 0.3 | Probe: identify env vars / config files Claude Code sets that advertise its presence | attune-ai | **done** | Found `CLAUDECODE=1` (boolean) + `CLAUDE_CODE_SESSION_ID=<uuid>` (session-specific). See `findings.md` Q3. |
+| 0.4 | Audit: list every sibling package that makes direct Anthropic API calls | attune-ai | **done** | attune-author (polish), attune-rag (judge + RAG answer-gen). attune-help and attune-lite have no LLM call sites. See `findings.md`. |
+| 0.5 | Write `findings.md` in this spec dir | attune-ai | **done** | Covers all four open design questions + sibling audit + caveats. |
+| 0.6 | Pre-commit Phase 1 design decisions in `decisions.md` | attune-ai | **done** | Design option = A; detection signal = `CLAUDECODE=1`; detection default = opt-out. |
 
 ### Phase 0 exit checklist
 
-- [ ] `scripts/probe_subscription_routing.py` lands and is
+- [x] `scripts/probe_subscription_routing.py` lands and is
       runnable both inside and outside Claude Code
-- [ ] `findings.md` answers the four open design questions
+- [x] `findings.md` answers the four open design questions
       from `design.md`
-- [ ] `decisions.md` has a pre-committed decision row for each
+- [x] `decisions.md` has a pre-committed decision row for each
       open question
-- [ ] Spec status moves from `draft` to `approved` (or `paused`
-      if findings invalidate the premise)
+- [x] Spec status moves from `draft` to `approved`
 
 ---
 

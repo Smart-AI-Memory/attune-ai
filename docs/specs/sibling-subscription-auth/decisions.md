@@ -13,8 +13,9 @@
 |---|---|---|
 | Phase 0 deliverable shape | A single `findings.md` doc plus a runnable probe script committed to `scripts/probe_subscription_routing.py` | The probe is reusable: if the routing mechanism changes upstream, re-running tells us so. A doc alone goes stale. |
 | Phase 0 success criterion | The four open design questions in `design.md` have explicit yes/no answers (or "not yet determined, follow-up needed") | Soft "we learned a lot" deliverables are how investigation phases die. |
-| Design option (A/B/C) | _TBD — pre-commit after Phase 0_ | The choice is determined by whether subscription auth is inheritable across a subprocess boundary. |
-| Detection default for subscribers | _TBD — pre-commit after Phase 0_ | Lean toward opt-in (`ATTUNE_AUTHOR_AUTH_MODE=auto` not the default initially) to avoid surprising users until the routing is proven stable. Revisit after the first month of real use. |
+| Design option (A/B/C) | **Option A** — per-sibling Agent-SDK shim | Phase 0 confirmed `claude_agent_sdk.query()` succeeds in a subprocess of Claude Code without `ANTHROPIC_API_KEY`. Two adapters across two siblings isn't enough duplication to justify Option B (cycle risk) or Option C (new package). Revisit after a 4th consumer needs the same plumbing. |
+| Detection signal | **`CLAUDECODE=1` env var** | Phase 0 surfaced this as a clean boolean string set by Claude Code in every subprocess it spawns. `CLAUDE_CODE_SESSION_ID` is a secondary, session-specific signal — not needed for routing. |
+| Detection default for subscribers | **Opt-out** (auto-mode is default; users opt out via env var or CLI flag) | Phase 0 showed routing works seamlessly via one env-var check. Opt-in would force every subscriber to flip a flag to get the obviously-better behavior. Solo-dev / first-run UX wins. |
 | CLI flag name | `--auth-mode={auto,api,sub}` on `attune-author generate`, `regenerate`, `attune-rag eval` | Three discrete values map clean to argparse `choices=`; matches existing `--fact-check={off,soft,strict}` style. |
 | Env var names | `ATTUNE_AUTHOR_AUTH_MODE` (attune-author scope) and `ATTUNE_RAG_AUTH_MODE` (attune-rag scope) | Per-package env vars; users with both packages can override independently. Avoids a single global `ATTUNE_AUTH_MODE` that overrides everything at once. |
 | Status command | `attune-author auth status` (and matching `attune-rag auth status`) | Mirrors `attune-ai`'s existing `attune auth status`. Output format intentionally parallel so users get the same diagnostic surface across packages. |
@@ -28,17 +29,13 @@
 
 ## Calibration record
 
-To be filled in during Phase 0 implementation:
+Phase 0 findings (see `findings.md` for full detail and the raw
+probe artifacts):
 
-- [ ] Phase 0 finding: `claude_agent_sdk.query()` inside Claude Code
-      without env key: _TBD_
-- [ ] Phase 0 finding: same from a child subprocess of Claude Code:
-      _TBD_
-- [ ] Phase 0 finding: detection signal Claude Code exposes
-      (env var, file, or none): _TBD_
-- [ ] Phase 0 finding: total sibling-package count making direct
-      API calls (today's known set: attune-author, attune-rag —
-      audit may surface more): _TBD_
+- [x] **`claude_agent_sdk.query()` inside Claude Code without env key:** ✅ works. Returned a complete response addressed to me by name even though `ANTHROPIC_API_KEY` was empty (`len=0`).
+- [x] **Same from a child subprocess of Claude Code:** ✅ works. The probe ran via the Bash tool's `python` subprocess and successfully made the call without an API key.
+- [x] **Detection signal Claude Code exposes:** `CLAUDECODE=1` (boolean). Secondary signal `CLAUDE_CODE_SESSION_ID=<uuid>` identifies which session.
+- [x] **Sibling-package audit:** today's set is **attune-author** (polish-pass) + **attune-rag** (faithfulness judge + RAG answer-generation). `attune-help` and `attune-lite` have no direct LLM call sites. The RAG answer-generation path is out of scope for v1 unless a UX seam appears.
 
 ---
 
@@ -52,3 +49,10 @@ To be filled in during Phase 0 implementation:
   PR #36) added a second LLM-call path that requires
   `ANTHROPIC_API_KEY`, making the cumulative API-key dependency
   in sibling packages tangible enough to warrant fixing.
+- 2026-05-16 — Phase 0 shipped. Decisions revised from "TBD" to
+  concrete:
+  - **Design option = Option A** (Phase 0 ruled out B and C).
+  - **Detection signal = `CLAUDECODE=1`** (one env var, no
+    filesystem probes needed).
+  - **Detection default = opt-out** (auto-mode is the default).
+  Spec status moves from `draft` to `approved`. Phase 1 unblocked.
