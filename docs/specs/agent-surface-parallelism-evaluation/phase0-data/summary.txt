@@ -1,0 +1,46 @@
+============================================================
+Phase 0.1 — Telemetry Summary
+Spec: agent-surface-parallelism-evaluation
+============================================================
+
+Event source: /Users/patrickroebuck/.attune/telemetry/usage.jsonl
+Date range:   2026-02-16 -> 2026-05-09
+Real events:  5,820 (test fixtures excluded)
+Inferred sessions: 105 (30-min idle gap per user_id)
+
+=== HEADLINE METRICS ===
+Sessions with >=2 distinct workflows (any):       101 (96.2%)
+Sessions with >=2 analytical workflows:            48 (45.7%)
+Sessions with >=1 analytical workflow:             82 (78.1%)
+
+=== DISTRIBUTIONS ===
+Sessions by distinct-workflow count:
+  1 workflows:    4 sessions (3.8%)
+  2 workflows:   25 sessions (23.8%)
+  3 workflows:    8 sessions (7.6%)
+  4 workflows:   24 sessions (22.9%)
+  5 workflows:    7 sessions (6.7%)
+  6 workflows:    7 sessions (6.7%)
+  7 workflows:   22 sessions (21.0%)
+  8 workflows:    8 sessions (7.6%)
+
+Sessions by analytical-workflow count:
+  0 analytical:   23 sessions (21.9%)
+  1 analytical:   34 sessions (32.4%)
+  2 analytical:   11 sessions (10.5%)
+  3 analytical:   29 sessions (27.6%)
+  4 analytical:    2 sessions (1.9%)
+  5 analytical:    6 sessions (5.7%)
+
+=== TOP MULTI-ANALYTICAL COMBOS ===
+   27x  bug-predict + code-review + security-audit
+    9x  code-review + security-audit
+    6x  bug-predict + doc-audit + perf-audit + refactor-plan + test-audit
+    2x  bug-predict + code-review + perf-audit + security-audit
+    1x  bug-predict + code-review
+    1x  doc-audit + perf-audit + refactor-plan
+    1x  doc-audit + refactor-plan + test-audit
+    1x  refactor-plan + test-audit
+
+Matrix gate (frequency only):
+  PASS  (45.7% >= 10%) — Phase 0.3-0.5 needed for wall-clock + qualitative gates
