@@ -267,6 +267,50 @@ def test_counters_persist_across_requests_on_same_app(tmp_path, monkeypatch):
     assert body["totals"]["pill_clicks"] == 5
 
 
+def test_counters_lazy_attach_when_app_state_missing():
+    """Defensive shim: if an app was constructed without the counter
+    pre-attached (e.g. a custom test fixture or pre-Phase-6.1 app
+    instance), the route's ``_counters()`` helper lazily attaches a
+    fresh ``InteractionCounters`` so the endpoint never 500s.
+
+    Exercises lines 55-57 of ``routes/interaction_counters.py`` —
+    the ``app.state.interaction_counters is None`` branch — which
+    ``create_app()`` skips because it wires the counter upfront.
+    """
+    from fastapi import FastAPI
+
+    from attune.ops.routes import interaction_counters as routes_mod
+
+    # Bare app — NO ``create_app``, NO ``app.state.interaction_counters``
+    # set. This is the exact pre-condition the defensive shim guards
+    # against.
+    app = FastAPI()
+    app.include_router(routes_mod.router)
+
+    assert not hasattr(app.state, "interaction_counters")
+
+    client = TestClient(app)
+    resp = client.post(
+        "/api/telemetry/interaction",
+        json={"event": "pill_click", "target": "security-audit"},
+    )
+    assert resp.status_code == 204
+
+    # The shim should have populated ``app.state.interaction_counters``
+    # AND the record should have landed.
+    assert isinstance(app.state.interaction_counters, InteractionCounters)
+    snapshot = app.state.interaction_counters.snapshot()
+    assert snapshot["pill_clicks"] == {"security-audit": 1}
+
+    # Second request reuses the lazily-attached counters; not a fresh one.
+    client.post(
+        "/api/telemetry/interaction",
+        json={"event": "pill_click", "target": "security-audit"},
+    )
+    snapshot = app.state.interaction_counters.snapshot()
+    assert snapshot["pill_clicks"] == {"security-audit": 2}
+
+
 def test_record_interaction_helper_exported_from_runner_js():
     """Drift guard: the JS helper must remain on the
     ``window.__attuneRunner`` export so run_view.js can find it."""
