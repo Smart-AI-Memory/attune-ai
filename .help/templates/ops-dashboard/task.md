@@ -1,71 +1,57 @@
 ---
-type: task
-name: ops-dashboard-task
 feature: ops-dashboard
 depth: task
-generated_at: 2026-05-16T06:19:45.791431+00:00
-source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
+generated_at: 2026-05-17T18:28:27.054846+00:00
+source_hash: 848a51e7aabcd39ac987255bff940539153d7b544651bdec566acd763432d775
 status: generated
 ---
 
-# Work with the ops dashboard
+# Work with ops dashboard
 
-Use the ops dashboard when you need to start, configure, or extend the local operations dashboard — a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming.
+Use ops dashboard when you need to local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live sse log streaming.
 
 ## Prerequisites
 
-- Read access to `src/attune/ops/`
-- The `attune` CLI installed and on your `PATH`
+- Access to the project source code
+- Familiarity with the files under src/attune/ops/**
 
 ## Steps
 
-1. **Identify the entry point that owns the behavior you want to change.**
+1. **Understand the current behavior.**
+   Read the entry points to see what ops dashboard
+   does today before making changes.
+   The primary functions are:
+   - `create_app()` in `src/attune/ops/__init__.py` — Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.
+   - `build_config()` in `src/attune/ops/__init__.py` — Lazy import of the config builder.
+   - `add_subparser()` in `src/attune/ops/cli.py` — Register the `ops` subparser on the main attune CLI parser.
+   - `cmd_ops()` in `src/attune/ops/cli.py` — Run the dashboard server (blocking).
+   - `main()` in `src/attune/ops/cli.py` — Standalone entry: ``python -m attune.ops``.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-   The dashboard is split across three modules. Match your goal to the responsible function:
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-   | Goal | Function | File |
-   |---|---|---|
-   | Change how the FastAPI app is constructed | `create_app()` | `src/attune/ops/__init__.py` |
-   | Change host, port, or retention defaults | `build_config()` | `src/attune/ops/config.py` |
-   | Add or rename a CLI flag | `add_subparser()` | `src/attune/ops/cli.py` |
-   | Change server startup behavior | `cmd_ops()` | `src/attune/ops/cli.py` |
-   | Change the standalone module entry point | `main()` | `src/attune/ops/cli.py` |
-   | Change how the attune home directory is resolved | `attune_home()` | `src/attune/ops/config.py` |
-   | Change how features are loaded for the scope picker | `list_features()` | `src/attune/ops/data.py` |
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "ops-dashboard"`.
 
-2. **Read the function's docstring, parameters, and return type** before editing. Confirm the function owns the behavior end-to-end — some behavior spans `build_config()` in both `__init__.py` (a lazy re-export) and `config.py` (the real implementation).
+## Key files
 
-3. **Edit the target function.** Keep changes consistent with the module's naming conventions, error-handling style, and logging patterns. For example:
-   - `build_config()` resolves paths against `project_root` and `attune_home`; pass `Path` objects, not raw strings.
-   - `TrustedHostMiddleware` reads `trusted_hosts` from `Config`; update `Config.trusted_hosts` if you need to change the allowlist.
-   - `list_features()` reads `<project_root>/.help/features.yaml`; changes to feature loading belong there, not in the app factory.
+- `src/attune/ops/**`
 
-4. **Start the dashboard and verify your change.**
+## Common modifications
 
-   Run the server locally:
+Functions you are most likely to modify:
 
-   ```bash
-   attune ops
-   ```
-
-   Or run it as a standalone module:
-
-   ```bash
-   python -m attune.ops
-   ```
-
-   The server binds to `127.0.0.1:8765` by default. Open `http://127.0.0.1:8765` in a browser and confirm the dashboard loads and your change behaves as expected.
-
-5. **Run the test suite** to catch regressions before they reach other developers:
-
-   ```bash
-   pytest -k "ops"
-   ```
-
-## Verify success
-
-The task is complete when:
-
-- `attune ops` starts without errors and the terminal shows the server address.
-- The dashboard home page loads in your browser and displays the KPI summary (today's events, cost, and the 7-day sparkline).
-- `pytest -k "ops"` passes with no new failures.
+- `create_app()` in `src/attune/ops/__init__.py`
+- `build_config()` in `src/attune/ops/__init__.py`
+- `add_subparser()` in `src/attune/ops/cli.py`
+- `cmd_ops()` in `src/attune/ops/cli.py`
+- `main()` in `src/attune/ops/cli.py`
+- `clear_cache()` in `src/attune/ops/completion_candidates.py`
+- `detect_candidates()` in `src/attune/ops/completion_candidates.py`
+- `attune_home()` in `src/attune/ops/config.py`

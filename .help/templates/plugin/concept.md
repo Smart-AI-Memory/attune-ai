@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: concept
-generated_at: 2026-05-14T00:09:29.490567+00:00
-source_hash: dad4ff4d931be93483178512f305df4124786c91adacb4cc3420e7e53450f49d
+generated_at: 2026-05-17T18:27:08.904228+00:00
+source_hash: 7c317f125965385a2a8e8ed6605ef6bd454625bc8fded43149d47d64438b73b0
 status: generated
 ---
 

@@ -1,7 +1,5 @@
 # Design: Coverage Exclusion Policy
-
-**Status**: complete (2026-05-12)
-
+**Status:** complete (2026-05-12)
 ---
 
 ## Phase 2: Design

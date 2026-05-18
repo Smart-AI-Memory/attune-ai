@@ -115,6 +115,8 @@ async def workflows_page(request: Request) -> HTMLResponse:
         supports_path=supports_path,
         default_scopes=default_scopes,
         all_code_path=data.ALL_CODE_PATH,
+        tier_label=data.TIER_LABEL,
+        tier_tooltip=data.TIER_TOOLTIP,
         sweep_chips=sweep_chips,
         # Absolute workspace root used by the scope picker to validate
         # localStorage-restored paths. A saved scope from a previous

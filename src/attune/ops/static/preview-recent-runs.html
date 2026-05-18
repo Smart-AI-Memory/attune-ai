@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Preview · recent-runs chips</title>
+  <link rel="stylesheet" href="/static/css/main.css">
+  <style>
+    body { padding: 24px 32px; max-width: 980px; }
+    h1 { font-size: 18px; margin: 0 0 4px 0; }
+    .preview-sub { color: var(--fg-muted); margin: 0 0 24px 0; font-size: 13px; }
+    .preview-section { margin-bottom: 28px; }
+    .preview-section h2 {
+      font-size: 13px; text-transform: uppercase; letter-spacing: 0.04em;
+      color: var(--fg-muted); margin: 0 0 8px 0;
+    }
+    .preview-description {
+      font-size: 14px; line-height: 1.5; margin: 0 0 8px 0;
+    }
+    .preview-row {
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      padding: 8px 0; border-bottom: 1px dashed var(--border);
+    }
+    .preview-row:last-child { border-bottom: none; }
+    .preview-meta {
+      font-family: var(--font-mono); font-size: 11px; color: var(--fg-muted);
+      min-width: 220px;
+    }
+  </style>
+</head>
+<body>
+  <h1>Recent-runs chip preview</h1>
+  <p class="preview-sub">
+    Static preview of every state the chip strip can render —
+    builds the same DOM the dashboard does, with mock run data, so
+    you can eyeball date/status pairs without waiting for real runs
+    to accumulate. Hover any chip to see the tooltip carrying the
+    run id + full ISO timestamp + scope.
+  </p>
+
+  <div class="preview-section">
+    <h2>Description-column context (mock workflow row)</h2>
+    <p class="preview-description">
+      Generate documentation from source code — docstrings,
+      READMEs, API references.
+    </p>
+    <div class="recent-runs" id="preview-strip"></div>
+  </div>
+
+  <div class="preview-section">
+    <h2>One chip per (date, status) pair</h2>
+    <div id="preview-grid"></div>
+  </div>
+
+  <script src="/static/js/runner.js?v=preview"></script>
+  <script>
+    // Mock runs spanning every date bucket the formatter knows
+    // about (today / yesterday / weekday / older) crossed with
+    // every status color (completed / failed / running / pending /
+    // other).
+    var now = new Date();
+    function iso(daysAgo, hours, minutes) {
+      var d = new Date(now);
+      d.setDate(d.getDate() - daysAgo);
+      if (typeof hours === "number") d.setHours(hours, minutes || 0, 0, 0);
+      return d.toISOString();
+    }
+    var mockRuns = [
+      { id: "b39613fd6195", status: "completed", path: "src/attune/security/", started_at: iso(0, 14, 2) },
+      { id: "089f60fe6411", status: "failed",    path: "src/attune/workflows/code_review.py", started_at: iso(0, 11, 15) },
+      { id: "d6ae69ee4aff", status: "running",   path: "src/attune/ops/", started_at: iso(0, 9, 30) },
+      { id: "222810456f50", status: "completed", path: "src/attune/", started_at: iso(1, 16, 45) },
+      { id: "f8ed53713add", status: "completed", path: "src/attune/memory/", started_at: iso(3, 10, 20) }
+    ];
+
+    // Hook into the runner.js export surface to render with the
+    // real codepath (not a duplicate) — guarantees this preview
+    // shows exactly what the dashboard will render.
+    window.__attuneRunner.renderRecentRunsInto(
+      document.getElementById("preview-strip"),
+      mockRuns
+    );
+
+    // Second section: one chip per scenario in isolation so each
+    // (date, status) pair has its own row with a label.
+    var scenarios = [
+      { label: "today  2:02 PM   completed", run: { id: "aaa11111aaaa", status: "completed", path: "src/", started_at: iso(0, 14, 2) } },
+      { label: "today  9:30 AM   running",   run: { id: "bbb22222bbbb", status: "running",   path: "src/", started_at: iso(0, 9, 30) } },
+      { label: "today  11:15 AM  failed",    run: { id: "ccc33333cccc", status: "failed",    path: "src/", started_at: iso(0, 11, 15) } },
+      { label: "today  12:00 AM  pending",   run: { id: "ddd44444dddd", status: "pending",   path: "src/", started_at: iso(0, 0, 0) } },
+      { label: "today  12:00 PM  completed", run: { id: "eee55555eeee", status: "completed", path: "src/", started_at: iso(0, 12, 0) } },
+      { label: "Yesterday        failed",    run: { id: "fff66666ffff", status: "failed",    path: "src/", started_at: iso(1, 16, 45) } },
+      { label: "Sat (3 days ago) completed", run: { id: "ggg77777gggg", status: "completed", path: "src/", started_at: iso(3, 10, 20) } },
+      { label: "Wed (5 days ago) failed",    run: { id: "hhh88888hhhh", status: "failed",    path: "src/", started_at: iso(5, 8, 0) } },
+      { label: "May 14 (older)   completed", run: { id: "iii99999iiii", status: "completed", path: "src/", started_at: iso(15, 13, 0) } },
+      { label: "Apr 22 (older)   completed", run: { id: "jjj00000jjjj", status: "completed", path: "src/", started_at: iso(45, 8, 0) } },
+      { label: "today  unknown   ?",         run: { id: "kkkaaaaakkkk", status: "weird",     path: "src/", started_at: iso(0, 7, 0) } }
+    ];
+    var grid = document.getElementById("preview-grid");
+    scenarios.forEach(function (s) {
+      var row = document.createElement("div");
+      row.className = "preview-row";
+      var meta = document.createElement("span");
+      meta.className = "preview-meta";
+      meta.textContent = s.label;
+      row.appendChild(meta);
+      var slot = document.createElement("div");
+      slot.className = "recent-runs";
+      row.appendChild(slot);
+      window.__attuneRunner.renderRecentRunsInto(slot, [s.run]);
+      grid.appendChild(row);
+    });
+  </script>
+</body>
+</html>

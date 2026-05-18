@@ -1005,6 +1005,9 @@ a.kpi:hover {
 .recent-run-chip.chip-muted {
   color: var(--fg-muted);
 }
+.recent-run-date {
+  font-variant-numeric: tabular-nums;
+}
 .recent-run-status {
   font-size: 10px;
   opacity: 0.7;

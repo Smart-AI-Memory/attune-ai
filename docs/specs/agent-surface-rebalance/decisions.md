@@ -1,6 +1,5 @@
 # Decisions
-
-**Status**: phase 0 complete + skills survey complete; **spec retired**
+**Status:** in-review
 **Decided**: 2026-05-12
 
 ---

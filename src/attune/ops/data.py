@@ -719,6 +719,27 @@ def list_recent_sessions(
 ALL_CODE_PATH = "src/"
 
 
+# Friendly chip labels for the Workflows tab. The Tier-map column on
+# ``workflows.html`` renders ``{stage}: {tier}`` chips; the raw stage
+# names (``agent-review``, ``sweep``) and lowercase tier identifiers
+# (``cheap``, ``capable``, ``premium``) read like internal jargon.
+# ``TIER_LABEL`` maps each tier to a human-readable descriptor;
+# ``TIER_TOOLTIP`` explains the descriptor plus the underlying model
+# class in a hover affordance per the dashboard's tooltip-positive
+# UX rule.
+TIER_LABEL: dict[str, str] = {
+    "cheap": "Light",
+    "capable": "Standard",
+    "premium": "Deep",
+}
+
+TIER_TOOLTIP: dict[str, str] = {
+    "cheap": "Light tier — fast, lowest cost. Uses Haiku.",
+    "capable": "Standard tier — balanced quality and cost. Uses Sonnet.",
+    "premium": "Deep tier — highest quality, slowest, most expensive. Uses Opus.",
+}
+
+
 @dataclass(frozen=True)
 class FamilyVersion:
     package: str
