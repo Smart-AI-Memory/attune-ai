@@ -333,7 +333,9 @@ features:
     assert resp.status_code == 200
     body = resp.text
     assert "data-scope-picker" in body
-    assert "Project-wide" in body
+    # v7.0.0: "All code (src/)" replaces "Project-wide" as the top
+    # (no-path-argument) option. The value="" mechanic is preserved.
+    assert "All code (src/)" in body
     assert "Custom path…" in body
     assert "data-scope-custom" in body
     # The feature dropdown option appears
@@ -375,7 +377,9 @@ features:
     # Scope column + picker markup must be present in read-only mode.
     assert ">Scope<" in body
     assert "data-scope-picker" in body
-    assert "Project-wide" in body
+    # v7.0.0: "All code (src/)" replaces "Project-wide" as the top
+    # (no-path-argument) option. The value="" mechanic is preserved.
+    assert "All code (src/)" in body
     assert "Custom path…" in body
     # The per-row default scope wires through regardless of run mode so
     # that the saved-scope restore path works on first paint.
@@ -757,9 +761,12 @@ def test_workflows_page_scope_picker_config_no_longer_carries_fallback_paths(tmp
 
 
 def test_workflows_page_renders_all_code_option(tmp_path, monkeypatch):
-    """The picker carries an "All code" option positioned between the
-    feature list and Custom path…, with the configured path as its
-    value and a descriptive label."""
+    """v7.0.0: "All code (src/)" is the top option on the picker and
+    carries ``value=""`` (the no-path-argument default the runner
+    already understands). It replaced the previous "Project-wide"
+    label in that slot; the prior separate "All code" option with
+    ``value="src/"`` between features and Custom was dropped to
+    eliminate the duplicate."""
     _write_features_yaml(
         tmp_path,
         "features:\n  feat:\n    description: x\n    files: [src/feat/**]\n",
@@ -768,16 +775,23 @@ def test_workflows_page_renders_all_code_option(tmp_path, monkeypatch):
     with TestClient(app) as client:
         resp = client.get("/workflows")
     assert resp.status_code == 200
-    # Option exists with the configured path as its value.
-    assert '<option value="src/"' in resp.text
+    # The empty-value "All code" option exists and carries the
+    # descriptive title attribute (the source-of-truth for the
+    # broad-scan semantics).
     assert "All code (src/)" in resp.text
-    # And precedes Custom path… in the markup (bottom-of-fixed-options
-    # placement; Custom path stays as the input-toggle anchor at the
-    # very end).
+    assert "All source code under src/" in resp.text
+    # Ordering: "All code" is the first <option> in the picker, above
+    # the feature list AND above Custom path…
     all_code_idx = resp.text.find("All code (src/)")
+    feat_idx = resp.text.find(">feat<")
     custom_idx = resp.text.find("Custom path")
-    assert all_code_idx > 0 and custom_idx > 0
+    assert all_code_idx > 0 and feat_idx > 0 and custom_idx > 0
+    assert all_code_idx < feat_idx
     assert all_code_idx < custom_idx
+    # The old separate ``<option value="src/">`` "All code" option was
+    # removed; the v7.0.0 picker has no such option (the broad-scan
+    # value="" replaced it).
+    assert '<option value="src/"' not in resp.text
 
 
 # ----------------------------------------------------------------------
