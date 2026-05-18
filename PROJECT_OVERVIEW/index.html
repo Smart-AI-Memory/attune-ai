@@ -4507,9 +4507,104 @@ Agent SDK for multi-agent execution.</p>
 </table>
 <p>Set via <code>ATTUNE_MAX_BUDGET_USD</code> environment variable.</p>
 <h3 id="per-agent-model-override">Per-Agent Model Override<a class="headerlink" href="#per-agent-model-override" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_SECURITY</span><span class="o">=</span>sonnet
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_DEFAULT</span><span class="o">=</span>opus
+<p>Each subagent is matched against a set of role-keyword env vars to
+determine which model it runs on. Setting any of the keywords to
+a tier name overrides the built-in default for subagents whose
+name contains that keyword.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="c1"># Examples</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_SECURITY</span><span class="o">=</span>sonnet<span class="w">   </span><span class="c1"># security-reviewer → sonnet</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_DEFAULT</span><span class="o">=</span>opus<span class="w">      </span><span class="c1"># any unmatched agent → opus</span>
 </code></pre></div>
+<p><strong>Available keywords and built-in defaults:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Keyword</th>
+<th>Default</th>
+<th>Matches subagents like</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>security</code></td>
+<td>opus</td>
+<td>security-reviewer</td>
+</tr>
+<tr>
+<td><code>vuln</code></td>
+<td>opus</td>
+<td>vuln-scanner</td>
+</tr>
+<tr>
+<td><code>architect</code></td>
+<td>opus</td>
+<td>architect-reviewer</td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td>sonnet</td>
+<td>quality-reviewer</td>
+</tr>
+<tr>
+<td><code>plan</code></td>
+<td>sonnet</td>
+<td>remediation-planner</td>
+</tr>
+<tr>
+<td><code>research</code></td>
+<td>sonnet</td>
+<td>research-*</td>
+</tr>
+<tr>
+<td><code>complexity</code></td>
+<td>haiku</td>
+<td>complexity-analyzer</td>
+</tr>
+<tr>
+<td><code>lint</code></td>
+<td>haiku</td>
+<td>lint-checker</td>
+</tr>
+<tr>
+<td><code>coverage</code></td>
+<td>haiku</td>
+<td>coverage-analyzer</td>
+</tr>
+<tr>
+<td><code>dep</code></td>
+<td>haiku</td>
+<td>dep-checker</td>
+</tr>
+<tr>
+<td><code>detector</code></td>
+<td>inherit</td>
+<td>secret-detector</td>
+</tr>
+<tr>
+<td><code>reviewer</code></td>
+<td>inherit</td>
+<td>auth-reviewer, perf-reviewer, safety-reviewer</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>inherit</code>-default keywords (<code>detector</code>, <code>reviewer</code>) exist
+primarily as override hooks — without an env var they fall
+through to the orchestrator's model or <code>ATTUNE_AGENT_MODEL_DEFAULT</code>.</p>
+<p><strong>Subscription users hitting rate limits</strong> on subagent-heavy
+workflows (security-audit fans out to 4 subagents, deep-review
+to 4-5, all Opus by default) can rebalance with:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Lighten security-audit by routing 3 of 4 subagents to Sonnet.</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="c1"># The orchestrator stays on Opus for cross-finding synthesis.</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_VULN</span><span class="o">=</span>sonnet
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_DETECTOR</span><span class="o">=</span>sonnet
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="nb">export</span><span class="w"> </span><span class="nv">ATTUNE_AGENT_MODEL_REVIEWER</span><span class="o">=</span>sonnet
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>security-audit
+</code></pre></div>
+<p>Trade-off: small accuracy reduction on pattern-finding work
+(Sonnet 4.6 closes most of the gap with Opus 4.7 for vuln /
+secret / auth pattern matching) in exchange for substantially
+lower rate-limit pressure and (for API-billed users) ~70% lower
+per-run cost.</p>
 <hr />
 <h2 id="wizards">Wizards<a class="headerlink" href="#wizards" title="Permanent link">&para;</a></h2>
 <p>5 interactive guided workflows using Socratic discovery:</p>
@@ -4543,8 +4638,8 @@ Agent SDK for multi-agent execution.</p>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>attune<span class="w"> </span>wizard<span class="w"> </span>list
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>attune<span class="w"> </span>wizard<span class="w"> </span>run<span class="w"> </span>debug
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>attune<span class="w"> </span>wizard<span class="w"> </span>list
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>attune<span class="w"> </span>wizard<span class="w"> </span>run<span class="w"> </span>debug
 </code></pre></div>
 <hr />
 <h2 id="claude-code-plugin">Claude Code Plugin<a class="headerlink" href="#claude-code-plugin" title="Permanent link">&para;</a></h2>
@@ -4693,15 +4788,15 @@ calls/min per tool.</p>
 </tbody>
 </table>
 <h3 id="cost-tracking">Cost Tracking<a class="headerlink" href="#cost-tracking" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>attune<span class="w"> </span>costs<span class="w">                  </span><span class="c1"># 7-day report</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>attune<span class="w"> </span>costs<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span><span class="w">        </span><span class="c1"># Custom range</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>attune<span class="w"> </span>costs<span class="w"> </span>today<span class="w">            </span><span class="c1"># Today only</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>attune<span class="w"> </span>costs<span class="w"> </span><span class="nb">export</span><span class="w"> </span>-o<span class="w"> </span>FILE<span class="w">   </span><span class="c1"># Export</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>attune<span class="w"> </span>costs<span class="w">                  </span><span class="c1"># 7-day report</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>attune<span class="w"> </span>costs<span class="w"> </span>--days<span class="w"> </span><span class="m">30</span><span class="w">        </span><span class="c1"># Custom range</span>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>attune<span class="w"> </span>costs<span class="w"> </span>today<span class="w">            </span><span class="c1"># Today only</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>attune<span class="w"> </span>costs<span class="w"> </span><span class="nb">export</span><span class="w"> </span>-o<span class="w"> </span>FILE<span class="w">   </span><span class="c1"># Export</span>
 </code></pre></div>
 <h3 id="auth-management">Auth Management<a class="headerlink" href="#auth-management" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>status<span class="w">            </span><span class="c1"># Subscription status</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>attune<span class="w"> </span>auth<span class="w"> </span>setup<span class="w">             </span><span class="c1"># Interactive setup</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>attune<span class="w"> </span>auth<span class="w"> </span>reset<span class="w"> </span>--confirm<span class="w">   </span><span class="c1"># Clear config</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>status<span class="w">            </span><span class="c1"># Subscription status</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>attune<span class="w"> </span>auth<span class="w"> </span>setup<span class="w">             </span><span class="c1"># Interactive setup</span>
+<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>attune<span class="w"> </span>auth<span class="w"> </span>reset<span class="w"> </span>--confirm<span class="w">   </span><span class="c1"># Clear config</span>
 </code></pre></div>
 <hr />
 <h2 id="installation-extras">Installation Extras<a class="headerlink" href="#installation-extras" title="Permanent link">&para;</a></h2>
@@ -4820,10 +4915,10 @@ calls/min per tool.</p>
 <hr />
 <h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
 <p><strong>15,555+ tests</strong> | <strong>85%+ coverage</strong> | <strong>pytest + pytest-cov</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pytest<span class="w"> </span>tests/<span class="w">                              </span><span class="c1"># Full suite</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>attune<span class="w"> </span>--cov-report<span class="o">=</span>html<span class="w">      </span><span class="c1"># With coverage</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>pytest<span class="w"> </span>tests/unit/workflows/<span class="w">               </span><span class="c1"># Specific module</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>pytest<span class="w"> </span>-n<span class="w"> </span>auto<span class="w">                             </span><span class="c1"># Parallel (4-8x faster)</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a>pytest<span class="w"> </span>tests/<span class="w">                              </span><span class="c1"># Full suite</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>attune<span class="w"> </span>--cov-report<span class="o">=</span>html<span class="w">      </span><span class="c1"># With coverage</span>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>pytest<span class="w"> </span>tests/unit/workflows/<span class="w">               </span><span class="c1"># Specific module</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>pytest<span class="w"> </span>-n<span class="w"> </span>auto<span class="w">                             </span><span class="c1"># Parallel (4-8x faster)</span>
 </code></pre></div>
 <h3 id="test-organization">Test Organization<a class="headerlink" href="#test-organization" title="Permanent link">&para;</a></h3>
 <table>
@@ -4977,22 +5072,22 @@ calls/min per tool.</p>
 <hr />
 <h2 id="entry-points">Entry Points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h2>
 <p>Registered in <code>pyproject.toml</code>:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="k">[project.entry-points.&quot;attune.workflows&quot;]</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="na">code-review</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.code_review:CodeReviewWorkflow&quot;</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="na">security-audit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.security_audit:SecurityAuditWorkflow&quot;</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="c1"># ... 13 more</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="k">[project.entry-points.&quot;attune.wizards&quot;]</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="na">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.wizards.builtin.debug_wizard:DebugWizard&quot;</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="c1"># ... 4 more</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="k">[project.entry-points.&quot;attune.plugins&quot;]</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a><span class="na">software</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_software.plugin:SoftwarePlugin&quot;</span>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.plugin:RedisPlugin&quot;</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>
-<a id="__codelineno-8-14" name="__codelineno-8-14" href="#__codelineno-8-14"></a><span class="k">[project.entry-points.&quot;attune.memory_backends&quot;]</span>
-<a id="__codelineno-8-15" name="__codelineno-8-15" href="#__codelineno-8-15"></a><span class="na">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.memory.file_session:FileSessionMemory&quot;</span>
-<a id="__codelineno-8-16" name="__codelineno-8-16" href="#__codelineno-8-16"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.memory:AMSMemoryBackend&quot;</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">[project.entry-points.&quot;attune.workflows&quot;]</span>
+<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="na">code-review</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.code_review:CodeReviewWorkflow&quot;</span>
+<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="na">security-audit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.workflows.security_audit:SecurityAuditWorkflow&quot;</span>
+<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="c1"># ... 13 more</span>
+<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a>
+<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="k">[project.entry-points.&quot;attune.wizards&quot;]</span>
+<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="na">debug</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.wizards.builtin.debug_wizard:DebugWizard&quot;</span>
+<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="c1"># ... 4 more</span>
+<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>
+<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="k">[project.entry-points.&quot;attune.plugins&quot;]</span>
+<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a><span class="na">software</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_software.plugin:SoftwarePlugin&quot;</span>
+<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.plugin:RedisPlugin&quot;</span>
+<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a>
+<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="k">[project.entry-points.&quot;attune.memory_backends&quot;]</span>
+<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="na">file</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune.memory.file_session:FileSessionMemory&quot;</span>
+<a id="__codelineno-9-16" name="__codelineno-9-16" href="#__codelineno-9-16"></a><span class="na">redis</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s">&quot;attune_redis.memory:AMSMemoryBackend&quot;</span>
 </code></pre></div>
 <hr />
 <h2 id="related-documentation">Related Documentation<a class="headerlink" href="#related-documentation" title="Permanent link">&para;</a></h2>
