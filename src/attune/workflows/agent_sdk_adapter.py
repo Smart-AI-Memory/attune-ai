@@ -583,7 +583,25 @@ def resolve_cwd_for_path(path: str | Path) -> Path:
     return p.parent if p.is_file() else p
 
 
-# Role-keyword to model mapping for subagents
+# Role-keyword to model mapping for subagents.
+#
+# Each entry registers a keyword that hooks two things:
+#
+# 1. The default model for subagents whose name contains the keyword.
+# 2. An env-var override path: ``ATTUNE_AGENT_MODEL_<KEYWORD>=sonnet``
+#    lets users opt subagents matching that keyword to a different
+#    tier without code changes.
+#
+# Map value ``"inherit"`` means "preserve current behavior — fall
+# through to the orchestrator's model unless overridden by env var."
+# Useful for agent roles where we want the override knob exposed
+# but don't want to commit to a specific tier as the default.
+#
+# Subscription-tier (Pro/Max) users hitting rate limits on
+# subagent-heavy workflows (security-audit, deep-review,
+# code-review) can lighten the load with e.g.
+# ``ATTUNE_AGENT_MODEL_VULN=sonnet ATTUNE_AGENT_MODEL_DETECTOR=sonnet
+# ATTUNE_AGENT_MODEL_REVIEWER=sonnet attune workflow run security-audit``.
 _SUBAGENT_MODEL_MAP: dict[str, str] = {
     # Deep reasoning agents → opus
     "security": "opus",
@@ -598,6 +616,14 @@ _SUBAGENT_MODEL_MAP: dict[str, str] = {
     "lint": "haiku",
     "coverage": "haiku",
     "dep": "haiku",
+    # Role-shape keywords with no committed default; exposed
+    # primarily as override hooks. ``inherit`` preserves the
+    # parent's model unless the corresponding env var is set.
+    # Covers: secret-detector (security-audit), auth-reviewer
+    # (security-audit), perf-reviewer (code-review),
+    # safety-reviewer (simplify-code).
+    "detector": "inherit",
+    "reviewer": "inherit",
 }
 
 
@@ -612,7 +638,9 @@ def get_subagent_model(agent_name: str) -> str | None:
     4. ``None`` (inherit parent model)
 
     Valid model values: ``"opus"``, ``"sonnet"``, ``"haiku"``,
-    ``"inherit"``.
+    ``"inherit"``. The literal ``"inherit"`` is normalized to
+    ``None`` so callers can pass the return value directly to the
+    SDK ``AgentDefinition.model`` field.
 
     Args:
         agent_name: Name of the subagent (e.g. ``"security-reviewer"``).
@@ -629,7 +657,14 @@ def get_subagent_model(agent_name: str) -> str | None:
             env_val = os.environ.get(env_key)
             if env_val:
                 return env_val if env_val != "inherit" else None
-            return _SUBAGENT_MODEL_MAP[keyword]
+            configured = _SUBAGENT_MODEL_MAP[keyword]
+            if configured != "inherit":
+                return configured
+            # Map value is ``inherit`` — this keyword exists solely
+            # to expose an override hook. Without that override, fall
+            # through to the global DEFAULT or ultimately None
+            # (parent-inherit) below. Match the FIRST keyword only.
+            break
 
     # Check global default override
     default = os.environ.get("ATTUNE_AGENT_MODEL_DEFAULT")

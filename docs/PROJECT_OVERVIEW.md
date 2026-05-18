@@ -151,10 +151,56 @@ Set via `ATTUNE_MAX_BUDGET_USD` environment variable.
 
 ### Per-Agent Model Override
 
+Each subagent is matched against a set of role-keyword env vars to
+determine which model it runs on. Setting any of the keywords to
+a tier name overrides the built-in default for subagents whose
+name contains that keyword.
+
 ```bash
-export ATTUNE_AGENT_MODEL_SECURITY=sonnet
-export ATTUNE_AGENT_MODEL_DEFAULT=opus
+# Examples
+export ATTUNE_AGENT_MODEL_SECURITY=sonnet   # security-reviewer → sonnet
+export ATTUNE_AGENT_MODEL_DEFAULT=opus      # any unmatched agent → opus
 ```
+
+**Available keywords and built-in defaults:**
+
+| Keyword | Default | Matches subagents like |
+| --- | --- | --- |
+| `security` | opus | security-reviewer |
+| `vuln` | opus | vuln-scanner |
+| `architect` | opus | architect-reviewer |
+| `quality` | sonnet | quality-reviewer |
+| `plan` | sonnet | remediation-planner |
+| `research` | sonnet | research-* |
+| `complexity` | haiku | complexity-analyzer |
+| `lint` | haiku | lint-checker |
+| `coverage` | haiku | coverage-analyzer |
+| `dep` | haiku | dep-checker |
+| `detector` | inherit | secret-detector |
+| `reviewer` | inherit | auth-reviewer, perf-reviewer, safety-reviewer |
+
+The `inherit`-default keywords (`detector`, `reviewer`) exist
+primarily as override hooks — without an env var they fall
+through to the orchestrator's model or `ATTUNE_AGENT_MODEL_DEFAULT`.
+
+**Subscription users hitting rate limits** on subagent-heavy
+workflows (security-audit fans out to 4 subagents, deep-review
+to 4-5, all Opus by default) can rebalance with:
+
+```bash
+# Lighten security-audit by routing 3 of 4 subagents to Sonnet.
+# The orchestrator stays on Opus for cross-finding synthesis.
+export ATTUNE_AGENT_MODEL_VULN=sonnet
+export ATTUNE_AGENT_MODEL_DETECTOR=sonnet
+export ATTUNE_AGENT_MODEL_REVIEWER=sonnet
+attune workflow run security-audit
+```
+
+Trade-off: small accuracy reduction on pattern-finding work
+(Sonnet 4.6 closes most of the gap with Opus 4.7 for vuln /
+secret / auth pattern matching) in exchange for substantially
+lower rate-limit pressure and (for API-billed users) ~70% lower
+per-run cost.
 
 ---
 
