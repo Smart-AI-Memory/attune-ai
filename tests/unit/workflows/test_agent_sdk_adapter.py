@@ -846,6 +846,87 @@ class TestGetSubagentModel:
         """Given mixed-case name, keyword matching is case-insensitive."""
         assert get_subagent_model("Security-Reviewer") == "opus"
 
+    # -- "inherit"-default keywords (reviewer, detector) -----------
+    #
+    # These keywords are registered in the map with value ``"inherit"``
+    # so that subagents matching them get an env-var override hook
+    # without committing to a specific tier as the default. Behavior
+    # for users who don't set the keyword-specific env var must be
+    # identical to the pre-existing inherit-parent semantics: fall
+    # through to the global DEFAULT env var, then return None.
+
+    def test_detector_keyword_inherits_by_default(self) -> None:
+        """secret-detector returns None (inherit) when no env vars set."""
+        assert get_subagent_model("secret-detector") is None
+
+    def test_reviewer_keyword_inherits_by_default(self) -> None:
+        """auth-reviewer / perf-reviewer / safety-reviewer return None
+        (inherit) when no env vars set.
+
+        Regression: ``perf-reviewer`` previously had no keyword match
+        and returned None via the unmatched path. Now it matches the
+        new ``reviewer`` keyword whose default is ``inherit``, which
+        must still return None.
+        """
+        assert get_subagent_model("auth-reviewer") is None
+        assert get_subagent_model("perf-reviewer") is None
+        assert get_subagent_model("safety-reviewer") is None
+
+    def test_detector_env_var_override(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """ATTUNE_AGENT_MODEL_DETECTOR=sonnet routes secret-detector."""
+        monkeypatch.setenv("ATTUNE_AGENT_MODEL_DETECTOR", "sonnet")
+        assert get_subagent_model("secret-detector") == "sonnet"
+
+    def test_reviewer_env_var_override(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """ATTUNE_AGENT_MODEL_REVIEWER=sonnet routes auth-reviewer."""
+        monkeypatch.setenv("ATTUNE_AGENT_MODEL_REVIEWER", "sonnet")
+        assert get_subagent_model("auth-reviewer") == "sonnet"
+        # perf-reviewer and safety-reviewer also match the keyword.
+        assert get_subagent_model("perf-reviewer") == "sonnet"
+        assert get_subagent_model("safety-reviewer") == "sonnet"
+
+    def test_inherit_default_falls_through_to_global_default(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """When the matched keyword's map value is ``inherit``, the
+        global ATTUNE_AGENT_MODEL_DEFAULT must still apply.
+
+        Without this fallthrough, adding ``reviewer`` to the map
+        would silently override the existing global-default contract
+        for perf-reviewer / auth-reviewer / safety-reviewer.
+        """
+        monkeypatch.setenv("ATTUNE_AGENT_MODEL_DEFAULT", "opus")
+        assert get_subagent_model("perf-reviewer") == "opus"
+        assert get_subagent_model("auth-reviewer") == "opus"
+        assert get_subagent_model("safety-reviewer") == "opus"
+
+    def test_keyword_override_beats_global_default(
+        self,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """Keyword-specific env var has priority over DEFAULT."""
+        monkeypatch.setenv("ATTUNE_AGENT_MODEL_DEFAULT", "opus")
+        monkeypatch.setenv("ATTUNE_AGENT_MODEL_REVIEWER", "sonnet")
+        assert get_subagent_model("auth-reviewer") == "sonnet"
+
+    def test_specific_keyword_wins_over_inherit_keyword(self) -> None:
+        """When an agent name matches BOTH a specific-default keyword
+        (e.g. ``security``) AND the ``reviewer`` inherit keyword, the
+        first dict-iteration match wins. The map orders specific
+        keywords before inherit ones so ``security-reviewer`` stays
+        on opus.
+        """
+        assert get_subagent_model("security-reviewer") == "opus"
+        assert get_subagent_model("quality-reviewer") == "sonnet"
+        assert get_subagent_model("architect-reviewer") == "opus"
+
 
 @pytest.mark.unit
 class TestAgentSDKResultAdapterStructuredOutput:

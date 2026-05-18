@@ -9,6 +9,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Two new role-keyword hooks (`detector`, `reviewer`) in the
+  subagent-model registry, exposing `ATTUNE_AGENT_MODEL_DETECTOR`
+  and `ATTUNE_AGENT_MODEL_REVIEWER` as opt-in overrides for agents
+  that previously had no env-var hook (secret-detector,
+  auth-reviewer, perf-reviewer, safety-reviewer). Both default to
+  `inherit` so they preserve current "inherit parent" behavior
+  for users who don't set the override — zero behavior change for
+  default users. Subscription users hitting rate limits on
+  subagent-heavy workflows (security-audit, deep-review,
+  code-review with 4-5 parallel Opus subagents) can now rebalance
+  via `ATTUNE_AGENT_MODEL_VULN=sonnet ATTUNE_AGENT_MODEL_DETECTOR
+  =sonnet ATTUNE_AGENT_MODEL_REVIEWER=sonnet attune workflow run
+  security-audit` without code changes. Docs at
+  [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md#per-agent-model-override)
+  enumerate every keyword + default + which subagents it matches.
 - Ops dashboard now tracks in-memory UI interaction counters (pill
   clicks, recommendation-card clicks, scope-picker changes) and
   surfaces them under a new "Dashboard interactions (this session)"
