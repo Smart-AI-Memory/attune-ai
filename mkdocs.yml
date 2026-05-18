@@ -216,6 +216,7 @@ nav:
           - Project Analysis: how-to/project-analysis-and-metrics.md
           - Context Management: how-to/context-management.md
           - Learning and Patterns: how-to/learning-and-patterns.md
+          - Triage Code-Quality Report: how-to/triage-code-quality.md
       - Observability:
           - Telemetry and Signals: how-to/telemetry-and-signals.md
       - Operations:
