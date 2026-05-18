@@ -17,6 +17,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Wired via a new `POST /api/telemetry/interaction` endpoint plus
   `GET /api/telemetry/interactions` for the JSON snapshot. Closes
   Phase 6.1 of the ops-runner-tier2 spec.
+- New ops module `src/attune/ops/anthropic_cost.py` — admin
+  cost-report client backing Phase 1 of the `anthropic-cost-integration`
+  spec. Reads an Anthropic admin API key from
+  `~/.attune/anthropic-admin.env` (or the `ANTHROPIC_ADMIN_API_KEY`
+  env var), fetches a 30-day cost window from
+  `GET /v1/organizations/cost_report`, and returns a `CostSummary`
+  with today / 7-day / MTD / 30-day totals plus per-day and
+  per-model breakdowns. Includes in-memory TTL cache (default
+  15min, configurable via `ANTHROPIC_COST_CACHE_TTL_SECONDS`) and
+  categorized failure modes (`no_key`, `auth_failed`,
+  `rate_limited`, `network`, `unknown`) so callers can surface
+  each error kind with the right UX. 34 tests covering currency
+  conversion edges, aggregation windows, every HTTP failure path,
+  cache hit/miss/refresh semantics, and key-safety (no key
+  material in error messages or logs). No callers wired yet —
+  Phase 2 will integrate into the home page.
 - Copy-report button on the ops dashboard's run-view page. Renders
   as a compact dotted-pill chip in the run header next to the run
   ID; one click copies the full rendered report (the `<pre
