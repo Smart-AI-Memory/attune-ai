@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-18T05:24:12.375039+00:00
-source_hash: b6ca0aef7a04a6f5122f0108db8941b3fcbbd161578c24f5d23838793ec43ec1
+generated_at: 2026-05-18T06:14:20.182798+00:00
+source_hash: aecb598ac46d567e49df6b1a4fed89b7135aba842be368103ed4fbec7cc451e8
 status: generated
 ---
 
@@ -12,6 +12,8 @@ status: generated
 
 | Class | Description | File |
 |-------|-------------|------|
+| `CostFetchError` | Categorized failure for cost-report fetch. | `src/attune/ops/anthropic_cost.py` |
+| `CostSummary` | Account-level cost data from the Anthropic admin cost-report. | `src/attune/ops/anthropic_cost.py` |
 | `Candidate` | One completion-candidate spec returned by the detector. | `src/attune/ops/completion_candidates.py` |
 | `Config` | Where attune ops reads project + attune state from. | `src/attune/ops/config.py` |
 | `TelemetrySummary` | — | `src/attune/ops/data.py` |
@@ -24,9 +26,7 @@ status: generated
 | `HomeKpis` | Summary numbers shown above the fold on the home page. | `src/attune/ops/data.py` |
 | `SweepChipCounts` | Per-bucket counts loaded from a persisted discovery-sweep result. | `src/attune/ops/data.py` |
 | `DismissEntry` | One dismissed candidate's persisted state. | `src/attune/ops/dismiss_store.py` |
-| `InteractionCounters` | Process-lifetime counters for dashboard UI interactions. | `src/attune/ops/interaction_counters.py` |
 | `TrustedHostMiddleware` | Reject requests whose ``Host`` header isn't on the allowlist. | `src/attune/ops/middleware.py` |
-| `InteractionEvent` | Request body for ``POST /api/telemetry/interaction``. | `src/attune/ops/routes/interaction_counters.py` |
 | `SpecPhase` | One phase file's status snapshot. | `src/attune/ops/routes/specs.py` |
 | `SpecRecord` | One spec's summary — directory + status of each phase file present. | `src/attune/ops/routes/specs.py` |
 | `RunnerBusyError` | Raised when a run is already pending/running. | `src/attune/ops/runner.py` |
@@ -44,6 +44,9 @@ status: generated
 |----------|-------------|------|
 | `create_app()` | Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI. | `src/attune/ops/__init__.py` |
 | `build_config()` | Lazy import of the config builder. | `src/attune/ops/__init__.py` |
+| `clear_cache()` | Empty the in-memory cache. Test-only convenience. | `src/attune/ops/anthropic_cost.py` |
+| `load_admin_key()` | Return the admin API key, or ``None`` if unavailable. | `src/attune/ops/anthropic_cost.py` |
+| `fetch_summary()` | Return the current cost summary or a categorized error. | `src/attune/ops/anthropic_cost.py` |
 | `add_subparser()` | Register the `ops` subparser on the main attune CLI parser. | `src/attune/ops/cli.py` |
 | `cmd_ops()` | Run the dashboard server (blocking). | `src/attune/ops/cli.py` |
 | `main()` | Standalone entry: ``python -m attune.ops``. | `src/attune/ops/cli.py` |
@@ -84,8 +87,6 @@ status: generated
 | `run_view_page()` | Full-page view for one workflow run. | `src/attune/ops/routes/dashboard.py` |
 | `specs_page()` | Specs tab — federated listing of all specs across configured roots. | `src/attune/ops/routes/dashboard.py` |
 | `spec_detail_page()` | Drill-in for a single spec: show every phase file's content (read-only). | `src/attune/ops/routes/dashboard.py` |
-| `record_interaction()` | Increment a UI interaction counter. | `src/attune/ops/routes/interaction_counters.py` |
-| `read_interactions()` | Return the full counter snapshot + per-event totals. | `src/attune/ops/routes/interaction_counters.py` |
 | `start_run()` | — | `src/attune/ops/routes/runner.py` |
 | `get_run()` | — | `src/attune/ops/routes/runner.py` |
 | `stream_run()` | — | `src/attune/ops/routes/runner.py` |

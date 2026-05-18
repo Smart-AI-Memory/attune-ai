@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: task
-generated_at: 2026-05-18T05:24:12.370158+00:00
-source_hash: b6ca0aef7a04a6f5122f0108db8941b3fcbbd161578c24f5d23838793ec43ec1
+generated_at: 2026-05-18T06:14:20.177886+00:00
+source_hash: aecb598ac46d567e49df6b1a4fed89b7135aba842be368103ed4fbec7cc451e8
 status: generated
 ---
 
@@ -23,9 +23,9 @@ Use ops dashboard when you need to local operations dashboard — workflow runne
    The primary functions are:
    - `create_app()` in `src/attune/ops/__init__.py` — Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.
    - `build_config()` in `src/attune/ops/__init__.py` — Lazy import of the config builder.
-   - `add_subparser()` in `src/attune/ops/cli.py` — Register the `ops` subparser on the main attune CLI parser.
-   - `cmd_ops()` in `src/attune/ops/cli.py` — Run the dashboard server (blocking).
-   - `main()` in `src/attune/ops/cli.py` — Standalone entry: ``python -m attune.ops``.
+   - `clear_cache()` in `src/attune/ops/anthropic_cost.py` — Empty the in-memory cache. Test-only convenience.
+   - `load_admin_key()` in `src/attune/ops/anthropic_cost.py` — Return the admin API key, or ``None`` if unavailable.
+   - `fetch_summary()` in `src/attune/ops/anthropic_cost.py` — Return the current cost summary or a categorized error.
 2. **Locate the right function to change.**
    Each function has a single responsibility. Read its
    docstring, parameters, and return type to confirm it
@@ -49,9 +49,9 @@ Functions you are most likely to modify:
 
 - `create_app()` in `src/attune/ops/__init__.py`
 - `build_config()` in `src/attune/ops/__init__.py`
+- `clear_cache()` in `src/attune/ops/anthropic_cost.py`
+- `load_admin_key()` in `src/attune/ops/anthropic_cost.py`
+- `fetch_summary()` in `src/attune/ops/anthropic_cost.py`
 - `add_subparser()` in `src/attune/ops/cli.py`
 - `cmd_ops()` in `src/attune/ops/cli.py`
 - `main()` in `src/attune/ops/cli.py`
-- `clear_cache()` in `src/attune/ops/completion_candidates.py`
-- `detect_candidates()` in `src/attune/ops/completion_candidates.py`
-- `attune_home()` in `src/attune/ops/config.py`
