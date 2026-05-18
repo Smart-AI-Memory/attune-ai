@@ -5425,6 +5425,34 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   at once. Don't be surprised when committing source files
   produces "free" follow-up commits — plan for them.
 
+- **Pushing a signed tag auto-creates a GitHub release with a
+  flat commit-log body — `gh release create` then 422s, and
+  the auto-body is unstructured noise covering pre-release
+  commits too**: hit on the v7.0.0 release 2026-05-18. Sequence:
+  `git push origin v7.0.0` → GitHub silently creates a release
+  object whose `body` is a bullet-list of EVERY commit since
+  the previous tag, including commits from prior PRs that have
+  nothing to do with this release (PR #421's flaky-test xfail,
+  PR #414's test-quality cycle, etc.). The body length on
+  v7.0.0 was 6,544 chars of brain-dump. Then `gh release create
+  v7.0.0 --notes-file ...` fails with `HTTP 422: Validation
+  Failed - Release.tag_name already exists`. Fix: use
+  `gh release edit v7.0.0 --notes-file <CHANGELOG-extract>` to
+  replace the auto-body with structured notes. Even better,
+  bake into the release-prep skill: extract the
+  `[X.Y.Z]` CHANGELOG section to a temp file BEFORE the tag
+  push, then immediately after the tag push run
+  `gh release edit` (not create) to overwrite the auto-body
+  with the prepared notes. The CHANGELOG-extract shell pattern
+  is `awk '/^## \[X\.Y\.Z\]/{flag=1; next} /^## \[/{flag=0} flag'
+  CHANGELOG.md > /tmp/release_notes.md`. Prepend a one-line
+  header with the date + PyPI link
+  (`Released YYYY-MM-DD · [PyPI](https://pypi.org/project/<pkg>/<ver>/)`)
+  for readability. The auto-generated body is technically
+  "fine" (no missing info — it covers all commits) but
+  reads as a changelog DUMP rather than RELEASE NOTES; the
+  structured CHANGELOG section is what you want users to see.
+
 - **attune-author CLI does NOT auto-load
   `~/.attune/anthropic.env` — every shell
   invocation needs an inline source**: the existing
