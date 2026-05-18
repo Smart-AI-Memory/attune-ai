@@ -13,7 +13,9 @@ from fastapi.templating import Jinja2Templates
 from attune import __version__
 from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
+from attune.ops.interaction_counters import InteractionCounters
 from attune.ops.routes import dashboard
+from attune.ops.routes import interaction_counters as interaction_counters_routes
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import runs_history as runs_history_routes
 from attune.ops.routes import sessions as sessions_routes
@@ -95,6 +97,11 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.state.config = config
     app.state.templates = templates
     app.state.runner = runner if runner is not None else _build_default_runner(config)
+    # Phase 6.1 of ops-runner-tier2 — process-lifetime UI interaction
+    # counters (pill clicks, recommendation-card clicks, scope-picker
+    # changes). In-memory only; resets on restart. See
+    # ``interaction_counters.py`` for bucket layout.
+    app.state.interaction_counters = InteractionCounters()
 
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
@@ -102,6 +109,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(sessions_routes.router)
     app.include_router(specs_routes.router)
     app.include_router(sweep_results_routes.router)
+    app.include_router(interaction_counters_routes.router)
 
     # Phase 2B of discovery-sweep-ops-integration: when sweep-result
     # persistence is enabled, wrap the runner's start() so each

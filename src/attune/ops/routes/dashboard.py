@@ -132,7 +132,26 @@ async def workflows_page(request: Request) -> HTMLResponse:
 async def telemetry_page(request: Request) -> HTMLResponse:
     cfg = request.app.state.config
     summary = data.read_telemetry_summary(cfg, recent_days=14)
-    return _render(request, "telemetry.html", page="telemetry", telemetry=summary)
+    # Phase 6.1 of ops-runner-tier2 — surface in-memory UI interaction
+    # counters alongside the persisted workflow telemetry. These are
+    # per-process tallies (reset on dashboard restart); the template
+    # labels the section accordingly so users don't confuse them with
+    # the disk-backed numbers above.
+    counters = getattr(request.app.state, "interaction_counters", None)
+    interaction_totals = counters.totals() if counters is not None else {}
+    interaction_top = {
+        "pill_clicks": counters.top("pill_click", limit=10) if counters else [],
+        "rec_card_clicks": counters.top("rec_card_click", limit=10) if counters else [],
+        "scope_picker_changes": (counters.top("scope_picker_change", limit=10) if counters else []),
+    }
+    return _render(
+        request,
+        "telemetry.html",
+        page="telemetry",
+        telemetry=summary,
+        interaction_totals=interaction_totals,
+        interaction_top=interaction_top,
+    )
 
 
 @router.get("/health", response_class=HTMLResponse)

@@ -250,12 +250,23 @@
     return null;
   }
 
+  // Phase 6.1 — fire-and-forget UI counter helper. Delegates to
+  // runner.js's recordInteraction if available; no-op otherwise so
+  // counter wiring never blocks the pill/rec-card user flow.
+  function recordInteraction(event, target) {
+    var runner = (typeof window !== "undefined") ? window.__attuneRunner : null;
+    if (runner && typeof runner.recordInteraction === "function") {
+      runner.recordInteraction(event, target);
+    }
+  }
+
   function handlePillClick(ev) {
     var pill = pillTargetFromEvent(ev);
     if (!pill) return;
     ev.preventDefault();
     var target = (pill.textContent || "").trim();
     if (!target) return;
+    recordInteraction("pill_click", target);
     if (!ALLOW_RUN) {
       showInlineError(
         "Read-only mode — restart attune ops without --read-only to chain runs."
@@ -480,6 +491,7 @@
     action.type = "button";
     action.textContent = kind === "next-workflow" ? "Run" : "Open";
     action.addEventListener("click", function () {
+      recordInteraction("rec_card_click", kind);
       action.disabled = true;
       if (kind === "next-workflow") {
         var name = payload.name;

@@ -56,4 +56,59 @@
 {% if telemetry.last_event_at %}
   <p class="meta">Last event recorded: <code>{{ telemetry.last_event_at }}</code></p>
 {% endif %}
+
+<section class="panel">
+  <h2>Dashboard interactions (this session)</h2>
+  <p class="page-sub">In-memory counters since the dashboard process started. Resets on restart; no PII, no disk write.</p>
+  <div class="kpi-grid">
+    <div class="kpi">
+      <div class="kpi-label">Pill clicks</div>
+      <div class="kpi-value">{{ '{:,}'.format(interaction_totals.get('pill_clicks', 0)) }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Recommendation card clicks</div>
+      <div class="kpi-value">{{ '{:,}'.format(interaction_totals.get('rec_card_clicks', 0)) }}</div>
+    </div>
+    <div class="kpi">
+      <div class="kpi-label">Scope picker changes</div>
+      <div class="kpi-value">{{ '{:,}'.format(interaction_totals.get('scope_picker_changes', 0)) }}</div>
+    </div>
+  </div>
+  {% if interaction_top.pill_clicks %}
+    <h3>Top pills clicked</h3>
+    <table class="data-table">
+      <thead><tr><th>Workflow</th><th class="num">Clicks</th></tr></thead>
+      <tbody>
+        {% for name, count in interaction_top.pill_clicks %}
+          <tr><td><code>{{ name }}</code></td><td class="num">{{ count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  {% if interaction_top.rec_card_clicks %}
+    <h3>Recommendation cards by kind</h3>
+    <table class="data-table">
+      <thead><tr><th>Kind</th><th class="num">Clicks</th></tr></thead>
+      <tbody>
+        {% for kind, count in interaction_top.rec_card_clicks %}
+          <tr><td><code>{{ kind }}</code></td><td class="num">{{ count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  {% if interaction_top.scope_picker_changes %}
+    <h3>Scope picker changes by workflow</h3>
+    <table class="data-table">
+      <thead><tr><th>Workflow</th><th class="num">Changes</th></tr></thead>
+      <tbody>
+        {% for name, count in interaction_top.scope_picker_changes %}
+          <tr><td><code>{{ name }}</code></td><td class="num">{{ count }}</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+  {% if not interaction_top.pill_clicks and not interaction_top.rec_card_clicks and not interaction_top.scope_picker_changes %}
+    <p class="empty">No dashboard interactions recorded yet this session.</p>
+  {% endif %}
+</section>
 {% endblock %}

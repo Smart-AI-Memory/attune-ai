@@ -1,6 +1,6 @@
 # Tasks — Ops Runner Tier 2
 
-**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 complete 2026-05-16 (recommendation channel + run-view cards + `code-review` demo integration); Phase 6 pending
+**Status:** Phase 1 complete 2026-05-13 (audit + registry shipped); Phase 2 complete 2026-05-14 (scope picker shipped); Phase 3 + Phase 4 complete 2026-05-14 (persistence + chainable pills shipped together); Phase 5 complete 2026-05-16 (recommendation channel + run-view cards + `code-review` demo integration); Phase 6.1 complete 2026-05-18 (in-memory interaction counters on `/telemetry`); 6.2–6.4 pending
 
 Phased plan. Each phase is independently shippable + reversible (single-commit revert). See `decisions.md`, `requirements.md`, `design.md` for context.
 
@@ -95,7 +95,7 @@ Goal: workflows can emit JSON recommendations rendered as action cards on the ru
 
 ## Phase 6 — Telemetry + close
 
-- [ ] **6.1** Add lightweight telemetry: pill click counts, recommendation card click counts, scope picker usage rates (in-memory only — no PII, no network). Surface in the existing `/telemetry` tab.
+- [x] **6.1** **Shipped 2026-05-18** — process-lifetime in-memory counters for pill clicks, recommendation-card clicks, and scope-picker changes. Backend: `src/attune/ops/interaction_counters.py` (counter store with thread-safe `Counter` buckets + target normalization) + `src/attune/ops/routes/interaction_counters.py` (`POST /api/telemetry/interaction`, `GET /api/telemetry/interactions`). Frontend: `recordInteraction()` helper on `window.__attuneRunner`, called from `handlePillClick`, recommendation-card action handler, and `wireScopeSave`. Telemetry page gains a "Dashboard interactions (this session)" section with three KPI tiles + top-N tables. 22 tests in `tests/unit/ops/test_interaction_counters.py` cover counter store unit behavior, HTTP API edge cases (unknown event → 204, HTML target → bucketed as `(unknown)`, missing event → 422), and the rendered HTML.
 - [ ] **6.2** Update `docs/COVERAGE_BUG_LOG.md` if any bugs surfaced during Phase 1–5 work.
 - [ ] **6.3** Patrick uses the new dashboard for at least one real feature scope; confirms the UX feels right.
 - [ ] **6.4** Close this spec. Open follow-up specs if any Phase 3/4 ideas surfaced (e.g. editor integration for file-path chips).

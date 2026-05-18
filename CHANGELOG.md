@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Ops dashboard now tracks in-memory UI interaction counters (pill
+  clicks, recommendation-card clicks, scope-picker changes) and
+  surfaces them under a new "Dashboard interactions (this session)"
+  panel on the `/telemetry` tab. Counters are process-lifetime — no
+  PII, no disk write, no network — and reset on dashboard restart.
+  Wired via a new `POST /api/telemetry/interaction` endpoint plus
+  `GET /api/telemetry/interactions` for the JSON snapshot. Closes
+  Phase 6.1 of the ops-runner-tier2 spec.
 - Copy-report button on the ops dashboard's run-view page. Renders
   as a compact dotted-pill chip in the run header next to the run
   ID; one click copies the full rendered report (the `<pre
