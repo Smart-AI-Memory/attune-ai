@@ -159,6 +159,33 @@
     if (pre) while (pre.firstChild) pre.removeChild(pre.firstChild);
   }
 
+  // Phase 6.1 — fire-and-forget UI interaction counter ping. Sends
+  // a small JSON POST to /api/telemetry/interaction. Any failure
+  // (network, 4xx/5xx, missing endpoint) is swallowed silently:
+  // these counters are best-effort dashboard telemetry, never on
+  // the critical path of a user action.
+  function recordInteraction(event, target) {
+    if (typeof fetch !== "function") return;
+    var body = { event: String(event || "") };
+    if (target != null && target !== "") {
+      body.target = String(target);
+    }
+    try {
+      fetch("/api/telemetry/interaction", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
+        // keepalive lets the request survive a navigation away
+        // from the page (e.g. pill-click → navigate to new run).
+        keepalive: true
+      }).catch(function () {
+        // INTENTIONAL: best-effort telemetry, no surfacing.
+      });
+    } catch (e) {
+      // INTENTIONAL: same as above — never raise from telemetry.
+    }
+  }
+
   // Export internals for the test page (tests/unit/ops/static/test_runner.html).
   // Wrapped in a check so it's a no-op in environments without window.
   if (typeof window !== "undefined") {
@@ -182,7 +209,8 @@
       appendBusyErrorLine: appendBusyErrorLine,
       applyChipCounts: applyChipCounts,
       refreshSweepChips: refreshSweepChips,
-      wireSweepChipRefresh: wireSweepChipRefresh
+      wireSweepChipRefresh: wireSweepChipRefresh,
+      recordInteraction: recordInteraction
     };
   }
 
@@ -462,9 +490,15 @@
     var picker = row.querySelector("[data-scope-picker]");
     var custom = row.querySelector("[data-scope-custom]");
     if (!picker) return;
+    // Phase 6.1 — workflow name is the per-row data attribute set by
+    // the workflows.html template (data-workflow=<name>). Falls back
+    // to "" so recordInteraction buckets unidentified rows under
+    // "(unknown)" rather than mislabeling them.
+    var workflowName = row.getAttribute("data-workflow") || "";
     picker.addEventListener("change", function () {
       if (picker.value === "__custom__") return;
       saveScope(picker.value);
+      recordInteraction("scope_picker_change", workflowName);
     });
     if (custom) {
       custom.addEventListener("change", function () {
@@ -475,6 +509,7 @@
         var trimmed = (custom.value || "").trim();
         if (trimmed === "") return; // Blank custom is Project-wide; skip.
         saveScope(trimmed);
+        recordInteraction("scope_picker_change", workflowName);
       });
     }
   }
