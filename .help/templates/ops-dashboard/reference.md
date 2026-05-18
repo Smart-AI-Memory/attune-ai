@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-18T06:14:20.182798+00:00
-source_hash: aecb598ac46d567e49df6b1a4fed89b7135aba842be368103ed4fbec7cc451e8
+generated_at: 2026-05-18T08:28:31.405678+00:00
+source_hash: 8cd4d31ba199aa38922ceab758f1620f6d922f2902f55ff70c107ecd4b00686e
 status: generated
 ---
 
