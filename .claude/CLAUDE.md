@@ -5377,6 +5377,54 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   extension — these workflows assume Python source and will
   silent-fail on `.html`, `.css`, `.md`, `.json`, etc.
 
+- **API quota exhaustion masquerades as SDK startup failure
+  with $0.00 / 0.0s — the workflow's "What Went Wrong" lists
+  three plausible-but-wrong causes and never names the real
+  one**: extends the existing "Command failed with exit code
+  1 + $0.0000 | 0.0s = subprocess startup failure" lesson with
+  a fourth root cause to consider. When the symptom shape is
+  `claude_agent_sdk.query()` failing in 2.6 seconds with
+  exit_code 0 at the CLI boundary, the workflow's voice-layer
+  suggests "ANTHROPIC_API_KEY unset/expired, claude CLI not
+  on PATH, claude-agent-sdk version incompatible" — but the
+  actual fourth cause is **API account usage cap reached**.
+  The SDK swallows the underlying 400
+  `invalid_request_error: "You have reached your specified
+  API usage limits. You will regain access on YYYY-MM-DD..."`
+  into the generic `Exception: Command failed`. Diagnosis
+  shortcut: call `claude` directly with the same flags the
+  SDK passes (`echo "" | claude --json-schema '<minimal-schema>'
+  -p "say hi"`). If the direct call returns the 400 quota
+  message, you've found the root cause. The
+  three-listed-causes are red herrings; auth + PATH + SDK
+  version are all fine. This drove ~15 minutes of misdiagnosis
+  on 2026-05-17 — and is the exact trigger for the
+  [`sdk-error-message-fidelity`](../../../docs/specs/sdk-error-message-fidelity/requirements.md)
+  spec.
+
+- **Pre-commit's `.help` template regen creates a
+  stash-and-reappear dance — every commit touching source
+  files that bump a feature's source_hash spawns a follow-up
+  commit for the regenerated `.help/templates/<feature>/*.md`
+  frontmatter**: hit twice in one session on 2026-05-17.
+  Commit 1 changed CLAUDE.md → pre-commit's
+  help-template-freshness hook regenerated
+  `.help/templates/plugin/{concept,reference,task}.md` →
+  these landed in the working tree AFTER commit 1 because
+  pre-commit's stash/restore cycle (stash unstaged before
+  hook run, restore after) merges hook output back as
+  unstaged changes. Same pattern hit again when commit 2
+  changed `src/attune/ops/*` → ops-dashboard templates
+  regenerated. Result: 3 commits planned became 5
+  (chore→regen→feat→docs→regen). Two cleaner alternatives
+  for the next session: (a) preempt the hook by running
+  `attune-author generate <feature>` manually before
+  `git add`, so the regenerated frontmatter is part of the
+  source commit; (b) batch the source-file commits and let
+  one trailing `chore(.help)` commit pick up all hash bumps
+  at once. Don't be surprised when committing source files
+  produces "free" follow-up commits — plan for them.
+
 - **attune-author CLI does NOT auto-load
   `~/.attune/anthropic.env` — every shell
   invocation needs an inline source**: the existing
