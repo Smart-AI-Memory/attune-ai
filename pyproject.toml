@@ -98,7 +98,7 @@ rag = []
 # to the sibling path for workspace dev; PyPI is the
 # fallback.
 author = [
-    "attune-author>=0.6.2,<0.12",
+    "attune-author>=0.6.2,<0.14",
 ]
 
 # `[memory]` extra removed in v6.8.0 (P2 of redis-decoupling spec).
