@@ -268,6 +268,29 @@ a.kpi:hover {
   color: var(--fg-subtle);
 }
 
+/* Account-spend cluster (Phase 2 anthropic-cost-integration).
+   Visually distinguishes Anthropic-billing tiles from workflow-
+   telemetry tiles above so users can tell at a glance which numbers
+   come from which data source. Thin left-edge accent on each tile
+   in the cluster + tighter top margin so the two clusters read as
+   related-but-distinct rather than as a single grid. */
+.kpi-cluster-account {
+  margin-top: -8px;
+}
+.kpi-cluster-account .kpi {
+  border-left: 3px solid var(--accent);
+}
+.kpi-cluster-account .kpi-value-small {
+  font-size: 18px;
+  font-weight: 500;
+}
+.kpi-cluster-account .kpi-cta {
+  border-left-color: var(--fg-muted);
+}
+.kpi-cluster-account .kpi-notice {
+  border-left-color: var(--warn, #c87a00);
+}
+
 /* ---------- Panels ---------- */
 
 .panel {
