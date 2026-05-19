@@ -166,6 +166,7 @@ class BugPredictionWorkflow(BaseWorkflow):
 
         try:
             run_result = await self._run_agent_predict(resolved_path, max_turns, depth)
+            self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(

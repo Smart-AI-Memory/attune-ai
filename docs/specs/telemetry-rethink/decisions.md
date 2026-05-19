@@ -67,3 +67,14 @@ To be filled in during implementation:
   Triggered by QA review and Patrick's "moving away from cost-
   saving-first" framing. Memory page dropped, Sessions page
   scoped separately.
+- 2026-05-19 — Storage-layer telemetry write gap fixed (unblocks
+  Phase 1). The spec's `requirements.md` line 103-105 explicitly
+  deferred storage-layer work, assuming `usage.jsonl` was being
+  written correctly. It wasn't — SDK-native workflows had bypassed
+  the telemetry write path since the SDK migration in early May,
+  freezing `usage.jsonl` for ~10 days. Without the fix, this
+  spec's Quality dashboard would have rendered empty panels for
+  every SDK workflow on launch. Fix wires `_track_sdk_run_telemetry`
+  through all 15 SDK workflows and adds an `atexit` flush so
+  buffered entries persist on CLI exit. See `CHANGELOG.md` under
+  `## [Unreleased] ### Fixed` for the full scope.

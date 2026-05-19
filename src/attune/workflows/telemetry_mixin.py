@@ -14,6 +14,8 @@ import uuid
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
+from attune.workflows.agent_sdk_adapter import AgentRunResult
+
 if TYPE_CHECKING:
     from attune.models import (
         TelemetryBackend,
@@ -149,6 +151,51 @@ class TelemetryMixin:
         except (OSError, PermissionError) as e:
             # File system errors - log but never crash workflow
             logger.debug(f"Failed to track telemetry (file system error): {e}")
+
+    def _track_sdk_run_telemetry(
+        self,
+        stage: str,
+        agent_run_result: AgentRunResult,
+    ) -> None:
+        """Record telemetry for an SDK-native workflow run.
+
+        SDK workflows call ``claude_agent_sdk.query()`` directly, bypassing
+        the legacy ``llm_mixin`` path that calls ``_track_telemetry()``. As
+        a result, ``usage.jsonl`` was never written for SDK runs and the
+        dashboard's home / telemetry KPIs went stale after the SDK migration.
+
+        Call this once per run, after the message-collection loop completes
+        and the ``AgentRunResult`` has been populated from the final
+        ``ResultMessage``. Failed runs (``is_error=True``) and zero-cost
+        runs (typically startup failures) are skipped.
+
+        Args:
+            stage: Stage name to record (e.g. ``"agent"``, ``"predict"``).
+            agent_run_result: Aggregated result from ``collect_agent_output``.
+        """
+        if not self._enable_telemetry or self._telemetry_tracker is None:
+            return
+        if agent_run_result.is_error:
+            return
+        cost = agent_run_result.total_cost_usd or 0.0
+        if cost <= 0:
+            return
+        usage = agent_run_result.usage or {}
+        self._track_telemetry(
+            stage=stage,
+            tier="SDK",
+            model="agent-sdk",
+            cost=cost,
+            tokens={
+                "input": int(usage.get("input_tokens", 0) or 0),
+                "output": int(usage.get("output_tokens", 0) or 0),
+            },
+            cache_hit=False,
+            cache_type=None,
+            duration_ms=agent_run_result.duration_ms or 0,
+            prompt_cache_creation_tokens=int(usage.get("cache_creation_input_tokens", 0) or 0),
+            prompt_cache_read_tokens=int(usage.get("cache_read_input_tokens", 0) or 0),
+        )
 
     def _emit_call_telemetry(
         self,

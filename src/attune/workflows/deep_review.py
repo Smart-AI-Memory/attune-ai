@@ -215,6 +215,7 @@ class DeepReviewAgentSDKWorkflow(BaseWorkflow):
 
         try:
             run_result = await self._run_deep_review(resolved_path, max_turns, active_agents, depth)
+            self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
 
             completed_at = datetime.now()
 

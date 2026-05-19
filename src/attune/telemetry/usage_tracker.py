@@ -7,6 +7,7 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+import atexit
 import hashlib
 import hmac
 import json
@@ -102,7 +103,28 @@ class UsageTracker:
         with cls._lock:
             if cls._instance is None:
                 cls._instance = cls(**kwargs)
+                # Register atexit flush so short-lived CLI runs (which
+                # typically produce 1-2 buffered entries — well below
+                # ``buffer_size``) still persist to disk before the
+                # process exits. Without this, ``usage.jsonl`` silently
+                # stops accumulating data once workflows move off the
+                # multi-call legacy LLM path (e.g. after the SDK
+                # migration).
+                atexit.register(cls._atexit_flush, cls._instance)
         return cls._instance
+
+    @staticmethod
+    def _atexit_flush(instance: "UsageTracker") -> None:
+        """atexit handler: flush any buffered entries on process exit.
+
+        Intentionally swallows all exceptions — telemetry failures must
+        never affect process exit status.
+        """
+        try:
+            instance.flush()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: best-effort flush at shutdown
+            pass
 
     # =========================================================================
     # Shared helpers
