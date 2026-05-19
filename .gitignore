@@ -256,3 +256,6 @@ dashboard/dist/
 # create stray MagicMock/mock.attune_dir/<id>/ trees. Ignore them as a
 # safety net; ideally the underlying tests should be fixed to use tmp_path.
 MagicMock/
+
+# Personal IDE launch configs (per-dev-machine; not portable)
+.claude/launch.json
