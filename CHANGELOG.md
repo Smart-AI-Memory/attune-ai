@@ -9,6 +9,35 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- New `attune workflow run --cheap` flag that sets
+  `ATTUNE_AGENT_MODEL_DEFAULT=haiku` for the duration of one run,
+  forcing every inherit-default subagent onto Haiku. Subagents
+  pinned to opus/sonnet by keyword (security, vuln, architect,
+  quality, plan, research) are unaffected — security-critical work
+  still gets the right model. For workflows like `bug-predict` or
+  `refactor-plan` whose subagents are mostly pattern-matching,
+  this is a one-flag opt-in to the cheap-mode tier.
+- Two new pattern-matching role keywords in the subagent-model
+  registry: `scanner → haiku` (catches `pattern-scanner`,
+  `debt-scanner`) and `finder → haiku` (catches `bottleneck-finder`,
+  `gap-finder`). Ordered after `security`/`vuln`/`architect` so
+  security-critical scanners (`vuln-scanner`, `security-scanner`)
+  stay on opus via their security keywords. Regression tests
+  pin the ordering. Closes the "easy wins" picks from the
+  2026-05-19 model-override audit.
+
+### Changed
+
+- `detector` keyword's default changed from `inherit` to `haiku`.
+  Routes `secret-detector` (security-audit) onto Haiku by default
+  — secret detection is regex-keyword work and Haiku handles it
+  reliably. Users who want the previous "inherit parent" behavior
+  can set `ATTUNE_AGENT_MODEL_DETECTOR=inherit` per-invocation.
+  Small per-run cost reduction for `security-audit`; no functional
+  change to what gets detected.
+
+### Added (prior release context — kept for reference)
+
 - Two new role-keyword hooks (`detector`, `reviewer`) in the
   subagent-model registry, exposing `ATTUNE_AGENT_MODEL_DETECTOR`
   and `ATTUNE_AGENT_MODEL_REVIEWER` as opt-in overrides for agents

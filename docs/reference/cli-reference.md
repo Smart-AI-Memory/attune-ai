@@ -112,7 +112,9 @@ attune workflow run security-audit --path ./src --json
 | `--path` | `-p` | Target path for analysis |
 | `--input` | `-i` | JSON input data |
 | `--target` | `-t` | Target value (e.g., coverage percentage) |
+| `--depth` | | Analysis depth: `quick`, `standard`, `deep` |
 | `--json` | `-j` | Output result as JSON |
+| `--cheap` | | Force every inherit-default subagent onto Haiku for this run (opus/sonnet-pinned subagents unaffected) |
 
 **Examples:**
 
@@ -128,7 +130,21 @@ attune workflow run test-coverage --path ./src --target 80
 
 # CI/CD friendly output
 attune workflow run security-audit --path ./src --json > results.json
+
+# Cheap-mode: route inherit-default subagents to Haiku
+attune workflow run bug-predict --cheap
 ```
+
+### Cost knobs
+
+`--cheap` is a single-flag shortcut for
+`ATTUNE_AGENT_MODEL_DEFAULT=haiku`. For finer-grained control,
+set per-keyword env vars listed in
+[PROJECT_OVERVIEW.md → Per-Agent Model Override](../PROJECT_OVERVIEW.md#per-agent-model-override).
+Subagent names are matched against keywords (first match wins):
+security/vuln/architect → opus; quality/plan/research → sonnet;
+complexity/lint/coverage/dep/scanner/finder/detector → haiku;
+reviewer → inherit (override hook).
 
 ---
 

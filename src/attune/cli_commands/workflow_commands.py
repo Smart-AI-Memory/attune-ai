@@ -77,11 +77,19 @@ def cmd_workflow_info(args: Namespace) -> int:
 def cmd_workflow_run(args: Namespace) -> int:
     """Execute a workflow."""
     import asyncio
+    import os
 
     from attune.security.path_validation import _validate_file_path
     from attune.workflows import get_workflow
 
     name = args.name
+
+    if getattr(args, "cheap", False):
+        os.environ["ATTUNE_AGENT_MODEL_DEFAULT"] = "haiku"
+        print(
+            "💸 --cheap mode: ATTUNE_AGENT_MODEL_DEFAULT=haiku for this run "
+            "(opus/sonnet-pinned subagents unaffected)"
+        )
 
     try:
         workflow_cls = get_workflow(name)

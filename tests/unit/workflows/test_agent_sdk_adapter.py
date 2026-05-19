@@ -846,18 +846,43 @@ class TestGetSubagentModel:
         """Given mixed-case name, keyword matching is case-insensitive."""
         assert get_subagent_model("Security-Reviewer") == "opus"
 
-    # -- "inherit"-default keywords (reviewer, detector) -----------
+    # -- Pattern-matching role keywords (scanner, finder, detector) ----
     #
-    # These keywords are registered in the map with value ``"inherit"``
-    # so that subagents matching them get an env-var override hook
-    # without committing to a specific tier as the default. Behavior
-    # for users who don't set the keyword-specific env var must be
-    # identical to the pre-existing inherit-parent semantics: fall
-    # through to the global DEFAULT env var, then return None.
+    # These keywords route subagents whose job is structured
+    # detection / pattern-matching / regex-scanning onto Haiku.
+    # Ordering matters: ``security`` and ``vuln`` must match first
+    # so security-scanner and vuln-scanner stay on opus.
 
-    def test_detector_keyword_inherits_by_default(self) -> None:
-        """secret-detector returns None (inherit) when no env vars set."""
-        assert get_subagent_model("secret-detector") is None
+    def test_detector_keyword_routes_to_haiku(self) -> None:
+        """secret-detector routes to haiku (pattern-matching role)."""
+        assert get_subagent_model("secret-detector") == "haiku"
+
+    def test_scanner_keyword_routes_to_haiku(self) -> None:
+        """pattern-scanner / debt-scanner route to haiku."""
+        assert get_subagent_model("pattern-scanner") == "haiku"
+        assert get_subagent_model("debt-scanner") == "haiku"
+
+    def test_finder_keyword_routes_to_haiku(self) -> None:
+        """bottleneck-finder / gap-finder route to haiku."""
+        assert get_subagent_model("bottleneck-finder") == "haiku"
+        assert get_subagent_model("gap-finder") == "haiku"
+
+    def test_vuln_scanner_stays_opus_via_ordering(self) -> None:
+        """vuln-scanner must stay opus — vuln keyword matches before scanner.
+
+        Regression guard: if a future edit reorders _SUBAGENT_MODEL_MAP
+        and puts scanner before vuln, vuln-scanner would drop to haiku.
+        That would be catastrophic for a security-critical workflow.
+        """
+        assert get_subagent_model("vuln-scanner") == "opus"
+
+    def test_security_scanner_stays_opus_via_ordering(self) -> None:
+        """security-scanner must stay opus — security matches before scanner."""
+        assert get_subagent_model("security-scanner") == "opus"
+
+    def test_complexity_scanner_stays_haiku_via_ordering(self) -> None:
+        """complexity-scanner matches complexity (haiku) before scanner (haiku)."""
+        assert get_subagent_model("complexity-scanner") == "haiku"
 
     def test_reviewer_keyword_inherits_by_default(self) -> None:
         """auth-reviewer / perf-reviewer / safety-reviewer return None
