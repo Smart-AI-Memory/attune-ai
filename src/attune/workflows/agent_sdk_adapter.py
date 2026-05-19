@@ -604,6 +604,9 @@ def resolve_cwd_for_path(path: str | Path) -> Path:
 # ATTUNE_AGENT_MODEL_REVIEWER=sonnet attune workflow run security-audit``.
 _SUBAGENT_MODEL_MAP: dict[str, str] = {
     # Deep reasoning agents → opus
+    # ORDERING NOTE: these must come BEFORE scanner/finder/detector
+    # so that security-scanner and vuln-scanner stay on opus rather
+    # than dropping to haiku via the broader scanner keyword.
     "security": "opus",
     "vuln": "opus",
     "architect": "opus",
@@ -616,13 +619,21 @@ _SUBAGENT_MODEL_MAP: dict[str, str] = {
     "lint": "haiku",
     "coverage": "haiku",
     "dep": "haiku",
-    # Role-shape keywords with no committed default; exposed
-    # primarily as override hooks. ``inherit`` preserves the
+    # Role-shape keywords for pattern-matching / structured-parse
+    # work. Catches subagents like ``pattern-scanner``,
+    # ``debt-scanner``, ``bottleneck-finder``, ``gap-finder``,
+    # ``secret-detector``. Vuln-scanner / security-scanner stay
+    # on opus because their (security, vuln) keywords match first.
+    "scanner": "haiku",
+    "finder": "haiku",
+    "detector": "haiku",
+    # Role-shape keyword with no committed default; exposed
+    # primarily as override hook. ``inherit`` preserves the
     # parent's model unless the corresponding env var is set.
-    # Covers: secret-detector (security-audit), auth-reviewer
-    # (security-audit), perf-reviewer (code-review),
-    # safety-reviewer (simplify-code).
-    "detector": "inherit",
+    # Covers auth-reviewer (security-audit), perf-reviewer
+    # (code-review), safety-reviewer (simplify-code),
+    # test-gap-reviewer (deep-review), accuracy-reviewer
+    # (doc-audit), polish-reviewer (document-gen).
     "reviewer": "inherit",
 }
 

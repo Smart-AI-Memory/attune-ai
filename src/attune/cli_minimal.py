@@ -172,6 +172,17 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
         choices=["quick", "standard", "deep"],
         help="Analysis depth (workflow-specific); defaults to 'standard'",
     )
+    run_parser.add_argument(
+        "--cheap",
+        action="store_true",
+        help=(
+            "Cost-saving mode: sets ATTUNE_AGENT_MODEL_DEFAULT=haiku for "
+            "this run, forcing every subagent without an explicit model "
+            "(see _SUBAGENT_MODEL_MAP) onto Haiku. Subagents pinned to "
+            "opus/sonnet by keyword (security, vuln, architect, quality, "
+            "plan, research) are unaffected."
+        ),
+    )
 
 
 def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:

@@ -162,26 +162,46 @@ export ATTUNE_AGENT_MODEL_SECURITY=sonnet   # security-reviewer → sonnet
 export ATTUNE_AGENT_MODEL_DEFAULT=opus      # any unmatched agent → opus
 ```
 
-**Available keywords and built-in defaults:**
+**Available keywords and built-in defaults** (ordered — first match wins):
 
 | Keyword | Default | Matches subagents like |
 | --- | --- | --- |
-| `security` | opus | security-reviewer |
+| `security` | opus | security-reviewer, security-scanner |
 | `vuln` | opus | vuln-scanner |
 | `architect` | opus | architect-reviewer |
 | `quality` | sonnet | quality-reviewer |
-| `plan` | sonnet | remediation-planner |
+| `plan` | sonnet | remediation-planner, plan-generator, test-planner |
 | `research` | sonnet | research-* |
-| `complexity` | haiku | complexity-analyzer |
+| `complexity` | haiku | complexity-analyzer, complexity-scanner |
 | `lint` | haiku | lint-checker |
 | `coverage` | haiku | coverage-analyzer |
-| `dep` | haiku | dep-checker |
-| `detector` | inherit | secret-detector |
-| `reviewer` | inherit | auth-reviewer, perf-reviewer, safety-reviewer |
+| `dep` | haiku | dep-checker, dependency-* |
+| `scanner` | haiku | pattern-scanner, debt-scanner |
+| `finder` | haiku | bottleneck-finder, gap-finder |
+| `detector` | haiku | secret-detector |
+| `reviewer` | inherit | auth-reviewer, perf-reviewer, safety-reviewer, test-gap-reviewer, accuracy-reviewer, polish-reviewer |
 
-The `inherit`-default keywords (`detector`, `reviewer`) exist
-primarily as override hooks — without an env var they fall
-through to the orchestrator's model or `ATTUNE_AGENT_MODEL_DEFAULT`.
+Ordering matters: `security` and `vuln` are listed before `scanner`
+so `security-scanner` and `vuln-scanner` keep their opus default
+rather than dropping to haiku via the broader `scanner` keyword.
+
+The `inherit`-default keyword (`reviewer`) exists primarily as an
+override hook — without an env var it falls through to the
+orchestrator's model or `ATTUNE_AGENT_MODEL_DEFAULT`.
+
+**Cheap mode in one flag.** For a one-off cost-saving run:
+
+```bash
+attune workflow run bug-predict --cheap
+```
+
+`--cheap` sets `ATTUNE_AGENT_MODEL_DEFAULT=haiku` for that single
+invocation. Subagents pinned to opus/sonnet by the keywords above
+are unaffected — security-critical work still gets the right
+model. Good for `bug-predict`, `refactor-plan`, `test-audit`,
+`doc-audit` (pattern-matching subagents); over-aggressive for
+`security-audit` or `code-review` where the opus subagents are
+load-bearing.
 
 **Subscription users hitting rate limits** on subagent-heavy
 workflows (security-audit fans out to 4 subagents, deep-review
