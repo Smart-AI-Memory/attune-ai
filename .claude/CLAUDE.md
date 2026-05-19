@@ -5519,3 +5519,118 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and accept that any survivors you didn't enumerate
   upfront are likely additional live sessions, not
   leaks.
+
+- **Buffered telemetry/event trackers in short-lived CLI processes
+  silently lose data without an atexit flush**: discovered 2026-05-19
+  while fixing the SDK-workflow telemetry gap (PR #439).
+  `UsageTracker.track_llm_call` buffers entries in memory (default
+  `buffer_size=50`) and only flushes when the buffer fills. The
+  buffer naturally filled in the era of multi-call legacy LLM
+  workflows (one workflow run = many `track_llm_call` invocations,
+  buffer hit quickly). After the SDK migration consolidated each
+  workflow run into ONE `track_llm_call`, a typical CLI invocation
+  produced 1-2 buffered entries that never flushed before the
+  process exited — `usage.jsonl` silently stopped growing and the
+  dashboard's home / telemetry KPIs went stale for ~10 days before
+  anyone noticed. Two-part lesson: (1) any singleton tracker that
+  buffers writes and lives in CLI/script processes needs an
+  `atexit.register(instance.flush)` at construction time, OR will
+  silently drop data when typical run volume falls below the buffer
+  threshold; (2) when investigating "why are my JSONL events not
+  appearing," check the writer's buffering semantics BEFORE
+  inspecting upstream wiring — the wiring might be correct but the
+  exit path may be lossy. Pairs with the existing
+  "Home's 7-day spend always shows 0" lesson (which is a different
+  bug in the READ path) — same surface symptom, three distinct root
+  causes (read field name, write path missing, write path buffered).
+
+- **Multi-subagent workflows hitting `ATTUNE_MAX_BUDGET_USD` during
+  startup planning surface as opaque `Command failed with exit
+  code 1`, NOT the structured "Reached maximum budget" message**:
+  discovered 2026-05-19. The existing CLAUDE.md lesson covers the
+  case where the cap fires mid-stream — that path produces a clean
+  `Exception: Claude Code returned an error result: Reached
+  maximum budget ($X)` from the SDK. A DIFFERENT path fires when
+  the cap is checked at subprocess-startup-time (before the first
+  turn completes), and that path raises the generic
+  `Command failed with exit code 1` from the SDK transport layer
+  with `$0.0000 | 0.0s` and no budget-message subtype. Diagnostic
+  shortcut: when a multi-subagent workflow (`bug-predict`,
+  `test-gen`, `code-review`, `security-audit`, `deep-review`)
+  fails with exit-1 and `$0.0000` on a small target, raise the
+  cap (`ATTUNE_MAX_BUDGET_USD=10`) and retry. If it succeeds at
+  real cost > old cap, the cap was the culprit. The hint that
+  this is a cap-hit rather than auth/PATH/quota: `claude -p`
+  works directly, AND the minimal SDK probe (`max_turns=2`,
+  one subagent) succeeds with the same cap value. The error
+  surface needs improvement — flagged in
+  [sdk-error-message-fidelity](docs/specs/sdk-error-message-fidelity/).
+  Practical rule for users: single-agent SDK workflows
+  (`simplify-code`, `doc-gen`, `dependency-check`) fit under
+  `$1.50`. Multi-subagent workflows need `≥$5` even on tiny
+  inputs because each subagent's planning phase emits costly
+  setup tokens before producing useful output.
+
+- **Specs and XML-enhanced prompts are LAYERED in
+  attune-ai, not alternatives — a spec contains XML
+  prompts at the task level**: easy mistake to frame
+  them as competing artifacts when presenting work-
+  shape decisions to the user. The existing rule file
+  at `.claude/rules/attune/xml-enhanced-prompts.md`
+  documents the format as "any task given to another
+  agent or future session to execute" — including
+  tasks inside specs. `docs/implementation/TASK_PROMPTS.md`
+  has 10 executed examples of this nesting (tasks
+  decompose into 2-3 XML prompts each by concern:
+  backend wiring + test scaffold + docs update). The
+  correct decision tree is sequential, not branching:
+  (1) does this work need a spec (design ambiguity /
+  multi-session / premise validation)? (2) if yes,
+  its tasks use XML prompts per the existing file's
+  criteria; (3) if no, the standalone work either
+  IS an XML prompt (3+ files, dependencies, subagent
+  handoff) or is too small for either. Pattern: when
+  helping the user choose between artifact types in
+  this codebase, never present "spec vs XML prompt"
+  as a choice — they nest like outline-and-paragraphs.
+
+- **Decision-criteria duplication across rule files
+  silently goes stale — reference, don't duplicate**:
+  when authoring a new project rule / playbook /
+  memory file that overlaps with an existing rule
+  file's criteria (e.g. "when to use X"), don't copy
+  the criteria into the new file. Reference the
+  existing file as canonical: "see
+  `.claude/rules/attune/<file>.md` — When to Use."
+  Otherwise both files become sources of truth and
+  drift independently. Discovered 2026-05-19 when
+  drafting a decision-routine framework with my own
+  "when XML prompts apply" list — the existing
+  `xml-enhanced-prompts.md` already had that list
+  with slightly different wording. The user
+  immediately flagged "wouldn't this make the other
+  code stale at the least." Generalizes to any
+  authoring task that touches decision criteria
+  documented elsewhere — find the canonical source
+  via grep BEFORE writing, then reference it. The
+  cost of grep is ~30 seconds; the cost of drift
+  surfaces months later when one of the two diverges.
+
+- **Pushback without a concretely-rendered alternative
+  is noise, not signal**: extends the
+  `feedback-pushback-welcomed` memory with the
+  operational test. Patrick clarified the signal for
+  when his stated preference deserves pushback: it's
+  not "do I have a theoretical objection" but "can I
+  show a solid right-sized alternative." Concrete
+  shapes: the actual XML prompt body, the
+  inline-implementation sketch, the specific file
+  list, the measurable acceptance criterion. If I
+  can't render the alternative in the message, the
+  pushback is hedging and creates friction without
+  carrying value. Heuristic for me: before pressing
+  back on a user-stated approach, can I produce ≥1
+  concrete artifact (code block, file list,
+  measurement plan) demonstrating the alternative
+  works at smaller scale? If no, just execute the
+  user's plan and learn the boundary later.
