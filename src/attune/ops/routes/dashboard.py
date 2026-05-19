@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from attune.ops import data
+from attune.ops import anthropic_cost, data
 
 logger = logging.getLogger(__name__)
 
@@ -60,6 +60,20 @@ async def home(request: Request) -> HTMLResponse:
     runner = getattr(request.app.state, "runner", None)
     recent_runs = [r.to_dict() for r in runner.recent(limit=5)] if runner else []
     attune_ai = next((v for v in versions if v.package == "attune-ai"), None)
+    # Anthropic account-spend tiles (Phase 2 of anthropic-cost-integration).
+    # Defensive try/except — a fetch crash must not block the dashboard
+    # render, so we degrade silently (no tile cluster) on unexpected
+    # errors. Categorized failures (no_key, auth_failed, rate_limited,
+    # network) come back through cost_error and the template renders
+    # the right CTA / notice / fallback per-kind.
+    refresh = request.query_params.get("refresh") == "1"
+    try:
+        cost_summary, cost_error = anthropic_cost.fetch_summary(refresh=refresh)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: defensive degradation; surface in DEBUG logs but
+        # never block the home page render on a billing-fetch surprise.
+        logger.debug("anthropic_cost.fetch_summary raised", exc_info=True)
+        cost_summary, cost_error = None, None
     return _render(
         request,
         "home.html",
@@ -71,6 +85,8 @@ async def home(request: Request) -> HTMLResponse:
         sparkline=sparkline,
         recent_runs=recent_runs,
         attune_ai=attune_ai,
+        cost_summary=cost_summary,
+        cost_error=cost_error,
     )
 
 

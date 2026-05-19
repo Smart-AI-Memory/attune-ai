@@ -40,6 +40,49 @@
   </a>
 </section>
 
+{# Account-spend cluster (Phase 2 of anthropic-cost-integration).
+   Visually distinguished from the workflow-telemetry cluster above
+   via the .kpi-cluster-account class — these numbers come from the
+   Anthropic admin API, not local usage.jsonl. Gated on cost_summary
+   availability; CTA when no admin key; friendly notice on auth fail;
+   silent fall-through on transient errors so the dashboard stays
+   functional. #}
+{% if cost_summary is not none %}
+  <section class="kpi-grid kpi-cluster-account">
+    <a class="kpi" href="/telemetry">
+      <div class="kpi-label">Today (account)</div>
+      <div class="kpi-value">${{ '%.2f'|format(cost_summary.today_usd) }}</div>
+      <div class="kpi-foot">Anthropic billing &middot; {{ cost_summary.source }}</div>
+    </a>
+    <a class="kpi" href="/telemetry">
+      <div class="kpi-label">7d (account)</div>
+      <div class="kpi-value">${{ '%.2f'|format(cost_summary.seven_day_usd) }}</div>
+      <div class="kpi-foot">last 7 days, all workspaces</div>
+    </a>
+    <a class="kpi" href="/telemetry">
+      <div class="kpi-label">MTD (account)</div>
+      <div class="kpi-value">${{ '%.2f'|format(cost_summary.month_to_date_usd) }}</div>
+      <div class="kpi-foot">month-to-date</div>
+    </a>
+  </section>
+{% elif cost_error is not none and cost_error.kind == "no_key" %}
+  <section class="kpi-grid kpi-cluster-account">
+    <a class="kpi kpi-cta" href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/reference/" rel="noopener">
+      <div class="kpi-label">Set up cost reporting</div>
+      <div class="kpi-value kpi-value-small">Connect billing</div>
+      <div class="kpi-foot">Add an Anthropic admin API key to see account-wide spend here.</div>
+    </a>
+  </section>
+{% elif cost_error is not none and cost_error.kind == "auth_failed" %}
+  <section class="kpi-grid kpi-cluster-account">
+    <a class="kpi kpi-notice" href="/telemetry">
+      <div class="kpi-label">Account billing</div>
+      <div class="kpi-value kpi-value-small">Key rejected</div>
+      <div class="kpi-foot">Anthropic admin key was rejected. Refresh the key to see account-wide spend.</div>
+    </a>
+  </section>
+{% endif %}
+
 <section class="panel">
   <h2>Recent runs</h2>
   {% if recent_runs %}
