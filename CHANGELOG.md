@@ -60,6 +60,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `navigator.clipboard` is unavailable (old browsers, insecure
   contexts) — surfaces the error rather than silently failing.
 
+### Fixed
+
+- SDK-native workflows now write to `~/.attune/telemetry/usage.jsonl`.
+  Prior to this fix, every SDK workflow (bug-predict, code-review,
+  security-audit, test-gen, simplify-code, doc-gen, deep-review,
+  dependency-check, perf-audit, refactor-plan, doc-audit,
+  document-gen, test-audit, release-prep, research-synthesis,
+  rag-code-gen) called `claude_agent_sdk.query()` directly,
+  bypassing the legacy `llm_mixin` path that calls
+  `_track_telemetry()`. As a result, `usage.jsonl` had not been
+  written to since the SDK migration completed in early May 2026,
+  and the dashboard's home / telemetry KPIs (7-day spend, today's
+  events, per-workflow rollups) silently went stale. Two coupled
+  fixes land together: (a) new `_track_sdk_run_telemetry()` helper
+  on `TelemetryMixin` extracts cost / tokens / duration from
+  `AgentRunResult` and forwards to the existing `_track_telemetry`
+  pipeline, wired into all 15 SDK workflows; (b) an `atexit`
+  handler on `UsageTracker.get_instance()` flushes the in-memory
+  write buffer (default size 50) when the process exits, so
+  short-lived CLI runs that produce 1-2 buffered entries no longer
+  lose them at shutdown. A drift-guard test fails CI if any new
+  SDK workflow is added without the wiring. Unblocks the Quality
+  dashboard work in [telemetry-rethink](docs/specs/telemetry-rethink/),
+  which had explicitly deferred storage-layer work assuming
+  `usage.jsonl` was being written correctly.
+
 ## [7.0.0] — 2026-05-16
 
 ### Removed — BREAKING

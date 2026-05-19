@@ -262,6 +262,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
                 model=model,
                 cwd=cwd,
             )
+            self._track_sdk_run_telemetry(stage="agent", agent_run_result=run_result)
         except ImportError as exc:
             logger.error("Agent SDK import failed: %s", exc)
             return self._error_result(f"Agent SDK unavailable: {exc}")
