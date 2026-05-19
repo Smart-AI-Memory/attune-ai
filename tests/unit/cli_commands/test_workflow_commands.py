@@ -835,28 +835,39 @@ class TestCmdWorkflowRunCheapFlag:
     ``ATTUNE_AGENT_MODEL_DEFAULT=haiku`` in the process environment
     BEFORE the workflow is instantiated, so that any subagent the
     workflow spawns sees the override via ``get_subagent_model``.
+
+    IMPORTANT: ``cmd_workflow_run`` does a raw ``os.environ[k] = v``
+    write, which pytest's ``monkeypatch`` cannot track or roll back.
+    Each test uses ``try/finally`` to pop the env var so it doesn't
+    leak to sibling tests on the same xdist worker (sibling assertions
+    like ``get_subagent_model(...) is None`` would silently fail).
     """
 
     @patch("attune.workflows.get_workflow")
     def test_cheap_flag_sets_env_var(self, mock_get, monkeypatch, capsys):
         """args.cheap=True sets ATTUNE_AGENT_MODEL_DEFAULT=haiku."""
+        import os
+
         monkeypatch.delenv("ATTUNE_AGENT_MODEL_DEFAULT", raising=False)
         mock_get.return_value = _make_workflow_class()
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
 
         args = _make_args(name="bug-predict", cheap=True)
-        cmd_workflow_run(args)
-
-        import os
-
-        assert os.environ.get("ATTUNE_AGENT_MODEL_DEFAULT") == "haiku"
-        captured = capsys.readouterr()
-        assert "--cheap mode" in captured.out
+        try:
+            cmd_workflow_run(args)
+            assert os.environ.get("ATTUNE_AGENT_MODEL_DEFAULT") == "haiku"
+            captured = capsys.readouterr()
+            assert "--cheap mode" in captured.out
+        finally:
+            # SUT does a raw env write monkeypatch can't track — pop it.
+            os.environ.pop("ATTUNE_AGENT_MODEL_DEFAULT", None)
 
     @patch("attune.workflows.get_workflow")
     def test_no_cheap_flag_leaves_env_unchanged(self, mock_get, monkeypatch, capsys):
         """Without --cheap, env var is not set by cmd_workflow_run."""
+        import os
+
         monkeypatch.delenv("ATTUNE_AGENT_MODEL_DEFAULT", raising=False)
         mock_get.return_value = _make_workflow_class()
 
@@ -866,10 +877,12 @@ class TestCmdWorkflowRunCheapFlag:
         # getattr(args, "cheap", False) fallback in cmd_workflow_run
         # must return False here.
         args = _make_args(name="bug-predict")
-        cmd_workflow_run(args)
-
-        import os
-
-        assert "ATTUNE_AGENT_MODEL_DEFAULT" not in os.environ
-        captured = capsys.readouterr()
-        assert "--cheap mode" not in captured.out
+        try:
+            cmd_workflow_run(args)
+            assert "ATTUNE_AGENT_MODEL_DEFAULT" not in os.environ
+            captured = capsys.readouterr()
+            assert "--cheap mode" not in captured.out
+        finally:
+            # Defense in depth — even if the assertion above doesn't fire,
+            # ensure nothing leaks if a future refactor changes behavior.
+            os.environ.pop("ATTUNE_AGENT_MODEL_DEFAULT", None)
