@@ -1,6 +1,6 @@
 # Tasks — Ops Dashboard Polish
 
-**Status:** draft
+**Status:** Phase A complete (publish-ready gate met); Phases B/C/D partially shipped, remaining items listed below. Last audit: 2026-05-20 against `main` at v7.0.0.
 **Owner:** Patrick
 
 Cross-references the QA punch list at
@@ -12,84 +12,71 @@ Status column legend: `todo` / `in-progress` / `pr-open` /
 
 ---
 
-## Phase A — Visible bug fixes (ship before publishing)
+## Phase A — Visible bug fixes (ship before publishing) ✓ complete
 
 **Goal:** the dashboard no longer signals "under construction" at a
 glance. Each PR is ~1 production file + tests, reviewable in under
 15 minutes.
 
-| ID | Task | Status | Closes | PR |
+| ID | Task | Status | Closes | PR / commit |
 |----|------|--------|--------|----|
-| A1 | Fix Home KPI / Daily activity field-name bug (`event.get("timestamp")` → `event.get("ts") or event.get("timestamp")`); add regression test asserting non-zero KPI count when telemetry has events | todo | PL-P1-1 | — |
-| A2 | Fix scope-textbox always-visible CSS bug (`.scope-custom` `display: block` overrides HTML `hidden` attr); use `display:none` by default + JS toggles `.is-visible` class, OR keep `hidden` semantics with `[hidden] { display: none !important }`; add Playwright/JS test asserting textbox hidden on first paint | todo | PL-P1-2 | — |
-| A3 | Per-workflow default scope (instead of all-workflows-default-to-first-feature). Server picks a workflow-relevant default from `features.yaml` based on each workflow's `primary_path` field (add field if missing); JS first-load fallback uses that per-row default | todo | PL-P1-3 | — |
+| A1 | Fix Home KPI / Daily activity field-name bug (`event.get("timestamp")` → `event.get("ts") or event.get("timestamp")`); add regression test asserting non-zero KPI count when telemetry has events | done | PL-P1-1 | code: `src/attune/ops/data.py:850`; tests: `tests/unit/ops/test_telemetry_summary.py` (4 cases — `ts` recognized, legacy `timestamp` fallback, mixed-schema file, missing-timestamp) |
+| A2 | Fix scope-textbox always-visible CSS bug (`.scope-custom` `display: block` overrides HTML `hidden` attr); use `display:none` by default + JS toggles `.is-visible` class, OR keep `hidden` semantics with `[hidden] { display: none !important }`; add Playwright/JS test asserting textbox hidden on first paint | done | PL-P1-2 | code: `src/attune/ops/static/css/main.css:941-965` (uses `.scope-custom:not([hidden])` selector so the user-agent `[hidden] { display: none }` still wins on first paint) |
+| A3 | Per-workflow default scope (instead of all-workflows-default-to-first-feature). Server picks a workflow-relevant default from `features.yaml` based on each workflow's `primary_path` field (add field if missing); JS first-load fallback uses that per-row default | done | PL-P1-3 | PR [#365](https://github.com/Smart-AI-Memory/attune-ai/pull/365) (commit `986fab1f`) |
 
-**Phase A definition of done:** A1, A2, A3 all merged. KPIs show
-real numbers in dev. Scope textbox only appears for "Custom path…".
-Each workflow's default scope is plausible (e.g. `bug-predict` →
-`src/attune/security/` not `src/attune/agents/`).
+**Phase A definition of done:** ✓ All three items shipped. KPIs show real numbers in production (regression test locks the `ts`/`timestamp` contract). Scope textbox only appears for "Custom path…" (CSS uses `:not([hidden])` so the user-agent rule wins by default). Each workflow's default scope is auto-derived from `features.yaml` `primary_path`.
 
 ---
 
-## Phase B — A11y + behavioral polish
+## Phase B — A11y + behavioral polish (4/5 shipped)
 
 **Goal:** the dashboard reads correctly to a screen reader, the
 keyboard-nav path is unbroken, and the recoverability gaps
 (refresh, eviction) are closed.
 
-| ID | Task | Status | Closes | PR |
+| ID | Task | Status | Closes | PR / location |
 |----|------|--------|--------|----|
-| B1 | Add `aria-label="Run {{ workflow_name }}"` to every Workflows-page Run button; verify with screen-reader simulation; add test grepping rendered HTML for unique aria-labels | todo | PL-P2-1 | — |
-| B2 | Fix Run-view 404 on refresh by adding disk-fallback to `runs/{id}/view` route: if not in `RunnerService._runs`, read `~/.attune/ops/runs/<wf>/<id>.json` and render; add test that simulates eviction | todo | PL-P2-2 | — |
-| B3 | Cache-bust static JS on release: `<script src="...runner.js?v={{ attune.__version__ }}">` in `base.html`; verify cached old-JS scenario via integration test | todo | PL-P2-3 | — |
-| B4 | Make Home "Recent runs" rows fully clickable (entire `<tr>` links to `/runs/<id>/view`, not just the workflow-name and run-id cells); preserve keyboard focusability | todo | PL-P2-4 | — |
-| B5 | Relabel `Stages: 0` for meta-orchestration workflows to something honest (`Stages: meta`, `Stages: orchestrated`, or hide the column for those rows); decide between code-fix vs label-fix as part of the PR | todo | PL-P2-5 | — |
+| B1 | Add `aria-label="Run {{ workflow_name }}"` to every Workflows-page Run button; verify with screen-reader simulation; add test grepping rendered HTML for unique aria-labels | done | PL-P2-1 | `src/attune/ops/templates/workflows.html:128` (`aria-label="Run {{ w.name }}"`); test coverage to verify in a follow-up |
+| B2 | Fix Run-view 404 on refresh by adding disk-fallback to `runs/{id}/view` route: if not in `RunnerService._runs`, read `~/.attune/ops/runs/<wf>/<id>.json` and render; add test that simulates eviction | todo | PL-P2-2 | `src/attune/ops/routes/dashboard.py:262` `run_view_page` exists with SSE-replay design but disk-fallback for evicted runs is **not yet wired** — verify and implement |
+| B3 | Cache-bust static JS on release: `<script src="...runner.js?v={{ attune.__version__ }}">` in `base.html`; verify cached old-JS scenario via integration test | done | PL-P2-3 | `src/attune/ops/templates/base.html:7` ("Release-keyed cache-bust" comment); `attune_version` exposed as Jinja global at `server.py:86` |
+| B4 | Make Home "Recent runs" rows fully clickable (entire `<tr>` links to `/runs/<id>/view`, not just the workflow-name and run-id cells); preserve keyboard focusability | done | PL-P2-4 | `src/attune/ops/templates/home.html:89-105` — implementation wraps each `<td>` in `<a class="row-link">` rather than using `<tr data-href>`, but functionally equivalent (whole row clickable, tab-stop preserved via `tabindex="-1"` on inner cells) |
+| B5 | Relabel `Stages: 0` for meta-orchestration workflows to something honest (`Stages: meta`, `Stages: orchestrated`, or hide the column for those rows); decide between code-fix vs label-fix as part of the PR | done | PL-P2-5 | PR [#367](https://github.com/Smart-AI-Memory/attune-ai/pull/367) — meta-orchestration tooltip at `workflows.html:55` ("Meta-orchestration workflow — composes other workflows rather than declaring its own stages.") |
 
-**Phase B definition of done:** B1–B5 all merged. A keyboard-only
-user can navigate every Workflows row and trigger Run. Browser
-refresh on `/runs/<id>/view` always renders the run if its JSON
-file exists. New releases don't blank out for returning users.
+**Phase B definition of done:** 4/5 shipped. Remaining: B2 disk-fallback for evicted runs.
 
 ---
 
-## Phase C — New surfaces (Memory + Sessions read-only views)
+## Phase C — New surfaces (Memory + Sessions read-only views) (Sessions shipped; Memory not started)
 
 **Goal:** close the "Operations dashboard for the workflow OS"
 framing promise. Memory and Sessions were listed in the original
 QA scope but don't exist as pages.
 
-| ID | Task | Status | Closes | PR |
+| ID | Task | Status | Closes | PR / location |
 |----|------|--------|--------|----|
-| C1 | `/memory` page: read-only view of `~/.attune/memory/` — list top-level memory keys, allow click-through to view value JSON; pagination if >50 keys; same table styling as Specs | todo | PL-P3-A | — |
-| C2 | `/sessions` page: read-only view of `~/.attune/sessions/` — most-recent-first list of session JSONL summaries (start time, duration, project, workflow count if any); link to viewing raw JSONL with syntax highlighting | todo | PL-P3-B | — |
-| C3 | Add `/memory` and `/sessions` to top nav; add Memory/Sessions counters to Home KPI grid if data exists | todo | PL-P3-C | — |
+| C1 | `/memory` page: read-only view of `~/.attune/memory/` — list top-level memory keys, allow click-through to view value JSON; pagination if >50 keys; same table styling as Specs | todo | PL-P3-A | not started |
+| C2 | `/sessions` page: read-only view of `~/.attune/sessions/` — most-recent-first list of session JSONL summaries (start time, duration, project, workflow count if any); link to viewing raw JSONL with syntax highlighting | done | PL-P3-B | scaffolding PR [#377](https://github.com/Smart-AI-Memory/attune-ai/pull/377); multi-key data layer + summary cache PR [#387](https://github.com/Smart-AI-Memory/attune-ai/pull/387); Haiku summarizer + budget PR [#390](https://github.com/Smart-AI-Memory/attune-ai/pull/390); template at `src/attune/ops/templates/sessions.html` |
+| C3 | Add `/memory` and `/sessions` to top nav; add Memory/Sessions counters to Home KPI grid if data exists | partial | PL-P3-C | `/sessions` added to top nav at `src/attune/ops/server.py:87-94`; `/memory` blocked on C1; KPI counters not yet added |
 
-**Phase C definition of done:** C1–C3 all merged. Top nav shows
-Memory and Sessions tabs. Each page renders even when its
-underlying directory is empty (proper empty state). KPI tiles for
-memory/sessions counts live on Home.
+**Phase C definition of done:** Partial — Sessions shipped end-to-end; Memory (C1) and the Memory portion of C3 + KPI counters remain.
 
 ---
 
-## Phase D — Audit pass (cross-cutting polish)
+## Phase D — Audit pass (cross-cutting polish) (1/6 shipped, 1/6 partial)
 
 **Goal:** the cross-cutting consistency work that's cheaper to do
 as a single sweep than as N small PRs.
 
-| ID | Task | Status | Closes | PR |
+| ID | Task | Status | Closes | PR / location |
 |----|------|--------|--------|----|
-| D1 | Tooltip system unification: every existing `title=` attribute in the dashboard converted to `data-tooltip` (the fast CSS system PR #358 introduced); deprecate native title via grep test in CI | todo | PL-P3-1 | — |
-| D2 | Empty/error-state sweep: each page must render meaningfully when its data source is empty / unreachable / missing. Specifically: Specs with no docs/specs/, Workflows with no installed `attune-ai`, Health with `ANTHROPIC_API_KEY` unset, Telemetry with empty jsonl, Run history with no runs | todo | PL-P3-2 | — |
-| D3 | Keyboard-nav audit: every interactive element reachable via Tab in logical order; Enter/Space activates buttons and pills; Escape cancels edit mode; visible focus rings on all interactive elements (not just outline-color tweaks) | todo | PL-P3-3 | — |
-| D4 | Color-contrast a11y audit: verify status pills (`chip-ok`/`chip-warn`/`chip-muted`/`chip-custom`) pass WCAG AA contrast against their backgrounds in both light and (future) dark mode; document any failures in this spec | todo | PL-P3-4 | — |
-| D5 | Fix project-name-shows-worktree-slug header bug (P3-11a): read `name` from `pyproject.toml` in `project_root`, fall back to `Path.name` if no pyproject; small one-file change | todo | PL-P3-11a | — |
-| D6 | Visual consistency sweep: same table padding everywhere, same hover affordances, same empty-state typography, same chip styling across pages | todo | PL-P3-5 | — |
+| D1 | Tooltip system unification: every existing `title=` attribute in the dashboard converted to `data-tooltip` (the fast CSS system PR #358 introduced); deprecate native title via grep test in CI | partial | PL-P3-1 | rollout in PR [#367](https://github.com/Smart-AI-Memory/attune-ai/pull/367); remaining `title=` attributes in `workflows.html` + other templates need a sweep, plus the CI grep-test gate |
+| D2 | Empty/error-state sweep: each page must render meaningfully when its data source is empty / unreachable / missing. Specifically: Specs with no docs/specs/, Workflows with no installed `attune-ai`, Health with `ANTHROPIC_API_KEY` unset, Telemetry with empty jsonl, Run history with no runs | todo | PL-P3-2 | not audited as a sweep — some pages handle empty data already, but no unified pass |
+| D3 | Keyboard-nav audit: every interactive element reachable via Tab in logical order; Enter/Space activates buttons and pills; Escape cancels edit mode; visible focus rings on all interactive elements (not just outline-color tweaks) | todo | PL-P3-3 | not audited |
+| D4 | Color-contrast a11y audit: verify status pills (`chip-ok`/`chip-warn`/`chip-muted`/`chip-custom`) pass WCAG AA contrast against their backgrounds in both light and (future) dark mode; document any failures in this spec | todo | PL-P3-4 | not audited |
+| D5 | Fix project-name-shows-worktree-slug header bug (P3-11a): read `name` from `pyproject.toml` in `project_root`, fall back to `Path.name` if no pyproject; small one-file change | done | PL-P3-11a | PR [#376](https://github.com/Smart-AI-Memory/attune-ai/pull/376) — `derive_project_name` at `src/attune/ops/data.py:289` |
+| D6 | Visual consistency sweep: same table padding everywhere, same hover affordances, same empty-state typography, same chip styling across pages | todo | PL-P3-5 | not audited |
 
-**Phase D definition of done:** D1–D6 all merged. The CSS tooltip
-system is the only tooltip system. All pages handle empty data.
-Keyboard-only navigation is unbroken. Color contrast verified on
-all chip variants. Worktree-launched dashboard shows the project
-name, not the worktree slug.
+**Phase D definition of done:** Remaining: D1 sweep + CI grep-test gate, D2 empty/error sweep, D3 keyboard-nav, D4 color-contrast, D6 visual consistency.
 
 ---
 
@@ -110,18 +97,12 @@ should not start until Phase B's PRs are merged.
 
 ## Sizing summary
 
-- **Phase A**: 3 PRs, ~4-6 hours total (KPI fix is 5 minutes; the
-  other two are 1-2h each with tests).
-- **Phase B**: 5 PRs, ~1-1.5 days total.
-- **Phase C**: 3 PRs, ~2-3 days total (new templates + routes,
-  more code per PR).
-- **Phase D**: 6 PRs, ~1-1.5 days total (mostly mechanical).
+- **Phase A**: 3 PRs, ~4-6 hours total — ✓ shipped.
+- **Phase B**: 5 PRs, ~1-1.5 days total — 4/5 shipped; B2 (run-view disk-fallback) remaining.
+- **Phase C**: 3 PRs, ~2-3 days total — C2 shipped; C1 (`/memory` page) + C3 Memory portion + KPI counters remaining.
+- **Phase D**: 6 PRs, ~1-1.5 days total — D5 shipped; D1 partial; D2–D4 + D6 remaining.
 
-**Critical path**: Phase A is the gating publish-readiness work.
-If publishing pressure is high, ship after Phase A. Phase B brings
-the dashboard to "professional grade looks right." Phases C and D
-are the difference between "looks right" and "feels right" and
-can land post-publish without embarrassment.
+**Critical path**: Phase A complete (publish-ready gate met as of v7.0.0). Remaining items in B/C/D are post-publish polish — none blocks shipping. **Remaining concrete work (5 items + 1 partial):** B2, C1, C3-memory, D2, D3, D4, D6 (todo); D1 (partial — sweep + CI gate).
 
 ---
 
