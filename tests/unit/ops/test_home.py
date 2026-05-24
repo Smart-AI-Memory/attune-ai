@@ -251,6 +251,43 @@ def test_home_renders_sparkline_svg_when_costs_present(tmp_path, monkeypatch):
     assert "$0.42" in resp.text or "0.4200" in resp.text
 
 
+def test_home_kpis_nonzero_when_telemetry_uses_ts_field(tmp_path, monkeypatch):
+    """Regression guard for A1: usage.jsonl events use the ``ts`` key
+    (v1.0 schema from UsageTracker._format_entry), not ``timestamp``.
+
+    Without the dual-field lookup in read_telemetry_summary, every
+    event silently misses by_day bucketing and Home's KPI tiles read
+    zero even when the telemetry log is populated.
+    """
+    home = tmp_path / "attune-home"
+    (home / "telemetry").mkdir(parents=True)
+    log = home / "telemetry" / "usage.jsonl"
+    today = date.today().isoformat()
+    # Write with ``ts`` (the real v1.0 schema key), NOT ``timestamp``.
+    log.write_text(
+        f'{{"workflow": "x", "total_cost": 0.42, "ts": "{today}T10:00:00+00:00"}}\n',
+        encoding="utf-8",
+    )
+    monkeypatch.setenv("ATTUNE_HOME", str(home))
+    config = build_config(
+        project_root=tmp_path,
+        trusted_hosts=("testserver", "test"),
+    )
+    app = create_app(config)
+    with TestClient(app) as client:
+        resp = client.get("/")
+    assert resp.status_code == 200
+    assert "<polyline" in resp.text, (
+        "Sparkline polyline absent — ts-field events are being silently "
+        "dropped from by_day bucketing (read_telemetry_summary must read "
+        "event.get('ts') or event.get('timestamp'), not only 'timestamp')"
+    )
+    assert "$0.42" in resp.text or "0.4200" in resp.text, (
+        "7-day cost shows zero despite a 0.42-cost ts-keyed event in "
+        "usage.jsonl — ts-field lookup in read_telemetry_summary regressed"
+    )
+
+
 def test_home_renders_attune_ai_version_tile(tmp_path, monkeypatch):
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
     config = build_config(
