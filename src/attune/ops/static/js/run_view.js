@@ -611,7 +611,18 @@
     slot.hidden = false;
   }
 
+  // ``learn-<workflow>`` is emitted by attune.workflows.suggestions
+  // ._help_template_suggestions as an *informational* pointer at the
+  // matching help-template, not a runnable workflow — there is no
+  // workflow registered under that slug. Detect the prefix so we
+  // render a non-clickable info chip instead of a Run button that
+  // would 404. Matches the f"learn-{workflow_name}" emission site.
+  var _INFO_PREFIX_RE = /^learn-/;
+
   function buildSuggestionChip(suggestion) {
+    if (_INFO_PREFIX_RE.test(suggestion.name)) {
+      return buildInfoChip(suggestion);
+    }
     var chip = document.createElement("button");
     chip.className = "suggestion-chip";
     chip.type = "button";
@@ -657,6 +668,26 @@
         chip.disabled = false;
       });
     });
+    return chip;
+  }
+
+  function buildInfoChip(suggestion) {
+    // Informational sibling of buildSuggestionChip — same DOM hook for
+    // tests (data-suggestion-chip) so the renderer drift-guard still
+    // catches the chip, but rendered as a <span> with no Run button.
+    // CSS variant ``.suggestion-chip-info`` removes the dotted border /
+    // pointer cursor so users don't expect clickability.
+    var chip = document.createElement("span");
+    chip.className = "suggestion-chip suggestion-chip-info";
+    chip.setAttribute("data-suggestion-chip", suggestion.name);
+    chip.setAttribute("data-suggestion-kind", "info");
+    chip.textContent = suggestion.name;
+    if (suggestion.tooltip) {
+      chip.setAttribute("data-tooltip", suggestion.tooltip);
+      chip.setAttribute("aria-label", suggestion.name + " — " + suggestion.tooltip);
+    } else {
+      chip.setAttribute("aria-label", suggestion.name);
+    }
     return chip;
   }
 
@@ -740,6 +771,7 @@
       parseSuggestions: parseSuggestions,
       renderSuggestionChipsFromLog: renderSuggestionChipsFromLog,
       buildSuggestionChip: buildSuggestionChip,
+      buildInfoChip: buildInfoChip,
       readReportText: readReportText,
       copyReportToClipboard: copyReportToClipboard,
       wireCopyReportButton: wireCopyReportButton,

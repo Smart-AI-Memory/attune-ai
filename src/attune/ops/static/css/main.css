@@ -1536,6 +1536,21 @@ a.kpi:hover {
   opacity: 0.55;
   cursor: progress;
 }
+/* Informational sibling: rendered as <span> for ``learn-*`` and
+   other non-runnable suggestion pointers. Removes the dotted
+   border / pointer cursor so users don't expect clickability,
+   keeps the muted text-only look that signals "see also". */
+.suggestion-chip-info {
+  border-style: none;
+  color: var(--muted, #888);
+  cursor: default;
+  padding: 3px 6px;
+}
+.suggestion-chip-info:hover {
+  background: transparent;
+  color: var(--muted, #888);
+  border-style: none;
+}
 
 /* ---------- Copy-report button (run-view header) ---------- */
 
