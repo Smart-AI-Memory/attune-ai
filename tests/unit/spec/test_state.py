@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import pytest
+
 from attune.spec.state import (
     SpecState,
     clear_state,
@@ -53,19 +55,44 @@ class TestLoadState:
         """Returns None when file doesn't exist."""
         assert load_state(str(tmp_path / "missing.md")) is None
 
-    def test_handles_malformed_json(self, tmp_path):
-        """Returns None for invalid JSON in state comment."""
-        plan = tmp_path / "plan.md"
-        plan.write_text("# Plan\n\n<!-- spec-state: {broken -->")
+    def test_handles_malformed_json(self, tmp_path, caplog):
+        """Returns None for invalid JSON in state comment.
 
-        assert load_state(str(plan)) is None
-
-    def test_rejects_non_object_payload(self, tmp_path):
-        """Returns None when the state payload is a JSON array, not object."""
+        The payload must START with ``{`` and END with ``}`` (so the
+        ``_STATE_PATTERN`` regex matches) but be invalid JSON between
+        the braces — otherwise the regex short-circuits at "no match"
+        and the json.JSONDecodeError branch is unreachable.
+        """
         plan = tmp_path / "plan.md"
+        plan.write_text("# Plan\n\n<!-- spec-state: {broken json here} -->")
+
+        with caplog.at_level("WARNING"):
+            assert load_state(str(plan)) is None
+        assert any("Malformed spec-state" in r.message for r in caplog.records)
+
+    def test_rejects_non_object_payload(self, tmp_path, monkeypatch, caplog):
+        """Returns None when the state payload parses as a JSON non-dict.
+
+        The default ``_STATE_PATTERN`` requires ``\\{...\\}`` so any
+        capture that reaches ``json.loads`` is necessarily a dict. To
+        exercise the defensive ``isinstance(data, dict)`` guard
+        directly, we temporarily loosen the regex so an array can
+        flow through. Without the guard, downstream ``data.get(...)``
+        calls would crash on a list.
+        """
+        import re
+
+        plan = tmp_path / "plan.md"
+        # Note: payload here is a JSON array. With the loosened regex
+        # it survives the match step; the isinstance guard catches it.
         plan.write_text("# Plan\n\n<!-- spec-state: [1, 2, 3] -->")
 
-        assert load_state(str(plan)) is None
+        loosened = re.compile(r"<!-- spec-state:\s*(\S.*?)\s*-->")
+        monkeypatch.setattr("attune.spec.state._STATE_PATTERN", loosened)
+
+        with caplog.at_level("WARNING"):
+            assert load_state(str(plan)) is None
+        assert any("is not a JSON object" in r.message for r in caplog.records)
 
     def test_rejects_non_list_completed(self, tmp_path, caplog):
         """Returns None when 'completed' is not a list[str].
@@ -184,6 +211,63 @@ class TestSaveState:
         leftovers = [p for p in tmp_path.iterdir() if p.name != plan.name and ".tmp" in p.name]
         assert leftovers == [], f"temp files leaked: {leftovers}"
 
+    def test_atomic_write_cleanup_on_replace_failure(self, tmp_path, monkeypatch):
+        """When ``os.replace`` fails, the temp file is unlinked and the
+        outer OSError re-raises so the caller learns the write failed.
+
+        Covers the cleanup-succeeds branch of ``_atomic_write_text``.
+        """
+
+        plan = tmp_path / "plan.md"
+        plan.write_text(PLAN_WITHOUT_STATE)
+
+        def _failing_replace(src, dst):
+            raise OSError("simulated replace failure")
+
+        monkeypatch.setattr("attune.spec.state.os.replace", _failing_replace)
+
+        with pytest.raises(OSError, match="simulated replace failure"):
+            save_state(SpecState(plan_path=str(plan), completed=["1"]))
+
+        # Cleanup ran — no .tmp sibling left behind.
+        leftovers = [p for p in tmp_path.iterdir() if p.name != plan.name and ".tmp" in p.name]
+        assert leftovers == [], f"temp files leaked after replace failure: {leftovers}"
+
+    def test_atomic_write_cleanup_failure_is_debug_logged(self, tmp_path, monkeypatch, caplog):
+        """When both ``os.replace`` AND ``os.unlink`` fail, the cleanup
+        failure is debug-logged (not swallowed silently) and the original
+        replace OSError still re-raises.
+
+        Covers the cleanup-fails branch of ``_atomic_write_text`` — the
+        line the code-quality bot flagged on PR #451.
+        """
+
+        plan = tmp_path / "plan.md"
+        plan.write_text(PLAN_WITHOUT_STATE)
+
+        def _failing_replace(src, dst):
+            raise OSError("simulated replace failure")
+
+        def _failing_unlink(path):
+            raise OSError("simulated unlink failure")
+
+        monkeypatch.setattr("attune.spec.state.os.replace", _failing_replace)
+        monkeypatch.setattr("attune.spec.state.os.unlink", _failing_unlink)
+
+        with caplog.at_level("DEBUG", logger="attune.spec.state"):
+            with pytest.raises(OSError, match="simulated replace failure"):
+                save_state(SpecState(plan_path=str(plan), completed=["1"]))
+
+        # Cleanup-failure debug log fired with both the temp path and the
+        # cleanup error text — so a noisy run can still observe it.
+        cleanup_logs = [
+            r
+            for r in caplog.records
+            if r.levelname == "DEBUG" and "Failed to unlink temp file" in r.message
+        ]
+        assert cleanup_logs, "expected a debug log for the cleanup failure"
+        assert "simulated unlink failure" in cleanup_logs[0].message
+
 
 class TestClearState:
     """Tests for clear_state."""
@@ -256,25 +340,48 @@ class TestFindResumablePlans:
 
         assert find_resumable_plans(str(not_a_dir)) == []
 
-    def test_logs_warning_on_unreadable_spec(self, tmp_path, caplog):
-        """Logs a warning when read_spec raises so dropped plans are observable."""
+    def test_skips_plan_with_state_but_no_tasks(self, tmp_path, monkeypatch):
+        """Skips plans whose state parses but whose spec body has no tasks.
+
+        Forces ``read_spec`` to return ``[]`` (the empty-tasks branch) so
+        the ``if not tasks: continue`` early-exit fires. Real read_spec
+        returns ``[]`` for plans missing ``<task>`` tags, but most such
+        plans also have no state comment and get skipped earlier — this
+        test isolates the state-present + no-tasks combination.
+        """
         plans_dir = tmp_path / ".claude" / "plans"
         plans_dir.mkdir(parents=True)
-        plan = plans_dir / "broken.md"
-        # State comment present, but read_spec needs <task> tags or
-        # raises ValueError on the empty parse — guarantees the
-        # warning branch fires.
-        plan.write_text('# Broken\n\n<!-- spec-state: {"completed":[],"current":null} -->\n')
+        plan = plans_dir / "no-tasks.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed":[],"current":null} -->\n')
+
+        monkeypatch.setattr("attune.pipeline.spec_reader.read_spec", lambda _p: [])
+
+        assert find_resumable_plans(str(plans_dir)) == []
+
+    def test_logs_warning_on_unreadable_spec(self, tmp_path, monkeypatch, caplog):
+        """Logs a warning when read_spec raises so dropped plans are observable.
+
+        Forces ``read_spec`` to raise ``ValueError`` via monkeypatch —
+        the natural failure modes (empty file, missing ``<task>`` tags)
+        return ``[]`` cleanly and hit the ``if not tasks`` early-exit
+        instead, leaving the broad-except branch unreached.
+        """
+        plans_dir = tmp_path / ".claude" / "plans"
+        plans_dir.mkdir(parents=True)
+        plan = plans_dir / "has-state.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed":[],"current":null} -->\n')
+
+        def _failing_read_spec(_path):
+            raise ValueError("simulated spec-parse failure")
+
+        monkeypatch.setattr("attune.pipeline.spec_reader.read_spec", _failing_read_spec)
 
         with caplog.at_level("WARNING"):
-            # The result may be [] (no tasks → not resumable) but we
-            # care about the warning emission, not the return value.
-            find_resumable_plans(str(plans_dir))
+            assert find_resumable_plans(str(plans_dir)) == []
 
-        # The warning may not fire if read_spec returns [] cleanly; in
-        # that case the early ``if not tasks`` branch wins. Either way
-        # is correct — we just guarantee the function doesn't crash on
-        # an oddly-shaped plan file.
+        skip_logs = [r for r in caplog.records if "skipping resumable-plan candidate" in r.message]
+        assert skip_logs, "expected a warning when read_spec raises"
+        assert "simulated spec-parse failure" in skip_logs[0].message
 
 
 class TestSpecStateDataclass:
