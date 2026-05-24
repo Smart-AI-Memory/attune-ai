@@ -5,10 +5,10 @@
 > "Command failed with exit code 1" wrapped in a list of plausible-
 > but-wrong remediation suggestions.
 
-**Status:** draft
+**Status:** approved (2026-05-24)
 **Created:** 2026-05-17
 **Owner:** TBD
-**Related:** [`workflow-failure-exit-propagation`](../workflow-failure-exit-propagation/) (sibling — same surface, exit-code side)
+**Related:** [`workflow-failure-exit-propagation`](../workflow-failure-exit-propagation/) (sibling — same surface, exit-code side); [`decisions.md`](decisions.md) and [`design.md`](design.md) and [`tasks.md`](tasks.md) (built out 2026-05-24 after firefight reproduction confirmed the requirements as written)
 
 ---
 
