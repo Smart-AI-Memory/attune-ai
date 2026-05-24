@@ -290,8 +290,17 @@ def _atomic_write_text(target: Path, content: str) -> None:
             f.write(content)
         os.replace(tmp_name, target)
     except OSError:
+        # Best-effort cleanup of the partial temp file. We intentionally
+        # swallow this inner OSError (the temp file may already be gone
+        # if the first failure was mid-replace) and re-raise the outer
+        # one so the caller learns the write didn't happen — but log the
+        # cleanup failure at debug so it stays observable in noisy runs.
         try:
             os.unlink(tmp_name)
-        except OSError:
-            pass
+        except OSError as cleanup_err:
+            logger.debug(
+                "Failed to unlink temp file %s after write error: %s",
+                tmp_name,
+                cleanup_err,
+            )
         raise
