@@ -61,11 +61,13 @@ class ExecutionMixin:
     and result finalization.
     """
 
-    # Expected attributes (set by BaseWorkflow.__init__ / cached_property)
+    # Expected attributes (set by BaseWorkflow.__init__)
     name: str
     description: str
     stages: list[str]
-    _stage_index: dict[str, int]  # cached_property on BaseWorkflow
+    # _stage_index is a cached_property on TierRoutingMixin (BaseWorkflow
+    # inherits both), resolved via MRO. Documented here as a contract.
+    _stage_index: dict[str, int]
     _enable_tier_tracking: bool
     _enable_heartbeat_tracking: bool
     _agent_id: str | None

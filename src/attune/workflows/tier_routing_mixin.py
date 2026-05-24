@@ -19,6 +19,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -28,12 +29,28 @@ if TYPE_CHECKING:
 class TierRoutingMixin:
     """Mixin providing tier routing logic for workflow stages."""
 
-    # Expected attributes (set by BaseWorkflow.__init__ / cached_property)
+    # Expected attributes (set by BaseWorkflow.__init__)
     name: str
     stages: list[str]
-    _stage_index: dict[str, int]  # cached_property on BaseWorkflow
     _routing_strategy: Any  # TierRoutingStrategy | None
     _enable_adaptive_routing: bool
+
+    @cached_property
+    def _stage_index(self) -> dict[str, int]:
+        """O(1) stage-name → index lookup, computed once per instance.
+
+        Replaces the previous O(n) ``self.stages.index(stage_name)``
+        call on every routing decision (and heartbeat via
+        ``ExecutionMixin._update_heartbeat`` which reads this through
+        MRO). ``stages`` is treated as immutable post-init — subclasses
+        that mutate the stage list at runtime should call
+        ``self.__dict__.pop("_stage_index", None)`` to invalidate.
+
+        Lives on TierRoutingMixin (not BaseWorkflow) so test stubs that
+        mix this in directly (e.g. tests/unit/test_coverage_batch7.py)
+        get the descriptor without needing BaseWorkflow's full init.
+        """
+        return {name: i for i, name in enumerate(self.stages)}
 
     def _get_tier_with_routing(
         self,
