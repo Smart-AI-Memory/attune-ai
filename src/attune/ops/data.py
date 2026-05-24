@@ -7,6 +7,7 @@ empty results instead of raising. This keeps the UI useful on a fresh install.
 from __future__ import annotations
 
 import contextlib
+import heapq
 import json
 import logging
 from collections import defaultdict
@@ -903,7 +904,9 @@ def read_telemetry_summary(
         for k in by_workflow_count
         if _is_canonical(k)
     ]
-    by_workflow = sorted(filtered, key=lambda row: row[2], reverse=True)[:20]
+    # heapq.nlargest is O(n log k) where k=20; sorted()[:20] is O(n log n).
+    # Same output ordering since both sort by cost descending.
+    by_workflow = heapq.nlargest(20, filtered, key=lambda row: row[2])
 
     if today is None:
         today = date.today()

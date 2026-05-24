@@ -61,10 +61,11 @@ class ExecutionMixin:
     and result finalization.
     """
 
-    # Expected attributes (set by BaseWorkflow.__init__)
+    # Expected attributes (set by BaseWorkflow.__init__ / cached_property)
     name: str
     description: str
     stages: list[str]
+    _stage_index: dict[str, int]  # cached_property on BaseWorkflow
     _enable_tier_tracking: bool
     _enable_heartbeat_tracking: bool
     _agent_id: str | None
@@ -565,7 +566,12 @@ class ExecutionMixin:
         if not heartbeat_coordinator:
             return
         try:
-            stage_index = self.stages.index(stage_name) + offset
+            # _stage_index is a cached_property on BaseWorkflow — O(1)
+            # vs the prior O(n) self.stages.index(stage_name) call on
+            # every heartbeat. Missing key raises KeyError, caught by
+            # the broad except below; behavior matches the previous
+            # ValueError-from-.index() path (skip heartbeat, debug log).
+            stage_index = self._stage_index[stage_name] + offset
             progress = stage_index / len(self.stages)
             task_label = "Completed" if offset else "Running"
             heartbeat_coordinator.beat(

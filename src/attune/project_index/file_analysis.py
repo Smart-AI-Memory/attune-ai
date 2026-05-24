@@ -213,6 +213,14 @@ class FileAnalysisMixin:
         # __init__.py files usually don't need tests unless they have logic
         if path.name == "__init__.py":
             try:
+                # Cheap stat first — any __init__.py over ~2 KB has well
+                # past the 20-line threshold this branch checks for, so
+                # we can return REQUIRED without the full read. Generous
+                # upper bound: ~20 lines × ~30 chars/line + newlines ≈
+                # 620 bytes; 2048 covers comments, type hints, and
+                # docstrings without missing the "just imports" case.
+                if path.stat().st_size > 2048:
+                    return TestRequirement.REQUIRED
                 content = path.read_text(encoding="utf-8", errors="ignore")
                 # If it's just imports/exports, no tests needed
                 if len(content.strip().split("\n")) < 20:

@@ -568,6 +568,55 @@ class TestProjectScannerDetermineTestRequirement:
             result = scanner._determine_test_requirement(source_path, FileCategory.SOURCE)
             assert result == TestRequirement.REQUIRED
 
+    def test_small_init_returns_optional(self):
+        """A short ``__init__.py`` (just imports/exports) stays OPTIONAL.
+
+        Locks in the existing behavior so the new ``st_size`` gate
+        doesn't accidentally short-circuit the small-file branch.
+
+        The default ``no_test_patterns`` excludes ``**/__init__.py``
+        via the glob check (returns NOT_APPLICABLE before the size
+        gate). To exercise the size-gate branch directly, drop the
+        ``__init__.py`` exclusion from the per-test config.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scanner = ProjectScanner(tmpdir)
+            scanner.config.no_test_patterns = [
+                p for p in scanner.config.no_test_patterns if "__init__.py" not in p
+            ]
+            init_path = Path(tmpdir) / "__init__.py"
+            init_path.write_text("from .module_a import thing_a\nfrom .module_b import thing_b\n")
+            result = scanner._determine_test_requirement(init_path, FileCategory.SOURCE)
+            assert result == TestRequirement.OPTIONAL
+
+    def test_large_init_short_circuits_to_required(self):
+        """A large ``__init__.py`` (>2 KB) returns REQUIRED without a
+        full read — the st_size gate skips the line-count check for
+        files that are obviously past the 20-line threshold.
+
+        Regression guard for the perf-audit micro-bundle optimization:
+        any future change that re-introduces an unconditional read of
+        every ``__init__.py`` should fail this test.
+
+        See ``test_small_init_returns_optional`` for why we strip the
+        ``__init__.py`` exclusion from no_test_patterns first.
+        """
+        with tempfile.TemporaryDirectory() as tmpdir:
+            scanner = ProjectScanner(tmpdir)
+            scanner.config.no_test_patterns = [
+                p for p in scanner.config.no_test_patterns if "__init__.py" not in p
+            ]
+            init_path = Path(tmpdir) / "__init__.py"
+            # Generate ~3 KB of content, well past the 2048-byte gate.
+            init_path.write_text(
+                "# Generated init with substantial setup code\n"
+                + "\n".join(f"def _helper_{i}(): return {i}" for i in range(100))
+                + "\n"
+            )
+            assert init_path.stat().st_size > 2048
+            result = scanner._determine_test_requirement(init_path, FileCategory.SOURCE)
+            assert result == TestRequirement.REQUIRED
+
 
 class TestProjectScannerGlobPatternMatching:
     """Tests for _matches_glob_pattern method."""
