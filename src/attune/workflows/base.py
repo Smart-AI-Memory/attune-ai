@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 from abc import ABC
+from functools import cached_property
 from typing import TYPE_CHECKING, Any
 
 if TYPE_CHECKING:
@@ -178,6 +179,20 @@ class BaseWorkflow(
     description: str = "Base workflow template"
     stages: list[str] = []
     tier_map: dict[str, ModelTier] = {}
+
+    @cached_property
+    def _stage_index(self) -> dict[str, int]:
+        """O(1) stage-name → index lookup, computed once per instance.
+
+        Mixins on hot paths (``TierRoutingMixin._get_tier_with_routing``,
+        ``ExecutionMixin._update_heartbeat``) previously called
+        ``self.stages.index(stage_name)`` on every routing decision /
+        heartbeat — both O(n) per call. The cached dict makes both
+        lookups O(1). ``stages`` is treated as immutable post-init —
+        subclasses that mutate the stage list at runtime should call
+        ``self.__dict__.pop("_stage_index", None)`` to invalidate.
+        """
+        return {name: i for i, name in enumerate(self.stages)}
 
     def __init__(
         self,

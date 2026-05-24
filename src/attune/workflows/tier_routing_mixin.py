@@ -28,9 +28,10 @@ if TYPE_CHECKING:
 class TierRoutingMixin:
     """Mixin providing tier routing logic for workflow stages."""
 
-    # Expected attributes (set by BaseWorkflow.__init__)
+    # Expected attributes (set by BaseWorkflow.__init__ / cached_property)
     name: str
     stages: list[str]
+    _stage_index: dict[str, int]  # cached_property on BaseWorkflow
     _routing_strategy: Any  # TierRoutingStrategy | None
     _enable_adaptive_routing: bool
 
@@ -68,7 +69,7 @@ class TierRoutingMixin:
 
             # Determine latency sensitivity based on stage position
             # First stages are more latency-sensitive (user waiting)
-            stage_index = self.stages.index(stage_name) if stage_name in self.stages else 0
+            stage_index = self._stage_index.get(stage_name, 0)
             if stage_index == 0:
                 latency_sensitivity = "high"
             elif stage_index < len(self.stages) // 2:
