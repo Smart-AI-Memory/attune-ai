@@ -813,8 +813,21 @@ def sparkline_points(values: list[float], *, width: int = 240, height: int = 40)
     return " ".join(points)
 
 
-def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> TelemetrySummary:
-    """Aggregate ``usage.jsonl`` into a UI-friendly summary."""
+def read_telemetry_summary(
+    config: Config,
+    *,
+    recent_days: int = 7,
+    today: date | None = None,
+) -> TelemetrySummary:
+    """Aggregate ``usage.jsonl`` into a UI-friendly summary.
+
+    ``today`` is a test injection point — production callers leave it
+    ``None`` so the rolling-window cutoff uses ``date.today()``. Tests
+    pass an explicit date so fixed-date fixtures (e.g. events dated
+    ``2026-05-14``) stay inside the recent-days window regardless of
+    when the test actually runs. Mirrors the existing ``now=None``
+    injection pattern elsewhere in this module.
+    """
     path = config.telemetry_path
     if not path.exists():
         return TelemetrySummary(0, 0.0, 0.0, [], [], None)
@@ -892,7 +905,8 @@ def read_telemetry_summary(config: Config, *, recent_days: int = 7) -> Telemetry
     ]
     by_workflow = sorted(filtered, key=lambda row: row[2], reverse=True)[:20]
 
-    today = date.today()
+    if today is None:
+        today = date.today()
     cutoff = today.toordinal() - recent_days
     recent_days_data = sorted(
         (
