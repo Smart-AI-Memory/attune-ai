@@ -1,51 +1,76 @@
 ---
+type: reference
+name: plugin-reference
 feature: plugin
 depth: reference
-generated_at: 2026-05-17T18:27:08.915959+00:00
-source_hash: 7c317f125965385a2a8e8ed6605ef6bd454625bc8fded43149d47d64438b73b0
+generated_at: 2026-05-21T03:20:39.401647+00:00
+source_hash: 5586c41f1c99c9715bfc73d5dc9622c7133d156e10d5ec551da7c26153748cf1
 status: generated
 ---
 
 # Plugin reference
 
+Core API for the attune-ai plugin runtime. Provides session continuity, workspace discovery, and Claude Code integration hooks.
+
 ## Classes
 
-| Class | Description | File |
-|-------|-------------|------|
-| `SpecInfo` | One in-flight spec discovered under a workspace root. | `plugin/hooks/_state.py` |
-| `GitState` | Snapshot of the worktree's git state at hook fire time. | `plugin/hooks/_state.py` |
+| Class | Description |
+|-------|-------------|
+| `SpecInfo` | One in-flight spec discovered under a workspace root |
+| `GitState` | Snapshot of the worktree's git state at hook fire time |
+
+### Fields
+
+#### SpecInfo fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `slug` | `str` | Unique identifier for the spec |
+| `path` | `Path` | File system location of the spec |
+| `layer` | `str` | Spec layer classification |
+| `phase` | `str` | Current development phase |
+| `status` | `str` | Processing status |
+| `mtime` | `float` | Last modification timestamp |
+
+#### GitState fields
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `branch` | `str` | Current git branch name |
+| `last_sha` | `str` | SHA of the most recent commit |
+| `last_subject` | `str` | Subject line of the most recent commit |
+| `uncommitted` | `tuple[str, ...]` | List of files with uncommitted changes |
 
 ## Functions
 
-| Function | Description | File |
-|----------|-------------|------|
-| `main()` | — | `plugin/hooks/_handoff_cli.py` |
-| `build_resume_prompt()` | Render the user-facing resume prompt body. | `plugin/hooks/_resume_prompt.py` |
-| `discover_specs()` | Walk ``specs/`` directories under each root for in-flight specs. | `plugin/hooks/_state.py` |
-| `git_state()` | Return branch, last commit, and uncommitted files for ``cwd``. | `plugin/hooks/_state.py` |
-| `session_sentinel_path()` | Path to the once-per-session compact-warning sentinel. | `plugin/hooks/_state.py` |
-| `prune_stale_sentinels()` | Delete sentinel files older than the TTL. | `plugin/hooks/_state.py` |
-| `workspace_roots()` | Best-effort guess at workspace roots to scan for specs. | `plugin/hooks/_state.py` |
-| `estimate_utilization()` | Return estimated context utilization in ``[0.0, 1.0]``. | `plugin/hooks/_transcript_size.py` |
-| `format_warning()` | Compose the user-facing warning + resume prompt. | `plugin/hooks/compact_warning.py` |
-| `main()` | Entry point — never raises. | `plugin/hooks/compact_warning.py` |
-| `main()` | Read tool result from stdin, format Python files. | `plugin/hooks/format_on_save.py` |
-| `main()` | Check help template freshness on session start. | `plugin/hooks/help_freshness_check.py` |
-| `main()` | Read PostToolUse payload and suggest help if applicable. | `plugin/hooks/help_on_error.py` |
-| `main()` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
-| `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
-| `validate_file_path()` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
-| `main()` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |
-| `format_orientation()` | Short markdown list of in-flight specs for non-compact starts. | `plugin/hooks/spec_orient.py` |
-| `render_spec_pin()` | Render a spec body for post-compact context restoration. | `plugin/hooks/spec_orient.py` |
-| `main()` | Entry point — branches on ``source``, never raises. | `plugin/hooks/spec_orient.py` |
-| `main()` | Print welcome message to stderr (Claude Code surfaces stderr). | `plugin/hooks/welcome.py` |
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `main` | — | `int` | CLI entry point for `/handoff` command |
+| `build_resume_prompt` | `spec_info: SpecInfo \| None, git_state: GitState, *, workspace_path: str = '~/attune', todo_summary: str \| None = None` | `str` | Render the user-facing resume prompt body |
+| `discover_specs` | `roots: list[Path]` | `list[SpecInfo]` | Walk `specs/` directories under each root for in-flight specs |
+| `git_state` | `cwd: Path` | `GitState` | Return branch, last commit, and uncommitted files for `cwd` |
+| `session_sentinel_path` | `session_id: str \| None` | `Path` | Path to the once-per-session compact-warning sentinel |
+| `prune_stale_sentinels` | `now: float \| None = None` | `int` | Delete sentinel files older than the TTL |
+| `workspace_roots` | `cwd: Path \| None = None` | `list[Path]` | Best-effort guess at workspace roots to scan for specs |
+| `estimate_utilization` | `transcript_path: str \| Path` | `float` | Return estimated context utilization in `[0.0, 1.0]` |
+| `format_warning` | `util: float, threshold: float, resume_body: str` | `str` | Compose the user-facing warning + resume prompt |
+| `validate_bash_command` | Command validation parameters | Validation result | Validate a Bash command against security policies |
+| `validate_file_path` | Path validation parameters | Validation result | Validate a file path against security policies |
+| `format_orientation` | Spec formatting parameters | `str` | Short markdown list of in-flight specs for non-compact starts |
+| `render_spec_pin` | Spec rendering parameters | `str` | Render a spec body for post-compact context restoration |
 
+### Return values
 
-## Source files
+#### main function returns
 
-- `plugin/**`
+```
+0
+```
 
-## Tags
+## Constants
 
-`plugin`, `claude-code`
+| Constant | Type | Values | Description |
+|----------|------|--------|-------------|
+| `__version__` | `str` | `'7.0.0'` | Plugin version identifier |
+| `SYSTEM_DIRECTORIES` | `frozenset` | `'/etc', '/sys', '/proc', '/dev', '/boot', '/sbin', '/usr/sbin', '/private/etc', '/private/var'` | Protected system directories |
+| `SEARCH_COMMAND_PREFIXES` | `frozenset` | `'grep', 'rg', 'ack', 'ag', 'git grep', 'git log', 'git diff'` | Recognized search command prefixes |

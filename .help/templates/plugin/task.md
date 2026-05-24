@@ -1,57 +1,59 @@
 ---
+type: task
+name: plugin-task
 feature: plugin
 depth: task
-generated_at: 2026-05-17T18:27:08.911339+00:00
-source_hash: 7c317f125965385a2a8e8ed6605ef6bd454625bc8fded43149d47d64438b73b0
+generated_at: 2026-05-21T03:20:39.396433+00:00
+source_hash: 5586c41f1c99c9715bfc73d5dc9622c7133d156e10d5ec551da7c26153748cf1
 status: generated
 ---
 
 # Work with plugin
 
-Use plugin when you need to claude code plugin — skills, hooks, commands, and mcp config.
+Use the plugin module when you need to modify session-continuity hooks, resume prompts, or state discovery for Claude's workspace integration.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under plugin/**
+- Familiarity with the plugin module structure
+- Understanding of git workflows and spec discovery patterns
 
-## Steps
+## Identify the component you need to modify
 
-1. **Understand the current behavior.**
-   Read the entry points to see what plugin
-   does today before making changes.
-   The primary functions are:
-   - `main()` in `plugin/hooks/_handoff_cli.py`
-   - `build_resume_prompt()` in `plugin/hooks/_resume_prompt.py` — Render the user-facing resume prompt body.
-   - `discover_specs()` in `plugin/hooks/_state.py` — Walk ``specs/`` directories under each root for in-flight specs.
-   - `git_state()` in `plugin/hooks/_state.py` — Return branch, last commit, and uncommitted files for ``cwd``.
-   - `session_sentinel_path()` in `plugin/hooks/_state.py` — Path to the once-per-session compact-warning sentinel.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+The plugin module contains four core components:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+1. **Handoff CLI** (`plugin/hooks/_handoff_cli.py`) — Entry point for the `/handoff` slash command
+2. **Resume prompt builder** (`plugin/hooks/_resume_prompt.py`) — Generates user-facing prompts with workspace context
+3. **State discovery** (`plugin/hooks/_state.py`) — Finds in-flight specs and captures git state
+4. **Transcript sizing** (`plugin/hooks/_transcript_size.py`) — Estimates context utilization for warnings
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "plugin"`.
+## Locate the specific function
 
-## Key files
+Each component contains focused functions with single responsibilities:
 
-- `plugin/**`
+- For CLI integration: `main()` in `_handoff_cli.py`
+- For prompt generation: `build_resume_prompt()` in `_resume_prompt.py`
+- For workspace discovery: `discover_specs()`, `git_state()`, or `workspace_roots()` in `_state.py`
+- For context management: `estimate_utilization()` or `format_warning()` in `_transcript_size.py`
 
-## Common modifications
+Read the function's docstring and parameters to confirm it handles your use case.
 
-Functions you are most likely to modify:
+## Modify the function
 
-- `main()` in `plugin/hooks/_handoff_cli.py`
-- `build_resume_prompt()` in `plugin/hooks/_resume_prompt.py`
-- `discover_specs()` in `plugin/hooks/_state.py`
-- `git_state()` in `plugin/hooks/_state.py`
-- `session_sentinel_path()` in `plugin/hooks/_state.py`
-- `prune_stale_sentinels()` in `plugin/hooks/_state.py`
-- `workspace_roots()` in `plugin/hooks/_state.py`
-- `estimate_utilization()` in `plugin/hooks/_transcript_size.py`
+1. Open the file containing your target function
+2. Preserve the existing error handling and logging patterns
+3. Match the naming conventions used in surrounding code
+4. Test your changes incrementally as you work
+
+## Verify your changes
+
+Run the plugin-specific tests to catch regressions:
+
+```bash
+pytest -k "plugin"
+```
+
+Your modification works correctly when:
+- All existing tests pass
+- The function returns the expected type as documented
+- Error conditions are handled consistently with the existing codebase
