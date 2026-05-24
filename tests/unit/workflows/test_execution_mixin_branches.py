@@ -37,10 +37,15 @@ from attune.workflows.execution_mixin import ExecutionMixin
 def _make_mixin(**attrs):
     """Minimal ExecutionMixin instance with all required attributes set."""
     obj = ExecutionMixin()
+    stages = attrs.get("stages", ["analyze", "generate"])
     defaults = {
         "name": "test-workflow",
         "description": "A test workflow",
-        "stages": ["analyze", "generate"],
+        "stages": stages,
+        # _stage_index is a cached_property on TierRoutingMixin in production;
+        # bare-ExecutionMixin stubs need it set explicitly so _update_heartbeat
+        # exercises the real beat path (not an AttributeError-swallow path).
+        "_stage_index": {n: i for i, n in enumerate(stages)},
         "tier_map": {"analyze": MagicMock(), "generate": MagicMock()},
         "_run_id": "run-abc123",
         "_stages_run": [],
