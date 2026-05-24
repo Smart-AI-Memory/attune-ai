@@ -126,6 +126,7 @@ pip install 'attune-ai[developer]'
 | Multi-agent workflows | -- | Yes |
 | Help system maintenance | -- | Yes |
 | CI/CD automation | -- | Yes |
+| Ops dashboard (`attune ops`) — run history, cost tiles, telemetry | -- | Yes |
 
 > **Note:** Skills use your Claude subscription at no extra cost.
 > CLI and MCP tools make direct Anthropic API calls — API key
@@ -176,6 +177,7 @@ pip install 'attune-ai[developer]'
 | **research-synthesis** | summarizer, pattern-analyst, writer | Multi-source research synthesis |
 | **discovery-sweep** | pattern-scanner, verifier | Repo-wide bug-pattern sweep with verification, dashboard chips, and run drill-in |
 | **rag-code-gen** | retriever, generator | Citation-forced code generation grounded in the local attune-help corpus |
+| **orchestrated-health-check** | dynamic team via meta-orchestration | Same intent as `health-check` with explicit meta-orchestration of the sub-team |
 
 ---
 
@@ -316,6 +318,18 @@ export ATTUNE_AGENT_MODEL_DEFAULT=opus     # Max quality
 ```bash
 export ATTUNE_MAX_BUDGET_USD=10.0  # Override
 ```
+
+One-flag cheap mode for pattern-matching workflows (forces every
+inherit-default subagent onto Haiku; security/architect/plan/quality
+keywords still get their pinned model):
+
+```bash
+attune workflow run bug-predict --cheap     # Haiku-default subagents
+attune workflow run refactor-plan --cheap
+```
+
+See your spend live on the dashboard (`attune ops` → home) — today / 7-day
+/ MTD / 30-day tiles fed from the Anthropic admin cost-report API.
 
 ---
 
