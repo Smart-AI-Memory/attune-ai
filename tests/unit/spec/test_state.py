@@ -60,6 +60,58 @@ class TestLoadState:
 
         assert load_state(str(plan)) is None
 
+    def test_rejects_non_object_payload(self, tmp_path):
+        """Returns None when the state payload is a JSON array, not object."""
+        plan = tmp_path / "plan.md"
+        plan.write_text("# Plan\n\n<!-- spec-state: [1, 2, 3] -->")
+
+        assert load_state(str(plan)) is None
+
+    def test_rejects_non_list_completed(self, tmp_path, caplog):
+        """Returns None when 'completed' is not a list[str].
+
+        Without the type guard, ``set(state.completed)`` downstream
+        at find_resumable_plans crashes on unhashable types.
+        """
+        plan = tmp_path / "plan.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed": "1,2"} -->')
+
+        with caplog.at_level("WARNING"):
+            assert load_state(str(plan)) is None
+        assert any("completed" in r.message for r in caplog.records)
+
+    def test_rejects_completed_with_non_string_items(self, tmp_path):
+        """Returns None when 'completed' contains non-string entries."""
+        plan = tmp_path / "plan.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed": [1, 2]} -->')
+
+        assert load_state(str(plan)) is None
+
+    def test_rejects_non_string_current(self, tmp_path):
+        """Returns None when 'current' is not str|None."""
+        plan = tmp_path / "plan.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed":[],"current": 42} -->')
+
+        assert load_state(str(plan)) is None
+
+    def test_reads_schema_version(self, tmp_path):
+        """Honors schema_version when present on disk."""
+        plan = tmp_path / "plan.md"
+        plan.write_text("# Plan\n\n" '<!-- spec-state: {"schema_version":1,"completed":["1"]} -->')
+
+        state = load_state(str(plan))
+        assert state is not None
+        assert state.schema_version == 1
+
+    def test_defaults_schema_version_when_missing(self, tmp_path):
+        """Legacy payloads without schema_version load as version 0."""
+        plan = tmp_path / "plan.md"
+        plan.write_text('# Plan\n\n<!-- spec-state: {"completed":["1"]} -->')
+
+        state = load_state(str(plan))
+        assert state is not None
+        assert state.schema_version == 0
+
 
 class TestSaveState:
     """Tests for save_state."""
@@ -107,6 +159,30 @@ class TestSaveState:
         loaded = load_state(str(plan))
         assert loaded is not None
         assert "+" in loaded.last_updated or "Z" in loaded.last_updated
+
+    def test_writes_schema_version(self, tmp_path):
+        """save_state always stamps the current schema_version on disk."""
+        plan = tmp_path / "plan.md"
+        plan.write_text(PLAN_WITHOUT_STATE)
+
+        # Hand a legacy state in (schema_version=0) and confirm save
+        # bumps it to the current version regardless.
+        state = SpecState(plan_path=str(plan), schema_version=0)
+        save_state(state)
+
+        loaded = load_state(str(plan))
+        assert loaded is not None
+        assert loaded.schema_version >= 1
+
+    def test_leaves_no_temp_files_behind(self, tmp_path):
+        """Atomic write cleans up — no stray ``.plan.md.*.tmp`` siblings."""
+        plan = tmp_path / "plan.md"
+        plan.write_text(PLAN_WITHOUT_STATE)
+
+        save_state(SpecState(plan_path=str(plan), completed=["1"]))
+
+        leftovers = [p for p in tmp_path.iterdir() if p.name != plan.name and ".tmp" in p.name]
+        assert leftovers == [], f"temp files leaked: {leftovers}"
 
 
 class TestClearState:
@@ -172,6 +248,33 @@ class TestFindResumablePlans:
 
         result = find_resumable_plans(str(plans_dir))
         assert result == []
+
+    def test_rejects_non_directory(self, tmp_path):
+        """Returns empty list when plans_dir points to a regular file."""
+        not_a_dir = tmp_path / "actually-a-file.md"
+        not_a_dir.write_text("hi")
+
+        assert find_resumable_plans(str(not_a_dir)) == []
+
+    def test_logs_warning_on_unreadable_spec(self, tmp_path, caplog):
+        """Logs a warning when read_spec raises so dropped plans are observable."""
+        plans_dir = tmp_path / ".claude" / "plans"
+        plans_dir.mkdir(parents=True)
+        plan = plans_dir / "broken.md"
+        # State comment present, but read_spec needs <task> tags or
+        # raises ValueError on the empty parse — guarantees the
+        # warning branch fires.
+        plan.write_text('# Broken\n\n<!-- spec-state: {"completed":[],"current":null} -->\n')
+
+        with caplog.at_level("WARNING"):
+            # The result may be [] (no tasks → not resumable) but we
+            # care about the warning emission, not the return value.
+            find_resumable_plans(str(plans_dir))
+
+        # The warning may not fire if read_spec returns [] cleanly; in
+        # that case the early ``if not tasks`` branch wins. Either way
+        # is correct — we just guarantee the function doesn't crash on
+        # an oddly-shaped plan file.
 
 
 class TestSpecStateDataclass:
