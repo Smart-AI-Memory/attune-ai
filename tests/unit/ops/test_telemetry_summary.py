@@ -11,11 +11,19 @@ coordinating, this test fails.
 from __future__ import annotations
 
 import json
+from datetime import date
 
 import pytest
 
 from attune.ops import data
 from attune.ops.config import Config
+
+# Frozen "today" for the by-day-window assertions below. Events in the
+# fixtures are dated 2026-05-14; this anchors the rolling window to the
+# same day so the assertions don't age out as wall-clock time advances.
+# The production code path keeps using date.today() — the parameter
+# only affects tests that pass it.
+_FIXED_TODAY = date(2026, 5, 14)
 
 
 def _write_jsonl(path, events):
@@ -60,7 +68,7 @@ def test_read_telemetry_summary_recognizes_ts_field(tmp_path):
         ],
     )
 
-    summary = data.read_telemetry_summary(cfg)
+    summary = data.read_telemetry_summary(cfg, today=_FIXED_TODAY)
 
     assert summary.total_requests == 1
     assert summary.total_cost == pytest.approx(0.05)
@@ -88,7 +96,7 @@ def test_read_telemetry_summary_falls_back_to_legacy_timestamp(tmp_path):
         ],
     )
 
-    summary = data.read_telemetry_summary(cfg)
+    summary = data.read_telemetry_summary(cfg, today=_FIXED_TODAY)
 
     assert summary.total_requests == 1
     assert summary.by_day == [("2026-05-14", 1, 0.05)]
@@ -114,7 +122,7 @@ def test_read_telemetry_summary_handles_both_fields_in_same_file(tmp_path):
         ],
     )
 
-    summary = data.read_telemetry_summary(cfg)
+    summary = data.read_telemetry_summary(cfg, today=_FIXED_TODAY)
 
     assert summary.total_requests == 3
     assert summary.total_cost == pytest.approx(0.06)
@@ -132,7 +140,7 @@ def test_read_telemetry_summary_skips_event_with_no_timestamp(tmp_path):
         [{"workflow": "a", "total_cost": 0.01}],
     )
 
-    summary = data.read_telemetry_summary(cfg)
+    summary = data.read_telemetry_summary(cfg, today=_FIXED_TODAY)
 
     assert summary.total_requests == 1
     assert summary.total_cost == pytest.approx(0.01)
