@@ -5634,3 +5634,41 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   measurement plan) demonstrating the alternative
   works at smaller scale? If no, just execute the
   user's plan and learn the boundary later.
+
+- **Editor settings-sync is a silent secret-exposure vector — never
+  put credentials in `settings.json` (VS Code, Cursor, JetBrains,
+  etc.)**: discovered 2026-05-19 when a Read on VS Code's user
+  settings.json surfaced a live `ANTHROPIC_API_KEY` stored in
+  `claudeCode.environmentVariables`. The key flowed to Microsoft/
+  GitHub cloud via VS Code's Settings Sync feature — revoking the
+  key at the provider neuters its use but does NOT scrub the sync
+  history. Two hazards combine: (1) editor extensions sometimes
+  offer convenience fields like `claudeCode.environmentVariables`,
+  `cursor.openai.apiKey`, JetBrains' "stored secrets in IDE config"
+  that all flow through the same sync surface; (2) Read tools that
+  open settings.json (yours or any agent's) immediately pull the
+  literal credential into the conversation transcript. **Safe
+  pattern:** store secrets in a 0600-permission file like
+  `~/.attune/anthropic.env` and source it from `~/.zshrc` with a
+  guard:
+  ```
+  [ -f ~/.attune/anthropic.env ] && set -a && source ~/.attune/anthropic.env && set +a
+  ```
+  Editor extensions that need the env var inherit it from the shell
+  when launched. The .env file stays off Settings Sync entirely.
+  **Detection hint:** when reviewing any editor config (settings.json,
+  .vscode/settings.json, JetBrains XML), grep for known provider
+  prefixes (`sk-`, `ghp_`, `xoxb-`, `AKIA`, etc.) BEFORE pulling the
+  content into agent context. Filename smell-test from the existing
+  ".txt secret leak" lesson applies broadly: any config file owned
+  by an editor or IDE is a potential secret-leak surface, not just
+  obviously-named credential files. **Recovery checklist when a leak
+  is found:** (a) revoke at provider FIRST; (b) move to safe
+  storage; (c) remove the plaintext entry from the editor config;
+  (d) if Settings Sync was enabled while the secret was present,
+  `Settings Sync: Reset` (Cmd+Shift+P) to clear cloud history; (e)
+  add `settings.json` to detect-secrets baseline if not already
+  scanned. Pairs with the existing "Read/head/cat on untracked .txt
+  files" lesson (same failure mode, different file class) and the
+  "Never paste PyPI tokens into chat" lesson (transcripts are
+  permanent).
