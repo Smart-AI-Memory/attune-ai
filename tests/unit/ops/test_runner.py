@@ -132,6 +132,83 @@ def test_run_busy_returns_409(tmp_path, monkeypatch):
     assert detail["current_run_id"] == first.json()["run_id"]
 
 
+def test_run_relative_scope_resolves_against_project_root_not_cwd(tmp_path, monkeypatch):
+    """Regression — relative scopes must anchor to ``--project-root``.
+
+    Bug: ``_validate_file_path`` calls ``Path(scope).resolve()``, which
+    resolves a relative scope against ``Path.cwd()``. When the
+    dashboard process is launched from a directory other than its
+    ``--project-root`` (common in worktree setups), every relative
+    scope is rejected as "outside allowed directory" — manifests as
+    "all workflows producing errors" in the UI.
+
+    Fix: anchor relative scopes to ``cfg.project_root`` before the
+    validator sees them. Absolute paths still flow through unchanged.
+
+    Repro:
+      - project_root = tmp_path/proj  (with a file inside it)
+      - cwd          = tmp_path/elsewhere  (no such file)
+      - POST {"path": "src/foo.txt"} to /workflows/code-review/run
+      - Pre-fix: 400 "outside allowed directory"
+      - Post-fix: 201 (run starts)
+    """
+    proj_root = tmp_path / "proj"
+    (proj_root / "src").mkdir(parents=True)
+    (proj_root / "src" / "foo.txt").write_text("body")
+
+    elsewhere = tmp_path / "elsewhere"
+    elsewhere.mkdir()
+    monkeypatch.chdir(elsewhere)
+
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    config = build_config(
+        project_root=proj_root,
+        allow_run=True,
+        trusted_hosts=("testserver", "test"),
+    )
+    runner = RunnerService(command_builder=_echo_cmd)
+    app = create_app(config, runner=runner)
+
+    with TestClient(app) as client:
+        resp = client.post(
+            "/workflows/code-review/run",
+            json={"path": "src/foo.txt"},
+        )
+    assert resp.status_code == 201, resp.text
+    assert "run_id" in resp.json()
+
+
+def test_run_absolute_scope_outside_project_root_still_rejected(tmp_path, monkeypatch):
+    """Defense check — the cwd fix must not weaken the security guard.
+
+    Absolute paths outside ``project_root`` were rejected pre-fix and
+    must stay rejected post-fix. Lock in the contract so a future
+    refactor of ``_absolutize_scope`` can't silently widen the
+    allowlist."""
+    proj_root = tmp_path / "proj"
+    proj_root.mkdir()
+    outside = tmp_path / "outside" / "leak.txt"
+    outside.parent.mkdir()
+    outside.write_text("nope")
+
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    config = build_config(
+        project_root=proj_root,
+        allow_run=True,
+        trusted_hosts=("testserver", "test"),
+    )
+    runner = RunnerService(command_builder=_echo_cmd)
+    app = create_app(config, runner=runner)
+
+    with TestClient(app) as client:
+        resp = client.post(
+            "/workflows/code-review/run",
+            json={"path": str(outside)},
+        )
+    assert resp.status_code == 400
+    assert "outside allowed" in resp.json()["detail"]
+
+
 # --- async tests: real subprocess lifecycle in a single loop
 
 

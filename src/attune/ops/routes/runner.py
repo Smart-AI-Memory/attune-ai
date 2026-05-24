@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 from collections.abc import AsyncIterator
+from pathlib import Path
 
 from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
@@ -12,6 +13,31 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from attune.ops import data
 from attune.ops.runner import RunnerBusyError, RunnerService
 from attune.security.path_validation import _validate_file_path
+
+
+def _absolutize_scope(scope: str, project_root: Path) -> str:
+    """Resolve a user-supplied scope path against ``project_root``.
+
+    The dashboard sends scopes as repo-relative strings (e.g.
+    ``"src/attune/agents"``) derived from ``features.yaml`` via
+    ``data.workflow_default_scope``. The downstream validator does
+    ``Path(scope).resolve()``, which resolves a relative path against
+    ``Path.cwd()`` — NOT against ``project_root``. When the dashboard
+    is launched from a directory other than its ``--project-root``
+    (common in worktree setups), cwd and project_root diverge and
+    every scope-bearing workflow run is rejected as "outside allowed
+    directory".
+
+    Anchoring relative scopes here, before validation, decouples scope
+    resolution from process cwd. Absolute scopes are passed through
+    unchanged so the validator can still reject anything that escapes
+    ``project_root``.
+    """
+    p = Path(scope)
+    if p.is_absolute():
+        return scope
+    return str(project_root / p)
+
 
 logger = logging.getLogger(__name__)
 
@@ -72,6 +98,11 @@ async def start_run(name: str, request: Request) -> JSONResponse:
                 detail=f"workflow '{name}' does not accept a path argument",
             )
         cfg = request.app.state.config
+        # Anchor relative scopes to project_root BEFORE validation. The
+        # validator's Path.resolve() uses cwd for relative paths, which
+        # breaks when the dashboard's cwd != --project-root (common in
+        # worktree launches). See _absolutize_scope docstring.
+        scope = _absolutize_scope(scope, cfg.project_root)
         try:
             validated = _validate_file_path(scope, allowed_dir=str(cfg.project_root))
         except ValueError as exc:
