@@ -185,8 +185,19 @@
     select.addEventListener("change", function () {
       finish(true);
     });
+    // Blur CANCELS — does not commit. Previously this committed on any
+    // blur (commit=true), which fired PUT /api/specs/.../status whenever
+    // focus left the select for any reason: alt-tab, screen-reader
+    // navigation, an a11y-tree traversal by an automated tool. Browsing
+    // the Specs page with a snapshotting/accessibility tool was enough
+    // to flip status across multiple specs without any user click. See
+    // docs/specs/ops-specs-features/phase4-findings.md Finding 0.
+    //
+    // Cancel-on-blur is the standard form pattern: only an explicit
+    // `change` event saves; clicking anywhere else closes the dropdown
+    // without writing.
     select.addEventListener("blur", function () {
-      finish(true);
+      finish(false);
     });
     select.addEventListener("keydown", function (e) {
       if (e.key === "Escape") {
