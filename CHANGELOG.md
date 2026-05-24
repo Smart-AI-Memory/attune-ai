@@ -7,60 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.0] — 2026-05-24
+
 ### Added
 
-- New `attune workflow run --cheap` flag that sets
-  `ATTUNE_AGENT_MODEL_DEFAULT=haiku` for the duration of one run,
-  forcing every inherit-default subagent onto Haiku. Subagents
-  pinned to opus/sonnet by keyword (security, vuln, architect,
-  quality, plan, research) are unaffected — security-critical work
-  still gets the right model. For workflows like `bug-predict` or
-  `refactor-plan` whose subagents are mostly pattern-matching,
-  this is a one-flag opt-in to the cheap-mode tier.
-- Two new pattern-matching role keywords in the subagent-model
-  registry: `scanner → haiku` (catches `pattern-scanner`,
-  `debt-scanner`) and `finder → haiku` (catches `bottleneck-finder`,
-  `gap-finder`). Ordered after `security`/`vuln`/`architect` so
-  security-critical scanners (`vuln-scanner`, `security-scanner`)
-  stay on opus via their security keywords. Regression tests
-  pin the ordering. Closes the "easy wins" picks from the
-  2026-05-19 model-override audit.
-
-### Changed
-
-- `detector` keyword's default changed from `inherit` to `haiku`.
-  Routes `secret-detector` (security-audit) onto Haiku by default
-  — secret detection is regex-keyword work and Haiku handles it
-  reliably. Users who want the previous "inherit parent" behavior
-  can set `ATTUNE_AGENT_MODEL_DETECTOR=inherit` per-invocation.
-  Small per-run cost reduction for `security-audit`; no functional
-  change to what gets detected.
-
-### Added (prior release context — kept for reference)
-
-- Two new role-keyword hooks (`detector`, `reviewer`) in the
-  subagent-model registry, exposing `ATTUNE_AGENT_MODEL_DETECTOR`
-  and `ATTUNE_AGENT_MODEL_REVIEWER` as opt-in overrides for agents
-  that previously had no env-var hook (secret-detector,
-  auth-reviewer, perf-reviewer, safety-reviewer). Both default to
-  `inherit` so they preserve current "inherit parent" behavior
-  for users who don't set the override — zero behavior change for
-  default users. Subscription users hitting rate limits on
-  subagent-heavy workflows (security-audit, deep-review,
-  code-review with 4-5 parallel Opus subagents) can now rebalance
-  via `ATTUNE_AGENT_MODEL_VULN=sonnet ATTUNE_AGENT_MODEL_DETECTOR
-  =sonnet ATTUNE_AGENT_MODEL_REVIEWER=sonnet attune workflow run
-  security-audit` without code changes. Docs at
-  [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md#per-agent-model-override)
-  enumerate every keyword + default + which subagents it matches.
-- Ops dashboard now tracks in-memory UI interaction counters (pill
-  clicks, recommendation-card clicks, scope-picker changes) and
-  surfaces them under a new "Dashboard interactions (this session)"
-  panel on the `/telemetry` tab. Counters are process-lifetime — no
-  PII, no disk write, no network — and reset on dashboard restart.
-  Wired via a new `POST /api/telemetry/interaction` endpoint plus
-  `GET /api/telemetry/interactions` for the JSON snapshot. Closes
-  Phase 6.1 of the ops-runner-tier2 spec.
+- Home dashboard renders Anthropic account-spend tiles — today / 7-day
+  / MTD / 30-day totals backed by the new `anthropic_cost` admin-API
+  client. Key sourced from `~/.attune/anthropic-admin.env` or
+  `ANTHROPIC_ADMIN_API_KEY`; 15-min TTL cache
+  (`ANTHROPIC_COST_CACHE_TTL_SECONDS` to tune); categorized failure
+  modes (`no_key`, `auth_failed`, `rate_limited`, `network`) surface
+  per-tile rather than blanking the dashboard
+  ([#441](https://github.com/Smart-AI-Memory/attune-ai/pull/441),
+  [#448](https://github.com/Smart-AI-Memory/attune-ai/pull/448)).
 - New ops module `src/attune/ops/anthropic_cost.py` — admin
   cost-report client backing Phase 1 of the `anthropic-cost-integration`
   spec. Reads an Anthropic admin API key from
@@ -75,8 +34,52 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   each error kind with the right UX. 34 tests covering currency
   conversion edges, aggregation windows, every HTTP failure path,
   cache hit/miss/refresh semantics, and key-safety (no key
-  material in error messages or logs). No callers wired yet —
-  Phase 2 will integrate into the home page.
+  material in error messages or logs)
+  ([#432](https://github.com/Smart-AI-Memory/attune-ai/pull/432)).
+- New `attune workflow run --cheap` flag that sets
+  `ATTUNE_AGENT_MODEL_DEFAULT=haiku` for the duration of one run,
+  forcing every inherit-default subagent onto Haiku. Subagents
+  pinned to opus/sonnet by keyword (security, vuln, architect,
+  quality, plan, research) are unaffected — security-critical work
+  still gets the right model. For workflows like `bug-predict` or
+  `refactor-plan` whose subagents are mostly pattern-matching,
+  this is a one-flag opt-in to the cheap-mode tier
+  ([#437](https://github.com/Smart-AI-Memory/attune-ai/pull/437)).
+- Two new role-keyword hooks (`detector`, `reviewer`) in the
+  subagent-model registry, exposing `ATTUNE_AGENT_MODEL_DETECTOR`
+  and `ATTUNE_AGENT_MODEL_REVIEWER` as opt-in overrides for agents
+  that previously had no env-var hook (secret-detector,
+  auth-reviewer, perf-reviewer, safety-reviewer). Both default to
+  `inherit` so they preserve current "inherit parent" behavior
+  for users who don't set the override — zero behavior change for
+  default users. Subscription users hitting rate limits on
+  subagent-heavy workflows (security-audit, deep-review,
+  code-review with 4-5 parallel Opus subagents) can now rebalance
+  via `ATTUNE_AGENT_MODEL_VULN=sonnet ATTUNE_AGENT_MODEL_DETECTOR
+  =sonnet ATTUNE_AGENT_MODEL_REVIEWER=sonnet attune workflow run
+  security-audit` without code changes. Docs at
+  [docs/PROJECT_OVERVIEW.md](docs/PROJECT_OVERVIEW.md#per-agent-model-override)
+  enumerate every keyword + default + which subagents it matches
+  ([#435](https://github.com/Smart-AI-Memory/attune-ai/pull/435)).
+- Two new pattern-matching role keywords in the subagent-model
+  registry: `scanner → haiku` (catches `pattern-scanner`,
+  `debt-scanner`) and `finder → haiku` (catches `bottleneck-finder`,
+  `gap-finder`). Ordered after `security`/`vuln`/`architect` so
+  security-critical scanners (`vuln-scanner`, `security-scanner`)
+  stay on opus via their security keywords. Regression tests
+  pin the ordering. Closes the "easy wins" picks from the
+  2026-05-19 model-override audit
+  ([#437](https://github.com/Smart-AI-Memory/attune-ai/pull/437)).
+- Ops dashboard now tracks in-memory UI interaction counters (pill
+  clicks, recommendation-card clicks, scope-picker changes) and
+  surfaces them under a new "Dashboard interactions (this session)"
+  panel on the `/telemetry` tab. Counters are process-lifetime — no
+  PII, no disk write, no network — and reset on dashboard restart.
+  Wired via a new `POST /api/telemetry/interaction` endpoint plus
+  `GET /api/telemetry/interactions` for the JSON snapshot. Closes
+  Phase 6.1 of the ops-runner-tier2 spec
+  ([#430](https://github.com/Smart-AI-Memory/attune-ai/pull/430),
+  [#433](https://github.com/Smart-AI-Memory/attune-ai/pull/433)).
 - Copy-report button on the ops dashboard's run-view page. Renders
   as a compact dotted-pill chip in the run header next to the run
   ID; one click copies the full rendered report (the `<pre
@@ -87,7 +90,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   "Nothing to copy" for 1.5s with matching state classes so the
   user gets immediate feedback. Graceful degradation when
   `navigator.clipboard` is unavailable (old browsers, insecure
-  contexts) — surfaces the error rather than silently failing.
+  contexts) — surfaces the error rather than silently failing
+  ([#427](https://github.com/Smart-AI-Memory/attune-ai/pull/427)).
+- Suggestion chips on run-view parsed from "What I'd Do Next" log
+  lines — renders actionable follow-ups as compact chips below the
+  report
+  ([#424](https://github.com/Smart-AI-Memory/attune-ai/pull/424)).
+- `sdk-error-message-fidelity` spec promoted from
+  requirements-only-draft to full 4-file approved draft
+  ([#455](https://github.com/Smart-AI-Memory/attune-ai/pull/455)).
+- Lesson on editor settings-sync as a secret-exposure vector in
+  CLAUDE.md
+  ([#450](https://github.com/Smart-AI-Memory/attune-ai/pull/450)).
+- Decision routine + five session lessons added to project rules
+  ([#440](https://github.com/Smart-AI-Memory/attune-ai/pull/440)).
+
+### Changed
+
+- `detector` keyword's default changed from `inherit` to `haiku`.
+  Routes `secret-detector` (security-audit) onto Haiku by default
+  — secret detection is regex-keyword work and Haiku handles it
+  reliably. Users who want the previous "inherit parent" behavior
+  can set `ATTUNE_AGENT_MODEL_DETECTOR=inherit` per-invocation.
+  Small per-run cost reduction for `security-audit`; no functional
+  change to what gets detected
+  ([#437](https://github.com/Smart-AI-Memory/attune-ai/pull/437)).
+- Regenerated help templates for `ops-dashboard` / `plugin` /
+  `rag-grounding` with new `type:` and `name:` frontmatter fields
+  ([#449](https://github.com/Smart-AI-Memory/attune-ai/pull/449)).
+- `[author]` extra widened: `attune-author>=0.6.2,<0.12` →
+  `>=0.6.2,<0.14` to track the upcoming attune-author 0.13.0+
+  releases
+  ([#429](https://github.com/Smart-AI-Memory/attune-ai/pull/429)).
+- `ops-runner-tier2` spec marked complete (Phase 6.2 / 6.3 / 6.4
+  done after a 7-workflow dashboard exercise)
+  ([#454](https://github.com/Smart-AI-Memory/attune-ai/pull/454)).
+- `read_telemetry_summary` refactored to accept a rolling-window
+  parameter for testability (unblocked the downstream cost-tiles
+  PRs)
+  ([#445](https://github.com/Smart-AI-Memory/attune-ai/pull/445)).
 
 ### Fixed
 
@@ -113,7 +154,56 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   SDK workflow is added without the wiring. Unblocks the Quality
   dashboard work in [telemetry-rethink](docs/specs/telemetry-rethink/),
   which had explicitly deferred storage-layer work assuming
-  `usage.jsonl` was being written correctly.
+  `usage.jsonl` was being written correctly
+  ([#439](https://github.com/Smart-AI-Memory/attune-ai/pull/439)).
+- `spec/state.py` hardening — atomic writes via sibling-temp +
+  `os.replace`, payload-shape validation in `load_state`,
+  `plans_dir` traversal guard in `find_resumable_plans`, new
+  `schema_version` field, dropped-plan warning logs. 100% line +
+  branch coverage on the module
+  ([#451](https://github.com/Smart-AI-Memory/attune-ai/pull/451),
+  [#456](https://github.com/Smart-AI-Memory/attune-ai/pull/456)).
+- `learn-*` next-action chips no longer 404 on click — render as
+  non-clickable info pointers instead of broken links
+  ([#452](https://github.com/Smart-AI-Memory/attune-ai/pull/452)).
+- Telemetry KPI tiles no longer read zero when `usage.jsonl` events
+  use the v1.0 `ts` schema (vs legacy `timestamp`). Regression
+  guard test pins the ts-field expectation
+  ([#448](https://github.com/Smart-AI-Memory/attune-ai/pull/448)).
+- `ops/runner` anchors relative scope to `project_root` before
+  validation — unblocks workflows when `cwd ≠ project_root`
+  ([#444](https://github.com/Smart-AI-Memory/attune-ai/pull/444)).
+- `ops/specs` cancel-on-blur instead of commit-on-blur — closes
+  the Finding 0 trigger from the Phase 4 audit (prevents
+  accidental persistence of in-progress edits)
+  ([#446](https://github.com/Smart-AI-Memory/attune-ai/pull/446)).
+
+### Performance
+
+- `read_telemetry_summary` top-N rollup uses `heapq.nlargest`
+  (O(n log 20)) instead of `sorted()[:20]` (O(n log n))
+  ([#453](https://github.com/Smart-AI-Memory/attune-ai/pull/453)).
+- `BaseWorkflow._stage_index` cached_property eliminates O(n)
+  `stages.index()` calls in routing + heartbeat hot paths.
+  Follow-up fix moved `_stage_index` to `TierRoutingMixin` to
+  unblock CI (commit `38536ac9`)
+  ([#453](https://github.com/Smart-AI-Memory/attune-ai/pull/453)).
+- `__init__.py` test-requirement check short-circuits via
+  `.stat().st_size` gate before full read
+  ([#453](https://github.com/Smart-AI-Memory/attune-ai/pull/453)).
+
+### Security
+
+- TOCTOU on `spec/state.py:save_state` closed via atomic-write
+  helper (sibling-temp + `os.replace`)
+  ([#451](https://github.com/Smart-AI-Memory/attune-ai/pull/451)).
+- Payload-shape validation in `load_state` prevents crafted plan
+  content from crashing downstream `set(state.completed)` on
+  unhashable items
+  ([#451](https://github.com/Smart-AI-Memory/attune-ai/pull/451)).
+- `plans_dir` validation in `find_resumable_plans` blocks
+  arbitrary-directory traversal via caller-controlled input
+  ([#451](https://github.com/Smart-AI-Memory/attune-ai/pull/451)).
 
 ## [7.0.0] — 2026-05-16
 
