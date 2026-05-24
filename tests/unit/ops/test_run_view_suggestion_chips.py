@@ -168,3 +168,86 @@ def test_css_styles_suggestion_chip() -> None:
     assert ".suggestion-chip:focus-visible" in text
     assert ".suggestion-chip:disabled" in text
     assert "border: 1px dotted" in text
+
+
+def test_learn_prefix_routes_to_info_chip_builder() -> None:
+    """``buildSuggestionChip`` short-circuits to ``buildInfoChip`` when
+    the suggestion name starts with ``learn-``.
+
+    Background: attune.workflows.suggestions._help_template_suggestions
+    emits ``NextAction(workflow_name=f"learn-{workflow_name}", ...)`` to
+    point at the matching help template, but no ``learn-*`` workflow is
+    registered. Without this short-circuit, clicking the chip POSTs to
+    /workflows/learn-X/run and gets a 404 every time.
+    """
+    text = _read_js()
+    # The prefix detector is anchored on the literal emission shape.
+    assert "_INFO_PREFIX_RE = /^learn-/" in text
+    # The short-circuit lives at the top of buildSuggestionChip — before
+    # the <button> construction — so info chips never get a click handler.
+    chip_idx = text.find("function buildSuggestionChip(")
+    next_top = text.find("\n  function ", chip_idx + 1)
+    body = text[chip_idx : next_top if next_top != -1 else len(text)]
+    assert "_INFO_PREFIX_RE.test(suggestion.name)" in body
+    assert "return buildInfoChip(suggestion)" in body
+
+
+def test_info_chip_renders_as_non_clickable_span() -> None:
+    """``buildInfoChip`` returns a <span> (not <button>), carries the
+    ``suggestion-chip-info`` CSS variant, and never wires a click
+    handler — so the dashboard can't accidentally POST to a 404 route.
+    """
+    text = _read_js()
+    info_idx = text.find("function buildInfoChip(")
+    assert info_idx > 0
+    next_top = text.find("\n  function ", info_idx + 1)
+    body = text[info_idx : next_top if next_top != -1 else len(text)]
+    # <span>, not <button>
+    assert 'document.createElement("span")' in body
+    assert 'document.createElement("button")' not in body
+    # Combined classname includes the info variant
+    assert '"suggestion-chip suggestion-chip-info"' in body
+    # Same data hook for drift-guard tests
+    assert 'chip.setAttribute("data-suggestion-chip"' in body
+    # Explicit kind attribute for downstream filtering / analytics
+    assert 'chip.setAttribute("data-suggestion-kind", "info")' in body
+    # Hard guarantee: no click handler in the info path
+    assert "addEventListener" not in body
+    assert "fetch(" not in body
+
+
+def test_info_chip_aria_label_omits_run_verb() -> None:
+    """The aria-label on an info chip does NOT start with "Run " — that
+    would mislead screen-reader users into expecting a button. The
+    runnable chip uses ``"Run " + name``; the info chip uses the name
+    directly.
+    """
+    text = _read_js()
+    info_idx = text.find("function buildInfoChip(")
+    next_top = text.find("\n  function ", info_idx + 1)
+    body = text[info_idx : next_top if next_top != -1 else len(text)]
+    # The aria-label assignments inside the info branch never include
+    # the "Run " prefix that the button-chip uses.
+    assert '"Run "' not in body
+    assert 'suggestion.name + " — " + suggestion.tooltip' in body
+
+
+def test_info_chip_exported_for_tests() -> None:
+    """The test surface (``window.__attuneRunView``) exposes
+    ``buildInfoChip`` alongside the existing helpers."""
+    text = _read_js()
+    assert "buildInfoChip: buildInfoChip" in text
+
+
+def test_css_styles_info_chip_variant() -> None:
+    """The CSS variant strips the dotted border + pointer cursor so
+    info chips read as muted text-only "see also" pointers, not
+    clickable affordances. Hover state is overridden back to the
+    same muted appearance — no accidental hover-feedback that would
+    suggest clickability."""
+    css_path = _RUN_VIEW_JS.parent.parent / "css" / "main.css"
+    text = css_path.read_text(encoding="utf-8")
+    assert ".suggestion-chip-info" in text
+    assert ".suggestion-chip-info:hover" in text
+    # Cursor is reset to default (no pointer)
+    assert "cursor: default" in text
