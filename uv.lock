@@ -435,7 +435,7 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.14" },
+    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.15" },
     { name = "attune-rag", specifier = ">=0.1.5,<0.3" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.3" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },

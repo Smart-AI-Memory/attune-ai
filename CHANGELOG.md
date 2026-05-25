@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Widen `attune-author` cap in the `[author]` optional extra:
+  `>=0.6.2,<0.14` → `>=0.6.2,<0.15`.** Admits
+  [attune-author 0.14.x](https://pypi.org/project/attune-author/)
+  which has been released for weeks but was silently locked out
+  by the stale cap. The `[author]` extra is workspace-only dev
+  tooling (used by local attune-ai contributors who run
+  `attune-author` inside this venv); no runtime path. Cap raised
+  one minor so the next breaking attune-author bump still
+  requires explicit re-validation.
+
 ## [7.1.2] — 2026-05-25
 
 ### Changed
