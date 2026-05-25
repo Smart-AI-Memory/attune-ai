@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- `publish-pypi.yml` now triggers on `push: tags: 'v*.*.*'` instead of
+  `release: [published]`. The release-published event does NOT fire when
+  the GitHub release is created by `GITHUB_TOKEN` (i.e. by another
+  workflow, like `release.yml`) — a documented GitHub Actions
+  limitation that surfaced on the v7.1.0 ship, where the PyPI publish
+  had to be dispatched manually. Tag-push fires regardless of actor,
+  closing the gap. publish-pypi now runs in parallel with release.yml
+  (both build dist independently); manual `workflow_dispatch` retained
+  as fallback.
+
 ### Fixed
 
 - `release-prep` and `orchestrated-health-check` workflows now load on
