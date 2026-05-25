@@ -74,6 +74,7 @@ dependencies = [
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "python-frontmatter>=1.0.0,<2.0.0",  # YAML frontmatter parsing for help templates — required by attune.help.engine which backs the help_lookup MCP tool (progressive/workflow_help/precursor/search_tag modes all parse template files). Vanilla pip install attune-ai without this breaks every help_lookup mode except `preamble`.
     "attune-rag>=0.1.5,<0.2",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy.
+    "tomli>=2.0.0; python_version < '3.11'",  # tomllib fallback for Python 3.10. Used by attune.utils.coverage (loaded transitively from release-prep + orchestrated-health-check workflows). Without this, those workflows fail to load on 3.10.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
     # NOTE: redis is opt-in via the [redis] extra (bundled attune_redis

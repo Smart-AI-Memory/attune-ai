@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `release-prep` and `orchestrated-health-check` workflows now load on
+  Python 3.10. `attune.utils.coverage` falls back to `tomli` when stdlib
+  `tomllib` is unavailable (3.10), but `tomli` was not declared as a
+  dependency — the fallback crashed at import time, surfacing as
+  `Failed to load workflow ... No module named 'tomli'` warnings on
+  fresh installs. Declared `tomli>=2.0.0; python_version < '3.11'` in
+  the runtime deps. No effect on 3.11+ users (stdlib `tomllib` already
+  resolves first).
+
 ## [7.1.0] — 2026-05-24
 
 ### Added
