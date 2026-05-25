@@ -1,6 +1,5 @@
 # Requirements — Agent Surface Parallelism Evaluation
-
-**Status:** draft (2026-05-16)
+**Status:** approved (2026-05-16)
 **Pairs with:** [`agent-surface-rebalance`](../agent-surface-rebalance/) (retired 2026-05-12)
 
 ---

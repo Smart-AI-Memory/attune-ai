@@ -1,8 +1,5 @@
 # Decisions: Multi-Actor Bulletin Board
-
-**Status:** approved
-
-
+**Status:** complete
 Resolutions on open questions, captured as Patrick reviewed the
 [`requirements.md`](requirements.md) draft.
 

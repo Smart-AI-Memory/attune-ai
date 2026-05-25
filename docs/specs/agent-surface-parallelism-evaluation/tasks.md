@@ -1,7 +1,5 @@
 # Tasks — Agent Surface Parallelism Evaluation
-
-**Status:** draft (2026-05-16)
-
+**Status:** approved (2026-05-16)
 | Phase | Status | Owner | Notes |
 |---|---|---|---|
 | Phase 0 — Telemetry + A/B measurement | in progress | | 0.1 done 2026-05-16, see `phase0-findings.md` |

@@ -1,7 +1,5 @@
 # Decisions — Discovery-Sweep Ops Dashboard Integration
-
-**Status:** draft (2026-05-13)
-
+**Status:** approved (2026-05-13)
 Records the **why** behind shape choices. New decisions append at
 the bottom with date + context.
 
