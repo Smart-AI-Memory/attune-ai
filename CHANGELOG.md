@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `docs/MULTI_PACKAGE_RELEASE_PATTERNS.md` — pattern catalogue for
+  coordinating releases across the attune-* family without locking
+  into "all at once" cycles. First entry documents the
+  "widen-the-consumer-range-before-upstream-releases" pattern (the
+  PR #429 / attune-author 0.14.0 worked example from the 2026-05-24
+  multi-package release). Six more patterns surfaced during the
+  v7.1.0 ship are listed as future entries.
+
 ### Changed
 
 - `publish-pypi.yml` now triggers on `push: tags: 'v*.*.*'` instead of
