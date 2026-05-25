@@ -236,7 +236,7 @@ wheels = [
 
 [[package]]
 name = "attune-ai"
-version = "7.1.1"
+version = "7.1.2"
 source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
@@ -436,8 +436,8 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
     { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.14" },
-    { name = "attune-rag", specifier = ">=0.1.5,<0.2" },
-    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.2" },
+    { name = "attune-rag", specifier = ">=0.1.5,<0.3" },
+    { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.3" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -605,16 +605,18 @@ wheels = [
 
 [[package]]
 name = "attune-rag"
-version = "0.1.5"
+version = "0.2.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "jinja2" },
+    { name = "jsonschema" },
     { name = "pyyaml" },
+    { name = "rich" },
     { name = "structlog" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/c9/b3ea4348209273e980c38a7e43f9c43cf4c9bd5eb15b9dce4092f95e1972/attune_rag-0.1.5.tar.gz", hash = "sha256:b35e116658fca88dc70660fc53fffb59e69e7b58877e2009ed28eff12585429f", size = 29731, upload-time = "2026-04-19T17:00:22.745Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/82/da/5de2d3a5e6f9f1830c19998b504f4fbd8e24d77e2a32709403389166bb30/attune_rag-0.2.0.tar.gz", hash = "sha256:d8d5f26bfa4b2379845492d2c36d29359e09ef8c7d03f47435cd06baacba4711", size = 102841, upload-time = "2026-05-25T03:53:32.587Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/27/5d/d5971db69551fa0a15ec863ca230671368f48a9ed73e265ab1ad9ef9d013/attune_rag-0.1.5-py3-none-any.whl", hash = "sha256:f02e2ce1b660c71cd4850c456c3006d6ffb97cb0888d332262ee94e52aec9164", size = 36335, upload-time = "2026-04-19T17:00:21.143Z" },
+    { url = "https://files.pythonhosted.org/packages/ed/49/005cf1581d99227c15bf4afddfa115cada1d666d9836296fd28f3619de29/attune_rag-0.2.0-py3-none-any.whl", hash = "sha256:a8c1b46e18c3336a654cf3609d628fcf2087d4e00459a22ad6ede3c4d88e33ae", size = 114144, upload-time = "2026-05-25T03:53:31.013Z" },
 ]
 
 [[package]]
