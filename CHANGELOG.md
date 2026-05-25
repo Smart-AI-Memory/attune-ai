@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.1] — 2026-05-25
+
 ### Added
 
 - `docs/MULTI_PACKAGE_RELEASE_PATTERNS.md` — pattern catalogue for
