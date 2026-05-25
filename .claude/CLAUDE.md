@@ -5672,3 +5672,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   files" lesson (same failure mode, different file class) and the
   "Never paste PyPI tokens into chat" lesson (transcripts are
   permanent).
+
+- **In remote cloud sessions, `mcp__github__push_files` + `mcp__github__create_pull_request`
+  replace `gh` CLI — but the local `Write` leaves an untracked file that blocks `git checkout`
+  of the new branch**: in remote/cloud Claude Code sessions (web, mobile, GitHub Actions), the
+  `gh` CLI is not available. Correct pattern for creating a PR with a new file: (1) `Write`
+  the file locally, (2) `mcp__github__push_files` to push it to a new remote branch in one
+  commit (the tool auto-creates the branch), (3) `mcp__github__create_pull_request`. Gotcha:
+  the local `Write` leaves an untracked copy; a subsequent `git checkout <new-branch>` fails
+  with "untracked working tree files would be overwritten." Fix: `rm <file>` first, then
+  `git checkout`. Better pattern for the next time: skip the local `Write` entirely and rely
+  solely on `mcp__github__push_files` — the file only needs to exist on the remote branch.
+  Only write locally when the file also needs to be present in the current session's working
+  tree (e.g. for further edits or commands that read it). Companion: `mcp__github__get_label`
+  errors (not returns null) when a label doesn't exist — run label checks in parallel and
+  proceed without labels on error.
+
+- **Dated-snapshot model aliases retire; stable aliases don't — always prefer stable aliases
+  in code**: Anthropic ships models under two alias forms: dated snapshots like
+  `claude-sonnet-4-20250514` (pinned to the exact checkpoint, retired on a published date)
+  and stable aliases like `claude-sonnet-4-6` (always point at the latest minor of that
+  series, never retired). Snapshot aliases retire with ~6 weeks notice. In-code references
+  using snapshot aliases will 404 after retirement. Search for dated patterns
+  (`YYYYMMDD` at the end of a model ID) across all source files before each model generation
+  EOL date. Safe replacement: the stable alias for the same series routes to the same
+  checkpoint until a new minor is released. Relevant files to grep: any that call the
+  Anthropic API directly (`polish.py`, `cost_tracker.py`, workflow configs, MCP server).
