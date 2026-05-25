@@ -1,6 +1,5 @@
 # Requirements — Discovery-Sweep Ops Dashboard Integration
-
-**Status:** draft (2026-05-13)
+**Status:** approved (2026-05-13)
 **Parent spec:** `docs/specs/discovery-sweep/` (feature-complete on
 `main` as of #321)
 **Blocks on:** `docs/specs/ops-runner-tier2/` Phase 2 (must ship

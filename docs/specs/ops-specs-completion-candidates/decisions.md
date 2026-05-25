@@ -1,5 +1,5 @@
 # Spec: Ops Specs Completion Candidates — Decisions
-
+**Status:** complete
 > Pre-committed decisions captured 2026-05-15/16. Triggered by
 > Patrick's observation that approved specs accumulate stale
 > status because manual completion-marking has no nudge surface.

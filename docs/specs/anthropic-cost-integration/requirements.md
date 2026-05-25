@@ -1,6 +1,5 @@
 # Requirements — Anthropic Cost Integration
-
-**Status:** Draft 2026-05-18
+**Status:** approved
 **Owner:** Patrick
 
 ---

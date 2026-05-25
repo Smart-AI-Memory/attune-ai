@@ -1,7 +1,5 @@
 # Tasks — Anthropic Cost Integration
-
-**Status:** Draft 2026-05-18; awaiting Phase 0 result before Phase 1 begins.
-
+**Status:** approved
 Each phase is independently shippable and reversible.
 
 ---
