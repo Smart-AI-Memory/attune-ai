@@ -7,6 +7,27 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.1.2] — 2026-05-25
+
+### Changed
+
+- **Widen `attune-rag` core pin: `>=0.1.5,<0.2` → `>=0.1.5,<0.3`
+  (and matching widen in the `[dev]` extra's test-coverage pin).**
+  Unblocks fresh `pip install attune-ai` alongside
+  [attune-rag 0.2.0](https://pypi.org/project/attune-rag/0.2.0/),
+  released 2026-05-25 as the first SemVer-binding cut. The 0.2.0
+  bump is purely additive (new `attune_rag.measure_corpus` public
+  module, new `load_aliases_from_file` helper, new
+  `DirectoryCorpus(extra_aliases_file=...)` kwarg); the
+  `RagPipeline` / `DirectoryCorpus` / `format_citations_markdown`
+  surfaces consumed by `attune.workflows.rag_code_gen`,
+  `attune.memory.personal`, and `attune.mcp.workflow_handlers`
+  are unchanged across 0.1.x → 0.2.0, so this is a pin widen only
+  with no code changes. Cap raised one minor rather than
+  open-ended so the next breaking attune-rag bump still requires
+  explicit re-validation. Companion comment block at the bottom
+  of `pyproject.toml` updated to match.
+
 ## [7.1.1] — 2026-05-25
 
 ### Added
