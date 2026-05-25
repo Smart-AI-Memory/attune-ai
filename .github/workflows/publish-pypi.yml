@@ -1,9 +1,16 @@
 name: Publish to PyPI
 
 on:
-  release:
-    types: [published]
-  workflow_dispatch:  # Allow manual trigger
+  # Trigger on tag push rather than release-published. Releases created by
+  # GITHUB_TOKEN (i.e. by another workflow, like release.yml) do NOT fire
+  # the `release:[published]` event — a documented GitHub Actions
+  # limitation that bit us on the v7.1.0 ship (PyPI publish had to be
+  # dispatched manually). Tag-push fires unconditionally regardless of
+  # the actor, so the chain release.yml → tag → publish-pypi works.
+  push:
+    tags:
+      - 'v*.*.*'  # match release.yml; runs in parallel with it
+  workflow_dispatch:  # Manual fallback / re-run on demand
 
 permissions:
   contents: read
