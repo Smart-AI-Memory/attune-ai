@@ -20,6 +20,7 @@ server runs with ``--read-only``, mutations are rejected with 403.
 
 from __future__ import annotations
 
+import logging
 import os
 import re
 import tempfile
@@ -29,7 +30,9 @@ from typing import Any
 
 from fastapi import APIRouter, Body, HTTPException, Request
 
-from attune.ops import dismiss_store
+from attune.ops import dismiss_store, pending_writes
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/specs", tags=["specs"])
 
@@ -421,6 +424,53 @@ def _extract_status_annotation(old_value: str) -> str:
     return annotation if annotation.strip() else ""
 
 
+def _record_pending_write(
+    *,
+    target: Path,
+    before_text: str,
+    after_text: str,
+    project_root: Path | str,
+    request: Request,
+) -> None:
+    """Best-effort journal append for a successful spec-status write.
+
+    Honors D5 in docs/specs/dashboard-pending-writes-journal/decisions.md:
+    journal failures MUST NOT block the calling write endpoint. Wraps the
+    entire body so any defect in the journal layer — including ones that
+    bypass ``append_entry``'s internal try/except — surfaces as a WARNING
+    log, not a 500 response.
+    """
+    import hashlib
+
+    try:
+        project_root_path = Path(project_root)
+        try:
+            rel_file_path = target.relative_to(project_root_path).as_posix()
+        except ValueError:
+            # target lives outside project_root (e.g. spec lives in a
+            # sibling repo via --specs-root). Fall back to absolute.
+            rel_file_path = target.as_posix()
+        before_sha = hashlib.sha256(before_text.encode("utf-8")).hexdigest()
+        after_sha = hashlib.sha256(after_text.encode("utf-8")).hexdigest()
+        entry = pending_writes.make_entry(
+            endpoint="PUT /api/specs/{slug}/{phase}/status",
+            action="set_spec_status",
+            file_path=rel_file_path,
+            project_root=str(project_root_path),
+            before_sha256=before_sha,
+            after_sha256=after_sha,
+        )
+        # Allow tests / dev to override the journal path via app.state.
+        journal_path = getattr(request.app.state, "pending_writes_journal_path", None)
+        pending_writes.append_entry(entry, journal_path=journal_path)
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: D5 contract — journal failure must never block the
+        # actual write. Log + swallow at the route boundary as defense in
+        # depth, even though append_entry catches internally.
+        logger = logging.getLogger(__name__)
+        logger.warning("pending_writes: journal append failed for %s: %s", target, exc)
+
+
 @router.put("/{slug}/{phase}/status")
 async def update_phase_status(
     slug: str,
@@ -479,6 +529,18 @@ async def update_phase_status(
         _atomic_write(target, new_text)
     except OSError as exc:
         raise HTTPException(status_code=500, detail=f"write failed: {exc}") from exc
+
+    # Append a pending-writes journal entry so the edit is durable
+    # across sessions even before it's committed to git. Best-effort:
+    # journal failures log a WARNING and do not block this endpoint.
+    # See docs/specs/dashboard-pending-writes-journal/ for the design.
+    _record_pending_write(
+        target=target,
+        before_text=original,
+        after_text=new_text,
+        project_root=getattr(config, "project_root", matched_root),
+        request=request,
+    )
 
     # On successful flip AWAY from a complete-like status, clear any
     # dismiss entry for this slug. Re-completion can then re-surface
