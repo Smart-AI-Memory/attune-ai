@@ -1,6 +1,5 @@
 # Requirements — Doc-Stack Reference Subtypes
-
-**Status:** draft (2026-05-16)
+**Status:** approved (2026-05-16)
 **Owner package:** `attune-author` (sibling repo — this spec lives in attune-ai because cross-package specs live here per the spec-viewer-ia precedent)
 
 ---
