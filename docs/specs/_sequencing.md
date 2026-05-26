@@ -1,9 +1,13 @@
 # Spec Execution Sequencing
 
-Working order for approved specs as of 2026-05-16. Update
+Working order for approved specs as of 2026-05-26. Update
 checkboxes as phases land. When a spec completes, move its
 entry to the "Done" section at the bottom rather than
 deleting it — the history is useful for retros.
+
+**Last refresh: 2026-05-26** — closed out ops-runner-tier2
+(Phase 6 shipped 2026-05-24); added 10 days of merges to Done
+and Recently Shipped; refreshed Today's recommended pick.
 
 ---
 
@@ -84,27 +88,9 @@ natural pause.
   - [ ] Verification — output survives refresh
 - Spec: [ops-security-hardening](ops-security-hardening/)
 
-### ops-runner-tier2
+### ops-runner-tier2 — done 2026-05-24
 
-- Status: Phases 1–5 shipped; Phase 6 pending. Phase 5 infra
-  on `main` (PR #413); Phase 5.4 code-review-emits-recs in
-  flight (PR #415, single-flake CI issue not related to the
-  change — re-run pending).
-- Why after security-hardening: 6 phases, each shippable.
-  Phase 1 is pure inspection so it can start anytime. Phases
-  3 and 4 shipped together (2026-05-14) for the chaining UX.
-- Tasks
-  - [x] Phase 1 — workflow registry verification (2026-05-13)
-  - [x] Phase 2 — scope picker (dropdown + custom path) (2026-05-14)
-  - [x] Phase 3 — persist recent runs (2026-05-14, with Phase 4)
-  - [x] Phase 4 — clickable workflow-name pills (2026-05-14, with Phase 3)
-  - [x] Phase 5 — structured recommendation channel (2026-05-16,
-        infra via #413; 5.4 demo integration in PR #415)
-  - [ ] Phase 6 — telemetry + close
-- Phase 2 unblocks the discovery-sweep-ops-integration spec
-  (per its design dependency on the scope picker) — that spec
-  shipped 2026-05-16, see Done.
-- Spec: [ops-runner-tier2](ops-runner-tier2/)
+(See Done section for full retrospective.)
 
 ### discovery-sweep — done 2026-05-13
 
@@ -297,47 +283,59 @@ Open only if a trigger condition fires.
 
 ## Today's recommended pick
 
-**Close the open-PR cluster from the 2026-05-16 daily briefing
-session** — 5 PRs at the head of the queue all gated on
-review/merge decisions rather than additional code:
+**For 2026-05-26.** Zero open PRs. PR queue cleared; PR #470
+(model alias fix) merged this morning. Track A long-closed.
+ops-runner-tier2 (Track C heavyweight) fully shipped 2026-05-24.
+Primary attention is on the agent-collaboration article
+(not tracked in this doc — see `docs/process/COLLABORATION_DISCIPLINE*.md`).
 
-- [#412](https://github.com/Smart-AI-Memory/attune-ai/pull/412)
-  CHANGELOG v7.0 rewrite (docs-only, all CI green, scope-
-  decision call).
-- [#415](https://github.com/Smart-AI-Memory/attune-ai/pull/415)
-  ops-runner-tier2 Phase 5.4 — code-review emits ATTUNE_REC.
-  Single CI flake (`test_tracks_retries_in_metrics`); re-run
-  the failed Ubuntu lanes.
-- [#417](https://github.com/Smart-AI-Memory/attune-ai/pull/417)
-  spec-viewer-ia proposal salvage (docs-only).
-- [#418](https://github.com/Smart-AI-Memory/attune-ai/pull/418)
-  help-IA code-quality triage flow salvage (docs-only).
-- [#420](https://github.com/Smart-AI-Memory/attune-ai/pull/420)
-  2 new spec drafts: agent-surface-parallelism-evaluation +
-  doc-stack-reference-subtypes (docs-only).
+Spec backlog closeouts that fit a short slot:
 
-Alternatives if you'd rather start fresh work than close out:
-
-- **ops-runner-tier2 Phase 6** — telemetry + close. Smallest
-  unit of work that retires a whole spec.
-- **agent-surface-parallelism-evaluation Phase 0** — telemetry
-  pull (~30 min, no LLM cost) routes a decision matrix that's
-  already pre-committed in `decisions.md`.
+- **agent-surface-parallelism-evaluation Phase 0.2–0.6** —
+  Phase 0.1 telemetry pull done 2026-05-16 (45.7% multi-
+  analytical sessions, frequency gate clears). Remaining work:
+  resolve D1/D2 decisions, run sequential-baseline + parallel-
+  arm measurements, write Phase 0 report, apply pre-committed
+  matrix. Budget cap $20.
 - **doc-stack-reference-subtypes Phase 0** — inventory pass
   (~30 min) tells us how many features fall into each subtype
-  before any generator work.
-- **test-quality-program** — opportunistic filler.
+  before any generator work. Gate: pre-commit the decisions
+  matrix BEFORE Phase 0 per the spec's own rule.
+- **test-quality-program** — opportunistic filler. One module
+  per session, picked by rubric.
 
-Recently shipped:
-- 2026-05-16 — `.help` regen (PR #402) — 9 stale features
-  refreshed + project docs added.
-- 2026-05-16 — ops-runner-tier2 Phase 5 infra (PR #413) —
-  structured recommendation channel for run-view.
-- 2026-05-16 — discovery-sweep-ops-integration (PR #411) —
-  dashboard chips, live progress, drill-in. Spec done.
-- 2026-05-16 — ops-security-hardening closeout (PR #409).
-- 2026-05-16 — ops-scope-picker-ia AC-6 (PR #410) — scope
-  picker renders in read-only mode.
+Alternatives if you have a longer slot:
+
+- **sdk-error-message-fidelity** — built out 2026-05-19 (commit
+  `556bb8b2`); spec has decisions / design / tasks ready to
+  execute.
+- **workflow-failure-exit-propagation** — draft. CLI exit-code
+  propagation so dashboards don't show false-green on workflow
+  failures.
+- **workflow-path-arg-unification** — draft. Unify how
+  workflows accept `--path` (already partially audited via
+  ops-runner-tier2 Phase 1).
+
+Recently shipped (since 2026-05-16, highlights):
+
+- 2026-05-26 — model alias swap in polish pipeline (PR #470).
+- 2026-05-25 — weekly report 2026-05-25 (PR #468).
+- 2026-05-25 — pending-writes journal Phase 1 (PR #469) —
+  durable record + API.
+- 2026-05-25 — persist dashboard-driven spec status (PR #467).
+- 2026-05-23 — attune-author cap widen + v7.1.2 release (PRs #466, #465).
+- 2026-05-22 — v7.1.1, v7.1.0 releases (PR #461 + main commits).
+- 2026-05-22 — multi-package-release-patterns catalogue (PR #460).
+- 2026-05-21 — ops-runner-tier2 Phase 6 closeout (commit `dce7cf86`).
+- 2026-05-21 — sdk-error-message-fidelity spec built out.
+- 2026-05-19 — anthropic-cost-integration Phase 2 (PR #441).
+- 2026-05-19 — decision routine + 5 session lessons (PR #440).
+- 2026-05-19 — SDK workflows skip usage.jsonl writes fix (PR #439).
+- 2026-05-19 — `--cheap` flag + subagent haiku routing (PR #437).
+- 2026-05-19 — ATTUNE_AGENT_MODEL_{DETECTOR,REVIEWER} overrides (PR #435).
+- 2026-05-16 — `.help` regen (PR #402); discovery-sweep-ops-
+  integration (PR #411); ops-security-hardening closeout
+  (PR #409); ops-scope-picker-ia AC-6 (PR #410).
 - 2026-05-14 — v6.8.0 PyPI release.
 
 ---
@@ -389,6 +387,30 @@ Recently shipped:
   consumer. Feature flag `ATTUNE_OPS_SWEEP_RESULTS=1` gates
   persistence; chips render zero until a sweep has been
   recorded for the current scope.
+- [docs/specs/ops-runner-tier2](ops-runner-tier2/) —
+  complete 2026-05-24. All 6 phases shipped: Phase 1 workflow
+  registry verification (2026-05-13, PR #390s); Phase 2 scope
+  picker — dropdown + custom path (2026-05-14); Phase 3 + 4
+  persisted recent runs + clickable workflow-name pills
+  (2026-05-14, together for chaining UX); Phase 5 structured
+  recommendation channel (2026-05-16, infra PR #413 + Phase
+  5.4 demo PR #415); Phase 6 telemetry close (2026-05-18 in-
+  memory counters on `/telemetry`, 6.2–6.4 closed 2026-05-24
+  with UX confirmed across 7-workflow dashboard exercise, one
+  bug fixed in PR #452). Phase 2 unblocked
+  discovery-sweep-ops-integration per its design dependency
+  on the scope picker.
+- [docs/specs/dashboard-pending-writes-journal](dashboard-pending-writes-journal/) —
+  Phase 1 complete 2026-05-25 (PR #469). Durable journal of
+  live-state writes from session-bound services + API surface
+  + spec-status setter wire-in. Phases 2 (queue inspection)
+  and 3 (consumer wiring on all write sites) deferred.
+  Spec named the class of bug surfaced in the same morning
+  the spec was written: live writes stranded in working tree
+  after sessions end.
+- [docs/specs/anthropic-cost-integration](anthropic-cost-integration/) —
+  Phase 2 shipped 2026-05-19 (PR #441). Home account-spend
+  tiles. Phases beyond pending.
 
 ---
 
