@@ -13,6 +13,21 @@
   </p>
 </section>
 
+{# Multi-actor bulletin strip — shows in-flight runs from OTHER actors
+   (other Claude Code sessions, CLI invocations, scheduled tasks). The
+   container is empty on first paint; bulletin.js polls
+   /api/bulletin/active every 5s and renders chips. The whole section
+   stays hidden via the ``hidden`` attribute when zero entries are
+   active, so it doesn't add visual noise in single-actor workflows.
+   See docs/specs/multi-actor-bulletin/. #}
+<section id="bulletin-strip" class="bulletin-strip" hidden>
+  <h2 class="bulletin-strip-title">
+    Now running across actors
+    <span class="bulletin-strip-count" id="bulletin-strip-count">0</span>
+  </h2>
+  <div class="bulletin-strip-chips" id="bulletin-strip-chips"></div>
+</section>
+
 {% if workflows %}
   <table class="data-table runner-table">
     <thead>
@@ -153,4 +168,9 @@
    elements that only exist when allow_run is True, so the read-only
    page sees a no-op for those features. #}
 <script src="{{ url_for('static', path='js/runner.js') }}?v={{ attune_version }}"></script>
+{# bulletin.js polls /api/bulletin/active every 5s to populate the
+   "Now running across actors" strip rendered above. Loaded
+   unconditionally so the strip appears in both run and read-only
+   modes — read-only dashboards can still surface OTHER actors' work. #}
+<script src="{{ url_for('static', path='js/bulletin.js') }}?v={{ attune_version }}"></script>
 {% endblock %}

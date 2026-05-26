@@ -1588,3 +1588,69 @@ a.kpi:hover {
   border-color: var(--danger, #b91c1c);
   border-style: solid;
 }
+
+/* ------------------------------------------------------------------
+ * Multi-actor bulletin strip — Workflows page, "Now running across
+ * actors". See docs/specs/multi-actor-bulletin/.
+ * ------------------------------------------------------------------ */
+.bulletin-strip {
+  margin: 12px 0 16px;
+  padding: 10px 14px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--bg-soft);
+}
+.bulletin-strip[hidden] {
+  display: none;
+}
+.bulletin-strip-title {
+  margin: 0 0 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--fg-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+.bulletin-strip-count {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 1px 8px;
+  margin-left: 6px;
+  border-radius: 99px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border);
+  color: var(--fg-muted);
+  letter-spacing: 0;
+}
+.bulletin-strip-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 8px;
+}
+.bulletin-chip {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--accent, #4f46e5);
+  color: var(--fg, #111);
+}
+.bulletin-chip-actor {
+  font-weight: 600;
+}
+.bulletin-chip-workflow {
+  color: var(--fg-muted);
+}
+.bulletin-chip-scope {
+  font-size: 11px;
+  color: var(--fg-muted);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, monospace);
+}
+.bulletin-chip-stale {
+  border-style: dashed;
+  opacity: 0.6;
+}
