@@ -2,7 +2,7 @@
 **Status:** approved (2026-05-16)
 | Phase | Status | Owner | Notes |
 |---|---|---|---|
-| Phase 0 — Inventory + hand-crafted samples | not started | | Gate: decisions matrix committed BEFORE Phase 0 |
+| Phase 0 — Inventory + hand-crafted samples | in progress | | 0.1 + 0.2 done 2026-05-26 (see `phase0-data/`). 0.3–0.6 await editorial pass. |
 | Phase 1 — Design + meta-templates | gated on Phase 0 | | Only if matrix says PROCEED |
 | Phase 2 — Generator + classifier wiring | gated on Phase 1 | | attune-author work |
 | Phase 3 — Regenerate corpus + RAG benchmark | gated on Phase 2 | | Cross-package: attune-author + attune-help + attune-rag |
@@ -13,8 +13,8 @@
 
 **Goal:** validate the subtype hypothesis with hand-crafted output before writing any generator code.
 
-- [ ] **0.1** Inventory current reference templates across the workspace. Output: `phase0-data/reference-inventory.csv` with columns `package, feature, current-content-shape (tabular-with-classes / tabular-with-functions / mostly-empty), lines, target-subtype`. Cover attune-ai, attune-help, attune-author, attune-rag, attune-gui.
-- [ ] **0.2** Compute distribution. What % of references would be procedural? tabular? free-form? Sanity-check the spec's premise.
+- [x] **0.1** Inventory current reference templates across the workspace. Output: `phase0-data/reference-inventory.csv` with columns `package, feature, current-content-shape (tabular-with-classes / tabular-with-functions / mostly-empty), lines, target-subtype`. Cover attune-ai, attune-help, attune-author, attune-rag, attune-gui. **Done 2026-05-26** — 117 reference docs across 5 packages, see `phase0-data/reference-inventory.csv` + `phase0-data/inventory-summary.md`.
+- [x] **0.2** Compute distribution. What % of references would be procedural? tabular? free-form? Sanity-check the spec's premise. **Done 2026-05-26** — 72 tabular (61.5%), 26 procedural (22.2%), 9 free-form (7.7%), 10 ambiguous (8.5%). Premise confirmed: ~30% of corpus benefits from new subtypes.
 - [ ] **0.3** Pick one feature per subtype for sample rendering:
   - Procedural: `attune-ai/.help/templates/security-audit/reference.md` (skill with steps + parameter).
   - Tabular: keep the current output for a feature with real classes (e.g. `attune-help/.help/templates/manifest/reference.md`).
