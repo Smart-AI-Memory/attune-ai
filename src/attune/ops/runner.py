@@ -26,7 +26,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Literal
 
+from attune.bulletin import BulletinBackend, BulletinEntry, resolve_actor
+from attune.bulletin.protocol import ActorKind
+
 logger = logging.getLogger(__name__)
+
+# Heartbeat cadence (seconds) — matches the bulletin's 90s stale GC
+# threshold; missing 3 ticks marks an actor dead. Lives in the wrapper
+# process per multi-actor-bulletin/decisions.md so blocked SDK calls
+# inside a workflow don't look like crashes to other actors.
+_BULLETIN_HEARTBEAT_INTERVAL_SEC = 30.0
 
 # Log-byte cap for persisted records. Records with logs larger than this
 # get truncated and a trailing ``<TRUNCATED — N bytes more>`` marker is
@@ -287,6 +296,9 @@ class RunnerService:
         executor: Callable[[Run], Awaitable[None]] | None = None,
         persistence_dir: Path | None = None,
         project_root: Path | None = None,
+        bulletin: BulletinBackend | None = None,
+        actor_id: str | None = None,
+        actor_kind: ActorKind = "dashboard",
     ) -> None:
         self._runs: OrderedDict[str, Run] = OrderedDict()
         self._history_limit = history_limit
@@ -301,6 +313,17 @@ class RunnerService:
         # the SSE channel; production wiring in ``server.py`` always
         # supplies it.
         self._project_root = project_root
+        # Bulletin wiring. ``bulletin=None`` disables all writes — the
+        # runner behaves exactly as before. Production server.py wires
+        # a FileBulletinBackend; tests inject a fake to assert calls.
+        self._bulletin = bulletin
+        if actor_id is None:
+            actor_id, _ = resolve_actor(actor_kind=actor_kind)
+        self._actor_id = actor_id
+        self._actor_kind: ActorKind = actor_kind
+        # Maps run_id -> heartbeat asyncio task so _finish_run can
+        # cancel cleanly. Pruned when the task is cancelled.
+        self._heartbeat_tasks: dict[str, asyncio.Task[None]] = {}
 
     @property
     def persistence_dir(self) -> Path | None:
@@ -507,6 +530,9 @@ class RunnerService:
             self._runs[run.id] = run
             while len(self._runs) > self._history_limit:
                 self._runs.popitem(last=False)
+        # Bulletin start record. Errors swallowed by the backend — never
+        # blocks workflow start. See multi-actor-bulletin spec.
+        self._bulletin_write(run, "running")
         # Fire and forget — execution streams events via the run's subscribers
         asyncio.create_task(self._executor(run))
         return run
@@ -523,10 +549,69 @@ class RunnerService:
         run.mark_done(exit_code)
         if self._persistence_dir is not None:
             _persist_run(run, self._persistence_dir)
+        # Cancel the wrapper-process heartbeat task (no-op if absent).
+        task = self._heartbeat_tasks.pop(run.id, None)
+        if task is not None:
+            task.cancel()
+        # Write the terminal bulletin record. ``mark_done`` already set
+        # status to ``completed`` or ``failed``.
+        self._bulletin_write(run, run.status)
+
+    def _bulletin_write(self, run: Run, status: str) -> None:
+        """Best-effort bulletin write — never raises to the caller.
+
+        ``status`` is one of ``running``, ``completed``, ``failed``,
+        ``cancelled``. ``mark_done`` only produces ``completed`` or
+        ``failed``; the runner doesn't emit ``cancelled`` today, but
+        the bulletin entry schema accepts it for future use.
+        """
+        if self._bulletin is None:
+            return
+        coerced_status = (
+            status if status in ("running", "completed", "failed", "cancelled") else "running"
+        )
+        try:
+            self._bulletin.append(
+                BulletinEntry(
+                    actor_id=self._actor_id,
+                    actor_kind=self._actor_kind,
+                    workflow=run.workflow,
+                    run_id=run.id,
+                    current_status=coerced_status,  # type: ignore[arg-type]
+                    scope=run.path,
+                )
+            )
+        except Exception as exc:  # noqa: BLE001
+            # INTENTIONAL: bulletin is advisory; backend bugs must not
+            # take down a workflow run. Log and continue.
+            logger.warning("bulletin: write failed for run %s: %s", run.id, exc)
+
+    async def _heartbeat_loop(self, run: Run) -> None:
+        """Tick every ``_BULLETIN_HEARTBEAT_INTERVAL_SEC`` until cancelled.
+
+        Lives in the wrapper process (this method), not inside the
+        workflow loop — so an SDK call blocking >60s inside the
+        subprocess doesn't look like a crash to other actors. See
+        multi-actor-bulletin/decisions.md.
+        """
+        try:
+            while True:
+                await asyncio.sleep(_BULLETIN_HEARTBEAT_INTERVAL_SEC)
+                if run.is_terminal:
+                    return
+                self._bulletin_write(run, "running")
+        except asyncio.CancelledError:
+            # Normal path: _finish_run cancels us at terminal status.
+            raise
 
     async def _execute(self, run: Run) -> None:
         run.status = "running"
         run.started_at = datetime.now(timezone.utc)
+        # Start the wrapper-process heartbeat. ``None`` when the
+        # bulletin isn't wired — keeps test fixtures and read-only
+        # mode behaving exactly as before.
+        if self._bulletin is not None:
+            self._heartbeat_tasks[run.id] = asyncio.create_task(self._heartbeat_loop(run))
         cmd = list(self._command_builder(run.workflow))
         # Append ``--path <scope>`` after the builder's output so test
         # fixtures (with simple ``workflow -> command`` signatures) don't
