@@ -354,3 +354,129 @@ class TestForwardCompat:
         active = backend.read_active()
         assert len(active) == 1
         assert active[0].run_id == "run-1"
+
+
+# ---------------------------------------------------------------------------
+# Error-path coverage (all paths swallow + log; bulletin is advisory)
+# ---------------------------------------------------------------------------
+
+
+class TestErrorPathsSwallowed:
+    """All filesystem error paths must log + return, never raise.
+
+    The bulletin is documented as advisory storage — workflows must
+    run successfully even when the bulletin can't write.
+    """
+
+    def test_append_rotation_oserror_swallowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+
+        # Make rotation explode; append should still try to write.
+        def _boom(self: FileBulletinBackend) -> None:
+            raise OSError("rotation fails")
+
+        monkeypatch.setattr(FileBulletinBackend, "_maybe_rotate", _boom)
+        # Should not raise.
+        backend.append(_entry(run_id="after-rotate-failure"))
+        # The append's own write may or may not have run; the contract
+        # is just "doesn't raise" — verified by reaching this line.
+
+    def test_append_open_oserror_swallowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+
+        original_open = os.open
+
+        def _selective_boom(path, flags, mode=0o777):
+            if "active.jsonl" in str(path):
+                raise OSError("disk full")
+            return original_open(path, flags, mode)
+
+        monkeypatch.setattr(os, "open", _selective_boom)
+        # Must not raise.
+        backend.append(_entry(run_id="open-fails"))
+
+    def test_read_oserror_returns_empty(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.append(_entry(run_id="run-1"))
+
+        def _boom(*_a, **_kw):
+            raise PermissionError("cannot read")
+
+        monkeypatch.setattr(Path, "open", _boom)
+        # Read must not raise; should return [] when the iterator
+        # can't open the file.
+        assert backend.read_active() == []
+
+    def test_rotation_replace_oserror_swallowed(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.append(_entry(run_id="needs-rotating"))
+        # Backdate so rotation triggers on next append.
+        yesterday = time.time() - 86_400 - 60
+        os.utime(backend.active_path, (yesterday, yesterday))
+
+        def _boom(self, _target):
+            raise OSError("permission denied")
+
+        monkeypatch.setattr(Path, "replace", _boom)
+        # Should not raise — and the active log keeps growing.
+        backend.append(_entry(run_id="post-failed-rotate"))
+
+
+class TestMalformedReadPaths:
+    """Read path skips corrupt lines, missing fields, oversized lines."""
+
+    def test_oversized_line_skipped_on_read(self, tmp_path: Path) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+        # Hand-write a line larger than _MAX_LINE_BYTES (16384) plus
+        # a healthy entry. Reader should skip the huge one and keep
+        # the healthy one.
+        huge = "x" * 17_000
+        with backend.active_path.open("w", encoding="utf-8") as fh:
+            fh.write(huge + "\n")
+            fh.write(json.dumps(_entry(run_id="healthy").to_dict()) + "\n")
+        active = backend.read_active()
+        assert {e.run_id for e in active} == {"healthy"}
+
+    def test_missing_required_field_skipped(self, tmp_path: Path) -> None:
+        """A dict missing a required field hits the TypeError branch."""
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+        # Missing ``run_id`` — dataclass construction raises TypeError.
+        bad = {
+            "actor_id": "A",
+            "actor_kind": "cli",
+            "workflow": "code-review",
+            # no run_id
+        }
+        with backend.active_path.open("w", encoding="utf-8") as fh:
+            fh.write(json.dumps(bad) + "\n")
+            fh.write(json.dumps(_entry(run_id="good").to_dict()) + "\n")
+        active = backend.read_active()
+        assert {e.run_id for e in active} == {"good"}
+
+    def test_malformed_heartbeat_drops_entry(self, tmp_path: Path) -> None:
+        """An unparseable last_heartbeat skips the entry on read."""
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {
+            "actor_id": "A",
+            "actor_kind": "cli",
+            "workflow": "code-review",
+            "run_id": "bad-heartbeat",
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "last_heartbeat": "not-an-iso-string",
+            "current_status": "running",
+        }
+        with backend.active_path.open("w", encoding="utf-8") as fh:
+            fh.write(json.dumps(payload) + "\n")
+        # Heartbeat parse failure -> entry dropped as if stale.
+        assert backend.read_active() == []
