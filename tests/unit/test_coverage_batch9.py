@@ -23,7 +23,10 @@ from unittest.mock import MagicMock, patch
 import pytest
 
 try:
-    from click.exceptions import Exit as ClickExit
+    # Import from typer (the library that raises) rather than click.exceptions
+    # — typer 0.26 vendored click and `typer.Exit` is no longer the same class
+    # as `click.exceptions.Exit`. See the CLAUDE.md lesson on typer.Exit.
+    from typer import Exit as ClickExit
 except ImportError:
     ClickExit = SystemExit  # type: ignore[assignment,misc]
 

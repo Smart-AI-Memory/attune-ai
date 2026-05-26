@@ -5698,3 +5698,73 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   EOL date. Safe replacement: the stable alias for the same series routes to the same
   checkpoint until a new minor is released. Relevant files to grep: any that call the
   Anthropic API directly (`polish.py`, `cost_tracker.py`, workflow configs, MCP server).
+
+- **`gh run view --log-failed` returns nothing while the parent
+  run is still in flight, even when individual jobs have already
+  flipped to "fail"**: discovered 2026-05-26 on PR #472. The
+  PR's check rollup showed 4 jobs as `fail` bucket and 9 as
+  `pending`, but `gh run view <id> --log-failed` returned
+  *"run X is still in progress; logs will be available when it
+  is complete."* The job-level link in `gh pr checks --json link`
+  doesn't help either — same gh CLI restriction. Implication:
+  during background CI watching, you can **detect** failures
+  early via `gh pr checks <PR> --json bucket` polling, but you
+  cannot **debug** them until the whole run completes. Don't
+  start speculative fixes based on the fail count alone — the
+  fail might be a flake, a real bug, or a known-tolerable guard
+  cancellation. Wait for the run-complete signal, then read the
+  logs. Companion to the existing `--watch --fail-fast` lesson
+  but a distinct gotcha (that one's about premature exit; this
+  one's about deferred log availability).
+
+- **Derivative writing tempts toward "what would be tidy to say"
+  rather than "what actually happened" — verify the framing
+  against the session record before shipping**: caught 2026-05-26
+  while drafting a LinkedIn post about today's session. About to
+  write *"My session edited `docs/process/`. Claude's session
+  never touched it."* — describing a parallel-session split that
+  didn't actually happen (we worked in a single session and
+  *chose not to* spawn the parallel one). The fictional framing
+  would have been a cleaner argument for the post's tier-2
+  example, but it would also have been false. Generalizes to any
+  derivative content drawn from a real working session: the
+  writer's instinct is to render the events as clean evidence
+  for the thesis being argued. The fix is the same as §7
+  verification beats taste — name the concrete check (read the
+  actual transcript / commit history) before shipping the
+  framing. Same root failure mode as the existing "Exploration
+  agents fabricate names" lesson, but applied to *the agent
+  writing about its own session* rather than scanning unfamiliar
+  code. Catch it by asking explicitly: "Did this happen?"
+  before each non-trivial claim in derivative content.
+
+- **typer 0.26 vendored its own click — tests asserting on
+  `click.exceptions.Exit` break the moment typer auto-upgrades
+  past 0.25.x**: pre-0.26, `typer.Exit` was a direct re-export
+  from `click.exceptions.Exit`, so tests that did
+  `from click.exceptions import Exit as ClickExit` /
+  `pytest.raises(ClickExit)` worked by *coincidence* — they
+  were asserting on the same class typer happened to be raising.
+  typer 0.26 vendored click; `typer.Exit` is now
+  `typer._click.exceptions.Exit`, a distinct class from
+  `click.exceptions.Exit`. The fix is one line: import the
+  exception from the library that actually raises it —
+  `from typer import Exit as ClickExit`. Works across all typer
+  versions (0.9 → 0.26+). General rule for exception
+  assertions in tests: import the exception from the library
+  that raises it, never from a transitive dep it happens to
+  re-use. Transitive-coincidence imports break the moment the
+  library vendors its dep. Diagnostic shape worth remembering
+  separately: **matrix-wide CI red after a green-on-same-commit
+  run earlier in the same day is almost always a third-party
+  dep release between the two runs.** CI does fresh `pip
+  install` each run; a PyPI release in the gap produces
+  opposite outcomes on the same SHA. Today's timeline:
+  typer 0.26.0 released 14:37 UTC, PR #471 merged 14:39, Tests
+  on main installed fresh 0.26 and broke 6 tests in
+  `TestCLIWorkflowCommands` with `typer._click.exceptions.Exit`
+  uncaught; the earlier same-commit Tests run at 13:16 used
+  typer 0.25.1 and passed. When a previously-green build flips
+  red on the same commit, cross-reference PyPI release
+  timestamps for deps in the failing test's stack. Companion to
+  the existing "matrix-wide red from one root cause" lesson.
