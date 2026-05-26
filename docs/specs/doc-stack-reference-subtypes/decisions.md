@@ -1,7 +1,5 @@
 # Decisions — Doc-Stack Reference Subtypes
-
-**Status:** draft (2026-05-16) — no decisions resolved yet
-
+**Status:** approved (2026-05-16) — no decisions resolved yet
 ---
 
 ## Pre-committed decision matrix (Phase 0 → action)

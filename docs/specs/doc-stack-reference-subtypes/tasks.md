@@ -1,7 +1,5 @@
 # Tasks — Doc-Stack Reference Subtypes
-
-**Status:** draft (2026-05-16)
-
+**Status:** approved (2026-05-16)
 | Phase | Status | Owner | Notes |
 |---|---|---|---|
 | Phase 0 — Inventory + hand-crafted samples | not started | | Gate: decisions matrix committed BEFORE Phase 0 |
