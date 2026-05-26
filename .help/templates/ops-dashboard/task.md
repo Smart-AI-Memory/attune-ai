@@ -1,102 +1,57 @@
 ---
-type: task
-name: ops-dashboard-task
 feature: ops-dashboard
 depth: task
-generated_at: 2026-05-21T03:19:56.082581+00:00
-source_hash: 70c9679ee8d985ef96c30f885e28ddd1a4c9216d86c485efecac67f77809fb67
+generated_at: 2026-05-26T21:06:44.514298+00:00
+source_hash: 358cabd372029010a81638242e718fe7c18cf5e3884933957d5eb43dcf498eed
 status: generated
 ---
 
 # Work with ops dashboard
 
-Use the ops dashboard when you need to monitor workflow operations, track costs, or manage running processes through a local web interface with real-time updates.
+Use ops dashboard when you need to local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live sse log streaming.
 
 ## Prerequisites
 
-- Python environment with attune installed
-- Access to the project source code in `src/attune/ops/`
-- Admin API key for Anthropic cost reporting (optional, for cost features)
+- Access to the project source code
+- Familiarity with the files under src/attune/ops/**
 
-## Start the dashboard
+## Steps
 
-1. **Launch the dashboard server.**
-   Run the ops dashboard from your project root:
-   ```bash
-   python -m attune.ops
-   ```
-   Or use the CLI subcommand:
-   ```bash
-   attune ops
-   ```
+1. **Understand the current behavior.**
+   Read the entry points to see what ops dashboard
+   does today before making changes.
+   The primary functions are:
+   - `create_app()` in `src/attune/ops/__init__.py` — Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.
+   - `build_config()` in `src/attune/ops/__init__.py` — Lazy import of the config builder.
+   - `clear_cache()` in `src/attune/ops/anthropic_cost.py` — Empty the in-memory cache. Test-only convenience.
+   - `load_admin_key()` in `src/attune/ops/anthropic_cost.py` — Return the admin API key, or ``None`` if unavailable.
+   - `fetch_summary()` in `src/attune/ops/anthropic_cost.py` — Return the current cost summary or a categorized error.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Access the web interface.**
-   Open `http://127.0.0.1:8765` in your browser. The dashboard loads with:
-   - Workflow runner with scope picker
-   - Cost tracking from Anthropic admin API
-   - Session history and telemetry
-   - Real-time SSE log streaming
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-3. **Configure dashboard settings.**
-   Modify the dashboard configuration by editing the config parameters:
-   - Host and port: Default `127.0.0.1:8765`
-   - Project root: Auto-detected from current directory
-   - Spec roots: Configured via `Config.specs_roots`
-   - Retention policy: `runs_retention_days` (default 30)
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "ops-dashboard"`.
 
-## Monitor costs and usage
+## Key files
 
-1. **View cost summaries.**
-   Check the cost panel for:
-   - Today's usage in USD
-   - 7-day and 30-day trends
-   - Month-to-date totals
-   - Breakdown by model and cost type
+- `src/attune/ops/**`
 
-2. **Handle cost fetch errors.**
-   If cost data fails to load, check:
-   - Admin API key availability via `load_admin_key()`
-   - Network connectivity to `api.anthropic.com`
-   - API rate limits and authentication
+## Common modifications
 
-3. **Clear cached data.**
-   Reset cost cache when testing or troubleshooting:
-   ```python
-   from attune.ops.anthropic_cost import clear_cache
-   clear_cache()
-   ```
+Functions you are most likely to modify:
 
-## Track workflow sessions
-
-1. **Review session history.**
-   The sessions page shows:
-   - Claude Code session IDs and timestamps
-   - Message counts and duration
-   - Starting prompts and activity patterns
-
-2. **Analyze telemetry data.**
-   Check telemetry summaries for:
-   - Total requests and costs
-   - Cost savings from workflow optimization
-   - Usage patterns by workflow type
-   - Daily activity trends
-
-## Detect completion candidates
-
-1. **Enable candidate detection.**
-   Set `specs_candidates_enabled: true` in your config to scan for specs ready for completion.
-
-2. **Review detected candidates.**
-   The dashboard identifies specs with:
-   - Status progression indicators
-   - Evidence of completion readiness
-   - Current phase and next steps
-
-## Verification
-
-The ops dashboard is working correctly when:
-- Web interface loads at the configured host/port
-- Cost data appears (if admin key is configured)
-- Workflow scope picker shows your project features
-- Session history displays recent Claude Code activity
-- Real-time logs stream during workflow execution
+- `create_app()` in `src/attune/ops/__init__.py`
+- `build_config()` in `src/attune/ops/__init__.py`
+- `clear_cache()` in `src/attune/ops/anthropic_cost.py`
+- `load_admin_key()` in `src/attune/ops/anthropic_cost.py`
+- `fetch_summary()` in `src/attune/ops/anthropic_cost.py`
+- `add_subparser()` in `src/attune/ops/cli.py`
+- `cmd_ops()` in `src/attune/ops/cli.py`
+- `main()` in `src/attune/ops/cli.py`
