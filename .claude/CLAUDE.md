@@ -5768,3 +5768,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   red on the same commit, cross-reference PyPI release
   timestamps for deps in the failing test's stack. Companion to
   the existing "matrix-wide red from one root cause" lesson.
+
+- **Cross-platform concurrent file appends — pick the
+  mechanism by platform reach, encode the trade-off in
+  tests**: the spec for `multi-actor-bulletin` called for
+  `fcntl` advisory locks on each append. `fcntl` is
+  POSIX-only — wiring it would make the bulletin a no-op
+  on Windows. The cross-platform alternative is POSIX
+  `O_APPEND` atomicity: writes ≤ `PIPE_BUF` (typically
+  4096B) on the same append-mode fd are guaranteed atomic
+  on POSIX, and "best-effort" on Windows (occasional
+  malformed lines, not corruption — readers tolerate the
+  skip). When the entries are well under the cap (~250-
+  400B for bulletin records), `O_APPEND` is the right
+  choice for any advisory-not-strict logger. **Encode the
+  platform difference in the test**: a single
+  "concurrent-writers don't lose entries" assertion that
+  passes 100% delivery on POSIX but allows <10% loss on
+  Windows. Splitting via `sys.platform == "win32"` is the
+  honest way to document the contract. PR #474's Windows
+  lane caught the trade-off exactly as the PR body
+  predicted (4/100 entries lost); the fix was a 30-line
+  test split that landed in the same PR. Reaching for a
+  real file-lock dep (`portalocker`, `filelock`) is the
+  fallback only when the operation's correctness depends
+  on strict delivery; for advisory logs (heartbeats,
+  metrics, debug events), `O_APPEND` + platform-split test
+  is cleaner. Pairs with the existing "Path.rename fails
+  on Windows when target exists" lesson — same shape
+  (POSIX-vs-Windows semantic divergence in stdlib file
+  ops), different mechanism. Bonus consequence: when
+  diverging from a spec for cross-platform reasons,
+  document the divergence in the PR body BEFORE pushing,
+  then let CI surface the predicted trade-off — the
+  divergence becomes self-validating.
