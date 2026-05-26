@@ -11,6 +11,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 
 from attune import __version__
+from attune.bulletin import FileBulletinBackend
 from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
 from attune.ops.interaction_counters import InteractionCounters
@@ -36,12 +37,16 @@ def _build_default_runner(config: Config) -> RunnerService:
 
     Read-only mode (``allow_run=False``) disables disk writes entirely —
     a read-only dashboard should not modify the user's ``~/.attune``.
+    The bulletin is only wired in writeable mode for the same reason.
     """
     if not config.allow_run:
         return RunnerService(project_root=config.project_root)
+    bulletin = FileBulletinBackend(config.bulletin_dir)
     return RunnerService(
         persistence_dir=config.runs_dir,
         project_root=config.project_root,
+        bulletin=bulletin,
+        actor_kind="dashboard",
     )
 
 

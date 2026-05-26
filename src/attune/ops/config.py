@@ -54,6 +54,11 @@ class Config:
     def sessions_dir(self) -> Path:
         return self.attune_home / "sessions"
 
+    @property
+    def bulletin_dir(self) -> Path:
+        """Directory for the multi-actor bulletin's active log + archive."""
+        return self.attune_home / "bulletin"
+
 
 def attune_home() -> Path:
     """Resolve the user's attune home dir (env override -> ~/.attune)."""
