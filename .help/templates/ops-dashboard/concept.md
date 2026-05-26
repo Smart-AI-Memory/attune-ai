@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: concept
-generated_at: 2026-05-26T21:24:05.329875+00:00
-source_hash: 1e99b94aaa6cb25d1a8177ca5ac28496f3fbd5498c6aea2873c19d7fdab748f0
+generated_at: 2026-05-26T21:52:50.465761+00:00
+source_hash: 2fa0737b9485076376be660db12bde8986aea4140b365e93a95ac041c50aaf0f
 status: generated
 ---
 
@@ -20,7 +20,7 @@ The main building blocks are:
 - **`Config`** — Where attune ops reads project + attune state from.
 - **`TelemetrySummary`** — core component
 
-Under the hood, this feature spans 45 source
+Under the hood, this feature spans 47 source
 files covering:
 
 - Run via ``python -m attune.ops``.

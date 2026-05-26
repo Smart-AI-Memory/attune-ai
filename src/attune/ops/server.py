@@ -15,6 +15,7 @@ from attune.bulletin import FileBulletinBackend
 from attune.ops import sweep_results as sweep_results_mod
 from attune.ops.config import Config
 from attune.ops.interaction_counters import InteractionCounters
+from attune.ops.routes import bulletin as bulletin_routes
 from attune.ops.routes import dashboard
 from attune.ops.routes import interaction_counters as interaction_counters_routes
 from attune.ops.routes import pending_writes as pending_writes_routes
@@ -117,6 +118,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(sweep_results_routes.router)
     app.include_router(interaction_counters_routes.router)
     app.include_router(pending_writes_routes.router)
+    app.include_router(bulletin_routes.router)
 
     # Phase 2B of discovery-sweep-ops-integration: when sweep-result
     # persistence is enabled, wrap the runner's start() so each
