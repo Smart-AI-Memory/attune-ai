@@ -127,6 +127,28 @@ class TestPayloadShape:
         assert set(entry.keys()) == expected_keys
 
 
+class TestBackendFailure:
+    """The route must swallow backend errors — bulletin is advisory."""
+
+    def test_backend_exception_returns_empty_list(
+        self,
+        client: TestClient,
+        monkeypatch: pytest.MonkeyPatch,
+    ) -> None:
+        """A backend that raises must not produce a 500 — return [] instead."""
+
+        def _boom(self, *_a, **_kw):
+            raise RuntimeError("catastrophic backend error")
+
+        # Patch the bulletin's read_active to raise — covers the
+        # except Exception guard in the route handler.
+        monkeypatch.setattr("attune.bulletin.FileBulletinBackend.read_active", _boom)
+
+        resp = client.get("/api/bulletin/active")
+        assert resp.status_code == 200
+        assert resp.json() == {"entries": []}
+
+
 def resp_first(resp) -> dict:
     """Return the first entry from a response payload."""
     body = resp.json()
