@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-26T21:24:05.340959+00:00
-source_hash: 1e99b94aaa6cb25d1a8177ca5ac28496f3fbd5498c6aea2873c19d7fdab748f0
+generated_at: 2026-05-26T21:52:50.476961+00:00
+source_hash: 2fa0737b9485076376be660db12bde8986aea4140b365e93a95ac041c50aaf0f
 status: generated
 ---
 
@@ -85,6 +85,7 @@ status: generated
 | `compute_file_sha256()` | Compute sha256 of a file's contents. | `src/attune/ops/pending_writes.py` |
 | `make_entry()` | Construct a JournalEntry, filling in defaults from runtime context. | `src/attune/ops/pending_writes.py` |
 | `append_entry()` | Append a journal entry to the JSONL journal. | `src/attune/ops/pending_writes.py` |
+| `list_active()` | Return active bulletin entries across all actors. | `src/attune/ops/routes/bulletin.py` |
 | `home()` | — | `src/attune/ops/routes/dashboard.py` |
 | `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
