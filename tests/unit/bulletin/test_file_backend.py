@@ -480,3 +480,55 @@ class TestMalformedReadPaths:
             fh.write(json.dumps(payload) + "\n")
         # Heartbeat parse failure -> entry dropped as if stale.
         assert backend.read_active() == []
+
+
+# ---------------------------------------------------------------------------
+# read_archive coverage — error paths + skip conditions
+# ---------------------------------------------------------------------------
+
+
+class TestReadArchive:
+    """Cover read_archive's edge paths: missing dir, OSError on iter,
+    non-jsonl files, and non-ISO-date filenames."""
+
+    def test_missing_archive_dir_returns_empty(self, tmp_path: Path) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        # archive/ never created
+        result = backend.read_archive(since=datetime.now(timezone.utc))
+        assert result == []
+
+    def test_iterdir_oserror_returns_empty(
+        self, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+    ) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.archive_dir.mkdir(parents=True, exist_ok=True)
+
+        def boom(self):  # noqa: ANN001
+            raise OSError("simulated")
+
+        monkeypatch.setattr(Path, "iterdir", boom)
+        result = backend.read_archive(since=datetime.now(timezone.utc))
+        assert result == []
+
+    def test_non_jsonl_files_are_skipped(self, tmp_path: Path) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.archive_dir.mkdir(parents=True, exist_ok=True)
+        # A regular file with non-jsonl suffix and a subdirectory
+        (backend.archive_dir / "README.md").write_text("ignore me", encoding="utf-8")
+        (backend.archive_dir / "subdir").mkdir()
+        # A valid jsonl-with-date file alongside the noise
+        today_iso = datetime.now(timezone.utc).date().isoformat()
+        valid_path = backend.archive_dir / f"{today_iso}.jsonl"
+        entry = _entry(run_id="r1")
+        valid_path.write_text(json.dumps(entry.to_dict()) + "\n", encoding="utf-8")
+        result = backend.read_archive(since=datetime.now(timezone.utc) - timedelta(days=2))
+        assert [e.run_id for e in result] == ["r1"]
+
+    def test_non_date_filename_skipped(self, tmp_path: Path) -> None:
+        backend = FileBulletinBackend(tmp_path / "bulletin")
+        backend.archive_dir.mkdir(parents=True, exist_ok=True)
+        # File matching *.jsonl but stem isn't an ISO date
+        bad = backend.archive_dir / "not-a-date.jsonl"
+        bad.write_text("{}\n", encoding="utf-8")
+        result = backend.read_archive(since=datetime.now(timezone.utc) - timedelta(days=1))
+        assert result == []

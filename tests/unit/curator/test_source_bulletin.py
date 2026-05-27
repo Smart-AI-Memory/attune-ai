@@ -158,3 +158,80 @@ def test_reader_never_raises_on_unreadable_dir(tmp_path, bulletin_home, monkeypa
     summary = bulletin_source.read(project_root=tmp_path)
     assert summary.source_id == "bulletin"
     assert summary.items == []  # Nothing to show; no crash.
+
+
+def test_read_archive_failure_does_not_raise(tmp_path, bulletin_home, monkeypatch):
+    """read_archive raising should be swallowed; active entries still flow."""
+    _seed_active(bulletin_home, [_make_entry(run_id="r-active")])
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("archive corrupted")
+
+    monkeypatch.setattr(FileBulletinBackend, "read_archive", boom)
+    summary = bulletin_source.read(project_root=tmp_path)
+    ids = {item.item_id for item in summary.items}
+    assert "bulletin:active:r-active" in ids
+
+
+def test_active_entry_with_unparseable_heartbeat_marked_unknown(tmp_path, bulletin_home):
+    """An active entry whose last_heartbeat fails ISO parse keeps the
+    'unknown' marker rather than crashing."""
+    backend = FileBulletinBackend(bulletin_home)
+    backend.active_path.parent.mkdir(parents=True, exist_ok=True)
+    now = datetime.now(timezone.utc)
+    payload = {
+        "actor_id": "actor-1",
+        "actor_kind": "cli",
+        "workflow": "code-review",
+        "run_id": "weird",
+        "started_at": now.isoformat(),
+        "last_heartbeat": now.isoformat(),  # valid on the active path
+        "current_status": "running",
+    }
+    with backend.active_path.open("w", encoding="utf-8") as fh:
+        fh.write(json.dumps(payload) + "\n")
+
+    # Patch the source-internal _parse_iso to return None, simulating
+    # an entry whose heartbeat falls past the ISO parser. (We can't
+    # easily put a bad ISO into BulletinEntry since read_active
+    # already filters those out as stale.)
+    import attune.curator.sources.bulletin as bmod
+
+    orig = bmod._parse_iso
+    bmod._parse_iso = lambda s: None
+    try:
+        summary = bulletin_source.read(project_root=tmp_path)
+    finally:
+        bmod._parse_iso = orig
+    active = [i for i in summary.items if i.metadata["kind"] == "active"]
+    assert active and active[0].metadata["heartbeat_age_s"] == "unknown"
+
+
+def test_active_item_includes_scope_when_set(tmp_path, bulletin_home):
+    _seed_active(
+        bulletin_home,
+        [_make_entry(run_id="r-scoped", scope="src/attune/security/")],
+    )
+    summary = bulletin_source.read(project_root=tmp_path)
+    active = [i for i in summary.items if i.item_id == "bulletin:active:r-scoped"]
+    assert active and "Scope: src/attune/security/" in active[0].detail
+
+
+def test_archived_item_includes_scope_when_set(tmp_path, bulletin_home):
+    today_iso = datetime.now(timezone.utc).date().isoformat()
+    _seed_archive(
+        bulletin_home,
+        today_iso,
+        [_make_entry(run_id="r-arch", status="completed", scope="docs/")],
+    )
+    summary = bulletin_source.read(project_root=tmp_path)
+    archived = [i for i in summary.items if i.item_id == "bulletin:archived:r-arch"]
+    assert archived and "Scope: docs/" in archived[0].detail
+
+
+def test_parse_iso_returns_none_on_bad_input():
+    """Direct unit test of the _parse_iso helper's failure path."""
+    import attune.curator.sources.bulletin as bmod
+
+    assert bmod._parse_iso("totally-not-iso") is None
+    assert bmod._parse_iso(None) is None  # type: ignore[arg-type]

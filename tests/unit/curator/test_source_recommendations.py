@@ -130,3 +130,133 @@ def test_since_param_overrides_default(tmp_path, attune_home_tmp):
     cutoff = datetime.now(timezone.utc) - timedelta(hours=72)
     summary = rec_source.read(project_root=tmp_path, since=cutoff)
     assert len(summary.items) == 1
+
+
+def test_runs_dir_iterdir_oserror_returns_empty(tmp_path, attune_home_tmp, monkeypatch):
+    """If iterdir on runs_dir raises, reader returns empty (caps the
+    error before any workflow-dir traversal)."""
+    from pathlib import Path
+
+    (attune_home_tmp / "ops" / "runs").mkdir(parents=True, exist_ok=True)
+
+    def boom(self):  # noqa: ANN001
+        raise OSError("simulated")
+
+    monkeypatch.setattr(Path, "iterdir", boom)
+    summary = rec_source.read(project_root=tmp_path)
+    assert summary.items == []
+
+
+def test_workflow_glob_oserror_skips_dir(tmp_path, attune_home_tmp, monkeypatch):
+    """If a workflow_dir.glob raises, that dir is skipped but others proceed."""
+    from pathlib import Path
+
+    _write_run(
+        attune_home_tmp,
+        "code-review",
+        "good",
+        recommendations=[{"kind": "open", "label": "x"}],
+    )
+    # Make a second workflow dir whose glob will raise.
+    _write_run(
+        attune_home_tmp,
+        "bad-workflow",
+        "x",
+        recommendations=[{"kind": "open", "label": "y"}],
+    )
+
+    original_glob = Path.glob
+
+    def selective_boom(self, pattern):  # noqa: ANN001
+        if self.name == "bad-workflow":
+            raise OSError("simulated")
+        return original_glob(self, pattern)
+
+    monkeypatch.setattr(Path, "glob", selective_boom)
+    summary = rec_source.read(project_root=tmp_path)
+    ids = {item.item_id for item in summary.items}
+    # Good workflow's recs still surface; bad-workflow's are skipped.
+    assert any("code-review:good" in i for i in ids)
+    assert not any("bad-workflow" in i for i in ids)
+
+
+def test_stat_oserror_on_record_skips_silently(tmp_path, attune_home_tmp, monkeypatch):
+    """A stat() failure on a record path should skip that file, not crash."""
+    from pathlib import Path
+
+    _write_run(
+        attune_home_tmp,
+        "code-review",
+        "r1",
+        recommendations=[{"kind": "open", "label": "x"}],
+    )
+
+    original_stat = Path.stat
+
+    def selective_boom(self, *a, **kw):  # noqa: ANN001
+        if self.name == "r1.json":
+            raise OSError("simulated stat fail")
+        return original_stat(self, *a, **kw)
+
+    monkeypatch.setattr(Path, "stat", selective_boom)
+    summary = rec_source.read(project_root=tmp_path)
+    assert summary.source_id == "recommendations"
+    assert summary.items == []
+
+
+def test_tmp_record_files_skipped(tmp_path, attune_home_tmp):
+    """Atomic-replace temp suffixes (.tmp) are skipped on read."""
+    runs_dir = attune_home_tmp / "ops" / "runs" / "code-review"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    (runs_dir / "abc.json.tmp").write_text(
+        json.dumps({"run_id": "abc", "recommendations": [{"kind": "open", "label": "x"}]}),
+        encoding="utf-8",
+    )
+    summary = rec_source.read(project_root=tmp_path)
+    assert summary.items == []
+
+
+def test_non_dict_payload_skipped(tmp_path, attune_home_tmp):
+    """A JSON record whose top-level isn't a dict produces zero items."""
+    runs_dir = attune_home_tmp / "ops" / "runs" / "code-review"
+    runs_dir.mkdir(parents=True, exist_ok=True)
+    (runs_dir / "r1.json").write_text('["not", "dict"]', encoding="utf-8")
+    summary = rec_source.read(project_root=tmp_path)
+    assert summary.items == []
+
+
+def test_non_dict_recommendation_entries_skipped(tmp_path, attune_home_tmp):
+    """recommendations: [<string>, ...] entries get skipped (non-dict)."""
+    _write_run(
+        attune_home_tmp,
+        "code-review",
+        "r1",
+        recommendations=[
+            "not-a-dict",  # type: ignore[list-item]
+            {"kind": "open", "label": "valid"},
+        ],
+    )
+    summary = rec_source.read(project_root=tmp_path)
+    # Only the valid one surfaces.
+    assert len(summary.items) == 1
+
+
+def test_max_items_cap_truncates(tmp_path, attune_home_tmp):
+    """When a single run carries >50 recommendations, the per-file
+    extension still respects the global cap on the next iteration."""
+    # Spread 60 recs across two runs to force the post-extend truncation
+    # plus the outer break.
+    _write_run(
+        attune_home_tmp,
+        "wf-a",
+        "r1",
+        recommendations=[{"kind": "open", "label": f"a{i}"} for i in range(30)],
+    )
+    _write_run(
+        attune_home_tmp,
+        "wf-b",
+        "r2",
+        recommendations=[{"kind": "open", "label": f"b{i}"} for i in range(30)],
+    )
+    summary = rec_source.read(project_root=tmp_path)
+    assert len(summary.items) == 50

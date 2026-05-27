@@ -82,8 +82,8 @@ def _recent_records(workflow_dir: Path, cutoff: datetime) -> list[Path]:
         return []
     fresh: list[Path] = []
     for path in files:
-        if path.name.endswith(".tmp"):
-            continue
+        # `*.json` glob already excludes `*.json.tmp` atomic-write
+        # leftovers, so no extra .tmp filter needed here.
         try:
             mtime = path.stat().st_mtime
         except OSError:

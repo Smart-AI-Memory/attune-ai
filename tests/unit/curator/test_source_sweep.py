@@ -115,3 +115,28 @@ def test_caps_at_50_items(tmp_path, attune_home_tmp):
     _write_sweep(attune_home_tmp, "big", {"queue": findings})
     summary = sweep_source.read(project_root=tmp_path)
     assert len(summary.items) == 50
+
+
+def test_results_dir_glob_oserror_returns_empty(tmp_path, attune_home_tmp, monkeypatch):
+    """If glob('*.json') raises OSError, reader returns empty."""
+    from pathlib import Path
+
+    # Make the dir exist so we reach the glob call.
+    (attune_home_tmp / "ops" / "sweep-results").mkdir(parents=True, exist_ok=True)
+
+    def boom(self, pattern):  # noqa: ANN001
+        raise OSError("simulated")
+
+    monkeypatch.setattr(Path, "glob", boom)
+    summary = sweep_source.read(project_root=tmp_path)
+    assert summary.source_id == "sweep"
+    assert summary.items == []
+
+
+def test_non_dict_payload_skipped(tmp_path, attune_home_tmp):
+    """A JSON file whose top-level isn't a dict produces zero items."""
+    sweep_dir = attune_home_tmp / "ops" / "sweep-results"
+    sweep_dir.mkdir(parents=True, exist_ok=True)
+    (sweep_dir / "abc.json").write_text('["not", "a", "dict"]', encoding="utf-8")
+    summary = sweep_source.read(project_root=tmp_path)
+    assert summary.items == []

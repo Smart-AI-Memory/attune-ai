@@ -101,3 +101,72 @@ def test_reader_does_not_raise_when_detect_candidates_blows_up(project_with_spec
     assert len(summary.items) == 3
     for item in summary.items:
         assert item.metadata["is_completion_candidate"] == "false"
+
+
+def test_list_specs_raise_returns_empty(project_with_specs, monkeypatch):
+    """If _list_specs_in_root raises, reader returns empty summary."""
+    monkeypatch.setenv("ATTUNE_HOME", str(project_with_specs / ".attune"))
+
+    def boom(*args, **kwargs):
+        raise RuntimeError("simulated listing failure")
+
+    monkeypatch.setattr(
+        "attune.curator.sources.specs._list_specs_in_root",
+        boom,
+    )
+    summary = specs_source.read(project_root=project_with_specs)
+    assert summary.source_id == "specs"
+    assert summary.items == []
+    assert len(summary.state_hash) == 16
+
+
+def test_spec_without_any_status_falls_through(project_with_specs, monkeypatch):
+    """A spec dir whose phase files all lack '**Status:**' lines yields
+    metadata.status='unknown'."""
+    monkeypatch.setenv("ATTUNE_HOME", str(project_with_specs / ".attune"))
+    silent = project_with_specs / "docs" / "specs" / "silent"
+    silent.mkdir(parents=True, exist_ok=True)
+    (silent / "tasks.md").write_text(
+        "# Tasks\n\nNo status line here.\n\n- [ ] todo\n",
+        encoding="utf-8",
+    )
+    summary = specs_source.read(project_root=project_with_specs)
+    silent_items = [i for i in summary.items if i.item_id == "spec:silent"]
+    assert silent_items
+    assert silent_items[0].metadata["status"] == "unknown"
+
+
+def test_age_days_none_when_no_last_modified():
+    """Direct unit test of the _age_days helper: empty input -> None."""
+    import attune.curator.sources.specs as spec_mod
+
+    assert spec_mod._age_days(None) is None
+    assert spec_mod._age_days("") is None
+
+
+def test_age_days_returns_none_on_bad_iso():
+    """_age_days swallows fromisoformat ValueError and returns None."""
+    import attune.curator.sources.specs as spec_mod
+
+    assert spec_mod._age_days("not-an-iso-string") is None
+
+
+def test_age_days_handles_naive_datetime():
+    """A naive datetime (no tz) gets UTC-coerced before delta math."""
+    from datetime import datetime, timedelta, timezone
+
+    import attune.curator.sources.specs as spec_mod
+
+    naive_yesterday = (datetime.now(timezone.utc) - timedelta(days=2)).replace(tzinfo=None)
+    days = spec_mod._age_days(naive_yesterday.isoformat())
+    assert days is not None and days >= 1
+
+
+def test_empty_summary_helper():
+    """_empty_summary returns the canonical empty SourceSummary."""
+    import attune.curator.sources.specs as spec_mod
+
+    summary = spec_mod._empty_summary(started=0.0)
+    assert summary.source_id == "specs"
+    assert summary.items == []
+    assert len(summary.state_hash) == 16

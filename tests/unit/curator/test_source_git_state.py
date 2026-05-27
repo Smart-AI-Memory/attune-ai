@@ -108,3 +108,89 @@ def test_git_timeout_does_not_raise(empty_repo, monkeypatch):
     assert summary.source_id == "git-state"
     # No signals emitted — but no traceback either.
     assert summary.items == []
+
+
+def test_diverged_signal_fires_when_head_is_stale(empty_repo, monkeypatch):
+    """If origin/main is >3 days ahead of HEAD, emit a diverged item."""
+    from datetime import datetime, timedelta, timezone
+
+    head = datetime.now(timezone.utc) - timedelta(days=10)
+    main = datetime.now(timezone.utc)
+
+    def fake_commit_date(project_root, ref):  # noqa: ANN001
+        if ref == "HEAD":
+            return head
+        if ref == "origin/main":
+            return main
+        return None
+
+    monkeypatch.setattr(git_source, "_commit_date", fake_commit_date)
+    summary = git_source.read(project_root=empty_repo)
+    diverged = [i for i in summary.items if i.metadata["signal"] == "diverged"]
+    assert len(diverged) == 1
+    assert int(diverged[0].metadata["days_behind"]) >= 3
+
+
+def test_diverged_signal_silent_when_head_caught_up(empty_repo, monkeypatch):
+    """Within 3 days of origin/main, no diverged item fires."""
+    from datetime import datetime, timedelta, timezone
+
+    now = datetime.now(timezone.utc)
+
+    def fake_commit_date(project_root, ref):  # noqa: ANN001
+        if ref == "HEAD":
+            return now - timedelta(hours=12)
+        if ref == "origin/main":
+            return now
+        return None
+
+    monkeypatch.setattr(git_source, "_commit_date", fake_commit_date)
+    summary = git_source.read(project_root=empty_repo)
+    assert not any(i.metadata.get("signal") == "diverged" for i in summary.items)
+
+
+def test_secrets_signal_caps_at_10(empty_repo):
+    """Even with 20 matching files only 10 secret-shape items surface."""
+    for i in range(20):
+        (empty_repo / f"secret{i}.key").write_text("x\n", encoding="utf-8")
+    summary = git_source.read(project_root=empty_repo)
+    secret_items = [item for item in summary.items if item.metadata["signal"] == "secret_shape"]
+    assert len(secret_items) == 10
+
+
+def test_secrets_signal_ignores_blank_ls_files_lines(empty_repo, monkeypatch):
+    """Blank lines in ls-files output don't crash or false-fire."""
+    real_run_git = git_source._run_git
+
+    def stub(project_root, argv):  # noqa: ANN001
+        if argv[0] == "ls-files":
+            return "\n\n.env\n\n"
+        return real_run_git(project_root, argv)
+
+    monkeypatch.setattr(git_source, "_run_git", stub)
+    summary = git_source.read(project_root=empty_repo)
+    secret_items = [i for i in summary.items if i.metadata["signal"] == "secret_shape"]
+    assert any(item.metadata["path"] == ".env" for item in secret_items)
+
+
+def test_commit_date_returns_none_on_empty_output(empty_repo, monkeypatch):
+    """When git log returns whitespace-only stdout, _commit_date is None."""
+    monkeypatch.setattr(git_source, "_run_git", lambda root, argv: "   \n")
+    assert git_source._commit_date(empty_repo, "HEAD") is None
+
+
+def test_commit_date_returns_none_on_bad_iso(empty_repo, monkeypatch):
+    """If git log emits unparseable ISO, _commit_date returns None."""
+    monkeypatch.setattr(git_source, "_run_git", lambda root, argv: "not-an-iso\n")
+    assert git_source._commit_date(empty_repo, "HEAD") is None
+
+
+def test_commit_date_coerces_naive_to_utc(empty_repo, monkeypatch):
+    """A naive ISO string (no tz) gets stamped UTC."""
+    monkeypatch.setattr(
+        git_source,
+        "_run_git",
+        lambda root, argv: "2026-05-26T12:00:00\n",
+    )
+    dt = git_source._commit_date(empty_repo, "HEAD")
+    assert dt is not None and dt.tzinfo is not None
