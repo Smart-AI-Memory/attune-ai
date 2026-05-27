@@ -15,6 +15,9 @@ from __future__ import annotations
 
 import logging
 import re
+import shutil
+import subprocess
+import time
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
@@ -23,6 +26,17 @@ from pathlib import Path
 from attune.ops.config import Config
 
 logger = logging.getLogger(__name__)
+
+# Authority cache TTL for attune-author status. Short enough that
+# regen jobs that change staleness state surface promptly; long
+# enough that a page-refresh burst doesn't re-spawn the subprocess
+# per request.
+_STALENESS_CACHE_TTL_SECONDS = 5.0
+
+# Process-lifetime cache for attune-author status. Keyed on the
+# (project_root, help_dir) pair so multiple dashboards in one
+# process don't cross-contaminate.
+_staleness_cache: dict[tuple[str, str], tuple[float, frozenset[str]]] = {}
 
 # The 11 template kinds attune-author produces per feature. A
 # feature with all 11 is "complete"; fewer = an incomplete set.
@@ -177,18 +191,28 @@ def corpus_root(config: Config) -> Path:
 
 
 def list_features(config: Config) -> list[FeatureSummary]:
-    """All features in the corpus, alphabetical."""
+    """All features in the corpus, alphabetical.
+
+    Staleness comes from ``attune-author status`` when available
+    (the authoritative source-hash drift signal). Falls back to
+    per-template age-based check when attune-author isn't on PATH.
+    """
     root = corpus_root(config)
     if not root.exists():
         return []
+    stale = _attune_author_stale_features(config.project_root, config.project_root / ".help")
     out: list[FeatureSummary] = []
     for feat_dir in sorted(p for p in root.iterdir() if p.is_dir()):
-        out.append(_summarize_feature(feat_dir))
+        out.append(_summarize_feature(feat_dir, stale_features=stale))
     return out
 
 
 def get_template(config: Config, feature: str, kind: str) -> TemplateRecord | None:
-    """Load one template by feature + kind. None if missing."""
+    """Load one template by feature + kind. None if missing.
+
+    Staleness uses the attune-author authority when available;
+    falls back to age-based when the CLI isn't on PATH.
+    """
     if not _safe_slug(feature) or not _safe_slug(kind):
         return None
     path = corpus_root(config) / feature / f"{kind}.md"
@@ -199,7 +223,8 @@ def get_template(config: Config, feature: str, kind: str) -> TemplateRecord | No
     except OSError as exc:
         logger.warning("help_data: cannot read %s: %s", path, exc)
         return None
-    return _parse_template(feature, kind, path, raw)
+    stale = _attune_author_stale_features(config.project_root, config.project_root / ".help")
+    return _parse_template(feature, kind, path, raw, stale_features=stale)
 
 
 def search(config: Config, query: str, *, limit: int = 20) -> list[SearchHit]:
@@ -389,18 +414,38 @@ def _safe_slug(s: str) -> bool:
     return bool(s) and bool(_SLUG_RE.match(s)) and ".." not in s
 
 
-def _summarize_feature(feat_dir: Path) -> FeatureSummary:
-    """Scan a feature directory for its kinds + freshness."""
+def _summarize_feature(
+    feat_dir: Path, *, stale_features: frozenset[str] | None = None
+) -> FeatureSummary:
+    """Scan a feature directory for its kinds + freshness.
+
+    ``stale_features`` is the authoritative set from
+    :func:`_attune_author_stale_features` (drift-based). When
+    ``None`` the function falls back to per-template age-based
+    staleness — used in tests and when attune-author isn't on PATH.
+    """
     name = feat_dir.name
     kinds: list[str] = []
-    stale_count = 0
-    for kind in EXPECTED_KINDS:
-        path = feat_dir / f"{kind}.md"
-        if not path.is_file():
-            continue
-        kinds.append(kind)
-        if _is_template_stale(path):
-            stale_count += 1
+    if stale_features is None:
+        # Fallback: age-based per-template check.
+        stale_count = 0
+        for kind in EXPECTED_KINDS:
+            path = feat_dir / f"{kind}.md"
+            if not path.is_file():
+                continue
+            kinds.append(kind)
+            if _is_template_stale(path):
+                stale_count += 1
+    else:
+        # Authority path: if the feature is in attune-author's
+        # stale set, every kind it has is treated as stale (the
+        # source files drifted; all derived templates need
+        # regen). If not in the set, nothing is stale.
+        for kind in EXPECTED_KINDS:
+            path = feat_dir / f"{kind}.md"
+            if path.is_file():
+                kinds.append(kind)
+        stale_count = len(kinds) if name in stale_features else 0
     missing = tuple(k for k in EXPECTED_KINDS if k not in kinds)
     return FeatureSummary(
         name=name,
@@ -411,11 +456,20 @@ def _summarize_feature(feat_dir: Path) -> FeatureSummary:
     )
 
 
-def _is_template_stale(path: Path) -> bool:
-    """Quick freshness check — frontmatter generated_at > STALE_THRESHOLD_DAYS old.
+def _is_template_stale(path: Path, *, stale_features: frozenset[str] | None = None) -> bool:
+    """Per-template freshness check.
 
-    We read only the frontmatter, not the full body — cheap.
+    Two modes:
+    - Authority (``stale_features`` provided): a template is stale
+      if its parent feature is in attune-author's drift set.
+    - Fallback (``stale_features`` is ``None``): age-based —
+      ``generated_at`` older than :data:`STALE_THRESHOLD_DAYS`.
     """
+    if stale_features is not None:
+        # path is .../<feature>/<kind>.md
+        feature = path.parent.name
+        return feature in stale_features
+
     try:
         with path.open("r", encoding="utf-8", errors="replace") as fh:
             chunk = fh.read(1024)
@@ -436,8 +490,114 @@ def _is_template_stale(path: Path) -> bool:
     return age_days > STALE_THRESHOLD_DAYS
 
 
-def _parse_template(feature: str, kind: str, path: Path, raw: str) -> TemplateRecord:
-    """Split frontmatter + body, build a TemplateRecord."""
+# ---------------------------------------------------------------------------
+# attune-author authority — source-hash drift, the real staleness signal
+# ---------------------------------------------------------------------------
+
+
+# Markdown table-row pattern from attune-author's ``status``
+# output. Format:
+#   | <feature> | <description> | <files-changed> |
+# The header + divider rows are filtered by the surrounding
+# parser context (only rows AFTER "### Stale" + the divider row).
+_TABLE_ROW_RE = re.compile(r"^\s*\|\s*([a-z][a-z0-9-]*)\s*\|")
+
+
+def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozenset[str] | None:
+    """Return the set of features attune-author reports as stale.
+
+    Shells out to ``attune-author status`` and parses the markdown
+    output. Result cached for :data:`_STALENESS_CACHE_TTL_SECONDS`
+    per ``(project_root, help_dir)`` key.
+
+    Returns:
+        - ``frozenset[str]``: feature names with source-hash drift,
+          including the empty set when everything is in sync.
+        - ``None`` when attune-author isn't on PATH or its
+          subprocess fails — callers fall back to age-based
+          staleness in that case.
+    """
+    key = (str(project_root), str(help_dir))
+    now = time.monotonic()
+    cached = _staleness_cache.get(key)
+    if cached is not None and (now - cached[0]) < _STALENESS_CACHE_TTL_SECONDS:
+        return cached[1]
+
+    binary = shutil.which("attune-author")
+    if binary is None:
+        logger.info("help_data: attune-author not on PATH; using age fallback")
+        return None
+    cmd = [
+        binary,
+        "status",
+        "--project-root",
+        str(project_root),
+        "--help-dir",
+        str(help_dir),
+    ]
+    try:
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=15,
+            check=False,
+        )
+    except (OSError, subprocess.SubprocessError) as exc:
+        logger.warning("help_data: attune-author status failed: %s", exc)
+        return None
+    stale = _parse_status_output(result.stdout)
+    _staleness_cache[key] = (now, stale)
+    return stale
+
+
+def _parse_status_output(text: str) -> frozenset[str]:
+    """Extract stale feature names from ``attune-author status`` output.
+
+    Strategy: walk lines, track whether we're inside the
+    ``### Stale`` section, treat each markdown table row whose
+    first column is a slug-shaped string as a stale feature.
+    Skips the header and divider rows automatically because they
+    don't match :data:`_TABLE_ROW_RE` (they begin with ``Feature``
+    or ``-----``).
+    """
+    out: set[str] = set()
+    in_stale = False
+    for line in text.splitlines():
+        stripped = line.strip()
+        if stripped.startswith("###"):
+            in_stale = stripped == "### Stale"
+            continue
+        if not in_stale:
+            continue
+        m = _TABLE_ROW_RE.match(line)
+        if m:
+            out.add(m.group(1))
+    return frozenset(out)
+
+
+def _clear_staleness_cache() -> None:
+    """Test hook — flushes the per-process staleness cache."""
+    _staleness_cache.clear()
+
+
+def _parse_template(
+    feature: str,
+    kind: str,
+    path: Path,
+    raw: str,
+    *,
+    stale_features: frozenset[str] | None = None,
+) -> TemplateRecord:
+    """Split frontmatter + body, build a TemplateRecord.
+
+    When ``stale_features`` is provided (the attune-author
+    authority set), staleness comes from feature-in-set lookup.
+    Otherwise falls back to age-based staleness from the
+    frontmatter ``generated_at``.
+    """
     m = _FRONTMATTER_RE.match(raw)
     if m:
         fm = m.group("fm")
@@ -448,16 +608,21 @@ def _parse_template(feature: str, kind: str, path: Path, raw: str) -> TemplateRe
     generated_at = _extract_frontmatter_field(fm, "generated_at")
     source_hash = _extract_frontmatter_field(fm, "source_hash")
     title = _title_from_content(body) or f"{feature} / {kind}"
-    is_stale = False
-    if generated_at:
-        try:
-            when = datetime.fromisoformat(generated_at)
-            if when.tzinfo is None:
-                when = when.replace(tzinfo=timezone.utc)
-            age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86_400
-            is_stale = age_days > STALE_THRESHOLD_DAYS
-        except (ValueError, TypeError):
-            pass
+
+    if stale_features is not None:
+        is_stale = feature in stale_features
+    else:
+        is_stale = False
+        if generated_at:
+            try:
+                when = datetime.fromisoformat(generated_at)
+                if when.tzinfo is None:
+                    when = when.replace(tzinfo=timezone.utc)
+                age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86_400
+                is_stale = age_days > STALE_THRESHOLD_DAYS
+            except (ValueError, TypeError):
+                pass
+
     return TemplateRecord(
         feature=feature,
         kind=kind,

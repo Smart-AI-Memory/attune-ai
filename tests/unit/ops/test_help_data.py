@@ -116,6 +116,21 @@ def corpus(tmp_path: Path) -> Path:
     return tmp_path
 
 
+@pytest.fixture(autouse=True)
+def _force_age_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Force the age-based staleness fallback in tests.
+
+    Implemented by stubbing ``shutil.which`` so the authority
+    function naturally returns None and callers fall through to
+    the age-based path. Tests that exercise the authority path
+    re-monkeypatch shutil.which themselves.
+    """
+    import attune.ops.help_data as mod
+
+    monkeypatch.setattr(mod.shutil, "which", lambda _: None)
+    mod._clear_staleness_cache()
+
+
 @pytest.fixture
 def cfg(corpus: Path) -> Config:
     return Config(
@@ -583,3 +598,188 @@ class TestIsTemplateStale:
     def test_unreadable_file_returns_false(self, tmp_path: Path) -> None:
         # Pass a path that doesn't exist — open() raises OSError
         assert _is_template_stale(tmp_path / "missing.md") is False
+
+
+# ---------------------------------------------------------------------------
+# attune-author authority path
+# ---------------------------------------------------------------------------
+
+
+_REAL_STATUS_OUTPUT = """## Help Templates
+
+**24** current, **2** stale
+
+### Stale
+
+| Feature | Description | Files Changed |
+|---------|-------------|---------------|
+| spec-engine | The spec engine | 8 source files |
+| smart-test | Find test gaps | 3 source files |
+
+
+### Current
+
+- **security-audit** — desc
+- **code-quality** — desc
+"""
+
+
+class TestParseStatusOutput:
+    def test_extracts_stale_features(self) -> None:
+        from attune.ops.help_data import _parse_status_output
+
+        stale = _parse_status_output(_REAL_STATUS_OUTPUT)
+        assert stale == frozenset({"spec-engine", "smart-test"})
+
+    def test_no_stale_section_returns_empty(self) -> None:
+        from attune.ops.help_data import _parse_status_output
+
+        text = "## Help Templates\n\n**25** current, **0** stale\n"
+        assert _parse_status_output(text) == frozenset()
+
+    def test_empty_string(self) -> None:
+        from attune.ops.help_data import _parse_status_output
+
+        assert _parse_status_output("") == frozenset()
+
+    def test_ignores_table_header_and_divider(self) -> None:
+        """Header row (Feature/Description/Files) and the |---|---| divider
+        don't match the slug regex, so they're correctly skipped."""
+        from attune.ops.help_data import _parse_status_output
+
+        text = (
+            "### Stale\n\n"
+            "| Feature | Description | Files Changed |\n"
+            "|---------|-------------|---------------|\n"
+            "| valid-slug | desc | 1 file |\n"
+        )
+        assert _parse_status_output(text) == frozenset({"valid-slug"})
+
+    def test_current_section_ignored(self) -> None:
+        """Bullets in the ### Current section don't pollute the stale set."""
+        from attune.ops.help_data import _parse_status_output
+
+        text = (
+            "### Stale\n\n"
+            "| a-feature | x | 1 |\n\n"
+            "### Current\n\n"
+            "- **other-feature** — desc\n"
+        )
+        assert _parse_status_output(text) == frozenset({"a-feature"})
+
+
+class TestAttuneAuthorStaleFeatures:
+    """Tests for the subprocess wrapper. We mock subprocess.run to
+    keep tests fast and deterministic — no dependency on the real
+    attune-author CLI being installed in the venv."""
+
+    def test_returns_none_when_binary_missing(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from attune.ops import help_data
+
+        # Autouse fixture already stubs shutil.which to return None.
+        help_data._clear_staleness_cache()
+        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        assert result is None
+
+    def test_parses_subprocess_output(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from attune.ops import help_data
+
+        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+
+        class _FakeResult:
+            stdout = _REAL_STATUS_OUTPUT
+            stderr = ""
+            returncode = 0
+
+        monkeypatch.setattr(help_data.subprocess, "run", lambda *a, **kw: _FakeResult())
+        help_data._clear_staleness_cache()
+        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        assert result == frozenset({"spec-engine", "smart-test"})
+
+    def test_subprocess_failure_returns_none(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        import subprocess as _sp
+
+        from attune.ops import help_data
+
+        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+
+        def _raise(*_a, **_kw):
+            raise _sp.SubprocessError("boom")
+
+        monkeypatch.setattr(help_data.subprocess, "run", _raise)
+        help_data._clear_staleness_cache()
+        result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        assert result is None
+
+    def test_cache_hits_skip_subprocess(
+        self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+    ) -> None:
+        from attune.ops import help_data
+
+        monkeypatch.setattr(help_data.shutil, "which", lambda _: "/fake/attune-author")
+
+        call_count = {"n": 0}
+
+        class _FakeResult:
+            stdout = _REAL_STATUS_OUTPUT
+            returncode = 0
+            stderr = ""
+
+        def _counting_run(*a, **kw):
+            call_count["n"] += 1
+            return _FakeResult()
+
+        monkeypatch.setattr(help_data.subprocess, "run", _counting_run)
+        help_data._clear_staleness_cache()
+        # First call: subprocess fires
+        help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        # Second call within TTL: cache hit, no subprocess
+        help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
+        assert call_count["n"] == 1
+
+    def test_drift_set_used_for_feature_staleness(
+        self, monkeypatch: pytest.MonkeyPatch, cfg: Config, corpus: Path
+    ) -> None:
+        """End-to-end: with attune-author saying 'complete-feature' is
+        stale, list_features() should mark it stale (and no other)."""
+        from attune.ops import help_data
+
+        # Override the autouse fallback to return a known stale set.
+        monkeypatch.setattr(
+            help_data,
+            "_attune_author_stale_features",
+            lambda *_a, **_kw: frozenset({"complete-feature"}),
+        )
+        feats = {f.name: f for f in help_data.list_features(cfg)}
+        # Authority says complete-feature is stale → every kind it has
+        # is treated as stale. stale-feature (which has only old
+        # generated_at timestamps) is NOT in the authority set →
+        # zero stale.
+        assert feats["complete-feature"].has_any_stale is True
+        assert feats["complete-feature"].stale_count == 11
+        assert feats["stale-feature"].has_any_stale is False
+        assert feats["stale-feature"].stale_count == 0
+
+
+class TestIsTemplateStaleAuthorityMode:
+    def test_in_authority_set_returns_true(self, tmp_path: Path) -> None:
+        from attune.ops.help_data import _is_template_stale
+
+        p = tmp_path / "my-feat" / "concept.md"
+        p.parent.mkdir()
+        p.write_text("# x\n", encoding="utf-8")
+        assert _is_template_stale(p, stale_features=frozenset({"my-feat"})) is True
+
+    def test_not_in_authority_set_returns_false(self, tmp_path: Path) -> None:
+        from attune.ops.help_data import _is_template_stale
+
+        p = tmp_path / "my-feat" / "concept.md"
+        p.parent.mkdir()
+        p.write_text("# x\n", encoding="utf-8")
+        assert _is_template_stale(p, stale_features=frozenset({"other-feat"})) is False
