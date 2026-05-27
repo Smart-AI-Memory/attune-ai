@@ -20,7 +20,6 @@ import subprocess
 import time
 from collections.abc import Iterable
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
 from pathlib import Path
 
 from attune.ops.config import Config
@@ -62,11 +61,6 @@ INTENT_GROUPS: dict[str, tuple[str, ...]] = {
     "understand": ("concept",),
     "lookup": ("reference",),
 }
-
-# Staleness threshold — a template whose ``generated_at`` is more
-# than this many days old gets a "stale" chip. Matches the
-# attune-author docs convention.
-STALE_THRESHOLD_DAYS = 7
 
 # Frontmatter regex — quick parse without pulling in PyYAML.
 _FRONTMATTER_RE = re.compile(
@@ -457,37 +451,21 @@ def _summarize_feature(
 
 
 def _is_template_stale(path: Path, *, stale_features: frozenset[str] | None = None) -> bool:
-    """Per-template freshness check.
+    """Per-template freshness check (hash-based only).
 
-    Two modes:
-    - Authority (``stale_features`` provided): a template is stale
-      if its parent feature is in attune-author's drift set.
-    - Fallback (``stale_features`` is ``None``): age-based —
-      ``generated_at`` older than :data:`STALE_THRESHOLD_DAYS`.
+    A template is stale iff its parent feature is in
+    ``stale_features`` — attune-author's source-hash drift set.
+    When ``stale_features`` is ``None`` (attune-author unavailable),
+    the dashboard cannot determine drift, so it reports
+    ``False`` (assume fresh). The previous age-based fallback was
+    dropped: a template's age in days is not a proxy for whether
+    its content matches the current source.
     """
-    if stale_features is not None:
-        # path is .../<feature>/<kind>.md
-        feature = path.parent.name
-        return feature in stale_features
-
-    try:
-        with path.open("r", encoding="utf-8", errors="replace") as fh:
-            chunk = fh.read(1024)
-    except OSError:
+    if stale_features is None:
         return False
-    m = _FRONTMATTER_RE.match(chunk + "\n---\n" if "---" not in chunk[3:] else chunk)
-    fm = m.group("fm") if m else chunk
-    gen_at = _extract_frontmatter_field(fm, "generated_at")
-    if not gen_at:
-        return False
-    try:
-        when = datetime.fromisoformat(gen_at)
-    except (ValueError, TypeError):
-        return False
-    if when.tzinfo is None:
-        when = when.replace(tzinfo=timezone.utc)
-    age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86_400
-    return age_days > STALE_THRESHOLD_DAYS
+    # path is .../<feature>/<kind>.md
+    feature = path.parent.name
+    return feature in stale_features
 
 
 # ---------------------------------------------------------------------------
@@ -593,10 +571,11 @@ def _parse_template(
 ) -> TemplateRecord:
     """Split frontmatter + body, build a TemplateRecord.
 
-    When ``stale_features`` is provided (the attune-author
-    authority set), staleness comes from feature-in-set lookup.
-    Otherwise falls back to age-based staleness from the
-    frontmatter ``generated_at``.
+    Staleness is hash-based only: a template is stale iff its
+    parent feature is in ``stale_features`` (attune-author's
+    source-hash drift set). When ``stale_features`` is ``None``
+    (attune-author unavailable), the dashboard cannot determine
+    drift and reports ``is_stale=False`` — see ``_is_template_stale``.
     """
     m = _FRONTMATTER_RE.match(raw)
     if m:
@@ -609,25 +588,7 @@ def _parse_template(
     source_hash = _extract_frontmatter_field(fm, "source_hash")
     title = _title_from_content(body) or f"{feature} / {kind}"
 
-    if stale_features is not None:
-        is_stale = feature in stale_features
-    else:
-        is_stale = False
-        if generated_at:
-            try:
-                when = datetime.fromisoformat(generated_at)
-                if when.tzinfo is None:
-                    when = when.replace(tzinfo=timezone.utc)
-                age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86_400
-                is_stale = age_days > STALE_THRESHOLD_DAYS
-            except (ValueError, TypeError) as exc:
-                logger.debug(
-                    "could not parse generated_at=%r for %s/%s (%s); " "leaving is_stale=False",
-                    generated_at,
-                    feature,
-                    kind,
-                    exc,
-                )
+    is_stale = stale_features is not None and feature in stale_features
 
     return TemplateRecord(
         feature=feature,
