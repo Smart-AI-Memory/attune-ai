@@ -8,9 +8,7 @@
 ---
 
 ## Phase 1: Requirements
-
-**Status:** draft (2026-05-25)
-
+**Status:** approved (2026-05-25)
 ### Problem statement
 
 The ops dashboard mutates the working tree live — primarily

@@ -4,8 +4,7 @@
 > [`.claude/rules/attune/xml-enhanced-prompts.md`](../../../.claude/rules/attune/xml-enhanced-prompts.md).
 > Companion to [`requirements.md`](requirements.md) and
 > [`design.md`](design.md).
-
-**Status:** draft
+**Status:** approved
 **Last updated:** 2026-05-26
 **Total estimate:** ~10h across 4 phases. Each phase ships
 independently; CLI/dashboard surfaces (Phase 3) can ship after
