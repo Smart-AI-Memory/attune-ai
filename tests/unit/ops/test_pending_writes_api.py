@@ -85,6 +85,23 @@ def client_factory(tmp_project: Path, tmp_path: Path):
     return _make
 
 
+@pytest.fixture(autouse=True)
+def _disable_tmp_path_prefix_filter(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Tests in this module use pytest ``tmp_path`` as the project_root,
+    which is itself under one of the production tmp-path prefixes
+    (``/private/var/folders/.../pytest-of-...`` on macOS,
+    ``/tmp/pytest-of-...`` on Linux). The prod prefix filter would
+    reject those entries and break every test in the module.
+
+    Disable the prefix filter at the source-list level. Tests that
+    specifically verify prefix-filter behavior re-enable it via
+    their own monkeypatch or by setting specific prefix values.
+    """
+    from attune.ops.routes import pending_writes as pw_routes
+
+    monkeypatch.setattr(pw_routes, "_TMP_PATH_PREFIXES", ())
+
+
 def _write_journal(journal_path: Path, entries: list[dict]) -> None:
     """Write a sequence of journal entry dicts to a JSONL file."""
     journal_path.parent.mkdir(parents=True, exist_ok=True)
@@ -350,6 +367,137 @@ def test_corrupt_journal_line_is_skipped_not_fatal(
     # Only the valid line surfaces.
     assert len(body["pending"]) == 1
     assert any("corrupt journal line" in record.message for record in caplog.records)
+
+
+def test_entries_with_nonexistent_project_root_are_filtered_out(
+    tmp_project: Path,
+    client_factory,
+    tmp_path: Path,
+) -> None:
+    """Stale entries (project_root no longer on disk) drop out at read.
+
+    Most common cause: pytest tmp_path is garbage-collected after a
+    test, leaving journal entries pointing at non-existent dirs. Same
+    for projects the user has since deleted or moved.
+
+    Module's autouse fixture disables the prefix filter, so this test
+    isolates the existence-check behavior. Prefix-filter behavior is
+    verified separately in the next test.
+
+    See ``_is_real_entry`` in routes/pending_writes.py.
+    """
+    real = tmp_project / "real.md"
+    real.write_text("real\n", encoding="utf-8")
+
+    journal_path = tmp_path / "journal.jsonl"
+    _write_journal(
+        journal_path,
+        [
+            # Real: tmp_project exists
+            _make_journal_dict(
+                project_root=tmp_project,
+                file_path="real.md",
+                after_sha256=pending_writes.compute_file_sha256(real),
+            ),
+            # Stale: dir was never created
+            _make_journal_dict(
+                project_root=tmp_path / "deleted-dir-never-created",
+                file_path="some.md",
+                after_sha256="aaa",
+            ),
+        ],
+    )
+
+    client = client_factory(journal_path=journal_path)
+    body = client.get("/api/pending-writes").json()
+    assert len(body["pending"]) == 1
+    assert body["pending"][0]["file_path"] == "real.md"
+    assert body["summary"]["total_entries"] == 1
+
+
+def test_entries_under_tmp_path_prefixes_are_filtered_out(
+    tmp_path: Path,
+    client_factory,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Entries whose project_root is under a known transient-dir prefix
+    drop out at read, even when the dir still exists on disk.
+
+    pytest tmp_path is itself under one of those prefixes
+    (``/private/var/folders/.../pytest-of-...`` on macOS), so we can
+    use tmp_path directly as a project_root that DOES exist but should
+    still be filtered as test-fixture pollution.
+
+    Re-enables the prefix list that the module's autouse fixture
+    cleared.
+
+    See ``_TMP_PATH_PREFIXES`` in routes/pending_writes.py.
+    """
+    import tempfile
+
+    from attune.ops.routes import pending_writes as pw_routes
+
+    # Use the actual platform tempdir as the prefix so the test
+    # works on macOS, Linux, and Windows. Include both the raw
+    # ``gettempdir()`` form (``/var/folders/...``) AND the resolved
+    # form (``/private/var/folders/...``) because macOS's
+    # ``/var`` ↔ ``/private/var`` symlink means tmp_path may show
+    # up under either depending on whether it was resolved (see
+    # CLAUDE.md "macOS /var → /private/var symlink" lesson). Keep
+    # ``/tmp/`` for the second (non-existent) entry below.
+    raw_tmp = tempfile.gettempdir().rstrip(os.sep) + os.sep
+    resolved_tmp = str(Path(tempfile.gettempdir()).resolve()).rstrip(os.sep) + os.sep
+    monkeypatch.setattr(
+        pw_routes,
+        "_TMP_PATH_PREFIXES",
+        (raw_tmp, resolved_tmp, "/tmp/"),
+    )
+    # tmp_path exists on disk and is under one of the tmp prefixes.
+    # The entry's other fields don't matter for this assertion — the
+    # filter rejects it on prefix alone, before existence check.
+    journal_path = tmp_path / "journal.jsonl"
+    _write_journal(
+        journal_path,
+        [
+            _make_journal_dict(
+                project_root=tmp_path,  # under /private/var/folders/.../pytest-of-...
+                file_path="anything.md",
+                after_sha256="aaa",
+            ),
+            # Also include a /tmp/ entry for the second prefix
+            _make_journal_dict(
+                project_root=Path("/tmp/test-fixture-never-created"),
+                file_path="other.md",
+                after_sha256="bbb",
+            ),
+        ],
+    )
+
+    client = client_factory(journal_path=journal_path)
+    body = client.get("/api/pending-writes").json()
+    # Both should be filtered — first by prefix match (tmp_path under
+    # pytest-of-), second by both prefix (/tmp/) AND nonexistence.
+    assert len(body["pending"]) == 0
+    assert body["summary"]["total_entries"] == 0
+
+
+def test_system_tmp_prefix_returns_path_with_trailing_separator() -> None:
+    """``_system_tmp_prefix()`` returns the platform tempdir with a
+    trailing ``os.sep``. The trailing separator matters: without it,
+    ``"/tmp/foo".startswith("/tmp")`` would match ``"/tmp"`` AND
+    ``"/tmpfoo"`` — only the separator-terminated form is safe.
+
+    The function is invoked at module-import time to populate the
+    first entry of ``_TMP_PATH_PREFIXES``. This test exercises it
+    directly so codecov sees the call.
+    """
+    import tempfile
+
+    from attune.ops.routes import pending_writes as pw_routes
+
+    result = pw_routes._system_tmp_prefix()
+    assert result.endswith(os.sep)
+    assert result.rstrip(os.sep) == tempfile.gettempdir().rstrip(os.sep)
 
 
 # --- integration: PUT spec status appends to journal -------------
