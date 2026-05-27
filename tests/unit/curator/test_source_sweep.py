@@ -140,3 +140,52 @@ def test_non_dict_payload_skipped(tmp_path, attune_home_tmp):
     (sweep_dir / "abc.json").write_text('["not", "a", "dict"]', encoding="utf-8")
     summary = sweep_source.read(project_root=tmp_path)
     assert summary.items == []
+
+
+def test_non_dict_row_in_bucket_is_skipped(tmp_path, attune_home_tmp):
+    """Bucket entries that aren't dicts (e.g. nulls, strings)
+    get skipped silently — exercises the elif-False loop-continue
+    branch in _iter_findings.
+    """
+    _write_sweep(
+        attune_home_tmp,
+        "abc",
+        {
+            "queue": [
+                None,
+                "stray-string",
+                42,
+                {"source": "bug-predict", "severity": "high", "title": "real"},
+            ]
+        },
+    )
+    summary = sweep_source.read(project_root=tmp_path)
+    titles = {item.title for item in summary.items}
+    assert titles == {"real"}
+
+
+def test_questions_row_with_empty_reason_omits_question_marker(tmp_path, attune_home_tmp):
+    """A questions-bucket finding whose reason is empty/missing
+    should produce an item with no 'question: ...' suffix —
+    exercises the False branch of `if reason:` in _finding_to_item.
+    """
+    _write_sweep(
+        attune_home_tmp,
+        "abc",
+        {
+            "questions": [
+                {
+                    "finding": {
+                        "source": "bug-predict",
+                        "severity": "warn",
+                        "title": "ambiguous",
+                    },
+                    # 'reason' deliberately omitted -> empty string
+                    # default; falsy in the formatter.
+                }
+            ]
+        },
+    )
+    summary = sweep_source.read(project_root=tmp_path)
+    assert len(summary.items) == 1
+    assert "question:" not in summary.items[0].detail
