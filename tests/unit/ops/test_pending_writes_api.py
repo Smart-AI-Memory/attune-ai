@@ -481,6 +481,25 @@ def test_entries_under_tmp_path_prefixes_are_filtered_out(
     assert body["summary"]["total_entries"] == 0
 
 
+def test_system_tmp_prefix_returns_path_with_trailing_separator() -> None:
+    """``_system_tmp_prefix()`` returns the platform tempdir with a
+    trailing ``os.sep``. The trailing separator matters: without it,
+    ``"/tmp/foo".startswith("/tmp")`` would match ``"/tmp"`` AND
+    ``"/tmpfoo"`` — only the separator-terminated form is safe.
+
+    The function is invoked at module-import time to populate the
+    first entry of ``_TMP_PATH_PREFIXES``. This test exercises it
+    directly so codecov sees the call.
+    """
+    import tempfile
+
+    from attune.ops.routes import pending_writes as pw_routes
+
+    result = pw_routes._system_tmp_prefix()
+    assert result.endswith(os.sep)
+    assert result.rstrip(os.sep) == tempfile.gettempdir().rstrip(os.sep)
+
+
 # --- integration: PUT spec status appends to journal -------------
 
 
