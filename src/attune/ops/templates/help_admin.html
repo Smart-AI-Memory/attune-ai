@@ -9,7 +9,7 @@
 <h1 class="help-template-title">Admin tools</h1>
 <p class="help-page-sub">
   Maintenance surface for the <code>.help/templates/</code> corpus — coverage gaps,
-  stale templates, and regeneration shortcuts.
+  stale templates, and one-click regeneration.
 </p>
 
 <div class="help-stat-strip">
@@ -31,12 +31,39 @@
   </div>
 </div>
 
+<div class="help-bulk-actions">
+  <button class="btn-help-action btn-help-action-primary"
+          data-regen-action="regenerate"
+          data-confirm="Regenerate ALL stale templates? This can take several minutes.">
+    Regenerate all stale
+  </button>
+  <button class="btn-help-action"
+          data-regen-action="regenerate"
+          data-dry-run="1">
+    Dry run (preview)
+  </button>
+  <a href="/help/admin" class="btn-help-action btn-help-action-ghost">
+    Refresh page
+  </a>
+</div>
+
+<div id="help-regen-status" class="help-regen-status" hidden>
+  <div class="help-regen-status-head">
+    <span class="help-regen-status-label">Regen job</span>
+    <code class="help-regen-status-id"></code>
+    <span class="help-regen-status-state">pending</span>
+    <span class="help-regen-status-spacer"></span>
+    <button class="btn-help-action-close" aria-label="Close">×</button>
+  </div>
+  <pre class="help-regen-status-log"></pre>
+</div>
+
 {% if report.incomplete %}
 <section class="help-section">
   <h2 class="help-section-title">Incomplete sets <span class="help-count">{{ report.incomplete | length }}</span></h2>
   <table class="help-gaps-table">
     <thead>
-      <tr><th>Feature</th><th>Kinds</th><th>Completeness</th><th>Missing</th></tr>
+      <tr><th>Feature</th><th>Kinds</th><th>Completeness</th><th>Missing</th><th class="help-col-action">Action</th></tr>
     </thead>
     <tbody>
       {% for f in report.incomplete %}
@@ -48,6 +75,11 @@
             {{ f.completeness_pct }}%
           </td>
           <td class="help-missing">{{ f.missing_kinds | join(", ") }}</td>
+          <td>
+            <button class="btn-help-row-action"
+                    data-regen-action="generate"
+                    data-feature="{{ f.name }}">Generate missing</button>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
@@ -59,12 +91,12 @@
 <section class="help-section">
   <h2 class="help-section-title">Stale templates <span class="help-count">{{ report.stale | length }}</span></h2>
   <p class="help-section-sub">
-    Source hash drift older than 7 days · regenerate via
-    <code>attune-author generate &lt;feature&gt; --all-kinds</code>
+    Source hash drift older than 7 days. Use the per-row button or the bulk
+    "Regenerate all stale" above.
   </p>
   <table class="help-gaps-table">
     <thead>
-      <tr><th>Feature</th><th>Kind</th><th>Generated</th></tr>
+      <tr><th>Feature</th><th>Kind</th><th>Generated</th><th class="help-col-action">Action</th></tr>
     </thead>
     <tbody>
       {% for t in report.stale[:25] %}
@@ -72,10 +104,15 @@
           <td><a href="/help/{{ t.feature }}/{{ t.kind }}">{{ t.feature }}</a></td>
           <td><span class="help-item-kind">{{ t.kind }}</span></td>
           <td>{{ t.generated_at | replace("T", " ") | replace("+00:00", " UTC") }}</td>
+          <td>
+            <button class="btn-help-row-action"
+                    data-regen-action="generate"
+                    data-feature="{{ t.feature }}">Regen feature</button>
+          </td>
         </tr>
       {% endfor %}
       {% if report.stale | length > 25 %}
-        <tr><td colspan="3" class="help-table-more">… {{ report.stale | length - 25 }} more</td></tr>
+        <tr><td colspan="4" class="help-table-more">… {{ report.stale | length - 25 }} more</td></tr>
       {% endif %}
     </tbody>
   </table>
@@ -83,16 +120,132 @@
 {% endif %}
 
 <section class="help-section">
-  <h2 class="help-section-title">How to fix</h2>
+  <h2 class="help-section-title">How regen works</h2>
   <ol>
-    <li>For <strong>incomplete sets</strong>, run
-        <code>attune-author generate &lt;feature&gt; --all-kinds</code>
-        from the project root.</li>
-    <li>For <strong>stale templates</strong>, the same command regenerates
-        only the kinds whose source hash drifted.</li>
-    <li>Review the regenerated content before committing — the polish pass
-        is LLM-assisted; spot-check facts you care about.</li>
+    <li><strong>Per-feature regen</strong> shells out to
+        <code>attune-author generate &lt;feature&gt; --all-kinds</code> — regenerates
+        all 11 kinds, including missing ones.</li>
+    <li><strong>Regenerate all stale</strong> runs
+        <code>attune-author regenerate</code> which detects every stale feature
+        and regenerates each in turn.</li>
+    <li>Each job runs in the dashboard's process; output streams below as it
+        appears. Only one job can run at a time — touching the corpus from
+        multiple processes would race.</li>
+    <li>Review regenerated content before committing — the polish pass is
+        LLM-assisted; spot-check the facts you care about per the existing
+        hallucination-shapes lesson.</li>
   </ol>
 </section>
 
+{% endblock %}
+
+{% block scripts %}
+<script>
+(function () {
+  "use strict";
+  var status = document.getElementById("help-regen-status");
+  var statusId = status.querySelector(".help-regen-status-id");
+  var statusState = status.querySelector(".help-regen-status-state");
+  var statusLog = status.querySelector(".help-regen-status-log");
+  var closeBtn = status.querySelector(".btn-help-action-close");
+  var pollTimer = null;
+
+  function setState(state) {
+    statusState.textContent = state;
+    statusState.className = "help-regen-status-state state-" + state;
+  }
+
+  function appendLines(lines) {
+    statusLog.textContent = (lines || []).join("\n");
+    statusLog.scrollTop = statusLog.scrollHeight;
+  }
+
+  function stopPolling() {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+  }
+
+  function showStatus(jobId) {
+    statusId.textContent = jobId;
+    setState("pending");
+    statusLog.textContent = "";
+    status.hidden = false;
+  }
+
+  function pollOnce(jobId) {
+    fetch("/api/help/regen/" + encodeURIComponent(jobId), {
+      headers: { Accept: "application/json" }
+    })
+      .then(function (r) { return r.json(); })
+      .then(function (job) {
+        setState(job.status);
+        appendLines(job.lines);
+        if (job.status === "completed" || job.status === "failed") {
+          stopPolling();
+        }
+      })
+      .catch(function (err) {
+        if (window.console) console.warn("regen poll:", err);
+      });
+  }
+
+  function startRegen(action, opts) {
+    var body = { action: action };
+    if (opts && opts.feature) body.feature = opts.feature;
+    if (opts && opts.dry_run) body.dry_run = true;
+    fetch("/api/help/regen", {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      body: JSON.stringify(body),
+    })
+      .then(function (r) {
+        if (r.status === 409) {
+          return r.json().then(function (data) {
+            var existing = data.current_job_id;
+            if (existing) {
+              showStatus(existing);
+              pollOnce(existing);
+              pollTimer = setInterval(function () { pollOnce(existing); }, 2000);
+            } else {
+              alert("Regen already in flight.");
+            }
+            return null;
+          });
+        }
+        if (!r.ok) { alert("Regen failed to start: HTTP " + r.status); return null; }
+        return r.json();
+      })
+      .then(function (job) {
+        if (!job) return;
+        showStatus(job.id);
+        pollOnce(job.id);
+        pollTimer = setInterval(function () { pollOnce(job.id); }, 2000);
+      })
+      .catch(function (err) {
+        alert("Regen failed: " + err);
+      });
+  }
+
+  // Wire all .btn-help-action / .btn-help-row-action buttons that
+  // have a data-regen-action attribute.
+  Array.prototype.forEach.call(
+    document.querySelectorAll("[data-regen-action]"),
+    function (btn) {
+      btn.addEventListener("click", function () {
+        var action = btn.getAttribute("data-regen-action");
+        var feature = btn.getAttribute("data-feature");
+        var dryRun = btn.getAttribute("data-dry-run") === "1";
+        var confirmMsg = btn.getAttribute("data-confirm");
+        if (confirmMsg && !window.confirm(confirmMsg)) return;
+        stopPolling();
+        startRegen(action, { feature: feature, dry_run: dryRun });
+      });
+    }
+  );
+
+  closeBtn.addEventListener("click", function () {
+    stopPolling();
+    status.hidden = true;
+  });
+})();
+</script>
 {% endblock %}
