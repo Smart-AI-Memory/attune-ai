@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Search — Help (mockup)</title>
+  <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mockup-banner">
+  📐 Mockup — search results view.
+  <a href="index.html">← Back to home</a>
+</div>
+
+<header class="topbar">
+  <span class="topbar-brand">attune ops</span>
+  <span class="topbar-version">v7.1.2</span>
+  <nav class="topbar-nav">
+    <a href="#">Home</a><a href="#">Workflows</a><a href="#">Specs</a>
+    <a href="#">Sessions</a><a href="#">Telemetry</a>
+    <a href="index.html" class="active">Help</a>
+  </nav>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-project">PROJECT <code>attune-ai</code></span>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <input type="search" class="search" value="injection" placeholder="Search help…">
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Browse features</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="index.html">← All features</a></li>
+        <li><details><summary>security-audit</summary><ul><li><a class="leaf" href="template.html">task</a></li><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+        <li><details><summary>bug-predict</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+        <li><details><summary>code-quality</summary><ul><li><a class="leaf" href="#">task</a></li></ul></details></li>
+        <li><details><summary>deep-review</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Pages</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="index.html">Home</a></li>
+        <li><a class="leaf" href="search.html">Search results</a></li>
+        <li><a class="leaf" href="template.html">Template view</a></li>
+        <li><a class="leaf" href="gaps.html">Coverage gaps</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <h1>Search</h1>
+      <div class="sub">7 results for <code>injection</code> · 142ms · semantic (attune-rag) + lexical fallback</div>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <a class="result-feature" href="template.html">security-audit</a>
+        <span class="result-kind">task</span>
+        <span class="result-spacer"></span>
+        <span class="result-score">★★★★★  0.92</span>
+      </div>
+      <div class="result-snippet">
+        …detects SQL <mark>injection</mark> patterns, command
+        <mark>injection</mark>, path traversal, hardcoded secrets,
+        and other CWE-aligned vulnerabilities. The scanner emits
+        severity-grouped findings with remediation steps…
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <a class="result-feature" href="#">security-audit</a>
+        <span class="result-kind">concept</span>
+        <span class="result-spacer"></span>
+        <span class="result-score">★★★★☆  0.88</span>
+      </div>
+      <div class="result-snippet">
+        …OWASP top-10 coverage including <mark>injection</mark>,
+        broken authentication, sensitive data exposure, and XSS.
+        The scanner uses pattern-based detection with smart
+        false-positive filtering…
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <a class="result-feature" href="#">bug-predict</a>
+        <span class="result-kind">reference</span>
+        <span class="result-spacer"></span>
+        <span class="result-score">★★★☆☆  0.61</span>
+      </div>
+      <div class="result-snippet">
+        …the <code>dangerous_eval</code> scanner flags potential
+        <mark>injection</mark> via <code>eval()</code> and
+        <code>exec()</code> usage. False positives are filtered
+        by context analysis (test fixtures, detection code)…
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <a class="result-feature" href="#">code-quality</a>
+        <span class="result-kind">task</span>
+        <span class="result-spacer"></span>
+        <span class="result-score">★★★☆☆  0.54</span>
+      </div>
+      <div class="result-snippet">
+        …reviews code for quality issues that adjacent to but
+        distinct from security findings — style, structure, and
+        complexity that don't rise to <mark>injection</mark>-level
+        severity but still warrant attention…
+      </div>
+    </div>
+
+    <div class="result">
+      <div class="result-head">
+        <a class="result-feature" href="#">deep-review</a>
+        <span class="result-kind">concept</span>
+        <span class="result-spacer"></span>
+        <span class="result-score">★★☆☆☆  0.42</span>
+      </div>
+      <div class="result-snippet">
+        …multi-pass review escalates to a deeper security-focused
+        pass when surface scanning surfaces high-severity
+        candidates like <mark>injection</mark> or auth bypass…
+      </div>
+    </div>
+
+    <p style="margin-top: 16px; color: var(--fg-muted); font-size: 12px;">
+      2 more results below 0.40 score · <a href="#">show all</a>
+    </p>
+  </main>
+</div>
+
+</body>
+</html>

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>security-audit / task — Help (mockup)</title>
+  <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mockup-banner">
+  📐 Mockup — template detail view.
+  <a href="index.html">← Back to home</a>
+</div>
+
+<header class="topbar">
+  <span class="topbar-brand">attune ops</span>
+  <span class="topbar-version">v7.1.2</span>
+  <nav class="topbar-nav">
+    <a href="#">Home</a><a href="#">Workflows</a><a href="#">Specs</a>
+    <a href="#">Sessions</a><a href="#">Telemetry</a>
+    <a href="index.html" class="active">Help</a>
+  </nav>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-project">PROJECT <code>attune-ai</code></span>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <input type="search" class="search" placeholder="Search help…">
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">security-audit</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="#">comparison</a></li>
+        <li><a class="leaf" href="#">concept</a></li>
+        <li><a class="leaf" href="#">error</a></li>
+        <li><a class="leaf" href="#">faq</a></li>
+        <li><a class="leaf" href="#">note</a></li>
+        <li><a class="leaf" href="#">quickstart</a></li>
+        <li><a class="leaf" href="#">reference</a></li>
+        <li><a class="leaf active" href="template.html">task</a></li>
+        <li><a class="leaf" href="#">tip</a></li>
+        <li><a class="leaf" href="#">troubleshooting</a></li>
+        <li><a class="leaf" href="#">warning</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">See also</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="#">bug-predict</a></li>
+        <li><a class="leaf" href="#">code-quality</a></li>
+        <li><a class="leaf" href="#">deep-review</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Pages</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="index.html">Home</a></li>
+        <li><a class="leaf" href="search.html">Search results</a></li>
+        <li><a class="leaf" href="template.html">Template view</a></li>
+        <li><a class="leaf" href="gaps.html">Coverage gaps</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="template-head">
+      <div class="breadcrumb">
+        <a href="index.html">Help</a> ›
+        <a href="#">security-audit</a> ›
+        <span>task</span>
+      </div>
+      <h1 class="template-title">Run a security audit</h1>
+      <div class="template-meta">
+        <span class="chip">task</span>
+        <span class="chip chip-fresh">fresh · 4 days ago</span>
+        <button class="btn">⊕ Pin</button>
+        <button class="btn">Copy link</button>
+      </div>
+    </div>
+
+    <div class="on-this-page">
+      <h3>On this page</h3>
+      <ul>
+        <li><a href="#prerequisites">Prerequisites</a></li>
+        <li><a href="#run-the-audit">Run the audit</a></li>
+        <li><a href="#interpret-results">Interpret results</a></li>
+        <li><a href="#act-on-findings">Act on findings</a></li>
+      </ul>
+    </div>
+
+    <article class="prose">
+      <p>
+        Use <code>attune workflow run security-audit</code> when you
+        want to scan a codebase for vulnerabilities — eval/exec usage,
+        path traversal, hardcoded secrets, and injection risks — and
+        receive a severity-grouped report with actionable remediation
+        steps.
+      </p>
+
+      <h2 id="prerequisites">Prerequisites</h2>
+      <ul>
+        <li>Access to the project source code you want to scan</li>
+        <li>The <code>attune</code> CLI installed and accessible on your <code>PATH</code></li>
+      </ul>
+
+      <h2 id="run-the-audit">Run the audit</h2>
+
+      <h3>1. Choose the path to scan</h3>
+      <p>
+        Identify the directory or file you want to audit. For most
+        projects, <code>src/</code> is a good starting point. Smaller
+        scopes (e.g. <code>src/myapp/auth/</code>) finish faster and
+        produce more focused reports.
+      </p>
+
+      <h3>2. Run the workflow</h3>
+<pre><code>$ attune workflow run security-audit --path src/
+[security-audit] starting on src/
+[security-audit] scanning 234 files…
+[security-audit] 3 findings (1 HIGH, 2 MEDIUM)
+</code></pre>
+
+      <h3>3. Read the report</h3>
+      <p>
+        The workflow writes a severity-grouped report. HIGH findings
+        warrant immediate attention; MEDIUM and LOW can be triaged.
+      </p>
+
+      <h2 id="interpret-results">Interpret results</h2>
+      <p>
+        Each finding includes:
+      </p>
+      <ul>
+        <li><strong>Severity</strong> — HIGH, MEDIUM, or LOW based on CWE classification</li>
+        <li><strong>Location</strong> — <code>file:line</code> reference, clickable in most editors</li>
+        <li><strong>Pattern</strong> — what was detected (e.g. <code>dangerous_eval</code>, <code>broad_exception</code>)</li>
+        <li><strong>Remediation</strong> — a concrete fix suggestion</li>
+      </ul>
+
+      <p>
+        See <a href="#">security-audit / reference</a> for the full
+        pattern catalog, and <a href="#">bug-predict / concept</a> for
+        the broader detection philosophy.
+      </p>
+
+      <h2 id="act-on-findings">Act on findings</h2>
+      <p>
+        Fix HIGH findings first. If the scanner flags a false positive,
+        add the file to the audit-exclusion list (see
+        <a href="#">security-audit / faq</a>).
+      </p>
+
+      <div class="see-also">
+        <h3>See also</h3>
+        <ul>
+          <li><a href="#">security-audit / reference — pattern catalog</a></li>
+          <li><a href="#">security-audit / troubleshooting — common false positives</a></li>
+          <li><a href="#">bug-predict / concept — detection philosophy</a></li>
+          <li><a href="#">code-quality / task — style-vs-security review</a></li>
+        </ul>
+      </div>
+    </article>
+  </main>
+</div>
+
+</body>
+</html>
