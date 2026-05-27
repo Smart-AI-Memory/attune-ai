@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import asyncio
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -24,6 +25,17 @@ from attune.ops.help_regen import (
     HelpRegenRunner,
 )
 from attune.ops.server import create_app
+
+# The fake-binary fixtures below write POSIX shell scripts with
+# `#!/bin/sh` shebangs and chmod 0o755 — neither resolves on Windows.
+# Tests that actually invoke the binary fail there (subprocess startup
+# errors); tests that only exercise validation logic before invocation
+# still pass. Apply this mark to the affected tests only.
+_skip_on_windows = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="fake-binary fixture is a POSIX shell script; production "
+    "runner itself is OS-agnostic",
+)
 
 
 @pytest.fixture
@@ -86,6 +98,7 @@ def _await(coro):
 
 
 class TestGenerate:
+    @_skip_on_windows
     def test_generate_runs_subprocess(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -120,6 +133,7 @@ class TestGenerate:
 
 
 class TestRegenerate:
+    @_skip_on_windows
     def test_regenerate_runs(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -155,6 +169,7 @@ class TestRegenerate:
 
 
 class TestFailingSubprocess:
+    @_skip_on_windows
     def test_nonzero_exit_marks_failed(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -208,6 +223,7 @@ class TestMissingBinary:
 
 
 class TestAnsiStripping:
+    @_skip_on_windows
     def test_ansi_codes_stripped_from_log(self, ansi_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(ansi_binary))
 
@@ -245,6 +261,7 @@ class TestAnsiRegex:
 
 
 class TestOutputCap:
+    @_skip_on_windows
     def test_oversized_output_truncated(self, tmp_path: Path) -> None:
         # Build a script that floods stdout
         flooder = tmp_path / "flood"
@@ -403,6 +420,7 @@ class TestRegenRoute:
         resp = regen_client.get("/api/help/regen/has-dashes")
         assert resp.status_code == 400
 
+    @_skip_on_windows
     def test_get_status_returns_job(self, regen_client: TestClient) -> None:
         """POST creates a job, GET returns its current state.
 
