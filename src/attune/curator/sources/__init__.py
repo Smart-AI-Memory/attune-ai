@@ -33,7 +33,6 @@ class SourceReader(Protocol):
         empty ``SourceSummary`` whose ``state_hash`` is stable
         across calls.
         """
-        ...
 
 
 __all__ = ["SourceReader"]
