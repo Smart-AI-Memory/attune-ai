@@ -5802,3 +5802,81 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   document the divergence in the PR body BEFORE pushing,
   then let CI surface the predicted trade-off — the
   divergence becomes self-validating.
+
+- **The `rag-code-gen` workflow's agent is read-only —
+  `allowed_tools=["Read", "Glob", "Grep"]` — so it cannot
+  write files**: hit 2026-05-26 trying to use rag-code-gen
+  to draft a Phase 1 implementation skeleton from a spec.
+  The workflow retrieves RAG-grounded context, calls the
+  agent with the augmented prompt, and returns the agent's
+  output as a single text blob in
+  ``WorkflowResult.final_output``. The agent CAN read the
+  spec + existing patterns to ground its output, but the
+  returned text then has to be manually split across the
+  spec's target paths. For multi-file scaffolding
+  (12 files for the bulletin-curator Phase 1), this is
+  strictly worse than just executing the spec's XML
+  prompts directly with Edit/Write — same grounding,
+  no transcription step. Pattern: when a workflow's name
+  suggests "code generation," check its `allowed_tools`
+  list before relying on it for file creation. Read-only
+  tool surfaces produce text, not commits.
+  ([rag_code_gen.py:359](src/attune/workflows/rag_code_gen.py:359))
+
+- **z-score anomaly detection silently never fires when
+  the historical sample has zero variance — decide
+  explicitly how to handle stddev=0 before shipping**:
+  classic implementation:
+  ```python
+  mean = sum(prior) / len(prior)
+  variance = sum((c - mean) ** 2 for c in prior) / len(prior)
+  stddev = math.sqrt(variance) if variance > 0 else 0.0
+  if stddev == 0:
+      continue  # ← skips workflows with identical prior values
+  z = (today_cost - mean) / stddev
+  if z > 2.0:
+      emit_spike(...)
+  ```
+  Real-world hit: telemetry test fixture with 6 identical
+  $0.01 days and a $5.00 spike today produces stddev=0 →
+  no spike fired. Test failed for the wrong reason (looked
+  like a logic bug; was a fixture problem). Two valid
+  resolutions: (a) require fixture variance (real
+  workflow telemetry has natural variation across model
+  tiers + run sizes — uniform synthetic data is the
+  problem); (b) production code adds a multiplier
+  fallback for the stddev=0 case (e.g. "today >5× the
+  mean AND mean > 0"). Pick one before writing tests so
+  fixtures and code agree. The "no anomaly when prior is
+  flat" interpretation is actually defensible — a
+  workflow that ran at $0.01 every day for a week
+  arguably SHOULD trigger an alert when it suddenly hits
+  $5, because that's a 500× jump, but the heuristic the
+  spec named was "z-score" which structurally can't
+  catch it. Surface the trade-off in the spec / decisions.md
+  rather than papering over it in a test.
+
+- **Pre-existing TZ-sensitive test failures pass under
+  `TZ=UTC` and fail under local TZ — diagnose before
+  treating as a regression**: hit 2026-05-26 on the
+  bulletin Phase 1's `_maybe_rotate` test. After adding
+  an unrelated method to `file_backend.py`,
+  `test_yesterdays_log_moved_to_archive` fired red.
+  Stashing the change and running on pristine origin/main
+  reproduced the failure → not caused by my change.
+  Re-running under `TZ=UTC` made it pass. Root cause:
+  `_maybe_rotate` compares `mtime.date()` (computed with
+  `tz=timezone.utc`) against `date.today()` (which uses
+  local TZ). In Eastern, an mtime backdated to "yesterday
+  +60s ago" maps to a UTC date that's still "today" in
+  local TZ → rotation no-ops. CI is UTC so the failure
+  never surfaces on origin/main; only local non-UTC dev
+  environments hit it. Diagnostic recipe when an
+  unrelated-looking test fails after your change:
+  (1) `git stash` your changes, (2) re-run the test on
+  pristine origin/main — if it still fails, the cause
+  is pre-existing; (3) try `TZ=UTC` (or other env
+  overrides like `LC_ALL=C`, `LANG=en_US.UTC-8`) — if
+  that flips it, you've found a CI-vs-dev environment
+  drift bug. Don't bundle the fix into an unrelated PR;
+  flag in the PR body and file separately.
