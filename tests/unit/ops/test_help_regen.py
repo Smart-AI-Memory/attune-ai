@@ -26,57 +26,89 @@ from attune.ops.help_regen import (
 )
 from attune.ops.server import create_app
 
-# The fake-binary fixtures below write POSIX shell scripts with
-# `#!/bin/sh` shebangs and chmod 0o755 — neither resolves on Windows.
-# Tests that actually invoke the binary fail there (subprocess startup
-# errors); tests that only exercise validation logic before invocation
-# still pass. Apply this mark to the affected tests only.
-_skip_on_windows = pytest.mark.skipif(
-    sys.platform == "win32",
-    reason="fake-binary fixture is a POSIX shell script; production "
-    "runner itself is OS-agnostic",
-)
+
+# The fake-binary fixtures below are cross-platform: the actual
+# script logic lives in a .py file (deterministic, runs anywhere
+# Python runs), and a tiny per-OS wrapper (.bat on Windows, shell
+# script on POSIX) invokes it via ``sys.executable``. This keeps the
+# fixture path executable from asyncio.create_subprocess_exec on
+# either platform.
+def _make_fake_binary(tmp_path: Path, name: str, py_body: str) -> Path:
+    """Write a .py script + a cross-platform wrapper that invokes it.
+
+    The wrapper is what gets passed to HelpRegenRunner as
+    ``attune_author_path``; the runner's
+    ``asyncio.create_subprocess_exec`` then launches the wrapper,
+    which in turn invokes ``python <name>.py %*`` (Windows) or
+    ``python <name>.py "$@"`` (POSIX). Returns the wrapper path.
+    """
+    py_script = tmp_path / f"_{name.replace('-', '_')}.py"
+    py_script.write_text(py_body, encoding="utf-8")
+
+    if sys.platform == "win32":
+        wrapper = tmp_path / f"{name}.bat"
+        wrapper.write_text(
+            f'@echo off\r\n"{sys.executable}" "{py_script}" %*\r\n',
+            encoding="utf-8",
+        )
+    else:
+        wrapper = tmp_path / name
+        wrapper.write_text(
+            f'#!/bin/sh\nexec "{sys.executable}" "{py_script}" "$@"\n',
+            encoding="utf-8",
+        )
+        wrapper.chmod(0o755)
+    return wrapper
 
 
 @pytest.fixture
 def fake_binary(tmp_path: Path) -> Path:
-    """Tiny shell script that mimics attune-author CLI shape.
+    """Cross-platform fake binary that mimics attune-author CLI shape.
 
-    Echoes "started action=<action>", a numbered line, and exits 0
-    unless ATTUNE_FAKE_EXIT_CODE is set.
+    Echoes "started action=<action>" plus 3 numbered lines, and exits
+    with ATTUNE_FAKE_EXIT_CODE (default 0). Equivalent to the prior
+    POSIX shell script but works on Windows via a .bat wrapper.
     """
-    script = tmp_path / "fake-attune-author"
-    script.write_text(
-        "#!/bin/sh\n"
-        'echo "started action=$1"\n'
-        'for i in 1 2 3; do echo "line $i"; done\n'
-        'exit "${ATTUNE_FAKE_EXIT_CODE:-0}"\n',
-        encoding="utf-8",
+    return _make_fake_binary(
+        tmp_path,
+        "fake-attune-author",
+        "import os, sys\n"
+        'action = sys.argv[1] if len(sys.argv) > 1 else "unknown"\n'
+        'print(f"started action={action}", flush=True)\n'
+        "for i in (1, 2, 3):\n"
+        '    print(f"line {i}", flush=True)\n'
+        'sys.exit(int(os.environ.get("ATTUNE_FAKE_EXIT_CODE", "0")))\n',
     )
-    script.chmod(0o755)
-    return script
 
 
 @pytest.fixture
 def slow_binary(tmp_path: Path) -> Path:
-    """Fake binary that sleeps briefly — used for concurrency tests."""
-    script = tmp_path / "slow-attune-author"
-    script.write_text("#!/bin/sh\nsleep 0.3\necho 'done'\n", encoding="utf-8")
-    script.chmod(0o755)
-    return script
+    """Cross-platform fake binary that sleeps briefly.
+
+    Used for concurrency tests where the subprocess needs to remain
+    "in flight" long enough for the test to interact with it.
+    """
+    return _make_fake_binary(
+        tmp_path,
+        "slow-attune-author",
+        "import time\ntime.sleep(0.3)\nprint('done', flush=True)\n",
+    )
 
 
 @pytest.fixture
 def ansi_binary(tmp_path: Path) -> Path:
-    """Fake binary that emits ANSI color codes."""
-    script = tmp_path / "ansi-attune-author"
-    # Real ANSI bytes — match what attune-author + structlog emit
-    script.write_text(
-        "#!/bin/sh\nprintf '\\033[36mcolor line\\033[0m\\n'\n",
-        encoding="utf-8",
+    """Cross-platform fake binary that emits ANSI color codes.
+
+    Matches what attune-author + structlog produce in real runs:
+    raw ANSI escapes that the runner is responsible for stripping.
+    """
+    return _make_fake_binary(
+        tmp_path,
+        "ansi-attune-author",
+        "import sys\n"
+        'sys.stdout.write("\\x1b[36mcolor line\\x1b[0m\\n")\n'
+        "sys.stdout.flush()\n",
     )
-    script.chmod(0o755)
-    return script
 
 
 def _await(coro):
@@ -98,7 +130,6 @@ def _await(coro):
 
 
 class TestGenerate:
-    @_skip_on_windows
     def test_generate_runs_subprocess(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -133,7 +164,6 @@ class TestGenerate:
 
 
 class TestRegenerate:
-    @_skip_on_windows
     def test_regenerate_runs(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -169,7 +199,6 @@ class TestRegenerate:
 
 
 class TestFailingSubprocess:
-    @_skip_on_windows
     def test_nonzero_exit_marks_failed(self, fake_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
@@ -223,7 +252,6 @@ class TestMissingBinary:
 
 
 class TestAnsiStripping:
-    @_skip_on_windows
     def test_ansi_codes_stripped_from_log(self, ansi_binary: Path) -> None:
         runner = HelpRegenRunner(attune_author_path=str(ansi_binary))
 
@@ -261,7 +289,6 @@ class TestAnsiRegex:
 
 
 class TestOutputCap:
-    @_skip_on_windows
     def test_oversized_output_truncated(self, tmp_path: Path) -> None:
         # Build a script that floods stdout
         flooder = tmp_path / "flood"
@@ -420,7 +447,6 @@ class TestRegenRoute:
         resp = regen_client.get("/api/help/regen/has-dashes")
         assert resp.status_code == 400
 
-    @_skip_on_windows
     def test_get_status_returns_job(self, regen_client: TestClient) -> None:
         """POST creates a job, GET returns its current state.
 
