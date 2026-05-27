@@ -16,6 +16,7 @@ import pytest
 import yaml
 
 PLUGIN_ROOT = Path(__file__).parents[3] / "plugin"
+REPO_ROOT = Path(__file__).parents[3]
 
 
 @pytest.mark.unit
@@ -350,34 +351,75 @@ class TestVersionConsistency:
     """Test that version numbers are consistent across plugin files."""
 
     def _get_versions(self) -> dict[str, str]:
-        """Collect version strings from all plugin files."""
+        """Collect version strings from all release-artifact files.
+
+        Project policy: PyPI package version (``pyproject.toml``) and
+        every plugin manifest version MUST be identical on every
+        release. See CLAUDE.md "Policy: PyPI package version and
+        plugin manifest version MUST be the same value, always".
+        Each release-relevant file's version goes here so a single
+        ``test_all_versions_match`` assertion catches any drift
+        across PyPI, plugin, and marketplace surfaces.
+        """
         versions: dict[str, str] = {}
 
-        # plugin.json
+        # pyproject.toml — PyPI package version (authoritative
+        # source for what gets uploaded to PyPI)
+        py = REPO_ROOT / "pyproject.toml"
+        for line in py.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("version = "):
+                versions["pyproject.toml"] = stripped.split("=", 1)[1].strip().strip('"').strip("'")
+                break
+
+        # plugin/.claude-plugin/plugin.json — Claude Code plugin manifest
         pj = PLUGIN_ROOT / ".claude-plugin" / "plugin.json"
         data = json.loads(pj.read_text(encoding="utf-8"))
-        versions["plugin.json"] = data["version"]
+        versions["plugin/.claude-plugin/plugin.json"] = data["version"]
 
-        # marketplace.json (metadata + plugins[0])
+        # plugin/.claude-plugin/marketplace.json — bundled marketplace
+        # (metadata.version + plugins[0].version)
         mj = PLUGIN_ROOT / ".claude-plugin" / "marketplace.json"
         data = json.loads(mj.read_text(encoding="utf-8"))
-        versions["marketplace.json:metadata"] = data["metadata"]["version"]
-        versions["marketplace.json:plugin"] = data["plugins"][0]["version"]
+        versions["plugin/.claude-plugin/marketplace.json:metadata"] = data["metadata"]["version"]
+        versions["plugin/.claude-plugin/marketplace.json:plugin"] = data["plugins"][0]["version"]
 
-        # core/__init__.py
+        # .claude-plugin/marketplace.json — root-level marketplace
+        # (the one users `claude plugin marketplace add` against)
+        root_mj = REPO_ROOT / ".claude-plugin" / "marketplace.json"
+        data = json.loads(root_mj.read_text(encoding="utf-8"))
+        versions["root .claude-plugin/marketplace.json:metadata"] = data["metadata"]["version"]
+        versions["root .claude-plugin/marketplace.json:plugin"] = data["plugins"][0]["version"]
+
+        # plugin/core/__init__.py — bundled runtime version
         init = PLUGIN_ROOT / "core" / "__init__.py"
         content = init.read_text(encoding="utf-8")
         for line in content.splitlines():
             if line.startswith("__version__"):
-                versions["core/__init__.py"] = line.split("=")[1].strip().strip('"').strip("'")
+                versions["plugin/core/__init__.py"] = (
+                    line.split("=")[1].strip().strip('"').strip("'")
+                )
 
         return versions
 
     def test_all_versions_match(self) -> None:
-        """Test that all version strings are identical."""
+        """Every release-artifact file carries the SAME version.
+
+        Project policy (see CLAUDE.md "Policy: PyPI package version
+        and plugin manifest version MUST be the same value"): the
+        PyPI package and the Claude Code plugin distribution are
+        ONE release, even when only one surface's content changed.
+        A user running ``pip show attune-ai`` and ``claude plugin
+        list`` should never see a mismatch.
+        """
         versions = self._get_versions()
         unique = set(versions.values())
-        assert len(unique) == 1, f"Version mismatch across files: {versions}"
+        assert len(unique) == 1, (
+            f"Version mismatch across release-artifact files: {versions}. "
+            "Project policy requires pyproject.toml and every plugin "
+            "manifest to carry the same version. Bump all entries to "
+            "match the new release."
+        )
 
     def test_version_is_semver(self) -> None:
         """Test that the version follows semver format."""

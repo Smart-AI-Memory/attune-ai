@@ -6286,3 +6286,61 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   drops) feels like a regen tool bug, but the actual root cause
   is the staleness *reporter* including items the regen tool was
   never designed to handle.
+
+- **Policy: PyPI package version and plugin manifest version
+  MUST be the same value, always — they are one release, not
+  two streams**: project policy is that ``pyproject.toml``'s
+  ``version`` and ALL plugin manifest version fields
+  (``plugin/.claude-plugin/plugin.json``,
+  ``plugin/.claude-plugin/marketplace.json`` — both
+  ``metadata.version`` AND ``plugins[0].version``, the
+  root-level ``.claude-plugin/marketplace.json`` — same two
+  fields, ``plugin/core/__init__.py``'s ``__version__``)
+  carry the SAME version string on every release. Even when
+  ``plugin/`` content hasn't changed since the last release,
+  the plugin manifests still get bumped to match the new PyPI
+  version. **Why:** the PyPI install and the Claude Code
+  plugin install are two surfaces for ONE release. A user
+  running ``pip show attune-ai`` (e.g. 7.2.0) and
+  ``claude plugin list`` (showing 7.0.0) should NEVER see a
+  mismatch — they installed the same release, even if some
+  files in it didn't change. **What broke and why this lesson
+  exists:** the v7.2.0 release shipped with plugin manifests
+  still at 7.0.0 — they had stayed at 7.0.0 since the actual
+  v7.0.0 release, four PyPI minor versions earlier (7.0.x →
+  7.1.0 → 7.1.1 → 7.1.2 → 7.2.0). The
+  ``test_all_versions_match`` test only checks
+  internal-to-plugin consistency (the four plugin files agree
+  with each other), not cross-stream consistency against
+  ``pyproject.toml``, so the drift went unnoticed through four
+  publishes. **Required:** bump ALL plugin-file occurrences
+  to match the target ``pyproject.toml`` version every
+  release, no exceptions. The drift-guard test should be
+  extended to also assert ``pyproject.toml`` == plugin
+  manifests — that one new assertion would have caught every
+  miss since v7.0.0. Forward correction lives in a bump-only
+  follow-up PR; don't try to re-tag historical releases.
+
+- **Tag push + workflow_dispatch both fire ``publish-pypi.yml`` —
+  approve ONE, cancel the other**: extends the existing
+  "``release: published`` + ``workflow_dispatch`` both
+  approved for ``pypi`` env = duplicate publish" lesson with
+  the second auto-trigger shape. Repo's ``publish-pypi.yml``
+  is triggered by ``push: tags: 'v*.*.*'`` (changed to this
+  in v7.1.1 per its CHANGELOG entry). Pushing ``v7.2.0``
+  auto-fires a publish run. Additionally calling
+  ``gh workflow run publish-pypi.yml --ref main`` fires a
+  SECOND run via ``workflow_dispatch``. Both then sit waiting
+  for ``pypi`` environment approval. If both get approved,
+  the second 422s on "File already exists" — but the alarming
+  "failed" appearance hides that the first uploaded
+  successfully. **Operational rule** for any release whose
+  workflow has BOTH an auto-trigger AND
+  ``workflow_dispatch:``: choose ONE path, not both. For
+  ``push: tags``-triggered publishes, the cleaner default is
+  to let the tag push do it and skip the explicit
+  ``gh workflow run``. If you've already triggered both,
+  approve the tag-run via
+  ``gh api .../pending_deployments -X POST`` and
+  ``gh run cancel <dispatch-run-id>`` the duplicate before it
+  reaches the upload step.
