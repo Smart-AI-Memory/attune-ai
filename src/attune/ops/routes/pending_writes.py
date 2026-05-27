@@ -17,6 +17,7 @@ import json
 import logging
 import os
 import subprocess
+import tempfile
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -118,7 +119,20 @@ def _is_file_committed(file_path: Path, project_root: Path) -> bool | None:
     return result.stdout.strip() == ""
 
 
+def _system_tmp_prefix() -> str:
+    """Platform-native system tempdir as a path prefix.
+
+    Covers Windows ``%TEMP%`` / ``%TMP%`` (typically
+    ``C:\\Users\\<user>\\AppData\\Local\\Temp``), Linux ``$TMPDIR``,
+    and macOS default. ``startswith()`` matches against the same
+    separator form the journal writer recorded
+    (``os.sep`` from ``str(Path(...))``).
+    """
+    return tempfile.gettempdir().rstrip(os.sep) + os.sep
+
+
 _TMP_PATH_PREFIXES: tuple[str, ...] = (  # nosec B108 — filter prefixes, not file I/O
+    _system_tmp_prefix(),
     "/tmp/",  # nosec B108
     "/private/tmp/",  # nosec B108
     "/var/folders/",
@@ -129,7 +143,12 @@ _TMP_PATH_PREFIXES: tuple[str, ...] = (  # nosec B108 — filter prefixes, not f
 """Known transient-directory prefixes — pytest tmp_path, OS scratch
 dirs. Entries whose project_root lives under any of these are
 test-fixture pollution, even when the dir still exists at read
-time (macOS pytest keeps the last few tmp dirs alive)."""
+time (macOS pytest keeps the last few tmp dirs alive).
+
+First entry is the platform tempdir (covers Windows
+``AppData\\Local\\Temp``). The static POSIX entries cover macOS's
+``/private/var/folders/...pytest-of-...`` cases that survive even
+when ``TMPDIR`` is overridden by tests or CI."""
 
 
 def _is_real_entry(entry: dict[str, Any]) -> bool:

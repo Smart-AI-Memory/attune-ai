@@ -433,12 +433,24 @@ def test_entries_under_tmp_path_prefixes_are_filtered_out(
 
     See ``_TMP_PATH_PREFIXES`` in routes/pending_writes.py.
     """
+    import tempfile
+
     from attune.ops.routes import pending_writes as pw_routes
 
+    # Use the actual platform tempdir as the prefix so the test
+    # works on macOS, Linux, and Windows. Include both the raw
+    # ``gettempdir()`` form (``/var/folders/...``) AND the resolved
+    # form (``/private/var/folders/...``) because macOS's
+    # ``/var`` ↔ ``/private/var`` symlink means tmp_path may show
+    # up under either depending on whether it was resolved (see
+    # CLAUDE.md "macOS /var → /private/var symlink" lesson). Keep
+    # ``/tmp/`` for the second (non-existent) entry below.
+    raw_tmp = tempfile.gettempdir().rstrip(os.sep) + os.sep
+    resolved_tmp = str(Path(tempfile.gettempdir()).resolve()).rstrip(os.sep) + os.sep
     monkeypatch.setattr(
         pw_routes,
         "_TMP_PATH_PREFIXES",
-        ("/tmp/", "/private/tmp/", "/var/folders/", "/private/var/folders/"),
+        (raw_tmp, resolved_tmp, "/tmp/"),
     )
     # tmp_path exists on disk and is under one of the tmp prefixes.
     # The entry's other fields don't matter for this assertion — the
