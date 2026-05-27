@@ -1,9 +1,10 @@
 ---
 type: faq
+name: plugin-faq
 feature: plugin
 depth: faq
-generated_at: 2026-04-19T18:53:24.485898+00:00
-source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
+generated_at: 2026-05-27T13:42:27.346057+00:00
+source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
 status: generated
 ---
 
@@ -11,40 +12,47 @@ status: generated
 
 ## What is the plugin?
 
-The plugin is a Claude Code extension system that provides skills, hooks, commands, and MCP configuration. It includes a bundled runtime for standalone operation and hooks that automatically format Python files, check help freshness, suggest help when commands fail, and maintain help documentation after git commits.
+The plugin is the Claude Code integration layer: it bundles hooks, slash commands, MCP configuration, and skills that run alongside your Claude Code sessions.
 
-## When should I use the plugin?
+## What hooks does the plugin provide?
 
-Use the plugin when you need to extend Claude Code's functionality with custom skills, set up automated hooks for file formatting or help maintenance, or configure MCP (Model Context Protocol) behavior. If you're working with standalone operations outside the main Claude Code environment, the bundled runtime lets the plugin operate independently.
+The plugin includes hooks for several lifecycle events:
 
-## How do I get started with the plugin?
+- **`hooks.format_on_save`** — formats files when you save
+- **`hooks.help_freshness_check`** — checks whether help content is current
+- **`hooks.help_on_error`** — surfaces help when an error occurs
+- **`hooks.help_post_commit`** — runs help checks after a commit
+- **`hooks.compact_warning`** — warns you when context utilization is high
+- **`hooks.security_guard`** — validates bash commands and file paths before execution
+- **`hooks.spec_orient`** — orients you to in-flight specs in your workspace
+- **`hooks.welcome`** — runs on session start
 
-Start with one of these main entry points depending on your goal:
+## What does `security_guard` actually check?
 
-- `plugin/hooks/format_on_save.py` — automatically format Python files after Write/Edit operations
-- `plugin/hooks/help_freshness_check.py` — check if help templates are current when sessions start
-- `plugin/hooks/help_on_error.py` — suggest relevant help when Bash commands fail
+It validates two things: the bash command you're about to run (`validate_bash_command`) and the file path you're about to access (`validate_file_path`). Both return a `(bool, str)` tuple — `True` if the input is allowed, along with a message explaining the decision.
 
-Each module's `main()` function includes documentation about expected inputs and outputs.
+File path validation blocks access to system directories including `/etc`, `/sys`, `/proc`, `/dev`, `/boot`, `/sbin`, `/usr/sbin`, `/private/etc`, and `/private/var`.
 
-## How do I debug plugin issues?
+## How does the compact warning work?
 
-First, run the plugin-specific tests: `pytest -k "plugin" -v`. If the tests pass but your code still fails, add `logger.debug` statements at suspected failure points and re-run with logging enabled to trace the execution flow.
+`estimate_utilization` in `hooks._transcript_size` reads your transcript and returns a float in `[0.0, 1.0]` representing how full your context window is. When that value crosses a threshold, `format_warning` in `hooks.compact_warning` composes a warning that includes a resume prompt so you can continue work in a fresh session.
 
-For systematic diagnosis of common problems, check the troubleshooting page for this feature.
+The resume prompt itself is built by `build_resume_prompt` in `hooks._resume_prompt`, which pulls in the current `SpecInfo` (if any), the `GitState` snapshot, your workspace path, and an optional to-do summary.
 
-## What security validation does the plugin provide?
+## How does the plugin find my in-flight specs?
 
-The plugin includes security functions to validate operations:
+`discover_specs` in `hooks._state` walks the `specs/` directories under each workspace root and returns a list of `SpecInfo` objects. Each `SpecInfo` carries the spec's `slug`, `path`, `layer`, `phase`, `status`, and `mtime`. Workspace roots are resolved by `workspace_roots`, which defaults to `~/attune` if it can't determine them from your current directory.
 
-- `validate_bash_command()` — checks Bash commands against security policies
-- `validate_file_path()` — validates file paths against security policies
-- Tool call validation that returns `'allowed': True` for permitted operations
+## What git information does the plugin use?
 
-These functions help prevent access to system directories like `/etc`, `/sys`, `/proc`, and other protected paths.
+`git_state` in `hooks._state` returns a `GitState` snapshot containing your current `branch`, the `last_sha` and `last_subject` of your most recent commit, and a tuple of `uncommitted` file paths. Hooks that build resume prompts and orientation output use this snapshot.
 
-## Where are the plugin source files?
+## How do I run the handoff command?
 
-All plugin source files are located in the `plugin/` directory and its subdirectories.
+Call `main()` in `hooks._handoff_cli` — it's the entry point for the `/handoff` slash command and returns `0` on success.
+
+## Where are the source files?
+
+All plugin source files live under `plugin/**`.
 
 **Tags:** `plugin`, `claude-code`
