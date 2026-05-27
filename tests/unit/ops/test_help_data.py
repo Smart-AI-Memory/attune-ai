@@ -710,6 +710,45 @@ class TestParseStatusOutput:
         )
         assert _parse_status_output(text) == frozenset({"a-feature"})
 
+    def test_project_docs_stale_section_ignored(self) -> None:
+        """``## Project Docs`` is a SEPARATE corpus from
+        ``.help/templates/``. Its stale section must NOT contribute
+        to the dashboard's help-templates stale set — otherwise
+        clicking "Regenerate all stale" can never bring the count
+        down (regenerate only touches .help/, not docs/).
+
+        This is the bug PR #494 fixed: pre-fix the parser walked
+        every "### Stale" section regardless of its parent h2,
+        rolling project-docs drift into help-templates staleness.
+        """
+        from attune.ops.help_data import _parse_status_output
+
+        text = (
+            "## Help Templates\n\n"
+            "**1** current, **1** stale\n\n"
+            "### Stale\n\n"
+            "| help-only-feat | foo | 1 |\n\n"
+            "## Project Docs\n\n"
+            "**0** current, **2** stale\n\n"
+            "### Stale\n\n"
+            "| docs-only-feat | bar | 2 |\n"
+            "| another-docs-feat | baz | 1 |\n"
+        )
+        # Only the help-templates feature appears; the project-docs
+        # features are silently dropped.
+        assert _parse_status_output(text) == frozenset({"help-only-feat"})
+
+    def test_help_templates_implicit_when_no_h2(self) -> None:
+        """If no ``## `` h2 appears, default to Help Templates context.
+
+        Backward compat with older attune-author versions whose
+        status output didn't include section headers.
+        """
+        from attune.ops.help_data import _parse_status_output
+
+        text = "### Stale\n\n| legacy-feat | foo | 1 |\n"
+        assert _parse_status_output(text) == frozenset({"legacy-feat"})
+
 
 class TestAttuneAuthorStaleFeatures:
     """Tests for the subprocess wrapper. We mock subprocess.run to
