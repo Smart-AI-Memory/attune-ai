@@ -101,3 +101,35 @@ trivially. No special-casing needed in the hook.
 **Caveat:** a `feat:` commit that adds 200 lines of code without
 tests *and* claims "refactor only" should be reviewed for accuracy
 of the claim. Reviewer responsibility, not hook responsibility.
+
+---
+
+## D5 — Hook MUST run with `--branch` coverage (2026-05-27)
+
+**Question:** does the pre-push hook run `coverage` in
+line-coverage-only or line+branch mode?
+
+**Decision:** **Branch coverage required.** The hook invokes
+`coverage run --branch -m pytest <tests>`.
+
+**Rationale:** PR #485's codecov failure was 2 partial branches
+flagged at 99.74% patch coverage while local line coverage
+reported 100%. The gap: codecov runs branch coverage
+(`[coverage:run] branch = true`), and the local
+`coverage run -m pytest` (without `--branch`) doesn't. So an
+agent running the local-coverage-default workflow sees 100%
+and pushes; codecov sees 99.74% and rejects.
+
+If the pre-push hook is going to close this loop, it MUST
+match codecov's mode. Line-only would re-introduce the same
+discipline gap this spec is built to fix.
+
+Implementation: `scripts/coverage_gate/check_patch.py` passes
+`--branch` to `coverage run` and parses the branch-coverage
+columns (`Branch`, `BrPart`, `BrMissing`) from the report.
+Threshold check intersects touched lines AND touched branches
+with the executed set.
+
+**Reference:** PR #485's second codecov-failure cycle
+(2026-05-27); see commit c4099ac2 which closed the partials
+that line coverage missed.
