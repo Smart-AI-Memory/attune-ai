@@ -4,8 +4,7 @@
 > module layout, source-reader signatures, agent system prompt,
 > output schema, cache mechanics, dashboard surface, and error
 > model.
-
-**Status:** draft
+**Status:** approved
 **Last updated:** 2026-05-26
 
 ---
