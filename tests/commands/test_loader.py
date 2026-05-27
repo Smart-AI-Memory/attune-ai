@@ -182,10 +182,20 @@ Body.
         # Valid file should not be in results (no errors)
         assert str(tmp_path / "valid.md") not in results
 
-    def test_validate_directory_nonexistent(self, loader):
-        """Test validating non-existent directory."""
-        results = loader.validate_directory("/nonexistent")
-        assert "nonexistent" in str(list(results.keys())[0])
+    def test_validate_directory_nonexistent(self, loader, tmp_path):
+        """Test validating non-existent directory.
+
+        Uses a path under tmp_path so the test is robust on every OS.
+        Earlier versions hardcoded ``"/nonexistent"`` which resolved
+        to ``<current-drive>:\\nonexistent`` on Windows and silently
+        passed/failed depending on whether the runner image had a
+        directory there. Windows-3.11/12/13 hit the false-pass path
+        in CI; the tmp_path form is deterministic.
+        """
+        target = tmp_path / "definitely-does-not-exist-xyz123"
+        assert not target.exists()  # pre-condition the old test assumed
+        results = loader.validate_directory(str(target))
+        assert "definitely-does-not-exist-xyz123" in str(list(results.keys())[0])
 
     def test_get_command_names(self, loader, commands_dir):
         """Test getting command names without full loading."""

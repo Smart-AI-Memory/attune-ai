@@ -5802,3 +5802,166 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   document the divergence in the PR body BEFORE pushing,
   then let CI surface the predicted trade-off — the
   divergence becomes self-validating.
+
+- **The `rag-code-gen` workflow's agent is read-only —
+  `allowed_tools=["Read", "Glob", "Grep"]` — so it cannot
+  write files**: hit 2026-05-26 trying to use rag-code-gen
+  to draft a Phase 1 implementation skeleton from a spec.
+  The workflow retrieves RAG-grounded context, calls the
+  agent with the augmented prompt, and returns the agent's
+  output as a single text blob in
+  ``WorkflowResult.final_output``. The agent CAN read the
+  spec + existing patterns to ground its output, but the
+  returned text then has to be manually split across the
+  spec's target paths. For multi-file scaffolding
+  (12 files for the bulletin-curator Phase 1), this is
+  strictly worse than just executing the spec's XML
+  prompts directly with Edit/Write — same grounding,
+  no transcription step. Pattern: when a workflow's name
+  suggests "code generation," check its `allowed_tools`
+  list before relying on it for file creation. Read-only
+  tool surfaces produce text, not commits.
+  ([rag_code_gen.py:359](src/attune/workflows/rag_code_gen.py:359))
+
+- **z-score anomaly detection silently never fires when
+  the historical sample has zero variance — decide
+  explicitly how to handle stddev=0 before shipping**:
+  classic implementation:
+  ```python
+  mean = sum(prior) / len(prior)
+  variance = sum((c - mean) ** 2 for c in prior) / len(prior)
+  stddev = math.sqrt(variance) if variance > 0 else 0.0
+  if stddev == 0:
+      continue  # ← skips workflows with identical prior values
+  z = (today_cost - mean) / stddev
+  if z > 2.0:
+      emit_spike(...)
+  ```
+  Real-world hit: telemetry test fixture with 6 identical
+  $0.01 days and a $5.00 spike today produces stddev=0 →
+  no spike fired. Test failed for the wrong reason (looked
+  like a logic bug; was a fixture problem). Two valid
+  resolutions: (a) require fixture variance (real
+  workflow telemetry has natural variation across model
+  tiers + run sizes — uniform synthetic data is the
+  problem); (b) production code adds a multiplier
+  fallback for the stddev=0 case (e.g. "today >5× the
+  mean AND mean > 0"). Pick one before writing tests so
+  fixtures and code agree. The "no anomaly when prior is
+  flat" interpretation is actually defensible — a
+  workflow that ran at $0.01 every day for a week
+  arguably SHOULD trigger an alert when it suddenly hits
+  $5, because that's a 500× jump, but the heuristic the
+  spec named was "z-score" which structurally can't
+  catch it. Surface the trade-off in the spec / decisions.md
+  rather than papering over it in a test.
+
+- **Pre-existing TZ-sensitive test failures pass under
+  `TZ=UTC` and fail under local TZ — diagnose before
+  treating as a regression**: hit 2026-05-26 on the
+  bulletin Phase 1's `_maybe_rotate` test. After adding
+  an unrelated method to `file_backend.py`,
+  `test_yesterdays_log_moved_to_archive` fired red.
+  Stashing the change and running on pristine origin/main
+  reproduced the failure → not caused by my change.
+  Re-running under `TZ=UTC` made it pass. Root cause:
+  `_maybe_rotate` compares `mtime.date()` (computed with
+  `tz=timezone.utc`) against `date.today()` (which uses
+  local TZ). In Eastern, an mtime backdated to "yesterday
+  +60s ago" maps to a UTC date that's still "today" in
+  local TZ → rotation no-ops. CI is UTC so the failure
+  never surfaces on origin/main; only local non-UTC dev
+  environments hit it. Diagnostic recipe when an
+  unrelated-looking test fails after your change:
+  (1) `git stash` your changes, (2) re-run the test on
+  pristine origin/main — if it still fails, the cause
+  is pre-existing; (3) try `TZ=UTC` (or other env
+  overrides like `LC_ALL=C`, `LANG=en_US.UTC-8`) — if
+  that flips it, you've found a CI-vs-dev environment
+  drift bug. Don't bundle the fix into an unrelated PR;
+  flag in the PR body and file separately.
+
+- **Local `coverage run -m pytest` defaults to LINE
+  coverage; codecov runs BRANCH coverage — always use
+  `coverage run --branch` locally to match what CI
+  enforces**: hit 2026-05-27 on PR #485 (bulletin-
+  curator Phase 1). After lifting line coverage to 100%
+  and pushing, codecov flagged 2 partial branches in
+  `sources/sweep.py` at 99.74% patch coverage. Local
+  re-run with `--branch` immediately reproduced the gap
+  (`Branch=28, BrPart=2`). The two partials were
+  `elif isinstance(row, dict)` False (non-dict bucket
+  rows) and `if reason:` False (empty reason in
+  questions-bucket finding) — both reachable by adding
+  one fixture each. Three corollaries: (1) when fixing
+  coverage gaps on any PR with codecov, run
+  `coverage run --branch -m pytest` from the start;
+  line-only reports lie by omission about partial
+  branches. (2) When writing the local-fast-feedback
+  pre-push hook, it MUST run with `--branch` (see
+  `docs/specs/test-discipline-controls/decisions.md` D5).
+  (3) When the report shows `Branch=N, BrPart=0,
+  Cover=100%`, you actually have full coverage; when
+  the same numbers say `Cover=100% line` only without
+  branch columns, treat as suspicious until verified.
+  Diagnostic: `coverage report -m` with `--branch`
+  prints a "BrPart" column and "Missing" lines with
+  `103->96` notation for branch arrows; line-only
+  prints integer line numbers only.
+
+- **Rapid pushes to a PR with `cancel-in-progress`
+  concurrency cancel the prior workflow run — and
+  cancelled-but-required = blocking, indistinguishable
+  from real failure to the PR gate**: extends the
+  existing "`gh pr checks --watch --fail-fast` mistakes
+  cancellations for failures" lesson with the
+  inbound-cause variant. Hit 2026-05-27 on PR #485
+  during the coverage-fix cycle: 4 commits pushed
+  within 17 minutes triggered 4 security-workflow runs
+  via `pull_request` events. The workflow's
+  `concurrency.group: $workflow-$head_ref` plus
+  `cancel-in-progress: true` meant each new push
+  cancelled the prior run mid-execution. The LATEST
+  commit's security run was also cancelled (likely a
+  webhook race or stale dispatch), leaving the
+  required `security` check in `cancel` bucket and the
+  PR `BLOCKED`. Recovery: `gh run rerun <run-id>` on
+  the cancelled run for the latest SHA. Prevention:
+  before pushing a fix, check whether a security /
+  long workflow is still in-flight via
+  `gh run list --workflow=security.yml --branch=<name>
+  --limit=1 --json status`. If `in_progress`, either
+  wait for it to settle (~5-7 min) or accept the
+  re-run cost. The `cancel-in-progress` design assumes
+  the new push superseded the old one, but for
+  required checks the cancellation is treated as a
+  fail-state by branch protection.
+
+- **Mark tasks complete on outcome verification, not
+  on tool-call success — especially "open PR" tasks**:
+  Hit 2026-05-27 across multiple PR-opening tasks in
+  the same session. Pattern: `gh pr create` returns a
+  URL → mark task "completed" → discover hours later
+  that CI is blocking the PR for codecov / security /
+  windows-test reasons → task should have stayed
+  in-progress the whole time. The misalignment: a tool
+  call returning success ≠ the deliverable being done.
+  The deliverable for "open PR" is "PR opened and
+  green on required checks." For "run tests" it's
+  "tests pass on the CI matrix, not just locally." For
+  "commit fix" it's "fix is on main, not just in a
+  local commit." Operational rule: when a task has an
+  outcome that lives outside the agent's machine (PR
+  state on GitHub, CI results, deploy state, package
+  on PyPI), mark the task complete ONLY when the
+  external state matches the desired outcome — not
+  when the local tool call succeeded. Practical
+  application: task "open PR" stays in_progress until
+  `gh pr checks <pr>` shows zero pending and zero
+  failing; task "push fix" stays in_progress until
+  codecov posts a green check; task "merge PR" stays
+  in_progress until `gh pr view` shows
+  `state=MERGED`. The task list as a planning artifact
+  is only useful if "completed" means "the work I
+  said I'd do is done in reality" — not "I called the
+  tool and it didn't error."

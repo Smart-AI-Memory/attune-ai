@@ -135,6 +135,38 @@ class FileBulletinBackend:
         out.sort(key=lambda e: e.last_heartbeat, reverse=True)
         return out
 
+    def read_archive(self, *, since: datetime) -> list[BulletinEntry]:
+        """Return archived entries whose snapshot date is >= ``since``.
+
+        Walks ``archive/YYYY-MM-DD.jsonl`` files. Files whose name
+        cannot be parsed as ISO date are skipped silently. A
+        missing ``archive/`` directory returns ``[]`` (rotation
+        may not have fired yet).
+        """
+        if not self.archive_dir.exists():
+            return []
+
+        cutoff = since.date()
+        out: list[BulletinEntry] = []
+        try:
+            children = sorted(self.archive_dir.iterdir())
+        except OSError as e:
+            logger.warning("bulletin: cannot list %s: %s", self.archive_dir, e)
+            return []
+
+        for path in children:
+            if not path.is_file() or path.suffix != ".jsonl":
+                continue
+            try:
+                snapshot_date = date.fromisoformat(path.stem)
+            except ValueError:
+                logger.debug("bulletin: skipping non-date archive %s", path.name)
+                continue
+            if snapshot_date < cutoff:
+                continue
+            out.extend(self._iter_entries(path))
+        return out
+
     # ------------------------------------------------------------------
     # Internals
     # ------------------------------------------------------------------
