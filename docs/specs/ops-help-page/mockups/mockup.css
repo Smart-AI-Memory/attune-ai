@@ -803,3 +803,38 @@ a:hover { text-decoration: underline; }
   color: var(--fg);
 }
 .search-form .search-btn svg { width: 14px; height: 14px; }
+
+/* Admin tools button — top-right of the home page */
+.page-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  padding: 16px 0 0;
+}
+.btn-admin {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  border: 1px solid var(--border-strong);
+  border-radius: 8px;
+  background: var(--bg);
+  color: var(--fg);
+  font-weight: 500;
+  font-size: 13px;
+  text-decoration: none;
+  transition: border-color 80ms, background 80ms;
+}
+.btn-admin:hover {
+  border-color: var(--accent);
+  background: var(--accent-soft);
+  text-decoration: none;
+}
+.btn-admin svg {
+  width: 16px;
+  height: 16px;
+  color: var(--fg-muted);
+}
+.btn-admin:hover svg { color: var(--accent); }
+.btn-admin .health-chip {
+  margin-left: 4px;
+}
