@@ -139,7 +139,16 @@ class TestRegenerate:
         runner = HelpRegenRunner(attune_author_path=str(fake_binary))
 
         async def run() -> HelpRegenJob:
-            return await runner.start("regenerate", dry_run=True)
+            job = await runner.start("regenerate", dry_run=True)
+            # Wait for the subprocess to complete so its transport
+            # cleanup doesn't race with the event-loop close — same
+            # pattern as the other tests in this file. Without it,
+            # xdist workers crash on Ubuntu CI (Python 3.11/3.12).
+            for _ in range(50):
+                if job.status in ("completed", "failed"):
+                    break
+                await asyncio.sleep(0.05)
+            return job
 
         job = _await(run())
         assert "--dry-run" in job.command
