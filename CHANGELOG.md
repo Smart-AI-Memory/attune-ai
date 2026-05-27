@@ -7,8 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.2.0] — 2026-05-27
+
+### Added
+
+- **Live `/help` page in ops dashboard** — browse and search across
+  the `.help/templates/` corpus, with a separate "Admin tools" tab
+  for coverage gaps, staleness inventory, and one-click regeneration.
+  Drives the maintenance surface for the help corpus that previously
+  required shelling out to `attune-author status` (#482, #483, #484).
+- **Pending-writes API filters test-fixture and stale entries** —
+  `GET /api/pending-writes` now drops entries whose `project_root`
+  is under a known transient directory prefix (`/tmp`,
+  `/var/folders/`, the platform `tempfile.gettempdir()`) or doesn't
+  exist on disk. Filter runs on the read side; the journal itself
+  remains append-only and auditors can still read raw entries from
+  `~/.attune/ops/pending_writes.jsonl`. Cross-platform: includes
+  Windows `AppData\Local\Temp` paths (#492).
+- **Curator Phase 1** — source readers and cache scaffolding for the
+  bulletin-curator pipeline (#485).
+- **Multi-actor bulletin Phase 1** — protocol, file backend, and
+  actor-id foundation. A "Now running across actors" strip on the
+  Workflows page surfaces concurrent runs from sibling sessions so
+  parallel work is visible rather than guessed at (#474, #476, #477,
+  #478, #480).
+
 ### Changed
 
+- **Staleness detection on `/help/admin` is hash-only.** The 7-day
+  age fallback that conflated "source-hash drift" with "polished a
+  while ago" is removed. When attune-author is unavailable, the
+  dashboard reports zero stale rather than guessing via
+  `generated_at` age. Behavioral shift: per-template staleness now
+  collapses to per-feature because attune-author's source-hash
+  drift is feature-level (one hash per feature, not per kind), so
+  all kinds of a stale feature are reported stale together (#493).
 - **Widen `attune-author` cap in the `[author]` optional extra:
   `>=0.6.2,<0.14` → `>=0.6.2,<0.15`.** Admits
   [attune-author 0.14.x](https://pypi.org/project/attune-author/)
@@ -18,6 +51,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `attune-author` inside this venv); no runtime path. Cap raised
   one minor so the next breaking attune-author bump still
   requires explicit re-validation.
+
+### Fixed
+
+- **Dashboard stale count never decreased after "Regenerate all
+  stale".** `_parse_status_output` walked every `### Stale` section
+  in `attune-author status` output regardless of its parent `## `
+  h2, so it included features from BOTH `## Help Templates` (which
+  regenerate can fix) and `## Project Docs` (which it cannot —
+  separate corpus). That made ~30 docs-side features look stale to
+  the dashboard, expanded to ~150 templates flagged. The parser now
+  tracks h2 boundaries and only collects features inside
+  `## Help Templates → ### Stale`. Backward compat with older
+  attune-author output that omits the h2 (#494).
+- **Bulletin Windows loss-rate threshold** — widened to absorb
+  boundary runs from intermittent `O_APPEND` atomicity gaps on
+  Windows. POSIX is unaffected (#490).
+- **Closed codecov gap on `bulletin/route`** from #478 (#480).
+- **xdist worker pollution xfail (second test)** — sibling test in
+  `test_redis_fallback` failing on 6 lanes with the identical
+  symptom as PR #421's existing xfail; mirrored the xfail rather
+  than re-investigating the polluter (#481).
+- **typer 0.26 vendored its own click** — test imports asserting on
+  `click.exceptions.Exit` broke the moment typer auto-upgraded past
+  0.25.x. Swapped to `typer.Exit` (works across all typer versions)
+  (#473).
+- **`help/polish` model alias** — swapped the deprecated Anthropic
+  model snapshot for the stable alias to avoid the retirement
+  cutover (#470).
+
+### Docs
+
+- New `Lessons Learned` entries from 2026-05-27 session investigation,
+  plus h2-scoped status-parsing lesson (#489, #494).
+- Dashboard QA + Pandoc/weasyprint print-CSS lesson persisted (#491).
+- ops-help-page spec: requirements + wireframes drafted, "Admin tools"
+  button promoted, open questions resolved (#482, #483, #487).
+- test-discipline-controls 4-control proposal drafted (#486).
+- bulletin-curator design + tasks drafted, spec approved (#472, #479).
+- doc-stack reference subtypes spec Phase 0 inventory complete; spec
+  approved (#472, #475).
+- `_sequencing.md` refreshed for 2026-05-26 (#471).
+- Recovery snapshot from 2026-05-26 evening session (#488).
 
 ## [7.1.2] — 2026-05-25
 
