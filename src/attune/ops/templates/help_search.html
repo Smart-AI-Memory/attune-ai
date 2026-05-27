@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Search: {{ q }}{% endblock %}
+{% block content %}
+
+<section class="help-hero help-hero-small">
+  <form class="help-hero-search-form" action="/help/search" method="get" role="search">
+    <input type="search" name="q" class="help-hero-search"
+           value="{{ q }}" placeholder="Search help…" autofocus>
+    <button type="submit" class="help-hero-search-btn" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+      </svg>
+    </button>
+  </form>
+</section>
+
+<div class="help-search-meta">
+  {% if q %}
+    {{ hits | length }} result{% if hits | length != 1 %}s{% endif %} for <code>{{ q }}</code>
+  {% else %}
+    Enter a query above to search the help corpus.
+  {% endif %}
+  · <a href="/help">← back to help home</a>
+</div>
+
+{% if hits %}
+<div class="help-results">
+  {% for hit in hits %}
+    <a href="/help/{{ hit.feature }}/{{ hit.kind }}" class="help-result">
+      <div class="help-result-head">
+        <span class="help-result-feature">{{ hit.feature }}</span>
+        <span class="help-result-kind">{{ hit.kind }}</span>
+        <span class="help-result-spacer"></span>
+        <span class="help-result-score">{{ '%.2f' % hit.score }}</span>
+      </div>
+      <div class="help-result-title">{{ hit.title }}</div>
+      <div class="help-result-snippet">{{ hit.snippet }}</div>
+    </a>
+  {% endfor %}
+</div>
+{% elif q %}
+<div class="help-empty">
+  No results for <code>{{ q }}</code>.
+  Try a different phrase, or
+  <a href="/help">browse the corpus</a>.
+</div>
+{% endif %}
+
+{% endblock %}
