@@ -39,12 +39,23 @@ from attune.ops.help_data import (
 
 
 def _fresh_ts() -> str:
-    """A generated_at timestamp younger than the staleness threshold."""
+    """A recent ``generated_at`` timestamp (now, UTC).
+
+    Staleness is hash-based; the timestamp itself does not affect
+    ``is_stale``. Kept so corpus templates have realistic frontmatter.
+    """
     return datetime.now(timezone.utc).isoformat()
 
 
 def _stale_ts() -> str:
-    """A generated_at timestamp older than the 7-day threshold."""
+    """An old ``generated_at`` timestamp (14 days ago, UTC).
+
+    Pre-rewrite this name drove date-based staleness; under the new
+    hash-only logic it just makes a template's frontmatter LOOK old.
+    Kept for tests that document the no-authority behavior
+    (an old timestamp alone is no longer enough to mark a template
+    stale — see :class:`TestIsTemplateStale`).
+    """
     return (datetime.now(timezone.utc) - timedelta(days=14)).isoformat()
 
 
@@ -118,15 +129,29 @@ def corpus(tmp_path: Path) -> Path:
 
 
 @pytest.fixture(autouse=True)
-def _force_age_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Force the age-based staleness fallback in tests.
+def _inject_stale_features(request: pytest.FixtureRequest, monkeypatch: pytest.MonkeyPatch) -> None:
+    """Inject the attune-author authority set used by the corpus.
 
-    Implemented by stubbing ``shutil.which`` so the authority
-    function naturally returns None and callers fall through to
-    the age-based path. Tests that exercise the authority path
-    re-monkeypatch shutil.which themselves.
+    Staleness is hash-based only (no date fallback). The synthetic
+    corpus marks ``stale-feature`` and ``mixed-feature`` as the
+    features whose source has drifted; this fixture stubs
+    ``_attune_author_stale_features`` to return that exact set so
+    tests run deterministically without needing the real
+    attune-author CLI on PATH.
+
+    Skipped for ``TestAttuneAuthorStaleFeatures`` — those tests
+    exercise the real ``_attune_author_stale_features`` body, so
+    they need to see the un-stubbed function. Tests in other
+    classes that need a different authority set re-monkeypatch
+    ``_attune_author_stale_features`` themselves.
     """
-    monkeypatch.setattr(help_data_mod.shutil, "which", lambda _: None)
+    if request.cls is not None and request.cls.__name__ == "TestAttuneAuthorStaleFeatures":
+        return
+    monkeypatch.setattr(
+        help_data_mod,
+        "_attune_author_stale_features",
+        lambda *_args, **_kwargs: frozenset({"stale-feature", "mixed-feature"}),
+    )
     help_data_mod._clear_staleness_cache()
 
 
@@ -216,12 +241,16 @@ class TestListFeatures:
         assert stale.has_any_stale is True
         assert stale.stale_count == 5  # all 5 kinds are stale
 
-    def test_mixed_feature_partial_stale(self, cfg: Config) -> None:
+    def test_mixed_feature_marked_fully_stale(self, cfg: Config) -> None:
+        """Staleness is hash-based at the feature level (no per-kind
+        granularity). If a feature is in the authority set, ALL its
+        kinds are stale together. The pre-rename ``partial_stale``
+        semantics came from the dropped per-template date check.
+        """
         feats = {f.name: f for f in list_features(cfg)}
         mixed = feats["mixed-feature"]
-        # Half stale, half fresh — exact count depends on parity
         assert mixed.has_any_stale is True
-        assert 0 < mixed.stale_count < 11
+        assert mixed.stale_count == 11
 
     def test_alphabetical_order(self, cfg: Config) -> None:
         names = [f.name for f in list_features(cfg)]
@@ -579,15 +608,30 @@ class TestFormatKinds:
 
 
 class TestIsTemplateStale:
-    def test_fresh_returns_false(self, tmp_path: Path) -> None:
+    """Tests for the no-authority path (``stale_features=None``).
+
+    Staleness is hash-based only: without the attune-author authority
+    set, ``_is_template_stale`` cannot determine drift and returns
+    ``False`` for every input. The authority-mode path is covered by
+    :class:`TestIsTemplateStaleAuthorityMode` below.
+    """
+
+    def test_no_authority_returns_false(self, tmp_path: Path) -> None:
+        """A template with a fresh ``generated_at`` returns False —
+        unsurprising. The point is that ``stale_features=None`` means
+        we cannot judge, so we report not-stale rather than guessing.
+        """
         p = tmp_path / "fresh.md"
         p.write_text(f"---\ngenerated_at: {_fresh_ts()}\n---\n\n# x\n", encoding="utf-8")
         assert _is_template_stale(p) is False
 
-    def test_stale_returns_true(self, tmp_path: Path) -> None:
-        p = tmp_path / "stale.md"
+    def test_no_authority_returns_false_even_for_old_template(self, tmp_path: Path) -> None:
+        """Pre-rewrite this returned True via the age-based fallback.
+        Hash-only semantics: without an authority set, age is irrelevant.
+        """
+        p = tmp_path / "ancient.md"
         p.write_text(f"---\ngenerated_at: {_stale_ts()}\n---\n\n# x\n", encoding="utf-8")
-        assert _is_template_stale(p) is True
+        assert _is_template_stale(p) is False
 
     def test_no_generated_at_returns_false(self, tmp_path: Path) -> None:
         p = tmp_path / "nogen.md"
@@ -675,9 +719,12 @@ class TestAttuneAuthorStaleFeatures:
     def test_returns_none_when_binary_missing(
         self, monkeypatch: pytest.MonkeyPatch, tmp_path: Path
     ) -> None:
+        """When ``shutil.which`` reports the binary missing,
+        ``_attune_author_stale_features`` returns ``None`` (the
+        signal callers use to mean 'cannot determine drift')."""
         from attune.ops import help_data
 
-        # Autouse fixture already stubs shutil.which to return None.
+        monkeypatch.setattr(help_data.shutil, "which", lambda _: None)
         help_data._clear_staleness_cache()
         result = help_data._attune_author_stale_features(tmp_path, tmp_path / ".help")
         assert result is None
