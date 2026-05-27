@@ -1,0 +1,111 @@
+<!-- Shared HTML fragments for the mockups. NOT included server-side
+     — the mockups are static HTML files so they can be opened
+     directly from disk. Copy-paste into each page. -->
+
+<!-- Mockup banner (top of body) -->
+<div class="mockup-banner">
+  📐 Mockup — visual reference for
+  <a href="https://github.com/Smart-AI-Memory/attune-ai/pull/482">PR #482 (ops-help-page spec)</a>.
+  Not connected to the real corpus.
+</div>
+
+<!-- Topbar (after banner) -->
+<header class="topbar">
+  <span class="topbar-brand">attune ops</span>
+  <span class="topbar-version">v7.1.2</span>
+  <nav class="topbar-nav">
+    <a href="#">Home</a>
+    <a href="#">Workflows</a>
+    <a href="#">Specs</a>
+    <a href="#">Sessions</a>
+    <a href="#">Telemetry</a>
+    <a href="index.html" class="active">Help</a>
+  </nav>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-project">PROJECT <code>attune-ai</code></span>
+</header>
+
+<!-- Sidebar (sidebar) — feature tree with all 25 real features -->
+<aside class="sidebar">
+  <input type="search" class="search" placeholder="Search help…">
+
+  <div class="sidebar-section">
+    <h3 class="sidebar-section-title">Features (25)</h3>
+    <ul class="feature-tree">
+      <li><details><summary>agents</summary>
+        <ul>
+          <li><a class="leaf" href="#">concept <span class="kind-tag">md</span></a></li>
+          <li><a class="leaf" href="#">task <span class="kind-tag">md</span></a></li>
+          <li><a class="leaf" href="#">reference <span class="kind-tag">md</span></a></li>
+        </ul>
+      </details></li>
+      <li><details><summary>bug-predict <span class="stale-dot" title="1 stale template"></span></summary>
+        <ul>
+          <li><a class="leaf" href="#">concept</a></li>
+          <li><a class="leaf" href="#">task</a></li>
+          <li><a class="leaf" href="#">reference</a></li>
+        </ul>
+      </details></li>
+      <li><details><summary>cli</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>code-quality</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>configuration</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>deep-review</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>doc-gen</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>fix-test</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>help-system</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>hooks</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>mcp-server</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>memory</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>models</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>ops-dashboard</summary><ul><li><a class="leaf" href="#">concept</a></li><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>orchestration</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>plugin</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>rag-grounding</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>refactor-plan</summary><ul><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>release-prep</summary><ul><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>resilience</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details open><summary>security-audit <span class="stale-dot" title="1 stale"></span></summary>
+        <ul>
+          <li><a class="leaf" href="#">comparison</a></li>
+          <li><a class="leaf" href="#">concept</a></li>
+          <li><a class="leaf" href="#">error</a></li>
+          <li><a class="leaf" href="#">faq</a></li>
+          <li><a class="leaf" href="#">note</a></li>
+          <li><a class="leaf" href="#">quickstart</a></li>
+          <li><a class="leaf" href="#">reference</a></li>
+          <li><a class="leaf active" href="template.html">task</a></li>
+          <li><a class="leaf" href="#">tip</a></li>
+          <li><a class="leaf" href="#">troubleshooting</a></li>
+          <li><a class="leaf" href="#">warning</a></li>
+        </ul>
+      </details></li>
+      <li><details><summary>smart-test</summary><ul><li><a class="leaf" href="#">task</a></li></ul></details></li>
+      <li><details><summary>spec-engine</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+      <li><details><summary>telemetry</summary><ul><li><a class="leaf" href="#">reference</a></li></ul></details></li>
+      <li><details><summary>wizards</summary><ul><li><a class="leaf" href="#">concept</a></li></ul></details></li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 class="sidebar-section-title">Browse by kind</h3>
+    <ul class="feature-tree">
+      <li><a class="leaf" href="#">concept <span class="kind-tag">25</span></a></li>
+      <li><a class="leaf" href="#">task <span class="kind-tag">19</span></a></li>
+      <li><a class="leaf" href="#">reference <span class="kind-tag">12</span></a></li>
+      <li><a class="leaf" href="#">faq <span class="kind-tag">8</span></a></li>
+      <li><a class="leaf" href="#">troubleshooting <span class="kind-tag">5</span></a></li>
+      <li><a class="leaf" href="#">tip <span class="kind-tag">5</span></a></li>
+      <li><a class="leaf" href="#">… 5 more kinds</a></li>
+    </ul>
+  </div>
+
+  <div class="sidebar-section">
+    <h3 class="sidebar-section-title">Pages</h3>
+    <ul class="feature-tree">
+      <li><a class="leaf" href="index.html">Home</a></li>
+      <li><a class="leaf" href="gaps.html">Coverage gaps</a></li>
+      <li><a class="leaf" href="search.html">Search results (demo)</a></li>
+      <li><a class="leaf" href="template.html">Template view (demo)</a></li>
+    </ul>
+  </div>
+</aside>

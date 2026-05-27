@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Coverage gaps — Help (mockup)</title>
+  <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mockup-banner">
+  📐 Mockup — coverage gaps view.
+  <a href="index.html">← Back to home</a>
+</div>
+
+<header class="topbar">
+  <span class="topbar-brand">attune ops</span>
+  <span class="topbar-version">v7.1.2</span>
+  <nav class="topbar-nav">
+    <a href="#">Home</a><a href="#">Workflows</a><a href="#">Specs</a>
+    <a href="#">Sessions</a><a href="#">Telemetry</a>
+    <a href="index.html" class="active">Help</a>
+  </nav>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-project">PROJECT <code>attune-ai</code></span>
+</header>
+
+<div class="shell">
+  <aside class="sidebar">
+    <form class="search-form" action="search.html" method="get" role="search">
+      <input type="search" name="q" class="search" placeholder="Search help…">
+      <button type="submit" class="search-btn" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+        </svg>
+      </button>
+    </form>
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Pages</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="index.html">Home</a></li>
+        <li><a class="leaf" href="search.html">Search results</a></li>
+        <li><a class="leaf" href="template.html">Template view</a></li>
+        <li><a class="leaf active" href="gaps.html">Coverage gaps</a></li>
+      </ul>
+    </div>
+    <div class="sidebar-section">
+      <h3 class="sidebar-section-title">Filter by</h3>
+      <ul class="feature-tree">
+        <li><a class="leaf" href="#">All gaps</a></li>
+        <li><a class="leaf" href="#">Incomplete sets only</a></li>
+        <li><a class="leaf" href="#">Stale only</a></li>
+      </ul>
+    </div>
+  </aside>
+
+  <main class="main">
+    <div class="page-head">
+      <h1>Coverage gaps</h1>
+      <div class="sub">Features with incomplete template sets or stale source hashes.</div>
+    </div>
+
+    <div class="stat-strip">
+      <div class="stat"><div class="stat-value">96%</div><div class="stat-label">complete</div></div>
+      <div class="stat"><div class="stat-value">286/297</div><div class="stat-label">templates</div></div>
+      <div class="stat"><div class="stat-value">92%</div><div class="stat-label">fresh</div></div>
+      <div class="stat"><div class="stat-value warn">10</div><div class="stat-label">stale</div></div>
+    </div>
+
+    <section class="section">
+      <h2>Incomplete sets <span class="count">2</span></h2>
+      <table class="gaps-table">
+        <thead>
+          <tr><th>Feature</th><th>Kinds</th><th>Completeness</th><th>Missing</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><a href="#">help-system</a></td>
+            <td>9/11</td>
+            <td><span class="completeness-bar" style="--pct: 82%"></span> 82%</td>
+            <td class="missing">comparison, warning</td>
+          </tr>
+          <tr>
+            <td><a href="#">orchestration</a></td>
+            <td>7/11</td>
+            <td><span class="completeness-bar" style="--pct: 64%"></span> 64%</td>
+            <td class="missing">error, faq, tip, troubleshooting</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>Stale templates <span class="count">10</span></h2>
+      <p style="color: var(--fg-muted); font-size: 12px; margin-top: -4px;">
+        Source hash drift older than 7 days · regenerate via
+        <code>attune-author generate &lt;feature&gt; --all-kinds</code>
+      </p>
+      <table class="gaps-table">
+        <thead>
+          <tr><th>Feature</th><th>Kind</th><th>Last regen</th><th>Source drift</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><a href="#">bug-predict</a></td><td><span class="item-kind">task</span></td><td>14 days ago</td><td class="missing">3 commits</td></tr>
+          <tr><td><a href="#">security-audit</a></td><td><span class="item-kind">faq</span></td><td>11 days ago</td><td class="missing">2 commits</td></tr>
+          <tr><td><a href="#">code-quality</a></td><td><span class="item-kind">reference</span></td><td>9 days ago</td><td class="missing">1 commit</td></tr>
+          <tr><td><a href="#">cli</a></td><td><span class="item-kind">concept</span></td><td>9 days ago</td><td class="missing">1 commit</td></tr>
+          <tr><td><a href="#">configuration</a></td><td><span class="item-kind">reference</span></td><td>8 days ago</td><td class="missing">1 commit</td></tr>
+          <tr><td colspan="4" style="text-align:center; color: var(--fg-muted);">… 5 more</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section">
+      <h2>How to fix</h2>
+      <ol>
+        <li>For <strong>incomplete sets</strong>, run
+            <code>attune-author generate &lt;feature&gt; --all-kinds</code>
+            from the project root.</li>
+        <li>For <strong>stale templates</strong>, the same command
+            regenerates only the kinds whose source hash drifted.</li>
+        <li>Review the regenerated content before committing — the
+            polish pass is LLM-assisted; spot-check for facts you
+            care about per the existing hallucination-shapes lesson.</li>
+      </ol>
+    </section>
+  </main>
+</div>
+
+</body>
+</html>

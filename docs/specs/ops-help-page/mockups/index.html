@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Help — attune ops (mockup, user-first)</title>
+  <link rel="stylesheet" href="mockup.css">
+</head>
+<body>
+
+<div class="mockup-banner">
+  📐 Mockup v2 — user-first home for
+  <a href="https://github.com/Smart-AI-Memory/attune-ai/pull/482">PR #482</a>.
+  Maintainer view moved to <a href="gaps.html">Maintain corpus</a> at the bottom.
+</div>
+
+<header class="topbar">
+  <span class="topbar-brand">attune ops</span>
+  <span class="topbar-version">v7.1.2</span>
+  <nav class="topbar-nav">
+    <a href="#">Home</a><a href="#">Workflows</a><a href="#">Specs</a>
+    <a href="#">Sessions</a><a href="#">Telemetry</a>
+    <a href="index.html" class="active">Help</a>
+  </nav>
+  <span class="topbar-spacer"></span>
+  <span class="topbar-project">PROJECT <code>attune-ai</code></span>
+</header>
+
+<div class="shell shell-full">
+  <main class="main">
+
+    <section class="hero">
+      <h1>How can attune help?</h1>
+      <form class="hero-search-form" action="search.html" method="get" role="search">
+        <input type="search" name="q" class="hero-search"
+               placeholder="Search anything — security audit, fix tests, commit message…"
+               autofocus>
+        <button type="submit" class="hero-search-btn" aria-label="Search">
+          <!-- magnifier glyph -->
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+          </svg>
+        </button>
+      </form>
+      <div class="hero-suggestions">
+        Try:
+        <a href="search.html">security audit</a>
+        <a href="#">how do I commit</a>
+        <a href="#">fix failing tests</a>
+        <a href="#">multi-agent coordination</a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Browse by what you need</h2>
+      <div class="intent-grid">
+        <a href="#" class="intent-card">
+          <div class="intent-icon">⚡</div>
+          <div class="intent-title">Do something</div>
+          <div class="intent-sub">task · quickstart</div>
+          <div class="intent-count">27 articles</div>
+        </a>
+        <a href="#" class="intent-card">
+          <div class="intent-icon">🔧</div>
+          <div class="intent-title">Solve a problem</div>
+          <div class="intent-sub">troubleshooting · error · faq</div>
+          <div class="intent-count">21 articles</div>
+        </a>
+        <a href="#" class="intent-card">
+          <div class="intent-icon">💡</div>
+          <div class="intent-title">Understand</div>
+          <div class="intent-sub">concept</div>
+          <div class="intent-count">25 articles</div>
+        </a>
+        <a href="#" class="intent-card">
+          <div class="intent-icon">📖</div>
+          <div class="intent-title">Look it up</div>
+          <div class="intent-sub">reference</div>
+          <div class="intent-count">12 articles</div>
+        </a>
+      </div>
+    </section>
+
+    <section class="section">
+      <h2>Featured topics</h2>
+      <ul class="featured-list">
+        <li>
+          <a href="template.html">
+            <span class="name">security-audit</span>
+            <span class="desc">Scan a codebase for vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection.</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="name">smart-test</span>
+            <span class="desc">Find test gaps and generate tests for uncovered code paths.</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="name">bulletin</span>
+            <span class="desc">Coordinate work across multiple Claude Code sessions and CLI invocations.</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="name">deep-review</span>
+            <span class="desc">Multi-pass review covering security, quality, and test gaps.</span>
+          </a>
+        </li>
+        <li>
+          <a href="#">
+            <span class="name">release-prep</span>
+            <span class="desc">Pre-release checklist — health checks, security audit, changelog validation.</span>
+          </a>
+        </li>
+      </ul>
+    </section>
+
+    <section class="section">
+      <h2>Continue where you left off</h2>
+      <ul class="item-list">
+        <li>
+          <a class="item-feature" href="template.html">security-audit</a>
+          <span class="item-kind">task</span>
+          <span class="item-spacer"></span>
+          <span class="item-meta">read 4 min ago</span>
+        </li>
+        <li>
+          <a class="item-feature" href="#">bulletin</a>
+          <span class="item-kind">concept</span>
+          <span class="item-spacer"></span>
+          <span class="item-meta">read 12 min ago</span>
+        </li>
+        <li>
+          <a class="item-feature" href="#">discovery-sweep</a>
+          <span class="item-kind">reference</span>
+          <span class="item-spacer"></span>
+          <span class="item-meta">read 1 h ago</span>
+        </li>
+      </ul>
+    </section>
+
+    <details class="all-features">
+      <summary>Browse all 25 features</summary>
+      <ul>
+        <li><a href="#">agents</a></li>
+        <li><a href="#">bug-predict</a></li>
+        <li><a href="#">cli</a></li>
+        <li><a href="#">code-quality</a></li>
+        <li><a href="#">configuration</a></li>
+        <li><a href="#">deep-review</a></li>
+        <li><a href="#">doc-gen</a></li>
+        <li><a href="#">fix-test</a></li>
+        <li><a href="#">help-system</a></li>
+        <li><a href="#">hooks</a></li>
+        <li><a href="#">mcp-server</a></li>
+        <li><a href="#">memory</a></li>
+        <li><a href="#">models</a></li>
+        <li><a href="#">ops-dashboard</a></li>
+        <li><a href="#">orchestration</a></li>
+        <li><a href="#">plugin</a></li>
+        <li><a href="#">rag-grounding</a></li>
+        <li><a href="#">refactor-plan</a></li>
+        <li><a href="#">release-prep</a></li>
+        <li><a href="#">resilience</a></li>
+        <li><a href="template.html">security-audit</a></li>
+        <li><a href="#">smart-test</a></li>
+        <li><a href="#">spec-engine</a></li>
+        <li><a href="#">telemetry</a></li>
+        <li><a href="#">wizards</a></li>
+      </ul>
+    </details>
+
+    <footer class="maintain-footer">
+      <span>286 templates across 25 features</span>
+      <span>
+        <a href="gaps.html">Maintain corpus →</a>
+        <span class="health-chip">10 stale · 2 incomplete</span>
+      </span>
+    </footer>
+  </main>
+</div>
+
+</body>
+</html>
