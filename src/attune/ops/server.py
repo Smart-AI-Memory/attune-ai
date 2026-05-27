@@ -17,6 +17,7 @@ from attune.ops.config import Config
 from attune.ops.interaction_counters import InteractionCounters
 from attune.ops.routes import bulletin as bulletin_routes
 from attune.ops.routes import dashboard
+from attune.ops.routes import help as help_routes
 from attune.ops.routes import interaction_counters as interaction_counters_routes
 from attune.ops.routes import pending_writes as pending_writes_routes
 from attune.ops.routes import runner as runner_routes
@@ -98,6 +99,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
         ("/sessions", "Sessions"),
         ("/telemetry", "Telemetry"),
         ("/health", "Health"),
+        ("/help", "Help"),
     ]
 
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
@@ -109,6 +111,12 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     # changes). In-memory only; resets on restart. See
     # ``interaction_counters.py`` for bucket layout.
     app.state.interaction_counters = InteractionCounters()
+    # Help-corpus regen runner — wraps attune-author subprocess
+    # invocations. Single concurrent job, one history per server
+    # instance. See docs/specs/ops-help-page/.
+    from attune.ops.help_regen import HelpRegenRunner
+
+    app.state.help_regen = HelpRegenRunner()
 
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
@@ -119,6 +127,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     app.include_router(interaction_counters_routes.router)
     app.include_router(pending_writes_routes.router)
     app.include_router(bulletin_routes.router)
+    app.include_router(help_routes.router)
 
     # Phase 2B of discovery-sweep-ops-integration: when sweep-result
     # persistence is enabled, wrap the runner's start() so each

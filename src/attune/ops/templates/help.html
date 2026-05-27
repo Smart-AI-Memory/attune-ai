@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+{% block title %}Help{% endblock %}
+{% block content %}
+
+<div class="help-page-toolbar">
+  <a href="/help/admin" class="btn-help-admin">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+         stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M14.7 6.3a1 1 0 0 0 .256 1.085l2.66 2.66a1 1 0 0 0 1.085.256 6 6 0 1 1-4.001 4Z"></path>
+      <path d="m14 7-3 3"></path>
+      <path d="M19.7 9.3l1.3 1.3"></path>
+      <path d="M9.4 9.4a3 3 0 0 0-4.2 4.2L3 16v3h3l2.4-2.4a3 3 0 0 0 4.2-4.2L9.4 9.4Z"></path>
+    </svg>
+    Admin tools
+    {% if stale_count or incomplete_count %}
+      <span class="health-chip">{{ stale_count }} stale · {{ incomplete_count }} incomplete</span>
+    {% endif %}
+  </a>
+</div>
+
+<section class="help-hero">
+  <h1>How can attune help?</h1>
+  <form class="help-hero-search-form" action="/help/search" method="get" role="search">
+    <input type="search" name="q" class="help-hero-search"
+           placeholder="Search anything — security audit, fix tests, commit message…"
+           value="" autofocus>
+    <button type="submit" class="help-hero-search-btn" aria-label="Search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"></circle>
+        <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+      </svg>
+    </button>
+  </form>
+</section>
+
+<section class="help-section">
+  <h2 class="help-section-title">Browse by what you need</h2>
+  <div class="help-intent-grid">
+    {% for intent in intents %}
+      <a href="/help/search?q={{ intent.kinds | join(' OR ') }}" class="help-intent-card">
+        <div class="help-intent-icon">{{ intent.icon }}</div>
+        <div class="help-intent-title">{{ intent.title }}</div>
+        <div class="help-intent-sub">{{ intent.kinds | join(' · ') }}</div>
+        <div class="help-intent-count">{{ intent.count }} articles</div>
+      </a>
+    {% endfor %}
+  </div>
+</section>
+
+{% if featured %}
+<section class="help-section">
+  <h2 class="help-section-title">Featured topics</h2>
+  <ul class="help-featured-list">
+    {% for feat in featured %}
+      <li>
+        <a href="/help/{{ feat.name }}">
+          <span class="help-feat-name">{{ feat.name }}</span>
+          {% if feat.is_complete %}
+            <span class="help-feat-kinds">{{ feat.kinds | length }} of {{ feat.kinds | length }} kinds</span>
+          {% else %}
+            <span class="help-feat-kinds">{{ feat.kinds | length }} of 11 kinds</span>
+          {% endif %}
+        </a>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% if recent %}
+<section class="help-section">
+  <h2 class="help-section-title">Recently regenerated</h2>
+  <ul class="help-item-list">
+    {% for r in recent %}
+      <li>
+        <a class="help-item-feature" href="/help/{{ r.feature }}/{{ r.kind }}">{{ r.feature }}</a>
+        <span class="help-item-kind">{{ r.kind }}</span>
+        <span class="help-item-spacer"></span>
+        <span class="help-item-meta">{{ r.generated_at | replace("T", " ") | replace("+00:00", " UTC") }}</span>
+      </li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+<details class="help-all-features">
+  <summary>Browse all {{ total_features }} features</summary>
+  <ul>
+    {% for f in features %}
+      <li><a href="/help/{{ f.name }}">{{ f.name }}</a>{% if f.has_any_stale %} <span class="help-stale-dot" title="{{ f.stale_count }} stale"></span>{% endif %}</li>
+    {% endfor %}
+  </ul>
+</details>
+
+<footer class="help-corpus-footer">
+  {{ total_templates }} templates across {{ total_features }} features
+</footer>
+
+{% endblock %}

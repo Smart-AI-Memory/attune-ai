@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}{{ record.feature }} / {{ record.kind }}{% endblock %}
+{% block content %}
+
+<div class="help-template-wrap">
+  <aside class="help-sidebar">
+    <form class="help-sidebar-search" action="/help/search" method="get" role="search">
+      <input type="search" name="q" placeholder="Search help…">
+      <button type="submit" aria-label="Search">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"
+             stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle>
+          <line x1="21" y1="21" x2="16.5" y2="16.5"></line>
+        </svg>
+      </button>
+    </form>
+
+    <h3 class="help-sidebar-title">{{ record.feature }}</h3>
+    <ul class="help-sidebar-tree">
+      {% for k in sibling_kinds %}
+        <li>
+          <a href="/help/{{ record.feature }}/{{ k }}"
+             class="{% if k == record.kind %}is-active{% endif %}">{{ k }}</a>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <h3 class="help-sidebar-title">Pages</h3>
+    <ul class="help-sidebar-tree">
+      <li><a href="/help">Help home</a></li>
+      <li><a href="/help/admin">Admin tools</a></li>
+    </ul>
+  </aside>
+
+  <main class="help-template-main">
+    <div class="help-breadcrumb">
+      <a href="/help">Help</a> &rsaquo;
+      <a href="/help/{{ record.feature }}">{{ record.feature }}</a> &rsaquo;
+      <span>{{ record.kind }}</span>
+    </div>
+    <h1 class="help-template-title">{{ record.title }}</h1>
+    <div class="help-template-meta">
+      <span class="chip">{{ record.kind }}</span>
+      {% if record.is_stale %}
+        <span class="chip chip-stale">stale · regen recommended</span>
+      {% else %}
+        <span class="chip chip-fresh">fresh</span>
+      {% endif %}
+      {% if record.generated_at %}
+        <span class="help-template-genat">generated {{ record.generated_at | replace("T", " ") | replace("+00:00", " UTC") }}</span>
+      {% endif %}
+    </div>
+
+    <article class="help-prose markdown-body">
+      {{ rendered_body | safe }}
+    </article>
+  </main>
+</div>
+
+{% endblock %}

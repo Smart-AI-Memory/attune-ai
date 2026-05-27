@@ -177,6 +177,148 @@ async def health_page(request: Request) -> HTMLResponse:
     return _render(request, "health.html", page="health", snapshot=snapshot)
 
 
+# ---------------------------------------------------------------------------
+# Help — see docs/specs/ops-help-page/
+# ---------------------------------------------------------------------------
+
+
+# Kinds grouped by intent — used by the home page's "Browse by
+# what you need" cards. Same shape as help_data.INTENT_GROUPS but
+# duplicated here for template-side rendering convenience.
+_HELP_INTENTS = (
+    {
+        "id": "do",
+        "icon": "⚡",
+        "title": "Do something",
+        "kinds": ("task", "quickstart"),
+    },
+    {
+        "id": "solve",
+        "icon": "🔧",
+        "title": "Solve a problem",
+        "kinds": ("troubleshooting", "error", "faq"),
+    },
+    {
+        "id": "understand",
+        "icon": "💡",
+        "title": "Understand",
+        "kinds": ("concept",),
+    },
+    {
+        "id": "lookup",
+        "icon": "📖",
+        "title": "Look it up",
+        "kinds": ("reference",),
+    },
+)
+
+
+def _count_articles_for_kinds(features, kinds: tuple[str, ...]) -> int:
+    """Total templates across features that match the intent's kinds."""
+    out = 0
+    for f in features:
+        for k in kinds:
+            if k in f.kinds:
+                out += 1
+    return out
+
+
+@router.get("/help", response_class=HTMLResponse)
+async def help_home_page(request: Request) -> HTMLResponse:
+    """Help home — user-first browse + search entry point."""
+    from attune.ops import help_data
+
+    cfg = request.app.state.config
+    features = help_data.list_features(cfg)
+    featured = help_data.featured_topics(cfg)
+    recent = help_data.recently_regenerated(cfg, limit=5)
+    intents = [
+        dict(intent, count=_count_articles_for_kinds(features, intent["kinds"]))
+        for intent in _HELP_INTENTS
+    ]
+    total_templates = sum(len(f.kinds) for f in features)
+    stale_count = sum(f.stale_count for f in features)
+    incomplete_count = sum(1 for f in features if not f.is_complete)
+    return _render(
+        request,
+        "help.html",
+        page="help",
+        features=features,
+        featured=featured,
+        recent=recent,
+        intents=intents,
+        total_features=len(features),
+        total_templates=total_templates,
+        stale_count=stale_count,
+        incomplete_count=incomplete_count,
+    )
+
+
+@router.get("/help/search", response_class=HTMLResponse)
+async def help_search_page(request: Request, q: str = "") -> HTMLResponse:
+    """Help search results page."""
+    from attune.ops import help_data
+
+    cfg = request.app.state.config
+    hits = help_data.search(cfg, q, limit=20)
+    return _render(request, "help_search.html", page="help", q=q, hits=hits)
+
+
+@router.get("/help/admin", response_class=HTMLResponse)
+async def help_admin_page(request: Request) -> HTMLResponse:
+    """Admin tools — coverage gaps + stale templates."""
+    from attune.ops import help_data
+
+    cfg = request.app.state.config
+    report = help_data.coverage_gaps(cfg)
+    return _render(request, "help_admin.html", page="help", report=report)
+
+
+@router.get("/help/{feature}/{kind}", response_class=HTMLResponse)
+async def help_template_page(request: Request, feature: str, kind: str) -> HTMLResponse:
+    """One template — markdown-rendered."""
+    from fastapi import HTTPException
+
+    from attune.ops import help_data
+
+    if not help_data._safe_slug(feature) or not help_data._safe_slug(kind):
+        raise HTTPException(status_code=400, detail="invalid slug")
+    cfg = request.app.state.config
+    rec = help_data.get_template(cfg, feature, kind)
+    if rec is None:
+        raise HTTPException(status_code=404, detail=f"template not found: {feature}/{kind}")
+    # Sibling kinds for the in-page nav
+    features = {f.name: f for f in help_data.list_features(cfg)}
+    feat = features.get(feature)
+    sibling_kinds = list(feat.kinds) if feat else []
+    rendered_body = _render_markdown_safe(rec.body)
+    return _render(
+        request,
+        "help_template.html",
+        page="help",
+        record=rec,
+        sibling_kinds=sibling_kinds,
+        rendered_body=rendered_body,
+    )
+
+
+@router.get("/help/{feature}", response_class=HTMLResponse)
+async def help_feature_page(request: Request, feature: str) -> HTMLResponse:
+    """Feature index — list of available kinds, click to read."""
+    from fastapi import HTTPException
+
+    from attune.ops import help_data
+
+    if not help_data._safe_slug(feature):
+        raise HTTPException(status_code=400, detail="invalid feature slug")
+    cfg = request.app.state.config
+    features = {f.name: f for f in help_data.list_features(cfg)}
+    feat = features.get(feature)
+    if feat is None:
+        raise HTTPException(status_code=404, detail=f"feature not found: {feature}")
+    return _render(request, "help_feature.html", page="help", feature_obj=feat)
+
+
 @router.get("/sessions", response_class=HTMLResponse)
 async def sessions_page(request: Request) -> HTMLResponse:
     """Sessions page — recent Claude Code sessions for this project.

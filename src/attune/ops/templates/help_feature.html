@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block title %}{{ feature_obj.name }}{% endblock %}
+{% block content %}
+
+<div class="help-breadcrumb">
+  <a href="/help">Help</a> &rsaquo; <span>{{ feature_obj.name }}</span>
+</div>
+
+<h1 class="help-template-title">{{ feature_obj.name }}</h1>
+<p class="help-page-sub">
+  {{ feature_obj.kinds | length }} of 11 template kinds
+  {% if feature_obj.has_any_stale %}
+    · <span class="help-stale-text">{{ feature_obj.stale_count }} stale</span>
+  {% endif %}
+</p>
+
+<section class="help-section">
+  <h2 class="help-section-title">Available kinds</h2>
+  <ul class="help-kind-grid">
+    {% for k in feature_obj.kinds %}
+      <li><a href="/help/{{ feature_obj.name }}/{{ k }}" class="help-kind-card">
+        <span class="help-kind-name">{{ k }}</span>
+      </a></li>
+    {% endfor %}
+  </ul>
+</section>
+
+{% if feature_obj.missing_kinds %}
+<section class="help-section">
+  <h2 class="help-section-title">Missing kinds <span class="help-count">{{ feature_obj.missing_kinds | length }}</span></h2>
+  <p class="help-section-sub">Run <code>attune-author generate {{ feature_obj.name }} --all-kinds</code> to fill in.</p>
+  <ul class="help-missing-list">
+    {% for k in feature_obj.missing_kinds %}
+      <li>{{ k }}</li>
+    {% endfor %}
+  </ul>
+</section>
+{% endif %}
+
+{% endblock %}
