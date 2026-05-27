@@ -290,14 +290,15 @@ class TestAnsiRegex:
 
 class TestOutputCap:
     def test_oversized_output_truncated(self, tmp_path: Path) -> None:
-        # Build a script that floods stdout
-        flooder = tmp_path / "flood"
-        flooder.write_text(
-            "#!/bin/sh\nfor i in $(seq 1 50000); do echo "
-            "'flood line with some bulk text for size estimate'; done\n",
-            encoding="utf-8",
+        # Build a fake binary that floods stdout — cross-platform via
+        # the same .py + wrapper pattern as the module-level fixtures.
+        flooder = _make_fake_binary(
+            tmp_path,
+            "flood",
+            "for _ in range(50000):\n"
+            "    print('flood line with some bulk text for size estimate', "
+            "flush=True)\n",
         )
-        flooder.chmod(0o755)
         runner = HelpRegenRunner(attune_author_path=str(flooder))
 
         async def run() -> HelpRegenJob:
