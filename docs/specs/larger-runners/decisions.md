@@ -1,6 +1,5 @@
 # Decisions — Larger CI Runners
-
-**Status:** Draft (2026-05-11, revised post-Probe-C)
+**Status:** approved (2026-05-11, revised post-Probe-C)
 **Owner:** Patrick
 
 ---

@@ -1,7 +1,5 @@
 # Requirements — Vercel Noise Cleanup
-
-**Status:** draft — awaiting approval before design.md and tasks.md
-
+**Status:** approved — awaiting approval before design.md and tasks.md
 User-facing stories and the contracts they imply. See `decisions.md`
 for context and the chosen resolution path. `design.md` and `tasks.md`
 are intentionally omitted — they will be written after Patrick reviews

@@ -7,9 +7,7 @@
 ---
 
 ## Phase 1: Requirements
-
-**Status**: draft
-
+**Status:** approved
 ### Problem statement
 
 The 2026-05-14 QA punch list flagged that `/sessions` returns 404 —

@@ -1,6 +1,5 @@
 # Design — Discovery-Sweep Ops Dashboard Integration
-
-**Status:** revised 2026-05-13 to Option A (see
+**Status:** approved (see
 [`audit-2026-05-13.md`](audit-2026-05-13.md))
 **Requirements:** `requirements.md`
 **Parent code:** `docs/specs/discovery-sweep/` (feature-complete on

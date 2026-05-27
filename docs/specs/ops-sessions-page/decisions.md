@@ -1,5 +1,8 @@
 # Spec: Ops Sessions Page — Decisions
 
+**Status:** approved
+
+
 > Pre-committed decisions captured 2026-05-14.
 
 ---

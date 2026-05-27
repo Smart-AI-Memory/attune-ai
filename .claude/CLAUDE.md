@@ -6076,7 +6076,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   CheckRun + StatusContext + RequiredStatusCheck records,
   not all of which carry the same fields. Same fix shape
   for `.workflowName`, `.detailsUrl`, etc.
-
 - **Required `security` check fires CANCELLED on every non-
   dependabot PR — the guard-skip pattern collides with
   branch protection**: the `Security Scan` workflow's
@@ -6192,3 +6191,63 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   installed in the venv. Practical for any dashboard /
   consumer that wants attune-rag search over an on-disk corpus
   without the full attune-help package dependency.
+
+- **Pandoc + weasyprint print artifacts need BOTH `@page` rules
+  AND `@media screen` rules — print-only CSS makes the HTML look
+  broken on a monitor**: `@page` rules (margins, headers,
+  footers, named-string section markers) ONLY fire during print
+  preview / PDF generation. They do NOT apply when the same HTML
+  is viewed in a browser. If the CSS only sets `@page` margins
+  and assumes body fills the printable area, the browser view
+  will sprawl full-width across whatever monitor it lands on
+  with zero centering or padding — looks unfinished even when
+  the PDF output is fine. Fix shape:
+  ```css
+  @media screen {
+    html { background: #ececec; font-size: 13pt; }
+    body {
+      max-width: 44em;
+      margin: 0 auto;
+      padding: 4em 3.5em 5em 3.5em;
+      background: #fdfcf8;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+    }
+    h2 { page-break-before: auto; }   /* suppress for screen */
+    #TOC { margin: 2em 0 3em 0; padding: 1.5em 0;
+           border-top: 1px solid #ddd;
+           border-bottom: 1px solid #ddd; }
+  }
+  @media (max-width: 600px) {
+    body { padding: 2em 1.2em 3em 1.2em; box-shadow: none; }
+  }
+  ```
+  Discovered building the `COLLABORATION_DISCIPLINE` article PDF
+  on 2026-05-25 — the v1 PDF looked fine, but the HTML opened in
+  Safari sprawled full-width with no margins. Pattern generalizes
+  to any print-styled HTML/PDF artifact: always test both
+  print-preview AND on-screen rendering before declaring done,
+  and budget for both `@page` and `@media screen` blocks from
+  the start.
+
+- **Pandoc `--from gfm` does NOT enable fenced divs (`:::`); use
+  `--from markdown+fenced_divs+autolink_bare_uris`**: building a
+  print artifact from a markdown source that uses pandoc's
+  fenced-div extension (`::: callout ... :::` →
+  `<div class="callout">`) silently fails under `--from gfm`. The
+  `:::` markers pass through as literal text and the HTML/PDF
+  renders them as visible characters at the top of each block.
+  The `gfm` input format is GitHub-Flavored Markdown which
+  doesn't recognize fenced divs. Two fixes: (1) use
+  `--from markdown+fenced_divs+autolink_bare_uris` (pandoc's
+  extended markdown enables fenced_divs by default; the
+  `autolink_bare_uris` extension preserves bare URL clickability),
+  or (2) maintain two parallel source files — a clean canonical
+  `.md` for GitHub rendering, and a `_print.md` companion with
+  the fenced divs for the pandoc → PDF pipeline. The fenced div
+  syntax doesn't render at all in GitHub's viewer (the `:::`
+  text appears literally), which is a worse failure mode than
+  the source files being slightly out of sync — so for any
+  document that lives both on GitHub and as a styled PDF, option
+  (2) is cleaner: canonical .md stays GitHub-friendly with plain
+  blockquotes instead of fenced divs, print .md adds the
+  div-wrapped markup for the pandoc step.

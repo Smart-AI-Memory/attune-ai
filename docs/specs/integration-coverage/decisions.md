@@ -1,5 +1,8 @@
 # Per-phase decisions — Integration Coverage Program
 
+**Status:** approved
+
+
 Append-only log. One section per phase as it lands. See
 `requirements.md` and `tasks.md` for the framework.
 

@@ -1,6 +1,5 @@
 # Decisions — Wire attune-rag's `expand_async` into attune-ai workflows
-
-**Status:** Draft (2026-05-11) — gated on briefing-followup batch
+**Status:** approved (2026-05-11) — gated on briefing-followup batch
 **Owner:** Patrick
 
 ---

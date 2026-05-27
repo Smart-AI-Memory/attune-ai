@@ -3,9 +3,7 @@
 > Pre-committed decisions per the existing lesson "Pre-committed
 > decision matrices survive contact with data." Edits to this file
 > after Phase 1 ships require a follow-up PR with rationale.
-
-**Status:** draft (2026-05-24)
-
+**Status:** approved (2026-05-24)
 ---
 
 ## Decision matrix

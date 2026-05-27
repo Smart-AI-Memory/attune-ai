@@ -1,6 +1,5 @@
 # Spec: Integration Coverage Program
-
-**Status**: draft
+**Status:** approved
 **Created**: 2026-05-13
 **Origin**: Complement to the `test-quality-program` umbrella
 ([requirements.md](../test-quality-program/requirements.md)).

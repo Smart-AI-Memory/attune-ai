@@ -1,7 +1,5 @@
 # Spec: SDK Error Message Fidelity — Design
-
-**Status:** draft (2026-05-24)
-
+**Status:** approved (2026-05-24)
 ---
 
 ## Module layout

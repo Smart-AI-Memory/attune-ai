@@ -1,5 +1,8 @@
 # Spec: Ops Path Picker — Decisions
 
+**Status:** approved
+
+
 > Pre-committed decisions captured 2026-05-14. Triggered by QA
 > punch-list item P2-7 reframed by Patrick from "fix the overflow"
 > to "give users a real path-selection affordance."

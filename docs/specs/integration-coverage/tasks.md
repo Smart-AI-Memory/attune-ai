@@ -1,7 +1,5 @@
 # Tasks: Integration Coverage Program
-
-**Status**: draft
-
+**Status:** approved
 ---
 
 ## Phase 0 — Audit before design
