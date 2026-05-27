@@ -118,6 +118,53 @@ def _is_file_committed(file_path: Path, project_root: Path) -> bool | None:
     return result.stdout.strip() == ""
 
 
+_TMP_PATH_PREFIXES: tuple[str, ...] = (  # nosec B108 — filter prefixes, not file I/O
+    "/tmp/",  # nosec B108
+    "/private/tmp/",  # nosec B108
+    "/var/folders/",
+    "/private/var/folders/",
+    "/var/tmp/",  # nosec B108
+    "/private/var/tmp/",  # nosec B108
+)
+"""Known transient-directory prefixes — pytest tmp_path, OS scratch
+dirs. Entries whose project_root lives under any of these are
+test-fixture pollution, even when the dir still exists at read
+time (macOS pytest keeps the last few tmp dirs alive)."""
+
+
+def _is_real_entry(entry: dict[str, Any]) -> bool:
+    """Drop test-fixture / stale entries at read time.
+
+    Two-part heuristic. A journal entry is "real" if its
+    ``project_root``:
+      - is present
+      - is NOT under a known transient-directory prefix
+        (``/tmp``, ``/var/folders/...pytest``, etc.)
+      - points at an existing directory on disk
+
+    Tmp-path prefixes catch pytest fixtures even while they're
+    still alive (macOS pytest holds the last few runs). Existence
+    check catches stale entries from projects the user has since
+    deleted or moved.
+
+    This is a READ-side filter only — the journal itself stays as
+    the append-only source of truth (see D1 in decisions.md).
+    Auditors who need the raw stream can read
+    ``~/.attune/ops/pending_writes.jsonl`` directly.
+    """
+    pr = entry.get("project_root", "")
+    if not isinstance(pr, str) or not pr:
+        return False
+    # Tmp-path prefix exclusion runs BEFORE the existence check
+    # because macOS keeps pytest tmp_path dirs alive across runs.
+    if any(pr.startswith(prefix) for prefix in _TMP_PATH_PREFIXES):
+        return False
+    try:
+        return Path(pr).is_dir()
+    except (OSError, ValueError):
+        return False
+
+
 def _enrich(entry: dict[str, Any], now: datetime) -> dict[str, Any]:
     """Add computed fields to a journal entry.
 
@@ -195,7 +242,11 @@ async def list_pending_writes(request: Request) -> dict[str, Any]:
     )
     now = datetime.now(timezone.utc)
     raw_entries = _load_journal_entries(journal_path)
-    enriched = [_enrich(entry, now) for entry in raw_entries]
+    # Filter test-fixture / stale entries before enrichment — see
+    # ``_is_real_entry`` for the heuristic. Skips expensive sha256 +
+    # git-status computation for entries we'd just drop anyway.
+    real_entries = [e for e in raw_entries if _is_real_entry(e)]
+    enriched = [_enrich(entry, now) for entry in real_entries]
     return {
         "pending": enriched,
         "summary": _summarize(enriched),
