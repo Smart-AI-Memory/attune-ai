@@ -112,7 +112,7 @@
         </tr>
       {% endfor %}
       {% if report.stale | length > 25 %}
-        <tr><td colspan="4" class="help-table-more">… {{ report.stale | length - 25 }} more</td></tr>
+        <tr><td colspan="4" class="help-table-more">… {{ (report.stale | length) - 25 }} more</td></tr>
       {% endif %}
     </tbody>
   </table>

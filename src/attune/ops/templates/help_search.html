@@ -33,7 +33,7 @@
         <span class="help-result-feature">{{ hit.feature }}</span>
         <span class="help-result-kind">{{ hit.kind }}</span>
         <span class="help-result-spacer"></span>
-        <span class="help-result-score">{{ '%.2f' % hit.score }}</span>
+        <span class="help-result-score">{{ '%.2f' % (hit.score | float) }}</span>
       </div>
       <div class="help-result-title">{{ hit.title }}</div>
       <div class="help-result-snippet">{{ hit.snippet }}</div>

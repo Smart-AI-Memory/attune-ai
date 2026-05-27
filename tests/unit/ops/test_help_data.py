@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from attune.ops import help_data as help_data_mod
 from attune.ops.config import Config
 from attune.ops.help_data import (
     EXPECTED_KINDS,
@@ -125,10 +126,8 @@ def _force_age_fallback(monkeypatch: pytest.MonkeyPatch) -> None:
     the age-based path. Tests that exercise the authority path
     re-monkeypatch shutil.which themselves.
     """
-    import attune.ops.help_data as mod
-
-    monkeypatch.setattr(mod.shutil, "which", lambda _: None)
-    mod._clear_staleness_cache()
+    monkeypatch.setattr(help_data_mod.shutil, "which", lambda _: None)
+    help_data_mod._clear_staleness_cache()
 
 
 @pytest.fixture

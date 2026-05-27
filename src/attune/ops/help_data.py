@@ -620,8 +620,14 @@ def _parse_template(
                     when = when.replace(tzinfo=timezone.utc)
                 age_days = (datetime.now(timezone.utc) - when).total_seconds() / 86_400
                 is_stale = age_days > STALE_THRESHOLD_DAYS
-            except (ValueError, TypeError):
-                pass
+            except (ValueError, TypeError) as exc:
+                logger.debug(
+                    "could not parse generated_at=%r for %s/%s (%s); " "leaving is_stale=False",
+                    generated_at,
+                    feature,
+                    kind,
+                    exc,
+                )
 
     return TemplateRecord(
         feature=feature,

@@ -165,18 +165,26 @@ async def help_regen_start(request: Request) -> JSONResponse:
     except HelpRegenBusyError as exc:
         # Existing job in flight — surface its id so the client
         # can poll it directly instead of opening a second.
+        # Scrub the exception message from the response; the
+        # current_job_id field carries the only data the client needs.
+        logger.info("help_regen busy: %s", exc)
         return JSONResponse(
             {
                 "error": "busy",
-                "detail": str(exc),
+                "detail": "another regen job is already in flight",
                 "current_job_id": exc.current_id,
             },
             status_code=409,
         )
     except ValueError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        logger.warning("help_regen bad request: %s", exc)
+        raise HTTPException(status_code=400, detail="invalid help_regen request") from exc
     except FileNotFoundError as exc:
-        raise HTTPException(status_code=503, detail=str(exc)) from exc
+        logger.warning("help_regen missing dependency: %s", exc)
+        raise HTTPException(
+            status_code=503,
+            detail="help_regen unavailable (missing dependency)",
+        ) from exc
     return JSONResponse(job.to_dict(), status_code=202)
 
 
