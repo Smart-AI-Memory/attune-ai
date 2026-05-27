@@ -6251,3 +6251,38 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (2) is cleaner: canonical .md stays GitHub-friendly with plain
   blockquotes instead of fenced divs, print .md adds the
   div-wrapped markup for the pandoc step.
+
+- **Status-output parsers that walk every section break the moment
+  the upstream tool grows a second corpus — track h2 boundaries,
+  not just h3 markers**: hit 2026-05-27 on PR #494. The dashboard's
+  ``_parse_status_output`` walked every ``### Stale`` markdown
+  section in ``attune-author status`` output without tracking which
+  ``## `` h2 it lived under. attune-author emits TWO sections:
+  ``## Help Templates`` (drift in ``.help/templates/``, which
+  ``attune-author regenerate`` can fix) and ``## Project Docs``
+  (drift in ``docs/how-to/``, ``docs/reference/``, etc. — separate
+  corpus, NOT touched by regenerate). The parser rolled both into
+  one ``stale_features`` set, so the dashboard reported ~31
+  features stale (1 from help-templates + 30 from project-docs).
+  That expanded to 154 templates marked stale across the
+  ``.help/templates/`` corpus. Clicking "Regenerate all stale"
+  could only fix the help-templates side (~2 features actually
+  drifted); the other 29 features' drift lived in ``docs/`` and
+  was untouched — so the counter never went down regardless of
+  how many times the user clicked. **Diagnostic shape:** when a
+  dashboard surfaces a count that NEVER decreases after the
+  remediation action runs, suspect a scope mismatch between what
+  the count includes and what the action fixes. Fix: track h2
+  section boundaries in the parser; only collect inside the
+  section the consumer's actions can address. Generalizes beyond
+  attune-author to any tool whose output groups multiple
+  sub-corpora under separate h2 headers (CI tools with per-runner
+  sections, lint tools with per-language sections, etc.). Default
+  to the desired-corpus context when no h2 appears — preserves
+  backward compat with older versions of the upstream tool that
+  emit single-section output. Companion observation: this kind of
+  bug hides behind the more visible "two parallel generators
+  drift silently" lesson because the symptom (stale count never
+  drops) feels like a regen tool bug, but the actual root cause
+  is the staleness *reporter* including items the regen tool was
+  never designed to handle.

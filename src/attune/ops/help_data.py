@@ -534,21 +534,41 @@ def _attune_author_stale_features(project_root: Path, help_dir: Path) -> frozens
 def _parse_status_output(text: str) -> frozenset[str]:
     """Extract stale feature names from ``attune-author status`` output.
 
-    Strategy: walk lines, track whether we're inside the
-    ``### Stale`` section, treat each markdown table row whose
-    first column is a slug-shaped string as a stale feature.
-    Skips the header and divider rows automatically because they
-    don't match :data:`_TABLE_ROW_RE` (they begin with ``Feature``
-    or ``-----``).
+    The status command emits two top-level sections:
+
+    - ``## Help Templates`` — drift in ``.help/templates/`` files,
+      which ``attune-author regenerate`` can fix.
+    - ``## Project Docs`` — drift in ``docs/`` files (``docs/how-to/``,
+      ``docs/reference/``, etc.) which is a SEPARATE corpus that
+      ``regenerate`` does NOT touch.
+
+    The dashboard only manages ``.help/templates/``, so this parser
+    collects feature names ONLY from the Stale section under
+    ``## Help Templates``. Including Project Docs stale features
+    here caused the dashboard to flag all templates of those
+    features as stale, but "Regenerate all stale" couldn't fix
+    them (the regenerate command leaves ``docs/`` alone) — so the
+    count never went down. Default behavior when no ``## `` headers
+    appear: assume Help Templates context (backward compat with
+    older attune-author versions that omitted the header).
+
+    Skips the table header and divider rows automatically because
+    they don't match :data:`_TABLE_ROW_RE` (they begin with
+    ``Feature`` or ``-----``).
     """
     out: set[str] = set()
+    in_project_docs = False
     in_stale = False
     for line in text.splitlines():
         stripped = line.strip()
+        if stripped.startswith("## "):
+            in_project_docs = "Project Docs" in stripped
+            in_stale = False  # h2 boundary resets h3 state
+            continue
         if stripped.startswith("###"):
             in_stale = stripped == "### Stale"
             continue
-        if not in_stale:
+        if not in_stale or in_project_docs:
             continue
         m = _TABLE_ROW_RE.match(line)
         if m:
