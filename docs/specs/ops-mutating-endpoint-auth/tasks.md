@@ -1,5 +1,8 @@
 # Tasks — Ops mutating-endpoint auth
 
+**Status:** approved
+
+
 ## Phase 1 — Inventory + scaffold
 
 - [ ] **1.1** Inventory every `@router.(put|post|delete|patch)` route under `src/attune/ops/routes/`. Produce a table in this file: route, method, file:line, "needs token?" (default yes; document any "no" with reason).

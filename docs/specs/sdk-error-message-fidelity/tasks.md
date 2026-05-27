@@ -1,7 +1,5 @@
 # Spec: SDK Error Message Fidelity — Tasks
-
-**Status:** draft (2026-05-24)
-
+**Status:** approved (2026-05-24)
 > Five phases, each shipping as its own PR. Phase 1 is the recommended
 > first commitment; Phases 2–5 build on it. Phase 1 can be approved
 > and shipped independently — it adds the primitives without touching

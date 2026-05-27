@@ -1,6 +1,5 @@
 # Decisions — Ops Dashboard Polish
-
-**Status:** draft
+**Status:** approved
 **Owner:** Patrick
 **Opened:** 2026-05-14
 **Predecessors:**

@@ -1,6 +1,5 @@
 # Decisions — Anthropic Files API adoption in attune-ai
-
-**Status:** Draft (2026-05-11) — gated on briefing-followup batch
+**Status:** approved (2026-05-11) — gated on briefing-followup batch
 **Owner:** Patrick
 
 ---

@@ -1,6 +1,5 @@
 # Decisions — Ops mutating-endpoint auth (per-process token gate)
-
-**Status:** Draft (2026-05-23)
+**Status:** approved (2026-05-23)
 **Owner:** Patrick
 **Context:** [`docs/specs/ops-specs-features/phase4-findings.md`](../ops-specs-features/phase4-findings.md) (Finding 0)
 

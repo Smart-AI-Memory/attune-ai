@@ -1,6 +1,5 @@
 # Decisions — Vercel Noise Cleanup
-
-**Status:** draft — DECIDE callouts need Patrick's input before
+**Status:** approved — DECIDE callouts need Patrick's input before
 design.md can be written
 
 Context, investigation findings, and the resolution option set. See
