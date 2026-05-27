@@ -5880,3 +5880,88 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that flips it, you've found a CI-vs-dev environment
   drift bug. Don't bundle the fix into an unrelated PR;
   flag in the PR body and file separately.
+
+- **Local `coverage run -m pytest` defaults to LINE
+  coverage; codecov runs BRANCH coverage — always use
+  `coverage run --branch` locally to match what CI
+  enforces**: hit 2026-05-27 on PR #485 (bulletin-
+  curator Phase 1). After lifting line coverage to 100%
+  and pushing, codecov flagged 2 partial branches in
+  `sources/sweep.py` at 99.74% patch coverage. Local
+  re-run with `--branch` immediately reproduced the gap
+  (`Branch=28, BrPart=2`). The two partials were
+  `elif isinstance(row, dict)` False (non-dict bucket
+  rows) and `if reason:` False (empty reason in
+  questions-bucket finding) — both reachable by adding
+  one fixture each. Three corollaries: (1) when fixing
+  coverage gaps on any PR with codecov, run
+  `coverage run --branch -m pytest` from the start;
+  line-only reports lie by omission about partial
+  branches. (2) When writing the local-fast-feedback
+  pre-push hook, it MUST run with `--branch` (see
+  `docs/specs/test-discipline-controls/decisions.md` D5).
+  (3) When the report shows `Branch=N, BrPart=0,
+  Cover=100%`, you actually have full coverage; when
+  the same numbers say `Cover=100% line` only without
+  branch columns, treat as suspicious until verified.
+  Diagnostic: `coverage report -m` with `--branch`
+  prints a "BrPart" column and "Missing" lines with
+  `103->96` notation for branch arrows; line-only
+  prints integer line numbers only.
+
+- **Rapid pushes to a PR with `cancel-in-progress`
+  concurrency cancel the prior workflow run — and
+  cancelled-but-required = blocking, indistinguishable
+  from real failure to the PR gate**: extends the
+  existing "`gh pr checks --watch --fail-fast` mistakes
+  cancellations for failures" lesson with the
+  inbound-cause variant. Hit 2026-05-27 on PR #485
+  during the coverage-fix cycle: 4 commits pushed
+  within 17 minutes triggered 4 security-workflow runs
+  via `pull_request` events. The workflow's
+  `concurrency.group: $workflow-$head_ref` plus
+  `cancel-in-progress: true` meant each new push
+  cancelled the prior run mid-execution. The LATEST
+  commit's security run was also cancelled (likely a
+  webhook race or stale dispatch), leaving the
+  required `security` check in `cancel` bucket and the
+  PR `BLOCKED`. Recovery: `gh run rerun <run-id>` on
+  the cancelled run for the latest SHA. Prevention:
+  before pushing a fix, check whether a security /
+  long workflow is still in-flight via
+  `gh run list --workflow=security.yml --branch=<name>
+  --limit=1 --json status`. If `in_progress`, either
+  wait for it to settle (~5-7 min) or accept the
+  re-run cost. The `cancel-in-progress` design assumes
+  the new push superseded the old one, but for
+  required checks the cancellation is treated as a
+  fail-state by branch protection.
+
+- **Mark tasks complete on outcome verification, not
+  on tool-call success — especially "open PR" tasks**:
+  Hit 2026-05-27 across multiple PR-opening tasks in
+  the same session. Pattern: `gh pr create` returns a
+  URL → mark task "completed" → discover hours later
+  that CI is blocking the PR for codecov / security /
+  windows-test reasons → task should have stayed
+  in-progress the whole time. The misalignment: a tool
+  call returning success ≠ the deliverable being done.
+  The deliverable for "open PR" is "PR opened and
+  green on required checks." For "run tests" it's
+  "tests pass on the CI matrix, not just locally." For
+  "commit fix" it's "fix is on main, not just in a
+  local commit." Operational rule: when a task has an
+  outcome that lives outside the agent's machine (PR
+  state on GitHub, CI results, deploy state, package
+  on PyPI), mark the task complete ONLY when the
+  external state matches the desired outcome — not
+  when the local tool call succeeded. Practical
+  application: task "open PR" stays in_progress until
+  `gh pr checks <pr>` shows zero pending and zero
+  failing; task "push fix" stays in_progress until
+  codecov posts a green check; task "merge PR" stays
+  in_progress until `gh pr view` shows
+  `state=MERGED`. The task list as a planning artifact
+  is only useful if "completed" means "the work I
+  said I'd do is done in reality" — not "I called the
+  tool and it didn't error."
