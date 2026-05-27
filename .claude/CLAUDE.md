@@ -5965,3 +5965,114 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is only useful if "completed" means "the work I
   said I'd do is done in reality" — not "I called the
   tool and it didn't error."
+- **Worktree dirty-state recovery via tar + 3-way merge —
+  the safe pattern when a parallel session left
+  uncommitted work on a branch you need to move off**:
+  hit 2026-05-27 with 43 dirty files in
+  `vigorous-pike-a1325f` (modified + untracked, 11 hours
+  old). Standard moves (`git stash -u` + branch switch +
+  `git stash pop`) have known traps per the existing
+  "stash pop silently skips overwriting" lesson, and
+  `git switch -c new-branch origin/main` fails outright
+  when any tracked file diverged between PR base and
+  current main. Safe sequence:
+  ```
+  # 1. Capture every dirty path (tracked + untracked) to tar
+  cd <dirty-worktree>
+  { git diff --name-only HEAD; \
+    git ls-files --others --exclude-standard; } \
+    | sort -u > /tmp/dirty_files.txt
+  tar -czf /tmp/dirty_snapshot.tar.gz -T /tmp/dirty_files.txt
+  # 2. Restore clean state (be careful with rm scope —
+  #    `git restore .` first restores tracked, then
+  #    delete only the originally-untracked paths)
+  git restore .
+  comm -23 \
+    <(sort /tmp/dirty_files.txt) \
+    <(git ls-files | sort) \
+    | xargs -I {} rm -f {}
+  # 3. Switch to fresh branch off main
+  git switch -c snapshot/<date> origin/main
+  # 4. Unpack
+  tar -xzf /tmp/dirty_snapshot.tar.gz
+  # 5. For tracked files that diverged between PR base
+  #    and origin/main (typically CLAUDE.md), do a 3-way
+  #    merge with git merge-file — see step 6 below
+  ```
+  Step 6: divergence handling. After unpack, any tracked
+  file that's been modified on main since the PR base is
+  now CORRUPTED (your unpack overwrote main's content
+  with the dirty version which was based on a stale
+  ancestor). Identify them upfront:
+  `while read f; do git diff --quiet 908ed7fb origin/main
+  -- "$f" || echo "DIVERGED: $f"; done < /tmp/dirty_files.txt`
+  Fix each diverged file via 3-way merge:
+  `git show <pr-base>:<path> > /tmp/base`
+  `git show origin/main:<path> > /tmp/main`
+  `cp <path> /tmp/dirty`
+  `cp /tmp/main /tmp/merged && git merge-file -p
+  /tmp/merged /tmp/base /tmp/dirty > <path>`
+  If the diff is a pure tail-append (verify with
+  `diff <base> <dirty> | grep -c "^<"` = 0), even simpler:
+  `cp /tmp/main <path> && tail -n <N> /tmp/dirty >> <path>`.
+  Pairs with the existing "stash pop silently skips" and
+  "stacked PR rebase" lessons — same problem class
+  (recovering work across branch state shifts), different
+  mechanism. Use this when the dirty state is
+  multi-file, multi-day-old, or spans both tracked and
+  untracked.
+
+- **POSIX-shell test fixtures (`#!/bin/sh` + `chmod 0o755`)
+  fail at subprocess startup on Windows — the production
+  code is OS-agnostic but the fixture isn't**: hit
+  2026-05-27 on PR #484. `test_help_regen.py` had a
+  `fake_binary` fixture that wrote a shell script and
+  chmod'd it executable, then passed the path to
+  `HelpRegenRunner(attune_author_path=...)`. The runner's
+  `asyncio.create_subprocess_exec` invocation works fine
+  cross-platform — but on Windows the shell script isn't
+  executable (no shebang resolution, chmod is a no-op),
+  so subprocess startup fails immediately and the job's
+  status becomes `failed` instead of `completed`. Six
+  tests across the file failed with the SAME shape
+  (`AssertionError: 'failed' == 'completed'`), all
+  fixture-driven; 30+ other tests in the same file
+  passed on Windows because they exercise validation
+  logic that returns BEFORE subprocess startup. Three
+  fix options ranked: (a) **`@pytest.mark.skipif(sys
+  .platform == "win32", ...)`** on each affected test —
+  quickest, loses Windows coverage of subprocess
+  paths; (b) **conditional fixture**: write a `.bat` on
+  Windows, `.sh` on POSIX. Watch out — recent Python
+  versions added security restrictions on running .bat
+  files via `create_subprocess_exec`; may need
+  `shell=True` workaround; (c) **Python script + sys
+  .executable wrapper** — write a `.py` fake binary and
+  wrap with a tiny `.bat`/`.sh` shim that invokes
+  `python <path>.py`. Most portable, most lines of
+  code. Production users aren't affected because the
+  real `attune-author` ships as `<venv>\Scripts\attune-
+  author.exe` on Windows (a setuptools-generated
+  launcher) which `shutil.which` finds and
+  `CreateProcess` runs natively. Pairs with the existing
+  "Path.rename fails on Windows when target exists" and
+  "Windows xdist worker crashes" lessons — same shape
+  (POSIX-only stdlib behavior in test infrastructure)
+  but a new specific surface (subprocess + shell
+  scripts).
+
+- **`gh pr view --json statusCheckRollup` returns null
+  name fields for incomplete checks — always
+  `select(.name != null)` before any name-pattern match
+  in jq**: hit 2026-05-27 trying to filter for the
+  codecov check with `select(.name | test("codecov"; "i"))`.
+  jq exited with `test("codecov"; "i") cannot be applied
+  to: null` because one of the rollup entries had a
+  null `name` (a still-running or incomplete check). Fix:
+  always prefix name-based filters with the null guard:
+  `select(.name != null) | select(.name | test(...))`.
+  Generalizes to any GraphQL-returned array of
+  heterogeneous nodes — `.statusCheckRollup` mixes
+  CheckRun + StatusContext + RequiredStatusCheck records,
+  not all of which carry the same fields. Same fix shape
+  for `.workflowName`, `.detailsUrl`, etc.
