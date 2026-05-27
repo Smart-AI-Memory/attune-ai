@@ -744,3 +744,62 @@ a:hover { text-decoration: underline; }
   margin: 0 auto;
   padding: 0 32px 40px;
 }
+
+/* Search button overlay — sits inside the hero search input */
+.hero-search-form {
+  position: relative;
+  width: 100%;
+}
+.hero-search { padding-right: 56px; }
+.hero-search-btn {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--accent);
+  color: white;
+  border: 0;
+  border-radius: 8px;
+  width: 44px;
+  height: 36px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  transition: background 80ms;
+}
+.hero-search-btn:hover { background: #4338ca; }
+.hero-search-btn:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+.hero-search-btn svg { width: 18px; height: 18px; }
+
+/* Smaller search-go button inside the sidebar search */
+.search-form {
+  position: relative;
+  width: 100%;
+}
+.search { padding-right: 36px; }
+.search-form .search-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: 0;
+  width: 28px;
+  height: 28px;
+  cursor: pointer;
+  color: var(--fg-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 6px;
+}
+.search-form .search-btn:hover {
+  background: var(--bg-hover);
+  color: var(--fg);
+}
+.search-form .search-btn svg { width: 14px; height: 14px; }
