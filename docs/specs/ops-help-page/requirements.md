@@ -271,6 +271,11 @@ Phases 3+4 are the polish that earns "point of pride."
 
 ## Open questions
 
+> **Status (2026-05-27):** all five resolved — see
+> [`decisions.md`](decisions.md). The questions below are
+> kept for context; the leans they propose were adopted as
+> the v1 path.
+
 1. **Search backend choice.** attune-rag's existing retrieval is the
    semantic option; a simple lexical fallback is the no-cost option.
    Lean: use attune-rag (you've already invested in benchmarks +
