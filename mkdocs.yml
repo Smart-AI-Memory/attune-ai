@@ -205,7 +205,6 @@ nav:
           - Auto-Chaining: how-to/auto-chaining.md
       - Integration:
           - Claude Code: integration/claude-code-integration.md
-          - Webhooks: how-to/webhook-integration.md
           - Hooks: hooks.md
           - Security: how-to/security-architecture.md
           - HIPAA Compliance: how-to/hipaa-compliance.md

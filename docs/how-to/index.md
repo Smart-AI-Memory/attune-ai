@@ -49,10 +49,6 @@ framework and need to accomplish something specific.
 
 <div class="grid cards" markdown>
 
-- :material-webhook: **[Webhook Integration](webhook-integration.md)**
-
-    Connect to external systems via webhooks
-
 - :material-shield: **[Security Architecture](security-architecture.md)**
 
     Secure your Empathy deployment

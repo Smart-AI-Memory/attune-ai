@@ -209,7 +209,6 @@ features:
     tags: [wizards, interactive]
     doc_paths:
       - docs/reference/wizards.md
-      - docs/reference/software-wizards.md
 
   configuration:
     description: Project configuration and settings management
@@ -238,5 +237,3 @@ features:
     files:
       - src/attune/hooks/**
     tags: [hooks, webhooks, events, automation]
-    doc_paths:
-      - docs/how-to/webhook-integration.md

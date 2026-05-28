@@ -225,5 +225,4 @@ delete_custom_wizard("my-wizard")
 
 - [Wizard Architecture](wizard-architecture.md) — How the wizard system works internally
 - Custom Wizard Development — Build Python-based wizards with workflow delegation
-- [Software Wizards](../reference/software-wizards.md) — Full reference for all 16 software wizards
-- [Industry Wizards](../reference/wizards.md) — Domain-specific wizards (Healthcare, Finance, Legal, etc.)
+- [Wizards Reference](../reference/wizards.md) — Reference for the built-in wizards
