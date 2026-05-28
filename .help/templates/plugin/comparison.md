@@ -1,55 +1,72 @@
 ---
 type: comparison
+name: plugin-comparison
 feature: plugin
 depth: comparison
-generated_at: 2026-04-19T18:54:04.258869+00:00
-source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
+generated_at: 2026-05-27T13:42:27.354756+00:00
+source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
 status: generated
 ---
 
-# Plugin vs building custom automation
+# Comparison: Plugin hooks vs direct scripting
 
-## Overview
+## Context
 
-Claude Code's plugin system provides pre-built automation through hooks, security validation, and help management. You can either use these bundled capabilities or build custom automation from scratch.
+The plugin ships a suite of lifecycle hooks for Claude Code — session handoff, compact warnings, security validation, spec orientation, and post-commit help. Each hook is a standalone entry point backed by shared state helpers in `hooks._state`. This page helps you decide when to use the plugin's hooks and when a simpler approach is the better fit.
 
-## Feature comparison
+## Hook-by-hook summary
 
-| Capability | Plugin system | Custom automation |
+| Hook module | Entry point | What it does | Requires git? |
+|---|---|---|---|
+| `hooks._handoff_cli` | `main() -> int` | Drives the `/handoff` slash command | Yes — reads `GitState` |
+| `hooks._resume_prompt` | `build_resume_prompt(...)  -> str` | Renders the session-resume prompt with spec and git context | Yes |
+| `hooks.compact_warning` | `main() -> int` | Emits a context-utilization warning when `estimate_utilization()` exceeds a threshold | No |
+| `hooks.format_on_save` | `main() -> None` | Runs the formatter on save events | No |
+| `hooks.help_freshness_check` | `main() -> None` | Checks whether help content is stale | No |
+| `hooks.help_on_error` | `main() -> None` | Surfaces contextual help after an error | No |
+| `hooks.help_post_commit` | `main() -> None` | Surfaces help after a commit | Yes |
+| `hooks.security_guard` | `main(context) -> dict` | Validates bash commands and file paths before execution | No |
+| `hooks.spec_orient` | `main() -> int` | Formats and pins the active spec for the current session | Yes |
+| `hooks.welcome` | `main() -> None` | Runs once at session start | No |
+
+## Plugin hooks vs a throwaway script
+
+| Criterion | Plugin hook | Throwaway script |
 |---|---|---|
-| **Python formatting** | Automatic via PostToolUse hook | Write your own formatter integration |
-| **Help freshness** | Built-in session start checks | Manual maintenance or custom scripts |
-| **Error suggestions** | Automatic help recommendations on Bash failures | Build your own error detection |
-| **Security validation** | Pre-configured policies for paths and commands | Design and implement security rules |
-| **Git integration** | Auto-maintains `.help/` after commits | Write custom git hooks |
-| **Setup time** | Ready to use with attune-ai core | Weeks of development |
-| **Maintenance** | Updated with Claude Code releases | You own all bug fixes and updates |
-| **Customization** | Limited to configuration options | Full control over behavior |
-| **Error handling** | Battle-tested across 611 source files | You handle edge cases |
+| **State discovery** | `discover_specs()` + `workspace_roots()` handle multi-root workspaces automatically | You must locate and parse spec files manually |
+| **Git context** | `git_state(cwd)` returns branch, last SHA, last subject, and uncommitted files in one call | You shell out to `git` and parse the output yourself |
+| **Session continuity** | `session_sentinel_path()` and `prune_stale_sentinels()` manage once-per-session deduplication | You implement your own sentinel logic |
+| **Context utilization** | `estimate_utilization(transcript_path)` returns a `[0.0, 1.0]` float ready to threshold | You compute transcript size and derive a ratio manually |
+| **Security validation** | `validate_bash_command()` and `validate_file_path()` check against `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` | You replicate or skip the allow/deny logic |
+| **Prompt rendering** | `build_resume_prompt()` composes spec info, git state, workspace path, and todo summary into a single string | You template the prompt yourself |
+| **Maintenance** | Hooks evolve with the plugin; your callers get fixes automatically | Each script is independent and drifts separately |
+| **Best for** | Persistent, production-grade Claude Code integrations | One-off investigation or a feature not yet in the API |
 
-## Use the plugin system when
+The plugin hooks are clearly the stronger choice for anything that runs regularly. A throwaway script is reasonable for exploratory work — but once you find yourself re-implementing `git_state()` or sentinel management, that is a signal to switch.
 
-- You want Python files auto-formatted after Write/Edit operations
-- You need help templates kept fresh without manual work
-- You want intelligent error suggestions when Bash commands fail
-- You need file path and command validation with sensible security defaults
-- You prefer proven automation over custom development
-- You're working within the Claude Code ecosystem
+## Plugin hooks vs calling Claude Code directly (no hooks)
 
-The plugin system is ~90% of what most developers need with zero setup time.
+Without the hooks layer, Claude Code has no automatic access to:
 
-## Build custom automation when
+- In-flight spec metadata (`SpecInfo`: `slug`, `layer`, `phase`, `status`, `mtime`)
+- Workspace root discovery across multiple directories
+- Compact warnings tied to real transcript utilization
+- Session-scoped deduplication of warnings and orientation prompts
 
-- You need behavior the plugin hooks don't provide
-- Your security policies differ significantly from the built-in rules
-- You're integrating with tools outside the Claude Code workflow
-- You want complete control over error handling and logging
-- Performance requirements exceed what the bundled runtime provides
+If you skip the hooks, you lose these capabilities entirely — they are not duplicated elsewhere in the plugin's public API.
 
-Custom automation gives you full flexibility but requires significant development investment.
+## Use the plugin hooks when…
 
-## Recommendation
+- **You need session continuity.** `session_sentinel_path()` and `prune_stale_sentinels()` keep once-per-session behaviour correct without manual bookkeeping.
+- **You are working in a multi-root workspace.** `workspace_roots()` and `discover_specs()` handle the traversal; a script cannot match this without replicating the logic.
+- **You need git context reliably.** `git_state(cwd)` returns a typed `GitState` dataclass — branch, last SHA, last subject, and uncommitted files — rather than fragile shell output parsing.
+- **You are building a security boundary.** `validate_bash_command()` and `validate_file_path()` enforce the `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` allow/deny rules that you would otherwise have to maintain yourself.
+- **You are rendering a resume or orientation prompt.** `build_resume_prompt()` and `format_orientation()` produce consistent output; hand-rolled prompts diverge over time.
 
-**Start with the plugin system.** It handles the most common automation needs immediately. The hooks (`format_on_save.py`, `help_freshness_check.py`, `help_on_error.py`, `help_post_commit.py`, `security_guard.py`) cover formatting, help maintenance, error guidance, and security validation — the core automation most developers want.
+## Skip the plugin hooks when…
 
-Build custom solutions only when you've identified specific limitations that block your workflow. The plugin system's 611-file codebase represents years of edge case handling you won't want to recreate.
+- Your task is purely exploratory and you do not plan to run it more than once or twice.
+- The behaviour you need is not exposed by the public API — in that case, file an issue or propose an extension point rather than patching internals.
+- Your integration lives at the orchestration layer above the plugin; in that case, call the orchestration API rather than individual hooks directly.
+
+**Tags:** `plugin`, `claude-code`

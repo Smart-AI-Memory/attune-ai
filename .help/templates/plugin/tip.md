@@ -1,16 +1,19 @@
 ---
 type: tip
+name: plugin-tip
 feature: plugin
 depth: tip
-generated_at: 2026-04-19T18:53:45.040321+00:00
-source_hash: cc66c32b53d43302658abed13a290caa83674b971790b41324cfbf01e8b7773b
+generated_at: 2026-05-27T13:42:27.350556+00:00
+source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
 status: generated
 ---
 
-# Tip: Test hook functions in isolation during development
+# Tip: Working effectively with the plugin hooks
 
-When developing Claude Code plugin hooks, run each hook's `main()` function independently before testing the full plugin integration. Hook functions like `format_on_save.main()` and `help_on_error.main()` are designed to work standalone — they read from stdin, process the data, and exit cleanly.
+Call the public entry points — `main()` in `hooks.spec_orient`, `hooks.compact_warning`, and `hooks.format_on_save` — rather than reaching into underscore-prefixed modules directly. Those internal modules (`_state`, `_resume_prompt`, `_transcript_size`, `_handoff_cli`) can change between versions; the public `main()` functions are the stable interface.
 
-Testing in isolation catches logic errors faster than debugging through the full plugin lifecycle, where you have to trigger the right hook event and parse Claude's output to see what went wrong.
+**Why:** Underscore-prefixed modules in this package are explicitly internal — `_state`, `_resume_prompt`, and `_transcript_size` are shared helpers that multiple hooks import, so their signatures change whenever any of those hooks evolves.
 
-The tradeoff: isolated testing won't catch integration issues where your hook interacts incorrectly with Claude's tool execution flow or MCP protocol handling.
+**Tradeoff:** Staying at the public surface means you get less direct access to intermediate values — for example, you can't cheaply reuse a `GitState` object across two calls without going through `hooks._state.git_state()`. That is an acceptable cost; if you genuinely need the intermediate data, import the specific helper by name and treat it as an internal dependency you own.
+
+**Tags:** `plugin`, `claude-code`
