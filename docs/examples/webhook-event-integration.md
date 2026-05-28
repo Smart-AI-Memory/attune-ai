@@ -844,7 +844,3 @@ def verify_webhook_signature(request, secret):
 - Add conditional webhooks (filter low-value events)
 - Batch events: `batch_size=10, batch_timeout_seconds=5`
 - Use async webhooks: `async_delivery=True`
-
----
-
-**Questions?** See [Webhook Integration Guide](../how-to/webhook-integration.md)

@@ -398,5 +398,4 @@ Multi-stage workflows typically start with `cheap` tiers for broad scanning and 
 
 - [Getting Started](wizards-getting-started.md) — Run your first wizard in under 10 minutes
 - Custom Wizard Development — Build Python wizards with workflow delegation
-- [Software Wizards](../reference/software-wizards.md) — Full reference for all 16 software wizards
-- [Industry Wizards](../reference/wizards.md) — Domain-specific wizards (Healthcare, Finance, Legal, etc.)
+- [Wizards Reference](../reference/wizards.md) — Reference for the built-in wizards
