@@ -137,16 +137,28 @@ def _is_in_flight(phase: str, status: str) -> bool:
     return True
 
 
-def _layer_for(roots: list[Path], spec_dir: Path) -> str:
-    """Resolve the layer slug for a spec directory.
+def _layer_for(roots: list[Path], base: Path) -> str:
+    """Resolve the layer slug for a spec's base directory.
 
-    Workspace-root specs (``<workspace>/specs/foo``) → ``workspace``.
-    Layer specs (``<workspace>/attune-rag/specs/foo``) → ``attune-rag``.
+    ``base`` is the directory that *contains* the spec subdir
+    (``specs`` or ``docs/specs``) — either the workspace root or a
+    layer dir.
+
+    Workspace-root specs → ``workspace``.
+    Layer specs (``<workspace>/attune-rag/...``) → ``attune-rag``.
     """
-    parent = spec_dir.parent.parent
-    if parent in roots:
+    if base in roots:
         return "workspace"
-    return parent.name or "workspace"
+    return base.name or "workspace"
+
+
+# Spec-subdir conventions probed under each root and layer dir.
+# attune-gui and workspace-root specs live in ``specs/``;
+# attune-rag/author/help keep theirs in ``docs/specs/``. Probing both
+# lets one identical hook serve every repo (supersedes a per-repo
+# config). Root-level matches are processed before layer matches so a
+# root ``docs/specs`` is attributed to ``workspace`` (see dedup below).
+_SPEC_SUBDIRS: tuple[str, ...] = ("specs", "docs/specs")
 
 
 def discover_specs(roots: list[Path]) -> list[SpecInfo]:
@@ -164,14 +176,18 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
     found: list[SpecInfo] = []
     seen: set[Path] = set()
     for root in roots:
-        candidate_specs_dirs: list[Path] = [root / "specs"]
+        # (base, specs_dir) pairs. ``base`` is the dir that contains the
+        # spec subdir and decides the layer label. Root-level bases are
+        # listed first so a ``docs/specs`` at the root is attributed to
+        # ``workspace`` before the layer walk reaches the same path.
+        candidate_bases: list[tuple[Path, Path]] = [(root, root / sub) for sub in _SPEC_SUBDIRS]
         try:
-            for entry in root.iterdir():
+            for entry in sorted(root.iterdir()):
                 if entry.is_dir():
-                    candidate_specs_dirs.append(entry / "specs")
+                    candidate_bases.extend((entry, entry / sub) for sub in _SPEC_SUBDIRS)
         except OSError:
             continue
-        for specs_dir in candidate_specs_dirs:
+        for base, specs_dir in candidate_bases:
             if not specs_dir.is_dir():
                 continue
             try:
@@ -193,7 +209,7 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
                     SpecInfo(
                         slug=spec_dir.name,
                         path=spec_dir,
-                        layer=_layer_for(roots, spec_dir),
+                        layer=_layer_for(roots, base),
                         phase=phase,
                         status=status,
                         mtime=mtime,
