@@ -23,7 +23,7 @@ try:
     from markdown_it import MarkdownIt
 except ImportError:  # pragma: no cover - build-time dependency
     sys.stderr.write("markdown-it-py is required: pip install markdown-it-py\n")
-    raise SystemExit(1)
+    raise SystemExit(1) from None
 
 HERE = Path(__file__).resolve().parent
 SOURCE = HERE / "discipline" / "COLLABORATION_DISCIPLINE.md"
