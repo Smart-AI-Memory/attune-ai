@@ -110,3 +110,30 @@ The pre-committed matrix in this file still routes the decision; only the compar
 **Acknowledgment:** Phase 0.1's 45.7% multi-analytical-sessions figure is heavily Patrick-weighted (13,318 of 19,014 events from one user_id). All Phase 0 measurement decisions inherit this skew. Even with rigorous A/B, the outcome reflects "what's right for Patrick's workflow pattern," not external users. This is a known limitation and not a blocker — but any PROCEED/DEFER/RETIRE decision must be honest about the sample size.
 
 **Mitigation:** if Phase 0 routes to PROCEED, Phase 1 dogfood (gated on feature flag) becomes the multi-user telemetry pass. If it routes to RETIRE or DEFER, the single-operator caveat is documented and we trust that real users hitting a different pattern would surface a different spec.
+
+---
+
+## Probe verdict — RETIRE (2026-05-29)
+
+**Status:** RESOLVED. Executed the committed "Probe before measurement" decision via static inspection of `src/attune/workflows/deep_review.py` (no live A/B needed to route).
+
+**What the code shows:**
+- `_run_deep_review` (≈line 282) calls `claude_agent_sdk.query(prompt=_TASK_PROMPT_TEMPLATE, options=ClaudeAgentOptions(system_prompt=_SYSTEM_PROMPT, agents={3 AgentDefinitions}, allowed_tools=["Read","Glob","Grep","Agent"], ...))`.
+- The three subagents (`security`, `quality`, `test gaps`) are registered as Agent-SDK `AgentDefinition`s with read-only tools and per-agent models.
+- The orchestrator system prompt + task template instruct: "Review … using the three specialized subagents below … After all subagents finish, synthesize."
+
+**Conclusion:** The architectural premise of THIS spec — "build a parallel orchestrator subagent that fans out analyses and synthesizes" — **already ships in `deep_review.py`**. It is an Agent-SDK orchestrator over a 3-subagent fan-out with a synthesis step. The proposed new surface would duplicate it.
+
+**Routing (per the committed "Probe before measurement" decision, 2026-05-19):**
+> "If it does [parallel], the spec retires because the proposed work is already shipping. If it doesn't [serial], the right fix is a one-line orchestrator-prompt tweak to deep-review, not a new orchestrator skill."
+
+Static inspection confirms the orchestrator is **parallel-capable** (`allowed_tools` includes `Agent`; the SDK permits multiple Agent tool calls in one assistant turn). It cannot prove from source alone whether the model dispatches in one turn (parallel) or three (serial) at runtime — but **both branches of the committed decision lead away from building a new surface.** That runtime nuance is a `deep_review` optimization detail, not a justification for the proposed spec.
+
+**Decision: RETIRE this spec.** The proposed orchestrator is redundant with `deep_review`. Pairs with the already-retired `agent-surface-rebalance` (2026-05-12); together they close the "should we grow the subagent surface" question for now.
+
+**Single carved-off follow-up (optional, tiny, NOT this spec):**
+- One live `/deep-review` run with turn-level tracing → record in `phase0-data/deep-review-trace.md` whether the 3 Agent calls fire in one assistant turn (parallel) or serially.
+- If serial: a one-line tweak to `_TASK_PROMPT_TEMPLATE` / `_SYSTEM_PROMPT` (e.g. "dispatch all three subagents in a single turn before synthesizing") — a `deep_review` perf fix, filed on its own.
+- If parallel: no action; close the thread.
+
+The D2 modal triplet (`bug-predict + code-review + security-audit`) differs slightly from `deep_review`'s (`security + quality + test-gaps`); this does not change the verdict — `code-quality` already wraps bug-predict-style analysis, and the architecture (orchestrate + fan-out + synthesize) is what was being evaluated, and it exists.

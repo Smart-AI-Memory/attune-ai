@@ -1,5 +1,5 @@
 # Requirements — Agent Surface Parallelism Evaluation
-**Status:** approved (2026-05-16)
+**Status:** RETIRED (2026-05-29) — probe found the proposed orchestrator already ships in `deep_review.py`. See [decisions.md](decisions.md) "Probe verdict — RETIRE".
 **Pairs with:** [`agent-surface-rebalance`](../agent-surface-rebalance/) (retired 2026-05-12)
 
 ---
