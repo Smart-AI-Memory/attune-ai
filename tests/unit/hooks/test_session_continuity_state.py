@@ -145,6 +145,35 @@ class TestDiscoverSpecs:
         (specs_dir / "README.md").write_text("not a spec dir")
         assert state_mod.discover_specs([tmp_path]) == []
 
+    def test_docs_specs_at_root_is_workspace(self, tmp_path: Path, state_mod) -> None:
+        # attune-rag/author/help keep specs under docs/specs/, not specs/.
+        spec = tmp_path / "docs" / "specs" / "rag-feat"
+        _write_spec(spec, requirements_status="approved")
+        result = state_mod.discover_specs([tmp_path])
+        assert len(result) == 1
+        assert result[0].slug == "rag-feat"
+        assert result[0].layer == "workspace"
+
+    def test_docs_specs_under_layer(self, tmp_path: Path, state_mod) -> None:
+        spec = tmp_path / "attune-author" / "docs" / "specs" / "author-feat"
+        _write_spec(spec, requirements_status="approved")
+        result = state_mod.discover_specs([tmp_path])
+        assert len(result) == 1
+        assert result[0].slug == "author-feat"
+        assert result[0].layer == "attune-author"
+
+    def test_both_conventions_coexist_without_dup(self, tmp_path: Path, state_mod) -> None:
+        # A repo using specs/ and one using docs/specs/ side by side; no
+        # double-counting, each attributed to the right layer.
+        _write_spec(tmp_path / "specs" / "ws-feat", requirements_status="approved")
+        _write_spec(
+            tmp_path / "attune-rag" / "docs" / "specs" / "rag-feat",
+            requirements_status="approved",
+        )
+        result = state_mod.discover_specs([tmp_path])
+        layers = {s.slug: s.layer for s in result}
+        assert layers == {"ws-feat": "workspace", "rag-feat": "attune-rag"}
+
 
 # ── git_state ────────────────────────────────────────────────
 
