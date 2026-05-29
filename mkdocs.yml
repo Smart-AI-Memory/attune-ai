@@ -93,6 +93,7 @@ exclude_docs: |
   how-to/multi-agent-coordination.md
 
   # --- Top-level orphaned files ---
+  repo-hygiene.md
   ADAPTIVE_ROUTING_*.md
   AGENT_*.md
   ANTHROPIC_*.md

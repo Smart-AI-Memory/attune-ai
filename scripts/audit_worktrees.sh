@@ -250,3 +250,6 @@ if [[ ${ACTIVE_ROWS[@]+x} ]]; then
         echo "- \`${parts[0]}\` → PR #${parts[3]}"
     done
 fi
+
+echo ""
+echo "> Triage method (preserve before you prune): see \`docs/repo-hygiene.md\`."
