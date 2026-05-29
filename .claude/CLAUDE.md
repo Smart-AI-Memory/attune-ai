@@ -6344,3 +6344,55 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   ``gh api .../pending_deployments -X POST`` and
   ``gh run cancel <dispatch-run-id>`` the duplicate before it
   reaches the upload step.
+
+- **`dig @8.8.8.8 <domain>` returning NXDOMAIN is the
+  definitive "this domain is unregistered" signal — local
+  `whois` and `whois.com` via WebFetch are both unreliable
+  for second-level domain availability**: discovered
+  2026-05-27 while triaging domain candidates for the
+  attune-ai.dev / attune-rag.dev / attune-help.dev launch.
+  The local ``whois`` command on macOS returned only
+  TLD-level registry info (Google's .dev registry boilerplate)
+  rather than second-level domain records. ``dig`` without
+  specifying a resolver timed out ambiguously — could mean
+  "unregistered" OR "registered with no DNS records." ``dig
+  @8.8.8.8 <domain>`` queries Google's public DNS, which
+  authoritatively asks the TLD nameservers and returns
+  NXDOMAIN in the ``status:`` line if the name doesn't exist
+  in the registry. NXDOMAIN at this layer is definitive. The
+  whois.com web lookup via WebFetch worked fine for .com but
+  hit-or-miss for .dev/.ai (sometimes returns the
+  search-form page text instead of actual WHOIS data — needs
+  a real form submission). Reliable triage chain: (1) ``dig
+  @8.8.8.8 <domain> | grep NXDOMAIN`` to check existence
+  cheaply; (2) if NOT NXDOMAIN, try ``curl -sI
+  https://<domain>`` to characterize — HTTP 525 = Cloudflare
+  SSL handshake fail (registered + broken origin, often
+  parked), HTTP 200 = active site, no response = registered
+  + no web service; (3) ``whois.com`` lookup via WebFetch
+  only when you actually need registration metadata
+  (registrar, dates, lock flags).
+
+- **The ``attune-ai`` brand has a permanent .com collision
+  with another company (Attune, Excel-automation AI)**:
+  noticed 2026-05-27 during domain triage. ``attune-ai.com``
+  is owned by a separate "Attune" Excel-automation startup
+  (registered Jan 2024, GoDaddy, AWS DNS, contact
+  ``henry@attune-ai.com``). This is permanent reality, not a
+  squatter — they have a real product live on the site.
+  Implications: (1) any future product positioning should
+  anticipate occasional email/search confusion with that
+  separate Attune; (2) the canonical home for the package
+  surface is ``attune-ai.dev`` (registered May 2026), which
+  also signals "developer tooling" more clearly than the
+  SaaS-product framing the .com occupies; (3) the install
+  command ↔ canonical URL consistency (``pip install
+  attune-ai`` ↔ ``attune-ai.dev``) sidesteps the .com
+  entirely; (4) defensive registration of ``attune-ai.ai``
+  is cheap if cross-namespace confusion ever becomes an
+  active concern. Pair lesson with the existing pattern of
+  putting sibling static-site dirs at repo root: the
+  ``attune-ai-dev/`` directory was added alongside
+  ``website/`` (smartaimemory.com Next.js) so each
+  deployable site is one top-level directory — sibling, not
+  nested, not duplicating each other's marketing surface.
