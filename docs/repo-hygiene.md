@@ -134,3 +134,20 @@ branches proved to be exact duplicates of the one dropped commit; the
 remaining branches mapped to already-shipped specs. Net: dropped 1
 commit, pruned 2 worktrees + 16 branches, recovered 1 piece of real
 work, **lost nothing**.
+
+## Gotcha — docs PRs and `mkdocs build --strict`
+
+If your project builds docs with `mkdocs build --strict`, note that
+strict mode aborts on *any* warning — including a relative link from a
+`docs/` page to a file **outside** the docs tree (e.g.
+`../scripts/foo.sh`). A dev runbook like this one lives in `docs/` for
+proximity but isn't a published page, so:
+
+- Add it to `exclude_docs:` in `mkdocs.yml` (alongside other dev-only
+  docs). Excluded pages aren't link-validated, and the relative link
+  still resolves correctly when the file is read on GitHub or locally.
+- Or, if the page *is* published, use an absolute GitHub URL for any
+  out-of-tree target instead of a relative path.
+
+(This very file tripped that check on its first PR — fixed by the
+`exclude_docs` route.)
