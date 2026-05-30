@@ -321,9 +321,85 @@ Phase 2 triages these specific docs.
      source before going this route.
   3. **Keep current** — not viable; the doc is fiction-adjacent and
      a copy-paste hazard for users in regulated environments.
-- **`docs/how-to/unified-memory-system.md`** — line 450 describes
-  `security-architecture.md` as covering "PII scrubbing, **encryption**,
-  audit logging." Encryption is fiction-adjacent (no real encryption
-  module in `attune.security`). Phase 2 triage of this doc must update
-  the description to drop "encryption" or document what surface does
-  exist if any (verify against `src/attune/memory/`).
+- **`docs/how-to/unified-memory-system.md`** — line 450 used to
+  describe `security-architecture.md` as covering "PII scrubbing,
+  **encryption**, audit logging." Encryption is fiction-adjacent
+  (no real encryption module in `attune.security`). **Resolved in
+  PR-B (2026-05-30):** "encryption" dropped from the line during
+  the MECHANICAL batch.
+
+---
+
+## Phase 3 outcomes (2026-05-30, PR-D — RETIRE batch)
+
+### Retired (4 docs deleted)
+
+- **`docs/how-to/short-term-memory-implementation.md`** — built
+  on `AgentCoordinator` / `AgentTask` / `TeamSession`, which were
+  deliberately **deleted in v6.8.0**. `src/attune/coordination.py`
+  is an `ImportError` shim telling callers to pin
+  `attune-ai<6.8.0`. This doc is no longer fact-drift; it
+  documents a feature that no longer ships.
+- **`docs/reference/SHORT_TERM_MEMORY.md`** — same coordination
+  spine. Full reference for classes that no longer exist.
+- **`docs/examples/webhook-event-integration.md`** — imports
+  `attune.webhooks` and `attune.events`; neither module exists
+  in source; `[webhooks]` extra not in `pyproject.toml`. Was
+  flagged in `decisions.md` open question; closed by retire.
+- **`docs/tutorials/examples/webhook-event-integration.md`** —
+  identical near-copy of the above; same retire reasoning.
+
+### Phase 3 scout's surprises
+
+- **Coordination subsystem deletion was a deliberate v6.8.0
+  product decision**, not doc drift. The original "Fact-drift
+  HIGH (16)" table framed three docs (short-term-memory-implementation,
+  SHORT_TERM_MEMORY, multi-agent-coordination) as deleted-API
+  drift without noting that the shim explicitly tells callers to
+  pin `<6.8.0`. Pushed two of those three from REWRITE to RETIRE.
+- `multi-agent-coordination.md` also slipped from REWRITE to
+  RETIRE-CANDIDATE because `AgentMonitor` is real but at
+  `attune.agent_monitoring`, NOT `attune.monitoring`, and the
+  surviving content overlaps the existing pattern-library
+  reference.
+
+### Inbound-ref cleanup
+
+13 inbound references cleaned across 11 files:
+- `mkdocs.yml` (3 nav entries dropped)
+- `.help/features.yaml` (3 entries dropped)
+- `docs/how-to/unified-memory-system.md`, `how-to/index.md`,
+  `reference/index.md`, `getting-started/redis-setup.md`,
+  `examples/simple-chatbot.md`, `tutorials/examples/simple-chatbot.md`
+  (bullet/sentence pruning where the broken link lived)
+- `docs/examples/{adaptive-learning-system,sbar-clinical-handoff,
+  multi-agent-team-coordination}.md` +
+  `docs/tutorials/examples/{adaptive-learning-system,sbar-clinical-handoff}.md`
+  (dropped the "Webhook Integration" bullet from each "Related
+  examples" section)
+
+### Build verification
+
+- `mkdocs build --strict` passes. Pre-existing anchor warnings
+  in `API_REFERENCE.md` are unrelated to this PR.
+- Sanity grep: zero remaining inbound references to the 4
+  retired docs outside of (a) the cleanup spec itself, (b)
+  `docs/archive/`.
+
+### Follow-up chip spawned
+
+- **Team coordination on shared Redis memory** — feature spec
+  exploration. Recovers (in a new design) the coordination
+  surface that v6.8.0 deleted; separate from doc cleanup. Chip
+  in queue; not in this session's scope.
+
+### Phase 3 status
+
+- Scout ✅ (this session)
+- PR-D RETIRE batch ✅ (this session, shipping now)
+- PR-E MECHANICAL batch ⏸ (4 docs queued: learning-and-patterns,
+  pattern-library, smart-router, +1)
+- PR-F+ REWRITE batch ⏸ (3 docs queued: META_ORCHESTRATION_TUTORIAL,
+  multi-agent-coordination, project-analysis-and-metrics; ≤1
+  REWRITE per session per contract)
+- Phase 4: TROUBLESHOOTING.md (out of Phase 3 cohort; deferred)

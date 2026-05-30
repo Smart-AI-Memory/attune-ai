@@ -670,7 +670,6 @@ asyncio.run(adaptive_learning_demo())
 
 **Related examples**:
 - [Multi-Agent Coordination](multi-agent-team-coordination.md) - Collective learning
-- [Webhook Integration](webhook-event-integration.md) - Event-driven adaptation
 - [Simple Chatbot](simple-chatbot.md) - Trust building basics
 
 ---

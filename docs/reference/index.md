@@ -35,10 +35,6 @@ quick reference materials for when you need to look something up.
 
     Configuration options and environment variables
 
-- :material-memory: **[Short-Term Memory](SHORT_TERM_MEMORY.md)**
-
-    Memory system technical reference
-
 </div>
 
 ### Core Modules
