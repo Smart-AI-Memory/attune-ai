@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
+        <meta name="description" content="Reference for `attune.wizards` — guided multi-step wizards with XML task decomposition. Covers the 5 built-in developer wizards, the `BaseWizard` lifecycle, and config-driven YAML wizards.">
       
       
         <meta name="author" content="Patrick Roebuck">
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#description-industry-wizards-api-reference-domain-specific-ai-assistants-with-built-in-security-compliance-and-industry-best-practices-ov" class="md-skip">
+        <a href="#wizards" class="md-skip">
           Skip to content
         </a>
       
@@ -3776,6 +3776,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3784,10 +3786,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description-industry-wizards-api-reference-domain-specific-ai-assistants-with-built-in-security-compliance-and-industry-best-practices-ov" class="md-nav__link">
+  <a href="#public-api-at-a-glance" class="md-nav__link">
     <span class="md-ellipsis">
       
-        description: Industry Wizards API reference: Domain-specific AI assistants with built-in security, compliance, and industry best practices. ## Ov
+        Public API at a glance
       
     </span>
   </a>
@@ -3795,22 +3797,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#industry-wizards" class="md-nav__link">
+  <a href="#listing-and-running-wizards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Industry Wizards
+        Listing and running wizards
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Industry Wizards">
+    <nav class="md-nav" aria-label="Listing and running wizards">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#overview" class="md-nav__link">
+  <a href="#listing-wizards-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Overview
+        Listing wizards (Python)
       
     </span>
   </a>
@@ -3818,10 +3820,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#getting-and-running-a-wizard-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Getting and running a wizard (Python)
       
     </span>
   </a>
@@ -3829,33 +3831,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#healthcare-wizards" class="md-nav__link">
+  <a href="#listing-and-running-wizards-claude-code-skill" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Healthcare Wizards
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Healthcare Wizards">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
+        Listing and running wizards (Claude Code skill)
       
     </span>
   </a>
@@ -3866,35 +3845,46 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#finance-wizard" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#the-5-built-in-wizards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Finance Wizard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Finance Wizard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features_1" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
+        The 5 built-in wizards
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example_1" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#step-types" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Example
+        Step types
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#basewizard-lifecycle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BaseWizard lifecycle
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="BaseWizard lifecycle">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#minimal-custom-wizard-python" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Minimal custom wizard (Python)
       
     </span>
   </a>
@@ -3905,24 +3895,24 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#legal-wizard" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#config-driven-wizards-yaml" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Legal Wizard
+        Config-driven wizards (YAML)
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Legal Wizard">
+    <nav class="md-nav" aria-label="Config-driven wizards (YAML)">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#key-features_2" class="md-nav__link">
+  <a href="#yaml-schema-v10" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Key Features
+        YAML schema (v1.0)
       
     </span>
   </a>
@@ -3930,10 +3920,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#quick-example_2" class="md-nav__link">
+  <a href="#example" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Example
+        Example
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#lifecycle-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Lifecycle helpers
       
     </span>
   </a>
@@ -3944,353 +3945,37 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#retail-wizard" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#sessions" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Retail Wizard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Retail Wizard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features_3" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
+        Sessions
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example_3" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#discovery-registration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Example
+        Discovery &amp; registration
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#education-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        Education Wizard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Education Wizard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example_4" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#hr-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        HR Wizard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="HR Wizard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example_5" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#technology-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Technology Wizard
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Technology Wizard">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#key-features_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Key Features
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#quick-example_6" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Quick Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#additional-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Additional Wizards
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Additional Wizards">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#accounting-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Accounting Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#customer-support-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Customer Support Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#government-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Government Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#insurance-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Insurance Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#logistics-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Logistics Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#manufacturing-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Manufacturing Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#real-estate-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Real Estate Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#research-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Research Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#sales-wizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sales Wizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#base-wizard-api" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Base Wizard API
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Base Wizard API">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#basewizard" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseWizard
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#wizardconfig" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        WizardConfig
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-custom-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Creating Custom Wizards
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#security-best-practices" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Security Best Practices
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
+        <li class="md-nav__item">
   <a href="#see-also" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See Also
+        See also
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4314,486 +3999,356 @@
   
 
 
+<h1 id="wizards">Wizards<a class="headerlink" href="#wizards" title="Permanent link">&para;</a></h1>
+<p><code>attune.wizards</code> is the runtime for <strong>guided, multi-step interactive
+wizards</strong> in Attune AI. A wizard is an ordered sequence of typed steps
+(questions, LLM calls, task decomposition, review, preview, confirm)
+that walks a user through a task with structured prompts and
+checkpoints.</p>
+<p>It ships with 5 built-in developer-focused wizards and a config-driven
+mode that lets users define custom wizards in YAML — no Python
+required.</p>
+<blockquote>
+<p><strong>Note</strong>: This is not a collection of "industry-specific" or
+"domain-compliance" wizards. The package has no Healthcare, Finance,
+Legal, HIPAA, or SOC2 wizards. Earlier docs that described such a
+surface were fiction — see the <code>doc-fiction-cleanup</code> spec.</p>
+</blockquote>
 <hr />
-<h2 id="description-industry-wizards-api-reference-domain-specific-ai-assistants-with-built-in-security-compliance-and-industry-best-practices-ov">description: Industry Wizards API reference: Domain-specific AI assistants with built-in security, compliance, and industry best practices. ## Ov<a class="headerlink" href="#description-industry-wizards-api-reference-domain-specific-ai-assistants-with-built-in-security-compliance-and-industry-best-practices-ov" title="Permanent link">&para;</a></h2>
-<h1 id="industry-wizards">Industry Wizards<a class="headerlink" href="#industry-wizards" title="Permanent link">&para;</a></h1>
-<p>Domain-specific AI assistants with built-in security, compliance, and industry best practices.</p>
-<h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">&para;</a></h2>
-<p><strong>Attune AI includes industry-specific wizards</strong> that provide:</p>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m10 17-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9m-6-8L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5z"/></svg></span> <strong>Built-in Security</strong> - PII scrubbing, secrets detection, audit logging</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4c0-1.11.89-2 2-2m9 16v-2H6v2zm3-4v-2H6v2z"/></svg></span> <strong>Domain Knowledge</strong> - Industry-specific prompts and workflows</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m10 17-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9m-6-6a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2"/></svg></span> <strong>Compliance Ready</strong> - HIPAA, SOC2, GDPR, industry regulations</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20.5 11H19V7a2 2 0 0 0-2-2h-4V3.5A2.5 2.5 0 0 0 10.5 1 2.5 2.5 0 0 0 8 3.5V5H4a2 2 0 0 0-2 2v3.8h1.5c1.5 0 2.7 1.2 2.7 2.7S5 16.2 3.5 16.2H2V20a2 2 0 0 0 2 2h3.8v-1.5c0-1.5 1.2-2.7 2.7-2.7s2.7 1.2 2.7 2.7V22H17a2 2 0 0 0 2-2v-4h1.5a2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5"/></svg></span> <strong>Easy Integration</strong> - Drop-in components for any application</li>
-</ul>
-<hr />
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="admonition tip">
-<p class="admonition-title">Choose Your Industry</p>
-<p>Click the tab for your industry to see the specialized wizard documentation.</p>
-</div>
-<div class="tabbed-set tabbed-alternate" data-tabs="1:8"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><input id="__tabbed_1_3" name="__tabbed_1" type="radio" /><input id="__tabbed_1_4" name="__tabbed_1" type="radio" /><input id="__tabbed_1_5" name="__tabbed_1" type="radio" /><input id="__tabbed_1_6" name="__tabbed_1" type="radio" /><input id="__tabbed_1_7" name="__tabbed_1" type="radio" /><input id="__tabbed_1_8" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M128 64c0-35.3 28.7-64 64-64h192c35.3 0 64 28.7 64 64v64h64c35.3 0 64 28.7 64 64v256c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V192c0-35.3 28.7-64 64-64h64zm144 288c-17.7 0-32 14.3-32 32v80h96v-80c0-17.7-14.3-32-32-32zm-144 16v-32c0-8.8-7.2-16-16-16H80c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16m-16-112c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16H80c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16zm400 112v-32c0-8.8-7.2-16-16-16h-32c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16h32c8.8 0 16-7.2 16-16m-16-112c8.8 0 16-7.2 16-16v-32c0-8.8-7.2-16-16-16h-32c-8.8 0-16 7.2-16 16v32c0 8.8 7.2 16 16 16zM264 104v32h-32c-8.8 0-16 7.2-16 16v16c0 8.8 7.2 16 16 16h32v32c0 8.8 7.2 16 16 16h16c8.8 0 16-7.2 16-16v-32h32c8.8 0 16-7.2 16-16v-16c0-8.8-7.2-16-16-16h-32v-32c0-8.8-7.2-16-16-16h-16c-8.8 0-16 7.2-16 16"/></svg></span> Healthcare</label><label for="__tabbed_1_2"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M271.9 20.2c-9.8-5.6-21.9-5.6-31.8 0l-224 128c-12.6 7.2-18.8 22-15.1 36S17.5 208 32 208h32v208l-51.2 38.4C4.7 460.4 0 469.9 0 480c0 17.7 14.3 32 32 32h448c17.7 0 32-14.3 32-32 0-10.1-4.7-19.6-12.8-25.6L448 416V208h32c14.5 0 27.2-9.8 30.9-23.8s-2.5-28.8-15.1-36l-224-128zM400 208v208h-64V208zm-112 0v208h-64V208zm-112 0v208h-64V208zm80-112a32 32 0 1 1 0 64 32 32 0 1 1 0-64"/></svg></span> Finance</label><label for="__tabbed_1_3"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M384 32h128c17.7 0 32 14.3 32 32s-14.3 32-32 32H398.4c-5.2 25.8-22.9 47.1-46.4 57.3V448h160c17.7 0 32 14.3 32 32s-14.3 32-32 32H128c-17.7 0-32-14.3-32-32s14.3-32 32-32h160V153.3c-23.5-10.3-41.2-31.6-46.4-57.3H128c-17.7 0-32-14.3-32-32s14.3-32 32-32h128c14.6-19.4 37.8-32 64-32s49.4 12.6 64 32m55.6 288h144.8L512 195.8zm72.4 96c-62.9 0-115.2-34-126-78.9-2.6-11 1-22.3 6.7-32.1l95.2-163.2c5-8.6 14.2-13.8 24.1-13.8s19.1 5.3 24.1 13.8L631.3 305c5.7 9.8 9.3 21.1 6.7 32.1-10.8 44.8-63.1 78.9-126 78.9M126.8 195.8 54.4 320h144.9zM.9 337.1c-2.6-11 1-22.3 6.7-32.1l95.2-163.2c5-8.6 14.2-13.8 24.1-13.8s19.1 5.3 24.1 13.8L246.2 305c5.7 9.8 9.3 21.1 6.7 32.1-10.8 44.8-63.1 78.9-126 78.9S11.7 382 .9 337.1"/></svg></span> Legal</label><label for="__tabbed_1_4"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M24-16C10.7-16 0-5.3 0 8s10.7 24 24 24h45.3c3.9 0 7.2 2.8 7.9 6.6l52.1 286.3c6.2 34.2 36 59.1 70.8 59.1H456c13.3 0 24-10.7 24-24s-10.7-24-24-24H200.1c-11.6 0-21.5-8.3-23.6-19.7l-5.1-28.3H475c30.8 0 57.2-21.9 62.9-52.2l31-165.9c3.7-19.7-11.4-37.9-31.5-37.9H124.7l-.4-2c-4.8-26.6-28-46-55.1-46zm184 528a48 48 0 1 0 0-96 48 48 0 1 0 0 96m224 0a48 48 0 1 0 0-96 48 48 0 1 0 0 96"/></svg></span> Retail</label><label for="__tabbed_1_5"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 576 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="m48 195.8 209.2 86.1c9.8 4 20.2 6.1 30.8 6.1s21-2.1 30.8-6.1l242.4-99.8c9-3.7 14.8-12.4 14.8-22.1s-5.8-18.4-14.8-22.1L318.8 38.1c-9.8-4-20.2-6.1-30.8-6.1s-21 2.1-30.8 6.1L14.8 137.9C5.8 141.6 0 150.3 0 160v296c0 13.3 10.7 24 24 24s24-10.7 24-24zm48 71.7V384c0 53 86 96 192 96s192-43 192-96V267.4l-142.9 58.9c-15.6 6.4-32.2 9.7-49.1 9.7s-33.5-3.3-49.1-9.7L96 267.4z"/></svg></span> Education</label><label for="__tabbed_1_6"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M320 16a104 104 0 1 1 0 208 104 104 0 1 1 0-208M96 88a72 72 0 1 1 0 144 72 72 0 1 1 0-144M0 416c0-70.7 57.3-128 128-128 12.8 0 25.2 1.9 36.9 5.4C132 330.2 112 378.8 112 432v16c0 11.4 2.4 22.2 6.7 32H32c-17.7 0-32-14.3-32-32zm521.3 64c4.3-9.8 6.7-20.6 6.7-32v-16c0-53.2-20-101.8-52.9-138.6 11.7-3.5 24.1-5.4 36.9-5.4 70.7 0 128 57.3 128 128v32c0 17.7-14.3 32-32 32zM472 160a72 72 0 1 1 144 0 72 72 0 1 1-144 0M160 432c0-88.4 71.6-160 160-160s160 71.6 160 160v16c0 17.7-14.3 32-32 32H192c-17.7 0-32-14.3-32-32z"/></svg></span> HR</label><label for="__tabbed_1_7"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M176 24c0-13.3-10.7-24-24-24s-24 10.7-24 24v40c-35.3 0-64 28.7-64 64H24c-13.3 0-24 10.7-24 24s10.7 24 24 24h40v56H24c-13.3 0-24 10.7-24 24s10.7 24 24 24h40v56H24c-13.3 0-24 10.7-24 24s10.7 24 24 24h40c0 35.3 28.7 64 64 64v40c0 13.3 10.7 24 24 24s24-10.7 24-24v-40h56v40c0 13.3 10.7 24 24 24s24-10.7 24-24v-40h56v40c0 13.3 10.7 24 24 24s24-10.7 24-24v-40c35.3 0 64-28.7 64-64h40c13.3 0 24-10.7 24-24s-10.7-24-24-24h-40v-56h40c13.3 0 24-10.7 24-24s-10.7-24-24-24h-40v-56h40c13.3 0 24-10.7 24-24s-10.7-24-24-24h-40c0-35.3-28.7-64-64-64V24c0-13.3-10.7-24-24-24s-24 10.7-24 24v40h-56V24c0-13.3-10.7-24-24-24s-24 10.7-24 24v40h-56zm-16 104h192c17.7 0 32 14.3 32 32v192c0 17.7-14.3 32-32 32H160c-17.7 0-32-14.3-32-32V160c0-17.7 14.3-32 32-32m16 48v160h160V176z"/></svg></span> Technology</label><label for="__tabbed_1_8"><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M200 48h112c4.4 0 8 3.6 8 8v40H192V56c0-4.4 3.6-8 8-8m-56 8v40H64c-35.3 0-64 28.7-64 64v96h512v-96c0-35.3-28.7-64-64-64h-80V56c0-30.9-25.1-56-56-56H200c-30.9 0-56 25.1-56 56m368 248H320v16c0 17.7-14.3 32-32 32h-64c-17.7 0-32-14.3-32-32v-16H0v112c0 35.3 28.7 64 64 64h384c35.3 0 64-28.7 64-64z"/></svg></span> More Industries</label></div>
-<div class="tabbed-content">
-<div class="tabbed-block">
-<h2 id="healthcare-wizards">Healthcare Wizards<a class="headerlink" href="#healthcare-wizards" title="Permanent link">&para;</a></h2>
-<p><strong>17 HIPAA-compliant AI assistants</strong> for medical applications with enhanced PHI protection.</p>
-<h3 id="key-features">Key Features<a class="headerlink" href="#key-features" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.3v3.5c0 .6-.6 1.2-1.3 1.2H9.2c-.6 0-1.2-.6-1.2-1.3v-3.5c0-.6.6-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7m0 1.2c-.8 0-1.5.5-1.5 1.3V11h3V9.5c0-.8-.7-1.3-1.5-1.3"/></svg></span> <strong>Enhanced PHI Protection</strong> - 10+ medical patterns (MRN, Patient ID, DOB, etc.)</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M7 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2m5.6-4c-.8-2.3-3-4-5.6-4-3.3 0-6 2.7-6 6s2.7 6 6 6c2.6 0 4.8-1.7 5.6-4H16v4h4v-4h3v-4z"/></svg></span> <strong>Mandatory Encryption</strong> - AES-256-GCM for all PHI</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m23.5 17-5 5-3.5-3.5 1.5-1.5 2 2 3.5-3.5zM6 2c-1.11 0-2 .89-2 2v16c0 1.11.89 2 2 2h7.81c-.53-.91-.81-1.95-.81-3 0-.33.03-.67.08-1H6v-2h7.81c.46-.8 1.1-1.5 1.87-2H6v-2h12v1.08c.33-.05.67-.08 1-.08.34 0 .67.03 1 .08V8l-6-6m-1 1.5L18.5 9H13Z"/></svg></span> <strong>90-Day Retention</strong> - HIPAA §164.528 compliance</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2M7 8h2v4H8V9H7zm3 9v1H7v-.92L9 15H7v-1h2.25c.41 0 .75.34.75.75 0 .2-.08.39-.21.52L8.12 17zm1-13c0-.55.45-1 1-1s1 .45 1 1-.45 1-1 1-1-.45-1-1m6 13h-5v-2h5zm0-6h-5V9h5z"/></svg></span> <strong>Comprehensive Audit Trail</strong> - HIPAA §164.312(b) compliant</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 17.27 18.18 21l-1.64-7.03L22 9.24l-7.19-.62L12 2 9.19 8.62 2 9.24l5.45 4.73L5.82 21z"/></svg></span> <strong>$2M+ Annual ROI</strong> - For 100-bed hospitals</li>
-</ul>
-<h3 id="quick-example">Quick Example<a class="headerlink" href="#quick-example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">HealthcareWizard</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Initialize with security enabled</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">api_key</span><span class="o">=</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;ANTHROPIC_API_KEY&quot;</span><span class="p">),</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">enable_security</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a><span class="p">)</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="c1"># Create HIPAA-compliant wizard</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">HealthcareWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a><span class="c1"># Process patient information (PHI is automatically scrubbed)</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Patient John Doe (MRN 123456) needs follow-up for diabetes&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;doctor@hospital.com&quot;</span>
-<a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a><span class="p">)</span>
-<a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a>
-<a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="c1"># PHI was removed before sending to LLM</span>
-<a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;security_report&#39;</span><span class="p">][</span><span class="s1">&#39;phi_removed&#39;</span><span class="p">])</span>  <span class="c1"># [&#39;mrn&#39;, &#39;name&#39;]</span>
+<h2 id="public-api-at-a-glance">Public API at a glance<a class="headerlink" href="#public-api-at-a-glance" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">BaseWizard</span><span class="p">,</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">ConfigDrivenWizard</span><span class="p">,</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">DecomposedTask</span><span class="p">,</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">StepType</span><span class="p">,</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">TaskDecomposer</span><span class="p">,</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">WizardConfig</span><span class="p">,</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">WizardResult</span><span class="p">,</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">WizardSession</span><span class="p">,</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">WizardStep</span><span class="p">,</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">delete_custom_wizard</span><span class="p">,</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">get_wizard</span><span class="p">,</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">list_wizards</span><span class="p">,</span>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">register_wizard</span><span class="p">,</span>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">save_custom_wizard</span><span class="p">,</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
 </code></pre></div>
-<details class="info">
-<summary>What PHI Patterns Are Detected?</summary>
-<p><strong>Standard PII:</strong>
-- Email addresses
-- Phone numbers
-- SSN
-- Physical addresses
-- Credit card numbers
-- IP addresses</p>
-<p><strong>Healthcare-Specific PHI:</strong>
-- <strong>MRN</strong> - Medical Record Numbers
-- <strong>Patient IDs</strong> - Patient identifiers
-- <strong>DOB</strong> - Dates of birth
-- <strong>Insurance IDs</strong> - Insurance/policy numbers
-- <strong>Provider NPI</strong> - National Provider Identifiers
-- <strong>CPT Codes</strong> - Medical procedure codes
-- <strong>ICD Codes</strong> - Diagnosis codes
-- <strong>Medications</strong> - Drug names (optional, configurable)</p>
-</details>
-<details class="example">
-<summary>Clinical Handoff (SBAR Protocol)</summary>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">HealthcareWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
+<p>These are the only names exported from <code>attune.wizards</code>
+(<code>src/attune/wizards/__init__.py</code>).</p>
+<hr />
+<h2 id="listing-and-running-wizards">Listing and running wizards<a class="headerlink" href="#listing-and-running-wizards" title="Permanent link">&para;</a></h2>
+<h3 id="listing-wizards-python">Listing wizards (Python)<a class="headerlink" href="#listing-wizards-python" title="Permanent link">&para;</a></h3>
+<p><code>list_wizards()</code> is a module-level function. It returns a list of
+<code>WizardConfig</code> objects sorted by <code>wizard_id</code>, covering built-ins plus
+any custom YAML wizards loaded from <code>.attune/wizards/</code>.</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_wizards</span>
 <a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Generate SBAR handoff report</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">generate_handoff</span><span class="p">(</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">patient_id</span><span class="o">=</span><span class="s2">&quot;PT123456&quot;</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;SBAR&quot;</span><span class="p">,</span>  <span class="c1"># Situation, Background, Assessment, Recommendation</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">handoff_type</span><span class="o">=</span><span class="s2">&quot;shift_change&quot;</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;sbar_report&#39;</span><span class="p">])</span>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="c1"># Output:</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a><span class="c1"># **Situation:** 65yo male, chest pain x2h, vitals stable</span>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="c1"># **Background:** Hx of MI 2018, on aspirin, metoprolol</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="c1"># **Assessment:** Possible STEMI, EKG shows ST elevation</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="c1"># **Recommendation:** Activate cath lab, continue monitoring</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">for</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">list_wizards</span><span class="p">():</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">wizard_id</span><span class="si">:</span><span class="s2">14</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">30</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 </code></pre></div>
-</details>
-<div class="admonition warning">
-<p class="admonition-title">HIPAA Compliance Requirements</p>
-<p>To maintain HIPAA compliance:</p>
+<h3 id="getting-and-running-a-wizard-python">Getting and running a wizard (Python)<a class="headerlink" href="#getting-and-running-a-wizard-python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_wizard</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">WizardCls</span> <span class="o">=</span> <span class="n">get_wizard</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>          <span class="c1"># type[BaseWizard] | None</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">WizardCls</span><span class="p">(</span><span class="n">ask_user_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wizard</span><span class="o">.</span><span class="n">run</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;TypeError: ...&quot;</span><span class="p">}))</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">steps_completed</span><span class="p">)</span>
+</code></pre></div>
+<p><code>get_wizard()</code> checks the in-memory registry, then triggers entry-point
+discovery (group <code>empathy.wizards</code>), then loads built-ins, then loads
+custom YAML wizards from <code>.attune/wizards/</code>. Returns <code>None</code> if the
+wizard ID is not found.</p>
+<h3 id="listing-and-running-wizards-claude-code-skill">Listing and running wizards (Claude Code skill)<a class="headerlink" href="#listing-and-running-wizards-claude-code-skill" title="Permanent link">&para;</a></h3>
+<p>In Claude Code, the <code>/wizard</code> skill drives the runtime. Routes (from
+<code>.claude/skills/wizard/SKILL.md</code>):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/wizard                      Ask what to do
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>/wizard list                 List available wizards
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>/wizard run debug            Debug wizard
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>/wizard run test-gen         Test generation wizard
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>/wizard run refactor         Refactoring wizard
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>/wizard run security         Security wizard
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>/wizard run release-prep     Release prep wizard
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>/wizard create               Create a custom wizard
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>/wizard edit                 Edit a wizard
+</code></pre></div>
+<p>The skill aliases (e.g. <code>wizard-debug</code>, <code>wizard-create</code>) are listed in
+<code>src/attune/cli_router.py</code>.</p>
+<blockquote>
+<p>There is currently no top-level <code>attune wizard ...</code> subcommand on
+the Python CLI. <code>attune health</code> does include a wizard discovery
+probe — it calls <code>list_wizards()</code> and reports the count.</p>
+</blockquote>
+<hr />
+<h2 id="the-5-built-in-wizards">The 5 built-in wizards<a class="headerlink" href="#the-5-built-in-wizards" title="Permanent link">&para;</a></h2>
+<p>The built-in set is defined in
+<code>src/attune/wizards/builtin/__init__.py</code> as the <code>BUILTIN_WIZARDS</code> dict:</p>
+<table>
+<thead>
+<tr>
+<th>Wizard ID</th>
+<th>Class</th>
+<th>Domain</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debug</code></td>
+<td><code>DebugWizard</code></td>
+<td>development</td>
+<td>Gather error details, analyze root cause, decompose a fix</td>
+</tr>
+<tr>
+<td><code>test-gen</code></td>
+<td><code>TestGenWizard</code></td>
+<td>testing</td>
+<td>Pick a target, analyze untested paths, plan test files</td>
+</tr>
+<tr>
+<td><code>refactor</code></td>
+<td><code>RefactorWizard</code></td>
+<td>development</td>
+<td>Describe goal, analyze structure, plan incremental refactor</td>
+</tr>
+<tr>
+<td><code>security</code></td>
+<td><code>SecurityWizard</code></td>
+<td>(varies)</td>
+<td>Scope a scan, generate findings, plan remediations</td>
+</tr>
+<tr>
+<td><code>release-prep</code></td>
+<td><code>ReleasePrepWizard</code></td>
+<td>release</td>
+<td>Version info, readiness check, optional changelog, plan</td>
+</tr>
+</tbody>
+</table>
+<p>Each built-in subclasses <code>BaseWizard</code>, defines a <code>WizardConfig</code>, and
+declares an ordered <code>steps</code> list. For example, <code>DebugWizard</code> runs:</p>
 <ol>
-<li>✅ Enable security: <code>EmpathyLLM(enable_security=True)</code></li>
-<li>✅ Use encryption at rest for stored data</li>
-<li>✅ Review audit logs daily</li>
-<li>✅ Implement access controls</li>
-<li>✅ Sign Business Associate Agreement with LLM provider</li>
+<li><code>gather_info</code> (QUESTION) — error description, file, stack-trace flag</li>
+<li><code>analyze</code> (LLM_CALL, <code>bug-analysis</code> template, <code>capable</code> tier)</li>
+<li><code>review_analysis</code> (REVIEW of the <code>analyze</code> result)</li>
+<li><code>decompose_fix</code> (TASK_DECOMPOSE)</li>
+<li><code>preview</code> (PREVIEW)</li>
+<li><code>confirm</code> (CONFIRM)</li>
 </ol>
-</div>
-<p><strong>See Also:</strong> <a href="../../tutorials/examples/sbar-clinical-handoff/">SBAR Clinical Handoff Example</a></p>
-</div>
-<div class="tabbed-block">
-<h2 id="finance-wizard">Finance Wizard<a class="headerlink" href="#finance-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>SOC2-compliant AI assistant</strong> for financial services with enhanced PII/PCI protection.</p>
-<h3 id="key-features_1">Key Features<a class="headerlink" href="#key-features_1" title="Permanent link">&para;</a></h3>
+<p><code>RefactorWizard</code> and <code>SecurityWizard</code> additionally delegate their
+analysis step to a heavier workflow (<code>RefactorPlanWorkflow</code> and
+<code>SecurityAuditWorkflow</code> respectively) for multi-stage scanning while
+preserving the wizard-guided UX.</p>
+<hr />
+<h2 id="step-types">Step types<a class="headerlink" href="#step-types" title="Permanent link">&para;</a></h2>
+<p>The wizard runtime supports six step types, defined as the <code>StepType</code>
+enum in <code>src/attune/wizards/_types.py</code>:</p>
+<table>
+<thead>
+<tr>
+<th><code>StepType</code></th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>QUESTION</code></td>
+<td>Collect user input via <code>AskUserQuestion</code> (rendered through <code>SocraticFormEngine</code>).</td>
+</tr>
+<tr>
+<td><code>LLM_CALL</code></td>
+<td>Render an XML prompt and call an LLM at the step's tier (<code>cheap</code> / <code>capable</code> / <code>premium</code>).</td>
+</tr>
+<tr>
+<td><code>TASK_DECOMPOSE</code></td>
+<td>Use <code>TaskDecomposer</code> to break the current problem into structured XML sub-tasks.</td>
+</tr>
+<tr>
+<td><code>REVIEW</code></td>
+<td>Show the result of a prior <code>LLM_CALL</code> step and ask "does this look right?" (up to 2 retries).</td>
+</tr>
+<tr>
+<td><code>PREVIEW</code></td>
+<td>Format collected data, step results, and tasks into a preview block and store it.</td>
+</tr>
+<tr>
+<td><code>CONFIRM</code></td>
+<td>Final yes/no gate; "no" aborts the wizard cleanly.</td>
+</tr>
+</tbody>
+</table>
+<p>A step can also carry a <code>condition: Callable[[WizardSession], bool]</code>
+that, when it returns <code>False</code>, causes the step to be skipped.
+<code>ReleasePrepWizard</code> uses this to skip changelog generation when the
+user opts out.</p>
+<hr />
+<h2 id="basewizard-lifecycle"><code>BaseWizard</code> lifecycle<a class="headerlink" href="#basewizard-lifecycle" title="Permanent link">&para;</a></h2>
+<p><code>BaseWizard</code> (in <code>src/attune/wizards/base.py</code>) is an abstract class.
+Subclasses must define:</p>
 <ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 7H4V8h16Z"/></svg></span> <strong>PCI DSS Compliance</strong> - Credit card detection and masking</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M11.5 1 2 6v2h19V6m-5 4v7h3v-7M2 22h19v-3H2m8-9v7h3v-7m-9 0v7h3v-7z"/></svg></span> <strong>Financial PII</strong> - Account numbers, routing numbers, SSN</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m16 11.78 4.24-7.33 1.73 1-5.23 9.05-6.51-3.75L5.46 19H22v2H2V3h2v14.54L9.5 8z"/></svg></span> <strong>Risk Analysis</strong> - AML, fraud detection, compliance checks</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 9h5.5L13 3.5zM6 2h8l6 6v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V4c0-1.11.89-2 2-2m9 16v-2H6v2zm3-4v-2H6v2z"/></svg></span> <strong>Audit Trail</strong> - SOC2 Type II compliant logging</li>
+<li><code>config: WizardConfig</code> — wizard identity and cost/duration estimates.</li>
+<li><code>steps: list[WizardStep]</code> — the ordered step list.</li>
+<li><code>build_prompt_context(step) -&gt; PromptContext</code> — builds the prompt
+  context for <code>LLM_CALL</code> and <code>TASK_DECOMPOSE</code> steps from session state.</li>
+<li><code>process_step_result(step, result) -&gt; None</code> — stores or transforms
+  the LLM response for use by later steps.</li>
 </ul>
-<h3 id="quick-example_1">Quick Example<a class="headerlink" href="#quick-example_1" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">FinanceWizard</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">FinanceWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="c1"># Analyze transaction for compliance</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">analyze_transaction</span><span class="p">(</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">transaction_data</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>        <span class="s2">&quot;amount&quot;</span><span class="p">:</span> <span class="mi">15000</span><span class="p">,</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>        <span class="s2">&quot;source_account&quot;</span><span class="p">:</span> <span class="s2">&quot;****1234&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="s2">&quot;destination_account&quot;</span><span class="p">:</span> <span class="s2">&quot;****5678&quot;</span><span class="p">,</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="s2">&quot;country&quot;</span><span class="p">:</span> <span class="s2">&quot;US&quot;</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>    <span class="p">},</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>    <span class="n">check_aml</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="n">check_fraud</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="p">)</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a><span class="k">if</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;flags&#39;</span><span class="p">]:</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;⚠️  Compliance flags: </span><span class="si">{</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;flags&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-<details class="info">
-<summary>What Financial PII Is Protected?</summary>
+<p>Everything else — step dispatch, retries, the session, the form
+engine, the XML prompt rendering, the preview/confirm UX — is provided
+for free.</p>
+<p><code>BaseWizard.run(initial_context=None)</code> is the single entry point. It
+is <code>async</code>, creates a fresh <code>WizardSession</code>, iterates over <code>self.steps</code>,
+dispatches each one by <code>StepType</code>, and returns a <code>WizardResult</code> with:</p>
 <ul>
-<li><strong>Credit Card Numbers</strong> - Full card number detection and masking</li>
-<li><strong>Account Numbers</strong> - Bank account numbers</li>
-<li><strong>Routing Numbers</strong> - ABA routing numbers</li>
-<li><strong>SSN</strong> - Social Security Numbers</li>
-<li><strong>ITIN</strong> - Individual Taxpayer Identification Numbers</li>
-<li><strong>EIN</strong> - Employer Identification Numbers</li>
-<li><strong>Investment Account IDs</strong> - Brokerage account numbers</li>
+<li><code>success: bool</code></li>
+<li><code>steps_completed: list[str]</code></li>
+<li><code>collected_data: dict[str, Any]</code> (everything from QUESTION steps)</li>
+<li><code>generated_output: str | dict</code> (the PREVIEW text)</li>
+<li><code>tasks: list[dict]</code> (from TASK_DECOMPOSE)</li>
+<li><code>total_cost: float</code> and <code>total_duration_ms: float</code></li>
+<li><code>error: str | None</code> if the run failed</li>
 </ul>
-</details>
-<div class="admonition tip">
-<p class="admonition-title">Risk Analysis Features</p>
-<p>The Finance Wizard includes built-in risk analysis:</p>
-<ul>
-<li><strong>AML (Anti-Money Laundering)</strong> - Flags suspicious transactions</li>
-<li><strong>Fraud Detection</strong> - Pattern-based fraud indicators</li>
-<li><strong>Sanctions Screening</strong> - OFAC compliance checks</li>
-<li><strong>KYC Validation</strong> - Know Your Customer verification</li>
-</ul>
-</div>
-</div>
-<div class="tabbed-block">
-<h2 id="legal-wizard">Legal Wizard<a class="headerlink" href="#legal-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>AI assistant</strong> for legal practices with document classification and privilege protection.</p>
-<h3 id="key-features_2">Key Features<a class="headerlink" href="#key-features_2" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m2.3 20.28 9.6-9.6-1.4-1.42-.72.71a.996.996 0 0 1-1.41 0l-.71-.71a.996.996 0 0 1 0-1.41l5.66-5.66a.996.996 0 0 1 1.41 0l.71.71c.39.39.39 1.02 0 1.41l-.71.69 1.42 1.43a.996.996 0 0 1 1.41 0c.39.39.39 1.03 0 1.42l1.41 1.41.71-.71c.39-.39 1.03-.39 1.42 0l.7.71c.39.39.39 1.03 0 1.42l-5.65 5.65c-.39.39-1.03.39-1.42 0l-.7-.7a.99.99 0 0 1 0-1.42l.7-.71-1.41-1.41-9.61 9.61a.996.996 0 0 1-1.41 0c-.39-.39-.39-1.03 0-1.42M20 19a2 2 0 0 1 2 2v1H12v-1a2 2 0 0 1 2-2z"/></svg></span> <strong>Attorney-Client Privilege</strong> - Automatic privilege detection</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M4 4v18h16v2H4c-1.1 0-2-.9-2-2V4zm11 3h5.5L15 1.5zM8 0h8l6 6v12c0 1.11-.89 2-2 2H8a2 2 0 0 1-2-2V2c0-1.11.89-2 2-2m9 16v-2H8v2zm3-4v-2H8v2z"/></svg></span> <strong>Document Classification</strong> - Contract, brief, discovery types</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m19.31 18.9 3.08 3.1L21 23.39l-3.12-3.07c-.69.43-1.51.68-2.38.68-2.5 0-4.5-2-4.5-4.5s2-4.5 4.5-4.5 4.5 2 4.5 4.5c0 .88-.25 1.71-.69 2.4m-3.81.1a2.5 2.5 0 0 0 0-5 2.5 2.5 0 0 0 0 5M21 4v2H3V4zM3 16v-2h6v2zm0-5V9h18v2h-2.03c-1.01-.63-2.2-1-3.47-1s-2.46.37-3.47 1z"/></svg></span> <strong>Legal Citation</strong> - Find relevant case law</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm0 6c1.4 0 2.8 1.1 2.8 2.5V11c.6 0 1.2.6 1.2 1.3v3.5c0 .6-.6 1.2-1.3 1.2H9.2c-.6 0-1.2-.6-1.2-1.3v-3.5c0-.6.6-1.2 1.2-1.2V9.5C9.2 8.1 10.6 7 12 7m0 1.2c-.8 0-1.5.5-1.5 1.3V11h3V9.5c0-.8-.7-1.3-1.5-1.3"/></svg></span> <strong>Confidentiality</strong> - Work product protection</li>
-</ul>
-<h3 id="quick-example_2">Quick Example<a class="headerlink" href="#quick-example_2" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">LegalWizard</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">LegalWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="c1"># Analyze legal document</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">analyze_document</span><span class="p">(</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">document_text</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>    <span class="n">document_type</span><span class="o">=</span><span class="s2">&quot;contract&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="n">jurisdiction</span><span class="o">=</span><span class="s2">&quot;CA&quot;</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="p">)</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;risk_factors&#39;</span><span class="p">])</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;suggested_clauses&#39;</span><span class="p">])</span>
-</code></pre></div>
-<details class="example">
-<summary>Contract Review</summary>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="c1"># Review contract for risks</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">review_contract</span><span class="p">(</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">contract_text</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">contract_type</span><span class="o">=</span><span class="s2">&quot;employment&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">jurisdiction</span><span class="o">=</span><span class="s2">&quot;CA&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">check_for</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>        <span class="s2">&quot;non_compete&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>        <span class="s2">&quot;indemnification&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="s2">&quot;termination&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="s2">&quot;ip_assignment&quot;</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>    <span class="p">]</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a><span class="p">)</span>
+<p>If a <code>CONFIRM</code> step gets a "no" answer, the wizard raises an internal
+<code>_WizardAbort</code> and exits cleanly with <code>success=True</code> but no further
+steps.</p>
+<h3 id="minimal-custom-wizard-python">Minimal custom wizard (Python)<a class="headerlink" href="#minimal-custom-wizard-python" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.meta_workflows.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormQuestion</span><span class="p">,</span> <span class="n">QuestionType</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptContext</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseWizard</span><span class="p">,</span> <span class="n">StepType</span><span class="p">,</span> <span class="n">WizardConfig</span><span class="p">,</span> <span class="n">WizardStep</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">HelloWizard</span><span class="p">(</span><span class="n">BaseWizard</span><span class="p">):</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">WizardConfig</span><span class="p">(</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">wizard_id</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Hello Wizard&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Trivial example&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="p">)</span>
 <a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a><span class="c1"># Get risk assessment</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a><span class="k">for</span> <span class="n">risk</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;risks&#39;</span><span class="p">]:</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">risk</span><span class="p">[</span><span class="s1">&#39;severity&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">risk</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Suggested fix: </span><span class="si">{</span><span class="n">risk</span><span class="p">[</span><span class="s1">&#39;remediation&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span>
+<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">WizardStep</span><span class="p">(</span>
+<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;ask&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Ask name&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>            <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">QUESTION</span><span class="p">,</span>
+<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>            <span class="n">questions</span><span class="o">=</span><span class="p">[</span>
+<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>                <span class="n">FormQuestion</span><span class="p">(</span>
+<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>                    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>                    <span class="n">text</span><span class="o">=</span><span class="s2">&quot;What&#39;s your name?&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>                    <span class="nb">type</span><span class="o">=</span><span class="n">QuestionType</span><span class="o">.</span><span class="n">TEXT_INPUT</span><span class="p">,</span>
+<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>                <span class="p">),</span>
+<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="p">],</span>
+<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>        <span class="p">),</span>
+<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>        <span class="n">WizardStep</span><span class="p">(</span>
+<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>            <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;greet&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Generate greeting&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>            <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">LLM_CALL</span><span class="p">,</span>
+<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>            <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;cheap&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>        <span class="p">),</span>
+<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>        <span class="n">WizardStep</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;preview&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Preview&quot;</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">PREVIEW</span><span class="p">),</span>
+<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>        <span class="n">WizardStep</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;confirm&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Confirm&quot;</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">CONFIRM</span><span class="p">),</span>
+<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>    <span class="p">]</span>
+<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
+<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_prompt_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PromptContext</span><span class="p">:</span>
+<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;stranger&quot;</span><span class="p">)</span>
+<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>        <span class="k">return</span> <span class="n">PromptContext</span><span class="p">(</span>
+<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>            <span class="n">role</span><span class="o">=</span><span class="s2">&quot;friendly assistant&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>            <span class="n">goal</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Write a one-sentence greeting for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>            <span class="n">instructions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Be warm and concise.&quot;</span><span class="p">],</span>
+<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>            <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
+<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>            <span class="n">input_payload</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
+<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>        <span class="p">)</span>
+<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>
+<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">process_step_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;greeting&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
 </code></pre></div>
-</details>
-</div>
-<div class="tabbed-block">
-<h2 id="retail-wizard">Retail Wizard<a class="headerlink" href="#retail-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>AI assistant</strong> for e-commerce and retail operations.</p>
-<h3 id="key-features_3">Key Features<a class="headerlink" href="#key-features_3" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 18c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2M1 2v2h2l3.6 7.59-1.36 2.45c-.15.28-.24.61-.24.96a2 2 0 0 0 2 2h12v-2H7.42a.25.25 0 0 1-.25-.25q0-.075.03-.12L8.1 13h7.45c.75 0 1.41-.42 1.75-1.03l3.58-6.47c.07-.16.12-.33.12-.5a1 1 0 0 0-1-1H5.21l-.94-2M7 18c-1.11 0-2 .89-2 2a2 2 0 0 0 2 2 2 2 0 0 0 2-2 2 2 0 0 0-2-2"/></svg></span> <strong>Inventory Management</strong> - Stock optimization suggestions</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M5.5 7A1.5 1.5 0 0 1 4 5.5 1.5 1.5 0 0 1 5.5 4 1.5 1.5 0 0 1 7 5.5 1.5 1.5 0 0 1 5.5 7m15.91 4.58-9-9C12.05 2.22 11.55 2 11 2H4c-1.11 0-2 .89-2 2v7c0 .55.22 1.05.59 1.41l8.99 9c.37.36.87.59 1.42.59s1.05-.23 1.41-.59l7-7c.37-.36.59-.86.59-1.41 0-.56-.23-1.06-.59-1.42"/></svg></span> <strong>Pricing Strategy</strong> - Dynamic pricing recommendations</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 5.5A3.5 3.5 0 0 1 15.5 9a3.5 3.5 0 0 1-3.5 3.5A3.5 3.5 0 0 1 8.5 9 3.5 3.5 0 0 1 12 5.5M5 8c.56 0 1.08.15 1.53.42-.15 1.43.27 2.85 1.13 3.96C7.16 13.34 6.16 14 5 14a3 3 0 0 1-3-3 3 3 0 0 1 3-3m14 0a3 3 0 0 1 3 3 3 3 0 0 1-3 3c-1.16 0-2.16-.66-2.66-1.62a5.54 5.54 0 0 0 1.13-3.96c.45-.27.97-.42 1.53-.42M5.5 18.25c0-2.07 2.91-3.75 6.5-3.75s6.5 1.68 6.5 3.75V20h-13zM0 20v-1.5c0-1.39 1.89-2.56 4.45-2.9-.59.68-.95 1.62-.95 2.65V20zm24 0h-3.5v-1.75c0-1.03-.36-1.97-.95-2.65 2.56.34 4.45 1.51 4.45 2.9z"/></svg></span> <strong>Customer Service</strong> - Support automation</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2M9 17H7v-7h2zm4 0h-2V7h2zm4 0h-2v-4h2z"/></svg></span> <strong>Sales Analytics</strong> - Trend analysis</li>
-</ul>
-<h3 id="quick-example_3">Quick Example<a class="headerlink" href="#quick-example_3" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">RetailWizard</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">RetailWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="c1"># Optimize inventory</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">optimize_inventory</span><span class="p">(</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">product_data</span><span class="o">=</span><span class="p">{</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>        <span class="s2">&quot;sku&quot;</span><span class="p">:</span> <span class="s2">&quot;PROD123&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>        <span class="s2">&quot;current_stock&quot;</span><span class="p">:</span> <span class="mi">50</span><span class="p">,</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>        <span class="s2">&quot;sales_last_30d&quot;</span><span class="p">:</span> <span class="mi">120</span><span class="p">,</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>        <span class="s2">&quot;season&quot;</span><span class="p">:</span> <span class="s2">&quot;winter&quot;</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="p">}</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="p">)</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;reorder_quantity&#39;</span><span class="p">])</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;optimal_price&#39;</span><span class="p">])</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<h2 id="education-wizard">Education Wizard<a class="headerlink" href="#education-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>FERPA-compliant AI assistant</strong> for educational institutions.</p>
-<h3 id="key-features_4">Key Features<a class="headerlink" href="#key-features_4" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 3 1 9l11 6 9-4.91V17h2V9M5 13.18v4L12 21l7-3.82v-4L12 17z"/></svg></span> <strong>Student Privacy</strong> - FERPA compliance (20 U.S.C. § 1232g)</li>
-<li>:material-account-student: <strong>Student PII Protection</strong> - Student IDs, grades, records</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 19H5V8h14m0-5h-1V1h-2v2H8V1H6v2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2m-2.47 8.06L15.47 10l-4.88 4.88-2.12-2.12-1.06 1.06L10.59 17z"/></svg></span> <strong>Assignment Grading</strong> - Automated assessment assistance</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 12h7v1.5h-7m0-4h7V11h-7m0 3.5h7V16h-7m8-12H3a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h18a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2m0 15h-9V6h9"/></svg></span> <strong>Curriculum Support</strong> - Lesson plan generation</li>
-</ul>
-<h3 id="quick-example_4">Quick Example<a class="headerlink" href="#quick-example_4" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">EducationWizard</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">EducationWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="c1"># Generate lesson plan (no student PII exposed)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">generate_lesson_plan</span><span class="p">(</span>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a>    <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;Mathematics&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-8" name="__codelineno-6-8" href="#__codelineno-6-8"></a>    <span class="n">grade_level</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
-<a id="__codelineno-6-9" name="__codelineno-6-9" href="#__codelineno-6-9"></a>    <span class="n">topic</span><span class="o">=</span><span class="s2">&quot;Linear Equations&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-10" name="__codelineno-6-10" href="#__codelineno-6-10"></a>    <span class="n">duration_minutes</span><span class="o">=</span><span class="mi">45</span>
-<a id="__codelineno-6-11" name="__codelineno-6-11" href="#__codelineno-6-11"></a><span class="p">)</span>
-<a id="__codelineno-6-12" name="__codelineno-6-12" href="#__codelineno-6-12"></a>
-<a id="__codelineno-6-13" name="__codelineno-6-13" href="#__codelineno-6-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;lesson_plan&#39;</span><span class="p">])</span>
-<a id="__codelineno-6-14" name="__codelineno-6-14" href="#__codelineno-6-14"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;assessment_questions&#39;</span><span class="p">])</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<h2 id="hr-wizard">HR Wizard<a class="headerlink" href="#hr-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>AI assistant</strong> for human resources with employee PII protection.</p>
-<h3 id="key-features_5">Key Features<a class="headerlink" href="#key-features_5" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6 17c0-2 4-3.1 6-3.1s6 1.1 6 3.1v1H6m9-9a3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3 3 3 0 0 1 3 3M3 5v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2"/></svg></span> <strong>Employee PII Protection</strong> - SSN, DOB, salary, benefits</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M17 9H7V7h10m0 6H7v-2h10m-3 6H7v-2h7M12 3a1 1 0 0 1 1 1 1 1 0 0 1-1 1 1 1 0 0 1-1-1 1 1 0 0 1 1-1m7 0h-4.18C14.4 1.84 13.3 1 12 1s-2.4.84-2.82 2H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2"/></svg></span> <strong>Job Descriptions</strong> - Generate JD from requirements</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M15.5 12c2.5 0 4.5 2 4.5 4.5 0 .88-.25 1.71-.69 2.4l3.08 3.1L21 23.39l-3.12-3.07c-.69.43-1.51.68-2.38.68-2.5 0-4.5-2-4.5-4.5s2-4.5 4.5-4.5m0 2a2.5 2.5 0 0 0-2.5 2.5 2.5 2.5 0 0 0 2.5 2.5 2.5 2.5 0 0 0 2.5-2.5 2.5 2.5 0 0 0-2.5-2.5M10 4a4 4 0 0 1 4 4c0 .91-.31 1.75-.82 2.43-.86.32-1.63.83-2.27 1.47L10 12a4 4 0 0 1-4-4 4 4 0 0 1 4-4M2 20v-2c0-2.12 3.31-3.86 7.5-4-.32.78-.5 1.62-.5 2.5 0 1.29.38 2.5 1 3.5z"/></svg></span> <strong>Resume Screening</strong> - Bias-free candidate evaluation</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 1 3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5zm0 4a3 3 0 0 1 3 3 3 3 0 0 1-3 3 3 3 0 0 1-3-3 3 3 0 0 1 3-3m5.13 12A9.7 9.7 0 0 1 12 20.92 9.7 9.7 0 0 1 6.87 17c-.34-.5-.63-1-.87-1.53 0-1.65 2.71-3 6-3s6 1.32 6 3c-.24.53-.53 1.03-.87 1.53"/></svg></span> <strong>Compliance</strong> - EEOC, ADA, FLSA guidance</li>
-</ul>
-<h3 id="quick-example_5">Quick Example<a class="headerlink" href="#quick-example_5" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">HRWizard</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">HRWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="c1"># Generate job description</span>
-<a id="__codelineno-7-6" name="__codelineno-7-6" href="#__codelineno-7-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">generate_job_description</span><span class="p">(</span>
-<a id="__codelineno-7-7" name="__codelineno-7-7" href="#__codelineno-7-7"></a>    <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Senior Software Engineer&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-8" name="__codelineno-7-8" href="#__codelineno-7-8"></a>    <span class="n">department</span><span class="o">=</span><span class="s2">&quot;Engineering&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-9" name="__codelineno-7-9" href="#__codelineno-7-9"></a>    <span class="n">level</span><span class="o">=</span><span class="s2">&quot;Senior&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-10" name="__codelineno-7-10" href="#__codelineno-7-10"></a>    <span class="n">requirements</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Python&quot;</span><span class="p">,</span> <span class="s2">&quot;AWS&quot;</span><span class="p">,</span> <span class="s2">&quot;5+ years experience&quot;</span><span class="p">]</span>
-<a id="__codelineno-7-11" name="__codelineno-7-11" href="#__codelineno-7-11"></a><span class="p">)</span>
-<a id="__codelineno-7-12" name="__codelineno-7-12" href="#__codelineno-7-12"></a>
-<a id="__codelineno-7-13" name="__codelineno-7-13" href="#__codelineno-7-13"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;job_description&#39;</span><span class="p">])</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<h2 id="technology-wizard">Technology Wizard<a class="headerlink" href="#technology-wizard" title="Permanent link">&para;</a></h2>
-<p><strong>AI assistant</strong> for software development and IT operations.</p>
-<h3 id="key-features_6">Key Features<a class="headerlink" href="#key-features_6" title="Permanent link">&para;</a></h3>
-<ul>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M14 12h-4v-2h4m0 6h-4v-2h4m6-6h-2.81a6 6 0 0 0-1.82-1.96L17 4.41 15.59 3l-2.17 2.17a6 6 0 0 0-2.83 0L8.41 3 7 4.41l1.62 1.63C7.88 6.55 7.26 7.22 6.81 8H4v2h2.09c-.05.33-.09.66-.09 1v1H4v2h2v1c0 .34.04.67.09 1H4v2h2.81c1.04 1.79 2.97 3 5.19 3s4.15-1.21 5.19-3H20v-2h-2.09c.05-.33.09-.66.09-1v-1h2v-2h-2v-1c0-.34-.04-.67-.09-1H20z"/></svg></span> <strong>Bug Analysis</strong> - Root cause identification</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m14.6 16.6 4.6-4.6-4.6-4.6L16 6l6 6-6 6zm-5.2 0L4.8 12l4.6-4.6L8 6l-6 6 6 6z"/></svg></span> <strong>Code Review</strong> - Security and quality checks</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M6.5 20q-2.28 0-3.89-1.57Q1 16.85 1 14.58q0-1.95 1.17-3.48 1.18-1.53 3.08-1.95.63-2.3 2.5-3.72Q9.63 4 12 4q2.93 0 4.96 2.04Q19 8.07 19 11q1.73.2 2.86 1.5 1.14 1.28 1.14 3 0 1.88-1.31 3.19T18.5 20Z"/></svg></span> <strong>Cloud Architecture</strong> - AWS/Azure/GCP design patterns</li>
-<li><span class="twemoji"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 12h7c-.53 4.11-3.28 7.78-7 8.92zH5V6.3l7-3.11M12 1 3 5v6c0 5.55 3.84 10.73 9 12 5.16-1.27 9-6.45 9-12V5z"/></svg></span> <strong>Security Scanning</strong> - Vulnerability detection</li>
-</ul>
-<h3 id="quick-example_6">Quick Example<a class="headerlink" href="#quick-example_6" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">TechnologyWizard</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">TechnologyWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="c1"># Analyze code for security issues</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">review_code</span><span class="p">(</span>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a>    <span class="n">code</span><span class="o">=</span><span class="n">code_snippet</span><span class="p">,</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a>    <span class="n">language</span><span class="o">=</span><span class="s2">&quot;python&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-9" name="__codelineno-8-9" href="#__codelineno-8-9"></a>    <span class="n">check_for</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;sql_injection&quot;</span><span class="p">,</span> <span class="s2">&quot;xss&quot;</span><span class="p">,</span> <span class="s2">&quot;secrets&quot;</span><span class="p">]</span>
-<a id="__codelineno-8-10" name="__codelineno-8-10" href="#__codelineno-8-10"></a><span class="p">)</span>
-<a id="__codelineno-8-11" name="__codelineno-8-11" href="#__codelineno-8-11"></a>
-<a id="__codelineno-8-12" name="__codelineno-8-12" href="#__codelineno-8-12"></a><span class="k">for</span> <span class="n">issue</span> <span class="ow">in</span> <span class="n">result</span><span class="p">[</span><span class="s1">&#39;security_issues&#39;</span><span class="p">]:</span>
-<a id="__codelineno-8-13" name="__codelineno-8-13" href="#__codelineno-8-13"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">issue</span><span class="p">[</span><span class="s1">&#39;severity&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">issue</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-</code></pre></div>
-</div>
-<div class="tabbed-block">
-<h2 id="additional-wizards">Additional Wizards<a class="headerlink" href="#additional-wizards" title="Permanent link">&para;</a></h2>
-<h3 id="accounting-wizard">Accounting Wizard<a class="headerlink" href="#accounting-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for accounting and bookkeeping</strong>
-- GAAP/IFRS compliance
-- Financial statement analysis
-- Tax preparation assistance</p>
-<h3 id="customer-support-wizard">Customer Support Wizard<a class="headerlink" href="#customer-support-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for customer service operations</strong>
-- Ticket classification
-- Response templates
-- Sentiment analysis</p>
-<h3 id="government-wizard">Government Wizard<a class="headerlink" href="#government-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for government agencies</strong>
-- FOIA compliance
-- Public records management
-- Citizen service automation</p>
-<h3 id="insurance-wizard">Insurance Wizard<a class="headerlink" href="#insurance-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for insurance operations</strong>
-- Claims processing
-- Underwriting assistance
-- Risk assessment</p>
-<h3 id="logistics-wizard">Logistics Wizard<a class="headerlink" href="#logistics-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for supply chain and logistics</strong>
-- Route optimization
-- Inventory forecasting
-- Shipment tracking</p>
-<h3 id="manufacturing-wizard">Manufacturing Wizard<a class="headerlink" href="#manufacturing-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for manufacturing operations</strong>
-- Production scheduling
-- Quality control
-- Equipment maintenance</p>
-<h3 id="real-estate-wizard">Real Estate Wizard<a class="headerlink" href="#real-estate-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for real estate professionals</strong>
-- Property valuation
-- Lease generation
-- Market analysis</p>
-<h3 id="research-wizard">Research Wizard<a class="headerlink" href="#research-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for academic and scientific research</strong>
-- Literature review
-- Citation management
-- Data analysis</p>
-<h3 id="sales-wizard">Sales Wizard<a class="headerlink" href="#sales-wizard" title="Permanent link">&para;</a></h3>
-<p><strong>AI assistant for sales teams</strong>
-- Lead qualification
-- Proposal generation
-- CRM integration</p>
-</div>
-</div>
-</div>
+<p>Register it (once per process) with <code>register_wizard("hello", HelloWizard)</code>,
+or expose it via the <code>empathy.wizards</code> entry-point group for automatic
+discovery.</p>
 <hr />
-<h2 id="base-wizard-api">Base Wizard API<a class="headerlink" href="#base-wizard-api" title="Permanent link">&para;</a></h2>
-<p>All wizards extend the <code>BaseWizard</code> class with common functionality:</p>
-<h3 id="basewizard">BaseWizard<a class="headerlink" href="#basewizard" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="k">class</span><span class="w"> </span><span class="nc">BaseWizard</span><span class="p">:</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for all industry wizards.</span>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="sd">    Provides common wizard lifecycle: start -&gt; collect steps -&gt; preview -&gt; approve -&gt; save.</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="sd">    &quot;&quot;&quot;</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">submit_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wizard_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">preview</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wizard_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wizard_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">approval</span><span class="p">:</span> <span class="nb">dict</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span> <span class="o">...</span>
-</code></pre></div>
-<h3 id="wizardconfig">WizardConfig<a class="headerlink" href="#wizardconfig" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="nd">@dataclass</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a><span class="k">class</span><span class="w"> </span><span class="nc">WizardConfig</span><span class="p">:</span>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration for wizard instances.&quot;&quot;&quot;</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a>    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>    <span class="n">industry</span><span class="p">:</span> <span class="nb">str</span>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a>    <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a>    <span class="n">security_level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;standard&quot;</span>
-</code></pre></div>
-<p><strong>Configuration options:</strong></p>
+<h2 id="config-driven-wizards-yaml">Config-driven wizards (YAML)<a class="headerlink" href="#config-driven-wizards-yaml" title="Permanent link">&para;</a></h2>
+<p><code>ConfigDrivenWizard</code> lets users author wizards entirely in YAML. A
+custom wizard is a single file under <code>.attune/wizards/&lt;wizard_id&gt;.yaml</code>.</p>
+<h3 id="yaml-schema-v10">YAML schema (v1.0)<a class="headerlink" href="#yaml-schema-v10" title="Permanent link">&para;</a></h3>
+<p>Required top-level fields (validated by <code>_validate_schema</code> in
+<code>config_driven.py</code>):</p>
 <ul>
-<li><code>name</code> (str): Wizard identifier</li>
-<li><code>domain</code> (str): Industry domain (healthcare, finance, legal, etc.)</li>
-<li><code>default_empathy_level</code> (int): Empathy level 0-4 (default: 2)</li>
-<li><code>enable_security</code> (bool): Enable PII/secrets detection</li>
-<li><code>pii_patterns</code> (list): Custom PII patterns to detect</li>
-<li><code>enable_secrets_detection</code> (bool): Scan for API keys, passwords</li>
-<li><code>audit_all_access</code> (bool): Log all wizard interactions</li>
-<li><code>retention_days</code> (int): Audit log retention (default: 180 days)</li>
-<li><code>default_classification</code> (str): Data classification (PUBLIC, INTERNAL, SENSITIVE)</li>
+<li><code>wizard_id</code></li>
+<li><code>name</code></li>
+<li><code>steps</code> (non-empty list)</li>
+</ul>
+<p>Optional: <code>description</code>, <code>domain</code>, <code>version</code>,
+<code>estimated_cost_range</code> (list of two floats),
+<code>estimated_duration_minutes</code>, <code>schema_version</code>.</p>
+<p>Each step must include <code>id</code> and a valid <code>step_type</code>
+(<code>question</code>, <code>llm_call</code>, <code>task_decompose</code>, <code>review</code>, <code>preview</code>, <code>confirm</code>).
+For <code>llm_call</code> steps, supply a declarative <code>prompt_context</code> block —
+<code>role</code>, <code>goal</code>, <code>instructions</code>, <code>constraints</code>, <code>input_type</code>,
+<code>input_payload</code> — with <code>{session.var_name}</code> placeholders that the
+runtime substitutes from current session state.</p>
+<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">wizard_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;code-migration&quot;</span>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Code</span><span class="nv"> </span><span class="s">Migration</span><span class="nv"> </span><span class="s">Wizard&quot;</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Guide</span><span class="nv"> </span><span class="s">through</span><span class="nv"> </span><span class="s">migrating</span><span class="nv"> </span><span class="s">code</span><span class="nv"> </span><span class="s">between</span><span class="nv"> </span><span class="s">frameworks&quot;</span>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;development&quot;</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nt">steps</span><span class="p">:</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gather_info&quot;</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Migration</span><span class="nv"> </span><span class="s">Scope&quot;</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nt">step_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;question&quot;</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">questions</span><span class="p">:</span>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;source&quot;</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">        </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Migrating</span><span class="nv"> </span><span class="s">FROM</span><span class="nv"> </span><span class="s">which</span><span class="nv"> </span><span class="s">framework?&quot;</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;text_input&quot;</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;analyze&quot;</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">step_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;llm_call&quot;</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="nt">tier</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;capable&quot;</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="nt">prompt_context</span><span class="p">:</span>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">      </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;migration</span><span class="nv"> </span><span class="s">specialist&quot;</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">      </span><span class="nt">goal</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Plan</span><span class="nv"> </span><span class="s">migration</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">{session.source}&quot;</span>
+</code></pre></div>
+<h3 id="lifecycle-helpers">Lifecycle helpers<a class="headerlink" href="#lifecycle-helpers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>save_custom_wizard(data, base_dir=None)</code> — validate, write
+  <code>&lt;wizard_id&gt;.yaml</code> under <code>.attune/wizards/</code> (or <code>base_dir</code>), and
+  register the wizard.</li>
+<li><code>delete_custom_wizard(wizard_id, base_dir=None)</code> — remove the YAML
+  and unregister. Raises <code>ValueError</code> if <code>wizard_id</code> is a built-in
+  (the five IDs in <code>BUILTIN_WIZARDS</code>).</li>
 </ul>
 <hr />
-<h2 id="creating-custom-wizards">Creating Custom Wizards<a class="headerlink" href="#creating-custom-wizards" title="Permanent link">&para;</a></h2>
-<div class="admonition tip">
-<p class="admonition-title">Build Your Own Domain-Specific Wizard</p>
-<p>You can create custom wizards for your specific industry:</p>
-</div>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseWizard</span><span class="p">,</span> <span class="n">WizardConfig</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm</span><span class="w"> </span><span class="kn">import</span> <span class="n">EmpathyLLM</span>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="k">class</span><span class="w"> </span><span class="nc">MyIndustryWizard</span><span class="p">(</span><span class="n">BaseWizard</span><span class="p">):</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Custom wizard for my industry&quot;&quot;&quot;</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">llm</span><span class="p">:</span> <span class="n">EmpathyLLM</span><span class="p">):</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>        <span class="n">config</span> <span class="o">=</span> <span class="n">WizardConfig</span><span class="p">(</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;my_industry&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-10" name="__codelineno-11-10" href="#__codelineno-11-10"></a>            <span class="n">domain</span><span class="o">=</span><span class="s2">&quot;custom&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-11" name="__codelineno-11-11" href="#__codelineno-11-11"></a>            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;AI assistant for my industry&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-12" name="__codelineno-11-12" href="#__codelineno-11-12"></a>            <span class="n">enable_security</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<a id="__codelineno-11-13" name="__codelineno-11-13" href="#__codelineno-11-13"></a>            <span class="n">pii_patterns</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;custom_pattern&quot;</span><span class="p">],</span>
-<a id="__codelineno-11-14" name="__codelineno-11-14" href="#__codelineno-11-14"></a>            <span class="n">default_classification</span><span class="o">=</span><span class="s2">&quot;INTERNAL&quot;</span>
-<a id="__codelineno-11-15" name="__codelineno-11-15" href="#__codelineno-11-15"></a>        <span class="p">)</span>
-<a id="__codelineno-11-16" name="__codelineno-11-16" href="#__codelineno-11-16"></a>        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">llm</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
-<a id="__codelineno-11-17" name="__codelineno-11-17" href="#__codelineno-11-17"></a>
-<a id="__codelineno-11-18" name="__codelineno-11-18" href="#__codelineno-11-18"></a>    <span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">process</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">user_input</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">user_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">):</span>
-<a id="__codelineno-11-19" name="__codelineno-11-19" href="#__codelineno-11-19"></a><span class="w">        </span><span class="sd">&quot;&quot;&quot;Custom processing logic&quot;&quot;&quot;</span>
-<a id="__codelineno-11-20" name="__codelineno-11-20" href="#__codelineno-11-20"></a>
-<a id="__codelineno-11-21" name="__codelineno-11-21" href="#__codelineno-11-21"></a>        <span class="c1"># Add domain-specific prompts</span>
-<a id="__codelineno-11-22" name="__codelineno-11-22" href="#__codelineno-11-22"></a>        <span class="n">enhanced_prompt</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-11-23" name="__codelineno-11-23" href="#__codelineno-11-23"></a><span class="s2">        You are an AI assistant specialized in </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">domain</span><span class="si">}</span><span class="s2">.</span>
-<a id="__codelineno-11-24" name="__codelineno-11-24" href="#__codelineno-11-24"></a>
-<a id="__codelineno-11-25" name="__codelineno-11-25" href="#__codelineno-11-25"></a><span class="s2">        User request: </span><span class="si">{</span><span class="n">user_input</span><span class="si">}</span>
-<a id="__codelineno-11-26" name="__codelineno-11-26" href="#__codelineno-11-26"></a><span class="s2">        &quot;&quot;&quot;</span>
-<a id="__codelineno-11-27" name="__codelineno-11-27" href="#__codelineno-11-27"></a>
-<a id="__codelineno-11-28" name="__codelineno-11-28" href="#__codelineno-11-28"></a>        <span class="c1"># Use parent LLM with security enabled</span>
-<a id="__codelineno-11-29" name="__codelineno-11-29" href="#__codelineno-11-29"></a>        <span class="n">response</span> <span class="o">=</span> <span class="k">await</span> <span class="bp">self</span><span class="o">.</span><span class="n">llm</span><span class="o">.</span><span class="n">interact</span><span class="p">(</span>
-<a id="__codelineno-11-30" name="__codelineno-11-30" href="#__codelineno-11-30"></a>            <span class="n">user_id</span><span class="o">=</span><span class="n">user_id</span><span class="p">,</span>
-<a id="__codelineno-11-31" name="__codelineno-11-31" href="#__codelineno-11-31"></a>            <span class="n">prompt</span><span class="o">=</span><span class="n">enhanced_prompt</span><span class="p">,</span>
-<a id="__codelineno-11-32" name="__codelineno-11-32" href="#__codelineno-11-32"></a>            <span class="n">context</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;wizard&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">config</span><span class="o">.</span><span class="n">name</span><span class="p">}</span>
-<a id="__codelineno-11-33" name="__codelineno-11-33" href="#__codelineno-11-33"></a>        <span class="p">)</span>
-<a id="__codelineno-11-34" name="__codelineno-11-34" href="#__codelineno-11-34"></a>
-<a id="__codelineno-11-35" name="__codelineno-11-35" href="#__codelineno-11-35"></a>        <span class="k">return</span> <span class="n">response</span>
-<a id="__codelineno-11-36" name="__codelineno-11-36" href="#__codelineno-11-36"></a>
-<a id="__codelineno-11-37" name="__codelineno-11-37" href="#__codelineno-11-37"></a><span class="c1"># Use your custom wizard</span>
-<a id="__codelineno-11-38" name="__codelineno-11-38" href="#__codelineno-11-38"></a><span class="n">llm</span> <span class="o">=</span> <span class="n">EmpathyLLM</span><span class="p">(</span><span class="n">provider</span><span class="o">=</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">api_key</span><span class="o">=</span><span class="s2">&quot;...&quot;</span><span class="p">)</span>
-<a id="__codelineno-11-39" name="__codelineno-11-39" href="#__codelineno-11-39"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">MyIndustryWizard</span><span class="p">(</span><span class="n">llm</span><span class="p">)</span>
-<a id="__codelineno-11-40" name="__codelineno-11-40" href="#__codelineno-11-40"></a>
-<a id="__codelineno-11-41" name="__codelineno-11-41" href="#__codelineno-11-41"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">wizard</span><span class="o">.</span><span class="n">process</span><span class="p">(</span>
-<a id="__codelineno-11-42" name="__codelineno-11-42" href="#__codelineno-11-42"></a>    <span class="n">user_input</span><span class="o">=</span><span class="s2">&quot;Help me with industry-specific task&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-43" name="__codelineno-11-43" href="#__codelineno-11-43"></a>    <span class="n">user_id</span><span class="o">=</span><span class="s2">&quot;user@company.com&quot;</span>
-<a id="__codelineno-11-44" name="__codelineno-11-44" href="#__codelineno-11-44"></a><span class="p">)</span>
-</code></pre></div>
+<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
+<p><code>WizardSession</code> (in <code>src/attune/wizards/session.py</code>) is the mutable
+state object that lives for the duration of one <code>wizard.run()</code> call.
+It is created automatically; subclasses interact with it via
+<code>self._session</code> in <code>build_prompt_context</code> and <code>process_step_result</code>.</p>
+<p>Key fields: <code>wizard_id</code>, <code>run_id</code> (12-hex), <code>initial_context</code>,
+<code>collected_data</code>, <code>step_results</code>, <code>tasks</code>, <code>steps_completed</code>,
+<code>steps_skipped</code>, <code>generated_output</code>, <code>total_cost</code>, <code>started_at</code>.</p>
+<p><code>session.get(key, default)</code> does a layered lookup —
+<code>collected_data</code> first, then <code>initial_context</code>.</p>
 <hr />
-<h2 id="security-best-practices">Security Best Practices<a class="headerlink" href="#security-best-practices" title="Permanent link">&para;</a></h2>
-<div class="admonition warning">
-<p class="admonition-title">Production Security Checklist</p>
-<p><strong>For all wizards in production:</strong></p>
-<ul>
-<li>[ ] Enable security features: <code>enable_security=True</code></li>
-<li>[ ] Configure appropriate PII patterns for your industry</li>
-<li>[ ] Enable secrets detection: <code>enable_secrets_detection=True</code></li>
-<li>[ ] Enable audit logging: <code>audit_all_access=True</code></li>
-<li>[ ] Set correct data classification</li>
-<li>[ ] Review audit logs regularly</li>
-<li>[ ] Test PII scrubbing before production</li>
-<li>[ ] Implement access controls</li>
-<li>[ ] Encrypt data at rest</li>
-<li>[ ] Sign appropriate compliance agreements (BAA for HIPAA, DPA for GDPR)</li>
-</ul>
-</div>
-<div class="admonition info">
-<p class="admonition-title">Classification Levels</p>
-<p><strong>PUBLIC</strong> - No PII, can be shared publicly</p>
-<p><strong>INTERNAL</strong> - Internal business data, PII scrubbed</p>
-<p><strong>SENSITIVE</strong> - PHI, financial data, legal privileged - requires encryption</p>
-</div>
+<h2 id="discovery-registration">Discovery &amp; registration<a class="headerlink" href="#discovery-registration" title="Permanent link">&para;</a></h2>
+<p><code>get_wizard()</code> and <code>list_wizards()</code> both trigger three loaders, each
+guarded so they run at most once per process:</p>
+<ol>
+<li><code>_discover_wizards()</code> — entry-point group <code>empathy.wizards</code></li>
+<li><code>_load_builtins()</code> — the <code>BUILTIN_WIZARDS</code> dict</li>
+<li><code>_load_custom_wizards()</code> — YAML files in <code>.attune/wizards/</code></li>
+</ol>
+<p><code>register_wizard(wizard_id, wizard_class)</code> is the manual hook — useful
+for tests or in-process registration of Python wizards.</p>
 <hr />
-<h2 id="see-also">See Also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
+<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../llm-toolkit/">LLM Toolkit</a> - Core LLM functionality</li>
-<li><a href="../../how-to/security-architecture/">Security Architecture</a> - Security implementation details</li>
-<li><a href="../../tutorials/examples/sbar-clinical-handoff/">SBAR Example</a> - Healthcare wizard in action</li>
-<li><a href="../config/">Configuration</a> - Wizard configuration options</li>
+<li><code>src/attune/wizards/</code> — implementation (start with <code>__init__.py</code>,
+  <code>base.py</code>, <code>_types.py</code>, <code>registry.py</code>, <code>config_driven.py</code>).</li>
+<li><code>src/attune/wizards/builtin/</code> — the five built-in wizards.</li>
+<li><code>.claude/skills/wizard/SKILL.md</code> — the Claude Code skill that drives
+  the wizard runtime in a session.</li>
+<li><code>attune health</code> — includes a wizard discovery probe that calls
+  <code>list_wizards()</code>.</li>
 </ul>
 
 
@@ -4801,6 +4356,9 @@
 
 
 
+
+  
+  
 
 
 
