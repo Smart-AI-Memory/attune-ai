@@ -18,7 +18,7 @@ The continuous learning system:
 ## Quick Start
 
 ```python
-from attune_llm.learning import (
+from attune.learning import (
     SessionEvaluator,
     PatternExtractor,
     LearnedSkillsStorage,
@@ -235,7 +235,7 @@ relevant = ctx.search_patterns("authentication")
 Aggregate patterns into higher-level skills:
 
 ```python
-from attune_llm.learning import LearnedSkill
+from attune.learning import LearnedSkill
 
 skill = LearnedSkill(
     skill_id="skill_001",
@@ -283,7 +283,7 @@ summary = storage.get_summary("user123")
 ### Session End Evaluation
 
 ```python
-from attune_llm.hooks import HookRegistry, HookEvent
+from attune.hooks import HookRegistry, HookEvent
 
 def evaluate_session_handler(context):
     evaluator = SessionEvaluator()

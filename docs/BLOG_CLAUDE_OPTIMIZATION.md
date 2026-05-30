@@ -114,11 +114,6 @@ I didn't break anything. Attune AI supports:
 
 All providers use async clients. All providers work with workflows. The difference: Claude-specific features (slash commands, conversation persistence) unlock capabilities the others don't have.
 
-```python
-# Still works fine
-from attune_llm.providers import OpenAIProvider, GeminiProvider, LocalProvider
-```
-
 ## The Skills System
 
 I put all the workflow logic in markdown files:

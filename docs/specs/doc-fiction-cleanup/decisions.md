@@ -167,6 +167,65 @@ retire decision — to be triaged in Phase 2. See `tasks.md`.
   `docs/archive/` tree, and (c) the historical
   `deprecated-module-retirement/tasks.md:35` note (intentional).
 
+## Phase 2 outcomes (2026-05-30, PR-B — MECHANICAL batch)
+
+### Renamed (5 docs, pure `attune_llm` → `attune` rename)
+
+- **`docs/context-management.md`** — 3 imports renamed; all
+  symbols (`ContextManager`, `CompactState`, `CompactionStateManager`,
+  `HookRegistry`, `HookEvent`) resolve at the new paths.
+- **`docs/continuous-learning.md`** — 3 imports renamed; all
+  symbols (`SessionEvaluator`, `PatternExtractor`,
+  `LearnedSkillsStorage`, `SessionQuality`, `PatternCategory`,
+  `LearnedSkill`, `HookRegistry`, `HookEvent`) verified present.
+  This closes the previously-open "may be fiction" question on
+  this doc — scout was correct, every symbol resolves.
+- **`docs/hooks.md`** — 4 imports renamed (`HookRegistry`,
+  `HookEvent`, `HookConfig`, `HookMatcher`). One example
+  pointer broken even after rename: replaced
+  `attune_llm.hooks.scripts.session_start:main` with
+  `attune.hooks.scripts.first_time_init:main` (real script in
+  the same dir; semantically aligned for SessionStart events;
+  `session_start.py` does not exist in current source).
+- **`docs/markdown-agents.md`** — 3 imports renamed
+  (`AgentRegistry`, `AgentLoader`). Closes the second
+  previously-open "may be fiction" question — scout was correct.
+- **`docs/how-to/unified-memory-system.md`** — 2 imports renamed
+  (`PIIScrubber`, `SecretsDetector` from `attune.security`).
+  Also: dropped "encryption" from the inline description of
+  `security-architecture.md` at line ~450 (no encryption module
+  exists; was overpromising) per Phase 2 preflight note.
+
+### Pruned fiction (3 docs, partial cleanup)
+
+- **`docs/EXCEPTION_HANDLING_GUIDE.md`** — deleted the entire
+  35-line "Example 4: Health Check with Specific Handlers"
+  section (referenced `attune_llm/code_health.py:393`;
+  `code_health.py` does not exist in source). Also removed the
+  bullet pointing to `attune_llm/code_health.py` in the
+  "Codebase Examples" section. Examples 1, 2, 3, and 5 retained
+  (Example 5 auto-renumbered to 4 by markdown convention; no
+  inbound deep-links to anchors).
+- **`docs/BLOG_CLAUDE_OPTIMIZATION.md`** — deleted a 3-line
+  fenced code block `from attune_llm.providers import
+  OpenAIProvider, GeminiProvider, LocalProvider`. The multi-
+  provider story is broader fiction than the rename (real
+  surface is Anthropic-only today), but the surrounding prose
+  + table are left intact for the BLOG owner to revisit
+  separately. Scope-bounded to the import-line fiction.
+- **`docs/guides/DISTRIBUTION_POLICY.md`** — single trivial
+  change: `(attune, attune_llm, etc.)` → `(attune, etc.)` in
+  a table cell.
+
+### Verification
+
+- Net diff: -41 lines (18 insertions, 59 deletions).
+- `mkdocs build --strict` passes.
+- Grep sanity: remaining `attune_llm` references confined to
+  (a) `docs/archive/` (intentional fossils), (b) the cleanup
+  spec itself, (c) the pending REWRITE targets `agent-factory.md`
+  and `TROUBLESHOOTING.md` (Phase 2 PR-C and Phase 3 respectively).
+
 ---
 
 ## Phase 2 preflight notes (2026-05-30)

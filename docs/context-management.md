@@ -18,7 +18,7 @@ The context management system handles:
 ## Quick Start
 
 ```python
-from attune_llm.context import ContextManager
+from attune.context import ContextManager
 
 # Initialize
 manager = ContextManager(storage_dir=".attune/compact_states")
@@ -93,7 +93,7 @@ handoff = manager.set_handoff(
 path = manager.save_for_compaction(collaboration_state)
 
 # Or create manually
-from attune_llm.context import CompactState, CompactionStateManager
+from attune.context import CompactState, CompactionStateManager
 
 state = CompactState(
     user_id="user123",
@@ -178,7 +178,7 @@ implementation
 ### Pre-Compact Hook
 
 ```python
-from attune_llm.hooks import HookRegistry, HookEvent
+from attune.hooks import HookRegistry, HookEvent
 
 registry = HookRegistry()
 

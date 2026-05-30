@@ -18,7 +18,7 @@ Hooks allow you to execute custom code at specific points in the session lifecyc
 ## Quick Start
 
 ```python
-from attune_llm.hooks import HookRegistry, HookEvent
+from attune.hooks import HookRegistry, HookEvent
 
 # Create registry
 registry = HookRegistry()
@@ -67,7 +67,7 @@ hooks:
         match_all: true
       hooks:
         - type: python
-          command: attune_llm.hooks.scripts.session_start:main
+          command: attune.hooks.scripts.first_time_init:main
           description: Restore previous context
 
   PostToolUse:
@@ -86,7 +86,7 @@ log_executions: true
 ### Loading Configuration
 
 ```python
-from attune_llm.hooks import HookConfig
+from attune.hooks import HookConfig
 
 config = HookConfig.from_yaml("hooks.yaml")
 registry = HookRegistry(config=config)
@@ -97,7 +97,7 @@ registry = HookRegistry(config=config)
 Matchers determine when hooks fire:
 
 ```python
-from attune_llm.hooks import HookMatcher
+from attune.hooks import HookMatcher
 
 # Match specific tool
 tool_matcher = HookMatcher(tool="Edit")
