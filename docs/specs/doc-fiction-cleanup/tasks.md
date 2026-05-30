@@ -42,17 +42,47 @@ concrete claim, surface for review before finalizing.
 
 ---
 
-## Phase 2 — attune_llm dead-import sweep (21 docs)
+## Phase 2 — attune_llm dead-import sweep (18 docs, scout 2026-05-30)
 
-- [ ] Triage each `attune_llm`-referencing doc: mechanical
+- [x] Triage each `attune_llm`-referencing doc: mechanical
   rename (`attune_llm` -> `attune`, verify symbol) vs retire
-  (doc is itself fiction).
-- [ ] Apply renames; verify symbols resolve.
+  (doc is itself fiction). Done 2026-05-30 — see
+  [`phase-2-triage.md`](phase-2-triage.md) (18 docs classified;
+  fewer than the spec's 21-doc estimate). Buckets: 8 MECHANICAL,
+  4 RETIRE-CANDIDATE, 4 REWRITE, 2 UNCLEAR. Scout disagreed with
+  `decisions.md` "Open Questions" on `continuous-learning.md` and
+  `markdown-agents.md` — both are MECHANICAL, every symbol resolves.
+- [x] **RETIRE + ARCHIVE batch (PR-A, 2026-05-30):** retired
+  `hipaa-compliance.md`, `ENTERPRISE_PRIVACY_INTEGRATION.md`,
+  `guides/RELEASE_PREPARATION.md`, `migration-guide.md`,
+  `reference/USER_GUIDE.md`; archived `ANTHROPIC_COMPLIANCE_PLAN.md`
+  and `features/v2.3-memory-enhancement.md` under `docs/archive/`;
+  replaced `DEVELOPER_GUIDE.md` with a redirect stub pointing at
+  Phase 1's `plugin-system.md`/`wizards.md`/`security-architecture.md`.
+  Inbound refs cleaned in `mkdocs.yml` (4 nav entries), `.help/features.yaml`
+  (3 entries), `how-to/index.md`, both `sbar-clinical-handoff.md`,
+  `how-to/telemetry-and-signals.md`, `reference/index.md`. `mkdocs build --strict`
+  passes.
+- [ ] **MECHANICAL batch (PR-B):** 8 docs grep+replace
+  `attune_llm` → `attune` with per-import verification:
+  `BLOG_CLAUDE_OPTIMIZATION.md` (or just delete the snippet),
+  `EXCEPTION_HANDLING_GUIDE.md`, `context-management.md`,
+  `continuous-learning.md`, `guides/DISTRIBUTION_POLICY.md`,
+  `hooks.md`, `markdown-agents.md`, `unified-memory-system.md`
+  (also drop "encryption" from line 450 per `decisions.md`
+  Phase 2 preflight). All symbols verified present at the
+  renamed path per triage file.
+- [ ] **REWRITE batch (PR-C, ≤1 doc this session):**
+  `agent-factory.md` recommended. Deferred to Phase 3:
+  `TROUBLESHOOTING.md` (mixed real troubleshooting + fiction;
+  needs careful surgery).
 - [ ] Decide on the two `webhook-event-integration.md` example
-  docs (retire vs rewrite-narrow).
+  docs (retire vs rewrite-narrow). *Open from prior phase; not
+  in the attune_llm cohort.*
 - [ ] Triage the remaining MEDIUM/LOW fact-drift docs from
   `decisions.md` (auto-chaining, multi-agent, llm-toolkit,
   telemetry-and-signals, configuration, help-system-maintenance).
+  *Open from prior phase; not in the attune_llm cohort.*
 
 ---
 

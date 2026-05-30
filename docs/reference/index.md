@@ -73,10 +73,6 @@ quick reference materials for when you need to look something up.
 
     Terms and definitions
 
-- :material-file-document: **[User Guide](USER_GUIDE.md)**
-
-    Comprehensive user documentation
-
 </div>
 
 ---

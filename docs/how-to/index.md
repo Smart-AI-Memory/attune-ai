@@ -53,10 +53,6 @@ framework and need to accomplish something specific.
 
     Secure your Empathy deployment
 
-- :material-hospital-building: **[HIPAA Compliance](hipaa-compliance.md)**
-
-    Configure for healthcare compliance
-
 </div>
 
 ## Resilience

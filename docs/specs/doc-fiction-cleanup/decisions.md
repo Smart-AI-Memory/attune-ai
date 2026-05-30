@@ -97,13 +97,75 @@ retire decision — to be triaged in Phase 2. See `tasks.md`.
 
 ## Open questions
 
-- Which of the untracked `attune_llm` docs are salvageable
-  (mechanical rename) vs fictional (retire)? Needs a Phase-2
-  triage pass like the one done for the tracked 30.
+- ~~Which of the untracked `attune_llm` docs are salvageable
+  (mechanical rename) vs fictional (retire)?~~ **Resolved
+  2026-05-30** by Phase 2 triage scout — see `phase-2-triage.md`.
+  18-doc cohort classified into 4 buckets. Scout disagreed with
+  the speculative "may be fiction" flag on `continuous-learning.md`
+  and `markdown-agents.md` — both are MECHANICAL (every symbol
+  resolves at `attune.learning` / `attune.agents_md`).
 - Should the two near-identical `webhook-event-integration.md`
   example docs (`docs/examples/` and `docs/tutorials/examples/`,
   both fictional `attune.webhooks`) be retired too? They are out
-  of the tracked set; flagged for Phase 2.
+  of the tracked set; flagged for Phase 2. *(Still open;
+  out-of-cohort.)*
+
+## Phase 2 outcomes (2026-05-30, PR-A — RETIRE + ARCHIVE batch)
+
+### Retired (deleted)
+
+- **`docs/how-to/hipaa-compliance.md`** — preflight Option 1.
+  No standalone HIPAA-compliance feature ships today; the doc
+  overpromised. Removed from nav + `features.yaml` + inbound refs
+  in `how-to/index.md`, `examples/sbar-clinical-handoff.md`,
+  `tutorials/examples/sbar-clinical-handoff.md`.
+- **`docs/architecture/ENTERPRISE_PRIVACY_INTEGRATION.md`** —
+  describes `EnterprisePrivacyConfig` (never built), marked
+  "Status: Design Phase" 2025-11. Removed from `features.yaml`.
+- **`docs/guides/RELEASE_PREPARATION.md`** — pinned to v3.7.0
+  with `HealthcareWizard` smoke tests; release long shipped.
+  Removed from nav. Historical reference left untouched in
+  `docs/specs/deprecated-module-retirement/tasks.md:35` (closed
+  task; revisionism would be worse than the dangling note).
+- **`docs/migration-guide.md`** — the rename window closed
+  (current version is past v3, shims gone). Doc misleads about
+  the timeline. Removed from nav.
+- **`docs/reference/USER_GUIDE.md`** — 2374 lines with heavy
+  `coach_wizards` fiction. Retired without replacement this PR;
+  follow-up task to author a thinner `getting-started.md` left
+  for a separate spec (deferred consciously rather than rushing a
+  thin replacement into this PR).
+
+### Archived (moved to `docs/archive/`)
+
+- **`docs/implementation/ANTHROPIC_COMPLIANCE_PLAN.md`** →
+  `docs/archive/implementation/`. 1456-line implementation plan
+  with `attune_llm/providers.py` paths that no longer exist;
+  treated as historical fossil. Original `docs/implementation/`
+  directory left in place for any future plan.
+- **`docs/features/v2.3-memory-enhancement.md`** →
+  `docs/archive/releases/`. Release-note style narrative pinned
+  to "v2.3 / December 2025"; preserved as a historical fossil
+  rather than rewritten as competing memory-architecture
+  reference.
+
+### Replaced with stub
+
+- **`docs/DEVELOPER_GUIDE.md`** — replaced with a short redirect
+  pointing readers at the Phase 1 outputs (`plugin-system.md`,
+  `wizards.md`, `security-architecture.md`). A full Developer
+  Guide may be authored in a future spec; this stub ensures the
+  inbound link from `PROJECT_OVERVIEW.md:454` still resolves.
+
+### Build verification
+
+- `mkdocs build --strict` passes; pre-existing anchor warnings
+  in `API_REFERENCE.md` and related docs are unrelated to this
+  PR (long-standing issue, not introduced or worsened here).
+- Grep sanity: zero remaining inbound references to the 5 retired
+  docs outside of (a) the cleanup spec itself, (b) the
+  `docs/archive/` tree, and (c) the historical
+  `deprecated-module-retirement/tasks.md:35` note (intentional).
 
 ---
 

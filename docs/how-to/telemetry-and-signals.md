@@ -243,7 +243,5 @@ attune costs export -o backup.json && attune costs reset --confirm
 ## See Also
 
 - [Cost Commands](../reference/cli-reference.md#costs-commands) — Full CLI reference
-- [Adaptive Routing](../reference/USER_GUIDE.md) — How tier routing decisions
-  are made
 - [Agent Coordination](../reference/multi-agent.md) — Multi-agent architecture
   and access tiers

@@ -72,7 +72,6 @@ exclude_docs: |
   guides/MCP_PUBLISH_INSTRUCTIONS.md
   guides/MKDOCS_TUTORIAL.md
   guides/PUBLISHING.md
-  guides/RELEASE_PREPARATION.md
   guides/WORKFLOW_PATTERNS.md
   guides/claude-memory-integration.md
   guides/five-levels-of-empathy.md
@@ -160,7 +159,6 @@ exclude_docs: |
   keyboard-shortcuts.md
   known-issues.md
   markdown-agents.md
-  migration-guide.md
   quickstart.md
   reliability_improvements_report.md
   testing-guide.md
@@ -209,7 +207,6 @@ nav:
           - Claude Code: integration/claude-code-integration.md
           - Hooks: hooks.md
           - Security: how-to/security-architecture.md
-          - HIPAA Compliance: how-to/hipaa-compliance.md
       - Patterns:
           - Practical Patterns: how-to/practical-patterns.md
           - Resilience Patterns: how-to/resilience-patterns.md
@@ -261,7 +258,6 @@ nav:
           - FAQ: reference/FAQ.md
           - Troubleshooting: reference/TROUBLESHOOTING.md
           - Glossary: reference/glossary.md
-          - User Guide: reference/USER_GUIDE.md
           - Short-Term Memory: reference/SHORT_TERM_MEMORY.md
       - Architecture:
           - Overview: ARCHITECTURE.md
