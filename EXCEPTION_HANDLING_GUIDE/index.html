@@ -2915,21 +2915,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-4-health-check-with-specific-handlers" class="md-nav__link">
+  <a href="#example-4-acceptable-broad-exception-with-noqa" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example 4: Health Check with Specific Handlers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-5-acceptable-broad-exception-with-noqa" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example 5: Acceptable Broad Exception with noqa
+        Example 4: Acceptable Broad Exception with noqa
       
     </span>
   </a>
@@ -4526,21 +4515,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-4-health-check-with-specific-handlers" class="md-nav__link">
+  <a href="#example-4-acceptable-broad-exception-with-noqa" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example 4: Health Check with Specific Handlers
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example-5-acceptable-broad-exception-with-noqa" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example 5: Acceptable Broad Exception with noqa
+        Example 4: Acceptable Broad Exception with noqa
       
     </span>
   </a>
@@ -5049,88 +5027,56 @@
 <a id="__codelineno-22-20" name="__codelineno-22-20" href="#__codelineno-22-20"></a>            <span class="s2">&quot;remediation&quot;</span><span class="p">:</span> <span class="s2">&quot;Manual review recommended - scanner could not complete&quot;</span>
 <a id="__codelineno-22-21" name="__codelineno-22-21" href="#__codelineno-22-21"></a>        <span class="p">})</span>
 </code></pre></div>
-<h3 id="example-4-health-check-with-specific-handlers">Example 4: Health Check with Specific Handlers<a class="headerlink" href="#example-4-health-check-with-specific-handlers" title="Permanent link">&para;</a></h3>
-<p><strong>File:</strong> <code>attune_llm/code_health.py:393</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a>    <span class="k">if</span> <span class="n">tool</span> <span class="o">==</span> <span class="s2">&quot;ruff&quot;</span><span class="p">:</span>
-<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>        <span class="n">result</span> <span class="o">=</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">run</span><span class="p">(</span>
-<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a>            <span class="p">[</span><span class="s2">&quot;ruff&quot;</span><span class="p">,</span> <span class="s2">&quot;check&quot;</span><span class="p">,</span> <span class="s2">&quot;--output-format=json&quot;</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">project_root</span><span class="p">)],</span>
-<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>            <span class="n">check</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">capture_output</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">text</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>        <span class="p">)</span>
-<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>        <span class="n">ruff_issues</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">stdout</span><span class="p">)</span>
-<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>        <span class="c1"># Process issues...</span>
-<a id="__codelineno-23-9" name="__codelineno-23-9" href="#__codelineno-23-9"></a><span class="k">except</span> <span class="n">json</span><span class="o">.</span><span class="n">JSONDecodeError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-23-10" name="__codelineno-23-10" href="#__codelineno-23-10"></a>    <span class="c1"># Tool output not in expected JSON format</span>
-<a id="__codelineno-23-11" name="__codelineno-23-11" href="#__codelineno-23-11"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Lint check JSON parse error (</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-23-12" name="__codelineno-23-12" href="#__codelineno-23-12"></a>    <span class="k">return</span> <span class="n">CheckResult</span><span class="p">(</span>
-<a id="__codelineno-23-13" name="__codelineno-23-13" href="#__codelineno-23-13"></a>        <span class="n">category</span><span class="o">=</span><span class="n">CheckCategory</span><span class="o">.</span><span class="n">LINT</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">HealthStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
-<a id="__codelineno-23-14" name="__codelineno-23-14" href="#__codelineno-23-14"></a>        <span class="n">score</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Failed to parse </span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2"> output: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
-<a id="__codelineno-23-15" name="__codelineno-23-15" href="#__codelineno-23-15"></a>    <span class="p">)</span>
-<a id="__codelineno-23-16" name="__codelineno-23-16" href="#__codelineno-23-16"></a><span class="k">except</span> <span class="n">subprocess</span><span class="o">.</span><span class="n">SubprocessError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-23-17" name="__codelineno-23-17" href="#__codelineno-23-17"></a>    <span class="c1"># Tool execution failed</span>
-<a id="__codelineno-23-18" name="__codelineno-23-18" href="#__codelineno-23-18"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Lint check subprocess error (</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-23-19" name="__codelineno-23-19" href="#__codelineno-23-19"></a>    <span class="k">return</span> <span class="n">CheckResult</span><span class="p">(</span>
-<a id="__codelineno-23-20" name="__codelineno-23-20" href="#__codelineno-23-20"></a>        <span class="n">category</span><span class="o">=</span><span class="n">CheckCategory</span><span class="o">.</span><span class="n">LINT</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">HealthStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
-<a id="__codelineno-23-21" name="__codelineno-23-21" href="#__codelineno-23-21"></a>        <span class="n">score</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Failed to run </span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">}</span>
-<a id="__codelineno-23-22" name="__codelineno-23-22" href="#__codelineno-23-22"></a>    <span class="p">)</span>
-<a id="__codelineno-23-23" name="__codelineno-23-23" href="#__codelineno-23-23"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-<a id="__codelineno-23-24" name="__codelineno-23-24" href="#__codelineno-23-24"></a>    <span class="c1"># INTENTIONAL: Broad handler for graceful degradation of optional check</span>
-<a id="__codelineno-23-25" name="__codelineno-23-25" href="#__codelineno-23-25"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">exception</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unexpected error in lint check (</span><span class="si">{</span><span class="n">tool</span><span class="si">}</span><span class="s2">): </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-23-26" name="__codelineno-23-26" href="#__codelineno-23-26"></a>    <span class="k">return</span> <span class="n">CheckResult</span><span class="p">(</span>
-<a id="__codelineno-23-27" name="__codelineno-23-27" href="#__codelineno-23-27"></a>        <span class="n">category</span><span class="o">=</span><span class="n">CheckCategory</span><span class="o">.</span><span class="n">LINT</span><span class="p">,</span> <span class="n">status</span><span class="o">=</span><span class="n">HealthStatus</span><span class="o">.</span><span class="n">ERROR</span><span class="p">,</span>
-<a id="__codelineno-23-28" name="__codelineno-23-28" href="#__codelineno-23-28"></a>        <span class="n">score</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">details</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)}</span>
-<a id="__codelineno-23-29" name="__codelineno-23-29" href="#__codelineno-23-29"></a>    <span class="p">)</span>
-</code></pre></div>
-<h3 id="example-5-acceptable-broad-exception-with-noqa">Example 5: Acceptable Broad Exception with noqa<a class="headerlink" href="#example-5-acceptable-broad-exception-with-noqa" title="Permanent link">&para;</a></h3>
+<h3 id="example-4-acceptable-broad-exception-with-noqa">Example 4: Acceptable Broad Exception with noqa<a class="headerlink" href="#example-4-acceptable-broad-exception-with-noqa" title="Permanent link">&para;</a></h3>
 <p><strong>File:</strong> <code>src/attune/cli.py:2041</code></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Best-effort serialization for JSON output</span>
-<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a><span class="k">try</span><span class="p">:</span>
-<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>    <span class="n">final_output_serializable</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
-<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
-<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>    <span class="c1"># INTENTIONAL: Cannot predict all possible object types users might return</span>
-<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>    <span class="c1"># This is best-effort serialization for JSON output</span>
-<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot serialize field </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>    <span class="k">pass</span>  <span class="c1"># Silently skip non-serializable fields</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-23-1" name="__codelineno-23-1" href="#__codelineno-23-1"></a><span class="c1"># Best-effort serialization for JSON output</span>
+<a id="__codelineno-23-2" name="__codelineno-23-2" href="#__codelineno-23-2"></a><span class="k">try</span><span class="p">:</span>
+<a id="__codelineno-23-3" name="__codelineno-23-3" href="#__codelineno-23-3"></a>    <span class="n">final_output_serializable</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">v</span><span class="p">)</span>
+<a id="__codelineno-23-4" name="__codelineno-23-4" href="#__codelineno-23-4"></a><span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>  <span class="c1"># noqa: BLE001</span>
+<a id="__codelineno-23-5" name="__codelineno-23-5" href="#__codelineno-23-5"></a>    <span class="c1"># INTENTIONAL: Cannot predict all possible object types users might return</span>
+<a id="__codelineno-23-6" name="__codelineno-23-6" href="#__codelineno-23-6"></a>    <span class="c1"># This is best-effort serialization for JSON output</span>
+<a id="__codelineno-23-7" name="__codelineno-23-7" href="#__codelineno-23-7"></a>    <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Cannot serialize field </span><span class="si">{</span><span class="n">k</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-23-8" name="__codelineno-23-8" href="#__codelineno-23-8"></a>    <span class="k">pass</span>  <span class="c1"># Silently skip non-serializable fields</span>
 </code></pre></div>
 <hr />
 <h2 id="pre-commit-hook">Pre-Commit Hook<a class="headerlink" href="#pre-commit-hook" title="Permanent link">&para;</a></h2>
 <p>The codebase enforces these standards via pre-commit hooks:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="c1"># Install hooks (one-time setup)</span>
-<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a>pre-commit<span class="w"> </span>install
-<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a>
-<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="c1"># Run manually before commit</span>
-<a id="__codelineno-25-5" name="__codelineno-25-5" href="#__codelineno-25-5"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
-<a id="__codelineno-25-6" name="__codelineno-25-6" href="#__codelineno-25-6"></a>
-<a id="__codelineno-25-7" name="__codelineno-25-7" href="#__codelineno-25-7"></a><span class="c1"># Run only bare exception check</span>
-<a id="__codelineno-25-8" name="__codelineno-25-8" href="#__codelineno-25-8"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>ruff-bare-exception-check<span class="w"> </span>--all-files
+<div class="highlight"><pre><span></span><code><a id="__codelineno-24-1" name="__codelineno-24-1" href="#__codelineno-24-1"></a><span class="c1"># Install hooks (one-time setup)</span>
+<a id="__codelineno-24-2" name="__codelineno-24-2" href="#__codelineno-24-2"></a>pre-commit<span class="w"> </span>install
+<a id="__codelineno-24-3" name="__codelineno-24-3" href="#__codelineno-24-3"></a>
+<a id="__codelineno-24-4" name="__codelineno-24-4" href="#__codelineno-24-4"></a><span class="c1"># Run manually before commit</span>
+<a id="__codelineno-24-5" name="__codelineno-24-5" href="#__codelineno-24-5"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>--all-files
+<a id="__codelineno-24-6" name="__codelineno-24-6" href="#__codelineno-24-6"></a>
+<a id="__codelineno-24-7" name="__codelineno-24-7" href="#__codelineno-24-7"></a><span class="c1"># Run only bare exception check</span>
+<a id="__codelineno-24-8" name="__codelineno-24-8" href="#__codelineno-24-8"></a>pre-commit<span class="w"> </span>run<span class="w"> </span>ruff-bare-exception-check<span class="w"> </span>--all-files
 </code></pre></div>
 <p>The hook configuration (<code>.pre-commit-config.yaml</code>):
-<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ruff</span>
-<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ruff-bare-exception-check</span>
-<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a><span class="w">  </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;--select=BLE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;--no-fix&#39;</span><span class="p p-Indicator">]</span>
-<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a><span class="w">  </span><span class="c1"># Prevents bare except clauses from being committed</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-25-1" name="__codelineno-25-1" href="#__codelineno-25-1"></a><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ruff</span>
+<a id="__codelineno-25-2" name="__codelineno-25-2" href="#__codelineno-25-2"></a><span class="w">  </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">ruff-bare-exception-check</span>
+<a id="__codelineno-25-3" name="__codelineno-25-3" href="#__codelineno-25-3"></a><span class="w">  </span><span class="nt">args</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">&#39;--select=BLE&#39;</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">&#39;--no-fix&#39;</span><span class="p p-Indicator">]</span>
+<a id="__codelineno-25-4" name="__codelineno-25-4" href="#__codelineno-25-4"></a><span class="w">  </span><span class="c1"># Prevents bare except clauses from being committed</span>
 </code></pre></div></p>
 <hr />
 <h2 id="quick-decision-tree">Quick Decision Tree<a class="headerlink" href="#quick-decision-tree" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-27-1" name="__codelineno-27-1" href="#__codelineno-27-1"></a>Is this an optional feature (wizard, plugin, tip)?
-<a id="__codelineno-27-2" name="__codelineno-27-2" href="#__codelineno-27-2"></a>├─ YES → Use graceful degradation pattern (Example 2)
-<a id="__codelineno-27-3" name="__codelineno-27-3" href="#__codelineno-27-3"></a>│         - Catch specific exceptions first
-<a id="__codelineno-27-4" name="__codelineno-27-4" href="#__codelineno-27-4"></a>│         - Broad Exception as last resort with logger.exception()
-<a id="__codelineno-27-5" name="__codelineno-27-5" href="#__codelineno-27-5"></a>│         - Document with comment
-<a id="__codelineno-27-6" name="__codelineno-27-6" href="#__codelineno-27-6"></a>│         - Return False/default value
-<a id="__codelineno-27-7" name="__codelineno-27-7" href="#__codelineno-27-7"></a>└─ NO → Is this a security-related operation?
-<a id="__codelineno-27-8" name="__codelineno-27-8" href="#__codelineno-27-8"></a>    ├─ YES → Use fail-secure pattern (Example 3)
-<a id="__codelineno-27-9" name="__codelineno-27-9" href="#__codelineno-27-9"></a>    │         - Log all errors
-<a id="__codelineno-27-10" name="__codelineno-27-10" href="#__codelineno-27-10"></a>    │         - Create findings for scan failures
-<a id="__codelineno-27-11" name="__codelineno-27-11" href="#__codelineno-27-11"></a>    │         - Never silently skip
-<a id="__codelineno-27-12" name="__codelineno-27-12" href="#__codelineno-27-12"></a>    └─ NO → Use specific exception handlers
-<a id="__codelineno-27-13" name="__codelineno-27-13" href="#__codelineno-27-13"></a>              - Catch expected exceptions
-<a id="__codelineno-27-14" name="__codelineno-27-14" href="#__codelineno-27-14"></a>              - Log at appropriate level
-<a id="__codelineno-27-15" name="__codelineno-27-15" href="#__codelineno-27-15"></a>              - Re-raise critical errors
-<a id="__codelineno-27-16" name="__codelineno-27-16" href="#__codelineno-27-16"></a>              - Add broad Exception ONLY if:
-<a id="__codelineno-27-17" name="__codelineno-27-17" href="#__codelineno-27-17"></a>                  * You log with logger.exception()
-<a id="__codelineno-27-18" name="__codelineno-27-18" href="#__codelineno-27-18"></a>                  * You document why
-<a id="__codelineno-27-19" name="__codelineno-27-19" href="#__codelineno-27-19"></a>                  * You use # noqa: BLE001
+<div class="highlight"><pre><span></span><code><a id="__codelineno-26-1" name="__codelineno-26-1" href="#__codelineno-26-1"></a>Is this an optional feature (wizard, plugin, tip)?
+<a id="__codelineno-26-2" name="__codelineno-26-2" href="#__codelineno-26-2"></a>├─ YES → Use graceful degradation pattern (Example 2)
+<a id="__codelineno-26-3" name="__codelineno-26-3" href="#__codelineno-26-3"></a>│         - Catch specific exceptions first
+<a id="__codelineno-26-4" name="__codelineno-26-4" href="#__codelineno-26-4"></a>│         - Broad Exception as last resort with logger.exception()
+<a id="__codelineno-26-5" name="__codelineno-26-5" href="#__codelineno-26-5"></a>│         - Document with comment
+<a id="__codelineno-26-6" name="__codelineno-26-6" href="#__codelineno-26-6"></a>│         - Return False/default value
+<a id="__codelineno-26-7" name="__codelineno-26-7" href="#__codelineno-26-7"></a>└─ NO → Is this a security-related operation?
+<a id="__codelineno-26-8" name="__codelineno-26-8" href="#__codelineno-26-8"></a>    ├─ YES → Use fail-secure pattern (Example 3)
+<a id="__codelineno-26-9" name="__codelineno-26-9" href="#__codelineno-26-9"></a>    │         - Log all errors
+<a id="__codelineno-26-10" name="__codelineno-26-10" href="#__codelineno-26-10"></a>    │         - Create findings for scan failures
+<a id="__codelineno-26-11" name="__codelineno-26-11" href="#__codelineno-26-11"></a>    │         - Never silently skip
+<a id="__codelineno-26-12" name="__codelineno-26-12" href="#__codelineno-26-12"></a>    └─ NO → Use specific exception handlers
+<a id="__codelineno-26-13" name="__codelineno-26-13" href="#__codelineno-26-13"></a>              - Catch expected exceptions
+<a id="__codelineno-26-14" name="__codelineno-26-14" href="#__codelineno-26-14"></a>              - Log at appropriate level
+<a id="__codelineno-26-15" name="__codelineno-26-15" href="#__codelineno-26-15"></a>              - Re-raise critical errors
+<a id="__codelineno-26-16" name="__codelineno-26-16" href="#__codelineno-26-16"></a>              - Add broad Exception ONLY if:
+<a id="__codelineno-26-17" name="__codelineno-26-17" href="#__codelineno-26-17"></a>                  * You log with logger.exception()
+<a id="__codelineno-26-18" name="__codelineno-26-18" href="#__codelineno-26-18"></a>                  * You document why
+<a id="__codelineno-26-19" name="__codelineno-26-19" href="#__codelineno-26-19"></a>                  * You use # noqa: BLE001
 </code></pre></div>
 <hr />
 <h2 id="references">References<a class="headerlink" href="#references" title="Permanent link">&para;</a></h2>
@@ -5142,7 +5088,6 @@
 <li><code>backend/services/database/auth_db.py</code> - Database patterns</li>
 <li><code>backend/api/wizard_api.py</code> - Graceful degradation</li>
 <li><code>agents/code_inspection/adapters/security_adapter.py</code> - Fail-secure</li>
-<li><code>attune_llm/code_health.py</code> - Health checks</li>
 <li><code>src/attune/cli.py</code> - CLI error handling</li>
 </ul>
 <hr />

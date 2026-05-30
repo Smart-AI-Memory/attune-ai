@@ -1610,10 +1610,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#from-attune_llmsecurity" class="md-nav__link">
+  <a href="#from-attunesecurity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From attune_llm.security
+        From attune.security
       
     </span>
   </a>
@@ -4484,10 +4484,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#from-attune_llmsecurity" class="md-nav__link">
+  <a href="#from-attunesecurity" class="md-nav__link">
     <span class="md-ellipsis">
       
-        From attune_llm.security
+        From attune.security
       
     </span>
   </a>
@@ -4962,9 +4962,9 @@
 <a id="__codelineno-15-11" name="__codelineno-15-11" href="#__codelineno-15-11"></a><span class="n">empathy</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Convenience method</span>
 <a id="__codelineno-15-12" name="__codelineno-15-12" href="#__codelineno-15-12"></a><span class="n">empathy</span><span class="o">.</span><span class="n">memory</span><span class="o">.</span><span class="n">stash</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>  <span class="c1"># Or via unified interface</span>
 </code></pre></div>
-<h3 id="from-attune_llmsecurity">From <code>attune_llm.security</code><a class="headerlink" href="#from-attune_llmsecurity" title="Permanent link">&para;</a></h3>
+<h3 id="from-attunesecurity">From <code>attune.security</code><a class="headerlink" href="#from-attunesecurity" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="c1"># OLD (still works via re-exports)</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">PIIScrubber</span><span class="p">,</span> <span class="n">SecretsDetector</span>
+<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.security</span><span class="w"> </span><span class="kn">import</span> <span class="n">PIIScrubber</span><span class="p">,</span> <span class="n">SecretsDetector</span>
 <a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>
 <a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="c1"># NEW (recommended)</span>
 <a id="__codelineno-16-5" name="__codelineno-16-5" href="#__codelineno-16-5"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.memory</span><span class="w"> </span><span class="kn">import</span> <span class="n">PIIScrubber</span><span class="p">,</span> <span class="n">SecretsDetector</span>
@@ -4974,7 +4974,7 @@
 <h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
 <li><strong><a href="../short-term-memory-implementation/">Short-Term Memory Implementation</a></strong>: Detailed Redis setup</li>
-<li><strong><a href="../security-architecture/">Security Architecture</a></strong>: PII scrubbing, encryption, audit logging</li>
+<li><strong><a href="../security-architecture/">Security Architecture</a></strong>: PII scrubbing, audit logging</li>
 <li><strong><a href="../../reference/multi-agent/">API Reference: Memory</a></strong>: Complete class documentation</li>
 </ul>
 <hr />
