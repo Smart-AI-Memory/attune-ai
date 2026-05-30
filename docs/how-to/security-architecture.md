@@ -1,379 +1,335 @@
 ---
-description: Security Architecture: System architecture overview with components, data flow, and design decisions. Understand the framework internals.
+description: Security architecture in attune — PII scrubbing, secrets detection, audit logging, path validation, and the SecurityAuditWorkflow.
 ---
 
 # Security Architecture
 
-Comprehensive security implementation for enterprise AI applications with PII protection, secrets detection, and compliance logging.
+Attune's security surface is a set of composable primitives in
+`attune.security` (re-exported from `attune.memory.security`) plus an
+Agent-SDK-backed `SecurityAuditWorkflow` that scans a codebase. This
+page describes what actually ships in the source tree.
 
 ---
 
 ## Overview
 
-The Attune AI implements a **defense-in-depth security model** with multiple layers of protection:
+The security module exposes four primitive families and one workflow:
 
-1. **Input Sanitization** - PII scrubbing before LLM processing
-2. **Secrets Detection** - Automatic detection of API keys, passwords, tokens
-3. **Audit Logging** - JSONL audit trail for compliance (HIPAA, GDPR, SOC2)
-4. **Encryption at Rest** - AES-256-GCM for sensitive data
-5. **Access Controls** - Role-based access control (RBAC) for wizards
+1. **PII scrubbing** — `PIIScrubber`, `PIIPattern`, `PIIDetection`.
+2. **Secrets detection** — `SecretsDetector`, `detect_secrets()`,
+   `SecretType`, `SecretDetection`.
+3. **Audit logging** — `AuditLogger`, `AuditEvent`,
+   `SecurityViolation`, `Severity`.
+4. **Path validation** — `_validate_file_path()` (private helper used
+   by the CLI to block path traversal).
+5. **Workflow** — `SecurityAuditWorkflow` runs a multi-subagent audit
+   against a directory or file.
 
----
-
-## Architecture Diagram
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                      User Input                              │
-└─────────────────────┬───────────────────────────────────────┘
-                      │
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              1. PII Scrubber                                 │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • SSN, Credit Cards, Phone Numbers                  │    │
-│  │ • Healthcare: MRN, Patient ID, DOB, Insurance       │    │
-│  │ • Financial: Account Numbers, Routing Numbers       │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ (Scrubbed Text)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              2. Secrets Detector                             │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • API Keys (AWS, Stripe, GitHub, OpenAI)            │    │
-│  │ • OAuth Tokens, JWT                                 │    │
-│  │ • Private Keys (RSA, SSH)                           │    │
-│  │ • Database Connection Strings                       │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ (Validated Text)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              3. Audit Logger                                 │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • User ID, Timestamp, Action                        │    │
-│  │ • PII Items Removed, Secrets Detected               │    │
-│  │ • JSONL Format for SIEM Integration                 │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ (Logged)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│              4. LLM Processing                               │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ • Anthropic Claude                                  │    │
-│  │ • Receives ONLY scrubbed, validated text            │    │
-│  │ • No PII or secrets sent to external APIs           │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────┬───────────────────────────────────────┘
-                      │ (Response)
-                      ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   User Response                              │
-└─────────────────────────────────────────────────────────────┘
-```
-
----
-
-## PII Scrubbing
-
-### Standard PII Patterns
-
-Automatically detected and removed:
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| SSN | `\b\d{3}-\d{2}-\d{4}\b` | `123-45-6789` |
-| Credit Card | Luhn algorithm | `4111-1111-1111-1111` |
-| Phone (US) | `\b\d{3}-\d{3}-\d{4}\b` | `555-123-4567` |
-| Email | RFC 5322 | `user@example.com` |
-| IP Address | IPv4/IPv6 | `192.168.1.1` |
-
-### Healthcare-Specific PHI
-
-For Healthcare Wizards (HIPAA compliance):
-
-| Type | Pattern | Example |
-|------|---------|---------|
-| MRN | `\bMRN:?\s*\d{6,10}\b` | `MRN: 123456` |
-| Patient ID | `\bPT\d{6,10}\b` | `PT123456` |
-| DOB | `\b\d{1,2}/\d{1,2}/\d{4}\b` | `01/15/1980` |
-| Insurance ID | `\bINS\d{8,12}\b` | `INS12345678` |
-| Provider NPI | `\b\d{10}\b` (validated) | `1234567890` |
-
-### Implementation Example
+All public symbols are importable from either
+`attune.security` or `attune.memory.security` — the former re-exports
+the latter for convenience.
 
 ```python
-from attune_llm import EmpathyLLM
-from attune_llm.security import PIIScrubber
-
-# Initialize with security enabled
-llm = EmpathyLLM(
-    provider="anthropic",
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
-    enable_security=True  # Enables PII scrubbing
+from attune.security import (
+    PIIScrubber,
+    SecretsDetector,
+    AuditLogger,
+    AuditEvent,
+    SecurityViolation,
+    Severity,
+    detect_secrets,
 )
-
-# Example with PHI
-user_input = """
-Patient John Doe (SSN: 123-45-6789, MRN: 987654)
-called from 555-123-4567 about diabetes medication.
-"""
-
-# Process with automatic PII scrubbing
-response = await llm.interact(
-    user_id="doctor@hospital.com",
-    user_input=user_input,
-    context={"classification": "SENSITIVE"}
-)
-
-# PHI is automatically removed before sending to LLM
-# Audit log records: ['ssn', 'mrn', 'phone', 'name']
 ```
+
+---
+
+## PII Protection
+
+`PIIScrubber` detects PII in text and returns a tuple of
+`(sanitized_text, detections)`. Each detection is a `PIIDetection`
+dataclass with the matched text, position, replacement token, and
+confidence.
+
+### Built-in patterns
+
+`PIIScrubber._init_default_patterns()` ships nine patterns:
+
+| Pattern name  | Replacement     | Notes                                       |
+|---------------|-----------------|---------------------------------------------|
+| `email`       | `[EMAIL]`       | RFC 5322 simplified                         |
+| `ssn`         | `[SSN]`         | Excludes invalid area numbers (000/666/9xx) |
+| `phone`       | `[PHONE]`       | US + international formats                  |
+| `credit_card` | `[CC]`          | Visa / MC / Amex / Discover                 |
+| `ipv4`        | `[IP]`          | Octet-validated                             |
+| `ipv6`        | `[IP]`          | Simplified IPv6                             |
+| `address`     | `[ADDRESS]`     | US street address heuristic                 |
+| `name`        | `[NAME]`        | Title-prefixed names; **disabled by default** (high false-positive rate) |
+| `mrn`         | `[MRN]`         | Medical Record Number                       |
+| `patient_id`  | `[PATIENT_ID]`  | Patient identifier (`Patient ID:` / `PID-`) |
+
+### Usage
+
+```python
+from attune.security import PIIScrubber
+
+scrubber = PIIScrubber()  # name detection disabled by default
+
+text = "Email user@example.com or call 555-123-4567 (MRN: 1234567)."
+sanitized, detections = scrubber.scrub(text)
+
+print(sanitized)
+# "Email [EMAIL] or call [PHONE] (MRN: [MRN])."
+
+for d in detections:
+    print(d.pii_type, d.replacement, d.confidence)
+```
+
+`PIIDetection.to_audit_safe_dict()` returns a dict that omits the
+matched value — safe to forward to an audit log.
+
+### Custom patterns
+
+```python
+scrubber.add_custom_pattern(
+    name="employee_id",
+    pattern=r"EMP-\d{6}",
+    replacement="[EMPLOYEE_ID]",
+    confidence=1.0,
+    description="Company employee identifier",
+)
+```
+
+Default patterns can be disabled with `disable_pattern(name)` and
+re-enabled with `enable_pattern(name)`. Custom patterns are removed
+with `remove_custom_pattern(name)`.
 
 ---
 
 ## Secrets Detection
 
-### Supported Secret Types
+`SecretsDetector` scans content for hardcoded credentials using
+compiled regex patterns plus optional Shannon-entropy fallback. The
+detector **never stores the matched secret value** — only metadata
+(type, severity, line/column, redacted context snippet).
 
-| Type | Detection Method | Example Pattern |
-|------|------------------|-----------------|
-| AWS Access Key | `AKIA[0-9A-Z]{16}` | `AKIAIOSFODNN7EXAMPLE` |
-| Stripe API Key | `sk_live_[0-9a-zA-Z]{24}` | `sk_live_...` |
-| GitHub Token | `ghp_[0-9a-zA-Z]{36}` | `ghp_...` |
-| OpenAI API Key | `sk-[0-9a-zA-Z]{48}` | `sk-...` |
-| JWT | Base64 + signature validation | `eyJ...` |
-| Private Keys | `-----BEGIN PRIVATE KEY-----` | RSA/SSH keys |
+### Supported secret types
 
-### Implementation Example
+From `SecretType` (see `secrets_types.py`):
+
+- API keys: `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`, `AWS_ACCESS_KEY`,
+  `AWS_SECRET_KEY`, `GITHUB_TOKEN`, `SLACK_TOKEN`, `STRIPE_KEY`,
+  `GENERIC_API_KEY`
+- Passwords: `PASSWORD`, `BASIC_AUTH`
+- Private keys: `RSA_PRIVATE_KEY`, `SSH_PRIVATE_KEY`,
+  `EC_PRIVATE_KEY`, `PGP_PRIVATE_KEY`, `TLS_CERTIFICATE_KEY`
+- Tokens: `JWT_TOKEN`, `OAUTH_TOKEN`, `BEARER_TOKEN`
+- Databases: `DATABASE_URL`, `CONNECTION_STRING`
+- Heuristic: `HIGH_ENTROPY_STRING`
+
+### Severity model
+
+`Severity` is an enum with four levels:
+
+| Level    | Typical members                                        |
+|----------|--------------------------------------------------------|
+| CRITICAL | Private keys, AWS access/secret keys                   |
+| HIGH     | API keys (Anthropic, OpenAI, GitHub, Slack, Stripe), passwords, database URLs |
+| MEDIUM   | OAuth tokens, JWT tokens, bearer tokens                |
+| LOW      | High-entropy strings (heuristic catch)                 |
+
+### Usage
 
 ```python
-from attune.memory import SecretsDetector
+from attune.security import SecretsDetector, detect_secrets
 
-detector = SecretsDetector()
+# One-shot:
+detections = detect_secrets(source_code)
 
-code_snippet = """
-import openai
-openai.api_key = "sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-"""
+# Reusable instance with custom thresholds:
+detector = SecretsDetector(
+    enable_entropy_analysis=True,
+    entropy_threshold=4.5,
+    min_entropy_length=20,
+)
+detections = detector.detect(source_code)
 
-# Detect secrets
-detections = detector.detect(code_snippet)
-
-for secret in detections:
-    print(f"⚠️ {secret.secret_type}: Line {secret.line}")
-    print(f"   Severity: {secret.severity}")
-    print(f"   Recommendation: {secret.remediation}")
-
-# Output:
-# ⚠️ OPENAI_API_KEY: Line 2
-#    Severity: HIGH
-#    Recommendation: Remove from code, use environment variables
+for d in detections:
+    print(
+        d.secret_type.value,
+        d.severity.value,
+        f"line {d.line_number} col {d.column_start}",
+        d.context_snippet,  # secret value replaced with [REDACTED]
+    )
 ```
+
+`SecretDetection.to_dict()` is JSON-safe. Custom patterns are added
+via `detector.add_custom_pattern(name, pattern, severity)` where
+`severity` is `"critical" | "high" | "medium" | "low"`.
 
 ---
 
 ## Audit Logging
 
-### Log Format (JSONL)
-
-```json
-{
-  "timestamp": "2025-11-25T10:30:00Z",
-  "event_id": "evt_abc123",
-  "user_id": "doctor@hospital.com",
-  "action": "llm_interaction",
-  "classification": "SENSITIVE",
-  "security": {
-    "pii_scrubbed": 4,
-    "pii_types": ["ssn", "mrn", "phone", "name"],
-    "secrets_detected": 0,
-    "encryption_used": true
-  },
-  "performance": {
-    "duration_ms": 1234,
-    "tokens_used": 500
-  },
-  "compliance": {
-    "hipaa_compliant": true,
-    "retention_days": 90
-  }
-}
-```
-
-### Compliance Requirements
-
-| Regulation | Retention | Encryption | Audit Trail |
-|------------|-----------|------------|-------------|
-| **HIPAA** | 90 days minimum | AES-256-GCM required | All PHI access |
-| **GDPR** | Data subject request | At rest + in transit | All processing |
-| **SOC2** | 180 days | Recommended | All access |
-
-### Implementation Example
+`AuditLogger` writes append-only JSON-Lines (`.jsonl`) events to a
+log directory, with optional size-based rotation and age-based
+cleanup. The constructor accepts:
 
 ```python
-from attune_llm.security import AuditLogger
-
-logger = AuditLogger(
-    log_file="/var/log/empathy/audit.jsonl",
-    retention_days=90  # HIPAA minimum
-)
-
-# Automatically logs all interactions when security is enabled
-logger.log_interaction(
-    user_id="doctor@hospital.com",
-    action="view_patient_record",
-    classification="SENSITIVE",
-    pii_scrubbed=4,
-    secrets_detected=0
-)
-
-# Query audit logs
-logs = logger.query(
-    user_id="doctor@hospital.com",
-    start_date="2025-11-01",
-    end_date="2025-11-30"
-)
-
-print(f"Total interactions: {len(logs)}")
-print(f"Total PII scrubbed: {sum(log['security']['pii_scrubbed'] for log in logs)}")
-```
-
----
-
-## Encryption
-
-### Data at Rest
-
-AES-256-GCM encryption for sensitive data:
-
-```python
-from attune_llm.security import encrypt_sensitive_data
-
-# Encrypt PHI before storing
-encrypted_data = encrypt_sensitive_data(
-    data={"patient_id": "PT123456", "diagnosis": "Diabetes Type 2"},
-    encryption_key=os.getenv("ENCRYPTION_KEY"),  # 32-byte key
-    classification="SENSITIVE"
-)
-
-# Store encrypted data
-database.store(encrypted_data)
-
-# Decrypt when needed (with authorization)
-decrypted = decrypt_sensitive_data(
-    encrypted_data,
-    encryption_key=os.getenv("ENCRYPTION_KEY")
+AuditLogger(
+    log_dir=None,                  # defaults to platform_utils.get_default_log_dir()
+    log_filename="audit.jsonl",
+    max_file_size_mb=100,
+    retention_days=365,
+    enable_rotation=True,
+    enable_console_logging=False,
 )
 ```
 
-### Data in Transit
+The log directory is created with `0o700` permissions; on init
+failure it falls back to `./logs`.
 
-All API communications use TLS 1.2+:
+### Event types
+
+Logging methods on `AuditLogger` (mixed in from
+`AuditLogMethodsMixin`):
+
+- `log_llm_request(user_id, empathy_level, provider, model, memory_sources, pii_count=0, secrets_count=0, ...)`
+  — records an LLM API call with per-request size, duration, and
+  PII/secret counts.
+- `log_pattern_store(user_id, pattern_id, pattern_type, classification, pii_scrubbed=0, secrets_detected=0, ...)`
+  — records storage of a MemDocs pattern.
+- `log_pattern_retrieve(user_id, pattern_id, classification, access_granted=True, ...)`
+  — records pattern retrieval and unauthorized-access attempts.
+- `log_security_violation(user_id, violation_type, severity, details, ...)`
+  — records a security policy violation.
+
+`log_llm_request` and `log_pattern_store` automatically escalate to
+`log_security_violation` when `secrets_count > 0` or when sensitive
+classifications are stored unencrypted.
+
+### Event shape
+
+Every event is an `AuditEvent` dataclass:
 
 ```python
-llm = EmpathyLLM(
-    provider="anthropic",
-    api_key=os.getenv("ANTHROPIC_API_KEY"),
-    enable_security=True,
-    tls_verify=True  # Enforce TLS certificate validation
+AuditEvent(
+    event_id="evt_<12-hex>",        # auto-generated
+    timestamp="<UTC ISO-8601>",     # auto-generated
+    version="1.0",
+    event_type="llm_request",       # or store_pattern / retrieve_pattern / security_violation
+    user_id="...",
+    session_id="...",
+    status="success",               # or failed / blocked
+    error="",
+    data={...},                     # event-specific fields
+)
+```
+
+`to_dict()` flattens `data` into the top level for easier querying.
+
+### Querying logs
+
+`AuditLogger.query()` (from `AuditQueryMixin`) supports filtering by
+`event_type`, `user_id`, `status`, date range, and arbitrary
+field/value filters:
+
+```python
+events = logger.query(
+    event_type="llm_request",
+    user_id="user@example.com",
+    start_date=datetime(2026, 1, 1),
+    end_date=datetime(2026, 1, 31),
+    limit=1000,
 )
 ```
 
 ---
 
-## Access Controls
+## Path Validation
 
-### Role-Based Access Control (RBAC)
+> **Internal API.** The `_validate_file_path` helper has a leading
+> underscore — treat it as internal. The signature and behavior may
+> change between releases. It is documented here because it is the
+> single source of truth for path-traversal defense across the
+> codebase; prefer calling it via the higher-level workflows rather
+> than depending on its signature directly.
 
-```python
-from attune_llm.wizards import HealthcareWizard
-from attune_llm.security import AccessControl
+`attune.security.path_validation._validate_file_path(path, allowed_dir=None)`
+is the internal guard the CLI uses to block path-traversal attacks
+(CWE-22) before running workflows against user-supplied paths.
 
-# Define roles
-access_control = AccessControl()
-access_control.add_role("physician", permissions=["read_phi", "write_phi"])
-access_control.add_role("nurse", permissions=["read_phi"])
-access_control.add_role("admin", permissions=["read_phi", "write_phi", "view_audit_logs"])
+- Rejects empty paths, non-string paths, and paths containing null
+  bytes.
+- Resolves the path with `Path.resolve()` and (optionally) asserts
+  it lies under `allowed_dir`.
+- Refuses to operate on platform system directories
+  (e.g. `/etc`, `/private/etc`, `/usr/bin`, `/bin` on Unix;
+  `C:\Windows\System32`, `Program Files` on Windows).
 
-# Check permissions before granting access
-if access_control.has_permission(user_role="nurse", permission="read_phi"):
-    wizard = HealthcareWizard(llm)
-    result = await wizard.process(
-        user_input="Patient handoff for bed 312",
-        user_id="nurse@hospital.com"
-    )
-```
-
----
-
-## Best Practices
-
-### ✅ Do
-
-1. **Always enable security** for production: `enable_security=True`
-2. **Use environment variables** for API keys and encryption keys
-3. **Review audit logs** daily for suspicious activity
-4. **Implement access controls** for sensitive operations
-5. **Encrypt data at rest** for SENSITIVE classification
-6. **Test PII scrubbing** before production deployment
-7. **Sign BAA agreements** with LLM providers (for HIPAA)
-
-### ❌ Don't
-
-1. **Never disable security** in production
-2. **Never commit secrets** to version control
-3. **Never skip encryption** for healthcare data
-4. **Never ignore audit log alerts**
-5. **Never share encryption keys** across environments
-6. **Never bypass access controls** for convenience
+The leading underscore is intentional: this is a private primitive
+used internally by `attune.cli_commands.workflow_commands.cmd_workflow_run`,
+not a public API. Callers outside the CLI should not import it.
 
 ---
 
-## Security Testing
+## SecurityAuditWorkflow
 
-### PII Scrubbing Test
+`SecurityAuditWorkflow` (slug: `security-audit`) is the public,
+SDK-native security audit. It delegates to four Claude Agent SDK
+subagents and synthesizes their findings into a `WorkflowResult`:
 
-```python
-import pytest
-from attune_llm.security import PIIScrubber
+- **vuln-scanner** — injection flaws, `eval`/`exec`, XSS, path
+  traversal, command injection, insecure deserialization.
+- **secret-detector** — hardcoded credentials, API keys, tokens,
+  private keys, database credentials.
+- **auth-reviewer** — missing auth checks, broken access control,
+  insecure session management, privilege-escalation risks.
+- **remediation-planner** — prioritized fix plan grouped by effort.
 
-def test_pii_scrubbing():
-    scrubber = PIIScrubber()
+### Run from the CLI
 
-    text = "Patient SSN 123-45-6789 called from 555-123-4567"
-    scrubbed = scrubber.scrub(text)
-
-    # Verify PII removed
-    assert "123-45-6789" not in scrubbed
-    assert "555-123-4567" not in scrubbed
-
-    # Verify scrubbed items tracked
-    items = scrubber.get_scrubbed_items(text)
-    assert len(items) == 2
-    assert any(item['type'] == 'ssn' for item in items)
+```bash
+attune workflow run security-audit --path src/
+attune workflow run security-audit --path src/ --depth deep
 ```
 
-### Secrets Detection Test
+Supported `--depth` values are `quick`, `standard` (default), and
+`deep`. Depth maps to a `max_turns` budget for the orchestrator
+(10 / 20 / 40 respectively) and engages extended thinking on `deep`.
+
+### Run from Python
 
 ```python
-def test_secrets_detection():
-    detector = SecretsDetector()
+import asyncio
+from attune.workflows.security_audit import SecurityAuditWorkflow
 
-    code = 'api_key = "sk_live_XXXXXXXXXXXXXXXXXXXXXXXXXXXX"'
-    detections = detector.detect(code)
+async def run_audit():
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path="src/", depth="standard")
+    print(result.final_output)
+    print(result.summary)
 
-    assert len(detections) > 0
-    assert detections[0].secret_type == SecretType.STRIPE_KEY
+asyncio.run(run_audit())
 ```
+
+### Output
+
+The orchestrator's synthesis covers three sections —
+**Summary** (a security score 0–100 + 2-3 sentence executive
+summary), **Security** (consolidated findings by severity), and
+**Suggestions** (prioritized remediation). Per-subagent transcripts
+are recovered separately and appended under
+`## Subagent findings` so the orchestrator's summary cannot silently
+drop their detail.
+
+The returned `WorkflowResult` carries `final_output`, `summary`,
+`success`, `stages`, `cost_report`, `metadata` (with the resolved
+path, depth, and subagent transcripts), plus optional `error` /
+`error_type` / `transient` fields when the SDK call fails.
 
 ---
 
-## See Also
+## See also
 
-- [HIPAA Compliance Guide](hipaa-compliance.md) - Healthcare-specific requirements
-- [LLM Toolkit API](../reference/llm-toolkit.md) - Security API reference
-- [Industry Wizards](../reference/wizards.md) - Domain-specific security
-- [SBAR Example](../tutorials/examples/sbar-clinical-handoff.md) - Healthcare security in action
+- [Wizards](../reference/wizards.md) — the wizard runtime; the `security` builtin delegates to `SecurityAuditWorkflow`.
+- [CLI Reference](../reference/cli-reference.md) — `attune workflow run security-audit` invocation and flags.

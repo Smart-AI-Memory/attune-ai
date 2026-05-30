@@ -827,7 +827,7 @@ wizard = HealthcareWizard()
 
 ## Related Documentation
 
-- **[Plugin System](./architecture/PLUGIN_SYSTEM_README.md)** - Building custom plugins
+- **[Plugin System](./architecture/plugin-system.md)** - Building custom plugins
 
 ---
 
