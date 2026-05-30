@@ -26,7 +26,7 @@ Users receive the **core framework** needed to use Empathy:
 
 | Category | Included |
 |----------|----------|
-| **Source Code** | All Python packages (attune, attune_llm, etc.) |
+| **Source Code** | All Python packages (attune, etc.) |
 | **Documentation** | README.md, CHANGELOG.md, QUICKSTART.md, CONTRIBUTING.md |
 | **Configuration** | pyproject.toml, requirements.txt, example configs |
 | **User Docs** | API reference, guides, getting-started, examples |

@@ -431,11 +431,11 @@ empathy.stash(...)  # Convenience method
 empathy.memory.stash(...)  # Or via unified interface
 ```
 
-### From `attune_llm.security`
+### From `attune.security`
 
 ```python
 # OLD (still works via re-exports)
-from attune_llm.security import PIIScrubber, SecretsDetector
+from attune.security import PIIScrubber, SecretsDetector
 
 # NEW (recommended)
 from attune.memory import PIIScrubber, SecretsDetector
@@ -447,7 +447,7 @@ from attune.memory.security import AuditLogger
 ## Next Steps
 
 - **[Short-Term Memory Implementation](./short-term-memory-implementation.md)**: Detailed Redis setup
-- **[Security Architecture](./security-architecture.md)**: PII scrubbing, encryption, audit logging
+- **[Security Architecture](./security-architecture.md)**: PII scrubbing, audit logging
 - **[API Reference: Memory](../reference/multi-agent.md)**: Complete class documentation
 
 ---

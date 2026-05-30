@@ -63,15 +63,22 @@ concrete claim, surface for review before finalizing.
   (3 entries), `how-to/index.md`, both `sbar-clinical-handoff.md`,
   `how-to/telemetry-and-signals.md`, `reference/index.md`. `mkdocs build --strict`
   passes.
-- [ ] **MECHANICAL batch (PR-B):** 8 docs grep+replace
-  `attune_llm` → `attune` with per-import verification:
-  `BLOG_CLAUDE_OPTIMIZATION.md` (or just delete the snippet),
-  `EXCEPTION_HANDLING_GUIDE.md`, `context-management.md`,
-  `continuous-learning.md`, `guides/DISTRIBUTION_POLICY.md`,
-  `hooks.md`, `markdown-agents.md`, `unified-memory-system.md`
-  (also drop "encryption" from line 450 per `decisions.md`
-  Phase 2 preflight). All symbols verified present at the
-  renamed path per triage file.
+- [x] **MECHANICAL batch (PR-B, 2026-05-30):** 8 docs renamed
+  `attune_llm` → `attune` with per-import verification.
+  Net -41 lines. Renamed: `context-management.md` (3 imports),
+  `continuous-learning.md` (3 imports), `hooks.md` (4 imports
+  + replaced broken `session_start:main` with real
+  `first_time_init:main`), `markdown-agents.md` (3 imports),
+  `unified-memory-system.md` (2 imports + dropped "encryption"
+  from line 450 per Phase 2 preflight). Pruned: a 35-line
+  fictional `Example 4: Health Check` block in
+  `EXCEPTION_HANDLING_GUIDE.md` (`attune_llm/code_health.py`
+  doesn't exist); a 3-line broken multi-provider import snippet
+  in `BLOG_CLAUDE_OPTIMIZATION.md`; one `attune_llm` mention
+  in `guides/DISTRIBUTION_POLICY.md`. `mkdocs build --strict`
+  passes. Zero remaining `attune_llm` references outside
+  `docs/archive/`, the cleanup spec, and the pending REWRITE
+  targets (agent-factory.md, TROUBLESHOOTING.md).
 - [ ] **REWRITE batch (PR-C, ≤1 doc this session):**
   `agent-factory.md` recommended. Deferred to Phase 3:
   `TROUBLESHOOTING.md` (mixed real troubleshooting + fiction;

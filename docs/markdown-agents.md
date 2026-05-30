@@ -50,7 +50,7 @@ You are an expert code reviewer focused on:
 ### 2. Load the Agent
 
 ```python
-from attune_llm.agents_md import AgentRegistry
+from attune.agents_md import AgentRegistry
 
 registry = AgentRegistry.get_instance()
 registry.load_from_directory("agents/")
@@ -149,7 +149,7 @@ The framework includes these agents in `agents_md/`:
 ### From Directory
 
 ```python
-from attune_llm.agents_md import AgentRegistry
+from attune.agents_md import AgentRegistry
 
 registry = AgentRegistry.get_instance()
 count = registry.load_from_directory("agents/", recursive=True)
@@ -197,7 +197,7 @@ for name in registry.list_agents():
 Validate agent files before loading:
 
 ```python
-from attune_llm.agents_md import AgentLoader
+from attune.agents_md import AgentLoader
 
 loader = AgentLoader()
 errors = loader.validate_directory("agents/")

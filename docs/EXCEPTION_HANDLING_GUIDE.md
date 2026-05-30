@@ -516,42 +516,7 @@ for py_file in self.project_root.rglob("*.py"):
         })
 ```
 
-### Example 4: Health Check with Specific Handlers
-**File:** `attune_llm/code_health.py:393`
-
-```python
-try:
-    if tool == "ruff":
-        result = subprocess.run(
-            ["ruff", "check", "--output-format=json", str(self.project_root)],
-            check=False, capture_output=True, text=True
-        )
-        ruff_issues = json.loads(result.stdout)
-        # Process issues...
-except json.JSONDecodeError as e:
-    # Tool output not in expected JSON format
-    logger.warning(f"Lint check JSON parse error ({tool}): {e}")
-    return CheckResult(
-        category=CheckCategory.LINT, status=HealthStatus.ERROR,
-        score=0, details={"error": f"Failed to parse {tool} output: {e}"}
-    )
-except subprocess.SubprocessError as e:
-    # Tool execution failed
-    logger.error(f"Lint check subprocess error ({tool}): {e}")
-    return CheckResult(
-        category=CheckCategory.LINT, status=HealthStatus.ERROR,
-        score=0, details={"error": f"Failed to run {tool}: {e}"}
-    )
-except Exception as e:
-    # INTENTIONAL: Broad handler for graceful degradation of optional check
-    logger.exception(f"Unexpected error in lint check ({tool}): {e}")
-    return CheckResult(
-        category=CheckCategory.LINT, status=HealthStatus.ERROR,
-        score=0, details={"error": str(e)}
-    )
-```
-
-### Example 5: Acceptable Broad Exception with noqa
+### Example 4: Acceptable Broad Exception with noqa
 **File:** `src/attune/cli.py:2041`
 
 ```python
@@ -627,7 +592,6 @@ Is this an optional feature (wizard, plugin, tip)?
   - `backend/services/database/auth_db.py` - Database patterns
   - `backend/api/wizard_api.py` - Graceful degradation
   - `agents/code_inspection/adapters/security_adapter.py` - Fail-secure
-  - `attune_llm/code_health.py` - Health checks
   - `src/attune/cli.py` - CLI error handling
 
 ---
