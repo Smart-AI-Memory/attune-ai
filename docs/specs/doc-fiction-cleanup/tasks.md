@@ -79,8 +79,18 @@ concrete claim, surface for review before finalizing.
   passes. Zero remaining `attune_llm` references outside
   `docs/archive/`, the cleanup spec, and the pending REWRITE
   targets (agent-factory.md, TROUBLESHOOTING.md).
-- [ ] **REWRITE batch (PR-C, ≤1 doc this session):**
-  `agent-factory.md` recommended. Deferred to Phase 3:
+- [x] **REWRITE batch (PR-C, 2026-05-30):**
+  `agent-factory.md` rewritten against
+  `src/attune/agent_factory/`. 30+ claims verified in draft
+  Verification log (stripped before swap, per Phase 1 pattern).
+  CLI section omitted — no `attune frameworks` CLI exists;
+  mangled "Attune AIs frameworks" command from original was
+  fiction. Decorators omitted from public reference (none in
+  `__all__`). Real surface documented: `AgentFactory` class +
+  5 framework adapters (Native, LangChain, LangGraph, AutoGen,
+  Haystack) + `AgentRole` / `AgentCapability` / `Framework`
+  enums + `MemoryAwareAgent` / `ResilientAgent` optional
+  wrappers + model-tier table. Deferred to Phase 3:
   `TROUBLESHOOTING.md` (mixed real troubleshooting + fiction;
   needs careful surgery).
 - [ ] Decide on the two `webhook-event-integration.md` example
