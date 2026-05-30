@@ -6396,3 +6396,71 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   ``website/`` (smartaimemory.com Next.js) so each
   deployable site is one top-level directory — sibling, not
   nested, not duplicating each other's marketing surface.
+
+- **Scheduled-tasks display time uses Claude Code's
+  configured local timezone, NOT the timezone you
+  passed in the ISO offset — verify by reading the
+  display in the user's local time, not by trusting
+  the offset you specified**: passed
+  `fireAt="2026-05-12T19:30:00-07:00"` (intending 7:30
+  PM Pacific). Display showed "5/12/2026, 10:30:00
+  PM" — which is 7:30 PM Pacific rendered in Eastern
+  time (the user's locale). The stored ISO is
+  canonical; the display is just rendered for the
+  user. If user said "7:30 PM" and the display shows
+  a different hour, the schedule is wrong for THEIR
+  intent. Confirm user's timezone separately (their
+  daily-briefing cron `fireAt` minus the cron
+  `cronExpression` time-of-day gives the local
+  offset). Update via
+  `update_scheduled_task(fireAt="<correct-offset>")`.
+
+- **Replicating prepared staged work onto a moved
+  main: use `git apply --3way` of the diff, not
+  content overwrites**: prepared work in a parent
+  worktree's staging area may be against a
+  POINT-IN-TIME version of main that has since
+  evolved. Wholesale-copying the staged content
+  into a fresh branch off current main reverts the
+  upstream evolution. Caught when
+  `test-quality-program/decisions.md` showed a
+  279-line deletion — main had grown a Phase-2
+  decisions section that the staged version
+  predated. Fix template: `git -C <parent> diff
+  --cached -- <paths> > /tmp/x.patch` to extract
+  the prepared diff, then `git apply --3way
+  /tmp/x.patch` on a fresh branch off current
+  main. 3-way picks up the surgical change,
+  preserves the upstream growth, and flags only
+  the actual conflicts.
+
+- **`git merge --ff-only` can fail silently when
+  staged changes conflict with incoming files**:
+  the error ("Your local changes to the following
+  files would be overwritten by merge") prints and
+  exit is non-zero, but a user pasting a
+  multi-command block may not see it scroll past.
+  Always verify post-merge HEAD: `git rev-parse
+  main` and `git rev-parse origin/main` should
+  match. Diagnostic check before merging:
+  `git merge-base --is-ancestor main origin/main`
+  (must be true) AND look for overlap between
+  `git diff --cached --name-only` and `git diff
+  main..origin/main --name-only` — must be empty
+  for ff to succeed with a staged tree. If
+  non-empty, unstage or stash those files before
+  the merge.
+
+- **`git stash pop` after a ff-merge that touched
+  the same files: resolve with `--ours` to keep
+  main, NOT `--theirs`**: counterintuitive flag
+  direction. For `git stash pop`, `--ours` is the
+  WORKING TREE state (main's authoritative content
+  after the ff) and `--theirs` is the STASHED
+  content. Memory hook: stash-pop has `git apply`
+  semantics — what's CURRENTLY in the tree is
+  "ours", what you're applying is "theirs". Same
+  direction as `git merge`, opposite of `git
+  rebase`. When the goal is to keep main's newer
+  content over older stashed prep, `git checkout
+  --ours <file>`.
