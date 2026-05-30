@@ -193,7 +193,7 @@ features:
     files:
       - plugin/**
     tags: [plugin, claude-code]
-    arch_path: docs/architecture/PLUGIN_SYSTEM_README.md
+    arch_path: docs/architecture/plugin-system.md
 
   spec-engine:
     description: Spec-driven development with approval loops

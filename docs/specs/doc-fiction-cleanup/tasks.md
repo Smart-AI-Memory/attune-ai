@@ -23,13 +23,22 @@ pending commit + PR.
 Each: read current source, write accurate doc, verify every
 concrete claim, surface for review before finalizing.
 
-- [ ] Rewrite `docs/reference/wizards.md` to the real
+- [x] Rewrite `docs/reference/wizards.md` to the real
   `attune.wizards` API; absorb salvageable `software-wizards.md`
-  content (5 builtin wizards).
-- [ ] Rewrite `docs/how-to/security-architecture.md` against
-  `SecurityAuditWorkflow` + `attune.security`.
-- [ ] Rewrite `docs/architecture/PLUGIN_SYSTEM_README.md` to the
-  `BasePlugin` / `register_mcp_tools()` model.
+  content (5 builtin wizards). Shipped 2026-05-30; flagged
+  entry-point-group mismatch (`empathy.wizards` in registry.py vs
+  `attune.wizards` in pyproject.toml) as a separate code-fix task.
+- [x] Rewrite `docs/how-to/security-architecture.md` against
+  `SecurityAuditWorkflow` + `attune.security`. Shipped 2026-05-30;
+  blast-radius grep confirmed zero anchor deep-links (slug renames
+  break nothing). HIPAA / encryption follow-ups for Phase 2 captured
+  in `decisions.md` "Phase 2 preflight notes".
+- [x] Rewrite `docs/architecture/PLUGIN_SYSTEM_README.md` to the
+  `BasePlugin` / `register_mcp_tools()` model. Shipped 2026-05-30
+  at new path `docs/architecture/plugin-system.md` (renamed for
+  consistency with the rest of `docs/architecture/`). Inbound refs
+  updated in `docs/ARCHITECTURE.md` and `.help/features.yaml`. Zero
+  anchor deep-links existed, so the rename broke nothing.
 
 ---
 

@@ -104,3 +104,33 @@ retire decision — to be triaged in Phase 2. See `tasks.md`.
   example docs (`docs/examples/` and `docs/tutorials/examples/`,
   both fictional `attune.webhooks`) be retired too? They are out
   of the tracked set; flagged for Phase 2.
+
+---
+
+## Phase 2 preflight notes (2026-05-30)
+
+Caught during Phase 1 review; carries forward as constraint when
+Phase 2 triages these specific docs.
+
+- **`docs/how-to/hipaa-compliance.md`** — Patrick (2026-05-30):
+  *"we don't absolutely have HIPAA compliance the way we used to."*
+  Phase 2 triage cannot assume the doc can be rewritten to a still-real
+  HIPAA-compliance feature surface. Likely outcomes, in order of
+  preference:
+  1. **Retire.** No standalone HIPAA-compliance feature ships today;
+     the doc as it stands overpromises. Remove from nav + features.yaml
+     + inbound links.
+  2. **Rewrite-narrow.** If primitives in `attune.security` (PII
+     scrubber, audit logger) are useful *building blocks* for HIPAA
+     workflows without being compliance themselves, rewrite as a
+     "Building blocks for HIPAA-adjacent workflows" how-to with
+     explicit "this is not a compliance claim" framing. Verify against
+     source before going this route.
+  3. **Keep current** — not viable; the doc is fiction-adjacent and
+     a copy-paste hazard for users in regulated environments.
+- **`docs/how-to/unified-memory-system.md`** — line 450 describes
+  `security-architecture.md` as covering "PII scrubbing, **encryption**,
+  audit logging." Encryption is fiction-adjacent (no real encryption
+  module in `attune.security`). Phase 2 triage of this doc must update
+  the description to drop "encryption" or document what surface does
+  exist if any (verify against `src/attune/memory/`).
