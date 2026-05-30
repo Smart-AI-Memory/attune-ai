@@ -5,7 +5,6 @@ version: 1
 _docs:
   # Reference material
   - docs/reference/FAQ.md
-  - docs/reference/USER_GUIDE.md
   - docs/reference/TROUBLESHOOTING.md
   - docs/reference/API_REFERENCE.md
   - docs/reference/glossary.md
@@ -15,7 +14,6 @@ _docs:
   - docs/reference/index.md
   # Cross-cutting how-to narratives
   - docs/how-to/practical-patterns.md
-  - docs/how-to/hipaa-compliance.md
   - docs/how-to/prerequisites.md
   - docs/how-to/index.md
   # Tutorials
@@ -28,7 +26,6 @@ _docs:
   - docs/tutorials/examples/simple-chatbot.md
   - docs/tutorials/examples/webhook-event-integration.md
   # Architecture without clear feature owner
-  - docs/architecture/ENTERPRISE_PRIVACY_INTEGRATION.md
   - docs/architecture/extending-composition-patterns.md
 
 features:

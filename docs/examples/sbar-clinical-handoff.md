@@ -652,4 +652,3 @@ response = empathy.interact(
 ---
 
 **Questions?** See the Contributing chapter for contact information.
-**HIPAA Compliance**: See [HIPAA Compliance Guide](../how-to/hipaa-compliance.md)
