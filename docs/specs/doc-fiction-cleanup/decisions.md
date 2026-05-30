@@ -226,6 +226,78 @@ retire decision — to be triaged in Phase 2. See `tasks.md`.
   spec itself, (c) the pending REWRITE targets `agent-factory.md`
   and `TROUBLESHOOTING.md` (Phase 2 PR-C and Phase 3 respectively).
 
+## Phase 2 outcomes (2026-05-30, PR-C — REWRITE batch)
+
+### Rewritten
+
+- **`docs/how-to/agent-factory.md`** — Phase-1-style rewrite
+  against `src/attune/agent_factory/`. Real surface documented:
+  - `AgentFactory` class (`factory.py:60`) with verified
+    constructor + `create_agent` / `create_workflow` /
+    `create_*` method signatures.
+  - 5 framework adapters: Native, LangChain, LangGraph, AutoGen,
+    Haystack (verified from `adapters/__init__.py`).
+  - Enums: `Framework` (5 members + `from_string`), `AgentRole`
+    (15 members), `AgentCapability` (8 members).
+  - Optional wrappers: `MemoryAwareAgent`, `ResilientAgent`
+    (applied conditionally; `Resilient` outer of `MemoryAware`).
+  - Model-tier fallback table from `base.py:288–317`.
+  - Framework install commands from
+    `framework.py:get_framework_info`.
+- 30+ concrete claims verified against source in the draft's
+  Verification log section (stripped before swap, per Phase 1
+  pattern).
+
+### Decisions on per-doc open questions
+
+- **CLI section omitted (Q1 → option A).** No `attune frameworks`
+  CLI exists in current source. `[project.scripts]` only exposes
+  `attune = attune.cli_minimal:main`; grep of CLI modules for
+  `framework`/`agent_factory` returns nothing. Original doc's
+  "Attune AIs frameworks" command was a corrupted/mangled
+  reference. Future CLI feature spec spawned as a separate chip
+  (not a Phase 2 obligation).
+- **Decorators omitted from public reference.** `decorators.py`
+  exports 6 decorators but none are in `agent_factory.__init__`
+  `__all__`. Treated as internal — same discipline as
+  `_validate_file_path` in Phase 1 security-architecture rewrite
+  (only document internal primitives when load-bearing single
+  source of truth; decorators are utility helpers).
+- **`__init__.py:26-27` docstring drift** — references a
+  `create_wizard` example method that doesn't exist on
+  `AgentFactory`. Out of scope for this doc PR (code fix, not
+  doc fix). Spawned as a separate 1-line-fix chip.
+
+### Real ideas preserved from original
+
+- "Pick framework → same call sites" framing
+- Model-tier mental model (cheap/capable/premium)
+- Framework-selection-by-use-case (`use_case="rag"` → Haystack)
+- Code-review-pipeline example (rewritten against verified APIs)
+
+### Discarded fiction
+
+- `attune_llm.*` imports throughout
+- "Attune AIs frameworks" CLI block
+- Model price-per-million table ($0.25/$3/$15) — billing data
+  not in source
+- Framework-specific examples using invented APIs (e.g.
+  `StructuredTool.from_function`)
+
+### Phase 2 status
+
+- PR-A (RETIRE + ARCHIVE) ✅ merged as #507
+- PR-B (MECHANICAL) ✅ merged as #508
+- PR-C (REWRITE) shipping now
+
+Phase 2 substantially complete. Out-of-cohort items still open:
+- TROUBLESHOOTING.md REWRITE (deferred to Phase 3)
+- Two `webhook-event-integration.md` example docs (decisions.md
+  open question, unchanged)
+- MEDIUM/LOW fact-drift docs from the original 30-doc triage
+  (`auto-chaining`, `multi-agent`, `llm-toolkit`,
+  `telemetry-and-signals`, `configuration`, `help-system-maintenance`).
+
 ---
 
 ## Phase 2 preflight notes (2026-05-30)
