@@ -94,6 +94,7 @@ exclude_docs: |
 
   # --- Top-level orphaned files ---
   repo-hygiene.md
+  process/COLLABORATION_DISCIPLINE_outline.md
   ADAPTIVE_ROUTING_*.md
   AGENT_*.md
   ANTHROPIC_*.md

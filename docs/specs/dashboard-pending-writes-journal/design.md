@@ -1,5 +1,7 @@
 # Design: Dashboard Pending-Writes Journal
-**Status:** approved (2026-05-25)
+
+**Status:** draft (2026-05-25)
+
 **Phase 1 scope:** journal writer + API endpoint. UI chip
 (Phase 2) and session-start hook (Phase 3) are sketched at
 the bottom for design coherence, not for this session's
