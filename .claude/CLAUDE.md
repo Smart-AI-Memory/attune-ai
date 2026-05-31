@@ -6558,3 +6558,71 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `_scripts_helpers/` package with a different name. The
   refactor cost is low; the upfront package-vs-file naming
   collision is needless friction.
+
+- **`Path("/tmp/x.py").is_absolute()` returns `False` on
+  Windows — POSIX-shaped literal absolute paths in tests
+  silently early-return guard checks**: a 5th surface to
+  add to the existing "Cross-platform path handling has at
+  least FOUR Windows-specific surfaces" lesson. Pathlib on
+  Windows requires a drive letter for `is_absolute()` to
+  return `True`; bare POSIX absolutes (e.g. `/tmp/x.py`,
+  `/var/log/foo`) parse fine but return `False` from
+  `is_absolute()`. Hit 2026-05-31 on PR #521 worktree-
+  path-guard hook: `test_main_propagates_unexpected_errors`
+  passed `file_path="/tmp/x.py"` expecting the hook's
+  `if not target_path.is_absolute(): return 0` guard to be
+  skipped so a patched `_git_toplevel` would raise. On
+  macOS/Linux the guard fell through (absolute → False
+  early-return skipped → `_git_toplevel` called → raises).
+  On Windows the guard fired (path treated as relative →
+  early-return 0 → `_git_toplevel` never called) and
+  `pytest.raises(RuntimeError)` reported `DID NOT RAISE`
+  across all 4 Windows lanes. **Diagnostic shortcut**:
+  any test fixture using a literal `/tmp/...`, `/var/...`,
+  or other POSIX-anchored path string for "I need an
+  absolute path" is Windows-fragile. **Fix**: use the
+  `tmp_path` pytest fixture — always platform-appropriate
+  absolute (drive-prefixed on Windows, root-anchored on
+  POSIX). Same shape works as a one-line search-and-
+  replace across the test suite. Pairs with the existing
+  cross-platform path lesson — same root cause family
+  (pathlib's Windows-specific semantic for what "absolute"
+  means), different surface (input validation guards, not
+  path manipulation).
+
+- **Edge-of-bucket time tests fail on Windows from sub-
+  second clock-source jitter between `time.time()` and
+  `datetime.now(tz).timestamp()`**: a separate Windows
+  timing gotcha from the existing `time.time()` 0.0-
+  duration lesson — that one's about resolution; this one
+  is about two clock APIs returning slightly different
+  values for "now." Hit 2026-05-31 on PR #524's
+  `_format_age` tests: production read
+  `datetime.now(timezone.utc).timestamp()` while tests
+  computed `now = time.time()` and passed `now - 300`
+  (exactly 5 minutes) expecting `"5m ago"`. On
+  macOS/Linux the two clock sources agree to enough
+  precision that `delta = production_now - (test_now -
+  300)` is always ≥ 300 → `int(delta / 60) = 5`. On
+  Windows the two sources can disagree by enough sub-
+  second jitter to make `production_now < test_now`,
+  pushing `delta` into `[240, 300)` → `int(delta / 60) =
+  4` → fails with `'4m ago' == '5m ago'`. Same shape
+  for the 2h test (7200s = exact 2h boundary) and 2d
+  test (172800s = exact 2d). 3 of 4 Windows lanes
+  failed; the lane that passed (3.13) was a coincidence
+  of clock-source alignment that round. **Fix**: don't
+  rely on real-clock consistency across two APIs in the
+  same test path. Add an optional `now: float | None =
+  None` parameter to the time-bucketing function;
+  production keeps the same default (real clock), tests
+  pin a fixed `NOW = 1_700_000_000.0` and pass it via
+  `now=`. Keep one test that exercises the default-now
+  path with a comfortably-buffered value (e.g. 5400s in
+  the 1h bucket [60m, 24h)) so the real-clock branch
+  retains coverage. **Diagnostic shortcut**: any time-
+  bucket test using values that are exact multiples of
+  the bucket size (60, 300, 3600, 7200, 86400, 172800
+  …) is fragile on Windows. Either pin `now` or use
+  comfortably-inside-bucket values (`bucket_size *
+  N + bucket_size // 2`).
