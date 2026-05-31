@@ -9,7 +9,7 @@
 > **Orthogonal to content correctness.** This spec does not touch what
 > docs *say* — only how they connect.
 
-**Status:** draft
+**Status:** approved (2026-05-31; see [decisions.md](./decisions.md))
 **Created:** 2026-05-30
 **Owner:** TBD
 **Related:**

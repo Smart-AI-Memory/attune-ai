@@ -9,7 +9,7 @@
 > docs in one cut rather than across a string of inconsistent
 > intermediate states.
 
-**Status:** draft
+**Status:** approved (2026-05-31; see [decisions.md](./decisions.md))
 **Created:** 2026-05-30
 **Owner:** TBD
 **Related:** [`doc-fiction-cleanup`](../doc-fiction-cleanup/),
