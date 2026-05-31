@@ -368,7 +368,13 @@ class BaseWorkflow(
 
         self.provider = provider
 
-    def _error_result(self, message: str) -> WorkflowResult:
+    def _error_result(
+        self,
+        message: str,
+        *,
+        sdk_stderr: str | None = None,
+        sdk_error_kind: str | None = None,
+    ) -> WorkflowResult:
         """Build a failed WorkflowResult with the given error message.
 
         Provides a standard error result so subclasses don't need
@@ -377,13 +383,33 @@ class BaseWorkflow(
 
         Args:
             message: Human-readable error description.
+            sdk_stderr: Optional raw stderr captured from the
+                ``claude`` CLI subprocess (already redacted). When
+                provided, threaded into ``metadata["sdk_stderr"]``
+                so Phase 3's persistence + render layer surfaces it
+                on the run-view page. Part of the
+                ``docs/specs/sdk-error-message-fidelity/`` flow.
+            sdk_error_kind: Optional classifier kind (see
+                ``SdkErrorKind`` Literal in ``agent_sdk_adapter``).
+                Threaded into ``metadata["sdk_error_kind"]`` so
+                downstream consumers (run-view chip classifier,
+                periodic reporting) can branch on a typed value
+                instead of regex-scanning the error string.
 
         Returns:
-            WorkflowResult with success=False.
+            WorkflowResult with success=False. When either SDK kwarg
+            is set, the corresponding ``metadata[...]`` key is
+            populated; absent kwargs leave ``metadata`` empty.
         """
         from datetime import datetime
 
         now = datetime.now()
+        metadata: dict[str, Any] = {}
+        if sdk_stderr is not None:
+            metadata["sdk_stderr"] = sdk_stderr
+        if sdk_error_kind is not None:
+            metadata["sdk_error_kind"] = sdk_error_kind
+
         return WorkflowResult(
             success=False,
             stages=[
@@ -405,6 +431,7 @@ class BaseWorkflow(
             total_duration_ms=0,
             provider="anthropic",
             error=message,
+            metadata=metadata,
         )
 
     def get_tier_for_stage(self, stage_name: str) -> ModelTier:

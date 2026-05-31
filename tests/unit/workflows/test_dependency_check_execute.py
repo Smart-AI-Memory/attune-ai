@@ -248,11 +248,16 @@ class TestExecuteExceptionHandling:
         assert "connection failed" in result.error.lower()
 
     def test_generic_exception(self, workflow, monkeypatch):
+        """Generic SDK exception surfaces the Phase 2 typed error
+        result (sdk-error-message-fidelity spec). Mock exception has
+        no recognizable argv shape, so classifier falls back to
+        'unknown' with synthetic capture-failure stderr."""
         self._patch_query_to_raise(monkeypatch, RuntimeError("kaboom"))
         result = asyncio.run(workflow.execute(path="/tmp/proj"))
         assert result.success is False
-        assert "RuntimeError" in result.error
-        assert "kaboom" in result.error
+        assert "claude CLI subprocess failed" in result.error
+        assert result.metadata.get("sdk_error_kind") == "unknown"
+        assert "sdk_stderr" in result.metadata
 
 
 # ---------------------------------------------------------------------------
