@@ -17,9 +17,11 @@ import subprocess
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 import claude_agent_sdk
+
+from attune.ops.session_redaction import redact
 
 from .base import ModelTier
 from .data_classes import CostReport, NextAction, WorkflowResult, WorkflowStage
@@ -532,6 +534,222 @@ def sdk_error_message(
         "If this recurs, check the stderr output for the underlying "
         f"error and consider opening an issue.\n{raw_tail}"
     )
+
+
+# ----------------------------------------------------------------------
+# SDK error fidelity (spec: docs/specs/sdk-error-message-fidelity/)
+#
+# Phase 1 primitives: typed exception, classifier, capture helper,
+# argv extractor. No call sites use these yet — wiring happens in
+# Phase 2 onward.
+# ----------------------------------------------------------------------
+
+SdkErrorKind = Literal[
+    "api_quota",
+    "auth",
+    "rate_limit",
+    "not_found",
+    "schema_rejected",
+    "unknown",
+]
+
+
+@dataclass
+class SdkSubprocessError(Exception):
+    """Typed wrapper around the SDK's bare 'Command failed' Exception.
+
+    Captures the underlying ``claude`` CLI's stderr (via a second
+    direct-subprocess call) and classifies it into one of the known
+    failure-kind labels for user-facing messaging.
+
+    Attributes:
+        message: User-facing one-line summary (e.g. "Anthropic API
+            quota reached for this account.").
+        stderr: Redacted stderr captured from the second
+            ``subprocess.run`` call.
+        kind: Classified failure category (see ``SdkErrorKind``).
+        original_exc: The SDK's wrapped exception, preserved so
+            callers / tests can ``raise X from err.original_exc``.
+    """
+
+    message: str
+    stderr: str
+    kind: SdkErrorKind
+    original_exc: BaseException | None = None
+
+    def __str__(self) -> str:
+        return self.message
+
+    def format_user_message(self) -> str:
+        """Voice-layer-ready user-facing block.
+
+        When ``kind == "unknown"`` the raw stderr is included inline
+        so the user has the truth even when the classifier didn't
+        match a known pattern. For classified kinds, the message is
+        the summary and the full stderr is available via the run
+        view (persisted by Phase 3).
+        """
+        if self.kind == "unknown":
+            return (
+                f"{self.message}\n\n"
+                "Underlying error (raw stderr from the claude CLI):\n"
+                f"{self.stderr.strip()}"
+            )
+        return f"{self.message}\n\nFull stderr is available on /runs/<id>/view."
+
+
+# (compiled_re, kind, message) tuples. Ordered most-specific first so
+# a more-precise label wins over a generic one (e.g. an "API usage
+# limits" message that also mentions "401" still classifies as
+# api_quota).
+_CLASSIFIERS: list[tuple[re.Pattern[str], SdkErrorKind, str]] = [
+    (
+        re.compile(r"specified API usage limits", re.I),
+        "api_quota",
+        "Anthropic API quota reached for this account.",
+    ),
+    (
+        re.compile(r"\b(401|invalid[_\s-]?api[_\s-]?key|unauthorized)\b", re.I),
+        "auth",
+        "Anthropic auth invalid or missing.",
+    ),
+    (
+        re.compile(r"\b(429|rate[_\s-]?limit|too many requests)\b", re.I),
+        "rate_limit",
+        "Rate-limited by Anthropic; retry shortly.",
+    ),
+    (
+        re.compile(r"FileNotFoundError|claude.*not.*(found|on.*PATH)", re.I),
+        "not_found",
+        "The bundled claude CLI was not found at the expected path.",
+    ),
+    (
+        re.compile(r"json[_\s-]?schema|--?json-?schema", re.I),
+        "schema_rejected",
+        "The output schema was rejected by the claude CLI.",
+    ),
+]
+
+
+def classify_subprocess_failure(stderr: str) -> tuple[SdkErrorKind, str]:
+    """Classify a captured stderr blob into ``(kind, user-message)``.
+
+    Args:
+        stderr: Captured stderr text from the ``claude`` CLI
+            subprocess. Typically the redacted output of
+            ``capture_subprocess_failure()``.
+
+    Returns:
+        A 2-tuple of ``(SdkErrorKind, str)``. Falls back to
+        ``("unknown", "The claude CLI subprocess failed; see raw
+        stderr below.")`` when no classifier pattern matches.
+    """
+    for pattern, kind, message in _CLASSIFIERS:
+        if pattern.search(stderr):
+            return kind, message
+    return "unknown", "The claude CLI subprocess failed; see raw stderr below."
+
+
+def capture_subprocess_failure(
+    args: list[str],
+    env: dict[str, str] | None = None,
+    timeout_s: float = 10.0,
+) -> str:
+    """Re-run the failed ``claude`` invocation with stderr capture.
+
+    Called from the broad-except branch around a
+    ``claude_agent_sdk.query()`` call when the bare 'Command failed'
+    exception fires. The SDK swallows stderr; this helper re-runs
+    the same argv directly via ``subprocess.run()`` so the real
+    cause becomes visible.
+
+    Args:
+        args: Exact argv used by the SDK's first invocation. Pulled
+            from the SDK's exception via ``_last_subprocess_argv()``.
+        env: Optional env override. Defaults to the inherited
+            process environment.
+        timeout_s: Subprocess timeout. The failure modes we care
+            about (quota / auth / not-found) all exit in sub-second;
+            10s is a generous ceiling.
+
+    Returns:
+        Redacted stderr text, or a synthetic
+        ``"(capture-call also failed: <reason>)"`` / ``"(capture-call
+        timed out after <Ns>)"`` string if the second subprocess
+        itself raises. The synthetic strings are intentionally
+        formatted so the classifier's "unknown" fallback still
+        renders them to the user.
+    """
+    try:
+        result = subprocess.run(  # noqa: S603
+            args,
+            env=env,
+            capture_output=True,
+            text=True,
+            timeout=timeout_s,
+            check=False,  # we want to inspect failure output
+        )
+        # Some failures put real errors on stdout (e.g. JSON envelope).
+        # Concatenate; the classifier scans both anyway.
+        combined = (result.stderr or "") + ("\n" + result.stdout if result.stdout else "")
+        return redact(combined).text
+    except subprocess.TimeoutExpired:
+        return f"(capture-call timed out after {timeout_s}s)"
+    except (OSError, subprocess.SubprocessError, IndexError, ValueError) as exc:
+        # IndexError / ValueError: empty or malformed argv from
+        # _last_subprocess_argv() — subprocess.run([]) raises IndexError
+        # on Python's stdlib path; ValueError covers None / non-str entries.
+        return f"(capture-call also failed: {type(exc).__name__}: {exc})"
+
+
+def _last_subprocess_argv(exc: BaseException) -> list[str]:
+    """Extract the failing argv from an SDK ``Exception('Command failed ...')``.
+
+    The SDK's ``claude_agent_sdk._internal.query`` raises a bare
+    ``Exception`` with a string message but stores the subprocess
+    args on the exception's ``__cause__`` or in an attribute the
+    classifier walks. This helper centralises that extraction so
+    a drift-guard test can fail loudly when the SDK changes shape.
+
+    Walks these candidate attribute paths in order:
+
+    1. ``exc.args[0]`` if it's already a ``list[str]`` (some SDK
+       versions stash the argv there).
+    2. ``exc.__cause__.cmd`` — ``subprocess.CalledProcessError``-shaped
+       wrap.
+    3. ``exc.cmd`` — direct attribute on the exception.
+    4. Fallback: empty list — caller's downstream
+       ``capture_subprocess_failure([])`` will hit the OSError path
+       and surface a synthetic "(capture-call also failed)" string.
+
+    Returns:
+        The captured argv as ``list[str]``, or ``[]`` if no
+        recognized shape was found.
+    """
+    # Shape 1: argv stashed in exc.args[0]
+    args_attr = getattr(exc, "args", None)
+    if args_attr and isinstance(args_attr, tuple) and len(args_attr) > 0:
+        first = args_attr[0]
+        if isinstance(first, list) and all(isinstance(x, str) for x in first):
+            return first
+
+    # Shape 2: subprocess.CalledProcessError on __cause__
+    cause = getattr(exc, "__cause__", None)
+    if cause is not None:
+        cmd = getattr(cause, "cmd", None)
+        if isinstance(cmd, list) and all(isinstance(x, str) for x in cmd):
+            return cmd
+        if isinstance(cmd, str):
+            return [cmd]
+
+    # Shape 3: direct .cmd on the exception
+    cmd = getattr(exc, "cmd", None)
+    if isinstance(cmd, list) and all(isinstance(x, str) for x in cmd):
+        return cmd
+    if isinstance(cmd, str):
+        return [cmd]
+
+    return []
 
 
 def get_max_budget_usd(depth: str = "standard") -> float | None:
