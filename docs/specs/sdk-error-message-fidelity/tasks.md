@@ -48,17 +48,32 @@ Goal: replace the `sdk_error_message(exc, ...)` call in two high-traffic workflo
 
 Goal: thread `sdk_stderr` + `sdk_error_kind` through the runner so they land in `<runs_dir>/<workflow>/<run-id>.json` and render in the dashboard.
 
-- [ ] **3.1** Add `sdk_stderr: str | None = None` and `sdk_error_kind: str | None = None` to `Run.to_record()` / `from_record()` in `src/attune/ops/runner.py`. Existing records without the keys read back as None.
-- [ ] **3.2** `RunnerService._execute()` pulls the fields off the `WorkflowResult.metadata` (set in Phase 2.3) and stores on the `Run` before persistence.
-- [ ] **3.3** `src/attune/ops/templates/run_view.html` — add the collapsible `<details>` block per [design.md](design.md) § "Persistence + render".
-- [ ] **3.4** `src/attune/ops/static/css/main.css` — `.sdk-error-detail` + `.sdk-error-stderr` styles. Monospace, muted background, scroll-on-overflow.
-- [ ] **3.5** Tests:
+**Split 2026-05-31** during implementation: the runner spawns the CLI as a subprocess and doesn't directly hold `WorkflowResult` objects, so the original 3.2 ("pull off WorkflowResult.metadata") requires a side-channel architectural decision (CLI emits `ATTUNE_RUN_META key=value` stdout lines à la `ATTUNE_DS` for discovery-sweep; runner parses them from the stdout stream it's already reading line-by-line). Splitting into 3a (schema + render — independent and useful) and 3b (CLI side-channel + runner consumer — wires the data flow) lets each ship as a smaller PR.
+
+### Phase 3a — Schema + render (independent)
+
+- [ ] **3a.1** Add `sdk_stderr: str | None = None` and `sdk_error_kind: str | None = None` to `Run` dataclass + `Run.to_dict()` / `to_record()` / `from_record()` in `src/attune/ops/runner.py`. Existing records without the keys read back as None.
+- [ ] **3a.2** `src/attune/ops/templates/run_view.html` — add the collapsible `<details>` block per [design.md](design.md) § "Persistence + render". Block is no-op until 3b lands (no run has `sdk_stderr` populated yet).
+- [ ] **3a.3** `src/attune/ops/static/css/main.css` — `.sdk-error-detail` + `.sdk-error-stderr` styles. Monospace, muted background, scroll-on-overflow.
+- [ ] **3a.4** Tests:
   - `test_run_record_round_trips_sdk_stderr_fields` — write Run with `sdk_stderr` + `sdk_error_kind`, read back, assert equal
   - `test_run_record_back_compat_missing_sdk_fields` — old-format record without keys, read back, assert both fields are None
   - `test_run_view_renders_collapsible_stderr_when_present` — Jinja render with mock Run carrying `sdk_stderr`, assert `<details>` block in output
   - `test_run_view_omits_stderr_block_when_absent` — same with None, assert no `<details>` block
 
-**Acceptance:** persisted runs carry the fields, dashboard renders them, back-compat holds.
+**Acceptance:** schema fields round-trip, dashboard renders when fields present, back-compat holds.
+
+### Phase 3b — CLI side-channel + runner consumer (wires the flow)
+
+- [ ] **3b.1** Add `src/attune/ops/run_meta_stdout.py` module mirroring `attune.workflows.discovery_sweep.ds_stdout` — `ATTUNE_RUN_META_VERSION 1` schema line, `ATTUNE_RUN_META sdk_error_kind=<kind>` and `ATTUNE_RUN_META sdk_stderr_b64=<base64>` lines, `parse_line()` helper. Env-gated via `ATTUNE_RUN_META_EMIT=1` so legitimate users piping to a file don't see the lines (see existing CLAUDE.md lesson on `ATTUNE_DS_EMIT`).
+- [ ] **3b.2** `_print_workflow_result()` in `src/attune/cli_commands/workflow_commands.py` calls the emitter after printing the formatted output when `WorkflowResult.metadata` carries the keys AND `ATTUNE_RUN_META_EMIT=1` is set.
+- [ ] **3b.3** `RunnerService._execute()` sets `ATTUNE_RUN_META_EMIT=1` in the subprocess env, parses each captured stdout line through `run_meta_stdout.parse_line()`, stashes the values onto `Run.sdk_stderr` / `Run.sdk_error_kind` before persistence. Emitted lines are filtered out of `run.lines` so the user-facing log doesn't show them.
+- [ ] **3b.4** Tests:
+  - Round-trip emitter ↔ parser (analogous to `ds_stdout` tests)
+  - `_print_workflow_result` emits the line when both metadata keys + env var are present; emits nothing otherwise
+  - `RunnerService._execute()` end-to-end with a synthetic command that emits the side-channel lines — verify `Run.sdk_stderr`/`Run.sdk_error_kind` populated and the marker lines absent from `run.lines`
+
+**Acceptance:** induced subprocess error in any Phase 2 workflow surfaces the redacted stderr + classified kind on the run-view page.
 
 ---
 

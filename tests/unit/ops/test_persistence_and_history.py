@@ -774,3 +774,91 @@ def test_run_view_404_when_neither_memory_nor_disk_has_run(tmp_path, monkeypatch
     # generic HTML / detail-lost-on-render gap is worth a separate fix
     # (a custom 404.html that interpolates exc.detail); not part of
     # B2's scope. Status code is what users perceive as "not found."
+
+
+# ---------------------------------------------------------------------------
+# Phase 3a — sdk_stderr / sdk_error_kind persistence + render
+# See docs/specs/sdk-error-message-fidelity/tasks.md § Phase 3a.
+# ---------------------------------------------------------------------------
+
+
+def test_run_record_round_trips_sdk_stderr_fields():
+    """Run(sdk_stderr=..., sdk_error_kind=...) → to_record() → from_record()
+    preserves both new fields verbatim."""
+    original = Run(
+        id="cafef00d0001",
+        workflow="code-review",
+        status="failed",
+        exit_code=1,
+        sdk_stderr=(
+            "anthropic.RateLimitError: Error code: 429 - "
+            "{'error': {'message': 'Number of request tokens has exceeded'}}"
+        ),
+        sdk_error_kind="rate_limit",
+        lines=["[runner error] subprocess exited 1"],
+    )
+    record = original.to_record()
+    assert record["sdk_stderr"] == original.sdk_stderr
+    assert record["sdk_error_kind"] == "rate_limit"
+    restored = Run.from_record(record)
+    assert restored.sdk_stderr == original.sdk_stderr
+    assert restored.sdk_error_kind == "rate_limit"
+
+
+def test_run_record_back_compat_missing_sdk_fields():
+    """Records persisted before Phase 3a have no sdk_stderr / sdk_error_kind
+    keys at all. from_record() must read them back as None, not raise."""
+    legacy = {
+        "id": "deadbeef0001",
+        "workflow": "security-audit",
+        "status": "completed",
+        "exit_code": 0,
+        # Intentionally no sdk_stderr / sdk_error_kind keys.
+    }
+    restored = Run.from_record(legacy)
+    assert restored.sdk_stderr is None
+    assert restored.sdk_error_kind is None
+
+
+def test_run_view_renders_collapsible_stderr_when_present(tmp_path, monkeypatch):
+    """A disk-loaded run with sdk_stderr populated renders the
+    <details class="sdk-error-detail"> block on /runs/<id>/view with
+    the summary text + raw stderr inside a <pre>."""
+    app, _, config = _make_app(tmp_path, monkeypatch)
+    _write_disk_record(
+        config.runs_dir,
+        "code-review",
+        "feedfeed0001",
+        exit_code=1,
+        sdk_stderr=("anthropic.AuthenticationError: 401 - invalid x-api-key"),
+        sdk_error_kind="auth",
+        lines=["[runner error] subprocess exited 1"],
+    )
+    with TestClient(app) as client:
+        resp = client.get("/runs/feedfeed0001/view")
+    assert resp.status_code == 200
+    body = resp.text
+    assert 'class="sdk-error-detail"' in body
+    assert "Raw stderr from claude CLI" in body
+    assert "(auth)" in body
+    assert 'class="sdk-error-stderr"' in body
+    assert "AuthenticationError" in body
+
+
+def test_run_view_omits_stderr_block_when_absent(tmp_path, monkeypatch):
+    """A disk-loaded run WITHOUT sdk_stderr (the common case — no SDK
+    failure was captured) must NOT render the .sdk-error-detail block."""
+    app, _, config = _make_app(tmp_path, monkeypatch)
+    _write_disk_record(
+        config.runs_dir,
+        "code-review",
+        "feedfeed0002",
+        exit_code=0,
+        lines=["everything fine"],
+    )
+    with TestClient(app) as client:
+        resp = client.get("/runs/feedfeed0002/view")
+    assert resp.status_code == 200
+    body = resp.text
+    assert "sdk-error-detail" not in body
+    assert "Raw stderr from claude CLI" not in body
