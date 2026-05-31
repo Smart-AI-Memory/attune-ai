@@ -89,9 +89,13 @@ failure mode: confidently solving the wrong problem.
 ### 4. RAG-grounded generation
 
 `attune-rag` (core dep) grounds LLM generation in retrieved corpus
-passages and enforces citation-per-claim, cutting hallucination from
-46.7% → 6.7% on the benchmark set. Retrieved passages are wrapped in
-sentinel tags to prevent prompt injection. The Claude provider
+passages and enforces citation-per-claim, delivering **0.996 mean
+per-claim faithfulness on the benchmark set — over 99% of generated
+claims are grounded in their cited passages (under 1% hallucinated
+per claim)**. The conservative per-query bucket rate (a single
+ungrounded claim disqualifies the whole response) is 6.7%, down from
+46.7% without the citation contract. Retrieved passages are wrapped
+in sentinel tags to prevent prompt injection. The Claude provider
 automatically caches the stable RAG context prefix, eliminating
 repeated token costs across calls.
 
@@ -220,15 +224,21 @@ pip install 'attune-ai[developer]'
 
 ## Accuracy & Faithfulness
 
-### RAG grounding — hallucination down 46.7% → 6.7%
+### RAG grounding — 0.996 per-claim faithfulness (over 99%)
 
-Measured on a 15-query golden set with retrieval held constant:
+Measured on a 15-query golden set with retrieval held constant. The
+**per-claim faithfulness** score (how much of what the model says is
+grounded in cited passages) is the headline metric. The conservative
+**per-query bucket rate** (a single ungrounded claim disqualifies the
+whole response) is shown alongside for completeness — they measure
+related-but-different things, and the per-claim number is the right
+"how trustworthy is each statement" answer:
 
-| Prompt variant | Hallucination rate | Mean faithfulness |
+| Prompt variant | Per-claim faithfulness | Per-query hallucination |
 |---|---|---|
-| baseline (no grounding rule) | 46.67% | 0.938 |
-| strict ("answer only from context") | 26.67% | 0.968 |
-| **citation (shipped default)** | **6.67%** | **0.996** |
+| baseline (no grounding rule) | 0.938 | 46.67% |
+| strict ("answer only from context") | 0.968 | 26.67% |
+| **citation (shipped default)** | **0.996** | **6.67%** |
 
 The gain comes from the prompting contract (citation-per-claim), not
 from retrieval. Full methodology:
