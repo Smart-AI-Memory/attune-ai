@@ -307,4 +307,4 @@ print(decision.primary_wizard)  # → compliance-check
 - [Auto-Chaining](auto-chaining.md) — Automatic wizard sequencing
 - [Telemetry and Signals](telemetry-and-signals.md) — Monitor routing
   decisions over time with `attune telemetry routing-stats`
-- [API Reference](../reference/API_REFERENCE.md#smartrouter) — Full API documentation
+- [API Reference](../reference/API_REFERENCE.md) — Full API documentation

@@ -202,6 +202,88 @@ def docs_tree(tmp_path):
     return docs
 
 
+class TestHtmlAnchors:
+    """HTML <a name="..."></a> / <a id="..."></a> anchors should be
+    recognized in addition to slugified headings — pattern used by
+    legacy markdown docs with emoji-prefixed headings."""
+
+    def test_html_name_anchor_recognized(self, audit_module):
+        text = "# Doc\n\n" '## <a name="big-idea"></a>🧠 The Big Idea\n\n' "content\n"
+        anchors = audit_module._extract_headings(text)
+        # Both the slugified heading AND the explicit HTML anchor
+        # should be present.
+        assert "big-idea" in anchors
+
+    def test_html_id_anchor_recognized(self, audit_module):
+        text = '<a id="my-section"></a>\n\n## Other Heading\n'
+        anchors = audit_module._extract_headings(text)
+        assert "my-section" in anchors
+
+    def test_html_anchor_link_resolves(self, audit_module, docs_tree):
+        """End-to-end: a link to #big-idea should resolve when the
+        target doc uses an HTML name anchor instead of a heading."""
+        (docs_tree / "tutorial.md").write_text(
+            "# Tutorial\n\n"
+            "[Jump](#big-idea)\n\n"
+            '## <a name="big-idea"></a>🧠 The Big Idea\n\n'
+            "content\n",
+            encoding="utf-8",
+        )
+        findings = audit_module.check_anchors(docs_tree)
+        assert findings == []
+
+
+class TestInlineCodeSkip:
+    """Links inside backtick-delimited inline code or fenced code
+    blocks must NOT be flagged — they're documentation of the syntax,
+    not real links."""
+
+    def test_inline_code_link_skipped(self, audit_module, docs_tree):
+        (docs_tree / "spec.md").write_text(
+            "# Spec\n\n"
+            "Links matching the pattern `[text](#anchor)` are "
+            "documentation examples.\n",
+            encoding="utf-8",
+        )
+        findings = audit_module.check_anchors(docs_tree)
+        assert findings == []
+
+    def test_double_backtick_link_skipped(self, audit_module, docs_tree):
+        """`` `[text](#anchor)` `` (double backticks) — also skipped
+        when the inner content is treated as inline code."""
+        (docs_tree / "spec.md").write_text(
+            "# Spec\n\n" "The link form `[text](#anchor)` is shown as code.\n",
+            encoding="utf-8",
+        )
+        findings = audit_module.check_anchors(docs_tree)
+        assert findings == []
+
+    def test_fenced_code_block_link_skipped(self, audit_module, docs_tree):
+        (docs_tree / "spec.md").write_text(
+            "# Spec\n\n"
+            "Example:\n\n"
+            "```markdown\n"
+            "[text](#anchor-that-does-not-exist)\n"
+            "```\n",
+            encoding="utf-8",
+        )
+        findings = audit_module.check_anchors(docs_tree)
+        assert findings == []
+
+    def test_real_link_outside_code_still_flagged(self, audit_module, docs_tree):
+        """The inline-code skip must NOT mask real broken links that
+        also happen to live in a doc with code examples."""
+        (docs_tree / "spec.md").write_text(
+            "# Spec\n\n"
+            "See [missing](#nope-not-here) for details.\n\n"
+            "Pattern: `[text](#example)` is documentation.\n",
+            encoding="utf-8",
+        )
+        findings = audit_module.check_anchors(docs_tree)
+        assert len(findings) == 1
+        assert "nope-not-here" in findings[0].message
+
+
 class TestCheckAnchors:
     def test_valid_anchor_no_finding(self, audit_module, docs_tree):
         (docs_tree / "guide.md").write_text(

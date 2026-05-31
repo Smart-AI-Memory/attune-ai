@@ -239,4 +239,4 @@ graph.load()
 
 - [Smart Router](smart-router.md) - Natural language wizard dispatch
 - [Auto-Chaining](auto-chaining.md) - Automatic wizard sequencing
-- [API Reference](../reference/API_REFERENCE.md#memorygraph) - Full API documentation
+- [API Reference](../reference/API_REFERENCE.md) - Full API documentation

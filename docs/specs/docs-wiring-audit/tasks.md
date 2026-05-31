@@ -102,7 +102,7 @@ implements the anchor check per [design.md §3a](./design.md#3a-anchor-integrity
 
 **Goal:**
 `scripts/audit_docs_wiring/checks/nav.py` implements the
-nav-vs-filesystem check per [design.md §3b](./design.md#3b-nav--filesystem-checksnavpy).
+nav-vs-filesystem check per [design.md §3b](./design.md#3b-nav-filesystem-checksnavpy).
 
 **Files to create:**
 
@@ -135,7 +135,7 @@ nav-vs-filesystem check per [design.md §3b](./design.md#3b-nav--filesystem-chec
 
 **Goal:**
 `scripts/audit_docs_wiring/checks/features_yaml.py` implements
-the features.yaml check per [design.md §3c](./design.md#3c-featuresyaml--filesystem-checksfeatures_yamlpy).
+the features.yaml check per [design.md §3c](./design.md#3c-featuresyaml-filesystem-checksfeatures_yamlpy).
 
 **Files to create:**
 
@@ -164,7 +164,7 @@ the features.yaml check per [design.md §3c](./design.md#3c-featuresyaml--filesy
 ### Task 5 — Initial `.audit/orphans.yml`
 
 **Goal:** create the allowlist file with the initial subtree
-entries enumerated in [design.md §2](./design.md#artifact-2--auditorphansyml).
+entries enumerated in [design.md §2](./design.md#artifact-2-auditorphansyml).
 
 **Files to create:**
 
@@ -228,7 +228,7 @@ the same branch.
 ### Task 7 — CI integration (advisory mode)
 
 **Goal:** add the `wiring-audit` job to
-`.github/workflows/docs.yml` per [design.md §6](./design.md#artifact-6--ci-integration).
+`.github/workflows/docs.yml` per [design.md §6](./design.md#artifact-6-ci-integration).
 Job runs on every PR but is NOT yet a required status check.
 
 **Files to modify:**
@@ -281,7 +281,7 @@ status check.
 
 **Goal:**
 `scripts/audit_docs_wiring/checks/mkdocstrings.py` implements
-the symbol-resolution check per [design.md §4](./design.md#artifact-4--mkdocstrings-symbol-resolution-v11).
+the symbol-resolution check per [design.md §4](./design.md#artifact-4-mkdocstrings-symbol-resolution-v11).
 
 **Files to create:**
 
@@ -318,7 +318,7 @@ task can sit indefinitely.
 **Acceptance criteria (if pursued):**
 
 - [ ] `scripts/audit_docs_wiring/checks/see_also.py` implemented
-  per [design.md §5](./design.md#artifact-5--reciprocal-see-also-advisory-v12-or-deferred).
+  per [design.md §5](./design.md#artifact-5-reciprocal-see-also-advisory-v12-or-deferred).
 - [ ] `severity="advisory"` — surfaces in reports but does NOT
   fail CI.
 

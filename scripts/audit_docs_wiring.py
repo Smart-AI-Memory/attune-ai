@@ -204,15 +204,39 @@ _HEADING_RE = re.compile(r"^(#{1,6})\s+(.+?)\s*$", re.MULTILINE)
 # to the closing paren or whitespace.
 _LINK_RE = re.compile(r"\[([^\]]+)\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 
+# Inline code span — single-backtick-delimited. Used to mask out
+# documentation that mentions a link pattern as code without it being
+# a real link, e.g. `` `[text](#anchor)` `` in a spec describing the
+# syntax. Multi-backtick fenced spans (```) are matched first so they
+# don't get partially-consumed by the single-backtick rule.
+_FENCED_CODE_RE = re.compile(r"```.*?```", re.DOTALL)
+_INLINE_CODE_RE = re.compile(r"`[^`\n]*`")
+
+
+# Explicit HTML anchors: <a name="foo"></a> or <a id="foo"></a>. Common
+# in legacy markdown where authors wanted stable anchors independent of
+# heading text (e.g. emoji-prefixed headings, where the slugify of the
+# emoji+text is awkward). Matched both inside and outside headings.
+_HTML_ANCHOR_RE = re.compile(r"<a\s+(?:name|id)=[\"']([^\"']+)[\"']", re.I)
+
 
 def _extract_headings(text: str) -> set[str]:
-    """Return the set of slugified anchors for a markdown document."""
+    """Return the set of anchors (slugified headings + HTML name/id) for a doc.
+
+    Includes:
+    - Slugified ATX headings (``# H1``, ``## H2`` …).
+    - Explicit HTML anchors anywhere in the document
+      (``<a name="foo">`` or ``<a id="foo">``). These let authors
+      pin stable anchors that don't depend on heading text.
+    """
     anchors: set[str] = set()
     for match in _HEADING_RE.finditer(text):
         heading_text = match.group(2)
         # Strip trailing # marks (e.g. "## Section ##")
         heading_text = re.sub(r"\s+#+\s*$", "", heading_text)
         anchors.add(slugify(heading_text))
+    for match in _HTML_ANCHOR_RE.finditer(text):
+        anchors.add(match.group(1))
     return anchors
 
 
@@ -305,8 +329,14 @@ def check_anchors(docs_root: Path) -> list[Finding]:
             continue
 
         line_starts = _compute_line_starts(text)
+        # Mask out fenced + inline code spans so links inside backticks
+        # (e.g. a spec describing the link syntax with ``[text](#anchor)``)
+        # don't get matched as real links. We replace with spaces of the
+        # same length to preserve byte offsets — line numbers stay correct.
+        scan_text = _FENCED_CODE_RE.sub(lambda m: " " * (m.end() - m.start()), text)
+        scan_text = _INLINE_CODE_RE.sub(lambda m: " " * (m.end() - m.start()), scan_text)
 
-        for match in _LINK_RE.finditer(text):
+        for match in _LINK_RE.finditer(scan_text):
             url = match.group(2)
             if _is_external_link(url):
                 continue
