@@ -1,6 +1,6 @@
 # Spec: Self-truthing spec status (derive from completion state, not the header line)
 
-**Status**: draft (awaiting approval)
+**Status**: approved (2026-05-31; see [decisions.md](./decisions.md))
 **Created**: 2026-05-29
 **Layer**: attune-ai plugin — session hooks (`plugin/hooks/_state.py`, `spec_orient.py`)
 **Origin**: 2026-05-29 session. The spec-orientation hook reported
@@ -15,7 +15,7 @@ so neither the model nor the human works off a drifted header.
 
 ## Phase 1: Requirements
 
-**Status**: draft
+**Status**: approved
 
 ### Problem statement
 
