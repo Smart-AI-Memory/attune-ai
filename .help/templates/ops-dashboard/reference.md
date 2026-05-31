@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-31T14:56:21.019760+00:00
-source_hash: af58f6dea192c32d27c04b43a01ee379eb1a9b7b4af5143f55f0803b41d352e8
+generated_at: 2026-05-31T20:54:22.238786+00:00
+source_hash: 55d4ceccfe9282d44ea02ca06378d8a89b8516f920509ddb31a006d0c5d2adb5
 status: generated
 ---
 
@@ -141,6 +141,12 @@ status: generated
 | `get_sweep_result()` | Return the latest sweep result for a scope-hash, or 404. | `src/attune/ops/routes/sweep_results.py` |
 | `get_sweep_chips()` | Return chip counts for an arbitrary scope path. | `src/attune/ops/routes/sweep_results.py` |
 | `sweep_detail_page()` | Scope-keyed detail page for the latest discovery-sweep result. | `src/attune/ops/routes/sweep_results.py` |
+| `is_emission_enabled()` | True when ``ATTUNE_RUN_META_EMIT`` is set to any non-empty value. | `src/attune/ops/run_meta_stdout.py` |
+| `emit_version_line()` | Write the schema-version line. Parsers refuse unknown versions. | `src/attune/ops/run_meta_stdout.py` |
+| `emit_field_line()` | Write one ``ATTUNE_RUN_META`` line for a named field. | `src/attune/ops/run_meta_stdout.py` |
+| `encode_stderr()` | Base64-encode a multi-line stderr string for wire-safe transit. | `src/attune/ops/run_meta_stdout.py` |
+| `decode_stderr()` | Inverse of :func:`encode_stderr`. Returns empty string on | `src/attune/ops/run_meta_stdout.py` |
+| `parse_line()` | Parse one ATTUNE_RUN_META line back into a dict. None on no match. | `src/attune/ops/run_meta_stdout.py` |
 | `echo_command_builder()` | Test helper: produce a portable subprocess that prints two lines + exits 0. | `src/attune/ops/runner.py` |
 | `prune_old_runs()` | Delete persisted run files older than ``days``. Returns the deletion count. | `src/attune/ops/runner.py` |
 | `create_app()` | Build the FastAPI app, wiring config + templates into request state. | `src/attune/ops/server.py` |
