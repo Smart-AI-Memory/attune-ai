@@ -14,7 +14,7 @@
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| **D1 — Lifecycle derivation rules** | See "Lifecycle derivation algorithm" below | Five buckets (Active / Approved-not-shipped / Complete / Paused / Draft) are the right split per Patrick. First-match evaluation order chosen so explicit author signals (paused, complete) win over inferred states. v1 stays file-only; v2 may add PR-signal refinement for Approved-not-shipped. |
+| **D1 — Lifecycle derivation rules** | See "Lifecycle derivation algorithm" below | Six buckets (Active / Approved-not-shipped / Complete / Paused / Stale / Draft) are the right split per Patrick. First-match evaluation order chosen so explicit author signals (paused, complete) win over inferred states, and Stale wins over Draft/Approved-not-shipped/Active so the "rotting" signal surfaces instead of being hidden behind the spec's nominal state. v1 stays file-only; v2 may add PR-signal refinement for Approved-not-shipped. **Stale bucket added 2026-05-31** during wireframe review — surfaces the "started but rotting" case the original 5 buckets silently hid. |
 | **D2 — Filter widget shape** | **Chip row above table, one chip per lifecycle bucket** | Chips show the filter state at-a-glance (no menu open required), one-click toggle, inline counts double as population indicator, matches existing dashboard style (workflows tier-map chips, bulletin actor strip). Alternatives rejected: dropdown hides state behind a click; facet sidebar is overkill for one filter dimension. |
 | **D3 — Visual grouping (R1 stretch)** | **Defer to v2** | Chips already cluster; per-row lifecycle indicator already labels each bucket; grouping fights with sort options; collapse/expand adds state to manage (server default? localStorage? URL?). v2 trigger conditions: (a) consistent alphabetical-sort + multi-bucket-active usage, OR (b) spec count past ~80-100 making the flat list unwieldy. Neither currently true. |
 | **D4 — Action menu UI** | **Kebab `⋯` in a dedicated last column** | Doesn't fight whole-row-click (R3.1) because the kebab cell has its own explicit hit target. Compact (one icon per row), scales to v2 actions without redesign, standard pattern users recognize, keyboard-friendly. Alternatives rejected: always-visible inline buttons (column bloat, mobile-hostile); row-hover reveal (conflicts with R3.1, invisible on touch); right-click context menu (unexpected in web UIs). |
@@ -42,17 +42,26 @@ values: `draft`, `in-review` / `review`, `approved`, `complete` /
    `(complete, completed, done)`. Explicit author signal that the
    spec is done.
 
-3. **Draft** — `requirements.md` is missing OR its status is NOT in
+3. **Stale** — `last_modified` is older than **30 days** AND the
+   spec didn't match Paused or Complete above. Surfaces the
+   "started but rotting" case: a spec that was Active, Draft, or
+   Approved-not-shipped but hasn't been touched in over a month.
+   The Stale bucket wins over Draft / Approved-not-shipped / Active
+   so users see "this is rotting" instead of the spec's nominal
+   state. (Threshold ratified 2026-05-31; revisit if 30d proves too
+   noisy or too quiet in practice.)
+
+4. **Draft** — `requirements.md` is missing OR its status is NOT in
    `(approved, complete, completed, done)`. The earliest stage, no
    formal commitment yet.
 
-4. **Approved-not-shipped** — `requirements.md` approved AND no phase
+5. **Approved-not-shipped** — `requirements.md` approved AND no phase
    marked `complete` / `completed` / `done` AND `tasks.md` exists.
    Means design + tasks artifacts are ratified but work-shipping
    hasn't happened. v1 is file-only; v2 may refine with PR-signal
    (`gh pr list --search <slug>`).
 
-5. **Active** — default. `requirements.md` approved AND doesn't match
+6. **Active** — default. `requirements.md` approved AND doesn't match
    any rule above. The "work in progress" state.
 
 ### Trade-offs ratified
@@ -65,6 +74,15 @@ values: `draft`, `in-review` / `review`, `approved`, `complete` /
   through to the file-based rules.
 - **No "Complete" override**: no mechanism in v1 to mark a spec
   complete without flipping all 4 phase pills. Use the pills.
+- **Stale threshold is fixed at 30 days** for v1 — no per-spec
+  override, no user-configurable knob. If 30d turns out to flag too
+  many specs that are still active in your head but lightly touched,
+  lengthen it in a follow-up; if too few, shorten it. The visual
+  treatment is amber (distinct shade from Paused) signaling "needs
+  decision."
+- **Default Stale chip is ACTIVE (visible)**: stale specs need
+  attention, not concealment. The only default-hidden bucket is
+  Complete (per R1.3).
 
 ---
 

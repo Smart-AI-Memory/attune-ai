@@ -55,10 +55,15 @@ A user with 45+ specs can:
 ### R1 — Volume reduction (grouping + filtering)
 
 - **R1.1** Filter by spec **lifecycle state** derived from phase
-  statuses. Five buckets: Active / Approved-not-shipped / Complete /
-  Paused / Draft. User can show any combination via a chip row above
-  the table. (See [`decisions.md`](decisions.md) § D1 for the
-  derivation rules and § D2 for the chip widget shape.)
+  statuses + age. Six buckets: Active / Approved-not-shipped /
+  Complete / Paused / **Stale** / Draft. User can show any
+  combination via a chip row above the table. (See
+  [`decisions.md`](decisions.md) § D1 for the derivation rules and
+  § D2 for the chip widget shape. The Stale bucket was added
+  2026-05-31 during wireframe review — it surfaces specs that
+  haven't been touched in 30+ days and aren't already explicitly
+  Paused or Complete, addressing the "started but rotting" case the
+  original 5 buckets silently hid.)
 - **R1.2** Text search on spec slug — substring match, case-insensitive.
   Filters within the already-bucket-filtered set. No fuzzy or semantic
   matching in v1.

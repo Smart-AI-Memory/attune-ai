@@ -84,6 +84,8 @@
     .chip-active.bucket-complete { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
     .chip-active.bucket-draft { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
     .chip-active.bucket-approved-not-shipped { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
+    /* Stale: distinct amber-orange shade, separate from Paused's softer amber. */
+    .chip-active.bucket-stale { background: #ffedd5; color: #9a3412; border-color: #fdba74; }
     .chip-inactive { background: #f9fafb; color: #9ca3af; border-color: #e5e7eb; }
     .chip-inactive .chip-hidden-mark { color: #ef4444; margin-left: 2px; }
     .chip:hover { filter: brightness(0.97); }
@@ -176,6 +178,7 @@
     .lifecycle-complete { background: #d1fae5; color: #065f46; }
     .lifecycle-paused { background: #fef3c7; color: #92400e; }
     .lifecycle-draft { background: #f3f4f6; color: #374151; }
+    .lifecycle-stale { background: #ffedd5; color: #9a3412; }
 
     /* ----- Kebab menu ----- */
     .kebab-btn {
@@ -299,6 +302,9 @@
       <span class="chip chip-active bucket-paused" data-bucket="paused">
         Paused <span class="chip-count" data-count="paused">0</span>
       </span>
+      <span class="chip chip-active bucket-stale" data-bucket="stale">
+        Stale <span class="chip-count" data-count="stale">0</span>
+      </span>
       <span class="chip chip-active bucket-draft" data-bucket="draft">
         Draft <span class="chip-count" data-count="draft">0</span>
       </span>
@@ -322,9 +328,10 @@
   <div class="inspector">
     <h3>Wireframe inspector — try these to exercise every state</h3>
     <ul>
-      <li><span class="state-key">Default</span> — page loads with all chips active except <strong>Complete</strong> (greyed with hidden-count marker)</li>
+      <li><span class="state-key">Default</span> — page loads with all chips active except <strong>Complete</strong> (greyed with hidden-count marker). <strong>Stale is default-active</strong> — stale specs need attention, not concealment.</li>
       <li><span class="state-key">Click "Complete" chip</span> — reveals 27 hidden specs in their own bucket</li>
-      <li><span class="state-key">Click "Active" chip off</span> — filters out active specs, leaving only paused/draft/approved-not-shipped</li>
+      <li><span class="state-key">Click "Stale" chip off</span> — hides specs that haven't been touched in 30+ days (the "rotting" set)</li>
+      <li><span class="state-key">Click "Active" chip off</span> — filters out active specs, leaving paused/stale/draft/approved-not-shipped</li>
       <li><span class="state-key">Type "rag" in search</span> — substring filter within active buckets</li>
       <li><span class="state-key">Type "xyz" in search</span> — 0-result state inside active buckets</li>
       <li><span class="state-key">Click all chips off</span> — empty-state with "re-enable at least one chip" CTA</li>
@@ -379,6 +386,15 @@
     { slug: "rag-knowledge-query-cache", updated: NOW - 9 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
     { slug: "enforcement-vs-documentation", updated: NOW - 1 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "in-review" } },
     { slug: "dashboard-tools-inventory", updated: NOW - 0.5 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    // ---- Stale (age > 30 days, would otherwise be Active / Draft / Approved-not-shipped) ----
+    // These surface as Stale because their last_modified crosses the 30d threshold,
+    // hiding whatever bucket they'd otherwise have landed in. The "rotting" signal
+    // wins over the spec's nominal state per D1.
+    { slug: "agent-surface-parallelism-evaluation", updated: NOW - 47 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "anthropic-cost-integration", updated: NOW - 55 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "draft" } },
+    { slug: "doc-fiction-cleanup", updated: NOW - 38 * DAY, phases: { decisions: "draft", requirements: "draft", design: "—", tasks: "—" } },
+    { slug: "worktree-inventory", updated: NOW - 72 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "integration-coverage", updated: NOW - 41 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "approved" } },
   ];
   // Add filler Complete specs so the count reads 27 (matches the
   // wireframe banner's "Complete 27 ✗" assertion).
@@ -391,15 +407,19 @@
   }
 
   // ---------- Lifecycle derivation (matches decisions.md § D1) ----------
-  // First match wins. Evaluation order: Paused -> Complete -> Draft ->
-  // Approved-not-shipped -> Active.
+  // First match wins. Evaluation order: Paused -> Complete -> Stale ->
+  // Draft -> Approved-not-shipped -> Active.
   const COMPLETE_VALUES = new Set(["complete", "completed", "done"]);
+  const STALE_THRESHOLD_DAYS = 30;
   function lifecycleOf(spec) {
     const phaseValues = Object.values(spec.phases);
     // Paused: any phase status contains "paused" (case-insensitive)
     if (phaseValues.some(s => s && s.toLowerCase().includes("paused"))) return "paused";
     // Complete: all 4 phases in {complete, completed, done}
     if (phaseValues.every(s => COMPLETE_VALUES.has((s || "").toLowerCase()))) return "complete";
+    // Stale: last_modified older than threshold AND not Paused/Complete
+    const ageDays = (NOW - spec.updated) / DAY;
+    if (ageDays > STALE_THRESHOLD_DAYS) return "stale";
     // Draft: requirements missing OR not approved
     const reqs = (spec.phases.requirements || "").toLowerCase();
     if (!reqs || reqs === "—" || (reqs !== "approved" && !COMPLETE_VALUES.has(reqs))) return "draft";
@@ -424,6 +444,10 @@
       // Find the phase carrying the paused marker
       const pausedPhase = Object.entries(spec.phases).find(([_, s]) => s && s.toLowerCase().includes("paused"));
       return pausedPhase ? `(paused — see ${pausedPhase[0]}.md)` : "(paused)";
+    }
+    if (lifecycle === "stale") {
+      const ageDays = Math.round((NOW - spec.updated) / DAY);
+      return `Stale ${ageDays}d — decide: resume, pause, or close`;
     }
     if (lifecycle === "draft") {
       if (!spec.phases.requirements || spec.phases.requirements === "—") return "Next: write requirements";
@@ -476,14 +500,15 @@
 
   // ---------- State + render ----------
   const state = {
-    // Default per R1.3: all buckets EXCEPT Complete are active
-    buckets: new Set(["active", "approved-not-shipped", "paused", "draft"]),
+    // Default per R1.3: all buckets EXCEPT Complete are active.
+    // Stale is default-ACTIVE — stale specs need attention.
+    buckets: new Set(["active", "approved-not-shipped", "paused", "stale", "draft"]),
     search: "",
     sort: "recent",
   };
 
   function specsByLifecycle() {
-    const groups = { active: [], "approved-not-shipped": [], complete: [], paused: [], draft: [] };
+    const groups = { active: [], "approved-not-shipped": [], complete: [], paused: [], stale: [], draft: [] };
     MOCK_SPECS.forEach(s => groups[lifecycleOf(s)].push(s));
     return groups;
   }
@@ -535,7 +560,7 @@
         </div>
       `;
       document.getElementById("reset-buckets").addEventListener("click", () => {
-        state.buckets = new Set(["active", "approved-not-shipped", "paused", "draft"]);
+        state.buckets = new Set(["active", "approved-not-shipped", "paused", "stale", "draft"]);
         syncChipStates(); renderTable();
       });
       return;
