@@ -84,23 +84,35 @@ class TestSurfacing:
 
 
 class TestAgeFormatter:
-    """The age helper handles four ranges: <1m, <1h, <1d, ≥1d."""
+    """The age helper handles four ranges: <1m, <1h, <1d, ≥1d.
+
+    Tests pin ``now`` explicitly via the ``now=`` parameter so they
+    don't depend on real-time consistency between ``time.time()``
+    and ``datetime.now(timezone.utc).timestamp()`` — on Windows
+    those can differ by enough sub-second jitter to push
+    edge-of-bucket values (300s, 7200s, 86400s) across boundaries.
+    """
+
+    NOW = 1_700_000_000.0
 
     def test_seconds_age(self, hook_module):
-        now = time.time()
-        assert hook_module._format_age(now - 30) == "just now"
+        assert hook_module._format_age(self.NOW - 30, now=self.NOW) == "just now"
 
     def test_minutes_age(self, hook_module):
-        now = time.time()
-        assert hook_module._format_age(now - 300) == "5m ago"
+        assert hook_module._format_age(self.NOW - 300, now=self.NOW) == "5m ago"
 
     def test_hours_age(self, hook_module):
-        now = time.time()
-        assert hook_module._format_age(now - 7200) == "2h ago"
+        assert hook_module._format_age(self.NOW - 7200, now=self.NOW) == "2h ago"
 
     def test_days_age(self, hook_module):
-        now = time.time()
-        assert hook_module._format_age(now - 172800) == "2d ago"
+        assert hook_module._format_age(self.NOW - 172800, now=self.NOW) == "2d ago"
+
+    def test_default_now_uses_real_clock(self, hook_module):
+        """When ``now`` is omitted the helper falls back to the real
+        clock. Use a buffered value to absorb any sub-second drift."""
+        real_now = time.time()
+        # 90 minutes ago → comfortably in the hours bucket [60m, 24h).
+        assert hook_module._format_age(real_now - 5400) == "1h ago"
 
 
 class TestErrorHandling:

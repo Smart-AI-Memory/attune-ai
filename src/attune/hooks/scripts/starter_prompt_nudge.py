@@ -34,9 +34,17 @@ from pathlib import Path
 STARTER_PATH = Path.home() / ".attune" / "next_session_starter.md"
 
 
-def _format_age(mtime_ts: float) -> str:
-    """Return a short human-readable age like '2h ago', '3d ago'."""
-    now = datetime.now(timezone.utc).timestamp()
+def _format_age(mtime_ts: float, now: float | None = None) -> str:
+    """Return a short human-readable age like '2h ago', '3d ago'.
+
+    ``now`` is the current Unix timestamp; defaults to
+    ``datetime.now(timezone.utc).timestamp()``. Exposed as a
+    parameter so tests can pin time and avoid Windows clock-source
+    jitter between ``time.time()`` and ``datetime.now().timestamp()``
+    that would otherwise push edge-of-bucket values across boundaries.
+    """
+    if now is None:
+        now = datetime.now(timezone.utc).timestamp()
     delta = now - mtime_ts
     if delta < 60:
         return "just now"
