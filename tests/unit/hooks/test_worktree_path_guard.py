@@ -18,7 +18,9 @@ Covers:
 from __future__ import annotations
 
 import importlib.util
+import io
 import json
+import runpy
 import subprocess
 import sys
 from pathlib import Path
@@ -193,18 +195,23 @@ class TestDegradedAllows:
 
 
 class TestHookErrorHandling:
-    def test_main_propagates_unexpected_errors(self, hook_module):
+    def test_main_propagates_unexpected_errors(self, hook_module, tmp_path):
         """The script's __main__ block catches all Exceptions and
         exits 0 — but main() itself should propagate so callers can
         observe errors in tests."""
         # Patch _git_toplevel to raise to verify the script-level
-        # exception handler at __main__ would catch it.
+        # exception handler at __main__ would catch it. Use tmp_path
+        # so the input is absolute on Windows too (a literal "/tmp/x.py"
+        # is_absolute() returns False on Windows because there's no
+        # drive letter — main() would early-return before reaching
+        # the patched _git_toplevel).
+        target = tmp_path / "x.py"
         with patch.object(hook_module, "_git_toplevel", side_effect=RuntimeError("oops")):
             with pytest.raises(RuntimeError):
                 hook_module.main(
                     {
                         "tool_name": "Write",
-                        "tool_input": {"file_path": "/tmp/x.py"},
+                        "tool_input": {"file_path": str(target)},
                     }
                 )
 
@@ -257,3 +264,58 @@ class TestMetrics:
             }
         )
         assert code == 0
+
+
+# ---------------------------------------------------------------------
+# Script-level coverage: _read_stdin_context + __main__ block
+# ---------------------------------------------------------------------
+
+
+class TestReadStdinContext:
+    def test_empty_stdin_returns_empty_dict(self, hook_module, monkeypatch):
+        monkeypatch.setattr(sys, "stdin", io.StringIO(""))
+        assert hook_module._read_stdin_context() == {}
+
+    def test_invalid_json_returns_empty_dict(self, hook_module, monkeypatch):
+        monkeypatch.setattr(sys, "stdin", io.StringIO("not-json{"))
+        assert hook_module._read_stdin_context() == {}
+
+    def test_valid_json_returns_parsed_dict(self, hook_module, monkeypatch):
+        payload = '{"tool_name": "Write", "tool_input": {"file_path": "x"}}'
+        monkeypatch.setattr(sys, "stdin", io.StringIO(payload))
+        assert hook_module._read_stdin_context() == {
+            "tool_name": "Write",
+            "tool_input": {"file_path": "x"},
+        }
+
+
+class TestScriptMainEntry:
+    """Cover the `if __name__ == "__main__":` block via runpy."""
+
+    def test_script_with_empty_stdin_exits_0(self, monkeypatch):
+        monkeypatch.setattr(sys, "stdin", io.StringIO(""))
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_path(str(SCRIPT_PATH), run_name="__main__")
+        assert exc_info.value.code == 0
+
+    def test_script_with_skip_context_exits_0(self, monkeypatch):
+        """A Bash tool context routes through main() and exits 0."""
+        ctx = json.dumps({"tool_name": "Bash", "tool_input": {"command": "ls"}})
+        monkeypatch.setattr(sys, "stdin", io.StringIO(ctx))
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_path(str(SCRIPT_PATH), run_name="__main__")
+        assert exc_info.value.code == 0
+
+    def test_script_catches_main_exception_and_exits_0(self, monkeypatch, capsys):
+        """If main() raises, the wrapper prints to stderr and exits 0 —
+        a hook bug must never block real work."""
+        # Pass a malformed tool_input (string, not dict) to provoke an
+        # AttributeError inside main() when it calls .get on tool_input.
+        bad_ctx = '{"tool_name": "Write", "tool_input": "not-a-dict"}'
+        monkeypatch.setattr(sys, "stdin", io.StringIO(bad_ctx))
+        with pytest.raises(SystemExit) as exc_info:
+            runpy.run_path(str(SCRIPT_PATH), run_name="__main__")
+        assert exc_info.value.code == 0
+        captured = capsys.readouterr()
+        assert "hook error" in captured.err
+        assert "AttributeError" in captured.err
