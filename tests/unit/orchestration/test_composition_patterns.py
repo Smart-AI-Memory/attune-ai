@@ -100,16 +100,28 @@ class TestParallelComposition:
         test_context,
         mock_execute_agent,
     ):
-        """Test that agents execute independently in parallel."""
+        """Test that agents execute independently in parallel.
+
+        Verifies parallelism structurally via asyncio scheduling order rather
+        than wall-clock duration ratios. When ParallelStrategy uses
+        ``asyncio.gather``, every agent enters its coroutine and reaches its
+        first ``await`` before any of them returns — so the count of started
+        agents at each finish is ``[n, n, n]``. Sequential execution would
+        produce ``[1, 2, 3]``. The previous duration-ratio assertion was
+        flaky on Windows 3.12 where timer granularity and asyncio scheduling
+        overhead exceeded the measured individual durations of instant mock
+        agents.
+        """
         strategy = ParallelStrategy()
 
-        # Track execution order to verify parallelism
-        execution_times = []
+        started = 0
+        finished_when_started: list[int] = []
 
         async def tracked_execute(agent, context):
-            start = time.perf_counter()
+            nonlocal started
+            started += 1
             result = await mock_execute_agent(agent, context)
-            execution_times.append((agent.id, time.perf_counter() - start))
+            finished_when_started.append(started)
             return result
 
         strategy._execute_agent = tracked_execute
@@ -118,14 +130,13 @@ class TestParallelComposition:
 
         assert result.success
         assert len(result.outputs) == 3
+        assert len(finished_when_started) == 3
 
-        # All agents should have executed
-        assert len(execution_times) == 3
-
-        # Verify parallel execution: total duration should be max, not sum
-        # (allowing some overhead for async coordination)
-        max_individual = max(t[1] for t in execution_times)
-        assert result.total_duration <= max_individual * 1.5
+        assert finished_when_started == [3, 3, 3], (
+            "Agents did not execute in parallel: "
+            f"finished_when_started={finished_when_started} "
+            "(parallel expected [3, 3, 3], sequential would be [1, 2, 3])"
+        )
 
     @pytest.mark.asyncio
     async def test_parallel_result_aggregation(self, mock_agents, test_context, mock_execute_agent):
