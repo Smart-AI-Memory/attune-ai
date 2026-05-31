@@ -41,6 +41,28 @@ class WorkflowEntry:
 
 
 @dataclass(frozen=True)
+class ToolEntry:
+    """One row in the unified Tools inventory page.
+
+    Aggregates workflows (server-runnable from the dashboard),
+    skills (auto-triggered by natural-language phrases in Claude Code
+    chat), and slash commands (explicit chat-side invocation) under
+    one user-facing dataclass. The ``kind`` field carries the type
+    so the template can render the right action button.
+
+    See ``docs/specs/dashboard-tools-inventory/decisions.md``.
+    """
+
+    name: str
+    description: str
+    kind: str  # Literal["workflow", "skill", "command"]
+    invocation_hint: str  # workflow name, NL trigger phrase, or "/cmd-name"
+    # Workflow-only fields; ``None`` for skills and commands.
+    stages: int | None = None
+    tier_map: dict[str, str] | None = None
+
+
+@dataclass(frozen=True)
 class PathArgSpec:
     """How a workflow accepts a scope path on the CLI.
 
@@ -997,6 +1019,149 @@ def list_workflows() -> list[WorkflowEntry]:
         # INTENTIONAL: registry introspection is best-effort; never fail the dashboard.
         return []
     return sorted(out, key=lambda w: w.name)
+
+
+def _extract_trigger_phrase(description: str, fallback: str) -> str:
+    """Pull the first natural-language trigger phrase from a skill description.
+
+    Skills conventionally embed ``Triggers on: a, b, c.`` in their
+    frontmatter description. The first phrase reads as the canonical
+    "say this in chat" example. When the marker is absent (older
+    skills), fall back to the skill name itself — Anthropic's
+    auto-trigger matches semantically, so the skill name usually
+    works as a reasonable invocation hint.
+
+    Args:
+        description: The full description string (skill frontmatter).
+        fallback: Used when no ``Triggers on:`` marker is present.
+
+    Returns:
+        A short phrase the user can paste into Claude Code chat.
+    """
+    if not description:
+        return fallback
+    marker = "Triggers on:"
+    idx = description.find(marker)
+    if idx < 0:
+        return fallback
+    tail = description[idx + len(marker) :].strip()
+    # Split on first period (end of trigger list) or comma (first phrase).
+    end = len(tail)
+    for stop_char in (".", ","):
+        pos = tail.find(stop_char)
+        if 0 <= pos < end:
+            end = pos
+    phrase = tail[:end].strip()
+    return phrase or fallback
+
+
+def _parse_skill_entry(skill_md: Path) -> ToolEntry | None:
+    """Parse one ``plugin/skills/<name>/SKILL.md`` into a ToolEntry.
+
+    Returns ``None`` if the file can't be parsed (malformed
+    frontmatter, missing required fields) — caller treats this as a
+    silent skip per the existing list_workflows pattern.
+    """
+    try:
+        import frontmatter as fm
+
+        post = fm.load(str(skill_md))
+    except (OSError, Exception):  # noqa: BLE001
+        # INTENTIONAL: best-effort parse; never fail the dashboard
+        # because one skill has bad frontmatter.
+        return None
+    meta = post.metadata or {}
+    name = str(meta.get("name") or "").strip()
+    description = str(meta.get("description") or "").strip()
+    if not name:
+        return None
+    return ToolEntry(
+        name=name,
+        description=description,
+        kind="skill",
+        invocation_hint=_extract_trigger_phrase(description, fallback=name),
+    )
+
+
+def _parse_command_entry(cmd_md: Path) -> ToolEntry | None:
+    """Parse one ``plugin/commands/<name>.md`` into a ToolEntry.
+
+    Slash command frontmatter usually has ``description`` and
+    ``allowed-tools`` but no ``name`` field — the filename stem is
+    the command name. Invocation hint is the slash-prefixed name.
+    """
+    try:
+        import frontmatter as fm
+
+        post = fm.load(str(cmd_md))
+    except (OSError, Exception):  # noqa: BLE001
+        # INTENTIONAL: best-effort parse; never fail the dashboard.
+        return None
+    meta = post.metadata or {}
+    description = str(meta.get("description") or "").strip()
+    name = cmd_md.stem
+    if not name:
+        return None
+    return ToolEntry(
+        name=name,
+        description=description,
+        kind="command",
+        invocation_hint=f"/{name}",
+    )
+
+
+def list_tools(project_root: Path) -> list[ToolEntry]:
+    """Return the unified inventory of workflows + skills + commands.
+
+    Each row is a user-invokable capability. Workflows come from the
+    existing in-process registry (server-runnable from the
+    dashboard); skills come from ``plugin/skills/*/SKILL.md``
+    frontmatter (auto-triggered by natural-language phrases in
+    Claude Code chat); slash commands come from
+    ``plugin/commands/*.md`` (explicit chat-side invocation).
+
+    The plugin directory is resolved relative to ``project_root``;
+    when ``plugin/`` is absent (typical for installed-from-pip use),
+    the workflow inventory still ships and skill / command sections
+    render empty. This matches the v1 "attune-ai-local" scope per
+    ``docs/specs/dashboard-tools-inventory/decisions.md``.
+
+    Args:
+        project_root: Repository root used to resolve ``plugin/``.
+
+    Returns:
+        Sorted by ``(kind, name)`` so the template can stable-render
+        sections. Empty if neither workflows nor a ``plugin/`` dir
+        are present.
+    """
+    out: list[ToolEntry] = []
+    for wf in list_workflows():
+        out.append(
+            ToolEntry(
+                name=wf.name,
+                description=wf.description,
+                kind="workflow",
+                invocation_hint=wf.name,
+                stages=wf.stages,
+                tier_map=wf.tier_map,
+            )
+        )
+    plugin_dir = project_root / "plugin"
+    skills_dir = plugin_dir / "skills"
+    if skills_dir.is_dir():
+        for skill_md in sorted(skills_dir.glob("*/SKILL.md")):
+            entry = _parse_skill_entry(skill_md)
+            if entry is not None:
+                out.append(entry)
+    commands_dir = plugin_dir / "commands"
+    if commands_dir.is_dir():
+        for cmd_md in sorted(commands_dir.glob("*.md")):
+            entry = _parse_command_entry(cmd_md)
+            if entry is not None:
+                out.append(entry)
+    # Sort by kind then name so each section in the template renders
+    # deterministically. The template can then partition on .kind.
+    return sorted(out, key=lambda t: (t.kind, t.name))
 
 
 def family_versions() -> list[FamilyVersion]:

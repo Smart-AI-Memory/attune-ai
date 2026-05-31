@@ -94,7 +94,11 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
     templates.env.globals["attune_version"] = __version__
     templates.env.globals["nav_items"] = [
         ("/", "Home"),
-        ("/workflows", "Workflows"),
+        # URL stays /workflows for bookmark / external-link stability;
+        # the label says "Tools" so users see the unified inventory's
+        # intent (workflows + skills + slash commands all listed). See
+        # docs/specs/dashboard-tools-inventory/decisions.md.
+        ("/workflows", "Tools"),
         ("/specs", "Specs"),
         ("/sessions", "Sessions"),
         ("/telemetry", "Telemetry"),

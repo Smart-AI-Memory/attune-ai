@@ -1,16 +1,23 @@
 {% extends "base.html" %}
-{% block title %}Workflows{% endblock %}
+{% block title %}Tools{% endblock %}
 {% block content %}
 <section class="page-head">
-  <h1>Workflows</h1>
+  <h1>Tools</h1>
   <p class="page-sub">
-    {{ workflows|length }} registered.
+    {{ workflows|length }} workflow{{ "" if workflows|length == 1 else "s" }} runnable from the dashboard.
+    {% if chat_tools %}
+      {{ chat_tools|length }} more {{ "skill or command" if chat_tools|length == 1 else "skills + commands" }} usable in Claude Code chat — see below.
+    {% endif %}
     {% if allow_run %}
-      Click <strong>Run</strong> to execute one. Output streams below.
+      Click <strong>Run</strong> on a workflow to execute it. Output streams below.
     {% else %}
-      Read-only mode — restart without <code>--read-only</code> to run from the dashboard.
+      Read-only mode — restart without <code>--read-only</code> to run workflows from the dashboard.
     {% endif %}
   </p>
+</section>
+
+<section class="page-head" style="margin-top: 4px; margin-bottom: 12px;">
+  <h2 style="font-size: 1.1em; margin: 0;">Run from dashboard</h2>
 </section>
 
 {# Multi-actor bulletin strip — shows in-flight runs from OTHER actors
@@ -150,6 +157,53 @@
 {% else %}
   <p class="empty">No workflows are visible. Make sure <code>attune-ai</code> is installed in the same venv as <code>attune-ops</code>.</p>
 {% endif %}
+
+{# Tools inventory — chat-side capabilities (skills + slash commands)
+   that the user invokes from Claude Code chat, not from the dashboard.
+   Each row has a "Use in chat" button that copies the trigger phrase
+   to the clipboard so the user can paste it into chat. The dashboard
+   acts as the *map* of these capabilities; the chat is where they
+   actually fire. See docs/specs/dashboard-tools-inventory/. #}
+{% if chat_tools %}
+  <section class="page-head" style="margin-top: 32px; margin-bottom: 12px;">
+    <h2 style="font-size: 1.1em; margin: 0;">Use in chat</h2>
+    <p class="page-sub" style="margin-top: 4px;">
+      Skills auto-trigger from natural-language phrases; slash commands fire when typed explicitly. Copy any row's trigger and paste into your Claude Code chat.
+    </p>
+  </section>
+  <table class="data-table chat-tools-table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Kind</th>
+        <th>Description</th>
+        <th>Trigger</th>
+        <th class="num">Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for t in chat_tools %}
+        <tr>
+          <td><code>{{ t.name }}</code></td>
+          <td>
+            <span class="chat-tool-kind chat-tool-kind-{{ t.kind }}">{{ t.kind }}</span>
+          </td>
+          <td>{{ t.description }}</td>
+          <td><code class="chat-tool-trigger">{{ t.invocation_hint }}</code></td>
+          <td class="num">
+            <button class="btn btn-copy-chat" type="button"
+                    data-copy-chat="{{ t.invocation_hint }}"
+                    data-tool-name="{{ t.name }}"
+                    data-tooltip="Copy this trigger to the clipboard for pasting into Claude Code chat"
+                    aria-label="Copy {{ t.name }} trigger to clipboard">
+              Use in chat
+            </button>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endif %}
 {% endblock %}
 
 {% block scripts %}
@@ -173,4 +227,9 @@
    unconditionally so the strip appears in both run and read-only
    modes — read-only dashboards can still surface OTHER actors' work. #}
 <script src="{{ url_for('static', path='js/bulletin.js') }}?v={{ attune_version }}"></script>
+{# chat_tools.js wires the "Use in chat" copy-to-clipboard buttons in
+   the Tools inventory's chat-side section. Loaded only on this page
+   since no other template renders [data-copy-chat] buttons. See
+   docs/specs/dashboard-tools-inventory/. #}
+<script src="{{ url_for('static', path='js/chat_tools.js') }}?v={{ attune_version }}"></script>
 {% endblock %}

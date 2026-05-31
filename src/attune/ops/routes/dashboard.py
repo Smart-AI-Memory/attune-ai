@@ -121,11 +121,17 @@ async def workflows_page(request: Request) -> HTMLResponse:
     default_scopes = {
         w.name: data.workflow_default_scope(w.name, cfg.project_root) for w in workflows
     }
+    # Tools inventory (dashboard-tools-inventory spec): unified list of
+    # workflows + skills + slash commands. Skills + commands are
+    # "Use in chat" entries; workflows keep their existing Run button.
+    all_tools = data.list_tools(cfg.project_root)
+    chat_tools = [t for t in all_tools if t.kind in ("skill", "command")]
     return _render(
         request,
         "workflows.html",
         page="workflows",
         workflows=workflows,
+        chat_tools=chat_tools,
         allow_run=cfg.allow_run,
         features=features,
         supports_path=supports_path,

@@ -2330,3 +2330,67 @@ a.kpi:hover {
   overflow-y: auto;
   white-space: pre-wrap;
 }
+
+/* Tools inventory — chat-side capabilities table on /workflows.
+   The "Use in chat" section renders skills + slash commands that
+   can't run from the dashboard. Each row gets a copy-to-clipboard
+   button that hands the trigger phrase to the user's chat. See
+   docs/specs/dashboard-tools-inventory/. */
+.chat-tools-table .chat-tool-kind {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--bg-muted, #f3f4f6);
+  color: var(--fg-muted, #6b7280);
+  border: 1px solid var(--border, #e5e7eb);
+}
+.chat-tools-table .chat-tool-kind-skill {
+  background: #eff6ff;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.chat-tools-table .chat-tool-kind-command {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+.chat-tools-table .chat-tool-trigger {
+  font-family: var(--font-mono, monospace);
+  font-size: 12px;
+  background: var(--bg-muted, #f3f4f6);
+  padding: 2px 6px;
+  border-radius: 3px;
+}
+.btn-copy-chat {
+  padding: 4px 10px;
+  font-size: 13px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  background: var(--bg, #fff);
+  color: var(--fg, #111);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s ease, color 0.1s ease, border-color 0.1s ease;
+}
+.btn-copy-chat:hover {
+  border-color: var(--accent, #2563eb);
+  color: var(--accent, #2563eb);
+}
+.btn-copy-chat:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 1px;
+}
+.btn-copy-chat.is-copied {
+  background: #f0fdf4;
+  color: #166534;
+  border-color: #bbf7d0;
+}
+.btn-copy-chat.is-failed {
+  background: #fef2f2;
+  color: #991b1b;
+  border-color: #fecaca;
+}
