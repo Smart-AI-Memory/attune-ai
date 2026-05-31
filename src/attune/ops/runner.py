@@ -435,14 +435,24 @@ class RunnerService:
         return sanitized
 
     def handle_stdout_line(self, run: Run, line: str) -> None:
-        """Route a raw stdout line to either the log or the recommendation channel.
+        """Route a raw stdout line to either the log, the recommendation
+        channel, or the run-metadata side-channel.
 
         Lines prefixed with :data:`_RECOMMENDATION_MARKER` are parsed as
         JSON, validated, and broadcast as a ``recommendation`` event.
         Bad markers (parse error, validation failure) are dropped — they
         do NOT pollute the visible log so workflows can iterate on the
-        protocol without leaking debug noise. Non-marker lines flow to
-        the normal append_line path.
+        protocol without leaking debug noise.
+
+        Lines prefixed with ``ATTUNE_RUN_META`` carry SDK error metadata
+        (``sdk_stderr`` / ``sdk_error_kind``) from the CLI's
+        ``_print_workflow_result``; they're parsed via
+        :mod:`attune.ops.run_meta_stdout` and stashed on the ``Run``
+        object before persistence, and filtered out of ``run.lines``
+        so the user-facing log stays clean. Part of the
+        ``docs/specs/sdk-error-message-fidelity/`` Phase 3b flow.
+
+        Non-marker lines flow to the normal append_line path.
         """
         if line.startswith(_RECOMMENDATION_MARKER):
             raw = line[len(_RECOMMENDATION_MARKER) :]
@@ -454,6 +464,35 @@ class RunnerService:
             sanitized = self._validate_recommendation(parsed)
             if sanitized is not None:
                 run.emit_recommendation(sanitized)
+            return
+        if line.startswith("ATTUNE_RUN_META"):
+            # Local import keeps the runner module light when the
+            # side-channel never fires (the common case — only fails
+            # on SDK workflows emit these lines).
+            from attune.ops import run_meta_stdout
+
+            parsed_meta = run_meta_stdout.parse_line(line)
+            if parsed_meta is None:
+                # Malformed marker — drop silently like the
+                # recommendation channel does. Don't pollute the
+                # visible log; emitters can iterate without leaking
+                # debug noise.
+                return
+            event = parsed_meta.get("event")
+            if event == "version":
+                # Version line is informational; consumer ignores it
+                # after a basic sanity check. The grammar is stable
+                # for v1 so unknown versions just drop through.
+                return
+            if event == "field":
+                key = parsed_meta.get("key")
+                value = parsed_meta.get("value", "")
+                if key == "sdk_error_kind" and value:
+                    run.sdk_error_kind = value
+                elif key == "sdk_stderr_b64" and value:
+                    decoded = run_meta_stdout.decode_stderr(value)
+                    if decoded:
+                        run.sdk_stderr = decoded
             return
         run.append_line(line)
 
@@ -642,11 +681,24 @@ class RunnerService:
             cmd.extend(["--path", run.path])
         run.command = list(cmd)
         run.append_line(f"$ {' '.join(shlex.quote(c) for c in cmd)}")
+        # Opt the spawned CLI process into the ATTUNE_RUN_META
+        # stdout side-channel so SDK error metadata (sdk_stderr +
+        # sdk_error_kind) flows back into Run.sdk_stderr / .sdk_error_kind
+        # for persistence + the run-view collapsible details block.
+        # See docs/specs/sdk-error-message-fidelity/ Phase 3b. The
+        # env var is the consumer's signal — without it, the CLI's
+        # _print_workflow_result skips the emit, so users who pipe
+        # `attune workflow run X > out.md` outside the daemon don't
+        # see the marker lines.
+        import os as _os
+
+        proc_env = {**_os.environ, "ATTUNE_RUN_META_EMIT": "1"}
         try:
             proc = await asyncio.create_subprocess_exec(
                 *cmd,
                 stdout=asyncio.subprocess.PIPE,
                 stderr=asyncio.subprocess.STDOUT,
+                env=proc_env,
             )
         except FileNotFoundError as exc:
             run.append_line(f"[runner error] command not found: {exc}")

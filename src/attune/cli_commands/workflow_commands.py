@@ -188,3 +188,44 @@ def _print_workflow_result(
     from attune.voice import format_output
 
     print(format_output(workflow_name, result))
+    _emit_run_meta_for_daemon(result)
+
+
+def _emit_run_meta_for_daemon(result: object) -> None:
+    """Emit ``ATTUNE_RUN_META`` side-channel lines when the ops daemon
+    has opted in via ``ATTUNE_RUN_META_EMIT=1``.
+
+    Reads ``sdk_stderr`` / ``sdk_error_kind`` from
+    ``result.metadata`` (set by ``BaseWorkflow._error_result()``
+    during SDK subprocess failure) and writes them as base64-encoded
+    + plain-text stdout lines that the runner parses. Silent no-op
+    when the env var isn't set, when ``result`` doesn't carry
+    metadata, or when neither field is populated.
+
+    Part of the ``docs/specs/sdk-error-message-fidelity/`` Phase 3b
+    flow. The side-channel design (rather than calling into runner
+    APIs directly) keeps the CLI process decoupled from the daemon —
+    the CLI just emits structured stdout, the daemon parses what it
+    cares about.
+    """
+    from attune.ops import run_meta_stdout
+
+    if not run_meta_stdout.is_emission_enabled():
+        return
+    metadata = getattr(result, "metadata", None)
+    if not isinstance(metadata, dict):
+        return
+    kind = metadata.get("sdk_error_kind")
+    stderr_text = metadata.get("sdk_stderr")
+    if not kind and not stderr_text:
+        return
+    # Emit version line first so the parser knows what grammar it's
+    # reading. Cheap; downstream consumer ignores it after the version
+    # check.
+    run_meta_stdout.emit_version_line()
+    if kind:
+        run_meta_stdout.emit_field_line("sdk_error_kind", str(kind))
+    if stderr_text:
+        encoded = run_meta_stdout.encode_stderr(str(stderr_text))
+        if encoded:
+            run_meta_stdout.emit_field_line("sdk_stderr_b64", encoded)
