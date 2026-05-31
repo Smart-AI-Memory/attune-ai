@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Wizard entry-point group renamed to ``attune.wizards``.** The
+  registry now reads the canonical ``attune.wizards`` group (which
+  ``pyproject.toml`` has declared since the package rename). Third-party
+  wizards still declared under the legacy ``empathy.wizards`` group
+  continue to load with a ``DeprecationWarning`` for one release; the
+  legacy fallback will be removed in the next major. Builtin wizards
+  are unaffected — they load by hardcoded module path, not entry-point
+  discovery.
+
 ## [7.2.0] — 2026-05-27
 
 ### Added
