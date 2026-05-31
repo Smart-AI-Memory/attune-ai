@@ -292,4 +292,4 @@ async def run_chain_with_logging(wizard, result):
 
 - [Smart Router](smart-router.md) - Natural language wizard dispatch
 - [Memory Graph](memory-graph.md) - Cross-wizard knowledge sharing
-- [API Reference](../reference/API_REFERENCE.md#chainexecutor) - Full API documentation
+- [API Reference](../reference/API_REFERENCE.md) - Full API documentation

@@ -10,8 +10,8 @@ abstract class — `BasePlugin` — discovered through Python entry points and
 managed by a process-wide registry.
 
 This document describes the actual surface in `src/attune/plugins/`.
-Every concrete claim below is verified against source in the
-[Verification log](#verification-log) at the bottom.
+Every concrete claim below is verified against source in
+`src/attune/plugins/`.
 
 ## Architecture overview
 

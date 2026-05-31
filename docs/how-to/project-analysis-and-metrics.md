@@ -227,9 +227,9 @@ summary = index.get_summary()
 
 ## See Also
 
-- [health-check workflow](../reference/API_REFERENCE.md#health-check) — The
+- [health-check workflow](../reference/API_REFERENCE.md) — The
   primary consumer of project index data
-- [code-review workflow](../reference/API_REFERENCE.md#code-review) — Uses
+- [code-review workflow](../reference/API_REFERENCE.md) — Uses
   metrics for prioritizing review focus
 - [Practical Patterns](practical-patterns.md) — Code quality patterns and
   refactoring guidance

@@ -13,7 +13,7 @@ two prerequisite specs (`docs-completeness-audit` Phase 1 and
 Three open questions resolved in one session. Spec status flips
 from `draft` to `approved`. Phase 2 (the release ceremony itself)
 runs only after dependencies in
-[requirements.md → Dependencies](./requirements.md#dependencies--block-release-until-each-is-met)
+[requirements.md → Dependencies](./requirements.md#dependencies-block-release-until-each-is-met)
 are met.
 
 ---

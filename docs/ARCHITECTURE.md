@@ -20,7 +20,7 @@ description: Attune AI - Architecture Overview: System architecture overview wit
 6. [MCP Server Integration](#mcp-server-integration)
 7. [Memory Architecture](#memory-architecture)
 8. [Workflow System](#workflow-system)
-9. [Agent State & Dynamic Teams](#agent-state--dynamic-teams)
+9. [Agent State & Dynamic Teams](#agent-state-dynamic-teams)
 10. [Hook System](#hook-system)
 11. [Pipeline System](#pipeline-system)
 12. [Caching Strategy](#caching-strategy)

@@ -373,6 +373,6 @@ async def health_endpoint():
 
 ## See Also
 
-- [API Reference](../reference/API_REFERENCE.md#resilience-patterns) - Full API documentation
+- [API Reference](../reference/API_REFERENCE.md) - Full API documentation
 - [Smart Router](smart-router.md) - Natural language wizard dispatch
 - [Memory Graph](memory-graph.md) - Cross-wizard knowledge sharing
