@@ -1,0 +1,733 @@
+<!doctype html>
+<!--
+  Standalone wireframe for the attune-ops Specs page refinement.
+
+  Per docs/specs/ops-specs-page-refinement/decisions.md and the
+  ratified requirements. Self-contained: open directly in a browser
+  to interact. No build step, no external assets.
+
+  Mock data covers every rendered state requested in the design:
+    - All 5 lifecycle buckets (Active, Approved-not-shipped, Complete,
+      Paused, Draft) populated with realistic specs from this project
+    - Each spec carries 4 phase statuses (decisions, requirements,
+      design, tasks) drawn from real observed values
+    - Search filters within active buckets, sort reorders, kebab opens
+      per-row, all-chips-off renders an empty-state explanation
+
+  Style intent: match the actual dashboard's `main.css` patterns
+  (chips, status pills, table density) without pulling in the full
+  stylesheet — this is a wireframe, not a fork of production CSS.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Specs — wireframe (v1)</title>
+  <style>
+    /* ----- Reset + base ----- */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #111;
+      background: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    .wireframe-banner {
+      background: #fef3c7;
+      border-bottom: 1px solid #f59e0b;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #92400e;
+      text-align: center;
+    }
+    .wireframe-banner code { background: rgba(0,0,0,0.05); padding: 1px 4px; border-radius: 3px; }
+    main { max-width: 1280px; margin: 0 auto; padding: 24px 16px; }
+    h1 { margin: 0 0 4px 0; font-size: 24px; font-weight: 600; }
+    .page-sub { margin: 0 0 24px 0; color: #6b7280; font-size: 13px; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ----- Toolbar (chip row + search + sort) ----- */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .chip-label { font-size: 12px; color: #6b7280; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+      user-select: none;
+    }
+    .chip-active { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .chip-active.bucket-paused { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .chip-active.bucket-complete { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .chip-active.bucket-draft { background: #f3f4f6; color: #374151; border-color: #e5e7eb; }
+    .chip-active.bucket-approved-not-shipped { background: #ede9fe; color: #5b21b6; border-color: #ddd6fe; }
+    .chip-inactive { background: #f9fafb; color: #9ca3af; border-color: #e5e7eb; }
+    .chip-inactive .chip-hidden-mark { color: #ef4444; margin-left: 2px; }
+    .chip:hover { filter: brightness(0.97); }
+    .chip-count { font-weight: 600; font-variant-numeric: tabular-nums; }
+
+    .search-wrap { display: flex; align-items: center; gap: 8px; }
+    .search-wrap label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+    .search-input {
+      padding: 4px 8px;
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      font-size: 13px;
+      width: 180px;
+    }
+    .search-input:focus { outline: 2px solid #2563eb; outline-offset: 1px; }
+    .sort-wrap { display: flex; align-items: center; gap: 8px; }
+    .sort-wrap label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+    .sort-select { padding: 4px 8px; border: 1px solid #d1d5db; border-radius: 4px; font-size: 13px; }
+
+    /* ----- Table ----- */
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
+    thead th {
+      text-align: left;
+      padding: 10px 12px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      background: #f9fafb;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    tbody tr {
+      cursor: pointer;
+      transition: background 0.08s;
+    }
+    tbody tr:hover { background: #f9fafb; }
+    tbody td {
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      vertical-align: middle;
+    }
+    tbody tr:last-child td { border-bottom: none; }
+    .col-slug { font-family: ui-monospace, monospace; font-size: 12px; color: #2563eb; }
+    .col-mtime { color: #6b7280; font-size: 12px; white-space: nowrap; }
+    .col-phase { text-align: center; }
+    .col-lifecycle { white-space: nowrap; }
+    .col-next { color: #4b5563; font-size: 12px; }
+    .col-kebab { text-align: right; width: 32px; }
+
+    /* ----- Status pills (per-phase status) ----- */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      padding: 2px 6px;
+      border-radius: 3px;
+      font-size: 10px;
+      font-family: ui-monospace, monospace;
+      font-weight: 500;
+      text-transform: uppercase;
+      border: 1px solid transparent;
+    }
+    .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+    .pill-approved { background: #d1fae5; color: #065f46; border-color: #a7f3d0; }
+    .pill-approved .status-dot { background: #10b981; }
+    .pill-complete { background: #dbeafe; color: #1e40af; border-color: #bfdbfe; }
+    .pill-complete .status-dot { background: #3b82f6; }
+    .pill-review { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+    .pill-review .status-dot { background: #f59e0b; }
+    .pill-draft { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+    .pill-draft .status-dot { background: #9ca3af; }
+    .pill-missing { background: #fafafa; color: #d1d5db; border-color: #e5e7eb; }
+    .pill-missing .status-dot { background: #e5e7eb; }
+    .pill-custom { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
+    .pill-custom .status-dot { background: #f97316; }
+
+    /* ----- Lifecycle badge (per-row) ----- */
+    .lifecycle-badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .lifecycle-active { background: #dbeafe; color: #1e40af; }
+    .lifecycle-approved-not-shipped { background: #ede9fe; color: #5b21b6; }
+    .lifecycle-complete { background: #d1fae5; color: #065f46; }
+    .lifecycle-paused { background: #fef3c7; color: #92400e; }
+    .lifecycle-draft { background: #f3f4f6; color: #374151; }
+
+    /* ----- Kebab menu ----- */
+    .kebab-btn {
+      background: transparent;
+      border: none;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 16px;
+      color: #6b7280;
+      border-radius: 4px;
+      line-height: 1;
+    }
+    .kebab-btn:hover { background: #f3f4f6; color: #111; }
+    .kebab-btn:focus-visible { outline: 2px solid #2563eb; outline-offset: 1px; }
+    .kebab-menu {
+      position: absolute;
+      min-width: 200px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      z-index: 10;
+      padding: 4px 0;
+    }
+    .kebab-menu-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #111;
+    }
+    .kebab-menu-item:hover { background: #f3f4f6; }
+    .kebab-menu-item .external-glyph { color: #9ca3af; font-size: 11px; }
+
+    /* ----- Empty / zero-result states ----- */
+    .empty-state {
+      padding: 48px 24px;
+      text-align: center;
+      color: #6b7280;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    .empty-state-title { font-size: 16px; font-weight: 600; color: #111; margin-bottom: 8px; }
+    .empty-state-hint { font-size: 13px; }
+    .empty-state-action {
+      display: inline-block;
+      margin-top: 12px;
+      padding: 6px 14px;
+      background: #2563eb;
+      color: #fff;
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+    }
+    .empty-state-action:hover { background: #1d4ed8; }
+
+    /* ----- Toast (copy-feedback) ----- */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #111;
+      color: #fff;
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-size: 13px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+      opacity: 0;
+      transition: opacity 0.2s;
+      pointer-events: none;
+    }
+    .toast.visible { opacity: 1; }
+
+    /* ----- Wireframe inspector panel ----- */
+    .inspector {
+      margin-top: 32px;
+      padding: 16px;
+      background: #f0f9ff;
+      border: 1px solid #bae6fd;
+      border-radius: 6px;
+      font-size: 12px;
+      color: #075985;
+    }
+    .inspector h3 { margin: 0 0 8px 0; font-size: 13px; color: #0c4a6e; }
+    .inspector ul { margin: 0; padding-left: 20px; }
+    .inspector li { margin: 4px 0; }
+    .inspector .state-key { font-family: ui-monospace, monospace; font-weight: 600; color: #0369a1; }
+  </style>
+</head>
+
+<body>
+
+<div class="wireframe-banner">
+  <strong>WIREFRAME</strong> — Standalone preview of the proposed Specs page refinement.
+  Reads <code>docs/specs/ops-specs-page-refinement/{requirements,decisions}.md</code>.
+  Open in browser, click chips / kebabs / type in search to interact.
+</div>
+
+<main>
+  <h1>Specs</h1>
+  <p class="page-sub" id="page-sub"></p>
+
+  <div class="toolbar">
+    <div class="chip-row">
+      <span class="chip-label">Filter:</span>
+      <span class="chip chip-active" data-bucket="active">
+        Active <span class="chip-count" data-count="active">0</span>
+      </span>
+      <span class="chip chip-active bucket-approved-not-shipped" data-bucket="approved-not-shipped">
+        Approved-not-shipped <span class="chip-count" data-count="approved-not-shipped">0</span>
+      </span>
+      <span class="chip chip-inactive" data-bucket="complete">
+        Complete <span class="chip-count" data-count="complete">0</span>
+        <span class="chip-hidden-mark">✗</span>
+      </span>
+      <span class="chip chip-active bucket-paused" data-bucket="paused">
+        Paused <span class="chip-count" data-count="paused">0</span>
+      </span>
+      <span class="chip chip-active bucket-draft" data-bucket="draft">
+        Draft <span class="chip-count" data-count="draft">0</span>
+      </span>
+    </div>
+    <div class="search-wrap">
+      <label for="search">Search:</label>
+      <input id="search" class="search-input" type="text" placeholder="slug substring…" autocomplete="off" />
+    </div>
+    <div class="sort-wrap">
+      <label for="sort">Sort:</label>
+      <select id="sort" class="sort-select">
+        <option value="recent">Recently updated</option>
+        <option value="alpha">Alphabetical</option>
+        <option value="oldest">Oldest untouched</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="table-container"></div>
+
+  <div class="inspector">
+    <h3>Wireframe inspector — try these to exercise every state</h3>
+    <ul>
+      <li><span class="state-key">Default</span> — page loads with all chips active except <strong>Complete</strong> (greyed with hidden-count marker)</li>
+      <li><span class="state-key">Click "Complete" chip</span> — reveals 27 hidden specs in their own bucket</li>
+      <li><span class="state-key">Click "Active" chip off</span> — filters out active specs, leaving only paused/draft/approved-not-shipped</li>
+      <li><span class="state-key">Type "rag" in search</span> — substring filter within active buckets</li>
+      <li><span class="state-key">Type "xyz" in search</span> — 0-result state inside active buckets</li>
+      <li><span class="state-key">Click all chips off</span> — empty-state with "re-enable at least one chip" CTA</li>
+      <li><span class="state-key">Click any kebab (⋯)</span> — opens action menu with 3 items (Open in editor / Copy slug / View linked PRs)</li>
+      <li><span class="state-key">Change Sort</span> — reorders the list (note: <strong>v1 has no visual grouping</strong> by lifecycle; that's deferred to v2 per D3)</li>
+      <li><span class="state-key">Click row body</span> — drills in to spec detail (placeholder alert in this wireframe)</li>
+      <li><span class="state-key">Click "Copy slug"</span> — copies to clipboard, toast feedback</li>
+    </ul>
+  </div>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // ---------- Mock data ----------
+  // Slugs drawn from real attune-ai specs (see orientation listing) so
+  // the wireframe feels authentic. Each spec carries 4 phase statuses,
+  // an updated timestamp (relative to "now"), and its raw_status
+  // strings used by the lifecycle derivation rules.
+  const NOW = Date.now();
+  const DAY = 86400000;
+  const MOCK_SPECS = [
+    // ---- Paused (matches "paused" keyword) ----
+    { slug: "coverage-canonical-pattern", updated: NOW - 19 * DAY, phases: { decisions: "approved", requirements: "approved", design: "paused 2026-05-12 — premise invalidated", tasks: "draft" } },
+    { slug: "agent-surface-rebalance", updated: NOW - 19 * DAY, phases: { decisions: "approved", requirements: "approved", design: "retired 2026-05-12 (paused indefinitely)", tasks: "—" } },
+    { slug: "recursing-montalcini-stash-triage", updated: NOW - 45 * DAY, phases: { decisions: "draft", requirements: "draft", design: "paused", tasks: "—" } },
+    // ---- Complete (all 4 in complete/completed/done) ----
+    { slug: "ci-debt", updated: NOW - 21 * DAY, phases: { decisions: "complete", requirements: "complete", design: "complete", tasks: "complete" } },
+    { slug: "telemetry", updated: NOW - 60 * DAY, phases: { decisions: "complete", requirements: "complete", design: "complete", tasks: "complete" } },
+    { slug: "vercel-noise-cleanup", updated: NOW - 17 * DAY, phases: { decisions: "complete", requirements: "complete", design: "complete", tasks: "complete" } },
+    { slug: "ops-specs-completion-candidates", updated: NOW - 16 * DAY, phases: { decisions: "complete", requirements: "complete", design: "complete", tasks: "complete" } },
+    // ---- Draft (requirements missing or not approved) ----
+    { slug: "telemetry-rethink", updated: NOW - 7 * DAY, phases: { decisions: "draft", requirements: "draft", design: "—", tasks: "—" } },
+    { slug: "sibling-subscription-auth", updated: NOW - 3 * DAY, phases: { decisions: "approved", requirements: "draft", design: "—", tasks: "—" } },
+    { slug: "workflow-failure-exit-propagation", updated: NOW - 5 * DAY, phases: { decisions: "approved", requirements: "draft", design: "—", tasks: "—" } },
+    { slug: "deprecated-module-retirement", updated: NOW - 11 * DAY, phases: { decisions: "draft", requirements: "—", design: "—", tasks: "—" } },
+    { slug: "workflow-path-arg-unification", updated: NOW - 22 * DAY, phases: { decisions: "approved", requirements: "draft", design: "—", tasks: "—" } },
+    // ---- Approved-not-shipped (reqs approved, no phase complete, tasks exists) ----
+    { slug: "ignored-tests", updated: NOW - 4 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "approved" } },
+    { slug: "sibling-package-pre-commit", updated: NOW - 6 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "approved" } },
+    { slug: "test-quality-program", updated: NOW - 18 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "approved" } },
+    { slug: "ops-specs-page-refinement", updated: NOW - 0, phases: { decisions: "approved", requirements: "approved", design: "—", tasks: "—" } },
+    // ---- Active (reqs approved + at least one phase still draft/review/missing, not the above buckets) ----
+    { slug: "sdk-error-message-fidelity", updated: NOW - 2 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "in-review" } },
+    { slug: "spec-status-self-truthing", updated: NOW - 1 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "docs-wiring-audit", updated: NOW - 2 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "in-review" } },
+    { slug: "docs-completeness-audit", updated: NOW - 4 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "docs-release-prep", updated: NOW - 5 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "draft" } },
+    { slug: "bulletin-curator", updated: NOW - 8 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "ops-runner-tier2", updated: NOW - 14 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "in-review" } },
+    { slug: "discovery-sweep-ops-integration", updated: NOW - 11 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "draft" } },
+    { slug: "rag-knowledge-query-cache", updated: NOW - 9 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+    { slug: "enforcement-vs-documentation", updated: NOW - 1 * DAY, phases: { decisions: "approved", requirements: "approved", design: "approved", tasks: "in-review" } },
+    { slug: "dashboard-tools-inventory", updated: NOW - 0.5 * DAY, phases: { decisions: "approved", requirements: "approved", design: "draft", tasks: "—" } },
+  ];
+  // Add filler Complete specs so the count reads 27 (matches the
+  // wireframe banner's "Complete 27 ✗" assertion).
+  for (let i = 0; i < 23; i++) {
+    MOCK_SPECS.push({
+      slug: `complete-filler-${String(i + 1).padStart(2, "0")}`,
+      updated: NOW - (30 + i * 5) * DAY,
+      phases: { decisions: "complete", requirements: "complete", design: "complete", tasks: "complete" },
+    });
+  }
+
+  // ---------- Lifecycle derivation (matches decisions.md § D1) ----------
+  // First match wins. Evaluation order: Paused -> Complete -> Draft ->
+  // Approved-not-shipped -> Active.
+  const COMPLETE_VALUES = new Set(["complete", "completed", "done"]);
+  function lifecycleOf(spec) {
+    const phaseValues = Object.values(spec.phases);
+    // Paused: any phase status contains "paused" (case-insensitive)
+    if (phaseValues.some(s => s && s.toLowerCase().includes("paused"))) return "paused";
+    // Complete: all 4 phases in {complete, completed, done}
+    if (phaseValues.every(s => COMPLETE_VALUES.has((s || "").toLowerCase()))) return "complete";
+    // Draft: requirements missing OR not approved
+    const reqs = (spec.phases.requirements || "").toLowerCase();
+    if (!reqs || reqs === "—" || (reqs !== "approved" && !COMPLETE_VALUES.has(reqs))) return "draft";
+    // Approved-not-shipped: reqs approved, no phase complete, tasks exists
+    const tasks = (spec.phases.tasks || "").toLowerCase();
+    const anyComplete = phaseValues.some(s => COMPLETE_VALUES.has((s || "").toLowerCase()));
+    if (!anyComplete && tasks && tasks !== "—") {
+      // additional check: all 4 phases must be approved or complete
+      const allApprovedOrComplete = phaseValues.every(s => {
+        const v = (s || "").toLowerCase();
+        return v === "approved" || COMPLETE_VALUES.has(v);
+      });
+      if (allApprovedOrComplete) return "approved-not-shipped";
+    }
+    return "active";
+  }
+
+  // ---------- Next-action label (R2.2) ----------
+  function nextActionOf(spec, lifecycle) {
+    if (lifecycle === "complete") return "Complete";
+    if (lifecycle === "paused") {
+      // Find the phase carrying the paused marker
+      const pausedPhase = Object.entries(spec.phases).find(([_, s]) => s && s.toLowerCase().includes("paused"));
+      return pausedPhase ? `(paused — see ${pausedPhase[0]}.md)` : "(paused)";
+    }
+    if (lifecycle === "draft") {
+      if (!spec.phases.requirements || spec.phases.requirements === "—") return "Next: write requirements";
+      return "Next: approve requirements";
+    }
+    if (lifecycle === "approved-not-shipped") return "Ready to implement";
+    // Active — find the first phase that isn't approved/complete
+    const order = ["decisions", "requirements", "design", "tasks"];
+    for (const phase of order) {
+      const v = (spec.phases[phase] || "").toLowerCase();
+      if (!v || v === "—") return `Next: write ${phase}`;
+      if (v === "draft") return `Next: approve ${phase}`;
+      if (v === "in-review" || v === "review") return `In review: ${phase}`;
+    }
+    return "Run impl";
+  }
+
+  // ---------- Status pill class mapping ----------
+  function pillClassOf(status) {
+    if (!status || status === "—") return "pill-missing";
+    const s = status.toLowerCase();
+    if (s === "approved") return "pill-approved";
+    if (COMPLETE_VALUES.has(s)) return "pill-complete";
+    if (s === "in-review" || s === "review") return "pill-review";
+    if (s === "draft") return "pill-draft";
+    return "pill-custom";
+  }
+  function pillCodeOf(status) {
+    if (!status || status === "—") return "—";
+    const s = status.toLowerCase();
+    if (s === "approved") return "apv";
+    if (s === "complete" || s === "completed" || s === "done") return "cpl";
+    if (s === "in-review" || s === "review") return "rvw";
+    if (s === "draft") return "drf";
+    return s.length > 4 ? s.slice(0, 4) + "…" : s;
+  }
+
+  // ---------- Relative-time helper ----------
+  function relativeTime(ts) {
+    const diffMs = Date.now() - ts;
+    const sec = Math.round(diffMs / 1000);
+    const min = Math.round(sec / 60);
+    const hr = Math.round(min / 60);
+    const day = Math.round(hr / 24);
+    if (sec < 60) return "just now";
+    if (min < 60) return `${min}m ago`;
+    if (hr < 24) return `${hr}h ago`;
+    return `${day}d ago`;
+  }
+
+  // ---------- State + render ----------
+  const state = {
+    // Default per R1.3: all buckets EXCEPT Complete are active
+    buckets: new Set(["active", "approved-not-shipped", "paused", "draft"]),
+    search: "",
+    sort: "recent",
+  };
+
+  function specsByLifecycle() {
+    const groups = { active: [], "approved-not-shipped": [], complete: [], paused: [], draft: [] };
+    MOCK_SPECS.forEach(s => groups[lifecycleOf(s)].push(s));
+    return groups;
+  }
+
+  function updateCounts() {
+    const groups = specsByLifecycle();
+    Object.entries(groups).forEach(([bucket, items]) => {
+      const el = document.querySelector(`[data-count="${bucket}"]`);
+      if (el) el.textContent = items.length;
+    });
+  }
+
+  function filteredSpecs() {
+    const groups = specsByLifecycle();
+    let out = [];
+    state.buckets.forEach(b => out = out.concat(groups[b] || []));
+    if (state.search.trim()) {
+      const q = state.search.toLowerCase();
+      out = out.filter(s => s.slug.toLowerCase().includes(q));
+    }
+    // Sort
+    if (state.sort === "alpha") out.sort((a, b) => a.slug.localeCompare(b.slug));
+    else if (state.sort === "oldest") out.sort((a, b) => a.updated - b.updated);
+    else out.sort((a, b) => b.updated - a.updated); // recent
+    return out;
+  }
+
+  function renderTable() {
+    const container = document.getElementById("table-container");
+    const filtered = filteredSpecs();
+    const totalShown = filtered.length;
+
+    // Update page-sub line
+    const total = MOCK_SPECS.length;
+    const sub = document.getElementById("page-sub");
+    if (state.buckets.size === 0) {
+      sub.innerHTML = "0 of " + total + " specs shown — all buckets filtered out.";
+    } else {
+      sub.innerHTML = `${totalShown} of ${total} spec${total === 1 ? "" : "s"} shown.` +
+                      (state.search ? ` Search: <code>${escapeHtml(state.search)}</code>.` : "");
+    }
+
+    if (state.buckets.size === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">All buckets filtered out</div>
+          <div class="empty-state-hint">Re-enable at least one lifecycle chip above to see specs.</div>
+          <button class="empty-state-action" id="reset-buckets">Reset to default filters</button>
+        </div>
+      `;
+      document.getElementById("reset-buckets").addEventListener("click", () => {
+        state.buckets = new Set(["active", "approved-not-shipped", "paused", "draft"]);
+        syncChipStates(); renderTable();
+      });
+      return;
+    }
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-state-title">No matches</div>
+          <div class="empty-state-hint">
+            No specs in active buckets match <code>${escapeHtml(state.search)}</code>.
+            Try clearing the search or enabling more chips above.
+          </div>
+        </div>
+      `;
+      return;
+    }
+
+    // Build table
+    const rows = filtered.map(s => {
+      const lc = lifecycleOf(s);
+      const next = nextActionOf(s, lc);
+      const phasePills = ["decisions", "requirements", "design", "tasks"].map(p => {
+        const v = s.phases[p];
+        return `<span class="status-pill ${pillClassOf(v)}" title="${escapeHtml(v || '(no status)')}">
+          <span class="status-dot"></span>${escapeHtml(pillCodeOf(v))}
+        </span>`;
+      }).join("");
+      return `
+        <tr data-slug="${escapeHtml(s.slug)}">
+          <td class="col-slug">${escapeHtml(s.slug)}</td>
+          <td class="col-mtime">${relativeTime(s.updated)}</td>
+          <td class="col-phase">${phasePills}</td>
+          <td class="col-lifecycle">
+            <span class="lifecycle-badge lifecycle-${lc}">${lc.replace(/-/g, " ")}</span>
+          </td>
+          <td class="col-next">${escapeHtml(next)}</td>
+          <td class="col-kebab">
+            <button class="kebab-btn" data-kebab="${escapeHtml(s.slug)}" aria-label="Actions for ${escapeHtml(s.slug)}">⋯</button>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    // Table structure: 1 phase column visible (combined), or 4 separate?
+    // Going with 4 separate pills in one cell for compactness — matches
+    // the production table's existing "4 chips per row" pattern but
+    // collapses them under one "Phases" header.
+    container.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>Spec</th>
+            <th>Updated</th>
+            <th class="col-phase">Phases (D/R/D/T)</th>
+            <th>Lifecycle</th>
+            <th>Next action</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+    `;
+    wireRowHandlers();
+  }
+
+  function wireRowHandlers() {
+    // Whole-row click drills in (R3.1)
+    document.querySelectorAll("tbody tr").forEach(tr => {
+      tr.addEventListener("click", e => {
+        // Don't fire row-click when the kebab cell was clicked
+        if (e.target.closest(".col-kebab")) return;
+        const slug = tr.dataset.slug;
+        alert(`[wireframe] Drill in to /specs/${slug}`);
+      });
+    });
+    // Kebab buttons (R3.2)
+    document.querySelectorAll(".kebab-btn").forEach(btn => {
+      btn.addEventListener("click", e => {
+        e.stopPropagation();
+        openKebabMenu(btn);
+      });
+    });
+  }
+
+  // ---------- Kebab menu ----------
+  let openMenu = null;
+  function closeKebabMenu() {
+    if (openMenu) { openMenu.remove(); openMenu = null; }
+  }
+  function openKebabMenu(btn) {
+    closeKebabMenu();
+    const slug = btn.dataset.kebab;
+    const menu = document.createElement("div");
+    menu.className = "kebab-menu";
+    menu.innerHTML = `
+      <div class="kebab-menu-item" data-action="editor">Open in editor</div>
+      <div class="kebab-menu-item" data-action="copy">Copy slug</div>
+      <div class="kebab-menu-item" data-action="prs">View linked PRs <span class="external-glyph">↗</span></div>
+    `;
+    document.body.appendChild(menu);
+    // Position anchored to the kebab cell
+    const rect = btn.getBoundingClientRect();
+    menu.style.top = (rect.bottom + window.scrollY + 4) + "px";
+    menu.style.left = (rect.right + window.scrollX - menu.offsetWidth) + "px";
+    menu.querySelectorAll(".kebab-menu-item").forEach(item => {
+      item.addEventListener("click", e => {
+        e.stopPropagation();
+        handleKebabAction(item.dataset.action, slug);
+      });
+    });
+    openMenu = menu;
+  }
+  function handleKebabAction(action, slug) {
+    if (action === "editor") {
+      // vscode:// scheme — works for VS Code, Cursor, Codium
+      const url = `vscode://file/${encodeURIComponent("/path/to/docs/specs/" + slug)}`;
+      showToast(`[wireframe] Would open ${url}`);
+    } else if (action === "copy") {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(slug).then(
+          () => showToast(`Copied: ${slug}`),
+          () => showToast("Copy failed")
+        );
+      } else {
+        showToast("Clipboard unavailable");
+      }
+    } else if (action === "prs") {
+      const url = `https://github.com/Smart-AI-Memory/attune-ai/pulls?q=${encodeURIComponent(slug)}`;
+      window.open(url, "_blank");
+    }
+    closeKebabMenu();
+  }
+
+  // ---------- Toast ----------
+  let toastTimer = null;
+  function showToast(msg) {
+    const t = document.getElementById("toast");
+    t.textContent = msg;
+    t.classList.add("visible");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => t.classList.remove("visible"), 2000);
+  }
+
+  // ---------- Chip click handlers ----------
+  function syncChipStates() {
+    document.querySelectorAll("[data-bucket]").forEach(chip => {
+      const bucket = chip.dataset.bucket;
+      const active = state.buckets.has(bucket);
+      chip.classList.toggle("chip-active", active);
+      chip.classList.toggle("chip-inactive", !active);
+      // Hidden-count marker only on Complete when inactive
+      const mark = chip.querySelector(".chip-hidden-mark");
+      if (mark) mark.style.display = (!active && bucket === "complete") ? "inline" : "none";
+    });
+  }
+
+  // ---------- Helpers ----------
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  }
+
+  // ---------- Init ----------
+  document.addEventListener("DOMContentLoaded", () => {
+    document.querySelectorAll("[data-bucket]").forEach(chip => {
+      chip.addEventListener("click", () => {
+        const b = chip.dataset.bucket;
+        if (state.buckets.has(b)) state.buckets.delete(b);
+        else state.buckets.add(b);
+        syncChipStates();
+        renderTable();
+      });
+    });
+    document.getElementById("search").addEventListener("input", e => {
+      state.search = e.target.value;
+      renderTable();
+    });
+    document.getElementById("sort").addEventListener("change", e => {
+      state.sort = e.target.value;
+      renderTable();
+    });
+    // Close kebab on outside-click or Escape
+    document.addEventListener("click", () => closeKebabMenu());
+    document.addEventListener("keydown", e => { if (e.key === "Escape") closeKebabMenu(); });
+
+    updateCounts();
+    renderTable();
+  });
+</script>
+</body>
+</html>
