@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-26T21:52:50.476961+00:00
-source_hash: 2fa0737b9485076376be660db12bde8986aea4140b365e93a95ac041c50aaf0f
+generated_at: 2026-05-31T14:56:21.019760+00:00
+source_hash: af58f6dea192c32d27c04b43a01ee379eb1a9b7b4af5143f55f0803b41d352e8
 status: generated
 ---
 
@@ -26,6 +26,13 @@ status: generated
 | `HomeKpis` | Summary numbers shown above the fold on the home page. | `src/attune/ops/data.py` |
 | `SweepChipCounts` | Per-bucket counts loaded from a persisted discovery-sweep result. | `src/attune/ops/data.py` |
 | `DismissEntry` | One dismissed candidate's persisted state. | `src/attune/ops/dismiss_store.py` |
+| `TemplateRecord` | One template file. | `src/attune/ops/help_data.py` |
+| `FeatureSummary` | One feature — name + which kinds exist. | `src/attune/ops/help_data.py` |
+| `SearchHit` | One ranked hit from a search query. | `src/attune/ops/help_data.py` |
+| `GapsReport` | Coverage-gap signals — incomplete sets + stale templates. | `src/attune/ops/help_data.py` |
+| `HelpRegenJob` | One regen invocation — status, captured stdout, exit code. | `src/attune/ops/help_regen.py` |
+| `HelpRegenRunner` | Owns the regen-job history + active subprocess. | `src/attune/ops/help_regen.py` |
+| `HelpRegenBusyError` | Raised when a regen job is requested while one is already running. | `src/attune/ops/help_regen.py` |
 | `InteractionCounters` | Process-lifetime counters for dashboard UI interactions. | `src/attune/ops/interaction_counters.py` |
 | `TrustedHostMiddleware` | Reject requests whose ``Host`` header isn't on the allowlist. | `src/attune/ops/middleware.py` |
 | `JournalEntry` | One pending-writes journal entry. | `src/attune/ops/pending_writes.py` |
@@ -77,6 +84,13 @@ status: generated
 | `save()` | Persist a dismiss entry for ``slug`` (overwrites prior entry). | `src/attune/ops/dismiss_store.py` |
 | `clear()` | Remove the entry for ``slug``. No-op if absent. | `src/attune/ops/dismiss_store.py` |
 | `is_active()` | True iff a dismiss for ``slug`` is currently suppressing it. | `src/attune/ops/dismiss_store.py` |
+| `corpus_root()` | Return the ``.help/templates/`` directory for this project. | `src/attune/ops/help_data.py` |
+| `list_features()` | All features in the corpus, alphabetical. | `src/attune/ops/help_data.py` |
+| `get_template()` | Load one template by feature + kind. None if missing. | `src/attune/ops/help_data.py` |
+| `search()` | Run a keyword search against the corpus. | `src/attune/ops/help_data.py` |
+| `coverage_gaps()` | Compute incomplete sets + stale templates across the corpus. | `src/attune/ops/help_data.py` |
+| `recently_regenerated()` | N most-recently-generated templates across the corpus. | `src/attune/ops/help_data.py` |
+| `featured_topics()` | Curated list of high-leverage features for the home page. | `src/attune/ops/help_data.py` |
 | `compute_allowlist()` | Compute the default + user-supplied Host allowlist. | `src/attune/ops/middleware.py` |
 | `settings_path()` | Return the absolute path to the ops settings file. | `src/attune/ops/ops_config_store.py` |
 | `load_settings()` | Read persisted ops settings. Missing or corrupt file → ``{}``. | `src/attune/ops/ops_config_store.py` |
@@ -90,10 +104,25 @@ status: generated
 | `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `health_page()` | — | `src/attune/ops/routes/dashboard.py` |
+| `help_home_page()` | Help home — user-first browse + search entry point. | `src/attune/ops/routes/dashboard.py` |
+| `help_search_page()` | Help search results page. | `src/attune/ops/routes/dashboard.py` |
+| `help_admin_page()` | Admin tools — coverage gaps + stale templates. | `src/attune/ops/routes/dashboard.py` |
+| `help_template_page()` | One template — markdown-rendered. | `src/attune/ops/routes/dashboard.py` |
+| `help_feature_page()` | Feature index — list of available kinds, click to read. | `src/attune/ops/routes/dashboard.py` |
 | `sessions_page()` | Sessions page — recent Claude Code sessions for this project. | `src/attune/ops/routes/dashboard.py` |
 | `run_view_page()` | Full-page view for one workflow run. | `src/attune/ops/routes/dashboard.py` |
 | `specs_page()` | Specs tab — federated listing of all specs across configured roots. | `src/attune/ops/routes/dashboard.py` |
 | `spec_detail_page()` | Drill-in for a single spec: show every phase file's content (read-only). | `src/attune/ops/routes/dashboard.py` |
+| `help_index()` | Top-level summary — features list + corpus stats. | `src/attune/ops/routes/help.py` |
+| `help_search()` | Ranked search hits. | `src/attune/ops/routes/help.py` |
+| `help_feature()` | All kinds available for a single feature. | `src/attune/ops/routes/help.py` |
+| `help_template()` | One template — metadata + full markdown body. | `src/attune/ops/routes/help.py` |
+| `help_gaps()` | Coverage gaps + stale templates — admin-tools surface. | `src/attune/ops/routes/help.py` |
+| `help_featured()` | Curated featured-topics list for the home page. | `src/attune/ops/routes/help.py` |
+| `help_recent()` | Recently-regenerated templates. | `src/attune/ops/routes/help.py` |
+| `help_regen_start()` | Start an attune-author regen job. | `src/attune/ops/routes/help.py` |
+| `help_regen_status()` | Poll a regen job's status + captured output. | `src/attune/ops/routes/help.py` |
+| `help_regen_recent()` | Recent regen jobs — used by the Admin tools UI to surface | `src/attune/ops/routes/help.py` |
 | `record_interaction()` | Increment a UI interaction counter. | `src/attune/ops/routes/interaction_counters.py` |
 | `read_interactions()` | Return the full counter snapshot + per-event totals. | `src/attune/ops/routes/interaction_counters.py` |
 | `list_pending_writes()` | Return all journal entries enriched with computed status fields. | `src/attune/ops/routes/pending_writes.py` |
