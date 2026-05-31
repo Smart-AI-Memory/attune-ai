@@ -1,128 +1,57 @@
 ---
-type: task
 feature: hooks
 depth: task
-generated_at: 2026-05-04T02:43:15.171329+00:00
-source_hash: ee7c91a1c6d86f5cfe8cb471894be8631647c9e853782d701bb219ccfe3deaf4
+generated_at: 2026-05-31T14:15:05.556631+00:00
+source_hash: 42b6f3d8928cb9d9f896c40c595715ed3473820bfdc5f12e14e2889aea7c4d0a
 status: generated
 ---
 
 # Work with hooks
 
-Use the hooks system when you need to respond to events in the Attune AI lifecycle, such as evaluating sessions for learning potential or initializing projects.
+Use hooks when you need to hook system — pre/post-tool events, webhooks, and hook executor.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/hooks/
+- Familiarity with the files under src/attune/hooks/**
 
-## Configure hook events
+## Steps
 
-1. **Load your hook configuration.**
-   Create a `HookConfig` instance to define which hooks fire for which events:
-   ```python
-   from attune.hooks import HookConfig
-   config = HookConfig.from_yaml("path/to/hooks.yaml")
-   ```
+1. **Understand the current behavior.**
+   Read the entry points to see what hooks
+   does today before making changes.
+   The primary functions are:
+   - `run_evaluate_session()` in `src/attune/hooks/scripts/evaluate_session.py` — Evaluate a session for learning potential.
+   - `get_learning_summary()` in `src/attune/hooks/scripts/evaluate_session.py` — Get learning summary for a user.
+   - `apply_learned_patterns()` in `src/attune/hooks/scripts/evaluate_session.py` — Generate context injection from learned patterns.
+   - `get_project_root()` in `src/attune/hooks/scripts/first_time_init.py` — Get the project root directory.
+   - `is_initialized()` in `src/attune/hooks/scripts/first_time_init.py` — Check if Attune AI is initialized in the project.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Register hooks for specific events.**
-   Add hooks to respond to Attune AI lifecycle events:
-   ```python
-   config.add_hook(
-       event=HookEvent.SESSION_START,
-       hook=HookDefinition(
-           type=HookType.PYTHON,
-           action="evaluate_session",
-           config={"threshold": 0.8}
-       )
-   )
-   ```
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-3. **Set up the hook registry.**
-   Initialize the registry with your configuration:
-   ```python
-   from attune.hooks import HookRegistry
-   registry = HookRegistry(config=config)
-   ```
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "hooks"`.
 
-## Execute hooks programmatically
+## Key files
 
-1. **Fire hooks for an event.**
-   Trigger all matching hooks for a specific lifecycle event:
-   ```python
-   context = {"session_id": "abc123", "user_id": "user456"}
-   results = registry.fire_sync(HookEvent.SESSION_END, context)
-   ```
+- `src/attune/hooks/**`
 
-2. **Use built-in evaluation scripts.**
-   Run the session evaluation hook directly:
-   ```python
-   from attune.hooks.scripts.evaluate_session import run_evaluate_session
-   result = run_evaluate_session({"session_data": session})
-   ```
+## Common modifications
 
-3. **Check project initialization status.**
-   Verify if Attune AI is set up in your project:
-   ```python
-   from attune.hooks.scripts.first_time_init import is_initialized, get_project_root
-   project_root = get_project_root()
-   if not is_initialized(project_root):
-       # Initialize project
-   ```
+Functions you are most likely to modify:
 
-## Create custom hook handlers
-
-1. **Define a Python handler function.**
-   Write a function that accepts context and returns results:
-   ```python
-   def custom_learning_handler(context: dict) -> dict:
-       session_id = context.get("session_id")
-       # Process learning data
-       return {"status": "processed", "insights": insights}
-   ```
-
-2. **Register your handler.**
-   Add it to the registry with an event matcher:
-   ```python
-   registry.register(
-       event=HookEvent.LEARNING_UPDATE,
-       handler=custom_learning_handler,
-       description="Process learning insights",
-       priority=10
-   )
-   ```
-
-3. **Test your hook.**
-   Verify it fires correctly:
-   ```python
-   test_context = {"session_id": "test123"}
-   results = registry.fire_sync(HookEvent.LEARNING_UPDATE, test_context)
-   assert results[0]["status"] == "processed"
-   ```
-
-## Monitor hook execution
-
-1. **Enable execution logging.**
-   Track hook performance and results:
-   ```python
-   # Check execution history
-   log = registry.get_execution_log(limit=50)
-   for entry in log:
-       print(f"Hook {entry['hook_id']} took {entry['duration_ms']}ms")
-   ```
-
-2. **View hook statistics.**
-   Get metrics on hook usage:
-   ```python
-   stats = registry.get_stats()
-   print(f"Total hooks: {stats['total_hooks']}")
-   print(f"Executions: {stats['total_executions']}")
-   ```
-
-## Verification
-
-Your hooks are working correctly when:
-- `registry.fire_sync()` returns expected results without errors
-- Hook execution logs show your handlers running at the right events
-- Built-in evaluation scripts like `run_evaluate_session()` complete successfully
-- Project initialization checks return the correct status for your environment
+- `run_evaluate_session()` in `src/attune/hooks/scripts/evaluate_session.py`
+- `get_learning_summary()` in `src/attune/hooks/scripts/evaluate_session.py`
+- `apply_learned_patterns()` in `src/attune/hooks/scripts/evaluate_session.py`
+- `get_project_root()` in `src/attune/hooks/scripts/first_time_init.py`
+- `is_initialized()` in `src/attune/hooks/scripts/first_time_init.py`
+- `get_never_ask_file()` in `src/attune/hooks/scripts/first_time_init.py`
+- `should_skip_init()` in `src/attune/hooks/scripts/first_time_init.py`
+- `mark_never_ask()` in `src/attune/hooks/scripts/first_time_init.py`
