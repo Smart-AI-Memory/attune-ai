@@ -6626,3 +6626,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   …) is fragile on Windows. Either pin `now` or use
   comfortably-inside-bucket values (`bucket_size *
   N + bucket_size // 2`).
+
+- **Documentation framing IS a faithfulness decision
+  when two metrics measure the same property** —
+  README/docs can undersell their own results by leading
+  with a conservative metric and burying a stronger
+  one. Hit 2026-05-31 on attune-ai's README: the RAG
+  section led with "hallucination from 46.7% → 6.7%"
+  (per-query bucket rate — "did *any* claim fail
+  grounding") and buried per-claim faithfulness of
+  0.996 = >99% (the right answer to "how trustworthy
+  is each statement the model makes"). The conservative
+  per-query rate is a worst-case framing; the per-claim
+  number is the strong, accurate headline. Leading with
+  the worse-looking framing was unfaithful to attune-ai's
+  own measurements and made the system look less
+  trustworthy than it measurably is. PR #527 reframed
+  both sites (README + docs/rag/index.md) to lead with
+  per-claim and keep per-query as the labeled secondary
+  column. **Checklist for any docs PR that cites a
+  metric**: (1) are there two ways to measure this
+  property (e.g. per-claim vs per-query, per-step vs
+  per-task)? (2) if yes, are both surfaced with clear
+  labels? (3) does the headline framing match the
+  strongest honest reading? Historical decision docs
+  (the kind dated and pre-committed) stay as written
+  even when the framing is dated — they're snapshots,
+  not living docs. The fix is in the *current* docs
+  (README, mkdocs pages) that present the result to
+  today's readers.
