@@ -6685,3 +6685,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   R1.1, decisions.md D1, wireframe.html) and ratified
   the threshold (30d), default visibility (active),
   and visual treatment (amber distinct from Paused).
+
+- **Windows runner strips `\n` but leaves `\r` —
+  tests asserting against `run.lines` need rstrip** —
+  pairs with the existing "Cross-platform path
+  handling" + `is_absolute()` + edge-of-bucket timing
+  + `Path("/tmp")` lessons as a 6th surface in the
+  same family. The runner's existing line-read at
+  `src/attune/ops/runner.py::_execute` does
+  `raw.decode("utf-8", errors="replace").rstrip("\n")`
+  — only strips the LF half of CRLF, leaving the CR
+  attached to every line in `run.lines` on Windows.
+  Substring checks (`"text" in joined_string`) tolerate
+  the trailing CR; **exact-match list membership
+  checks (`"text" in run.lines`) don't**. Hit
+  2026-05-31 on PR #531 Phase 3b: all 4 Windows lanes
+  failed identically on
+  `assert "running code-review" in real_log_lines`
+  because the actual list was
+  `['running code-review\r', 'done\r']`. **Diagnostic
+  shortcut**: any test asserting
+  `"exact text" in some_list_of_log_lines` where
+  lines come from a subprocess's `print()` is
+  Windows-fragile. **Fix**: `[line.rstrip() for line in
+  run.lines if ...]` before the membership check —
+  cross-platform safe (`rstrip()` with no arg strips
+  all trailing whitespace including CR). **Production-
+  side is fine for this PR**: the new
+  `attune.ops.run_meta_stdout.parse_line` already does
+  `.rstrip("\r\n")` internally so the side-channel
+  marker parsing works cross-platform — only direct
+  line-comparison tests are affected. A broader fix
+  (strip CR in `_execute` itself) is worth its own
+  PR; this lesson exists so the bug doesn't re-surface
+  in tests of future runner-adjacent code.
