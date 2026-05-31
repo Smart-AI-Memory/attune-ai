@@ -6464,3 +6464,97 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   rebase`. When the goal is to keep main's newer
   content over older stashed prep, `git checkout
   --ours <file>`.
+
+- **`Write` to an absolute `/Users/patrickroebuck/attune-ai/...`
+  path from a worktree session lands the file on the PARENT
+  MAIN checkout, not the worktree** — extends the existing
+  worktree-vs-main lessons with a write-side failure mode.
+  Hit 2026-05-31 writing
+  `docs/specs/spec-status-self-truthing/decisions.md`. The
+  worktree's CWD was the right place, but I used the bare
+  repo absolute path (which resolves to `~/attune-ai/`, the
+  main checkout, not `~/attune-ai/.claude/worktrees/<slug>/`).
+  Symptom: `git -C <main> status` shows the new untracked
+  file even though my branch is in the worktree. Detection:
+  after any Write that touches the repo, `git -C <worktree>
+  status` AND `git -C <main> status` — divergence = wrong
+  path. Recovery: copy file to worktree, `git -C <main>
+  checkout --` or `rm` to clean main. **Defensive rule**:
+  when working in a worktree, absolute paths must include
+  the worktree segment (`.claude/worktrees/<slug>/`). Bare
+  `/Users/patrickroebuck/attune-ai/` paths are wrong by
+  construction in a worktree session. Pairs with the
+  existing `PYTHONPATH=$(pwd)/src` / launch lessons — same
+  class of bug, different surface (write-side instead of
+  execute-side).
+
+- **Spec-phase numbers are authoring stages, not
+  implementation stages — Phase N means "author the doc for
+  artifact N"**: attune-ai's spec template puts each artifact
+  in its own phase: Phase 1 = `requirements.md` (approval),
+  Phase 2 = `design.md` (technical design authoring), Phase
+  3 = `tasks.md` (task decomposition authoring), Phase 4 =
+  actual code implementation. So when a user says "do Phase
+  X of spec Y," for X < 4 the work is doc authoring, NOT
+  implementation. Hit 2026-05-31 when Patrick said "wiring-
+  audit Phase 1 now" — I interpreted as "implement the
+  wiring-audit tool," but Phase 1 was already done (it's
+  approval, completed in PR #513) and the actual next
+  executable work was Phase 2 (authoring `design.md`).
+  Defensive rule: before starting "Phase X" of any spec,
+  `ls docs/specs/<spec>/` and check which artifact files
+  exist. Phase X authors artifact X; presence-on-disk tells
+  you whether the phase is done. Only Phase 4 produces code.
+
+- **Per-loop function definitions trigger ruff B023
+  (loop-variable capture) even when the closure is invoked
+  only within the same iteration — extract to module-level
+  helper instead of suppressing**: hit 2026-05-31 building
+  `scripts/audit_docs_wiring.py`. Pattern that fires:
+  ```python
+  for md in docs.glob("*.md"):
+      line_starts = compute_starts(md.read_text())
+      def offset_to_line(offset: int) -> int:
+          return bisect.bisect_right(line_starts, offset)
+      for match in pattern.finditer(text):
+          finding.line = offset_to_line(match.start())
+  ```
+  Ruff B023 flags `line_starts` as captured by closure
+  reference. In this exact code the closure is only invoked
+  within the same outer iteration, so the late-binding bug
+  ruff is warning about can't actually occur — but ruff
+  can't see that. Three fixes ranked: (a) extract the
+  helper to module level and pass the variable as a
+  parameter (cleanest — clean code, lint-silent, also
+  testable in isolation); (b) use a default-arg trick
+  (`def offset_to_line(offset, _starts=line_starts):`) —
+  ugly, signals "I'm working around lint"; (c)
+  `# noqa: B023` — silences without cleaning up. Pick (a)
+  by default. The extracted helper often also wants
+  `_compute_line_starts(text)` separated, which composes
+  nicely (testable in isolation, no per-iteration cost
+  surprises).
+
+- **`scripts/` is not a Python package in attune-ai — adding
+  a directory `scripts/foo/` and a file `scripts/foo.py` is
+  a name collision Python can't resolve**: the
+  `scripts/audit_docs_wiring/` package design proposed in
+  the wiring-audit spec couldn't coexist with the CLI entry
+  `scripts/audit_docs_wiring.py` because Python sees them
+  as the same name at the parent path. Plus `scripts/` has
+  no `__init__.py`, so `python -m scripts.audit_docs_wiring`
+  wouldn't even resolve. Existing scripts (`check_help_coverage.py`,
+  etc.) all ship as single-file modules. Test imports use
+  `importlib.util.spec_from_file_location("_<name>",
+  path)` per the convention in
+  `tests/unit/help/test_coverage_script.py`. Pattern: when
+  a spec design proposes a package layout for `scripts/`,
+  prefer single-file v1 until the file approaches ~800 LOC
+  and the multi-check architecture genuinely needs internal
+  module separation. Refactor to package later by either
+  (a) making `scripts/` itself a package (verify nothing
+  else assumes it's a flat dir first), or (b) keeping the
+  CLI as a single file that imports a sibling
+  `_scripts_helpers/` package with a different name. The
+  refactor cost is low; the upfront package-vs-file naming
+  collision is needless friction.
