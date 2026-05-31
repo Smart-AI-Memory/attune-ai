@@ -23,8 +23,8 @@ Usage:
     # Create workflows
     pipeline = factory.create_workflow([researcher, writer])
 
-    # Create wizards with framework backing
-    debug_wizard = factory.create_wizard("debugging")
+    # Create role-specialized agents with sensible defaults
+    debugger = factory.create_debugger()
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
