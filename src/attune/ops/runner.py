@@ -115,6 +115,17 @@ class Run:
     # Captured at execute time so the persistence record can reproduce
     # exactly what ran. ``None`` for runs that never executed.
     command: list[str] | None = None
+    # Captured stderr from the underlying ``claude`` CLI subprocess
+    # when an SDK-backed workflow fails. Already redacted by the
+    # workflow before reaching this field. Populated by Phase 3b's
+    # stdout side-channel; ``None`` until 3b lands and for any run
+    # that didn't fail at the SDK boundary. Part of the
+    # ``docs/specs/sdk-error-message-fidelity/`` flow.
+    sdk_stderr: str | None = None
+    # Classifier kind (one of ``SdkErrorKind`` literals — ``api_quota``,
+    # ``auth``, ``rate_limit``, ``not_found``, ``schema_rejected``,
+    # ``unknown``). ``None`` when no SDK failure was captured.
+    sdk_error_kind: str | None = None
     lines: list[str] = field(default_factory=list)
     # Buffered recommendations replayed to late subscribers so a user
     # who opens /runs/<id>/view after the run finished still sees the
@@ -144,6 +155,8 @@ class Run:
             "line_count": len(self.lines),
             "path": self.path,
             "command": list(self.command) if self.command else None,
+            "sdk_stderr": self.sdk_stderr,
+            "sdk_error_kind": self.sdk_error_kind,
         }
 
     def to_record(self) -> dict[str, object]:
@@ -177,6 +190,11 @@ class Run:
         lines = [str(line) for line in lines_raw] if isinstance(lines_raw, list) else []
         command_raw = data.get("command")
         command = [str(c) for c in command_raw] if isinstance(command_raw, list) else None
+        # SDK error fields (Phase 3a) — old records read back as None.
+        sdk_stderr_raw = data.get("sdk_stderr")
+        sdk_stderr = str(sdk_stderr_raw) if isinstance(sdk_stderr_raw, str) else None
+        sdk_kind_raw = data.get("sdk_error_kind")
+        sdk_error_kind = str(sdk_kind_raw) if isinstance(sdk_kind_raw, str) else None
         return cls(
             id=str(data.get("id", "")),
             workflow=str(data.get("workflow", "")),
@@ -186,6 +204,8 @@ class Run:
             completed_at=_parse_dt(data.get("completed_at")),
             path=str(data["path"]) if isinstance(data.get("path"), str) else None,
             command=command,
+            sdk_stderr=sdk_stderr,
+            sdk_error_kind=sdk_error_kind,
             lines=lines,
         )
 

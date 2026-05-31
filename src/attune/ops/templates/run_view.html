@@ -72,6 +72,19 @@
 <pre class="log-output run-view-log" data-log>{% for line in server_rendered_lines %}{{ line }}
 {% endfor %}</pre>
 
+{# Phase 3a — collapsible raw stderr from the underlying claude CLI
+   subprocess when an SDK-backed workflow fails. Default-collapsed so
+   the page stays scannable; one click expands the redacted stderr.
+   Block is omitted entirely when sdk_stderr is None (no SDK failure
+   was captured, or the run predates the Phase 3a schema). See
+   docs/specs/sdk-error-message-fidelity/. #}
+{% if run.sdk_stderr %}
+<details class="sdk-error-detail">
+  <summary>Raw stderr from claude CLI{% if run.sdk_error_kind %} ({{ run.sdk_error_kind }}){% endif %}</summary>
+  <pre class="sdk-error-stderr">{{ run.sdk_stderr }}</pre>
+</details>
+{% endif %}
+
 <p class="meta run-view-foot">
   {% if stream_url %}
     This page reconnects to the run's stream automatically — refresh anytime

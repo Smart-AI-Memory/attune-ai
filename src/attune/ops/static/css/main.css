@@ -2330,3 +2330,38 @@ a.kpi:hover {
   overflow-y: auto;
   white-space: pre-wrap;
 }
+
+/* Phase 3a — SDK error raw-stderr block on /runs/<id>/view.
+   Renders only when the run record carries a captured stderr from
+   the underlying claude CLI subprocess. Collapsed by default; the
+   <summary> is the only thing visible until the user clicks. See
+   docs/specs/sdk-error-message-fidelity/ for the surrounding flow. */
+.sdk-error-detail {
+  margin: 8px 0 0 0;
+  padding: 8px 12px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 6px;
+  background: var(--bg-muted, #f7f7f8);
+  font-size: 13px;
+}
+.sdk-error-detail > summary {
+  cursor: pointer;
+  font-weight: 500;
+  color: var(--fg, #111);
+}
+.sdk-error-detail > summary:hover {
+  color: var(--accent, #2563eb);
+}
+.sdk-error-stderr {
+  margin: 8px 0 0 0;
+  padding: 10px 12px;
+  font: 12px var(--font-mono);
+  color: var(--fg, #111);
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  max-height: 240px;
+  overflow: auto;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
