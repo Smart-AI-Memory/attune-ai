@@ -6655,3 +6655,33 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   not living docs. The fix is in the *current* docs
   (README, mkdocs pages) that present the result to
   today's readers.
+
+- **Wireframes surface design gaps that careful design
+  conversation misses** — the wireframe is a design-
+  discovery surface, not just a ratification surface.
+  Hit 2026-05-31 on the ops-specs-page-refinement spec:
+  Patrick + I stepped through 4 explicit design decisions
+  in conversation (lifecycle rules, filter widget, visual
+  grouping, action menu UI), ratified each, then I built
+  the wireframe. Reviewing the rendered wireframe of
+  mock specs surfaced a 6th lifecycle bucket — **Stale**
+  — that the abstract 5-bucket conversation never
+  produced. Seeing actual rows with old `updated`
+  timestamps next to specs with explicit `paused`
+  markers made the "rotting in flight" case visible in
+  a way that the design discussion couldn't. The
+  budgetary lesson: **expect design changes when the
+  wireframe lands; don't treat "decisions ratified →
+  wireframe is a formality."** Distinct from the
+  existing `feedback_standalone_preview_pages.md`
+  memory (which says build wireframes for variant
+  review) — the new bit is that wireframes can
+  ORIGINATE design decisions, not just ratify them.
+  Implication for the /spec workflow: budget time for
+  a "wireframe review → updates to requirements +
+  decisions" pass before locking design.md / tasks.md
+  / implementation. In this session that pass added
+  the Stale bucket to all three docs (requirements.md
+  R1.1, decisions.md D1, wireframe.html) and ratified
+  the threshold (30d), default visibility (active),
+  and visual treatment (amber distinct from Paused).
