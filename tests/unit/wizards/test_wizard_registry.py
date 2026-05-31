@@ -449,6 +449,28 @@ class TestDiscovery:
         ]
         assert not any("dual-wizard" in msg for msg in deprecation_msgs)
 
+    def test_discover_skips_entry_point_without_config_attr(self):
+        """Wizard classes missing a ``config`` attribute are silently
+        skipped — not registered, no exception raised."""
+        registry._discovered = False
+        registry._WIZARD_REGISTRY.clear()
+
+        mock_ep = MagicMock()
+        mock_ep.name = "no-config"
+        # Object without a ``config`` attribute.
+        mock_ep.load.return_value = object()
+
+        mock_eps = MagicMock()
+        mock_eps.select = MagicMock(return_value=[mock_ep])
+
+        with patch("importlib.metadata.entry_points", return_value=mock_eps):
+            registry._discover_wizards()
+
+        assert "no-config" not in registry._WIZARD_REGISTRY
+        assert not any(
+            getattr(v, "__class__", None) is object for v in registry._WIZARD_REGISTRY.values()
+        )
+
     def test_discover_skips_broken_entry_point(self):
         """Test _discover_wizards gracefully handles broken entry points."""
         registry._discovered = False
