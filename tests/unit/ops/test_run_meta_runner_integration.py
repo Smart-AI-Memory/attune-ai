@@ -204,7 +204,12 @@ async def test_execute_end_to_end_stashes_marker_metadata(tmp_path):
     # ``ATTUNE_RUN_META`` string-content — that's expected and benign.
     # The check that matters: no STANDALONE log line should START with
     # ``ATTUNE_RUN_META`` (a real marker that leaked through unfiltered).
-    real_log_lines = [line for line in live.lines if not line.startswith("$ ")]
+    # ``rstrip()`` normalizes trailing CR — on Windows, Python's print
+    # uses CRLF line endings and the runner's existing
+    # ``raw.decode(...).rstrip("\n")`` only strips the LF, leaving the
+    # CR attached. That's pre-existing runner behavior unrelated to
+    # Phase 3b; this test just needs to be cross-platform-tolerant.
+    real_log_lines = [line.rstrip() for line in live.lines if not line.startswith("$ ")]
     assert "running code-review" in real_log_lines
     assert "done" in real_log_lines
     for line in real_log_lines:
