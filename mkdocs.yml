@@ -190,14 +190,12 @@ nav:
           - Multi-Agent Teams: tutorials/examples/multi-agent-team-coordination.md
           - SBAR Clinical Handoff: tutorials/examples/sbar-clinical-handoff.md
           - Adaptive Learning: tutorials/examples/adaptive-learning-system.md
-          - Webhook Integration: tutorials/examples/webhook-event-integration.md
 
   # Task-oriented
   - How-to:
       - how-to/index.md
       - Memory System:
           - Unified Memory: how-to/unified-memory-system.md
-          - Short-Term Memory: how-to/short-term-memory-implementation.md
           - Memory Graph: how-to/memory-graph.md
       - AI Agents:
           - Agent Factory: how-to/agent-factory.md
@@ -258,7 +256,6 @@ nav:
           - FAQ: reference/FAQ.md
           - Troubleshooting: reference/TROUBLESHOOTING.md
           - Glossary: reference/glossary.md
-          - Short-Term Memory: reference/SHORT_TERM_MEMORY.md
       - Architecture:
           - Overview: ARCHITECTURE.md
           - Ops Dashboard: architecture/ops-dashboard.md

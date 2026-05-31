@@ -643,4 +643,4 @@ memory = UnifiedMemory(redis_url=None)
 
 ---
 
-**Need help?** See the API Reference or [Short-Term Memory Reference](../reference/SHORT_TERM_MEMORY.md).
+**Need help?** See the API Reference.

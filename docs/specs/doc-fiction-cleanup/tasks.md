@@ -103,17 +103,43 @@ concrete claim, surface for review before finalizing.
 
 ---
 
-## Phase 3 — Fix the 16 HIGH fact-drift tracked docs
+## Phase 3 — HIGH fact-drift remainder
 
-The non-fiction HIGH docs (renamed symbols, not fictional APIs)
-— regen-via-attune-author candidates IF the project-doc regen
-path works (verify on one doc first; note `doc-audit` SDK path is
-blocked). Otherwise manual rewrite.
+After Phase 1 (3 rewrites) + Phase 2 (retire+archive 8, mechanical 8,
+rewrite 1) shipped, the Phase 3 scout (2026-05-30) classified the
+~11 remaining HIGH docs into 4 RETIRE / 4 MECHANICAL / 3 REWRITE / 0
+UNCLEAR. Triage file: [`phase-3-triage.md`](phase-3-triage.md).
 
-- [ ] Verify attune-author project-doc regen works on one
-  low-risk doc.
-- [ ] Regen or rewrite the memory cluster, smart-router,
-  cli-reference, project-analysis, agent-factory how-to.
+- [x] **Phase 3 scout** — 11 docs classified into 4 buckets.
+  Surprise: coordination subsystem (`AgentCoordinator` /
+  `AgentTask` / `TeamSession`) was deliberately deleted in
+  v6.8.0; `src/attune/coordination.py` is an `ImportError` shim
+  telling callers to pin `<6.8.0`. Three "fact-drift" docs are
+  actually deleted-on-purpose feature docs → hard retire.
+- [x] **RETIRE batch (PR-D, 2026-05-30):** retired the 2
+  short-term-memory docs (`short-term-memory-implementation.md`,
+  `reference/SHORT_TERM_MEMORY.md` — both built on the deleted
+  coordination spine) and both `webhook-event-integration.md`
+  copies (`examples/` + `tutorials/examples/`, both import
+  `attune.webhooks` which doesn't exist). 13 inbound refs
+  cleaned (nav, features.yaml, sibling docs' "Related" /
+  "Next Steps" lists). `mkdocs build --strict` passes.
+- [ ] **MECHANICAL batch (PR-E):** 4 docs (per phase-3-triage):
+  `learning-and-patterns.md`, `pattern-library.md`,
+  `smart-router.md`, +1. Mostly method-name renames
+  (`extract`→`extract_patterns`, `find_patterns`→`query_patterns`,
+  `wizard`→`workflow` system-wide).
+- [ ] **REWRITE batch (PR-F+, ≤1 per session per contract):**
+  `META_ORCHESTRATION_TUTORIAL.md` (931 lines; real
+  `MetaOrchestrator` underneath, fictional `attune orchestrate`
+  CLI on top), `multi-agent-coordination.md`,
+  `project-analysis-and-metrics.md` (or however many emerge).
+- [ ] **Phase 4 deferred:** `TROUBLESHOOTING.md` (mixed real +
+  fiction; out of Phase 3 scout brief; needs its own scout).
+- [ ] **Open spec spawn:** team-coordination-on-shared-Redis-memory
+  feature spec (chip spawned 2026-05-30; recovers the
+  coordination surface that v6.8.0 deleted — separate from doc
+  cleanup).
 
 ---
 

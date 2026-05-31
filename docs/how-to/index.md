@@ -17,10 +17,6 @@ framework and need to accomplish something specific.
 
     Configure and use the three-tier memory architecture
 
-- :material-memory: **[Short-Term Memory](short-term-memory-implementation.md)**
-
-    Implement Redis-backed session memory
-
 - :material-graph: **[Memory Graph](memory-graph.md)**
 
     Build knowledge graphs from conversation history

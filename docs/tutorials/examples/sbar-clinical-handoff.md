@@ -626,7 +626,6 @@ response = empathy.interact(
 **Related examples**:
 - [Multi-Agent Coordination](multi-agent-team-coordination.md) - Team-based collaboration
 - [Adaptive Learning](adaptive-learning-system.md) - Dynamic pattern learning
-- [Webhook Integration](webhook-event-integration.md) - Real-time event handling
 
 ---
 

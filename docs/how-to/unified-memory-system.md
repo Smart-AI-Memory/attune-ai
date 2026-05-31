@@ -446,7 +446,6 @@ from attune.memory.security import AuditLogger
 
 ## Next Steps
 
-- **[Short-Term Memory Implementation](./short-term-memory-implementation.md)**: Detailed Redis setup
 - **[Security Architecture](./security-architecture.md)**: PII scrubbing, audit logging
 - **[API Reference: Memory](../reference/multi-agent.md)**: Complete class documentation
 

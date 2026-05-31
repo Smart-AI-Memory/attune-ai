@@ -24,7 +24,6 @@ _docs:
   - docs/tutorials/examples/multi-agent-team-coordination.md
   - docs/tutorials/examples/sbar-clinical-handoff.md
   - docs/tutorials/examples/simple-chatbot.md
-  - docs/tutorials/examples/webhook-event-integration.md
   # Architecture without clear feature owner
   - docs/architecture/extending-composition-patterns.md
 
@@ -124,12 +123,10 @@ features:
     doc_paths:
       - docs/how-to/memory-graph.md
       - docs/how-to/unified-memory-system.md
-      - docs/how-to/short-term-memory-implementation.md
       - docs/how-to/context-management.md
       - docs/how-to/learning-and-patterns.md
       - docs/reference/pattern-library.md
       - docs/reference/persistence.md
-      - docs/reference/SHORT_TERM_MEMORY.md
 
   agents:
     description: Release agents, state persistence, and recovery
