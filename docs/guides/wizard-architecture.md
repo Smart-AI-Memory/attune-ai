@@ -312,10 +312,15 @@ The wizard registry (`registry.py`) finds wizards through a 3-tier search:
 
 ```text
 1. In-memory registry     ← Programmatic registration
-2. Entry points           ← pip-installed packages (empathy.wizards group)
+2. Entry points           ← pip-installed packages (attune.wizards group)
 3. Built-in loading       ← src/attune/wizards/builtin/
 4. Custom YAML loading    ← .attune/wizards/*.yaml
 ```
+
+The legacy entry-point group ``empathy.wizards`` is still loaded for
+backward compatibility but emits a ``DeprecationWarning`` and will be
+removed in the next major release. Third-party packages should declare
+wizards under ``[project.entry-points."attune.wizards"]``.
 
 Each tier only runs once per process (guarded by flags). The registry supports:
 

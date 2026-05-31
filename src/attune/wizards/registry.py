@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import importlib.metadata
 import logging
+import warnings
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -188,9 +189,24 @@ def delete_custom_wizard(wizard_id: str, base_dir: str | None = None) -> bool:
 
 _discovered = False
 
+_ENTRY_POINT_GROUP = "attune.wizards"
+_LEGACY_ENTRY_POINT_GROUP = "empathy.wizards"
+
+
+def _select_entry_points(eps: Any, group: str) -> list[Any]:
+    """Return entry points for ``group`` across Python versions."""
+    if hasattr(eps, "select"):
+        return list(eps.select(group=group))
+    return list(eps.get(group, []))
+
 
 def _discover_wizards() -> None:
-    """Discover wizards from entry points (``empathy.wizards`` group).
+    """Discover wizards from entry points.
+
+    Reads the canonical ``attune.wizards`` group, then falls back to the
+    deprecated ``empathy.wizards`` group (with a ``DeprecationWarning``)
+    so third-party packages that still declare the old group continue to
+    load for one release.
 
     Only runs once per process.
     """
@@ -201,25 +217,42 @@ def _discover_wizards() -> None:
 
     try:
         eps = importlib.metadata.entry_points()
-        # Python 3.12+ returns a SelectableGroups; older returns dict
-        if hasattr(eps, "select"):
-            wizard_eps = eps.select(group="empathy.wizards")
-        else:
-            wizard_eps = eps.get("empathy.wizards", [])
+        loaded_names: set[str] = set()
 
-        for ep in wizard_eps:
-            try:
-                wizard_class = ep.load()
-                if hasattr(wizard_class, "config"):
-                    _WIZARD_REGISTRY[wizard_class.config.wizard_id] = wizard_class
-                    logger.debug("Discovered wizard via entry point: %s", ep.name)
-            except Exception as e:  # noqa: BLE001
-                # INTENTIONAL: Entry point loading is best-effort
-                logger.warning("Failed to load wizard entry point %s: %s", ep.name, e)
+        for ep in _select_entry_points(eps, _ENTRY_POINT_GROUP):
+            if _try_load_wizard(ep):
+                loaded_names.add(ep.name)
+
+        for ep in _select_entry_points(eps, _LEGACY_ENTRY_POINT_GROUP):
+            if ep.name in loaded_names:
+                continue
+            warnings.warn(
+                f"Wizard entry-point group '{_LEGACY_ENTRY_POINT_GROUP}' is "
+                f"deprecated; declare '{ep.name}' under '{_ENTRY_POINT_GROUP}' "
+                "instead. The legacy group will be removed in the next major "
+                "release.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+            _try_load_wizard(ep)
 
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Entry point discovery is optional
         logger.debug("Entry point discovery failed: %s", e)
+
+
+def _try_load_wizard(ep: Any) -> bool:
+    """Load a single wizard entry point. Returns True on success."""
+    try:
+        wizard_class = ep.load()
+        if hasattr(wizard_class, "config"):
+            _WIZARD_REGISTRY[wizard_class.config.wizard_id] = wizard_class
+            logger.debug("Discovered wizard via entry point: %s", ep.name)
+            return True
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: Entry point loading is best-effort
+        logger.warning("Failed to load wizard entry point %s: %s", ep.name, e)
+    return False
 
 
 def _load_builtins() -> None:

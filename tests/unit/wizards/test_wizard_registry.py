@@ -366,12 +366,88 @@ class TestDiscovery:
         mock_ep.load.return_value = mock_wizard_class
 
         # No .select attribute — simulates older Python
-        mock_eps = {"empathy.wizards": [mock_ep]}
+        mock_eps = {"attune.wizards": [mock_ep]}
 
         with patch("importlib.metadata.entry_points", return_value=mock_eps):
             registry._discover_wizards()
 
         assert "dict-wizard" in registry._WIZARD_REGISTRY
+
+    def test_discover_loads_from_legacy_empathy_wizards_group(self):
+        """Wizards declared under the deprecated ``empathy.wizards`` group
+        still load (with a DeprecationWarning) for one release window."""
+        registry._discovered = False
+        registry._WIZARD_REGISTRY.clear()
+
+        mock_ep = MagicMock()
+        mock_ep.name = "legacy-wizard"
+        mock_wizard_class = MagicMock()
+        mock_wizard_class.config = WizardConfig(
+            wizard_id="legacy-wizard",
+            name="Legacy",
+            description="From legacy group",
+        )
+        mock_ep.load.return_value = mock_wizard_class
+
+        # Dict-style: only the legacy group is populated.
+        mock_eps = {"empathy.wizards": [mock_ep]}
+
+        import warnings as _warnings
+
+        with patch("importlib.metadata.entry_points", return_value=mock_eps):
+            with _warnings.catch_warnings(record=True) as caught:
+                _warnings.simplefilter("always")
+                registry._discover_wizards()
+
+        assert "legacy-wizard" in registry._WIZARD_REGISTRY
+        deprecation_msgs = [
+            str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
+        ]
+        assert any("empathy.wizards" in msg for msg in deprecation_msgs)
+        assert any("attune.wizards" in msg for msg in deprecation_msgs)
+
+    def test_discover_prefers_new_group_over_legacy_on_name_collision(self):
+        """When the same entry-point name appears in both groups, the new
+        group wins and no deprecation warning fires for that name."""
+        registry._discovered = False
+        registry._WIZARD_REGISTRY.clear()
+
+        new_ep = MagicMock()
+        new_ep.name = "dual-wizard"
+        new_class = MagicMock()
+        new_class.config = WizardConfig(
+            wizard_id="dual-wizard", name="New", description="From new group"
+        )
+        new_ep.load.return_value = new_class
+
+        legacy_ep = MagicMock()
+        legacy_ep.name = "dual-wizard"
+        legacy_class = MagicMock()
+        legacy_class.config = WizardConfig(
+            wizard_id="dual-wizard",
+            name="Legacy",
+            description="From legacy group",
+        )
+        legacy_ep.load.return_value = legacy_class
+
+        mock_eps = {
+            "attune.wizards": [new_ep],
+            "empathy.wizards": [legacy_ep],
+        }
+
+        import warnings as _warnings
+
+        with patch("importlib.metadata.entry_points", return_value=mock_eps):
+            with _warnings.catch_warnings(record=True) as caught:
+                _warnings.simplefilter("always")
+                registry._discover_wizards()
+
+        assert registry._WIZARD_REGISTRY["dual-wizard"] is new_class
+        legacy_ep.load.assert_not_called()
+        deprecation_msgs = [
+            str(w.message) for w in caught if issubclass(w.category, DeprecationWarning)
+        ]
+        assert not any("dual-wizard" in msg for msg in deprecation_msgs)
 
     def test_discover_skips_broken_entry_point(self):
         """Test _discover_wizards gracefully handles broken entry points."""
