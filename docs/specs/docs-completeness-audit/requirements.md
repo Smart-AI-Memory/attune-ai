@@ -11,7 +11,7 @@
 > as the tracked cohort — or the next reader still hits fiction,
 > just in a different aisle of the store.
 
-**Status:** draft
+**Status:** approved (2026-05-31; see [decisions.md](./decisions.md))
 **Created:** 2026-05-30
 **Owner:** TBD
 **Related:** [`doc-fiction-cleanup`](../doc-fiction-cleanup/) (sibling — tracked-cohort triage);
