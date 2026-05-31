@@ -94,7 +94,8 @@ class TestWorkflowExecution:
 
     @pytest.mark.asyncio
     async def test_execute_handles_runtime_error(self):
-        """Test execute catches RuntimeError from SDK."""
+        """Test execute catches RuntimeError from SDK and returns the
+        Phase 2 typed error result (sdk-error-message-fidelity spec)."""
         mock_sdk = MagicMock()
         mock_sdk.query = MagicMock(side_effect=RuntimeError("boom"))
         mock_sdk.ClaudeAgentOptions = MagicMock()
@@ -106,7 +107,13 @@ class TestWorkflowExecution:
 
         assert isinstance(result, WorkflowResult)
         assert result.success is False
-        assert "RuntimeError" in (result.error or "")
+        # Phase 2 surfaces the classifier's user-facing message instead
+        # of the raw exception type. The mock exception has no argv
+        # shape, so the classifier falls back to "unknown" with a
+        # synthetic capture-failure stderr inlined.
+        assert "claude CLI subprocess failed" in (result.error or "")
+        assert result.metadata.get("sdk_error_kind") == "unknown"
+        assert "sdk_stderr" in result.metadata
 
     @pytest.mark.asyncio
     async def test_execute_handles_connection_error(self):

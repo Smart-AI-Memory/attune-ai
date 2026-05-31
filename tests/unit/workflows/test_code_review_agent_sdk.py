@@ -100,7 +100,8 @@ class TestCodeReviewWorkflowExecution:
 
     @pytest.mark.asyncio
     async def test_execute_handles_sdk_exception_gracefully(self) -> None:
-        """Given SDK raises an exception, execute returns error result."""
+        """Given SDK raises an exception, execute returns the Phase 2
+        typed error result (sdk-error-message-fidelity spec)."""
         mock_sdk = MagicMock()
         mock_sdk.query = MagicMock(side_effect=RuntimeError("SDK crashed"))
         mock_sdk.ClaudeAgentOptions = MagicMock()
@@ -117,7 +118,11 @@ class TestCodeReviewWorkflowExecution:
 
         assert isinstance(result, WorkflowResult)
         assert result.success is False
-        assert "RuntimeError" in (result.error or "")
+        # Phase 2 surfaces the classifier's user-facing message; the
+        # mock exception has no recognizable argv shape so the
+        # classifier falls back to "unknown".
+        assert "claude CLI subprocess failed" in (result.error or "")
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
     @pytest.mark.asyncio
     async def test_execute_without_path_returns_error(self) -> None:
