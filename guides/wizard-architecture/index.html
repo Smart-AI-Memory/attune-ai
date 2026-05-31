@@ -4741,10 +4741,14 @@
 <h2 id="registry-and-discovery">Registry and Discovery<a class="headerlink" href="#registry-and-discovery" title="Permanent link">&para;</a></h2>
 <p>The wizard registry (<code>registry.py</code>) finds wizards through a 3-tier search:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>1. In-memory registry     ← Programmatic registration
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Entry points           ← pip-installed packages (empathy.wizards group)
+<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Entry points           ← pip-installed packages (attune.wizards group)
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>3. Built-in loading       ← src/attune/wizards/builtin/
 <a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a>4. Custom YAML loading    ← .attune/wizards/*.yaml
 </code></pre></div>
+<p>The legacy entry-point group <code>empathy.wizards</code> is still loaded for
+backward compatibility but emits a <code>DeprecationWarning</code> and will be
+removed in the next major release. Third-party packages should declare
+wizards under <code>[project.entry-points."attune.wizards"]</code>.</p>
 <p>Each tier only runs once per process (guarded by flags). The registry supports:</p>
 <ul>
 <li><code>register_wizard(id, class)</code> — Manual registration</li>
