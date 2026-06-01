@@ -27,13 +27,16 @@ import claude_agent_sdk
 from .agent_sdk_adapter import (
     AgentRunResult,
     AgentSDKResultAdapter,
+    SdkSubprocessError,
+    _last_subprocess_argv,
     build_result_text,
+    capture_subprocess_failure,
+    classify_subprocess_failure,
     collect_agent_output,
     get_max_budget_usd,
     get_task_budget,
     get_thinking_config,
     resolve_cwd_for_path,
-    sdk_error_message,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -272,14 +275,21 @@ class RagCodeGenWorkflow(BaseWorkflow):
         except Exception as exc:  # noqa: BLE001
             # INTENTIONAL: Catch-all for unknown SDK errors so we
             # return a structured WorkflowResult rather than
-            # crashing the CLI.
+            # crashing the CLI. Phase 5 of
+            # docs/specs/sdk-error-message-fidelity/.
             logger.exception(
                 "RAG generation failed: %s",
                 type(exc).__name__,
             )
-            duration = (datetime.now() - started_at).total_seconds()
+            stderr = capture_subprocess_failure(_last_subprocess_argv(exc))
+            kind, summary = classify_subprocess_failure(stderr)
+            sdk_err = SdkSubprocessError(
+                message=summary, stderr=stderr, kind=kind, original_exc=exc
+            )
             return self._error_result(
-                sdk_error_message(exc, duration_seconds=duration, depth=depth)
+                sdk_err.format_user_message(),
+                sdk_stderr=stderr,
+                sdk_error_kind=kind,
             )
 
         completed_at = datetime.now()

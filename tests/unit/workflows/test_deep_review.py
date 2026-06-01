@@ -142,7 +142,9 @@ class TestDeepReviewExecution:
 
         assert isinstance(result, WorkflowResult)
         assert result.success is False
-        assert "RuntimeError" in (result.error or "")
+        # Phase 5 — see test_sdk_error_fidelity_phase5.py.
+        assert "claude CLI subprocess failed" in (result.error or "")
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
     @pytest.mark.asyncio
     async def test_handles_connection_error(self) -> None:

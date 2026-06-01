@@ -251,9 +251,10 @@ class TestExecuteExceptionHandling:
         self._patch_query_to_raise(monkeypatch, RuntimeError("kaboom"))
         result = asyncio.run(workflow.execute(path="/tmp/proj"))
         assert result.success is False
-        # sdk_error_message wraps the exception; verify the class name
-        # surfaces somewhere in the error string for diagnosability.
-        assert "RuntimeError" in result.error or "kaboom" in result.error
+        # Phase 5 of docs/specs/sdk-error-message-fidelity/ — see
+        # test_sdk_error_fidelity_phase5.py for the new shape.
+        assert "claude CLI subprocess failed" in result.error
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
 
 # ---------------------------------------------------------------------------

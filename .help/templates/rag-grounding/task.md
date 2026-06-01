@@ -1,58 +1,45 @@
 ---
-type: task
-name: rag-grounding-task
 feature: rag-grounding
 depth: task
-generated_at: 2026-05-21T03:20:54.619948+00:00
-source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
+generated_at: 2026-06-01T11:59:09.459247+00:00
+source_hash: 93cb0ee5d2aca6e29f80507cc0c23c2ba8b904fe0e64bf16403a5a0dd115ccef
 status: generated
 ---
 
 # Work with rag grounding
 
-Use rag grounding when you need to generate code backed by verified documentation — it retrieves attune-help context and forces Claude to cite real APIs and patterns rather than hallucinating features.
+Use rag grounding when you need to rag-grounded code generation — retrieves attune-help context via attune-rag, feeds citation-forced prompts to claude, emits answers with provenance.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with `src/attune/workflows/rag_code_gen.py`
+- Familiarity with the files under src/attune/workflows/rag_code_gen.py
 
-## Configure the workflow
+## Steps
 
-1. **Import the RagCodeGenWorkflow class:**
-   ```python
-   from attune.workflows.rag_code_gen import RagCodeGenWorkflow
-   ```
+1. **Understand the class hierarchy.**
+   Read the interfaces to see how rag grounding
+   is structured before extending or modifying.
+   The key classes are:
+   - `RagCodeGenWorkflow` in `src/attune/workflows/rag_code_gen.py` — SDK-native RAG-grounded code generation workflow.
+2. **Decide whether to extend or modify.**
+   If the class has subclasses, extend with a new one
+   rather than changing the base. If it stands alone,
+   modify directly.
 
-2. **Initialize the workflow:**
-   ```python
-   workflow = RagCodeGenWorkflow(**kwargs)
-   ```
+3. **Make your change.**
+   Follow existing patterns — naming, error handling,
+   and logging style.
 
-3. **Execute with your requirements:**
-   ```python
-   result = workflow.execute(**kwargs)
-   ```
+4. **Run the related tests.**
+   Target with `pytest -k "rag-grounding"`.
 
-## Extend the workflow behavior
+## Key files
 
-1. **Review the base RagCodeGenWorkflow class** in `src/attune/workflows/rag_code_gen.py` to understand the existing citation and grounding mechanisms.
+- `src/attune/workflows/rag_code_gen.py`
 
-2. **Create a subclass for custom behavior:**
-   ```python
-   class CustomRagCodeGenWorkflow(RagCodeGenWorkflow):
-       def execute(self, **kwargs):
-           # Your custom logic here
-           return super().execute(**kwargs)
-   ```
+## Common modifications
 
-3. **Preserve the citation system** — the workflow includes a `_SYSTEM_PROMPT` that enforces grounding in real attune documentation and prevents feature hallucination.
+Classes you are most likely to extend:
 
-## Verify the grounding works
-
-Run your workflow and confirm that:
-- Generated code references actual attune APIs from the retrieved context
-- Citations include source file references
-- No invented features appear in the output
-
-The workflow should return a `WorkflowResult` containing grounded code with proper provenance tracking.
+- `RagCodeGenWorkflow` in `src/attune/workflows/rag_code_gen.py`

@@ -1,51 +1,45 @@
 ---
-type: task
 feature: deep-review
 depth: task
-generated_at: 2026-05-04T02:28:25.316934+00:00
-source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
+generated_at: 2026-06-01T11:59:09.446905+00:00
+source_hash: c88c39a4d669dd53e0c79a38f05bf3f121d25317b59202f71eed73be8dc817a0
 status: generated
 ---
 
-# Run deep review
+# Work with deep review
 
-Run deep review when you need comprehensive code analysis across security, quality, and test coverage dimensions.
+Use deep review when you need to multi-pass deep code review — security, quality, and test gap analysis.
 
 ## Prerequisites
 
-- Access to the target codebase
-- Claude Agent SDK configured in your environment
-- Permission to read the files you want to review
+- Access to the project source code
+- Familiarity with the files under src/attune/workflows/deep_review.py
 
-## Execute a deep review
+## Steps
 
-1. **Import the workflow class.**
-   ```python
-   from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
-   ```
+1. **Understand the class hierarchy.**
+   Read the interfaces to see how deep review
+   is structured before extending or modifying.
+   The key classes are:
+   - `DeepReviewAgentSDKWorkflow` in `src/attune/workflows/deep_review.py` — Multi-pass deep code review using Claude Agent SDK subagents.
+2. **Decide whether to extend or modify.**
+   If the class has subclasses, extend with a new one
+   rather than changing the base. If it stands alone,
+   modify directly.
 
-2. **Initialize the workflow.**
-   ```python
-   workflow = DeepReviewAgentSDKWorkflow()
-   ```
+3. **Make your change.**
+   Follow existing patterns — naming, error handling,
+   and logging style.
 
-3. **Run the review on your target path.**
-   ```python
-   result = workflow.execute(path="/path/to/your/code")
-   ```
+4. **Run the related tests.**
+   Target with `pytest -k "deep-review"`.
 
-4. **Access the consolidated report.**
-   The result contains findings from three specialized reviewers:
-   - Security vulnerabilities and risks
-   - Code quality issues and maintainability concerns
-   - Test coverage gaps and missing test scenarios
+## Key files
 
-## Verify the review completed
+- `src/attune/workflows/deep_review.py`
 
-Check that your `WorkflowResult` contains:
-- Overall health score (0-100)
-- Findings categorized by severity
-- Actionable recommendations ranked by impact
-- Specific file paths and line numbers for each finding
+## Common modifications
 
-The review runs three passes automatically — you don't need to coordinate the security-reviewer, quality-reviewer, and test-gap-reviewer subagents manually.
+Classes you are most likely to extend:
+
+- `DeepReviewAgentSDKWorkflow` in `src/attune/workflows/deep_review.py`
