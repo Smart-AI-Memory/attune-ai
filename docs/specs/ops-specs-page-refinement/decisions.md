@@ -38,9 +38,21 @@ values: `draft`, `in-review` / `review`, `approved`, `complete` /
    everything else; a paused-then-completed spec stays Paused until
    the paused marker is removed.
 
-2. **Complete** — ALL 4 phases have status in
-   `(complete, completed, done)`. Explicit author signal that the
-   spec is done.
+2. **Complete** — every phase file that EXISTS has status in
+   `(complete, completed, done)`, AND at least one phase exists.
+   Real-world specs often ship with 3 of 4 phase files (e.g.
+   `ci-debt`, `telemetry` skipped `decisions.md`;
+   `ops-specs-page-refinement` itself skipped `design.md` and
+   `tasks.md` since the wireframe IS the design reference). Treating
+   non-existent phases as not-blocking matches the actual
+   phase-skipping pattern; requiring "ALL 4 phases exist + complete"
+   would block every fast-tracked spec from ever reaching Complete.
+   The "at least one phase exists" guard blocks vacuous truth for
+   empty directories. *(Wording revised from "ALL 4 phases" during
+   A1 implementation 2026-06-01 after the original wording was found
+   to contradict the actual phase-skipping pattern; see
+   [spec_lifecycle.py](../../../src/attune/ops/spec_lifecycle.py)
+   for the codified rule.)*
 
 3. **Stale** — `last_modified` is older than **30 days** AND the
    spec didn't match Paused or Complete above. Surfaces the

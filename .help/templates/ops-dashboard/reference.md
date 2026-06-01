@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-05-31T20:54:22.238786+00:00
-source_hash: 55d4ceccfe9282d44ea02ca06378d8a89b8516f920509ddb31a006d0c5d2adb5
+generated_at: 2026-06-01T02:55:14.259200+00:00
+source_hash: c7fab82abc6b97a74f5beb3686d1be77f85af45f63e183d99cae247fdc40ab54
 status: generated
 ---
 
@@ -159,6 +159,7 @@ status: generated
 | `cache_path_for()` | Return the on-disk cache path for one session id. | `src/attune/ops/session_summary_cache.py` |
 | `load()` | Return the cached summary iff the on-disk record matches ``expected``. | `src/attune/ops/session_summary_cache.py` |
 | `save()` | Write a summary to the on-disk cache, atomically. | `src/attune/ops/session_summary_cache.py` |
+| `derive_lifecycle()` | Return the lifecycle bucket label for one spec. | `src/attune/ops/spec_lifecycle.py` |
 | `is_persistence_enabled()` | True when ``ATTUNE_OPS_SWEEP_RESULTS`` is set to a non-empty value. | `src/attune/ops/sweep_results.py` |
 | `results_dir()` | Return ``<attune_home>/ops/sweep-results/`` (created if missing). | `src/attune/ops/sweep_results.py` |
 | `scope_hash()` | Hash a scope path to a fixed-length hex identifier. | `src/attune/ops/sweep_results.py` |
