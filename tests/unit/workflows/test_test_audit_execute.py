@@ -141,7 +141,12 @@ class TestTestAuditExecute:
 
         result = asyncio.run(workflow.execute(src_path="/tmp/test"))
         assert result.success is False
-        assert "RuntimeError" in result.error
+        # Phase 6 of docs/specs/sdk-error-message-fidelity/ replaced the
+        # hand-rolled "Agent SDK error: <type>: <msg>" leak with the
+        # structured SdkSubprocessError message. Mock exceptions with
+        # no argv shape classify as "unknown".
+        assert "claude CLI subprocess failed" in result.error
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
     def test_execute_default_depth(self, workflow):
         """execute() defaults to 'standard' depth (20 turns)."""
