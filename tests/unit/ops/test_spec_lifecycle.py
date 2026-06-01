@@ -271,6 +271,16 @@ class TestStaleRule:
         )
         assert derive_lifecycle(spec, now=NOW) != "stale"
 
+    def test_naive_now_treated_as_utc(self):
+        """A caller passing a naive `now` shouldn't crash — UTC default."""
+        naive_now = datetime(2026, 6, 1, 12, 0, 0)  # no tzinfo
+        old_ts = "2025-01-01T00:00:00+00:00"  # >30 days before naive_now
+        spec = _Spec(
+            phases=_all_phases(requirements="approved"),
+            last_modified=old_ts,
+        )
+        assert derive_lifecycle(spec, now=naive_now) == "stale"
+
 
 # ----- Rule 4: Draft --------------------------------------------------
 
