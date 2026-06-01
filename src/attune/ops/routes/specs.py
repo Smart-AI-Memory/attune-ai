@@ -24,7 +24,7 @@ import logging
 import os
 import re
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -113,6 +113,24 @@ class SpecRecord:
     # (which shouldn't happen since _list_specs_in_root requires at
     # least one canonical phase file, but handled defensively).
     last_modified: str | None = None
+    # Lifecycle bucket derived from `phases` + `last_modified` via
+    # `attune.ops.spec_lifecycle.derive_lifecycle`. Computed in
+    # `__post_init__` so callers don't need to coordinate. `init=False`
+    # keeps the constructor signature backward-compatible with the many
+    # `SpecRecord(slug=..., phases=..., last_modified=...)` test fixtures.
+    # One of: "paused", "complete", "stale", "draft",
+    # "approved-not-shipped", "active". See
+    # [docs/specs/ops-specs-page-refinement/decisions.md](../../../docs/specs/ops-specs-page-refinement/decisions.md).
+    lifecycle: str = field(init=False, default="")
+
+    def __post_init__(self) -> None:
+        # Lazy import to avoid any chance of an import cycle between
+        # routes/specs.py and spec_lifecycle.py (defensive; no cycle
+        # exists today since spec_lifecycle uses a structural Protocol).
+        from attune.ops.spec_lifecycle import derive_lifecycle
+
+        # Frozen dataclass — use object.__setattr__ to set the field.
+        object.__setattr__(self, "lifecycle", derive_lifecycle(self))
 
 
 def _extract_status(text: str) -> str | None:
@@ -222,6 +240,7 @@ async def list_specs(request: Request) -> dict:
                 "root": s.root,
                 "path": s.path,
                 "phases": [asdict(p) for p in s.phases],
+                "lifecycle": s.lifecycle,
             }
             for s in specs
         ],
