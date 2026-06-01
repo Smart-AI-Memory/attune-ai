@@ -3054,6 +3054,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   spec is partially obsolete" not "follow the spec
   literally."
 
+- **Spec-named work-scope drifts from code reality —
+  grep the actual instances before executing the named
+  scope**: hit 2026-06-01 executing Phase 5 of
+  `sdk-error-message-fidelity`. The spec named six
+  workflows as Phase 5 targets: `test-audit`, `doc-audit`,
+  `doc-gen`, `discovery-sweep`, `secure-release`,
+  `deep-review`. A `grep -l "sdk_error_message"
+  src/attune/workflows/` showed only ONE of those (`deep_review`)
+  actually used the legacy helper Phase 5 was designed to
+  retire. The other FIVE named workflows had hand-rolled
+  error messages (a different, less-bad failure mode) —
+  but five OTHER workflows not on the spec's list
+  (`rag_code_gen`, `research_synthesis`, `simplify_code`,
+  `release_prep`, `deep_review`) DID still use the legacy
+  helper. The spec text was written when those code paths
+  looked different; the code moved; the spec text didn't.
+  Blindly migrating the spec-named six would have left
+  four legacy-helper users unmigrated and migrated five
+  workflows that didn't need it. **Pattern**: before
+  executing a spec phase whose scope is named by
+  workflow/module/file, grep the code for the actual
+  property the phase targets (legacy helper usage, deprecated
+  call, pattern signature) and use THAT set as the
+  execution scope. Update the spec text to reflect reality
+  in the same PR. The spec's named list is a starting
+  hypothesis, not the contract — the code is the contract.
+  Pairs with the "Re-validate a spec's premise" lesson
+  above and the "Audits with 'possibly delete if X'
+  qualifiers" lesson — same family (spec/audit text goes
+  stale; verify against current code before acting).
+
 - **xdist worker crashes on Windows can come from
   repeated socket probes in fixture/helper code,
   not from the test itself**:
