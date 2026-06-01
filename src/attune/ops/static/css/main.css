@@ -2603,3 +2603,113 @@ a.kpi:hover {
 .specs-empty-state .empty-state-action:hover {
   background: var(--accent-soft, #dbeafe);
 }
+
+/* ============================================================
+   A3b — Specs page kebab action menu (Open in editor / Copy slug
+   / View linked PRs). Menu is appended to <body> via JS so it
+   escapes any table overflow; positioning is fixed via inline
+   style set in JS.
+   ============================================================ */
+
+.specs-table .col-kebab {
+  text-align: right;
+  width: 32px;
+  white-space: nowrap;
+}
+
+.kebab-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--fg-muted, #6b7280);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+}
+.kebab-btn:hover {
+  background: var(--bg-soft, #f3f4f6);
+  color: var(--fg, #111827);
+}
+.kebab-btn:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 1px;
+}
+.kebab-btn[aria-expanded="true"] {
+  background: var(--bg-soft, #f3f4f6);
+  color: var(--fg, #111827);
+  border-color: var(--border, #e5e7eb);
+}
+
+.kebab-menu {
+  position: absolute;
+  z-index: 1000;
+  min-width: 180px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08), 0 2px 4px rgba(0, 0, 0, 0.04);
+  padding: 4px 0;
+  font-size: 13px;
+}
+.kebab-menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 12px;
+  background: transparent;
+  border: 0;
+  text-align: left;
+  font-size: inherit;
+  font-family: inherit;
+  color: var(--fg, #374151);
+  cursor: pointer;
+}
+.kebab-menu-item:hover,
+.kebab-menu-item:focus-visible {
+  background: var(--bg-soft, #f3f4f6);
+  outline: none;
+}
+.kebab-menu-item-disabled {
+  color: var(--fg-subtle, #9ca3af);
+  cursor: not-allowed;
+}
+.kebab-menu-item-disabled:hover,
+.kebab-menu-item-disabled:focus-visible {
+  background: transparent;
+}
+.kebab-external-glyph {
+  color: var(--fg-subtle, #9ca3af);
+  font-size: 11px;
+  margin-left: 8px;
+}
+
+/* Toast feedback — fixed bottom-center, fade in/out via class
+   toggle from specs_kebab.js. */
+.specs-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(8px);
+  background: #1f2937;
+  color: #f9fafb;
+  padding: 8px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease-out, transform 0.15s ease-out;
+  z-index: 1100;
+}
+.specs-toast.toast-visible {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}

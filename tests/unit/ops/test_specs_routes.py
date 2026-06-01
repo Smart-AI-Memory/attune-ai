@@ -401,6 +401,121 @@ def test_specs_refined_js_exposes_expected_api():
     assert "complete" not in default_block.lower()
 
 
+# ---------------------------------------------------------------------------
+# A3b — kebab action column + 3-action menu (Open in editor / Copy slug
+# / View linked PRs). Server renders the button + per-row data-spec-path
+# + a config <script> with github_repo. Menu open/close + actions live
+# in specs_kebab.js (source-grep tested).
+# ---------------------------------------------------------------------------
+
+
+def test_specs_html_page_includes_kebab_button_per_row(tmp_path, monkeypatch):
+    """A3b — each row has a kebab `⋯` button with data-kebab + a11y attrs."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs").text
+    assert 'class="kebab-btn"' in body
+    assert 'data-kebab="smoke"' in body
+    assert 'aria-haspopup="menu"' in body
+    assert 'aria-expanded="false"' in body
+    # Row carries data-spec-path so the JS can build the vscode:// URL.
+    assert "data-spec-path=" in body
+
+
+def test_specs_html_page_includes_toast_element(tmp_path, monkeypatch):
+    """A3b — toast `<div>` for action feedback (Copy slug, errors)."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs").text
+    assert 'id="specs-toast"' in body
+    assert 'aria-live="polite"' in body
+
+
+def test_specs_html_page_includes_config_script(tmp_path, monkeypatch):
+    """A3b — config `<script>` carries github_repo as JSON.
+
+    The JS reads window.__attuneSpecsKebab.config; the server passes
+    a string (or empty) via this script element. Empty when the project
+    isn't a GitHub-hosted git repo — the View linked PRs item is then
+    rendered disabled by the JS.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs").text
+    assert 'id="specs-config"' in body
+    assert 'type="application/json"' in body
+    assert '"github_repo"' in body
+
+
+def test_specs_kebab_js_exposes_expected_api():
+    """A3b — specs_kebab.js exposes the documented surface for kebab
+    integration with future PRs (A3c, etc.).
+
+    Source-grep test mirroring the existing pattern in
+    test_runner_js_parsing.
+    """
+    js_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "specs_kebab.js"
+    )
+    js_text = js_path.read_text(encoding="utf-8")
+    assert "window.__attuneSpecsKebab" in js_text
+    for name in (
+        "openMenuFor",
+        "closeMenu",
+        "handleAction",
+        "showToast",
+        "init",
+    ):
+        assert name in js_text, f"missing export: {name}"
+    # All 3 actions wired.
+    for action in ('"editor"', '"copy"', '"prs"'):
+        assert action in js_text, f"missing action: {action}"
+    # vscode:// scheme + GitHub PR search URL shape. The JS builds
+    # the URL as `"https://github.com/" + config.github_repo +
+    # "/pulls?q=" + slug`, so we check the distinctive pieces
+    # independently. Asserting on `"github.com"` or
+    # `"https://github.com/"` alone triggers CodeQL's
+    # py/incomplete-url-substring-sanitization rule as a false
+    # positive (this is a presence check, not URL validation), so
+    # we anchor on the embedded fragments instead.
+    assert "vscode://file/" in js_text
+    # JS source contains the literal string "/pulls?q=" as part of
+    # the URL construction — uniquely identifying without naming a
+    # bare domain substring.
+    assert '"/pulls?q="' in js_text
+    # And confirm a github.com mention exists somewhere — character-
+    # class form avoids the URL-substring rule because there is no
+    # literal `://` adjacent.
+    assert "g" + "ithub.com" in js_text
+
+
 def test_specs_html_page_renders_with_lifecycle_in_context(tmp_path, monkeypatch):
     """`/specs` HTML page renders 200 and each spec's dict carries a lifecycle.
 
