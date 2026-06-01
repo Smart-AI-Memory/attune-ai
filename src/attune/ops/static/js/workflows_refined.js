@@ -1,7 +1,9 @@
-// Workflows page — concern-chip filter + search behavior (A3a).
+// Workflows page — concern-chip filter + search + URL state (A3a + A3c).
 //
 // Reads the server-rendered table at /workflows and applies client-side
-// filtering by concern bucket + workflow name substring.
+// filtering by concern bucket + workflow name substring. URL state
+// (?bucket=…&q=…) is the source of truth — JS reads on init, writes
+// on chip toggle / search input.
 //
 // Default state per docs/specs/ops-workflows-page-refinement/decisions.md D1/D2:
 //   - All 7 concern chips active (no chip is structurally "noise"
@@ -10,8 +12,6 @@
 //
 // No sort dropdown — workflows render alphabetical by name from the
 // server (decisions.md D7: alphabetical-by-name; v2 may add by-last-run).
-//
-// URL params ship in A3c. A3b adds the kebab action menu.
 //
 // Exports a `window.__attuneWorkflows` namespace so future PRs and
 // source-grep tests can verify the surface (matches the
@@ -37,6 +37,73 @@
     buckets: new Set(VALID_BUCKETS),
     search: "",
   };
+
+  // ---------- URL state (A3c) ----------
+  //
+  // ?bucket=review,audit&q=security  → state.buckets={review,audit}, search="security"
+  //
+  // Defaults are normalized OUT of the URL — a "clean" URL (no params)
+  // means "default state: all buckets, no search". This keeps shared
+  // links short and survives back/forward navigation cleanly.
+
+  function readURLState() {
+    try {
+      var u = new URL(window.location.href);
+      var bucketParam = u.searchParams.get("bucket");
+      if (bucketParam !== null && bucketParam.length > 0) {
+        var candidates = bucketParam
+          .split(",")
+          .map(function (b) {
+            return b.trim();
+          })
+          .filter(function (b) {
+            return VALID_BUCKETS.has(b);
+          });
+        // Empty after filtering → invalid param, fall back to defaults
+        // (don't strand the user with zero chips active on first paint).
+        if (candidates.length > 0) {
+          state.buckets = new Set(candidates);
+        }
+      }
+      var q = u.searchParams.get("q");
+      if (q !== null) {
+        state.search = q;
+      }
+    } catch (e) {
+      // URL parse failure in older browsers / restrictive contexts —
+      // silent fall-through to defaults is fine, no UX regression.
+    }
+  }
+
+  function bucketsAreDefault(bucketSet) {
+    // "Default" = all 7 buckets on. URL stays clean in that case.
+    return bucketSet.size === VALID_BUCKETS.size;
+  }
+
+  function syncURL() {
+    try {
+      var u = new URL(window.location.href);
+      if (bucketsAreDefault(state.buckets)) {
+        u.searchParams.delete("bucket");
+      } else {
+        // Sort for stable URLs — same bucket set always serializes the
+        // same way regardless of toggle order.
+        var sorted = Array.from(state.buckets).sort();
+        u.searchParams.set("bucket", sorted.join(","));
+      }
+      var q = (state.search || "").trim();
+      if (q.length === 0) {
+        u.searchParams.delete("q");
+      } else {
+        u.searchParams.set("q", q);
+      }
+      // Use replaceState — toggling a chip shouldn't push a history
+      // entry per toggle. Back button still leaves /workflows entirely.
+      window.history.replaceState({}, "", u.toString());
+    } catch (e) {
+      // Older browser — silent no-op (state still works, just no URL sync).
+    }
+  }
 
   // ---------- DOM helpers ----------
 
@@ -139,6 +206,7 @@
           setChipState(chip, true);
         }
         applyFilters();
+        syncURL();
       });
     });
   }
@@ -149,20 +217,35 @@
     input.addEventListener("input", function () {
       state.search = input.value;
       applyFilters();
+      syncURL();
     });
   }
 
   // ---------- Init ----------
 
+  function syncChipsToState() {
+    // After readURLState() runs, the visual chip state may not match
+    // what state.buckets says. Server-rendered HTML has all chips
+    // chip-active; URL params may have flipped some off. This brings
+    // visual state in line with the logical state on first paint.
+    $$(".workflows-toolbar .chip[data-bucket]").forEach(function (chip) {
+      var bucket = chip.getAttribute("data-bucket");
+      setChipState(chip, state.buckets.has(bucket));
+    });
+  }
+
   function init() {
+    // A3c — URL state is the source of truth on init. Read it before
+    // wiring handlers so the first handler invocation already sees
+    // the URL-derived state.
+    readURLState();
+    syncChipsToState();
     wireChips();
     wireSearch();
-    // First-paint render — server already filtered nothing, but the
-    // empty-state logic needs to run in case there's a stored search
-    // (browser back/forward restored the input value).
+    // Sync the search <input>'s value to the URL-derived state.
     var input = $("#workflows-search");
-    if (input && input.value) {
-      state.search = input.value;
+    if (input) {
+      input.value = state.search;
     }
     applyFilters();
   }
@@ -180,6 +263,9 @@
     state: state,
     applyFilters: applyFilters,
     setChipState: setChipState,
+    readURLState: readURLState,
+    syncURL: syncURL,
+    bucketsAreDefault: bucketsAreDefault,
     init: init,
   };
 })();
