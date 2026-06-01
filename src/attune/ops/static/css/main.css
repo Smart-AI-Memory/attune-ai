@@ -2365,3 +2365,241 @@ a.kpi:hover {
   white-space: pre-wrap;
   word-break: break-word;
 }
+
+/* ============================================================
+   A3a — Specs page refinement: toolbar, lifecycle badges,
+   empty state. Scoped via `.specs-toolbar` and `.lifecycle-badge`
+   to avoid collision with the global `.chip` class which is used
+   by tier chips, workflow status chips, and others.
+   ============================================================ */
+
+.specs-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: center;
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+}
+.specs-toolbar .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.specs-toolbar .chip-label,
+.specs-toolbar .search-label,
+.specs-toolbar .sort-label {
+  font-size: 12px;
+  color: var(--fg-muted, #6b7280);
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.specs-toolbar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  user-select: none;
+  margin: 0;
+  background: var(--bg-soft, #f9fafb);
+  color: var(--fg, #374151);
+  font-family: inherit;
+  line-height: 1.2;
+}
+.specs-toolbar .chip:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 1px;
+}
+.specs-toolbar .chip-active {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.specs-toolbar .chip-active.bucket-paused {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+.specs-toolbar .chip-active.bucket-complete {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+.specs-toolbar .chip-active.bucket-draft {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+.specs-toolbar .chip-active.bucket-approved-not-shipped {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+/* Stale: distinct amber-orange shade, separate from Paused's softer
+   amber. Per decisions.md D1: "amber distinct from Paused signaling
+   needs decision." */
+.specs-toolbar .chip-active.bucket-stale {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+.specs-toolbar .chip-inactive {
+  background: var(--bg-soft, #f9fafb);
+  color: var(--fg-subtle, #9ca3af);
+  border-color: var(--border, #e5e7eb);
+}
+.specs-toolbar .chip-inactive .chip-hidden-mark {
+  color: var(--danger, #ef4444);
+  margin-left: 2px;
+}
+.specs-toolbar .chip:hover {
+  filter: brightness(0.97);
+}
+.specs-toolbar .chip-count {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.specs-toolbar .search-wrap,
+.specs-toolbar .sort-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.specs-toolbar .search-input {
+  padding: 4px 8px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  font-size: 13px;
+  width: 180px;
+  font-family: inherit;
+  background: var(--bg, #fff);
+  color: var(--fg, #111827);
+}
+.specs-toolbar .search-input:focus {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 1px;
+}
+.specs-toolbar .sort-select {
+  padding: 4px 8px;
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--bg, #fff);
+  color: var(--fg, #111827);
+}
+
+/* Phase pills compaction — 4 pills in a single cell with consistent
+   spacing. Replaces the old 4-column per-phase layout. */
+.specs-table .col-phases {
+  text-align: center;
+  white-space: nowrap;
+}
+.specs-table .phase-axis {
+  font-size: 10px;
+  color: var(--fg-subtle, #9ca3af);
+  margin-left: 4px;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+}
+.specs-table .phase-pills {
+  display: inline-flex;
+  gap: 3px;
+  align-items: center;
+}
+
+/* Lifecycle badge — per-row derived bucket. Shares the chip palette
+   in the toolbar (active variants) for visual consistency. */
+.lifecycle-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.4;
+  border: 1px solid transparent;
+  text-transform: capitalize;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+.lifecycle-active {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #bfdbfe;
+}
+.lifecycle-approved-not-shipped {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #ddd6fe;
+}
+.lifecycle-complete {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #a7f3d0;
+}
+.lifecycle-paused {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fde68a;
+}
+.lifecycle-stale {
+  background: #ffedd5;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+.lifecycle-draft {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #e5e7eb;
+}
+
+/* Empty state inside the specs table area — shown when filters
+   eliminate all rows, or search produces no matches. Hidden by
+   default; JS toggles via `hidden` attribute. */
+.specs-empty-state {
+  margin: 32px auto;
+  padding: 24px;
+  text-align: center;
+  background: var(--bg-soft, #f9fafb);
+  border: 1px dashed var(--border, #e5e7eb);
+  border-radius: 6px;
+  max-width: 480px;
+}
+.specs-empty-state .empty-state-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--fg, #374151);
+  margin-bottom: 6px;
+}
+.specs-empty-state .empty-state-hint {
+  font-size: 13px;
+  color: var(--fg-muted, #6b7280);
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+.specs-empty-state .empty-state-action {
+  padding: 6px 14px;
+  border: 1px solid var(--accent, #2563eb);
+  background: var(--bg, #fff);
+  color: var(--accent, #2563eb);
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+.specs-empty-state .empty-state-action:hover {
+  background: var(--accent-soft, #dbeafe);
+}

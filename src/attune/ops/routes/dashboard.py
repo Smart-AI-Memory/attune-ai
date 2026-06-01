@@ -494,6 +494,14 @@ async def specs_page(request: Request) -> HTMLResponse:
                     "lifecycle": record.lifecycle,
                 }
             )
+    # Bucket counts for the chip filter row. All 6 keys are always present
+    # so the template can render chips with `0` counts for empty buckets
+    # (better UX than missing chips that pop in/out as data shifts).
+    bucket_counts = dict.fromkeys(
+        ("active", "approved-not-shipped", "complete", "paused", "stale", "draft"), 0
+    )
+    for s in specs:
+        bucket_counts[s["lifecycle"]] = bucket_counts.get(s["lifecycle"], 0) + 1
     return _render(
         request,
         "specs.html",
@@ -502,6 +510,7 @@ async def specs_page(request: Request) -> HTMLResponse:
         roots=[str(r) for r in roots],
         allow_run=cfg.allow_run,
         specs_candidates_enabled=cfg.specs_candidates_enabled,
+        bucket_counts=bucket_counts,
     )
 
 
