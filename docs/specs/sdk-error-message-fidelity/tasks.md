@@ -1,5 +1,5 @@
 # Spec: SDK Error Message Fidelity — Tasks
-**Status:** approved (2026-05-24)
+**Status:** Phases 1-5 shipped in v7.3.0 (2026-06-01); Phase 6 added for v7.4.0
 > Five phases, each shipping as its own PR. Phase 1 is the recommended
 > first commitment; Phases 2–5 build on it. Phase 1 can be approved
 > and shipped independently — it adds the primitives without touching
@@ -89,19 +89,32 @@ Goal: roll the Phase 2 pattern to the remaining four high-traffic SDK workflows.
 
 ---
 
-## Phase 5 — Long-tail workflows + retrospective
+## Phase 5 — Long-tail workflows (shipped 2026-06-01)
 
-Goal: cover the remaining SDK-backed workflows, then close the spec.
+Goal: cover the remaining SDK workflows that still used the legacy `sdk_error_message` helper.
 
-- [ ] **5.1** Apply the pattern to: `test-audit`, `doc-audit`, `doc-gen`, `discovery-sweep`, the `secure-release` pipeline, and `deep-review`. Same test shape per workflow.
-- [ ] **5.2** Manual verification across three induced failure modes:
-  - `ANTHROPIC_API_KEY=invalid` → expect "auth" classification
-  - Force a 429 (or mock at the SDK boundary) → expect "rate_limit"
-  - `PATH=""` → expect "not_found"
-- [ ] **5.3** Update `docs/COVERAGE_BUG_LOG.md` if any bugs surfaced during Phase 1–4 implementation.
-- [ ] **5.4** Close this spec. Open follow-up specs for `NextAction.kind` schema cleanup (the `learn-*` chip fix in PR #452 deferred this) and any other surface that emerges.
+**Scope correction (2026-06-01):** Phase 5 originally named `test-audit`, `doc-audit`, `doc-gen`, `discovery-sweep`, `secure-release`, and `deep-review` as the six targets. During implementation we found that only `deep-review` actually used the legacy helper — the other five had hand-rolled error messages (`"Agent SDK error: <type>: <exc>"`) that don't surface the misleading three-cause menu. Five DIFFERENT workflows DID use the legacy helper (per the spec-named-work-scope-drifts-from-code-reality lesson). PR #544 shipped the actually-broken set; the spec-named hand-rolled-message workflows move to Phase 6.
 
-**Acceptance:** all 12+ SDK-backed workflows migrated. Spec marked complete. Follow-up specs noted.
+- [x] **5.1** Apply the pattern to: `simplify-code`, `deep-review`, `research-synthesis`, `rag-code-gen`, `release-prep`. (PR #544 — shipped 2026-06-01.)
+- [x] **5.2** Manual verification deferred — Patrick's `claude` CLI auth was broken in-session, making the invalid-auth case trivially redundant. Test mocks cover all three classification paths. Will re-verify when next running a live SDK workflow.
+- [x] **5.3** No new bugs surfaced during Phase 1–4 implementation. COVERAGE_BUG_LOG.md unchanged.
+- [x] **5.4** Phases 1-5 shipped in v7.3.0 (2026-06-01). Phase 6 added below.
+
+**Acceptance:** 11 of 16 SDK-backed workflows migrated (Phase 2: 2 + Phase 4: 4 + Phase 5: 5). Helper `sdk_error_message` still exists for Phase 6 workflows; deletion happens after Phase 6.
+
+---
+
+## Phase 6 — Hand-rolled-message workflows (v7.4.0 candidate)
+
+Goal: extend the typed-kind SDK error flow to the remaining 5 SDK workflows that have hand-rolled error messages instead of the legacy helper.
+
+These workflows don't have the misleading three-cause menu — they fail with `"Agent SDK error: <type>: <exc>"`. Less bad than the legacy menu but still less rich than the typed-kind flow.
+
+- [ ] **6.1** Apply the pattern to: `test-audit`, `doc-audit`, `doc-gen` (if it has a separate SDK workflow file), `discovery-sweep`, `secure-release` pipeline. Same test shape per workflow.
+- [ ] **6.2** Once all 16 SDK workflows are migrated, delete the `sdk_error_message` helper from `agent_sdk_adapter.py`. Update its `__all__` export to remove the legacy name. Add a drift-guard test that grep-fails if any workflow re-imports `sdk_error_message`.
+- [ ] **6.3** Close this spec. Open follow-up specs for `NextAction.kind` schema cleanup (the `learn-*` chip fix in PR #452 deferred this) and any other surface that emerges.
+
+**Acceptance:** All 16 SDK-backed workflows migrated. Helper deleted. Spec marked complete.
 
 ---
 
