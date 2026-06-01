@@ -6841,3 +6841,95 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   lesson (don't undersell what the system actually
   delivers) — same family: be faithful to what the
   system actually does and can.
+
+- **Retargeting a stacked PR's base branch with `gh
+  pr edit --base main` doesn't trigger fresh CI —
+  the required `Tests` checks stay MISSING (not
+  failed) and admin-merge errors with "Required
+  status check 'X' is expected"**: extends the
+  existing "Stacked PR auto-close" lesson with a new
+  failure mode for the still-open-base case. Hit
+  2026-06-01 on PR #544 (Phase 5 stacked on Phase 4).
+  After Phase 4 merged, I ran `gh pr edit 544 --base
+  main` to retarget. The base reference updated cleanly
+  but pull_request `synchronize` events don't fire on
+  base-only changes, so `Tests` workflow's required
+  checks (`test (ubuntu-latest, 3.12)`, `lint`,
+  `coverage`, `platform-compat`) stayed unfired on the
+  rollup. Visible signature: `mergeable=MERGEABLE`,
+  `mergeStateStatus=BLOCKED`, `failed=0`, several
+  checks just absent from the rollup. Looks like the
+  PR is ready but admin-merge rejects. **Fix**:
+  rebase the stacked branch onto current main and
+  force-push. The rebase changes commit SHAs which IS
+  a synchronize event, firing all `pull_request`
+  workflows fresh against the new base. Sequence per
+  the existing "stacked PR rebase pattern":
+  `git fetch origin main && git rebase --onto
+  origin/main <old-base-commit> && git push
+  --force-with-lease`. Distinct from the existing
+  delete-branch-orphan lesson — that one's about base
+  branches deleted on merge; this one's about base
+  branches retargeted while still open.
+
+- **Two security workflows with confusingly-similar
+  names produce different required-check contexts —
+  `security.yml` → check name `security` (REQUIRED);
+  `security-scan.yml` → check name `Run Security
+  Scanner` (not required)**: hit 2026-06-01 multiple
+  times during the v7.3.0 release-prep sequence.
+  `security.yml` is the recurring guard-skip
+  workflow that CANCELLEDs on every non-dependabot
+  PR (per the existing "Required `security` check
+  fires CANCELLED" lesson) — and its check IS in the
+  required-status-checks list, so the cancellation
+  always blocks admin-merge until rerun.
+  `security-scan.yml` is a separate scanner that
+  usually runs SUCCESS on first try and isn't
+  required. Diagnostic confusion mode: when `gh pr
+  merge --admin` errors with `Required status check
+  "security" is expected. (mergePullRequest)`, the
+  rollup may show `Run Security Scanner:
+  COMPLETED/SUCCESS` — that's the WRONG run. Find the
+  blocking job via `gh run list --workflow=security.yml
+  --branch <branch>` and rerun it. Pairs with the
+  existing "Required `security` check" + "Tag push +
+  workflow_dispatch both fire publish-pypi.yml"
+  lessons — same root-cause family (workflow files
+  with similar names, different required-check
+  status contexts).
+
+- **Migrating workflows to a new error-handling
+  pattern silently breaks existing tests that
+  asserted on the OLD pattern's output strings —
+  grep the test tree for old-format assertions
+  BEFORE the first push**: hit 2026-06-01 on Phase 4
+  of `sdk-error-message-fidelity` (PR #543). Phase 2
+  (PR #522) had documented this exact pattern in its
+  commit body — "Updated 3 existing tests that
+  asserted on the legacy exception-type-leak
+  behavior" — and named the new assertion shape
+  (`'claude CLI subprocess failed' in result.error`
+  + `metadata.sdk_error_kind == 'unknown'` for mock
+  exceptions). I didn't read Phase 2's commit body
+  before pushing Phase 4, so 4 existing tests
+  (`test_bug_predict_execute.py::test_generic_exception`
+  + 3 siblings) broke on the OLD assertion shape
+  (`"RuntimeError" in result.error` and `"kaboom"
+  in result.error` — both came from the legacy
+  `sdk_error_message` helper which was deleted in
+  Phase 4). Failure surface: full CI matrix red
+  across 6+ lanes, looks platform-wide because it's
+  asserting on the same OLD strings everywhere.
+  **Operational rule**: when migrating a workflow
+  layer from one error-handling pattern to another,
+  before the first push grep the test tree for
+  assertions on the OLD pattern's output strings
+  AND read the prior phase's commit body — they
+  hit this and documented the fix. Cost of skipping
+  the read: a full CI matrix wait (~15 min) for
+  multi-platform red, then a follow-up commit. Pairs
+  with the existing "Matrix-wide red on a feature PR
+  is usually one root-cause test" lesson — same
+  shape (one root cause, looks like N independent
+  bugs); this one names the prevention.
