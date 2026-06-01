@@ -87,8 +87,12 @@ def test_specs_page_writeable_mode_shows_editable_pills(tmp_path):
     client = _client(tmp_path, specs_roots=(root,), allow_run=True)
     r = client.get("/specs")
     assert r.status_code == 200
-    # No inline <select> — that's now created client-side on click.
-    assert "<select" not in r.text
+    # No inline status-edit <select> inside the table body — those are
+    # created client-side on pill click. The toolbar's sort <select>
+    # (added in A3a) is a navigation control, not a status mutation,
+    # so it sits outside <tbody> by construction.
+    tbody = r.text.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+    assert "<select" not in tbody
     # Pills carry the writeable markers so specs.js can wire click-to-edit.
     assert "status-pill-editable" in r.text
     assert 'role="button"' in r.text
@@ -99,14 +103,21 @@ def test_specs_page_writeable_mode_shows_editable_pills(tmp_path):
     assert 'data-original="draft"' in r.text
 
 
-def test_specs_page_readonly_mode_no_dropdowns(tmp_path):
-    """allow_run=False → no <select> elements, plain chips only."""
+def test_specs_page_readonly_mode_no_status_dropdowns(tmp_path):
+    """allow_run=False → no status-edit dropdowns inside the table body.
+
+    The toolbar's sort <select> (A3a) is always present regardless of
+    allow_run — it's a navigation control. What read-only mode forbids
+    is per-pill status mutation, which would render as a <select>
+    inside the spec table's <tbody>.
+    """
     root = tmp_path / "specs"
     _make_spec(root, "alpha", files={"tasks.md": "**Status:** draft\n"})
     client = _client(tmp_path, specs_roots=(root,), allow_run=False)
     r = client.get("/specs")
     assert r.status_code == 200
-    assert "<select" not in r.text
+    tbody = r.text.split("<tbody>", 1)[1].split("</tbody>", 1)[0]
+    assert "<select" not in tbody
     assert "Read-only mode" in r.text
 
 
