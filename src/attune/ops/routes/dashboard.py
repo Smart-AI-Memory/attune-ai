@@ -8,7 +8,7 @@ from pathlib import Path
 from fastapi import APIRouter, Request
 from fastapi.responses import HTMLResponse
 
-from attune.ops import anthropic_cost, data
+from attune.ops import anthropic_cost, data, workflow_concern
 
 logger = logging.getLogger(__name__)
 
@@ -121,6 +121,14 @@ async def workflows_page(request: Request) -> HTMLResponse:
     default_scopes = {
         w.name: data.workflow_default_scope(w.name, cfg.project_root) for w in workflows
     }
+    # A2 of docs/specs/ops-workflows-page-refinement/. Per-row concern
+    # bucket + per-bucket counts derived from the workflow_concern
+    # module (PR #552 — pure logic, no I/O). The template's chip
+    # toolbar (A3a) renders one chip per bucket with these counts;
+    # each row gets a `concern-pill` badge keyed off concerns[name].
+    workflow_names = [w.name for w in workflows]
+    concerns = {name: workflow_concern.derive_concern(name) for name in workflow_names}
+    bucket_counts = workflow_concern.concern_counts(workflow_names)
     return _render(
         request,
         "workflows.html",
@@ -130,6 +138,9 @@ async def workflows_page(request: Request) -> HTMLResponse:
         features=features,
         supports_path=supports_path,
         default_scopes=default_scopes,
+        concerns=concerns,
+        bucket_counts=bucket_counts,
+        all_concerns=workflow_concern.ALL_CONCERNS,
         all_code_path=data.ALL_CODE_PATH,
         tier_label=data.TIER_LABEL,
         tier_tooltip=data.TIER_TOOLTIP,
