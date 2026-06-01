@@ -245,8 +245,9 @@ class TestExecuteExceptionHandling:
         self._patch_query_to_raise(monkeypatch, RuntimeError("kaboom"))
         result = asyncio.run(workflow.execute(path="/tmp/proj"))
         assert result.success is False
-        assert "RuntimeError" in result.error
-        assert "kaboom" in result.error
+        # Phase 4 — see test_bug_predict_execute.py for the rationale.
+        assert "claude CLI subprocess failed" in result.error
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
 
 # ---------------------------------------------------------------------------
@@ -362,4 +363,6 @@ class TestMain:
         captured = capsys.readouterr()
         assert "Success: False" in captured.out
         assert "Error:" in captured.out
-        assert "boom" in captured.out
+        # Phase 4: legacy exception-text leak replaced by structured
+        # SdkSubprocessError message. Mock exception has no argv → unknown.
+        assert "claude CLI subprocess failed" in captured.out

@@ -1,98 +1,49 @@
 ---
-type: task
-name: bug-predict-task
 feature: bug-predict
 depth: task
-generated_at: 2026-05-16T06:19:45.770969+00:00
-source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
+generated_at: 2026-06-01T11:47:06.411071+00:00
+source_hash: cc510a144b48d7a571de765708d61c6c9bd34809866c35bf40d3568682dc0f7c
 status: generated
 ---
 
-# Run Bug Prediction
+# Work with bug predict
 
-Use bug prediction when you want to find likely bug locations in your codebase before they reach production — catching dangerous eval usage, swallowed exceptions, and incomplete code paths by analyzing patterns and complexity.
+Use bug predict when you need to predict likely bug locations based on code patterns and complexity.
 
 ## Prerequisites
 
 - Access to the project source code
-- The `src/attune/workflows/bug_predict.py` module available in your working environment
+- Familiarity with the files under src/attune/workflows/bug_predict.py
 
 ## Steps
 
-1. **Choose the path to scan.**
-   Decide the scope of your scan: a single file, a directory, or the whole project. The broader the scope, the more findings you may need to filter.
+1. **Understand the current behavior.**
+   Read the entry points to see what bug predict
+   does today before making changes.
+   The primary functions are:
+   - `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py` — Format bug prediction output as a human-readable report.
+   - `main()` in `src/attune/workflows/bug_predict_report.py` — CLI entry point for bug prediction workflow.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-   | Target | Command |
-   |--------|---------|
-   | Single file | `/bug-predict src/auth.py` |
-   | Directory | `/bug-predict src/` |
-   | Whole project | `/bug-predict .` |
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-2. **Run the scan.**
-   Invoke the skill with your chosen path:
-
-   ```
-   /bug-predict src/
-   ```
-
-   If you omit a path, the skill prompts you to choose a scope and severity filter before running.
-
-3. **Read the risk report.**
-   The workflow coordinates three subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — and synthesizes their output into a single structured report:
-
-   ```
-   Bug Prediction Report
-   Risk Score: 73/100 | Files: 34 | Findings: 8
-
-   HIGH (2 findings)
-     src/hooks/executor.py:89   dangerous_eval  eval() on user input
-     src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
-
-   MEDIUM (3 findings)
-     src/api/webhook.py:67      broad_exception bare except: masks errors
-     ...
-
-   LOW (3 findings)
-     src/auth/session.py:45     incomplete_code TODO: add token rotation
-     ...
-   ```
-
-   Each finding includes a file path, line number, pattern type, and a plain-English description. File links are clickable — select one to jump directly to the flagged line.
-
-4. **Act on HIGH-severity findings first.**
-   Ask for a guided fix on any critical finding:
-
-   ```
-   fix the dangerous_eval in executor.py
-   ```
-
-   Then work through MEDIUM and LOW findings in priority order.
-
-5. **Verify the report output programmatically (optional).**
-   If you are calling the workflow directly in code, use `format_bug_predict_report()` to render results:
-
-   ```python
-   from attune.workflows.bug_predict_report import format_bug_predict_report
-
-   report_text = format_bug_predict_report(result, input_data)
-   print(report_text)
-   ```
-
-6. **Run the tests.**
-   After any changes to the workflow or report formatter, confirm nothing regressed:
-
-   ```
-   pytest -k "bug-predict"
-   ```
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "bug-predict"`.
 
 ## Key files
 
-- `src/attune/workflows/bug_predict.py` — `BugPredictionWorkflow` and the three-subagent orchestration logic
-- `src/attune/workflows/bug_predict_report.py` — `format_bug_predict_report()` and the `main()` CLI entry point
+- `src/attune/workflows/bug_predict.py`
+- `src/attune/workflows/bug_predict_*.py`
 
-## Verify success
+## Common modifications
 
-The task is complete when:
+Functions you are most likely to modify:
 
-- The scan finishes and returns a report with an overall risk score (0–100), findings grouped by severity (HIGH, MEDIUM, LOW), and a Suggestions section with prioritized prevention strategies.
-- All tests pass: `pytest -k "bug-predict"` exits with no failures.
+- `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py`
+- `main()` in `src/attune/workflows/bug_predict_report.py`
