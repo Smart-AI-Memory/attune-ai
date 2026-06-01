@@ -3,7 +3,7 @@
 {% block content %}
 <section class="page-head">
   <h1>Specs</h1>
-  <p class="page-sub">
+  <p class="page-sub" id="page-sub">
     {{ specs|length }} spec{{ '' if specs|length == 1 else 's' }}
     across {{ roots|length }} root{{ '' if roots|length == 1 else 's' }}.
     {% if allow_run %}
@@ -43,6 +43,50 @@
 {% endif %}
 
 {% if specs %}
+  {# A3a toolbar — chip filter row, search, sort. JS in specs_refined.js
+     handles state; default chip state is all-on EXCEPT Complete per
+     decisions.md D1 + R1.3. URL param persistence ships in A3c. #}
+  <div class="specs-toolbar" role="region" aria-label="Spec filter and sort controls">
+    <div class="chip-row" role="group" aria-label="Lifecycle bucket filters">
+      <span class="chip-label">Filter:</span>
+      {% set bucket_styles = [
+        ('active', 'Active', ''),
+        ('approved-not-shipped', 'Approved-not-shipped', 'bucket-approved-not-shipped'),
+        ('complete', 'Complete', 'bucket-complete'),
+        ('paused', 'Paused', 'bucket-paused'),
+        ('stale', 'Stale', 'bucket-stale'),
+        ('draft', 'Draft', 'bucket-draft'),
+      ] %}
+      {% for bucket, label, color_cls in bucket_styles %}
+        {% set active = bucket != 'complete' %}
+        {# bucket-* class always present so chips colorize correctly
+           after JS toggles chip-active on/off. CSS gates the color
+           on `.chip-active.bucket-*` — inactive chips show neutral. #}
+        <button
+          type="button"
+          class="chip {% if color_cls %}{{ color_cls }} {% endif %}{% if active %}chip-active{% else %}chip-inactive{% endif %}"
+          data-bucket="{{ bucket }}"
+          aria-pressed="{{ 'true' if active else 'false' }}"
+          aria-label="{{ label }} bucket — {{ bucket_counts[bucket] }} specs"
+        >{{ label }} <span class="chip-count" data-count="{{ bucket }}">{{ bucket_counts[bucket] }}</span>{% if not active %} <span class="chip-hidden-mark" aria-hidden="true">✗</span>{% endif %}</button>
+      {% endfor %}
+    </div>
+    <div class="search-wrap">
+      <label class="search-label" for="specs-search">Search:</label>
+      <input id="specs-search" class="search-input" type="search"
+        placeholder="slug substring…" autocomplete="off"
+        aria-label="Filter specs by slug substring" />
+    </div>
+    <div class="sort-wrap">
+      <label class="sort-label" for="specs-sort">Sort:</label>
+      <select id="specs-sort" class="sort-select" aria-label="Sort specs">
+        <option value="recent">Recently updated</option>
+        <option value="alpha">Alphabetical</option>
+        <option value="oldest">Oldest untouched</option>
+      </select>
+    </div>
+  </div>
+
   {# Compact status display: dot + 3-letter code for known statuses,
      truncated text + dotted underline for custom strings. Full status
      in title attribute (native tooltip). Click on editable pills swaps
@@ -76,14 +120,13 @@
       <tr>
         <th class="col-slug">Spec</th>
         <th class="col-mtime">Updated</th>
-        {% for phase_name in ("decisions", "requirements", "design", "tasks") %}
-          <th class="col-phase">{{ phase_name|capitalize }}</th>
-        {% endfor %}
+        <th class="col-phases" data-tooltip="Decisions / Requirements / Design / Tasks">Phases <span class="phase-axis">D&middot;R&middot;D&middot;T</span></th>
+        <th class="col-lifecycle">Lifecycle</th>
       </tr>
     </thead>
     <tbody>
       {% for s in specs %}
-        <tr data-slug="{{ s.slug }}">
+        <tr data-slug="{{ s.slug }}" data-bucket="{{ s.lifecycle }}" data-mtime="{{ s.last_modified or '' }}">
           <td class="col-slug">
             <a href="/specs/{{ s.slug }}" class="link spec-slug" data-tooltip="{{ s.slug }}" aria-label="{{ s.slug }}"><code>{{ s.slug }}</code></a>
           </td>
@@ -101,35 +144,47 @@
               <span class="spec-mtime spec-mtime-empty" aria-label="No update time recorded">—</span>
             {% endif %}
           </td>
-          {% for phase in s.phases %}
-            <td class="col-phase" data-phase="{{ phase.name }}">
-              {% if not phase.exists %}
-                <span class="status-pill chip-muted" data-tooltip="No {{ phase.name }}.md file" aria-label="No {{ phase.name }}.md file">—</span>
-              {% else %}
-                {% set cls = chip_cls(phase.status)|trim %}
-                {% set code = status_code(phase.status)|trim %}
-                {% set custom = is_custom(phase.status)|trim == '1' %}
-                <span
-                  class="status-pill {{ cls }}{% if custom %} status-pill-custom{% endif %}{% if allow_run %} status-pill-editable{% endif %}"
-                  data-tooltip="{{ phase.status or '(no status)' }}"
-                  {% if allow_run %}
-                  data-slug="{{ s.slug }}"
-                  data-phase="{{ phase.name }}"
-                  data-original="{{ phase.status or '' }}"
-                  role="button"
-                  tabindex="0"
-                  aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}. Click to edit."
-                  {% else %}
-                  aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}"
-                  {% endif %}
-                ><span class="status-dot" aria-hidden="true"></span><span class="status-code">{{ code or '(none)' }}</span></span>
-              {% endif %}
-            </td>
-          {% endfor %}
+          <td class="col-phases">
+            <span class="phase-pills" role="group" aria-label="Phase statuses for {{ s.slug }}">
+              {% for phase in s.phases %}
+                {% if not phase.exists %}
+                  <span class="status-pill chip-muted" data-phase="{{ phase.name }}" data-tooltip="No {{ phase.name }}.md file" aria-label="No {{ phase.name }}.md file">—</span>
+                {% else %}
+                  {% set cls = chip_cls(phase.status)|trim %}
+                  {% set code = status_code(phase.status)|trim %}
+                  {% set custom = is_custom(phase.status)|trim == '1' %}
+                  <span
+                    class="status-pill {{ cls }}{% if custom %} status-pill-custom{% endif %}{% if allow_run %} status-pill-editable{% endif %}"
+                    data-phase="{{ phase.name }}"
+                    data-tooltip="{{ phase.name|capitalize }}: {{ phase.status or '(no status)' }}"
+                    {% if allow_run %}
+                    data-slug="{{ s.slug }}"
+                    data-original="{{ phase.status or '' }}"
+                    role="button"
+                    tabindex="0"
+                    aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}. Click to edit."
+                    {% else %}
+                    aria-label="Status for {{ phase.name }} of {{ s.slug }}: {{ phase.status or 'no status' }}"
+                    {% endif %}
+                  ><span class="status-dot" aria-hidden="true"></span><span class="status-code">{{ code or '(none)' }}</span></span>
+                {% endif %}
+              {% endfor %}
+            </span>
+          </td>
+          <td class="col-lifecycle">
+            <span class="lifecycle-badge lifecycle-{{ s.lifecycle }}" data-tooltip="Derived from phase statuses + last-modified date">
+              {{ s.lifecycle.replace('-', ' ') }}
+            </span>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
   </table>
+  <div id="specs-empty-state" class="specs-empty-state" hidden role="status" aria-live="polite">
+    <div class="empty-state-title" id="specs-empty-title">No matches</div>
+    <div class="empty-state-hint" id="specs-empty-hint"></div>
+    <button type="button" class="empty-state-action" id="specs-reset-filters">Reset to default filters</button>
+  </div>
 {% else %}
   <p class="empty">
     No specs found. Configure a roots directory with
@@ -140,10 +195,19 @@
 {% endblock %}
 
 {% block scripts %}
-{% if allow_run %}
-  <script src="{{ url_for('static', path='js/specs.js') }}?v={{ attune_version }}"></script>
-  {% if specs_candidates_enabled %}
-    <script src="{{ url_for('static', path='js/completion_candidates.js') }}?v={{ attune_version }}"></script>
+  {# A3a: chip filter / search / sort behavior. Loaded for all users
+     (read-only and editable) since filtering is a navigation aid, not
+     a mutation. URL persistence + chip-state-from-URL ships in A3c. #}
+  {% if specs %}
+    <script src="{{ url_for('static', path='js/specs_refined.js') }}?v={{ attune_version }}"></script>
   {% endif %}
-{% endif %}
+  {% if allow_run %}
+    {# Pre-A3 status-flip behavior — still loaded so per-phase pill
+       clicks open the inline editor. A future PR can fold its logic
+       into specs_refined.js if the surfaces converge. #}
+    <script src="{{ url_for('static', path='js/specs.js') }}?v={{ attune_version }}"></script>
+    {% if specs_candidates_enabled %}
+      <script src="{{ url_for('static', path='js/completion_candidates.js') }}?v={{ attune_version }}"></script>
+    {% endif %}
+  {% endif %}
 {% endblock %}

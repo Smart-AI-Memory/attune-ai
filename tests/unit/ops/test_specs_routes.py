@@ -277,6 +277,130 @@ def test_list_specs_lifecycle_matches_bucket_cascade(tmp_path, monkeypatch):
     assert lifecycles["draft-spec"] == "draft"
 
 
+def test_specs_html_page_includes_bucket_chip_row(tmp_path, monkeypatch):
+    """A3a — chip filter row with all 6 buckets renders on /specs.
+
+    The toolbar is server-rendered (data-bucket + count attributes),
+    JS attaches behavior on load. All 6 chips are always present even
+    when the bucket count is zero — that's a UX choice so chips don't
+    pop in/out as data shifts.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    response = client.get("/specs")
+    assert response.status_code == 200
+    body = response.text
+    # All 6 bucket chips render — even buckets with 0 count.
+    for bucket in (
+        "active",
+        "approved-not-shipped",
+        "complete",
+        "paused",
+        "stale",
+        "draft",
+    ):
+        assert f'data-bucket="{bucket}"' in body, f"missing chip for {bucket}"
+        assert f'data-count="{bucket}"' in body, f"missing count slot for {bucket}"
+    # Default chip state per decisions.md: all-active except Complete.
+    # Complete chip has `chip-inactive` class; others have `chip-active`.
+    # Just smoke-check the Complete chip is inactive — full default-state
+    # behavior is in the JS, which is source-grep tested below.
+    assert "chip-inactive" in body
+
+
+def test_specs_html_page_includes_lifecycle_column(tmp_path, monkeypatch):
+    """A3a — each spec row gets a lifecycle badge with the derived bucket."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "draft-only",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs").text
+    # Row carries data-bucket so the JS can filter without re-fetching.
+    assert 'data-bucket="draft"' in body  # both the chip and the row
+    # The lifecycle badge renders with the derived bucket class.
+    assert "lifecycle-badge" in body
+    assert "lifecycle-draft" in body
+
+
+def test_specs_html_page_includes_search_and_sort(tmp_path, monkeypatch):
+    """A3a — toolbar carries search input and sort select.
+
+    URL persistence ships in A3c — these controls work client-side
+    only for now.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs").text
+    assert 'id="specs-search"' in body
+    assert 'id="specs-sort"' in body
+    # All 3 sort options present.
+    for opt in ("recent", "alpha", "oldest"):
+        assert f'value="{opt}"' in body
+
+
+def test_specs_refined_js_exposes_expected_api():
+    """A3a — specs_refined.js exposes the documented surface.
+
+    Source-grep test mirroring the test_runner_js_parsing convention.
+    Future PRs (A3b kebab integration, A3c URL params) hook the same
+    state/surface — this guards against accidental removal.
+    """
+    js_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "specs_refined.js"
+    )
+    js_text = js_path.read_text(encoding="utf-8")
+    # Exports namespace.
+    assert "window.__attuneSpecs" in js_text
+    # Documented surface — A3c will hook state.buckets; A3b may hook init.
+    for name in (
+        "DEFAULT_BUCKETS",
+        "state",
+        "applyFilters",
+        "applySort",
+        "setChipState",
+        "init",
+    ):
+        assert name in js_text, f"missing export: {name}"
+    # Default bucket set must match decisions.md (all-on except Complete).
+    for bucket in (
+        "active",
+        "approved-not-shipped",
+        "paused",
+        "stale",
+        "draft",
+    ):
+        assert f'"{bucket}"' in js_text, f"missing default bucket: {bucket}"
+    # Complete must NOT be in DEFAULT_BUCKETS — it's the only chip
+    # that's default-off per R1.3.
+    default_block = js_text.split("DEFAULT_BUCKETS", 1)[1].split("]", 1)[0]
+    assert "complete" not in default_block.lower()
+
+
 def test_specs_html_page_renders_with_lifecycle_in_context(tmp_path, monkeypatch):
     """`/specs` HTML page renders 200 and each spec's dict carries a lifecycle.
 
