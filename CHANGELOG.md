@@ -7,16 +7,102 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.3.0] — 2026-06-01
+
+### Added
+
+- **Ops dashboard Specs page refinement** — the `/specs` route gains
+  a 6-bucket lifecycle (Active / Approved-not-shipped / Complete /
+  Paused / Stale / Draft), a chip filter toolbar, a per-row kebab
+  action menu (Open in editor, Copy slug, View linked PRs), and URL
+  parameter support for shareable filter state
+  (`?bucket=active,paused&sort=alpha`). Stale auto-surfaces specs
+  not touched in 30 days. The derivation is pure-Python and testable
+  in isolation; the dashboard reads from it on every render
+  (#533, #534, #535, #536, #539).
+- **SDK error message fidelity (Phase 1-3)** — when a workflow's
+  `claude_agent_sdk.query()` fails, the dashboard's Recent Runs
+  page now surfaces the real `claude` CLI stderr in a collapsible
+  block instead of the legacy "Command failed with exit code 1"
+  message. A typed `sdk_error_kind` classifier identifies
+  `api_quota`, `auth`, `rate_limit`, `not_found`, `budget_cap`,
+  and `unknown` cases. Phase 2 wires `code-review` and
+  `dependency-check`; Phase 3 adds persistence + render + CLI
+  side-channel for the runner consumer. Remaining workflows
+  (`bug-predict`, `perf-audit`, `refactor-plan`, `security-audit`,
+  long-tail) ship in a follow-up
+  (#516, #522, #526, #531).
+- **Pre-Write worktree-path-guard hook** — first enforced pattern
+  from the enforcement-vs-documentation framework. The hook blocks
+  Write/Edit operations targeting a path outside the current git
+  worktree's root, exiting with code 2 and a remediation message.
+  Catches the wrong-tree-write class of bugs at the moment of the
+  attempted write (#521).
+- **SessionStart starter-prompt nudge** — a hook surfaces the
+  contents of `~/.attune/next_session_starter.md` at session start
+  so cross-session handoff context is visible without manual paste.
+  Pairs with the existing cross-account-handoff feedback memory
+  (#524).
+- **Docs wiring-audit CI job (advisory mode)** — Tasks 1+2+6+7 of
+  the `docs-wiring-audit` spec ship a stdlib-only audit script
+  that checks anchor integrity across `docs/`. Wired as a GitHub
+  Actions job that runs on every PR but is NOT yet in
+  `required_status_checks` — explicit advisory-mode runway before
+  branch-protection enforcement (#518, #523, #540).
+- **Spec discovery extension to `docs/specs/`** — the SessionStart
+  hook now lists in-flight specs by walking `docs/specs/`,
+  surfacing each spec's `requirements.md` `status:` field. Replaces
+  the previous Workflows-only inventory at session start (#500).
+- **`attune-ai.dev` static landing page** — first commit of the
+  domain's marketing surface. Lives at `attune-ai-dev/` in the
+  repo as a sibling to `website/` (the smartaimemory.com Next.js
+  site) so each deployable surface is one top-level directory
+  (#498).
+
 ### Changed
 
-- **Wizard entry-point group renamed to ``attune.wizards``.** The
-  registry now reads the canonical ``attune.wizards`` group (which
-  ``pyproject.toml`` has declared since the package rename). Third-party
-  wizards still declared under the legacy ``empathy.wizards`` group
-  continue to load with a ``DeprecationWarning`` for one release; the
-  legacy fallback will be removed in the next major. Builtin wizards
-  are unaffected — they load by hardcoded module path, not entry-point
-  discovery.
+- **Wizard entry-point group renamed to `attune.wizards`.** The
+  registry reads the canonical `attune.wizards` group (which
+  `pyproject.toml` has declared since the package rename).
+  Third-party wizards still declared under the legacy
+  `empathy.wizards` group continue to load with a
+  `DeprecationWarning` for one release; the legacy fallback will
+  be removed in the next major. Builtin wizards are unaffected —
+  they load by hardcoded module path, not entry-point discovery
+  (#512).
+- **README leads with per-claim faithfulness (>99%), not per-query
+  bucket rate (6.7% hallucination).** The two metrics measure the
+  same RAG-grounding property at different granularities;
+  per-claim is the stronger honest framing. Burying the better
+  number was unfaithful to attune-rag's own measurements (#527).
+
+### Fixed
+
+- **Stale test flake + `create_wizard` docstring** — rescued from
+  at-risk worktrees during 2026-05-30 repo-hygiene work. Two
+  small fixes that had landed in WIP branches but not main (#514).
+
+### Chore
+
+- **Plugin manifest version sync + drift-guard test** — bumps the
+  plugin/.claude-plugin/ version fields to match `pyproject.toml`
+  (the v7.2.0 release shipped with them at 7.0.0 through four
+  releases). A new `test_pyproject_matches_plugin_manifests` test
+  asserts cross-stream version match going forward (#496).
+- **Docs fiction cleanup (Phases 1-3)** — 8 docs renamed
+  mechanically, 1 doc rewritten, 4 docs archived. Eliminates
+  references to features that never shipped or were retired
+  (#506, #507, #508, #509, #510). Pairs with the
+  `doc-fiction-cleanup` spec authored in (#499).
+- **`.help/templates/` plugin feature regenerated** with
+  attune-author 0.14.2 — picks up the latest polish-pass output
+  for the plugin feature surface (#497).
+- **18 CLAUDE.md lessons added** across the session — Windows
+  test-fragility, documentation-framing faithfulness, wireframes
+  surface design gaps, 3-stage gap discovery, CodeQL URL
+  substring rule, etc. (#519, #525, #527, #528, #530, #532, plus
+  PR #541 in this release window).
+- **Dependency cap bumps** — `streamlit>=1.58.0,<2.0.0` (#537).
 
 ## [7.2.0] — 2026-05-27
 
