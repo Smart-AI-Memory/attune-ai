@@ -228,7 +228,23 @@ class Run:
         self.exit_code = exit_code
         self.status = "completed" if exit_code == 0 else "failed"
         self.completed_at = datetime.now(timezone.utc)
-        self._broadcast(("done", {"exit_code": exit_code, "status": self.status}))
+        # Phase 4.3 of docs/specs/sdk-error-message-fidelity/ — include
+        # typed sdk_error_kind + redacted sdk_stderr in the done payload
+        # so the dashboard chip classifier can read the typed value
+        # instead of regex-scanning the log buffer. The fields are set
+        # via the run_meta_stdout side-channel during line processing,
+        # so they're already populated by the time mark_done fires.
+        self._broadcast(
+            (
+                "done",
+                {
+                    "exit_code": exit_code,
+                    "status": self.status,
+                    "sdk_error_kind": self.sdk_error_kind,
+                    "sdk_stderr": self.sdk_stderr,
+                },
+            )
+        )
 
     # Per-run recommendation cap. Workflows that hit this cap have
     # something pathological going on (or are emitting one per finding
@@ -266,7 +282,17 @@ class Run:
         for rec in self.recommendations:
             queue.put_nowait(("recommendation", rec))
         if self.is_terminal:
-            queue.put_nowait(("done", {"exit_code": self.exit_code, "status": self.status}))
+            queue.put_nowait(
+                (
+                    "done",
+                    {
+                        "exit_code": self.exit_code,
+                        "status": self.status,
+                        "sdk_error_kind": self.sdk_error_kind,
+                        "sdk_stderr": self.sdk_stderr,
+                    },
+                )
+            )
         self.subscribers.add(queue)
         try:
             while True:

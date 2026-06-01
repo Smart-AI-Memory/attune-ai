@@ -152,14 +152,39 @@
       // Defense in depth for P0-2: a run that exits 0 but emitted an
       // uncaught Python exception, a workflow-reported failure block,
       // or a similar error-leak signal should not render with a green
-      // "completed" chip. The CLI side ought to propagate the failure
-      // as exit code != 0 — that's tracked separately — but until it
-      // does, scan the captured log here and downgrade the chip.
-      var leak = info.status === "completed" && info.exit_code === 0
+      // "completed" chip. Two layers, in order:
+      //
+      //   1. Phase 4.3 typed-kind path — when the workflow has been
+      //      migrated to the sdk-error-message-fidelity flow and the
+      //      SDK actually failed, the side-channel writes
+      //      ``sdk_error_kind`` onto the run record. Use that directly
+      //      instead of regex-scanning the log buffer. Typed, fast,
+      //      and survives log-output formatting changes.
+      //
+      //   2. Log-scan fallback — for unmigrated workflows (Phase 5
+      //      hasn't reached them yet) or runs whose CLI exited 0
+      //      after a workflow-reported failure, the regex heuristic
+      //      still catches Python tracebacks / voice-layer "What Went
+      //      Wrong" blocks. Removed once all workflows are migrated.
+      var typedKind = info.status === "completed" && info.exit_code === 0
+        ? info.sdk_error_kind || null
+        : null;
+      var leak = !typedKind && info.status === "completed" && info.exit_code === 0
         ? detectLogErrorLeak(logBuffer)
         : null;
 
-      if (leak) {
+      if (typedKind) {
+        setStatus("completed with errors (" + typedKind + ")");
+        setStatusClass("chip-warn");
+        if (statusEl) {
+          statusEl.setAttribute(
+            "data-tooltip",
+            "The run exited 0 but the SDK subprocess reported a " +
+            typedKind + " failure. See the 'Raw stderr from claude CLI' " +
+            "section below for the underlying message."
+          );
+        }
+      } else if (leak) {
         setStatus("completed with errors (" + leak + ")");
         setStatusClass("chip-warn");
         if (statusEl) {
