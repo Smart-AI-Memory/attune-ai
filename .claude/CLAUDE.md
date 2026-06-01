@@ -6685,3 +6685,70 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   R1.1, decisions.md D1, wireframe.html) and ratified
   the threshold (30d), default visibility (active),
   and visual treatment (amber distinct from Paused).
+
+- **Windows runner strips `\n` but leaves `\r` —
+  tests asserting against `run.lines` need rstrip** —
+  pairs with the existing "Cross-platform path
+  handling" + `is_absolute()` + edge-of-bucket timing
+  + `Path("/tmp")` lessons as a 6th surface in the
+  same family. The runner's existing line-read at
+  `src/attune/ops/runner.py::_execute` does
+  `raw.decode("utf-8", errors="replace").rstrip("\n")`
+  — only strips the LF half of CRLF, leaving the CR
+  attached to every line in `run.lines` on Windows.
+  Substring checks (`"text" in joined_string`) tolerate
+  the trailing CR; **exact-match list membership
+  checks (`"text" in run.lines`) don't**. Hit
+  2026-05-31 on PR #531 Phase 3b: all 4 Windows lanes
+  failed identically on
+  `assert "running code-review" in real_log_lines`
+  because the actual list was
+  `['running code-review\r', 'done\r']`. **Diagnostic
+  shortcut**: any test asserting
+  `"exact text" in some_list_of_log_lines` where
+  lines come from a subprocess's `print()` is
+  Windows-fragile. **Fix**: `[line.rstrip() for line in
+  run.lines if ...]` before the membership check —
+  cross-platform safe (`rstrip()` with no arg strips
+  all trailing whitespace including CR). **Production-
+  side is fine for this PR**: the new
+  `attune.ops.run_meta_stdout.parse_line` already does
+  `.rstrip("\r\n")` internally so the side-channel
+  marker parsing works cross-platform — only direct
+  line-comparison tests are affected. A broader fix
+  (strip CR in `_execute` itself) is worth its own
+  PR; this lesson exists so the bug doesn't re-surface
+  in tests of future runner-adjacent code.
+
+- **Don't re-mitigate what the system already
+  solves** — when listing risks for a plan, lean on
+  existing infrastructure for known-solved problem
+  classes (attune-rag's >99% per-claim faithfulness
+  for citation-grounded generation; the wiring-audit
+  pattern for single-file CLI audit scripts; the
+  worktree-path-guard hook for wrong-tree writes;
+  the bulletin for cross-actor coordination) rather
+  than enumerating mitigations as if from scratch.
+  The over-conservative listing is itself a
+  faithfulness gap — it implies the system's
+  capabilities don't exist or aren't trusted. Hit
+  2026-05-31 during the capability-surface-taxonomy
+  spec planning: I listed "hallucination risk" as a
+  manual-care concern for spec authoring when
+  attune-rag is literally designed to solve that
+  exact problem class for any RAG-grounded
+  generation. **Corollary — proposed mitigations
+  should name which infrastructure does the work**:
+  if the answer is "manual care," that's a signal
+  either the system is missing something OR I'm
+  under-applying what exists. The framing test:
+  "what already-shipped capability would address
+  this risk?" If I can name one, use it. If I can't,
+  the risk is genuinely novel — that's a feature
+  request, not a vigilance assignment. Pairs with
+  `feedback_ask_before_self_inventory.md`
+  (don't enumerate ahead of asking what's seen) and
+  the 2026-05-31 documentation-framing-faithfulness
+  lesson (don't undersell what the system actually
+  delivers) — same family: be faithful to what the
+  system actually does and can.
