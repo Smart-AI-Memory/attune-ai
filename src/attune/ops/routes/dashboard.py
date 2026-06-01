@@ -502,6 +502,13 @@ async def specs_page(request: Request) -> HTMLResponse:
     )
     for s in specs:
         bucket_counts[s["lifecycle"]] = bucket_counts.get(s["lifecycle"], 0) + 1
+    # GitHub repo for the "View linked PRs" kebab action (A3b).
+    # Reuses the resolver from completion_candidates (handles SSH +
+    # HTTPS + git protocol URLs). None if not a GitHub-hosted git repo;
+    # the template renders the action as disabled in that case.
+    from attune.ops.completion_candidates import _resolve_host_repo
+
+    github_repo = _resolve_host_repo(cfg.project_root)
     return _render(
         request,
         "specs.html",
@@ -511,6 +518,7 @@ async def specs_page(request: Request) -> HTMLResponse:
         allow_run=cfg.allow_run,
         specs_candidates_enabled=cfg.specs_candidates_enabled,
         bucket_counts=bucket_counts,
+        github_repo=github_repo,
     )
 
 

@@ -122,11 +122,12 @@
         <th class="col-mtime">Updated</th>
         <th class="col-phases" data-tooltip="Decisions / Requirements / Design / Tasks">Phases <span class="phase-axis">D&middot;R&middot;D&middot;T</span></th>
         <th class="col-lifecycle">Lifecycle</th>
+        <th class="col-kebab" aria-label="Row actions"></th>
       </tr>
     </thead>
     <tbody>
       {% for s in specs %}
-        <tr data-slug="{{ s.slug }}" data-bucket="{{ s.lifecycle }}" data-mtime="{{ s.last_modified or '' }}">
+        <tr data-slug="{{ s.slug }}" data-bucket="{{ s.lifecycle }}" data-mtime="{{ s.last_modified or '' }}" data-spec-path="{{ s.path }}">
           <td class="col-slug">
             <a href="/specs/{{ s.slug }}" class="link spec-slug" data-tooltip="{{ s.slug }}" aria-label="{{ s.slug }}"><code>{{ s.slug }}</code></a>
           </td>
@@ -176,6 +177,19 @@
               {{ s.lifecycle.replace('-', ' ') }}
             </span>
           </td>
+          <td class="col-kebab">
+            {# A3b kebab — 3 actions (Open in editor / Copy slug / View
+               linked PRs). Menu opens absolutely positioned via JS;
+               closes on outside click, Escape, or item select. #}
+            <button
+              type="button"
+              class="kebab-btn"
+              data-kebab="{{ s.slug }}"
+              aria-label="Actions for {{ s.slug }}"
+              aria-haspopup="menu"
+              aria-expanded="false"
+            >⋯</button>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
@@ -185,6 +199,18 @@
     <div class="empty-state-hint" id="specs-empty-hint"></div>
     <button type="button" class="empty-state-action" id="specs-reset-filters">Reset to default filters</button>
   </div>
+
+  {# A3b — kebab-menu toast for action feedback (Copy slug succeeded,
+     etc.). `aria-live="polite"` so screen readers announce the result
+     without interrupting the user. JS toggles `.toast-visible`. #}
+  <div id="specs-toast" class="specs-toast" role="status" aria-live="polite"></div>
+
+  {# A3b config — github_repo for the View linked PRs URL. None when
+     the project isn't a GitHub-hosted git repo; JS renders that
+     action as disabled. #}
+  <script id="specs-config" type="application/json">
+    {"github_repo": {{ (github_repo or '')|tojson }}}
+  </script>
 {% else %}
   <p class="empty">
     No specs found. Configure a roots directory with
@@ -200,6 +226,9 @@
      a mutation. URL persistence + chip-state-from-URL ships in A3c. #}
   {% if specs %}
     <script src="{{ url_for('static', path='js/specs_refined.js') }}?v={{ attune_version }}"></script>
+    {# A3b — kebab menu + 3 actions. Loaded for all users (read-only
+       and editable) since none of the 3 actions mutate spec state. #}
+    <script src="{{ url_for('static', path='js/specs_kebab.js') }}?v={{ attune_version }}"></script>
   {% endif %}
   {% if allow_run %}
     {# Pre-A3 status-flip behavior — still loaded so per-phase pill
