@@ -497,9 +497,13 @@ def test_specs_kebab_js_exposes_expected_api():
     # All 3 actions wired.
     for action in ('"editor"', '"copy"', '"prs"'):
         assert action in js_text, f"missing action: {action}"
-    # vscode:// scheme + GitHub URL pattern.
+    # vscode:// scheme + GitHub PR search URL shape. Asserting on the
+    # full path (not just the domain substring) keeps CodeQL's
+    # py/incomplete-url-substring-sanitization rule happy — this is a
+    # presence check, not URL validation.
     assert "vscode://file/" in js_text
-    assert "github.com/" in js_text
+    assert "https://github.com/" in js_text
+    assert "/pulls?q=" in js_text
 
 
 def test_specs_html_page_renders_with_lifecycle_in_context(tmp_path, monkeypatch):
