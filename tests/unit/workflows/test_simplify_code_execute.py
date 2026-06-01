@@ -155,7 +155,11 @@ class TestSimplifyCodeExecute:
 
         result = asyncio.run(workflow.execute(path="/tmp/test"))
         assert result.success is False
-        assert "RuntimeError" in result.error
+        # Phase 5 of docs/specs/sdk-error-message-fidelity/ replaced the
+        # legacy exception-text leak with the structured
+        # SdkSubprocessError message.
+        assert "claude CLI subprocess failed" in result.error
+        assert result.metadata.get("sdk_error_kind") == "unknown"
 
     def test_execute_default_depth(self, workflow):
         """execute() defaults to 'standard' depth."""
