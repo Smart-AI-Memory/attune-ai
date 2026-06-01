@@ -509,6 +509,12 @@ async def specs_page(request: Request) -> HTMLResponse:
     from attune.ops.completion_candidates import _resolve_host_repo
 
     github_repo = _resolve_host_repo(cfg.project_root)
+    # URL params for initial chip / sort / search state (A3c). The JS
+    # owns the live state machine; the server's job is to make the
+    # first paint already match what the URL says, so a shared link
+    # like `?bucket=stale&q=rag` renders correctly without a flash of
+    # default state followed by JS re-render.
+    initial_buckets, initial_sort, initial_query = _parse_specs_url_state(request.query_params)
     return _render(
         request,
         "specs.html",
@@ -519,7 +525,71 @@ async def specs_page(request: Request) -> HTMLResponse:
         specs_candidates_enabled=cfg.specs_candidates_enabled,
         bucket_counts=bucket_counts,
         github_repo=github_repo,
+        initial_buckets=initial_buckets,
+        initial_sort=initial_sort,
+        initial_query=initial_query,
     )
+
+
+# A3c — URL param parsing helpers. Module-level so tests can import
+# without spinning up the full FastAPI app.
+
+_VALID_BUCKETS: frozenset[str] = frozenset(
+    {"active", "approved-not-shipped", "complete", "paused", "stale", "draft"}
+)
+_VALID_SORTS: frozenset[str] = frozenset({"recent", "alpha", "oldest"})
+# Defaults match the JS DEFAULT_BUCKETS in specs_refined.js exactly:
+# all chips on except Complete (R1.3).
+_DEFAULT_BUCKETS: tuple[str, ...] = (
+    "active",
+    "approved-not-shipped",
+    "paused",
+    "stale",
+    "draft",
+)
+
+
+def _parse_specs_url_state(
+    query_params,
+) -> tuple[list[str], str, str]:
+    """Parse `?bucket=`, `?sort=`, `?q=` URL params for the Specs page.
+
+    Args:
+        query_params: Starlette ``QueryParams`` (request.query_params).
+
+    Returns:
+        ``(initial_buckets, initial_sort, initial_query)``. Invalid
+        values fall back to defaults silently rather than rejecting
+        the request — the URL is a UI affordance, not a strict
+        contract, and a malformed share link should still render the
+        page (with default state) rather than 400.
+
+    The default bucket set matches the JS ``DEFAULT_BUCKETS`` exactly
+    so the first paint and the JS-controlled state align.
+    """
+    # bucket=active,paused → ["active", "paused"]. Missing param → defaults.
+    raw_buckets = query_params.get("bucket")
+    if raw_buckets is None:
+        buckets = list(_DEFAULT_BUCKETS)
+    else:
+        candidates = [b.strip() for b in raw_buckets.split(",") if b.strip()]
+        buckets = [b for b in candidates if b in _VALID_BUCKETS]
+        # If filtering left nothing valid, fall back to defaults so the
+        # page isn't stuck in an empty state from a malformed share link.
+        if not buckets:
+            buckets = list(_DEFAULT_BUCKETS)
+
+    # sort=alpha → "alpha". Invalid → "recent" (default).
+    raw_sort = query_params.get("sort", "recent")
+    initial_sort = raw_sort if raw_sort in _VALID_SORTS else "recent"
+
+    # q=substring → "substring". Cap at 200 chars to bound rendering
+    # cost; the JS already does substring filtering so longer queries
+    # don't unlock new behavior, just bloat the URL.
+    raw_query = query_params.get("q", "")
+    initial_query = raw_query[:200] if raw_query else ""
+
+    return buckets, initial_sort, initial_query
 
 
 def _render_markdown_safe(text: str) -> str:

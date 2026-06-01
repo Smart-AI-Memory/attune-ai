@@ -27,11 +27,46 @@
     "draft",
   ];
 
-  var state = {
-    buckets: new Set(DEFAULT_BUCKETS),
-    search: "",
-    sort: "recent",
-  };
+  var VALID_BUCKETS = new Set([
+    "active",
+    "approved-not-shipped",
+    "complete",
+    "paused",
+    "stale",
+    "draft",
+  ]);
+
+  var VALID_SORTS = new Set(["recent", "alpha", "oldest"]);
+
+  // A3c — read initial state from URL (`?bucket=...&sort=...&q=...`).
+  // Server already renders the right chips/sort/search on first paint
+  // (via dashboard.py's _parse_specs_url_state); this is the JS-side
+  // mirror so in-memory state matches the DOM before any user action.
+  function readURLState() {
+    var params = new URLSearchParams(window.location.search);
+    var bucketParam = params.get("bucket");
+    var sortParam = params.get("sort");
+    var qParam = params.get("q");
+
+    var buckets;
+    if (bucketParam === null) {
+      buckets = new Set(DEFAULT_BUCKETS);
+    } else {
+      var candidates = bucketParam.split(",").map(function (b) {
+        return b.trim();
+      }).filter(function (b) {
+        return b && VALID_BUCKETS.has(b);
+      });
+      buckets = candidates.length > 0
+        ? new Set(candidates)
+        : new Set(DEFAULT_BUCKETS);
+    }
+    var sort = (sortParam && VALID_SORTS.has(sortParam)) ? sortParam : "recent";
+    var search = qParam ? qParam.slice(0, 200) : "";
+    return { buckets: buckets, sort: sort, search: search };
+  }
+
+  var state = readURLState();
 
   // -------------------------------------------------------------------
   // Element lookups (idempotent on missing — script may load on
@@ -40,6 +75,54 @@
 
   function $(sel) { return document.querySelector(sel); }
   function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+  // -------------------------------------------------------------------
+  // URL sync (A3c). Writes the current state back to the URL via
+  // history.replaceState so refreshes preserve filters and the URL
+  // can be shared. Params that match the default are OMITTED from
+  // the URL to keep shared links tidy (`?bucket=stale` instead of
+  // `?bucket=active,approved-not-shipped,paused,stale,draft&sort=recent`).
+  // -------------------------------------------------------------------
+
+  function bucketsAreDefault(bucketSet) {
+    if (bucketSet.size !== DEFAULT_BUCKETS.length) return false;
+    for (var i = 0; i < DEFAULT_BUCKETS.length; i++) {
+      if (!bucketSet.has(DEFAULT_BUCKETS[i])) return false;
+    }
+    return true;
+  }
+
+  function syncURL() {
+    var params = new URLSearchParams(window.location.search);
+    // Preserve any params we didn't author (future-proofs against
+    // other tools sharing the URL).
+    if (bucketsAreDefault(state.buckets)) {
+      params.delete("bucket");
+    } else {
+      // Sort buckets alphabetically for stable URLs.
+      var bucketList = Array.from(state.buckets).sort();
+      params.set("bucket", bucketList.join(","));
+    }
+    if (state.sort === "recent") {
+      params.delete("sort");
+    } else {
+      params.set("sort", state.sort);
+    }
+    if (!state.search) {
+      params.delete("q");
+    } else {
+      params.set("q", state.search);
+    }
+    var qs = params.toString();
+    var newURL = window.location.pathname + (qs ? "?" + qs : "") +
+      window.location.hash;
+    try {
+      window.history.replaceState(null, "", newURL);
+    } catch (e) {
+      // Older browsers / restrictive contexts — silent fail is fine,
+      // the in-memory state is still correct, just not persisted to URL.
+    }
+  }
 
   // -------------------------------------------------------------------
   // Filter / sort application
@@ -165,6 +248,7 @@
           setChipState(chip, true);
         }
         applyFilters();
+        syncURL();
       });
     });
   }
@@ -175,6 +259,7 @@
     input.addEventListener("input", function () {
       state.search = input.value;
       applyFilters();
+      syncURL();
     });
   }
 
@@ -184,6 +269,7 @@
     sel.addEventListener("change", function () {
       state.sort = sel.value;
       applySort();
+      syncURL();
     });
   }
 
@@ -201,18 +287,27 @@
         setChipState(chip, state.buckets.has(bucket));
       });
       applyFilters();
+      syncURL();
     });
   }
 
   function init() {
+    // Sync the sort <select>'s value to match state — server template
+    // honors initial_sort via the `selected` attribute, but if the
+    // user pressed back / restored a tab, the select's value may not
+    // match the URL. Be defensive.
+    var sortSel = $("#specs-sort");
+    if (sortSel && sortSel.value !== state.sort) {
+      sortSel.value = state.sort;
+    }
     wireChips();
     wireSearch();
     wireSort();
     wireResetButton();
-    // Apply the default sort on load — server renders rows in
-    // directory order (sorted by slug), but the default UI sort is
-    // "recent." Re-order on first paint so users see what the sort
-    // control claims to be doing.
+    // Apply the current sort on load — server renders rows in
+    // directory order (sorted by slug), but the live sort is
+    // determined by state. Re-order on first paint so users see
+    // what the sort control claims to be doing.
     applySort();
     applyFilters();
   }
@@ -228,10 +323,15 @@
   // convention) can verify the surface.
   window.__attuneSpecs = {
     DEFAULT_BUCKETS: DEFAULT_BUCKETS,
+    VALID_BUCKETS: VALID_BUCKETS,
+    VALID_SORTS: VALID_SORTS,
     state: state,
     applyFilters: applyFilters,
     applySort: applySort,
     setChipState: setChipState,
+    readURLState: readURLState,
+    syncURL: syncURL,
+    bucketsAreDefault: bucketsAreDefault,
     init: init,
   };
 })();

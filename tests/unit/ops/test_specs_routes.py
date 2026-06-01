@@ -516,6 +516,192 @@ def test_specs_kebab_js_exposes_expected_api():
     assert "g" + "ithub.com" in js_text
 
 
+# ---------------------------------------------------------------------------
+# A3c — URL param parsing + initial state on first paint
+#
+# Server reads ?bucket=, ?sort=, ?q= and renders chips/sort/search to
+# match. JS picks up the same URL state on init so refreshes preserve
+# the live state. Invalid values silently fall back to defaults — a
+# malformed share link still renders cleanly rather than 400ing.
+# ---------------------------------------------------------------------------
+
+
+class TestParseSpecsURLState:
+    """Unit tests for the URL param parser (pure logic, no client needed)."""
+
+    def _parse(self, **params):
+        """Helper: build a Starlette-compatible mapping and parse."""
+        from starlette.datastructures import QueryParams
+
+        from attune.ops.routes.dashboard import _parse_specs_url_state
+
+        return _parse_specs_url_state(QueryParams(params))
+
+    def test_no_params_returns_defaults(self):
+        buckets, sort, query = self._parse()
+        # All on except Complete (R1.3).
+        assert set(buckets) == {
+            "active",
+            "approved-not-shipped",
+            "paused",
+            "stale",
+            "draft",
+        }
+        assert sort == "recent"
+        assert query == ""
+
+    def test_bucket_param_subset(self):
+        buckets, _, _ = self._parse(bucket="active,paused")
+        assert set(buckets) == {"active", "paused"}
+
+    def test_bucket_param_includes_complete(self):
+        buckets, _, _ = self._parse(bucket="complete")
+        assert buckets == ["complete"]
+
+    def test_invalid_bucket_silently_dropped(self):
+        buckets, _, _ = self._parse(bucket="active,bogus,paused")
+        assert set(buckets) == {"active", "paused"}
+
+    def test_all_invalid_buckets_falls_back_to_defaults(self):
+        buckets, _, _ = self._parse(bucket="bogus,fake")
+        # All-invalid → defaults so the page isn't stuck empty.
+        assert set(buckets) == {
+            "active",
+            "approved-not-shipped",
+            "paused",
+            "stale",
+            "draft",
+        }
+
+    def test_sort_param_valid(self):
+        _, sort, _ = self._parse(sort="alpha")
+        assert sort == "alpha"
+
+    def test_sort_param_invalid_falls_back(self):
+        _, sort, _ = self._parse(sort="random")
+        assert sort == "recent"
+
+    def test_query_param_passed_through(self):
+        _, _, query = self._parse(q="rag")
+        assert query == "rag"
+
+    def test_query_param_capped_at_200_chars(self):
+        _, _, query = self._parse(q="x" * 300)
+        assert len(query) == 200
+
+    def test_empty_bucket_string_falls_back_to_defaults(self):
+        # ?bucket= (empty value) — same as no param.
+        buckets, _, _ = self._parse(bucket="")
+        assert set(buckets) == {
+            "active",
+            "approved-not-shipped",
+            "paused",
+            "stale",
+            "draft",
+        }
+
+
+def test_specs_page_with_bucket_url_param(tmp_path, monkeypatch):
+    """A3c — `?bucket=stale,paused` URL → only those chips render active."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs?bucket=stale,paused").text
+    # Build a per-bucket regex-friendly extractor.
+    import re
+
+    chip_blocks = re.findall(
+        r'<button[^>]*data-bucket="([^"]+)"[^>]*aria-pressed="([^"]+)"',
+        body,
+    )
+    chip_state = dict(chip_blocks)
+    assert chip_state["stale"] == "true"
+    assert chip_state["paused"] == "true"
+    # Everything else inactive.
+    for bucket in ("active", "approved-not-shipped", "complete", "draft"):
+        assert chip_state[bucket] == "false", f"{bucket} unexpectedly active"
+
+
+def test_specs_page_with_sort_url_param(tmp_path, monkeypatch):
+    """A3c — `?sort=alpha` → `<option value="alpha" selected>`."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs?sort=alpha").text
+    assert 'value="alpha" selected' in body
+    # The other two options are NOT selected.
+    assert 'value="recent" selected' not in body
+    assert 'value="oldest" selected' not in body
+
+
+def test_specs_page_with_query_url_param(tmp_path, monkeypatch):
+    """A3c — `?q=rag` → search input renders with that value pre-filled."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/specs?q=rag").text
+    assert 'value="rag"' in body
+
+
+def test_specs_page_malformed_url_renders_defaults(tmp_path, monkeypatch):
+    """A3c — invalid params don't 400; page falls back to defaults."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    # All params bogus.
+    response = client.get("/specs?bucket=fake&sort=random&q=hi")
+    assert response.status_code == 200
+    # Complete chip is inactive (default state preserved despite the
+    # invalid bucket param).
+    assert "chip-inactive" in response.text
+
+
+def test_specs_refined_js_exposes_url_helpers():
+    """A3c — specs_refined.js exports readURLState + syncURL.
+
+    Extends the A3a source-grep test with the new URL-sync surface.
+    """
+    js_path = (
+        Path(__file__).parent.parent.parent.parent
+        / "src"
+        / "attune"
+        / "ops"
+        / "static"
+        / "js"
+        / "specs_refined.js"
+    )
+    js_text = js_path.read_text(encoding="utf-8")
+    for name in ("readURLState", "syncURL", "bucketsAreDefault"):
+        assert name in js_text, f"missing export: {name}"
+    # URL machinery is wired.
+    assert "URLSearchParams" in js_text
+    assert "history.replaceState" in js_text
+
+
 def test_specs_html_page_renders_with_lifecycle_in_context(tmp_path, monkeypatch):
     """`/specs` HTML page renders 200 and each spec's dict carries a lifecycle.
 
