@@ -1,0 +1,185 @@
+// Workflows page — concern-chip filter + search behavior (A3a).
+//
+// Reads the server-rendered table at /workflows and applies client-side
+// filtering by concern bucket + workflow name substring.
+//
+// Default state per docs/specs/ops-workflows-page-refinement/decisions.md D1/D2:
+//   - All 7 concern chips active (no chip is structurally "noise"
+//     unlike Specs page's Complete-off default)
+//   - Search empty
+//
+// No sort dropdown — workflows render alphabetical by name from the
+// server (decisions.md D7: alphabetical-by-name; v2 may add by-last-run).
+//
+// URL params ship in A3c. A3b adds the kebab action menu.
+//
+// Exports a `window.__attuneWorkflows` namespace so future PRs and
+// source-grep tests can verify the surface (matches the
+// `__attuneSpecs` + `__attuneRunner` convention).
+
+(function () {
+  "use strict";
+
+  // All 7 buckets per decisions.md D1. Stable order; chips render in
+  // the template in this order so the JS doesn't need to enforce it.
+  var VALID_BUCKETS = new Set([
+    "review",
+    "test",
+    "docs",
+    "refactor",
+    "audit",
+    "meta",
+    "other",
+  ]);
+
+  // Mutable state. All buckets active by default. Search empty.
+  var state = {
+    buckets: new Set(VALID_BUCKETS),
+    search: "",
+  };
+
+  // ---------- DOM helpers ----------
+
+  function $(sel) {
+    return document.querySelector(sel);
+  }
+  function $$(sel) {
+    return Array.prototype.slice.call(document.querySelectorAll(sel));
+  }
+
+  function rowConcern(tr) {
+    return tr.getAttribute("data-concern") || "";
+  }
+  function rowName(tr) {
+    return (tr.getAttribute("data-workflow") || "").toLowerCase();
+  }
+
+  // ---------- Filter application ----------
+
+  function applyFilters() {
+    var tbody = $(".workflows-table tbody");
+    if (!tbody) return;
+    var rows = $$(".workflows-table tbody tr");
+    var query = state.search.trim().toLowerCase();
+    var anyVisible = false;
+
+    rows.forEach(function (tr) {
+      var inBucket = state.buckets.has(rowConcern(tr));
+      var matchesQuery = !query || rowName(tr).indexOf(query) !== -1;
+      var visible = inBucket && matchesQuery;
+      if (visible) anyVisible = true;
+      tr.hidden = !visible;
+    });
+
+    updateEmptyState(anyVisible, query);
+  }
+
+  function updateEmptyState(anyVisible, query) {
+    // Reuse the existing .empty <p> from the template when present, or
+    // inject an empty-state row inside the table body. Keeping the
+    // affordance close to the table to mirror the Specs page UX.
+    var box = $("#workflows-empty-state");
+    if (!box) {
+      box = document.createElement("div");
+      box.id = "workflows-empty-state";
+      box.className = "empty-state";
+      box.setAttribute("role", "status");
+      box.hidden = true;
+      var table = $(".workflows-table");
+      if (table && table.parentNode) {
+        table.parentNode.insertBefore(box, table.nextSibling);
+      }
+    }
+    if (anyVisible) {
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+    if (state.buckets.size === 0) {
+      box.textContent =
+        "All concerns filtered out — re-enable at least one chip above.";
+    } else if (query) {
+      box.textContent =
+        "No workflows in active concerns match '" + query + "'.";
+    } else {
+      box.textContent = "No workflows match the current filters.";
+    }
+  }
+
+  // ---------- Chip toggle ----------
+
+  function setChipState(chip, active) {
+    chip.classList.toggle("chip-active", active);
+    chip.classList.toggle("chip-inactive", !active);
+    chip.setAttribute("aria-pressed", active ? "true" : "false");
+    // Add or remove the "✗" hidden-count marker on inactive chips so
+    // the visual state matches the Specs page convention.
+    var mark = chip.querySelector(".chip-hidden-mark");
+    if (!active && !mark) {
+      var span = document.createElement("span");
+      span.className = "chip-hidden-mark";
+      span.setAttribute("aria-hidden", "true");
+      span.textContent = "✗";
+      chip.appendChild(span);
+    } else if (active && mark) {
+      mark.remove();
+    }
+  }
+
+  function wireChips() {
+    $$(".workflows-toolbar .chip[data-bucket]").forEach(function (chip) {
+      chip.addEventListener("click", function () {
+        var bucket = chip.getAttribute("data-bucket");
+        if (!VALID_BUCKETS.has(bucket)) return;
+        if (state.buckets.has(bucket)) {
+          state.buckets.delete(bucket);
+          setChipState(chip, false);
+        } else {
+          state.buckets.add(bucket);
+          setChipState(chip, true);
+        }
+        applyFilters();
+      });
+    });
+  }
+
+  function wireSearch() {
+    var input = $("#workflows-search");
+    if (!input) return;
+    input.addEventListener("input", function () {
+      state.search = input.value;
+      applyFilters();
+    });
+  }
+
+  // ---------- Init ----------
+
+  function init() {
+    wireChips();
+    wireSearch();
+    // First-paint render — server already filtered nothing, but the
+    // empty-state logic needs to run in case there's a stored search
+    // (browser back/forward restored the input value).
+    var input = $("#workflows-search");
+    if (input && input.value) {
+      state.search = input.value;
+    }
+    applyFilters();
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
+
+  // Exports — namespace mirrors `window.__attuneSpecs` from
+  // specs_refined.js so source-grep tests can verify the surface.
+  window.__attuneWorkflows = {
+    VALID_BUCKETS: VALID_BUCKETS,
+    state: state,
+    applyFilters: applyFilters,
+    setChipState: setChipState,
+    init: init,
+  };
+})();
