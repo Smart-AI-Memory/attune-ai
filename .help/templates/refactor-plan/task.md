@@ -1,54 +1,49 @@
 ---
-type: task
 feature: refactor-plan
 depth: task
-generated_at: 2026-05-04T02:27:56.841732+00:00
-source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
+generated_at: 2026-06-01T11:47:06.470639+00:00
+source_hash: 6f279448091cd9ecd115ce65a7c82e22149b5ff442f0841471de09a630a0f293
 status: generated
 ---
 
 # Work with refactor plan
 
-Use refactor plan when you need to modify how the refactoring analysis workflow processes code or formats its output.
+Use refactor plan when you need to detect code smells and generate a prioritized refactoring roadmap.
 
 ## Prerequisites
 
 - Access to the project source code
-- Understanding of the RefactorPlanWorkflow class and its subagents
+- Familiarity with the files under src/attune/workflows/refactor_plan.py
 
-## Locate the component to modify
+## Steps
 
-The refactor plan feature has two main components:
+1. **Understand the current behavior.**
+   Read the entry points to see what refactor plan
+   does today before making changes.
+   The primary functions are:
+   - `format_refactor_plan_report()` in `src/attune/workflows/refactor_plan_report.py` — Format refactor plan output as a human-readable report.
+   - `main()` in `src/attune/workflows/refactor_plan_report.py` — CLI entry point for refactor planning workflow.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-- **Core workflow**: `RefactorPlanWorkflow` in `src/attune/workflows/refactor_plan.py` — orchestrates the three subagents (debt-scanner, impact-analyzer, plan-generator)
-- **Output formatting**: `format_refactor_plan_report()` in `src/attune/workflows/refactor_plan_report.py` — converts analysis results into readable reports
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-## Modify the workflow logic
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "refactor-plan"`.
 
-1. **Edit the RefactorPlanWorkflow class** to change how subagents coordinate:
-   - Update `_SUBAGENT_NAMES` to add or remove specialized analyzers
-   - Modify `_SYSTEM_PROMPT` to change the orchestrator's behavior
-   - Edit `_TASK_PROMPT_TEMPLATE` to adjust the analysis structure
+## Key files
 
-2. **Test your workflow changes** by running the CLI:
-   ```bash
-   python -m attune.workflows.refactor_plan_report <path>
-   ```
+- `src/attune/workflows/refactor_plan.py`
+- `src/attune/workflows/refactor_plan_report.py`
 
-## Modify the report format
+## Common modifications
 
-1. **Edit `format_refactor_plan_report()`** to change output structure:
-   - Adjust section headers, priority ordering, or effort estimates
-   - Add new analysis categories or metrics
-   - Change how file paths and line numbers display
+Functions you are most likely to modify:
 
-2. **Verify the formatting** by checking the generated markdown structure matches your intended layout.
-
-## Test your changes
-
-Run the refactor plan workflow on a sample codebase to verify:
-- Subagents execute correctly and produce expected findings
-- Report formatting displays all analysis results clearly
-- Priority ordering and effort estimates make sense
-
-You'll know the task worked when the refactor plan produces a structured report with actionable refactoring recommendations prioritized by impact and effort.
+- `format_refactor_plan_report()` in `src/attune/workflows/refactor_plan_report.py`
+- `main()` in `src/attune/workflows/refactor_plan_report.py`
