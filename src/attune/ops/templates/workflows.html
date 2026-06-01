@@ -29,10 +29,36 @@
 </section>
 
 {% if workflows %}
-  <table class="data-table runner-table">
+  {# A3a toolbar — concern-chip filter row + search. JS in
+     workflows_refined.js handles state; default chip state is all-on
+     (no concern is structurally "noise" — unlike Specs page's
+     Complete default-off). URL param persistence ships in A3c. #}
+  <div class="workflows-toolbar" role="region" aria-label="Workflow filter controls">
+    <div class="chip-row" role="group" aria-label="Concern bucket filters">
+      <span class="chip-label">Concern:</span>
+      {% for bucket in all_concerns %}
+        <button
+          type="button"
+          class="chip bucket-{{ bucket }} chip-active"
+          data-bucket="{{ bucket }}"
+          aria-pressed="true"
+          aria-label="{{ bucket }} bucket — {{ bucket_counts[bucket] }} workflows"
+        >{{ bucket }} <span class="chip-count" data-count="{{ bucket }}">{{ bucket_counts[bucket] }}</span></button>
+      {% endfor %}
+    </div>
+    <div class="search-wrap">
+      <label class="search-label" for="workflows-search">Search:</label>
+      <input id="workflows-search" class="search-input" type="search"
+        placeholder="workflow name…" autocomplete="off"
+        aria-label="Filter workflows by name substring" />
+    </div>
+  </div>
+
+  <table class="data-table runner-table workflows-table">
     <thead>
       <tr>
         <th>Name</th>
+        <th class="col-concern">Concern</th>
         <th>Tier map</th>
         <th>Description</th>
         <th>Scope</th>
@@ -49,8 +75,15 @@
            workflows like release-prep / health-check that don't map
            to a single feature. #}
         <tr data-workflow="{{ w.name }}"
+            data-concern="{{ concerns[w.name] }}"
             data-scope-default="{{ default_scopes[w.name] if supports_path[w.name] else '' }}">
           <td><code>{{ w.name }}</code></td>
+          {# A3a — concern pill, color-keyed off bucket-* class.
+             JS filter uses the row's data-concern attribute; this
+             pill is the per-row visual indicator. #}
+          <td class="col-concern">
+            <span class="concern-pill bucket-{{ concerns[w.name] }}">{{ concerns[w.name] }}</span>
+          </td>
           {# Chip text: humanized stage name + friendly tier descriptor.
              - Stage names like ``agent-review`` strip the ``agent-`` prefix
                and title-case for readability (``Review``).
@@ -173,4 +206,10 @@
    unconditionally so the strip appears in both run and read-only
    modes — read-only dashboards can still surface OTHER actors' work. #}
 <script src="{{ url_for('static', path='js/bulletin.js') }}?v={{ attune_version }}"></script>
+{# A3a — workflows_refined.js handles the chip filter + search.
+   Loaded only when there are workflows to filter; runner.js +
+   bulletin.js still load unconditionally above. #}
+{% if workflows %}
+<script src="{{ url_for('static', path='js/workflows_refined.js') }}?v={{ attune_version }}"></script>
+{% endif %}
 {% endblock %}

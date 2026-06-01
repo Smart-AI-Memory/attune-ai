@@ -2713,3 +2713,176 @@ a.kpi:hover {
   opacity: 1;
   transform: translateX(-50%) translateY(0);
 }
+
+/* ============================================================
+   A3a — Workflows page refinement: chip toolbar + concern pill.
+   Scoped via `.workflows-toolbar` and `.concern-pill` to avoid
+   collision with the global `.chip` class and the Specs page's
+   `.specs-toolbar` selectors. Mirrors the Specs page pattern
+   (PR #535) for visual consistency across the dashboard's two
+   filtered-list surfaces.
+   ============================================================ */
+
+.workflows-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 24px;
+  align-items: center;
+  margin: 16px 0;
+  padding: 12px;
+  background: var(--bg, #fff);
+  border: 1px solid var(--border, #e5e7eb);
+  border-radius: 6px;
+}
+.workflows-toolbar .chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+.workflows-toolbar .chip-label,
+.workflows-toolbar .search-label {
+  font-size: 12px;
+  color: var(--fg-muted, #6b7280);
+  margin-right: 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 500;
+}
+.workflows-toolbar .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 99px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.1s, color 0.1s, border-color 0.1s;
+  user-select: none;
+  margin: 0;
+  background: var(--bg-soft, #f9fafb);
+  color: var(--fg, #374151);
+  font-family: inherit;
+  line-height: 1.2;
+  text-transform: lowercase;
+}
+.workflows-toolbar .chip:focus-visible {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: 1px;
+}
+.workflows-toolbar .chip-inactive {
+  background: var(--bg-soft, #f9fafb);
+  color: var(--fg-muted, #9ca3af);
+  border-color: var(--border, #e5e7eb);
+  opacity: 0.7;
+}
+.workflows-toolbar .chip-hidden-mark {
+  font-size: 11px;
+  font-weight: 700;
+  margin-left: 2px;
+  opacity: 0.6;
+}
+.workflows-toolbar .chip-count {
+  font-variant-numeric: tabular-nums;
+  opacity: 0.7;
+  font-weight: 600;
+}
+
+/* Per-concern accent shades. Applied to BOTH the toolbar chip
+   (when active) AND the inline `.concern-pill` per-row badge.
+   Colors chosen to be distinguishable and to roughly cluster by
+   "type of work" — purple-leaning for review/refactor, green for
+   test, orange for docs, amber for audit, cyan for meta.
+   Matches the wireframe.html palette so the implementation
+   visually matches the design reference. */
+.workflows-toolbar .chip-active.bucket-review,
+.concern-pill.bucket-review {
+  background: #ede9fe;
+  color: #5b21b6;
+  border-color: #c4b5fd;
+}
+.workflows-toolbar .chip-active.bucket-test,
+.concern-pill.bucket-test {
+  background: #d1fae5;
+  color: #065f46;
+  border-color: #6ee7b7;
+}
+.workflows-toolbar .chip-active.bucket-docs,
+.concern-pill.bucket-docs {
+  background: #fed7aa;
+  color: #9a3412;
+  border-color: #fdba74;
+}
+.workflows-toolbar .chip-active.bucket-refactor,
+.concern-pill.bucket-refactor {
+  background: #fce7f3;
+  color: #9d174d;
+  border-color: #f9a8d4;
+}
+.workflows-toolbar .chip-active.bucket-audit,
+.concern-pill.bucket-audit {
+  background: #fef3c7;
+  color: #92400e;
+  border-color: #fcd34d;
+}
+.workflows-toolbar .chip-active.bucket-meta,
+.concern-pill.bucket-meta {
+  background: #cffafe;
+  color: #155e75;
+  border-color: #67e8f9;
+}
+.workflows-toolbar .chip-active.bucket-other,
+.concern-pill.bucket-other {
+  background: #e5e7eb;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+/* Per-row concern pill. Compact pill inside the new Concern column.
+   Renders even when the row is filtered hidden; visibility is
+   controlled by the parent <tr>'s hidden attribute. */
+.concern-pill {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 99px;
+  font-size: 11px;
+  font-weight: 500;
+  text-transform: lowercase;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+
+/* Empty-state injected by workflows_refined.js when all rows hide. */
+#workflows-empty-state {
+  margin: 16px 0;
+  padding: 24px 16px;
+  text-align: center;
+  color: var(--fg-muted, #6b7280);
+  background: var(--bg-soft, #f9fafb);
+  border: 1px dashed var(--border, #d1d5db);
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+/* Search input mirrors the Specs page's search-wrap layout. */
+.workflows-toolbar .search-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.workflows-toolbar .search-input {
+  border: 1px solid var(--border, #d1d5db);
+  border-radius: 4px;
+  padding: 4px 8px;
+  font-size: 13px;
+  width: 200px;
+  background: var(--bg, #fff);
+  color: var(--fg, #111);
+}
+.workflows-toolbar .search-input:focus {
+  outline: 2px solid var(--accent, #2563eb);
+  outline-offset: -1px;
+  border-color: var(--accent, #2563eb);
+}
