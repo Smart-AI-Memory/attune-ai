@@ -225,7 +225,7 @@ the same branch.
 
 ---
 
-### Task 7 — CI integration (advisory mode)
+### Task 7 — CI integration (advisory mode) — **done 2026-06-01**
 
 **Goal:** add the `wiring-audit` job to
 `.github/workflows/docs.yml` per [design.md §6](./design.md#artifact-6-ci-integration).
