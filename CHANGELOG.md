@@ -20,18 +20,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   not touched in 30 days. The derivation is pure-Python and testable
   in isolation; the dashboard reads from it on every render
   (#533, #534, #535, #536, #539).
-- **SDK error message fidelity (Phase 1-3)** — when a workflow's
-  `claude_agent_sdk.query()` fails, the dashboard's Recent Runs
-  page now surfaces the real `claude` CLI stderr in a collapsible
-  block instead of the legacy "Command failed with exit code 1"
-  message. A typed `sdk_error_kind` classifier identifies
-  `api_quota`, `auth`, `rate_limit`, `not_found`, `budget_cap`,
-  and `unknown` cases. Phase 2 wires `code-review` and
-  `dependency-check`; Phase 3 adds persistence + render + CLI
-  side-channel for the runner consumer. Remaining workflows
-  (`bug-predict`, `perf-audit`, `refactor-plan`, `security-audit`,
-  long-tail) ship in a follow-up
-  (#516, #522, #526, #531).
+- **SDK error message fidelity (Phases 1-5 complete)** — when a
+  workflow's `claude_agent_sdk.query()` fails, the dashboard's
+  Recent Runs page now surfaces the real `claude` CLI stderr in
+  a collapsible block instead of the legacy "Command failed with
+  exit code 1" message. A typed `sdk_error_kind` classifier
+  identifies `api_quota`, `auth`, `rate_limit`, `not_found`,
+  `budget_cap`, and `unknown` cases. Eleven SDK-backed workflows
+  now surface real causes — `code-review`, `dependency-check`
+  (Phase 2), `bug-predict`, `perf-audit`, `refactor-plan`,
+  `security-audit` (Phase 4), plus `simplify-code`, `deep-review`,
+  `research-synthesis`, `rag-code-gen`, `release-prep` (Phase 5).
+  Phase 3 added persistence + render + CLI side-channel for the
+  runner consumer; Phase 4.3 wired the dashboard chip classifier
+  to read the typed `sdk_error_kind` directly. The remaining 5
+  workflows (`test-audit`, `doc-audit`, `doc-gen`,
+  `discovery-sweep`, `secure-release`) have hand-rolled error
+  messages without the misleading three-cause menu and ship in
+  a v7.4.0 follow-up
+  (#516, #522, #526, #531, #543, #544).
 - **Pre-Write worktree-path-guard hook** — first enforced pattern
   from the enforcement-vs-documentation framework. The hook blocks
   Write/Edit operations targeting a path outside the current git
