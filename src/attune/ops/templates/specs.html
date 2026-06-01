@@ -58,7 +58,11 @@
         ('draft', 'Draft', 'bucket-draft'),
       ] %}
       {% for bucket, label, color_cls in bucket_styles %}
-        {% set active = bucket != 'complete' %}
+        {# A3c — chip active state honors `?bucket=` URL param when
+           present, else falls back to defaults (all on except Complete).
+           initial_buckets is always a list — pre-parsed in
+           dashboard.py via _parse_specs_url_state. #}
+        {% set active = bucket in initial_buckets %}
         {# bucket-* class always present so chips colorize correctly
            after JS toggles chip-active on/off. CSS gates the color
            on `.chip-active.bucket-*` — inactive chips show neutral. #}
@@ -73,16 +77,19 @@
     </div>
     <div class="search-wrap">
       <label class="search-label" for="specs-search">Search:</label>
+      {# A3c — initial_query from ?q= URL param (empty by default). #}
       <input id="specs-search" class="search-input" type="search"
         placeholder="slug substring…" autocomplete="off"
+        value="{{ initial_query }}"
         aria-label="Filter specs by slug substring" />
     </div>
     <div class="sort-wrap">
       <label class="sort-label" for="specs-sort">Sort:</label>
+      {# A3c — initial_sort from ?sort= URL param (default "recent"). #}
       <select id="specs-sort" class="sort-select" aria-label="Sort specs">
-        <option value="recent">Recently updated</option>
-        <option value="alpha">Alphabetical</option>
-        <option value="oldest">Oldest untouched</option>
+        <option value="recent"{% if initial_sort == 'recent' %} selected{% endif %}>Recently updated</option>
+        <option value="alpha"{% if initial_sort == 'alpha' %} selected{% endif %}>Alphabetical</option>
+        <option value="oldest"{% if initial_sort == 'oldest' %} selected{% endif %}>Oldest untouched</option>
       </select>
     </div>
   </div>
