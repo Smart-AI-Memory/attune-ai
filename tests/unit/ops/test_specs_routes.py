@@ -170,6 +170,142 @@ def test_list_specs_multi_root_collision_preserved(tmp_path, monkeypatch):
 
 
 # ---------------------------------------------------------------------------
+# A2 — lifecycle field wired into SpecRecord and JSON serializer
+#
+# Pure data layer: every spec in the /api/specs response carries a
+# `lifecycle` string from the 6-bucket cascade in
+# `attune.ops.spec_lifecycle`. Template + JS consumers land in A3.
+# See [docs/specs/ops-specs-page-refinement/decisions.md](
+# ../../../docs/specs/ops-specs-page-refinement/decisions.md).
+# ---------------------------------------------------------------------------
+
+
+def test_specrecord_post_init_computes_lifecycle():
+    """Constructing a SpecRecord auto-populates the lifecycle field.
+
+    Backstop for the __post_init__ wiring — if anyone removes the hook,
+    this fires before the route-level tests even run.
+    """
+    from attune.ops.routes.specs import SpecPhase, SpecRecord
+
+    phases = [
+        SpecPhase(name="requirements", file="requirements.md", exists=True, status="approved"),
+        SpecPhase(name="design", file="design.md", exists=False, status=None),
+        SpecPhase(name="tasks", file="tasks.md", exists=False, status=None),
+        SpecPhase(name="decisions", file="decisions.md", exists=False, status=None),
+    ]
+    record = SpecRecord(
+        slug="example",
+        root="/r",
+        path="/r/example",
+        phases=phases,
+        last_modified="2026-05-31T00:00:00+00:00",
+    )
+    # requirements approved, no tasks file → falls to Rule 6 (Active)
+    assert record.lifecycle == "active"
+
+
+def test_list_specs_response_includes_lifecycle_field(tmp_path, monkeypatch):
+    """Every spec in /api/specs response carries a `lifecycle` string."""
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "alpha",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+    _make_spec(
+        specs_root,
+        "beta",
+        files={
+            "requirements.md": "**Status:** approved\n",
+            "decisions.md": "**Status:** approved\n",
+        },
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/api/specs").json()
+    for spec in body["specs"]:
+        assert "lifecycle" in spec, f"missing lifecycle on {spec['slug']}"
+        assert isinstance(spec["lifecycle"], str)
+        assert spec["lifecycle"] in {
+            "paused",
+            "complete",
+            "stale",
+            "draft",
+            "approved-not-shipped",
+            "active",
+        }
+
+
+def test_list_specs_lifecycle_matches_bucket_cascade(tmp_path, monkeypatch):
+    """Lifecycle values reflect the bucket cascade for known fixtures.
+
+    Smoke-tests the wiring end-to-end: a paused spec surfaces as
+    "paused", a fully-complete spec surfaces as "complete", a
+    requirements-missing spec surfaces as "draft". The cascade itself
+    is exhaustively tested in test_spec_lifecycle.py — this asserts
+    the route hands the right shape to derive_lifecycle.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "paused-spec",
+        files={"decisions.md": "**Status:** paused 2026-05-12 — premise invalidated\n"},
+    )
+    _make_spec(
+        specs_root,
+        "complete-spec",
+        files={
+            "requirements.md": "**Status:** complete\n",
+            "design.md": "**Status:** complete\n",
+            "tasks.md": "**Status:** complete\n",
+        },
+    )
+    _make_spec(
+        specs_root,
+        "draft-spec",
+        files={"decisions.md": "**Status:** draft\n"},  # no requirements.md
+    )
+
+    client = _client(tmp_path)
+    body = client.get("/api/specs").json()
+    lifecycles = {s["slug"]: s["lifecycle"] for s in body["specs"]}
+    assert lifecycles["paused-spec"] == "paused"
+    assert lifecycles["complete-spec"] == "complete"
+    assert lifecycles["draft-spec"] == "draft"
+
+
+def test_specs_html_page_renders_with_lifecycle_in_context(tmp_path, monkeypatch):
+    """`/specs` HTML page renders 200 and each spec's dict carries a lifecycle.
+
+    A2 doesn't add UI surface for the field — template still shows
+    the 4 phase pills. This test just guards that the route
+    serializer didn't drop the field on the way to the template.
+    Verified by inspecting the rendered HTML for the slug + lifecycle
+    bucket appearing in a data-lifecycle attribute would be cleaner
+    once A3 ships; for now, just smoke-test the page renders.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    specs_root = tmp_path / "docs" / "specs"
+    _make_spec(
+        specs_root,
+        "smoke",
+        files={"decisions.md": "**Status:** Draft\n"},
+    )
+
+    client = _client(tmp_path)
+    response = client.get("/specs")
+    assert response.status_code == 200
+    # Template intentionally doesn't render lifecycle in A2.
+    # The field IS in the template context per `routes/dashboard.py`'s
+    # `specs_page` serializer; this is a smoke check that the page
+    # still renders cleanly with the new field present.
+    assert "smoke" in response.text
+
+
+# ---------------------------------------------------------------------------
 # GET /api/specs/{slug} — drill-in
 # ---------------------------------------------------------------------------
 

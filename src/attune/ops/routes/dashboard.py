@@ -491,6 +491,7 @@ async def specs_page(request: Request) -> HTMLResponse:
                     "path": record.path,
                     "phases": [asdict(p) for p in record.phases],
                     "last_modified": record.last_modified,
+                    "lifecycle": record.lifecycle,
                 }
             )
     return _render(
