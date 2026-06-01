@@ -1,0 +1,648 @@
+<!doctype html>
+<!--
+  Standalone wireframe for the attune-ops Workflows page refinement.
+
+  Per docs/specs/ops-workflows-page-refinement/decisions.md and the
+  ratified requirements. Self-contained: open directly in a browser
+  to interact. No build step, no external assets.
+
+  Mock data covers every rendered state in the design:
+    - All 7 concern buckets populated with the real 20 workflows
+    - Each row has tier-map chips matching the actual workflow
+    - Search filters within active buckets
+    - Kebab opens per-row with 3 actions
+    - All-chips-off renders empty-state explanation
+
+  Style intent: match the actual dashboard's `main.css` patterns
+  (chips, tier-map indicators, table density) without pulling the
+  full stylesheet.
+-->
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Workflows — wireframe (v1)</title>
+  <style>
+    /* ----- Reset + base ----- */
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+                   "Helvetica Neue", Arial, sans-serif;
+      font-size: 14px;
+      line-height: 1.5;
+      color: #111;
+      background: #fafafa;
+      margin: 0;
+      padding: 0;
+    }
+    .wireframe-banner {
+      background: #fef3c7;
+      border-bottom: 1px solid #f59e0b;
+      padding: 8px 16px;
+      font-size: 12px;
+      color: #92400e;
+      text-align: center;
+    }
+    .wireframe-banner code { background: rgba(0,0,0,0.05); padding: 1px 4px; border-radius: 3px; }
+    main { max-width: 1280px; margin: 0 auto; padding: 24px 16px; }
+    h1 { margin: 0 0 4px 0; font-size: 24px; font-weight: 600; }
+    .page-sub { margin: 0 0 24px 0; color: #6b7280; font-size: 13px; }
+    code { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; }
+    a { color: #2563eb; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* ----- Toolbar (chip row + search) ----- */
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 16px 24px;
+      align-items: center;
+      margin-bottom: 16px;
+      padding: 12px;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+    }
+    .chip-row { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+    .chip-label { font-size: 12px; color: #6b7280; margin-right: 4px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 10px;
+      border-radius: 99px;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      border: 1px solid transparent;
+      transition: background 0.1s, color 0.1s, border-color 0.1s;
+      user-select: none;
+    }
+    .chip-count { font-variant-numeric: tabular-nums; opacity: 0.65; font-weight: 600; }
+    .chip-active { background: #dbeafe; color: #1e40af; border-color: #93c5fd; }
+    .chip-active:hover { background: #bfdbfe; }
+    .chip-inactive { background: #f3f4f6; color: #6b7280; border-color: #e5e7eb; }
+    .chip-inactive:hover { background: #e5e7eb; color: #374151; }
+    .chip-hidden-mark { font-weight: 700; margin-left: 2px; }
+    /* Per-concern accent shades */
+    .bucket-review { background: #ede9fe; color: #5b21b6; border-color: #c4b5fd; }
+    .bucket-review:hover { background: #ddd6fe; }
+    .bucket-test { background: #d1fae5; color: #065f46; border-color: #6ee7b7; }
+    .bucket-test:hover { background: #a7f3d0; }
+    .bucket-docs { background: #fed7aa; color: #9a3412; border-color: #fdba74; }
+    .bucket-docs:hover { background: #fdba74; }
+    .bucket-refactor { background: #fce7f3; color: #9d174d; border-color: #f9a8d4; }
+    .bucket-refactor:hover { background: #fbcfe8; }
+    .bucket-audit { background: #fef3c7; color: #92400e; border-color: #fcd34d; }
+    .bucket-audit:hover { background: #fde68a; }
+    .bucket-meta { background: #cffafe; color: #155e75; border-color: #67e8f9; }
+    .bucket-meta:hover { background: #a5f3fc; }
+    .bucket-other { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
+    .bucket-other:hover { background: #d1d5db; }
+
+    .search-wrap { display: flex; align-items: center; gap: 8px; }
+    .search-wrap label { font-size: 12px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
+    .search-input {
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      padding: 4px 8px;
+      font-size: 13px;
+      width: 200px;
+    }
+    .search-input:focus { outline: 2px solid #3b82f6; outline-offset: -1px; border-color: #3b82f6; }
+
+    /* ----- Table ----- */
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+    .data-table th {
+      background: #f9fafb;
+      text-align: left;
+      padding: 8px 12px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: #6b7280;
+      font-weight: 600;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .data-table td {
+      padding: 10px 12px;
+      vertical-align: top;
+      border-bottom: 1px solid #f3f4f6;
+    }
+    .data-table tr:last-child td { border-bottom: none; }
+    .row-name { font-weight: 600; }
+    .row-name code { font-size: 13px; }
+
+    .concern-pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 99px;
+      font-size: 11px;
+      font-weight: 500;
+      text-transform: lowercase;
+    }
+    .concern-pill.bucket-review { background: #ede9fe; color: #5b21b6; }
+    .concern-pill.bucket-test { background: #d1fae5; color: #065f46; }
+    .concern-pill.bucket-docs { background: #fed7aa; color: #9a3412; }
+    .concern-pill.bucket-refactor { background: #fce7f3; color: #9d174d; }
+    .concern-pill.bucket-audit { background: #fef3c7; color: #92400e; }
+    .concern-pill.bucket-meta { background: #cffafe; color: #155e75; }
+    .concern-pill.bucket-other { background: #e5e7eb; color: #374151; }
+
+    .tier-chip {
+      display: inline-block;
+      padding: 1px 6px;
+      border-radius: 99px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: lowercase;
+      margin-right: 3px;
+    }
+    .tier-chip.tier-cheap { background: #e0f2fe; color: #075985; }
+    .tier-chip.tier-capable { background: #ddd6fe; color: #5b21b6; }
+    .tier-chip.tier-premium { background: #fecaca; color: #991b1b; }
+
+    .scope-cell { font-size: 12px; color: #4b5563; max-width: 220px; }
+    .scope-cell code { background: rgba(0,0,0,0.04); padding: 1px 4px; border-radius: 3px; }
+    .scope-na { color: #9ca3af; font-style: italic; }
+
+    .row-description { font-size: 13px; color: #4b5563; max-width: 360px; }
+
+    .row-action { white-space: nowrap; }
+    .btn-run {
+      background: #3b82f6; color: white; border: none; padding: 5px 14px;
+      border-radius: 4px; font-size: 13px; font-weight: 500; cursor: pointer;
+    }
+    .btn-run:hover { background: #2563eb; }
+
+    /* ----- Kebab ----- */
+    .kebab-cell { position: relative; width: 32px; text-align: center; padding: 8px 4px !important; }
+    .kebab-btn {
+      background: none; border: none; cursor: pointer;
+      padding: 4px 6px; border-radius: 4px; color: #6b7280; font-size: 18px;
+      line-height: 1;
+    }
+    .kebab-btn:hover { background: #f3f4f6; color: #111; }
+    .kebab-menu {
+      position: absolute;
+      top: 32px;
+      right: 0;
+      background: #fff;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      min-width: 200px;
+      z-index: 10;
+      display: none;
+    }
+    .kebab-menu.open { display: block; }
+    .kebab-menu-item {
+      display: block;
+      width: 100%;
+      text-align: left;
+      background: none;
+      border: none;
+      padding: 8px 12px;
+      font-size: 13px;
+      color: #111;
+      cursor: pointer;
+    }
+    .kebab-menu-item:hover { background: #f3f4f6; }
+    .kebab-menu-item .ext-marker { font-size: 11px; color: #9ca3af; margin-left: 4px; }
+
+    /* ----- Empty state ----- */
+    .empty-state {
+      padding: 32px 16px;
+      text-align: center;
+      color: #6b7280;
+      background: #fff;
+      border: 1px dashed #d1d5db;
+      border-radius: 6px;
+    }
+    .empty-state strong { color: #111; }
+
+    /* ----- Toast ----- */
+    .toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(8px);
+      background: #111;
+      color: #fff;
+      padding: 8px 14px;
+      border-radius: 4px;
+      font-size: 13px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.15s, transform 0.15s;
+      z-index: 50;
+    }
+    .toast.show {
+      opacity: 1;
+      transform: translateX(-50%) translateY(0);
+    }
+
+    /* ----- Inspector ----- */
+    .inspector {
+      margin-top: 32px;
+      padding: 16px;
+      background: #fef9c3;
+      border: 1px solid #fde047;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .inspector h3 { margin: 0 0 8px 0; font-size: 14px; color: #713f12; }
+    .inspector ul { margin: 0; padding-left: 20px; }
+    .inspector li { margin-bottom: 4px; }
+    .state-key { font-weight: 600; color: #713f12; }
+  </style>
+</head>
+<body>
+
+<div class="wireframe-banner">
+  <strong>WIREFRAME</strong> — Standalone preview of the proposed Workflows page refinement.
+  Reads <code>docs/specs/ops-workflows-page-refinement/{requirements,decisions}.md</code>.
+  Open in browser, click chips / kebabs / type in search to interact.
+</div>
+
+<main>
+  <h1>Workflows</h1>
+  <p class="page-sub" id="page-sub"></p>
+
+  <div class="toolbar">
+    <div class="chip-row">
+      <span class="chip-label">Concern:</span>
+      <span class="chip chip-active bucket-review" data-bucket="review">
+        review <span class="chip-count" data-count="review">0</span>
+      </span>
+      <span class="chip chip-active bucket-test" data-bucket="test">
+        test <span class="chip-count" data-count="test">0</span>
+      </span>
+      <span class="chip chip-active bucket-docs" data-bucket="docs">
+        docs <span class="chip-count" data-count="docs">0</span>
+      </span>
+      <span class="chip chip-active bucket-refactor" data-bucket="refactor">
+        refactor <span class="chip-count" data-count="refactor">0</span>
+      </span>
+      <span class="chip chip-active bucket-audit" data-bucket="audit">
+        audit <span class="chip-count" data-count="audit">0</span>
+      </span>
+      <span class="chip chip-active bucket-meta" data-bucket="meta">
+        meta <span class="chip-count" data-count="meta">0</span>
+      </span>
+      <span class="chip chip-active bucket-other" data-bucket="other">
+        other <span class="chip-count" data-count="other">0</span>
+      </span>
+    </div>
+    <div class="search-wrap">
+      <label for="search">Search:</label>
+      <input id="search" class="search-input" type="text" placeholder="workflow name…" autocomplete="off" />
+    </div>
+  </div>
+
+  <div id="table-container"></div>
+
+  <div class="inspector">
+    <h3>Wireframe inspector — exercise every state</h3>
+    <ul>
+      <li><span class="state-key">Default</span> — page loads with ALL 7 concern chips active (unlike Specs page, no concern is structurally "noise")</li>
+      <li><span class="state-key">Click "review" off</span> — hides 4 review workflows (code-review, deep-review, security-audit, bug-predict)</li>
+      <li><span class="state-key">Type "health" in search</span> — narrows to 2 workflows (health-check, orchestrated-health-check) — directly addresses H4 (similar-named pairs)</li>
+      <li><span class="state-key">Type "release" in search</span> — finds release-prep, secure-release — both in `meta` concern, visually grouped</li>
+      <li><span class="state-key">Type "xyz" in search</span> — 0-result state inside active concerns</li>
+      <li><span class="state-key">Click all chips off</span> — empty-state with "re-enable at least one chip" CTA</li>
+      <li><span class="state-key">Click any kebab (⋯)</span> — opens 3-action menu (View recent runs / Copy run command / View docs)</li>
+      <li><span class="state-key">Click "Copy run command"</span> — copies <code>attune workflow run &lt;name&gt;</code> to clipboard with toast</li>
+      <li><span class="state-key">URL params</span> — try opening with <code>?bucket=review,audit&q=security</code> at the end of the URL</li>
+    </ul>
+  </div>
+</main>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+<script>
+  // ---------- Mock data ----------
+  // 20 real workflows from list_workflows() as of 2026-06-01.
+  // Concern assignments per docs/specs/ops-workflows-page-refinement/decisions.md.
+  const WORKFLOWS = [
+    // review
+    { name: "code-review",       concern: "review",   tiers: [["review","capable"]],                 description: "Review code for correctness, quality, and reuse opportunities" },
+    { name: "deep-review",       concern: "review",   tiers: [["review","capable"],["security","premium"],["test-gaps","capable"]], description: "Multi-pass deep review across correctness, security, test gaps" },
+    { name: "security-audit",    concern: "review",   tiers: [["audit","capable"]],                  description: "Find security vulnerabilities (eval/exec, secrets, injection, path traversal)" },
+    { name: "bug-predict",       concern: "review",   tiers: [["predict","capable"]],                description: "Predict likely bugs from patterns + complexity + change frequency" },
+    // test
+    { name: "test-gen",          concern: "test",     tiers: [["generate","capable"]],               description: "Generate unit tests for uncovered code" },
+    { name: "test-audit",        concern: "test",     tiers: [["audit","capable"]],                  description: "Audit test quality — flaky tests, missing edge cases, weak assertions" },
+    // docs
+    { name: "doc-gen",           concern: "docs",     tiers: [["generate","cheap"]],                 description: "Generate docstrings, README sections, API reference content" },
+    { name: "doc-audit",         concern: "docs",     tiers: [["audit","capable"]],                  description: "Find stale or missing documentation" },
+    { name: "doc-orchestrator",  concern: "docs",     tiers: [],                                     description: "Meta-workflow — orchestrates doc-gen + doc-audit pipelines" },
+    // refactor
+    { name: "simplify-code",     concern: "refactor", tiers: [["simplify","capable"]],               description: "Simplify code — flatten nesting, inline trivial helpers, remove dead code" },
+    { name: "refactor-plan",     concern: "refactor", tiers: [["plan","capable"]],                   description: "Prioritize tech debt — code smells, duplication, complexity" },
+    // audit
+    { name: "discovery-sweep",   concern: "audit",    tiers: [["sweep","capable"]],                  description: "Cross-cutting sweep — security + perf + bugs + docs in one pass" },
+    { name: "perf-audit",        concern: "audit",    tiers: [["audit","capable"]],                  description: "Performance audit — complexity, bottlenecks, optimization advice" },
+    { name: "dependency-check",  concern: "audit",    tiers: [["check","cheap"]],                    description: "Audit dependencies for CVEs, version drift, license issues" },
+    // meta
+    { name: "release-prep",      concern: "meta",     tiers: [["prep","capable"]],                   description: "Pre-release readiness check — CHANGELOG, version bumps, dependencies, tests" },
+    { name: "secure-release",    concern: "meta",     tiers: [],                                     description: "Pipeline — security-audit + release-prep + publish in one orchestrated flow" },
+    { name: "orchestrated-health-check", concern: "meta", tiers: [["health","capable"]],             description: "Multi-stage health check — tests, deps, security, docs in one orchestrated run" },
+    { name: "health-check",      concern: "meta",     tiers: [["check","cheap"]],                    description: "Quick health probe — config check, basic test, dep sanity (cheaper than orchestrated)" },
+    // other
+    { name: "rag-code-gen",      concern: "other",    tiers: [["generate","capable"]],               description: "RAG-grounded code generation with source citations from attune docs" },
+    { name: "research-synthesis",concern: "other",    tiers: [["synthesize","capable"]],             description: "Multi-source research synthesis from RAG corpus + web" },
+  ];
+
+  // Per-workflow default scope hint (derived server-side from features.yaml in prod)
+  const SCOPE_HINTS = {
+    "security-audit":   "src/attune/security/",
+    "bug-predict":      "src/attune/workflows/",
+    "perf-audit":       "src/attune/",
+    "test-audit":       "tests/",
+    "doc-audit":        "docs/",
+    "doc-gen":          "src/",
+    "code-review":      "src/",
+    "deep-review":      "src/",
+    "simplify-code":    "src/",
+    "refactor-plan":    "src/",
+    "dependency-check": "(project-wide)",
+    "release-prep":     "(project-wide)",
+    "health-check":     "(project-wide)",
+    "secure-release":   "(project-wide)",
+    "orchestrated-health-check": "(project-wide)",
+    "discovery-sweep":  "src/",
+    "doc-orchestrator": "(project-wide)",
+    "rag-code-gen":     "(rag query)",
+    "research-synthesis": "(rag query)",
+    "test-gen":         "src/",
+  };
+
+  const VALID_BUCKETS = new Set(["review","test","docs","refactor","audit","meta","other"]);
+
+  // ---------- State ----------
+  const state = {
+    buckets: new Set(VALID_BUCKETS),   // all on by default
+    search: "",
+  };
+
+  // ---------- URL params (mirror Specs A3c) ----------
+  function readURLState() {
+    const u = new URL(window.location.href);
+    const b = u.searchParams.get("bucket");
+    if (b) {
+      const valid = b.split(",").filter(x => VALID_BUCKETS.has(x));
+      if (valid.length > 0) state.buckets = new Set(valid);
+    }
+    const q = u.searchParams.get("q");
+    if (q) state.search = q;
+  }
+
+  function syncURL() {
+    const u = new URL(window.location.href);
+    const allOn = state.buckets.size === VALID_BUCKETS.size;
+    if (allOn) {
+      u.searchParams.delete("bucket");
+    } else {
+      u.searchParams.set("bucket", Array.from(state.buckets).join(","));
+    }
+    if (state.search.trim()) {
+      u.searchParams.set("q", state.search.trim());
+    } else {
+      u.searchParams.delete("q");
+    }
+    history.replaceState(null, "", u.toString());
+  }
+
+  // ---------- Rendering ----------
+  function updateChipCounts() {
+    const counts = {};
+    for (const b of VALID_BUCKETS) counts[b] = 0;
+    for (const w of WORKFLOWS) counts[w.concern]++;
+    for (const b of VALID_BUCKETS) {
+      const el = document.querySelector(`[data-count="${b}"]`);
+      if (el) el.textContent = counts[b];
+    }
+  }
+
+  function updateChipClasses() {
+    for (const chip of document.querySelectorAll(".chip[data-bucket]")) {
+      const b = chip.getAttribute("data-bucket");
+      const isOn = state.buckets.has(b);
+      chip.classList.toggle("chip-active", isOn);
+      chip.classList.toggle("chip-inactive", !isOn);
+      chip.classList.toggle(`bucket-${b}`, isOn); // accent shade only when active
+      const mark = chip.querySelector(".chip-hidden-mark");
+      if (!isOn && !mark) {
+        const span = document.createElement("span");
+        span.className = "chip-hidden-mark";
+        span.textContent = "✗";
+        chip.appendChild(span);
+      } else if (isOn && mark) {
+        mark.remove();
+      }
+    }
+  }
+
+  function tierMarkup(tiers) {
+    if (!tiers || tiers.length === 0) {
+      return '<span class="scope-na">—</span>';
+    }
+    return tiers.map(([stage, tier]) => {
+      const label = stage.replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+      const tierName = tier === "cheap" ? "Cheap" : tier === "premium" ? "Premium" : "Standard";
+      return `<span class="tier-chip tier-${tier}">${label} ${tierName}</span>`;
+    }).join("");
+  }
+
+  function renderTable() {
+    const container = document.getElementById("table-container");
+    const q = state.search.trim().toLowerCase();
+
+    const visible = WORKFLOWS
+      .filter(w => state.buckets.has(w.concern))
+      .filter(w => !q || w.name.toLowerCase().includes(q))
+      .sort((a, b) => a.name.localeCompare(b.name));
+
+    // Update subhead with active counts
+    const subEl = document.getElementById("page-sub");
+    const totalActive = WORKFLOWS.filter(w => state.buckets.has(w.concern)).length;
+    if (state.buckets.size === 0) {
+      subEl.textContent = `0 of ${WORKFLOWS.length} workflows visible.`;
+    } else if (q && visible.length === 0) {
+      subEl.textContent = `0 workflows match in ${state.buckets.size} active concern${state.buckets.size === 1 ? "" : "s"}.`;
+    } else if (q) {
+      subEl.textContent = `${visible.length} of ${totalActive} workflows match '${q}'.`;
+    } else {
+      subEl.textContent = `${visible.length} of ${WORKFLOWS.length} workflows in ${state.buckets.size} active concern${state.buckets.size === 1 ? "" : "s"}.`;
+    }
+
+    if (state.buckets.size === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <strong>All concerns filtered out.</strong><br>
+          Re-enable at least one chip above to see workflows.
+        </div>`;
+      return;
+    }
+
+    if (visible.length === 0) {
+      container.innerHTML = `
+        <div class="empty-state">
+          <strong>No workflows in active concerns match '${escapeHtml(q)}'.</strong><br>
+          Try a different search term or enable more concern chips.
+        </div>`;
+      return;
+    }
+
+    let html = `
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Concern</th>
+            <th>Tier map</th>
+            <th>Description</th>
+            <th>Default scope</th>
+            <th>Run</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    for (const w of visible) {
+      const scope = SCOPE_HINTS[w.name] || "—";
+      html += `
+        <tr data-workflow="${escapeAttr(w.name)}" data-concern="${escapeAttr(w.concern)}">
+          <td class="row-name"><code>${escapeHtml(w.name)}</code></td>
+          <td><span class="concern-pill bucket-${w.concern}">${w.concern}</span></td>
+          <td>${tierMarkup(w.tiers)}</td>
+          <td class="row-description">${escapeHtml(w.description)}</td>
+          <td class="scope-cell"><code>${escapeHtml(scope)}</code></td>
+          <td class="row-action"><button class="btn-run" data-run="${escapeAttr(w.name)}">Run</button></td>
+          <td class="kebab-cell">
+            <button class="kebab-btn" aria-label="More actions for ${escapeAttr(w.name)}" data-kebab="${escapeAttr(w.name)}">⋯</button>
+            <div class="kebab-menu" data-kebab-menu="${escapeAttr(w.name)}">
+              <button class="kebab-menu-item" data-action="recent" data-workflow="${escapeAttr(w.name)}">View recent runs</button>
+              <button class="kebab-menu-item" data-action="copy" data-workflow="${escapeAttr(w.name)}">Copy run command</button>
+              <button class="kebab-menu-item" data-action="docs" data-workflow="${escapeAttr(w.name)}">View docs <span class="ext-marker">↗</span></button>
+            </div>
+          </td>
+        </tr>`;
+    }
+
+    html += `</tbody></table>`;
+    container.innerHTML = html;
+  }
+
+  function escapeHtml(s) {
+    return String(s || "")
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#39;");
+  }
+  function escapeAttr(s) { return escapeHtml(s); }
+
+  // ---------- Toast ----------
+  let toastTimer = null;
+  function showToast(msg) {
+    const el = document.getElementById("toast");
+    el.textContent = msg;
+    el.classList.add("show");
+    if (toastTimer) clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => el.classList.remove("show"), 1800);
+  }
+
+  // ---------- Event handlers ----------
+  function onChipClick(e) {
+    const chip = e.target.closest(".chip[data-bucket]");
+    if (!chip) return;
+    const b = chip.getAttribute("data-bucket");
+    if (state.buckets.has(b)) state.buckets.delete(b);
+    else state.buckets.add(b);
+    updateChipClasses();
+    renderTable();
+    syncURL();
+  }
+
+  function onSearchInput(e) {
+    state.search = e.target.value;
+    renderTable();
+    syncURL();
+  }
+
+  function onKebabClick(e) {
+    const btn = e.target.closest("[data-kebab]");
+    if (!btn) return;
+    e.stopPropagation();
+    const name = btn.getAttribute("data-kebab");
+    const menu = document.querySelector(`[data-kebab-menu="${CSS.escape(name)}"]`);
+    document.querySelectorAll(".kebab-menu.open").forEach(m => { if (m !== menu) m.classList.remove("open"); });
+    if (menu) menu.classList.toggle("open");
+  }
+
+  function onMenuItemClick(e) {
+    const item = e.target.closest("[data-action]");
+    if (!item) return;
+    e.stopPropagation();
+    const name = item.getAttribute("data-workflow");
+    const action = item.getAttribute("data-action");
+    if (action === "copy") {
+      const cmd = `attune workflow run ${name}`;
+      navigator.clipboard.writeText(cmd).then(() => showToast(`Copied: ${cmd}`));
+    } else if (action === "recent") {
+      showToast(`(wireframe) Would scroll to ${name}'s recent runs strip`);
+    } else if (action === "docs") {
+      showToast(`(wireframe) Would open /help/${name} in a new tab`);
+    }
+    document.querySelectorAll(".kebab-menu.open").forEach(m => m.classList.remove("open"));
+  }
+
+  function onRunClick(e) {
+    const btn = e.target.closest("[data-run]");
+    if (!btn) return;
+    e.stopPropagation();
+    showToast(`(wireframe) Would run: attune workflow run ${btn.getAttribute("data-run")}`);
+  }
+
+  function onDocumentClick(e) {
+    if (!e.target.closest(".kebab-menu") && !e.target.closest("[data-kebab]")) {
+      document.querySelectorAll(".kebab-menu.open").forEach(m => m.classList.remove("open"));
+    }
+  }
+
+  function onKeyDown(e) {
+    if (e.key === "Escape") {
+      document.querySelectorAll(".kebab-menu.open").forEach(m => m.classList.remove("open"));
+    }
+  }
+
+  // ---------- Init ----------
+  readURLState();
+  updateChipCounts();
+  updateChipClasses();
+  document.getElementById("search").value = state.search;
+  renderTable();
+
+  document.querySelector(".chip-row").addEventListener("click", onChipClick);
+  document.getElementById("search").addEventListener("input", onSearchInput);
+  document.getElementById("table-container").addEventListener("click", e => {
+    onKebabClick(e);
+    onMenuItemClick(e);
+    onRunClick(e);
+  });
+  document.addEventListener("click", onDocumentClick);
+  document.addEventListener("keydown", onKeyDown);
+</script>
+
+</body>
+</html>
