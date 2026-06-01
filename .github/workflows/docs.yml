@@ -7,11 +7,17 @@ on:
       - 'docs/**'
       - 'mkdocs.yml'
       - '.github/workflows/docs.yml'
+      # wiring-audit job — also fire on source / script changes that
+      # could break docs references (anchor links, mkdocstrings symbols).
+      - 'src/**'
+      - 'scripts/audit_docs_wiring.py'
   pull_request:
     branches: [main]
     paths:
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'src/**'
+      - 'scripts/audit_docs_wiring.py'
   workflow_dispatch:
 
 permissions:
@@ -22,6 +28,25 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Wiring-audit job — advisory mode per docs/specs/docs-wiring-audit/
+  # tasks.md Task 7. NOT yet in required_status_checks; Task 8 will
+  # promote once main has held 3 consecutive green runs. Script is
+  # stdlib-only so this job needs no dependency install — just
+  # checkout + a Python interpreter (any 3.10+).
+  wiring-audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+        with:
+          python-version: '3.11'
+
+      - name: Run wiring audit
+        run: python scripts/audit_docs_wiring.py --format json
+
   build:
     runs-on: ubuntu-latest
     timeout-minutes: 10

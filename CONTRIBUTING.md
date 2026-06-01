@@ -375,6 +375,37 @@ Update documentation when:
 - **Docstrings**: In-code documentation
 - **CONTRIBUTING.md**: This file
 
+### Documentation wiring audit (advisory CI)
+
+A `wiring-audit` job in `.github/workflows/docs.yml` runs
+[`scripts/audit_docs_wiring.py`](scripts/audit_docs_wiring.py)
+on every PR that touches `docs/`, `mkdocs.yml`, `src/`, or the
+audit script itself. The check is **advisory** for now — failures
+do NOT block merge. After the audit holds green on `main` for 3
+consecutive PRs, it will be promoted to a required status check
+(per `docs/specs/docs-wiring-audit/tasks.md` Task 8).
+
+**Run locally** (stdlib-only, no deps required):
+
+```bash
+python scripts/audit_docs_wiring.py            # human-readable
+python scripts/audit_docs_wiring.py --format json  # CI shape
+python scripts/audit_docs_wiring.py --check anchor # specific check
+```
+
+**Findings to expect:**
+
+- **anchor** — broken `[link](file.md#anchor)` references where
+  the anchor doesn't exist in the target file.
+- **nav** — pages on disk that aren't reachable from any nav
+  entry in `mkdocs.yml`.
+- **features-yaml** — entries in `.help/features.yaml` whose
+  referenced doc paths don't exist.
+
+If a PR's audit fails, the job log lists each finding with the
+source location. Fix at the source, or open a follow-up issue
+if the finding is intentional (legacy redirect, etc.).
+
 ### Writing Examples
 
 Good examples are:
