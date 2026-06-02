@@ -143,3 +143,56 @@ class TestTemplateIntegration:
         )
         template_text = template_path.read_text(encoding="utf-8")
         assert "workflows_refined.js" in template_text
+
+
+class TestURLStateSurface:
+    """A3c — URL param parsing + state sync.
+
+    The JS module exposes readURLState/syncURL on the namespace and
+    wires them into chip + search handlers so ?bucket=…&q=… is the
+    source of truth on init and updates as the user toggles.
+    """
+
+    def test_exposes_read_url_state(self, js_text: str) -> None:
+        """readURLState is on the public surface."""
+        assert "readURLState" in js_text
+
+    def test_exposes_sync_url(self, js_text: str) -> None:
+        """syncURL is on the public surface."""
+        assert "syncURL" in js_text
+
+    def test_exposes_buckets_are_default(self, js_text: str) -> None:
+        """bucketsAreDefault helper for clean-URL detection."""
+        assert "bucketsAreDefault" in js_text
+
+    def test_parses_bucket_query_param(self, js_text: str) -> None:
+        """URL ?bucket= is read into state.buckets."""
+        assert 'searchParams.get("bucket")' in js_text
+
+    def test_parses_q_query_param(self, js_text: str) -> None:
+        """URL ?q= is read into state.search."""
+        assert 'searchParams.get("q")' in js_text
+
+    def test_uses_replace_state_not_push(self, js_text: str) -> None:
+        """Toggling a chip uses replaceState — toggles don't pollute
+        browser history.
+        """
+        assert "history.replaceState" in js_text
+
+    def test_clean_url_when_defaults(self, js_text: str) -> None:
+        """When all buckets are on and search is empty, both params
+        are removed from the URL.
+        """
+        assert 'searchParams.delete("bucket")' in js_text
+        assert 'searchParams.delete("q")' in js_text
+
+    def test_sync_url_called_on_chip_toggle(self, js_text: str) -> None:
+        """The chip click handler calls syncURL() after applyFilters()."""
+        # Pattern: applyFilters() is called, then syncURL() within the
+        # same handler. Just check syncURL() appears more than once
+        # (definition + at least one call site).
+        assert js_text.count("syncURL()") >= 2
+
+    def test_init_calls_read_url_state(self, js_text: str) -> None:
+        """init() reads URL state before wiring handlers."""
+        assert "readURLState()" in js_text
