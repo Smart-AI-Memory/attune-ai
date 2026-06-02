@@ -25,7 +25,7 @@ def parse_security_results(results_file: Path) -> dict:
         Dict with parsed findings and metadata
     """
     try:
-        with open(results_file) as f:
+        with open(results_file, encoding="utf-8") as f:
             content = f.read()
 
         if not content.strip():
@@ -342,7 +342,7 @@ def main():
             "scan_skipped": extraction_failure,
         }
 
-        with open(args.output, "w") as f:
+        with open(args.output, "w", encoding="utf-8") as f:
             json.dump(analysis, f, indent=2)
 
         # Suppress PR comment on extraction failure (issue #560): the scan
@@ -350,7 +350,7 @@ def main():
         # alarms contributors when the GH check is actually green. Real
         # errors still get a comment.
         if not extraction_failure:
-            with open("pr_comment.md", "w") as f:
+            with open("pr_comment.md", "w", encoding="utf-8") as f:
                 f.write(
                     f"""## 🔒 Security Scan Results
 
@@ -365,7 +365,7 @@ Please check the workflow logs for details.
                 )
 
         if args.github_output:
-            with open(args.github_output, "a") as f:
+            with open(args.github_output, "a", encoding="utf-8") as f:
                 f.write("has_critical=false\n")
                 f.write("critical_count=0\n")
 
@@ -393,15 +393,15 @@ Please check the workflow logs for details.
     comment = generate_pr_comment(categorized, analysis)
 
     # Write outputs
-    with open(args.output, "w") as f:
+    with open(args.output, "w", encoding="utf-8") as f:
         json.dump(analysis, f, indent=2)
 
-    with open("pr_comment.md", "w") as f:
+    with open("pr_comment.md", "w", encoding="utf-8") as f:
         f.write(comment)
 
     # Write GitHub Actions outputs
     if args.github_output:
-        with open(args.github_output, "a") as f:
+        with open(args.github_output, "a", encoding="utf-8") as f:
             f.write(f"has_critical={'true' if analysis['has_critical'] else 'false'}\n")
             f.write(f"critical_count={analysis['critical_count']}\n")
             f.write(f"medium_count={analysis['medium_count']}\n")
