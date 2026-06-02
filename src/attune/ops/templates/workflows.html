@@ -63,6 +63,9 @@
         <th>Description</th>
         <th>Scope</th>
         {% if allow_run %}<th class="num">Action</th>{% endif %}
+        {# A3b — kebab column for the action menu. Always rendered
+           (no allow_run gate) since all 3 actions are non-mutating. #}
+        <th class="col-kebab" aria-label="Row actions"></th>
       </tr>
     </thead>
     <tbody>
@@ -176,6 +179,19 @@
               <button class="btn btn-run" type="button" data-run-button data-workflow="{{ w.name }}" aria-label="Run {{ w.name }}">Run</button>
             </td>
           {% endif %}
+          {# A3b — kebab trigger. workflows_kebab.js injects the menu
+             on click; menu floats positioned via fixed coords, appended
+             to <body> so it escapes table overflow. #}
+          <td class="col-kebab kebab-cell">
+            <button
+              type="button"
+              class="kebab-btn"
+              data-kebab="{{ w.name }}"
+              aria-label="Actions for {{ w.name }}"
+              aria-haspopup="menu"
+              aria-expanded="false"
+            >⋯</button>
+          </td>
         </tr>
       {% endfor %}
     </tbody>
@@ -211,5 +227,9 @@
    bulletin.js still load unconditionally above. #}
 {% if workflows %}
 <script src="{{ url_for('static', path='js/workflows_refined.js') }}?v={{ attune_version }}"></script>
+{# A3b — workflows_kebab.js handles the row-level action menu
+   (View recent runs / Copy run command / View docs). Pure DOM,
+   no fetch. Toast container is lazily injected by the script. #}
+<script src="{{ url_for('static', path='js/workflows_kebab.js') }}?v={{ attune_version }}"></script>
 {% endif %}
 {% endblock %}

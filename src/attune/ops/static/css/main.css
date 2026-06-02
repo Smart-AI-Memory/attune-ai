@@ -2611,7 +2611,8 @@ a.kpi:hover {
    style set in JS.
    ============================================================ */
 
-.specs-table .col-kebab {
+.specs-table .col-kebab,
+.workflows-table .col-kebab {
   text-align: right;
   width: 32px;
   white-space: nowrap;
