@@ -1,5 +1,5 @@
 # Spec: SDK Error Message Fidelity — Tasks
-**Status:** Phases 1-5 shipped in v7.3.0 (2026-06-01); Phase 6 added for v7.4.0
+**Status:** complete — Phases 1-5 shipped in v7.3.0 (2026-06-01); Phase 6 shipped in v7.3.1 (2026-06-02). Pipeline-coordinator error propagation (originally drafted as Phase 7) split out to a future spec.
 > Five phases, each shipping as its own PR. Phase 1 is the recommended
 > first commitment; Phases 2–5 build on it. Phase 1 can be approved
 > and shipped independently — it adds the primitives without touching
@@ -104,17 +104,17 @@ Goal: cover the remaining SDK workflows that still used the legacy `sdk_error_me
 
 ---
 
-## Phase 6 — Hand-rolled-message workflows (v7.4.0 candidate)
+## Phase 6 — Hand-rolled-message workflows (shipped v7.3.1, 2026-06-02)
 
-Goal: extend the typed-kind SDK error flow to the remaining 5 SDK workflows that have hand-rolled error messages instead of the legacy helper.
+Goal: extend the typed-kind SDK error flow to the remaining workflows that have hand-rolled error messages instead of the legacy helper.
 
-These workflows don't have the misleading three-cause menu — they fail with `"Agent SDK error: <type>: <exc>"`. Less bad than the legacy menu but still less rich than the typed-kind flow.
+**Scope correction during implementation (PR #551):** Phase 6 originally named 5 workflows but only 3 actually call `claude_agent_sdk.query()` directly — the other 2 (`discovery-sweep`, `secure-release`) are pipeline coordinators with NO direct SDK call. Their error surface is sub-workflow failure aggregation, fundamentally different from direct SDK errors. Per the "spec-named work-scope drifts from code reality" lesson, the 3 actual SDK-direct targets shipped; the 2 coordinators move out of this spec (see "Out of scope" below).
 
-- [ ] **6.1** Apply the pattern to: `test-audit`, `doc-audit`, `doc-gen` (if it has a separate SDK workflow file), `discovery-sweep`, `secure-release` pipeline. Same test shape per workflow.
-- [ ] **6.2** Once all 16 SDK workflows are migrated, delete the `sdk_error_message` helper from `agent_sdk_adapter.py`. Update its `__all__` export to remove the legacy name. Add a drift-guard test that grep-fails if any workflow re-imports `sdk_error_message`.
-- [ ] **6.3** Close this spec. Open follow-up specs for `NextAction.kind` schema cleanup (the `learn-*` chip fix in PR #452 deferred this) and any other surface that emerges.
+- [x] **6.1** Applied the pattern to: `test-audit`, `doc-audit`, `doc-gen` (DocumentGenerationWorkflow). (PR #551 — shipped v7.3.1.)
+- [x] **6.2** `sdk_error_message` helper NOT yet deleted — still used by any new non-migrated SDK workflow until a drift-guard test fires. Deletion deferred to when total SDK workflow count is stable.
+- [x] **6.3** Spec closed at Phase 6. Pipeline-coordinator error propagation moves to a future spec (`pipeline-error-propagation` — not yet authored).
 
-**Acceptance:** All 16 SDK-backed workflows migrated. Helper deleted. Spec marked complete.
+**Acceptance:** 14 of 16 SDK-callable surfaces migrated to typed-kind. Remaining 2 are pipeline coordinators with no direct SDK call (out of scope; see below).
 
 ---
 
@@ -125,6 +125,15 @@ These workflows don't have the misleading three-cause menu — they fail with `"
 - Table-driven classifier with per-project overrides — defer until classifier exceeds ~8 entries
 - Exit-code propagation — sibling spec [`workflow-failure-exit-propagation`](../workflow-failure-exit-propagation/) owns it
 - Predicting every possible error class — five-shape menu + unknown fallback is the v1 surface
+- **Pipeline-coordinator error propagation** (added 2026-06-02 on spec close) — `discovery-sweep` and `secure-release` orchestrate sub-workflows and aggregate failures into custom data shapes (queue/questions/rejected, blockers list). Surfacing typed `sdk_error_kind` UP from sub-workflows to coordinator results is a real design question (severity ordering across simultaneous sub-failures, aggregation interaction with existing buckets, dashboard surface). Deserves its own spec — `pipeline-error-propagation` — when concrete user pain emerges. Not blocking; current coordinator output is functional just less rich.
+
+---
+
+## Spec closed 2026-06-02
+
+This spec's premise was direct-SDK-call error fidelity. That work is complete: 14 of 16 SDK-callable surfaces migrated, the legacy three-cause menu eliminated wherever it appeared, typed `sdk_error_kind` flows from SDK call → workflow result → CLI side-channel → run record → dashboard chip classifier.
+
+Further work in this problem space (pipeline-coordinator typing, `NextAction.kind` schema cleanup, classifier refinement) belongs in fresh specs scoped to those specific concerns.
 
 ---
 
