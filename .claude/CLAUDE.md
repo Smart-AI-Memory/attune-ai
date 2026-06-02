@@ -6999,3 +6999,33 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   existing sub-worktree-merge-error lesson — that
   one names the cause; this one names the dance-
   specific consequence.
+
+- **"Create a new worktree to continue last session"
+  usually means "use the existing worktree on that
+  branch," not "create a second one" — git refuses
+  two worktrees on the same branch**: hit 2026-06-02
+  when a session-startup ask was "create a new
+  worktree" with a queued `gh pr create --head
+  <branch>` and the branch already had a worktree at
+  `.claude/worktrees/<slug>` left over from the prior
+  session. Creating a literal "new" worktree on that
+  branch would have failed with `fatal: '<branch>' is
+  already used by worktree at '<path>'`. The "new"
+  framing here means "fresh session context," not
+  "fresh git worktree" — the existing worktree's git
+  state IS what the user wants to continue from.
+  **Diagnostic recipe**: before creating a worktree
+  for a named branch, `git worktree list | grep
+  <branch>`. If a row matches, `cd` into it and reuse;
+  surface the reuse to the user
+  ("an existing worktree at <path> is on this branch
+  — reusing it"). If not, create one off the requested
+  base. Same pattern applies when a queued command
+  references `--head <branch>` or `--base <branch>` —
+  the worktree the command needs may already exist.
+  Pairs with the existing worktree-PYTHONPATH /
+  Write-absolute-path / dirty-state-recovery lessons —
+  all are about correctly locating the right worktree
+  for a piece of work; this one's about the
+  multi-session handoff case where the prior session
+  left state behind.
