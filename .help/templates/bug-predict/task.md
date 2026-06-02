@@ -1,49 +1,77 @@
 ---
+type: task
+name: bug-predict-task
 feature: bug-predict
 depth: task
-generated_at: 2026-06-01T11:47:06.411071+00:00
-source_hash: cc510a144b48d7a571de765708d61c6c9bd34809866c35bf40d3568682dc0f7c
+generated_at: 2026-06-02T10:56:02.663294+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Work with bug predict
+# Run Bug Prediction
 
-Use bug predict when you need to predict likely bug locations based on code patterns and complexity.
+Use `/bug-predict` when you want to find likely bug locations in a codebase before they surface in production, using pattern detection and complexity analysis.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/workflows/bug_predict.py
+- The target path you want to scan (a single file, a directory, or `.` for the whole project)
 
-## Steps
+## Run a scan
 
-1. **Understand the current behavior.**
-   Read the entry points to see what bug predict
-   does today before making changes.
-   The primary functions are:
-   - `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py` — Format bug prediction output as a human-readable report.
-   - `main()` in `src/attune/workflows/bug_predict_report.py` — CLI entry point for bug prediction workflow.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Choose your entry point.**
+   - To scan interactively from the command line, call `main()` in `workflows.bug_predict_report`. This is the CLI entry point for the bug prediction workflow.
+   - To run a scan programmatically, instantiate `BugPredictionWorkflow` from `workflows.bug_predict` and call `execute()`:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+     ```python
+     from workflows.bug_predict import BugPredictionWorkflow
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "bug-predict"`.
+     workflow = BugPredictionWorkflow()
+     result = workflow.execute(path="src/")
+     ```
+
+2. **Scope the scan to the path you care about.**
+   Pass the target as the `path` argument to `execute()`. You can target a single file, a directory tree, or the whole project:
+
+   | Target | Example |
+   |--------|---------|
+   | One file | `path="src/auth.py"` |
+   | A directory | `path="src/"` |
+   | Whole project | `path="."` |
+
+3. **Format the output.**
+   Pass the `WorkflowResult` returned by `execute()` to `format_bug_predict_report()`:
+
+   ```python
+   from workflows.bug_predict_report import format_bug_predict_report
+
+   report = format_bug_predict_report(result=result.data, input_data={"path": "src/"})
+   print(report)
+   ```
+
+   The report organizes findings by severity (HIGH, MEDIUM, LOW) with file paths, line numbers, pattern types, and plain-English descriptions.
+
+4. **Customize the orchestrator prompt if needed.**
+   `BugPredictionWorkflow.__init__` accepts a `system_prompt_suffix` keyword argument. Pass a string to append additional instructions to the default orchestrator prompt — for example, to restrict the scan to specific pattern types or adjust the output format.
+
+   ```python
+   workflow = BugPredictionWorkflow(system_prompt_suffix="Focus only on dangerous_eval findings.")
+   ```
+
+5. **Run the tests to verify your changes.**
+   After any modification to `workflows/bug_predict.py` or `workflows/bug_predict_report.py`, run:
+
+   ```
+   pytest -k "bug-predict"
+   ```
+
+## Confirm success
+
+The scan succeeded when `format_bug_predict_report()` returns a non-empty report string that includes a **Summary** section with an overall risk score (0–100), a **Bugs** section with at least one severity group, and a **Suggestions** section with prioritized prevention strategies.
 
 ## Key files
 
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_*.py`
-
-## Common modifications
-
-Functions you are most likely to modify:
-
-- `format_bug_predict_report()` in `src/attune/workflows/bug_predict_report.py`
-- `main()` in `src/attune/workflows/bug_predict_report.py`
+| File | Purpose |
+|------|---------|
+| `src/attune/workflows/bug_predict.py` | `BugPredictionWorkflow` class and three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) |
+| `src/attune/workflows/bug_predict_report.py` | `format_bug_predict_report()` and the `main()` CLI entry point |

@@ -3,50 +3,46 @@ type: warning
 name: cli-warning
 feature: cli
 depth: warning
-generated_at: 2026-05-16T06:19:45.819463+00:00
+generated_at: 2026-06-02T10:56:02.727759+00:00
 source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# CLI cautions
+# CLI Cautions
 
 ## What to watch for
 
-The `attune` CLI spans cost tracking, help browsing, lesson management, memory capture, and provider routing. The risks below are specific to how these commands interact with persistent state and the `HybridRouter` preference store.
+The CLI layer connects user input to skills and cost tracking through routing logic that learns from use. Two areas deserve attention before you start: destructive commands that cannot be undone, and a routing preference system whose learned state can produce surprising results.
 
 ## Risk areas
 
-### `cmd_costs_reset()` is irreversible
+### `cmd_costs_reset` permanently discards all cost data
 
-`cmd_costs_reset()` clears **all** cost tracking data and always returns `0`, so a successful exit code gives you no confirmation that data existed before it was deleted. Run `cmd_costs_export()` to back up data before calling reset, especially in scripts where the call might be unintentional.
+`cmd_costs_reset` clears every cost record. There is no confirmation prompt and no undo. If you are scripting cost workflows, call `cmd_costs_export` first to preserve the data before any reset.
 
-### `HybridRouter` preference drift over time
+### `HybridRouter` learns preferences that silently override routing
 
-`HybridRouter.learn_preference()` writes to a file-backed store (default path controlled by `preferences_path`). Repeated calls with the same `keyword` accumulate `usage_count` and adjust `confidence`, which changes future routing decisions from `route()`. If you pass `None` for `preferences_path`, the router silently uses a default location — preferences learned in one environment carry over to another if that path is shared (for example, a mounted home directory in a container).
+`HybridRouter.learn_preference(keyword, skill, args)` writes a `RoutingPreference` to disk (at the path passed to `__init__`). Once written, that preference — including its `confidence` and `usage_count` fields — influences every subsequent call to `HybridRouter.route()`. If you call `learn_preference` in a test or experiment and do not clean up the preferences file, those learned entries will affect routing in other contexts, including production sessions.
 
-### Cost export overwrites without prompting
+To inspect what has been learned, call `HybridRouter.get_suggestions(partial)` with an empty string to see all stored keywords before routing runs.
 
-`cmd_costs_export()` exports cost data to a file. If the target file already exists, the command does not prompt for confirmation before overwriting it. Specify a unique or timestamped output path when automating exports.
+### `route_user_input` and slash-command detection are order-sensitive
 
-### Lesson and memory commands modify files in place
+`is_slash_command(text)` determines whether input is dispatched as a slash command or passed through the hybrid router. If your input starts with `/` but is not a registered command, it may be silently dropped or misrouted rather than falling back gracefully. Validate the text with `is_slash_command` before passing it to `route_user_input` when the input source is untrusted or user-supplied.
 
-`cmd_remember()`, `cmd_forget()`, and `cmd_memory_capture()` all write to lesson or memory files directly. `cmd_forget()` removes entries by line number, so line numbers shift after each deletion — running it twice in a loop without re-querying `cmd_lessons()` between calls removes the wrong entries.
+### Memory commands modify persistent state without a dry-run option
 
-### `_CATEGORIES` is internal and subject to change
-
-The `_CATEGORIES` tuple (`errors`, `warnings`, `tips`, `references`) drives filtering in help commands. It is underscore-prefixed and not part of the public API. If your tooling parses CLI output and expects exactly these four category names, a refactor can break it silently.
+`cmd_memory_capture`, `cmd_remember`, `cmd_forget`, and `cmd_memory_forget_topic` all write to or delete from cross-session memory immediately. `cmd_forget` removes a lesson by line number or keyword — if the lessons file has shifted since you last called `cmd_lessons`, you may delete the wrong entry. Always call `cmd_lessons` immediately before `cmd_forget` to confirm line numbers are current.
 
 ## How to avoid problems
 
-1. **Export before reset.** Always call `cmd_costs_export()` with a safe output path before `cmd_costs_reset()`. The reset returns `0` regardless of how much data it deletes.
+1. **Export before reset.** Always run `cmd_costs_export` before `cmd_costs_reset` in any automated script. Treat cost data as append-only until you have a confirmed export.
 
-2. **Pin `preferences_path` explicitly.** When constructing `HybridRouter` in tests or containerized environments, pass an explicit `preferences_path` pointing to a temporary or isolated file. Relying on the default path risks cross-environment preference bleed.
+2. **Isolate learned routing preferences in tests.** Pass a temporary file path to `HybridRouter.__init__` during testing so learned `RoutingPreference` entries do not persist to your real preferences file. Delete the temp file in teardown.
 
-3. **Re-query line numbers between `cmd_forget()` calls.** If you need to remove multiple lessons, call `cmd_lessons()` after each `cmd_forget()` to get the updated line numbers before the next deletion.
+3. **Confirm memory line numbers are fresh.** When scripting `cmd_forget` or `cmd_memory_forget_topic`, call `cmd_lessons` or `cmd_memory_topics` in the same session immediately before the delete call to ensure indices have not shifted.
 
-4. **Use only public API functions.** Depend on the functions listed in `__all__` for each module. Private helpers — anything prefixed with `_`, including `_CATEGORIES` — can change without notice.
-
-5. **Scope cost-command tests carefully.** `cmd_costs_reset()` in a test that shares state with other tests will delete real data. Use a temporary directory or mock the storage layer when testing cost commands.
+4. **Check slash-command validity before routing.** Use `is_slash_command(text)` to gate input before passing it to `route_user_input`. This prevents ambiguous input from reaching the router in an unexpected state.
 
 ## Source files
 

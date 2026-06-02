@@ -1,40 +1,66 @@
 ---
 type: faq
+name: help-system-faq
 feature: help-system
 depth: faq
-generated_at: 2026-04-20T01:18:38.711695+00:00
-source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
+generated_at: 2026-06-02T10:56:02.703427+00:00
+source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
 status: generated
 ---
 
 # Help System FAQ
 
-## What is the help system?
+## What does the help system do?
 
-A template engine that provides progressive-depth help based on context, advancing from concept to task to reference as users ask for more detail.
+It scans your project to discover features, generates depth-layered help templates for each one, and serves those templates at runtime — adapting content to the audience channel and tracking session state so users automatically receive more detail each time they ask the same question.
 
-## When should I use the help system?
+## When should I use it?
 
-Use the help system when you need context-aware documentation that adapts to user behavior. It's designed for CLI tools, development environments, and applications where users need different levels of detail depending on their experience and current task.
+Use the help system when you need to generate, maintain, or serve contextual help templates for project features. If you only need to look up a single template by ID, start with `populate()` in `help.templates`. If you need to keep templates in sync as source files change, start with `run_maintenance()` in `help.maintenance`.
 
-## How do I get started?
+## What are the key entry points?
 
-Start with `scan_project()` to discover features in your codebase, then use `proposals_to_manifest()` to create a features manifest. Once you have templates, use the `populate()` function to render help content for specific audiences.
+The right starting point depends on what you want to do:
+
+| Goal | Function | Module |
+|---|---|---|
+| Discover features in a project | `scan_project()` | `help.bootstrap` |
+| Turn discovered features into a manifest | `proposals_to_manifest()` | `help.bootstrap` |
+| Generate templates for a feature | `generate_feature_templates()` | `help.generator` |
+| Serve a template to a user | `populate()` | `help.templates` |
+| Serve with progressive depth | `populate_progressive()` | `help.progression` |
+| Re-generate stale templates | `run_maintenance()` | `help.maintenance` |
+| Find templates relevant to a file | `get_precursor_warnings()` | `help.feedback` |
+| Find templates relevant to a workflow | `get_workflow_help()` | `help.feedback` |
 
 ## How does progressive depth work?
 
-The system tracks session state and advances depth automatically. First lookup returns concept-level help (depth 0), second lookup provides task details (depth 1), and third lookup shows reference information (depth 2). Depth resets when you change topics.
+Each time a user asks about the same topic, `populate_progressive()` advances the depth level — from concept to task to reference — so they get more detail without being overwhelmed on the first request. The session state is stored per topic and resets when the topic changes. Call `reset_session()` from `help.session` to clear state manually.
 
-## What's the difference between templates and populated templates?
+## How do I know if my templates are out of date?
 
-Templates are markdown files with frontmatter that define the structure and content. Populated templates are the result of processing those templates with audience-specific context, ready for rendering to users.
+Call `check_staleness()` from `help.staleness`, passing your manifest and project root. It returns a `StalenessReport` whose `stale_features()` property lists every feature whose source hash no longer matches the stored hash. Then call `run_maintenance()` to regenerate only the stale ones.
 
-## How do I test my help system?
+## How do I record feedback on a template?
 
-Run template validation to ensure all markdown files parse correctly, test progressive depth advancement with repeated lookups, verify precursor warnings trigger for relevant files, and check that cross-links resolve to existing templates.
+Call `record_template_feedback(template_id, rating)` from `help.feedback`. It returns the updated confidence score as a float. You can retrieve the current score at any time with `get_template_confidence(template_id)`.
 
-## Where are templates stored?
+## How do I find templates by tag?
 
-Templates live in the `templates/` directory within your help system package. Each template has a type (concept, task, reference, etc.) and belongs to a feature defined in `features.yaml`.
+Use `search_by_tag(tag)` to get a list of template IDs for a given tag, or `list_tags()` to see every tag and how many templates it covers. Both functions accept `sort_by_usage=True` to rank results by recent usage.
+
+## How do I debug a failing template?
+
+1. Run `pytest -k "help-system" -v` to confirm whether the failure is in the test layer or in your code.
+2. Call `check_staleness()` to rule out stale source hashes.
+3. Call `populate()` directly with the template ID and print the returned `PopulatedTemplate` to inspect the populated body and metadata.
+4. If cross-links are involved, call `invalidate_cross_links_cache()` from `help.templates` and retry — a stale cache is a common source of resolution failures.
+
+For renderer-specific failures, pass the `PopulatedTemplate` to `render_cli()`, `render_claude_code()`, or `render_marketplace()` individually to isolate which renderer is at fault.
+
+## Where are the source files?
+
+- `src/attune/help/**`
+- `packages/attune-help/src/attune_help/**`
 
 **Tags:** `help`, `templates`, `docs`

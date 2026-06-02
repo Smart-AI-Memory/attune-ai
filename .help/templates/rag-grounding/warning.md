@@ -1,43 +1,42 @@
 ---
 type: warning
+name: rag-grounding-warning
 feature: rag-grounding
 depth: warning
-generated_at: 2026-04-19T18:50:54.599261+00:00
-source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
+generated_at: 2026-06-02T10:56:02.700632+00:00
+source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
 status: generated
 ---
 
-# RAG grounding cautions
+# RAG Grounding Cautions
 
-## What to watch for
-
-RAG-grounded code generation retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, and emits answers with provenance. The system's accuracy depends on proper context retrieval and citation enforcement.
+`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and returns answers with provenance. Because the workflow couples retrieval, prompting, and code generation in a single call chain, a misstep in any one layer can silently degrade faithfulness without raising an exception.
 
 ## Risk areas
 
-### Context retrieval failures produce hallucinated APIs
+### Hallucinated attune features in generated code
 
-When `RagCodeGenWorkflow` cannot retrieve relevant context, the underlying language model fills gaps with plausible-sounding but nonexistent attune features. You'll see method names, CLI commands, or workflow classes that don't exist in the actual codebase.
+The system prompt instructs the model never to invent attune features, but that guarantee depends on the retrieved context actually covering the topic being asked about. If the RAG retrieval returns thin or off-topic passages, the model may fill gaps with plausible-sounding but non-existent API names, workflow names, or CLI commands. The generated code compiles and looks reasonable — there is no runtime signal that anything is wrong.
 
-**Mitigation:** Validate all generated code references against the actual attune API documentation before using them.
+**Mitigation:** Review generated code against the public API before using it. Any class, method, or CLI flag not present in the attune public API surface should be treated as a hallucination.
 
-### Citation enforcement bypassed by clever prompting
+### Prompt-injection via retrieved passages
 
-The `_SYSTEM_PROMPT` instructs Claude to "never invent attune features," but sufficiently creative input prompts can override this constraint. User prompts that begin with "ignore previous instructions" or similar jailbreaking patterns can compromise citation discipline.
+The system prompt explicitly guards against instructions embedded in `<passage>...</passage>` content — text that appears to be a directive or attempts to break out of the wrapping is treated as documentation, not as a command. However, this boundary is only as strong as the retrieval pipeline's ability to keep adversarial content out of the context window in the first place.
 
-**Mitigation:** Sanitize user inputs and monitor generated outputs for invented APIs that don't appear in the retrieved context.
+**Mitigation:** Treat the passage content fed to `RagCodeGenWorkflow.execute()` as untrusted input. Do not retrieve passages from sources you do not control without reviewing them first.
 
-### Stale context leads to deprecated API usage
+### `**kwargs` interfaces obscure required inputs
 
-RAG retrieval pulls from indexed documentation that may lag behind rapid API changes. Generated code might reference methods or parameters that were recently deprecated or removed.
+Both `RagCodeGenWorkflow.__init__` and `RagCodeGenWorkflow.execute` accept `**kwargs`. This means missing or misspelled arguments fail silently or produce degraded output rather than a `TypeError`. You will not get an error if you omit a required retrieval parameter — you will get a response grounded in no context at all.
 
-**Mitigation:** Keep your attune-rag index synchronized with the latest codebase, especially after major releases.
+**Mitigation:** Check the `WorkflowResult` returned by `execute` for provenance and citation fields before trusting the output. An empty or missing citation set is a signal that the retrieval step did not receive the inputs it needed.
 
-### Workflow state pollution between executions
+### Private helpers can change without notice
 
-`RagCodeGenWorkflow.execute()` may retain state from previous invocations if not properly reset. This can cause context bleeding where one generation request influences subsequent ones.
+The `_SYSTEM_PROMPT` constant and any other underscore-prefixed names in `rag_code_gen` are internal implementation details. If you copy or override `_SYSTEM_PROMPT` to customize behavior, your copy will silently diverge from the upstream prompt — including any future security or faithfulness fixes applied to it.
 
-**Mitigation:** Create fresh workflow instances for each generation request, or verify that `execute()` properly cleans up internal state.
+**Mitigation:** Depend only on `RagCodeGenWorkflow` and `execute` from the public API. If you need to customize prompting behavior, pass parameters through `execute(**kwargs)` rather than patching internal constants.
 
 ## Source files
 

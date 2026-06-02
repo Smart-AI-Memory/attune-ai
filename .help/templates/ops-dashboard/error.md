@@ -3,8 +3,8 @@ type: error
 name: ops-dashboard-error
 feature: ops-dashboard
 depth: error
-generated_at: 2026-05-16T06:19:45.800719+00:00
-source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
+generated_at: 2026-06-02T10:56:02.715960+00:00
+source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
 status: generated
 ---
 
@@ -12,39 +12,31 @@ status: generated
 
 ## Common error signatures
 
-These failures occur when starting, configuring, or running the `attune ops` dashboard server.
+Most failures in the ops dashboard fall into one of two categories: cost-report fetch failures and configuration or startup failures.
 
-| Symptom | Likely cause |
-|---|---|
-| `ImportError` on `attune ops` startup | `create_app()` triggers a lazy FastAPI import that fails — FastAPI is not installed or the import path is broken |
-| `OSError` or `FileNotFoundError` at boot | `build_config()` cannot resolve `project_root` or `attune_home`; the computed `runs_dir`, `memory_dir`, or `sessions_dir` path does not exist and cannot be created |
-| `400` / `403` response from the dashboard | `TrustedHostMiddleware.dispatch()` rejected a request whose `Host` header is not in `Config.trusted_hosts` |
-| Dashboard exits immediately with a non-zero code | `cmd_ops()` failed to bind to `Config.host`:`Config.port` (default `127.0.0.1:8765`), or an unhandled exception escaped the blocking server loop |
-| `KeyError` or `ValueError` reading features | `list_features()` could not parse `.help/features.yaml` under `project_root` — the file is missing, malformed, or contains an unrecognised field |
-| Empty scope on first workflow paint | `workflow_default_scope()` returned `''` — no feature with a renderable scope exists under `project_root` |
+**Cost-report fetch failures** are represented by `CostFetchError`, a categorized error dataclass returned (never raised) by `fetch_summary()`. Its `kind` field contains a `CostFetchErrorKind` value and its `message` field contains a human-readable description. Common causes include:
 
-## Where errors originate
+- No admin API key available — `load_admin_key()` returns `None`, so `fetch_summary()` cannot authenticate against `https://api.anthropic.com/v1/organizations/cost_report`.
+- A non-success HTTP response or network-level failure reaching the cost-report endpoint.
+- A stale or unparseable cached response when `refresh=False`.
 
-- **`build_config()`** — constructs the `Config` dataclass from CLI arguments and environment defaults. Failures here mean the dashboard never reaches the bind step.
-- **`create_app()`** — performs the lazy FastAPI import and wires middleware (including `TrustedHostMiddleware`). An `ImportError` here means no server starts.
-- **`cmd_ops()`** — the blocking entrypoint called by `attune ops`. Any uncaught exception propagates as a non-zero exit code.
-- **`main()`** — the `python -m attune.ops` entrypoint; delegates to `cmd_ops()` and returns its exit code.
-- **`list_features()` / `first_feature()`** — read `.help/features.yaml`; failures affect the scope picker but may also prevent the dashboard UI from rendering correctly.
+**Configuration and startup failures** occur before the dashboard server is running:
+
+- `build_config()` fails when required paths (`project_root`, `attune_home`) cannot be resolved.
+- `create_app()` raises an `ImportError`-family exception if FastAPI is not installed; the lazy-import design means this only surfaces at call time, not at `import attune`.
+- `cmd_ops()` exits non-zero (returns a value other than `0`) when the server cannot bind to `Config.host`/`Config.port` (default `127.0.0.1:8765`).
 
 ## How to diagnose
 
-1. **Locate the raise site.** Run `attune ops` in a terminal where you can see the full traceback. The file path and line number in the last frame identify whether the failure is in config building, server startup, or middleware.
+1. **Check whether `fetch_summary()` returned an error.** The function signature is `fetch_summary(*, refresh: bool = False) -> tuple[CostSummary | None, CostFetchError | None]`. If the second element of the tuple is not `None`, inspect `CostFetchError.kind` for the error category and `CostFetchError.message` for the detail. A non-`None` error with a `None` summary means no cost data is available.
 
-2. **Check path resolution.** Most `OSError` failures trace back to a bad `project_root` or missing `attune_home`. Confirm that:
-   - `ATTUNE_HOME` (if set) points to a writable directory.
-   - `project_root` contains a `.help/features.yaml` file if the scope picker is used.
-   - `Config.runs_dir` (`<attune_home>/ops/runs`) is writable on first write.
+2. **Verify the admin API key is present.** Call `load_admin_key()` directly. If it returns `None`, the dashboard cannot reach the Anthropic cost-report API and every `fetch_summary()` call will produce a `CostFetchError`.
 
-3. **Verify host and port configuration.** If the server exits immediately without a traceback, another process may already hold `127.0.0.1:8765`. Pass `--host` and `--port` overrides to `build_config()`, or check with `lsof -i :8765`.
+3. **Confirm FastAPI is installed before calling `create_app()`.** Because the import is deferred, an `ImportError` will not appear until `create_app()` is called. If you see an `ImportError` or `ModuleNotFoundError` mentioning FastAPI at that point, install the ops extras.
 
-4. **Check `trusted_hosts` when you get 400/403 responses.** `TrustedHostMiddleware` rejects any request whose `Host` header is absent from `Config.trusted_hosts`. Add the host you are accessing the dashboard from to the `trusted_hosts` tuple in your config.
+4. **Check the configured host and port.** If `cmd_ops()` returns a non-zero exit code immediately, the server likely failed to bind. Inspect the `Config` values for `host` (default `127.0.0.1`) and `port` (default `8765`) and confirm nothing else is listening on that address.
 
-5. **Inspect `.help/features.yaml` for parse errors.** If `list_features()` raises, open the file directly and confirm every entry has `name`, `description`, and an optional `path`. An unexpected key or a YAML syntax error will surface as a `KeyError` or a YAML parser exception.
+5. **Review `Config.specs_roots` when `detect_candidates()` returns nothing.** The `specs_candidates_enabled` field must be `True` and `specs_roots` must contain at least one valid `Path` for candidate detection to run. An empty tuple for `specs_roots` is a silent no-op, not an exception.
 
 ## Source files
 

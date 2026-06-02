@@ -1,9 +1,10 @@
 ---
 type: faq
+name: spec-engine-faq
 feature: spec-engine
 depth: faq
-generated_at: 2026-04-14T15:26:02.812942+00:00
-source_hash: da2776f0fd9a91d42dcf9bea5dec82a4fb9b85009623c3ae56e9db9136c29d2e
+generated_at: 2026-06-02T10:56:02.714703+00:00
+source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
 status: generated
 ---
 
@@ -11,39 +12,48 @@ status: generated
 
 ## What is the spec engine?
 
-The spec engine executes XML specifications as a series of tasks, with quality gates and approval loops for each step. It manages execution state so you can resume interrupted runs.
+The spec engine executes a structured, spec-driven development workflow — decomposing a plan into tasks, running each task through quality gates, and tracking progress with per-task approval loops.
 
-## When should I use the spec engine?
+## When should I use it?
 
-Use the spec engine when you want to run specifications with human oversight. It's designed for cases where you need to review and approve each task before proceeding to the next one.
+Use the spec engine when you have a plan file with XML task blocks (saved under `.claude/plans/`) and want to execute those tasks with quality gates and approval checkpoints. If you're still in the brainstorming or decomposition phase, you don't need the spec engine yet.
 
-## How do I run a spec with approvals?
+## What's the main entry point?
 
-Call `execute_with_approval()` with your spec path. This function will pause after each task and wait for your approval before continuing.
+It depends on what you want to do:
 
-## How do I see what tasks are in my spec?
+- **Load and parse a plan file** — call `read_spec(plan_path)` to extract a list of `DecomposedTask` objects from the XML blocks in your plan.
+- **Run the full pipeline programmatically** — instantiate `PipelineOrchestrator(spec_path)` and call `run_all()`. Use `skip_gates`, `skip_tests`, or `skip_simplify` to control which checks run.
+- **Run with per-task approval** — call `execute_with_approval(spec_path, on_task_complete)`, which prompts for approval after each task instead of running automatically.
 
-Use `present_tasks()` to get a markdown table of all tasks, or `present_task_detail()` to see the full details of a single task.
+## How do quality gates work?
 
-## Can I resume a partially completed spec?
+After each task executes, `run_gates_for_task()` evaluates the result and returns a `TaskResult`. The `TaskResult.quality_gate_passed` field tells you whether the task met its acceptance criteria; `TaskResult.gate_score` gives a numeric score; and `TaskResult.severity` classifies the outcome. If `quality_gate_passed` is `False`, the pipeline stops unless you're running in auto-run mode (`SpecState.auto_run = True`).
 
-Yes. The spec engine saves execution state in your plan files. Use `find_resumable_plans()` to see which specs have incomplete runs, then call `load_state()` to restore where you left off.
+## How does the engine track progress?
 
-## How do I run a spec without approvals?
+Progress is stored in a `SpecState` object, which records the `plan_path`, a list of `completed` task IDs, and the `current` task ID. Call `load_state(plan_path)` to read existing state from the plan file, `save_state(state)` to persist it, and `clear_state(plan_path)` to reset. To find all plans that have unfinished work, call `find_resumable_plans()`, which defaults to searching `.claude/plans/`.
 
-Create a `PipelineOrchestrator` and call `run_all()`. This executes the entire spec automatically without stopping for approval.
+## Can I skip tasks or resume a partial run?
 
-## What happens if a task fails its quality gates?
+Yes. Pass a set of task IDs to `run_all(skip_task_ids=...)` to exclude specific tasks. To resume from where you left off, call `get_pending_tasks(tasks, state)` — it filters out any task IDs already in `SpecState.completed` — then pass those remaining tasks to your orchestration logic.
 
-The task result will show `quality_gate_passed: False` and include details in the `gate_details` field. You can examine the failure and decide whether to continue or fix the issue.
+## How do I display task status to a user?
 
-## How do I skip quality gates or tests?
+Use the presenter functions:
 
-Pass `skip_gates=True` or `skip_tests=True` to either `execute_with_approval()` or the `PipelineOrchestrator` constructor.
+- `present_tasks(tasks, state)` — renders a markdown table of all tasks, annotated with completion status if you pass a `SpecState`.
+- `present_task_detail(task)` — renders full details for a single task.
+- `present_task_result(task, gate_result)` — renders the outcome of a task alongside its quality gate status.
+- `format_progress_bar(completed, total)` — returns a visual progress indicator.
+
+## How do I check whether the whole pipeline succeeded?
+
+Inspect the `PipelineResult` returned by `run_all()` or `execute_with_approval()`. `PipelineResult.success` is `True` only when all tasks executed and passed their gates. `PipelineResult.summary` gives a human-readable summary. `PipelineResult.total_cost` and `PipelineResult.duration_ms` are available for observability.
 
 ## Where are the source files?
 
-- `src/attune/spec/**`
-- `src/attune/pipeline/**`
+- `src/attune/pipeline/**` — orchestration, result models, and spec reader
+- `src/attune/spec/**` — state management, presenter utilities, and approval runner
 
 **Tags:** `spec`, `planning`

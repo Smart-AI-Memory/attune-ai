@@ -1,59 +1,68 @@
 ---
+type: task
+name: security-audit-task
 feature: security-audit
 depth: task
-generated_at: 2026-06-01T11:47:06.395697+00:00
-source_hash: 6e7b17414ac506196ba40231988637e7d6eb64f9b1a8266dc41deaab14bee626
+generated_at: 2026-06-02T10:56:02.680360+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
-# Work with security audit
+# Run a security audit
 
-Use security audit when you need to scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
+Use `SecurityAuditWorkflow` when you want to scan a codebase for vulnerabilities — including `eval`/`exec` usage, path traversal, hardcoded secrets, and injection risks — and receive a severity-grouped report with actionable remediation steps.
 
 ## Prerequisites
 
-- Access to the project source code
-- Familiarity with the files under src/attune/workflows/security_audit.py
+- Access to the project source code you want to scan
+- The `attune` package installed with the `workflows` and `security` modules available
 
-## Steps
+## Run the audit
 
-1. **Understand the current behavior.**
-   Read the entry points to see what security audit
-   does today before making changes.
-   The primary functions are:
-   - `alerts()` in `src/attune/monitoring/alerts_cli.py` — Alert management commands for LLM telemetry monitoring.
-   - `init()` in `src/attune/monitoring/alerts_cli.py` — Initialize an alert with interactive workflow or CLI flags.
-   - `list_cmd()` in `src/attune/monitoring/alerts_cli.py` — List all configured alerts.
-   - `delete()` in `src/attune/monitoring/alerts_cli.py` — Delete an alert by ID.
-   - `enable()` in `src/attune/monitoring/alerts_cli.py` — Enable an alert by ID.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Import and instantiate `SecurityAuditWorkflow`.**
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   ```python
+   from attune.workflows.security_audit import SecurityAuditWorkflow
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "security-audit"`.
+   workflow = SecurityAuditWorkflow()
+   ```
+
+   Pass `system_prompt_suffix` if you want to append additional instructions to the orchestrator prompt:
+
+   ```python
+   workflow = SecurityAuditWorkflow(system_prompt_suffix="Focus on authentication code only.")
+   ```
+
+2. **Call `execute()` with the path to scan.**
+
+   ```python
+   result = workflow.execute(path="src/")
+   ```
+
+   The workflow coordinates four specialized subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner` — and synthesizes their output into a single report.
+
+3. **Inspect the returned `WorkflowResult`.**
+
+   The report contains three sections:
+
+   - **Summary** — an overall security score (0–100) and a brief executive summary
+   - **Security** — consolidated findings grouped by severity (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
+   - **Suggestions** — prioritized remediation steps with estimated effort per fix
+
+4. **Run the audit from the CLI** (alternative to the Python API).
+
+   ```
+   attune workflow run security-audit --path "src/"
+   ```
+
+   The CLI produces the same severity-grouped findings with CWE identifiers.
+
+## Verify success
+
+The audit completed successfully when `WorkflowResult` contains all three report sections — **Summary**, **Security**, and **Suggestions** — and the **Summary** section includes a numeric security score. If findings exist, they appear under **Security** with at least one severity label (`CRITICAL`, `HIGH`, `MEDIUM`, or `LOW`).
 
 ## Key files
 
-- `src/attune/workflows/security_audit.py`
-- `src/attune/security/**`
-- `src/attune/monitoring/**`
-
-## Common modifications
-
-Functions you are most likely to modify:
-
-- `alerts()` in `src/attune/monitoring/alerts_cli.py`
-- `init()` in `src/attune/monitoring/alerts_cli.py`
-- `list_cmd()` in `src/attune/monitoring/alerts_cli.py`
-- `delete()` in `src/attune/monitoring/alerts_cli.py`
-- `enable()` in `src/attune/monitoring/alerts_cli.py`
-- `disable()` in `src/attune/monitoring/alerts_cli.py`
-- `watch()` in `src/attune/monitoring/alerts_cli.py`
-- `history()` in `src/attune/monitoring/alerts_cli.py`
+- `src/attune/workflows/security_audit.py` — `SecurityAuditWorkflow` and its four subagent definitions
+- `src/attune/security/` — `SecretsDetector`, `PIIScrubber`, `AuditLogger`, and related detection primitives
+- `src/attune/monitoring/alerts_cli.py` — CLI commands (`watch`, `history`, `metrics`) for monitoring audit-related telemetry thresholds

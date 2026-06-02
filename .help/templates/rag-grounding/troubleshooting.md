@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: rag-grounding-troubleshooting
 feature: rag-grounding
 depth: troubleshooting
-generated_at: 2026-04-19T18:51:06.004110+00:00
-source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
+generated_at: 2026-06-02T10:56:02.703714+00:00
+source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
 status: generated
 ---
 
@@ -11,48 +12,101 @@ status: generated
 
 ## Before you start
 
-RAG grounding retrieves relevant context from attune-help documentation, then feeds that context to Claude with citation requirements to generate answers with provenance. When this workflow fails, the problem typically occurs in retrieval (empty or irrelevant context) or generation (hallucinated features despite grounding).
+`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and emits answers with source provenance. Issues typically fall into one of three categories: retrieval returning no or wrong passages, the workflow producing output that invents attune features, or the `execute` call failing outright.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Generated code references non-existent attune features | `RagCodeGenWorkflow.execute()` return value for empty context or verify the system prompt includes `_SYSTEM_PROMPT` |
-| Empty or "I don't know" responses | Log the retrieved context passed to `RagCodeGenWorkflow.__init__()` and confirm documents match your query |
-| Python exceptions during generation | Traceback points to the failing line in `RagCodeGenWorkflow.execute()` |
-| Workflow runs but produces wrong code patterns | Compare retrieved context against expected source files — retrieval may be pulling irrelevant documentation |
+| `execute` raises an exception | The Python traceback — it names the file and line in `src/attune/workflows/rag_code_gen.py` |
+| Output references attune APIs or workflow names that don't exist | Whether retrieved passages are actually reaching the prompt — the system prompt explicitly prohibits invented features |
+| Output contains no source citations | Whether `execute` is returning a `WorkflowResult` with empty provenance fields, or whether retrieval returned zero passages |
+| `execute` returns a result but the code it generates is wrong or incomplete | The passages fed as context — check that they cover the API the user asked about |
+| Intermittent failures or non-deterministic output | Environment variables and any caches that persist between runs |
+| Slow execution | The retrieval step — RAG workflows spend most of their time on I/O to the vector store and the Claude API call |
 
-## Step-by-step diagnosis
+## Diagnosis steps
 
-1. **Verify the workflow initializes correctly.**
-   Create a minimal `RagCodeGenWorkflow` instance with logging enabled:
-   ```python
-   from attune.workflows.rag_code_gen import RagCodeGenWorkflow
-   workflow = RagCodeGenWorkflow()
-   ```
-   If this throws an exception, the issue is in initialization, not execution.
+Work through these in order — each step is cheaper than the one that follows it.
 
-2. **Inspect the retrieved context.**
-   Before calling `execute()`, log what context the RAG system retrieved. Empty context means the retrieval step failed; irrelevant context means your query needs refinement.
+### 1. Reproduce with a minimal `execute` call
 
-3. **Check the system prompt application.**
-   The workflow uses `_SYSTEM_PROMPT` to force citations and prevent hallucination. Verify this prompt reaches Claude by examining the full request payload in debug logs.
+Strip the call to its required arguments and confirm the failure still occurs outside your surrounding application code:
 
-4. **Test with known-good queries.**
-   Run the workflow with queries that should retrieve obvious documentation (like "how to create a task template"). If these fail, the problem is in the workflow itself, not your specific use case.
+```python
+from workflows.rag_code_gen import RagCodeGenWorkflow
+
+wf = RagCodeGenWorkflow()
+result = wf.execute(query="<your failing query>")
+print(result)
+```
+
+If the failure disappears here, the problem is in how your caller constructs `kwargs`, not in the workflow itself.
+
+### 2. Enable DEBUG logging
+
+Before calling `execute`, raise the log level so the workflow's internal state is visible:
+
+```python
+import logging
+logging.basicConfig(level=logging.DEBUG)
+```
+
+Re-run your minimal reproduction. Log lines will show which retrieval results were returned and what was passed to the prompt.
+
+### 3. Check what the workflow received and returned
+
+Inspect the `WorkflowResult` that `execute` returns. Confirm that:
+
+- Retrieved passages are present and non-empty.
+- The passages contain real API names, workflow names, or CLI commands from attune-help — not placeholder text.
+- The result includes provenance or citation fields pointing to source files.
+
+If passages are empty, the retrieval layer upstream of `RagCodeGenWorkflow` is the likely fault, not the workflow itself.
+
+### 4. Run the related tests
+
+```bash
+pytest -k "rag" -v
+```
+
+If an existing test exercises the failing path, its fixtures show exactly what inputs the workflow expects. A failing test also confirms whether you have introduced a regression.
+
+### 5. Inspect the entry point directly
+
+If the steps above haven't isolated the problem, open `src/attune/workflows/rag_code_gen.py` and trace the `execute` method. Look for early returns that could silently drop retrieved context before it reaches the prompt.
 
 ## Common fixes
 
-- **No retrieved context**: The RAG system found no relevant documentation. Broaden your query terms or check that the documentation index includes the topics you're asking about.
+**Empty or missing retrieval context**
+If `execute` produces fabricated attune features, the most likely cause is that no passages were retrieved. Verify your retrieval configuration points at the correct attune-help index and that the query you pass to `execute` is specific enough to match indexed content.
 
-- **Hallucinated attune features**: The system prompt isn't properly constraining generation. Verify that `_SYSTEM_PROMPT` is applied and contains the text "Never invent attune features."
+**`kwargs` passed to `__init__` or `execute` are wrong**
+Both `RagCodeGenWorkflow.__init__` and `execute` accept `**kwargs`. An unexpected keyword argument won't raise a `TypeError` — it will silently be ignored or override an internal default. Print `kwargs` at each call site to confirm you are passing what you intend.
 
-- **Initialization errors**: Missing dependencies or configuration. Run `pip show attune` to confirm the package is installed and `RagCodeGenWorkflow` is importable.
+**Stale environment or cache**
+If the workflow worked previously without a code change, run:
 
-- **Slow or hanging execution**: The underlying Claude API may be rate-limited or unavailable. Add timeouts to your `execute()` calls and check API status.
+```bash
+pip show attune   # confirm installed version
+```
+
+Then clear any local caches and retry. A dependency upgrade can alter retrieval behavior or the shape of `WorkflowResult`.
+
+**Prompt injection in retrieved passages**
+The system prompt treats all content inside `<passage>...</passage>` tags as documentation, not instructions. If your retrieved passages contain directive-looking text and the model is acting on it, confirm that your retrieval layer is wrapping passages in those tags correctly so the system prompt's injection guard applies.
 
 ## Source files
 
 - `src/attune/workflows/rag_code_gen.py`
 
 **Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 36 (code fence) | error | `from workflows.rag_code_gen import …` — module not importable |

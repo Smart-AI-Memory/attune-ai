@@ -1,48 +1,27 @@
 ---
 type: note
+name: spec-engine-note
 feature: spec-engine
 depth: note
-generated_at: 2026-04-14T15:26:30.380721+00:00
-source_hash: da2776f0fd9a91d42dcf9bea5dec82a4fb9b85009623c3ae56e9db9136c29d2e
+generated_at: 2026-06-02T10:56:02.723495+00:00
+source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
 status: generated
 ---
 
 # Note: spec engine
 
-## Context
+## How the two packages fit together
 
-The spec engine enables spec-driven development by executing XML specification files as pipelines with human approval loops and quality gates.
+The spec engine spans two packages: `pipeline` and `spec`. Each has a distinct role.
 
-## Core workflow
+**`pipeline`** owns execution. `PipelineOrchestrator` reads an XML plan file, runs tasks one at a time, and evaluates quality gates after each. `read_spec()` parses a plan file into a list of `DecomposedTask` objects that the orchestrator consumes. `TaskResult` and `PipelineResult` carry the outcome data — per-task fields like `quality_gate_passed`, `gate_score`, and `cost`, and aggregate fields like `total_cost` and `duration_ms`.
 
-The spec engine follows a three-phase workflow:
+**`spec`** owns state and presentation. `SpecState` tracks which task IDs are completed (`completed: list[str]`), which is currently running (`current: str | None`), and whether auto-run is active (`auto_run: bool`). State is stored as an HTML comment inside the plan file itself — `load_state()` reads it, `save_state()` writes it, and `clear_state()` removes it. `find_resumable_plans()` scans a directory (defaulting to `.claude/plans`) for plan files that have in-progress state.
 
-1. **State management** — Track execution progress across pipeline runs using `SpecState`, which persists completed tasks and current position in HTML comments within plan files
-2. **Task presentation** — Display tasks in human-readable formats through presenter functions that generate markdown tables and detailed views
-3. **Pipeline execution** — Run tasks through `PipelineOrchestrator` with configurable quality gates, test validation, and approval checkpoints
+The presenter functions in `spec` — `present_tasks()`, `present_task_detail()`, `present_task_result()`, and `format_progress_bar()` — accept the data types defined in `pipeline`. For example, `present_task_result()` takes a `DecomposedTask` and a `TaskResult`, and `get_pending_tasks()` filters a task list against a `SpecState`.
 
-## Key components
+The entry point for interactive use is `execute_with_approval()` in `spec.runner`, which wraps `PipelineOrchestrator` with a per-task approval loop. The `PipelineOrchestrator` constructor accepts `skip_gates`, `skip_tests`, and `skip_simplify` flags; `execute_with_approval()` passes those through.
 
-**State tracking:**
-- `SpecState` maintains execution progress with completed task lists and auto-run flags
-- State persists in plan files as HTML comments, allowing resume after interruption
-- `load_state()`, `save_state()`, and `clear_state()` manage persistence
+## Public API boundaries
 
-**Task execution:**
-- `PipelineOrchestrator` executes XML specs with optional quality gates, tests, and simplification
-- `TaskResult` captures individual task outcomes including gate scores and error details
-- `PipelineResult` aggregates results across all tasks with cost tracking and success status
-
-**Human interaction:**
-- `present_tasks()` renders task lists as markdown tables with progress indicators
-- `present_task_detail()` shows full task specifications for review
-- `execute_with_approval()` enables per-task approval workflows
-
-The engine supports resumable execution — you can stop a pipeline mid-run and resume from the last completed task using `find_resumable_plans()`.
-
-## Source files
-
-- `src/attune/spec/**` — State management and presentation
-- `src/attune/pipeline/**` — Orchestration and result models
-
-**Tags:** `spec`, `planning`
+`pipeline` exports `PipelineOrchestrator`, `PipelineResult`, `TaskResult`, and `read_spec`. `spec` exports `SpecState`, `clear_state`, `find_resumable_plans`, `format_progress_bar`, `get_pending_tasks`, `load_state`, `present_task_detail`, `present_task_result`, `present_tasks`, and `save_state`.

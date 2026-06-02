@@ -1,22 +1,31 @@
 ---
 type: tip
+name: deep-review-tip
 feature: deep-review
 depth: tip
-generated_at: 2026-04-14T14:55:18.418450+00:00
-source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
+generated_at: 2026-06-02T10:54:11.463750+00:00
+source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
 status: generated
 ---
 
-# Tip: working effectively with deep review
+# Tip: Working effectively with deep review
 
-Run deep reviews on complete feature branches, not individual commits.
+## Recommendation
 
-The multi-pass workflow coordinates three specialized subagents (security, quality, and test gaps) that need to see the full context of your changes to provide meaningful analysis. Running reviews on partial code or single files produces fragmented findings that miss cross-cutting concerns.
+Run `deep_review` when you want security, quality, and test-gap findings in a single pass — not as three separate workflow calls.
 
-The tradeoff is longer execution time, but you get a consolidated report with severity rankings and actionable next steps rather than disconnected observations.
+`DeepReviewAgentSDKWorkflow.execute()` internally coordinates three specialized subagents (`security-reviewer`, `quality-reviewer`, and `test-gap-reviewer`) and synthesizes their output into one consolidated report. Calling each underlying workflow individually loses the cross-domain synthesis step.
+
+## Why
+
+The orchestrator's final synthesis pass — not the subagent findings themselves — is where the prioritized, cross-domain **Suggestions** section is generated. Bypassing it means you never get the top 5–10 actionable next steps ordered by impact.
+
+## Tradeoff
+
+A full deep-review run is slower than a single-domain review because all three subagents complete before synthesis begins. If you only need one dimension (for example, just security), prefer `security-audit` directly rather than filtering deep-review output after the fact.
 
 ## Source files
 
 - `src/attune/workflows/deep_review.py`
 
-**Tags:** `review`, `security`, `quality`, `tests`
+**Tags:** `review`, `security`, `quality`, `tests`, `comprehensive-review`

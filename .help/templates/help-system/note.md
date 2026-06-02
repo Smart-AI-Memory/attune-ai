@@ -1,9 +1,10 @@
 ---
 type: note
+name: help-system-note
 feature: help-system
 depth: note
-generated_at: 2026-04-20T01:19:10.876462+00:00
-source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
+generated_at: 2026-06-02T10:56:02.713979+00:00
+source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
 status: generated
 ---
 
@@ -11,35 +12,42 @@ status: generated
 
 ## Context
 
-The help system provides progressive-depth template lookup and audience-specific adaptation for development documentation. It manages template loading, cross-link resolution, and stateful depth progression across user sessions.
+The help system is a progressive-depth template engine. It scans your project to discover features, generates and maintains per-feature help templates at three depth levels (`concept`, `task`, `reference`), and adapts output for different audiences and rendering targets.
 
-## Content
+## Public surface
 
-The help system centers on template generation and runtime lookup through complementary classes and functions:
+The `help.engine` module re-exports the full public API. The surface splits into two cooperating layers.
 
-**Core data structures:**
-- `ProposedFeature` — A feature discovered during project scanning with name, description, matched files, and confidence level
-- `Feature` — A validated project feature mapped to specific source files
-- `GeneratedTemplate` — Metadata for one generated template file including feature name, depth level, and content hash
-- `TemplateContext` — Runtime parameters like file path, error message, and workflow name for template population
-- `AudienceProfile` — Target channel and verbosity settings for output adaptation
+**Data classes** represent the domain objects that flow between functions:
 
-**Generation workflow:**
-- `scan_project()` analyzes source files and proposes features based on file patterns, entry points, and configuration detection
-- `generate_feature_templates()` creates concept, task, and reference templates for each feature using source code analysis
-- `check_staleness()` compares current source hashes against stored values to identify outdated templates
+| Class | Module | Represents |
+|---|---|---|
+| `ProposedFeature` | `help.bootstrap` | A feature discovered during project scanning |
+| `Feature` | `help.manifest` | A project feature mapped to its source files |
+| `FeatureManifest` | `help.manifest` | The parsed `features.yaml` manifest |
+| `GeneratedTemplate` | `help.generator` | A single generated template file with its source hash |
+| `GenerationResult` | `help.generator` | All templates generated for one feature |
+| `MaintenanceResult` | `help.maintenance` | The outcome of a maintenance run, including `stale_count` and `regenerated_count` |
+| `StalenessReport` | `help.staleness` | Per-feature staleness status across a manifest |
+| `AudienceProfile` | `help.templates` | Target channel and verbosity for rendered output |
+| `TemplateContext` | `help.templates` | Runtime parameters (file path, workflow name, error message, etc.) passed to `populate` |
+| `PopulatedTemplate` | `help.templates` | A template with all context slots filled, ready for rendering |
 
-**Runtime engine:**
-- `populate()` loads templates with audience-specific transformations and cross-link resolution
-- `get_precursor_warnings()` surfaces relevant help when editing specific files
-- `get_workflow_help()` provides context-aware assistance after workflow completion
-- `record_template_feedback()` captures user ratings to improve template relevance
+**Top-level functions** accept and return those classes. A few representative examples:
 
-The system maintains session state for progressive depth (concept → task → reference) and uses file-based storage for template metadata, feedback scores, and usage telemetry.
+- `scan_project()` → `list[ProposedFeature]`; feed the result to `proposals_to_manifest()` to produce a `FeatureManifest`.
+- `generate_feature_templates(feature, help_dir, project_root)` → `GenerationResult`; pass `overwrite=True` to replace existing files.
+- `run_maintenance(help_dir, project_root)` → `MaintenanceResult`; set `dry_run=True` to preview changes without writing.
+- `populate(template_id, context, audience)` → `PopulatedTemplate`; pass to `render_cli()`, `render_claude_code()`, or `render_marketplace()` for channel-specific output.
+- `get_precursor_warnings(file_path)` and `get_workflow_help(workflow_name)` return `list[PopulatedTemplate]` ranked by relevance.
+- `record_template_feedback(template_id, rating)` updates the confidence score returned by `get_template_confidence()`.
 
-## Source files
+## Session state
 
-- `src/attune/help/**` — Core scanning and generation logic
-- `packages/attune-help/src/attune_help/**` — Runtime engine and template population
+`populate_progressive()` tracks which depth level (`0` = concept, `1` = task, `2` = reference) the current session has reached for a given topic. Call `reset_session()` to clear that state — for example, between test runs or when the user switches topics.
+
+## Rendering targets
+
+Three renderers in `help.transformers` adapt a `PopulatedTemplate` for different surfaces: `render_cli()`, `render_claude_code()`, and `render_marketplace()`. The `AudienceProfile.channel` field defaults to `'claude-code'`.
 
 **Tags:** `help`, `templates`, `docs`

@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: deep-review-troubleshooting
 feature: deep-review
 depth: troubleshooting
-generated_at: 2026-04-14T14:54:43.568217+00:00
-source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
+generated_at: 2026-06-02T10:54:11.455541+00:00
+source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
 status: generated
 ---
 
@@ -11,48 +12,67 @@ status: generated
 
 ## Before you start
 
-The deep review feature performs multi-pass code analysis using three specialized Claude Agent SDK subagents: security-reviewer, quality-reviewer, and test-gap-reviewer. Each subagent analyzes your codebase independently, then the workflow synthesizes their findings into a consolidated report.
+`deep_review` runs a multi-pass review by coordinating three subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings into a single consolidated report. Most failures trace to one of three causes: a bad `path` argument, a subagent that didn't complete, or a synthesis step that produced an incomplete report.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| `DeepReviewAgentSDKWorkflow.execute()` throws exception | Python traceback for the exact line in `src/attune/workflows/deep_review.py` |
-| Empty or incomplete report sections | Return value from `execute()` - verify all three subagents completed successfully |
-| Missing file paths or line numbers in findings | Subagent outputs - check if the codebase path passed to `execute()` is valid and readable |
-| Workflow hangs or times out | Agent SDK subagent status - one of the three reviewers may be stuck waiting for API responses |
+| `deep_review` raises an exception immediately | Whether `path` resolves to a real directory or file on disk |
+| Report is missing a section (Security, Quality, or Test Gaps) | Which subagent produced that section — one of `security-reviewer`, `quality-reviewer`, or `test-gap-reviewer` may have failed silently |
+| Overall code health score is absent from the Summary | Whether `DeepReviewAgentSDKWorkflow.execute()` returned a complete `WorkflowResult` or an early partial result |
+| Review completes but findings appear empty or generic | Whether `path` pointed at the intended target — a wrong path yields a valid but content-free report |
+| Execution is much slower than expected | Whether `path` targets a very large directory; the three subagents run across the full tree |
 
-## Step-by-step diagnosis
+## Diagnosis steps
 
-1. **Reproduce with minimal input.**
-   Create a simple test directory with one source file and call `DeepReviewAgentSDKWorkflow.execute(path="test_dir")`. This isolates the workflow from complex codebases and validates the basic execution path.
+1. **Confirm the path argument is valid.**
+   Run `ls <path>` (or `dir <path>` on Windows) before invoking `deep_review`. An inaccessible or misspelled path is the most common cause of immediate failure and costs nothing to check.
 
-2. **Check subagent initialization.**
-   Verify all three required subagents (`security-reviewer`, `quality-reviewer`, `test-gap-reviewer`) are properly configured in your Agent SDK setup. The workflow expects these exact names from `_SUBAGENT_NAMES`.
+2. **Reproduce with the minimal call.**
+   Strip the invocation down to its required argument:
+   ```python
+   from workflows.deep_review import DeepReviewAgentSDKWorkflow
+   result = DeepReviewAgentSDKWorkflow().execute(path="<your-path>")
+   print(result)
+   ```
+   Confirm the failure occurs outside any surrounding orchestration before investigating further.
 
-3. **Enable Agent SDK logging.**
-   Set your logging level to `DEBUG` and look for Claude Agent SDK communication logs. Failed API calls or malformed responses from individual subagents will appear here before the workflow fails.
+3. **Check which subagents completed.**
+   The three subagents are `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer`. If the consolidated report is missing one of the corresponding sections (Security, Quality, or Test Gaps), the matching subagent is the likely failure point. Review any exception or truncated output associated with that agent.
 
-4. **Validate the codebase path.**
-   Ensure the path argument passed to `execute()` points to a readable directory with source files. The workflow needs file system access to analyze code and generate the file paths referenced in findings.
+4. **Run the related tests.**
+   ```
+   pytest -k "deep_review" -v
+   ```
+   A failing test that exercises your code path will surface the exact input and fixture state that triggers the bug.
 
-5. **Test subagents individually.**
-   If available in your Agent SDK setup, test each subagent (`security-reviewer`, `quality-reviewer`, `test-gap-reviewer`) independently on a small code sample to isolate which reviewer is failing.
+5. **Inspect the `WorkflowResult` directly.**
+   If the call returns without raising but the report looks wrong, print the raw `WorkflowResult` returned by `execute()`. A partial or malformed result indicates the synthesis step — which runs after all three subagents finish — did not receive complete input.
 
 ## Common fixes
 
-- **Fix Agent SDK configuration.** Ensure your Claude Agent SDK is properly configured with API credentials and the three required subagents are registered. Run `claude-sdk list-agents` or equivalent to verify availability.
+- **Wrong or inaccessible path.** Pass an absolute path to rule out working-directory ambiguity:
+  ```python
+  import os
+  result = DeepReviewAgentSDKWorkflow().execute(path=os.path.abspath("relative/path"))
+  ```
 
-- **Update file permissions.** The workflow needs read access to your codebase. Run `chmod -R +r /path/to/codebase` if you see permission errors in the logs.
+- **Subagent failure causing a missing report section.** If one subagent fails, the synthesis step may still run but produce an incomplete report. Re-run with a smaller, isolated subtree to confirm which subagent is failing:
+  ```python
+  result = DeepReviewAgentSDKWorkflow().execute(path="/path/to/single/module")
+  ```
 
-- **Increase timeout settings.** Large codebases can take time to analyze. If using a custom Agent SDK timeout, increase it to allow all three subagents to complete their analysis.
+- **Dependency or environment mismatch.** A changed environment can cause subagent behavior to differ from expectations. Verify your installed packages match your lockfile:
+  ```
+  pip show attune
+  ```
+  This fix requires changes outside `deep_review` itself — align your environment before re-running.
 
-- **Verify Claude API limits.** The workflow makes multiple API calls through the Agent SDK. Check your Claude API usage and rate limits if you see authentication or quota errors.
-
-- **Clean temporary state.** If the workflow uses temporary files or caches, clear them with `rm -rf /tmp/deep-review-*` or similar, then retry.
+- **Unexpectedly large scope.** If execution is slow, narrow `path` to a subdirectory. All three subagents traverse the full path, so pointing at a large monorepo root multiplies the cost.
 
 ## Source files
 
 - `src/attune/workflows/deep_review.py`
 
-**Tags:** `review`, `security`, `quality`, `tests`
+**Tags:** `review`, `security`, `quality`, `tests`, `comprehensive-review`

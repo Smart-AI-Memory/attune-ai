@@ -1,41 +1,56 @@
 ---
 type: warning
+name: help-system-warning
 feature: help-system
 depth: warning
-generated_at: 2026-04-20T01:18:02.573615+00:00
-source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
+generated_at: 2026-06-02T10:56:02.696305+00:00
+source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
 status: generated
 ---
 
-# Help System cautions
+# Help System Cautions
 
 ## What to watch for
 
-Progressive-depth help engine and template management.
+The help system combines a stateful progressive-depth engine with generated templates on disk. Most surprises come from stale templates that no longer match their source, session state that persists across unrelated lookups, and confidence scores that silently reflect sparse or skewed feedback data.
 
 ## Risk areas
 
-The help system's progressive depth tracking and template caching can cause unexpected behavior that looks like bugs but is actually feature interaction.
+### Stale templates after source changes
 
-- **Progressive depth state persists across lookups** — Calling `lookup_raw()` repeatedly advances depth from 0 to 1 to 2, but this state lives in the engine instance. Different test cases that share an engine will see escalated depth when they expect level 0.
+`run_maintenance()` and `check_staleness()` compare a stored hash against the output of `compute_source_hash()`. If you add or remove files that a `Feature` tracks without updating `features.yaml`, the hash stays unchanged and stale templates are never flagged. Always update `FeatureManifest` entries — particularly the `files` list on each `Feature` — when source files move or are deleted.
 
-- **Template file changes don't trigger automatic regeneration** — The system compares source file hashes to detect staleness, but only when you explicitly call `check_staleness()`. Modified Python files won't update their corresponding help templates until the next maintenance run.
+### Session state bleeding across topics
 
-- **Precursor warnings depend on filename patterns, not file content** — `get_precursor_warnings("models.py")` triggers database-related help based on the filename alone. Renaming files changes which warnings surface, even if the code is identical.
+`populate_progressive()` advances depth by reading and writing session state managed by `update_state()`. That state persists until you call `reset_session()`. In test suites or long-running processes, a prior lookup on one topic can leave depth at level 1 or 2, causing the next `populate_progressive()` call on a different topic to return task- or reference-depth content when concept-depth content was expected. Call `reset_session()` between unrelated test cases and at logical session boundaries in production.
 
-- **Cross-link resolution fails silently** — When `cross_links.json` references a template ID that doesn't exist on disk, `_find_template_file()` returns `None` instead of raising an exception. Broken links appear as missing sections rather than errors.
+### Confidence scores driven by thin feedback data
 
-- **Feedback scoring degrades with sparse data** — `get_template_confidence()` returns lower scores when few users have rated a template. New templates start with poor confidence even if they're well-written.
+`get_template_confidence()` returns a float derived from whatever ratings `record_template_feedback()` has recorded. With few ratings, the score is volatile — a single negative rating can push a frequently used template below any confidence threshold you apply. Cross-reference `get_usage_weights()` (which draws on 30 days of usage telemetry by default) before treating confidence alone as a signal for suppressing a template.
+
+### `generate_feature_templates()` silently skips existing files
+
+When `overwrite=False` (the default), `generate_feature_templates()` leaves existing templates untouched even if the underlying source has changed. If you regenerate after a significant refactor without passing `overwrite=True`, users may receive help that describes the old API. Use `run_maintenance()` to detect which features are stale before deciding whether to force regeneration.
+
+### `get_precursor_warnings()` returns an empty list for unrecognised paths
+
+`get_precursor_warnings()` maps a `file_path` to relevant `PopulatedTemplate` results using filename and extension. Paths that don't match any feature in the manifest return an empty list with no error. If precursor warnings appear to be missing for a file type you expect to be covered, verify that the corresponding `Feature.files` patterns in `features.yaml` include that path.
+
+### Cross-link cache is not invalidated automatically
+
+`populate()` can compose related templates when `compose=True`. The cross-link index backing this is cached in memory. If you add or remove templates on disk during the same process lifetime, call `invalidate_cross_links_cache()` before the next `populate()` call, or the composed output may reference templates that no longer exist.
 
 ## How to avoid problems
 
-1. **Reset engine state between tests.** Create a fresh `HelpEngine()` instance for each test case, or call `reset_session()` to clear progressive depth tracking.
+1. **Keep `features.yaml` in sync with your source tree.** `match_files_to_features()` and `compute_source_hash()` both rely on the `files` list inside each `Feature`. An outdated manifest causes staleness detection to miss real changes.
 
-2. **Run staleness checks after file modifications.** Call `check_staleness()` and `run_maintenance()` when you change source files that should update help templates.
+2. **Reset session state in tests.** Add `reset_session()` to your test teardown so that progressive-depth advancement in one test doesn't affect the starting depth of the next.
 
-3. **Validate cross-links in CI.** Load `cross_links.json` and verify every referenced template ID resolves to a real file using `_find_template_file()`.
+3. **Pair confidence with usage data.** When using `get_template_confidence()` to rank or suppress templates, also call `get_usage_weights()` so that low-traffic templates aren't unfairly penalised by a small feedback sample.
 
-4. **Test with realistic feedback data.** Use `record_template_feedback()` to populate test confidence scores, or mock the feedback file with representative ratings.
+4. **Run maintenance before regenerating.** Call `run_maintenance()` with `dry_run=True` first to see `MaintenanceResult.stale_count()` and `MaintenanceResult.regenerated_count()` without writing anything, then re-run without `dry_run` once you've confirmed the scope of changes.
+
+5. **Depend only on the public API.** Names beginning with `_` — such as internal template-file finders and cache structures — can change without notice. Rely on the exports listed in `help.engine.__all__` to avoid breakage during refactors.
 
 ## Source files
 

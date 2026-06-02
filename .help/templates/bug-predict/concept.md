@@ -1,34 +1,50 @@
 ---
+type: concept
+name: bug-predict-concept
 feature: bug-predict
 depth: concept
-generated_at: 2026-06-01T11:47:06.406248+00:00
-source_hash: cc510a144b48d7a571de765708d61c6c9bd34809866c35bf40d3568682dc0f7c
+generated_at: 2026-06-02T10:56:02.655473+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Bug Predict
+# Bug Prediction
+
+Bug prediction scans your codebase for code patterns and complexity signals that correlate with production failures, so you can act before bugs surface at runtime.
 
 ## How it works
 
-Predict likely bug locations based on code patterns and complexity.
+`BugPredictionWorkflow` orchestrates three specialized subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — that each focus on a distinct domain and report structured findings. After all three finish, the workflow synthesizes their output into a single report with three sections:
 
-The main building blocks are:
+- **Summary** — an overall risk score (0–100) and a brief executive summary of predicted hotspots
+- **Bugs** — findings organized by severity (HIGH, MEDIUM, LOW), each with a file path, line number, pattern type, and plain-English description
+- **Suggestions** — prioritized prevention strategies, including specific refactoring advice and testing recommendations
 
-- **`BugPredictionWorkflow`** — SDK-native bug prediction with three specialized subagents.
+The orchestrator prompt instructs the workflow to cite file paths and line numbers wherever possible, so findings are immediately actionable rather than vague.
 
-Under the hood, this feature spans 3 source
-files covering:
+## The three-subagent pipeline
 
-- Bug Prediction Pattern Detection Helpers.
-- Bug Prediction Report Formatting and CLI Entry Point.
+Each subagent handles one slice of the analysis:
 
-## What connects to it
+| Subagent | Role |
+|---|---|
+| `pattern-scanner` | Detects dangerous code patterns such as `eval()` on user input, bare `except:` clauses, and TODO/FIXME markers |
+| `risk-correlator` | Weighs contextual signals — cyclomatic complexity, change frequency, and code smells — to rank which findings matter most |
+| `prevention-advisor` | Translates ranked findings into concrete refactoring and testing recommendations |
 
-This feature relates to: bugs, prediction, scanning, race-condition.
+This division keeps each subagent focused, which improves both precision and the quality of the final synthesized report.
 
-Other parts of the codebase interact with
-bug predict through these interfaces:
+## Report formatting
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `BugPredictionWorkflow` | SDK-native bug prediction with three specialized subagents. | `src/attune/workflows/bug_predict.py` |
+`format_bug_predict_report(result, input_data)` converts the raw workflow output into the human-readable report you see in your conversation. The same formatting logic powers `main()`, the CLI entry point, so the report looks identical whether you invoke bug prediction through Claude Code or directly from the command line.
+
+## False-positive suppression
+
+Not every pattern match represents a real bug. The scanner automatically ignores known-safe cases — for example, code marked with intentional keywords such as `fallback`, `graceful`, or `intentional`, and test files matched by patterns like `test_bug_predict` and `test_scanner`. This filtering happens before findings reach the risk-correlator, so your report reflects genuine risk rather than noise.
+
+## When bug prediction matters
+
+- **Before merging a large PR** — surface patterns that slip through manual review
+- **After onboarding unfamiliar code** — quickly map risk hotspots in a new module
+- **Before a release** — confirm no new HIGH-severity patterns crept into high-churn files
+- **As a periodic health check** — track whether risk scores improve or drift over time

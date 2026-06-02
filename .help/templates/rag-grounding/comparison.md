@@ -1,52 +1,55 @@
 ---
 type: comparison
+name: rag-grounding-comparison
 feature: rag-grounding
 depth: comparison
-generated_at: 2026-04-19T18:51:56.161333+00:00
-source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
+generated_at: 2026-06-02T10:56:02.722830+00:00
+source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
 status: generated
 ---
 
-# RAG grounding vs direct LLM code generation
+# Comparison: RAG-grounded code generation vs alternatives
 
-RAG-grounded code generation retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, and emits answers with provenance. This comparison helps you decide when grounding is worth the overhead versus calling an LLM directly.
+## What RAG grounding does
+
+`RagCodeGenWorkflow` retrieves attune-help context, feeds citation-forced prompts to Claude, and emits answers with source provenance. Every claim in the output traces back to a real attune API, workflow name, or CLI command — the system prompt explicitly forbids inventing attune features.
+
+That design makes it the right choice for some problems and the wrong choice for others.
 
 ## Feature comparison
 
-| Capability | RAG grounding | Direct LLM |
-|---|---|---|
-| **Response accuracy** | High for attune ecosystem questions | Varies; can hallucinate attune-specific APIs |
-| **Citation tracking** | Built-in provenance links to source docs | No citations; user must verify claims |
-| **Setup complexity** | Requires attune-rag retrieval pipeline | Single LLM API call |
-| **Response latency** | ~2-3x slower due to retrieval step | Fast; direct model inference |
-| **Context freshness** | Always uses latest attune-help content | Training data may be months stale |
-| **Cost per query** | Higher (retrieval + generation tokens) | Lower (generation tokens only) |
-| **Offline capability** | Requires network for both retrieval and LLM | Can work with local models |
+| Capability | `RagCodeGenWorkflow` | Direct LLM call (no RAG) | Throwaway script |
+|---|---|---|---|
+| Cites real attune APIs and workflow names | ✅ Always — citation is enforced by the system prompt | ❌ Model may hallucinate feature names | ❌ N/A |
+| Output grounded in attune-help documentation | ✅ Retrieved at call time | ❌ Depends on training data cutoff | ❌ N/A |
+| Resists prompt injection in retrieved passages | ✅ `<passage>` content is treated as data, not instructions | ❌ No such boundary | ❌ N/A |
+| Setup overhead | Medium — `RagCodeGenWorkflow.__init__` accepts config via `**kwargs` | Low — one API call | None |
+| Useful for one-off exploration | No — wiring up the workflow adds ceremony with little benefit | Maybe | ✅ Best fit |
+| Returns structured `WorkflowResult` | ✅ | ❌ | ❌ |
 
-## When to use RAG grounding
+## Tradeoffs to know before choosing
 
-Use `RagCodeGenWorkflow` when you need **verifiable answers about the attune ecosystem**:
+**`RagCodeGenWorkflow` is the right default when faithfulness matters.** The citation-forced prompt means the model cannot silently invent an attune workflow or API name. That guarantee costs you retrieval latency and the overhead of calling `execute(**kwargs)` through the workflow interface — a direct LLM call will be faster when you do not need grounding.
 
-- Generating code that uses attune APIs, workflows, or CLI commands
-- Answering questions about attune features where accuracy matters more than speed
-- Building user-facing tools that must cite their sources
-- Working with developers who are new to attune and need guided examples
+**A direct LLM call is faster but unsafe for attune-specific output.** If you ask an ungrounded model to generate code that references attune internals, it will produce plausible-looking but potentially fictional names. Use an ungrounded call only when the task is generic enough that attune-specific accuracy is not required.
 
-The system prompt enforces citation requirements: "Use the provided context to cite real APIs, workflow names, and CLI commands. Never invent attune features."
+**A throwaway script beats both when you are still exploring.** The workflow is purpose-built for production-quality, cited answers. If you are spiking an idea and do not yet know whether attune-help context is relevant, a plain script avoids the overhead of configuring `RagCodeGenWorkflow` for a single use.
 
-## When to use direct LLM calls
+## Use `RagCodeGenWorkflow` when…
 
-Choose direct LLM generation when you need **speed over verification**:
+- You need generated code or explanations that cite real attune APIs, workflow names, or CLI commands — not plausible inventions.
+- Downstream consumers of the output need to verify claims against source documentation.
+- You want injection-safe handling of retrieved documentation (the system prompt ignores directives inside `<passage>` tags).
+- You are working within the attune SDK and want a structured `WorkflowResult` back rather than raw model output.
 
-- Prototyping or exploratory coding where accuracy is less critical
-- General programming questions unrelated to attune specifics
-- Batch processing where retrieval latency would be prohibitive
-- Working offline or in environments where retrieval isn't available
+## Do not use `RagCodeGenWorkflow` when…
 
-## Recommendation
+- Your task is generic (not attune-specific) and grounding adds latency with no accuracy benefit — a direct LLM call is simpler.
+- You are doing early exploratory work where the shape of the problem is still unclear — wire up the workflow once you know you need cited output.
+- You need behavior the `execute` method does not expose — do not patch internals; propose an extension point instead.
 
-**Start with RAG grounding** for any attune-related code generation. The citation overhead pays for itself by preventing hallucinated APIs that waste debugging time. Switch to direct LLM calls only when you've confirmed the speed difference matters for your use case.
+## Source files
 
-For mixed workloads, use RAG grounding for attune-specific queries and direct calls for general programming questions.
+- `src/attune/workflows/rag_code_gen.py`
 
 **Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`

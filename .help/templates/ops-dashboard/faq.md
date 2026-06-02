@@ -3,8 +3,8 @@ type: faq
 name: ops-dashboard-faq
 feature: ops-dashboard
 depth: faq
-generated_at: 2026-05-16T06:19:45.811176+00:00
-source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
+generated_at: 2026-06-02T10:56:02.731464+00:00
+source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
 status: generated
 ---
 
@@ -12,47 +12,50 @@ status: generated
 
 ## What is the ops dashboard?
 
-The ops dashboard is a local web UI for running attune workflows. It provides a per-feature scope picker, persisted run history, clickable workflow chaining, and live log streaming over SSE. You start it with `attune ops` or `python -m attune.ops`.
+A local operations dashboard that lets you run workflows, pick a feature scope, stream live logs over SSE, and browse persisted run history. Run it with `python -m attune.ops` or via the `attune ops` CLI subcommand.
 
 ## How do I start the dashboard?
 
-Run `attune ops` from your project root. By default the server binds to `127.0.0.1:8765`. To change the host, port, or other settings, pass flags on the CLI or call `build_config()` directly.
+Call `cmd_ops(args)` or run `python -m attune.ops`. The server binds to `127.0.0.1:8765` by default. You can change the host and port through the `host` and `port` fields on `Config`.
 
-## What does `allow_run` do?
+## What does `Config` control?
 
-`allow_run` is a `Config` field that controls whether the dashboard is permitted to execute workflows. It defaults to `False`, so the UI is read-only unless you explicitly enable it.
+`Config` is the central configuration dataclass. Its key fields include:
 
-## How do I change the host or port?
+- `project_root` and `attune_home` — where the dashboard reads project and attune state from
+- `host` / `port` — server bind address (defaults: `127.0.0.1` / `8765`)
+- `allow_run` — whether workflow execution is permitted
+- `specs_roots` — paths the candidate detector searches
+- `runs_retention_days` — how long persisted run history is kept (default: `30`)
+- `specs_candidates_enabled` — whether the spec-completion candidate detector is active
 
-Pass `--host` and `--port` when you run `attune ops`, or construct a `Config` manually using `build_config(host=..., port=...)`. The defaults are `127.0.0.1` and `8765`.
+## How do I get the Anthropic cost data?
 
-## What is `trusted_hosts` and when do I need it?
+Call `fetch_summary(refresh=False)`. It returns a `(CostSummary | None, CostFetchError | None)` tuple. If the request fails, inspect the `CostFetchError` fields — `kind` (a `CostFetchErrorKind`) and `message` — to understand why. Pass `refresh=True` to bypass the in-memory cache and fetch a fresh result.
 
-`trusted_hosts` is a tuple of hostnames the `TrustedHostMiddleware` allows through. Requests whose `Host` header isn't on the list are rejected. You only need to set this if you expose the dashboard on a non-loopback address.
+## What does `CostSummary` contain?
 
-## Where does the dashboard look for workflows and features?
+`CostSummary` holds account-level cost data fetched from the Anthropic admin cost report:
 
-- **Features** — parsed from `<project_root>/.help/features.yaml` by `list_features()`.
-- **Workflow specs** — discovered under the paths in `Config.specs_roots`.
+- `today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd` — pre-aggregated totals
+- `by_day`, `by_model`, `by_cost_type` — breakdowns as lists of tuples
+- `fetched_at` — when the data was retrieved
+- `source` — either `'live'` or `'cached'`
 
-## What shows up on the home page?
+## What are spec completion candidates?
 
-The home page displays `HomeKpis`: today's event count, today's cost, seven-day cost, seven-day savings, and a daily cost sparkline. These numbers come from the telemetry log at `Config.telemetry_path`.
+Candidates are specs that the detector identifies as potentially complete. `detect_candidates(config)` returns a list of `Candidate` objects, each with a `slug`, `path`, `current_status`, `evidence` list, and `snapshot_hash`. The detector only runs when `specs_candidates_enabled` is `True` on your `Config`.
 
-## How long is run history kept?
+## How do I reset the cost cache in tests?
 
-Persisted runs are stored under `Config.runs_dir` and retained for `runs_retention_days` days (default: 30). You can change the retention window via `build_config(runs_retention_days=...)`.
+Call `clear_cache()`. This empties the in-memory cache and is intended for test use only.
 
-## What appears on the `/sessions` page?
+## Do I need to import FastAPI directly?
 
-Each entry is a `Session` — a recorded Claude Code session with its start time, duration, message count, and an AI-generated starter summary you can use to decide whether to resume it.
+No. `create_app()` uses a lazy import so that importing `attune` does not pull in FastAPI. Similarly, `build_config()` lazy-imports the config builder. Only the symbols in `__all__` — `create_app`, `build_config`, and `Config` — are part of the public API.
 
-## How do I debug the dashboard when something goes wrong?
+## Where are the source files?
 
-Run the related tests first: `pytest -k "ops-dashboard" -v`. If they pass but the dashboard still misbehaves, add a `logger.debug` call at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.
-
-## Where is the source code?
-
-All ops dashboard source lives under `src/attune/ops/`. The three public exports are `create_app`, `build_config`, and `Config` (see `__all__`).
+All ops dashboard code lives under `src/attune/ops/`.
 
 **Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`

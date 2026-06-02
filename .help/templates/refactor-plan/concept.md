@@ -1,33 +1,43 @@
 ---
+type: concept
+name: refactor-plan-concept
 feature: refactor-plan
 depth: concept
-generated_at: 2026-06-01T11:47:06.465837+00:00
-source_hash: 6f279448091cd9ecd115ce65a7c82e22149b5ff442f0841471de09a630a0f293
+generated_at: 2026-06-02T10:56:02.665660+00:00
+source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
 status: generated
 ---
 
 # Refactor Plan
 
-## How it works
+A refactor plan scans a codebase for structural problems and produces a prioritized roadmap — with effort estimates and risk levels — so you know which changes to make first and why.
 
-Detect code smells and generate a prioritized refactoring roadmap.
+## How the workflow runs
 
-The main building blocks are:
+`RefactorPlanWorkflow` orchestrates three specialized subagents in sequence: `debt-scanner`, `impact-analyzer`, and `plan-generator`. Each subagent focuses on its own domain and reports findings as structured markdown. Once all three finish, the workflow synthesizes their output into a single report.
 
-- **`RefactorPlanWorkflow`** — Prioritize tech debt with Agent SDK subagents.
+You call the workflow through its `execute()` method, which returns a `WorkflowResult`. The report formatting step — handled by `format_refactor_plan_report(result, input_data)` — converts that result into a human-readable document structured around three sections:
 
-Under the hood, this feature spans 2 source
-files covering:
+| Section | What it contains |
+|---|---|
+| **Summary** | Overall tech debt score (0–100) and a 2–3 sentence executive summary |
+| **Refactoring** | Prioritized opportunities, each tagged with effort (small / medium / large) and risk (low / medium / high) |
+| **Suggestions** | Actionable next steps ordered by priority, from quick wins to longer-term improvements |
 
-- Refactor Plan Report Formatting and CLI
+The separation between `RefactorPlanWorkflow` and `format_refactor_plan_report` means the raw result is available for programmatic use before any formatting is applied — useful if you want to filter or re-rank items before presenting them.
 
-## What connects to it
+## What the subagents look for
 
-This feature relates to: refactor, tech-debt, complexity.
+The `debt-scanner` subagent surfaces issues in categories like long methods, god classes, high cyclomatic complexity, deep nesting, copy-pasted blocks, circular imports, and dead code. The `impact-analyzer` then weighs each finding against how many files it touches and how much improvement a fix would deliver. The `plan-generator` uses that scoring to sort items so that high-severity, low-effort, high-impact changes appear at the top and risky changes are explicitly flagged.
 
-Other parts of the codebase interact with
-refactor plan through these interfaces:
+## When it matters
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `RefactorPlanWorkflow` | Prioritize tech debt with Agent SDK subagents. | `src/attune/workflows/refactor_plan.py` |
+Run a refactor plan when a module feels hard to change or test, before extending a tangled area with new features, or when you need concrete data to justify refactoring time to stakeholders. Because the roadmap is prioritized, you can stop at any point and still have addressed the highest-value items — avoiding the yak-shaving that comes from refactoring without a plan.
+
+## Entry points
+
+| Symbol | Role |
+|---|---|
+| `RefactorPlanWorkflow.execute()` | Runs the full three-subagent analysis and returns a `WorkflowResult` |
+| `format_refactor_plan_report(result, input_data)` | Formats a `WorkflowResult` dict as a human-readable report |
+| `main()` | CLI entry point that wires the two together for command-line use |

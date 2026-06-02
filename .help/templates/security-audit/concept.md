@@ -1,43 +1,52 @@
 ---
+type: concept
+name: security-audit-concept
 feature: security-audit
 depth: concept
-generated_at: 2026-06-01T11:47:06.389393+00:00
-source_hash: 6e7b17414ac506196ba40231988637e7d6eb64f9b1a8266dc41deaab14bee626
+generated_at: 2026-06-02T10:56:02.673454+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
 # Security Audit
 
+Security audit is a workflow that scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review — things like `eval()` on untrusted input, file paths built without validation, API keys committed to source control, and injection risks in queries or shell commands.
+
 ## How it works
 
-Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks.
+`SecurityAuditWorkflow` coordinates four specialized subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner` — each focused on a distinct domain. After all four finish, the workflow synthesizes their output into a single report structured around three sections:
 
-The main building blocks are:
+- **Summary** — an overall security score (0–100) and a short executive summary of your security posture
+- **Security** — consolidated findings organized by severity (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
+- **Suggestions** — actionable remediation steps ordered by priority, with estimated effort for each fix
 
-- **`SecurityAuditWorkflow`** — SDK-native security audit with four specialized subagents.
-- **`AlertEngine`** — Alert engine with SQLite storage and notification delivery.
-- **`AlertChannel`** — Notification channels for alerts.
-- **`AlertMetric`** — Metrics that can be monitored.
-- **`AlertSeverity`** — Alert severity levels.
+Findings cite file paths and line numbers where possible.
 
-Under the hood, this feature spans 13 source
-files covering:
+On the security side, the `security` module exposes `SecretsDetector`, `PIIScrubber`, and `AuditLogger` as the underlying detection primitives. `detect_secrets` and `_validate_file_path` are the functions most likely to appear in scan results. `SecurityViolation` and `Severity` carry individual finding details through the pipeline.
 
-- Security Module for Attune AI.
-- Path validation utilities for Attune AI.
-- LLM Telemetry Monitoring System
+## What the scan covers
 
-## What connects to it
+| Category | What to look for |
+|----------|-----------------|
+| **Code injection** | `eval()`, `exec()`, and `compile()` on untrusted input |
+| **Path traversal** | File operations that don't validate the path first |
+| **Hardcoded secrets** | API keys, tokens, and passwords committed to source |
+| **SQL/command injection** | String concatenation in queries or shell commands |
+| **PII exposure** | Personal data handled without scrubbing (`PIIScrubber`, `PIIPattern`) |
+| **Weak cryptography** | MD5/SHA1 for security purposes, hardcoded IVs |
 
-This feature relates to: security, audit, owasp, scanning, cve.
+## How security audit relates to monitoring
 
-Other parts of the codebase interact with
-security audit through these interfaces:
+Security audit findings feed into the broader monitoring system. `AuditEvent` records are what the `AuditLogger` writes; those records can drive `AlertEngine` thresholds. An `AlertConfig` ties a specific `AlertMetric` to a `threshold` float and an `AlertChannel` (webhook, email, or stdout). When `AlertEngine.check_and_trigger()` finds a metric above its threshold, it produces an `AlertEvent` — a snapshot containing `current_value`, `threshold`, `severity`, and `triggered_at` — and delivers it via `deliver_notification`.
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `SecurityAuditWorkflow` | SDK-native security audit with four specialized subagents. | `src/attune/workflows/security_audit.py` |
-| `AlertEngine` | Alert engine with SQLite storage and notification delivery. | `src/attune/monitoring/engine.py` |
-| `AlertChannel` | Notification channels for alerts. | `src/attune/monitoring/models.py` |
-| `AlertMetric` | Metrics that can be monitored. | `src/attune/monitoring/models.py` |
-| `AlertSeverity` | Alert severity levels. | `src/attune/monitoring/models.py` |
+The `cooldown_seconds` field on `AlertConfig` (default `3600`) prevents alert storms: once an alert fires, it won't fire again until the cooldown expires.
+
+## Entry points
+
+| Surface | How you reach it |
+|---------|-----------------|
+| `SecurityAuditWorkflow.execute(**kwargs)` | SDK — run the four-subagent workflow programmatically |
+| `attune workflow run security-audit --path "src/"` | CLI — scan a directory and get severity-grouped findings |
+| `/security-audit <path>` | Claude Code skill — structured results in your conversation |
+| `detect_secrets(...)` | Python API — call the secret-detection primitive directly |
+| `AuditLogger` | Python API — write `AuditEvent` records from your own code |

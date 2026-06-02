@@ -1,49 +1,75 @@
 ---
+type: task
+name: refactor-plan-task
 feature: refactor-plan
 depth: task
-generated_at: 2026-06-01T11:47:06.470639+00:00
-source_hash: 6f279448091cd9ecd115ce65a7c82e22149b5ff442f0841471de09a630a0f293
+generated_at: 2026-06-02T10:56:02.674933+00:00
+source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
 status: generated
 ---
 
-# Work with refactor plan
+# Work with Refactor Plan
 
-Use refactor plan when you need to detect code smells and generate a prioritized refactoring roadmap.
+Use the refactor plan workflow when you want to scan a codebase for technical debt and produce a prioritized refactoring roadmap with effort estimates and risk levels.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/workflows/refactor_plan.py
+- The relevant source files:
+  - `src/attune/workflows/refactor_plan.py`
+  - `src/attune/workflows/refactor_plan_report.py`
 
-## Steps
+## Run a refactor plan
 
-1. **Understand the current behavior.**
-   Read the entry points to see what refactor plan
-   does today before making changes.
-   The primary functions are:
-   - `format_refactor_plan_report()` in `src/attune/workflows/refactor_plan_report.py` — Format refactor plan output as a human-readable report.
-   - `main()` in `src/attune/workflows/refactor_plan_report.py` — CLI entry point for refactor planning workflow.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Instantiate `RefactorPlanWorkflow`.**
+   Import the class from `workflows.refactor_plan` and create an instance. The constructor accepts keyword arguments that are forwarded to the underlying subagents (`debt-scanner`, `impact-analyzer`, and `plan-generator`).
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   ```python
+   from workflows.refactor_plan import RefactorPlanWorkflow
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "refactor-plan"`.
+   workflow = RefactorPlanWorkflow()
+   ```
 
-## Key files
+2. **Call `execute()` with the target path.**
+   Pass the path you want to analyze as a keyword argument. The workflow coordinates all three subagents and returns a `WorkflowResult`.
 
-- `src/attune/workflows/refactor_plan.py`
-- `src/attune/workflows/refactor_plan_report.py`
+   ```python
+   result = workflow.execute(path="src/auth/")
+   ```
 
-## Common modifications
+3. **Format the output.**
+   Pass the result and your original input data to `format_refactor_plan_report()` to produce a human-readable report.
 
-Functions you are most likely to modify:
+   ```python
+   from workflows.refactor_plan_report import format_refactor_plan_report
 
-- `format_refactor_plan_report()` in `src/attune/workflows/refactor_plan_report.py`
-- `main()` in `src/attune/workflows/refactor_plan_report.py`
+   report = format_refactor_plan_report(result, input_data={"path": "src/auth/"})
+   print(report)
+   ```
+
+4. **Or run the CLI entry point directly.**
+   Call `main()` from `workflows.refactor_plan_report` to run the full workflow from the command line without writing any Python.
+
+## Modify report formatting
+
+1. **Open `src/attune/workflows/refactor_plan_report.py`.**
+   The `format_refactor_plan_report(result: dict, input_data: dict) -> str` function is the single place responsible for converting raw workflow output into the final report string.
+
+2. **Identify the section to change.**
+   The report is structured around three sections driven by the workflow output: **Summary**, **Refactoring**, and **Suggestions**. Find the block that renders the section you need to adjust.
+
+3. **Edit the formatting logic and verify the signature.**
+   `format_refactor_plan_report` takes `result` (the `dict` returned by `execute()`) and `input_data` (the original inputs). Make sure your changes consume only fields present in those arguments.
+
+4. **Confirm the output looks correct.**
+   Call `format_refactor_plan_report` directly in a Python shell with a representative `result` dict and inspect the returned string.
+
+## Verify success
+
+Run the test suite targeting this feature:
+
+```
+pytest -k "refactor-plan"
+```
+
+All tests pass and `format_refactor_plan_report` returns a non-empty string that includes a **Summary**, **Refactoring**, and **Suggestions** section for a valid `result` input.
