@@ -53,7 +53,7 @@ def _run_main(analyzer_mod, tmp_path: Path, input_data: dict) -> Path:
     gh_output = cwd / "gh_output.txt"
     gh_output.touch()
 
-    input_file.write_text(json.dumps(input_data))
+    input_file.write_text(json.dumps(input_data), encoding="utf-8")
 
     original_cwd = Path.cwd()
     original_argv = sys.argv[:]
@@ -131,7 +131,7 @@ class TestMainSuppressesCommentOnExtractionFailure:
             tmp_path,
             {"findings": [], "error": "No JSON found in output"},
         )
-        analysis = json.loads((cwd / "analysis.json").read_text())
+        analysis = json.loads((cwd / "analysis.json").read_text(encoding="utf-8"))
         assert analysis["scan_skipped"] is True
         assert analysis["has_critical"] is False
         assert analysis["total_findings"] == 0
@@ -146,7 +146,7 @@ class TestMainSuppressesCommentOnExtractionFailure:
         )
         comment_path = cwd / "pr_comment.md"
         assert comment_path.exists(), "Real errors must still surface via PR comment"
-        assert "KeyError" in comment_path.read_text()
+        assert "KeyError" in comment_path.read_text(encoding="utf-8")
 
     def test_real_error_marks_scan_not_skipped(self, analyzer, tmp_path):
         cwd = _run_main(
@@ -154,7 +154,7 @@ class TestMainSuppressesCommentOnExtractionFailure:
             tmp_path,
             {"findings": [], "error": "Disk write error"},
         )
-        analysis = json.loads((cwd / "analysis.json").read_text())
+        analysis = json.loads((cwd / "analysis.json").read_text(encoding="utf-8"))
         assert analysis["scan_skipped"] is False
 
 
@@ -178,7 +178,7 @@ class TestMainHandlesNormalFindings:
         )
         comment_path = cwd / "pr_comment.md"
         assert comment_path.exists()
-        comment = comment_path.read_text()
+        comment = comment_path.read_text(encoding="utf-8")
         assert "Security Scan Results" in comment
 
     def test_normal_findings_record_counts_in_analysis(self, analyzer, tmp_path):
@@ -193,7 +193,7 @@ class TestMainHandlesNormalFindings:
                 ]
             },
         )
-        analysis = json.loads((cwd / "analysis.json").read_text())
+        analysis = json.loads((cwd / "analysis.json").read_text(encoding="utf-8"))
         assert analysis["total_findings"] == 3
         assert analysis["critical_count"] == 1
         assert analysis["medium_count"] == 1
