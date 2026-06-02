@@ -1,9 +1,10 @@
 ---
 type: faq
+name: release-prep-faq
 feature: release-prep
 depth: faq
-generated_at: 2026-04-14T14:51:00.270218+00:00
-source_hash: fe9ded2c56c77207b818a4bfa424bc8ad639e250941dae59bba6027c7ec2bb75
+generated_at: 2026-06-02T10:56:02.716749+00:00
+source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
 status: generated
 ---
 
@@ -11,45 +12,82 @@ status: generated
 
 ## What is release prep?
 
-A pre-release quality gate that runs automated checks before you ship code, including test coverage analysis, code quality scanning, security audits, and documentation verification.
+Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a `ReleaseReadinessReport` with a go/no-go verdict.
 
-## When should I use release prep?
+## When should I use it?
 
-Use release prep before publishing any version of your code — whether it's a patch, minor, or major release. The workflow catches quality issues, security vulnerabilities, and missing documentation that could affect users.
+Use release prep before tagging a release, bumping a version, or uploading to PyPI. It's also useful after merging a large feature branch when you want to confirm the codebase is in a shippable state.
 
-## What's the main entry point?
+## What checks does it run?
 
-Start with one of these classes based on your needs:
+Four specialized agents run in parallel:
 
-- `ReleasePreparationWorkflow` — Run the full workflow with all quality checks via Agent SDK subagents
-- `ReleasePrepTeam` — Coordinate multiple specialized agents in parallel for faster execution
-- Individual agents like `TestCoverageAgent` or `CodeQualityAgent` — Run specific checks only
+- **`CodeQualityAgent`** — runs ruff, checks type hints and complexity.
+- **`TestCoverageAgent`** — runs `pytest --cov` and parses the coverage report.
+- **`SecurityAuditorAgent`** — scans for vulnerabilities, secret leaks, and unsafe patterns.
+- **`DocumentationAgent`** — checks docstring coverage, README currency, and CHANGELOG presence.
 
-Read the docstring of your chosen class before calling any methods.
+Each agent returns a `ReleaseAgentResult` with a `score`, `confidence`, and `findings` dict.
 
-## How do the quality gates work?
+## What does the final report look like?
 
-Each agent runs checks and reports a score against configurable thresholds. The system aggregates results into a `ReleaseReadinessReport` that includes:
+`assess_readiness()` returns a `ReleaseReadinessReport`. The key fields are:
 
-- Overall pass/fail recommendation
-- Individual quality gate results (test coverage, code quality, documentation, security)
-- Specific blockers that must be fixed
-- Warnings for non-critical issues
+- `approved` — `True` if every critical `QualityGate` passed.
+- `blockers` — list of issues that must be fixed before release.
+- `warnings` — non-blocking advisories.
+- `quality_gates` — list of `QualityGate` results, each with `name`, `threshold`, `actual`, and `passed`.
 
-## Can I customize the quality thresholds?
+Call `format_console_output()` to print a human-readable summary, or `to_dict()` to serialize the report.
 
-Yes. Pass a `quality_gates` dictionary to `ReleasePrepTeam.__init__()` to set custom thresholds for test coverage, code complexity, documentation coverage, and other metrics.
+## What's the fastest way to run it?
 
-## How do I debug failed quality checks?
+Instantiate `ReleasePrepTeam` and call `assess_readiness()`:
 
-1. Run `pytest -k "release" -v` to verify the feature works in isolation
-2. Check the `ReleaseReadinessReport.blockers` list for specific failures
-3. Use `report.format_console_output()` to see detailed findings from each agent
-4. Add logging to see which tier (CHEAP/CAPABLE/PREMIUM) each agent escalated to
+```python
+from release import ReleasePrepTeam
+
+team = ReleasePrepTeam()
+report = team.assess_readiness(codebase_path=".")
+print(report.format_console_output())
+```
+
+If you need workflow integration, use `ReleasePrepTeamWorkflow.execute()` instead, which accepts a `path` and optional `context` dict.
+
+## Can I customize the quality gate thresholds?
+
+Yes. Pass a `quality_gates` dict to `ReleasePrepTeam` or `ReleasePrepTeamWorkflow`:
+
+```python
+team = ReleasePrepTeam(quality_gates={"coverage": 0.90, "security": 0.95})
+```
+
+Each key is a gate name and the value is the minimum passing threshold. Gates with `critical=True` block the `approved` verdict if they fail.
+
+## What happens when a check needs more analysis?
+
+`ReleaseAgent` uses progressive tier escalation — it starts at a cheap model tier and escalates to more capable tiers if confidence is low. The `ReleaseAgentResult.escalated` field tells you whether escalation occurred, and `tier_used` records which tier produced the final result.
+
+## How do I check what the run cost?
+
+Call `get_total_cost()` on your `ReleasePrepTeam` instance after `assess_readiness()` returns. The same value is also available as `ReleaseReadinessReport.total_cost`.
+
+## How do I debug a failed run?
+
+Run `pytest -k "release-prep" -v` first. If the tests pass but your results look wrong, inspect the `findings` dict on each `ReleaseAgentResult` in `report.agent_results` — each agent records its raw output there. You can also check `execution_time_ms` and `success` per agent to identify which one failed.
 
 ## Where are the source files?
 
-- `src/attune/workflows/release_prep.py` — Main workflow
-- `src/attune/agents/release/` — Individual quality check agents
+- `src/attune/agents/release/` — individual agents (`base_agent`, `coverage_agent`, `documentation_agent`, `quality_agent`, `security_agent`)
+- `src/attune/workflows/release_prep.py` — `ReleasePreparationWorkflow`
 
 **Tags:** `release`, `publishing`, `quality`
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 47 (code fence) | error | `from release import …` — module not importable |

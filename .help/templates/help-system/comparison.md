@@ -1,59 +1,61 @@
 ---
 type: comparison
+name: help-system-comparison
 feature: help-system
 depth: comparison
-generated_at: 2026-04-20T01:19:22.932191+00:00
-source_hash: 6d2c6cea2e90c550773fa55099fbf9d667aaf6f0539f84b791fb4828abba3c47
+generated_at: 2026-06-02T10:56:02.717021+00:00
+source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
 status: generated
 ---
 
-# Comparison: Help System vs alternatives
+# Comparison: Help System vs Alternatives
 
 ## Context
 
-Progressive-depth help engine and template management.
+The help system is a progressive-depth template engine that generates, populates, and maintains contextual documentation for project features. It covers the full lifecycle: scanning source code to propose features, generating templates at three depths (`concept`, `task`, `reference`), adapting output to different audiences, and tracking staleness when source files change.
 
 ## Feature comparison
 
-| Feature | Help System | Static docs | In-code comments |
-|---------|------------|-------------|------------------|
-| **Progressive depth** | Advances from concept → task → reference automatically | Fixed depth per page | No depth progression |
-| **Context awareness** | Surfaces precursor warnings based on file being edited | No file-based context | Limited to current function |
-| **Template testing** | Built-in validation for frontmatter, cross-links, and rendering | Manual validation required | No testing framework |
-| **Audience adaptation** | Multiple renderers (CLI, Claude Code, marketplace) | Single output format | Developer-only |
-| **Feedback tracking** | Confidence scoring and usage telemetry | No built-in feedback | No feedback mechanism |
-| **Maintenance** | Staleness detection and automated regeneration | Manual updates | Drift with code changes |
+The table below compares the help system's built-in entry points against two common alternatives: writing ad-hoc documentation by hand, and using a generic static-site generator.
 
-## When to use Help System
+| Capability | Help system | Hand-written docs | Generic static-site generator |
+|---|---|---|---|
+| Feature discovery | `scan_project()` proposes features from source automatically | Manual — you identify features yourself | Manual |
+| Template generation | `generate_feature_templates()` produces concept, task, and reference depths in one call | Author each depth by hand | Typically single-depth pages |
+| Progressive depth | `populate_progressive()` advances depth per session; `reset_session()` resets on topic change | Not applicable | Not applicable |
+| Staleness detection | `check_staleness()` hashes source files; `run_maintenance()` regenerates stale templates automatically | No detection — drift is silent | No detection |
+| Audience adaptation | `render_claude_code()`, `render_cli()`, `render_marketplace()` target specific channels from the same template | Duplicate content per channel | Requires custom theming per target |
+| Contextual warnings | `get_precursor_warnings(file_path)` surfaces relevant help when a specific file is being edited | Not applicable | Not applicable |
+| Workflow-triggered help | `get_workflow_help(workflow_name)` returns up to 3 relevant templates after a workflow completes | Not applicable | Not applicable |
+| Feedback loop | `record_template_feedback()` updates a confidence score; `get_usage_weights()` tunes relevance over time | None | None |
+| Tag-based discovery | `search_by_tag()` and `list_tags()` let you navigate templates by tag, optionally sorted by usage | Manual index maintenance | Depends on plugin |
+| CI maintenance hook | `run_hook()` integrates into CI; `run_maintenance(dry_run=True)` previews changes without writing | None | None |
 
-Use Help System when you need:
+## When NOT to use the help system
 
-- **Interactive help** that gets more detailed as users ask follow-up questions
-- **Context-sensitive warnings** triggered by the files you're editing (e.g., database help when touching `models.py`)
-- **Multi-audience output** that adapts the same content for different consumers
-- **Quality assurance** through automated template validation and cross-link checking
-- **Usage insights** to understand which help topics are most valuable
+- **Single-use scripts.** If you need one throwaway document, the overhead of defining a `Feature`, running `generate_feature_templates()`, and managing a `FeatureManifest` outweighs the benefit. Write the doc directly.
+- **Content the public API doesn't expose.** The help system does not expose internals for patching. If you need behavior outside the public API (see `help.engine.__all__`), open an issue or propose an extension point rather than reaching into private modules.
+- **Cross-feature orchestration.** If your documentation problem spans several features and requires coordinating their manifests, work at the orchestration layer above individual `load_manifest()` / `save_manifest()` calls rather than calling each feature's pipeline directly.
+- **Non-project documentation.** `scan_project()` skips well-known non-source directories (`.git`, `node_modules`, `dist`, `build`, and others) and is designed for structured project trees. It is not a general-purpose documentation crawler.
 
-The system excels at projects with complex workflows where users need different levels of detail depending on their experience and current task.
+## Use the help system when…
 
-## When NOT to use Help System
+| Situation | Recommended entry point |
+|---|---|
+| You want to discover what features exist in a codebase | `scan_project()` → `proposals_to_manifest()` |
+| You need concept, task, and reference docs generated for a feature | `generate_feature_templates()` |
+| You want help that adapts as a user asks follow-up questions | `populate_progressive()` + `reset_session()` |
+| You need to warn a user before they edit a specific file | `get_precursor_warnings(file_path)` |
+| You want help surfaced automatically after a workflow finishes | `get_workflow_help(workflow_name)` |
+| Your templates may drift as source files change | `check_staleness()` + `run_maintenance()` or `run_hook()` in CI |
+| You need to render the same template for Claude Code, CLI, and marketplace | `render_claude_code()`, `render_cli()`, `render_marketplace()` |
+| You want to measure whether a template is actually useful | `record_template_feedback()` + `get_template_confidence()` |
 
-Avoid Help System if:
+The help system is the right choice when you need the full pipeline — discovery, generation, population, adaptation, and maintenance — rather than any single step in isolation. If you only need one step, the corresponding module (`help.bootstrap`, `help.generator`, `help.staleness`, etc.) is importable independently.
 
-- **Your documentation is mostly static** — traditional docs tools like Sphinx or GitBook are simpler
-- **You have a small codebase** — the overhead of template generation and validation isn't worth it for <20 features
-- **Your team prefers inline docs** — if everyone reads code comments, don't force a separate help system
-- **You need real-time collaboration** — Help System templates are file-based, not collaborative editors
+## Source files
 
-## Alternative approaches
+- `src/attune/help/**`
+- `packages/attune-help/src/attune_help/**`
 
-| Alternative | Best for | Tradeoff |
-|-------------|----------|----------|
-| **Inline comments** | Small teams, simple APIs | No progressive depth or audience adaptation |
-| **README files** | Quick starts, project overviews | No context awareness or automated testing |
-| **Wiki systems** | Collaborative editing, FAQs | No template validation or staleness detection |
-| **API documentation tools** | Code reference, OpenAPI specs | No workflow guidance or precursor warnings |
-
-## Use Help System when...
-
-You have a complex codebase where users need different levels of help depending on their experience, and you want that help to be context-aware, automatically validated, and adaptable to different audiences. It's designed for projects where good documentation is a competitive advantage, not an afterthought.
+**Tags:** `help`, `templates`, `docs`

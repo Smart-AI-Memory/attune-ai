@@ -1,37 +1,40 @@
 ---
 type: note
+name: release-prep-note
 feature: release-prep
 depth: note
-generated_at: 2026-04-14T14:51:28.268851+00:00
-source_hash: fe9ded2c56c77207b818a4bfa424bc8ad639e250941dae59bba6027c7ec2bb75
+generated_at: 2026-06-02T10:56:02.725653+00:00
+source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
 status: generated
 ---
 
-# Release preparation system
+# Note: release prep
 
-## Overview
+## How the agent team is structured
 
-The release preparation system automates pre-release quality gates through coordinated agent teams that assess code health, security, documentation, and test coverage. The system produces a structured release readiness report with go/no-go recommendations based on configurable quality thresholds.
+Release prep runs four specialized agents in parallel, each responsible for a distinct domain. A `ReleasePrepTeam` coordinates their execution and aggregates results into a `ReleaseReadinessReport`.
 
-## Architecture
+| Agent | What it checks |
+|---|---|
+| `CodeQualityAgent` | Runs `ruff`, checks type hints and complexity |
+| `TestCoverageAgent` | Runs `pytest --cov` and parses the coverage report |
+| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence |
+| `SecurityAuditorAgent` | Scans for vulnerabilities, secret leaks, and unsafe patterns |
 
-The system uses a three-tier cost escalation strategy (CHEAP → CAPABLE → PREMIUM) where agents start with basic checks and escalate to more sophisticated analysis only when needed.
+Every agent extends `ReleaseAgent`, which handles CHEAP → CAPABLE → PREMIUM model-tier escalation automatically. The `escalated` field on `ReleaseAgentResult` records whether a given run required escalation.
 
-**Core workflow components:**
+## How readiness is decided
 
-- `ReleasePreparationWorkflow` — Main orchestrator that coordinates four specialized subagents (health-checker, security-scanner, changelog-generator, release-assessor)
-- `ReleasePrepTeam` — Manages parallel execution of release agents and aggregates results into a `ReleaseReadinessReport`
+Each agent produces a `ReleaseAgentResult` with a `score`, a `confidence`, and a `findings` dict. Those results feed into a list of `QualityGate` checks. A gate has a `threshold` and an `actual` value; if `actual` falls short of `threshold` and `critical` is `True`, the gate blocks the release.
 
-**Individual agents:**
+The final `ReleaseReadinessReport` rolls everything up:
 
-- `ReleaseAgent` — Base class implementing tier escalation for all specialized agents
-- `TestCoverageAgent` — Executes pytest with coverage reporting and parses results
-- `DocumentationAgent` — Validates docstring coverage, README currency, and changelog presence
-- `CodeQualityAgent` — Runs ruff linting and analyzes type hints and complexity metrics
+- `approved` — `True` only when all critical gates pass
+- `blockers` — gates or findings that must be resolved before shipping
+- `warnings` — non-critical issues worth noting
+- `confidence` — a string label reflecting overall certainty
 
-## Quality gates
-
-The system evaluates release readiness through configurable `QualityGate` thresholds. Each gate defines a minimum score, criticality level, and pass/fail criteria. The final `ReleaseReadinessReport` aggregates all agent findings, quality gate results, and provides structured output including blockers, warnings, cost tracking, and execution timing.
+Call `format_console_output()` to render a human-readable summary, or `to_dict()` to get a serializable dict for downstream tooling.
 
 ## Source files
 

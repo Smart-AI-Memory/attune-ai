@@ -1,9 +1,10 @@
 ---
 type: concept
+name: help-system-concept
 feature: help-system
 depth: concept
-generated_at: 2026-05-04T02:30:33.548305+00:00
-source_hash: 02f860e914d05f44ecfe133be87b26cad7e3f200e70a1a30901af220c56e2181
+generated_at: 2026-06-02T10:56:02.667333+00:00
+source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
 status: generated
 ---
 
@@ -11,34 +12,39 @@ status: generated
 
 ## How it works
 
-The help system generates contextual documentation by scanning your project, mapping features to source files, and creating progressive-depth templates that adapt to different audiences and usage patterns.
+The help system is a progressive-depth template engine that scans your project, generates structured help content per feature, and serves the right level of detail based on who is asking and what they are doing.
 
-When you scan a project, the system analyzes code structure and proposes features automatically. Each feature gets mapped to specific files, then generates three template depths: concept (mental model), task (step-by-step), and reference (complete lookup). The engine tracks user feedback and usage patterns to surface the most relevant content first.
+The pipeline has four stages that flow from discovery to delivery:
 
-## Core components
+**1. Discovery** — `scan_project()` walks your project root (skipping directories like `.git`, `node_modules`, and `__pycache__`) and returns a list of `ProposedFeature` objects, each with a `name`, `description`, matched `files`, and a `confidence` rating. You pass accepted proposals to `proposals_to_manifest()` to produce a `FeatureManifest`, which maps feature names to their source files in `features.yaml`.
 
-- **`ProposedFeature`** — Discovered features with confidence scores and file mappings from project scanning
-- **`GeneratedTemplate`** — Individual template file with source hash tracking for staleness detection
-- **`GenerationResult`** — Complete template set for one feature, including all depths and matched files
-- **`MaintenanceResult`** — Staleness report and regeneration results from a maintenance run
-- **`Feature`** — Finalized feature definition linking project capabilities to source files
+**2. Generation** — `generate_feature_templates()` takes a `Feature` from the manifest and writes one markdown file per depth level (`concept`, `task`, `reference`) into your help directory. Each output is a `GeneratedTemplate` carrying the feature name, depth, file path, and a `source_hash` that the staleness checker uses later.
 
-The system maintains a features manifest (`features.yaml`) that maps each project capability to its implementation files. When source files change, the system detects staleness by comparing file hashes and regenerates affected templates.
+**3. Population and adaptation** — `populate()` resolves a template ID against the generated directory, applies a `TemplateContext` (which can carry a `file_path`, `workflow_name`, `error_message`, or `tool_name`), and returns a `PopulatedTemplate`. `populate_progressive()` does the same but advances depth automatically across calls, tracking state through the session module. `AudienceProfile` controls the output channel (`claude-code` by default) and verbosity. Three renderers — `render_claude_code()`, `render_marketplace()`, and `render_cli()` — convert a `PopulatedTemplate` into its final string form.
 
-## Template lifecycle
+**4. Maintenance** — `run_maintenance()` calls `check_staleness()`, which hashes each feature's source files with `compute_source_hash()` and compares the result to the stored hash in the manifest. Features whose source has changed appear in `StalenessReport.stale_features()`. Passing `dry_run=False` regenerates them and returns a `MaintenanceResult` with `stale_count` and `regenerated_count` properties. `run_hook()` wraps this for use in pre-commit or CI hooks by checking `get_changed_files()` first.
 
-Templates follow a three-stage lifecycle: discovery, generation, and maintenance. During discovery, the scanner identifies features by analyzing file patterns, entry points, and configuration files. Generation creates structured markdown templates with YAML frontmatter for each depth level. Maintenance tracks changes to source files and updates stale templates automatically.
+## Contextual entry points
 
-The engine supports multiple audience profiles (Claude Code, CLI, marketplace) and transforms the same base template for different contexts. User feedback scores help rank template quality, while usage telemetry weights search results by real-world relevance.
+Rather than resolving a template ID directly, you can ask the system what is relevant right now:
 
-## What connects to it
+- `get_precursor_warnings(file_path)` returns up to three `PopulatedTemplate` objects relevant to the file a user is about to edit — for example, database-related warnings when opening `models.py`.
+- `get_workflow_help(workflow_name)` returns templates relevant after a named workflow completes.
+- `resolve_topic(query, manifest)` maps a free-text query to a feature name using the manifest.
+- `search_by_tag(tag)` and `list_tags()` let you browse the template inventory by tag; both accept `sort_by_usage=True` to rank results by recent activity.
 
-The help system integrates with development workflows through precursor warnings (alerts before editing risky files), post-workflow guidance (relevant templates after completing tasks), and tag-based search across all generated content.
+## Feedback and confidence
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `ProposedFeature` | Feature discovery with confidence scoring | `src/attune/help/bootstrap.py` |
-| `GeneratedTemplate` | Template file with staleness tracking | `src/attune/help/generator.py` |
-| `GenerationResult` | Complete feature template set | `src/attune/help/generator.py` |
-| `MaintenanceResult` | Staleness and regeneration report | `src/attune/help/maintenance.py` |
-| `Feature` | Project capability to file mapping | `src/attune/help/manifest.py` |
+Every `PopulatedTemplate` can be rated. `record_template_feedback(template_id, rating)` writes to `feedback.json` in the generated directory and returns an updated confidence score. `get_template_confidence(template_id)` reads that score back. `get_usage_weights(days=30)` returns a `dict[str, float]` of template IDs weighted by how often they have been used in the last N days — the engine uses these weights to rank results from `get_workflow_help()` and `get_precursor_warnings()`.
+
+## Key data types
+
+| Type | Where it lives | Role in the pipeline |
+|---|---|---|
+| `ProposedFeature` | `help.bootstrap` | Discovery output; carries `name`, `files`, `tags`, `confidence` |
+| `Feature` / `FeatureManifest` | `help.manifest` | Persistent record of features and their source files |
+| `GeneratedTemplate` / `GenerationResult` | `help.generator` | Generation output; carries `source_hash` for staleness tracking |
+| `TemplateContext` / `AudienceProfile` | `help.templates` | Runtime parameters and output channel for population |
+| `PopulatedTemplate` | `help.templates` | Final content object passed to a renderer |
+| `FeatureStaleness` / `StalenessReport` | `help.staleness` | Per-feature and aggregate staleness status |
+| `MaintenanceResult` | `help.maintenance` | Summary of a maintenance run: stale, regenerated, skipped, failed |

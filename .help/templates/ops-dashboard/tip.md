@@ -3,15 +3,17 @@ type: tip
 name: ops-dashboard-tip
 feature: ops-dashboard
 depth: tip
-generated_at: 2026-05-16T06:19:45.816009+00:00
-source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106cb76ff02fca34a836
+generated_at: 2026-06-02T10:56:02.737540+00:00
+source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
 status: generated
 ---
 
-# Tip: Start the ops dashboard with `build_config`, not by constructing `Config` directly
+# Tip: working effectively with ops dashboard
 
-Pass your parameters through `build_config()` rather than instantiating `Config` yourself. `build_config()` resolves environment defaults — including `attune_home` and `specs_roots` — that are easy to misconfigure when you set fields by hand.
+Use `fetch_summary(refresh=True)` when you need a live cost reading instead of relying on the cached result — the `source` field on `CostSummary` tells you whether you got `'live'` or `'cached'` data, so you can always verify what you received.
 
-**Why:** `Config` is a dataclass, so Python lets you construct it directly, but `build_config()` is where environment variable resolution and default wiring actually happen. Skipping it produces a `Config` that looks valid but silently misses those defaults.
+**Why:** `fetch_summary` returns a `(CostSummary | None, CostFetchError | None)` tuple, and silent cache hits are the most common reason cost figures look stale.
 
-**Tradeoff:** `build_config()` is an opaque builder — you can't see all the resolution logic at a glance. When you need to understand exactly what a field resolves to (for example, why `attune_home` is pointing somewhere unexpected), read `src/attune/ops/config.py` alongside it rather than relying on the defaults alone.
+**Tradeoff:** Passing `refresh=True` on every call adds a network round-trip to `https://api.anthropic.com/v1/organizations/cost_report` and requires a valid key from `load_admin_key()`. If the key is unavailable, `fetch_summary` returns `None` for the summary and a populated `CostFetchError` — check `CostFetchError.kind` and `CostFetchError.message` before assuming the data is valid.
+
+**Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`

@@ -3,81 +3,82 @@ type: faq
 name: bug-predict-faq
 feature: bug-predict
 depth: faq
-generated_at: 2026-05-16T06:19:45.790357+00:00
+generated_at: 2026-06-02T10:56:02.690028+00:00
 source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
 # Bug Predict FAQ
 
-## What does bug prediction do?
+## What does bug predict do?
 
-It scans your codebase for patterns that historically cause production incidents — things like `eval()` on user input, silently swallowed exceptions, and unfinished code paths — then scores and ranks the results by severity so you know where to focus first.
+It scans your codebase for code patterns and complexity signals that historically cause production incidents, then returns a risk report grouped by severity with file paths and line numbers.
 
 ## When should I use it?
 
-Use bug prediction before merging a large PR, during code review to focus attention on real risks, or before a release to confirm no new high-severity patterns crept in. It's also useful when you're onboarding to an unfamiliar codebase and want to map risk hotspots quickly.
+Use bug predict before merging a large PR, during code review to focus attention on real risks, or as a periodic health check on high-churn modules. If you need broader vulnerability scanning rather than pattern-based prediction, consider a security audit instead.
 
 ## How do I run it?
 
-Pass a file or directory to `/bug-predict`:
+The fastest way is to point it at a path:
 
 ```
 /bug-predict src/
 ```
 
-You can also use natural language:
-
-```
-predict bugs in src/
-where are bugs most likely in the auth package?
-```
-
-If you don't specify a path, the skill prompts you to scope the scan before it runs.
+You can also use natural language — for example, "predict bugs in src/" or "find risky code in the auth package". If you don't specify a path, the skill walks you through scoping before it runs. See the [task guide](tasks/use-bug-predict.md) for the full walkthrough.
 
 ## What patterns does it detect?
 
-Three categories:
+It detects three pattern types:
 
 | Pattern | Severity | Example |
 |---|---|---|
 | `dangerous_eval` | HIGH | `eval()` or `exec()` on user input |
-| `broad_exception` | MEDIUM | Bare `except:` that silently swallows errors |
+| `broad_exception` | MEDIUM | Bare `except:` or unlogged `except Exception:` |
 | `incomplete_code` | LOW | TODO, FIXME, HACK, or XXX comments |
 
-Beyond pattern matching, the scanner also weighs cyclomatic complexity, how frequently a file changes, and general code smells like functions over 50 lines.
+It also weighs cyclomatic complexity, change frequency, and code smells when calculating the overall risk score.
 
-## Will it flag false positives?
+## Does it flag false positives?
 
-It filters out several known-safe patterns automatically — for example, `eval()` inside test fixture strings, JavaScript's `regex.exec()` calls, and broad exceptions marked with `# INTENTIONAL:` or `# noqa: BLE001`. You can also signal intent through keywords like `fallback`, `graceful`, or `optional` in comments.
+It automatically suppresses known-safe patterns — for example, `eval()` inside test fixture strings, JavaScript `regex.exec()` calls, and broad exceptions marked with `# INTENTIONAL:` or `# noqa: BLE001`. Keywords like `fallback`, `graceful`, and `intentional` in surrounding comments are also treated as intentional and filtered out.
 
-## How do I read the report?
+## How is the risk score calculated?
 
-Results are grouped by severity (HIGH → MEDIUM → LOW). Each finding shows the file path, line number, pattern type, and a plain-English description. File links are clickable so you can jump directly to the issue.
+The score runs from 0 to 100 and reflects a combination of pattern matches, their severity, and contextual signals like file complexity and change frequency. A score is shown at the top of every report alongside the total file and finding counts.
 
-The overall risk score runs from 0 to 100 and appears at the top of the report alongside a short executive summary of the biggest hotspots.
+## What are the three subagents doing under the hood?
 
-## What should I do after I see the results?
-
-Fix HIGH findings first. You can ask directly — for example, `"fix the dangerous_eval in executor.py"` — to get a guided fix. After that, consider asking `"write tests for the flagged files"` to prevent regressions, or run a focused scan on a specific subdirectory to go deeper.
+`BugPredictionWorkflow` coordinates three specialized subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — and synthesizes their findings into a single report with a summary, a bugs section, and prioritized prevention suggestions.
 
 ## How do I generate a report programmatically?
 
-Call `format_bug_predict_report(result, input_data)` from `src/attune/workflows/bug_predict_report.py`. It takes the raw workflow result and the original input data, and returns a formatted string. For the CLI, use `main()` in the same module.
+Call `format_bug_predict_report(result, input_data)` from `workflows.bug_predict_report`. It takes the raw result dict and the original input data, and returns a formatted string you can print or write to a file. For a standalone CLI run, call `main()` from the same module.
 
-## How do I debug a failing scan?
+## Can I customize the workflow's system prompt?
 
-Run the related tests first:
+Yes. Pass a `system_prompt_suffix` string when constructing `BugPredictionWorkflow`:
 
+```python
+from workflows.bug_predict import BugPredictionWorkflow
+
+workflow = BugPredictionWorkflow(system_prompt_suffix="Focus only on authentication code.")
+result = workflow.execute(path="src/auth/")
 ```
-pytest -k "bug-predict" -v
-```
 
-If the tests pass but your scan still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. The three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) each report findings independently — checking their individual output can help you isolate which stage is failing.
+## How do I debug a failed scan?
 
-## Where are the source files?
+Run the related tests first with `pytest -k "bug-predict" -v`. If the tests pass but your scan still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. The source files to inspect are `src/attune/workflows/bug_predict.py` and the `bug_predict_report` module in the same directory.
 
-- `src/attune/workflows/bug_predict.py` — orchestration workflow and subagent coordination
-- `src/attune/workflows/bug_predict_report.py` — report formatting and CLI entry point
+**Tags:** `bugs`, `prediction`, `scanning`, `race-condition`
 
-**Tags:** `bugs`, `scanning`, `security`
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 63 (code fence) | error | `from workflows.bug_predict import …` — module not importable |
+| Line 29 | error | `[task guide](tasks/use-bug-predict.md)` — target does not exist |

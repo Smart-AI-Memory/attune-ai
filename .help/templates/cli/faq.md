@@ -3,66 +3,66 @@ type: faq
 name: cli-faq
 feature: cli
 depth: faq
-generated_at: 2026-05-16T06:19:45.824206+00:00
-source_hash: 8c67b256a4817afea8eb428fdd5db37b00bc30a3c490a3
+generated_at: 2026-06-02T10:56:02.734380+00:00
+source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
 # CLI FAQ
 
-## What does the CLI feature cover?
+## What does the CLI feature do?
 
-It covers attune's command-line interface: running commands for cost tracking, help browsing, memory, lessons, and routing user input to Claude Code skills via `HybridRouter`.
+It provides the command-line interface and input routing for attune. This includes commands for cost tracking, memory, telemetry, workflows, and provider configuration, plus the `HybridRouter` that dispatches user input to the right skill.
 
-## Which command do I call for cost tracking?
+## How do I start the CLI?
 
-It depends on what you need:
+Call `main()` from `attune.cli_minimal`. You can also call `create_parser()` directly if you need to build on top of the argument parser without invoking the full entry point.
 
-- `cmd_costs` — full cost report for a recent period
-- `cmd_costs_today` — today's cost summary only
+## How does routing work?
+
+`route_user_input()` in `attune.cli_router` takes a string of user input and an optional context dict, then returns a routing result dict. Under the hood it uses `HybridRouter`, which you can instantiate directly if you want to manage routing preferences yourself or call `get_suggestions()` for partial-input completion.
+
+## What is a RoutingPreference?
+
+A `RoutingPreference` is a dataclass in `attune.cli_router` that records a learned mapping from a keyword to a skill. Its fields are `keyword`, `skill`, `args` (default `''`), `usage_count` (default `0`), and `confidence` (default `1.0`). You add one by calling `HybridRouter.learn_preference(keyword, skill, args)`.
+
+## How do I check whether a string is a slash command?
+
+Call `is_slash_command(text)` from `attune.cli_router`. It returns a bool.
+
+## Which commands track costs?
+
+Four commands live in `cli_commands.cost_commands`:
+
+- `cmd_costs` — show a cost report for a recent period
+- `cmd_costs_today` — show today's cost summary
 - `cmd_costs_export` — export cost data to a file
 - `cmd_costs_reset` — clear all cost tracking data
 
-All four are in `src/attune/cli_commands/cost_commands.py`.
+## How do I work with memory and lessons?
 
-## How do I manage lessons and memory from the CLI?
+`cli_commands.memory_commands` exposes seven commands: `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, and `cmd_memory_forget_topic`. Use `cmd_lessons` to list current lessons with line numbers, `cmd_remember` to add one, and `cmd_forget` to remove one by line number or keyword.
 
-Use the commands in `src/attune/cli_commands/quick_memory_commands.py`:
+## What telemetry commands are available?
 
-- `cmd_remember` / `cmd_forget` — add or remove a lesson by keyword or line number
-- `cmd_lessons` — list current lessons with line numbers
-- `cmd_memory_capture` / `cmd_memory_recall` — save and search personal cross-session memory
+`cli_commands.telemetry_commands` provides `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_export`, `cmd_telemetry_routing_stats`, `cmd_telemetry_routing_check`, `cmd_telemetry_models`, `cmd_telemetry_agents`, and `cmd_telemetry_signals`.
 
-## What is `HybridRouter` and when do I need it?
+## How do I run workflows from the CLI?
 
-`HybridRouter` routes plain-text user input to Claude Code skill invocations. You use it when you want attune to learn and reuse routing preferences across sessions. Call `route()` for a one-off lookup, `learn_preference()` to record a new keyword-to-skill mapping, and `get_suggestions()` to autocomplete a partial input.
+Use the three commands in `cli_commands.workflow_commands`: `cmd_workflow_list` to see available workflows, `cmd_workflow_info` to inspect one, and `cmd_workflow_run` to execute it.
 
-## How does the CLI render help output?
+## How do I check that my setup is valid?
 
-Output format depends on the channel. In the terminal, `render_cli()` uses Rich panels, tables, and color. For details on how rendering differs across channels, see [Audience-adaptive rendering](concepts/audience-adaptation.md).
-
-## How do I browse available help templates from the CLI?
-
-Run `attune help-docs --tags` to list all 34 tags with template counts, then filter with `attune help-docs --tag <tagname>`. For a walkthrough, see the [Browse documentation quickstart](quickstarts/browse-help.md).
+Run `cmd_doctor` or `cmd_validate` from `cli_commands.utility_commands`. Use `cmd_setup` for initial configuration and `cmd_features` to see which features are active.
 
 ## How do I debug a failing CLI command?
 
-Run `pytest -k "cli" -v` first. If the tests pass but the command still fails, add a `logger.debug` call at the suspected failure point and re-run with logging enabled.
+Run `pytest -k "cli" -v` first. If the tests pass but your code still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. For symptom-based issues, see the troubleshooting page for this feature.
 
-## Where are the CLI source files?
+## Where are the source files?
 
 - `src/attune/cli_minimal.py`
 - `src/attune/cli_router.py`
-- `src/attune/cli_commands/` — subdirectory containing cost, help, and memory command modules
+- `src/attune/cli_commands/**`
 
 **Tags:** `cli`, `commands`
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 42 | error | `[Audience-adaptive rendering](concepts/audience-adaptation.md)` — target does not exist |
-| Line 46 | error | `[Browse documentation quickstart](quickstarts/browse-help.md)` — target does not exist |

@@ -1,18 +1,19 @@
 ---
 type: tip
+name: rag-grounding-tip
 feature: rag-grounding
 depth: tip
-generated_at: 2026-04-19T18:51:40.818605+00:00
-source_hash: 2b43bd46a0867ccd82e17c74e483eb64489f056eec8c96f498bd15452d8e7696
+generated_at: 2026-06-02T10:56:02.717692+00:00
+source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
 status: generated
 ---
 
-# Tip: Use RagCodeGenWorkflow as-is, don't extend it
+# Tip: Use `execute()` as your entry point into `RagCodeGenWorkflow`
 
-Use `RagCodeGenWorkflow` through composition rather than subclassing. The workflow is designed to be configured through its constructor, not extended through inheritance.
+Instantiate `RagCodeGenWorkflow` and call `execute(**kwargs)` directly — don't subclass it or reconstruct its internals.
 
-## Why
+**Why:** The workflow is designed around a single call boundary. Bypassing `execute()` skips the retrieval-and-citation pipeline, so generated code loses its grounding in real attune APIs.
 
-Subclassing breaks when the internal implementation changes, and you lose the benefit of the built-in citation system that prevents hallucinated attune features.
+**Tradeoff:** All customization must go through the `**kwargs` you pass to `__init__` and `execute`. If you need behavior that neither accepts, you are working outside the intended surface — and that gap is worth filing as a feature request rather than papering over with a subclass.
 
-The tradeoff: you'll write a few more lines to compose workflows together, but your code stays stable across attune updates and maintains grounded responses.
+**Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`

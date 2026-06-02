@@ -3,67 +3,66 @@ type: comparison
 name: bug-predict-comparison
 feature: bug-predict
 depth: comparison
-generated_at: 2026-05-16T06:19:45.799901+00:00
-source_hash: c4c1270dc9f702985426a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
+generated_at: 2026-06-02T10:56:02.703254+00:00
+source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
-# Comparison: Bug Prediction vs Security Audit vs Code Quality Review
+# Bug Prediction vs. Related Scanning Approaches
 
-## What each tool does
+Bug prediction finds *where* failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use `BugPredictionWorkflow` directly, when to use the CLI entry point, and when a different tool is the better fit.
 
-Bug prediction, security auditing, and code quality review all inspect your source code, but they answer different questions and operate at different scopes.
+## How the approaches compare
 
-| Capability | Bug Prediction | Security Audit | Code Quality Review |
+| | **`BugPredictionWorkflow` (SDK)** | **`main()` CLI entry point** | **Security audit / code quality scan** |
 |---|---|---|---|
-| **Primary question** | Where will production failures happen next? | What vulnerabilities exist? | How maintainable is this code? |
-| **Output** | Risk score (0–100) + prioritized finding list | Vulnerability report | Style, complexity, and coverage report |
-| **Severity tiers** | HIGH / MEDIUM / LOW | Typically CVE-severity | Usually no severity — all findings are peers |
-| **False-positive filtering** | Built-in (suppresses test fixtures, `regex.exec()`, `# INTENTIONAL:` comments, `# noqa: BLE001`) | Varies by tool | Rarely built-in |
-| **Actionable next step** | Named file + line number + plain-English description | Patch or configuration change | Refactor suggestion |
-| **Subagent architecture** | Three specialized subagents: `pattern-scanner`, `risk-correlator`, `prevention-advisor` | Single-pass scanner | Single-pass linter |
-| **Guided flow** | Yes — prompts for path and severity filter if you omit them | No | No |
+| **Primary use** | Embed bug prediction in agent pipelines or automated tooling | Run a one-off scan from the terminal or a script | Vulnerability scanning or broad style enforcement |
+| **Output** | `WorkflowResult` — structured, machine-readable | Human-readable report via `format_bug_predict_report()` | Varies by tool |
+| **Customization** | `system_prompt_suffix` parameter lets you extend orchestrator behavior | Fixed prompt; no runtime customization | Depends on tool |
+| **Subagent coordination** | Yes — orchestrates `pattern-scanner`, `risk-correlator`, and `prevention-advisor` automatically | Yes — same three subagents under the hood | Not applicable |
+| **False-positive filtering** | Built in — suppresses known-safe patterns (test fixtures, `regex.exec()`, `# INTENTIONAL:` comments, `# noqa: BLE001`) | Same filtering | Not guaranteed |
+| **Severity triage** | HIGH / MEDIUM / LOW with file path and line number | Same, formatted as readable report | Varies |
+| **Best for** | CI pipelines, agent workflows, programmatic consumers | Interactive use, quick pre-commit checks | Compliance scanning, style linting |
 
-## What bug prediction detects
+## What bug prediction detects — and what it doesn't
 
-The three subagents coordinate to cover distinct risk surfaces:
+`BugPredictionWorkflow` targets three specific pattern categories:
 
-- **`pattern-scanner`** — flags `dangerous_eval` (HIGH), `broad_exception` (MEDIUM), and `incomplete_code` (LOW) patterns
-- **`risk-correlator`** — weighs cyclomatic complexity, change frequency, and code smells (functions over 50 lines, excessive methods, duplicated logic)
-- **`prevention-advisor`** — produces prioritized refactoring advice and testing recommendations specific to the findings
-
-A security audit covers a wider vulnerability surface (dependency CVEs, authentication logic, data exposure) but does not correlate those findings with change frequency or complexity. Code quality review catches maintainability problems but assigns no severity and does not predict which issues are most likely to cause a runtime failure.
-
-## Tradeoffs
-
-**Bug prediction wins when:**
-- You need a ranked, severity-ordered list of where failures are *most likely*, not an exhaustive catalog of every issue
-- You want automatic suppression of known-safe patterns so you aren't triaging noise
-- You're working against a deadline (pre-merge, pre-release) and need to know what to fix *first*
-
-**Bug prediction loses when:**
-- You need CVE references or dependency vulnerability data — use a security audit
-- You need compliance-oriented metrics (test coverage, documentation coverage, line-length rules) — use a code quality review
-- You're doing exploratory work on a throwaway script where the overhead of a three-subagent workflow isn't justified
-
-## Feature entry points
-
-| Entry point | Source file | Use it when |
+| Pattern | Severity | Examples caught |
 |---|---|---|
-| `/bug-predict <path>` | `bug_predict.py` | Running interactively in Claude Code |
-| `format_bug_predict_report(result, input_data)` | `bug_predict_report.py` | Embedding a formatted report in another workflow |
-| `main()` | `bug_predict_report.py` | Running from the CLI outside Claude Code |
+| `dangerous_eval` | HIGH | `eval()` or `exec()` on user input, `compile()` on external data |
+| `broad_exception` | MEDIUM | Bare `except:`, unlogged `except Exception:` |
+| `incomplete_code` | LOW | TODO, FIXME, HACK, XXX comments in code paths |
+
+It also weighs cyclomatic complexity, change frequency ("hot" files), and code smells (functions over 50 lines, duplicated logic). It does **not** replace a dedicated security audit for vulnerability scanning (e.g., dependency CVEs, injection flaws beyond `eval`) or a linter for style enforcement. Those tools answer different questions.
+
+## Tradeoffs in depth
+
+**`BugPredictionWorkflow` vs. `main()`**
+
+Both use the same three subagents and the same false-positive suppression logic. The difference is in how you consume the output:
+
+- `BugPredictionWorkflow.execute()` returns a `WorkflowResult` you can inspect programmatically. Use `system_prompt_suffix` to steer the orchestrator toward a specific concern (e.g., focusing synthesis on auth-related findings).
+- `main()` calls `format_bug_predict_report(result, input_data)` and prints directly to stdout. There is no runtime customization — it is optimized for human readers, not downstream code.
+
+**Bug prediction vs. security audit**
+
+Bug prediction is proactive and pattern-based: it tells you *where* bugs are statistically likely. A security audit is reactive and rules-based: it tells you *what* known vulnerability classes are present. If you need both, run them independently — they don't overlap enough to substitute for each other.
 
 ## Use bug prediction when…
 
-- **Pre-merge review:** You're merging a large PR and want to focus human attention on the highest-risk changes, not every style warning.
-- **Unfamiliar code:** You've onboarded a new module and need a risk map before touching anything.
-- **Pre-release check:** You want confirmation that no new HIGH-severity patterns (`eval()` on user input, bare `except:`) crept in during the sprint.
-- **Recurring health check:** You run it weekly on high-churn modules to track whether risk scores are improving or drifting.
+- **You're about to merge a large PR** and want to catch `dangerous_eval` or silent exception swallowing before code review.
+- **You're onboarding to unfamiliar code** and need a risk map of the hottest files fast.
+- **You're building an agent pipeline** that needs structured bug-likelihood data — use `BugPredictionWorkflow` and consume `WorkflowResult` directly.
+- **You want a quick pre-release check** — run `main()` to get a formatted report with risk score, file links, and line numbers in seconds.
+- **You need to customize orchestration** — pass `system_prompt_suffix` to `BugPredictionWorkflow.__init__()` to extend the orchestrator's default behavior without touching internals.
 
-**Use a security audit instead** when your concern is vulnerability classes that bug prediction doesn't model — CVEs in dependencies, insecure cryptography, or authentication bypass paths.
+## Skip bug prediction when…
 
-**Use a code quality review instead** when your goal is maintainability metrics, compliance reporting, or enforcing team style conventions across the whole codebase.
+- Your concern is **known CVEs or dependency vulnerabilities** — use a dedicated security audit instead.
+- You need **style or formatting enforcement** — a linter is the right tool.
+- You're doing **a single throwaway check** on one function — the three-subagent workflow is heavier than necessary; a direct code review question is faster.
+- The files you want to scan match the internal test patterns (`test_bug_predict`, `test_scanner`, `test_security_scan`) — the scanner intentionally skips these to avoid false positives in its own test suite.
 
 ## Source files
 

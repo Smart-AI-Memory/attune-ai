@@ -1,58 +1,162 @@
 ---
 type: task
+name: spec-engine-task
 feature: spec-engine
 depth: task
-generated_at: 2026-05-04T02:39:14.240032+00:00
-source_hash: dfb05ee79541939dac0529f016b44e21b04ef77d58372da1d6d5b857d97ef4d0
+generated_at: 2026-06-02T10:56:02.687619+00:00
+source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
 status: generated
 ---
 
-# Work with spec engine
+# Work with the spec engine
 
-Use spec engine when you need to modify how spec-driven development orchestrates task execution, manages pipeline state, or presents plan information to users.
+Use the spec engine when you need to execute a structured plan file through an approval loop — running tasks one at a time, applying quality gates after each, and resuming interrupted runs from saved state.
 
 ## Prerequisites
 
 - Access to the project source code
-- Understanding of the five-phase spec workflow (brainstorm, decompose, review, approve, execute)
-- Basic familiarity with XML task blocks and quality gates
+- A plan file saved under `.claude/plans/` with valid XML task blocks
 
-## Identify the component to modify
+## Read a plan and inspect its tasks
 
-1. **Determine which aspect of spec engine you need to change:**
-   - **Task execution flow**: Modify `PipelineOrchestrator` in `src/attune/pipeline/orchestrator.py`
-   - **Plan file reading**: Modify `read_spec()` in `src/attune/pipeline/spec_reader.py`
-   - **Task presentation**: Modify presenter functions in `src/attune/spec/presenter.py`
-   - **State management**: Modify state functions in `src/attune/spec/state.py`
-   - **Execution control**: Modify runner functions in `src/attune/spec/runner.py`
+1. Import `read_spec` from `pipeline` and call it with the path to your plan file:
 
-2. **Read the target function's docstring and signature** to confirm it handles your use case.
+   ```python
+   from pipeline import read_spec
 
-3. **Check the function's current implementation** to understand its input processing, error handling, and return format.
-
-## Modify the implementation
-
-4. **Update the function code** following these patterns:
-   - Use the existing error handling style (raising `ValueError` or `FileNotFoundError` with descriptive messages)
-   - Maintain the same return type and structure
-   - Preserve existing logging and state management calls
-
-5. **Update related dataclass fields** if your change affects `TaskResult`, `PipelineResult`, or `SpecState`.
-
-## Verify your changes
-
-6. **Run targeted tests** to catch regressions:
-   ```bash
-   pytest -k "spec" --verbose
+   tasks = read_spec(".claude/plans/my-plan.md")
    ```
 
-7. **Test with a real spec file** by running a complete pipeline to ensure quality gates and state persistence work correctly.
+   `read_spec` raises `FileNotFoundError` if the path does not exist and `ValueError` if `plan_path` is an empty string.
 
-## Success criteria
+2. Pass the returned task list to `present_tasks` to see a formatted markdown table of all tasks and their current state:
 
-Your modification works when:
-- All existing tests pass
-- The spec engine correctly processes XML task blocks from plan files
-- Pipeline execution maintains proper state tracking between tasks
-- Quality gate results display accurately in task presentations
-- No regressions appear in the five-phase workflow (brainstorm through execute)
+   ```python
+   from spec import present_tasks, load_state
+
+   state = load_state(".claude/plans/my-plan.md")
+   print(present_tasks(tasks, state))
+   ```
+
+   If `load_state` returns `None`, no saved state exists yet and all tasks are treated as pending.
+
+3. To inspect a single task in full detail, call `present_task_detail` with the task object:
+
+   ```python
+   from spec import present_task_detail
+
+   print(present_task_detail(tasks[0]))
+   ```
+
+## Execute a plan with per-task approval
+
+1. Call `execute_with_approval` with your plan path and a callback to handle each completed task:
+
+   ```python
+   from spec import execute_with_approval
+
+   result = execute_with_approval(
+       ".claude/plans/my-plan.md",
+       on_task_complete=my_callback,
+   )
+   ```
+
+   Pass `skip_gates=True`, `skip_tests=True`, or `skip_simplify=True` to bypass the corresponding quality checks during development.
+
+2. After the run completes, check whether all tasks passed:
+
+   ```python
+   print(result.success)   # True if every task executed and passed its gate
+   print(result.summary)   # Human-readable summary of the run
+   ```
+
+3. To track progress mid-run, call `format_progress_bar` with the count of completed and total tasks:
+
+   ```python
+   from spec import format_progress_bar
+
+   bar = format_progress_bar(len(state.completed), len(tasks))
+   ```
+
+## Resume an interrupted run
+
+1. Call `find_resumable_plans` to list any plans that have saved state:
+
+   ```python
+   from spec import find_resumable_plans
+
+   resumable = find_resumable_plans(".claude/plans")
+   ```
+
+2. Load the saved state for the plan you want to resume:
+
+   ```python
+   from spec import load_state, get_pending_tasks
+
+   state = load_state(".claude/plans/my-plan.md")
+   pending = get_pending_tasks(tasks, state)
+   ```
+
+3. Pass the pending tasks to a `PipelineOrchestrator`, skipping the IDs already recorded in `state.completed`:
+
+   ```python
+   from pipeline import PipelineOrchestrator
+
+   orchestrator = PipelineOrchestrator(".claude/plans/my-plan.md")
+   result = orchestrator.run_all(
+       skip_task_ids=set(state.completed),
+   )
+   ```
+
+## Run quality gates for a single task
+
+1. Instantiate `PipelineOrchestrator` with your plan path:
+
+   ```python
+   orchestrator = PipelineOrchestrator(".claude/plans/my-plan.md")
+   ```
+
+2. Call `run_gates_for_task` with the task you want to evaluate:
+
+   ```python
+   gate_result = orchestrator.run_gates_for_task(tasks[0])
+   ```
+
+3. Inspect the result fields to determine next steps:
+
+   ```python
+   print(gate_result.severity)             # e.g. "error", "warning", "ok"
+   print(gate_result.quality_gate_passed)  # True / False / None
+   print(gate_result.gate_score)           # float score if available
+   ```
+
+4. Display the outcome to the user with `present_task_result`:
+
+   ```python
+   from spec import present_task_result
+
+   print(present_task_result(tasks[0], gate_result))
+   ```
+
+## Clear saved state
+
+Call `clear_state` to remove the state comment from a plan file and reset it for a fresh run:
+
+```python
+from spec import clear_state
+
+clear_state(".claude/plans/my-plan.md")
+```
+
+## Verify success
+
+A run is successful when `PipelineResult.success` returns `True`. This property is `True` only when every `TaskResult` in `PipelineResult.tasks` has `executed=True` and `quality_gate_passed=True`. Check `PipelineResult.summary` for a human-readable breakdown and inspect individual `TaskResult.error` fields for any tasks that failed.
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 145 (code fence) | error | `from spec import …` — module not importable |

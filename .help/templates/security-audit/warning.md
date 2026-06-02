@@ -3,8 +3,8 @@ type: warning
 name: security-audit-warning
 feature: security-audit
 depth: warning
-generated_at: 2026-05-16T06:19:45.808049+00:00
-source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645761ffa7e81668
+generated_at: 2026-06-02T10:56:02.697450+00:00
+source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
 status: generated
 ---
 
@@ -12,37 +12,41 @@ status: generated
 
 ## What to watch for
 
-The security audit scans for eval/exec usage, path traversal, hardcoded secrets, and injection risks. The risks below apply to how the audit itself is configured and run — not just to the code it scans.
+`SecurityAuditWorkflow` coordinates four specialized subagents (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) and synthesizes their output into a single report. The risks below apply to how you configure the scan, handle its findings, and act on its alerts.
 
 ## Risk areas
 
-**Hardcoded secrets committed before a scan runs**
-The `secret-detector` subagent finds secrets already in source control, but it cannot prevent a secret from being committed in the same change that introduces the audit. Run `attune workflow run security-audit --path "src/"` as a CI gate on every pull request, not just before releases, so secrets are caught before they merge.
+### Secrets detected during a scan may appear in telemetry
 
-**Alert thresholds that never fire**
-`AlertEngine.add_alert()` accepts a `threshold: float` with no validation against the actual range of the target `AlertMetric`. A threshold set too high will silently pass every `check_and_trigger()` call without raising an `AlertEvent`. After creating an alert, call `get_metrics()` to confirm the current metric value is in a range where your threshold is reachable.
+`SecretDetection` findings flow through the same `LLMCallRecord` and `WorkflowRunRecord` pipeline as all other telemetry. If you have configured an `OTELBackend` or a webhook-channel `AlertConfig`, raw finding data — including matched secret strings — can reach external endpoints. Before running a scan in an environment with telemetry backends enabled, verify that `MultiBackend.get_active_backends()` returns only backends you trust with sensitive content. Use `MultiBackend.remove_backend()` to detach any backend you don't want receiving findings.
 
-**Alert cooldown masking repeated violations**
-`AlertConfig.cooldown_seconds` defaults to `3600`. If a metric breaches its threshold repeatedly within that window, only the first `AlertEvent` is recorded. In high-frequency scanning environments, set a shorter cooldown or call `get_alert_history()` to confirm whether suppressed events exist before concluding a metric is healthy.
+### `detect_secrets` operates on the literal file content it is given
 
-**Disabled alerts that look active**
-`AlertConfig.enabled` defaults to `True`, but `disable_alert()` persists the change to SQLite. If you disable an alert for debugging and forget to re-enable it, `list_alerts()` will still show the alert — it just won't fire. Check the `enabled` field in the output of `list_cmd()` before assuming coverage is complete.
+`detect_secrets` from `security.__init__` does not follow symlinks or resolve `..` path components on its own. If you pass a path built from user input without first calling `_validate_file_path`, a traversal can silently scan files outside your intended scope. Always validate paths before passing them to the scan.
 
-**`MultiBackend` silently dropping telemetry**
-`MultiBackend.log_call()` continues if one backend fails, logging the failure internally rather than raising an exception. Call `get_failed_backends()` periodically — or after any infrastructure change — to confirm no backend has entered a failed state and is silently discarding records that `AlertEngine` depends on.
+### Alert `cooldown_seconds` can suppress repeated findings
 
-**Private subagent names and prompt templates**
-`_SUBAGENT_NAMES` and `_TASK_PROMPT_TEMPLATE` are underscore-prefixed module constants. They are not part of the public API and can change between releases. If you build tooling that parses audit output based on subagent names (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) or on the report's section structure, that tooling may break without a deprecation notice.
+`AlertConfig.cooldown_seconds` defaults to `3600`. If the same threshold is breached multiple times within an hour — for example, a high error-rate metric that stays elevated — `AlertEngine.check_and_trigger()` fires only once per cooldown window. You will not receive a second `AlertEvent` until the window expires, even if `current_value` keeps climbing. Reduce `cooldown_seconds` when you need per-occurrence visibility, or poll `AlertEngine.get_metrics()` directly for the live value.
+
+### Deleting an alert also removes its history
+
+`AlertEngine.delete_alert()` removes the `AlertConfig` and its associated `AlertEvent` rows from the SQLite database at `.attune/alerts.db`. Call `AlertEngine.get_alert_history()` and export the results before deleting any alert you may need for an audit trail.
+
+### `PIIScrubber` runs separately from `SecretsDetector`
+
+`PIIScrubber` and `SecretsDetector` are independent classes in `security.__init__`. Running one does not invoke the other. If you need both PII redaction and secret detection in a pipeline, you must call each explicitly — relying on `detect_secrets` alone leaves PII patterns unexamined.
 
 ## How to avoid problems
 
-1. **Verify alert reachability after setup.** After calling `add_alert()`, run `get_metrics()` and confirm the current metric value would cross your threshold under realistic conditions. An unreachable threshold is indistinguishable from no alert at all.
+1. **Audit active telemetry backends before scanning.** Call `MultiBackend.get_active_backends()` and confirm that no backend will forward finding data to an unintended destination. If in doubt, call `MultiBackend.flush()` then `MultiBackend.remove_backend()` for any backend that should not receive security findings.
 
-2. **Check backend health before relying on alert history.** Call `get_failed_backends()` on `MultiBackend` before treating `get_alert_history()` results as authoritative. Missing telemetry records mean `check_and_trigger()` evaluates incomplete data.
+2. **Validate file paths before passing them to the workflow.** Use `_validate_file_path` (exported from `security.__init__`) on any path derived from user input before invoking `SecurityAuditWorkflow.execute()`.
 
-3. **Use the workflow output, not internal constants.** Consume audit results through `SecurityAuditWorkflow.execute()` and parse the structured markdown sections (`## Summary`, `## Security`, `## Suggestions`) rather than keying on subagent names or prompt structure that may change.
+3. **Check alert history before deleting an alert.** Run `attune alerts history --alert-id <id>` (or call `AlertEngine.get_alert_history(alert_id=..., limit=100)`) and save the output before calling `delete_alert()`.
 
-4. **Re-enable alerts explicitly after maintenance.** After any debugging session where you called `disable_alert()`, call `enable_alert()` and confirm with `list_cmd()` that the `enabled` field is `True`.
+4. **Treat `_validate_webhook_url` and `_validate_file_path` as internal.** Both are exported in `__all__` for convenience, but names starting with `_` are not covered by the public API stability guarantee. Wrap them rather than depending on their signatures directly.
+
+5. **Pair `PIIScrubber` with `SecretsDetector` explicitly.** In any pipeline that processes user-generated content, instantiate both classes and run both checks. Do not assume one covers the other's detection patterns.
 
 ## Source files
 
@@ -51,3 +55,12 @@ The `secret-detector` subagent finds secrets already in source control, but it c
 - `src/attune/monitoring/**`
 
 **Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 45 | error | `attune alerts history` — subcommand not found  Detected against attune 5.10.0 (installed in active venv). If you are regenerating against a different version, verify the flag exists in that version's `attune --help`. To override:   - One-off:  attune-author generate FEATURE --skip-check check_cli_refs   - Per file: [tool.attune-author.fact-check.skip]               ".help/templates/security-audit/warning.md" = ["check_cli_refs"] |

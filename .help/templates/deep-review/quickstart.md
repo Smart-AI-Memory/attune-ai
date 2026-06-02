@@ -1,54 +1,73 @@
 ---
 type: quickstart
+name: deep-review-quickstart
 feature: deep-review
 depth: quickstart
-generated_at: 2026-04-14T14:55:11.283650+00:00
-source_hash: 97ad56b1e61d7e30b29c330d79cfa3d58efe35f1fa3640447d3cbf304737b484
+generated_at: 2026-06-02T10:54:11.460701+00:00
+source_hash: e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4
 status: generated
 ---
 
-# Quickstart: deep review
+# Quickstart: Deep review
 
-Run a comprehensive code review analyzing security, quality, and test coverage.
+Run a multi-pass code review that covers security, quality, and test gaps in one consolidated report.
 
 ```python
-from src.attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
+from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
 
-workflow = DeepReviewAgentSDKWorkflow()
-result = workflow.execute(path="/path/to/your/codebase")
-print(result.consolidated_report)
+result = DeepReviewAgentSDKWorkflow().execute(path="src/")
+print(result)
 ```
 
-## Run your first review
+**Result:** A consolidated report with an overall health score (0–100), security findings, quality findings, test gap findings, and up to ten prioritized suggestions — each tied to a specific finding.
 
-1. **Create the workflow instance**
-   ```python
-   from src.attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
-   workflow = DeepReviewAgentSDKWorkflow()
-   ```
+## Steps
 
-2. **Execute the review** on your target codebase
-   ```python
-   result = workflow.execute(path="/path/to/your/project")
-   ```
+**1. Import and instantiate**
 
-3. **View the consolidated report**
-   ```python
-   print(result.consolidated_report)
-   ```
+```python
+from attune.workflows.deep_review import DeepReviewAgentSDKWorkflow
 
-## Expected output
+workflow = DeepReviewAgentSDKWorkflow()
+```
 
-The workflow produces a structured report with five sections:
+**2. Run the review against your codebase**
 
-- **Summary**: Overall health score (0-100) and finding counts
-- **Security**: Vulnerability findings ordered by severity
-- **Quality**: Code quality issues ordered by severity
-- **Test Gaps**: Missing test coverage ordered by priority
-- **Suggestions**: Top 5-10 actionable improvements with specific references
+Pass the path you want reviewed:
 
-Each finding includes file paths and line numbers for easy navigation.
+```python
+result = workflow.execute(path="src/")
+```
 
-## Next steps
+The workflow coordinates three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — then synthesizes their findings.
 
-Configure custom review criteria by exploring the workflow's subagent parameters in the reference documentation.
+**3. Read the report**
+
+```python
+print(result)
+```
+
+Your output will be structured as:
+
+```
+## Summary
+Overall code health score (0-100) ...
+
+## Security
+...
+
+## Quality
+...
+
+## Test Gaps
+...
+
+## Suggestions
+...
+```
+
+If you see all five sections, the review completed successfully.
+
+---
+
+**Next:** Run `attune workflow run code-review --path "src/"` for a faster, single-pass quality check you can use on every commit.

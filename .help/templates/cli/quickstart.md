@@ -3,50 +3,79 @@ type: quickstart
 name: cli-quickstart
 feature: cli
 depth: quickstart
-generated_at: 2026-05-16T06:19:45.826688+00:00
+generated_at: 2026-06-02T10:56:02.737376+00:00
 source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# Quickstart: CLI commands and routing
+# Quickstart: attune CLI
 
-Run your first `attune` command and confirm the CLI is working.
+Run your first attune command and route user input to a skill in under a minute.
+
+```bash
+attune version
+```
+
+Expected output:
 
 ```
-attune help-docs --tags
+attune x.y.z
 ```
-
-**Result:** A list of 34 tags with template counts — confirms the CLI is installed and responding.
 
 ## Prerequisites
 
-- The project is cloned and installed locally.
-- `attune` is available on your `PATH`.
+- attune is installed and available on your `PATH`
+- You have a terminal open in your project directory
 
-## Step 1: Check today's costs
+## Step 1: Verify your setup
 
+Run the doctor command to confirm everything is configured correctly:
+
+```bash
+attune doctor
 ```
+
+If the output shows no errors, you're ready to proceed.
+
+## Step 2: Check today's costs
+
+```bash
 attune costs today
 ```
 
-**Result:** A summary of today's API cost data.
+This calls `cmd_costs_today` and prints a summary of your AI usage costs for the current day.
 
-## Step 2: Export cost data
+## Step 3: Route user input programmatically
 
-```
-attune costs export
-```
+Use `route_user_input` to send a plain-language string to the appropriate skill:
 
-**Result:** Cost data written to a file you can inspect or share.
+```python
+from attune.cli_router import route_user_input
 
-## Step 3: Browse available help topics
-
-```
-attune help-docs --tag cli
+result = route_user_input("show me my lessons")
+print(result)
 ```
 
-**Result:** A filtered list of help templates tagged `cli`, confirming the help system and routing are both functional.
+Expected output is a dict describing the routed skill and any arguments resolved from your input.
 
----
+## Step 4: Teach the router a custom shortcut
 
-**Next:** Add a lesson to memory with `attune remember` so you can retrieve it later with `attune memory-recall`.
+```python
+from attune.cli_router import HybridRouter
+
+router = HybridRouter()
+router.learn_preference(keyword="costs", skill="cmd_costs_today")
+result = router.route("costs")
+print(result)
+```
+
+`learn_preference` stores a `RoutingPreference` entry (with fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`) so the router recognises your shorthand on every future call.
+
+## What you just did
+
+- Confirmed your installation with `cmd_doctor`
+- Viewed a cost summary with `cmd_costs_today`
+- Routed plain-language input with `route_user_input`
+- Registered a custom routing shortcut with `HybridRouter.learn_preference`
+
+Next: say **"how do I configure routing preferences?"** for a full walkthrough of `HybridRouter`, `RoutingPreference` fields, and persistent preference storage.

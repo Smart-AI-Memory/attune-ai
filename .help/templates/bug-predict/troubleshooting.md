@@ -3,150 +3,94 @@ type: troubleshooting
 name: bug-predict-troubleshooting
 feature: bug-predict
 depth: troubleshooting
-generated_at: 2026-05-16T06:19:45.787945+00:00
+generated_at: 2026-06-02T10:56:02.687232+00:00
 source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
 status: generated
 ---
 
 # Troubleshoot bug predict
 
+## Before you start
+
+Bug prediction scans your codebase for patterns that historically cause production incidents — `dangerous_eval`, `broad_exception`, and `incomplete_code` — and returns a risk report scored 0–100. The workflow coordinates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) and formats output through `format_bug_predict_report()`. Failures can occur at the workflow, subagent, or report-formatting layer.
+
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| The scan produces no output or exits silently | Verify the path argument resolves to a readable file or directory; run `/bug-predict src/` and confirm `src/` exists relative to your working directory |
-| Risk score is 0 and findings list is empty on a directory you expect to have issues | Check whether the scanned path contains only test files — patterns matching `test_bug_predict`, `test_scanner`, or `test_security_scan` are intentionally suppressed |
-| `eval()` or `exec()` calls are not flagged | Confirm the call is not inside a test fixture string or a JavaScript `regex.exec()` context; both are filtered as known-safe patterns |
-| Broad exceptions are not flagged | Check whether the exception handler includes an `# INTENTIONAL:` comment or a `# noqa: BLE001` marker — these suppress the finding by design |
-| Report output is malformed or truncated | The issue is likely in `format_bug_predict_report()`; see diagnosis steps below |
-| The CLI command `bug-predict` fails immediately | Run `python -m attune.workflows.bug_predict_report` directly to separate a PATH/entry-point issue from a workflow failure |
-| Findings appear inconsistent across repeated runs | Check for environment-level state: caches, changed files between runs, or environment variables affecting file discovery |
+| `BugPredictionWorkflow.execute()` raises an exception | Read the full traceback — it names the file and line. Check whether the `path` argument resolves to a real directory before calling `execute()`. |
+| The report is empty or shows 0 findings on a path that should have issues | Confirm the scanned path contains `.py` files. If it does, check whether all findings are being suppressed by the false-positive filter (look for `# INTENTIONAL:`, `# noqa: BLE001`, or `_INTENTIONAL_KEYWORDS` matches). |
+| `format_bug_predict_report()` returns garbled or incomplete output | Verify that the `result` dict passed to `format_bug_predict_report(result, input_data)` is the unmodified return value of `execute()`. A partial or manually constructed dict can omit required keys. |
+| The CLI entry point (`main()`) exits without output | Run with a path argument and check stderr for an error message. `main()` is the CLI entry point — it does not return a value, so silent exit usually means the path was not found or was empty. |
+| Risk score is unexpectedly low despite known risky patterns | Check whether the flagged files match any of the test-file patterns (`test_bug_predict`, `test_scanner`, `test_security_scan`). Test files are excluded from scoring. |
+| Behavior differs between two runs on the same code | Look for environment drift: changed files, a dependency upgrade, or a different working directory affecting relative path resolution. |
 
-## Diagnose the problem
+## Step-by-step diagnosis
 
-Work through these steps in order — each one is cheaper than the next.
+Work from cheapest to most invasive. Stop as soon as you find the cause.
 
-### 1. Reproduce with a minimal path
+1. **Reproduce against a minimal path.**
+   Call `/bug-predict` on a single file you control — for example, a file you know contains a bare `except:`. If the expected finding appears, the scanner is working and the issue is specific to your target path or environment.
 
-Strip the invocation to its simplest form and confirm the failure still occurs:
+   ```
+   /bug-predict src/api/webhook.py
+   ```
 
-```
-/bug-predict src/
-```
+2. **Verify the path is reachable.**
+   Relative paths resolve from the working directory at the time `execute()` is called. Print or log the resolved path before passing it to `BugPredictionWorkflow.execute()` to rule out a working-directory mismatch.
 
-If that works, narrow to the specific file or subdirectory that fails:
+3. **Check false-positive suppression.**
+   If findings disappear unexpectedly, review the code under scan for any of the suppression markers the scanner honors:
+   - `# INTENTIONAL:` comments on broad-exception blocks
+   - `# noqa: BLE001` markers
+   - Keywords from `_INTENTIONAL_KEYWORDS`: `fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`
 
-```
-/bug-predict src/hooks/executor.py
-```
+   These are intentional suppressions — remove the marker if the suppression is wrong, not the pattern check.
 
-A failure on a single file rules out directory-traversal and aggregation issues and points the problem at pattern detection or report formatting.
+4. **Run the related test suite.**
+   ```
+   pytest -k "bug_predict" -v
+   ```
+   If a test exercises the failing path, its fixtures show you the expected input shape for `BugPredictionWorkflow` and `format_bug_predict_report()`.
 
-### 2. Check false-positive suppression
+5. **Inspect `format_bug_predict_report()` inputs directly.**
+   If the report output is wrong but `execute()` succeeds, call `format_bug_predict_report(result, input_data)` in isolation with the raw `result` dict to confirm the formatting layer is the source. A malformed `result` dict is the most common cause of garbled report output.
 
-Before assuming a bug in the scanner, verify whether the pattern is being intentionally filtered. A finding is suppressed when any of the following is true:
-
-- The file matches a test pattern (`test_bug_predict`, `test_scanner`, `test_security_scan`)
-- The exception handler contains one of these keywords in a comment: `fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`
-- The line carries a `# noqa: BLE001` marker
-- The `eval()` call is inside a test fixture string or is a JavaScript `regex.exec()` call
-
-If your code matches one of these conditions unintentionally, remove the suppressing comment or marker and re-run.
-
-### 3. Run the related tests
-
-```bash
-pytest -k "bug_predict or bug_predict_report or scanner" -v
-```
-
-A failing test that exercises the broken path gives you a reproducible fixture to work from without modifying production inputs. Pay attention to tests matching `_SCANNER_TEST_PATTERNS` — they cover the false-positive suppression logic specifically.
-
-### 4. Isolate the subagent responsible
-
-The workflow coordinates three subagents in sequence: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. To determine which stage is failing:
-
-- **No findings at all** — suspect `pattern-scanner`; it runs first and feeds the others.
-- **Findings present but risk score is wrong or missing** — suspect `risk-correlator`.
-- **Score and findings correct but suggestions are absent or garbled** — suspect `prevention-advisor` or the final synthesis step in `format_bug_predict_report()`.
-
-### 5. Inspect `format_bug_predict_report()` directly
-
-If the report output is malformed, call the formatter in isolation with a known-good result dict:
-
-```python
-from attune.workflows.bug_predict_report import format_bug_predict_report
-
-result = {
-    "risk_score": 73,
-    "findings": [
-        {"severity": "HIGH", "file": "src/hooks/executor.py", "line": 89,
-         "pattern": "dangerous_eval", "description": "eval() on user input"}
-    ],
-    "suggestions": ["Replace eval() with ast.literal_eval() where input is data, not code."]
-}
-input_data = {"path": "src/"}
-
-print(format_bug_predict_report(result, input_data))
-```
-
-If this call raises or returns unexpected output, the problem is in report formatting, not in scanning or correlation.
+6. **Check subagent completion.**
+   `BugPredictionWorkflow` coordinates three subagents: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. If the returned report is missing a section (Summary, Bugs, or Suggestions), one subagent likely did not complete. Look for timeout or error signals in the `WorkflowResult` before the report is formatted.
 
 ## Common fixes
 
-**Path does not exist or is not readable**
+- **Path does not exist or is empty.**
+  Pass an absolute path or confirm your working directory before calling `execute()`:
+  ```python
+  import os
+  from workflows.bug_predict import BugPredictionWorkflow
 
-```bash
-ls -la src/          # confirm the directory exists
-pwd                  # confirm your working directory
-```
+  wf = BugPredictionWorkflow()
+  result = wf.execute(path=os.path.abspath("src/"))
+  ```
 
-Pass an absolute path if relative resolution is unreliable in your environment:
+- **All findings suppressed by false-positive filter.**
+  If every match in a file carries a suppression marker and the suppression is wrong, remove the marker from the source file. Do not disable the filter globally — it exists to reduce noise from safe patterns like `regex.exec()` and test fixture strings.
 
-```
-/bug-predict /home/user/myproject/src/
-```
+- **`format_bug_predict_report()` receives a partial dict.**
+  Always pass the unmodified return value of `execute()` as the `result` argument:
+  ```python
+  from workflows.bug_predict_report import format_bug_predict_report
 
-**All findings suppressed by accident**
+  report = format_bug_predict_report(result=wf.execute(path="src/"), input_data={"path": "src/"})
+  ```
 
-If a broad exception you expect to be flagged is not appearing, check for an unintentional `# INTENTIONAL:` comment earlier in the same block, or a `# noqa: BLE001` added by a linter auto-fix. Remove the marker and re-run.
+- **Dependency version mismatch.**
+  A dependency upgrade can change pattern-matching behavior. Run `pip show <dep>` to confirm installed versions match your lockfile. This is a change outside the feature itself — align your environment before rerunning.
 
-**Report synthesis fails after subagents complete**
-
-The orchestrator prompt requires all three subagents to finish before it synthesizes output. If one subagent times out or returns no content, the final report may be empty or partial. Re-run the scan — transient LLM timeouts are the most common cause. If the failure is consistent, reduce scope:
-
-```
-/bug-predict src/auth.py
-```
-
-Scanning a single file forces all three subagents to complete faster and surfaces whether the issue is scope-related.
-
-**Dependency version mismatch**
-
-If `format_bug_predict_report()` raises an unexpected `TypeError` or `KeyError`, confirm that the installed package matches what the source expects:
-
-```bash
-pip show attune
-```
-
-A mismatch between an upgraded dependency and the result dict schema (keys `risk_score`, `findings`, `suggestions`) is the most likely cause.
-
-**CLI entry point not found**
-
-If `bug-predict` is not recognized as a command, invoke the module directly to confirm the install is intact:
-
-```bash
-python -m attune.workflows.bug_predict_report --help
-```
-
-If this fails, reinstall the package:
-
-```bash
-pip install --force-reinstall attune
-```
+- **Test files excluded from results.**
+  Files whose names match `test_bug_predict`, `test_scanner`, or `test_security_scan` are excluded from scoring. If you are scanning a test directory and seeing no results, this is expected behavior.
 
 ## Source files
 
-- `src/attune/workflows/bug_predict.py` — `BugPredictionWorkflow` and subagent orchestration
-- `src/attune/workflows/bug_predict_report.py` — `format_bug_predict_report()` and `main()` CLI entry point
+- `workflows/bug_predict.py` — `BugPredictionWorkflow` class and subagent orchestration
+- `workflows/bug_predict_report.py` — `format_bug_predict_report()` and `main()` CLI entry point
 
-**Tags:** `bugs`, `prediction`, `scanning`, `race-condition`
+**Tags:** `bugs`, `prediction`, `scanning`

@@ -1,55 +1,116 @@
 ---
 type: troubleshooting
+name: refactor-plan-troubleshooting
 feature: refactor-plan
 depth: troubleshooting
-generated_at: 2026-04-14T14:52:47.649295+00:00
-source_hash: 05ca199fb5b9d09ed7030f06c407e71de2e78a2433624c15a7beacf294de4d07
+generated_at: 2026-06-02T10:56:02.695166+00:00
+source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
 status: generated
 ---
 
 # Troubleshoot refactor plan
 
-## Before you start
-
-The refactor plan feature analyzes your codebase to detect tech debt and generate a prioritized refactoring roadmap using three specialized subagents: debt-scanner, impact-analyzer, and plan-generator.
-
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Unexpected exception | Python's traceback for the exact file and line where the error occurs |
-| Empty or malformed report output | Return value from `format_refactor_plan_report()` and the `result` dict it receives |
-| Missing subagent results | Whether all three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`) completed successfully |
-| Workflow hangs or times out | Agent SDK subagent communication and any I/O operations on the target codebase path |
+| `RefactorPlanWorkflow.execute()` raises an exception | Read the full traceback — the raise site names the file and line. Confirm the path argument passed to `execute()` exists and is readable. |
+| Report is empty or missing sections (Summary, Refactoring, Suggestions) | Check what `format_refactor_plan_report(result, input_data)` received. A missing key in `result` or `input_data` causes sections to be skipped silently. |
+| One or more subagents produce no output | The workflow coordinates three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`). Confirm each can reach the target path and has sufficient read permissions. |
+| CLI (`main()`) exits without output | Run with a concrete path argument and check stderr for errors before assuming the workflow itself failed. |
+| Results are inconsistent across runs | Check for environment drift — changed files, modified environment variables, or a caching layer between runs. |
+| Execution is unexpectedly slow | The workflow calls three subagents sequentially. Large directory trees multiply the cost; try scoping the path to a subdirectory first. |
 
-## Step-by-step diagnosis
+## Diagnose the issue
 
-1. **Reproduce the issue with minimal input.**
-   Run the refactor plan workflow on a small, known codebase to isolate whether the problem is with the workflow itself or your specific input. Use a simple directory with 2-3 Python files.
+### 1. Reproduce with a minimal path
 
-2. **Verify the codebase path.**
-   Confirm that the path you're analyzing exists and is readable. The workflow needs access to scan files and analyze code structure.
+Narrow the input to the smallest path that still triggers the failure:
 
-3. **Check subagent execution.**
-   The `RefactorPlanWorkflow` coordinates three subagents. If any subagent fails, the entire workflow may produce incomplete results. Look for error messages mentioning `debt-scanner`, `impact-analyzer`, or `plan-generator`.
+```python
+from workflows.refactor_plan import RefactorPlanWorkflow
 
-4. **Examine the workflow result.**
-   Inspect what `RefactorPlanWorkflow.execute()` returns. The `WorkflowResult` should contain data from all three subagents that gets passed to `format_refactor_plan_report()`.
+workflow = RefactorPlanWorkflow()
+result = workflow.execute(path="src/auth/")  # swap in the failing path
+print(result)
+```
 
-5. **Enable debug logging.**
-   Set your logging level to `DEBUG` to see detailed subagent communication and workflow state transitions.
+If the failure disappears with a smaller scope, the problem is likely in the content being analyzed, not the workflow itself.
+
+### 2. Inspect what `execute()` returns
+
+`execute()` returns a `WorkflowResult`. Before blaming report formatting, confirm the result object is well-formed:
+
+```python
+result = workflow.execute(path="src/auth/")
+print(type(result))
+print(vars(result))  # or result.__dict__ if dataclass
+```
+
+If `result` is `None` or missing expected fields, the failure is inside `execute()`, not in `format_refactor_plan_report()`.
+
+### 3. Check the report formatter in isolation
+
+If `execute()` returns data but the report looks wrong, test `format_refactor_plan_report()` directly:
+
+```python
+from workflows.refactor_plan_report import format_refactor_plan_report
+
+# Use the raw dict from your execute() call
+report = format_refactor_plan_report(result=your_result_dict, input_data=your_input_dict)
+print(report)
+```
+
+A `KeyError` or empty string here points to a mismatch between what `execute()` produces and what the formatter expects.
+
+### 4. Run the targeted tests
+
+```bash
+pytest -k "refactor_plan" -v
+```
+
+A failing test that covers your scenario gives you a reproducible fixture and a clear pass/fail signal before you change any code.
+
+### 5. Enable debug logging
+
+If the above steps don't isolate the issue, raise the log level to `DEBUG` and re-run. The subagent coordination layer logs state transitions that can reveal which of the three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`) stalled or returned unexpected output.
 
 ## Common fixes
 
-- **Fix path permissions.** Ensure the target codebase directory is readable by the workflow process. Run `ls -la /path/to/codebase` to verify permissions.
+**The path does not exist or is not readable**
+`execute()` requires a valid, accessible path. Verify it before invoking the workflow:
 
-- **Update Agent SDK dependencies.** The subagents rely on the Agent SDK. If you see import errors or subagent communication failures, run `pip install --upgrade agent-sdk`.
+```bash
+ls -la src/auth/   # confirm the path exists and is readable
+```
 
-- **Validate codebase structure.** The workflow expects Python code to analyze. If you're pointing it at an empty directory or non-Python files, it may return empty results without clear errors.
+**A required key is missing from `result` or `input_data`**
+`format_refactor_plan_report(result, input_data)` expects both arguments to contain the keys the formatter references. If `execute()` returned an error state, the result dict may be incomplete. Add a guard before calling the formatter:
 
-- **Clear workflow state.** If the workflow worked previously but now hangs, restart your Python process to clear any cached Agent SDK state or stale subagent connections.
+```python
+if result and not result.get("error"):
+    report = format_refactor_plan_report(result=dict(result), input_data=input_data)
+```
 
-- **Check system prompt configuration.** The workflow uses a specific system prompt to coordinate subagents. If you've modified environment variables or configuration that affects prompt loading, restore the default settings.
+**Subagent output is missing a required section**
+The synthesized report must include `## Summary`, `## Refactoring`, and `## Suggestions` sections. If a subagent returns no findings, that section may be absent, causing the formatter to produce an incomplete report. Re-run with a broader path to confirm there is analyzable content.
+
+**Dependency version mismatch**
+A dependency upgrade can change the behavior of the Agent SDK subagents. If the workflow worked previously, check whether a recent `pip install --upgrade` changed a relevant package:
+
+```bash
+pip show <dependency-name>
+```
+
+Pin the version in your requirements file if the upgrade introduced a regression.
+
+**Stale environment state**
+If the workflow fails intermittently without a code change, check for modified environment variables or cached state from a previous run. A clean environment often resolves this:
+
+```bash
+unset <relevant-env-var>
+# then re-run
+```
 
 ## Source files
 
@@ -57,3 +118,13 @@ The refactor plan feature analyzes your codebase to detect tech debt and generat
 - `src/attune/workflows/refactor_plan_report.py`
 
 **Tags:** `refactor`, `tech-debt`, `complexity`
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 30 (code fence) | error | `from workflows.refactor_plan import …` — module not importable |
+| Line 56 (code fence) | error | `from workflows.refactor_plan_report import …` — module not importable |

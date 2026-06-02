@@ -1,57 +1,117 @@
 ---
+type: task
+name: hooks-task
 feature: hooks
 depth: task
-generated_at: 2026-05-31T14:15:05.556631+00:00
-source_hash: 42b6f3d8928cb9d9f896c40c595715ed3473820bfdc5f12e14e2889aea7c4d0a
+generated_at: 2026-06-02T10:56:02.690918+00:00
+source_hash: 4690cd16c282bccaee1ffc3de0ea189b194fa0d71b87cec08e2f3675e136bbb9
 status: generated
 ---
 
 # Work with hooks
 
-Use hooks when you need to hook system — pre/post-tool events, webhooks, and hook executor.
+Use the hook system when you want to register handlers that fire automatically at Claude Code lifecycle events, execute hook actions against a context, or inspect the execution log for a running session.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/hooks/**
+- Python `Callable` objects or YAML configuration ready for the handlers you want to register
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what hooks
-   does today before making changes.
-   The primary functions are:
-   - `run_evaluate_session()` in `src/attune/hooks/scripts/evaluate_session.py` — Evaluate a session for learning potential.
-   - `get_learning_summary()` in `src/attune/hooks/scripts/evaluate_session.py` — Get learning summary for a user.
-   - `apply_learned_patterns()` in `src/attune/hooks/scripts/evaluate_session.py` — Generate context injection from learned patterns.
-   - `get_project_root()` in `src/attune/hooks/scripts/first_time_init.py` — Get the project root directory.
-   - `is_initialized()` in `src/attune/hooks/scripts/first_time_init.py` — Check if Attune AI is initialized in the project.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Create a `HookRegistry`.**
+   Instantiate `HookRegistry` from `hooks`. If you already have a `HookConfig` loaded from YAML, pass it to the constructor; otherwise leave the argument empty and add hooks programmatically.
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   ```python
+   from hooks import HookRegistry, HookConfig
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "hooks"`.
+   config = HookConfig.from_yaml("hooks.yaml")   # optional
+   registry = HookRegistry(config=config)
+   ```
 
-## Key files
+2. **Register a handler for an event.**
+   Call `registry.register()` with the target `HookEvent`, your callable handler, and an optional `HookMatcher` if the hook should fire only when the context meets specific conditions. The method returns a `handler_id` string — save it if you need to remove the handler later.
 
-- `src/attune/hooks/**`
+   ```python
+   from hooks import HookEvent
 
-## Common modifications
+   handler_id = registry.register(
+       event=HookEvent.POST_TOOL,
+       handler=my_handler,
+       description="Log tool output",
+       priority=10,
+   )
+   ```
 
-Functions you are most likely to modify:
+3. **Fire the event.**
+   Call `registry.fire()` to dispatch the event asynchronously, or `registry.fire_sync()` when you need results in a synchronous context. Pass a `context` dict with any data your handlers require.
 
-- `run_evaluate_session()` in `src/attune/hooks/scripts/evaluate_session.py`
-- `get_learning_summary()` in `src/attune/hooks/scripts/evaluate_session.py`
-- `apply_learned_patterns()` in `src/attune/hooks/scripts/evaluate_session.py`
-- `get_project_root()` in `src/attune/hooks/scripts/first_time_init.py`
-- `is_initialized()` in `src/attune/hooks/scripts/first_time_init.py`
-- `get_never_ask_file()` in `src/attune/hooks/scripts/first_time_init.py`
-- `should_skip_init()` in `src/attune/hooks/scripts/first_time_init.py`
-- `mark_never_ask()` in `src/attune/hooks/scripts/first_time_init.py`
+   ```python
+   results = registry.fire_sync(
+       HookEvent.POST_TOOL,
+       context={"tool": "bash", "output": "..."},
+   )
+   ```
+
+4. **Inspect results and the execution log.**
+   `fire` and `fire_sync` both return a list of `dict[str, Any]` — one entry per handler that ran. To review the full history of dispatched events, call `registry.get_execution_log()`. Filter by event type with the `event_filter` parameter, or limit the number of entries with `limit`.
+
+   ```python
+   log = registry.get_execution_log(limit=50, event_filter=HookEvent.POST_TOOL)
+   stats = registry.get_stats()
+   ```
+
+5. **Remove a handler when it is no longer needed.**
+   Call `registry.unregister()` with the `handler_id` returned in step 2. The method returns `True` if the handler was found and removed.
+
+   ```python
+   removed = registry.unregister(handler_id)
+   ```
+
+6. **Run the related tests.**
+   Verify your handlers behave correctly and that no existing hooks regressed.
+
+   ```
+   pytest -k "hooks"
+   ```
+
+## Load or save configuration from YAML
+
+If you prefer to manage hooks declaratively, use `HookConfig` directly:
+
+- `HookConfig.from_yaml(yaml_path)` — load a complete hook configuration from a YAML file.
+- `config.add_hook(event, hook, matcher, priority)` — add a `HookDefinition` to an existing config object.
+- `config.to_yaml(yaml_path)` — write the current configuration back to disk.
+- `config.get_hooks_for_event(event)` — retrieve all `HookRule` objects registered for a specific `HookEvent`.
+
+Once the config is ready, load it into a registry with `registry.load_config(config)`.
+
+## Execute a hook directly
+
+To run a single `HookDefinition` outside the registry, use `HookExecutor` or its synchronous counterpart `HookExecutorSync`. Supply a dict of Python callables keyed by handler name if your hook definitions reference Python handlers.
+
+```python
+from hooks import HookExecutor
+from hooks import HookDefinition
+
+executor = HookExecutor(python_handlers={"my_handler": my_handler})
+result = executor.execute(hook_definition, context={"key": "value"})
+```
+
+## Verify the task succeeded
+
+The task is complete when:
+
+- `registry.fire_sync()` returns a non-empty list and each entry contains the keys your handler populates.
+- `registry.get_execution_log()` shows the expected event entries with no error fields.
+- `registry.get_stats()` reflects the correct count of registered handlers and fired events.
+- `pytest -k "hooks"` passes with no failures.
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 93 (code fence) | error | `from hooks import …` — module not importable |

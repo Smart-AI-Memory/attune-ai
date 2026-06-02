@@ -1,9 +1,10 @@
 ---
 type: warning
+name: refactor-plan-warning
 feature: refactor-plan
 depth: warning
-generated_at: 2026-04-14T14:52:32.939069+00:00
-source_hash: 05ca199fb5b9d09ed7030f06c407e71de2e78a2433624c15a7beacf294de4d07
+generated_at: 2026-06-02T10:56:02.692746+00:00
+source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
 status: generated
 ---
 
@@ -11,28 +12,35 @@ status: generated
 
 ## What to watch for
 
-The refactor planning workflow orchestrates multiple subagents to analyze tech debt and generate prioritized improvement roadmaps. Watch for coordination failures between subagents and report formatting edge cases.
+A refactor plan roadmap is only as reliable as the analysis that produced it. Three subagents — `debt-scanner`, `impact-analyzer`, and `plan-generator` — each contribute findings that `RefactorPlanWorkflow.execute()` synthesizes into a single report. If the path you supply is incomplete, or if one subagent's output is sparse, the synthesized roadmap can quietly under-report issues without raising an error.
 
 ## Risk areas
 
-**Subagent coordination failures in RefactorPlanWorkflow.execute()**
-The workflow depends on three specific subagents ('debt-scanner', 'impact-analyzer', 'plan-generator') completing successfully. If any subagent fails or returns malformed data, the synthesis step can produce incomplete or misleading refactoring recommendations. Network timeouts or API rate limits affecting the Agent SDK can cascade into workflow failures.
+### Partial-path analysis produces a misleadingly clean score
 
-**Report formatting crashes with unexpected result structures**
-The `format_refactor_plan_report()` function expects specific keys in the result dictionary (Summary, Refactoring, Suggestions sections). When subagents return unexpected data structures or missing sections, the formatter can raise KeyError exceptions or generate malformed markdown that breaks downstream tools.
+`RefactorPlanWorkflow.execute()` scans whatever path you give it and scores only what it finds. Pointing the workflow at a subdirectory rather than the full module boundary means coupling issues and cross-file duplication that cross that boundary will be missed. The resulting tech debt score (0–100) will appear better than it is. Always align the analysis path with a meaningful module or package boundary, not a convenience slice of the tree.
 
-**CLI entry point assumes clean execution environment**
-The `main()` function provides no error recovery for common deployment issues like missing configuration files, insufficient permissions, or network connectivity problems. Failed workflows leave no partial results, making it difficult to diagnose which subagent or processing step caused the failure.
+### `format_refactor_plan_report()` silently accepts empty input
+
+`format_refactor_plan_report(result, input_data)` formats whatever you pass it. If `result` is an empty dict — for example, because `execute()` returned a `WorkflowResult` whose payload was not unpacked before being passed — the function returns a structurally valid but content-free report rather than raising an error. Verify that `result` contains the expected `Summary`, `Refactoring`, and `Suggestions` sections before passing it to the formatter.
+
+### Effort and risk estimates are model-generated, not measured
+
+The roadmap's effort estimates (`small` / `medium` / `large`) and risk levels (`low` / `medium` / `high`) come from the `plan-generator` subagent's interpretation of the other subagents' findings, not from static analysis metrics. A `Risk: Low` label on a rename in a widely-imported module does not account for callers outside the scanned path. Treat these labels as a starting point for planning, not a substitute for your own impact assessment.
+
+### Private subagent names can change without notice
+
+The subagent identifiers `debt-scanner`, `impact-analyzer`, and `plan-generator` are internal constants. If you have tooling or logging that keys on these names, it will break silently if the constants change. Depend on the public `RefactorPlanWorkflow` and `format_refactor_plan_report` surface instead.
 
 ## How to avoid problems
 
-1. **Validate subagent outputs before synthesis.** Check that all three required subagents completed and returned the expected data structure before attempting to format the final report. Handle partial results gracefully when possible.
+1. **Set the path at a real module boundary.** Run `/refactor-plan src/auth/` rather than `/refactor-plan src/auth/utils/` so that cross-file coupling and duplication are fully visible to all three subagents.
 
-2. **Test with realistic codebase complexity.** Small test projects may not trigger the coordination edge cases that appear with large codebases or when subagents disagree about priorities. Include integration tests with real-world repository sizes.
+2. **Validate `WorkflowResult` before formatting.** Unpack and inspect the result of `execute()` before passing it to `format_refactor_plan_report()`. Confirm the dict contains substantive content; an empty or minimal result is a signal to re-run, not to format and act on.
 
-3. **Monitor subagent execution time and failures.** Set reasonable timeouts for each subagent and log intermediate results. If the debt-scanner consistently times out on certain file types, you may need to adjust the analysis scope or exclude problematic directories.
+3. **Generate tests before acting on high-risk items.** For any roadmap item marked `Risk: High`, ask for a test suite covering the target file before making structural changes. This is especially important for items flagged as god classes or high-complexity functions, where the refactoring surface is large.
 
-4. **Verify report format assumptions.** The template expects structured markdown with specific section headers. If you modify the `_TASK_PROMPT_TEMPLATE`, ensure the output format remains compatible with downstream tools that consume the refactoring reports.
+4. **Depend only on the public API.** Build any automation around `RefactorPlanWorkflow` and `format_refactor_plan_report` — both in `workflows.refactor_plan` and `workflows.refactor_plan_report`. Avoid referencing internal constants by name.
 
 ## Source files
 

@@ -1,0 +1,149 @@
+---
+type: how-to
+name: hooks
+tags: [hooks, events, automation, registry, executor]
+source: hooks/__init__.py
+---
+
+# How to use hooks
+
+Use this guide when you need to register handlers for Claude Code lifecycle events, fire hooks programmatically, or load hook configuration from YAML. It targets developers who are wiring up event-driven behavior in an Attune AI project.
+
+## Quick start
+
+```python
+from hooks import HookConfig, HookEvent, HookExecutor, HookRegistry
+
+# Build a registry and register a handler for a lifecycle event
+registry = HookRegistry()
+
+def on_pre_compact(context: dict) -> dict:
+    print(f"Pre-compact fired. Context keys: {list(context.keys())}")
+    return {"status": "ok"}
+
+handler_id = registry.register(
+    event=HookEvent.PRE_COMPACT,
+    handler=on_pre_compact,
+    description="Log context before compaction",
+    priority=10,
+)
+
+# Fire the hook and inspect results
+results = registry.fire_sync(HookEvent.PRE_COMPACT, context={"session_id": "abc123"})
+print(results)  # [{"status": "ok"}]
+```
+
+## Core API
+
+### hooks package
+
+| Class | Purpose |
+|---|---|
+| `HookConfig` | Holds the complete hook configuration; load from or save to YAML |
+| `HookDefinition` | Describes a single hook action |
+| `HookEvent` | Enum of lifecycle event types (e.g. `PRE_COMPACT`) |
+| `HookMatcher` | Determines whether a hook fires for a given context |
+| `HookRegistry` | Central registry — registers, dispatches, and logs hooks |
+| `HookExecutor` | Runs a `HookDefinition` against a context (async) |
+| `HookExecutorSync` | Synchronous wrapper around `HookExecutor` |
+
+### HookRegistry methods
+
+| Method | Purpose |
+|---|---|
+| `register(event, handler, description, matcher, priority)` | Register a Python callable; returns a `handler_id` string |
+| `unregister(handler_id)` | Remove a previously registered handler |
+| `load_config(config)` | Load a `HookConfig` into the registry |
+| `get_matching_hooks(event, context)` | Return rules and definitions that match the event and context |
+| `fire(event, context)` | Fire all matching hooks asynchronously |
+| `fire_sync(event, context)` | Fire all matching hooks synchronously |
+| `get_execution_log(limit, event_filter)` | Retrieve recent execution records |
+| `clear_execution_log()` | Reset the execution log |
+| `get_stats()` | Return aggregate dispatch statistics |
+
+### HookConfig methods
+
+| Method | Purpose |
+|---|---|
+| `get_hooks_for_event(event)` | Return all `HookRule` objects registered for an event |
+| `add_hook(event, hook, matcher, priority)` | Add a hook definition programmatically |
+| `from_yaml(yaml_path)` | Class method — load configuration from a YAML file |
+| `to_yaml(yaml_path)` | Persist current configuration to a YAML file |
+
+## Configuration
+
+Load hook configuration from a YAML file and hand it to the registry:
+
+```python
+from hooks import HookConfig, HookRegistry
+
+config = HookConfig.from_yaml(".attune/hooks.yaml")
+registry = HookRegistry(config=config)
+```
+
+To save a programmatically built configuration for reuse:
+
+```python
+config = HookConfig()
+config.add_hook(event=HookEvent.PRE_COMPACT, hook=my_hook_def, priority=5)
+config.to_yaml(".attune/hooks.yaml")
+```
+
+## Integration patterns
+
+### Security validation on every Bash tool call
+
+Wire `scripts.security_guard` into the registry so it runs before any shell command executes:
+
+```python
+from hooks import HookEvent, HookRegistry
+from scripts.security_guard import main as security_guard
+
+registry = HookRegistry()
+registry.register(
+    event=HookEvent.PRE_TOOL,          # fires before a tool runs
+    handler=security_guard,
+    description="Validate bash commands and file paths",
+    priority=100,                       # high priority — run first
+)
+```
+
+`security_guard` calls `validate_bash_command` and `validate_file_path` internally and returns a result dict the registry collects alongside other handler results.
+
+### Session evaluation at end-of-session
+
+Attach `run_evaluate_session` so the registry triggers learning analysis automatically when a session ends:
+
+```python
+from hooks import HookEvent, HookRegistry
+from scripts.evaluate_session import run_evaluate_session
+
+registry = HookRegistry()
+registry.register(
+    event=HookEvent.POST_SESSION,
+    handler=run_evaluate_session,
+    description="Evaluate session for learnable patterns",
+)
+
+# Later, retrieve what each handler returned
+log = registry.get_execution_log(limit=10, event_filter=HookEvent.POST_SESSION)
+```
+
+Use `registry.get_stats()` to monitor dispatch counts and detect handlers that never fire.
+
+## See also
+
+- `scripts.pre_compact` — `run_pre_compact` and `generate_compaction_summary` for pre-compaction state preservation
+- `scripts.security_guard` — `validate_bash_command` and `validate_file_path` for security policy enforcement
+- `scripts.evaluate_session` — `run_evaluate_session`, `get_learning_summary`, `apply_learned_patterns` for session learning
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 14 (code fence) | error | `from hooks import …` — module not importable |
+| Line 98 (code fence) | error | `from scripts.security_guard import …` — module not importable |
+| Line 117 (code fence) | error | `from scripts.evaluate_session import …` — module not importable |

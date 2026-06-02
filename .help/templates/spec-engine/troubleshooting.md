@@ -1,9 +1,10 @@
 ---
 type: troubleshooting
+name: spec-engine-troubleshooting
 feature: spec-engine
 depth: troubleshooting
-generated_at: 2026-04-14T15:25:44.466671+00:00
-source_hash: da2776f0fd9a91d42dcf9bea5dec82a4fb9b85009623c3ae56e9db9136c29d2e
+generated_at: 2026-06-02T10:56:02.711703+00:00
+source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
 status: generated
 ---
 
@@ -11,68 +12,148 @@ status: generated
 
 ## Before you start
 
-The spec engine handles spec-driven development with quality gates, task execution, and state persistence. Issues typically manifest as execution failures, incorrect state tracking, or quality gate problems.
+The spec engine coordinates plan parsing, task execution, quality gates, and state persistence. Failures usually fall into one of three areas: a plan file that can't be read or parsed, a `SpecState` that is missing or corrupt, or a `TaskResult` that signals a quality-gate failure. Identify which area is affected before diving into code.
 
 ## Symptom table
 
 | If you observe | Check |
 |----------------|-------|
-| Pipeline execution stops unexpectedly | Verify the XML spec format and task definitions are valid |
-| Quality gates fail without clear reason | Examine `TaskResult.gate_details` and `gate_score` values |
-| State persistence not working | Check if the plan file exists and is writable at `plan_path` |
-| Tasks marked as completed but not executed | Compare `SpecState.completed` list against actual task IDs |
-| Approval loop hangs indefinitely | Verify the `on_task_complete` callback function is properly defined |
+| `FileNotFoundError: Plan file not found` | Verify the path passed to `read_spec(plan_path)` or `PipelineOrchestrator(spec_path)` exists and is non-empty. |
+| `ValueError: plan_path must be a non-empty string` | You passed an empty string or `None` as `spec_path`/`plan_path`. Confirm the calling code resolves the path before passing it. |
+| `PipelineResult.success` is `False` | Iterate `PipelineResult.tasks` and check each `TaskResult.error`, `TaskResult.quality_gate_passed`, and `TaskResult.tests_passed` to find which task failed and why. |
+| A task never appears in the output | Call `read_spec(plan_path)` directly and inspect the returned list. If the task is missing, the XML task block in the plan file is malformed or absent. |
+| Execution resumes from the wrong task | Call `load_state(plan_path)` and inspect `SpecState.completed` and `SpecState.current`. If stale, call `clear_state(plan_path)` to reset. |
+| `get_pending_tasks` returns an empty list unexpectedly | `SpecState.completed` already contains all task IDs. Either the state is stale or the plan was previously finished. Call `clear_state(plan_path)` to start fresh. |
+| Quality gate always passes when it shouldn't | Check whether `skip_gates=True` was passed to `PipelineOrchestrator` or `execute_with_approval`. Remove that flag to re-enable gates. |
+| `TaskResult.severity` returns an unexpected level | Inspect `TaskResult.gate_score` and `TaskResult.gate_details` to see the raw values driving the classification. |
+| No resumable plans found | Call `find_resumable_plans()` (default search path: `.claude/plans`). If it returns an empty list, no `.state.json` files exist in that directory. |
 
 ## Step-by-step diagnosis
 
-1. **Reproduce with minimal spec.**
-   Create a simple XML spec with one task to isolate whether the issue is in the orchestrator logic or your specific spec content.
+Follow these steps in order — earlier steps are cheaper and resolve most issues without deeper investigation.
 
-2. **Check spec state consistency.**
-   Use `load_state(plan_path)` to inspect the current `SpecState`. Verify that `completed`, `current`, and `auto_run` fields match your expectations.
+1. **Reproduce the failure with a minimal call.**
+   Strip the invocation to its required arguments and confirm the failure is repeatable:
 
-3. **Examine pipeline execution flow.**
-   Add logging around these key functions:
-   - `PipelineOrchestrator.run_all()` - Check if tasks are being filtered correctly
-   - `run_gates_for_task()` - Verify quality gate execution
-   - `execute_with_approval()` - Confirm approval callbacks are triggered
+   ```python
+   from pipeline import read_spec
+   tasks = read_spec("path/to/your-plan.md")
+   print(tasks)
+   ```
 
-4. **Validate task filtering logic.**
-   Use `get_pending_tasks()` manually to see which tasks the engine considers incomplete. Compare this against your expected task list.
+   If `read_spec` raises, the problem is in the plan file or the path. If it returns an unexpected list, the XML task blocks in the file need inspection.
 
-5. **Test quality gates in isolation.**
-   Call `run_gates_for_task()` directly on a single task to check if gate failures are due to the task content or the gate logic itself.
+2. **Inspect the state file.**
+   Before running the pipeline, check what state is persisted:
+
+   ```python
+   from spec import load_state
+   state = load_state("path/to/your-plan.md")
+   print(state)  # None means no state exists
+   if state:
+       print(state.to_dict())
+   ```
+
+   Look at `state.completed`, `state.current`, and `state.schema_version`. A mismatched `schema_version` or a `completed` list that includes tasks you expect to re-run indicates stale state.
+
+3. **Clear stale state and retry.**
+   If step 2 reveals stale or corrupt state, reset it:
+
+   ```python
+   from spec import clear_state
+   clear_state("path/to/your-plan.md")
+   ```
+
+   Then re-run the pipeline. This is the fix for most "wrong task order" and "pending tasks list is empty" issues.
+
+4. **Run the pipeline with gates disabled to isolate gate failures.**
+   If tasks execute but quality gates block progress unexpectedly, run with `skip_gates=True` to confirm the task logic itself works:
+
+   ```python
+   from pipeline import PipelineOrchestrator
+   orch = PipelineOrchestrator("path/to/your-plan.md", skip_gates=True)
+   result = orch.run_all()
+   print(result.summary())
+   ```
+
+   If `result.success` is `True` with gates skipped but `False` with gates enabled, the gate thresholds or the `gate_score` values on failing tasks are the root cause. Re-enable gates and inspect `TaskResult.gate_details` for each failing task.
+
+5. **Examine per-task results.**
+   Iterate the `PipelineResult.tasks` list and print each `TaskResult` to pinpoint which task failed:
+
+   ```python
+   for task_result in result.tasks:
+       if not task_result.quality_gate_passed or task_result.error:
+           print(task_result.task_id, task_result.task_name)
+           print("error:", task_result.error)
+           print("score:", task_result.gate_score)
+           print("details:", task_result.gate_details)
+           print("tests_passed:", task_result.tests_passed)
+   ```
+
+6. **Run related tests.**
+   Confirm which test cases pass against your current code:
+
+   ```
+   pytest -k "spec" -v
+   ```
+
+   A failing test that exercises the broken path gives you a reproducible harness and can confirm when your fix is correct.
 
 ## Common fixes
 
-- **Reset corrupted state:** Run `clear_state(plan_path)` to remove the state comment and restart execution from the beginning.
+- **Missing or mistyped plan path.**
+  `read_spec` raises `FileNotFoundError` or `ValueError` when `plan_path` is wrong. Always resolve the path before passing it:
 
-- **Fix spec path issues:** Ensure the `spec_path` argument points to a valid XML file and the directory is readable:
-  ```bash
-  ls -la /path/to/spec.xml
-  ```
-
-- **Handle quality gate configuration:** If gates are failing incorrectly, initialize with `skip_gates=True`:
   ```python
-  orchestrator = PipelineOrchestrator(spec_path, skip_gates=True)
+  import os
+  plan_path = os.path.abspath("path/to/your-plan.md")
+  tasks = read_spec(plan_path)
   ```
 
-- **Debug approval callback errors:** Verify your callback function signature matches `TaskCallback` and handles exceptions:
+- **Stale `SpecState` blocking re-execution.**
+  If a plan was previously completed or interrupted mid-run, the state file records those task IDs in `SpecState.completed`. Reset with:
+
   ```python
-  def safe_callback(task, result):
-      try:
-          # your callback logic
-          pass
-      except Exception as e:
-          print(f"Callback error: {e}")
+  from spec import clear_state
+  clear_state("path/to/your-plan.md")
   ```
 
-- **Resolve resumability issues:** Use `find_resumable_plans()` to see which plans have incomplete state, then clear or fix corrupted entries.
+  This removes the embedded state comment from the plan file. The next run starts from the first task.
+
+- **Quality gates skipped unintentionally.**
+  If `skip_gates=True` was passed to `PipelineOrchestrator` or `execute_with_approval` during development and left in, gate failures will never surface. Remove the flag:
+
+  ```python
+  # Before (gates disabled):
+  orch = PipelineOrchestrator(spec_path, skip_gates=True)
+
+  # After (gates enabled):
+  orch = PipelineOrchestrator(spec_path)
+  ```
+
+- **Skipping specific tasks unintentionally.**
+  If `run_all` was called with a non-empty `skip_task_ids` set, those tasks are silently omitted from the run. Confirm the set is correct or pass `None` to run all tasks:
+
+  ```python
+  result = orch.run_all(skip_task_ids=None)
+  ```
+
+- **XML task blocks missing from the plan file.**
+  `read_spec` returns an empty list if the plan file contains no parseable XML task blocks. Open the plan file and confirm the task blocks are present and well-formed. The plan file lives at the path under `.claude/plans/` recorded in `SpecState.plan_path`.
+
+- **Dependency version drift.**
+  If behavior changed without a code edit, confirm your environment matches expectations:
+
+  ```
+  pip show attune
+  ```
+
+  Note that this check requires access to your local environment and is outside the spec engine itself.
 
 ## Source files
 
-- `src/attune/spec/orchestrator.py` - Pipeline execution and quality gates
-- `src/attune/spec/runner.py` - State management and task filtering
-- `src/attune/spec/presenter.py` - Task formatting and progress display
+- `src/attune/spec/**`
+- `src/attune/pipeline/**`
 
 **Tags:** `spec`, `planning`

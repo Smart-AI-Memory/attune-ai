@@ -3,43 +3,49 @@ type: note
 name: cli-note
 feature: cli
 depth: note
-generated_at: 2026-05-16T06:19:45.831425+00:00
+generated_at: 2026-06-02T10:56:02.742270+00:00
 source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
 status: generated
 ---
 
-# Note: CLI package structure
+# Note: cli
 
-## Context
+The `cli` feature spans two layers: a set of command handler functions organized by domain, and a routing layer that maps free-form user input to those commands.
 
-The `cli` feature spans three source locations: `src/attune/cli_minimal.py`, `src/attune/cli_router.py`, and the subpackage `src/attune/cli_commands/`. Together they cover command dispatch, cost tracking, help browsing, routing, and quick-memory lessons.
+## Command handlers
 
-## Content
+Command handlers live in `cli_commands/` and are grouped by domain. Each function accepts an `argparse.Namespace` and returns an integer exit code.
 
-The CLI surface combines two kinds of exports: classes in `cli_router.py` and top-level command functions spread across `cli_commands/`.
-
-**Classes (`src/attune/cli_router.py`)**
-
-| Class | Role |
+| Module | Functions |
 |---|---|
-| `RoutingPreference` | Dataclass holding a user's learned keyword-to-skill mapping, with usage count and confidence score. |
-| `HybridRouter` | Routes free-form user input to Claude Code skill invocations; learns new preferences via `learn_preference()` and surfaces autocomplete candidates via `get_suggestions()`. |
+| `cost_commands` | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` |
+| `memory_commands` | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` |
+| `telemetry_commands` | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_export`, `cmd_telemetry_routing_stats`, `cmd_telemetry_routing_check`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` |
+| `utility_commands` | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_features`, `cmd_doctor` |
+| `workflow_commands` | `cmd_workflow_list`, `cmd_workflow_info`, `cmd_workflow_run` |
+| `provider_commands` | `cmd_provider_show`, `cmd_provider_set` |
+| `help_commands` | `cmd_help` |
 
-**Command functions (`src/attune/cli_commands/`)**
+The entry point is `attune.cli_minimal.main`, which calls `create_parser` to build the argument parser and then dispatches to the appropriate handler.
 
-| Function | Module | Purpose |
-|---|---|---|
-| `cmd_costs()` | `cost_commands.py` | Show cost report for a recent period. |
-| `cmd_costs_today()` | `cost_commands.py` | Show today's cost summary. |
-| `cmd_costs_export()` | `cost_commands.py` | Export cost data to a file. |
-| `cmd_costs_reset()` | `cost_commands.py` | Clear all cost tracking data. |
-| `cmd_help()` | `help_commands.py` | Handle the `attune help` command. |
-| `cmd_remember()` | `memory_commands.py` | Add a lesson to the lessons file. |
-| `cmd_forget()` | `memory_commands.py` | Remove a lesson by line number or keyword. |
-| `cmd_lessons()` | `memory_commands.py` | List current lessons with line numbers. |
-| `cmd_memory_capture()` | `memory_commands.py` | Save content to personal cross-session memory. |
-| `cmd_memory_recall()` | `memory_commands.py` | Search personal cross-session memory. |
+## Routing layer
 
-The classes and functions are designed to compose: `HybridRouter` handles routing decisions, and command functions handle the resulting skill dispatch. `cmd_help()` drives the same template browsing surface described in `help_commands.py`, which exposes 34 filterable tags via `attune help-docs --tags`.
+`attune.cli_router` sits above the command handlers and routes free-form text input — including slash commands detected by `is_slash_command` — to the correct skill invocation.
 
-**Tags:** `cli`, `commands`
+`HybridRouter` is the primary routing class. It accepts an optional `preferences_path` pointing to a file where learned preferences are persisted. Its `route` method returns a `dict` describing the resolved skill and arguments. `get_suggestions` accepts a partial string and returns a ranked list of completions.
+
+Learned preferences are stored as `RoutingPreference` instances:
+
+| Field | Type | Default | Meaning |
+|---|---|---|---|
+| `keyword` | `str` | — | Trigger word matched against user input |
+| `skill` | `str` | — | Skill name to invoke |
+| `args` | `str` | `''` | Arguments passed to the skill |
+| `usage_count` | `int` | `0` | Times this preference has been applied |
+| `confidence` | `float` | `1.0` | Routing confidence score |
+
+`learn_preference(keyword, skill, args)` adds or updates a `RoutingPreference` entry, incrementing `usage_count` over time.
+
+## Relationship between layers
+
+The command handlers and the routing layer are independent at the import level. `cli_router` resolves *which* skill to invoke; `cli_minimal.main` and the `cli_commands` modules handle *how* to execute it once the parser has matched a subcommand. The `route_user_input` convenience function in `attune.cli_router` wraps `HybridRouter.route` for callers that don't need to manage a router instance directly.

@@ -3,8 +3,8 @@ type: note
 name: ops-dashboard-note
 feature: ops-dashboard
 depth: note
-generated_at: 2026-05-16T06:19:45.818082+00:00
-source_hash: 882177b61c372bb6753c706430edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106bc0edfcc0df951fa4fae4106ba836
+generated_at: 2026-06-02T10:56:02.739815+00:00
+source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
 status: generated
 ---
 
@@ -12,45 +12,30 @@ status: generated
 
 ## Context
 
-`attune ops` is a local operations dashboard that combines a workflow runner, a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It runs as a blocking HTTP server (default `127.0.0.1:8765`) and is reachable via `attune ops` on the CLI or `python -m attune.ops` as a standalone entry point.
+`attune ops` is a local operations dashboard for the workflow OS. You can start it directly with `python -m attune.ops` or through the `attune ops` CLI subcommand (registered by `add_subparser`). The server binds to `127.0.0.1:8765` by default and runs blocking until stopped.
+
+The dashboard provides a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. All state roots — runs, sessions, memory, bulletins — are derived from `Config`, which exposes them as computed properties (`runs_dir`, `sessions_dir`, `memory_dir`, `bulletin_dir`, `telemetry_path`).
 
 ## Public surface
 
-The package exports three names at the boundary (`__all__ = {'create_app', 'build_config', 'Config'}`):
+`attune.ops` exports three names at the package boundary: `create_app`, `build_config`, and `Config`. Both `create_app` and `build_config` use lazy imports so that importing `attune` does not pull in FastAPI as a dependency.
 
-| Name | Kind | Source | Role |
-|---|---|---|---|
-| `Config` | dataclass | `ops/config.py` | Holds every runtime setting the dashboard reads — paths, host/port, retention policy, trusted hosts |
-| `create_app` | function | `ops/__init__.py` | Lazy-imports the FastAPI factory; keeps the top-level `attune` import free of FastAPI |
-| `build_config` | function | `ops/__init__.py` | Lazy-imports the config builder; constructs a `Config` from CLI args and environment defaults |
+The remaining public classes and functions live one level deeper:
 
-Additional internal functions in `ops/cli.py` wire these together:
+| Name | Location | Role |
+|---|---|---|
+| `CostSummary` | `src/attune/ops/anthropic_cost.py` | Account-level cost data from the Anthropic admin cost-report API (`/v1/organizations/cost_report`). Carries today, 7-day, month-to-date, and 30-day totals plus per-day, per-model, and per-cost-type breakdowns. |
+| `CostFetchError` | `src/attune/ops/anthropic_cost.py` | Categorized failure returned alongside `None` when `fetch_summary()` cannot reach or parse the cost report. |
+| `Candidate` | `src/attune/ops/completion_candidates.py` | One spec identified by `detect_candidates()` as a completion candidate. |
+| `Config` | `src/attune/ops/config.py` | Single source of truth for project root, attune home, server host/port, spec roots, trusted hosts, and retention policy. |
+| `fetch_summary()` | `src/attune/ops/anthropic_cost.py` | Returns `(CostSummary, None)` on success or `(None, CostFetchError)` on failure. Accepts a `refresh` flag to bypass the in-memory cache. |
+| `detect_candidates()` | `src/attune/ops/completion_candidates.py` | Scans all paths in `Config.specs_roots` and returns every spec that qualifies as a completion candidate. Only active when `Config.specs_candidates_enabled` is `True`. |
 
-- `add_subparser()` — registers the `ops` subparser on the main `attune` CLI parser
-- `cmd_ops()` — calls `build_config` and `create_app`, then serves the dashboard (blocking, returns `0`)
-- `main()` — thin wrapper used by the `python -m attune.ops` entry point
+## Design notes
 
-## Data model
-
-The dashboard surfaces read-only data through a set of dataclasses in `ops/data.py`. None of these are mutable by callers.
-
-| Class | What it represents |
-|---|---|
-| `WorkflowEntry` | A single workflow — name, description, stage count, and tier map |
-| `PathArgSpec` | How a workflow accepts a scope path on the CLI (`kwarg`, `required`) |
-| `Feature` | One entry from `.help/features.yaml`, used to populate the scope picker |
-| `Session` | One Claude Code session surfaced on the `/sessions` page |
-| `HomeKpis` | Summary numbers shown above the fold on the home page |
-| `TelemetrySummary` | Aggregated request counts, costs, and savings across workflows and days |
-| `DailyCost` | One day's cost data, used for the home-page sparkline |
-| `FamilyVersion` | Package version info surfaced by the dashboard |
-
-## Security
-
-`TrustedHostMiddleware` (in `ops/`) rejects any request whose `Host` header is not on the `trusted_hosts` allowlist configured in `Config`. The default configuration binds only to `127.0.0.1`, so external exposure requires an explicit host and allowlist change.
-
-## Source files
-
-`src/attune/ops/**`
+- **Cost report caching.** `fetch_summary()` caches results in memory. `clear_cache()` resets the cache and is intended for tests only.
+- **Admin key.** `load_admin_key()` returns the Anthropic admin API key or `None` if it is unavailable. `fetch_summary()` calls this internally; a missing key produces a `CostFetchError`.
+- **Run retention.** Persisted ops runs older than `Config.runs_retention_days` (default 30) are eligible for cleanup. The `runs_dir` property on `Config` points to the disk root; the directory may not exist until the first write.
+- **Spec candidates.** Candidate detection is opt-in via `Config.specs_candidates_enabled`. When enabled, `detect_candidates()` cross-references `_PR_REF_FILES` (`decisions.md`, `tasks.md`) against the configured spec roots.
 
 **Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`
