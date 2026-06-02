@@ -290,6 +290,31 @@ These should be reviewed but won't block the PR:
     return comment
 
 
+# Errors indicating the scan never produced parseable output (e.g. underlying
+# SDK call failed before emitting JSON). These should NOT post an alarming PR
+# comment — the workflow logs and check artifacts carry the real diagnostic,
+# and the GH check stays green so merge is unblocked. See issue #560.
+_EXTRACTION_FAILURE_MARKERS = (
+    "Could not extract JSON from CLI output",
+    "No JSON found in output",
+    "Security scan produced no output",
+    "Security results file is empty",
+    "Could not parse security results from mixed output",
+)
+
+
+def is_extraction_failure(error_text: str) -> bool:
+    """Return True if the error is a JSON-extraction failure, not a real finding.
+
+    Used to decide whether to post a PR comment. Extraction failures are
+    advisory noise (the GH check stays green); real errors should still
+    surface via the comment.
+    """
+    if not error_text:
+        return False
+    return any(marker in error_text for marker in _EXTRACTION_FAILURE_MARKERS)
+
+
 def main():
     """Main entry point."""
     parser = argparse.ArgumentParser(description="Analyze security scan results")
@@ -303,6 +328,8 @@ def main():
 
     if "error" in results:
         print(f"Error parsing results: {results['error']}", file=sys.stderr)
+        extraction_failure = is_extraction_failure(results["error"])
+
         # Create minimal analysis
         analysis = {
             "total_findings": 0,
@@ -312,15 +339,20 @@ def main():
             "has_critical": False,
             "has_bypass": False,
             "error": results["error"],
+            "scan_skipped": extraction_failure,
         }
 
         with open(args.output, "w") as f:
             json.dump(analysis, f, indent=2)
 
-        # Create error comment
-        with open("pr_comment.md", "w") as f:
-            f.write(
-                f"""## 🔒 Security Scan Results
+        # Suppress PR comment on extraction failure (issue #560): the scan
+        # never produced parseable output, so posting a "⚠️ Error" comment
+        # alarms contributors when the GH check is actually green. Real
+        # errors still get a comment.
+        if not extraction_failure:
+            with open("pr_comment.md", "w") as f:
+                f.write(
+                    f"""## 🔒 Security Scan Results
 
 ⚠️ **Error:** Could not complete security scan
 
@@ -330,7 +362,7 @@ def main():
 
 Please check the workflow logs for details.
 """
-            )
+                )
 
         if args.github_output:
             with open(args.github_output, "a") as f:
