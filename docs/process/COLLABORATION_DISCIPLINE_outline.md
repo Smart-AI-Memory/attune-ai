@@ -680,3 +680,57 @@ All open questions resolved. Drafting may proceed.
 8. **Standalone-per-section design constraint** — LOCKED. Each
    section sets its own context at the top. Slight prose
    redundancy across sections is acceptable cost.
+
+## Revision pass — planned 2026-06-02 (post-#575)
+
+Scope decided 2026-06-02. The small **payoff + frame** cut already
+ships in [#575](https://github.com/Smart-AI-Memory/attune-ai/pull/575)
+(intro team-management line, §8 dated throughput coda, generative
+close). The remaining refinements are **consolidated into ONE
+revision PR after #575 merges** — deliberately NOT a `/spec`: prose
+sits below the spec altitude, and full requirements/design/tasks
+would over-formalize per §4. Edits are structured-one-shots;
+rebuild via `attune-ai-dev/build_discipline.py`; any metric stays
+dated; Patrick merges to publish. Rationale + detail in memory
+`project_discipline_article_revisions`.
+
+Planned changes:
+
+1. **Spine / tell-show-tell.** The skeleton already exists (§1
+   preview + §8 recap). TIGHTEN, don't add a third block: turn the
+   §1 preview into a crisp scannable spine (one line per
+   discipline) and mirror it in the §8 recap. Candidate spine:
+   - §2 Contract — what each side owes; PR-and-approve as the
+     middle path.
+   - §3 Pacing — exploit the always-on asymmetry; spend human
+     attention only on decisions.
+   - §4 Artifacts — right-size: inline → one-shot → XML prompt →
+     spec; pre-commit decisions.
+   - §5 Memory — curate what persists; stale memory is dangerous.
+   - §6 Multi-agent — coordination is the baseline; name the
+     collision shapes.
+   - §7 Verification — tests catch zero hallucinations; dogfood;
+     the receipt beats the promise.
+2. **§3 generalize.** Strip the disability specifics; reframe as
+   the always-on asymmetry (general audience). Personal detail
+   becomes illustration, not the lesson.
+3. **§7 rewrite.** Reflect the verification-modes split (grounding
+   / generation-fact-check / behavioral / structural) and
+   attune-verify as the output-side product — referenced as a
+   SPEC / roadmap, NOT a shipped tool (unbuilt; criterion-6
+   honesty).
+4. **Autonomous contract = §2 in async mode.** The 7th-discipline
+   discovery: human queues *execution-ready* work for away-windows;
+   agent holds guardrails + stops honestly at the boundary; the
+   `auto:` handoff token. Fold into §2, not a standalone §9.
+5. **Transferable / tool-agnostic framing.** Teach each technique
+   tool-agnostic (any agent, no attune-ai required); attune-ai is
+   the receipt-it-scales, not the gate. Each technique =
+   pattern + why + one example; transferability test: *can a
+   stranger do it tomorrow without being Patrick?*
+6. **Generative frame.** Open thesis + close receipt (partly in
+   #575) — keep consistent across the consolidated PR.
+
+Watch: word ceiling is 8,000-9,500 (hard cap 12k). The §7 rewrite
++ spine add length; the §3 generalization trims. Re-measure the
+throughput stat before publishing — it grows.
