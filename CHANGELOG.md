@@ -7,6 +7,30 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [7.3.1] — 2026-06-02
+
+### Added
+
+- **Ops dashboard Workflows page refinement** — the `/workflows` route
+  now mirrors `/specs`: a 7-bucket concern classifier (Security /
+  Quality / Testing / Performance / Docs / Bugs / Discovery / Release)
+  derived from workflow names by a pure-Python module
+  (`workflow_concern.py`), a chip filter toolbar with search, per-row
+  concern badge column, a kebab action menu (View recent runs / Copy
+  run command / View docs), and URL parameter support for shareable
+  filter state (`?bucket=security,testing&q=...`). Backend wiring
+  reads from the derivation on every render (#552, #557, #554, #555,
+  #556).
+- **SDK error message fidelity Phase 6** — three more SDK-backed
+  workflows (`test-audit`, `doc-audit`, `doc-gen`) now surface the
+  real `claude` CLI stderr via the typed `sdk_error_kind` classifier
+  instead of hand-rolled generic messages. Eleven workflows from
+  v7.3.0 + three here = fourteen SDK-backed workflows total surfacing
+  real causes. The two remaining pipeline-coordinator workflows
+  (`discovery-sweep`, `secure-release`) aggregate sub-workflow
+  failures via a different error surface and are queued for Phase 7
+  in a future release (#551).
+
 ## [7.3.0] — 2026-06-01
 
 ### Added
