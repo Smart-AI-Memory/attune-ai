@@ -5,7 +5,7 @@
 > the whole table. Mirror of the Specs-page refinement pattern
 > (PRs #533-#536, #539) for the next pain-point area.
 
-**Status:** Phase 1 ratified 2026-06-01 (uncommitted; decisions.md + wireframe.html pending)
+**Status:** complete (2026-06-02; A1-A3c shipped in v7.3.0 + v7.3.1 — PRs #552, #557, #554, #555, #556)
 **Created:** 2026-06-01
 **Owner:** Patrick
 **Related:**

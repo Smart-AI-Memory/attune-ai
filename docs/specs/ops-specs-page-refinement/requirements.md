@@ -4,7 +4,7 @@
 > right one and see what to do next without scrolling/scanning the
 > whole table.
 
-**Status:** approved (2026-05-31)
+**Status:** complete (2026-05-31; A1-A3 shipped in PRs #533, #534, #535, #536, #539)
 **Created:** 2026-05-31
 **Owner:** Patrick (decisions ratified in-session 2026-05-31)
 **Related:** [`decisions.md`](decisions.md) — 4 design decisions ratified in-conversation before requirements were drafted, so they read as constraints here rather than open questions.
