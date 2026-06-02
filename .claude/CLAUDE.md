@@ -6933,3 +6933,69 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is usually one root-cause test" lesson — same
   shape (one root cause, looks like N independent
   bugs); this one names the prevention.
+
+- **Advisory CI workflows can post a PR comment with error
+  text while exiting 0 — judge blocking-ness by `gh pr
+  checks` bucket, NOT comment body text**: hit 2026-06-02
+  on PR #556 during the v7.3.1 release prep. The
+  `.github/workflows/security-scan.yml` job runs
+  `attune workflow run security-audit --json` and tries
+  to extract the final JSON object from the mixed CLI
+  output. When the underlying SDK call fails (budget
+  cap, quota, rate limit — same class the
+  sdk-error-message-fidelity spec hardens), no JSON
+  emits and the post-processing script writes a
+  placeholder `{"findings": [], "error": "Could not
+  extract JSON from CLI output"}` then exits 0. A
+  follow-up step posts a PR comment titled "🔒
+  Security Scan Results" with the error text. User
+  reading the PR sees an alarming comment and asks
+  "did the security scan fail?" — but the GH Actions
+  check (`Run Security Scanner`) is green AND the
+  required `security` check is green. Merge is
+  unaffected. **Diagnostic shortcut**: when a comment
+  on a PR looks like a failure, cross-check with
+  `gh pr checks <pr> --json name,bucket | jq \'.[] |
+  select(.bucket != "pass" and .bucket != "skipping")\'`
+  — if the bucket query is empty, no checks are
+  blocking and the comment is advisory noise. Apply
+  this BEFORE diving into what the comment claims is
+  wrong. Generalizes to any CI workflow that posts
+  cosmetic comments via `actions/github-script` or
+  similar — the comment body and the check
+  conclusion are independent surfaces. Pairs with the
+  existing "GitHub Copilot Autofix pushes commits
+  directly to PR branches" lesson — same family
+  (background CI activity that surfaces in the PR UI
+  but isn\'t a merge-blocking failure).
+
+- **Admin-merge dance: run as separate commands or
+  `;`-separated, never `&&`-chained — the merge
+  step reliably exits 1 from a sub-worktree (per the
+  existing sub-worktree lesson) and an `&&` chain
+  stops the protection-restore from running**: hit
+  2026-06-02 on PRs #556 and #558 during the v7.3.1
+  release sequence. Wrote the dance as
+  `gh api .../required_approving_review_count=0 &&
+  gh pr merge --squash --admin --delete-branch &&
+  gh api .../required_approving_review_count=1`.
+  Run from a sub-worktree, step 2 exited 1 because
+  the parent worktree owns `main` so the post-merge
+  local checkout step couldn\'t run (per the existing
+  "gh pr merge --squash --admin from a sub-worktree
+  exits non-zero" lesson) — but the REMOTE merge
+  succeeded. The `&&` chain short-circuited and
+  step 3 never ran, leaving
+  `required_approving_review_count=0` on main. Had
+  to manually re-issue step 3 to restore protection.
+  **Fix**: use `;` (run regardless) or three
+  independent commands. The protection-restore must
+  run even when the merge command exits non-zero
+  because that exit code does NOT mean the merge
+  failed when running from a sub-worktree. From the
+  parent worktree (where `main` is owned), the
+  merge step exits 0 and `&&` works — but be
+  defensive across both surfaces. Pairs with the
+  existing sub-worktree-merge-error lesson — that
+  one names the cause; this one names the dance-
+  specific consequence.
