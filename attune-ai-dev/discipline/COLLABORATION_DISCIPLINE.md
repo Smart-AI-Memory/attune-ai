@@ -101,25 +101,31 @@ that is visible on screen. None of these is clever in isolation.
 The compounding is the discipline.
 
 The rest of this piece names the six disciplines that produce
-mornings like that. Each gets its own section. Each is something
-you can adopt incrementally. §2 covers **the mutual contract** —
-what each side owes the other, including the PR-and-approve cycle
-as the middle path between agent-acts-alone and
-human-approves-every-line. §3 covers **pacing** — sustainability as
-a skill, the agent's role in honoring it, why this lives in a
-discipline doc and not a wellness doc. §4 covers **artifact
-discipline** — how specs nest XML-enhanced prompts which nest
-implementation, and how pre-committed decision matrices route
-choices that would otherwise drift into goalpost-moving. §5 covers
-**memory discipline** — what persists, what doesn't, and why stale
-memory is dangerous in a way new agent users do not yet feel. §6
-covers **multi-agent coordination** — when you're not the only one,
-with the failure shapes named (parallel push, worktree contention,
-stranded live-state writes) and the patterns that prevent them. §7
-covers **verification** — quality is not optional, dogfooding
-catches what unit tests cannot, and the dashboard is also a quality
-lens. §8 closes with a longer case study expanding the morning
-above into a full twenty-four-hour arc.
+mornings like that — each its own section, each adoptable
+incrementally, on its own or together:
+
+- **§2 — The mutual contract.** What each side owes the other; the
+  PR-and-approve cycle as the middle path between agent-acts-alone
+  and human-approves-every-line; and its asynchronous mode for the
+  work an agent does while you're away.
+- **§3 — Pacing.** Sustainability as a skill: agents don't tire,
+  the humans they work with do; clean stops and a rested cadence
+  raise throughput over weeks rather than lowering it.
+- **§4 — Artifact discipline.** Specs nest XML-enhanced prompts
+  nest implementation; pre-committed decision matrices route
+  choices before they drift into goalpost-moving.
+- **§5 — Memory discipline.** What persists, what doesn't, and why
+  stale memory is dangerous in a way new agent users don't yet
+  feel.
+- **§6 — Multi-agent coordination.** When you're not the only one:
+  the failure shapes named (parallel push, worktree contention,
+  stranded live-state writes) and the patterns that prevent them.
+- **§7 — Verification.** Quality is not optional: tests catch zero
+  hallucinations, dogfooding works at the meaning layer where they
+  live, and the receipt beats the promise.
+
+§8 closes with a longer case study expanding the morning above into
+a full twenty-four-hour arc.
 
 ---
 
