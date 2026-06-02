@@ -7029,3 +7029,40 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   for a piece of work; this one's about the
   multi-session handoff case where the prior session
   left state behind.
+
+- **`rag_knowledge_query` MCP tool fails in a worktree
+  session with `AttuneHelpCorpus.from_attune_help()
+  requires the [attune-help] extra` — and the
+  already-running MCP server self-heals on the next
+  query after you install it, no restart needed**: hit
+  2026-06-02. The worktree's `.venv` (and the `uv run
+  python -m attune.mcp.server` the session spawned) had
+  `attune_rag` but not `attune_help`, so the default
+  corpus backend couldn't load and every RAG query
+  returned `success: false` with the extra-missing
+  error. Fix: `uv pip install --python <worktree-venv>
+  attune-help` (PyPI wheel ships the corpus templates
+  as package data; sibling editable source also exists
+  at `~/attune-help`). The non-obvious part — **the MCP
+  server process that's ALREADY running picks up the
+  install on the very next query without a restart**,
+  because `from_attune_help()` is called lazily
+  per-query, not at server startup, and it reads the
+  same venv `site-packages` the running process is
+  bound to. Two caveats: (1) a future `uv run` re-sync
+  will wipe the pip-install per the existing "`uv sync`
+  wipes packages installed via `pip install`" lesson —
+  so this recurs per worktree session until
+  `attune-help` is added to an extra in
+  `pyproject.toml` + lockfile (the durable fix);
+  (2) the default corpus is `attune-help`, which
+  documents *how to use the skills* — it grounds
+  usage questions, NOT attune-rag's internal
+  faithfulness mechanics, so a query about internals
+  will return on-topic-looking-but-wrong hits and the
+  faithful answer is "context does not cover this."
+  Pairs with the existing "worktree venv missing
+  optional extras" + "`uv sync` wipes pip installs"
+  lessons — this names the specific RAG manifestation
+  plus the lazy-load self-heal that means you don't
+  restart the session to recover.
