@@ -238,3 +238,29 @@ All six Phase-1 questions were walked with Patrick and decided:
 - Whether the `FaithfulnessJudge` reuse is a hard dependency on
   attune-rag or a duck-typed optional integration (and how it
   degrades when rag isn't installed).
+
+---
+
+## Phase 4 PR conventions (forward note)
+
+The build+test PR for attune-verify is separate from this spec.
+
+Docs follow the attune-ai help pattern: attune-verify gets its own
+attune-author-generated `.help/` corpus (concept/task/reference +
+all-kinds, staleness detection, RAG corpus) — the same living-docs
+treatment attune-ai has.
+
+Doc-update discipline for that PR:
+
+- Update only help/docs that genuinely change from the feature;
+  don't churn unchanged templates.
+- **Exception:** a help template used as ground-truth / test input
+  for the faithfulness-accuracy checks must be made correct even if
+  it otherwise wouldn't change — stale ground truth corrupts the
+  test.
+- attune-verify stays roadmap-only in family docs until it ships
+  (criterion #6).
+
+Dogfood loop: attune-author generates attune-verify's help;
+attune-verify fact-checks that generated help — a self-contained
+loop that doubles as the Q4 first-consumer integration test.
