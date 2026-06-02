@@ -228,6 +228,11 @@ space.</p>
 a <em>discipline</em> problem. A mutual contract, a shared vocabulary,
 agreed artifact shapes, named failure modes. The disciplines are
 individually boring. They compound.</p>
+<p>And the posture isn't exotic — it's ordinary team management
+applied to a teammate who happens to be an agent: an explicit
+contract, clear handoffs, named boundaries. Practiced together,
+the disciplines produce synergies tied to the discipline
+itself; the compounding is the point, not a bonus.</p>
 <p>Here is what that looks like on a real morning. The ops dashboard
 is up in a browser tab. The family snapshot shows five PyPI
 packages tracked. Telemetry shows yesterday's spend and today's.
@@ -283,25 +288,31 @@ so the agent doesn't have to ask the human to re-explain context
 that is visible on screen. None of these is clever in isolation.
 The compounding is the discipline.</p>
 <p>The rest of this piece names the six disciplines that produce
-mornings like that. Each gets its own section. Each is something
-you can adopt incrementally. §2 covers <strong>the mutual contract</strong> —
-what each side owes the other, including the PR-and-approve cycle
-as the middle path between agent-acts-alone and
-human-approves-every-line. §3 covers <strong>pacing</strong> — sustainability as
-a skill, the agent's role in honoring it, why this lives in a
-discipline doc and not a wellness doc. §4 covers <strong>artifact
-discipline</strong> — how specs nest XML-enhanced prompts which nest
-implementation, and how pre-committed decision matrices route
-choices that would otherwise drift into goalpost-moving. §5 covers
-<strong>memory discipline</strong> — what persists, what doesn't, and why stale
-memory is dangerous in a way new agent users do not yet feel. §6
-covers <strong>multi-agent coordination</strong> — when you're not the only one,
-with the failure shapes named (parallel push, worktree contention,
-stranded live-state writes) and the patterns that prevent them. §7
-covers <strong>verification</strong> — quality is not optional, dogfooding
-catches what unit tests cannot, and the dashboard is also a quality
-lens. §8 closes with a longer case study expanding the morning
-above into a full twenty-four-hour arc.</p>
+mornings like that — each its own section, each adoptable
+incrementally, on its own or together:</p>
+<ul>
+<li><strong>§2 — The mutual contract.</strong> What each side owes the other; the
+PR-and-approve cycle as the middle path between agent-acts-alone
+and human-approves-every-line; and its asynchronous mode for the
+work an agent does while you're away.</li>
+<li><strong>§3 — Pacing.</strong> Sustainability as a skill: agents don't tire,
+the humans they work with do; clean stops and a rested cadence
+raise throughput over weeks rather than lowering it.</li>
+<li><strong>§4 — Artifact discipline.</strong> Specs nest XML-enhanced prompts
+nest implementation; pre-committed decision matrices route
+choices before they drift into goalpost-moving.</li>
+<li><strong>§5 — Memory discipline.</strong> What persists, what doesn't, and why
+stale memory is dangerous in a way new agent users don't yet
+feel.</li>
+<li><strong>§6 — Multi-agent coordination.</strong> When you're not the only one:
+the failure shapes named (parallel push, worktree contention,
+stranded live-state writes) and the patterns that prevent them.</li>
+<li><strong>§7 — Verification.</strong> Quality is not optional: tests catch zero
+hallucinations, dogfooding works at the meaning layer where they
+live, and the receipt beats the promise.</li>
+</ul>
+<p>§8 closes with a longer case study expanding the morning above into
+a full twenty-four-hour arc.</p>
 <hr />
 <h2>§2 — The Mutual Contract</h2>
 <p>A working contract between collaborators is not a new idea.
@@ -415,6 +426,41 @@ agent owes the human that pushback before executing. Hedging
 without an alternative is cosmetic and creates friction without
 value. The contract welcomes real pushback and rejects the
 imitation kind.</p>
+<p>The contract has an asynchronous mode, too — for when the human
+steps away and the agent keeps working. Everything above governs
+<em>interactive</em> work: decision points, recommend-and-approve. But
+agents don't tire, and a known away-window is runway the human can
+spend deliberately. The asynchronous contract has the same
+two-obligation shape, re-pointed at unattended work.</p>
+<p>The human's half is to queue <em>execution-ready</em> work — not merely
+substantial work. Decisions made, premise fresh, path clear:
+roughly, hand off implementation, not design. Decision-ambiguous
+work handed to an unattended window either stalls (the agent waits
+for an answer that won't come) or guesses wrong (a thousand lines
+of correct implementation of the wrong thing). The artifact
+altitude is the tell — tasks-level work survives an away-window;
+design-level work belongs in the synchronous window where you're
+present to answer. A compact invocation helps: in our tooling
+<code>auto: &lt;specs or PRs&gt;</code> reads as &quot;these are execution-ready, run
+them to the boundary&quot; — the same shorthand-as-vocabulary primitive
+from earlier in this section.</p>
+<p>The agent's half is to narrow to what is genuinely safe and fresh;
+hold hard guardrails (no irreversible or outward-facing act — no
+merge to a protected branch, no publish, no new repo, nothing
+touching credentials — without the human); re-validate a spec's
+premise before executing it, because specs go stale in days; and
+stop honestly at the real boundary rather than manufacture busywork
+or blind-execute a stale plan. The agent that pads an away-window
+with low-value churn to look productive breaks the asynchronous
+contract exactly as the one that smuggles in a refactor breaks the
+synchronous one.</p>
+<p>This cuts both ways at the <em>edges</em> of the work, not only the
+middle. If the human's starting handoff is weak — vague, ambiguous,
+or decision-heavy — the agent owes a pushback to firm it into a
+strong start before proceeding, the same way it owes a clean
+stopping boundary at the end rather than halting mid-edit.
+Protecting the quality of the start and the stop is higher-leverage
+than executing whatever phrasing happened to arrive.</p>
 <hr />
 <h2>§3 — Pacing: Sustainability Is a Skill</h2>
 <p>Sustainable pace has decades of engineering-management evidence
@@ -963,103 +1009,107 @@ test was written from the same misunderstanding as the code, both
 sides agree on the wrong thing and the test reports green. Coverage
 is green on dead code paths. Type checks pass on functions that no
 caller ever invokes. The gap is real and large.</p>
-<p>The dogfood principle is the single highest-leverage move in
-closing the gap. Before declaring an LLM-generated artifact done,
-run the artifact against a realistic input it will actually face in
-production. The six-hallucination case from the opening above is
-what dogfooding catches that unit tests cannot — the polished help
-page passed its unit tests cleanly. Dogfood runs are slower than
-unit tests by orders of magnitude, but they operate at the
-<em>meaning</em> layer, where the hallucinations live. A unit test asserts
-that the function returned the expected type; the dogfood run
-asserts that the function returned something <em>true</em>. Those are
-different properties. Both are needed. Neither replaces the other.</p>
-<p>Verification beats taste. The temptation to read an agent-generated
-artifact and approve it based on prose feel is strong. Discipline:
-name the concrete verification step <em>before</em> generation starts. For
-doc generation, resolve every CLI flag against the live <code>--help</code>
-output. Parse every Python import. Traverse every markdown link to
-confirm the target exists. Verify every numeric claim against its
-source. For code generation, run the function against
-representative inputs and confirm the outputs match expected. For
-spec generation, identify the irreversible decisions and verify
-each is logged with rationale. The verification is the artifact.
-The prose is decoration.</p>
-<p>This is not a counsel of perfection. The verification step does not
-need to catch every possible bug; it needs to catch the <em>named
-failure modes</em> that are known to recur. For LLM-generated
-documentation, the failure modes are: fabricated symbol names,
-fabricated CLI flags, fabricated cross-references, route-shape
-errors, version-mismatched code samples, insecure example code,
-fabricated quantitative claims. A six-step automated verification
-pass that checks for those six failure modes will catch most of
-what slips past taste. The pass is not glamorous. It is
-load-bearing.</p>
-<p>Decision matrices are also verification. When you commit the &quot;if A
-then X, if B then Y&quot; matrix before measurement, the measurement
-<em>automatically</em> routes the decision. The verification is built into
-the artifact's shape. There is nothing to &quot;review&quot; — the matrix
-says what to do; the measurement says which branch fires; the
-decision follows mechanically. This eliminates an entire class of
-post-hoc rationalization where the human (or the agent) finds
-reasons to favor the more interesting path against what the data
-actually says. The matrix is verification by structure.</p>
-<p>The dashboard is a quality lens. Watch for drift over time. Stale
-specs that should have moved status weeks ago and didn't. Broken
-cross-package pins where a sibling's version moved and the
-dependent didn't widen. Telemetry anomalies (today: workspace-local
-seven-day spend exceeded account-level seven-day spend by a
-non-trivial margin; that is mathematically impossible if the local
-counter is the local subset of the account counter; one of the two
-is wrong; worth flagging, not blocking; logged for diagnosis
-later). Use the dashboard at decision points, not just at
-end-of-day. The dashboard is reading what unit tests cannot reach:
-the state of the <em>world</em> the code lives in, not the state of the
-code in isolation.</p>
-<p>A specific verification pattern worth naming: <strong>the regression
-guard</strong>. After fixing a bug, write a test whose only purpose is to
-fail loudly if the bug returns. The test does not need to be
-beautiful. It needs to fail when the bug is back. The most valuable
-regression guards are the ones that nail a specific past failure
-mode by name. We have one that asserts the <code>Path.endswith(&quot;/...&quot;)</code>
-pattern is not used in tests because Windows paths break it. We
-have one that asserts a specific dataclass field is required at
-construction because forgetting it silently shipped wrong telemetry
-for ten days. Each guard is mechanical, narrow, and durable. None
-of them is glamorous. The collection compounds into a wall that
-past failure modes do not get to recur through.</p>
-<p>A note on what verification is <em>not</em>. It is not asking the agent
-&quot;are you sure this is right?&quot; The agent will say yes because the
-agent is wired to be helpful. It is not skimming the diff for an
-hour because diffs of a thousand lines exceed the human's ability
-to spot anomalies. It is not relying on the agent's &quot;I have
-verified that…&quot; claim — which is a verbal report, not a
-verification artifact. Verification is a thing that <em>runs</em> and
-<em>produces an output</em>. If you cannot name what would have failed if
-the bug were present, you have not verified.</p>
-<p>The verification discipline is also what makes <em>trust</em> sustainable
-across sessions. A human who trusts the agent because the agent
-claims to be careful is trusting a verbal report. A human who
-trusts the agent because the verification pass passed is trusting
-a check. The first trust is fragile and erodes the first time a
-confident agent ships a confident bug. The second trust accumulates
-because the check is doing the work of being trustworthy.
+<p>Verification is not one move; it is four, sorted by <em>what they
+check</em>. Two guard the boundaries of generation — the input the
+model is handed and the output it produces. Two guard the work
+itself — what it does at runtime and how its decisions got made.
+Name which one a given check buys you, and you stop confusing &quot;the
+tests are green&quot; with &quot;the work is true.&quot;</p>
+<h3>Grounding the input — &quot;is the claim supported?&quot;</h3>
+<p>When the agent answers from retrieved sources, the first
+verification is whether each claim is actually supported by the
+sources it cites. The lever is structural: force a citation for
+every claim and treat an uncited claim as no claim at all. The
+result is measurable — on attune-rag's golden evaluation set,
+citation-forced grounding reaches <strong>99.6% per-claim faithfulness</strong>:
+of every individual factual claim the system makes, 99.6% trace
+back to a cited passage.</p>
+<p>That number rewards a careful reading, because there are two ways
+to count and they tell different stories. <em>Per claim</em> — the honest
+unit — asks of each statement, &quot;is this one grounded?&quot; 99.6% are.
+<em>Per query</em> — a stricter all-or-nothing bucket — fails an entire
+answer if even one claim slips; by that count roughly one answer in
+fifteen still trips. The per-claim number is the one the reader
+actually experiences, sentence by sentence, and it is the one to
+lead with. It got there structurally — by making an uncited claim
+impossible to state — not by asking the model to try harder.</p>
+<h3>Fact-checking the output — &quot;do the named things exist?&quot;</h3>
+<p>Grounding can be perfect and the output can still invent a flag
+that was never in the retrieved context; the model fills
+surrounding scaffolding from priors that <em>sound</em> right. That is the
+second mode — and it is exactly the six-hallucination case above.
+The polished help page passed its unit tests because the
+fabrications were plausible, not true. The check is to resolve
+every named entity in the artifact against reality: every Python
+import imports, every CLI flag exists in <code>--help</code>, every markdown
+link resolves, every numeric claim matches its source. The failure
+modes recur and are therefore automatable — fabricated symbols,
+flags, cross-references, route shapes, version-mismatched samples,
+insecure examples, fabricated counts — so a pass that checks them
+by name catches most of what slips past taste. (We are extracting
+this into a standalone fact-checker, attune-verify, so any
+generation pipeline can call it; it is specced, not yet shipped.)
+Grounding verifies the input; fact-checking verifies the output;
+together they bracket generation.</p>
+<h3>Verifying behavior — &quot;does it do the true thing?&quot;</h3>
+<p>The dogfood principle is the highest-leverage move here. Before
+declaring an LLM-generated artifact done, run it against a
+realistic input it will actually face in production. Dogfood runs
+are slower than unit tests by orders of magnitude, but they operate
+at the <em>meaning</em> layer where the hallucinations live: a unit test
+asserts the function returned the expected type; the dogfood run
+asserts it returned something <em>true</em>. Both are needed; neither
+replaces the other. Its durable companion is <strong>the regression
+guard</strong> — after fixing a bug, write a test whose only purpose is to
+fail loudly if the bug returns. It need not be beautiful; it needs
+to fail when the bug is back. The best ones nail a specific past
+failure by name: one asserts a <code>Path.endswith(&quot;/…&quot;)</code> pattern stays
+out of tests because Windows paths break it; one asserts a
+dataclass field is required because forgetting it shipped wrong
+telemetry for ten days. Each is mechanical, narrow, durable; the
+collection compounds into a wall that past failures do not recur
+through.</p>
+<h3>Verifying decisions — &quot;did measurement route the call?&quot;</h3>
+<p>Decision matrices are verification by structure. Commit the &quot;if A
+then X, if B then Y&quot; matrix <em>before</em> measurement and the
+measurement automatically routes the decision: nothing to &quot;review,&quot;
+because the matrix says what to do, the measurement says which
+branch fires, and the decision follows mechanically. This
+eliminates the post-hoc rationalization where the human or the
+agent finds reasons to favor the more interesting path against what
+the data actually says.</p>
+<h3>What holds the four together</h3>
+<p>Verification beats taste. The pull to read an agent's artifact and
+approve it on prose feel is strong; the discipline is to name the
+concrete check <em>before</em> generation starts and approve on the
+check's result, not the feel. And verification is a thing that
+<em>runs and produces an output</em> — it is not asking the agent &quot;are you
+sure?&quot; (it is wired to say yes), not skimming a thousand-line diff
+(beyond human anomaly-spotting), not trusting an &quot;I verified
+that…&quot; (a verbal report, not an artifact). If you cannot name what
+would have failed had the bug been present, you have not verified.
+The dashboard is that same property pointed at the <em>world</em> rather
+than the code — watch for drift: stale specs, broken cross-package
+pins, telemetry anomalies (today: workspace seven-day spend
+exceeding account seven-day spend, mathematically impossible,
+flagged not blocked). Use it at decision points, not just
+end-of-day.</p>
+<p>This is also what makes <em>trust</em> sustainable across sessions. A
+human who trusts the agent because it claims to be careful is
+trusting a verbal report — fragile, and it erodes the first time a
+confident agent ships a confident bug. A human who trusts because
+the verification passed is trusting a check, and that trust
+accumulates because the check does the work of being trustworthy.
 Verification offloads trust from the relationship to the artifact,
-which is where it belongs.</p>
-<p>The dashboard as quality lens, the dogfood principle, decision
-matrices as structural verification, regression guards as durable
-failure-mode protection — these are not separate practices. They
-are four shapes of the same property: <em>something runs and tells the
-truth about the work, independent of whether anyone wants to
-believe it</em>. The discipline is to wire those checks in before they
-are needed and to honor their outputs when they fire.</p>
-<p><strong>The receipt.</strong> Across the attune-* family — five PyPI packages,
-multiple months of agent-collaborated development — test coverage
-sits at <strong>93%</strong>. That number isn't a target we aimed at; it's a
-byproduct of treating regression guards as non-optional and
-dogfood verification as part of the work, not an add-on.
-Discipline produces measurable artifacts. The artifact is the
-proof.</p>
+where it belongs.</p>
+<p><strong>The receipt.</strong> The discipline produces measurable artifacts, and
+the strongest is the one that says the work is <em>true</em>, not merely
+<em>tested</em>: citation-forced grounding holds <strong>99.6% per-claim
+faithfulness</strong> on attune-rag's golden set — better than
+ninety-nine parts in a hundred of the individual claims the system
+makes are checkably traceable to a source. And it got there by
+structure, not by exhortation. That is what verification buys that
+taste cannot.</p>
 <hr />
 <h2>§8 — What This Looks Like When It Goes Right: A Twenty-Four-Hour Case Study</h2>
 <p>The morning of 2026-05-25 began with attune-rag 0.2.0 already on
@@ -1158,10 +1208,10 @@ in-session pushback on the agent's own initial plan to run
 code-review on a config-only PR (no signal; skip; save the budget).
 One proactive memory write that did not exist at session start (the
 don't-enable-fatigue-push lesson, named after the third fatigue
-signal in three days). Test coverage across the family stayed at
-<strong>93%</strong> — not because we ran a coverage push but because regression
-guards landed alongside the new code. A handful of clean stops at
-completion boundaries when the human signaled fatigue.</p>
+signal in three days). Regression guards landed alongside the new
+code rather than as a separate coverage push — verification kept
+pace with the work instead of trailing it. A handful of clean stops
+at completion boundaries when the human signaled fatigue.</p>
 <p>The point of the case study is not that the morning was
 breathtaking. No single decision in that sequence was virtuoso. The
 shipped releases were routine. The spec was small. The
@@ -1172,6 +1222,17 @@ under-scoping on the substantive ones, no re-explaining context
 that was already visible on the dashboard, no fatigue-grinding past
 the productive window. Six disciplines, each boring in isolation,
 compounding into a morning where the work <em>moved</em>.</p>
+<p>And that morning wasn't a one-off. Across the two weeks ending
+2026-06-02, the same one-developer-plus-agent setup merged
+<strong>130 pull requests — roughly nine per calendar day</strong> — into the
+attune-ai repository. The composition matters more than the
+headline: about fifty were feature and fix code; the rest were
+documentation, specs, and release work the discipline keeps
+moving in lockstep with the code. That lockstep is the point —
+§5's memory and §4's artifacts mean the docs and specs <em>keep
+pace</em> rather than accruing as debt behind the shipping. The
+number is a dated snapshot of what the discipline produced here,
+not a multiplier anyone is promised.</p>
 <p>The closing point is simple. This is a learnable skill. The
 discipline above is six bullet-points worth of vocabulary, not a
 worldview, not an ideology, not a stance on AI. Adopt the contract
@@ -1180,6 +1241,15 @@ from §2. Adopt the pacing from §3. Adopt the artifact nesting from
 from §6. Adopt the verification gates from §7. Practice each one
 boring-ly until they compound. The mornings that result are
 unremarkable in any single moment, and remarkable across a week.</p>
+<p>There is a tell in how this article got written. The attune-*
+family is these disciplines turned into software — attune-ai
+builds and maintains the others — and the disciplines, once
+named, keep generating the next thing. Drafting this piece
+surfaced a friction none of the six quite covered; naming it
+produced a new spec by the end of the session. The discipline
+didn't only describe the work. It generated more of it. That is
+the synergy — tied to the discipline itself, not to any one
+tool.</p>
 <p>That is the discipline of agent collaboration. We are still
 learning it. We hope this is useful.</p>
 <hr />
