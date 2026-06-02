@@ -857,112 +857,120 @@ sides agree on the wrong thing and the test reports green. Coverage
 is green on dead code paths. Type checks pass on functions that no
 caller ever invokes. The gap is real and large.
 
-The dogfood principle is the single highest-leverage move in
-closing the gap. Before declaring an LLM-generated artifact done,
-run the artifact against a realistic input it will actually face in
-production. The six-hallucination case from the opening above is
-what dogfooding catches that unit tests cannot — the polished help
-page passed its unit tests cleanly. Dogfood runs are slower than
-unit tests by orders of magnitude, but they operate at the
-*meaning* layer, where the hallucinations live. A unit test asserts
-that the function returned the expected type; the dogfood run
-asserts that the function returned something *true*. Those are
-different properties. Both are needed. Neither replaces the other.
+Verification is not one move; it is four, sorted by *what they
+check*. Two guard the boundaries of generation — the input the
+model is handed and the output it produces. Two guard the work
+itself — what it does at runtime and how its decisions got made.
+Name which one a given check buys you, and you stop confusing "the
+tests are green" with "the work is true."
 
-Verification beats taste. The temptation to read an agent-generated
-artifact and approve it based on prose feel is strong. Discipline:
-name the concrete verification step *before* generation starts. For
-doc generation, resolve every CLI flag against the live `--help`
-output. Parse every Python import. Traverse every markdown link to
-confirm the target exists. Verify every numeric claim against its
-source. For code generation, run the function against
-representative inputs and confirm the outputs match expected. For
-spec generation, identify the irreversible decisions and verify
-each is logged with rationale. The verification is the artifact.
-The prose is decoration.
+### Grounding the input — "is the claim supported?"
 
-This is not a counsel of perfection. The verification step does not
-need to catch every possible bug; it needs to catch the *named
-failure modes* that are known to recur. For LLM-generated
-documentation, the failure modes are: fabricated symbol names,
-fabricated CLI flags, fabricated cross-references, route-shape
-errors, version-mismatched code samples, insecure example code,
-fabricated quantitative claims. A six-step automated verification
-pass that checks for those six failure modes will catch most of
-what slips past taste. The pass is not glamorous. It is
-load-bearing.
+When the agent answers from retrieved sources, the first
+verification is whether each claim is actually supported by the
+sources it cites. The lever is structural: force a citation for
+every claim and treat an uncited claim as no claim at all. The
+result is measurable — on attune-rag's golden evaluation set,
+citation-forced grounding reaches **99.6% per-claim faithfulness**:
+of every individual factual claim the system makes, 99.6% trace
+back to a cited passage.
 
-Decision matrices are also verification. When you commit the "if A
-then X, if B then Y" matrix before measurement, the measurement
-*automatically* routes the decision. The verification is built into
-the artifact's shape. There is nothing to "review" — the matrix
-says what to do; the measurement says which branch fires; the
-decision follows mechanically. This eliminates an entire class of
-post-hoc rationalization where the human (or the agent) finds
-reasons to favor the more interesting path against what the data
-actually says. The matrix is verification by structure.
+That number rewards a careful reading, because there are two ways
+to count and they tell different stories. *Per claim* — the honest
+unit — asks of each statement, "is this one grounded?" 99.6% are.
+*Per query* — a stricter all-or-nothing bucket — fails an entire
+answer if even one claim slips; by that count roughly one answer in
+fifteen still trips. The per-claim number is the one the reader
+actually experiences, sentence by sentence, and it is the one to
+lead with. It got there structurally — by making an uncited claim
+impossible to state — not by asking the model to try harder.
 
-The dashboard is a quality lens. Watch for drift over time. Stale
-specs that should have moved status weeks ago and didn't. Broken
-cross-package pins where a sibling's version moved and the
-dependent didn't widen. Telemetry anomalies (today: workspace-local
-seven-day spend exceeded account-level seven-day spend by a
-non-trivial margin; that is mathematically impossible if the local
-counter is the local subset of the account counter; one of the two
-is wrong; worth flagging, not blocking; logged for diagnosis
-later). Use the dashboard at decision points, not just at
-end-of-day. The dashboard is reading what unit tests cannot reach:
-the state of the *world* the code lives in, not the state of the
-code in isolation.
+### Fact-checking the output — "do the named things exist?"
 
-A specific verification pattern worth naming: **the regression
-guard**. After fixing a bug, write a test whose only purpose is to
-fail loudly if the bug returns. The test does not need to be
-beautiful. It needs to fail when the bug is back. The most valuable
-regression guards are the ones that nail a specific past failure
-mode by name. We have one that asserts the `Path.endswith("/...")`
-pattern is not used in tests because Windows paths break it. We
-have one that asserts a specific dataclass field is required at
-construction because forgetting it silently shipped wrong telemetry
-for ten days. Each guard is mechanical, narrow, and durable. None
-of them is glamorous. The collection compounds into a wall that
-past failure modes do not get to recur through.
+Grounding can be perfect and the output can still invent a flag
+that was never in the retrieved context; the model fills
+surrounding scaffolding from priors that *sound* right. That is the
+second mode — and it is exactly the six-hallucination case above.
+The polished help page passed its unit tests because the
+fabrications were plausible, not true. The check is to resolve
+every named entity in the artifact against reality: every Python
+import imports, every CLI flag exists in `--help`, every markdown
+link resolves, every numeric claim matches its source. The failure
+modes recur and are therefore automatable — fabricated symbols,
+flags, cross-references, route shapes, version-mismatched samples,
+insecure examples, fabricated counts — so a pass that checks them
+by name catches most of what slips past taste. (We are extracting
+this into a standalone fact-checker, attune-verify, so any
+generation pipeline can call it; it is specced, not yet shipped.)
+Grounding verifies the input; fact-checking verifies the output;
+together they bracket generation.
 
-A note on what verification is *not*. It is not asking the agent
-"are you sure this is right?" The agent will say yes because the
-agent is wired to be helpful. It is not skimming the diff for an
-hour because diffs of a thousand lines exceed the human's ability
-to spot anomalies. It is not relying on the agent's "I have
-verified that…" claim — which is a verbal report, not a
-verification artifact. Verification is a thing that *runs* and
-*produces an output*. If you cannot name what would have failed if
-the bug were present, you have not verified.
+### Verifying behavior — "does it do the true thing?"
 
-The verification discipline is also what makes *trust* sustainable
-across sessions. A human who trusts the agent because the agent
-claims to be careful is trusting a verbal report. A human who
-trusts the agent because the verification pass passed is trusting
-a check. The first trust is fragile and erodes the first time a
-confident agent ships a confident bug. The second trust accumulates
-because the check is doing the work of being trustworthy.
+The dogfood principle is the highest-leverage move here. Before
+declaring an LLM-generated artifact done, run it against a
+realistic input it will actually face in production. Dogfood runs
+are slower than unit tests by orders of magnitude, but they operate
+at the *meaning* layer where the hallucinations live: a unit test
+asserts the function returned the expected type; the dogfood run
+asserts it returned something *true*. Both are needed; neither
+replaces the other. Its durable companion is **the regression
+guard** — after fixing a bug, write a test whose only purpose is to
+fail loudly if the bug returns. It need not be beautiful; it needs
+to fail when the bug is back. The best ones nail a specific past
+failure by name: one asserts a `Path.endswith("/…")` pattern stays
+out of tests because Windows paths break it; one asserts a
+dataclass field is required because forgetting it shipped wrong
+telemetry for ten days. Each is mechanical, narrow, durable; the
+collection compounds into a wall that past failures do not recur
+through.
+
+### Verifying decisions — "did measurement route the call?"
+
+Decision matrices are verification by structure. Commit the "if A
+then X, if B then Y" matrix *before* measurement and the
+measurement automatically routes the decision: nothing to "review,"
+because the matrix says what to do, the measurement says which
+branch fires, and the decision follows mechanically. This
+eliminates the post-hoc rationalization where the human or the
+agent finds reasons to favor the more interesting path against what
+the data actually says.
+
+### What holds the four together
+
+Verification beats taste. The pull to read an agent's artifact and
+approve it on prose feel is strong; the discipline is to name the
+concrete check *before* generation starts and approve on the
+check's result, not the feel. And verification is a thing that
+*runs and produces an output* — it is not asking the agent "are you
+sure?" (it is wired to say yes), not skimming a thousand-line diff
+(beyond human anomaly-spotting), not trusting an "I verified
+that…" (a verbal report, not an artifact). If you cannot name what
+would have failed had the bug been present, you have not verified.
+The dashboard is that same property pointed at the *world* rather
+than the code — watch for drift: stale specs, broken cross-package
+pins, telemetry anomalies (today: workspace seven-day spend
+exceeding account seven-day spend, mathematically impossible,
+flagged not blocked). Use it at decision points, not just
+end-of-day.
+
+This is also what makes *trust* sustainable across sessions. A
+human who trusts the agent because it claims to be careful is
+trusting a verbal report — fragile, and it erodes the first time a
+confident agent ships a confident bug. A human who trusts because
+the verification passed is trusting a check, and that trust
+accumulates because the check does the work of being trustworthy.
 Verification offloads trust from the relationship to the artifact,
-which is where it belongs.
+where it belongs.
 
-The dashboard as quality lens, the dogfood principle, decision
-matrices as structural verification, regression guards as durable
-failure-mode protection — these are not separate practices. They
-are four shapes of the same property: *something runs and tells the
-truth about the work, independent of whether anyone wants to
-believe it*. The discipline is to wire those checks in before they
-are needed and to honor their outputs when they fire.
-
-**The receipt.** Across the attune-\* family — five PyPI packages,
-multiple months of agent-collaborated development — test coverage
-sits at **93%**. That number isn't a target we aimed at; it's a
-byproduct of treating regression guards as non-optional and
-dogfood verification as part of the work, not an add-on.
-Discipline produces measurable artifacts. The artifact is the
-proof.
+**The receipt.** The discipline produces measurable artifacts, and
+the strongest is the one that says the work is *true*, not merely
+*tested*: citation-forced grounding holds **99.6% per-claim
+faithfulness** on attune-rag's golden set — better than
+ninety-nine parts in a hundred of the individual claims the system
+makes are checkably traceable to a source. And it got there by
+structure, not by exhortation. That is what verification buys that
+taste cannot.
 
 ---
 
@@ -1073,10 +1081,10 @@ in-session pushback on the agent's own initial plan to run
 code-review on a config-only PR (no signal; skip; save the budget).
 One proactive memory write that did not exist at session start (the
 don't-enable-fatigue-push lesson, named after the third fatigue
-signal in three days). Test coverage across the family stayed at
-**93%** — not because we ran a coverage push but because regression
-guards landed alongside the new code. A handful of clean stops at
-completion boundaries when the human signaled fatigue.
+signal in three days). Regression guards landed alongside the new
+code rather than as a separate coverage push — verification kept
+pace with the work instead of trailing it. A handful of clean stops
+at completion boundaries when the human signaled fatigue.
 
 The point of the case study is not that the morning was
 breathtaking. No single decision in that sequence was virtuoso. The
