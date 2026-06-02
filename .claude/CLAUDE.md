@@ -7066,3 +7066,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   lessons — this names the specific RAG manifestation
   plus the lazy-load self-heal that means you don't
   restart the session to recover.
+
+- **The attune-ai.dev Discipline article is built
+  in-repo, and has stale decoy copies OUTSIDE the
+  repo**: the live source is
+  `attune-ai-dev/discipline/COLLABORATION_DISCIPLINE.md`,
+  rebuilt to `attune-ai-dev/discipline/index.html` by
+  `attune-ai-dev/build_discipline.py` (markdown-it-py
+  commonmark, `html=False` — NOT pandoc; the older
+  pandoc/weasyprint COLLABORATION_DISCIPLINE lessons are
+  about *separate* PDF/HTML export artifacts, not this
+  page). To update the article: edit the `.md`, run
+  `build_discipline.py` to regenerate `index.html`,
+  commit BOTH. The page carries a `--draft-label` banner
+  (default "Draft v4"). Served at attune-ai.dev/discipline;
+  the static site most likely deploys via the repo's
+  `gh-pages` branch (observed origin/gh-pages updates —
+  NOT confirmed; verify the publish trigger before
+  assuming merge-to-main = live). **Decoy copies that are
+  NOT the live source and whose edits do nothing**:
+  `~/Desktop/COLLABORATION_DISCIPLINE*.html` (v1/v2/v3)
+  and `~/articles-book-related/*.html`. Finding the real
+  source took a multi-location search because the obvious
+  `~/website` doesn't have it. Separately,
+  `docs/process/COLLABORATION_DISCIPLINE_outline.md` is
+  the structure/planning doc (not the article body) —
+  where article-revision PLANS go, per the "plan in the
+  outline doc, not `/spec`, for prose" decision.
