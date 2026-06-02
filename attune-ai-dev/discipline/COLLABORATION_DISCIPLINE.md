@@ -36,6 +36,12 @@ a *discipline* problem. A mutual contract, a shared vocabulary,
 agreed artifact shapes, named failure modes. The disciplines are
 individually boring. They compound.
 
+And the posture isn't exotic — it's ordinary team management
+applied to a teammate who happens to be an agent: an explicit
+contract, clear handoffs, named boundaries. Practiced together,
+the disciplines produce synergies tied to the discipline
+itself; the compounding is the point, not a bonus.
+
 Here is what that looks like on a real morning. The ops dashboard
 is up in a browser tab. The family snapshot shows five PyPI
 packages tracked. Telemetry shows yesterday's spend and today's.
@@ -1038,6 +1044,18 @@ that was already visible on the dashboard, no fatigue-grinding past
 the productive window. Six disciplines, each boring in isolation,
 compounding into a morning where the work *moved*.
 
+And that morning wasn't a one-off. Across the two weeks ending
+2026-06-02, the same one-developer-plus-agent setup merged
+**130 pull requests — roughly nine per calendar day** — into the
+attune-ai repository. The composition matters more than the
+headline: about fifty were feature and fix code; the rest were
+documentation, specs, and release work the discipline keeps
+moving in lockstep with the code. That lockstep is the point —
+§5's memory and §4's artifacts mean the docs and specs *keep
+pace* rather than accruing as debt behind the shipping. The
+number is a dated snapshot of what the discipline produced here,
+not a multiplier anyone is promised.
+
 The closing point is simple. This is a learnable skill. The
 discipline above is six bullet-points worth of vocabulary, not a
 worldview, not an ideology, not a stance on AI. Adopt the contract
@@ -1046,6 +1064,16 @@ from §2. Adopt the pacing from §3. Adopt the artifact nesting from
 from §6. Adopt the verification gates from §7. Practice each one
 boring-ly until they compound. The mornings that result are
 unremarkable in any single moment, and remarkable across a week.
+
+There is a tell in how this article got written. The attune-\*
+family is these disciplines turned into software — attune-ai
+builds and maintains the others — and the disciplines, once
+named, keep generating the next thing. Drafting this piece
+surfaced a friction none of the six quite covered; naming it
+produced a new spec by the end of the session. The discipline
+didn't only describe the work. It generated more of it. That is
+the synergy — tied to the discipline itself, not to any one
+tool.
 
 That is the discipline of agent collaboration. We are still
 learning it. We hope this is useful.
