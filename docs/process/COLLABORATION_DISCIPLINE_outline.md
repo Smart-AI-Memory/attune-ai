@@ -681,18 +681,27 @@ All open questions resolved. Drafting may proceed.
    section sets its own context at the top. Slight prose
    redundancy across sections is acceptable cost.
 
-## Revision pass — planned 2026-06-02 (post-#575)
+## Revision pass — executed 2026-06-02 (in #575)
 
-Scope decided 2026-06-02. The small **payoff + frame** cut already
-ships in [#575](https://github.com/Smart-AI-Memory/attune-ai/pull/575)
-(intro team-management line, §8 dated throughput coda, generative
-close). The remaining refinements are **consolidated into ONE
-revision PR after #575 merges** — deliberately NOT a `/spec`: prose
-sits below the spec altitude, and full requirements/design/tasks
-would over-formalize per §4. Edits are structured-one-shots;
-rebuild via `attune-ai-dev/build_discipline.py`; any metric stays
-dated; Patrick merges to publish. Rationale + detail in memory
+Scope decided 2026-06-02; **executed the same day in
+[#575](https://github.com/Smart-AI-Memory/attune-ai/pull/575)**.
+How it actually went, vs. the original plan below: rather than a
+separate PR *after* #575 merged, the whole revision was **folded
+into #575** while it was still open — one consolidated PR, no
+stacking. Deliberately NOT a `/spec`: prose sits below the spec
+altitude, and full requirements/design/tasks would over-formalize
+per §4. Edits were structured-one-shots, rebuilt via
+`attune-ai-dev/build_discipline.py`; metrics dated; Patrick merges
+#575 to publish. Rationale + detail in memory
 `project_discipline_article_revisions`.
+
+Status: items below landed in #575, with two exceptions — **§3
+generalize was a no-op** (already generalized: the asymmetry frame,
+polyphasic as one of three examples), and **transferable-framing
+touches + an optional §8 recap-mirror remain** as minor follow-ups.
+The §7 rewrite leads its receipt with **99.6% per-claim
+faithfulness** (93% coverage dropped). Original plan preserved for
+the record:
 
 Planned changes:
 
