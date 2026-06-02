@@ -42,6 +42,28 @@ _STATUS_LINE = re.compile(
     re.IGNORECASE | re.MULTILINE,
 )
 
+# Self-truthing additions — match terminal signals anywhere in
+# the spec file (not just the header), so a stale "draft" header
+# above a closed checklist doesn't keep the spec in-flight.
+_TERMINAL_LINE = re.compile(
+    r"^\s*(?:Spec\s+)?Status\s*:\s*(closed|complete|retired|superseded)\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_CHECKLIST_HEADING = re.compile(
+    r"^##\s+Completion\s+checklist\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+_CHECKLIST_LINE = re.compile(
+    r"^\s*-\s*\[([ xX])\]\s+(.*?)\s*$",
+    re.MULTILINE,
+)
+_DEFERRED_MARKERS = re.compile(
+    r"(~~.*?~~|\bdeferred\b|\bN/A\b|\bwon't\s+do\b)",
+    re.IGNORECASE,
+)
+_NEXT_H2 = re.compile(r"^##\s+", re.MULTILINE)
+_TERMINAL_VERDICTS = frozenset({"closed", "complete", "retired", "superseded"})
+
 # Sentinel TTL: anything older than this on a SessionStart prune
 # sweep is considered orphaned from an ungraceful exit.
 _SENTINEL_TTL_SECONDS = 7 * 24 * 60 * 60
@@ -66,10 +88,32 @@ class SpecInfo:
 
     status: str
     """Verbatim status line value, lowercased
-    (e.g. ``approved``, ``in-progress``, ``draft``)."""
+    (e.g. ``approved``, ``in-progress``, ``draft``).
+
+    Raw header value, preserved for back-compat. Consumers that
+    care about completion-state reconciliation should read
+    ``effective_status`` instead.
+    """
 
     mtime: float
     """Most-recent mtime across spec files (seconds since epoch)."""
+
+    # Self-truthing additions (2026-06-02). All optional with safe
+    # defaults so existing positional constructors don't break.
+    effective_status: str = ""
+    """Reconciled status — overrides ``status`` when a terminal
+    signal (completed checklist / explicit closed line) is found
+    deeper in the file. Falls back to ``status`` when no terminal
+    signal is present. See DECIDE-1 in the spec's decisions.md."""
+
+    status_source: str = "header"
+    """Where ``effective_status`` came from — one of
+    ``"header"`` / ``"checklist"`` / ``"terminal-line"``."""
+
+    status_conflict: bool = False
+    """True when ``effective_status`` overrode a non-terminal
+    ``status`` (i.e. header drifted away from completion state).
+    spec_orient renders a one-line hint when True."""
 
 
 @dataclass(frozen=True)
@@ -82,28 +126,128 @@ class GitState:
     uncommitted: tuple[str, ...]
 
 
-def _read_status(path: Path) -> str:
-    """Return the lowercased status from a phase file, or empty."""
+def _read_phase(path: Path) -> tuple[str, str]:
+    """Return ``(status, full_text)`` from a phase file.
+
+    Status is the lowercased value from the first ``**Status:**``
+    line, or empty string if absent. The full text is returned so
+    the reconciler can scan for terminal signals deeper in the file
+    without re-reading from disk.
+    """
     try:
         text = path.read_text(encoding="utf-8", errors="replace")
     except OSError:
-        return ""
+        return "", ""
     match = _STATUS_LINE.search(text)
-    if not match:
-        return ""
-    return match.group(1).strip().lower()
+    status = match.group(1).strip().lower() if match else ""
+    return status, text
 
 
-def _phase_for_dir(spec_dir: Path) -> tuple[str, str, float] | None:
+def _read_status(path: Path) -> str:
+    """Return the lowercased status from a phase file, or empty.
+
+    Back-compat shim — prefer ``_read_phase`` when you also need the
+    full text for reconciliation.
+    """
+    status, _ = _read_phase(path)
+    return status
+
+
+def _completion_signal(text: str) -> tuple[str | None, str]:
+    """Read terminal markers from a phase file's text.
+
+    Looks for two signals:
+
+    1. **Terminal-line scan** — explicit ``Spec status: closed`` /
+       ``Status: complete`` / etc. anywhere in the file.
+    2. **Completion-checklist scan** — a ``## Completion checklist``
+       section where all non-deferred rows are checked.
+
+    Returns ``(verdict, source)``:
+        - verdict: ``"closed"`` / ``"complete"`` / ``"retired"`` /
+          ``"superseded"`` if a terminal signal exists, else None.
+        - source: ``"terminal-line"`` / ``"checklist"`` when verdict
+          is non-None, else ``"header"``.
+    """
+    # 1. Terminal-line scan — short-circuit on first hit.
+    match = _TERMINAL_LINE.search(text)
+    if match:
+        return match.group(1).lower(), "terminal-line"
+
+    # 2. Completion-checklist scan.
+    heading = _CHECKLIST_HEADING.search(text)
+    if heading is None:
+        return None, "header"
+
+    section_start = heading.end()
+    next_heading = _NEXT_H2.search(text, section_start)
+    section_end = next_heading.start() if next_heading else len(text)
+    section = text[section_start:section_end]
+
+    items = list(_CHECKLIST_LINE.finditer(section))
+    if not items:
+        return None, "header"
+
+    checked = 0
+    outstanding = 0
+    for item in items:
+        box, body = item.group(1), item.group(2)
+        if _DEFERRED_MARKERS.search(body):
+            continue  # deferred — not outstanding
+        if box.strip().lower() == "x":
+            checked += 1
+        else:
+            outstanding += 1
+
+    # All non-deferred items checked, AND at least one was checked
+    # (guard against empty / all-deferred sections producing a
+    # spurious "complete" verdict).
+    if checked > 0 and outstanding == 0:
+        return "complete", "checklist"
+
+    return None, "header"
+
+
+def _reconcile_status(header_status: str, phase_text: str) -> tuple[str, str, bool]:
+    """Reconcile header status against completion signals.
+
+    DECIDE-1 (decisions.md): terminal signal wins over stale
+    non-terminal headers. Falls back to header when no terminal
+    signal is present.
+
+    Returns ``(effective_status, status_source, status_conflict)``.
+    """
+    verdict, source = _completion_signal(phase_text)
+    if verdict is None:
+        return header_status, "header", False
+
+    # Terminal signal exists. Per DECIDE-1, terminal wins.
+    header_is_terminal = header_status in _TERMINAL_VERDICTS
+    return verdict, source, not header_is_terminal
+
+
+def _phase_for_dir(
+    spec_dir: Path,
+) -> tuple[str, str, str, str, bool, float] | None:
     """Pick the highest-priority phase file present in a spec dir.
 
-    Returns ``(phase, status, mtime)`` where ``mtime`` is the most
-    recent across all phase files (so adding a fresh file bumps
-    the spec to the top of the list).
+    Returns ``(phase, raw_status, effective_status, status_source,
+    status_conflict, mtime)``:
+
+    - ``phase`` — ``requirements`` / ``design`` / ``tasks``
+    - ``raw_status`` — verbatim header status, lowercased
+    - ``effective_status`` — reconciled verdict (terminal signal
+      wins over a stale header per DECIDE-1)
+    - ``status_source`` — ``"header"`` / ``"checklist"`` /
+      ``"terminal-line"``
+    - ``status_conflict`` — True when ``effective_status`` overrode
+      a non-terminal ``raw_status``
+    - ``mtime`` — most recent across all phase files (fresh-file
+      bumps the spec to the top of the list)
 
     Returns ``None`` when no phase file is readable.
     """
-    chosen: tuple[str, str, float] | None = None
+    chosen: tuple[str, str, str, str, bool] | None = None
     latest_mtime = 0.0
     for phase, fname in _PHASE_FILES:
         fpath = spec_dir / fname
@@ -116,23 +260,31 @@ def _phase_for_dir(spec_dir: Path) -> tuple[str, str, float] | None:
         if file_mtime > latest_mtime:
             latest_mtime = file_mtime
         if chosen is None:
-            status = _read_status(fpath)
-            chosen = (phase, status, 0.0)
+            raw_status, phase_text = _read_phase(fpath)
+            effective, source, conflict = _reconcile_status(raw_status, phase_text)
+            chosen = (phase, raw_status, effective, source, conflict)
     if chosen is None:
         return None
-    return chosen[0], chosen[1], latest_mtime
+    return chosen[0], chosen[1], chosen[2], chosen[3], chosen[4], latest_mtime
 
 
-def _is_in_flight(phase: str, status: str) -> bool:
-    """Decide whether a spec is in-flight per the requirements.
+def _is_in_flight(phase: str, effective_status: str) -> bool:
+    """Decide whether a spec is in-flight per the reconciled verdict.
 
     Rules:
-    - tasks.md ``Status: complete`` → done, exclude.
-    - Any other phase/status with a present phase file → in-flight.
+    - Any terminal ``effective_status`` (closed / complete / retired
+      / superseded) → done, exclude — regardless of phase.
     - Empty status (malformed) → still in-flight (don't drop a
       working spec because the heading was malformed).
+    - Anything else → in-flight.
+
+    The historical "tasks + complete only" rule is now subsumed:
+    a tasks.md whose header says ``complete`` reaches this function
+    with ``effective_status == "complete"`` and is excluded the
+    same way; a requirements.md with a body ``Status: closed`` is
+    ALSO excluded now, which is the self-truthing improvement.
     """
-    if phase == "tasks" and status == "complete":
+    if effective_status in _TERMINAL_VERDICTS:
         return False
     return True
 
@@ -202,8 +354,8 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
                 phase_info = _phase_for_dir(spec_dir)
                 if phase_info is None:
                     continue
-                phase, status, mtime = phase_info
-                if not _is_in_flight(phase, status):
+                phase, raw_status, effective, source, conflict, mtime = phase_info
+                if not _is_in_flight(phase, effective):
                     continue
                 found.append(
                     SpecInfo(
@@ -211,8 +363,11 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
                         path=spec_dir,
                         layer=_layer_for(roots, base),
                         phase=phase,
-                        status=status,
+                        status=raw_status,
                         mtime=mtime,
+                        effective_status=effective,
+                        status_source=source,
+                        status_conflict=conflict,
                     )
                 )
     found.sort(key=lambda s: s.mtime, reverse=True)

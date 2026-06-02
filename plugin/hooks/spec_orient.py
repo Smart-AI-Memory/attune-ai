@@ -59,14 +59,31 @@ _ORIENTATION_MAX_SPECS = 3
 
 
 def _format_phase(spec: SpecInfo) -> str:
-    """Short ``(phase status)`` blurb for the orientation list."""
+    """Short ``(phase status)`` blurb for the orientation list.
+
+    Renders the reconciled ``effective_status`` (not the raw header
+    ``status``) so a stale "draft" header above a closed checklist
+    doesn't show up as in-flight draft.
+
+    When ``status_conflict`` is True (header drifted from the
+    completion state), append a one-line hint so the source drift
+    surfaces and can be fixed.
+    """
     phase_label = {
         "requirements": "requirements",
         "design": "design",
         "tasks": "tasks",
     }.get(spec.phase, spec.phase)
-    status = spec.status or "no status"
-    return f"{phase_label} {status}"
+    effective = spec.effective_status or spec.status or "no status"
+    base = f"{phase_label} {effective}"
+    if spec.status_conflict:
+        source_label = {
+            "checklist": "tasks closed per checklist",
+            "terminal-line": "marked terminal in body",
+        }.get(spec.status_source, spec.status_source)
+        raw = spec.status or "no header"
+        return f'{base} — {source_label}; header says "{raw}", worth fixing'
+    return base
 
 
 def format_orientation(specs: list[SpecInfo]) -> str:

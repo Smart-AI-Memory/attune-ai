@@ -175,6 +175,189 @@ class TestDiscoverSpecs:
         assert layers == {"ws-feat": "workspace", "rag-feat": "attune-rag"}
 
 
+# ── status reconciliation (self-truthing) ────────────────────
+
+
+def _write_tasks_with_checklist(
+    spec_dir: Path,
+    *,
+    header_status: str,
+    checklist_lines: list[str],
+    terminal_line: str | None = None,
+) -> None:
+    """Helper — write a tasks.md with a Completion checklist section.
+
+    ``checklist_lines`` are appended verbatim under the
+    ``## Completion checklist`` heading. Each should be a full
+    ``- [x] body`` or ``- [ ] body`` line (caller controls the box
+    state and whether the body is deferred).
+    """
+    spec_dir.mkdir(parents=True, exist_ok=True)
+    body = f"# Tasks\n\n**Status**: {header_status}\n\n"
+    if terminal_line is not None:
+        body += f"{terminal_line}\n\n"
+    body += "## Completion checklist\n\n"
+    body += "\n".join(checklist_lines)
+    body += "\n"
+    (spec_dir / "tasks.md").write_text(body, encoding="utf-8")
+
+
+class TestStatusReconciliation:
+    """Regression guard for the self-truthing-spec-status spec."""
+
+    def test_draft_header_with_closed_checklist_reconciles_to_complete(
+        self, tmp_path: Path, state_mod
+    ) -> None:
+        """Architecture-realignment shape: draft header above a fully
+        checked checklist (with deferred rows) → effective complete,
+        conflict True, NOT in-flight."""
+        spec_dir = tmp_path / "specs" / "ar-shape"
+        _write_tasks_with_checklist(
+            spec_dir,
+            header_status="draft",
+            checklist_lines=[
+                "- [x] Phase 1 — Implementation",
+                "- [x] Phase 2 — Tests",
+                "- [ ] ~~Phase 3 — Stretch goal~~ deferred to v2",
+                "- [ ] Audit cleanup — N/A",
+            ],
+        )
+        result = state_mod.discover_specs([tmp_path])
+        # Excluded from in-flight list per the reconciler.
+        assert [s.slug for s in result] == []
+
+        # Verify the reconciler reaches the expected verdict directly.
+        verdict, source = state_mod._completion_signal((spec_dir / "tasks.md").read_text())
+        assert verdict == "complete"
+        assert source == "checklist"
+
+    def test_approved_header_with_partial_checklist_stays_in_flight(
+        self, tmp_path: Path, state_mod
+    ) -> None:
+        spec_dir = tmp_path / "specs" / "in-progress"
+        _write_tasks_with_checklist(
+            spec_dir,
+            header_status="approved",
+            checklist_lines=[
+                "- [x] Phase 1 — Done",
+                "- [ ] Phase 2 — Working",
+                "- [ ] Phase 3 — Pending",
+            ],
+        )
+        result = state_mod.discover_specs([tmp_path])
+        assert len(result) == 1
+        spec = result[0]
+        assert spec.status == "approved"
+        assert spec.effective_status == "approved"
+        assert spec.status_source == "header"
+        assert spec.status_conflict is False
+
+    def test_no_checklist_no_terminal_falls_back_to_header(self, tmp_path: Path, state_mod) -> None:
+        """Header-only files behave exactly as they did before."""
+        spec_dir = tmp_path / "specs" / "header-only"
+        _write_spec(spec_dir, requirements_status="approved")
+        result = state_mod.discover_specs([tmp_path])
+        assert len(result) == 1
+        spec = result[0]
+        assert spec.status == "approved"
+        assert spec.effective_status == "approved"
+        assert spec.status_source == "header"
+        assert spec.status_conflict is False
+
+    def test_malformed_checklist_falls_back_safely(self, tmp_path: Path, state_mod) -> None:
+        """Heading present but body has no parseable ``- [ ]`` rows
+        → no signal, fall back to header. Must NOT raise."""
+        spec_dir = tmp_path / "specs" / "malformed"
+        spec_dir.mkdir(parents=True)
+        (spec_dir / "tasks.md").write_text(
+            "# Tasks\n\n**Status**: in-progress\n\n"
+            "## Completion checklist\n\n"
+            "Some random unrelated prose with no checkbox rows.\n",
+            encoding="utf-8",
+        )
+        result = state_mod.discover_specs([tmp_path])
+        assert len(result) == 1
+        spec = result[0]
+        assert spec.effective_status == "in-progress"
+        assert spec.status_conflict is False
+
+    def test_terminal_line_overrides_stale_approved_header(self, tmp_path: Path, state_mod) -> None:
+        spec_dir = tmp_path / "specs" / "terminal-line"
+        spec_dir.mkdir(parents=True)
+        (spec_dir / "tasks.md").write_text(
+            "# Tasks\n\n"
+            "**Status**: approved\n\n"
+            "## Phase 1 — Implementation\n\n"
+            "Did a thing. The work landed in 2026-05-08.\n\n"
+            "Spec status: closed\n",
+            encoding="utf-8",
+        )
+        result = state_mod.discover_specs([tmp_path])
+        # Excluded from in-flight per reconciliation.
+        assert [s.slug for s in result] == []
+
+        verdict, source = state_mod._completion_signal((spec_dir / "tasks.md").read_text())
+        assert verdict == "closed"
+        assert source == "terminal-line"
+
+    def test_format_phase_renders_conflict_hint(self, state_mod) -> None:
+        """When status_conflict is True, _format_phase appends the
+        one-line hint so a stale header gets surfaced for fix."""
+        # Load spec_orient module the same way state_mod is loaded.
+        import importlib.util
+        from pathlib import Path as _P
+
+        plugin_hooks = _P(__file__).resolve().parents[3] / "plugin" / "hooks"
+        spec = importlib.util.spec_from_file_location(
+            "_test_spec_orient", plugin_hooks / "spec_orient.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        spec_info = state_mod.SpecInfo(
+            slug="ar-shape",
+            path=_P("/tmp/x"),
+            layer="workspace",
+            phase="tasks",
+            status="draft",
+            mtime=0.0,
+            effective_status="complete",
+            status_source="checklist",
+            status_conflict=True,
+        )
+        rendered = mod._format_phase(spec_info)
+        assert "complete" in rendered
+        assert "tasks closed per checklist" in rendered
+        assert '"draft"' in rendered
+        assert "worth fixing" in rendered
+
+    def test_format_phase_no_hint_when_no_conflict(self, state_mod) -> None:
+        """When status_conflict is False, the hint stays absent."""
+        import importlib.util
+        from pathlib import Path as _P
+
+        plugin_hooks = _P(__file__).resolve().parents[3] / "plugin" / "hooks"
+        spec = importlib.util.spec_from_file_location(
+            "_test_spec_orient2", plugin_hooks / "spec_orient.py"
+        )
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+
+        spec_info = state_mod.SpecInfo(
+            slug="normal",
+            path=_P("/tmp/x"),
+            layer="workspace",
+            phase="design",
+            status="approved",
+            mtime=0.0,
+            effective_status="approved",
+            status_source="header",
+            status_conflict=False,
+        )
+        rendered = mod._format_phase(spec_info)
+        assert rendered == "design approved"
+
+
 # ── git_state ────────────────────────────────────────────────
 
 
