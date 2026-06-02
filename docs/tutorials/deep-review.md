@@ -98,7 +98,7 @@ Run it. You should have a full multi-pass review report in your terminal within 
 
 ## Next steps
 
-Read the [Deep Review tool reference](references/tool-deep-review.md) to see every parameter `execute` accepts, understand the severity scale used in findings, and learn how to call `deep_review` from an MCP tool context instead of directly from Python.
+Use `inspect.signature(DeepReviewAgentSDKWorkflow.execute)` to see every parameter `execute` accepts, and read `src/attune/workflows/deep_review.py` directly to understand the severity scale used in findings and how to call `deep_review` from an MCP tool context instead of directly from Python.
 
 <!-- attune-generated: source_hash=e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4 feature=deep-review kind=tutorial generated_at=2026-06-02 -->
 

@@ -91,11 +91,6 @@ data = report.to_dict()
 print(data["approved"], data["blockers"])
 ```
 
-## See also
-
-- [Release Prep concept overview](../concepts/tool-release-prep.md) — what each check area verifies and how the go/no-go decision is made
-- [Release Prep quickstart](../quickstarts/skill-release-prep.md) — run the `/release-prep` skill from Claude Code
-
 <!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=how-to generated_at=2026-06-02 -->
 
 ## Unresolved references

@@ -159,7 +159,7 @@ sys.exit(0 if report.approved else 1)
 
 ## Next steps
 
-To understand how the individual agents decide their scores — what ruff rules `CodeQualityAgent` enforces, what patterns `SecurityAuditorAgent` flags, and how the `Tier` escalation works when an agent's confidence is too low — read the [release prep reference](../reference/ref-release-prep.md).
+To understand how the individual agents decide their scores — what ruff rules `CodeQualityAgent` enforces, what patterns `SecurityAuditorAgent` flags, and how the `Tier` escalation works when an agent's confidence is too low — read the agent source files directly under `src/attune/agents/release/`.
 
 <!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=tutorial generated_at=2026-06-02 -->
 

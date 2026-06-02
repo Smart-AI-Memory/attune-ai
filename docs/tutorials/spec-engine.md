@@ -6,7 +6,7 @@ This tutorial walks you through the spec engine's Python API from first import t
 
 - Python 3.10 or newer
 - The project installed in your environment
-- A plan file saved at `.claude/plans/` (the spec skill produces these — see the [Spec-Driven Development concept](concepts/tool-spec.md) if you haven't created one yet)
+- A plan file saved at `.claude/plans/` (the spec skill produces these)
 
 ## What you will build
 

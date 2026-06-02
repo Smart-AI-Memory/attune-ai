@@ -50,7 +50,7 @@ Each subagent reports independently. The orchestrator — guided by `_SYSTEM_PRO
 - **Change synthesis behavior** (scoring weights, output sections, citation format) by modifying `_TASK_PROMPT_TEMPLATE`. The orchestrator's behavior is entirely prompt-driven; `_SYSTEM_PROMPT` controls its role framing and `_TASK_PROMPT_TEMPLATE` controls report structure.
 - **Wrap the workflow** by calling `DeepReviewAgentSDKWorkflow.execute(**kwargs)` inside your own class and post-processing the returned `WorkflowResult`. This is the correct approach for adding filtering, caching, or routing logic without modifying the core orchestration.
 
-For usage details, see the [tool reference](references/tool-deep-review.md).
+For usage details, see `src/attune/workflows/deep_review.py` directly.
 
 <!-- attune-generated: source_hash=e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4 feature=deep-review kind=architecture generated_at=2026-06-02 -->
 
