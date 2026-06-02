@@ -230,14 +230,47 @@ All six Phase-1 questions were walked with Patrick and decided:
 6. **Repo bring-up** → standard sibling pattern; **publish 0.1.0
    early** so the author integration is CI-testable.
 
-### Remaining open for Phase 2 design
+### Phase 2 design — resolved directions (2026-06-02)
 
-- The exact `VerifyContext` shape — how much attune-verify
-  auto-resolves (env import resolution, `--help` capture) vs.
-  requires the caller to declare explicitly.
-- Whether the `FaithfulnessJudge` reuse is a hard dependency on
-  attune-rag or a duck-typed optional integration (and how it
-  degrades when rag isn't installed).
+Both Phase-1 open items were resolved in discussion:
+
+- **`VerifyContext` shape** → verify **auto-resolves the lookups**
+  (import resolution, link stat, `--help` capture) but the caller
+  **declares the boundaries** in the context: which env (default:
+  current interpreter), the project root, the *allowlist of
+  commands* safe to introspect, and the count sources (values or
+  extractors). Two hard constraints: `--help` capture runs a
+  subprocess, so it is gated to caller-declared commands only —
+  never auto-run a command name the generated doc happens to
+  mention; and counts cannot be inferred, so the caller supplies
+  them.
+- **Semantic judge** → **Option C: a `Judge` protocol with
+  injection** (verify imports nothing from rag). Two
+  implementations behind it:
+  - **Skill-judge (default, interactive)** — when verify runs
+    inside a Claude Code session, a `/verify` skill has the
+    ambient agent do the semantic judgment on the subscription:
+    **no API call, no key, no spend**. The family's "runs on your
+    subscription" principle, applied to verification.
+  - **API-judge (headless fallback)** — for CI / the weekly
+    help-freshness workflow / batch regen (no ambient agent), an
+    optional `attune-verify[rag]` extra ships a thin adapter over
+    attune-rag's `FaithfulnessJudge`
+    (`score(query, answer, passages)`, async, needs
+    `ANTHROPIC_API_KEY`).
+  - A caller may inject any other judge satisfying the protocol.
+
+  The deterministic core never touches an LLM and runs everywhere.
+  attune-verify therefore ships **both a library and a `/verify`
+  skill** surface.
+
+Genuinely still open for Phase 2:
+
+- The exact `Judge` protocol signature — mirror rag's
+  `score(query, answer, passages)` or a verify-native shape.
+- Skill-judge mechanics: how the `/verify` skill feeds its verdict
+  back into the library's findings, and the degrade path when no
+  judge is available and the semantic flag is on.
 
 ---
 
