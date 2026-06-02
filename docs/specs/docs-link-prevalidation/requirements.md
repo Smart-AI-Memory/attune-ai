@@ -10,7 +10,7 @@
 > catching them at the boundary between attune-author and the
 > attune-ai repo BEFORE they land.
 
-**Status:** draft
+**Status:** approved
 **Created:** 2026-06-02
 **Owner:** —
 **Related:**
@@ -29,7 +29,7 @@
 
 ## Phase 1: Requirements
 
-**Status:** draft
+**Status:** approved
 
 ### Problem statement
 
@@ -61,8 +61,10 @@ before the file lands.
 
 **In scope:**
 
-- A validator that runs after `attune-author generate` (or as a
-  pre-commit hook on `docs/**/*.md`) and either:
+- A validator running as a **pre-commit hook** on `docs/**/*.md`
+  (chosen over post-generate runner: catches manual edits too,
+  reuses existing pre-commit infrastructure, low integration cost)
+  that either:
   - **Reads the `## Unresolved references` audit block** at the
     bottom of each generated file and surfaces the failures
     (preferred — the work is already done; we just need to
@@ -100,8 +102,11 @@ before the file lands.
    the cost of the LLM hallucination is bounded to the local cycle.
 2. **As a contributor opening a PR with regen'd docs**, I want the
    broken-link issues either pre-fixed or pre-flagged with clear
-   remediation guidance, so I'm not surprised by a mkdocs build
-   failure I had nothing to do with.
+   remediation guidance, so I'm equipped to fix them efficiently —
+   even if I didn't introduce them. The contributor on the PR is
+   often in the optimum position to fix the problem with full
+   context; the validator's job is to surface what to fix, not
+   hide it.
 3. **As CI on a docs-only PR**, I shouldn't fail on something that
    was preventable at commit time. mkdocs `--strict` becomes the
    safety net, not the primary detection layer.
@@ -169,6 +174,10 @@ locally at commit time using the existing audit-block signal.
 also the most invasive; defer until evidence shows (1)+(2) aren't
 enough.
 
+**Locked decision (2026-06-02 approval):** ship (1) + (2) together.
+Defer (3) until evidence shows the consumer-side defense alone
+isn't catching cases the polish-prompt fix would.
+
 ### Coverage areas
 
 | Area | Status | Notes |
@@ -209,11 +218,20 @@ contributors without the hook installed).
 
 ### Tradeoffs & alternatives
 
+The polish-prompt fix at attune-author#27 is the root-cause path
+and is **necessary but not sufficient** on its own: LLM
+hallucination floor is non-zero, attune-author already generates
+the audit block (the signal is sitting there unused), and the
+consumer verifier is extensible to the other 5 hallucination
+shapes from the same family. The right shape is **defense in
+depth**: polish-prompt fix reduces the hallucination rate at
+source; consumer verifier catches what slips through.
+
 | Option | Pros | Cons | Pick |
 |--------|------|------|------|
-| **Consumer-side audit-block reader** (this spec) | Cheap; leverages existing fact-check signal; defense-in-depth | New script + hook + CI job to maintain | ✅ |
-| **Fix the polish prompt at the source** (attune-author#27) | Root cause | Slow; LLM hallucination floor is non-zero anyway | ✗ alone — pair with this |
-| **Make mkdocs --strict run in a faster pre-flight job** | Minimal new code | Doesn't help local; just shifts the failure earlier in CI | △ — option 2 from "Proposed mechanism" |
+| **Consumer-side audit-block reader** (this spec) | Cheap; leverages existing fact-check signal; extensible to other hallucination shapes | New script + hook + CI job to maintain | ✅ ship now |
+| **Fix the polish prompt at the source** (attune-author#27) | Reduces hallucination rate at root | Slow; LLM hallucination floor is non-zero; doesn't consume the existing audit-block signal | ✅ keep in flight upstream — defense in depth |
+| **Make mkdocs --strict run in a faster pre-flight job** | Minimal new code | Doesn't help local; just shifts the failure earlier in CI | △ — already option 2 from "Proposed mechanism" |
 | **Accept the status quo** | Zero work | Every regen pass blocks PRs; contributor confusion compounds | ✗ |
 
 ### Rollback strategy
