@@ -32,18 +32,31 @@ other workflows that do. The Phase 6 mechanical pattern (wrap the
 SDK call, classify the exception, attach a kind) doesn't fit
 because there's no SDK call at the coordinator's own level.
 
-Today both coordinators handle errors with bare-except prose:
+Today both coordinators handle errors with bare-except prose
+(scope verified against source 2026-06-02):
 
 - [`src/attune/workflows/discovery_sweep/workflow.py:376`](../../../src/attune/workflows/discovery_sweep/workflow.py)
-  — `except Exception as exc:  # noqa: BLE001` wrapping
-  source-discovery failures.
+  — `except Exception as exc:  # noqa: BLE001` in `_run_source`,
+  wrapping `source.discover()`. Already captures
+  `type(exc).__name__` into the `source_failed` event and returns
+  `(source.name, exc)`.
 - [`src/attune/workflows/secure_release.py:275`](../../../src/attune/workflows/secure_release.py)
-  — `except Exception as e:  # noqa: BLE001` wrapping pipeline-run
-  failures.
+  — `except Exception as e:  # noqa: BLE001` wrapping the *entire*
+  four-stage pipeline (crew, security, code-review, release) in
+  one block. Sets `NO_GO` + generic "Pipeline failed: {e}"; cannot
+  attribute which stage failed without restructuring into per-stage
+  `try` blocks.
+
+A third bare-except at `discovery_sweep/workflow.py:74`
+(`_safe_emit`) is **not** a fidelity site — it is best-effort
+event-sink observability that must swallow so sink latency never
+breaks the sweep. It belongs on the waived list, not the scope.
 
 Plus per-source bare-excepts inside `discovery_sweep/sources/*.py`
-(dependency_check, doc_audit, security_audit, perf_audit) that catch
-sub-workflow errors and emit prose at the source layer.
+— **six** sites, not four: `bug_predict`, `dependency_check`,
+`doc_audit`, `perf_audit`, `security_audit`, `test_audit` — that
+catch sub-workflow errors per path and emit findings at the source
+layer.
 
 ### Concrete trigger
 
@@ -94,10 +107,14 @@ A complete answer needs both layers typed.
   auto-retry — that's a separate spec on resilience).
 - Changing the existing `sdk_error_kind` taxonomy from the closed
   parent spec.
-- Bare-except cleanup at the four per-source sites inside
-  `discovery_sweep/sources/*.py` — flag for triage but defer; they
-  catch *sub-workflow* errors which are handled by the layer-1
+- Bare-except cleanup at the six per-source sites inside
+  `discovery_sweep/sources/*.py` (`bug_predict`,
+  `dependency_check`, `doc_audit`, `perf_audit`, `security_audit`,
+  `test_audit`) — flag for triage but defer; they catch
+  *sub-workflow* errors which are handled by the layer-1
   propagation rule, so they don't need their own typed kind.
+- The observability swallow at `discovery_sweep/workflow.py:74`
+  (`_safe_emit`) — correctly best-effort by design; never type it.
 - Net-new sub-workflow error types.
 - Cross-coordinator standardization (e.g. pulling
   `release_prep.py`, `release.py` into the same model) — covered
@@ -164,26 +181,67 @@ design decision.
 
 ## Recommendation
 
-**Adopt Routes A + C together.** Route B is technically what the
-closed parent spec already chose ("out of scope for that spec");
-opening this spec to recommend B again would be a non-answer.
-Single-route A or single-route C leaves half the diagnostic gap
-unaddressed. The combined design is the complete picture.
+**Adopt the Routes A + C *shape*, but ground the layer-C taxonomy
+and confirm layer-A feasibility against source in Phase 2 before
+naming anything.** Route B is what the closed parent already chose
+("out of scope for that spec"); recommending it again would be a
+non-answer. Single-route A or single-route C leaves half the
+diagnostic gap unaddressed. The two-layer model (A = "what failed
+below me", C = "what failed at my level") is the keeper.
 
-Phase 2 design.md will need to decide:
+The change from the original draft: do **not** ratify the five
+`coordinator_error_kind` values in Phase 1. The 2026-06-02
+grounding pass (below) shows the proposed taxonomy is partly
+speculative and the layer-A mechanics are more nuanced than "read
+the sub-result's kind." Per the project lesson "the code is the
+contract, not the spec's named list," Phase 2 derives the taxonomy
+from observed failure modes.
+
+### Grounding pass (verified against source 2026-06-02)
+
+Reading the actual coordinator code surfaced five constraints the
+draft missed or left underspecified:
+
+1. **Scope was off.** One real coordinator site in discovery-sweep
+   (`:376`), not two — `:74` is an observability swallow (waived).
+   Per-source sites are six, not four (see Problem statement).
+2. **discovery-sweep is partial-failure-by-design.** Per NFR-1 a
+   source failure becomes a "questions" entry and never aborts the
+   sweep (`:376` returns `(name, exc)`, emits `source_failed`). So
+   `partial_failure` is the *expected* path there, not an error
+   kind — typing it as a failure would mislabel the common case.
+3. **Route A is two cases, not one.** When a sub-workflow returns
+   `success=False`, its `metadata["sdk_error_kind"]` is present and
+   trivially propagable. When a sub-workflow *raises*, there is no
+   kind — only an exception to classify. Route A as drafted covers
+   only the first; the raise-path bleeds into layer C.
+4. **secure-release needs restructuring for layer A.** Its single
+   broad catch wraps all four stages, so attributing the failing
+   sub-workflow requires per-stage `try` blocks — a real
+   implementation cost, not a metadata read.
+5. **`subworkflow_timeout` is speculative** — neither coordinator
+   has timeout logic today. And **`WorkflowResult` needs no new
+   field**: `metadata["sdk_error_kind"]` already exists
+   (`base.py:410`) and flows end-to-end through `ops/runner.py`.
+
+### Phase 2, task 1 (grounding deliverable)
+
+Before any design: enumerate the real failure modes at the one
+discovery-sweep coordinator site, the one secure-release site, and
+the six per-source sites; derive the layer-C kinds from those;
+record that secure-release requires per-stage `try`-block
+restructuring for any sub-workflow attribution.
+
+Phase 2 design.md still decides:
 
 - The aggregation rule for layer A (first-failure vs severity-
   ranked vs all-listed)
-- Partial-success semantics: M-of-N sub-workflows succeed →
-  coordinator returns success-with-warnings or failure?
+- Partial-success semantics — noting discovery-sweep treats it as
+  normal (see grounding #2)
 - Dashboard chip surface: coordinator_kind only, sub_kind only, or
   both? If both, presentation order?
-- Whether `subworkflow_timeout` requires the coordinator to
-  introduce timeouts it doesn't currently have (vs. defining the
-  kind for future use only)
-- Layer C taxonomy completeness — are the five proposed kinds
-  enough, or are there orchestration failures the discovery-sweep
-  and secure-release code paths produce that don't fit them?
+- Whether to define `subworkflow_timeout` speculatively or drop it
+  until coordinator-side timeouts exist
 
 ---
 
@@ -207,35 +265,40 @@ For Phase 4 implementation to be considered complete:
    surface decision.
 5. Drift-guard test prevents reintroducing bare-except at the two
    named sites.
-6. Existing per-source bare-excepts inside
-   `discovery_sweep/sources/*.py` are flagged in `decisions.md` as
-   waived (per "out of scope" above) so a future audit doesn't
-   re-open them.
+6. The six per-source bare-excepts inside
+   `discovery_sweep/sources/*.py` and the `_safe_emit` swallow at
+   `workflow.py:74` are flagged in `decisions.md` as waived (per
+   "out of scope" above) so a future audit doesn't re-open them.
 
 ---
 
 ## Open questions for Phase 2
 
-Captured so design.md has a clean checklist:
+Captured so design.md has a clean checklist. Several from the
+original draft were resolved by the 2026-06-02 grounding pass
+(see Recommendation) and are marked below.
 
 - **Aggregation rule for layer A:** first-failure encountered,
   most-severe by a ranked list, or all-listed? Affects whether
   coordinator result carries a single `sdk_error_kind` or a list.
-- **Partial-success semantics:** when 3 of 5 sub-workflows
-  succeed, is coordinator success? Affects discovery-sweep's UX
-  (it's *expected* for some sources to find nothing).
+  *(Open.)*
+- **Partial-success semantics:** *Partly resolved* —
+  discovery-sweep treats partial failure as normal (NFR-1); the
+  open part is whether secure-release's M-of-N stages should be
+  success-with-warnings or failure.
 - **Chip surface:** show coordinator kind, sub kind, or both? If
-  both, which dominates the chip's color/icon?
-- **Timeout introduction:** does adding `subworkflow_timeout` as a
-  kind require introducing coordinator-side timeouts? Or do we
-  define the kind speculatively for future use?
-- **Layer C taxonomy completeness:** review actual failure paths
-  in both coordinators to confirm the five proposed kinds cover
-  what the code can produce.
+  both, which dominates the chip's color/icon? *(Open.)*
+- **Timeout introduction:** *Resolved direction* — no coordinator
+  has timeout logic today, so `subworkflow_timeout` is either
+  defined speculatively for future use or dropped; it cannot fire
+  now.
+- **Layer C taxonomy completeness:** *Promoted to Phase 2 task 1*
+  (grounding deliverable) rather than an open question — derive
+  kinds from observed failure paths, don't ratify the five.
 - **`release_prep.py` and `release.py` scope:** these are
   orchestration-shaped too. Roll into this spec, or address
-  separately?
-- **Subworkflow propagation hook:** does the WorkflowResult
-  contract need a new field, or can we layer the propagation onto
-  existing fields (e.g. `metadata.sdk_error_kind` already exists
-  at the workflow level)?
+  separately? *(Open.)*
+- **Subworkflow propagation hook:** *Resolved* — no new
+  `WorkflowResult` field needed; `metadata["sdk_error_kind"]`
+  already exists at the workflow level and flows through
+  `ops/runner.py`.
