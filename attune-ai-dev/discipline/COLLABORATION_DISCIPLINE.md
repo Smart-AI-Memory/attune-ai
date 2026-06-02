@@ -245,6 +245,45 @@ without an alternative is cosmetic and creates friction without
 value. The contract welcomes real pushback and rejects the
 imitation kind.
 
+The contract has an asynchronous mode, too — for when the human
+steps away and the agent keeps working. Everything above governs
+*interactive* work: decision points, recommend-and-approve. But
+agents don't tire, and a known away-window is runway the human can
+spend deliberately. The asynchronous contract has the same
+two-obligation shape, re-pointed at unattended work.
+
+The human's half is to queue *execution-ready* work — not merely
+substantial work. Decisions made, premise fresh, path clear:
+roughly, hand off implementation, not design. Decision-ambiguous
+work handed to an unattended window either stalls (the agent waits
+for an answer that won't come) or guesses wrong (a thousand lines
+of correct implementation of the wrong thing). The artifact
+altitude is the tell — tasks-level work survives an away-window;
+design-level work belongs in the synchronous window where you're
+present to answer. A compact invocation helps: in our tooling
+`auto: <specs or PRs>` reads as "these are execution-ready, run
+them to the boundary" — the same shorthand-as-vocabulary primitive
+from earlier in this section.
+
+The agent's half is to narrow to what is genuinely safe and fresh;
+hold hard guardrails (no irreversible or outward-facing act — no
+merge to a protected branch, no publish, no new repo, nothing
+touching credentials — without the human); re-validate a spec's
+premise before executing it, because specs go stale in days; and
+stop honestly at the real boundary rather than manufacture busywork
+or blind-execute a stale plan. The agent that pads an away-window
+with low-value churn to look productive breaks the asynchronous
+contract exactly as the one that smuggles in a refactor breaks the
+synchronous one.
+
+This cuts both ways at the *edges* of the work, not only the
+middle. If the human's starting handoff is weak — vague, ambiguous,
+or decision-heavy — the agent owes a pushback to firm it into a
+strong start before proceeding, the same way it owes a clean
+stopping boundary at the end rather than halting mid-edit.
+Protecting the quality of the start and the stop is higher-leverage
+than executing whatever phrasing happened to arrive.
+
 ---
 
 ## §3 — Pacing: Sustainability Is a Skill
