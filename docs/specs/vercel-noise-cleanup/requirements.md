@@ -1,5 +1,5 @@
 # Requirements — Vercel Noise Cleanup
-**Status:** approved — awaiting approval before design.md and tasks.md
+**Status:** complete (2026-05-14; Vercel project deleted upstream, removing the recurring required-check failure that motivated the spec)
 User-facing stories and the contracts they imply. See `decisions.md`
 for context and the chosen resolution path. `design.md` and `tasks.md`
 are intentionally omitted — they will be written after Patrick reviews

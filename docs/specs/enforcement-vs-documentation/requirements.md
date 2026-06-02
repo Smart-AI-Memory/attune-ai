@@ -10,7 +10,7 @@
 > and establishes the size discipline + retirement metrics
 > that keep the enforced set tractable.
 
-**Status:** approved (2026-05-31; see [decisions.md](./decisions.md))
+**Status:** partial — framework approved 2026-05-31 (cap=10 enforcements); first enforcement (worktree-path-guard hook, PR #521) shipped; subsequent enforcements queued as candidates surface
 **Created:** 2026-05-31
 **Owner:** —
 **Related:**
