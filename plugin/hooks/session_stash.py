@@ -1,0 +1,312 @@
+#!/usr/bin/env python3
+"""Stop-hook session-stash — capture reusable findings once per session.
+
+The ``Stop`` event fires on every turn, so this hook acts ONCE per
+session (a per-session sentinel) and only after the transcript has
+accumulated meaningful content (a utilization gate), so it snapshots a
+substantive session rather than an empty opening turn.
+
+Flow (all best-effort, never blocks a stop):
+
+1. Read the session transcript tail.
+2. Extract <=5 structured findings via a LOCAL Ollama model
+   (``llama3.1:8b`` by default); degrade to a cheap heuristic marker
+   scan when Ollama is unavailable.
+3. Stash each finding through ``attune.memory.session_stash.stash_entry``
+   — which runs the PII/secrets gate and writes to the searchable
+   backend (file by default, AMS when connected).
+4. Prune expired findings once.
+
+Tunables (env): ``ATTUNE_MEMORY_STASH`` (set ``0`` to disable),
+``ATTUNE_MEMORY_STASH_MIN_UTIL`` (gate, default 0.30),
+``ATTUNE_MEMORY_OLLAMA_MODEL`` (default ``llama3.1:8b``),
+``ATTUNE_MEMORY_OLLAMA_URL`` (default ``http://localhost:11434``),
+``ATTUNE_MEMORY_STASH_TIMEOUT`` (LLM timeout secs, default 12).
+
+Exit 0 always; output is irrelevant (Stop-hook stdout is discarded).
+
+Copyright 2026 Smart-AI-Memory
+Licensed under Apache 2.0
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import sys
+import traceback
+import urllib.error
+import urllib.request
+from pathlib import Path
+
+# Force utf-8 on stdout/stderr (Windows cp1252 would crash on em-dash/
+# emoji, caught by the outer try/except -> silent breakage).
+for _stream in (sys.stdout, sys.stderr):
+    if _stream.encoding and _stream.encoding.lower() != "utf-8":
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+
+_HOOKS_DIR = str(Path(__file__).resolve().parent)
+if _HOOKS_DIR not in sys.path:
+    sys.path.insert(0, _HOOKS_DIR)
+
+# Reuse the transcript size proxy + sentinel dir from the existing hooks.
+try:
+    from _state import _sentinel_dir  # type: ignore[attr-defined]
+    from _transcript_size import estimate_utilization
+except Exception:  # noqa: BLE001 — hook must never crash a session
+    _sentinel_dir = None  # type: ignore[assignment]
+    estimate_utilization = None  # type: ignore[assignment]
+
+_VALID_TYPES = {"decision", "pattern", "bug", "reference", "note"}
+_MAX_FINDINGS = 5
+_TAIL_CHARS = 12_000  # transcript tail handed to the extractor
+_DEFAULT_MIN_UTIL = 0.30
+
+
+def _enabled() -> bool:
+    return os.environ.get("ATTUNE_MEMORY_STASH", "1").strip() not in {"0", "false", "no"}
+
+
+def _stash_sentinel(session_id: str | None) -> Path | None:
+    if _sentinel_dir is None:
+        return None
+    safe = "unknown"
+    if session_id:
+        safe = re.sub(r"[^A-Za-z0-9_-]", "_", session_id)[:64] or "unknown"
+    return _sentinel_dir() / f".stash-done-{safe}"
+
+
+def _read_transcript_tail(transcript_path: str | None, max_chars: int = _TAIL_CHARS) -> str:
+    """Return the human-readable tail of the session transcript.
+
+    Walks the JSONL user/assistant turns, extracts text, and returns the
+    last ``max_chars`` characters. Tolerant of malformed lines / missing
+    files; never raises.
+    """
+    if not transcript_path:
+        return ""
+    path = Path(transcript_path)
+    if not path.is_file():
+        return ""
+    chunks: list[str] = []
+    try:
+        with path.open("r", encoding="utf-8", errors="replace") as fh:
+            for line in fh:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    record = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if not isinstance(record, dict):
+                    continue
+                message = record.get("message")
+                content = (
+                    message.get("content") if isinstance(message, dict) else record.get("content")
+                )
+                role = (
+                    (message or {}).get("role")
+                    if isinstance(message, dict)
+                    else record.get("role") or record.get("type")
+                )
+                text = _text_of(content)
+                if text:
+                    chunks.append(f"{role or '?'}: {text}")
+    except OSError:
+        return ""
+    joined = "\n".join(chunks)
+    return joined[-max_chars:]
+
+
+def _text_of(content: object) -> str:
+    """Collect the string text from a transcript message body (recursive)."""
+    if content is None:
+        return ""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, list):
+        return " ".join(_text_of(p) for p in content).strip()
+    if isinstance(content, dict):
+        parts: list[str] = []
+        t = content.get("text")
+        if isinstance(t, str):
+            parts.append(t)
+        nested = content.get("content")
+        if nested is not None:
+            parts.append(_text_of(nested))
+        return " ".join(p for p in parts if p).strip()
+    return ""
+
+
+def _extract_via_ollama(text: str) -> list[dict] | None:
+    """Ask a local Ollama model for <=5 findings. None when unavailable."""
+    base = os.environ.get("ATTUNE_MEMORY_OLLAMA_URL", "http://localhost:11434").rstrip("/")
+    model = os.environ.get("ATTUNE_MEMORY_OLLAMA_MODEL", "llama3.1:8b")
+    try:
+        timeout = float(os.environ.get("ATTUNE_MEMORY_STASH_TIMEOUT", "12"))
+    except ValueError:
+        timeout = 12.0
+    prompt = (
+        "You are extracting durable memory from a coding session transcript.\n"
+        "Return ONLY JSON of the form "
+        '{"findings": [{"type": "...", "content": "..."}]}.\n'
+        "Rules:\n"
+        "- At most 5 findings; fewer is better. Skip chit-chat and routine steps.\n"
+        "- Each finding is a single reusable insight worth recalling next session.\n"
+        "- type is one of: decision, pattern, bug, reference, note.\n"
+        "- content is one concise sentence, <= 280 chars, no secrets/paths-as-secrets.\n\n"
+        f"TRANSCRIPT TAIL:\n{text}\n"
+    )
+    payload = json.dumps(
+        {"model": model, "prompt": prompt, "stream": False, "format": "json"}
+    ).encode("utf-8")
+    req = urllib.request.Request(
+        f"{base}/api/generate", data=payload, headers={"Content-Type": "application/json"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as resp:  # noqa: S310 — localhost
+            body = json.loads(resp.read().decode("utf-8", errors="replace"))
+    except (urllib.error.URLError, TimeoutError, ConnectionError, OSError, ValueError):
+        return None  # Ollama not running / model missing / timeout -> heuristic fallback
+    raw = body.get("response") if isinstance(body, dict) else None
+    if not isinstance(raw, str):
+        return None
+    try:
+        parsed = json.loads(raw)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    findings = parsed.get("findings") if isinstance(parsed, dict) else None
+    return findings if isinstance(findings, list) else []
+
+
+_MARKER_RE = re.compile(
+    r"\b(lesson|TIL|gotcha|decided|decision|bug|root cause|pattern|fix(?:ed)?|"
+    r"learned|insight|takeaway)\b",
+    re.IGNORECASE,
+)
+
+
+def _extract_heuristic(text: str) -> list[dict]:
+    """Cheap fallback: surface marker-bearing lines as ``note`` findings."""
+    out: list[dict] = []
+    seen: set[str] = set()
+    for line in text.splitlines():
+        line = line.strip(" -*#>\t")
+        if len(line) < 20 or len(line) > 280:
+            continue
+        if not _MARKER_RE.search(line):
+            continue
+        key = line.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        out.append({"type": "note", "content": line})
+        if len(out) >= _MAX_FINDINGS:
+            break
+    return out
+
+
+def _normalize(findings: list[dict]) -> list[dict]:
+    """Validate/clamp raw findings to <=5 well-typed {type, content} dicts."""
+    clean: list[dict] = []
+    for f in findings:
+        if not isinstance(f, dict):
+            continue
+        content = f.get("content")
+        if not isinstance(content, str) or not content.strip():
+            continue
+        ftype = f.get("type")
+        ftype = ftype if ftype in _VALID_TYPES else "note"
+        clean.append({"type": ftype, "content": content.strip()[:500]})
+        if len(clean) >= _MAX_FINDINGS:
+            break
+    return clean
+
+
+def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
+    """Write each finding via the PII-gated stash. Returns count written."""
+    try:
+        from attune.memory.session_stash import (
+            SessionStashEntry,
+            resolve_backend,
+            stash_entry,
+        )
+    except Exception:  # noqa: BLE001 — attune not importable -> silent no-op
+        return 0
+    written = 0
+    for f in findings:
+        try:
+            entry = SessionStashEntry.create(
+                session_id=session_id, cwd=cwd, type=f["type"], content=f["content"]
+            )
+            if stash_entry(entry):
+                written += 1
+        except Exception:  # noqa: BLE001 — one bad finding must not abort the rest
+            continue
+    if written:
+        try:
+            backend = resolve_backend()
+            prune = getattr(backend, "prune", None) if backend else None
+            if callable(prune):
+                prune()
+        except Exception:  # noqa: BLE001 — prune is best-effort
+            pass
+    return written
+
+
+def main() -> int:
+    """Entry point — acts once per substantive session, never raises."""
+    try:
+        if not _enabled():
+            return 0
+        try:
+            payload = json.load(sys.stdin)
+        except (json.JSONDecodeError, ValueError):
+            payload = {}
+        session_id = payload.get("session_id") or "unknown"
+        transcript_path = payload.get("transcript_path")
+        cwd = str(payload.get("cwd") or Path.cwd())
+
+        sentinel = _stash_sentinel(session_id)
+        if sentinel is not None and sentinel.exists():
+            return 0  # already stashed this session
+
+        # Utilization gate: only snapshot once the session has real content.
+        try:
+            min_util = float(os.environ.get("ATTUNE_MEMORY_STASH_MIN_UTIL", _DEFAULT_MIN_UTIL))
+        except ValueError:
+            min_util = _DEFAULT_MIN_UTIL
+        if estimate_utilization is not None and transcript_path:
+            if estimate_utilization(transcript_path) < min_util:
+                return 0  # too little so far; let a later, fuller stop capture it
+
+        text = _read_transcript_tail(transcript_path)
+        if not text.strip():
+            return 0
+
+        raw = _extract_via_ollama(text)
+        findings = _normalize(raw if raw is not None else _extract_heuristic(text))
+        if not findings:
+            return 0
+
+        _stash_findings(findings, session_id=session_id, cwd=cwd)
+
+        # Mark done AFTER work so a crash mid-extract retries next stop.
+        if sentinel is not None:
+            try:
+                sentinel.parent.mkdir(parents=True, exist_ok=True)
+                sentinel.write_text("done\n", encoding="utf-8")
+            except OSError:
+                # INTENTIONAL: a missing sentinel only means we may re-stash
+                # next stop (idempotent enough); never worth failing on.
+                pass
+        return 0
+    except Exception:  # noqa: BLE001 — a Stop hook must never crash the session
+        traceback.print_exc(file=sys.stderr)
+        return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

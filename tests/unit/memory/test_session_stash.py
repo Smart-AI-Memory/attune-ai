@@ -15,6 +15,7 @@ from attune.memory.session_stash import (
     MAX_CONTENT_CHARS,
     SessionStashEntry,
     recall_entries,
+    recent_entries,
     resolve_backend,
     stash_entry,
 )
@@ -307,6 +308,55 @@ def test_recall_handles_non_list_result():
             return None
 
     assert recall_entries("q", backend=_Weird()) == []
+
+
+# --------------------------------------------------------------------------
+# recent_entries — query-less recency recall (SessionStart)
+# --------------------------------------------------------------------------
+
+
+class _RecentBackend(_FakeBackend):
+    """Backend that implements the query-less recent() path."""
+
+    def __init__(self, results=None):
+        super().__init__(results)
+        self.recent_calls: list[dict] = []
+
+    def recent(self, limit=5, **filters):
+        self.recent_calls.append({"limit": limit, **filters})
+        return list(self._results)
+
+
+def test_recent_noop_without_backend():
+    assert recent_entries(backend=None) == []
+
+
+def test_recent_empty_when_backend_lacks_recent():
+    # _FakeBackend has no recent() — degrade quietly via the getattr guard.
+    assert recent_entries(backend=_FakeBackend(results=[{"text": "x"}])) == []
+
+
+def test_recent_returns_backend_results_and_passes_args():
+    rb = _RecentBackend(results=[{"text": "newest", "cwd": "/proj"}])
+    out = recent_entries(top_k=3, cwd="/proj", backend=rb)
+    assert out == [{"text": "newest", "cwd": "/proj"}]
+    assert rb.recent_calls == [{"limit": 3, "cwd": "/proj"}]
+
+
+def test_recent_swallows_backend_error():
+    class _Boom(_RecentBackend):
+        def recent(self, *a, **k):
+            raise RuntimeError("recent down")
+
+    assert recent_entries(backend=_Boom()) == []
+
+
+def test_recent_handles_non_list_result():
+    class _Weird(_RecentBackend):
+        def recent(self, *a, **k):
+            return None
+
+    assert recent_entries(backend=_Weird()) == []
 
 
 # --------------------------------------------------------------------------

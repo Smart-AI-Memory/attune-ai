@@ -274,3 +274,40 @@ def recall_entries(
     if cwd:
         results.sort(key=lambda r: 0 if (isinstance(r, dict) and r.get("cwd") == cwd) else 1)
     return results
+
+
+def recent_entries(
+    top_k: int = 5,
+    cwd: str | None = None,
+    backend: SearchableMemoryBackend | None = None,
+) -> list[dict[str, Any]]:
+    """Query-less recall of the most-recent findings (for SessionStart).
+
+    SessionStart has no query, so recall is recency-driven: the newest
+    stashed findings, with same-``cwd`` findings surfaced first. Returns
+    an empty list when no backend is available or the backend predates the
+    ``recent`` method. Never raises — safe to call from a hook.
+
+    Args:
+        top_k: Max results.
+        cwd: When set, prefer entries from this project root (soft filter).
+        backend: Optional injected backend; resolved from the entry point
+            when omitted.
+
+    Returns:
+        Ranked memory records as dicts (newest first), or ``[]``.
+    """
+    target = resolve_backend(backend)
+    if target is None:
+        return []
+    recent = getattr(target, "recent", None)
+    if not callable(recent):
+        # Backend predates query-less recall — degrade quietly.
+        return []
+    try:
+        results = recent(limit=top_k, cwd=cwd)
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: recall is best-effort; never break the host session.
+        logger.warning("session recent-recall failed: %s", exc)
+        return []
+    return results if isinstance(results, list) else []

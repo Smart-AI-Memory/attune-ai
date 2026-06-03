@@ -417,6 +417,20 @@ class AMSMemoryBackend:
             logger.error("search_failed: query=%s error=%s", query, e)
             return []
 
+    def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
+        """Query-less recent findings (SessionStart recall) — best-effort.
+
+        AMS is semantic-first; a query-less recency *list* is not a verified
+        primitive of the client yet, so this returns ``[]`` for now rather
+        than guess the API. AMS users still get full query-driven recall via
+        ``search`` (the ``/recall`` skill) and AMS's own auto-surfacing; the
+        file backend implements ``recent`` fully and powers SessionStart
+        auto-recall on the default install. Closing this is tracked as a
+        follow-up (verify the client's list/recency path against a live
+        server, then sort by ``created_at`` desc with a soft ``cwd`` filter).
+        """
+        return []
+
     def promote(self, session_id: str | None = None) -> bool:
         """Trigger promotion of working memories to long-term.
 

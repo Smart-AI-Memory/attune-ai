@@ -229,5 +229,24 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
         """
         ...
 
+    def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
+        """Return the most-recent findings without a query.
+
+        Powers query-less recall (SessionStart): newest findings first.
+        When a ``cwd`` filter is given, same-project findings are surfaced
+        first (soft priority). Best-effort; returns ``[]`` when unavailable,
+        never raises. Backends predating this method are handled by callers
+        via ``getattr``.
+
+        Args:
+            limit: Max results.
+            **filters: Optional soft filters (e.g. ``cwd``).
+
+        Returns:
+            Ranked memory records as dicts (newest first), or ``[]``.
+
+        """
+        ...
+
 
 __all__ = ["MemoryBackend", "SearchableMemoryBackend"]

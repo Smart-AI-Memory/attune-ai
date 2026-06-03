@@ -201,6 +201,30 @@ class FileStashBackend:
         scored.sort(key=lambda s: s[0], reverse=True)
         return [d for _, d in scored[:limit]]
 
+    def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
+        """Most-recent findings (no query) — powers SessionStart recall.
+
+        Sorted newest-first; when ``cwd`` is given, same-project findings
+        are surfaced ahead of others (soft priority, mirroring ``search``).
+        Returns the same record shape as ``search`` (minus ``score``).
+        """
+        cwd = filters.get("cwd")
+        records = self._load_records()  # already TTL-pruned
+        records.sort(key=lambda r: float(r.get("ts", 0) or 0), reverse=True)
+        if cwd:
+            # Stable secondary sort: cwd matches first, recency preserved within.
+            records.sort(key=lambda r: 0 if r.get("cwd") == cwd else 1)
+        return [
+            {
+                "id": r.get("id"),
+                "text": r.get("text"),
+                "topics": r.get("topics", []),
+                "cwd": r.get("cwd"),
+                "session_id": r.get("session_id"),
+            }
+            for r in records[:limit]
+        ]
+
     def promote(self, session_id: str | None = None) -> bool:
         """No-op for the file backend (findings are already durable here)."""
         return True

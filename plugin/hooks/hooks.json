@@ -27,6 +27,15 @@
             "timeout": 4000
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/session_recall.py",
+            "timeout": 3000
+          }
+        ]
       }
     ],
     "Stop": [
@@ -36,6 +45,15 @@
             "type": "command",
             "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/compact_warning.py",
             "timeout": 4000
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python ${CLAUDE_PLUGIN_ROOT}/hooks/session_stash.py",
+            "timeout": 15000
           }
         ]
       }
