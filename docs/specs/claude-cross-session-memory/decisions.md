@@ -95,6 +95,14 @@ semantic store. Neither naive option is right alone:
 - *(b) build a semantic index over the Redis stash* → unscoped new work
   (embeddings/index over Redis values).
 
+> **Backend refined by D5 (2026-06-03):** the three tiers below are
+> **backend-agnostic** — they run against the existing
+> `SearchableMemoryBackend` protocol. The default backend is file-based
+> (markdown + attune-rag keyword search); Redis Agent Memory Server is an
+> optional upgrade that already implements the protocol with true vector
+> search. See D5. Where tier 1 below names `RedisShortTermMemory.stash()`,
+> read it as "the active backend's write path."
+
 ### Decision — three-tier: cheap-write / semantic-read / gated-promote
 
 1. **Write (Stop hook, T1.2):** stash **raw** findings fast, **no LLM polish**
@@ -134,3 +142,79 @@ addressed by the **alias-overlap-remediation** spec (attune-rag PR #154). C
 should use the documented subclass override (`MIN_ALIAS_OVERLAP = 1`) for the
 personal-memory corpus, **or** measure recall quality and decide. This is a
 concrete instance of that spec's consumer-impact item.
+
+---
+
+## D5 — Backend selection: protocol-agnostic, file default, Redis AMS optional upgrade
+
+**Ratified:** 2026-06-03, after researching Redis's agent-memory stack
+against the existing ecosystem code (Patrick's prompt: "research what Redis
+has vs what we want; demote if we don't need it, add if we do").
+
+### What the research found
+
+attune-ai **already defines** `SearchableMemoryBackend(MemoryBackend,
+Protocol)` ([`src/attune/memory/backend.py:142`](../../../src/attune/memory/backend.py))
+— a `search(query, limit, **filters)` + `promote(session_id)` extension
+"implemented by backends that support vector similarity search (e.g., Redis
+Agent Memory Server)."
+
+`attune_redis.AMSMemoryBackend` **already implements it**, wrapping the
+**Redis Agent Memory Server** (`agent-memory-client>=0.14.0`):
+
+- `stash()` → AMS working memory (session key/value)
+- `search()` → AMS long-term memory, **vector / full-text / hybrid** semantic
+  search with topic/entity/namespace/time filters
+- `promote()` → AMS working → long-term promotion
+
+Redis AMS is a **superset** of the recall need: vector+hybrid search,
+automatic topic/entity extraction, background auto-promotion, and a built-in
+memory lifecycle (creation/promotion/access/aging/forgetting/compaction). Its
+cost is **infrastructure**: a running Agent Memory Server (HTTP service) +
+Redis + the optional `agent-memory-client` dep. (`agent-memory-client` is not
+installed in the default venv.)
+
+### Decision
+
+**Keep Redis — as the optional upgrade, not the baseline. Do not demote; do
+not require.**
+
+- **Recall is backend-agnostic.** `recall_entries()` resolves a
+  `SearchableMemoryBackend` and calls `.search()` / `.promote()`. It never
+  hard-codes Redis or files.
+- **Default backend = file-based, zero-config.** A new file
+  `SearchableMemoryBackend` impl: markdown corpus (`~/.attune/session_stash/`
+  + curated `~/.claude/memory`) searched by attune-rag's `KeywordRetriever`.
+  Works offline, no server, no extra dep. Query is keyword+alias+stemming
+  (attune-rag's model — embeddings were ruled out for the spine corpus).
+- **Optional upgrade = `AMSMemoryBackend`.** When `attune-redis` is installed
+  AND an AMS server is reachable, recall transparently gains vector/hybrid
+  search, auto-extraction, and native promotion — zero extra spec work
+  (already built + protocol-conformant).
+- Backend resolution: prefer a configured/available `SearchableMemoryBackend`
+  (AMS); else fall back to the file backend. Mirrors attune-ai's existing
+  `attune.memory_backends` entry-point + file-fallback pattern.
+
+### Tier mapping (AMS vs the curated layer — do not conflate)
+
+AMS's automatic working→long-term promotion is **not** the same as D2's
+review-gated promotion to curated `~/.claude/memory`. Map three tiers:
+
+- AMS **working memory** ≈ raw session stash (ephemeral).
+- AMS **long-term memory** ≈ an auto-extracted, vector-**searchable** middle
+  tier — surfaced by recall, but **not** human-curated.
+- **`~/.claude/memory` curated files** ≈ the human-reviewed durable tier;
+  promotion *into* it stays review-gated (D2 holds).
+
+So with the AMS backend, recall searches AMS long-term + curated files; AMS's
+background auto-promotion populates its own long-term tier and does **not**
+bypass the D2 gate into curated files.
+
+### Consequences
+
+- The spec targets the **protocol**, not a backend. T1.3's
+  `session_stash.py` ships the **file `SearchableMemoryBackend`** as the
+  default impl; the AMS path is selected when present.
+- No new public-surface or scope beyond the file backend — AMS is reuse.
+- Supersedes the previous-turn "demote Redis to accelerator / drop it" lean:
+  AMS is a real, already-built upgrade and stays as the optional high tier.

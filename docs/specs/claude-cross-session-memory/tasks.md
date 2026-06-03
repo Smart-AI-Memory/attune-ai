@@ -18,6 +18,12 @@
 >   stash — **not** a semantic query against Redis. See D4.
 > - Stash writes are **raw, no polish** (Stop hook stays fast); polish happens
 >   only at user-gated promotion (T2.2).
+> - **Backend is protocol-based (D5):** target the existing
+>   `SearchableMemoryBackend` protocol. T1.3 ships a **file** impl (markdown +
+>   attune-rag keyword `.search()`) as the zero-config default;
+>   `attune_redis.AMSMemoryBackend` (Redis Agent Memory Server, vector/hybrid)
+>   is the optional upgrade selected when present. `recall_entries()` calls
+>   `backend.search()` — never hard-codes a backend.
 
 Phases:
 - **Phase 1** (P1): SessionStart hook + Redis stash infrastructure
