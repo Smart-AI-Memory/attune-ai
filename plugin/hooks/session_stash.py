@@ -299,6 +299,8 @@ def main() -> int:
                 sentinel.parent.mkdir(parents=True, exist_ok=True)
                 sentinel.write_text("done\n", encoding="utf-8")
             except OSError:
+                # INTENTIONAL: a missing sentinel only means we may re-stash
+                # next stop (idempotent enough); never worth failing on.
                 pass
         return 0
     except Exception:  # noqa: BLE001 — a Stop hook must never crash the session
