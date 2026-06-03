@@ -20,8 +20,25 @@ from attune.memory.session_stash import (
 )
 
 
+@pytest.fixture(autouse=True)
+def _isolate_ambient_backend(monkeypatch):
+    """Ensure ``resolve_backend`` finds no ambient plugin backend by default.
+
+    Without this, a dev environment with a memory-backend plugin installed
+    (e.g. attune-redis + a running AMS) makes ``resolve_backend(None)``
+    return a *real* backend, so the no-backend-available tests fail
+    locally even though they pass in CI (which lacks the optional dep).
+    The entry-point lookup is patched to empty so the suite is
+    deterministic regardless of what's installed; tests that need an
+    entry point set their own monkeypatch, which runs after this and wins.
+    """
+    import importlib.metadata as md
+
+    monkeypatch.setattr(md, "entry_points", lambda *a, **k: [])
+
+
 class _FakeBackend:
-    """Minimal SearchableMemoryBackend stand-in."""
+    """Minimal SearchableMemoryBackend stand-in (key/value stash only)."""
 
     def __init__(self, results=None):
         self.stashed: list[tuple] = []
@@ -33,6 +50,18 @@ class _FakeBackend:
 
     def search(self, query, limit=10, **filters):
         return list(self._results)
+
+
+class _RememberBackend(_FakeBackend):
+    """Searchable backend that also implements the remember() write path."""
+
+    def __init__(self, results=None):
+        super().__init__(results)
+        self.remembered: list[tuple] = []
+
+    def remember(self, content, *, memory_id=None, session_id=None, topics=None):
+        self.remembered.append((content, memory_id, session_id, topics))
+        return True
 
 
 # --------------------------------------------------------------------------
@@ -203,6 +232,44 @@ def test_stash_swallows_backend_error(monkeypatch):
             raise RuntimeError("backend down")
 
     assert stash_entry(_entry(), backend=_Boom()) is False
+
+
+def test_stash_uses_remember_when_backend_supports_it(monkeypatch):
+    """D7: with a searchable write path, stash_entry writes via remember().
+
+    The finding must go to the long-term (recallable) tier, carrying its
+    id, session, and type/cwd topics — NOT the key/value stash fallback.
+    """
+
+    class _PassThroughGate:
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
+    rb = _RememberBackend()
+    entry = _entry("a finding worth recalling")
+    assert stash_entry(entry, backend=rb) is True
+    assert len(rb.remembered) == 1
+    content, memory_id, session_id, topics = rb.remembered[0]
+    assert content == "a finding worth recalling"
+    assert memory_id == entry.id
+    assert session_id == "sess"
+    assert "type:decision" in topics
+    assert "cwd:/proj" in topics
+    assert rb.stashed == [], "must use remember(), not the key/value stash fallback"
+
+
+def test_stash_falls_back_to_keyvalue_when_no_remember(monkeypatch):
+    """A backend without remember() degrades to the key/value stash."""
+
+    class _PassThroughGate:
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
+    fb = _FakeBackend()  # no remember attribute
+    assert stash_entry(_entry(), backend=fb) is True
+    assert len(fb.stashed) == 1, "fallback must use the key/value stash"
 
 
 # --------------------------------------------------------------------------

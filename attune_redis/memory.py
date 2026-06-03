@@ -313,6 +313,49 @@ class AMSMemoryBackend:
     # SearchableMemoryBackend extension methods
     # =========================================================================
 
+    def remember(
+        self,
+        content: str,
+        *,
+        memory_id: str | None = None,
+        session_id: str | None = None,
+        topics: list[str] | None = None,
+    ) -> bool:
+        """Write a searchable long-term memory.
+
+        Unlike ``stash`` (working-memory key/value ``data`` dict), this
+        creates an AMS long-term memory record that semantic ``search``
+        can retrieve. Embedding happens server-side on write, so the
+        finding is recallable across sessions.
+
+        Args:
+            content: Text to store and embed.
+            memory_id: Optional stable id (enables dedup on re-write).
+            session_id: Session id override.
+            topics: Free-form tags carried on the record.
+
+        Returns:
+            True if the memory was written.
+        """
+        from agent_memory_client.models import ClientMemoryRecord
+
+        record_kwargs: dict[str, Any] = {
+            "text": content,
+            "session_id": session_id or self._session_id,
+            "namespace": self._namespace,
+            "user_id": self._user_id,
+            "topics": list(topics or []),
+        }
+        if memory_id:
+            record_kwargs["id"] = memory_id
+        try:
+            _run_sync(self._client.create_long_term_memory([ClientMemoryRecord(**record_kwargs)]))
+            return True
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation for AMS HTTP errors
+            logger.error("remember_failed: id=%s error=%s", memory_id, e)
+            return False
+
     def search(
         self,
         query: str,
