@@ -97,7 +97,7 @@
       "tokens_out": 53
     }
   },
-  "model": "claude-haiku-4-5-20251001",
+  "model": "claude-haiku-4-5",
   "prompt_hash": "b837f64e77aa",
   "totals": {
     "cost_usd": 0.015896,

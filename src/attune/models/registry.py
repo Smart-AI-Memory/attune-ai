@@ -44,7 +44,7 @@ class ModelInfo:
     properties for compatibility with code expecting per-1k pricing.
 
     Attributes:
-        id: Model identifier (e.g., "claude-haiku-4-5-20251001")
+        id: Model identifier (e.g., "claude-haiku-4-5")
         provider: Provider name (e.g., "anthropic")
         tier: Tier level (e.g., "cheap")
         input_cost_per_million: Input token cost per million tokens
@@ -129,7 +129,7 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
     # -------------------------------------------------------------------------
     "anthropic": {
         "cheap": ModelInfo(
-            id="claude-haiku-4-5-20251001",
+            id="claude-haiku-4-5",
             provider="anthropic",
             tier="cheap",
             input_cost_per_million=1.00,
@@ -261,7 +261,7 @@ class ModelRegistry:
         Uses O(1) cache lookup for fast performance.
 
         Args:
-            model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
+            model_id: Model identifier (e.g., "claude-haiku-4-5")
 
         Returns:
             ModelInfo if found, None otherwise
@@ -353,7 +353,7 @@ class ModelRegistry:
         """Get pricing for a model by its ID.
 
         Args:
-            model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
+            model_id: Model identifier (e.g., "claude-haiku-4-5")
 
         Returns:
             Dict with 'input' and 'output' keys (per-million pricing), or None
@@ -424,7 +424,7 @@ def get_pricing_for_model(model_id: str) -> dict[str, float] | None:
     """Get pricing for a model by its ID.
 
     Args:
-        model_id: Model identifier (e.g., "claude-haiku-4-5-20251001")
+        model_id: Model identifier (e.g., "claude-haiku-4-5")
 
     Returns:
         Dict with 'input' and 'output' keys (per-million pricing), or None

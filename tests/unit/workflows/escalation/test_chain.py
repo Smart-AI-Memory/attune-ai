@@ -53,15 +53,15 @@ class TestEscalationResult:
         result = EscalationResult(
             success=True,
             response={"answer": "42"},
-            final_model="claude-haiku-4-5-20251001",
+            final_model="claude-haiku-4-5",
         )
-        assert result.summary() == "✓ claude-haiku-4-5-20251001"
+        assert result.summary() == "✓ claude-haiku-4-5"
 
     def test_summary_success_with_retries_and_escalations(self):
         result = EscalationResult(
             success=True,
             response={},
-            final_model="claude-sonnet-4-5-20250929",
+            final_model="claude-sonnet-4-5",
             total_retries=2,
             total_escalations=1,
         )
@@ -160,7 +160,7 @@ class TestEscalationChainSuccess:
     async def test_succeeds_first_attempt(self):
         executor = _make_executor(_mock_response({"answer": "42"}))
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=0,
             executor=executor,
@@ -168,7 +168,7 @@ class TestEscalationChainSuccess:
         result = await chain.run("What is 2+2?")
         assert result.success is True
         assert result.response == {"answer": "42"}
-        assert result.final_model == "claude-haiku-4-5-20251001"
+        assert result.final_model == "claude-haiku-4-5"
         assert result.total_retries == 0
         assert result.total_escalations == 0
 
@@ -176,7 +176,7 @@ class TestEscalationChainSuccess:
     async def test_succeeds_no_validators(self):
         executor = _make_executor(_mock_response({"x": 1}))
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             retries_per_model=0,
             executor=executor,
         )
@@ -198,7 +198,7 @@ class TestEscalationChainRetries:
             _mock_response({"answer": "42"}),
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=1,
             executor=executor,
@@ -215,7 +215,7 @@ class TestEscalationChainRetries:
             _mock_response({"answer": "42"}),
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=1,
             executor=executor,
@@ -241,14 +241,14 @@ class TestEscalationChainEscalation:
             _mock_response({"answer": "42"}),  # sonnet attempt 1
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+            models=["claude-haiku-4-5", "claude-sonnet-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=1,
             executor=executor,
         )
         result = await chain.run("What is 2+2?")
         assert result.success is True
-        assert result.final_model == "claude-sonnet-4-5-20250929"
+        assert result.final_model == "claude-sonnet-4-5"
         assert result.total_escalations == 1
         assert result.total_retries == 1
 
@@ -259,7 +259,7 @@ class TestEscalationChainEscalation:
             _mock_response({"answer": "42"}),  # sonnet succeeds
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+            models=["claude-haiku-4-5", "claude-sonnet-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=0,
             executor=executor,
@@ -275,7 +275,7 @@ class TestEscalationChainEscalation:
             _mock_response({"partial": "b"}),  # sonnet — parsed but fails validator
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+            models=["claude-haiku-4-5", "claude-sonnet-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=0,
             executor=executor,
@@ -301,7 +301,7 @@ class TestEscalationChainErrors:
 
         executor = _make_executor(bad_response, _mock_response({"answer": "ok"}))
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=1,
             executor=executor,
@@ -317,7 +317,7 @@ class TestEscalationChainErrors:
             side_effect=[RuntimeError("connection error"), _mock_response({"answer": "ok"})],
         )
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+            models=["claude-haiku-4-5", "claude-sonnet-4-5"],
             validators=[StructureValidator(["answer"])],
             retries_per_model=0,
             executor=executor,
@@ -340,10 +340,10 @@ class TestEscalationChainEvaluator:
         mock_evaluator = MagicMock(spec=Evaluator)
         mock_evaluator.should_run.return_value = True
         mock_evaluator.evaluate = AsyncMock(return_value=(True, None))
-        mock_evaluator.evaluator_model = "claude-haiku-4-5-20251001"
+        mock_evaluator.evaluator_model = "claude-haiku-4-5"
 
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             evaluator=mock_evaluator,
             retries_per_model=0,
@@ -362,10 +362,10 @@ class TestEscalationChainEvaluator:
         mock_evaluator = MagicMock(spec=Evaluator)
         mock_evaluator.should_run.side_effect = lambda is_last: is_last
         mock_evaluator.evaluate = AsyncMock(return_value=(True, None))
-        mock_evaluator.evaluator_model = "claude-haiku-4-5-20251001"
+        mock_evaluator.evaluator_model = "claude-haiku-4-5"
 
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001", "claude-sonnet-4-5-20250929"],
+            models=["claude-haiku-4-5", "claude-sonnet-4-5"],
             validators=[StructureValidator(["answer"])],
             evaluator=mock_evaluator,
             retries_per_model=0,
@@ -398,10 +398,10 @@ class TestEscalationChainEvaluator:
                 (True, None),
             ],
         )
-        mock_evaluator.evaluator_model = "claude-haiku-4-5-20251001"
+        mock_evaluator.evaluator_model = "claude-haiku-4-5"
 
         chain = EscalationChain(
-            models=["claude-haiku-4-5-20251001"],
+            models=["claude-haiku-4-5"],
             validators=[StructureValidator(["answer"])],
             evaluator=mock_evaluator,
             retries_per_model=1,
@@ -419,10 +419,10 @@ class TestEscalationChainEvaluator:
 
 class TestCostTracking:
     def test_total_cost_sums_attempts(self):
-        chain = EscalationChain(models=["claude-haiku-4-5-20251001"])
+        chain = EscalationChain(models=["claude-haiku-4-5"])
         attempts = [
             AttemptResult(
-                model="claude-haiku-4-5-20251001",
+                model="claude-haiku-4-5",
                 attempt_number=1,
                 raw_response="{}",
                 parsed_response={},
@@ -431,7 +431,7 @@ class TestCostTracking:
                 output_tokens=500,
             ),
             AttemptResult(
-                model="claude-haiku-4-5-20251001",
+                model="claude-haiku-4-5",
                 attempt_number=2,
                 raw_response="{}",
                 parsed_response={},

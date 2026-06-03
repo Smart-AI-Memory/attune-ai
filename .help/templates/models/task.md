@@ -1,57 +1,57 @@
 ---
-type: task
-name: models-task
 feature: models
 depth: task
-generated_at: 2026-05-16T06:19:45.830318+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-03T02:40:23.612344+00:00
+source_hash: eaf005e9abad245619a99d4824c4b03d726a7b59f62c01ae3437da4261b3bb55
 status: generated
 ---
 
 # Work with models
 
-Use the models feature when you need to configure authentication strategies, route tasks to the right model tier, or manage provider settings for your Attune workflows.
+Use models when you need to llm authentication, provider routing, and tier management.
 
 ## Prerequisites
 
-- Access to the project source code under `src/attune/models/`
-- A Python environment where you can run `pytest`
+- Access to the project source code
+- Familiarity with the files under src/attune/models/**
 
 ## Steps
 
-1. **Identify the area you want to change.**
-   The models feature covers two main concerns. Choose the one that matches your goal:
+1. **Understand the current behavior.**
+   Read the entry points to see what models
+   does today before making changes.
+   The primary functions are:
+   - `cmd_auth_setup()` in `src/attune/models/auth_cli.py` — Run interactive authentication strategy setup.
+   - `cmd_auth_status()` in `src/attune/models/auth_cli.py` — Show current authentication strategy configuration.
+   - `cmd_auth_reset()` in `src/attune/models/auth_cli.py` — Reset/clear authentication strategy configuration.
+   - `cmd_auth_recommend()` in `src/attune/models/auth_cli.py` — Get authentication recommendation for a specific file.
+   - `main()` in `src/attune/models/auth_cli.py` — Main CLI entry point.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-   - **Authentication strategy** — controlled by `src/attune/models/auth_strategy.py`. Key functions:
-     - `configure_auth_interactive()` — runs first-time interactive setup for an authentication strategy
-     - `get_auth_strategy()` — retrieves the global `AuthStrategy` instance
-     - `count_lines_of_code()` — counts lines in a Python file to inform tier and cost estimates
-   - **CLI commands** — controlled by `src/attune/models/auth_cli.py`. Key functions:
-     - `cmd_auth_setup()` — runs interactive authentication strategy setup
-     - `cmd_auth_status()` — shows the current authentication strategy configuration
-     - `cmd_auth_reset()` — resets or clears the authentication strategy configuration
-     - `cmd_auth_recommend()` — returns an authentication recommendation for a specific file
-     - `main()` — the main CLI entry point
-
-2. **Read the function signature and docstring.**
-   Before editing, confirm the function owns the behavior you need. Check its parameters, return type, and any `AuthStrategy` fields it reads or writes — for example, `default_mode`, `prefer_subscription`, and `cost_optimization`.
-
-3. **Edit the function.**
-   Keep your change consistent with the file's existing error-handling style and naming conventions. If you are modifying `AuthStrategy` fields, update both the dataclass definition and any callers that serialize or deserialize it with `to_dict()` / `from_dict()`.
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
 4. **Run the related tests.**
-   Verify your change does not introduce regressions:
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "models"`.
 
-   ```bash
-   pytest -k "models"
-   ```
+## Key files
 
-## Verify success
+- `src/attune/models/**`
 
-The test run reports zero failures. If you changed a CLI command, run it directly and confirm the output matches the updated behavior:
+## Common modifications
 
-```bash
-python -m attune.models auth status
-```
+Functions you are most likely to modify:
 
-A correct result shows the active `AuthStrategy` fields — including `subscription_tier`, `default_mode`, and `setup_completed` — without errors.
+- `cmd_auth_setup()` in `src/attune/models/auth_cli.py`
+- `cmd_auth_status()` in `src/attune/models/auth_cli.py`
+- `cmd_auth_reset()` in `src/attune/models/auth_cli.py`
+- `cmd_auth_recommend()` in `src/attune/models/auth_cli.py`
+- `main()` in `src/attune/models/auth_cli.py`
+- `configure_auth_interactive()` in `src/attune/models/auth_strategy.py`
+- `get_auth_strategy()` in `src/attune/models/auth_strategy.py`
+- `count_lines_of_code()` in `src/attune/models/auth_strategy.py`

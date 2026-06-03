@@ -114,7 +114,7 @@ class EscalationResult:
 
         Example:
             >>> result.summary()
-            '✓ claude-haiku-4-5-20251001, 1 retry(ies)'
+            '✓ claude-haiku-4-5, 1 retry(ies)'
 
         """
         if self.success:

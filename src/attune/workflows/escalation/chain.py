@@ -59,13 +59,13 @@ class EscalationChain:
         ... )
         >>> result = await chain.run("What is 2+2?")
         >>> print(result.summary())
-        '✓ claude-haiku-4-5-20251001'
+        '✓ claude-haiku-4-5'
 
     """
 
     DEFAULT_MODELS: list[str] = [
-        "claude-haiku-4-5-20251001",
-        "claude-sonnet-4-5-20250929",
+        "claude-haiku-4-5",
+        "claude-sonnet-4-5",
         "claude-opus-4-6",
     ]
 

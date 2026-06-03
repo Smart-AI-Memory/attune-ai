@@ -387,7 +387,7 @@ class TestModuleConstants:
         from attune.agents.release.release_models import MODEL_CONFIG
 
         # Prevent regression to deprecated model IDs
-        assert MODEL_CONFIG["cheap"] == "claude-haiku-4-5-20251001"
+        assert MODEL_CONFIG["cheap"] == "claude-haiku-4-5"
         assert MODEL_CONFIG["capable"] == "claude-sonnet-4-6"
         assert MODEL_CONFIG["premium"] == "claude-opus-4-6"
 

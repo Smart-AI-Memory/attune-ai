@@ -37,7 +37,7 @@ class TestLLMResponse:
         """Test creating LLMResponse with all fields populated."""
         response = LLMResponse(
             content="Complete response",
-            model_id="claude-haiku-4-5-20251001",
+            model_id="claude-haiku-4-5",
             provider="anthropic",
             tier="cheap",
             tokens_input=1000,

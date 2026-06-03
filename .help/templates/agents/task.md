@@ -1,55 +1,58 @@
 ---
-type: task
 feature: agents
 depth: task
-generated_at: 2026-05-04T02:33:05.990938+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-03T02:40:23.579468+00:00
+source_hash: bf303cb6343cd2a2e035f09d7021c5950e3aeca3a8891276134183794ba30235
 status: generated
 ---
 
 # Work with agents
 
-Use Attune's agent system when you need to integrate AI agents across multiple frameworks (AutoGen, Haystack, LangChain) or implement agent state persistence and recovery.
+Use agents when you need to release agents, state persistence, and recovery.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the agent framework you want to integrate (AutoGen, Haystack, LangChain, or LangGraph)
-- Understanding of your agent's configuration requirements
+- Familiarity with the files under src/attune/agents/**
 
 ## Steps
 
-1. **Choose your framework adapter.**
-   Select the adapter that matches your AI framework:
-   - Call `get_autogen_adapter()` for Microsoft AutoGen agents
-   - Call `get_haystack_adapter()` for deepset Haystack pipelines
-   - Call `get_langchain_adapter()` for LangChain chains
-   - Call `get_langgraph_adapter()` for LangGraph nodes
-   - Call `wrap_wizard()` to convert an existing wizard into an agent
+1. **Understand the current behavior.**
+   Read the entry points to see what agents
+   does today before making changes.
+   The primary functions are:
+   - `get_langchain_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangChain adapter (lazy import).
+   - `get_langgraph_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get LangGraph adapter (lazy import).
+   - `get_autogen_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get AutoGen adapter (lazy import).
+   - `get_haystack_adapter()` in `src/attune/agent_factory/adapters/__init__.py` — Get Haystack adapter (lazy import).
+   - `wrap_wizard()` in `src/attune/agent_factory/adapters/wizard_adapter.py` — Quick helper to wrap a wizard as an agent.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Configure your agent.**
-   Create an `AgentConfig` object with your agent's role, capabilities, and model settings. Set the provider (like 'anthropic') and any required API keys when initializing the adapter.
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-3. **Create the agent instance.**
-   Use your adapter's `create_agent()` method with your configuration. The adapter handles framework-specific initialization and wraps the underlying agent with Attune's standard interface.
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "agents"`.
 
-4. **Implement agent operations.**
-   Use the agent's `invoke()` method for single requests or `stream()` for real-time responses. Both methods accept string or dictionary input and optional context parameters.
+## Key files
 
-5. **Add error handling and monitoring.**
-   Wrap your agent operations with the provided decorators:
-   - Use `@safe_agent_operation()` for error logging and recovery
-   - Use `@retry_on_failure()` for automatic retries with exponential backoff
-   - Use `@log_performance()` to monitor slow operations
-   - Use `@with_cost_tracking()` to track API usage costs
+- `src/attune/agents/**`
+- `src/attune/agent_factory/**`
 
-6. **Test your integration.**
-   Run tests with `pytest -k "agents"` to verify your agent works correctly with the Attune framework and doesn't break existing functionality.
+## Common modifications
 
-## Verify success
+Functions you are most likely to modify:
 
-Your agent integration is working when:
-- The adapter's `is_available()` method returns `True`
-- Your agent responds correctly to `invoke()` calls
-- Error handling decorators catch and log exceptions appropriately
-- Tests pass without regressions
+- `get_langchain_adapter()` in `src/attune/agent_factory/adapters/__init__.py`
+- `get_langgraph_adapter()` in `src/attune/agent_factory/adapters/__init__.py`
+- `get_autogen_adapter()` in `src/attune/agent_factory/adapters/__init__.py`
+- `get_haystack_adapter()` in `src/attune/agent_factory/adapters/__init__.py`
+- `wrap_wizard()` in `src/attune/agent_factory/adapters/wizard_adapter.py`
+- `safe_agent_operation()` in `src/attune/agent_factory/decorators.py`
+- `retry_on_failure()` in `src/attune/agent_factory/decorators.py`
+- `log_performance()` in `src/attune/agent_factory/decorators.py`

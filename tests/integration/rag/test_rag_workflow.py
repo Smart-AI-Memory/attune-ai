@@ -296,12 +296,10 @@ def test_execute_passes_model_override_to_sdk_options() -> None:
             capturing_options,
         ),
     ):
-        result = asyncio.run(
-            workflow.execute(query="security audit", model="claude-haiku-4-5-20251001")
-        )
+        result = asyncio.run(workflow.execute(query="security audit", model="claude-haiku-4-5"))
 
     assert result.success is True
-    assert captured.get("model") == "claude-haiku-4-5-20251001"
+    assert captured.get("model") == "claude-haiku-4-5"
 
 
 def test_execute_passes_cwd_to_sdk_options() -> None:

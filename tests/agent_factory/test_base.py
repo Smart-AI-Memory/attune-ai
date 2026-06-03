@@ -621,7 +621,7 @@ class TestGetModelForTierImportError:
 
         with patch("builtins.__import__", side_effect=fake_import):
             model = adapter.get_model_for_tier("cheap", "anthropic")
-        assert model == "claude-haiku-4-5-20251001"
+        assert model == "claude-haiku-4-5"
 
     def test_fallback_with_unknown_provider(self):
         """Lines 314-317: unknown provider falls back to anthropic defaults."""

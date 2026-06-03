@@ -1,62 +1,43 @@
 ---
-type: concept
 feature: agents
 depth: concept
-generated_at: 2026-05-04T02:32:50.053871+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-03T02:40:23.573964+00:00
+source_hash: bf303cb6343cd2a2e035f09d7021c5950e3aeca3a8891276134183794ba30235
 status: generated
 ---
 
 # Agents
 
-Agents are AI entities that wrap different LLM frameworks into a unified interface for building conversational workflows and automated processes.
+## How it works
 
-## What agents provide
+Release agents, state persistence, and recovery.
 
-The agent system solves the framework fragmentation problem in AI development. Instead of learning separate APIs for AutoGen, Haystack, and LangChain, you work with a common agent interface that handles:
+The main building blocks are:
 
-- **Unified invocation** — Call `agent.invoke()` regardless of whether the underlying implementation uses AutoGen's AssistantAgent, Haystack's Pipeline, or LangChain's chains
-- **Consistent streaming** — Get real-time responses through `agent.stream()` with the same async pattern across all frameworks
-- **Framework adaptation** — Adapters translate between Attune's agent config and each framework's native configuration format
-- **Recovery and persistence** — State management and error recovery that works across framework boundaries
+- **`ReleaseAgent`** — Base agent with CHEAP -> CAPABLE -> PREMIUM escalation.
+- **`TestCoverageAgent`** — Runs pytest --cov and parses coverage report.
+- **`DocumentationAgent`** — Checks docstring coverage, README currency, and CHANGELOG presence.
+- **`CodeQualityAgent`** — Runs ruff, checks type hints and complexity.
+- **`Tier`** — Model tier for progressive escalation.
 
-## Core components
+Under the hood, this feature spans 29 source
+files covering:
 
-**Agent wrappers** encapsulate framework-specific implementations:
-- `AutoGenAgent` wraps AutoGen's AssistantAgent or UserProxyAgent for multi-agent conversations
-- `HaystackAgent` wraps Haystack Pipelines for document processing and RAG workflows
-- `LangChainAgent` wraps LangChain chains for sequential processing pipelines
+- Release Preparation Agent Team.
+- Base release agent with progressive tier escalation.
+- Test coverage agent for Release Preparation Agent Team.
 
-**Workflow orchestrators** coordinate multiple agents:
-- `AutoGenWorkflow` uses AutoGen's GroupChat for multi-agent discussions
-- `HaystackWorkflow` runs Haystack Pipelines with multiple processing stages
-- `LangChainWorkflow` chains multiple agents through SequentialChain or custom routing
+## What connects to it
 
-**Framework adapters** provide factory methods for creating agents and workflows:
-- `AutoGenAdapter` creates AutoGen-based agents with Microsoft's conversation patterns
-- `HaystackAdapter` creates Haystack-based agents with deepset's pipeline architecture
-- `LangChainAdapter` creates LangChain-based agents with Langchain's ecosystem
+This feature relates to: agents, ai, release.
 
-## How agent creation works
+Other parts of the codebase interact with
+agents through these interfaces:
 
-You don't instantiate agents directly. Instead, you use adapter factory methods that handle framework-specific setup:
-
-```python
-# Get the adapter for your preferred framework
-adapter = get_autogen_adapter(provider='anthropic')
-
-# Create an agent with unified configuration
-agent = adapter.create_agent(AgentConfig(
-    name="code_reviewer",
-    role=AgentRole.ASSISTANT,
-    capability=AgentCapability.CODE_ANALYSIS
-))
-```
-
-The adapter translates your `AgentConfig` into whatever the underlying framework expects—AutoGen's agent configuration, Haystack's component setup, or LangChain's chain definition.
-
-## State persistence and recovery
-
-Release agents include specialized state management through `AgentStateStore` and `AgentRecoveryManager`. These components track agent execution across runs and recover from failures without losing conversation context or progress through multi-step workflows.
-
-The `AgentExecutionRecord` captures each agent operation for replay, while `AgentStateRecord` maintains the agent's working memory between invocations.
+| Interface | Purpose | File |
+|-----------|---------|------|
+| `ReleaseAgent` | Base agent with CHEAP -> CAPABLE -> PREMIUM escalation. | `src/attune/agents/release/base_agent.py` |
+| `TestCoverageAgent` | Runs pytest --cov and parses coverage report. | `src/attune/agents/release/coverage_agent.py` |
+| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence. | `src/attune/agents/release/documentation_agent.py` |
+| `CodeQualityAgent` | Runs ruff, checks type hints and complexity. | `src/attune/agents/release/quality_agent.py` |
+| `Tier` | Model tier for progressive escalation. | `src/attune/agents/release/release_models.py` |

@@ -476,7 +476,7 @@ class TestCostTrackingAccuracy:
 
         # Log request with specific token counts
         request = tracker.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1500,
             output_tokens=500,
             task_type="summarize",
@@ -495,7 +495,7 @@ class TestCostTrackingAccuracy:
 
         # Use Haiku: $1.00/M input, $5.00/M output
         request = tracker.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1_000_000,  # 1M tokens
             output_tokens=1_000_000,  # 1M tokens
             task_type="summarize",
@@ -514,7 +514,7 @@ class TestCostTrackingAccuracy:
 
         # Haiku (cheap): $1.00/M input
         haiku_req = tracker.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="summarize",
@@ -575,7 +575,7 @@ class TestCostTrackingAccuracy:
         costs = []
         for _i in range(5):
             req = tracker.log_request(
-                model="claude-haiku-4-5-20251001",
+                model="claude-haiku-4-5",
                 input_tokens=1000,
                 output_tokens=500,
                 task_type="summarize",
@@ -597,7 +597,7 @@ class TestCostTrackingAccuracy:
         # Create tracker and log request
         tracker1 = CostTracker(storage_dir=str(tmp_path))
         tracker1.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
@@ -620,7 +620,7 @@ class TestCostTrackingAccuracy:
 
         # Log requests with different tiers
         tracker.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",
@@ -744,7 +744,7 @@ class TestRoutingDecisions:
         start_time = time.time()
 
         tracker.log_request(
-            model="claude-haiku-4-5-20251001",
+            model="claude-haiku-4-5",
             input_tokens=1000,
             output_tokens=500,
             task_type="summarize",

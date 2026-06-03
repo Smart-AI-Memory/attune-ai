@@ -190,7 +190,7 @@ class TestHelperFunctions:
         """Test getting a valid model."""
         model = get_model("anthropic", "cheap")
         assert model is not None
-        assert model.id == "claude-haiku-4-5-20251001"
+        assert model.id == "claude-haiku-4-5"
 
     def test_get_model_case_insensitive(self):
         """Test case insensitivity."""
@@ -216,7 +216,7 @@ class TestHelperFunctions:
 
     def test_get_pricing_for_model_found(self):
         """Test getting pricing for existing model."""
-        pricing = get_pricing_for_model("claude-haiku-4-5-20251001")
+        pricing = get_pricing_for_model("claude-haiku-4-5")
         assert pricing is not None
         assert pricing["input"] == 1.00
         assert pricing["output"] == 5.00

@@ -358,7 +358,7 @@ class AnthropicProvider(BaseLLMProvider):
                 "supports_thinking": True,
                 "ideal_for": "General development, balanced cost/performance",
             },
-            "claude-haiku-4-5-20251001": {
+            "claude-haiku-4-5": {
                 "max_tokens": 200000,
                 "cost_per_1m_input": 1.00,
                 "cost_per_1m_output": 5.00,

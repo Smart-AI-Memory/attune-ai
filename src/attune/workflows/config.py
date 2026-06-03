@@ -559,7 +559,7 @@ workflow_providers:
 # Override default models for specific provider/tier combinations
 custom_models:
   anthropic:
-    cheap: claude-haiku-4-5-20251001
+    cheap: claude-haiku-4-5
     capable: claude-sonnet-4-6
     premium: claude-opus-4-6
   openai:

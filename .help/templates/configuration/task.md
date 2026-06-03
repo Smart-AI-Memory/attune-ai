@@ -1,95 +1,57 @@
 ---
-type: task
 feature: configuration
 depth: task
-generated_at: 2026-05-04T02:40:55.356121+00:00
-source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
+generated_at: 2026-06-03T02:40:23.631973+00:00
+source_hash: c8fb692ea17a00968fafe6e570ae09d569d1880728837d9636497e05d1a9d9ed
 status: generated
 ---
 
 # Work with configuration
 
-Use configuration management when you need to load settings, access environment variables, or modify how Attune AI handles configuration across different deployment environments.
+Use configuration when you need to project configuration and settings management.
 
 ## Prerequisites
 
 - Access to the project source code
-- Understanding of the Attune AI configuration system structure
+- Familiarity with the files under src/attune/config/**
 
-## Examine the configuration system
+## Steps
 
-1. **Review the unified configuration model.**
-   Start with `UnifiedAgentConfig` in `src/attune/config/` to understand the main configuration structure:
-   ```python
-   from attune.config import load_unified_config
-   config = load_unified_config()
-   print(config.model_dump())
-   ```
+1. **Understand the current behavior.**
+   Read the entry points to see what configuration
+   does today before making changes.
+   The primary functions are:
+   - `get_attune_env()` in `src/attune/config/env_compat.py` — Get an environment variable, checking ATTUNE_ first then EMPATHY_ fallback.
+   - `iter_attune_env_prefix()` in `src/attune/config/env_compat.py` — Yield (middle_part, value) for env vars matching ATTUNE_{prefix}*{suffix}.
+   - `get_loader()` in `src/attune/config/loader.py` — Get the global ConfigLoader instance.
+   - `load_unified_config()` in `src/attune/config/loader.py` — Convenience function to load unified configuration.
+   - `save_unified_config()` in `src/attune/config/loader.py` — Convenience function to save unified configuration.
+2. **Locate the right function to change.**
+   Each function has a single responsibility. Read its
+   docstring, parameters, and return type to confirm it
+   owns the behavior you need to modify.
 
-2. **Check current environment variables.**
-   Use the environment compatibility layer to see what's loaded:
-   ```python
-   from attune.config.env_compat import get_attune_env, iter_attune_env_prefix
+3. **Make your change.**
+   Follow existing patterns in the file — naming
+   conventions, error handling style, and logging.
 
-   # Check specific variable
-   api_key = get_attune_env("API_KEY")
+4. **Run the related tests.**
+   This catches regressions before they reach other
+   developers. Target with `pytest -k "configuration"`.
 
-   # List all ATTUNE_MODEL_* variables
-   for name, value in iter_attune_env_prefix("MODEL"):
-       print(f"ATTUNE_MODEL_{name} = {value}")
-   ```
+## Key files
 
-## Load and modify configuration
+- `src/attune/config/**`
 
-3. **Load configuration from default sources.**
-   The loader checks multiple paths automatically:
-   ```python
-   from attune.config import get_loader
+## Common modifications
 
-   loader = get_loader()
-   config = loader.load()
-   ```
+Functions you are most likely to modify:
 
-4. **Save configuration changes.**
-   Modify settings and persist them:
-   ```python
-   config.model_tier = ModelTier.PREMIUM
-   config.timeout = 30
-
-   saved_path = loader.save(config)
-   print(f"Configuration saved to {saved_path}")
-   ```
-
-5. **Apply environment overrides.**
-   Environment variables take precedence over file settings:
-   ```python
-   config = loader.load()
-   config_with_env = loader.apply_env_overrides(config)
-   ```
-
-## Validate configuration
-
-6. **Check for configuration errors.**
-   Validate before using the configuration:
-   ```python
-   from attune.config import validate_config
-
-   errors = validate_config(config)
-   if errors:
-       for error in errors:
-           print(f"Config error: {error}")
-   ```
-
-7. **Test your changes.**
-   Run configuration-specific tests:
-   ```bash
-   pytest -k "config" -v
-   ```
-
-## Success criteria
-
-Your configuration changes work correctly when:
-- `load_unified_config()` returns valid configuration without errors
-- Environment variable overrides apply as expected
-- Configuration validates successfully with `validate_config()`
-- Related tests pass without regressions
+- `get_attune_env()` in `src/attune/config/env_compat.py`
+- `iter_attune_env_prefix()` in `src/attune/config/env_compat.py`
+- `get_loader()` in `src/attune/config/loader.py`
+- `load_unified_config()` in `src/attune/config/loader.py`
+- `save_unified_config()` in `src/attune/config/loader.py`
+- `validate_config()` in `src/attune/config/validation.py`
+- `get_config()` in `src/attune/config/xml_config.py`
+- `set_config()` in `src/attune/config/xml_config.py`

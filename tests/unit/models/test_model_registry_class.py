@@ -87,7 +87,7 @@ class TestModelRegistryInitialization:
         registry = ModelRegistry()
 
         # Should have cache entries for all Anthropic models
-        assert "claude-haiku-4-5-20251001" in registry._model_id_cache
+        assert "claude-haiku-4-5" in registry._model_id_cache
         assert "claude-sonnet-4-6" in registry._model_id_cache
         assert "claude-opus-4-6" in registry._model_id_cache
 
@@ -100,10 +100,10 @@ class TestGetModelById:
         """Test retrieving Haiku model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-haiku-4-5-20251001")
+        model = registry.get_model_by_id("claude-haiku-4-5")
 
         assert model is not None
-        assert model.id == "claude-haiku-4-5-20251001"
+        assert model.id == "claude-haiku-4-5"
         assert model.provider == "anthropic"
         assert model.tier == "cheap"
 
@@ -372,7 +372,7 @@ class TestGetPricingForModel:
         """Test getting pricing for Haiku model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-haiku-4-5-20251001")
+        pricing = registry.get_pricing_for_model("claude-haiku-4-5")
 
         assert pricing is not None
         assert "input" in pricing

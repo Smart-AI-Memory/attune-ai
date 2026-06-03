@@ -123,7 +123,7 @@ class TestBatchProcessingWorkflow:
                     "message": {
                         "content": [{"type": "text", "text": "Report generated"}],
                         "usage": {"input_tokens": 150, "output_tokens": 75},
-                        "model": "claude-haiku-4-5-20251001",
+                        "model": "claude-haiku-4-5",
                         "stop_reason": "end_turn",
                     },
                 },
@@ -329,7 +329,7 @@ class TestBatchProcessingCostSavings:
         with patch("attune.workflows.batch_processing.AnthropicBatchProvider"):
             with patch("attune.workflows.batch_processing.get_model") as mock_get_model:
                 # Mock model responses
-                mock_cheap = MagicMock(id="claude-haiku-4-5-20251001")
+                mock_cheap = MagicMock(id="claude-haiku-4-5")
                 mock_capable = MagicMock(id="claude-sonnet-4-6")
                 mock_premium = MagicMock(id="claude-opus-4-20250514")
 
