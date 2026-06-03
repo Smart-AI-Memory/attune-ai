@@ -7358,3 +7358,36 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   required check — don't chase the scary-red NON-required checks
   (this is the verify-first-on-infra discipline applied to the gate
   itself).
+
+- **Claude Code's `Stop` hook fires per-turn, not per-session — gate
+  once-per-session work with a sentinel + a utilization threshold**:
+  building the P2 memory `session_stash.py` Stop hook surfaced that
+  `Stop` fires on EVERY assistant turn-end, not at session end (there
+  is no reliable `SessionEnd` event). A naive "stash findings on Stop"
+  would re-extract and re-stash every turn. The established pattern
+  (`plugin/hooks/compact_warning.py`) is: (1) a **per-session
+  sentinel** file under `_state._sentinel_dir()` checked at entry →
+  return early if present; (2) a `_transcript_size.estimate_utilization()`
+  **gate** so the once-per-session action fires only after the session
+  has accumulated meaningful content (capturing a substantive
+  snapshot, not an empty opening turn). Two rules when adding a new
+  once-per-session Stop hook: use your OWN sentinel name
+  (compact_warning owns the default `.compact-warned-<id>`; the stash
+  hook uses `.stash-done-<id>`), and write the sentinel AFTER doing
+  the work so a mid-work crash retries next stop. The Stop payload
+  also carries `transcript_path` directly — no need to reconstruct the
+  encoded `~/.claude/projects/<enc>/<session>.jsonl` path.
+
+- **`github-code-quality` (Copilot Autofix) posts inline review
+  SUGGESTIONS on PRs, not always commits — two recurring shapes, one
+  fix one decline**: distinct from the existing "Copilot Autofix
+  pushes commits directly to PR branches" lesson — here it leaves
+  review *comments* (state `COMMENTED`, advisory, non-blocking). On
+  PR #600 it flagged: (1) an empty `except OSError: pass` with no
+  explanatory comment → **legit, fix it** by adding an `# INTENTIONAL:`
+  comment (matches the repo's BLE001 convention); (2) a `...` body in a
+  `typing.Protocol` method, flagged as "Statement has no effect" with a
+  suggestion to use `raise NotImplementedError` → **decline**: `...` is
+  the idiomatic Protocol-method body and matches every sibling method
+  in the file; changing one is inconsistent. Neither blocks merge; note
+  the decline + reason in the fixing commit so the rationale is durable.
