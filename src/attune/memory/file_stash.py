@@ -1,0 +1,284 @@
+"""File-based searchable session stash — the zero-infra default backend.
+
+Per decision **D8** (claude-cross-session-memory): cross-session memory
+works out-of-box with no Redis / AMS / Ollama. This backend implements the
+:class:`attune.memory.backend.SearchableMemoryBackend` protocol over a local
+JSONL stash, so :func:`attune.memory.session_stash.stash_entry` /
+``recall_entries`` function on a plain ``pip install attune-ai``.
+
+Recall is the cheap **keyword + recency + cwd** filter D4 specified — the
+stash is one user with short retention, small enough that semantic search is
+unnecessary. AMS (``attune_redis.AMSMemoryBackend``) remains the optional
+upgrade for higher-quality recall at scale; ``resolve_backend`` prefers it
+when it is connected and falls back to this backend otherwise.
+
+Storage: ``~/.attune/session_stash/findings.jsonl`` (one JSON record per
+line). Key/value ``stash``/``retrieve`` use a sibling ``kv.json``. Records
+past the TTL are pruned lazily on read/write.
+"""
+
+from __future__ import annotations
+
+import json
+import os
+import time
+from pathlib import Path
+from typing import Any
+
+import structlog
+
+logger = structlog.get_logger(__name__)
+
+#: Default working-stash retention; matches session_stash DEFAULT_TTL_DAYS.
+DEFAULT_TTL_DAYS = 7
+
+_DAY_SECONDS = 86_400
+#: Recency half-life for the recall score (newer findings rank higher).
+_RECENCY_HALFLIFE_SECONDS = 3 * _DAY_SECONDS
+
+
+def _tokenize(text: str) -> set[str]:
+    """Lowercase alphanumeric tokens of length >= 2."""
+    out: set[str] = set()
+    token: list[str] = []
+    for ch in text.lower():
+        if ch.isalnum():
+            token.append(ch)
+        elif token:
+            if len(token) >= 2:
+                out.add("".join(token))
+            token = []
+    if len(token) >= 2:
+        out.add("".join(token))
+    return out
+
+
+def _cwd_from_topics(topics: list[str]) -> str | None:
+    """Extract the ``cwd:<path>`` marker session_stash writes into topics."""
+    for t in topics:
+        if t.startswith("cwd:"):
+            return t[len("cwd:") :]
+    return None
+
+
+class FileStashBackend:
+    """Searchable, zero-infra session stash backed by a local JSONL file.
+
+    No-arg constructable (so it resolves from the ``attune.memory_backends``
+    entry point), and marked :data:`is_fallback` so ``resolve_backend``
+    prefers a connected AMS upgrade when one is available.
+    """
+
+    #: Marks this as the always-available default, not an upgrade backend.
+    is_fallback = True
+
+    def __init__(
+        self,
+        base_dir: str | Path | None = None,
+        ttl_days: int = DEFAULT_TTL_DAYS,
+    ) -> None:
+        """Initialize the file stash.
+
+        Args:
+            base_dir: Stash directory. Defaults to ``~/.attune/session_stash``.
+            ttl_days: Retention; records older than this are pruned on access.
+        """
+        if base_dir is None:
+            base_dir = Path.home() / ".attune" / "session_stash"
+        self._dir = Path(base_dir)
+        self._findings = self._dir / "findings.jsonl"
+        self._kv = self._dir / "kv.json"
+        self._ttl_seconds = max(1, ttl_days) * _DAY_SECONDS
+        self._closed = False
+        try:
+            self._dir.mkdir(parents=True, exist_ok=True)
+        except OSError as e:
+            logger.warning("file_stash_mkdir_failed", error=str(e))
+
+    # ------------------------------------------------------------------ #
+    # internal helpers
+    # ------------------------------------------------------------------ #
+
+    def _load_records(self) -> list[dict[str, Any]]:
+        """Load all non-expired finding records (lazy TTL prune on read)."""
+        if not self._findings.exists():
+            return []
+        cutoff = time.time() - self._ttl_seconds
+        records: list[dict[str, Any]] = []
+        try:
+            for line in self._findings.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(rec, dict) and float(rec.get("ts", 0)) >= cutoff:
+                    records.append(rec)
+        except OSError as e:
+            logger.warning("file_stash_read_failed", error=str(e))
+        return records
+
+    def _rewrite(self, records: list[dict[str, Any]]) -> None:
+        """Atomically rewrite the findings file (used for append + prune)."""
+        tmp = self._findings.with_suffix(".jsonl.tmp")
+        try:
+            tmp.write_text(
+                "".join(json.dumps(r, ensure_ascii=False) + "\n" for r in records),
+                encoding="utf-8",
+            )
+            tmp.replace(self._findings)  # Path.replace: cross-platform overwrite
+        except OSError as e:
+            logger.warning("file_stash_write_failed", error=str(e))
+
+    # ------------------------------------------------------------------ #
+    # SearchableMemoryBackend — searchable write/read
+    # ------------------------------------------------------------------ #
+
+    def remember(
+        self,
+        content: str,
+        *,
+        memory_id: str | None = None,
+        session_id: str | None = None,
+        topics: list[str] | None = None,
+    ) -> bool:
+        """Append a searchable finding to the local stash (prunes expired)."""
+        topics = list(topics or [])
+        record = {
+            "id": memory_id or os.urandom(8).hex(),
+            "text": content,
+            "session_id": session_id,
+            "topics": topics,
+            "cwd": _cwd_from_topics(topics),
+            "ts": time.time(),
+        }
+        try:
+            kept = self._load_records()  # already TTL-pruned
+            kept.append(record)
+            self._rewrite(kept)
+            return True
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: stash is best-effort; never break the host session.
+            logger.warning("file_stash_remember_failed", error=str(e))
+            return False
+
+    def search(self, query: str, limit: int = 10, **filters: Any) -> list[dict]:
+        """Keyword + recency + cwd recall over the stash (D4's cheap tier)."""
+        terms = _tokenize(query)
+        if not terms:
+            return []
+        cwd = filters.get("cwd")
+        now = time.time()
+        scored: list[tuple[float, dict[str, Any]]] = []
+        for rec in self._load_records():
+            doc_terms = _tokenize(rec.get("text", "")) | {
+                t for top in rec.get("topics", []) for t in _tokenize(top)
+            }
+            overlap = len(terms & doc_terms)
+            if overlap == 0:
+                continue
+            age = max(0.0, now - float(rec.get("ts", now)))
+            recency = 0.5 ** (age / _RECENCY_HALFLIFE_SECONDS)
+            score = overlap + recency
+            if cwd and rec.get("cwd") == cwd:
+                score += 1.0  # soft boost for same-project findings
+            scored.append(
+                (
+                    score,
+                    {
+                        "id": rec.get("id"),
+                        "text": rec.get("text"),
+                        "topics": rec.get("topics", []),
+                        "cwd": rec.get("cwd"),
+                        "session_id": rec.get("session_id"),
+                        "score": round(score, 4),
+                    },
+                )
+            )
+        scored.sort(key=lambda s: s[0], reverse=True)
+        return [d for _, d in scored[:limit]]
+
+    def promote(self, session_id: str | None = None) -> bool:
+        """No-op for the file backend (findings are already durable here)."""
+        return True
+
+    # ------------------------------------------------------------------ #
+    # MemoryBackend — key/value
+    # ------------------------------------------------------------------ #
+
+    def _load_kv(self) -> dict[str, Any]:
+        if not self._kv.exists():
+            return {}
+        try:
+            data = json.loads(self._kv.read_text(encoding="utf-8"))
+            return data if isinstance(data, dict) else {}
+        except (OSError, json.JSONDecodeError):
+            return {}
+
+    def stash(
+        self, key: str, value: Any, ttl: int | None = None, agent_id: str | None = None
+    ) -> bool:
+        """Store a key/value pair (separate from the searchable findings)."""
+        try:
+            data = self._load_kv()
+            data[key] = value
+            tmp = self._kv.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            tmp.replace(self._kv)
+            return True
+        except (OSError, TypeError) as e:
+            logger.warning("file_stash_kv_set_failed", key=key, error=str(e))
+            return False
+
+    def retrieve(self, key: str, agent_id: str | None = None) -> Any | None:
+        """Retrieve a key/value pair."""
+        return self._load_kv().get(key)
+
+    def delete(self, key: str) -> bool:
+        """Delete a key/value pair. Returns False if absent."""
+        data = self._load_kv()
+        if key not in data:
+            return False
+        del data[key]
+        try:
+            tmp = self._kv.with_suffix(".json.tmp")
+            tmp.write_text(json.dumps(data, ensure_ascii=False), encoding="utf-8")
+            tmp.replace(self._kv)
+            return True
+        except OSError as e:
+            logger.warning("file_stash_kv_delete_failed", key=key, error=str(e))
+            return False
+
+    def keys(self, pattern: str = "*") -> list[str]:
+        """List key/value keys (optionally glob-filtered)."""
+        import fnmatch
+
+        ks = list(self._load_kv().keys())
+        return ks if pattern == "*" else [k for k in ks if fnmatch.fnmatch(k, pattern)]
+
+    def is_connected(self) -> bool:
+        """Always available — the stash directory is local and writable."""
+        return self._dir.exists() or not self._closed
+
+    def get_stats(self) -> dict:
+        """Backend statistics."""
+        return {
+            "backend": "file",
+            "findings": len(self._load_records()),
+            "base_dir": str(self._dir),
+            "ttl_days": self._ttl_seconds // _DAY_SECONDS,
+        }
+
+    def close(self) -> None:
+        """No-op close (no persistent connection to release)."""
+        self._closed = True
+
+    def supports_realtime(self) -> bool:
+        """File backend has no realtime pub/sub."""
+        return False
+
+    def supports_distributed(self) -> bool:
+        """File backend is single-host."""
+        return False

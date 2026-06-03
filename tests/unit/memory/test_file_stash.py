@@ -1,0 +1,196 @@
+"""Tests for FileStashBackend — the zero-infra searchable default (D8).
+
+Exercises the keyword + recency + cwd recall, TTL pruning, key/value
+path, and the SearchableMemoryBackend protocol surface. All isolated to
+``tmp_path`` (never touches the real ``~/.attune``).
+"""
+
+from __future__ import annotations
+
+import json
+import time
+
+import pytest
+
+from attune.memory.file_stash import DEFAULT_TTL_DAYS, FileStashBackend
+
+
+@pytest.fixture
+def backend(tmp_path):
+    be = FileStashBackend(base_dir=tmp_path / "stash")
+    yield be
+    be.close()
+
+
+# --------------------------------------------------------------------------
+# remember / search round-trip
+# --------------------------------------------------------------------------
+
+
+def test_remember_then_search_finds_by_keyword(backend):
+    assert backend.remember("the authentication retry loop is flaky", memory_id="m1") is True
+    hits = backend.search("authentication flaky")
+    assert len(hits) == 1
+    assert hits[0]["id"] == "m1"
+    assert "authentication" in hits[0]["text"]
+
+
+def test_search_empty_query_returns_empty(backend):
+    backend.remember("anything at all", memory_id="m1")
+    assert backend.search("") == []
+    assert backend.search("   ") == []
+
+
+def test_search_excludes_zero_overlap(backend):
+    backend.remember("redis connection pooling notes", memory_id="m1")
+    assert backend.search("kubernetes ingress") == []
+
+
+def test_search_respects_limit(backend):
+    for i in range(5):
+        backend.remember(f"shared keyword finding number {i}", memory_id=f"m{i}")
+    hits = backend.search("shared keyword finding", limit=3)
+    assert len(hits) == 3
+
+
+def test_topics_are_searchable(backend):
+    backend.remember("opaque body text", memory_id="m1", topics=["type:bug", "cwd:/proj"])
+    hits = backend.search("bug")
+    assert len(hits) == 1 and hits[0]["id"] == "m1"
+
+
+# --------------------------------------------------------------------------
+# cwd surfacing + boost
+# --------------------------------------------------------------------------
+
+
+def test_cwd_surfaced_from_topics(backend):
+    backend.remember("a finding", memory_id="m1", topics=["cwd:/home/proj"])
+    hits = backend.search("finding")
+    assert hits[0]["cwd"] == "/home/proj"
+
+
+def test_cwd_match_boosts_ranking(backend):
+    backend.remember("matching keyword here", memory_id="other", topics=["cwd:/x"])
+    backend.remember("matching keyword here", memory_id="mine", topics=["cwd:/proj"])
+    hits = backend.search("matching keyword", cwd="/proj")
+    assert hits[0]["id"] == "mine", "same-cwd finding should rank first"
+
+
+# --------------------------------------------------------------------------
+# recency ordering + TTL prune (controlled ts via direct file write)
+# --------------------------------------------------------------------------
+
+
+def _write_records(be: FileStashBackend, records):
+    be._findings.parent.mkdir(parents=True, exist_ok=True)
+    be._findings.write_text("".join(json.dumps(r) + "\n" for r in records), encoding="utf-8")
+
+
+def test_recency_breaks_ties(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            {
+                "id": "old",
+                "text": "same keyword text",
+                "topics": [],
+                "cwd": None,
+                "ts": now - 5 * 86400,
+            },
+            {"id": "new", "text": "same keyword text", "topics": [], "cwd": None, "ts": now - 60},
+        ],
+    )
+    hits = backend.search("same keyword text")
+    assert [h["id"] for h in hits][0] == "new", "more recent finding ranks first"
+
+
+def test_ttl_prunes_expired_on_search(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            {"id": "fresh", "text": "keyword alpha", "topics": [], "cwd": None, "ts": now - 60},
+            {
+                "id": "stale",
+                "text": "keyword alpha",
+                "topics": [],
+                "cwd": None,
+                "ts": now - (DEFAULT_TTL_DAYS + 1) * 86400,
+            },
+        ],
+    )
+    hits = backend.search("keyword alpha")
+    ids = [h["id"] for h in hits]
+    assert "fresh" in ids and "stale" not in ids
+
+
+def test_remember_prunes_expired(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [{"id": "stale", "text": "x y", "topics": [], "cwd": None, "ts": now - 30 * 86400}],
+    )
+    backend.remember("brand new finding", memory_id="new")
+    ids = {r["id"] for r in backend._load_records()}
+    assert ids == {"new"}, "expired record dropped on the next write"
+
+
+# --------------------------------------------------------------------------
+# key/value path + protocol surface
+# --------------------------------------------------------------------------
+
+
+def test_kv_round_trip(backend):
+    assert backend.stash("k", {"v": 1}) is True
+    assert backend.retrieve("k") == {"v": 1}
+    assert backend.retrieve("missing") is None
+
+
+def test_kv_delete_and_keys(backend):
+    backend.stash("a", 1)
+    backend.stash("b", 2)
+    assert sorted(backend.keys()) == ["a", "b"]
+    assert backend.delete("a") is True
+    assert backend.delete("a") is False
+    assert backend.keys() == ["b"]
+
+
+def test_is_fallback_and_protocol_surface(backend):
+    assert FileStashBackend.is_fallback is True
+    assert backend.is_connected() is True
+    assert backend.promote() is True
+    assert backend.supports_realtime() is False
+    assert backend.supports_distributed() is False
+    stats = backend.get_stats()
+    assert stats["backend"] == "file"
+
+
+def test_remember_returns_false_on_unexpected_error(backend, monkeypatch):
+    monkeypatch.setattr(
+        backend, "_load_records", lambda: (_ for _ in ()).throw(RuntimeError("boom"))
+    )
+    assert backend.remember("x y z") is False
+
+
+def test_search_handles_read_error(backend):
+    # A directory at the findings path makes read_text raise -> [] (no crash).
+    backend._findings.mkdir(parents=True)
+    assert backend.search("anything") == []
+
+
+def test_kv_stash_returns_false_on_write_error(backend):
+    # A directory at the kv path makes the atomic replace fail -> False.
+    backend._kv.mkdir(parents=True)
+    assert backend.stash("k", {"v": 1}) is False
+
+
+def test_corrupt_lines_are_skipped(backend):
+    backend._findings.parent.mkdir(parents=True, exist_ok=True)
+    good = json.dumps(
+        {"id": "ok", "text": "valid keyword", "topics": [], "cwd": None, "ts": time.time()}
+    )
+    backend._findings.write_text(f"not json\n{good}\n", encoding="utf-8")
+    hits = backend.search("valid keyword")
+    assert len(hits) == 1 and hits[0]["id"] == "ok"
