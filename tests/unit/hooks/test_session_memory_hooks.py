@@ -101,6 +101,21 @@ def test_extract_heuristic_finds_markers(stash_mod):
     assert any("root cause" in f["content"].lower() for f in found)
 
 
+def test_extract_heuristic_skips_git_log_noise(stash_mod):
+    # Marker-matching lines that are actually git-log / commit noise must be
+    # filtered (they dominate a transcript tail full of `git log` output).
+    text = (
+        "a1b2c3d docs(CLAUDE.md): release-tax fix + P2 build lessons (#599)\n"
+        "fix(hooks): comment the sentinel-write except (code-quality nit)\n"
+        "assistant: the real lesson was that a cold model times out and starves it\n"
+    )
+    found = stash_mod._extract_heuristic(text)
+    contents = [f["content"] for f in found]
+    assert not any(c.startswith("a1b2c3d") for c in contents), "commit-hash line leaked"
+    assert not any(c.startswith("fix(hooks)") for c in contents), "conv-commit line leaked"
+    assert any("cold model times out" in c for c in contents), "real insight dropped"
+
+
 def test_normalize_clamps_type_and_count(stash_mod):
     raw = [{"type": "bogus", "content": "keep me"}] + [
         {"type": "bug", "content": f"f{i}"} for i in range(10)
@@ -138,6 +153,23 @@ def test_extract_via_ollama_returns_none_when_unreachable(stash_mod, monkeypatch
 
     monkeypatch.setattr(stash_mod.urllib.request, "urlopen", _boom)
     assert stash_mod._extract_via_ollama("x") is None
+
+
+def test_extract_via_ollama_returns_none_on_empty_findings(stash_mod, monkeypatch):
+    # A well-formed but empty response must return None (not []), so the
+    # caller falls back to the heuristic instead of stashing nothing.
+    class _Resp:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *a):
+            return False
+
+        def read(self):
+            return json.dumps({"response": json.dumps({"findings": []})}).encode()
+
+    monkeypatch.setattr(stash_mod.urllib.request, "urlopen", lambda *a, **k: _Resp())
+    assert stash_mod._extract_via_ollama("some transcript") is None
 
 
 # ==========================================================================
@@ -194,6 +226,54 @@ def test_stash_main_happy_path_writes_sentinel(stash_mod, monkeypatch, tmp_path)
     assert stash_mod.main() == 0
     assert written == [{"type": "bug", "content": "z"}]
     assert stash_mod._stash_sentinel("s3").exists(), "sentinel written after a successful stash"
+
+
+def test_stash_main_falls_back_to_heuristic_when_ollama_empty(stash_mod, monkeypatch, tmp_path):
+    # The dogfood bug: Ollama unavailable/empty must NOT starve extraction —
+    # main() falls back to the heuristic so a real marker line still stashes.
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path))
+    tpath = tmp_path / "t.jsonl"
+    tpath.write_text(
+        json.dumps(
+            {"message": {"role": "assistant", "content": "the root cause was a stale lockfile"}}
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(stash_mod, "estimate_utilization", lambda _p: 0.9)
+    monkeypatch.setattr(stash_mod, "_extract_via_ollama", lambda _t: None)  # unavailable/empty
+    written = []
+    monkeypatch.setattr(
+        stash_mod,
+        "_stash_findings",
+        lambda findings, **k: written.extend(findings) or len(findings),
+    )
+    _stdin(monkeypatch, {"session_id": "s4", "transcript_path": str(tpath), "cwd": "/proj"})
+    assert stash_mod.main() == 0
+    assert written, "heuristic fallback should have produced a finding when Ollama returned None"
+    assert any("root cause" in f["content"].lower() for f in written)
+
+
+def test_stash_findings_round_trips_through_real_file_backend(stash_mod, monkeypatch, tmp_path):
+    """Non-mocked receipt: extract -> real sanitize -> real file write -> recall."""
+    import attune.memory.session_stash as ss
+    from attune.memory.file_stash import FileStashBackend
+
+    backend = FileStashBackend(base_dir=tmp_path / "stash")
+    monkeypatch.setattr(ss, "resolve_backend", lambda *a, **k: backend)
+
+    n = stash_mod._stash_findings(
+        [{"type": "bug", "content": "a race in the runner stop hook"}],
+        session_id="rt",
+        cwd="/proj",
+    )
+    assert n == 1, "the finding should persist through the real backend"
+    # query-less recall (SessionStart path)
+    recent = ss.recent_entries(top_k=5, backend=backend)
+    assert any("race in the runner" in (h.get("text") or "") for h in recent)
+    # keyword recall (/recall path)
+    found = ss.recall_entries("race runner", backend=backend)
+    assert any("race in the runner" in (h.get("text") or "") for h in found)
 
 
 # ==========================================================================

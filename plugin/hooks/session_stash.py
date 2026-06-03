@@ -21,7 +21,8 @@ Tunables (env): ``ATTUNE_MEMORY_STASH`` (set ``0`` to disable),
 ``ATTUNE_MEMORY_STASH_MIN_UTIL`` (gate, default 0.30),
 ``ATTUNE_MEMORY_OLLAMA_MODEL`` (default ``llama3.1:8b``),
 ``ATTUNE_MEMORY_OLLAMA_URL`` (default ``http://localhost:11434``),
-``ATTUNE_MEMORY_STASH_TIMEOUT`` (LLM timeout secs, default 12).
+``ATTUNE_MEMORY_STASH_TIMEOUT`` (LLM timeout secs, default 40 — a cold
+llama3.1:8b can exceed a tighter cap and starve extraction).
 
 Exit 0 always; output is irrelevant (Stop-hook stdout is discarded).
 
@@ -60,7 +61,7 @@ except Exception:  # noqa: BLE001 — hook must never crash a session
 
 _VALID_TYPES = {"decision", "pattern", "bug", "reference", "note"}
 _MAX_FINDINGS = 5
-_TAIL_CHARS = 12_000  # transcript tail handed to the extractor
+_TAIL_CHARS = 8_000  # transcript tail handed to the extractor (smaller = faster LLM)
 _DEFAULT_MIN_UTIL = 0.30
 
 
@@ -145,9 +146,9 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
     base = os.environ.get("ATTUNE_MEMORY_OLLAMA_URL", "http://localhost:11434").rstrip("/")
     model = os.environ.get("ATTUNE_MEMORY_OLLAMA_MODEL", "llama3.1:8b")
     try:
-        timeout = float(os.environ.get("ATTUNE_MEMORY_STASH_TIMEOUT", "12"))
+        timeout = float(os.environ.get("ATTUNE_MEMORY_STASH_TIMEOUT", "40"))
     except ValueError:
-        timeout = 12.0
+        timeout = 40.0
     prompt = (
         "You are extracting durable memory from a coding session transcript.\n"
         "Return ONLY JSON of the form "
@@ -178,7 +179,9 @@ def _extract_via_ollama(text: str) -> list[dict] | None:
     except (json.JSONDecodeError, ValueError):
         return None
     findings = parsed.get("findings") if isinstance(parsed, dict) else None
-    return findings if isinstance(findings, list) else []
+    # Return None (not []) on an empty/garbage response so the caller falls
+    # back to the heuristic — an empty Ollama answer shouldn't starve extraction.
+    return findings if (isinstance(findings, list) and findings) else None
 
 
 _MARKER_RE = re.compile(
@@ -187,9 +190,24 @@ _MARKER_RE = re.compile(
     re.IGNORECASE,
 )
 
+#: Lines that match a marker but are mechanical noise, not insights:
+#: git-log / commit lines (short hex prefix, conventional-commit prefix, or a
+#: PR/issue ref). These dominate a transcript tail full of `git log` output
+#: and otherwise crowd out real findings.
+_NOISE_RE = re.compile(
+    r"^[0-9a-f]{7,40}\s"  # leading commit hash
+    r"|^(?:feat|fix|chore|docs|test|refactor|ci|build|style|perf)(?:\([^)]*\))?!?:"  # conv-commit
+    r"|\(#\d+\)",  # PR/issue reference
+    re.IGNORECASE,
+)
+
 
 def _extract_heuristic(text: str) -> list[dict]:
-    """Cheap fallback: surface marker-bearing lines as ``note`` findings."""
+    """Cheap fallback: surface marker-bearing lines as ``note`` findings.
+
+    Filters out git-log / commit-message noise (see :data:`_NOISE_RE`) so the
+    fallback yields prose insights rather than scraped commit lines.
+    """
     out: list[dict] = []
     seen: set[str] = set()
     for line in text.splitlines():
@@ -197,6 +215,8 @@ def _extract_heuristic(text: str) -> list[dict]:
         if len(line) < 20 or len(line) > 280:
             continue
         if not _MARKER_RE.search(line):
+            continue
+        if _NOISE_RE.search(line):
             continue
         key = line.lower()
         if key in seen:
@@ -287,7 +307,11 @@ def main() -> int:
             return 0
 
         raw = _extract_via_ollama(text)
-        findings = _normalize(raw if raw is not None else _extract_heuristic(text))
+        findings = _normalize(raw) if raw else []
+        if not findings:
+            # Ollama unavailable, timed out, or yielded nothing usable —
+            # fall back to the heuristic rather than stash nothing.
+            findings = _normalize(_extract_heuristic(text))
         if not findings:
             return 0
 
