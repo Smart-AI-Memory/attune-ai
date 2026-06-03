@@ -3,6 +3,22 @@
 **Status:** approved
 **Phase:** ready-to-implement
 
+> **API corrections (2026-06-03 verify pass — authoritative: see
+> [decisions.md](decisions.md) D4).** The method names below are confabulated;
+> use the verified APIs:
+>
+> - `PersonalMemory.store()` does **not** exist → use `.capture(topic,
+>   content, kind)` (promote path; runs LLM polish) or `.query(query, k,
+>   kind_filter)` (semantic recall).
+> - `RedisShortTermMemory.store()` does **not** exist → use `.stash(key, data,
+>   credentials, ttl)` / `.retrieve(key, credentials)` (key-based; requires
+>   `AgentCredentials`).
+> - `recall_entries()` (T1.3) is a **merge** of `PersonalMemory.query()`
+>   (semantic, durable) + a cheap keyword/recency/cwd filter over the raw
+>   stash — **not** a semantic query against Redis. See D4.
+> - Stash writes are **raw, no polish** (Stop hook stays fast); polish happens
+>   only at user-gated promotion (T2.2).
+
 Phases:
 - **Phase 1** (P1): SessionStart hook + Redis stash infrastructure
 - **Phase 2** (P2): `/recall` skill + promotion UX
