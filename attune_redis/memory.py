@@ -24,6 +24,11 @@ from .config import RedisPluginConfig
 
 logger = logging.getLogger(__name__)
 
+#: Default retention for pruning long-term findings (days). Mirrors
+#: ``attune.memory.session_stash.DEFAULT_TTL_DAYS`` — kept as a local
+#: constant to avoid a cross-package import into attune-redis.
+_DEFAULT_TTL_DAYS = 30
+
 
 class _PersistentLoop:
     """A single event loop running in a daemon thread.
@@ -435,6 +440,30 @@ class AMSMemoryBackend:
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
             logger.error("promote_failed: session=%s error=%s", sid, e)
             return False
+
+    def prune(self, max_age_days: int | None = None) -> int:
+        """Forget long-term findings older than ``max_age_days`` (default 30).
+
+        Aligns AMS retention with the file backend's age-prune (consistent
+        cross-backend policy). Scoped to this backend's namespace via AMS's
+        ``ForgetPolicy(max_age_days=...)``. Best-effort; returns the number
+        of memories deleted (0 on failure), never raises.
+        """
+        from agent_memory_client.models import ForgetPolicy
+
+        age = _DEFAULT_TTL_DAYS if max_age_days is None else max(1, max_age_days)
+        try:
+            response = _run_sync(
+                self._client.forget_long_term_memories(
+                    ForgetPolicy(max_age_days=age),
+                    namespace=self._namespace,
+                )
+            )
+            return int(getattr(response, "deleted", 0) or 0)
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation for AMS HTTP errors
+            logger.error("prune_failed: max_age_days=%s error=%s", age, e)
+            return 0
 
     # =========================================================================
     # Context manager

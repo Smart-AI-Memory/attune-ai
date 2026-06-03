@@ -44,8 +44,13 @@ MAX_CONTENT_CHARS = 500
 #: Entry-point group attune plugins register a memory backend under.
 _BACKEND_GROUP = "attune.memory_backends"
 
-#: Default working-memory TTL for a stashed finding.
-DEFAULT_TTL_DAYS = 7
+#: Default retention for a stashed finding (days). Applied consistently by
+#: both searchable backends (file age-prune + AMS forget). 30d covers
+#: realistic project-revisit gaps so recall isn't empty when you return to a
+#: project after a couple weeks; the curated ``/remember`` tier is the
+#: truly-durable layer for promoted keepers. Keep in sync with
+#: ``file_stash.DEFAULT_TTL_DAYS``.
+DEFAULT_TTL_DAYS = 30
 
 
 @dataclass

@@ -1,8 +1,8 @@
 ---
 feature: memory
 depth: reference
-generated_at: 2026-06-03T12:45:43.120749+00:00
-source_hash: aef54dd763ecee5292afdaa47a99e48e4d68ab66ba2bedf0a15d83d09ad51782
+generated_at: 2026-06-03T16:28:50.327836+00:00
+source_hash: a5579e8907712bf584f1ae5f2c1991e29aa4fdc4f749495b823c67f323543a57
 status: generated
 ---
 
@@ -42,6 +42,7 @@ status: generated
 | `SessionState` | Complete state of a session. | `src/attune/memory/file_session_models.py` |
 | `PatternStagingMixin` | Mixin providing pattern staging operations. | `src/attune/memory/file_session_patterns.py` |
 | `PersistenceMixin` | Mixin providing session persistence operations. | `src/attune/memory/file_session_persistence.py` |
+| `FileStashBackend` | Searchable, zero-infra session stash backed by a local JSONL file. | `src/attune/memory/file_stash.py` |
 | `MemoryGraph` | Knowledge graph for cross-workflow intelligence. | `src/attune/memory/graph.py` |
 | `LessonsManager` | Manages lessons learned from previous sessions. | `src/attune/memory/lessons.py` |
 | `SecureMemDocsIntegration` | Secure integration between Claude Memory and MemDocs. | `src/attune/memory/long_term_integration.py` |

@@ -29,8 +29,9 @@ import structlog
 
 logger = structlog.get_logger(__name__)
 
-#: Default working-stash retention; matches session_stash DEFAULT_TTL_DAYS.
-DEFAULT_TTL_DAYS = 7
+#: Default working-stash retention (days); keep in sync with
+#: session_stash.DEFAULT_TTL_DAYS. 30d covers realistic project-revisit gaps.
+DEFAULT_TTL_DAYS = 30
 
 _DAY_SECONDS = 86_400
 #: Recency half-life for the recall score (newer findings rank higher).
@@ -203,6 +204,40 @@ class FileStashBackend:
     def promote(self, session_id: str | None = None) -> bool:
         """No-op for the file backend (findings are already durable here)."""
         return True
+
+    def prune(self, max_age_days: int | None = None) -> int:
+        """Drop findings older than ``max_age_days`` (default: backend TTL).
+
+        The file backend also prunes lazily on every read/write, so this is
+        an explicit forced sweep for parity with the AMS backend (which the
+        Stop hook can call uniformly on either backend). Best-effort.
+        """
+        ttl_seconds = (
+            self._ttl_seconds if max_age_days is None else max(1, max_age_days) * _DAY_SECONDS
+        )
+        cutoff = time.time() - ttl_seconds
+        if not self._findings.exists():
+            return 0
+        kept: list[dict[str, Any]] = []
+        dropped = 0
+        try:
+            for line in self._findings.read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    rec = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                if isinstance(rec, dict) and float(rec.get("ts", 0)) >= cutoff:
+                    kept.append(rec)
+                else:
+                    dropped += 1
+            if dropped:
+                self._rewrite(kept)
+        except OSError as e:
+            logger.warning("file_stash_prune_failed", error=str(e))
+        return dropped
 
     # ------------------------------------------------------------------ #
     # MemoryBackend — key/value

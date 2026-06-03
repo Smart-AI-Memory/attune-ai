@@ -212,5 +212,22 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
         """
         ...
 
+    def prune(self, max_age_days: int | None = None) -> int:
+        """Forget searchable findings older than ``max_age_days``.
+
+        Applies the retention policy consistently across backends (file
+        age-prune + AMS forget). When ``max_age_days`` is None, the
+        backend's configured default is used. Best-effort; returns the
+        number of entries pruned (0 if none / on failure), never raises.
+
+        Args:
+            max_age_days: Age threshold in days; None uses the backend default.
+
+        Returns:
+            Count of pruned entries (best-effort).
+
+        """
+        ...
+
 
 __all__ = ["MemoryBackend", "SearchableMemoryBackend"]

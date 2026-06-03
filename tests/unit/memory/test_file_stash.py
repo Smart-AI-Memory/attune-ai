@@ -130,7 +130,10 @@ def test_remember_prunes_expired(backend):
     now = time.time()
     _write_records(
         backend,
-        [{"id": "stale", "text": "x y", "topics": [], "cwd": None, "ts": now - 30 * 86400}],
+        # 31 days: unambiguously past the 30-day TTL (avoid the exact-boundary
+        # epsilon trap that flakes on coarse-clock platforms — see CLAUDE.md
+        # "edge-of-bucket time tests fail on Windows").
+        [{"id": "stale", "text": "x y", "topics": [], "cwd": None, "ts": now - 31 * 86400}],
     )
     backend.remember("brand new finding", memory_id="new")
     ids = {r["id"] for r in backend._load_records()}
@@ -243,3 +246,77 @@ def test_kv_delete_swallows_write_error(backend, monkeypatch):
     backend._kv.mkdir(parents=True)
     result = backend.delete("k")
     assert result is False
+
+
+# --------------------------------------------------------------------------
+# explicit prune() — forced age sweep (parity with the AMS backend)
+# --------------------------------------------------------------------------
+
+
+def test_default_ttl_is_30_days():
+    """The zero-infra retention default is 30 days (project-revisit window)."""
+    assert DEFAULT_TTL_DAYS == 30
+
+
+def test_prune_drops_expired_keeps_fresh(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            {"id": "fresh", "text": "a", "topics": [], "cwd": None, "ts": now - 60},
+            {"id": "stale", "text": "b", "topics": [], "cwd": None, "ts": now - 31 * 86400},
+        ],
+    )
+    dropped = backend.prune()
+    assert dropped == 1
+    assert {r["id"] for r in backend._load_records()} == {"fresh"}
+
+
+def test_prune_respects_explicit_max_age(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            {"id": "keep", "text": "a", "topics": [], "cwd": None, "ts": now - 3 * 86400},
+            {"id": "drop", "text": "b", "topics": [], "cwd": None, "ts": now - 10 * 86400},
+        ],
+    )
+    # 5-day window: the 10-day-old record goes, the 3-day-old stays.
+    dropped = backend.prune(max_age_days=5)
+    assert dropped == 1
+    assert {r["id"] for r in backend._load_records()} == {"keep"}
+
+
+def test_prune_no_findings_file_returns_zero(backend):
+    # Nothing stashed yet -> findings.jsonl absent -> clean no-op.
+    assert backend.prune() == 0
+
+
+def test_prune_nothing_expired_returns_zero_and_keeps_all(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [{"id": "a", "text": "x", "topics": [], "cwd": None, "ts": now - 60}],
+    )
+    assert backend.prune() == 0
+    assert {r["id"] for r in backend._load_records()} == {"a"}
+
+
+def test_prune_swallows_read_error(backend):
+    # A directory at the findings path makes read_text raise OSError -> 0, no crash.
+    backend._findings.mkdir(parents=True)
+    assert backend.prune() == 0
+
+
+def test_prune_skips_blank_and_corrupt_drops_nondict(backend):
+    # Exercises the blank-line skip, the JSONDecodeError skip, and the
+    # non-dict branch (a bare number is dropped) — alongside a kept record.
+    now = time.time()
+    backend._findings.parent.mkdir(parents=True, exist_ok=True)
+    valid = json.dumps({"id": "keep", "text": "x", "topics": [], "cwd": None, "ts": now - 60})
+    backend._findings.write_text(f"\n{valid}\nnot valid json\n123\n", encoding="utf-8")
+    dropped = backend.prune()
+    # Only the non-dict record counts as dropped; blank + corrupt lines are
+    # silently skipped, the fresh dict is kept.
+    assert dropped == 1
+    assert {r["id"] for r in backend._load_records()} == {"keep"}
