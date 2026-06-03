@@ -296,11 +296,13 @@ running AMS to function; without it, sessions behave as they do today.
   an AMS server responds at `AMS_BASE_URL` before wiring (per the
   introspect-before-coding lesson).
 
-## D7 — Searchable-tier population: direct long-term write at stash time (PROPOSED — needs ratification)
+## D7 — Searchable-tier population: direct long-term write at stash time
 
-> **Status:** proposed 2026-06-03 from the D6 "verify-first at build
-> time" pass. Needs ratification before T1.2/T1.3 wiring. Builds on
-> attune-ai PR #588 (AMS backend bug fixes).
+> **Status:** **Ratified with Patrick 2026-06-03**, from the D6
+> "verify-first at build time" pass. Option (a) chosen. Builds on
+> attune-ai PR #588 (AMS backend bug fixes, merged). Implementation
+> (backend write method + `session_stash` wiring + round-trip test)
+> follows in a separate PR.
 
 ### What the verify-first pass found
 
