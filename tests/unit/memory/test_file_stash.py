@@ -152,8 +152,11 @@ def test_kv_delete_and_keys(backend):
     backend.stash("a", 1)
     backend.stash("b", 2)
     assert sorted(backend.keys()) == ["a", "b"]
-    assert backend.delete("a") is True
-    assert backend.delete("a") is False
+    # Extract the mutating call before asserting (no side-effect inside assert).
+    deleted = backend.delete("a")
+    assert deleted is True
+    deleted_again = backend.delete("a")
+    assert deleted_again is False
     assert backend.keys() == ["b"]
 
 
@@ -194,3 +197,49 @@ def test_corrupt_lines_are_skipped(backend):
     backend._findings.write_text(f"not json\n{good}\n", encoding="utf-8")
     hits = backend.search("valid keyword")
     assert len(hits) == 1 and hits[0]["id"] == "ok"
+
+
+def test_default_base_dir_is_under_home(tmp_path, monkeypatch):
+    """No-arg construction (the entry-point path) defaults under ~/.attune."""
+    import pathlib
+
+    monkeypatch.setattr(pathlib.Path, "home", classmethod(lambda cls: tmp_path))
+    be = FileStashBackend()
+    assert str(be._dir).startswith(str(tmp_path))
+    remembered = be.remember("default dir finding", memory_id="d1")
+    assert remembered is True
+
+
+def test_construction_survives_mkdir_failure(tmp_path):
+    """A base_dir that can't be created is logged, not fatal."""
+    blocker = tmp_path / "afile"
+    blocker.write_text("not a dir", encoding="utf-8")
+    be = FileStashBackend(base_dir=blocker / "stash")  # parent is a file
+    assert be is not None  # construction did not raise
+
+
+def test_blank_lines_in_findings_are_skipped(backend):
+    good = json.dumps(
+        {"id": "ok", "text": "keyword here", "topics": [], "cwd": None, "ts": time.time()}
+    )
+    backend._findings.parent.mkdir(parents=True, exist_ok=True)
+    backend._findings.write_text(f"\n\n{good}\n\n", encoding="utf-8")
+    hits = backend.search("keyword here")
+    assert len(hits) == 1
+
+
+def test_remember_survives_rewrite_failure(backend):
+    """A write failure during remember is swallowed (best-effort, non-fatal)."""
+    backend._findings.mkdir(parents=True)  # findings path is a dir -> replace fails
+    # _load_records returns [] (read fails on a dir), _rewrite hits OSError + logs.
+    backend.remember("a finding that cannot persist")  # must not raise
+
+
+def test_kv_delete_swallows_write_error(backend, monkeypatch):
+    """A write error while deleting a present key returns False, no raise."""
+    # Key is present (load patched), but the kv path is a directory so the
+    # atomic replace fails -> the OSError branch returns False.
+    monkeypatch.setattr(backend, "_load_kv", lambda: {"k": 1})
+    backend._kv.mkdir(parents=True)
+    result = backend.delete("k")
+    assert result is False
