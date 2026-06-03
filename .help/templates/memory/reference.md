@@ -1,8 +1,8 @@
 ---
 feature: memory
 depth: reference
-generated_at: 2026-06-03T04:28:47.269880+00:00
-source_hash: 762177a9860aee4aa45cfeb762f406a50a3f7c21a4558c69f74815620780172d
+generated_at: 2026-06-03T12:45:43.120749+00:00
+source_hash: aef54dd763ecee5292afdaa47a99e48e4d68ab66ba2bedf0a15d83d09ad51782
 status: generated
 ---
 
@@ -150,7 +150,7 @@ status: generated
 | `get_redis_or_mock()` | Get a Redis connection, starting Redis if needed, or return mock. | `src/attune/memory/redis_bootstrap.py` |
 | `detect_secrets()` | Convenience function to detect secrets without creating a detector instance. | `src/attune/memory/security/secrets_detector.py` |
 | `resolve_backend()` | Return a searchable backend, or ``None`` if none is available. | `src/attune/memory/session_stash.py` |
-| `stash_entry()` | Stash a finding to working memory after the PII/secrets gate. | `src/attune/memory/session_stash.py` |
+| `stash_entry()` | Write a finding to the searchable recall tier after the PII gate. | `src/attune/memory/session_stash.py` |
 | `recall_entries()` | Semantic recall over stashed findings. Empty list when unavailable. | `src/attune/memory/session_stash.py` |
 
 
