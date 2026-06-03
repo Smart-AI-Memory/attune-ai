@@ -79,6 +79,7 @@ intent so Claude matches the right skill:
 | spec | spec-driven dev, brainstorm and execute |
 | rag-code-gen | grounded code, cite sources, verify against attune (needs `[rag]` extra) |
 | coach | coach, learn, explain, tell me more, deeper |
+| recall | recall, remember, what did I learn, prior session, past findings |
 
 ## MCP Server Not Running
 

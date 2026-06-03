@@ -320,3 +320,54 @@ def test_prune_skips_blank_and_corrupt_drops_nondict(backend):
     # silently skipped, the fresh dict is kept.
     assert dropped == 1
     assert {r["id"] for r in backend._load_records()} == {"keep"}
+
+
+# --------------------------------------------------------------------------
+# recent() — query-less recency recall (powers SessionStart)
+# --------------------------------------------------------------------------
+
+
+def test_recent_newest_first(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            {"id": "old", "text": "a", "topics": [], "cwd": None, "ts": now - 3600},
+            {"id": "new", "text": "b", "topics": [], "cwd": None, "ts": now - 60},
+            {"id": "mid", "text": "c", "topics": [], "cwd": None, "ts": now - 600},
+        ],
+    )
+    assert [r["id"] for r in backend.recent()] == ["new", "mid", "old"]
+
+
+def test_recent_cwd_priority(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [
+            # newest overall is /other; /proj is older but should surface first
+            {"id": "other", "text": "a", "topics": [], "cwd": "/other", "ts": now - 60},
+            {"id": "proj", "text": "b", "topics": [], "cwd": "/proj", "ts": now - 600},
+        ],
+    )
+    ids = [r["id"] for r in backend.recent(cwd="/proj")]
+    assert ids[0] == "proj", "same-cwd finding surfaces first despite being older"
+
+
+def test_recent_respects_limit(backend):
+    now = time.time()
+    _write_records(
+        backend,
+        [{"id": f"m{i}", "text": "x", "topics": [], "cwd": None, "ts": now - i} for i in range(5)],
+    )
+    assert len(backend.recent(limit=2)) == 2
+
+
+def test_recent_empty_when_no_records(backend):
+    assert backend.recent() == []
+
+
+def test_recent_returns_search_shape(backend):
+    backend.remember("a finding", memory_id="m1", topics=["cwd:/p"])
+    hit = backend.recent()[0]
+    assert set(hit) == {"id", "text", "topics", "cwd", "session_id"}
