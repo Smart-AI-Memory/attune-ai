@@ -205,11 +205,12 @@ Return ONLY the Python test code, starting with imports. No markdown, no explana
 """
 
         try:
-            # Try Sonnet models only (Capable tier) - do NOT downgrade
+            # Try Sonnet models only (Capable tier) - do NOT downgrade.
+            # Stable alias only: it never retires and always routes to the
+            # latest Sonnet checkpoint. The old claude-3-5-sonnet-2024xxxx
+            # dated snapshots were retired by Anthropic 2025-10-28.
             models_to_try = [
-                "claude-sonnet-4-6",  # Sonnet 4.6 (February 2026 - latest)
-                "claude-3-5-sonnet-20241022",  # 3.5 Sonnet Oct 2024
-                "claude-3-5-sonnet-20240620",  # 3.5 Sonnet Jun 2024
+                "claude-sonnet-4-6",  # Sonnet 4.6 (stable alias)
             ]
 
             response = None
