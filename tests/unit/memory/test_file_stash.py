@@ -306,3 +306,17 @@ def test_prune_swallows_read_error(backend):
     # A directory at the findings path makes read_text raise OSError -> 0, no crash.
     backend._findings.mkdir(parents=True)
     assert backend.prune() == 0
+
+
+def test_prune_skips_blank_and_corrupt_drops_nondict(backend):
+    # Exercises the blank-line skip, the JSONDecodeError skip, and the
+    # non-dict branch (a bare number is dropped) — alongside a kept record.
+    now = time.time()
+    backend._findings.parent.mkdir(parents=True, exist_ok=True)
+    valid = json.dumps({"id": "keep", "text": "x", "topics": [], "cwd": None, "ts": now - 60})
+    backend._findings.write_text(f"\n{valid}\nnot valid json\n123\n", encoding="utf-8")
+    dropped = backend.prune()
+    # Only the non-dict record counts as dropped; blank + corrupt lines are
+    # silently skipped, the fresh dict is kept.
+    assert dropped == 1
+    assert {r["id"] for r in backend._load_records()} == {"keep"}
