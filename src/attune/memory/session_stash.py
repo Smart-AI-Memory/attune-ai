@@ -117,11 +117,16 @@ def resolve_backend(
 ) -> SearchableMemoryBackend | None:
     """Return a searchable backend, or ``None`` if none is available.
 
-    Resolution order: an explicitly injected ``backend`` wins; otherwise the
-    first entry registered under the ``attune.memory_backends`` entry point
-    is instantiated (env-configured). Any failure — no plugin installed,
-    construction error, missing search capability — returns ``None`` so the
-    caller degrades to a no-op rather than raising.
+    An explicitly injected ``backend`` always wins. Otherwise backends are
+    instantiated from the ``attune.memory_backends`` entry point and chosen
+    by preference (D8): a **connected upgrade** backend (e.g. the Redis AMS
+    when it's actually running) is preferred over the always-available
+    **fallback** (the local file backend, which marks itself
+    ``is_fallback=True``). This makes cross-session memory work out-of-box on
+    a plain install while transparently upgrading to AMS when present.
+
+    Any failure — no plugin installed, construction error, missing search
+    capability — degrades to the fallback or ``None`` rather than raising.
     """
     if backend is not None:
         return backend
@@ -130,8 +135,8 @@ def resolve_backend(
 
         from attune.memory.backend import SearchableMemoryBackend as _Searchable
 
-        eps = entry_points(group=_BACKEND_GROUP)
-        for ep in eps:
+        fallback: SearchableMemoryBackend | None = None
+        for ep in entry_points(group=_BACKEND_GROUP):
             try:
                 instance = ep.load()()
             except Exception as exc:  # noqa: BLE001
@@ -139,10 +144,28 @@ def resolve_backend(
                 # break the host session — recall simply yields nothing.
                 logger.debug("memory backend %s unavailable: %s", ep.name, exc)
                 continue
-            if isinstance(instance, _Searchable) or (
-                hasattr(instance, "search") and hasattr(instance, "stash")
+            if not (
+                isinstance(instance, _Searchable)
+                or (hasattr(instance, "search") and hasattr(instance, "stash"))
             ):
-                return instance
+                continue
+            # Connectivity gate: skip an upgrade backend that isn't actually
+            # reachable. Backends without is_connected() are assumed available.
+            connected = True
+            check = getattr(instance, "is_connected", None)
+            if callable(check):
+                try:
+                    connected = bool(check())
+                except Exception:  # noqa: BLE001
+                    connected = False
+            if not connected:
+                continue
+            if getattr(instance, "is_fallback", False):
+                fallback = fallback or instance  # remember; keep looking for an upgrade
+                continue
+            return instance  # connected upgrade backend wins
+        if fallback is not None:
+            return fallback
         logger.debug("no searchable memory backend registered under %s", _BACKEND_GROUP)
     except Exception as exc:  # noqa: BLE001
         # INTENTIONAL: resolution is best-effort; never propagate.

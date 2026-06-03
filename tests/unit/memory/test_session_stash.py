@@ -307,3 +307,107 @@ def test_recall_handles_non_list_result():
             return None
 
     assert recall_entries("q", backend=_Weird()) == []
+
+
+# --------------------------------------------------------------------------
+# resolve_backend preference (D8): connected upgrade > file fallback
+# --------------------------------------------------------------------------
+
+
+class _Upgrade(_FakeBackend):
+    """An AMS-like upgrade backend with a connectivity gate."""
+
+    is_fallback = False
+
+    def __init__(self, connected=True, results=None):
+        super().__init__(results)
+        self._connected = connected
+
+    def is_connected(self):
+        return self._connected
+
+
+class _Fallback(_FakeBackend):
+    """A file-like always-available fallback backend."""
+
+    is_fallback = True
+
+    def is_connected(self):
+        return True
+
+
+def _ep(name, factory):
+    class _EP:
+        pass
+
+    _EP.name = name
+    _EP.load = lambda self: factory
+    return _EP()
+
+
+def test_resolve_prefers_connected_upgrade_over_fallback(monkeypatch):
+    import importlib.metadata as md
+
+    upgrade = _Upgrade(connected=True)
+    fallback = _Fallback()
+    # Fallback listed first (mirrors the real ['file', 'redis'] order).
+    monkeypatch.setattr(
+        md,
+        "entry_points",
+        lambda group=None: [_ep("file", lambda: fallback), _ep("redis", lambda: upgrade)],
+    )
+    assert resolve_backend(None) is upgrade
+
+
+def test_resolve_falls_back_when_upgrade_disconnected(monkeypatch):
+    import importlib.metadata as md
+
+    upgrade = _Upgrade(connected=False)
+    fallback = _Fallback()
+    monkeypatch.setattr(
+        md,
+        "entry_points",
+        lambda group=None: [_ep("file", lambda: fallback), _ep("redis", lambda: upgrade)],
+    )
+    assert resolve_backend(None) is fallback
+
+
+def test_resolve_uses_fallback_when_no_upgrade(monkeypatch):
+    import importlib.metadata as md
+
+    fallback = _Fallback()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    assert resolve_backend(None) is fallback
+
+
+# --------------------------------------------------------------------------
+# D8 zero-infra round-trip: stash_entry -> recall_entries via the file backend
+# --------------------------------------------------------------------------
+
+
+def test_file_fallback_roundtrip_no_infra(tmp_path, monkeypatch):
+    """The headline D8 guarantee: cross-session recall works with no AMS.
+
+    Uses a real FileStashBackend over tmp_path — no Redis, no Ollama, no
+    server — and proves stash_entry -> recall_entries finds the finding.
+    """
+    from attune.memory.file_stash import FileStashBackend
+
+    class _PassThroughGate:
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
+    be = FileStashBackend(base_dir=tmp_path / "stash")
+    entry = SessionStashEntry.create(
+        session_id="s1",
+        cwd="/proj",
+        type="decision",
+        content="the retry loop deadlocks under heavy load",
+        tags=["ci"],
+    )
+    assert stash_entry(entry, backend=be) is True
+    hits = recall_entries("retry loop deadlocks", top_k=5, cwd="/proj", backend=be)
+    assert hits, "stashed finding must be recallable with zero infra"
+    assert any("retry loop" in (h.get("text") or "") for h in hits)
+    assert hits[0]["cwd"] == "/proj"
