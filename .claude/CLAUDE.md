@@ -7321,3 +7321,73 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / "create a new worktree to continue last session" lessons —
   same family (correctly locating the right worktree+branch for a
   piece of work), this one is the commit-destination surface.
+
+- **The recurring PR "merge tax" had two mechanical causes — both
+  now fixed structurally — and the prior 2026-06-03 diagnosis was
+  partly wrong**: that lesson blamed `auto-approve-owner` *skipping*
+  on an actor-login guard mismatch (`github.actor == 'patrickroebuck'`
+  vs the real login `silversurfer562`). By 2026-06-03 the guard had
+  ALREADY been corrected to `silversurfer562`, yet the job kept
+  *failing* (not skipping). Real cause (Tax 1 — the review gate):
+  `auto-approve-owner` in `.github/workflows/auto-approve.yml` had
+  `timeout-minutes: 5`, but its `lewagon/wait-on-check-action` step
+  used `check-regexp: ^(test |lint|Analyze )` — which matches the
+  ~20-min Windows `test ` lanes. It timed out at 5 min before the
+  approve step ran → no approval → `required_approving_review_count:
+  1` unmet → every owner PR sat `BLOCKED`. Tax 2 (the security
+  check): `security` was a REQUIRED status check, but its job runs
+  bandit/safety with `|| true` on every step (never gates on
+  findings — toothless) AND has `concurrency.cancel-in-progress:
+  true`, so any superseding push cancels the in-flight run and a
+  cancelled-but-required check blocks until rerun. **Fix applied
+  (all reversible `gh api` PATCHes):** (1) `required_approving_review_count`
+  1→0 on `branches/main/protection/required_pull_request_reviews`
+  (solo-dev — self-approval is theater); (2) removed `security` from
+  `required_status_checks` by PATCHing the FULL `checks` array
+  minus that entry, preserving exact app_ids (15368 GitHub Actions,
+  57789 CodeQL/Advanced Security) per the required-check-app-id rule
+  — a contexts-only PATCH risks the "not set by the expected app"
+  trap; (3) deleted the dead `auto-approve-owner` job (PR #598).
+  Result: owner PRs with green required checks now merge via the
+  normal button — no admin-override dance, no temp-remove-reviews.
+  CodeQL (still required) + the informational `Run Security Scanner`
+  keep real security coverage. **Diagnostic for next time:** when a
+  PR is `BLOCKED` with every visible check green, read
+  `gh api repos/<o>/<r>/branches/main/protection` FIRST to see which
+  checks are actually required and whether the gate is reviews vs a
+  required check — don't chase the scary-red NON-required checks
+  (this is the verify-first-on-infra discipline applied to the gate
+  itself).
+
+- **Claude Code's `Stop` hook fires per-turn, not per-session — gate
+  once-per-session work with a sentinel + a utilization threshold**:
+  building the P2 memory `session_stash.py` Stop hook surfaced that
+  `Stop` fires on EVERY assistant turn-end, not at session end (there
+  is no reliable `SessionEnd` event). A naive "stash findings on Stop"
+  would re-extract and re-stash every turn. The established pattern
+  (`plugin/hooks/compact_warning.py`) is: (1) a **per-session
+  sentinel** file under `_state._sentinel_dir()` checked at entry →
+  return early if present; (2) a `_transcript_size.estimate_utilization()`
+  **gate** so the once-per-session action fires only after the session
+  has accumulated meaningful content (capturing a substantive
+  snapshot, not an empty opening turn). Two rules when adding a new
+  once-per-session Stop hook: use your OWN sentinel name
+  (compact_warning owns the default `.compact-warned-<id>`; the stash
+  hook uses `.stash-done-<id>`), and write the sentinel AFTER doing
+  the work so a mid-work crash retries next stop. The Stop payload
+  also carries `transcript_path` directly — no need to reconstruct the
+  encoded `~/.claude/projects/<enc>/<session>.jsonl` path.
+
+- **`github-code-quality` (Copilot Autofix) posts inline review
+  SUGGESTIONS on PRs, not always commits — two recurring shapes, one
+  fix one decline**: distinct from the existing "Copilot Autofix
+  pushes commits directly to PR branches" lesson — here it leaves
+  review *comments* (state `COMMENTED`, advisory, non-blocking). On
+  PR #600 it flagged: (1) an empty `except OSError: pass` with no
+  explanatory comment → **legit, fix it** by adding an `# INTENTIONAL:`
+  comment (matches the repo's BLE001 convention); (2) a `...` body in a
+  `typing.Protocol` method, flagged as "Statement has no effect" with a
+  suggestion to use `raise NotImplementedError` → **decline**: `...` is
+  the idiomatic Protocol-method body and matches every sibling method
+  in the file; changing one is inconsistent. Neither blocks merge; note
+  the decline + reason in the fixing commit so the rationale is durable.
