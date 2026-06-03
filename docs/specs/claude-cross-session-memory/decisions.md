@@ -218,3 +218,80 @@ bypass the D2 gate into curated files.
 - No new public-surface or scope beyond the file backend — AMS is reuse.
 - Supersedes the previous-turn "demote Redis to accelerator / drop it" lean:
   AMS is a real, already-built upgrade and stays as the optional high tier.
+
+---
+
+## D6 — This release builds on Redis AMS (file/keyword tier cut)
+
+**Ratified:** 2026-06-03. Patrick: "if we can get it by implementing the
+Redis solution that's fine for this release — no point working extra hard for
+a mediocre result when we can leverage Redis." Confirmed feasible + simpler.
+
+### Decision
+
+For this release, **`AMSMemoryBackend` (Redis Agent Memory Server) is the sole
+implemented recall backend.** The file/keyword `SearchableMemoryBackend`
+(markdown + attune-rag) described in D5 is **deferred, not built** — it was
+both more work and the weaker result.
+
+The protocol seam from D5 is retained at **zero cost**: `recall_entries()` and
+`session_stash.py` target the `SearchableMemoryBackend` protocol, so a file
+fallback is a future drop-in, not a refactor. AMS is simply the only
+implementation wired this release.
+
+### Why this is less work AND better
+
+1. **AMS already implements `stash` / `search` / `promote`** — we wire hooks
+   to a built backend instead of authoring a retriever.
+2. **Sidesteps the B-regression entirely.** AMS uses its own vector/hybrid
+   search, not attune-rag's `KeywordRetriever`, so `MIN_ALIAS_OVERLAP` never
+   touches the recall path. The D4 cross-spec caveat does not apply to the AMS
+   path.
+3. **Curated `~/.claude/memory` files are already auto-loaded every session**
+   (global CLAUDE.md). Recall's distinct job is the *ephemeral session stash*
+   — exactly AMS working + long-term. No need to re-query curated files via
+   attune-rag; that whole tier is cut.
+
+### Setup cost (documented for the hooks' README)
+
+- Run the server: `uv run agent-memory api --task-backend=asyncio` (single
+  process) or `docker compose up api redis`.
+- Redis: already running (cloud + local:6379).
+- Embedding provider (mandatory for vector search): **Ollama** (local, free,
+  private — preferred for *personal* memory so findings never leave the
+  machine) **or** OpenAI (`OPENAI_API_KEY`, zero extra process). Spec default:
+  Ollama; override via AMS env.
+- Dep: `pip install attune-ai[redis]` (pulls `agent-memory-client`).
+- Env: `AMS_BASE_URL` (default `http://localhost:8000`), `AMS_NAMESPACE`,
+  `REDIS_URL`.
+
+### Graceful degradation
+
+AMS unreachable → recall + stash are **silent no-ops** (hooks exit 0, no
+banner), satisfying T1.1/T1.2 acceptance criteria. The feature requires a
+running AMS to function; without it, sessions behave as they do today.
+
+### Tier mapping under D6
+
+- **Session stash (raw, ephemeral):** AMS working memory — `stash()`.
+- **Searchable recall tier:** AMS long-term — `search()`, populated by AMS's
+  background auto-extraction/promotion from working memory.
+- **Curated durable tier:** `~/.claude/memory` files — unchanged; already
+  auto-loaded each session; promotion *into* it stays the existing
+  review-gated `/remember` flow (D2 holds, independent of AMS).
+
+### Consequences for tasks.md
+
+- **Cut from this release:** the file `SearchableMemoryBackend` impl, the
+  attune-rag keyword wiring, the `MIN_ALIAS_OVERLAP=1` override, the
+  keyword/recency stash filter (D4 tier-2 mechanics). All become the future
+  file-fallback drop-in.
+- **T1.3 `session_stash.py`:** wraps `AMSMemoryBackend` behind the
+  `SearchableMemoryBackend` protocol; provides `recall_entries()` →
+  `backend.search()` and the raw stash write → `backend.stash()`.
+- **T1.1 / T1.2 hooks:** call the protocol; silent no-op when AMS is down.
+- **T2.1 `/recall`:** presents `backend.search()` results; promotion to
+  curated files stays the `/remember` path (D2).
+- **Verify-first at build time:** confirm `agent-memory-client` installs and
+  an AMS server responds at `AMS_BASE_URL` before wiring (per the
+  introspect-before-coding lesson).
