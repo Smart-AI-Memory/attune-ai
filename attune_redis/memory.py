@@ -17,6 +17,7 @@ from __future__ import annotations
 import asyncio
 import fnmatch
 import logging
+import threading
 from typing import Any
 
 from .config import RedisPluginConfig
@@ -24,12 +25,38 @@ from .config import RedisPluginConfig
 logger = logging.getLogger(__name__)
 
 
-def _run_sync(coro: Any) -> Any:
-    """Run an async coroutine synchronously.
+class _PersistentLoop:
+    """A single event loop running in a daemon thread.
 
-    Handles the case where we're already inside a running
-    event loop (e.g. Jupyter, async web server) by using a
-    thread pool executor.
+    ``MemoryAPIClient`` holds a persistent ``httpx.AsyncClient``
+    bound to the event loop it was first used on. Running each
+    coroutine via a fresh ``asyncio.run`` (which creates *and
+    closes* a new loop per call) leaves that client bound to a
+    closed loop, so the second call onward fails with
+    ``RuntimeError: Event loop is closed``. Routing every
+    coroutine through one long-lived loop keeps the client's
+    connection pool valid for the backend's whole lifetime, and
+    ``run_coroutine_threadsafe`` is safe to call whether or not
+    the caller is itself inside a running loop.
+    """
+
+    def __init__(self) -> None:
+        self._loop = asyncio.new_event_loop()
+        self._thread = threading.Thread(
+            target=self._loop.run_forever, name="ams-backend-loop", daemon=True
+        )
+        self._thread.start()
+
+    def run(self, coro: Any) -> Any:
+        return asyncio.run_coroutine_threadsafe(coro, self._loop).result()
+
+
+_LOOP: _PersistentLoop | None = None
+_LOOP_LOCK = threading.Lock()
+
+
+def _run_sync(coro: Any) -> Any:
+    """Run an async coroutine synchronously on a persistent loop.
 
     Args:
         coro: Awaitable coroutine to run.
@@ -37,17 +64,11 @@ def _run_sync(coro: Any) -> Any:
     Returns:
         The coroutine's return value.
     """
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-
-    if loop and loop.is_running():
-        import concurrent.futures
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            return pool.submit(asyncio.run, coro).result()
-    return asyncio.run(coro)
+    global _LOOP
+    with _LOOP_LOCK:
+        if _LOOP is None:
+            _LOOP = _PersistentLoop()
+    return _LOOP.run(coro)
 
 
 class AMSMemoryBackend:
@@ -77,12 +98,10 @@ class AMSMemoryBackend:
             config: Plugin configuration. Uses env-based
                 defaults if None.
         """
-        from agent_memory_client import MemoryAPIClient
+        from agent_memory_client import MemoryAPIClient, MemoryClientConfig
 
         self._config = config or RedisPluginConfig.from_env()
-        self._client = MemoryAPIClient(
-            base_url=self._config.ams_base_url,
-        )
+        self._client = MemoryAPIClient(MemoryClientConfig(base_url=self._config.ams_base_url))
         self._session_id = self._config.default_session_id
         self._namespace = self._config.ams_namespace
         self._user_id = self._config.default_user_id
