@@ -85,6 +85,56 @@ def test_resolve_backend_none_when_unavailable(monkeypatch):
     assert resolve_backend(None) is None
 
 
+def test_resolve_backend_from_entry_point(monkeypatch):
+    """A registered, searchable entry-point backend is resolved + returned."""
+    import importlib.metadata as md
+
+    searchable = _FakeBackend()
+
+    class _EP:
+        name = "fake"
+
+        def load(self):
+            def _factory():
+                return searchable
+
+            return _factory
+
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_EP()])
+    assert resolve_backend(None) is searchable
+
+
+def test_resolve_backend_swallows_resolution_error(monkeypatch):
+    """A failure in entry-point resolution degrades to None, never raises."""
+    import importlib.metadata as md
+
+    def _boom(*args, **kwargs):
+        raise RuntimeError("entry point system down")
+
+    monkeypatch.setattr(md, "entry_points", _boom)
+    assert resolve_backend(None) is None
+
+
+def test_resolve_backend_skips_non_searchable_entry_point(monkeypatch):
+    """An entry-point object lacking search/stash is skipped, not returned."""
+    import importlib.metadata as md
+
+    class _NotSearchable:
+        pass
+
+    class _EP:
+        name = "fake"
+
+        def load(self):
+            def _factory():
+                return _NotSearchable()
+
+            return _factory
+
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_EP()])
+    assert resolve_backend(None) is None
+
+
 # --------------------------------------------------------------------------
 # stash_entry — gate + degradation
 # --------------------------------------------------------------------------
