@@ -1,8 +1,8 @@
 ---
 feature: memory
 depth: concept
-generated_at: 2026-06-03T12:45:43.107743+00:00
-source_hash: aef54dd763ecee5292afdaa47a99e48e4d68ab66ba2bedf0a15d83d09ad51782
+generated_at: 2026-06-03T16:28:50.316906+00:00
+source_hash: a5579e8907712bf584f1ae5f2c1991e29aa4fdc4f749495b823c67f323543a57
 status: generated
 ---
 
@@ -20,7 +20,7 @@ The main building blocks are:
 - **`MemoryFile`** — Represents a loaded CLAUDE.md memory file
 - **`ClaudeMemoryLoader`** — Loads and manages Claude Code memory files (CLAUDE.md).
 
-Under the hood, this feature spans 74 source
+Under the hood, this feature spans 75 source
 files covering:
 
 - Memory backend protocol for Attune AI.
