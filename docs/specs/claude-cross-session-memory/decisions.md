@@ -364,3 +364,59 @@ How should a stashed finding reach the searchable tier?
 - D6's "populated by AMS's background auto-extraction" bullet is
   superseded by "populated by a direct long-term write at stash time."
 - Extraction stays **off**; no generation model required.
+
+## D8 — File-fallback default; AMS becomes the optional upgrade (revisits D6)
+
+> **Ratified with Patrick 2026-06-03**, during release-readiness
+> planning. Partially **reverses D6's "cut the file/keyword tier"** —
+> see rationale below.
+
+### What release-readiness review found
+
+Verified against the installed package:
+
+- The `file` entry point → `FileSessionMemory`, which has **no
+  `search()`** and a constructor requiring `user_id` (so
+  `resolve_backend`'s no-arg `ep.load()()` can't even instantiate it).
+- Only `AMSMemoryBackend` is searchable. So **without a full local
+  AMS standup (Ollama + Redis Stack + agent-memory-server), recall is
+  a silent no-op** — there is no graceful fallback.
+- D6 had cut the file/keyword tier "to build on AMS this release,"
+  which left the feature hard-requiring heavy local infra. For a
+  `pip install attune-ai` dev tool, that means the *majority* of users
+  would get nothing from the feature.
+
+### Decision
+
+**The default backend is a searchable file backend; AMS is an optional
+upgrade for better recall at scale.** This restores D4's design (the
+ephemeral stash tier is recalled by a cheap **keyword + recency + cwd**
+filter — *not* semantic; the stash is one user × short retention, small
+enough that keyword/recency suffices). Cross-session memory then works
+**out-of-box for every install** with zero infra; users who want
+higher-quality recall over a large corpus opt into AMS.
+
+This supersedes D6's tier mapping: D6 said "searchable tier = AMS
+long-term, file/keyword tier cut." D8 reinstates the file tier as the
+default and demotes AMS to optional upgrade. D7's `remember()`-based
+write path is unchanged and applies to both backends.
+
+### Consequences / tasks
+
+- **New `FileStashBackend`** (purpose-built, no-arg constructable):
+  implements the `SearchableMemoryBackend` protocol over a local JSONL
+  stash (`~/.attune/session_stash/`). `remember()` appends a finding;
+  `search()` = keyword + recency + cwd filter; `stash`/`retrieve`
+  key/value; age-based TTL prune. Registered as the `file` entry
+  point (replaces the non-searchable `FileSessionMemory` mapping in
+  the `attune.memory_backends` group — `FileSessionMemory` stays the
+  general session-state facade, used directly, not via this group).
+- **`resolve_backend` preference**: prefer a *connected* upgrade
+  backend (AMS) over the always-available file fallback. Backends mark
+  themselves with an `is_fallback` class attribute; resolve picks the
+  first connected non-fallback, else a connected fallback, else None.
+  (Held for implementation with Patrick — changes shared resolution.)
+- **No-AMS UX**: feature works out-of-box; AMS-not-running just means
+  the file fallback is used (no error, no setup required).
+- Documentation frames AMS as "optional: better recall at scale,"
+  with the standup steps in an advanced section, not a prerequisite.

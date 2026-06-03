@@ -430,7 +430,7 @@ release-prep = "attune.wizards.builtin.release_prep_wizard:ReleasePrepWizard"
 
 # Memory backend plugin entry points
 [project.entry-points."attune.memory_backends"]
-file = "attune.memory.file_session:FileSessionMemory"
+file = "attune.memory.file_stash:FileStashBackend"
 redis = "attune_redis.memory:AMSMemoryBackend"
 
 [tool.setuptools]
