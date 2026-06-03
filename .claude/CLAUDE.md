@@ -7093,3 +7093,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the structure/planning doc (not the article body) —
   where article-revision PLANS go, per the "plan in the
   outline doc, not `/spec`, for prose" decision.
+
+- **`AskUserQuestion` first option MUST end with
+  `(Recommended)` — enforced by a PreToolUse hook at
+  `~/.claude/hooks/ask_question_format_guard.py`**: the
+  hook blocks the call entirely and returns an error if
+  the first option label doesn't end with that exact
+  suffix. The error message is clear but only fires at
+  call time, not authoring time. Pre-flight rule: before
+  every `AskUserQuestion`, verify the first option is
+  your genuine recommendation AND its label ends with
+  `(Recommended)`. If you genuinely have no preference,
+  pick the safer/cheaper option as first and mark it.
+  Discovered 2026-06-02 when the intake question for
+  Mission A/B was blocked on the first attempt.
+
+- **For solo-dev interactive recall, a user-invocable
+  Skill is preferable to an autonomous MCP tool**: when
+  designing an on-demand recall/lookup feature for a
+  solo developer who is always present in the session,
+  a Skill (`/recall`) is strictly better than an MCP
+  tool that Claude calls autonomously — because the
+  Skill is transparent (you see exactly when and what
+  was recalled), explicit (you control when it fires),
+  and formatted for human reading. The MCP tool is
+  better when Claude must proactively surface context
+  without a user prompt (background reasoning, complex
+  multi-step tasks). The D1 decision in the
+  cross-session-memory spec (2026-06-02) flipped from
+  "Hook + MCP tool" to "Hook + Skill" for this reason.
+  Generalization: any "on-demand context surface" in an
+  interactive tool where the user is always present
+  should be a Skill first, MCP tool second.
