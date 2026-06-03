@@ -119,7 +119,7 @@ Respond with JSON only:
 
     def __init__(
         self,
-        evaluator_model: str = "claude-haiku-4-5-20251001",
+        evaluator_model: str = "claude-haiku-4-5",
         max_tokens: int = 256,
         gate: str = "always",
     ) -> None:

@@ -79,7 +79,7 @@ class TestModelRouter:
     def test_route_cheap_task(self, router):
         """Test routing cheap task to cheap model."""
         model = router.route("summarize")
-        assert model == "claude-haiku-4-5-20251001"
+        assert model == "claude-haiku-4-5"
 
     def test_route_capable_task(self, router):
         """Test routing capable task to capable model."""

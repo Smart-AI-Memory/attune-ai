@@ -55,7 +55,7 @@ class AdaptiveConfig:
     enable_adaptation: bool = True
     model_tier_mapping: dict[str, str] = field(
         default_factory=lambda: {
-            "simple": "claude-haiku-4-5-20251001",
+            "simple": "claude-haiku-4-5",
             "moderate": "claude-sonnet-4-6",
             "complex": "claude-sonnet-4-6",
             "very_complex": "claude-opus-4-6",

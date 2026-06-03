@@ -249,7 +249,7 @@ class TestUnifiedAgentConfigModelIds:
     def test_anthropic_model_defaults(self):
         """Test Anthropic model IDs for each tier."""
         for tier, expected in [
-            (ModelTier.CHEAP, "claude-haiku-4-5-20251001"),
+            (ModelTier.CHEAP, "claude-haiku-4-5"),
             (ModelTier.CAPABLE, "claude-sonnet-4-6"),
             (ModelTier.PREMIUM, "claude-opus-4-6"),
         ]:

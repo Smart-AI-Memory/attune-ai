@@ -73,7 +73,7 @@ class TestCostTrackerLogRequest:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        record = tracker.log_request("claude-haiku-4-5-20251001", 100, 50)
+        record = tracker.log_request("claude-haiku-4-5", 100, 50)
         assert record["tier"] == "cheap"
         tracker.flush()
 
@@ -115,7 +115,7 @@ class TestCostTrackerCalculateCost:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        record = tracker.log_request("claude-haiku-4-5-20251001", 10000, 5000)
+        record = tracker.log_request("claude-haiku-4-5", 10000, 5000)
         assert record["savings"] >= 0
         tracker.flush()
 
@@ -154,7 +154,7 @@ class TestCostTrackerSummary:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-haiku-4-5-20251001", 100000, 50000, "summarize")
+        tracker.log_request("claude-haiku-4-5", 100000, 50000, "summarize")
         summary = tracker.get_summary(days=7)
         assert summary["savings_percent"] >= 0
         tracker.flush()
@@ -174,7 +174,7 @@ class TestCostTrackerGetReport:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        tracker.log_request("claude-haiku-4-5-20251001", 5000, 2000, "summarize")
+        tracker.log_request("claude-haiku-4-5", 5000, 2000, "summarize")
         report = tracker.get_report(days=7)
         assert isinstance(report, str)
         assert "COST TRACKING REPORT" in report
@@ -240,7 +240,7 @@ class TestModelPricingConstant:
         from attune.cost_tracker import MODEL_PRICING
 
         assert "claude-sonnet-4-6" in MODEL_PRICING
-        assert "claude-haiku-4-5-20251001" in MODEL_PRICING
+        assert "claude-haiku-4-5" in MODEL_PRICING
         assert "claude-opus-4-6" in MODEL_PRICING
 
     def test_has_tier_aliases(self):

@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # ``src/attune/models/registry.py`` — the per-million-tokens rates
 # the planning math assumes (~$0.001/session typical, well under
 # the $0.05 per-load cap with N=20).
-HAIKU_MODEL_ID = "claude-haiku-4-5-20251001"
+HAIKU_MODEL_ID = "claude-haiku-4-5"
 _INPUT_COST_PER_MILLION = 1.00
 _OUTPUT_COST_PER_MILLION = 5.00
 

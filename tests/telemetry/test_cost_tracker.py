@@ -195,7 +195,7 @@ class TestTierDetection:
         """Test that haiku models are detected as cheap tier."""
         tracker = CostTracker(storage_dir=str(tmp_path / ".empathy"))
         assert tracker._get_tier("claude-3-haiku-20240307") == "cheap"
-        assert tracker._get_tier("claude-haiku-4-5-20251001") == "cheap"
+        assert tracker._get_tier("claude-haiku-4-5") == "cheap"
 
     def test_detects_opus_as_premium(self, tmp_path):
         """Test that opus models are detected as premium tier."""

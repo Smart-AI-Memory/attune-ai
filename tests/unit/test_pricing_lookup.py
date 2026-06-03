@@ -34,7 +34,7 @@ class TestRegistryPricingLookup:
 
     def test_haiku_pricing(self) -> None:
         """Haiku 4.5 returns $1/M input, $5/M output."""
-        pricing = get_pricing_for_model("claude-haiku-4-5-20251001")
+        pricing = get_pricing_for_model("claude-haiku-4-5")
         assert pricing is not None
         assert pricing["input"] == pytest.approx(1.0)
         assert pricing["output"] == pytest.approx(5.0)
@@ -70,7 +70,7 @@ class TestCacheSavingsMath:
     def test_haiku_cache_savings_lower_than_sonnet(self) -> None:
         """Haiku at $1/M should yield 1/3 savings vs Sonnet at $3/M."""
         tokens = 10_000
-        haiku_pricing = get_pricing_for_model("claude-haiku-4-5-20251001")
+        haiku_pricing = get_pricing_for_model("claude-haiku-4-5")
         sonnet_pricing = get_pricing_for_model("claude-sonnet-4-6")
 
         assert haiku_pricing is not None
@@ -116,7 +116,7 @@ class TestUsageTrackerPerModelAggregation:
                 "prompt_cache": {"hit": True, "read_tokens": 1000, "creation_tokens": 0},
             },
             {
-                "model": "claude-haiku-4-5-20251001",
+                "model": "claude-haiku-4-5",
                 "prompt_cache": {"hit": True, "read_tokens": 1000, "creation_tokens": 0},
             },
         ]

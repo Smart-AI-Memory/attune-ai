@@ -178,7 +178,7 @@ class ModelRouter:
 
         Example:
             >>> router.route("summarize")
-            'claude-haiku-4-5-20251001'
+            'claude-haiku-4-5'
             >>> router.route("fix_bug")
             'claude-sonnet-4-6'
             >>> router.route("coordinate")
