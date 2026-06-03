@@ -7295,3 +7295,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   succeeding, grep for tests whose assertions depend on the old
   failure (no-op / None / empty fallbacks) — they may have been
   passing for the wrong reason.
+
+- **Branch-vs-worktree commit tangle — committing from a worktree
+  that's on the WRONG branch lands the commit elsewhere and ships
+  an EMPTY branch on push**: the failure mode is creating a branch
+  in one checkout (`git -C <main> checkout -b X`) while editing and
+  committing from a *different* worktree that is still on another
+  branch. The edits + `git commit` land on the worktree's CURRENT
+  branch (not `X`), so the new branch `X` points at the old main
+  commit with none of the work, and a subsequent `git push origin X`
+  ships an EMPTY branch — no diff, no PR content, looks like a
+  successful push. Hit twice in one session 2026-06-03 (both
+  recovered by re-applying the diff onto the right branch). **Fix —
+  one cheap check before every commit:** confirm the worktree you
+  are editing in is on the target branch with
+  `git -C <worktree> branch --show-current` (or just
+  `git branch --show-current` from inside it). Do all edits for a
+  given branch INSIDE the worktree that is checked out on that
+  branch; don't create the branch in checkout A and commit from
+  worktree B. When a session spans multiple worktrees, the safest
+  pattern is to keep all work for one branch in a single worktree
+  and switch that worktree's branch between tasks, rather than
+  juggling `git -C` across checkouts. Pairs with the existing
+  worktree-PYTHONPATH / Write-absolute-path / dirty-state-recovery
+  / "create a new worktree to continue last session" lessons —
+  same family (correctly locating the right worktree+branch for a
+  piece of work), this one is the commit-destination surface.
