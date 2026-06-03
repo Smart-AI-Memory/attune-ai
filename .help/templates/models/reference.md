@@ -1,16 +1,12 @@
 ---
-type: reference
-name: models-reference
 feature: models
 depth: reference
-generated_at: 2026-05-16T06:19:45.834928+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-03T02:40:23.617216+00:00
+source_hash: eaf005e9abad245619a99d4824c4b03d726a7b59f62c01ae3437da4261b3bb55
 status: generated
 ---
 
 # Models reference
-
-Configure authentication, route tasks to LLM providers, and manage model tiers.
 
 ## Classes
 
@@ -35,7 +31,7 @@ Configure authentication, route tasks to LLM providers, and manage model tiers.
 | `ProviderConfig` | User's provider configuration. | `src/attune/models/provider_config.py` |
 | `ModelTier` | Model tier classification for routing. | `src/attune/models/registry.py` |
 | `ModelProvider` | Supported model provider (Claude-native architecture as of v3.0.0). | `src/attune/models/registry.py` |
-| `ModelInfo` | Unified model information — single source of truth. | `src/attune/models/registry.py` |
+| `ModelInfo` | Unified model information - single source of truth. | `src/attune/models/registry.py` |
 | `ModelRegistry` | Object-oriented interface to the model registry. | `src/attune/models/registry.py` |
 | `AllProvidersFailedError` | Raised when all fallback providers have failed. | `src/attune/models/resilient_executor.py` |
 | `ResilientExecutor` | Wrapper that adds resilience to LLM execution. | `src/attune/models/resilient_executor.py` |
@@ -54,141 +50,58 @@ Configure authentication, route tasks to LLM providers, and manage model tiers.
 | `FileTestRecord` | Record of test execution for a specific source file. | `src/attune/models/telemetry/data_models.py` |
 | `TelemetryStore` | JSONL file-based telemetry backend (default implementation). | `src/attune/models/telemetry/storage.py` |
 
-### `ModelPerformance` fields
-
-| Field | Type | Default |
-|-------|------|---------|
-| `model_id` | `str` | — |
-| `tier` | `str` | — |
-| `success_rate` | `float` | — |
-| `avg_latency_ms` | `float` | — |
-| `avg_cost` | `float` | — |
-| `sample_size` | `int` | — |
-| `recent_failures` | `int` | `0` |
-
-#### `ModelPerformance` properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `quality_score` | `float` | Calculate quality score for ranking models. |
-
-### `AdaptiveModelRouter` methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `telemetry: Any` | — | Initialize the router with a telemetry source. |
-| `get_best_model` | `workflow: str, stage: str, max_cost: float | None = None, max_latency_ms: int | None = None, min_success_rate: float = 0.8` | `str` | Return the best model for a workflow stage based on telemetry. |
-| `recommend_tier_upgrade` | `workflow: str, stage: str` | `tuple[bool, str]` | Recommend whether a tier upgrade is warranted for a workflow stage. |
-| `get_routing_stats` | `workflow: str, stage: str | None = None, days: int = 7` | `dict[str, Any]` | Return routing statistics for a workflow stage over a time window. |
-
-### `AuthStrategy` fields
-
-| Field | Type | Default |
-|-------|------|---------|
-| `subscription_tier` | `SubscriptionTier` | `SubscriptionTier.PRO` |
-| `default_mode` | `AuthMode` | `AuthMode.AUTO` |
-| `small_module_threshold` | `int` | `500` |
-| `medium_module_threshold` | `int` | `2000` |
-| `loc_to_tokens_multiplier` | `float` | `4.0` |
-| `setup_completed` | `bool` | `True` |
-| `prefer_subscription` | `bool` | `True` |
-| `cost_optimization` | `bool` | `True` |
-| `metadata` | `dict[str, Any]` | `field(default_factory=dict)` |
-
-#### `AuthStrategy` methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `get_recommended_mode` | `module_lines: int` | `AuthMode` | Return the recommended authentication mode for a module of the given size. |
-| `estimate_tokens` | `module_lines: int` | `int` | Estimate token usage for a module of the given size. |
-| `estimate_cost` | `module_lines: int, mode: AuthMode | None = None` | `dict[str, Any]` | Estimate cost for a module, optionally scoped to a specific auth mode. |
-| `get_pros_cons` | `module_lines: int` | `dict[str, Any]` | Return pros and cons for each auth mode given the module size. |
-| `to_dict` | — | `dict[str, Any]` | Serialize the strategy to a dictionary. |
-| `from_dict` | `data: dict[str, Any]` | `AuthStrategy` | Deserialize a strategy from a dictionary. |
-| `save` | `path: Path | None = None` | `None` | Save the strategy to disk. |
-| `load` | `path: Path | None = None` | `AuthStrategy` | Load the strategy from disk. |
-
-### `CircuitBreakerState` fields
-
-| Field | Type | Default |
-|-------|------|---------|
-| `failure_count` | `int` | `0` |
-| `last_failure` | `datetime | None` | `None` |
-| `is_open` | `bool` | `False` |
-| `opened_at` | `datetime | None` | `None` |
-
-### `CircuitBreaker` methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `failure_threshold: int = 5, recovery_timeout_seconds: int = 60, half_open_calls: int = 1` | — | Initialize the circuit breaker with failure and recovery thresholds. |
-| `is_available` | `provider: str, tier: str | None = None` | `bool` | Check whether a provider is currently available. |
-| `record_success` | `provider: str, tier: str | None = None` | `None` | Record a successful call to a provider. |
-| `record_failure` | `provider: str, tier: str | None = None` | `None` | Record a failed call to a provider. |
-| `get_status` | — | `dict[str, dict[str, Any]]` | Return the current status of all tracked providers. |
-| `reset` | `provider: str | None = None, tier: str | None = None` | `None` | Reset circuit breaker state for a provider or all providers. |
-
-### `EmpathyLLMExecutor` methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `empathy_llm: Any | None = None, provider: str = 'anthropic', api_key: str | None = None, telemetry_store: TelemetryBackend | TelemetryStore | None = None, use_thinking: bool = False, thinking_budget: int = 10000, **llm_kwargs: Any` | — | Initialize the executor with an optional EmpathyLLM instance and routing config. |
-| `run` | `task_type: str, prompt: str, system: str | None = None, context: ExecutionContext | None = None, **kwargs: Any` | `LLMResponse` | Execute a prompt for the given task type and return a standardized response. |
-| `get_model_for_task` | `task_type: str` | `str` | Return the model ID selected for a task type. |
-| `estimate_cost` | `task_type: str, input_tokens: int, output_tokens: int` | `float` | Estimate the cost of an LLM call in USD. |
-
-### `LLMResponse` fields
-
-| Field | Type | Default |
-|-------|------|---------|
-| `content` | `str` | — |
-| `model_id` | `str` | — |
-| `provider` | `str` | — |
-| `tier` | `str` | — |
-| `tokens_input` | `int` | `0` |
-| `tokens_output` | `int` | `0` |
-| `cost_estimate` | `float` | `0.0` |
-| `latency_ms` | `int` | `0` |
-| `metadata` | `dict[str, Any]` | `field(default_factory=dict)` |
-
-#### `LLMResponse` properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `input_tokens` | `int` | Alias for `tokens_input` (backwards compatibility). |
-| `output_tokens` | `int` | Alias for `tokens_output` (backwards compatibility). |
-| `model_used` | `str` | Alias for `model_id` (backwards compatibility). |
-| `cost` | `float` | Alias for `cost_estimate` (backwards compatibility). |
-| `total_tokens` | `int` | Total tokens used (input + output). |
-| `success` | `bool` | `True` if the response contains content. |
-
-### `ExecutionContext` fields
-
-| Field | Type | Default |
-|-------|------|---------|
-| `user_id` | `str | None` | `None` |
-| `workflow_name` | `str | None` | `None` |
-| `step_name` | `str | None` | `None` |
-| `task_type` | `str | None` | `None` |
-| `provider_hint` | `str | None` | `None` |
-| `tier_hint` | `str | None` | `None` |
-| `timeout_seconds` | `int | None` | `None` |
-| `session_id` | `str | None` | `None` |
-| `metadata` | `dict[str, Any]` | `field(default_factory=dict)` |
-
 ## Functions
 
-| Function | Parameters | Returns | Description | File |
-|----------|------------|---------|-------------|------|
-| `cmd_auth_setup` | `args: Any` | `int` | Run interactive authentication strategy setup. | `src/attune/models/auth_cli.py` |
-| `cmd_auth_status` | `args: Any` | `int` | Show current authentication strategy configuration. | `src/attune/models/auth_cli.py` |
-| `cmd_auth_reset` | `args: Any` | `int` | Reset/clear authentication strategy configuration. | `src/attune/models/auth_cli.py` |
-| `cmd_auth_recommend` | `args: Any` | `int` | Get authentication recommendation for a specific file. | `src/attune/models/auth_cli.py` |
-| `main` | — | `int` | Main CLI entry point. | `src/attune/models/auth_cli.py` |
-| `configure_auth_interactive` | `module_lines: int = 1000` | `AuthStrategy` | Interactive authentication configuration (first-time setup). | `src/attune/models/auth_strategy.py` |
-| `get_auth_strategy` | — | `AuthStrategy` | Get the global authentication strategy. | `src/attune/models/auth_strategy.py` |
-| `count_lines_of_code` | `file_path: str | Path` | `int` | Count lines of code in a Python file. | `src/attune/models/auth_strategy.py` |
-| `get_module_size_category` | `module_lines: int` | `str` | Categorize module size. | `src/attune/models/auth_strategy.py` |
-| `print_registry` | `provider: str | None = None, format: str = 'table'` | `None` | Print the model registry. | `src/attune/models/cli.py` |
-| `print_tasks` | `tier: str | None = None, format: str = 'table'` | `None` | Print task-to-tier mappings. | `src/attune/models/cli.py` |
-| `print_costs` | `input_tokens: int = 10000, output_tokens: int = 2000, provider:
+| Function | Description | File |
+|----------|-------------|------|
+| `cmd_auth_setup()` | Run interactive authentication strategy setup. | `src/attune/models/auth_cli.py` |
+| `cmd_auth_status()` | Show current authentication strategy configuration. | `src/attune/models/auth_cli.py` |
+| `cmd_auth_reset()` | Reset/clear authentication strategy configuration. | `src/attune/models/auth_cli.py` |
+| `cmd_auth_recommend()` | Get authentication recommendation for a specific file. | `src/attune/models/auth_cli.py` |
+| `main()` | Main CLI entry point. | `src/attune/models/auth_cli.py` |
+| `configure_auth_interactive()` | Interactive authentication configuration (first-time setup). | `src/attune/models/auth_strategy.py` |
+| `get_auth_strategy()` | Get the global authentication strategy. | `src/attune/models/auth_strategy.py` |
+| `count_lines_of_code()` | Count lines of code in a Python file. | `src/attune/models/auth_strategy.py` |
+| `get_module_size_category()` | Categorize module size. | `src/attune/models/auth_strategy.py` |
+| `print_registry()` | Print the model registry. | `src/attune/models/cli.py` |
+| `print_tasks()` | Print task-to-tier mappings. | `src/attune/models/cli.py` |
+| `print_costs()` | Print cost estimates for all tiers. | `src/attune/models/cli.py` |
+| `print_effective_config()` | Print the effective configuration for a provider. | `src/attune/models/cli.py` |
+| `print_telemetry_summary()` | Print telemetry summary. | `src/attune/models/cli.py` |
+| `print_telemetry_costs()` | Print cost savings report. | `src/attune/models/cli.py` |
+| `print_telemetry_providers()` | Print provider usage summary. | `src/attune/models/cli.py` |
+| `print_telemetry_fallbacks()` | Print fallback statistics. | `src/attune/models/cli.py` |
+| `print_provider_config()` | Print current provider configuration. | `src/attune/models/cli.py` |
+| `configure_provider()` | Configure provider settings. | `src/attune/models/cli.py` |
+| `main()` | Main CLI entry point. | `src/attune/models/cli.py` |
+| `configure_provider_interactive()` | Interactive provider configuration for install/update (Anthropic-only as of v5.0.0). | `src/attune/models/provider_config.py` |
+| `configure_provider_cli()` | CLI-based provider configuration (Anthropic-only as of v5.0.0). | `src/attune/models/provider_config.py` |
+| `get_provider_config()` | Get the global provider configuration. | `src/attune/models/provider_config.py` |
+| `set_provider_config()` | Set the global provider configuration. | `src/attune/models/provider_config.py` |
+| `reset_provider_config()` | Reset the global provider configuration (forces reload). | `src/attune/models/provider_config.py` |
+| `configure_hybrid_interactive()` | Interactive hybrid provider configuration (DEPRECATED in v5.0.0). | `src/attune/models/provider_config.py` |
+| `get_model()` | Get model info for a provider/tier combination. | `src/attune/models/registry.py` |
+| `get_all_models()` | Get the complete model registry. | `src/attune/models/registry.py` |
+| `get_pricing_for_model()` | Get pricing for a model by its ID. | `src/attune/models/registry.py` |
+| `get_supported_providers()` | Get list of supported provider names. | `src/attune/models/registry.py` |
+| `get_tiers()` | Get list of available tiers. | `src/attune/models/registry.py` |
+| `normalize_task_type()` | Normalize a task type string for lookup. | `src/attune/models/tasks.py` |
+| `get_tier_for_task()` | Get the appropriate tier for a task type. | `src/attune/models/tasks.py` |
+| `get_tasks_for_tier()` | Get all task types for a given tier. | `src/attune/models/tasks.py` |
+| `get_all_tasks()` | Get all known task types organized by tier. | `src/attune/models/tasks.py` |
+| `is_known_task()` | Check if a task type is known/defined. | `src/attune/models/tasks.py` |
+| `get_telemetry_store()` | Get singleton telemetry store instance. | `src/attune/models/telemetry/__init__.py` |
+| `log_llm_call()` | Log an LLM API call. | `src/attune/models/telemetry/__init__.py` |
+| `log_workflow_run()` | Log a workflow run. | `src/attune/models/telemetry/__init__.py` |
+| `estimate_tokens()` | Estimate token count for text using accurate token counting. | `src/attune/models/token_estimator.py` |
+| `estimate_workflow_cost()` | Estimate total workflow cost before execution. | `src/attune/models/token_estimator.py` |
+| `estimate_single_call_cost()` | Estimate cost for a single LLM call. | `src/attune/models/token_estimator.py` |
+
+
+## Source files
+
+- `src/attune/models/**`
+
+## Tags
+
+`models`, `auth`, `llm`
