@@ -71,6 +71,19 @@ def _run_sync(coro: Any) -> Any:
     return _LOOP.run(coro)
 
 
+def _cwd_from_topics(topics: list[str] | None) -> str | None:
+    """Extract the ``cwd:<path>`` marker session_stash writes into topics.
+
+    Mirrors ``attune.memory.file_stash._cwd_from_topics`` so AMS search
+    results surface ``cwd`` the same way the file backend does — letting
+    ``recall_entries``'s cwd soft-sort actually work for AMS users.
+    """
+    for t in topics or []:
+        if isinstance(t, str) and t.startswith("cwd:"):
+            return t[len("cwd:") :]
+    return None
+
+
 class AMSMemoryBackend:
     """MemoryBackend implementation backed by Redis Agent Memory Server.
 
@@ -389,6 +402,7 @@ class AMSMemoryBackend:
                     "topics": r.topics,
                     "entities": r.entities,
                     "memory_type": r.memory_type,
+                    "cwd": _cwd_from_topics(r.topics),
                     "created_at": (r.created_at.isoformat() if r.created_at else None),
                 }
                 for r in results.memories

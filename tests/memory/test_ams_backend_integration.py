@@ -116,7 +116,9 @@ def test_remember_then_search_round_trip(backend):
     """D7: a remember() write is recallable via search() (Ollama-embedded)."""
     marker = f"itest-{uuid.uuid4().hex[:10]}"
     content = f"{marker}: integration finding for the searchable write path."
-    assert backend.remember(content, memory_id=marker, topics=["type:note"]) is True
+    assert (
+        backend.remember(content, memory_id=marker, topics=["type:note", "cwd:/itest-proj"]) is True
+    )
 
     # Embedding + indexing is server-side; allow a brief settle then search.
     # Query by the content text (self-similar embedding ranks the exact doc
@@ -129,6 +131,8 @@ def test_remember_then_search_round_trip(backend):
             break
         time.sleep(1)
     assert hit is not None, f"remember()'d content not found by search for {marker!r}"
+    # cwd surfaced from topics -> recall_entries' cwd soft-sort works for AMS.
+    assert hit["cwd"] == "/itest-proj"
 
 
 def test_session_stash_round_trip():
