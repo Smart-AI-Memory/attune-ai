@@ -7253,3 +7253,45 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   empty. Handoff notes that say "just an env var, flip later" are
   wrong once data exists — treat the first provider pick as
   load-bearing, not provisional.
+
+- **Integration tests against a persistent semantic store need
+  per-run namespace isolation + query-by-content, not
+  query-by-marker**: hit testing the AMS round-trip
+  (`stash_entry → recall_entries`) against a live Agent Memory
+  Server. Two failure modes compounded: (1) searching by a
+  low-signal random token (a hex uuid marker) is unreliable —
+  semantic embeddings of a meaningless token don't rank the target
+  doc into the top-k; (2) a *persistent* store accumulates
+  near-identical docs across test runs (same phrasing, differing
+  only by the marker), and semantic search can't distinguish them,
+  so *this* run's doc is not reliably retrieved. Fixes, both needed:
+  (a) construct the backend with a **unique namespace per run**
+  (`RedisPluginConfig(ams_namespace=f"itest-{uuid4().hex[:12]}")`)
+  so write + search are scoped to only this run's records; (b) query
+  by the **stored content text** (its self-similar embedding ranks
+  the exact doc #1) rather than the bare marker, asserting the
+  marker appears in the returned hit. A manual probe that searched
+  semantic *words* ("tangerine narwhal …") passed while the
+  committed test searching the hex marker flaked — same store, same
+  code, different query signal. Generalizes to any
+  embedding-search regression test against a long-lived index.
+
+- **A bug fix that makes a previously-failing construction succeed
+  can expose unit tests that passed only by accident**: pre-fix,
+  `AMSMemoryBackend.__init__` raised (the `base_url`-kwarg bug, PR
+  #588), so `resolve_backend(None)` caught it and returned `None`,
+  and the "no backend available" tests passed. Once #588 fixed
+  construction AND a real AMS was running locally,
+  `resolve_backend(None)` returned a *live* backend → those tests
+  failed locally (they still pass in CI, which lacks the optional
+  `agent-memory-client` dep, so construction ImportErrors → None).
+  The tests were environment-fragile and only green by coincidence
+  of a bug. Fix: isolate the ambient resolution — an `autouse`
+  fixture that monkeypatches `importlib.metadata.entry_points` to
+  return `[]` makes the no-backend tests deterministic regardless
+  of installed plugins or a running service; tests that need an
+  entry point set their own monkeypatch (runs after, wins). Lesson:
+  when a fix flips a construction/import from raising to
+  succeeding, grep for tests whose assertions depend on the old
+  failure (no-op / None / empty fallbacks) — they may have been
+  passing for the wrong reason.
