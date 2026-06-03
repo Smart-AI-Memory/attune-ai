@@ -142,9 +142,11 @@ def test_stash_fail_closed_when_gate_unavailable(monkeypatch):
 
 
 def test_stash_swallows_backend_error(monkeypatch):
-    monkeypatch.setattr(
-        security_mod, "DataSanitizer", lambda: type("S", (), {"sanitize": lambda self, d: (d, 0)})()
-    )
+    class _Sanitizer:
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _Sanitizer)
 
     class _Boom(_FakeBackend):
         def stash(self, *a, **k):
