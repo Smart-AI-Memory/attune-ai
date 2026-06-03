@@ -102,9 +102,11 @@ def test_stash_noop_without_backend():
 
 def test_stash_calls_backend_with_ttl_seconds(monkeypatch):
     # Make the gate a pass-through so we isolate the stash path.
-    monkeypatch.setattr(
-        security_mod, "DataSanitizer", lambda: type("S", (), {"sanitize": lambda self, d: (d, 0)})()
-    )
+    class _PassThroughGate:
+        def sanitize(self, d):
+            return (d, 0)
+
+    monkeypatch.setattr(security_mod, "DataSanitizer", _PassThroughGate)
     fb = _FakeBackend()
     e = _entry()
     assert stash_entry(e, backend=fb) is True
