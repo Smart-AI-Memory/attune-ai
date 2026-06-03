@@ -7168,3 +7168,88 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   writes used earlier in the session; generalizes to any
   multi-repo session where the sibling isn't the session's own
   worktree.
+
+- **Standing up the Redis Agent Memory Server (AMS) locally —
+  four gotchas, all hit in one 2026-06-03 session**: (1) **AMS
+  needs Redis Stack, not vanilla Redis.** Plain `brew install
+  redis` lacks the RediSearch module; AMS startup dies with
+  `redis.exceptions.ResponseError: unknown command 'FT._LIST'`.
+  Install `redis-stack-server` (`brew tap redis-stack/redis-stack
+  && brew install redis-stack-server`); `redis-cli FT._LIST`
+  returning empty (not "unknown command") confirms RediSearch is
+  loaded. (2) **The server and client packages are version-paired
+  and can drift on PyPI.** `agent-memory-server` 0.15.x imports
+  `agent_memory_client.utils.tag_codec`, which the latest
+  *published* `agent-memory-client` (0.14.0) doesn't have →
+  `ModuleNotFoundError` at CLI import. Pin the server to the
+  version matching the published client (`uv tool install
+  --force 'agent-memory-server==0.14.0'`). (3) **Route embeddings
+  to local Ollama via LiteLLM's native `ollama/` prefix** to keep
+  it fully local (Patrick avoids OpenAI — see global memory
+  `user_avoids_openai`): `EMBEDDING_MODEL=ollama/nomic-embed-text`
+  + `REDISVL_VECTOR_DIMENSIONS=768` (nomic is 768-dim, not the
+  OpenAI-default 1536 the server assumes for unknown models — set
+  it explicitly or the index/embedding dims mismatch). The
+  `openai/<model>` + `OPENAI_API_BASE=http://localhost:11434/v1`
+  route also reaches Ollama but reads as "OpenAI in the loop";
+  prefer `ollama/`. (4) **AMS uses a *generation* model (default
+  `gpt-5`) for auto-extraction, separate from embeddings.** For an
+  embeddings-only/local MVP, disable it
+  (`ENABLE_DISCRETE_MEMORY_EXTRACTION/ENABLE_TOPIC_EXTRACTION/
+  ENABLE_NER=false`) so no generation provider is needed. Config
+  surface lives in `agent_memory_server.config.Settings`
+  (`redis_url`, `embedding_model`, `generation_model`,
+  `openai_api_base`, `redisvl_vector_dimensions`, the `enable_*`
+  flags); read it directly rather than guessing env-var names.
+
+- **A sync wrapper over a persistent-async-client must use ONE
+  long-lived event loop, not `asyncio.run` per call**:
+  `attune_redis.AMSMemoryBackend` wrapped each
+  `agent-memory-client` coroutine in `asyncio.run(coro)`, which
+  creates *and closes* a fresh loop per call. The client's
+  persistent `httpx.AsyncClient` binds to the first loop, so the
+  *second* call onward raised `RuntimeError: Event loop is
+  closed` (first call — stash — worked; `search` failed). Fix:
+  route every coroutine through one persistent loop in a daemon
+  thread via `asyncio.run_coroutine_threadsafe(coro, loop)` —
+  keeps the connection pool valid for the wrapper's lifetime and
+  works whether or not the caller is itself in a running loop.
+  Pairs with the companion bug found the same pass: the 0.14.0
+  client constructor changed to
+  `MemoryAPIClient(MemoryClientConfig(base_url=...))` — the old
+  `MemoryAPIClient(base_url=...)` raised `TypeError` at
+  `__init__`. **Both bugs were invisible to the unit tests
+  because they mocked the client** — only a real-server
+  integration pass surfaced them (the "passing tests don't prove
+  integration" lesson, applied to an async HTTP client). Fixed in
+  attune-ai PR #588.
+
+- **AMS working memory (the `data` dict) and AMS long-term
+  semantic memory are disconnected subsystems — a `stash` write
+  is NOT recallable by `search`**: `set_working_memory_data`
+  writes a key/value blob; `search_long_term_memory` reads
+  embedded long-term *memory records*; `promote()` moves working
+  *memories* (message-derived), not the data dict; and AMS
+  auto-extraction (the documented working→long-term bridge)
+  operates on conversation *messages* AND needs a generation
+  model. So a finding written via `stash`/`set_working_memory_data`
+  never becomes searchable, even after `promote()`. To make a
+  finding recallable, write it directly as a long-term memory:
+  `create_long_term_memory([ClientMemoryRecord(text=..., topics=...,
+  session_id=..., namespace=...)])` — embedding happens
+  server-side on write (Ollama), and `search_long_term_memory`
+  finds it immediately, no generation model required. Verified
+  empirically (stash→search = 0 hits; direct create→search = 1
+  hit). This drove `claude-cross-session-memory` decision **D7**
+  (searchable tier populated by a direct long-term write at stash
+  time, superseding D6's "auto-extraction bridges it" assumption).
+
+- **Embedding-provider choice is NOT cheaply reversible — decide
+  before accumulating memory**: different embedding models produce
+  vectors in different spaces, so switching providers after
+  stashing weeks of memory orphans every old vector (recall
+  silently breaks for pre-switch entries unless you re-embed the
+  whole store). The cheap moment to choose is when the store is
+  empty. Handoff notes that say "just an env var, flip later" are
+  wrong once data exists — treat the first provider pick as
+  load-bearing, not provisional.
