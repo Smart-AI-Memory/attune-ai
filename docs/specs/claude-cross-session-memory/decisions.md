@@ -295,3 +295,72 @@ running AMS to function; without it, sessions behave as they do today.
 - **Verify-first at build time:** confirm `agent-memory-client` installs and
   an AMS server responds at `AMS_BASE_URL` before wiring (per the
   introspect-before-coding lesson).
+
+## D7 — Searchable-tier population: direct long-term write at stash time
+
+> **Status:** **Ratified with Patrick 2026-06-03**, from the D6
+> "verify-first at build time" pass. Option (a) chosen. Builds on
+> attune-ai PR #588 (AMS backend bug fixes, merged). Implementation
+> (backend write method + `session_stash` wiring + round-trip test)
+> follows in a separate PR.
+
+### What the verify-first pass found
+
+Standing up a real local AMS (Ollama `nomic-embed-text` @ 768-dim +
+Redis Stack RediSearch) to verify D6's wiring showed that **D6's
+stated populate mechanism does not hold as written.** D6's "Tier
+mapping under D6" says the searchable tier is "AMS long-term —
+`search()`, populated by AMS's background auto-extraction/promotion
+from working memory." Empirically:
+
+1. `stash()` → `set_working_memory_data` writes the working-memory
+   **data dict** (a key-value blob). AMS auto-extraction operates on
+   conversation **messages**, not the data dict, so it never promotes
+   the blob.
+2. Auto-extraction also requires a **generation model** (default
+   `gpt-5`), which contradicts the local-first / extraction-off stance
+   this release wants. Pointing generation at local `llama3.1` adds
+   latency on every write and is still message-based.
+3. Round-trip measured: `stash` → `search` = **0 hits**, even after an
+   explicit `promote()` (returns `True` but moves working *memories*,
+   not the data dict).
+4. **The search path itself works:** a direct
+   `create_long_term_memory([record])` → `search_long_term_memory`
+   returns the hit (Ollama embeddings + RediSearch verified). So the
+   gap is purely the *write* path — not embeddings, index, or search.
+
+(Two AMS backend bugs surfaced in the same pass — client construction
+against `agent-memory-client` 0.14.0, and an event-loop lifecycle bug
+in `_run_sync` — are fixed in PR #588, which D7 builds on.)
+
+### The decision
+
+How should a stashed finding reach the searchable tier?
+
+- **(a) Direct long-term write at stash time. — Recommended.**
+  `stash_entry` writes via a new `AMSMemoryBackend` method wrapping
+  `create_long_term_memory([ClientMemoryRecord(...)])`. The only option
+  empirically verified end-to-end; fully local (Ollama embeds on
+  write); recall is immediate; no generation model; no promote step.
+  Keeps the existing data-dict `stash()`/`retrieve()` for its
+  key-value use. Refines D6: the searchable tier is populated by a
+  **direct cheap long-term write at stash time** (embedding is the
+  only cost, handled locally), not by background auto-extraction.
+  D4's "cheap-write" intent holds — one create call, no LLM polish;
+  curation still lives in the `/remember` promotion path (D2).
+- **(b) Working memories + explicit `promote()` on session end.**
+  `add_memories_to_working_memory` then `promote()` (verified
+  generation-free). Two-step; defers searchability to session end.
+- **(c) Re-enable auto-extraction on a local generation model.**
+  Contradicts extraction-off + local-first, adds per-write latency,
+  and is unverified for data-dict writes. Not recommended.
+
+### Consequences if (a) is ratified
+
+- attune-redis: add a long-term-write method to `AMSMemoryBackend`
+  (it currently has none — only the data-dict `stash`).
+- T1.3 `session_stash.py`: `stash_entry` routes the searchable write
+  through that method; `recall_entries` stays `backend.search`.
+- D6's "populated by AMS's background auto-extraction" bullet is
+  superseded by "populated by a direct long-term write at stash time."
+- Extraction stays **off**; no generation model required.
