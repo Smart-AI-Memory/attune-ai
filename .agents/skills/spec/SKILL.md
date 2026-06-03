@@ -4,6 +4,15 @@ description: "Spec-driven development — brainstorm, plan, review, and execute 
 ---
 # Spec-Driven Development
 
+**Model recommendation:** Spec planning and XML-enhanced-prompt
+authoring benefit from the Opus tier (`claude-opus-4-8`). Before
+proceeding, suggest a model switch once:
+
+> "This is spec work — recommend `/model claude-opus-4-8` for
+> stronger structured reasoning. Want to switch?"
+
+Defer to the user's choice if they've already picked a model.
+
 **IMPORTANT: Start your response with a context preamble.**
 
 Call `help_lookup(topic="spec-engine", mode="preamble")` and
