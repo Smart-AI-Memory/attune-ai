@@ -172,10 +172,14 @@ def stash_entry(
     entry: SessionStashEntry,
     backend: SearchableMemoryBackend | None = None,
 ) -> bool:
-    """Stash a finding to working memory after the PII/secrets gate.
+    """Write a finding to the searchable recall tier after the PII gate.
 
-    No-op (returns ``False``) when no backend is available or the gate
-    can't run. Never raises — safe to call from a Stop hook.
+    Per D7, findings are written as long-term memories (recallable via
+    :func:`recall_entries`) through ``backend.remember`` when available.
+    Backends without a searchable write path fall back to the key/value
+    ``stash`` (not recallable, but non-fatal). No-op (returns ``False``)
+    when no backend is available or the gate can't run. Never raises —
+    safe to call from a Stop hook.
     """
     target = resolve_backend(backend)
     if target is None:
@@ -184,13 +188,26 @@ def stash_entry(
     if safe_content is None:
         return False
     entry.content = safe_content
-    ttl_seconds = max(1, entry.ttl_days) * 86_400
+    topics = list(entry.tags) + [f"type:{entry.type}", f"cwd:{entry.cwd}"]
+    remember = getattr(target, "remember", None)
     try:
+        if remember is not None:
+            return bool(
+                remember(
+                    safe_content,
+                    memory_id=entry.id,
+                    session_id=entry.session_id,
+                    topics=topics,
+                )
+            )
+        # Backend without a searchable write path: key/value stash only
+        # (not recallable, but the host session must not break).
+        ttl_seconds = max(1, entry.ttl_days) * 86_400
         return bool(
             target.stash(entry.id, entry.to_dict(), ttl=ttl_seconds, agent_id=entry.session_id)
         )
     except Exception as exc:  # noqa: BLE001
-        # INTENTIONAL: stash is best-effort; a backend error must not break
+        # INTENTIONAL: write is best-effort; a backend error must not break
         # the host session.
         logger.warning("session stash write failed: %s", exc)
         return False

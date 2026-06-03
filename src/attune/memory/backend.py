@@ -173,6 +173,32 @@ class SearchableMemoryBackend(MemoryBackend, Protocol):
         """
         ...
 
+    def remember(
+        self,
+        content: str,
+        *,
+        memory_id: str | None = None,
+        session_id: str | None = None,
+        topics: list[str] | None = None,
+    ) -> bool:
+        """Write a semantically-searchable long-term memory.
+
+        Distinct from ``stash`` (key/value working memory): a
+        ``remember`` write enters the long-term store that ``search``
+        retrieves, so the content is recallable across sessions.
+
+        Args:
+            content: Text to store and embed.
+            memory_id: Optional stable id (enables dedup on re-write).
+            session_id: Originating session id.
+            topics: Free-form tags carried on the record.
+
+        Returns:
+            True if the memory was written.
+
+        """
+        ...
+
     def promote(self, session_id: str | None = None) -> bool:
         """Promote working memories to long-term storage.
 

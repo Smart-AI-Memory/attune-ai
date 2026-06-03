@@ -26,6 +26,7 @@ Run locally with AMS up:
 from __future__ import annotations
 
 import os
+import time
 import urllib.request
 import uuid
 
@@ -54,9 +55,17 @@ pytestmark = pytest.mark.skipif(
 
 @pytest.fixture
 def backend():
+    from attune_redis.config import RedisPluginConfig
     from attune_redis.memory import AMSMemoryBackend
 
-    be = AMSMemoryBackend()
+    # Unique namespace per test run: the AMS store is persistent, so without
+    # isolation, near-identical findings from prior runs make semantic recall
+    # of *this* run's record non-deterministic.
+    cfg = RedisPluginConfig(
+        ams_base_url=_AMS_BASE_URL,
+        ams_namespace=f"itest-{uuid.uuid4().hex[:12]}",
+    )
+    be = AMSMemoryBackend(cfg)
     yield be
     be.close()
 
@@ -101,3 +110,66 @@ def test_data_dict_round_trip(backend):
     assert backend.stash("results", payload, agent_id=sid) is True
     got = backend.retrieve("results", agent_id=sid)
     assert got == payload
+
+
+def test_remember_then_search_round_trip(backend):
+    """D7: a remember() write is recallable via search() (Ollama-embedded)."""
+    marker = f"itest-{uuid.uuid4().hex[:10]}"
+    content = f"{marker}: integration finding for the searchable write path."
+    assert backend.remember(content, memory_id=marker, topics=["type:note"]) is True
+
+    # Embedding + indexing is server-side; allow a brief settle then search.
+    # Query by the content text (self-similar embedding ranks the exact doc
+    # highest) rather than the bare hex marker (semantically meaningless).
+    hit = None
+    for _ in range(10):
+        results = backend.search(content, limit=10)
+        hit = next((r for r in results if marker in (r.get("text") or "")), None)
+        if hit is not None:
+            break
+        time.sleep(1)
+    assert hit is not None, f"remember()'d content not found by search for {marker!r}"
+
+
+def test_session_stash_round_trip():
+    """D7 end-to-end: stash_entry -> recall_entries finds the finding.
+
+    This is the round-trip that returned 0 hits before D7 (stash wrote the
+    working-memory data dict; search reads long-term memory). With the
+    remember()-based write path it must now be recallable.
+    """
+    from attune.memory.session_stash import (
+        SessionStashEntry,
+        recall_entries,
+        stash_entry,
+    )
+    from attune_redis.config import RedisPluginConfig
+    from attune_redis.memory import AMSMemoryBackend
+
+    be = AMSMemoryBackend(
+        RedisPluginConfig(
+            ams_base_url=_AMS_BASE_URL,
+            ams_namespace=f"itest-{uuid.uuid4().hex[:12]}",
+        )
+    )
+    try:
+        marker = f"itest-{uuid.uuid4().hex[:10]}"
+        entry = SessionStashEntry.create(
+            session_id=f"itest-{uuid.uuid4()}",
+            cwd="/tmp/itest",
+            type="decision",
+            content=f"{marker}: end-to-end session-stash recall verification.",
+        )
+        assert stash_entry(entry, backend=be) is True
+        # Query by the finding text (self-similar embedding ranks the exact
+        # doc highest) rather than the bare hex marker.
+        hit = None
+        for _ in range(10):
+            results = recall_entries(entry.content, top_k=10, backend=be)
+            hit = next((r for r in results if marker in (r.get("text") or "")), None)
+            if hit is not None:
+                break
+            time.sleep(1)
+        assert hit is not None, f"stashed finding not recalled for {marker!r}"
+    finally:
+        be.close()
