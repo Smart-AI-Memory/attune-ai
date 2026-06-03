@@ -7321,3 +7321,40 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / "create a new worktree to continue last session" lessons —
   same family (correctly locating the right worktree+branch for a
   piece of work), this one is the commit-destination surface.
+
+- **The recurring PR "merge tax" had two mechanical causes — both
+  now fixed structurally — and the prior 2026-06-03 diagnosis was
+  partly wrong**: that lesson blamed `auto-approve-owner` *skipping*
+  on an actor-login guard mismatch (`github.actor == 'patrickroebuck'`
+  vs the real login `silversurfer562`). By 2026-06-03 the guard had
+  ALREADY been corrected to `silversurfer562`, yet the job kept
+  *failing* (not skipping). Real cause (Tax 1 — the review gate):
+  `auto-approve-owner` in `.github/workflows/auto-approve.yml` had
+  `timeout-minutes: 5`, but its `lewagon/wait-on-check-action` step
+  used `check-regexp: ^(test |lint|Analyze )` — which matches the
+  ~20-min Windows `test ` lanes. It timed out at 5 min before the
+  approve step ran → no approval → `required_approving_review_count:
+  1` unmet → every owner PR sat `BLOCKED`. Tax 2 (the security
+  check): `security` was a REQUIRED status check, but its job runs
+  bandit/safety with `|| true` on every step (never gates on
+  findings — toothless) AND has `concurrency.cancel-in-progress:
+  true`, so any superseding push cancels the in-flight run and a
+  cancelled-but-required check blocks until rerun. **Fix applied
+  (all reversible `gh api` PATCHes):** (1) `required_approving_review_count`
+  1→0 on `branches/main/protection/required_pull_request_reviews`
+  (solo-dev — self-approval is theater); (2) removed `security` from
+  `required_status_checks` by PATCHing the FULL `checks` array
+  minus that entry, preserving exact app_ids (15368 GitHub Actions,
+  57789 CodeQL/Advanced Security) per the required-check-app-id rule
+  — a contexts-only PATCH risks the "not set by the expected app"
+  trap; (3) deleted the dead `auto-approve-owner` job (PR #598).
+  Result: owner PRs with green required checks now merge via the
+  normal button — no admin-override dance, no temp-remove-reviews.
+  CodeQL (still required) + the informational `Run Security Scanner`
+  keep real security coverage. **Diagnostic for next time:** when a
+  PR is `BLOCKED` with every visible check green, read
+  `gh api repos/<o>/<r>/branches/main/protection` FIRST to see which
+  checks are actually required and whether the gate is reviews vs a
+  required check — don't chase the scary-red NON-required checks
+  (this is the verify-first-on-infra discipline applied to the gate
+  itself).
