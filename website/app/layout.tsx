@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/lib/theme-provider";
 import { generateMetadata, generateStructuredData } from "@/lib/metadata";
 import PlausibleAnalytics from "@/components/PlausibleAnalytics";
 import WebVitals from "@/components/WebVitals";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -62,6 +63,7 @@ export default function RootLayout({
         </a>
         <ThemeProvider>
           <WebVitals />
+          <SpeedInsights />
           {children}
         </ThemeProvider>
       </body>
