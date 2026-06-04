@@ -23,6 +23,7 @@ from __future__ import annotations
 import argparse
 import html
 import json
+import re
 import shutil
 import sys
 import tempfile
@@ -127,6 +128,7 @@ PAGE = """<!doctype html>
   <meta property="og:type" content="website" />
   <link rel="canonical" href="__CANONICAL__" />
   <style>__CSS__</style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <nav class="help-nav">
@@ -148,6 +150,30 @@ __BODY__
 
 def _md() -> MarkdownIt:
     return MarkdownIt("commonmark", {"html": False, "linkify": True}).enable("table")
+
+
+_ANCHOR_RE = re.compile(r'<a\s+href="([^"]*)"([^>]*)>')
+_KEEP_PREFIX_RE = re.compile(r"^(/|https?://|#|mailto:|tel:)")
+
+
+def _neutralize_relative_links(body_html: str) -> str:
+    """Strip ``href`` from corpus-relative anchors.
+
+    The corpus markdown cross-references sibling templates with relative
+    paths (``tasks/use-x.md``, ``concepts/y.md``, ``../specs/z/``) that have
+    no equivalent in the published, flat-routed site (``/help/<feature>/<kind>``).
+    Such links would 404 on click. Absolute (``/...``) and external
+    (``https://``) links are preserved; relative ones keep their text but
+    lose the dead href.
+    """
+
+    def repl(match: re.Match[str]) -> str:
+        href, rest = match.group(1), match.group(2)
+        if _KEEP_PREFIX_RE.match(href):
+            return match.group(0)
+        return f"<a{rest}>"
+
+    return _ANCHOR_RE.sub(repl, body_html)
 
 
 def _write_text(path: Path, text: str) -> None:
@@ -209,7 +235,7 @@ def _build_kind_page(out: Path, helpd, cfg, feature: str, kind: str, md: Markdow
     rec = helpd.get_template(cfg, feature, kind)
     if rec is None:
         return None
-    body_html = md.render(rec.body)
+    body_html = _neutralize_relative_links(md.render(rec.body))
     title = rec.title or _title_case(feature)
     page_body = f'  <article class="markdown-body">\n{body_html}\n  </article>'
     crumbs = _crumbs(

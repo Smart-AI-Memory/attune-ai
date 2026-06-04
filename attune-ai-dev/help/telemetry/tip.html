@@ -247,6 +247,7 @@
       .help-home h1 { font-size: 1.9rem; }
     }
 </style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <nav class="help-nav">
@@ -294,7 +295,7 @@
 <p>Polling these commands frequently gives you faster feedback, but each call reads from the underlying store. In high-throughput runs with many active agents, prefer <code>get_recent_events()</code> on <code>EventStreamer</code> with a bounded <code>count</code> rather than open-ended queries, to avoid pulling large Redis streams into memory.</p>
 <h2>Related topics</h2>
 <ul>
-<li><a href="concepts/feedback-loop.md">Concept: Template feedback loop</a> — explains how <code>record_template_feedback()</code> and <code>get_template_confidence()</code> feed quality signals back into template ranking.</li>
+<li><a>Concept: Template feedback loop</a> — explains how <code>record_template_feedback()</code> and <code>get_template_confidence()</code> feed quality signals back into template ranking.</li>
 </ul>
 <p><strong>Tags:</strong> <code>telemetry</code>, <code>metrics</code></p>
 <h2>Unresolved references</h2>

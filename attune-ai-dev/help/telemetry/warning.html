@@ -247,6 +247,7 @@
       .help-home h1 { font-size: 1.9rem; }
     }
 </style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <nav class="help-nav">
@@ -266,7 +267,7 @@
 <h3>Approval requests time out silently and block workflows</h3>
 <p><code>ApprovalGate.request_approval()</code> blocks until a response arrives or <code>timeout_seconds</code> elapses. If the timeout fires, the calling workflow stalls at that gate. Expired requests accumulate until <code>clear_expired_requests()</code> is called explicitly — they are not cleaned up automatically. Monitor <code>get_pending_approvals()</code> in long-running workflows, and call <code>clear_expired_requests()</code> on a schedule to prevent stale requests from cluttering the queue.</p>
 <h3>Feedback scores influence template ranking from the first rating</h3>
-<p><code>FeedbackLoop</code> computes confidence as <code>good / (good + bad)</code> and that score feeds into template ranking (see <a href="concepts/feedback-loop.md">Template feedback loop</a>). A single early bad rating on a new template produces a very low confidence score. If you are testing a template or running integration exercises, use a separate feedback store rather than writing to the production <code>feedback.json</code>, or your test ratings will skew ranking for real users.</p>
+<p><code>FeedbackLoop</code> computes confidence as <code>good / (good + bad)</code> and that score feeds into template ranking (see <a>Template feedback loop</a>). A single early bad rating on a new template produces a very low confidence score. If you are testing a template or running integration exercises, use a separate feedback store rather than writing to the production <code>feedback.json</code>, or your test ratings will skew ranking for real users.</p>
 <h3><code>EventStreamer.consume_events()</code> blocks when <code>block_ms</code> is set</h3>
 <p>Passing a non-<code>None</code> <code>block_ms</code> to <code>consume_events()</code> causes the call to block for up to <code>block_ms</code> milliseconds waiting for new Redis Stream entries. In a synchronous context this can stall the entire thread. Use <code>block_ms=None</code> (non-blocking) when you need to poll, and reserve blocking mode for dedicated consumer threads.</p>
 <h3>Private helpers in <code>src/attune/telemetry/</code> can change without notice</h3>
