@@ -1,6 +1,14 @@
 # Spec: Telemetry System
 
-**Status**: complete
+**Status**: complete (cost rollup) — quality-dashboard direction active
+
+> **2026-06-04 (backlog triage):** the former `telemetry-rethink` spec
+> was merged here as the forward direction for `/telemetry`. The cost-
+> savings rollup (this spec, Phase 1–4) is shipped and complete; the
+> next phase replaces it with a quality dashboard (redundant-call
+> detection, spendthrift-workflow ranking, latency, faithfulness). See
+> [quality-dashboard-requirements.md](./quality-dashboard-requirements.md)
+> and [quality-dashboard-decisions.md](./quality-dashboard-decisions.md).
 
 > Originally `docs/specs/TELEMETRY_DESIGN.md`, version 1.0 targeting attune-ai v3.8.2.
 > Shipped in v3.8.0+. Implementation lives in `src/attune/telemetry/` (notably `usage_tracker.py`, `cli.py`, `cli_commands/telemetry_commands.py`).

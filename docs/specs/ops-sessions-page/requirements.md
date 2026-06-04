@@ -4,6 +4,13 @@
 > days of Claude Code sessions for the **current project**, each with
 > a Haiku-summarized starter-prompt for resuming.
 
+> **2026-06-04 (backlog triage):** the former `worktree-inventory`
+> spec is folded into this page. Its scope (a panel showing which
+> worktrees have recent activity so orphans can be pruned safely) is
+> a marginal `group_by` over data this page already loads — implement
+> it as a sub-panel here rather than as a standalone spec. Archived at
+> `docs/specs/archive/worktree-inventory/`.
+
 ---
 
 ## Phase 1: Requirements
