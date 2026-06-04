@@ -291,8 +291,8 @@ class TestCmdWorkflowRunNotFound:
     """Tests for cmd_workflow_run when workflow is not found."""
 
     @patch("attune.workflows.get_workflow")
-    def test_run_not_found_returns_one(self, mock_get, capsys):
-        """Test that running a nonexistent workflow returns 1."""
+    def test_run_not_found_returns_cli_error(self, mock_get, capsys):
+        """A nonexistent workflow is a CLI-level error → exit 3."""
         mock_get.side_effect = KeyError("Unknown workflow: missing-workflow")
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
@@ -300,7 +300,7 @@ class TestCmdWorkflowRunNotFound:
         args = _make_args(name="missing-workflow")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 3
         captured = capsys.readouterr()
         assert "Workflow not found: missing-workflow" in captured.out
 
@@ -332,8 +332,8 @@ class TestCmdWorkflowRunInputParsing:
         assert call_kwargs["count"] == 42
 
     @patch("attune.workflows.get_workflow")
-    def test_run_invalid_json_returns_one(self, mock_get, capsys):
-        """Test that invalid JSON input returns 1 with error message."""
+    def test_run_invalid_json_returns_cli_error(self, mock_get, capsys):
+        """Invalid JSON input is a CLI-level error → exit 3."""
         mock_get.return_value = _make_workflow_class()
 
         from attune.cli_commands.workflow_commands import cmd_workflow_run
@@ -341,7 +341,7 @@ class TestCmdWorkflowRunInputParsing:
         args = _make_args(name="wf", input="{not valid json")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 3
         captured = capsys.readouterr()
         assert "Invalid JSON input" in captured.out
 
@@ -419,7 +419,7 @@ class TestCmdWorkflowRunPathValidation:
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
     def test_run_path_traversal_rejected(self, mock_get, mock_validate, capsys):
-        """Test that path traversal is caught and returns 1."""
+        """Path traversal is a CLI-level error → exit 3."""
         mock_validate.side_effect = ValueError("Cannot write to system directory: /etc")
         mock_get.return_value = _make_workflow_class()
 
@@ -428,7 +428,7 @@ class TestCmdWorkflowRunPathValidation:
         args = _make_args(name="wf", path="../../../etc/passwd")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 3
         captured = capsys.readouterr()
         assert "Invalid path" in captured.out
         assert "Cannot write to system directory" in captured.out
@@ -436,7 +436,7 @@ class TestCmdWorkflowRunPathValidation:
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
     def test_run_null_byte_path_rejected(self, mock_get, mock_validate, capsys):
-        """Test that null bytes in path are rejected."""
+        """Null bytes in path are a CLI-level error → exit 3."""
         mock_validate.side_effect = ValueError("path contains null bytes")
         mock_get.return_value = _make_workflow_class()
 
@@ -445,14 +445,14 @@ class TestCmdWorkflowRunPathValidation:
         args = _make_args(name="wf", path="config\x00.json")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 3
         captured = capsys.readouterr()
         assert "Invalid path" in captured.out
 
     @patch("attune.security.path_validation._validate_file_path")
     @patch("attune.workflows.get_workflow")
     def test_run_system_directory_path_rejected(self, mock_get, mock_validate, capsys):
-        """Test that system directory paths are rejected."""
+        """System directory paths are a CLI-level error → exit 3."""
         mock_validate.side_effect = ValueError("Cannot write to system directory: /sys")
         mock_get.return_value = _make_workflow_class()
 
@@ -461,7 +461,7 @@ class TestCmdWorkflowRunPathValidation:
         args = _make_args(name="wf", path="/sys/kernel/debug")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 3
         captured = capsys.readouterr()
         assert "Invalid path" in captured.out
 
@@ -675,11 +675,16 @@ class TestCmdWorkflowRunJsonOutput:
 
 
 class TestCmdWorkflowRunExceptionHandling:
-    """Tests for exception handling in cmd_workflow_run."""
+    """Tests for exception handling in cmd_workflow_run.
+
+    An uncaught exception from ``execute()`` is the exit-2 "unplanned
+    failure" branch: the traceback goes to stderr, the voiced summary
+    to stdout.
+    """
 
     @patch("attune.workflows.get_workflow")
     def test_run_workflow_raises_runtime_error(self, mock_get, capsys):
-        """Test that a RuntimeError during execute returns 1."""
+        """A RuntimeError during execute is an unplanned failure → exit 2."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=RuntimeError("Something broke"),
         )
@@ -689,14 +694,16 @@ class TestCmdWorkflowRunExceptionHandling:
         args = _make_args(name="wf")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 2
         captured = capsys.readouterr()
         assert "Something went wrong" in captured.out
         assert "Something broke" in captured.out
+        # Traceback is printed to stderr per the exit-2 contract.
+        assert "Traceback (most recent call last):" in captured.err
 
     @patch("attune.workflows.get_workflow")
     def test_run_workflow_raises_value_error(self, mock_get, capsys):
-        """Test that a ValueError during execute returns 1."""
+        """A ValueError during execute is an unplanned failure → exit 2."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=ValueError("Invalid value"),
         )
@@ -706,13 +713,13 @@ class TestCmdWorkflowRunExceptionHandling:
         args = _make_args(name="wf")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 2
         captured = capsys.readouterr()
         assert "Something went wrong" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_workflow_raises_key_error(self, mock_get, capsys):
-        """Test that a KeyError during execute returns 1."""
+        """A KeyError during execute is an unplanned failure → exit 2."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=KeyError("missing_key"),
         )
@@ -722,13 +729,13 @@ class TestCmdWorkflowRunExceptionHandling:
         args = _make_args(name="wf")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 2
         captured = capsys.readouterr()
         assert "Something went wrong" in captured.out
 
     @patch("attune.workflows.get_workflow")
     def test_run_async_workflow_raises_exception(self, mock_get, capsys):
-        """Test that an exception from an async workflow is caught."""
+        """An exception from an async workflow is an unplanned failure → exit 2."""
         mock_get.return_value = _make_workflow_class(
             execute_side_effect=ConnectionError("API unreachable"),
             is_async=True,
@@ -739,7 +746,7 @@ class TestCmdWorkflowRunExceptionHandling:
         args = _make_args(name="wf")
         result = cmd_workflow_run(args)
 
-        assert result == 1
+        assert result == 2
         captured = capsys.readouterr()
         assert "Something went wrong" in captured.out
         assert "API unreachable" in captured.out
