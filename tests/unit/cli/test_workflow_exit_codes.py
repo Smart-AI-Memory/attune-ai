@@ -262,6 +262,27 @@ class TestJsonModeThreadsExitCode:
         assert parsed["sdk_error_kind"] == "api_quota"
 
     @patch("attune.workflows.get_workflow")
+    def test_json_malformed_object_output_falls_back_to_envelope(self, mock_get, capsys):
+        """A final_output that looks like JSON but won't parse falls back
+        to the envelope instead of crashing."""
+        import json
+
+        result = _make_result(success=True)
+        # Starts with '{' (so the coercer tries to parse) but is invalid.
+        result.final_output = "{not valid json"
+        mock_get.return_value = _workflow_returning(result)
+
+        from attune.cli_commands.workflow_commands import cmd_workflow_run
+
+        rc = cmd_workflow_run(_make_args(name="wf", json=True))
+        assert rc == 0
+        out = capsys.readouterr().out
+        block = out[out.index("{") :]
+        parsed = json.loads(block)
+        assert parsed["exit_code"] == 0
+        assert parsed["success"] is True
+
+    @patch("attune.workflows.get_workflow")
     def test_json_non_dict_output_wrapped_in_envelope(self, mock_get, capsys):
         """Non-dict result is wrapped so contract fields are always present."""
         import json
