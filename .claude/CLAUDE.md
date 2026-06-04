@@ -7692,3 +7692,71 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   render in isolation. Generalizes the "registered ≠ working /
   dogfood the live loop" lesson to site navigation — a page nobody
   can navigate to is as good as unbuilt.
+
+- **Vercel `x-vercel-error: DEPLOYMENT_NOT_FOUND` on a custom
+  domain while `<project>.vercel.app` serves 200 = domain-binding
+  problem, NOT a build/deploy failure — diagnose with three
+  read-only commands before touching code**: hit 2026-06-04
+  wiring `attune-ai.dev` after merging the analytics PR. The bare
+  domain returned 404 on every path (including `/`) with
+  `x-vercel-error: DEPLOYMENT_NOT_FOUND` and `server: Vercel`,
+  which reads like "the site is broken" but means the production
+  deploy is fine and the *custom domain* isn't bound to it.
+  Diagnostic chain (read-only, ~30s): (1) `curl -sI
+  https://<domain>/` — `DEPLOYMENT_NOT_FOUND` + `server: Vercel`
+  = domain reaches Vercel but no project claims it; (2) `vercel
+  projects ls` — find the project + its "Latest Production URL"
+  (`<slug>.vercel.app`); curl that — 200 means the deploy
+  succeeded, only the domain hookup is missing; (3) `vercel
+  domains inspect <domain>` — read **Intended Nameservers vs
+  Current Nameservers**. All-✘ = authoritative DNS still at the
+  registrar (`ns1-4.whois.com`), not Vercel
+  (`ns1/ns2.vercel-dns.com`). Two valid fixes: (A) **NS
+  delegation** — change nameservers at registrar to Vercel's
+  (Vercel manages DNS+SSL; A record moot); (B) **external-DNS A
+  record** — keep registrar NS, set apex A record to the IP
+  Vercel shows (classic `76.76.21.21` OR newer anycast like
+  `216.150.1.1` Vercel now hands out — verify `dig @8.8.8.8
+  +short <domain> A`), AND **add the domain to the specific
+  project** in dashboard Settings → Domains (account-level
+  domain registration is NOT project assignment — the A record
+  gets traffic to Vercel's door; project assignment tells Vercel
+  which deployment to serve). Companion: once bound, a blanket
+  `308` on every path (including `/og.png`) is an apex↔www
+  redirect, not the site — `curl -sI` and read `location:`, then
+  `curl -sL -w "%{http_code} %{url_effective}"` to confirm it
+  lands 200. If the redirect direction (apex→www) disagrees with
+  the pages' own `rel="canonical"` / `og:image` (bare apex), flip
+  the primary domain in Vercel so the live canonical matches the
+  HTML — else social scrapers fetch a redirecting og:image.
+  Pairs with the existing `pypi` env-branch-policy and
+  vercel-noise-cleanup lessons (same family: Vercel config
+  surfaces that look like failures).
+
+- **attune-ai.dev static-site build — two publish gotchas now
+  guarded, plus a validator caveat**: (1) **Corpus-relative
+  links 404 on the flat-routed site.** `build_help.py` renders
+  raw `.help` corpus markdown (`md.render(rec.body)`); that
+  markdown cross-refs sibling templates via relative paths
+  (`tasks/use-x.md`, `concepts/y.md`, `../specs/z/`) with NO
+  equivalent on the published site (routed flat as
+  `/help/<feature>/<kind>`) → 404 on click. Fix: a
+  `_neutralize_relative_links()` post-render pass in BOTH
+  `build_help.py` and `build_discipline.py` that strips `href`
+  from relative anchors (keeps text), preserving absolute `/...`
+  and external `https://` — regex `<a\s+href="([^"]*)"([^>]*)>`
+  with keep-prefix guard `^(/|https?://|#|mailto:|tel:)`. (2)
+  **`og:image` referenced but missing** — `index.html` +
+  `discipline/index.html` set `og:image` to
+  `https://attune-ai.dev/og.png` and `vercel.json` caches
+  `/og.png`, but the PNG never existed → broken social cards.
+  Fix: reproducible `build_og.py` (PIL, 1200×630, brand dark
+  theme). (3) **Validator caveat:** a naive on-disk link/asset
+  checker false-positives on `/_vercel/insights/script.js` (the
+  Vercel Analytics runtime path, served by the edge, never on
+  disk) — exclude `/_vercel/*` from missing-asset checks; and
+  the root `/` link resolves to `index.html` via `cleanUrls`, so
+  special-case it or every page's home link false-flags. Hit the
+  "formatter strips imports added before usage" lesson again
+  here (`import re` added before its usage was stripped by ruff
+  in both build scripts — re-add AFTER the usage exists).
