@@ -76,9 +76,11 @@ class TestUnifiedMemoryInterface:
     def test_retrieve_checks_both_tiers(self):
         """Test that retrieve checks short-term first, then long-term."""
 
-    def test_short_term_takes_precedence_over_long_term(self):
+    def test_short_term_takes_precedence_over_long_term(self, tmp_path):
         """Test that short-term data overrides long-term if both exist."""
-        config = MemoryConfig(redis_mock=True)
+        # Isolate long-term storage so the test does not write to the
+        # tracked ./memdocs_storage fixture (SUT-write-leak family).
+        config = MemoryConfig(redis_mock=True, storage_dir=str(tmp_path))
         memory = UnifiedMemory(user_id="test_user", config=config)
 
         # Store in long-term with old value
