@@ -7635,3 +7635,60 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   lesson (same mechanism, different purpose: keeping an optional
   dep OFF the submodule import path). Pairs with "Unused
   `__init__.py` re-exports become invisible runtime deps."
+
+- **Byte-identity verification: trust `diff` + `git status`, NOT
+  the script's `len(str)` "bytes" print**: when refactoring a build
+  script to prove its rendered output is unchanged (e.g. extracting
+  the inline CSS from a `str.format()` HTML template into a shared
+  `brand.css` that both `build_discipline.py` and `build_help.py`
+  read), two gotchas. (1) On extraction, **un-double the braces** —
+  CSS inside a `.format()` string has `{{`/`}}` only to escape the
+  formatter; the standalone file needs single `{`/`}` (it's injected
+  as a `.format()` ARG value, inserted literally, not re-scanned).
+  (2) **`len(some_str)` is the CHARACTER count, not the byte count.**
+  A `print(f"wrote ... {len(html):,} bytes")` mislabels chars as
+  bytes; multi-byte UTF-8 (em-dashes, curly quotes in prose) makes
+  the char count SMALLER than the file's byte count — saw 71,454
+  chars vs 71,819 actual file bytes for the byte-IDENTICAL discipline
+  page, which briefly looked like a 365-byte regression. Verify
+  identity by saving a baseline (`cp out.html /tmp/base`) BEFORE the
+  refactor, then `diff -q /tmp/base out.html` + `git status` (no `M`)
+  after — the file/diff is ground truth, the script's self-reported
+  "bytes" is not. Pairs with the "markdown-it-py + brand template"
+  static-site build pattern.
+
+- **The Cowork preview manager owns the port via a `PORT` env var —
+  a static-preview helper must read `os.environ["PORT"]`, never
+  hardcode; clean-URL serving needs a `translate_path` fallback to
+  `<path>.html`**: `preview_start` (launch.json) rejects a server
+  that hardcodes its listen port with "hardcoded port that ignores
+  the PORT environment variable" — even when the port is free and
+  even after killing every process on it. Fix: `PORT =
+  int(os.environ.get("PORT", "<default>"))` so the manager controls
+  it. For previewing a Vercel-style clean-URL static site locally
+  (links like `/help/foo/bar` with no `.html`), subclass
+  `http.server.SimpleHTTPRequestHandler` and override
+  `translate_path` to fall back to `<path>.html` when the literal
+  path is neither a file nor a dir (dirs still 301 to trailing-slash
+  → `index.html`). Companion: the preview browser **caches the old
+  page** after a source edit (static files lack `Cache-Control`, per
+  the existing `/static/*` lesson) — the served bytes update but the
+  pane shows stale content; reload with `?v=` + `Date.now()` to bust
+  it. Also: name the helper `_serve_preview.py` (underscore prefix,
+  dev-only) and keep it OUT of the shipped commit.
+
+- **A new browsable site section isn't done until the landing/nav
+  links to it — the entry point is acceptance-criterion-level, not
+  polish**: built the entire `attune-ai.dev/help/` surface (25
+  features, 267 pages, search) but forgot to add the link from the
+  hand-authored `attune-ai-dev/index.html` home page, so there was
+  no way in — the user found it instantly ("where's the link to
+  help?"). It was literally AC5 in the spec ("/help reachable from
+  the site nav and landing page") yet slipped because the generated
+  section *felt* complete on its own. Rule: when adding a new section
+  to a site, wire its home/nav entry link in the SAME task that
+  builds the section, and verify the path a real visitor takes (land
+  on `/` → can I reach the new thing?), not just that the new pages
+  render in isolation. Generalizes the "registered ≠ working /
+  dogfood the live loop" lesson to site navigation — a page nobody
+  can navigate to is as good as unbuilt.
