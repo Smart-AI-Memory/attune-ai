@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: reference
-generated_at: 2026-06-03T02:46:55.584320+00:00
-source_hash: 57b8e505bab7ccba5ff519e5f59111f1ef50f2e629841d8c034de4c1391df086
+generated_at: 2026-06-04T10:52:19.419823+00:00
+source_hash: 3564938306a66c3c29641900b4227debc9ca0a266533d177666962f7158ba391
 status: generated
 ---
 
@@ -36,6 +36,8 @@ status: generated
 | `validate_bash_command()` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
 | `validate_file_path()` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
 | `main()` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |
+| `main()` | — | `plugin/hooks/session_recall.py` |
+| `main()` | Entry point — acts once per substantive session, never raises. | `plugin/hooks/session_stash.py` |
 | `format_orientation()` | Short markdown list of in-flight specs for non-compact starts. | `plugin/hooks/spec_orient.py` |
 | `render_spec_pin()` | Render a spec body for post-compact context restoration. | `plugin/hooks/spec_orient.py` |
 | `main()` | Entry point — branches on ``source``, never raises. | `plugin/hooks/spec_orient.py` |
