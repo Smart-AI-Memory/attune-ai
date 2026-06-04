@@ -127,6 +127,7 @@ PAGE = """<!doctype html>
   <meta property="og:type" content="website" />
   <link rel="canonical" href="__CANONICAL__" />
   <style>__CSS__</style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <nav class="help-nav">

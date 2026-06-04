@@ -55,6 +55,7 @@ TEMPLATE = """<!doctype html>
   <link rel="canonical" href="{canonical}" />
 
   <style>{brand_css}</style>
+  <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
   <div class="draft-banner">
