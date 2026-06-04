@@ -7592,3 +7592,46 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   memory-lint/injection PostToolUse hooks, so the cleaned
   frontmatter sticks. Same channel works to append the required
   `MEMORY.md` pointer (R3). Confirmed 2026-06-04.
+
+- **Extend a vendor class at its DATA BOUNDARY with a proxy, not
+  a subclass that duplicates its methods**: when you need to
+  change how a third-party class reads/writes data (e.g.
+  agent-memory-server's `RedisVLMemoryVectorDatabase` hardcoding
+  float32 vector encoding), wrap the lower-level collaborator it
+  delegates to (the RedisVL `AsyncSearchIndex`) and re-encode at
+  `load()`/`query()` — far less code and far more drift-resistant
+  than subclassing and copying its ~200-line add/search methods.
+  The proxy depends only on the stable collaborator interface
+  (`index.load/query/aggregate`, `VectorQuery._vector/_dtype`,
+  the `"vector"` field name), not the vendor's method bodies;
+  pair it with a drift-guard test asserting the few internals it
+  does rely on (e.g. "AMS add_memories still encodes float32").
+  For query paths that don't fit the proxy (server-side recency
+  aggregation), raise `NotImplementedError` so the vendor's own
+  fallback fires. Shipped as `attune_redis.Int8VectorIndexProxy`
+  (PR #609). When the SAME logic later belongs upstream, it
+  relocates into the vendor's own methods (the
+  `MEMORY_VECTOR_DB_FACTORY` datatype change,
+  redis/agent-memory-server#302) — but a boundary proxy is the
+  right shape for a CONSUMER-side override that can't wait for an
+  upstream release.
+
+- **A package `__init__` that eagerly imports a heavy/optional-
+  dependency symbol forces that dep on EVERY submodule import —
+  make it lazy with PEP 562 `__getattr__`**: `attune_redis/
+  __init__.py` eagerly did `from .plugin import RedisPlugin`
+  (which imports `attune`), so `import
+  attune_redis.vector_db_int8` from the agent-memory-server venv
+  (no `attune` installed there) crashed with
+  `ModuleNotFoundError: No module named 'attune'` — Python runs
+  the package `__init__` before any submodule. Fix: drop the
+  eager import and expose the heavy symbol via module-level
+  `def __getattr__(name)` so submodule imports stay
+  dependency-light while `from attune_redis import RedisPlugin`
+  still resolves lazily. Caught by DOGFOODING the live
+  `MEMORY_VECTOR_DB_FACTORY` path, NOT by unit tests (which ran
+  in an env that had `attune`) — the "registered ≠ working"
+  trap. Distinct from the existing PEP 562 deprecation-shim
+  lesson (same mechanism, different purpose: keeping an optional
+  dep OFF the submodule import path). Pairs with "Unused
+  `__init__.py` re-exports become invisible runtime deps."
