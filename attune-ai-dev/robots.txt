@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://attune-ai.dev/sitemap.xml
