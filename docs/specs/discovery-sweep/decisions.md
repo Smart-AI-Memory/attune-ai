@@ -1,6 +1,6 @@
 # Decisions — Discovery Sweep
 
-**Status:** approved
+**Status:** complete (2026-05-13)
 
 Context, motivation, and load-bearing design decisions for a meta-workflow that fans out across the audit-family workflows and triages their findings into act-on-now / drop / ask-human buckets.
 
