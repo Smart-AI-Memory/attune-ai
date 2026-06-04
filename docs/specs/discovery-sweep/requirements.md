@@ -1,6 +1,6 @@
 # Requirements — Discovery Sweep
 
-**Status:** approved with notes
+**Status:** complete (2026-05-13)
 
 User-facing stories and the contracts they imply. See `decisions.md` for context, `design.md` for the technical shape, `tasks.md` for the phase plan.
 

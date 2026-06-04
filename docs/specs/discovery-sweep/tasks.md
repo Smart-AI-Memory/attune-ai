@@ -1,5 +1,5 @@
 # Tasks — Discovery Sweep
-**Status:** approved (2026-05-13) — Phase 1, 2A, 2B, 3 shipped; Phase 4 closed empty per P2.7 surface evaluation.
+**Status:** complete (2026-05-13) — Phase 1, 2A, 2B, 3 shipped; Phase 4 closed empty per P2.7 surface evaluation.
 | Phase | Status | Shipped via |
 |---|---|---|
 | Phase 1 — Engine + PatternScanSource | done | [#303](https://github.com/Smart-AI-Memory/attune-ai/pull/303), [#306](https://github.com/Smart-AI-Memory/attune-ai/pull/306) FP filter, [#309](https://github.com/Smart-AI-Memory/attune-ai/pull/309) AST filter |

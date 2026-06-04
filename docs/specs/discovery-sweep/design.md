@@ -1,6 +1,6 @@
 # Design — Discovery Sweep
 
-**Status:** approved with updates
+**Status:** complete (2026-05-13)
 
 Technical shape of the work. See `requirements.md` for what we're building, `tasks.md` for the phase plan, `decisions.md` for why.
 
