@@ -57,6 +57,7 @@ TEMPLATE = """<!doctype html>
 
   <style>{brand_css}</style>
   <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
   <div class="draft-banner">

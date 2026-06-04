@@ -129,6 +129,7 @@ PAGE = """<!doctype html>
   <link rel="canonical" href="__CANONICAL__" />
   <style>__CSS__</style>
   <script defer src="/_vercel/insights/script.js"></script>
+  <script defer src="/_vercel/speed-insights/script.js"></script>
 </head>
 <body>
   <nav class="help-nav">
