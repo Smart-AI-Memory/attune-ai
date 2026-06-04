@@ -5,6 +5,47 @@ All notable changes to Attune AI (formerly Empathy Framework) will be documented
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Changed (Breaking)
+
+- **`attune workflow run` now exits non-zero when the workflow
+  actually failed.** Previously the command exited `0` even when
+  `WorkflowResult.success` was `False` or the SDK adapter swallowed an
+  uncaught exception — an exit-0 lie that forced downstream consumers
+  (the ops dashboard, CI scripts, IDE integrations) to scrape logs to
+  tell success from failure. The new exit-code contract:
+
+  | Code | Meaning |
+  |------|---------|
+  | `0` | Workflow ran and succeeded |
+  | `1` | Workflow ran and reported failure (`success is False`) |
+  | `2` | Workflow raised an uncaught exception (traceback on stderr) |
+  | `3` | CLI-level error (workflow not found, bad path, bad JSON) |
+
+  CLI-level errors that previously returned `1` now return `3`;
+  workflow exceptions that previously returned `1` now return `2`.
+  Workflows returning a plain `dict` / `str` / `None` (no `success`
+  field) still exit `0`.
+
+  `--json` output additively threads `exit_code` and `sdk_error_kind`
+  into the emitted JSON so CI consumers can read the outcome without
+  branching on `$?` (which remains authoritative).
+
+  **Migration** — scripts that relied on the old always-zero exit and
+  want to tolerate a *planned* failure (exit `1`) while still failing
+  on a crash (exit `2`/`3`):
+
+  ```sh
+  attune workflow run X; rc=$?; [ "$rc" -le 1 ] || exit "$rc"
+  ```
+
+  The ops dashboard's defense-in-depth log-scan
+  (`run_view.js` `detectLogErrorLeak`) is retained for one release as
+  a safety net and will be retired in a following release now that the
+  exit code is honest. See
+  `docs/specs/workflow-failure-exit-propagation/`.
+
 ## [7.4.0] — 2026-06-04
 
 ### Added

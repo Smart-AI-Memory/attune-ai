@@ -9,7 +9,8 @@
 
 ## Phase 1: Requirements
 
-**Status**: draft
+**Status**: approved (design + tasks complete; implemented in one PR —
+see `design.md`, `tasks.md`)
 
 ### Problem statement
 

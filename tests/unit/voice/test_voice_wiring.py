@@ -181,7 +181,9 @@ class TestErrorPathVoiceWiring:
         from attune.cli_commands.workflow_commands import cmd_workflow_run
 
         rc = cmd_workflow_run(_make_args(name="code-review"))
-        assert rc == 1
+        # Uncaught exception → exit 2 (unplanned failure) per the
+        # workflow-failure-exit-propagation contract.
+        assert rc == 2
         out = capsys.readouterr().out
         assert personality.ERROR_PREFIX in out
         assert "API connection lost" in out

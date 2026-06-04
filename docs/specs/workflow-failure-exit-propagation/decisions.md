@@ -19,22 +19,31 @@
 
 ---
 
-## Open questions (resolve during design phase)
+## Open questions — RESOLVED (design phase)
 
-1. **`_run_workflow_with_exit_code()` helper location.** Could live
-   in `cli_minimal.py` or in a new `cli_commands/_exit_codes.py`.
-   The latter is cleaner long-term; the former is one less file
-   to wire up. Decide during design.
+1. **Helper location → `cli_commands/_exit_codes.py` (new file).**
+   The contract (`EXIT_*` constants + `run_workflow_with_exit_code()`
+   + JSON threading) lives in a dedicated module under the existing
+   `cli_commands/` package, keeping `cli_minimal.py` free of
+   classification logic. The helper takes the workflow *class* and
+   instantiates it inside its own `try`, so constructor failures are
+   classified as exit 2 too. See `design.md` Q1.
 
-2. **Logging interaction.** When exit code is `2`, the traceback is
-   already printed to stderr by Python's default exception handler.
-   Do we also want a structured `--json` mode for CI consumers?
-   Defer to design.
+2. **`--json` mode → thread `exit_code` + `sdk_error_kind`; `$?`
+   stays authoritative.** JSON output additively gains `exit_code`
+   and `sdk_error_kind` (read from `result.metadata`, populated by
+   the sdk-error-message-fidelity primitives — no new classification
+   here). Object outputs get the keys injected (`setdefault`, never
+   clobbering); non-dict results are wrapped in an
+   `{exit_code, success, sdk_error_kind, result}` envelope. The
+   "last `{...}` block" invariant that `security-scan.yml` relies on
+   is preserved. See `design.md` Q2.
 
-3. **Migration message.** Should the CHANGELOG entry include a
-   one-line shell snippet for shop scripts that need to adapt?
-   E.g. `if attune workflow run X || [ $? -eq 1 ]; then …`. Decide
-   when CHANGELOG is drafted.
+3. **Migration snippet → yes, included in the CHANGELOG.** One
+   copy-safe shell line showing how a script tolerates a planned
+   failure (exit 1) while still failing on a crash (exit ≥ 2):
+   `attune workflow run X; rc=$?; [ "$rc" -le 1 ] || exit "$rc"`.
+   See `design.md` Q3.
 
 ---
 
@@ -47,3 +56,7 @@
   Triggered by ops-dashboard QA punch list item P0-2; companion
   defense-in-depth landed in dashboard log-scan PR (see
   `src/attune/ops/static/js/run_view.js` `detectLogErrorLeak`).
+- 2026-06-04 — Open questions Q1–Q3 resolved during the design
+  phase (see `design.md`) and implemented in one PR. No matrix rows
+  were revised. Dashboard log-scan retirement remains deferred to a
+  follow-up release per the matrix.

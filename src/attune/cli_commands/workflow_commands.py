@@ -76,9 +76,12 @@ def cmd_workflow_info(args: Namespace) -> int:
 
 def cmd_workflow_run(args: Namespace) -> int:
     """Execute a workflow."""
-    import asyncio
     import os
 
+    from attune.cli_commands._exit_codes import (
+        EXIT_CLI_ERROR,
+        run_workflow_with_exit_code,
+    )
     from attune.security.path_validation import _validate_file_path
     from attune.workflows import get_workflow
 
@@ -91,11 +94,14 @@ def cmd_workflow_run(args: Namespace) -> int:
             "(opus/sonnet-pinned subagents unaffected)"
         )
 
+    # CLI-level errors (workflow not found, bad JSON, bad path) exit 3 —
+    # distinct from workflow-execution outcomes (0/1/2). See the
+    # workflow-failure-exit-propagation spec.
     try:
         workflow_cls = get_workflow(name)
     except KeyError:
         print(f"❌ Workflow not found: {name}")
-        return 1
+        return EXIT_CLI_ERROR
 
     # Parse input if provided
     input_data = {}
@@ -104,7 +110,7 @@ def cmd_workflow_run(args: Namespace) -> int:
             input_data = json.loads(args.input)
         except json.JSONDecodeError as e:
             print(f"❌ Invalid JSON input: {e}")
-            return 1
+            return EXIT_CLI_ERROR
 
     # Add common options with validation
     if args.path:
@@ -114,7 +120,7 @@ def cmd_workflow_run(args: Namespace) -> int:
             input_data["path"] = str(validated_path)
         except ValueError as e:
             print(f"❌ Invalid path: {e}")
-            return 1
+            return EXIT_CLI_ERROR
     if args.target:
         input_data["target"] = args.target
 
@@ -137,38 +143,16 @@ def cmd_workflow_run(args: Namespace) -> int:
 
     print(f"\n🚀 Running workflow: {name}\n")
 
-    try:
-        workflow = workflow_cls()
-
-        # Run the workflow
-        if asyncio.iscoroutinefunction(workflow.execute):
-            result = asyncio.run(workflow.execute(**input_data))
-        else:
-            result = workflow.execute(**input_data)
-
-        # Output result
-        if args.json:
-            # Prefer the workflow's own JSON rendering in
-            # ``final_output`` when it honored ``output_format="json"``
-            # (cleaner than ``json.dumps(WorkflowResult)`` which serializes
-            # the stages/cost metadata too).
-            final_output = getattr(result, "final_output", "") or ""
-            if final_output.lstrip().startswith(("{", "[")):
-                print(final_output)
-            else:
-                print(json.dumps(result, indent=2, default=str))
-        else:
-            _print_workflow_result(result, workflow_name=name)
-
-        return 0
-
-    except Exception as e:  # noqa: BLE001
-        # INTENTIONAL: CLI commands should catch all errors and report gracefully
-        logger.exception(f"Workflow failed: {e}")
-        from attune.voice import format_error
-
-        print(format_error(str(e), workflow_name=name))
-        return 1
+    # Execution outcomes map to exit codes via the centralized
+    # contract: success -> 0, WorkflowResult.success is False -> 1,
+    # uncaught exception -> 2 (traceback to stderr).
+    return run_workflow_with_exit_code(
+        workflow_cls,
+        input_data,
+        name=name,
+        json_mode=bool(getattr(args, "json", False)),
+        print_result=lambda result: _print_workflow_result(result, workflow_name=name),
+    )
 
 
 def _print_workflow_result(
