@@ -7391,3 +7391,72 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the idiomatic Protocol-method body and matches every sibling method
   in the file; changing one is inconsistent. Neither blocks merge; note
   the decline + reason in the fixing commit so the rationale is durable.
+
+- **"Registered ≠ working" — dogfood the live loop; a non-mocked
+  round-trip test is the receipt**: the P2 memory hooks were registered
+  in the live plugin AND 1665 mocked unit tests were green, yet the
+  live Stop→stash→recall loop did not round-trip on first real contact
+  (caught only because Patrick demanded the receipt instead of accepting
+  "hooks registered = done"). The mocked tests passed precisely because
+  they mocked Ollama + the backend. Two durable takeaways: (1) for any
+  hook/pipeline with external deps (LLM, backend, network), ship at
+  least one **non-mocked round-trip** test (real input → real sanitize →
+  real write → real recall) — it both proves the persistence logic AND,
+  when the live system still fails, distinguishes a code bug from an
+  environmental one (here the non-mocked round-trip PASSED, reframing
+  the live "0 stashed" as environment, not code); (2) "wired up" /
+  "registered" / "smoke-exits-0" are necessary-not-sufficient — dogfood
+  the actual end-to-end before declaring done. The receipt beats the
+  promise (§7).
+
+- **A cold local LLM blows a tight hook timeout; size for cold-start,
+  and treat empty LLM output as "fall back," not "done"**: the P2 Stop
+  hook's 12s Ollama timeout made a *cold* `llama3.1:8b` time out at
+  exactly 12.0s → `None` → weak heuristic fallback, while a *warm* call
+  returned good findings in 7.5s. Any hook calling a local LLM must
+  budget for model **cold-start** (load), not just warm inference —
+  bumped default to 40s + trimmed the prompt input (12k→8k chars). Pair
+  bug: an empty/garbage LLM response returned `[]` (not `None`), which
+  made the `raw is not None` guard true and **suppressed the heuristic
+  fallback** → zero output. Return `None` on an empty/unusable LLM
+  response so the fallback fires; an empty answer is "try the other
+  path," not "the LLM succeeded with nothing." Also filter git-log /
+  commit-message noise (commit hashes, conventional-commit prefixes,
+  `(#NNN)` refs) from any marker-scan heuristic over a transcript tail —
+  `git log` output otherwise dominates and crowds out real insights.
+  (Fixed in #602.)
+
+- **A marketplace plugin's cache is version-pinned — stale version dirs
+  sit beside the current one, and the plugin root is the marketplace
+  `source` subdir, not the clone root**: verifying that `claude plugin
+  update` actually landed new hooks/skills is full of wrong-path traps.
+  The cache layout is
+  `~/.claude/plugins/cache/<owner>/<plugin>/<VERSION>/` — an update
+  ADDS a new version dir (e.g. `7.3.1/`) **beside** the stale one
+  (`6.3.0/`); both persist, so naive checks against the bare cache root
+  or an old version dir report "missing." Worse, when the marketplace
+  `source` is `./plugin` (a repo subdir), the *plugin root* is
+  `<version>/` containing `hooks/`, `skills/`, `.claude-plugin/` — NOT
+  the clone root, so the clone's git ref can read "current" while the
+  files you want live one dir over. Cost two wrong-path verification
+  passes. To verify a plugin update: `ls` the version dirs, take the
+  **highest**, check `<version>/hooks/hooks.json` for the expected
+  registrations. The loaded `/recall` skill appearing in the session's
+  skills list is the fastest positive signal the new version is active.
+
+- **Entry-point-resolved backends resolve DIFFERENTLY per environment —
+  verify the LIVE process's resolution, not a convenient interactive
+  python's**: `resolve_backend()` (via the `attune.memory_backends`
+  entry point) returned `AMSMemoryBackend` from the main checkout's
+  `.venv` (which has `attune-redis` + a reachable AMS) but
+  `FileStashBackend` from a bare pyenv `python` (no `attune-redis`, AMS
+  unreached) — identical code, different env. Compounding it,
+  `import attune_redis` resolved to the **worktree's cwd-local copy**
+  when run from the worktree (top-level package shadowing). So "which
+  backend does the hook actually use" is a function of *which python
+  Claude Code spawns the hook with* + cwd + installed extras + service
+  connectivity, and the answer can differ between an interactive test
+  harness and the live hook. When debugging a hook that touches an
+  entry-point-resolved backend, instrument the **live hook process's**
+  resolution (log `type(resolve_backend()).__name__` from inside the
+  hook); don't infer it from a convenient `python -c`.
