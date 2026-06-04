@@ -16,6 +16,7 @@ the source is author-controlled).
 from __future__ import annotations
 
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -77,6 +78,27 @@ TEMPLATE = """<!doctype html>
 """
 
 
+_ANCHOR_RE = re.compile(r'<a\s+href="([^"]*)"([^>]*)>')
+_KEEP_PREFIX_RE = re.compile(r"^(/|https?://|#|mailto:|tel:)")
+
+
+def _neutralize_relative_links(body_html: str) -> str:
+    """Strip ``href`` from relative anchors that have no published target.
+
+    The article's markdown links to repo-relative paths (``../specs/...``)
+    that don't exist on the static site and would 404 on click. Absolute and
+    external links are preserved; relative ones keep their text, lose the href.
+    """
+
+    def repl(match: re.Match[str]) -> str:
+        href, rest = match.group(1), match.group(2)
+        if _KEEP_PREFIX_RE.match(href):
+            return match.group(0)
+        return f"<a{rest}>"
+
+    return _ANCHOR_RE.sub(repl, body_html)
+
+
 def render(draft_label: str) -> str:
     """Render the source markdown into the branded HTML page."""
     if not SOURCE.is_file():
@@ -85,7 +107,7 @@ def render(draft_label: str) -> str:
     md_text = SOURCE.read_text(encoding="utf-8")
 
     md = MarkdownIt("commonmark", {"html": False, "linkify": True}).enable("table")
-    body_html = md.render(md_text)
+    body_html = _neutralize_relative_links(md.render(md_text))
 
     return TEMPLATE.format(
         brand_css=BRAND_CSS,
