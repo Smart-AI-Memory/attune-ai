@@ -56,6 +56,8 @@ TEMPLATE = """<!doctype html>
   <link rel="canonical" href="{canonical}" />
 
   <style>{brand_css}</style>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>

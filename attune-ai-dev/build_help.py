@@ -128,6 +128,8 @@ PAGE = """<!doctype html>
   <meta property="og:type" content="website" />
   <link rel="canonical" href="__CANONICAL__" />
   <style>__CSS__</style>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
   <script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
@@ -190,11 +192,14 @@ def _config():
     return Config(project_root=REPO_ROOT, attune_home=attune_home())
 
 
-def _page(*, title: str, desc: str, crumbs: str, body: str) -> str:
+SITE_URL = "https://attune-ai.dev"
+
+
+def _page(*, title: str, desc: str, crumbs: str, body: str, canonical: str) -> str:
     return (
         PAGE.replace("__TITLE__", html.escape(title, quote=True))
         .replace("__DESC__", html.escape(desc, quote=True))
-        .replace("__CANONICAL__", "https://attune-ai.dev/help")
+        .replace("__CANONICAL__", html.escape(canonical, quote=True))
         .replace("__CSS__", BRAND_CSS + HELP_CSS)
         .replace("__CRUMBS__", crumbs)
         .replace("__BODY__", body)
@@ -249,6 +254,7 @@ def _build_kind_page(out: Path, helpd, cfg, feature: str, kind: str, md: Markdow
         desc=_first_para(rec.body) or f"{title} {kind} reference.",
         crumbs=crumbs,
         body=page_body,
+        canonical=f"{SITE_URL}/help/{feature}/{kind}",
     )
     _write_text(out / feature / f"{kind}.html", page)
     return {
@@ -286,6 +292,7 @@ def _build_feature_page(out: Path, feat, md: MarkdownIt) -> None:
         desc=f"{_title_case(feature)} — help, tasks, reference, and troubleshooting.",
         crumbs=crumbs,
         body=body,
+        canonical=f"{SITE_URL}/help/{feature}",
     )
     (out / feature).mkdir(parents=True, exist_ok=True)
     _write_text(out / feature / "index.html", page)
@@ -335,6 +342,7 @@ def _build_landing(out: Path, features, helpd) -> None:
         "reference, and troubleshooting for every feature.",
         crumbs=crumbs,
         body=body,
+        canonical=f"{SITE_URL}/help",
     )
     _write_text(out / "index.html", page)
 
