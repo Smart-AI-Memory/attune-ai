@@ -1,26 +1,38 @@
 # attune-ai-dev
 
 Source for [attune-ai.dev](https://attune-ai.dev) — the canonical
-home for the article *The Discipline of Agent Collaboration* plus
-a minimal landing page for the `attune-ai` package.
+home for the `attune-ai` package: a landing page, the public **Help**
+site (`/help`, generated from the `.help/` corpus), and the article
+*The Discipline of Agent Collaboration* (`/discipline`).
 
 Sibling site to `website/` (smartaimemory.com). The two have
 different jobs:
 
 | Site | Job |
 |---|---|
-| `website/` (smartaimemory.com) | Full product marketing — six packages, docs, blog, pricing. |
-| `attune-ai-dev/` (attune-ai.dev) | Article home + wayfinding. Points back to smartaimemory.com for the full surface. |
+| `website/` (smartaimemory.com) | Full product marketing — six packages, blog, pricing. |
+| `attune-ai-dev/` (attune-ai.dev) | Package home: landing + user Help + the Discipline article. |
 
 ## Files
 
-- `index.html` — bare-domain landing page. Single file, no build
-  step, no external dependencies. Matches the smartaimemory.com
-  brand tokens (`#004ac6` primary, Manrope headline, system body).
-- `discipline/` — *(planned)* the article *The Discipline of Agent
-  Collaboration*, served at `attune-ai.dev/discipline`.
-- `og.png` — *(planned)* 1200×630 social card image. Generated
-  from the brand tokens.
+- `index.html` — bare-domain landing page. Single file, hand-edited.
+  Links to Help, the Discipline article, smartaimemory.com, and
+  GitHub. Matches the smartaimemory.com brand tokens (`#004ac6`
+  primary, Manrope headline, system body).
+- `brand.css` — shared brand tokens + base styles. Single-sourced;
+  both build scripts read it.
+- `discipline/` — the article *The Discipline of Agent Collaboration*,
+  served at `attune-ai.dev/discipline`. Built by `build_discipline.py`
+  (markdown-it-py) from `COLLABORATION_DISCIPLINE.md`.
+- `help/` — the generated public help site, served at
+  `attune-ai.dev/help`. Built by `build_help.py` from the `.help/`
+  corpus (reuses `attune.ops.help_data` + markdown-it-py). Committed
+  static HTML; rebuilt by `.github/workflows/build-help-site.yml`
+  when `.help/` changes.
+- `build_discipline.py` / `build_help.py` — build scripts. Run
+  locally / in CI; Vercel never runs them (it serves the committed
+  HTML).
+- `og.png` — *(planned)* 1200×630 social card image.
 
 ## Deploying
 
@@ -59,7 +71,7 @@ automatically once the DNS records resolve.
 ## Updating the version chip
 
 The eyebrow chip in `index.html` shows the current package
-version (currently `v7.2.0`). Update by hand on each release,
+version (currently `v7.4.0`). Update by hand on each release,
 or wire it to `pyproject.toml` later via a build step.
 
 ## Why a separate site
