@@ -1,0 +1,347 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Release Prep errors — error</title>
+  <meta name="description" content="Release prep errors fall into two categories: failures during agent execution (a subagent like `TestCoverageAgent` or `CodeQualityAgent` cannot complete its check) and quality gate failures (an agent " />
+  <meta property="og:title" content="Release Prep errors — error" />
+  <meta property="og:description" content="Release prep errors fall into two categories: failures during agent execution (a subagent like `TestCoverageAgent` or `CodeQualityAgent` cannot complete its check) and quality gate failures (an agent " />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-prep">Release Prep</a><span class="sep">&rsaquo;</span><span>error</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Release Prep errors</h1>
+<p>Release prep errors fall into two categories: failures during agent execution (a subagent like <code>TestCoverageAgent</code> or <code>CodeQualityAgent</code> cannot complete its check) and quality gate failures (an agent completes successfully but <code>ReleaseReadinessReport.approved</code> is <code>False</code> because one or more <code>QualityGate</code> thresholds were not met). The sections below help you tell them apart.</p>
+<h2>Common error signatures</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReleaseAgentResult.success</code> is <code>False</code> for a specific agent</td>
+<td>The agent raised an exception internally; inspect <code>ReleaseAgentResult.findings</code> for the error detail</td>
+</tr>
+<tr>
+<td><code>ReleaseReadinessReport.approved</code> is <code>False</code> with entries in <code>blockers</code></td>
+<td>At least one <code>QualityGate</code> with <code>critical=True</code> has <code>passed=False</code> — <code>QualityGate.actual</code> is below <code>QualityGate.threshold</code></td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam.assess_readiness()</code> raises during startup</td>
+<td><code>redis_url</code> is set but Redis is unreachable, or <code>quality_gates</code> contains a key that no agent recognises</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.execute()</code> raises before any agent runs</td>
+<td><code>path</code> does not point to a valid codebase directory</td>
+</tr>
+<tr>
+<td><code>TestCoverageAgent</code> fails</td>
+<td><code>pytest --cov</code> is not installed or no test files are found at <code>codebase_path</code></td>
+</tr>
+<tr>
+<td><code>CodeQualityAgent</code> fails</td>
+<td><code>ruff</code> is not installed or the project has no Python source files at <code>codebase_path</code></td>
+</tr>
+<tr>
+<td><code>DocumentationAgent</code> fails</td>
+<td><code>CHANGELOG</code> file is absent and the agent cannot locate a README at <code>codebase_path</code></td>
+</tr>
+<tr>
+<td><code>ReleaseAgent.process()</code> returns with <code>escalated=True</code> and <code>success=False</code></td>
+<td>All three tiers (CHEAP → CAPABLE → PREMIUM) were tried and none produced a confident result</td>
+</tr>
+</tbody>
+</table>
+<h2>Where errors originate</h2>
+<p>Different failure modes surface in different classes. Match the symptom to the class before walking the call stack further.</p>
+<ul>
+<li><strong><code>ReleasePrepTeam.assess_readiness()</code></strong> — top-level entry point; collects <code>ReleaseAgentResult</code> objects from all subagents and assembles the <code>ReleaseReadinessReport</code>. If this raises, check connectivity (Redis) and whether <code>codebase_path</code> is readable.</li>
+<li><strong><code>ReleasePrepTeamWorkflow.execute()</code></strong> — workflow wrapper around <code>ReleasePrepTeam</code>; validates <code>path</code> and <code>quality_gates</code> before delegating. Errors here usually mean a misconfigured <code>quality_gates</code> dict or an invalid <code>path</code> argument.</li>
+<li><strong><code>ReleaseAgent.process()</code></strong> — base agent that drives tier escalation (CHEAP → CAPABLE → PREMIUM). When <code>escalated=True</code> in the returned <code>ReleaseAgentResult</code>, the agent exhausted all tiers.</li>
+<li><strong><code>TestCoverageAgent</code></strong> — calls <code>pytest --cov</code> as a subprocess; fails if pytest or the coverage plugin is missing.</li>
+<li><strong><code>CodeQualityAgent</code></strong> — calls <code>ruff</code> as a subprocess; fails if ruff is not on <code>PATH</code>.</li>
+<li><strong><code>DocumentationAgent</code></strong> — inspects docstring coverage, README currency, and CHANGELOG presence; fails if expected files are missing.</li>
+<li><strong><code>SecurityAuditorAgent</code></strong> — scans for vulnerabilities and secret leaks; may fail if required scanning tools are unavailable.</li>
+</ul>
+<h2>How to diagnose</h2>
+<ol>
+<li>
+<p><strong>Check <code>ReleaseReadinessReport</code> fields first.</strong> Call <code>report.format_console_output()</code> or <code>report.to_dict()</code> to see the full picture: <code>approved</code>, <code>blockers</code>, <code>warnings</code>, each <code>QualityGate.passed</code> / <code>QualityGate.actual</code> / <code>QualityGate.threshold</code>, and each <code>ReleaseAgentResult.success</code>. This tells you whether an agent crashed or simply found a failing gate.</p>
+</li>
+<li>
+<p><strong>Distinguish a gate failure from an agent failure.</strong> If <code>ReleaseReadinessReport.approved</code> is <code>False</code> but every <code>ReleaseAgentResult.success</code> is <code>True</code>, the problem is a quality gate threshold, not a code error — look at <code>QualityGate.actual</code> vs <code>QualityGate.threshold</code> for each gate where <code>passed=False</code>. If any <code>ReleaseAgentResult.success</code> is <code>False</code>, an agent itself failed; check that result's <code>findings</code> dict for the underlying exception or subprocess error.</p>
+</li>
+<li>
+<p><strong>Identify which agent failed.</strong> Match <code>ReleaseAgentResult.agent_id</code> and <code>ReleaseAgentResult.agent_role</code> to the agent class (<code>TestCoverageAgent</code>, <code>CodeQualityAgent</code>, <code>DocumentationAgent</code>, <code>SecurityAuditorAgent</code>). Each agent runs a specific external tool — confirm that tool is installed and accessible from the working directory.</p>
+</li>
+<li>
+<p><strong>Check for tier escalation.</strong> If <code>ReleaseAgentResult.escalated</code> is <code>True</code>, <code>ReleaseAgent.process()</code> tried every model tier without reaching sufficient confidence. This usually indicates an ambiguous or incomplete codebase state rather than a tool failure.</p>
+</li>
+<li>
+<p><strong>Verify <code>quality_gates</code> configuration.</strong> <code>ReleasePrepTeam</code> and <code>ReleasePrepTeamWorkflow</code> both accept a <code>quality_gates</code> dict. A threshold of <code>0.0</code> means the gate always passes; a threshold higher than any achievable <code>actual</code> value means it always blocks. Print your <code>quality_gates</code> dict and compare each key against the <code>QualityGate.name</code> values in the report.</p>
+</li>
+</ol>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/release_prep.py</code></li>
+<li><code>src/attune/agents/release/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

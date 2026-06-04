@@ -1,0 +1,780 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Orchestration reference — reference</title>
+  <meta name="description" content="Compose agents into dynamic teams, select and register execution strategies, and manage agent templates." />
+  <meta property="og:title" content="Orchestration reference — reference" />
+  <meta property="og:description" content="Compose agents into dynamic teams, select and register execution strategies, and manage agent templates." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/orchestration">Orchestration</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Orchestration reference</h1>
+<p>Compose agents into dynamic teams, select and register execution strategies, and manage agent templates.</p>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ToolEnhancedStrategy</code></td>
+<td>Single agent with comprehensive tool access.</td>
+<td><code>src/attune/orchestration/_strategies/advanced_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>PromptCachedSequentialStrategy</code></td>
+<td>Sequential execution with shared cached context.</td>
+<td><code>src/attune/orchestration/_strategies/advanced_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>DelegationChainStrategy</code></td>
+<td>Hierarchical delegation with max depth enforcement.</td>
+<td><code>src/attune/orchestration/_strategies/advanced_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>ExecutionStrategy</code></td>
+<td>Base class for agent composition strategies.</td>
+<td><code>src/attune/orchestration/_strategies/base.py</code></td>
+</tr>
+<tr>
+<td><code>ConditionalStrategy</code></td>
+<td>Conditional branching (if X then A else B).</td>
+<td><code>src/attune/orchestration/_strategies/conditional_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>MultiConditionalStrategy</code></td>
+<td>Multiple conditional branches (switch/case pattern).</td>
+<td><code>src/attune/orchestration/_strategies/conditional_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>NestedStrategy</code></td>
+<td>Nested workflow execution (sentences within sentences).</td>
+<td><code>src/attune/orchestration/_strategies/conditional_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>StepDefinition</code></td>
+<td>Definition of a step in NestedSequentialStrategy.</td>
+<td><code>src/attune/orchestration/_strategies/conditional_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>NestedSequentialStrategy</code></td>
+<td>Sequential execution with nested workflow support.</td>
+<td><code>src/attune/orchestration/_strategies/conditional_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>ConditionType</code></td>
+<td>Type of condition for gate evaluation.</td>
+<td><code>src/attune/orchestration/_strategies/conditions.py</code></td>
+</tr>
+<tr>
+<td><code>Condition</code></td>
+<td>A conditional gate for branching in agent workflows.</td>
+<td><code>src/attune/orchestration/_strategies/conditions.py</code></td>
+</tr>
+<tr>
+<td><code>Branch</code></td>
+<td>A branch in conditional execution.</td>
+<td><code>src/attune/orchestration/_strategies/conditions.py</code></td>
+</tr>
+<tr>
+<td><code>ConditionEvaluator</code></td>
+<td>Evaluates conditions against execution context.</td>
+<td><code>src/attune/orchestration/_strategies/conditions.py</code></td>
+</tr>
+<tr>
+<td><code>SequentialStrategy</code></td>
+<td>Sequential composition (A → B → C).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>ParallelStrategy</code></td>
+<td>Parallel composition (A || B || C).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>DebateStrategy</code></td>
+<td>Debate/Consensus composition (A ⇄ B ⇄ C → Synthesis).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>TeachingStrategy</code></td>
+<td>Teaching/Validation (Junior → Expert Review).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>RefinementStrategy</code></td>
+<td>Progressive Refinement (Draft → Review → Polish).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>AdaptiveStrategy</code></td>
+<td>Adaptive Routing (Classifier → Specialist).</td>
+<td><code>src/attune/orchestration/_strategies/core_strategies.py</code></td>
+</tr>
+<tr>
+<td><code>AgentResult</code></td>
+<td>Result from agent execution.</td>
+<td><code>src/attune/orchestration/_strategies/data_classes.py</code></td>
+</tr>
+<tr>
+<td><code>StrategyResult</code></td>
+<td>Aggregated result from strategy execution.</td>
+<td><code>src/attune/orchestration/_strategies/data_classes.py</code></td>
+</tr>
+<tr>
+<td><code>WorkflowReference</code></td>
+<td>Reference to a workflow for nested composition.</td>
+<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
+</tr>
+<tr>
+<td><code>InlineWorkflow</code></td>
+<td>Inline workflow definition for nested composition.</td>
+<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
+</tr>
+<tr>
+<td><code>NestingContext</code></td>
+<td>Tracks nesting depth and prevents infinite recursion.</td>
+<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
+</tr>
+<tr>
+<td><code>WorkflowDefinition</code></td>
+<td>A registered workflow definition.</td>
+<td><code>src/attune/orchestration/_strategies/nesting.py</code></td>
+</tr>
+<tr>
+<td><code>SDKExecutionMode</code></td>
+<td>How the agent should run.</td>
+<td><code>src/attune/orchestration/agent_models.py</code></td>
+</tr>
+<tr>
+<td><code>SDKAgentResult</code></td>
+<td>Result from a single agent execution.</td>
+<td><code>src/attune/orchestration/agent_models.py</code></td>
+</tr>
+<tr>
+<td><code>QualityGate</code></td>
+<td>A named threshold that an agent result must satisfy.</td>
+<td><code>src/attune/orchestration/agent_models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentLike</code></td>
+<td>Protocol for objects that can participate in DynamicTeam execution.</td>
+<td><code>src/attune/orchestration/agent_models.py</code></td>
+</tr>
+<tr>
+<td><code>StubAgent</code></td>
+<td>Lightweight agent stub for DynamicTeam composition.</td>
+<td><code>src/attune/orchestration/agent_models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentCapability</code></td>
+<td>Capability that an agent can perform.</td>
+<td><code>src/attune/orchestration/agent_templates/models.py</code></td>
+</tr>
+<tr>
+<td><code>ResourceRequirements</code></td>
+<td>Resource requirements for agent execution.</td>
+<td><code>src/attune/orchestration/agent_templates/models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentTemplate</code></td>
+<td>Reusable agent archetype.</td>
+<td><code>src/attune/orchestration/agent_templates/models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentConfiguration</code></td>
+<td>Saved configuration for a successful agent team composition.</td>
+<td><code>src/attune/orchestration/config_store.py</code></td>
+</tr>
+<tr>
+<td><code>ConfigurationStore</code></td>
+<td>Persistent storage for successful agent team compositions.</td>
+<td><code>src/attune/orchestration/config_store.py</code></td>
+</tr>
+<tr>
+<td><code>DynamicTeamResult</code></td>
+<td>Aggregated result from a DynamicTeam execution.</td>
+<td><code>src/attune/orchestration/dynamic_team.py</code></td>
+</tr>
+<tr>
+<td><code>DynamicTeam</code></td>
+<td>Executes a dynamically-composed agent team.</td>
+<td><code>src/attune/orchestration/dynamic_team.py</code></td>
+</tr>
+<tr>
+<td><code>TaskAnalysisMixin</code></td>
+<td>Mixin providing task analysis and agent selection for meta-orchestrator.</td>
+<td><code>src/attune/orchestration/meta_orch_analysis.py</code></td>
+</tr>
+<tr>
+<td><code>EstimationMixin</code></td>
+<td>Mixin providing cost and duration estimation for meta-orchestrator.</td>
+<td><code>src/attune/orchestration/meta_orch_estimation.py</code></td>
+</tr>
+<tr>
+<td><code>InteractiveModeMixin</code></td>
+<td>Mixin providing interactive mode for meta-orchestrator.</td>
+<td><code>src/attune/orchestration/meta_orch_interactive.py</code></td>
+</tr>
+<tr>
+<td><code>TaskComplexity</code></td>
+<td>Task complexity classification.</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>TaskDomain</code></td>
+<td>Task domain classification.</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>CompositionPattern</code></td>
+<td>Available composition patterns (grammar rules).</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>TaskRequirements</code></td>
+<td>Extracted requirements from task analysis.</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>ExecutionPlan</code></td>
+<td>Plan for agent execution.</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>MetaOrchestrator</code></td>
+<td>Intelligent task analyzer and agent composition engine.</td>
+<td><code>src/attune/orchestration/meta_orchestrator.py</code></td>
+</tr>
+<tr>
+<td><code>LearningStore</code></td>
+<td>Memory and file storage for learning data.</td>
+<td><code>src/attune/orchestration/pattern_learner.py</code></td>
+</tr>
+<tr>
+<td><code>PatternRecommendation</code></td>
+<td>A pattern recommendation.</td>
+<td><code>src/attune/orchestration/pattern_learner.py</code></td>
+</tr>
+<tr>
+<td><code>PatternRecommender</code></td>
+<td>Hybrid recommendation engine for patterns.</td>
+<td><code>src/attune/orchestration/pattern_learner.py</code></td>
+</tr>
+<tr>
+<td><code>PatternLearner</code></td>
+<td>Main interface for the learning grammar system.</td>
+<td><code>src/attune/orchestration/pattern_learner.py</code></td>
+</tr>
+<tr>
+<td><code>ExecutionRecord</code></td>
+<td>Record of a single pattern execution.</td>
+<td><code>src/attune/orchestration/pattern_learner_models.py</code></td>
+</tr>
+<tr>
+<td><code>PatternStats</code></td>
+<td>Aggregated statistics for a pattern.</td>
+<td><code>src/attune/orchestration/pattern_learner_models.py</code></td>
+</tr>
+<tr>
+<td><code>ContextSignature</code></td>
+<td>Signature of a context for similarity matching.</td>
+<td><code>src/attune/orchestration/pattern_learner_models.py</code></td>
+</tr>
+<tr>
+<td><code>DynamicTeamBuilder</code></td>
+<td>Builds runnable <code>DynamicTeam</code> instances from various sources.</td>
+<td><code>src/attune/orchestration/team_builder.py</code></td>
+</tr>
+<tr>
+<td><code>TeamSpecification</code></td>
+<td>Specification for a dynamic agent team.</td>
+<td><code>src/attune/orchestration/team_store.py</code></td>
+</tr>
+<tr>
+<td><code>TeamStore</code></td>
+<td>Persistent storage for team specifications.</td>
+<td><code>src/attune/orchestration/team_store.py</code></td>
+</tr>
+<tr>
+<td><code>ArchitectureReport</code></td>
+<td>Architecture analysis report.</td>
+<td><code>src/attune/orchestration/tools/architecture.py</code></td>
+</tr>
+<tr>
+<td><code>RealArchitectureAnalyzer</code></td>
+<td>Static architecture analysis for Python projects.</td>
+<td><code>src/attune/orchestration/tools/architecture.py</code></td>
+</tr>
+<tr>
+<td><code>PerformanceReport</code></td>
+<td>Performance profiling report from AST-based analysis.</td>
+<td><code>src/attune/orchestration/tools/performance.py</code></td>
+</tr>
+<tr>
+<td><code>RealPerformanceProfiler</code></td>
+<td>Runs real performance profiling via AST-based static analysis.</td>
+<td><code>src/attune/orchestration/tools/performance.py</code></td>
+</tr>
+<tr>
+<td><code>QualityReport</code></td>
+<td>Code quality report from ruff and mypy.</td>
+<td><code>src/attune/orchestration/tools/quality.py</code></td>
+</tr>
+<tr>
+<td><code>RealCodeQualityAnalyzer</code></td>
+<td>Runs real code quality analysis using ruff and mypy.</td>
+<td><code>src/attune/orchestration/tools/quality.py</code></td>
+</tr>
+<tr>
+<td><code>DocumentationReport</code></td>
+<td>Documentation completeness report.</td>
+<td><code>src/attune/orchestration/tools/quality.py</code></td>
+</tr>
+<tr>
+<td><code>RealDocumentationAnalyzer</code></td>
+<td>Analyzes documentation completeness by scanning docstrings.</td>
+<td><code>src/attune/orchestration/tools/quality.py</code></td>
+</tr>
+<tr>
+<td><code>SecurityReport</code></td>
+<td>Security audit report from bandit.</td>
+<td><code>src/attune/orchestration/tools/security.py</code></td>
+</tr>
+<tr>
+<td><code>RealSecurityAuditor</code></td>
+<td>Runs real security audit using bandit.</td>
+<td><code>src/attune/orchestration/tools/security.py</code></td>
+</tr>
+<tr>
+<td><code>RealTestGenerator</code></td>
+<td>Generates actual test code using LLM.</td>
+<td><code>src/attune/orchestration/tools/test_generation.py</code></td>
+</tr>
+<tr>
+<td><code>CoverageReport</code></td>
+<td>Coverage analysis report from pytest-cov.</td>
+<td><code>src/attune/orchestration/tools/testing.py</code></td>
+</tr>
+<tr>
+<td><code>RealCoverageAnalyzer</code></td>
+<td>Runs real pytest coverage analysis.</td>
+<td><code>src/attune/orchestration/tools/testing.py</code></td>
+</tr>
+<tr>
+<td><code>RealTestValidator</code></td>
+<td>Validates generated tests by running them.</td>
+<td><code>src/attune/orchestration/tools/testing.py</code></td>
+</tr>
+<tr>
+<td><code>WorkflowAgentAdapter</code></td>
+<td>Adapts a BaseWorkflow to the <code>SDKAgent.process()</code> interface.</td>
+<td><code>src/attune/orchestration/workflow_agent_adapter.py</code></td>
+</tr>
+<tr>
+<td><code>WorkflowComposer</code></td>
+<td>Composes <code>BaseWorkflow</code> subclasses into a <code>DynamicTeam</code>.</td>
+<td><code>src/attune/orchestration/workflow_composer.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2><code>StepDefinition</code> fields</h2>
+<p><code>StepDefinition</code> is a dataclass that defines a single step in <code>NestedSequentialStrategy</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent</code></td>
+<td><code>AgentTemplate | None</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>workflow_ref</code></td>
+<td><code>WorkflowReference | None</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_strategy</code></td>
+<td><code>strategy_name: str</code></td>
+<td><code>ExecutionStrategy</code></td>
+<td>Get strategy instance by name.</td>
+</tr>
+<tr>
+<td><code>register_strategy</code></td>
+<td><code>name: str, strategy_class: type[ExecutionStrategy]</code></td>
+<td><code>None</code></td>
+<td>Register a strategy class by name.</td>
+</tr>
+<tr>
+<td><code>register_workflow</code></td>
+<td><code>workflow: WorkflowDefinition</code></td>
+<td><code>None</code></td>
+<td>Register a workflow for nested references.</td>
+</tr>
+<tr>
+<td><code>get_workflow</code></td>
+<td><code>workflow_id: str</code></td>
+<td><code>WorkflowDefinition</code></td>
+<td>Get a registered workflow by ID.</td>
+</tr>
+<tr>
+<td><code>get_template</code></td>
+<td><code>template_id: str</code></td>
+<td><code>AgentTemplate | None</code></td>
+<td>Retrieve template by ID.</td>
+</tr>
+<tr>
+<td><code>get_all_templates</code></td>
+<td>—</td>
+<td><code>list[AgentTemplate]</code></td>
+<td>Retrieve all registered templates.</td>
+</tr>
+<tr>
+<td><code>get_templates_by_capability</code></td>
+<td><code>capability: str</code></td>
+<td><code>list[AgentTemplate]</code></td>
+<td>Retrieve templates with a specific capability.</td>
+</tr>
+<tr>
+<td><code>get_templates_by_tier</code></td>
+<td><code>tier: str</code></td>
+<td><code>list[AgentTemplate]</code></td>
+<td>Retrieve templates preferring a specific tier.</td>
+</tr>
+<tr>
+<td><code>register_custom_template</code></td>
+<td><code>template: AgentTemplate</code></td>
+<td><code>None</code></td>
+<td>Register a user-defined template at runtime.</td>
+</tr>
+<tr>
+<td><code>unregister_template</code></td>
+<td><code>template_id: str</code></td>
+<td><code>bool</code></td>
+<td>Remove a template from the registry.</td>
+</tr>
+<tr>
+<td><code>get_registry</code></td>
+<td>—</td>
+<td><code>dict[str, AgentTemplate]</code></td>
+<td>Return a read-only snapshot of the template registry.</td>
+</tr>
+<tr>
+<td><code>get_learner</code></td>
+<td>—</td>
+<td><code>PatternLearner</code></td>
+<td>Get the default pattern learner instance.</td>
+</tr>
+</tbody>
+</table>
+<h3>Raises</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Raises</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_strategy</code></td>
+<td><code>ValueError</code></td>
+<td><code>'Unknown strategy: {...}. Available: {...}'</code></td>
+</tr>
+<tr>
+<td><code>get_workflow</code></td>
+<td><code>ValueError</code></td>
+<td><code>'Unknown workflow: {...}. Available: {...}'</code></td>
+</tr>
+</tbody>
+</table>
+<h3><code>unregister_template</code> return values</h3>
+<p><code>unregister_template</code> returns <code>bool</code>. When the template ID is not found in the registry, the function returns <code>False</code>.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/orchestration/**</code></li>
+<li><code>src/attune/coordination/**</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>orchestration</code>, <code>teams</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

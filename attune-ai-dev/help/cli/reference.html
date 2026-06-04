@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CLI reference — reference</title>
+  <meta name="description" content="Use this reference to look up every command handler, routing function, parser entry point, and data class in the attune command-line interface." />
+  <meta property="og:title" content="CLI reference — reference" />
+  <meta property="og:description" content="Use this reference to look up every command handler, routing function, parser entry point, and data class in the attune command-line interface." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>CLI reference</h1>
+<p>Use this reference to look up every command handler, routing function, parser entry point, and data class in the attune command-line interface.</p>
+<h2>Classes</h2>
+<h3><code>RoutingPreference</code></h3>
+<p><code>attune.cli_router</code> — <code>[dataclass]</code> — Stores a user's learned routing preference for a keyword.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>keyword</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>skill</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>args</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>usage_count</code></td>
+<td><code>int</code></td>
+<td><code>0</code></td>
+</tr>
+<tr>
+<td><code>confidence</code></td>
+<td><code>float</code></td>
+<td><code>1.0</code></td>
+</tr>
+</tbody>
+</table>
+<h3><code>HybridRouter</code></h3>
+<p><code>attune.cli_router</code> — Routes user input to Claude Code skill invocations.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>preferences_path: str | None = None</code></td>
+<td>—</td>
+<td>Initialize the router, optionally loading preferences from a file path.</td>
+</tr>
+<tr>
+<td><code>route</code></td>
+<td><code>user_input: str, context: dict[str, Any] | None = None</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Route user input to a skill, returning a routing result dict.</td>
+</tr>
+<tr>
+<td><code>learn_preference</code></td>
+<td><code>keyword: str, skill: str, args: str = ''</code></td>
+<td>—</td>
+<td>Record a keyword-to-skill mapping to improve future routing.</td>
+</tr>
+<tr>
+<td><code>get_suggestions</code></td>
+<td><code>partial: str</code></td>
+<td><code>list[str]</code></td>
+<td>Return autocomplete suggestions for a partial input string.</td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<h3>Entry point</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td><code>argv: list[str] | None = None</code></td>
+<td><code>int</code></td>
+<td>CLI entry point; parses <code>argv</code> (or <code>sys.argv</code>) and dispatches to the appropriate command handler.</td>
+</tr>
+<tr>
+<td><code>create_parser</code></td>
+<td>—</td>
+<td><code>argparse.ArgumentParser</code></td>
+<td>Build and return the top-level argument parser.</td>
+</tr>
+<tr>
+<td><code>get_version</code></td>
+<td>—</td>
+<td><code>str</code></td>
+<td>Return the installed package version string.</td>
+</tr>
+</tbody>
+</table>
+<h3>Routing</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>route_user_input</code></td>
+<td><code>user_input: str, context: dict[str, Any] | None = None</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Quick routing helper; resolve user input to a skill invocation dict without instantiating <code>HybridRouter</code> directly.</td>
+</tr>
+<tr>
+<td><code>is_slash_command</code></td>
+<td><code>text: str</code></td>
+<td><code>bool</code></td>
+<td>Return <code>True</code> if <code>text</code> is a slash command.</td>
+</tr>
+</tbody>
+</table>
+<h3>Cost commands</h3>
+<p><code>cli_commands.cost_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_costs</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show cost report for recent period.</td>
+</tr>
+<tr>
+<td><code>cmd_costs_today</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show today's cost summary.</td>
+</tr>
+<tr>
+<td><code>cmd_costs_export</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Export cost data to file.</td>
+</tr>
+<tr>
+<td><code>cmd_costs_reset</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Clear all cost tracking data.</td>
+</tr>
+</tbody>
+</table>
+<h3>Help commands</h3>
+<p><code>cli_commands.help_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_help</code></td>
+<td><code>args: argparse.Namespace</code></td>
+<td><code>int</code></td>
+<td>Handle the <code>attune help</code> command.</td>
+</tr>
+</tbody>
+</table>
+<h3>Memory commands</h3>
+<p><code>cli_commands.memory_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_remember</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Add a lesson to the lessons file.</td>
+</tr>
+<tr>
+<td><code>cmd_forget</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Remove a lesson by line number or keyword.</td>
+</tr>
+<tr>
+<td><code>cmd_lessons</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>List current lessons with line numbers.</td>
+</tr>
+<tr>
+<td><code>cmd_memory_capture</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Save content to personal cross-session memory.</td>
+</tr>
+<tr>
+<td><code>cmd_memory_recall</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Search personal cross-session memory.</td>
+</tr>
+<tr>
+<td><code>cmd_memory_topics</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>List all personal memory topics.</td>
+</tr>
+<tr>
+<td><code>cmd_memory_forget_topic</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Delete a topic (or specific kind) from personal memory.</td>
+</tr>
+</tbody>
+</table>
+<h3>Provider commands</h3>
+<p><code>cli_commands.provider_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_provider_show</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show current provider configuration.</td>
+</tr>
+<tr>
+<td><code>cmd_provider_set</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Set the LLM provider.</td>
+</tr>
+</tbody>
+</table>
+<h3>Telemetry commands</h3>
+<p><code>cli_commands.telemetry_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_telemetry_show</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Display usage summary.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_savings</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show cost savings from tier routing.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_export</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Export telemetry data to file.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_routing_stats</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show adaptive routing statistics.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_routing_check</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Check for tier upgrade recommendations.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_models</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show model performance by provider.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_agents</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show active agents and their status.</td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_signals</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show coordination signals.</td>
+</tr>
+</tbody>
+</table>
+<h3>Utility commands</h3>
+<p><code>cli_commands.utility_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_setup</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Install Attune slash commands for Claude Code.</td>
+</tr>
+<tr>
+<td><code>cmd_validate</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Validate configuration.</td>
+</tr>
+<tr>
+<td><code>cmd_version</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show version information.</td>
+</tr>
+<tr>
+<td><code>cmd_features</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show available memory and telemetry features.</td>
+</tr>
+<tr>
+<td><code>cmd_doctor</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Run comprehensive environment health check.</td>
+</tr>
+</tbody>
+</table>
+<h3>Workflow commands</h3>
+<p><code>cli_commands.workflow_commands</code></p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_workflow_list</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>List available workflows.</td>
+</tr>
+<tr>
+<td><code>cmd_workflow_info</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show workflow details.</td>
+</tr>
+<tr>
+<td><code>cmd_workflow_run</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Execute a workflow.</td>
+</tr>
+</tbody>
+</table>
+<h2>Constants</h2>
+<h3><code>_CATEGORIES</code></h3>
+<p>Members used to filter help template listings.</p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Type</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_CATEGORIES</code></td>
+<td><code>tuple</code></td>
+<td><code>'errors'</code>, <code>'warnings'</code>, <code>'tips'</code>, <code>'references'</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/cli_minimal.py</code></li>
+<li><code>src/attune/cli_router.py</code></li>
+<li><code>src/attune/cli_commands/**</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>cli</code>, <code>commands</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

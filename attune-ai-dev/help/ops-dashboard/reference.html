@@ -1,0 +1,1068 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Ops Dashboard reference — reference</title>
+  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `CostFetchError` | Categorized failure for cost-report fetch. | `src/attune/ops/anthropic_cost.py` | | `CostSummary` | Account-level cos" />
+  <meta property="og:title" content="Ops Dashboard reference — reference" />
+  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `CostFetchError` | Categorized failure for cost-report fetch. | `src/attune/ops/anthropic_cost.py` | | `CostSummary` | Account-level cos" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/ops-dashboard">Ops Dashboard</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Ops Dashboard reference</h1>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CostFetchError</code></td>
+<td>Categorized failure for cost-report fetch.</td>
+<td><code>src/attune/ops/anthropic_cost.py</code></td>
+</tr>
+<tr>
+<td><code>CostSummary</code></td>
+<td>Account-level cost data from the Anthropic admin cost-report.</td>
+<td><code>src/attune/ops/anthropic_cost.py</code></td>
+</tr>
+<tr>
+<td><code>Candidate</code></td>
+<td>One completion-candidate spec returned by the detector.</td>
+<td><code>src/attune/ops/completion_candidates.py</code></td>
+</tr>
+<tr>
+<td><code>Config</code></td>
+<td>Where attune ops reads project + attune state from.</td>
+<td><code>src/attune/ops/config.py</code></td>
+</tr>
+<tr>
+<td><code>TelemetrySummary</code></td>
+<td>—</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>WorkflowEntry</code></td>
+<td>—</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>PathArgSpec</code></td>
+<td>How a workflow accepts a scope path on the CLI.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>Feature</code></td>
+<td>One feature from <code>.help/features.yaml</code> for the scope picker.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>Session</code></td>
+<td>One Claude Code session — what surfaces on the dashboard's /sessions page.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>FamilyVersion</code></td>
+<td>—</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>DailyCost</code></td>
+<td>One day's cost for the home-page sparkline.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>HomeKpis</code></td>
+<td>Summary numbers shown above the fold on the home page.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>SweepChipCounts</code></td>
+<td>Per-bucket counts loaded from a persisted discovery-sweep result.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>DismissEntry</code></td>
+<td>One dismissed candidate's persisted state.</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>TemplateRecord</code></td>
+<td>One template file.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>FeatureSummary</code></td>
+<td>One feature — name + which kinds exist.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>SearchHit</code></td>
+<td>One ranked hit from a search query.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>GapsReport</code></td>
+<td>Coverage-gap signals — incomplete sets + stale templates.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>HelpRegenJob</code></td>
+<td>One regen invocation — status, captured stdout, exit code.</td>
+<td><code>src/attune/ops/help_regen.py</code></td>
+</tr>
+<tr>
+<td><code>HelpRegenRunner</code></td>
+<td>Owns the regen-job history + active subprocess.</td>
+<td><code>src/attune/ops/help_regen.py</code></td>
+</tr>
+<tr>
+<td><code>HelpRegenBusyError</code></td>
+<td>Raised when a regen job is requested while one is already running.</td>
+<td><code>src/attune/ops/help_regen.py</code></td>
+</tr>
+<tr>
+<td><code>InteractionCounters</code></td>
+<td>Process-lifetime counters for dashboard UI interactions.</td>
+<td><code>src/attune/ops/interaction_counters.py</code></td>
+</tr>
+<tr>
+<td><code>TrustedHostMiddleware</code></td>
+<td>Reject requests whose <code>Host</code> header isn't on the allowlist.</td>
+<td><code>src/attune/ops/middleware.py</code></td>
+</tr>
+<tr>
+<td><code>JournalEntry</code></td>
+<td>One pending-writes journal entry.</td>
+<td><code>src/attune/ops/pending_writes.py</code></td>
+</tr>
+<tr>
+<td><code>InteractionEvent</code></td>
+<td>Request body for <code>POST /api/telemetry/interaction</code>.</td>
+<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
+</tr>
+<tr>
+<td><code>SpecPhase</code></td>
+<td>One phase file's status snapshot.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>SpecRecord</code></td>
+<td>One spec's summary — directory + status of each phase file present.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>RunnerBusyError</code></td>
+<td>Raised when a run is already pending/running.</td>
+<td><code>src/attune/ops/runner.py</code></td>
+</tr>
+<tr>
+<td><code>Run</code></td>
+<td>Single workflow execution + its broadcast state.</td>
+<td><code>src/attune/ops/runner.py</code></td>
+</tr>
+<tr>
+<td><code>RunnerService</code></td>
+<td>Owns the run history + concurrency lock.</td>
+<td><code>src/attune/ops/runner.py</code></td>
+</tr>
+<tr>
+<td><code>RedactionResult</code></td>
+<td>Outcome of a redaction pass.</td>
+<td><code>src/attune/ops/session_redaction.py</code></td>
+</tr>
+<tr>
+<td><code>SummaryResult</code></td>
+<td>One Haiku-or-cache result, ready to slot into a :class:<code>Session</code>.</td>
+<td><code>src/attune/ops/session_summarizer.py</code></td>
+</tr>
+<tr>
+<td><code>Budget</code></td>
+<td>Mutable spend ledger for one page-load summarization loop.</td>
+<td><code>src/attune/ops/session_summarizer.py</code></td>
+</tr>
+<tr>
+<td><code>CacheKey</code></td>
+<td>Stable key that invalidates a cached summary when the source moves.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+<tr>
+<td><code>CachedSummary</code></td>
+<td>One persisted session summary plus the metadata to validate it.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>create_app()</code></td>
+<td>Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.</td>
+<td><code>src/attune/ops/__init__.py</code></td>
+</tr>
+<tr>
+<td><code>build_config()</code></td>
+<td>Lazy import of the config builder.</td>
+<td><code>src/attune/ops/__init__.py</code></td>
+</tr>
+<tr>
+<td><code>clear_cache()</code></td>
+<td>Empty the in-memory cache. Test-only convenience.</td>
+<td><code>src/attune/ops/anthropic_cost.py</code></td>
+</tr>
+<tr>
+<td><code>load_admin_key()</code></td>
+<td>Return the admin API key, or <code>None</code> if unavailable.</td>
+<td><code>src/attune/ops/anthropic_cost.py</code></td>
+</tr>
+<tr>
+<td><code>fetch_summary()</code></td>
+<td>Return the current cost summary or a categorized error.</td>
+<td><code>src/attune/ops/anthropic_cost.py</code></td>
+</tr>
+<tr>
+<td><code>add_subparser()</code></td>
+<td>Register the <code>ops</code> subparser on the main attune CLI parser.</td>
+<td><code>src/attune/ops/cli.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_ops()</code></td>
+<td>Run the dashboard server (blocking).</td>
+<td><code>src/attune/ops/cli.py</code></td>
+</tr>
+<tr>
+<td><code>main()</code></td>
+<td>Standalone entry: <code>python -m attune.ops</code>.</td>
+<td><code>src/attune/ops/cli.py</code></td>
+</tr>
+<tr>
+<td><code>clear_cache()</code></td>
+<td>Reset the in-memory caches. Test helper.</td>
+<td><code>src/attune/ops/completion_candidates.py</code></td>
+</tr>
+<tr>
+<td><code>detect_candidates()</code></td>
+<td>Return all completion candidates across the configured spec roots.</td>
+<td><code>src/attune/ops/completion_candidates.py</code></td>
+</tr>
+<tr>
+<td><code>attune_home()</code></td>
+<td>Resolve the user's attune home dir (env override -&gt; ~/.attune).</td>
+<td><code>src/attune/ops/config.py</code></td>
+</tr>
+<tr>
+<td><code>build_config()</code></td>
+<td>Build a Config from inputs and environment defaults.</td>
+<td><code>src/attune/ops/config.py</code></td>
+</tr>
+<tr>
+<td><code>list_features()</code></td>
+<td>Return features parsed from <code>&lt;project_root&gt;/.help/features.yaml</code>.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>first_feature()</code></td>
+<td>Return the alphabetically-first feature with a renderable scope.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>workflow_default_scope()</code></td>
+<td>Return the default scope for one workflow on first paint.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>derive_project_name()</code></td>
+<td>Return a human-readable project name for the dashboard header.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>claude_sessions_dir()</code></td>
+<td>Return the canonical directory Claude Code stores sessions for this project in.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>enumerate_project_encoded_keys()</code></td>
+<td>Return all <code>~/.claude/projects/</code> dirs belonging to this logical project.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>list_recent_sessions_with_paths()</code></td>
+<td>Same as :func:<code>list_recent_sessions</code> but also returns each</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>list_recent_sessions()</code></td>
+<td>Return Session records for this project's last <code>days</code> of activity.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>home_kpis()</code></td>
+<td>Derive home-page KPIs from a telemetry summary.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>sparkline_points()</code></td>
+<td>Render values as an SVG <code>polyline</code> <code>points</code> string.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>read_telemetry_summary()</code></td>
+<td>Aggregate <code>usage.jsonl</code> into a UI-friendly summary.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>read_sweep_chip_counts()</code></td>
+<td>Read the latest persisted sweep result for <code>scope_path</code> and tally chips.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>list_workflows()</code></td>
+<td>Return the registered workflow catalog. Empty if the registry is unavailable.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>family_versions()</code></td>
+<td>Resolve installed versions for every related attune package.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>env_health()</code></td>
+<td>Lightweight environment snapshot for the Health page.</td>
+<td><code>src/attune/ops/data.py</code></td>
+</tr>
+<tr>
+<td><code>store_path()</code></td>
+<td>Return the absolute path to the dismiss-store JSON file.</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>load()</code></td>
+<td>Read the dismiss store. Missing or corrupt file → <code>{}</code>.</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>save()</code></td>
+<td>Persist a dismiss entry for <code>slug</code> (overwrites prior entry).</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>clear()</code></td>
+<td>Remove the entry for <code>slug</code>. No-op if absent.</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>is_active()</code></td>
+<td>True iff a dismiss for <code>slug</code> is currently suppressing it.</td>
+<td><code>src/attune/ops/dismiss_store.py</code></td>
+</tr>
+<tr>
+<td><code>corpus_root()</code></td>
+<td>Return the <code>.help/templates/</code> directory for this project.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>list_features()</code></td>
+<td>All features in the corpus, alphabetical.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>get_template()</code></td>
+<td>Load one template by feature + kind. None if missing.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>search()</code></td>
+<td>Run a keyword search against the corpus.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>coverage_gaps()</code></td>
+<td>Compute incomplete sets + stale templates across the corpus.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>recently_regenerated()</code></td>
+<td>N most-recently-generated templates across the corpus.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>featured_topics()</code></td>
+<td>Curated list of high-leverage features for the home page.</td>
+<td><code>src/attune/ops/help_data.py</code></td>
+</tr>
+<tr>
+<td><code>compute_allowlist()</code></td>
+<td>Compute the default + user-supplied Host allowlist.</td>
+<td><code>src/attune/ops/middleware.py</code></td>
+</tr>
+<tr>
+<td><code>settings_path()</code></td>
+<td>Return the absolute path to the ops settings file.</td>
+<td><code>src/attune/ops/ops_config_store.py</code></td>
+</tr>
+<tr>
+<td><code>load_settings()</code></td>
+<td>Read persisted ops settings. Missing or corrupt file → <code>{}</code>.</td>
+<td><code>src/attune/ops/ops_config_store.py</code></td>
+</tr>
+<tr>
+<td><code>save_setting()</code></td>
+<td>Persist a single setting; returns True on success, False on failure.</td>
+<td><code>src/attune/ops/ops_config_store.py</code></td>
+</tr>
+<tr>
+<td><code>resolve_specs_candidates_enabled()</code></td>
+<td>Resolve the <code>specs_candidates_enabled</code> setting.</td>
+<td><code>src/attune/ops/ops_config_store.py</code></td>
+</tr>
+<tr>
+<td><code>compute_file_sha256()</code></td>
+<td>Compute sha256 of a file's contents.</td>
+<td><code>src/attune/ops/pending_writes.py</code></td>
+</tr>
+<tr>
+<td><code>make_entry()</code></td>
+<td>Construct a JournalEntry, filling in defaults from runtime context.</td>
+<td><code>src/attune/ops/pending_writes.py</code></td>
+</tr>
+<tr>
+<td><code>append_entry()</code></td>
+<td>Append a journal entry to the JSONL journal.</td>
+<td><code>src/attune/ops/pending_writes.py</code></td>
+</tr>
+<tr>
+<td><code>list_active()</code></td>
+<td>Return active bulletin entries across all actors.</td>
+<td><code>src/attune/ops/routes/bulletin.py</code></td>
+</tr>
+<tr>
+<td><code>home()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>workflows_page()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>telemetry_page()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>health_page()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_home_page()</code></td>
+<td>Help home — user-first browse + search entry point.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_search_page()</code></td>
+<td>Help search results page.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_admin_page()</code></td>
+<td>Admin tools — coverage gaps + stale templates.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_template_page()</code></td>
+<td>One template — markdown-rendered.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_feature_page()</code></td>
+<td>Feature index — list of available kinds, click to read.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>sessions_page()</code></td>
+<td>Sessions page — recent Claude Code sessions for this project.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>run_view_page()</code></td>
+<td>Full-page view for one workflow run.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>specs_page()</code></td>
+<td>Specs tab — federated listing of all specs across configured roots.</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>spec_detail_page()</code></td>
+<td>Drill-in for a single spec: show every phase file's content (read-only).</td>
+<td><code>src/attune/ops/routes/dashboard.py</code></td>
+</tr>
+<tr>
+<td><code>help_index()</code></td>
+<td>Top-level summary — features list + corpus stats.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_search()</code></td>
+<td>Ranked search hits.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_feature()</code></td>
+<td>All kinds available for a single feature.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_template()</code></td>
+<td>One template — metadata + full markdown body.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_gaps()</code></td>
+<td>Coverage gaps + stale templates — admin-tools surface.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_featured()</code></td>
+<td>Curated featured-topics list for the home page.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_recent()</code></td>
+<td>Recently-regenerated templates.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_regen_start()</code></td>
+<td>Start an attune-author regen job.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_regen_status()</code></td>
+<td>Poll a regen job's status + captured output.</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>help_regen_recent()</code></td>
+<td>Recent regen jobs — used by the Admin tools UI to surface</td>
+<td><code>src/attune/ops/routes/help.py</code></td>
+</tr>
+<tr>
+<td><code>record_interaction()</code></td>
+<td>Increment a UI interaction counter.</td>
+<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
+</tr>
+<tr>
+<td><code>read_interactions()</code></td>
+<td>Return the full counter snapshot + per-event totals.</td>
+<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
+</tr>
+<tr>
+<td><code>list_pending_writes()</code></td>
+<td>Return all journal entries enriched with computed status fields.</td>
+<td><code>src/attune/ops/routes/pending_writes.py</code></td>
+</tr>
+<tr>
+<td><code>start_run()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/runner.py</code></td>
+</tr>
+<tr>
+<td><code>get_run()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/runner.py</code></td>
+</tr>
+<tr>
+<td><code>stream_run()</code></td>
+<td>—</td>
+<td><code>src/attune/ops/routes/runner.py</code></td>
+</tr>
+<tr>
+<td><code>list_runs()</code></td>
+<td>Return up to 20 newest runs for <code>workflow</code>, newest first.</td>
+<td><code>src/attune/ops/routes/runs_history.py</code></td>
+</tr>
+<tr>
+<td><code>get_run_record()</code></td>
+<td>Return one persisted run record (metadata + log).</td>
+<td><code>src/attune/ops/routes/runs_history.py</code></td>
+</tr>
+<tr>
+<td><code>enrich_with_summaries()</code></td>
+<td>Public helper used by both the JSON route and the HTML page.</td>
+<td><code>src/attune/ops/routes/sessions.py</code></td>
+</tr>
+<tr>
+<td><code>list_sessions()</code></td>
+<td><code>GET /api/sessions</code> — JSON listing of recent sessions.</td>
+<td><code>src/attune/ops/routes/sessions.py</code></td>
+</tr>
+<tr>
+<td><code>list_specs()</code></td>
+<td>Federated listing across all configured spec roots.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>list_completion_candidates()</code></td>
+<td>Return &quot;Ready to close?&quot; candidates for the Specs page.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>get_spec()</code></td>
+<td>Return phase-file contents for one spec.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>update_phase_status()</code></td>
+<td>Rewrite the <code>**Status**</code> line in the named phase file.</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>dismiss_completion_candidate()</code></td>
+<td>Suppress a completion candidate for the default TTL (14 days).</td>
+<td><code>src/attune/ops/routes/specs.py</code></td>
+</tr>
+<tr>
+<td><code>get_sweep_result()</code></td>
+<td>Return the latest sweep result for a scope-hash, or 404.</td>
+<td><code>src/attune/ops/routes/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>get_sweep_chips()</code></td>
+<td>Return chip counts for an arbitrary scope path.</td>
+<td><code>src/attune/ops/routes/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>sweep_detail_page()</code></td>
+<td>Scope-keyed detail page for the latest discovery-sweep result.</td>
+<td><code>src/attune/ops/routes/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>is_emission_enabled()</code></td>
+<td>True when <code>ATTUNE_RUN_META_EMIT</code> is set to any non-empty value.</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>emit_version_line()</code></td>
+<td>Write the schema-version line. Parsers refuse unknown versions.</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>emit_field_line()</code></td>
+<td>Write one <code>ATTUNE_RUN_META</code> line for a named field.</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>encode_stderr()</code></td>
+<td>Base64-encode a multi-line stderr string for wire-safe transit.</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>decode_stderr()</code></td>
+<td>Inverse of :func:<code>encode_stderr</code>. Returns empty string on</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>parse_line()</code></td>
+<td>Parse one ATTUNE_RUN_META line back into a dict. None on no match.</td>
+<td><code>src/attune/ops/run_meta_stdout.py</code></td>
+</tr>
+<tr>
+<td><code>echo_command_builder()</code></td>
+<td>Test helper: produce a portable subprocess that prints two lines + exits 0.</td>
+<td><code>src/attune/ops/runner.py</code></td>
+</tr>
+<tr>
+<td><code>prune_old_runs()</code></td>
+<td>Delete persisted run files older than <code>days</code>. Returns the deletion count.</td>
+<td><code>src/attune/ops/runner.py</code></td>
+</tr>
+<tr>
+<td><code>create_app()</code></td>
+<td>Build the FastAPI app, wiring config + templates into request state.</td>
+<td><code>src/attune/ops/server.py</code></td>
+</tr>
+<tr>
+<td><code>redact()</code></td>
+<td>Run all redaction passes over <code>text</code> and return the result.</td>
+<td><code>src/attune/ops/session_redaction.py</code></td>
+</tr>
+<tr>
+<td><code>redact_json_line()</code></td>
+<td>Redact one JSON-serialized line in-place, preserving structure.</td>
+<td><code>src/attune/ops/session_redaction.py</code></td>
+</tr>
+<tr>
+<td><code>new_budget()</code></td>
+<td>Build a :class:<code>Budget</code> from the env override or default.</td>
+<td><code>src/attune/ops/session_summarizer.py</code></td>
+</tr>
+<tr>
+<td><code>llm_enabled()</code></td>
+<td>Return True iff the Haiku path is enabled this run.</td>
+<td><code>src/attune/ops/session_summarizer.py</code></td>
+</tr>
+<tr>
+<td><code>summarize_session()</code></td>
+<td>Return a Haiku-or-cached summary for one session JSONL.</td>
+<td><code>src/attune/ops/session_summarizer.py</code></td>
+</tr>
+<tr>
+<td><code>compute_cache_key()</code></td>
+<td>Build a :class:<code>CacheKey</code> for one JSONL file. <code>None</code> on I/O failure.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+<tr>
+<td><code>cache_path_for()</code></td>
+<td>Return the on-disk cache path for one session id.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+<tr>
+<td><code>load()</code></td>
+<td>Return the cached summary iff the on-disk record matches <code>expected</code>.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+<tr>
+<td><code>save()</code></td>
+<td>Write a summary to the on-disk cache, atomically.</td>
+<td><code>src/attune/ops/session_summary_cache.py</code></td>
+</tr>
+<tr>
+<td><code>derive_lifecycle()</code></td>
+<td>Return the lifecycle bucket label for one spec.</td>
+<td><code>src/attune/ops/spec_lifecycle.py</code></td>
+</tr>
+<tr>
+<td><code>is_persistence_enabled()</code></td>
+<td>True when <code>ATTUNE_OPS_SWEEP_RESULTS</code> is set to a non-empty value.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>results_dir()</code></td>
+<td>Return <code>&lt;attune_home&gt;/ops/sweep-results/</code> (created if missing).</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>scope_hash()</code></td>
+<td>Hash a scope path to a fixed-length hex identifier.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>parse_lines()</code></td>
+<td>Parse a captured stdout buffer into the final SweepResult JSON.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>persist_result()</code></td>
+<td>Atomically write <code>sweep_result</code> to <code>&lt;results_dir&gt;/&lt;hash&gt;.json</code>.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>read_result()</code></td>
+<td>Read a previously-persisted result by its scope-hash digest.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>persist_from_lines()</code></td>
+<td>Parse captured stdout lines and persist the result for <code>scope_path</code>.</td>
+<td><code>src/attune/ops/sweep_results.py</code></td>
+</tr>
+<tr>
+<td><code>watch_and_persist()</code></td>
+<td>Subscribe to a discovery-sweep run; persist its result on success.</td>
+<td><code>src/attune/ops/sweep_results_watcher.py</code></td>
+</tr>
+<tr>
+<td><code>derive_concern()</code></td>
+<td>Return the concern bucket for one workflow.</td>
+<td><code>src/attune/ops/workflow_concern.py</code></td>
+</tr>
+<tr>
+<td><code>group_by_concern()</code></td>
+<td>Group a list of workflow names by their concern bucket.</td>
+<td><code>src/attune/ops/workflow_concern.py</code></td>
+</tr>
+<tr>
+<td><code>concern_counts()</code></td>
+<td>Return per-concern counts for a list of workflow names.</td>
+<td><code>src/attune/ops/workflow_concern.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/ops/**</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

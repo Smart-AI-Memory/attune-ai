@@ -1,0 +1,383 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bug Prediction vs. Related Scanning Approaches — comparison</title>
+  <meta name="description" content="Bug prediction finds *where* failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use `BugPredictionWorkflow`" />
+  <meta property="og:title" content="Bug Prediction vs. Related Scanning Approaches — comparison" />
+  <meta property="og:description" content="Bug prediction finds *where* failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use `BugPredictionWorkflow`" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/bug-predict">Bug Predict</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Bug Prediction vs. Related Scanning Approaches</h1>
+<p>Bug prediction finds <em>where</em> failures are likely to happen before they do — by analyzing code patterns, complexity, and change frequency. This page helps you decide when to use <code>BugPredictionWorkflow</code> directly, when to use the CLI entry point, and when a different tool is the better fit.</p>
+<h2>How the approaches compare</h2>
+<table>
+<thead>
+<tr>
+<th></th>
+<th><strong><code>BugPredictionWorkflow</code> (SDK)</strong></th>
+<th><strong><code>main()</code> CLI entry point</strong></th>
+<th><strong>Security audit / code quality scan</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Primary use</strong></td>
+<td>Embed bug prediction in agent pipelines or automated tooling</td>
+<td>Run a one-off scan from the terminal or a script</td>
+<td>Vulnerability scanning or broad style enforcement</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td><code>WorkflowResult</code> — structured, machine-readable</td>
+<td>Human-readable report via <code>format_bug_predict_report()</code></td>
+<td>Varies by tool</td>
+</tr>
+<tr>
+<td><strong>Customization</strong></td>
+<td><code>system_prompt_suffix</code> parameter lets you extend orchestrator behavior</td>
+<td>Fixed prompt; no runtime customization</td>
+<td>Depends on tool</td>
+</tr>
+<tr>
+<td><strong>Subagent coordination</strong></td>
+<td>Yes — orchestrates <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code> automatically</td>
+<td>Yes — same three subagents under the hood</td>
+<td>Not applicable</td>
+</tr>
+<tr>
+<td><strong>False-positive filtering</strong></td>
+<td>Built in — suppresses known-safe patterns (test fixtures, <code>regex.exec()</code>, <code># INTENTIONAL:</code> comments, <code># noqa: BLE001</code>)</td>
+<td>Same filtering</td>
+<td>Not guaranteed</td>
+</tr>
+<tr>
+<td><strong>Severity triage</strong></td>
+<td>HIGH / MEDIUM / LOW with file path and line number</td>
+<td>Same, formatted as readable report</td>
+<td>Varies</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>CI pipelines, agent workflows, programmatic consumers</td>
+<td>Interactive use, quick pre-commit checks</td>
+<td>Compliance scanning, style linting</td>
+</tr>
+</tbody>
+</table>
+<h2>What bug prediction detects — and what it doesn't</h2>
+<p><code>BugPredictionWorkflow</code> targets three specific pattern categories:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Severity</th>
+<th>Examples caught</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>dangerous_eval</code></td>
+<td>HIGH</td>
+<td><code>eval()</code> or <code>exec()</code> on user input, <code>compile()</code> on external data</td>
+</tr>
+<tr>
+<td><code>broad_exception</code></td>
+<td>MEDIUM</td>
+<td>Bare <code>except:</code>, unlogged <code>except Exception:</code></td>
+</tr>
+<tr>
+<td><code>incomplete_code</code></td>
+<td>LOW</td>
+<td>TODO, FIXME, HACK, XXX comments in code paths</td>
+</tr>
+</tbody>
+</table>
+<p>It also weighs cyclomatic complexity, change frequency (&quot;hot&quot; files), and code smells (functions over 50 lines, duplicated logic). It does <strong>not</strong> replace a dedicated security audit for vulnerability scanning (e.g., dependency CVEs, injection flaws beyond <code>eval</code>) or a linter for style enforcement. Those tools answer different questions.</p>
+<h2>Tradeoffs in depth</h2>
+<p><strong><code>BugPredictionWorkflow</code> vs. <code>main()</code></strong></p>
+<p>Both use the same three subagents and the same false-positive suppression logic. The difference is in how you consume the output:</p>
+<ul>
+<li><code>BugPredictionWorkflow.execute()</code> returns a <code>WorkflowResult</code> you can inspect programmatically. Use <code>system_prompt_suffix</code> to steer the orchestrator toward a specific concern (e.g., focusing synthesis on auth-related findings).</li>
+<li><code>main()</code> calls <code>format_bug_predict_report(result, input_data)</code> and prints directly to stdout. There is no runtime customization — it is optimized for human readers, not downstream code.</li>
+</ul>
+<p><strong>Bug prediction vs. security audit</strong></p>
+<p>Bug prediction is proactive and pattern-based: it tells you <em>where</em> bugs are statistically likely. A security audit is reactive and rules-based: it tells you <em>what</em> known vulnerability classes are present. If you need both, run them independently — they don't overlap enough to substitute for each other.</p>
+<h2>Use bug prediction when…</h2>
+<ul>
+<li><strong>You're about to merge a large PR</strong> and want to catch <code>dangerous_eval</code> or silent exception swallowing before code review.</li>
+<li><strong>You're onboarding to unfamiliar code</strong> and need a risk map of the hottest files fast.</li>
+<li><strong>You're building an agent pipeline</strong> that needs structured bug-likelihood data — use <code>BugPredictionWorkflow</code> and consume <code>WorkflowResult</code> directly.</li>
+<li><strong>You want a quick pre-release check</strong> — run <code>main()</code> to get a formatted report with risk score, file links, and line numbers in seconds.</li>
+<li><strong>You need to customize orchestration</strong> — pass <code>system_prompt_suffix</code> to <code>BugPredictionWorkflow.__init__()</code> to extend the orchestrator's default behavior without touching internals.</li>
+</ul>
+<h2>Skip bug prediction when…</h2>
+<ul>
+<li>Your concern is <strong>known CVEs or dependency vulnerabilities</strong> — use a dedicated security audit instead.</li>
+<li>You need <strong>style or formatting enforcement</strong> — a linter is the right tool.</li>
+<li>You're doing <strong>a single throwaway check</strong> on one function — the three-subagent workflow is heavier than necessary; a direct code review question is faster.</li>
+<li>The files you want to scan match the internal test patterns (<code>test_bug_predict</code>, <code>test_scanner</code>, <code>test_security_scan</code>) — the scanner intentionally skips these to avoid false positives in its own test suite.</li>
+</ul>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/bug_predict.py</code></li>
+<li><code>src/attune/workflows/bug_predict_report.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>bugs</code>, <code>prediction</code>, <code>scanning</code>, <code>race-condition</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

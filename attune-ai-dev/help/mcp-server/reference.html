@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>MCP server — reference</title>
+  <meta name="description" content="Build MCP-compatible servers that expose Attune AI workflows, help system, memory tools, and authentication utilities to clients like Claude Desktop." />
+  <meta property="og:title" content="MCP server — reference" />
+  <meta property="og:description" content="Build MCP-compatible servers that expose Attune AI workflows, help system, memory tools, and authentication utilities to clients like Claude Desktop." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/mcp-server">Mcp Server</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>MCP server</h1>
+<p>Build MCP-compatible servers that expose Attune AI workflows, help system, memory tools, and authentication utilities to clients like Claude Desktop.</p>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>MemoryHandlersMixin</code></td>
+<td>Mixin providing memory tool handlers for EmpathyMCPServer</td>
+</tr>
+<tr>
+<td><code>RateLimiter</code></td>
+<td>Simple sliding-window rate limiter</td>
+</tr>
+<tr>
+<td><code>EmpathyMCPServer</code></td>
+<td>MCP server for Attune AI workflows</td>
+</tr>
+<tr>
+<td><code>WorkflowHandlersMixin</code></td>
+<td>Mixin providing workflow tool handlers for EmpathyMCPServer</td>
+</tr>
+</tbody>
+</table>
+<h3>RateLimiter</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>max_calls: int = 60, window_seconds: float = 60.0</code></td>
+<td><code>None</code></td>
+<td>Initialize rate limiter with call limits</td>
+</tr>
+<tr>
+<td><code>check</code></td>
+<td><code>key: str</code></td>
+<td><code>bool</code></td>
+<td>Check if key is within rate limits</td>
+</tr>
+</tbody>
+</table>
+<h3>EmpathyMCPServer</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>workspace_root: str | None = None, user_id: str | None = None</code></td>
+<td>-</td>
+<td>Initialize MCP server with workspace and user context</td>
+</tr>
+<tr>
+<td><code>get_prompt_list</code></td>
+<td>-</td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get list of available prompts</td>
+</tr>
+<tr>
+<td><code>get_prompt_messages</code></td>
+<td><code>prompt_name: str, arguments: dict[str, str]</code></td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get messages for a specific prompt</td>
+</tr>
+<tr>
+<td><code>call_tool</code></td>
+<td><code>tool_name: str, arguments: dict[str, Any]</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Execute a tool with provided arguments</td>
+</tr>
+<tr>
+<td><code>get_tool_list</code></td>
+<td>-</td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get list of available tools</td>
+</tr>
+<tr>
+<td><code>get_resource_list</code></td>
+<td>-</td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get list of available resources</td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_prompt_list</code></td>
+<td><code>prompts: dict[str, dict[str, Any]]</code></td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get list of available prompts</td>
+</tr>
+<tr>
+<td><code>get_prompt_messages</code></td>
+<td><code>prompts: dict[str, dict[str, Any]], prompt_name: str, arguments: dict[str, str]</code></td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Get messages for a specific prompt</td>
+</tr>
+<tr>
+<td><code>create_server</code></td>
+<td>-</td>
+<td><code>EmpathyMCPServer</code></td>
+<td>Create and return an Empathy MCP server instance</td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td>-</td>
+<td><code>None</code></td>
+<td>Entry point for MCP server</td>
+</tr>
+<tr>
+<td><code>get_workflow_tools</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>Tool definitions for workflow execution tools</td>
+</tr>
+<tr>
+<td><code>get_utility_tools</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>Tool definitions for auth, telemetry, and session management</td>
+</tr>
+<tr>
+<td><code>get_help_tools</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>Tool definitions for contextual help and progressive documentation</td>
+</tr>
+<tr>
+<td><code>get_personal_memory_tools</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>Tool definitions for personal cross-session memory</td>
+</tr>
+<tr>
+<td><code>get_memory_tools</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>Tool definitions for memory store/retrieve/search/forget</td>
+</tr>
+<tr>
+<td><code>get_resources</code></td>
+<td>-</td>
+<td><code>dict[str, dict[str, Any]]</code></td>
+<td>MCP resource definitions</td>
+</tr>
+</tbody>
+</table>
+<h3>Raises</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Exception</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_prompt_messages</code></td>
+<td><code>ValueError</code></td>
+<td>'Unknown prompt: {...}'</td>
+</tr>
+</tbody>
+</table>
+<h3>Tool schemas</h3>
+<h4>get_utility_tools</h4>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>auth_status</code></td>
+<td>-</td>
+<td>Get authentication strategy status. Shows current configuration, subscription tier, and default mode</td>
+</tr>
+<tr>
+<td><code>auth_recommend</code></td>
+<td><code>file_path: str</code> (required)</td>
+<td>Get authentication recommendation for a file. Analyzes LOC and suggests optimal auth mode</td>
+</tr>
+<tr>
+<td><code>telemetry_stats</code></td>
+<td><code>days: int = 30</code></td>
+<td>Get telemetry statistics. Shows cost savings, cache hit rates, and workflow performance</td>
+</tr>
+<tr>
+<td><code>attune_get_level</code></td>
+<td>-</td>
+<td>Get current interaction level (1-5). Level 1=Reactive, 2=Guided, 3=Proactive, 4=Anticipatory, 5=Systems</td>
+</tr>
+<tr>
+<td><code>attune_set_level</code></td>
+<td><code>level: int</code> (required, min: 1, max: 5)</td>
+<td>Set interaction level (1-5) for this session</td>
+</tr>
+<tr>
+<td><code>context_get</code></td>
+<td><code>key: str</code> (required)</td>
+<td>Get session context value</td>
+</tr>
+<tr>
+<td><code>context_set</code></td>
+<td><code>key: str, value: str</code> (required)</td>
+<td>Set session context value</td>
+</tr>
+</tbody>
+</table>
+<h4>get_help_tools</h4>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>help_lookup</code></td>
+<td><code>topic: str</code> (required), <code>mode: str = 'progressive'</code>, <code>file_path: str</code>, <code>last_workflow: str</code>, <code>reset: bool = False</code></td>
+<td>Look up contextual help for a topic, workflow, or error. Progressive mode escalates across template types</td>
+</tr>
+<tr>
+<td><code>help_maintain</code></td>
+<td><code>dry_run: bool = False</code>, <code>batch: bool = False</code></td>
+<td>Check for stale help templates and regenerate them</td>
+</tr>
+<tr>
+<td><code>help_init</code></td>
+<td><code>action: str</code> (required), <code>accepted: array</code></td>
+<td>Bootstrap a project-local help system. Scans the project to discover features</td>
+</tr>
+<tr>
+<td><code>help_status</code></td>
+<td><code>features: array</code></td>
+<td>Show staleness report for the project-local help system</td>
+</tr>
+<tr>
+<td><code>help_update</code></td>
+<td><code>features: array</code>, <code>dry_run: bool = False</code></td>
+<td>Regenerate help templates for specific features or all stale features</td>
+</tr>
+</tbody>
+</table>
+<h4>get_personal_memory_tools</h4>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>personal_memory_capture</code></td>
+<td><code>topic: str, content: str</code> (required), <code>kind: str = 'decision'</code>, <code>project_local: bool = False</code></td>
+<td>Save a decision, pattern, troubleshooting finding, or reference to personal cross-session memory</td>
+</tr>
+<tr>
+<td><code>personal_memory_recall</code></td>
+<td><code>query: str</code> (required), <code>k: int = 3</code>, <code>kind_filter: str</code></td>
+<td>Search personal cross-session memory with a natural language query</td>
+</tr>
+<tr>
+<td><code>personal_memory_topics</code></td>
+<td>-</td>
+<td>List all topics stored in personal cross-session memory</td>
+</tr>
+<tr>
+<td><code>personal_memory_forget</code></td>
+<td><code>topic: str</code> (required), <code>kind: str</code></td>
+<td>Delete a topic from personal memory</td>
+</tr>
+</tbody>
+</table>
+<h4>get_memory_tools</h4>
+<table>
+<thead>
+<tr>
+<th>Tool</th>
+<th>Parameters</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory_store</code></td>
+<td><code>key: str, value: str</code> (required), <code>classification: str = 'PUBLIC'</code>, <code>pattern_type: str</code></td>
+<td>Store data in attune-ai memory</td>
+</tr>
+<tr>
+<td><code>memory_retrieve</code></td>
+<td><code>key: str</code> (required)</td>
+<td>Retrieve data from attune-ai memory by key or pattern ID</td>
+</tr>
+<tr>
+<td><code>memory_search</code></td>
+<td><code>query: str</code> (required), <code>pattern_type: str</code></td>
+<td>Search attune-ai memory for patterns matching a query</td>
+</tr>
+<tr>
+<td><code>memory_forget</code></td>
+<td><code>key: str</code> (required), <code>scope: str = 'all'</code></td>
+<td>Remove data from attune-ai memory</td>
+</tr>
+</tbody>
+</table>
+<h3>Resources</h3>
+<table>
+<thead>
+<tr>
+<th>Resource</th>
+<th>URI</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflows</code></td>
+<td><code>attune://workflows</code></td>
+<td>List of all available Attune workflows</td>
+</tr>
+<tr>
+<td><code>auth_config</code></td>
+<td><code>attune://auth/config</code></td>
+<td>Current authentication strategy configuration</td>
+</tr>
+<tr>
+<td><code>telemetry</code></td>
+<td><code>attune://telemetry</code></td>
+<td>Cost tracking and performance metrics</td>
+</tr>
+</tbody>
+</table>
+<h2>Constants</h2>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Values</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_VOICE_SKIP_TOOLS</code></td>
+<td><code>{'memory_store', 'memory_retrieve', 'memory_search', 'memory_forget', 'personal_memory_capture', 'personal_memory_recall', 'personal_memory_topics', 'personal_memory_forget', 'attune_get_level', 'attune_set_level', 'context_get', 'context_set', 'auth_status', 'auth_recommend', 'telemetry_stats'}</code></td>
+<td>Tools excluded from voice interfaces</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

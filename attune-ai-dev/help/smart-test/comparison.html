@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Test vs Fix Test: Choosing the right testing tool — comparison</title>
+  <meta name="description" content="Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken " />
+  <meta property="og:title" content="Smart Test vs Fix Test: Choosing the right testing tool — comparison" />
+  <meta property="og:description" content="Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken " />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/smart-test">Smart Test</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Smart Test vs Fix Test: Choosing the right testing tool</h1>
+<h2>Overview</h2>
+<p>Both smart-test and fix-test work on your test suite, but they solve opposite problems. Smart-test finds code that has no tests and writes them. Fix-test takes tests that already exist but are broken and repairs them. Running them together covers the full testing lifecycle — but picking the wrong one for your situation wastes time.</p>
+<h2>Feature comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>smart-test</th>
+<th>fix-test</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Primary job</strong></td>
+<td>Finds untested code and generates pytest tests</td>
+<td>Diagnoses failing tests and applies targeted fixes</td>
+</tr>
+<tr>
+<td><strong>Starting condition</strong></td>
+<td>Code exists; tests are absent or thin</td>
+<td>Tests exist; they are failing</td>
+</tr>
+<tr>
+<td><strong>Coverage analysis</strong></td>
+<td>Yes — parses <code>coverage.json</code>, ranks modules by gap size and risk</td>
+<td>No — works from pytest tracebacks, not coverage data</td>
+</tr>
+<tr>
+<td><strong>AST-based code analysis</strong></td>
+<td>Yes — <code>ASTFunctionAnalyzer</code> extracts function signatures, async status, raises, decorators, and complexity</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Output</strong></td>
+<td>New <code>.py</code> test files with assertions, edge cases, parametrized inputs, and error-path tests</td>
+<td>Repaired existing test files</td>
+</tr>
+<tr>
+<td><strong>Parallelism</strong></td>
+<td><code>ParallelTestGenerationWorkflow</code> can process up to 200 low-coverage modules in configurable batches</td>
+<td>Sequential: diagnose → fix → re-run, up to 3 retry attempts per test</td>
+</tr>
+<tr>
+<td><strong>Retry / self-healing</strong></td>
+<td>No — generates once; you review</td>
+<td>Yes — reruns after each fix, reports what still needs manual attention</td>
+</tr>
+<tr>
+<td><strong>Root-cause classification</strong></td>
+<td>No</td>
+<td>Yes — import errors, mock mismatches, assertion drift, type errors, missing fixtures, environment issues</td>
+</tr>
+<tr>
+<td><strong>Best scale</strong></td>
+<td>Bootstrapping coverage across a whole codebase or auditing a new module</td>
+<td>Repairing a specific failing test or a broken CI pipeline</td>
+</tr>
+<tr>
+<td><strong>Runs on</strong></td>
+<td>Your Claude subscription — no extra API key</td>
+<td>Your Claude subscription — no extra API key</td>
+</tr>
+</tbody>
+</table>
+<h2>How each tool works internally</h2>
+<p><strong>smart-test</strong> runs two coordinated workflows:</p>
+<ol>
+<li><code>TestAuditWorkflow</code> — three subagents (<code>coverage-auditor</code>, <code>gap-analyzer</code>, <code>test-planner</code>) parse <code>coverage.json</code> via <code>parse_coverage_json()</code>, rank modules using <code>prioritize_modules()</code> (default threshold: 50% coverage), group them into subsystem batches with <code>group_into_batches()</code>, and produce a structured audit report.</li>
+<li><code>TestGenerationWorkflow</code> (or <code>ParallelTestGenerationWorkflow</code> for large codebases) — three subagents (<code>function-identifier</code>, <code>test-designer</code>, <code>test-writer</code>) analyze each module's AST, then write pytest functions with assertions, boundary values, and <code>@pytest.mark.parametrize</code> blocks.</li>
+</ol>
+<p><strong>fix-test</strong> runs a tighter loop: run the failing test, classify the traceback into a known root-cause category, apply a fix, re-run, and repeat up to three times. It does not generate new coverage — it restores tests that a refactor or dependency upgrade broke.</p>
+<h2>Tradeoffs to know before you choose</h2>
+<ul>
+<li><strong>smart-test is broader but not self-healing.</strong> It can generate tests for 200 modules in parallel, but it won't automatically fix a test it generates that fails. Review generated tests before committing them.</li>
+<li><strong>fix-test is precise but narrow.</strong> It excels at the tedious read-traceback → edit → re-run loop, but it can't tell you what's untested — only what's broken.</li>
+<li><strong>Coverage threshold matters for smart-test.</strong> <code>prioritize_modules()</code> filters out modules already above 50% coverage by default. If your codebase is mostly well-covered, smart-test may produce a smaller report than you expect — that's by design, not a bug.</li>
+<li><strong>For legacy codebases with no tests at all,</strong> smart-test is the clear starting point. Fix-test has nothing to work with until tests exist.</li>
+</ul>
+<h2>Use smart-test when…</h2>
+<ul>
+<li>You've written new public functions or modules and want tests before they ship.</li>
+<li>Your coverage has dropped below the 80% threshold and you need to find exactly what's missing.</li>
+<li>You're bootstrapping a test suite for a legacy codebase with little or no coverage.</li>
+<li>You want to verify that error paths and boundary conditions are exercised before a release.</li>
+<li>You need to generate tests across many modules at once — <code>ParallelTestGenerationWorkflow</code> handles batches of up to 200 modules.</li>
+</ul>
+<h2>Use fix-test when…</h2>
+<ul>
+<li><code>pytest</code> is showing failures after a refactor, dependency upgrade, or large migration.</li>
+<li>CI is broken on tests you didn't intentionally change.</li>
+<li>You want the read-traceback → edit → re-run loop automated with automatic retry.</li>
+<li>You already have tests — they're just wrong after the code moved.</li>
+</ul>
+<p><strong>If you're unsure:</strong> check whether tests <em>exist</em> for the code in question. If they don't, start with smart-test. If they do but they're red, start with fix-test.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/test_gen/**</code></li>
+<li><code>src/attune/workflows/test_audit/**</code></li>
+<li><code>src/attune/workflows/test_gen_parallel.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

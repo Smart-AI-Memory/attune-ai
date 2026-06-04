@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comparison: Models feature — authentication modes and routing strategies — comparison</title>
+  <meta name="description" content="The `models` feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetr" />
+  <meta property="og:title" content="Comparison: Models feature — authentication modes and routing strategies — comparison" />
+  <meta property="og:description" content="The `models` feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetr" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/models">Models</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Comparison: Models feature — authentication modes and routing strategies</h1>
+<h2>Context</h2>
+<p>The <code>models</code> feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetry, and managing circuit breakers when providers fail. Understanding the tradeoffs within this feature helps you configure it correctly for your workload.</p>
+<h2>Authentication mode comparison</h2>
+<p><code>AuthStrategy</code> supports two authentication modes, selected via <code>AuthMode</code>. The system defaults to <code>AuthMode.AUTO</code>, which picks a mode based on module size.</p>
+<table>
+<thead>
+<tr>
+<th>Factor</th>
+<th>Subscription mode (<code>prefer_subscription=True</code>)</th>
+<th>API key mode (<code>prefer_subscription=False</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cost model</strong></td>
+<td>Flat subscription fee; no per-token charge</td>
+<td>Pay-per-token; cost scales with usage</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>High-volume, continuous workflows</td>
+<td>Sporadic or exploratory use</td>
+</tr>
+<tr>
+<td><strong>Token estimation</strong></td>
+<td><code>estimate_tokens()</code> uses <code>loc_to_tokens_multiplier=4.0</code></td>
+<td>Same estimation; cost calculated differently via <code>estimate_cost()</code></td>
+</tr>
+<tr>
+<td><strong>Small modules (&lt;500 LOC)</strong></td>
+<td>May be cost-inefficient</td>
+<td>Generally cheaper</td>
+</tr>
+<tr>
+<td><strong>Large modules (&gt;2000 LOC)</strong></td>
+<td>Cost advantage grows with volume</td>
+<td>Costs accumulate quickly</td>
+</tr>
+<tr>
+<td><strong>Setup</strong></td>
+<td><code>cmd_auth_setup()</code> interactive wizard</td>
+<td><code>cmd_auth_setup()</code> interactive wizard</td>
+</tr>
+<tr>
+<td><strong>Switching</strong></td>
+<td><code>cmd_auth_reset()</code> then re-run setup</td>
+<td><code>cmd_auth_reset()</code> then re-run setup</td>
+</tr>
+</tbody>
+</table>
+<p><code>AuthStrategy.get_recommended_mode()</code> encodes this logic: pass your module's line count and it returns the optimal <code>AuthMode</code> for that size category (<code>get_module_size_category()</code> returns <code>'small'</code>, <code>'medium'</code>, or <code>'large'</code>).</p>
+<h2>Model tier comparison</h2>
+<p>The registry maps tasks to three tiers. <code>TASK_TIER_MAP</code> and <code>AdaptiveModelRouter</code> use these distinctions to select models at runtime.</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Task examples</th>
+<th>Latency expectation</th>
+<th>Cost expectation</th>
+<th>When the router selects it</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Cheap</strong> (<code>CHEAP_TASKS</code>)</td>
+<td>Background analysis, batch summarization</td>
+<td>Higher acceptable</td>
+<td>Lowest</td>
+<td><code>max_cost</code> constraint set, <code>success_rate ≥ 0.8</code> on telemetry</td>
+</tr>
+<tr>
+<td><strong>Capable</strong> (<code>CAPABLE_TASKS</code>)</td>
+<td>Code generation, test writing</td>
+<td>Moderate</td>
+<td>Moderate</td>
+<td>Default for most workflow stages</td>
+</tr>
+<tr>
+<td><strong>Premium</strong> (<code>PREMIUM_TASKS</code>)</td>
+<td>Complex reasoning, architecture review</td>
+<td>Lowest acceptable</td>
+<td>Highest</td>
+<td><code>recommend_tier_upgrade()</code> returns <code>True</code> based on historical failure rates</td>
+</tr>
+<tr>
+<td><strong>Realtime</strong> (<code>REALTIME_REQUIRED_TASKS</code>)</td>
+<td><code>chat</code>, <code>live_coding</code>, <code>security_incident</code>, <code>emergency_response</code></td>
+<td>Must be minimal</td>
+<td>Varies</td>
+<td>Task type is in the frozenset; cannot be overridden by cost constraints</td>
+</tr>
+</tbody>
+</table>
+<p>The router scores candidates using <code>ModelPerformance.quality_score</code>, which combines <code>success_rate</code>, <code>avg_latency_ms</code>, and <code>avg_cost</code>. You can constrain selection with <code>max_cost</code>, <code>max_latency_ms</code>, and <code>min_success_rate</code> parameters on <code>get_best_model()</code>.</p>
+<h2>Routing strategy comparison</h2>
+<p><code>AdaptiveModelRouter</code> and direct model selection via the registry represent two different approaches.</p>
+<table>
+<thead>
+<tr>
+<th>Aspect</th>
+<th><code>AdaptiveModelRouter</code></th>
+<th>Direct registry lookup (<code>get_model()</code>, <code>get_tier_for_task()</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Selection basis</strong></td>
+<td>Live telemetry over a configurable window (default 7 days)</td>
+<td>Static registry configuration</td>
+</tr>
+<tr>
+<td><strong>Adapts to failures</strong></td>
+<td>Yes — <code>recent_failures</code> and <code>sample_size</code> factor into <code>quality_score</code></td>
+<td>No — returns the registered model regardless of runtime behavior</td>
+</tr>
+<tr>
+<td><strong>Circuit breaker integration</strong></td>
+<td>Works alongside <code>CircuitBreaker</code>; failing providers are excluded</td>
+<td>Not integrated; caller is responsible</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Production workflows where model reliability varies</td>
+<td>Testing, scripting, or when you need deterministic model selection</td>
+</tr>
+<tr>
+<td><strong>Upgrade recommendations</strong></td>
+<td><code>recommend_tier_upgrade()</code> signals when a higher tier would improve outcomes</td>
+<td>Not available</td>
+</tr>
+<tr>
+<td><strong>Observability</strong></td>
+<td><code>get_routing_stats(workflow, stage, days=7)</code> returns structured performance data</td>
+<td>None built in</td>
+</tr>
+</tbody>
+</table>
+<h2>Circuit breaker behavior</h2>
+<p><code>CircuitBreaker</code> sits between <code>EmpathyLLMExecutor</code> and the provider. It opens after <code>failure_threshold</code> failures (default: 5) and stays open for <code>recovery_timeout_seconds</code> (default: 60). During the half-open state, <code>half_open_calls</code> (default: 1) probe call is allowed before fully re-enabling the provider.</p>
+<p>If you call providers directly without going through <code>EmpathyLLMExecutor</code>, the circuit breaker does not apply — you are responsible for handling provider failures.</p>
+<h2>CLI entry points</h2>
+<table>
+<thead>
+<tr>
+<th>Command function</th>
+<th>Purpose</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_auth_setup()</code></td>
+<td>Interactive first-time configuration</td>
+<td>Setting up a new environment</td>
+</tr>
+<tr>
+<td><code>cmd_auth_status()</code></td>
+<td>Display current <code>AuthStrategy</code> fields</td>
+<td>Debugging unexpected auth behavior</td>
+</tr>
+<tr>
+<td><code>cmd_auth_reset()</code></td>
+<td>Clear saved strategy from disk</td>
+<td>Switching providers or subscription tiers</td>
+</tr>
+<tr>
+<td><code>cmd_auth_recommend(args)</code></td>
+<td>Score a specific file and return the recommended <code>AuthMode</code></td>
+<td>Deciding auth mode for a single large module</td>
+</tr>
+</tbody>
+</table>
+<h2>Use X when...</h2>
+<p><strong>Use <code>AuthMode.AUTO</code> with <code>prefer_subscription=True</code></strong> when you run continuous workflows against large codebases (&gt;2000 LOC per module). The subscription tier amortizes cost across high token volumes, and <code>get_recommended_mode()</code> will select it automatically.</p>
+<p><strong>Use API key mode</strong> when your usage is infrequent or you are running one-off scripts. Token costs stay low when volume is low, and you avoid paying for subscription capacity you do not use.</p>
+<p><strong>Use <code>AdaptiveModelRouter</code></strong> in any production workflow. It is the better default: it reacts to real failure rates, avoids degraded providers automatically, and surfaces upgrade recommendations before failures compound.</p>
+<p><strong>Use direct registry lookup</strong> only in tests or throwaway scripts where you need a fixed, predictable model and do not want telemetry to influence selection.</p>
+<p><strong>Use the <code>REALTIME_REQUIRED_TASKS</code> path</strong> for anything user-facing or time-critical (<code>chat</code>, <code>live_coding</code>, <code>security_incident</code>, <code>emergency_response</code>). Cost constraints passed to <code>get_best_model()</code> are not applied to these tasks — latency takes priority unconditionally.</p>
+<p><strong>Do not use this feature directly</strong> if your workflow spans multiple providers and you need coordinated fallback logic. The <code>ResilientExecutor</code> and <code>FallbackStrategy</code> layer above <code>models</code> handles multi-provider orchestration; wiring <code>AdaptiveModelRouter</code> and <code>CircuitBreaker</code> together manually duplicates logic that already exists there.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/models/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot ops dashboard — troubleshooting</title>
+  <meta name="description" content="The ops dashboard is the `attune ops` operations interface — a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It runs " />
+  <meta property="og:title" content="Troubleshoot ops dashboard — troubleshooting" />
+  <meta property="og:description" content="The ops dashboard is the `attune ops` operations interface — a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It runs " />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/ops-dashboard">Ops Dashboard</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot ops dashboard</h1>
+<p>The ops dashboard is the <code>attune ops</code> operations interface — a workflow runner with a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. It runs as a local server (default <code>127.0.0.1:8765</code>) and is started via <code>python -m attune.ops</code> or the <code>attune ops</code> CLI subcommand.</p>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Dashboard server fails to start</td>
+<td>Confirm <code>host</code> and <code>port</code> in your <code>Config</code> are not already bound. The default is <code>127.0.0.1:8765</code>. Run <code>lsof -i :8765</code> to check for a port conflict.</td>
+</tr>
+<tr>
+<td>Cost data is missing or stale</td>
+<td>Check whether <code>load_admin_key()</code> returns <code>None</code> — this means <code>ANTHROPIC_ADMIN_KEY</code> (or equivalent) is unset or unreadable. Also inspect the <code>source</code> field on <code>CostSummary</code>: <code>'cached'</code> means the live fetch was skipped. Call <code>fetch_summary(refresh=True)</code> to force a new fetch.</td>
+</tr>
+<tr>
+<td><code>fetch_summary()</code> returns a <code>CostFetchError</code></td>
+<td>Read <code>CostFetchError.kind</code> and <code>CostFetchError.message</code>. The <code>kind</code> field is a <code>CostFetchErrorKind</code> enum that categorises the failure (network, auth, parse, etc.).</td>
+</tr>
+<tr>
+<td>Spec completion candidates not appearing</td>
+<td>Verify <code>specs_candidates_enabled = True</code> in <code>Config</code> and that <code>specs_roots</code> contains at least one valid path. Run <code>detect_candidates(config)</code> directly to see what the detector finds.</td>
+</tr>
+<tr>
+<td>Run history is empty or not persisted</td>
+<td>Check that <code>Config.runs_dir</code> exists on disk — it is not created until the first write. Verify <code>runs_retention_days</code> is not set to <code>0</code>.</td>
+</tr>
+<tr>
+<td>Sessions page shows no sessions</td>
+<td>Confirm <code>Config.sessions_dir</code> exists and contains session files. The <code>Session.source</code> field will be <code>'heuristic'</code> for auto-detected sessions.</td>
+</tr>
+<tr>
+<td>Scope picker shows no features</td>
+<td>Check that <code>.help/features.yaml</code> exists under your project root and that each entry has a valid <code>name</code> and <code>path</code>.</td>
+</tr>
+<tr>
+<td>Dashboard refuses a cross-origin request</td>
+<td>Add the calling host to <code>Config.trusted_hosts</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnosis steps</h2>
+<p>Work through these in order — each step is cheaper than the one that follows it.</p>
+<ol>
+<li>
+<p><strong>Reproduce the failure with the minimal invocation.</strong>
+Run <code>python -m attune.ops</code> directly (or <code>attune ops</code>) and observe the exact error or misbehaviour. Strip away any wrapper scripts so you're working with the raw entry point.</p>
+</li>
+<li>
+<p><strong>Check <code>Config</code> values before the server starts.</strong>
+Call <code>build_config()</code> and print the resulting <code>Config</code> dataclass. Confirm <code>project_root</code>, <code>attune_home</code>, <code>host</code>, <code>port</code>, <code>specs_roots</code>, and <code>allow_run</code> match your expectations. Many startup failures trace back to a wrong path or a flag left at its default.</p>
+</li>
+<li>
+<p><strong>Check the admin key for cost features.</strong>
+Call <code>load_admin_key()</code>. If it returns <code>None</code>, cost reporting will fail silently — no exception is raised at startup. Set the key in your environment before starting the server.</p>
+</li>
+<li>
+<p><strong>Force a cache refresh for cost data.</strong>
+Call <code>fetch_summary(refresh=True)</code>. Inspect the returned <code>CostFetchError</code> if the first element of the tuple is <code>None</code> — <code>CostFetchError.kind</code> and <code>CostFetchError.message</code> together identify whether the problem is network, authentication, or response parsing. To reset the in-memory cache entirely, call <code>clear_cache()</code>.</p>
+</li>
+<li>
+<p><strong>Run the related tests.</strong></p>
+<pre><code>pytest -k &quot;ops&quot; -v
+</code></pre>
+<p>If a test covers the failing path, its fixtures give you a reproducible starting point and confirm whether the issue is in your environment or the code itself.</p>
+</li>
+<li>
+<p><strong>Inspect <code>telemetry_path</code> for accumulated state.</strong>
+If behaviour is correct on a clean run but wrong after repeated use, check the telemetry file at <code>Config.telemetry_path</code>. Stale telemetry or a corrupted <code>spec_completion_dismissed.json</code> (stored under <code>ops/</code> inside <code>attune_home</code>) can cause the dashboard to behave inconsistently.</p>
+</li>
+</ol>
+<h2>Common fixes</h2>
+<p><strong>Port already in use</strong></p>
+<pre><code>lsof -i :8765
+kill -9 &lt;PID&gt;
+</code></pre>
+<p>Or set a different port by passing <code>--port &lt;N&gt;</code> to <code>attune ops</code>, which maps to <code>Config.port</code>.</p>
+<p><strong>Admin key not found — cost panel blank</strong>
+Export the key before starting the server:</p>
+<pre><code>export ANTHROPIC_ADMIN_KEY=&quot;sk-admin-...&quot;
+python -m attune.ops
+</code></pre>
+<p><code>load_admin_key()</code> reads this at runtime; restarting the server after exporting is required.</p>
+<p><strong>Stale cost cache</strong>
+Call <code>clear_cache()</code> (defined in <code>attune.ops.anthropic_cost</code>) then call <code>fetch_summary(refresh=True)</code>. Note that <code>clear_cache()</code> is documented as a test helper — in production, prefer <code>fetch_summary(refresh=True)</code>.</p>
+<p><strong>Spec candidates not detected</strong>
+Set <code>specs_candidates_enabled = True</code> in your config and populate <code>specs_roots</code> with the directories that contain your spec files. Then verify with:</p>
+<pre><code class="language-python">from attune.ops import build_config
+from attune.ops.specs_candidates import detect_candidates
+config = build_config()
+print(detect_candidates(config))
+</code></pre>
+<p>Each returned <code>Candidate</code> has a <code>slug</code>, <code>path</code>, <code>current_status</code>, and <code>evidence</code> list you can inspect.</p>
+<p><strong>Run history not persisting</strong>
+<code>Config.runs_dir</code> is not created on startup — it is created on first write. If you see no history, check whether any run has ever completed successfully and written to that directory. If the directory exists but is empty, check <code>runs_retention_days</code>; runs older than that value are pruned.</p>
+<p><strong>FastAPI not installed</strong>
+<code>create_app()</code> uses a lazy import to avoid pulling FastAPI when you import <code>attune</code>. If the dashboard fails to start with an <code>ImportError</code>, install the server dependencies:</p>
+<pre><code>pip install &quot;attune[ops]&quot;
+</code></pre>
+<p>Then confirm with <code>pip show fastapi</code>.</p>
+<p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 75 (code fence)</td>
+<td>error</td>
+<td><code>from attune.ops.specs_candidates import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

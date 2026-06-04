@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Work with the help system — task</title>
+  <meta name="description" content="Use the help system when you need to scan a project for features, generate or maintain help templates, surface progressive-depth content to users, or record and query template feedback." />
+  <meta property="og:title" content="Work with the help system — task" />
+  <meta property="og:description" content="Use the help system when you need to scan a project for features, generate or maintain help templates, surface progressive-depth content to users, or record and query template feedback." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/help-system">Help System</a><span class="sep">&rsaquo;</span><span>task</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Work with the help system</h1>
+<p>Use the help system when you need to scan a project for features, generate or maintain help templates, surface progressive-depth content to users, or record and query template feedback.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Access to the project source code</li>
+<li>Python environment with <code>attune-help</code> installed</li>
+<li>A <code>features.yaml</code> manifest in your help directory (see <code>load_manifest</code> / <code>save_manifest</code>)</li>
+</ul>
+<h2>Steps</h2>
+<ol>
+<li>
+<p><strong>Scan the project and build a feature manifest.</strong>
+Call <code>scan_project()</code> with your project root to discover features from source files. Review the returned <code>ProposedFeature</code> list, then pass the accepted proposals to <code>proposals_to_manifest()</code> to produce a <code>FeatureManifest</code>.</p>
+<pre><code class="language-python">from help.bootstrap import scan_project, proposals_to_manifest
+
+proposals = scan_project(&quot;path/to/project&quot;)
+manifest = proposals_to_manifest(proposals)
+</code></pre>
+</li>
+<li>
+<p><strong>Generate templates for each feature.</strong>
+Pass a <code>Feature</code> object, your help directory, and the project root to <code>generate_feature_templates()</code>. Set <code>overwrite=True</code> only when you want to replace existing files. The function raises <code>ValueError</code> if the feature name is invalid.</p>
+<pre><code class="language-python">from help.generator import generate_feature_templates
+
+result = generate_feature_templates(
+    feature=manifest.features[&quot;my-feature&quot;],
+    help_dir=&quot;help/&quot;,
+    project_root=&quot;path/to/project&quot;,
+    overwrite=False,
+)
+print(f&quot;Generated {len(result.templates)} template(s)&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Check and repair stale templates.</strong>
+Run <code>check_staleness()</code> to compare stored source hashes against the current state of matched files. If <code>StalenessReport.stale_count</code> is greater than zero, call <code>run_maintenance()</code> to regenerate outdated templates. Use <code>dry_run=True</code> first to preview what will change.</p>
+<pre><code class="language-python">from help.staleness import check_staleness
+from help.maintenance import run_maintenance, format_status_report
+
+report = check_staleness(manifest, help_dir=&quot;help/&quot;, project_root=&quot;path/to/project&quot;)
+print(report.stale_features)
+
+result = run_maintenance(&quot;help/&quot;, &quot;path/to/project&quot;, dry_run=True)
+print(f&quot;Stale: {result.stale_count}, would regenerate: {result.regenerated_count}&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Populate and render a template.</strong>
+Call <code>populate()</code> with a template ID and an optional <code>AudienceProfile</code> to get a <code>PopulatedTemplate</code>. Pass the result to one of the renderer functions to produce output for your target channel.</p>
+<pre><code class="language-python">from help.templates import populate, AudienceProfile
+from help.transformers import render_cli, render_claude_code
+
+template = populate(
+    &quot;tas-my-feature&quot;,
+    audience=AudienceProfile(channel=&quot;claude-code&quot;, verbosity=&quot;normal&quot;),
+)
+print(render_cli(template))
+</code></pre>
+</li>
+<li>
+<p><strong>Surface contextual help for workflows and files.</strong>
+Use <code>get_workflow_help()</code> to retrieve relevant templates after a named workflow completes, or <code>get_precursor_warnings()</code> to surface warnings when a specific file is about to be edited.</p>
+<pre><code class="language-python">from help.feedback import get_workflow_help, get_precursor_warnings
+
+workflow_templates = get_workflow_help(&quot;deploy&quot;, max_results=3)
+file_warnings = get_precursor_warnings(&quot;models.py&quot;, max_results=3)
+</code></pre>
+</li>
+<li>
+<p><strong>Record feedback and query confidence.</strong>
+After a user rates a template, call <code>record_template_feedback()</code> with the template ID and rating. Retrieve the resulting confidence score, or call <code>get_template_confidence()</code> at any time to check a template's current score.</p>
+<pre><code class="language-python">from help.feedback import record_template_feedback, get_template_confidence
+
+score = record_template_feedback(&quot;tas-my-feature&quot;, rating=&quot;helpful&quot;)
+print(f&quot;Updated confidence: {score:.2f}&quot;)
+
+current = get_template_confidence(&quot;tas-my-feature&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Verify the system is healthy.</strong>
+Run <code>pytest -k &quot;help-system&quot;</code> to catch regressions across template loading, progressive depth, cross-link resolution, and renderer output. See the help system testing quickstart for full test patterns.</p>
+</li>
+</ol>
+<h2>Success criteria</h2>
+<ul>
+<li><code>generate_feature_templates()</code> returns a <code>GenerationResult</code> with at least one entry in <code>result.templates</code> and no feature name in <code>MaintenanceResult.failed</code>.</li>
+<li><code>run_maintenance()</code> reports <code>regenerated_count &gt; 0</code> for any features that were stale, and <code>stale_count</code> drops to zero on a second run.</li>
+<li><code>populate()</code> returns a non-<code>None</code> <code>PopulatedTemplate</code>, and each renderer (<code>render_cli</code>, <code>render_claude_code</code>, <code>render_marketplace</code>) produces non-empty output.</li>
+<li>All <code>pytest -k &quot;help-system&quot;</code> tests pass.</li>
+</ul>
+<h2>Key files</h2>
+<ul>
+<li><code>help/bootstrap.py</code> — <code>scan_project()</code>, <code>proposals_to_manifest()</code></li>
+<li><code>help/generator.py</code> — <code>generate_feature_templates()</code></li>
+<li><code>help/maintenance.py</code> — <code>run_maintenance()</code>, <code>run_hook()</code>, <code>get_changed_files()</code>, <code>format_status_report()</code></li>
+<li><code>help/staleness.py</code> — <code>check_staleness()</code>, <code>compute_source_hash()</code></li>
+<li><code>help/manifest.py</code> — <code>load_manifest()</code>, <code>save_manifest()</code>, <code>match_files_to_features()</code>, <code>resolve_topic()</code></li>
+<li><code>help/feedback.py</code> — <code>record_template_feedback()</code>, <code>get_template_confidence()</code>, <code>get_usage_weights()</code>, <code>search_by_tag()</code>, <code>list_tags()</code>, <code>get_workflow_help()</code>, <code>get_precursor_warnings()</code></li>
+<li><code>help/templates.py</code> — <code>populate()</code>, <code>AudienceProfile</code>, <code>TemplateContext</code>, <code>PopulatedTemplate</code></li>
+<li><code>help/transformers.py</code> — <code>render_cli()</code>, <code>render_claude_code()</code>, <code>render_marketplace()</code></li>
+</ul>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

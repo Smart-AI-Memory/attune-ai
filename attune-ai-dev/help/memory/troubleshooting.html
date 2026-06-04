@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot memory — troubleshooting</title>
+  <meta name="description" content="The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis conn" />
+  <meta property="og:title" content="Troubleshoot memory — troubleshooting" />
+  <meta property="og:description" content="The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis conn" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/memory">Memory</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot memory</h1>
+<h2>Before you start</h2>
+<p>The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis connectivity, memory file loading, or classification and security access.</p>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>OSError: REDIS_URL not found</code></td>
+<td>Run <code>is_redis_available()</code> before calling <code>get_railway_redis()</code>. Confirm <code>REDIS_URL</code> is set in your environment, or add Redis to your Railway project with <code>railway add --database redis</code>.</td>
+</tr>
+<tr>
+<td><code>stash()</code> or <code>retrieve()</code> returns <code>None</code> unexpectedly</td>
+<td>Call <code>backend.is_connected()</code> to confirm the backend is live. Then call <code>backend.get_stats()</code> to check key counts and TTL state.</td>
+</tr>
+<tr>
+<td>CLAUDE.md memory files are not loaded</td>
+<td>Check <code>ClaudeMemoryConfig.enabled</code> — it defaults to <code>False</code>. Confirm <code>project_root</code> resolves to the directory containing <code>.claude/CLAUDE.md</code>. Call <code>loader.get_loaded_files()</code> to see what was actually imported.</td>
+</tr>
+<tr>
+<td>Memory files load but content is missing or truncated</td>
+<td>Check <code>ClaudeMemoryConfig.max_file_size_bytes</code> (default: 1,000,000 bytes) and <code>max_import_depth</code> (default: 5). Files exceeding the size limit or beyond the import depth are silently skipped when <code>validate_files=True</code>.</td>
+</tr>
+<tr>
+<td><code>MemoryPermissionError</code> or <code>SecurityError</code> on pattern access</td>
+<td>Call <code>check_access()</code> with the pattern's classification. Confirm the agent's credentials cover the required <code>Classification</code> level (e.g., <code>HEALTHCARE</code>, <code>FINANCIAL</code>, <code>PROPRIETARY</code>).</td>
+</tr>
+<tr>
+<td>Redis starts but the control panel reports unhealthy</td>
+<td>Call <code>panel.health_check()</code> and inspect the returned dict. Then call <code>panel.status()</code> to see whether <code>auto_start_redis</code> succeeded.</td>
+</tr>
+<tr>
+<td>Intermittent failures across agents or sessions</td>
+<td>Check for stale state under the <code>empathy:active_agents</code> and <code>empathy:service_lock</code> Redis keys. Call <code>panel.clear_short_term(agent_id=...)</code> to flush a specific agent's short-term memory.</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnosis steps</h2>
+<p>Work through these in order — each step is cheaper than the one that follows it.</p>
+<ol>
+<li>
+<p><strong>Confirm Redis availability.</strong>
+Before investigating application logic, verify the Redis subsystem is reachable:</p>
+<pre><code class="language-python">from attune.memory import is_redis_available
+print(is_redis_available())
+</code></pre>
+<p>If this returns <code>False</code>, fix connectivity before continuing. For Railway deployments, ensure <code>REDIS_URL</code> is set; for local deployments, confirm Redis is running on <code>localhost:6379</code> (the default <code>ControlPanelConfig</code> values).</p>
+</li>
+<li>
+<p><strong>Check the connection status explicitly.</strong>
+If Redis appears available but behavior is wrong, get a detailed status report:</p>
+<pre><code class="language-python">from attune.memory import check_redis_connection
+print(check_redis_connection())
+</code></pre>
+<p>This returns a dict with connection state you can inspect without modifying any code.</p>
+</li>
+<li>
+<p><strong>Inspect what memory files were loaded.</strong>
+If CLAUDE.md content is missing, call <code>get_loaded_files()</code> after <code>load_all_memory()</code> to see the exact file list:</p>
+<pre><code class="language-python">from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
+
+config = ClaudeMemoryConfig(enabled=True, project_root=&quot;/your/project&quot;)
+loader = ClaudeMemoryLoader(config)
+content = loader.load_all_memory()
+print(loader.get_loaded_files())
+</code></pre>
+<p>Cross-reference the output against your <code>max_import_depth</code> and <code>max_file_size_bytes</code> settings.</p>
+</li>
+<li>
+<p><strong>Run the memory test suite.</strong>
+Before modifying any code, confirm which paths are already covered:</p>
+<pre><code>pytest -k &quot;memory&quot; -v
+</code></pre>
+<p>A failing test that exercises your symptom gives you a reproducible baseline and a fixture you can reuse.</p>
+</li>
+<li>
+<p><strong>Enable DEBUG logging.</strong>
+If the above steps don't isolate the problem, increase log verbosity and re-run:</p>
+<pre><code class="language-python">import logging
+logging.getLogger(&quot;attune.memory&quot;).setLevel(logging.DEBUG)
+</code></pre>
+<p>Look for unexpected early returns, TTL expirations, or classification rejections in the output.</p>
+</li>
+<li>
+<p><strong>Pull a full health and statistics report.</strong>
+For control-panel issues, call both <code>health_check()</code> and <code>get_statistics()</code> together:</p>
+<pre><code class="language-python">panel = MemoryControlPanel()
+print(panel.health_check())
+print(panel.get_statistics())
+</code></pre>
+<p>The statistics report exposes pattern counts, storage usage, and audit log state that are not visible in the basic status output.</p>
+</li>
+</ol>
+<h2>Common fixes</h2>
+<ul>
+<li>
+<p><strong>Redis not found on Railway.</strong> Set the <code>REDIS_URL</code> environment variable or run <code>railway add --database redis</code>. For external access use <code>REDIS_PUBLIC_URL</code>. This is a deployment environment change, not a code change.</p>
+</li>
+<li>
+<p><strong>Claude memory loading is silently disabled.</strong> <code>ClaudeMemoryConfig.enabled</code> defaults to <code>False</code>. Explicitly set it to <code>True</code> when constructing the config, or pass a config with <code>enabled=True</code> to <code>ClaudeMemoryLoader</code>.</p>
+</li>
+<li>
+<p><strong>Files skipped due to size or depth limits.</strong> Increase <code>max_file_size_bytes</code> or <code>max_import_depth</code> in <code>ClaudeMemoryConfig</code>. Alternatively, restructure deep import chains so critical content appears within the first five levels.</p>
+</li>
+<li>
+<p><strong>Missing default CLAUDE.md.</strong> If no memory file exists for a project, create one with:</p>
+<pre><code class="language-python">from attune.memory.claude_memory import create_default_project_memory
+create_default_project_memory(project_root=&quot;/your/project&quot;, framework=&quot;empathy&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Stale short-term memory causing incorrect agent behavior.</strong> Clear a specific agent's short-term store:</p>
+<pre><code class="language-python">panel = MemoryControlPanel()
+cleared = panel.clear_short_term(agent_id=&quot;your-agent-id&quot;)
+print(f&quot;Cleared {cleared} entries&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Classification access denied.</strong> Pattern access is gated by <code>Classification</code> level. If you see <code>MemoryPermissionError</code>, confirm the agent's credentials include the required tier before calling <code>retrieve()</code> or <code>search()</code>. This may require changes to how agent credentials are provisioned, outside the memory module itself.</p>
+</li>
+<li>
+<p><strong>Redis URL parse failure.</strong> If <code>get_redis_memory()</code> raises on an unexpected URL format, test the URL directly:</p>
+<pre><code class="language-python">from attune.memory.config import parse_redis_url
+print(parse_redis_url(&quot;redis://your-host:6379&quot;))
+</code></pre>
+<p>This isolates whether the problem is in the URL string or in the broader connection setup.</p>
+</li>
+</ul>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/memory/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

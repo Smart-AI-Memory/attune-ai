@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Spec Engine reference — reference</title>
+  <meta name="description" content="Run spec-driven development pipelines with per-task approval loops and quality gates." />
+  <meta property="og:title" content="Spec Engine reference — reference" />
+  <meta property="og:description" content="Run spec-driven development pipelines with per-task approval loops and quality gates." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/spec-engine">Spec Engine</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Spec Engine reference</h1>
+<p>Run spec-driven development pipelines with per-task approval loops and quality gates.</p>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>TaskResult</code></td>
+<td>Result of executing a single pipeline task.</td>
+</tr>
+<tr>
+<td><code>PipelineResult</code></td>
+<td>Aggregated result from a full pipeline run.</td>
+</tr>
+<tr>
+<td><code>PipelineOrchestrator</code></td>
+<td>Executes tasks from an XML spec with quality gates.</td>
+</tr>
+<tr>
+<td><code>SpecState</code></td>
+<td>Execution state for a spec plan.</td>
+</tr>
+</tbody>
+</table>
+<h3>TaskResult</h3>
+<p><code>pipeline.models</code> · [dataclass]</p>
+<p>Holds the outcome of a single task after execution and gate evaluation.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>task_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>task_name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>executed</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>quality_gate_passed</code></td>
+<td>`bool</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>tests_passed</code></td>
+<td>`bool</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>simplified</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>gate_details</code></td>
+<td>`dict</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>gate_score</code></td>
+<td>`float</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td><code>float</code></td>
+<td><code>0.0</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Properties</h4>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>severity</code></td>
+<td><code>str</code></td>
+<td>Classify gate result severity.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>PipelineResult</h3>
+<p><code>pipeline.models</code> · [dataclass]</p>
+<p>Aggregates task results, cost, and duration after a full pipeline run.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec_path</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>tasks</code></td>
+<td><code>list[TaskResult]</code></td>
+<td><code>field(default_factory=list)</code></td>
+</tr>
+<tr>
+<td><code>total_cost</code></td>
+<td><code>float</code></td>
+<td><code>0.0</code></td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td><code>int</code></td>
+<td><code>0</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Properties</h4>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether all tasks executed and passed gates.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str</code></td>
+<td>Human-readable summary of the pipeline run.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>PipelineOrchestrator</h3>
+<p><code>pipeline.orchestrator</code></p>
+<p>Loads a spec file and runs its tasks in order, enforcing quality gates between steps.</p>
+<h4>Constructor</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>spec_path</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>skip_gates</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>skip_tests</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>skip_simplify</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_all</code></td>
+<td>`on_task_complete: TaskCallback</td>
+<td>None = None, skip_task_ids: set[str]</td>
+<td>None = None`</td>
+</tr>
+<tr>
+<td><code>run_gates_for_task</code></td>
+<td><code>task: DecomposedTask</code></td>
+<td><code>TaskResult</code></td>
+<td>Run quality gates for a single task and return the result.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>SpecState</h3>
+<p><code>spec.state</code> · [dataclass]</p>
+<p>Tracks which tasks have completed, which is active, and whether auto-run is enabled for a plan.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>plan_path</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>completed</code></td>
+<td><code>list[str]</code></td>
+<td><code>field(default_factory=list)</code></td>
+</tr>
+<tr>
+<td><code>current</code></td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>auto_run</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>last_updated</code></td>
+<td><code>str</code></td>
+<td><code>field(default_factory=lambda: datetime.now(timezone.utc).isoformat())</code></td>
+</tr>
+<tr>
+<td><code>schema_version</code></td>
+<td><code>int</code></td>
+<td><code>_CURRENT_SCHEMA_VERSION</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td>—</td>
+<td><code>dict[str, object]</code></td>
+<td>Serialize the state to a plain dictionary.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Functions</h2>
+<h3>pipeline.spec_reader</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>read_spec</code></td>
+<td><code>plan_path: str</code></td>
+<td><code>list[DecomposedTask]</code></td>
+<td>Read a plan file and extract XML task blocks.</td>
+</tr>
+</tbody>
+</table>
+<h4>Raises — <code>read_spec</code></h4>
+<table>
+<thead>
+<tr>
+<th>Exception</th>
+<th>Message</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError</code></td>
+<td><code>'plan_path must be a non-empty string'</code></td>
+</tr>
+<tr>
+<td><code>FileNotFoundError</code></td>
+<td><code>'Plan file not found: {...}'</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>spec.presenter</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>present_tasks</code></td>
+<td>`tasks: list[DecomposedTask], state: SpecState</td>
+<td>None = None`</td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>present_task_detail</code></td>
+<td><code>task: DecomposedTask</code></td>
+<td><code>str</code></td>
+<td>Format a single task with full details.</td>
+</tr>
+<tr>
+<td><code>present_task_result</code></td>
+<td><code>task: DecomposedTask, gate_result: TaskResult</code></td>
+<td><code>str</code></td>
+<td>Format a task's execution result with quality gate status.</td>
+</tr>
+<tr>
+<td><code>format_progress_bar</code></td>
+<td><code>completed: int, total: int</code></td>
+<td><code>str</code></td>
+<td>Visual progress indicator for task execution.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>spec.runner</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_pending_tasks</code></td>
+<td><code>tasks: list[DecomposedTask], state: SpecState</code></td>
+<td><code>list[DecomposedTask]</code></td>
+<td>Filter tasks to only those not yet completed.</td>
+</tr>
+<tr>
+<td><code>execute_with_approval</code></td>
+<td><code>spec_path: str, on_task_complete: object, *, skip_gates: bool = False, skip_tests: bool = False, skip_simplify: bool = False</code></td>
+<td><code>PipelineResult</code></td>
+<td>Execute a spec with per-task approval.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3>spec.state</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_state</code></td>
+<td><code>plan_path: str</code></td>
+<td>`SpecState</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>save_state</code></td>
+<td><code>state: SpecState</code></td>
+<td><code>None</code></td>
+<td>Write or update the spec-state comment in a plan file.</td>
+</tr>
+<tr>
+<td><code>clear_state</code></td>
+<td><code>plan_path: str</code></td>
+<td><code>None</code></td>
+<td>Remove the spec-state comment from a plan file.</td>
+</tr>
+<tr>
+<td><code>find_resumable_plans</code></td>
+<td><code>plans_dir: str = '.claude/plans'</code></td>
+<td><code>list[SpecState]</code></td>
+<td>Find plan files with incomplete execution state.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/spec/**</code></li>
+<li><code>src/attune/pipeline/**</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>spec</code>, <code>planning</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,1112 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Telemetry reference — reference</title>
+  <meta name="description" content="Track usage, coordinate agents, manage approval gates, and collect quality feedback." />
+  <meta property="og:title" content="Telemetry reference — reference" />
+  <meta property="og:description" content="Track usage, coordinate agents, manage approval gates, and collect quality feedback." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/telemetry">Telemetry</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Telemetry reference</h1>
+<p>Track usage, coordinate agents, manage approval gates, and collect quality feedback.</p>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>CoordinationSignal</code></td>
+<td>Coordination signal between agents.</td>
+<td><code>src/attune/telemetry/agent_coordination.py</code></td>
+</tr>
+<tr>
+<td><code>CoordinationSignals</code></td>
+<td>TTL-based inter-agent coordination signals.</td>
+<td><code>src/attune/telemetry/agent_coordination.py</code></td>
+</tr>
+<tr>
+<td><code>AgentHeartbeat</code></td>
+<td>Agent heartbeat data structure.</td>
+<td><code>src/attune/telemetry/agent_tracking.py</code></td>
+</tr>
+<tr>
+<td><code>HeartbeatCoordinator</code></td>
+<td>Coordinates agent heartbeats using Redis TTL keys.</td>
+<td><code>src/attune/telemetry/agent_tracking.py</code></td>
+</tr>
+<tr>
+<td><code>ApprovalRequest</code></td>
+<td>Approval request with context for human decision.</td>
+<td><code>src/attune/telemetry/approval_gates.py</code></td>
+</tr>
+<tr>
+<td><code>ApprovalResponse</code></td>
+<td>Response to an approval request.</td>
+<td><code>src/attune/telemetry/approval_gates.py</code></td>
+</tr>
+<tr>
+<td><code>ApprovalGate</code></td>
+<td>Human approval gates for workflow control.</td>
+<td><code>src/attune/telemetry/approval_gates.py</code></td>
+</tr>
+<tr>
+<td><code>StreamEvent</code></td>
+<td>Event published to Redis Stream.</td>
+<td><code>src/attune/telemetry/event_streaming.py</code></td>
+</tr>
+<tr>
+<td><code>EventStreamer</code></td>
+<td>Real-time event streaming using Redis Streams.</td>
+<td><code>src/attune/telemetry/event_streaming.py</code></td>
+</tr>
+<tr>
+<td><code>FeatureStatus</code></td>
+<td>Status of an optional feature.</td>
+<td><code>src/attune/telemetry/features.py</code></td>
+</tr>
+<tr>
+<td><code>FeatureInfo</code></td>
+<td>Information about a telemetry feature.</td>
+<td><code>src/attune/telemetry/features.py</code></td>
+</tr>
+<tr>
+<td><code>TelemetryFeatures</code></td>
+<td>Check availability of telemetry features.</td>
+<td><code>src/attune/telemetry/features.py</code></td>
+</tr>
+<tr>
+<td><code>FeedbackLoop</code></td>
+<td>Agent-to-LLM feedback loop for quality-based learning.</td>
+<td><code>src/attune/telemetry/feedback_loop.py</code></td>
+</tr>
+<tr>
+<td><code>ModelTier</code></td>
+<td>Model tier enum matching workflows.base.ModelTier.</td>
+<td><code>src/attune/telemetry/feedback_models.py</code></td>
+</tr>
+<tr>
+<td><code>FeedbackEntry</code></td>
+<td>Quality feedback for an LLM response.</td>
+<td><code>src/attune/telemetry/feedback_models.py</code></td>
+</tr>
+<tr>
+<td><code>QualityStats</code></td>
+<td>Quality statistics for a workflow stage.</td>
+<td><code>src/attune/telemetry/feedback_models.py</code></td>
+</tr>
+<tr>
+<td><code>TierRecommendation</code></td>
+<td>Tier recommendation based on quality feedback.</td>
+<td><code>src/attune/telemetry/feedback_models.py</code></td>
+</tr>
+<tr>
+<td><code>HelpTracker</code></td>
+<td>Append-only JSONL tracker for help-system queries.</td>
+<td><code>src/attune/telemetry/help_tracker.py</code></td>
+</tr>
+<tr>
+<td><code>UsageTracker</code></td>
+<td>Privacy-first local telemetry tracker.</td>
+<td><code>src/attune/telemetry/usage_tracker.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3>CoordinationSignal</h3>
+<p>Dataclass representing a coordination signal passed between agents.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>signal_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>signal_type</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>source_agent</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>target_agent</code></td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>payload</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>datetime</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>ttl_seconds</code></td>
+<td><code>int</code></td>
+<td><code>60</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td><code>self</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Serialize to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>cls, data: dict[str, Any]</code></td>
+<td><code>CoordinationSignal</code></td>
+<td>Deserialize from a dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3>CoordinationSignals</h3>
+<p>TTL-based inter-agent coordination signals backed by Redis.</p>
+<h4>Constructor</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>agent_id</code></td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>enable_streaming</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>signal</code></td>
+<td><code>self, signal_type: str, source_agent: str | None = None, target_agent: str | None = None, payload: dict[str, Any] | None = None, ttl_seconds: int | None = None, credentials: AgentCredentials | None = None</code></td>
+<td><code>str</code></td>
+<td>Send a directed signal to a target agent.</td>
+</tr>
+<tr>
+<td><code>broadcast</code></td>
+<td><code>self, signal_type: str, source_agent: str | None = None, payload: dict[str, Any] | None = None, ttl_seconds: int | None = None, credentials: AgentCredentials | None = None</code></td>
+<td><code>str</code></td>
+<td>Broadcast a signal to all agents.</td>
+</tr>
+<tr>
+<td><code>wait_for_signal</code></td>
+<td><code>self, signal_type: str, source_agent: str | None = None, timeout: float = 30.0, poll_interval: float = 0.5</code></td>
+<td><code>CoordinationSignal | None</code></td>
+<td>Block until a matching signal arrives or the timeout elapses.</td>
+</tr>
+<tr>
+<td><code>check_signal</code></td>
+<td><code>self, signal_type: str, source_agent: str | None = None, consume: bool = True</code></td>
+<td><code>CoordinationSignal | None</code></td>
+<td>Non-blocking check for a pending signal.</td>
+</tr>
+<tr>
+<td><code>get_pending_signals</code></td>
+<td><code>self, signal_type: str | None = None</code></td>
+<td><code>list[CoordinationSignal]</code></td>
+<td>Return all pending signals, optionally filtered by type.</td>
+</tr>
+<tr>
+<td><code>clear_signals</code></td>
+<td><code>self, signal_type: str | None = None</code></td>
+<td><code>int</code></td>
+<td>Remove pending signals and return the count cleared.</td>
+</tr>
+</tbody>
+</table>
+<h3>AgentHeartbeat</h3>
+<p>Dataclass holding heartbeat data for a single agent.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>agent_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>progress</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>current_task</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>last_beat</code></td>
+<td><code>datetime</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict[str, Any]</code></td>
+<td><code>field(default_factory=dict)</code></td>
+</tr>
+<tr>
+<td><code>display_name</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td><code>self</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Serialize to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>cls, data: dict[str, Any]</code></td>
+<td><code>AgentHeartbeat</code></td>
+<td>Deserialize from a dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3>HeartbeatCoordinator</h3>
+<p>Coordinates agent heartbeats using Redis TTL keys.</p>
+<h4>Constructor</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>enable_streaming</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>start_heartbeat</code></td>
+<td><code>self, agent_id: str, metadata: dict[str, Any] | None = None, display_name: str | None = None</code></td>
+<td><code>None</code></td>
+<td>Register and begin a heartbeat for the given agent.</td>
+</tr>
+<tr>
+<td><code>beat</code></td>
+<td><code>self, status: str = 'running', progress: float = 0.0, current_task: str = ''</code></td>
+<td><code>None</code></td>
+<td>Emit a single heartbeat pulse with current status and progress.</td>
+</tr>
+<tr>
+<td><code>stop_heartbeat</code></td>
+<td><code>self, final_status: str = 'completed'</code></td>
+<td><code>None</code></td>
+<td>Stop the heartbeat and record a final status.</td>
+</tr>
+<tr>
+<td><code>get_active_agents</code></td>
+<td><code>self</code></td>
+<td><code>list[AgentHeartbeat]</code></td>
+<td>Return heartbeat records for all currently active agents.</td>
+</tr>
+<tr>
+<td><code>is_agent_alive</code></td>
+<td><code>self, agent_id: str</code></td>
+<td><code>bool</code></td>
+<td>Return whether the given agent has a live heartbeat.</td>
+</tr>
+<tr>
+<td><code>get_agent_status</code></td>
+<td><code>self, agent_id: str</code></td>
+<td><code>AgentHeartbeat | None</code></td>
+<td>Return the latest heartbeat record for the given agent.</td>
+</tr>
+<tr>
+<td><code>get_stale_agents</code></td>
+<td><code>self, threshold_seconds: float = 60.0</code></td>
+<td><code>list[AgentHeartbeat]</code></td>
+<td>Return agents whose last beat exceeds the staleness threshold.</td>
+</tr>
+</tbody>
+</table>
+<h3>ApprovalRequest</h3>
+<p>Dataclass representing a human approval request with workflow context.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>request_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>approval_type</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>agent_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>context</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>datetime</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>timeout_seconds</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>status</code></td>
+<td><code>str</code></td>
+<td><code>'pending'</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td><code>self</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Serialize to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>cls, data: dict[str, Any]</code></td>
+<td><code>ApprovalRequest</code></td>
+<td>Deserialize from a dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3>ApprovalResponse</h3>
+<p>Dataclass representing a human responder's decision on an approval request.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>request_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>approved</code></td>
+<td><code>bool</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>responder</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>reason</code></td>
+<td><code>str</code></td>
+<td><code>''</code></td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>datetime</code></td>
+<td><code>field(default_factory=lambda : datetime.now(timezone.utc))</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td><code>self</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Serialize to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>cls, data: dict[str, Any]</code></td>
+<td><code>ApprovalResponse</code></td>
+<td>Deserialize from a dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3>ApprovalGate</h3>
+<p>Human approval gates for workflow control.</p>
+<h4>Constructor</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>agent_id</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>request_approval</code></td>
+<td><code>self, approval_type: str, context: dict[str, Any] | None = None, timeout: float | None = None</code></td>
+<td><code>ApprovalResponse</code></td>
+<td>Submit an approval request and wait for a human response.</td>
+</tr>
+<tr>
+<td><code>respond_to_approval</code></td>
+<td><code>self, request_id: str, approved: bool, responder: str, reason: str = ''</code></td>
+<td><code>bool</code></td>
+<td>Record a human decision for the given request.</td>
+</tr>
+<tr>
+<td><code>get_pending_approvals</code></td>
+<td><code>self, approval_type: str | None = None</code></td>
+<td><code>list[ApprovalRequest]</code></td>
+<td>Return all pending approval requests, optionally filtered by type.</td>
+</tr>
+<tr>
+<td><code>clear_expired_requests</code></td>
+<td><code>self</code></td>
+<td><code>int</code></td>
+<td>Remove timed-out requests and return the count cleared.</td>
+</tr>
+</tbody>
+</table>
+<h3>StreamEvent</h3>
+<p>Dataclass representing an event published to a Redis Stream.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>event_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>event_type</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>timestamp</code></td>
+<td><code>datetime</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>data</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code></td>
+<td><code>'attune'</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td><code>self</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Serialize to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_redis_entry</code></td>
+<td><code>cls, event_id: str, entry_data: dict[bytes, bytes]</code></td>
+<td><code>StreamEvent</code></td>
+<td>Deserialize from a raw Redis Stream entry.</td>
+</tr>
+</tbody>
+</table>
+<h3>EventStreamer</h3>
+<p>Real-time event streaming using Redis Streams.</p>
+<h4>Constructor</h4>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>memory</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>publish_event</code></td>
+<td><code>self, event_type: str, data: dict[str, Any], source: str = 'attune'</code></td>
+<td><code>str</code></td>
+<td>Publish an event to the stream and return its event ID.</td>
+</tr>
+<tr>
+<td><code>consume_events</code></td>
+<td><code>self, event_types: list[str] | None = None, block_ms: int | None = None, count: int = 10, start_id: str = '$'</code></td>
+<td><code>Iterator[StreamEvent]</code></td>
+<td>Yield events from the stream, optionally blocking for new entries.</td>
+</tr>
+<tr>
+<td><code>get_recent_events</code></td>
+<td><code>self, event_type: str, count: int = 100, start_id: str = '-', end_id: str = '+'</code></td>
+<td><code>list[StreamEvent]</code></td>
+<td>Return recent events of the given type within the specified ID range.</td>
+</tr>
+<tr>
+<td><code>get_stream_info</code></td>
+<td><code>self, event_type: str</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Return metadata about the specified stream.</td>
+</tr>
+<tr>
+<td><code>delete_stream</code></td>
+<td><code>self, event_type: str</code></td>
+<td><code>bool</code></td>
+<td>Delete the entire stream for the given event type.</td>
+</tr>
+<tr>
+<td><code>trim_stream</code></td>
+<td><code>self, event_type: str, max_length: int = 1000</code></td>
+<td><code>int</code></td>
+<td>Trim the stream to <code>max_length</code> entries and return the count removed.</td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>main</code></td>
+<td>—</td>
+<td><code>int</code></td>
+<td>Telemetry CLI entry point.</td>
+<td><code>src/attune/telemetry/__main__.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_sonnet_opus_analysis</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show Sonnet 4.5 -&gt; Opus 4.5 fallback analysis and cost savings.</td>
+<td><code>src/attune/telemetry/cli_analysis.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_file_test_status</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show per-file test status.</td>
+<td><code>src/attune/telemetry/cli_analysis.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_tier1_status</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show comprehensive Tier 1 automation status.</td>
+<td><code>src/attune/telemetry/cli_automation.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_task_routing_report</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show detailed task routing report.</td>
+<td><code>src/attune/telemetry/cli_automation.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_test_status</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show test execution status.</td>
+<td><code>src/attune/telemetry/cli_automation.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_agent_performance</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show agent performance metrics.</td>
+<td><code>src/attune/telemetry/cli_automation.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_show</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show recent telemetry entries.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_savings</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Calculate and display cost savings.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_cache_stats</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Show prompt caching performance statistics.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_compare</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Compare telemetry across two time periods.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_reset</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Reset/clear all telemetry data.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_export</code></td>
+<td><code>args: Any</code></td>
+<td><code>int</code></td>
+<td>Export</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,876 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Security Audit reference — reference</title>
+  <meta name="description" content="Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, and injection risks." />
+  <meta property="og:title" content="Security Audit reference — reference" />
+  <meta property="og:description" content="Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, and injection risks." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/security-audit">Security Audit</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Security Audit reference</h1>
+<p>Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, and injection risks.</p>
+<h2>Classes</h2>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SecurityAuditWorkflow</code></td>
+<td>SDK-native security audit with four specialized subagents.</td>
+</tr>
+<tr>
+<td><code>AlertEngine</code></td>
+<td>Alert engine with SQLite storage and notification delivery.</td>
+</tr>
+<tr>
+<td><code>AlertConfig</code></td>
+<td>Configuration for a single alert.</td>
+</tr>
+<tr>
+<td><code>AlertEvent</code></td>
+<td>An alert event that was triggered.</td>
+</tr>
+<tr>
+<td><code>AlertChannel</code></td>
+<td>Notification channels for alerts.</td>
+</tr>
+<tr>
+<td><code>AlertMetric</code></td>
+<td>Metrics that can be monitored.</td>
+</tr>
+<tr>
+<td><code>AlertSeverity</code></td>
+<td>Alert severity levels.</td>
+</tr>
+<tr>
+<td><code>TelemetryBackend</code></td>
+<td>Protocol for telemetry storage backends.</td>
+</tr>
+<tr>
+<td><code>MultiBackend</code></td>
+<td>Composite backend for simultaneous logging to multiple backends.</td>
+</tr>
+<tr>
+<td><code>OTELBackend</code></td>
+<td>OpenTelemetry backend for exporting telemetry to OTEL collectors.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>SecurityAuditWorkflow</code></h3>
+<p>Coordinates four specialized subagents — <code>vuln-scanner</code>, <code>secret-detector</code>, <code>auth-reviewer</code>, and <code>remediation-planner</code> — to produce a unified security audit report.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>*, system_prompt_suffix: str = '', **kwargs: Any</code></td>
+<td><code>None</code></td>
+<td>Initializes the workflow with an optional system prompt suffix.</td>
+</tr>
+<tr>
+<td><code>execute</code></td>
+<td><code>**kwargs: Any</code></td>
+<td><code>WorkflowResult</code></td>
+<td>Runs all four subagents and synthesizes findings into a single report.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>AlertEngine</code></h3>
+<p>Manages alert storage in SQLite, evaluates thresholds against live telemetry, and dispatches notifications.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>db_path: str | Path = '.attune/alerts.db', telemetry_dir: str | Path | None = None</code></td>
+<td><code>None</code></td>
+<td>Creates an engine backed by a SQLite database at <code>db_path</code>.</td>
+</tr>
+<tr>
+<td><code>add_alert</code></td>
+<td><code>alert_id: str, name: str, metric: AlertMetric | str, threshold: float, channel: AlertChannel | str, webhook_url: str | None = None, email: str | None = None, cooldown_seconds: int = 3600, severity: AlertSeverity | str = AlertSeverity.WARNING</code></td>
+<td><code>AlertConfig</code></td>
+<td>Registers a new alert and returns its configuration.</td>
+</tr>
+<tr>
+<td><code>list_alerts</code></td>
+<td>—</td>
+<td><code>list[AlertConfig]</code></td>
+<td>Returns all configured alerts.</td>
+</tr>
+<tr>
+<td><code>get_alert</code></td>
+<td><code>alert_id: str</code></td>
+<td><code>AlertConfig | None</code></td>
+<td>Returns the configuration for a single alert, or <code>None</code> if not found.</td>
+</tr>
+<tr>
+<td><code>delete_alert</code></td>
+<td><code>alert_id: str</code></td>
+<td><code>bool</code></td>
+<td>Deletes an alert by ID. Returns <code>True</code> on success.</td>
+</tr>
+<tr>
+<td><code>enable_alert</code></td>
+<td><code>alert_id: str</code></td>
+<td><code>bool</code></td>
+<td>Enables an alert by ID. Returns <code>True</code> on success.</td>
+</tr>
+<tr>
+<td><code>disable_alert</code></td>
+<td><code>alert_id: str</code></td>
+<td><code>bool</code></td>
+<td>Disables an alert by ID. Returns <code>True</code> on success.</td>
+</tr>
+<tr>
+<td><code>get_metrics</code></td>
+<td>—</td>
+<td><code>dict[str, float]</code></td>
+<td>Returns current telemetry metric values keyed by metric name.</td>
+</tr>
+<tr>
+<td><code>check_and_trigger</code></td>
+<td>—</td>
+<td><code>list[AlertEvent]</code></td>
+<td>Evaluates all enabled alerts and fires notifications for any that exceed their thresholds.</td>
+</tr>
+<tr>
+<td><code>get_alert_history</code></td>
+<td><code>alert_id: str | None = None, limit: int = 100</code></td>
+<td><code>list[dict[str, Any]]</code></td>
+<td>Returns past trigger records, optionally filtered to one alert.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>AlertConfig</code></h3>
+<p><strong>[dataclass]</strong> Configuration for a single alert.</p>
+<h4>Fields</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>alert_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>metric</code></td>
+<td><code>AlertMetric</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>channel</code></td>
+<td><code>AlertChannel</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>webhook_url</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>email</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>enabled</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+</tr>
+<tr>
+<td><code>cooldown_seconds</code></td>
+<td><code>int</code></td>
+<td><code>3600</code></td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>AlertSeverity</code></td>
+<td><code>AlertSeverity.WARNING</code></td>
+</tr>
+<tr>
+<td><code>created_at</code></td>
+<td><code>datetime | None</code></td>
+<td><code>None</code></td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td>—</td>
+<td><code>dict[str, Any]</code></td>
+<td>Serializes the configuration to a plain dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>data: dict[str, Any]</code></td>
+<td><code>AlertConfig</code></td>
+<td>Deserializes an <code>AlertConfig</code> from a plain dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>AlertEvent</code></h3>
+<p><strong>[dataclass]</strong> A triggered alert event, capturing the metric value and context at the moment of firing.</p>
+<h4>Fields</h4>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>alert_id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>alert_name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>metric</code></td>
+<td><code>AlertMetric</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>current_value</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>threshold</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>AlertSeverity</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>triggered_at</code></td>
+<td><code>datetime</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>message</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td>—</td>
+<td><code>dict[str, Any]</code></td>
+<td>Serializes the event to a plain dictionary.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>MultiBackend</code></h3>
+<p>Routes telemetry records to multiple storage backends simultaneously, tracking failures per backend.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>backends: list[TelemetryBackend] | None = None</code></td>
+<td><code>None</code></td>
+<td>Creates a composite backend from an optional initial list.</td>
+</tr>
+<tr>
+<td><code>from_config</code></td>
+<td><code>storage_dir: str = '.attune'</code></td>
+<td><code>MultiBackend</code></td>
+<td>Creates a <code>MultiBackend</code> from the configuration at <code>storage_dir</code>.</td>
+</tr>
+<tr>
+<td><code>add_backend</code></td>
+<td><code>backend: TelemetryBackend</code></td>
+<td><code>None</code></td>
+<td>Adds a backend to the active set.</td>
+</tr>
+<tr>
+<td><code>remove_backend</code></td>
+<td><code>backend: TelemetryBackend</code></td>
+<td><code>None</code></td>
+<td>Removes a backend from the active set.</td>
+</tr>
+<tr>
+<td><code>log_call</code></td>
+<td><code>record: LLMCallRecord</code></td>
+<td><code>None</code></td>
+<td>Writes an LLM call record to all active backends.</td>
+</tr>
+<tr>
+<td><code>log_workflow</code></td>
+<td><code>record: WorkflowRunRecord</code></td>
+<td><code>None</code></td>
+<td>Writes a workflow run record to all active backends.</td>
+</tr>
+<tr>
+<td><code>get_active_backends</code></td>
+<td>—</td>
+<td><code>list[str]</code></td>
+<td>Returns the names of currently active backends.</td>
+</tr>
+<tr>
+<td><code>get_failed_backends</code></td>
+<td>—</td>
+<td><code>list[str]</code></td>
+<td>Returns the names of backends that have encountered errors.</td>
+</tr>
+<tr>
+<td><code>reset_failures</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Clears the failure state for all backends.</td>
+</tr>
+<tr>
+<td><code>flush</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Flushes all pending records in active backends.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>OTELBackend</code></h3>
+<p>Exports telemetry records to an OpenTelemetry collector, with configurable batching and retry.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td><code>endpoint: str | None = None, batch_size: int = 10, retry_count: int = 3</code></td>
+<td><code>None</code></td>
+<td>Connects to an OTEL collector endpoint with the given batch and retry settings.</td>
+</tr>
+<tr>
+<td><code>is_available</code></td>
+<td>—</td>
+<td><code>bool</code></td>
+<td>Returns <code>True</code> if the OTEL endpoint is reachable.</td>
+</tr>
+<tr>
+<td><code>log_call</code></td>
+<td><code>record: LLMCallRecord</code></td>
+<td><code>None</code></td>
+<td>Buffers an LLM call record for export.</td>
+</tr>
+<tr>
+<td><code>log_workflow</code></td>
+<td><code>record: WorkflowRunRecord</code></td>
+<td><code>None</code></td>
+<td>Buffers a workflow run record for export.</td>
+</tr>
+<tr>
+<td><code>flush</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Exports all buffered records to the OTEL collector.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>TelemetryBackend</code></h3>
+<p>Protocol for telemetry storage backends.</p>
+<h4>Methods</h4>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>log_call</code></td>
+<td><code>record: LLMCallRecord</code></td>
+<td><code>None</code></td>
+<td>Writes an LLM call record to the backend.</td>
+</tr>
+<tr>
+<td><code>log_workflow</code></td>
+<td><code>record: WorkflowRunRecord</code></td>
+<td><code>None</code></td>
+<td>Writes a workflow run record to the backend.</td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_alert_engine</code></td>
+<td><code>db_path: str | Path = '.attune/alerts.db'</code></td>
+<td><code>AlertEngine</code></td>
+<td>Returns an <code>AlertEngine</code> instance backed by the given SQLite database.</td>
+</tr>
+<tr>
+<td><code>collect_metrics</code></td>
+<td><code>telemetry_dir: Path</code></td>
+<td><code>dict[str, float]</code></td>
+<td>Collects current telemetry metrics from JSONL files in <code>telemetry_dir</code>.</td>
+</tr>
+<tr>
+<td><code>get_multi_backend</code></td>
+<td><code>storage_dir: str = '.attune'</code></td>
+<td><code>MultiBackend</code></td>
+<td>Returns or creates the global <code>MultiBackend</code> instance.</td>
+</tr>
+<tr>
+<td><code>reset_multi_backend</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Resets the global <code>MultiBackend</code> instance.</td>
+</tr>
+<tr>
+<td><code>deliver_notification</code></td>
+<td><code>alert: AlertConfig, event: AlertEvent</code></td>
+<td><code>bool</code></td>
+<td>Dispatches a notification through the channel configured on <code>alert</code>.</td>
+</tr>
+<tr>
+<td><code>deliver_webhook</code></td>
+<td><code>alert: AlertConfig, event: AlertEvent</code></td>
+<td><code>bool</code></td>
+<td>Delivers an alert notification via webhook (Slack, Discord, etc.).</td>
+</tr>
+<tr>
+<td><code>deliver_email</code></td>
+<td><code>alert: AlertConfig, event: AlertEvent</code></td>
+<td><code>bool</code></td>
+<td>Delivers an alert notification via email.</td>
+</tr>
+<tr>
+<td><code>deliver_stdout</code></td>
+<td><code>event: AlertEvent</code></td>
+<td><code>bool</code></td>
+<td>Delivers an alert notification to stdout.</td>
+</tr>
+<tr>
+<td><code>alerts</code></td>
+<td>—</td>
+<td>—</td>
+<td>Alert management commands for LLM telemetry monitoring.</td>
+</tr>
+<tr>
+<td><code>init</code></td>
+<td><code>non_interactive: bool, metric: str | None, threshold: float | None, channel: str | None, webhook_url: str | None, email: str | None</code></td>
+<td>—</td>
+<td>Initializes an alert interactively or from CLI flags.</td>
+</tr>
+<tr>
+<td><code>list_cmd</code></td>
+<td><code>as_json: bool</code></td>
+<td>—</td>
+<td>Lists all configured alerts.</td>
+</tr>
+<tr>
+<td><code>delete</code></td>
+<td><code>alert_id: str</code></td>
+<td>—</td>
+<td>Deletes an alert by ID.</td>
+</tr>
+<tr>
+<td><code>enable</code></td>
+<td><code>alert_id: str</code></td>
+<td>—</td>
+<td>Enables an alert by ID.</td>
+</tr>
+<tr>
+<td><code>disable</code></td>
+<td><code>alert_id: str</code></td>
+<td>—</td>
+<td>Disables an alert by ID.</td>
+</tr>
+<tr>
+<td><code>watch</code></td>
+<td><code>interval: int, daemon: bool, once: bool</code></td>
+<td>—</td>
+<td>Polls telemetry and fires alerts when thresholds are exceeded.</td>
+</tr>
+<tr>
+<td><code>history</code></td>
+<td><code>alert_id: str | None, limit: int, as_json: bool</code></td>
+<td>—</td>
+<td>Displays past alert trigger records.</td>
+</tr>
+<tr>
+<td><code>metrics</code></td>
+<td><code>as_json: bool</code></td>
+<td>—</td>
+<td>Displays current telemetry metric values.</td>
+</tr>
+</tbody>
+</table>
+<h2>Constants</h2>
+<h3><code>_SUBAGENT_NAMES</code></h3>
+<p>The four subagent roles coordinated by <code>SecurityAuditWorkflow</code>.</p>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>_SUBAGENT_NAMES</code></td>
+<td><code>'vuln-scanner'</code>, <code>'secret-detector'</code>, <code>'auth-reviewer'</code>, <code>'remediation-planner'</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/security_audit.py</code></li>
+<li><code>src/attune/security/**</code></li>
+<li><code>src/attune/monitoring/**</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>security</code>, <code>audit</code>, <code>owasp</code>, <code>scanning</code>, <code>cve</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

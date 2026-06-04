@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot plugin — troubleshooting</title>
+  <meta name="description" content="The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothin" />
+  <meta property="og:title" content="Troubleshoot plugin — troubleshooting" />
+  <meta property="og:description" content="The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothin" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/plugin">Plugin</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot plugin</h1>
+<p>The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothing.</p>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>/attune</code> or other skill commands show no matches</td>
+<td>Run <code>claude plugin list</code> and confirm <code>attune-ai</code> appears. If not, see <strong>Fix: plugin not installed</strong> below.</td>
+</tr>
+<tr>
+<td>Hook fires but produces wrong output</td>
+<td>Confirm the correct entry point ran — each hook module exposes its own <code>main()</code>. Check that <code>SpecInfo</code> fields (<code>slug</code>, <code>phase</code>, <code>status</code>) match what the hook expects.</td>
+</tr>
+<tr>
+<td>Hook fires but produces no output</td>
+<td>Check whether an early return is swallowing the result. For <code>spec_orient</code>, verify that <code>discover_specs()</code> found at least one <code>SpecInfo</code> under your workspace roots.</td>
+</tr>
+<tr>
+<td>Compact warning never appears</td>
+<td>Run <code>estimate_utilization()</code> against your transcript path and confirm the returned float exceeds the configured threshold. Also check whether a sentinel file from a previous session is suppressing the warning — call <code>prune_stale_sentinels()</code> to clear stale ones.</td>
+</tr>
+<tr>
+<td>Resume prompt is empty or malformed</td>
+<td>Confirm <code>build_resume_prompt()</code> receives a valid <code>GitState</code> (non-empty <code>branch</code>, <code>last_sha</code>). If <code>spec_info</code> is <code>None</code>, the prompt renders without spec context — check that <code>discover_specs()</code> returns results for your workspace roots.</td>
+</tr>
+<tr>
+<td>Security guard blocks a legitimate command</td>
+<td>Call <code>validate_bash_command()</code> or <code>validate_file_path()</code> directly against the string being rejected and inspect the returned reason string. Check whether the command prefix is in <code>SEARCH_COMMAND_PREFIXES</code> or the path is under <code>SYSTEM_DIRECTORIES</code>.</td>
+</tr>
+<tr>
+<td>Two attune plugins installed simultaneously</td>
+<td>Run <code>claude plugin list</code> and confirm only one of <code>attune-lite</code> or <code>attune-ai</code> is present. Duplicate installs cause conflicting skill triggers.</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnosis steps</h2>
+<ol>
+<li>
+<p><strong>Reproduce with the minimal call.</strong>
+Before enabling any logging, confirm you can reproduce the failure by calling the relevant entry point directly. Each hook module exposes a <code>main()</code> function — run it in isolation and note whether the failure persists without the surrounding Claude Code context.</p>
+</li>
+<li>
+<p><strong>Check workspace discovery.</strong>
+Many hooks depend on <code>workspace_roots()</code> returning the correct paths. Call it from your working directory and verify the output. If it returns an empty list, <code>discover_specs()</code> will find no specs and hooks that depend on <code>SpecInfo</code> will silently short-circuit.</p>
+</li>
+<li>
+<p><strong>Inspect git state.</strong>
+If the resume prompt or handoff output looks wrong, call <code>git_state(cwd)</code> against your repo and print the resulting <code>GitState</code>. Confirm <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> all reflect the current worktree.</p>
+</li>
+<li>
+<p><strong>Check transcript utilization.</strong>
+If the compact warning is misfiring or never appears, call <code>estimate_utilization(transcript_path)</code> and compare the returned float (range <code>0.0</code>–<code>1.0</code>) against your configured threshold.</p>
+</li>
+<li>
+<p><strong>Check sentinel state.</strong>
+If a hook that should fire once per session is not firing, a stale sentinel file may be suppressing it. Call <code>prune_stale_sentinels()</code> — it returns the number of files it deleted. If it deletes one, the sentinel was the cause.</p>
+</li>
+<li>
+<p><strong>Run the related tests.</strong>
+<code>pytest -k &quot;plugin&quot; -v</code> shows which paths have coverage. A failing test that exercises your symptom confirms the regression and gives you a fixture to work from.</p>
+</li>
+</ol>
+<h2>Common fixes</h2>
+<p><strong>Plugin not installed or not found</strong></p>
+<pre><code>claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
+</code></pre>
+<p>If skills still don't appear, remove any conflicting plugin first: <code>claude plugin list</code> → remove the duplicate → reinstall.</p>
+<p><strong>Conflicting duplicate plugins</strong>
+Only one of <code>attune-lite</code> or <code>attune-ai</code> should be installed. Remove the other:</p>
+<pre><code>claude plugin remove attune-lite
+</code></pre>
+<p><strong><code>discover_specs()</code> returns an empty list</strong>
+Verify your <code>specs/</code> directory exists under at least one of the paths returned by <code>workspace_roots()</code>. The function walks <code>specs/</code> subdirectories under each root — if the directory is missing or misnamed, it returns nothing.</p>
+<p><strong>Stale sentinel suppressing a hook</strong></p>
+<pre><code class="language-python">from hooks._state import prune_stale_sentinels
+removed = prune_stale_sentinels()
+print(f&quot;Removed {removed} stale sentinel(s)&quot;)
+</code></pre>
+<p><strong>Security guard false positive</strong>
+<code>validate_bash_command()</code> blocks any command whose prefix does not appear in <code>SEARCH_COMMAND_PREFIXES</code> and whose behavior looks destructive. If a legitimate command is blocked, inspect the second element of the returned tuple for the rejection reason, then adjust the command string to match an allowed prefix or raise the issue for a policy update — changing <code>SEARCH_COMMAND_PREFIXES</code> or <code>SYSTEM_DIRECTORIES</code> requires a change to <code>hooks.security_guard</code>.</p>
+<p><strong>Version mismatch after a dependency upgrade</strong></p>
+<pre><code>pip show attune-ai
+</code></pre>
+<p>Confirm the installed version matches what your workspace expects. A version mismatch in the plugin bundle can change hook behavior without any local code change.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>hooks/_handoff_cli.py</code></li>
+<li><code>hooks/_resume_prompt.py</code></li>
+<li><code>hooks/_state.py</code></li>
+<li><code>hooks/_transcript_size.py</code></li>
+<li><code>hooks/compact_warning.py</code></li>
+<li><code>hooks/format_on_save.py</code></li>
+<li><code>hooks/security_guard.py</code></li>
+<li><code>hooks/spec_orient.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code>, <code>setup</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 66 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._state import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

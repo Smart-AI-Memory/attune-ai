@@ -1,0 +1,397 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot wizards — troubleshooting</title>
+  <meta name="description" content="The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test genera" />
+  <meta property="og:title" content="Troubleshoot wizards — troubleshooting" />
+  <meta property="og:description" content="The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test genera" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/wizards">Wizards</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot wizards</h1>
+<h2>Before you start</h2>
+<p>The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test generation.</p>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError: Cannot write wizard YAML</code></td>
+<td>File permissions on the target directory and available disk space</td>
+</tr>
+<tr>
+<td><code>ValueError: Cannot delete built-in wizard</code></td>
+<td>Whether you're trying to delete a built-in wizard (only custom wizards can be deleted)</td>
+</tr>
+<tr>
+<td>Wizard step skipped unexpectedly</td>
+<td>The step's <code>condition</code> function and the current <code>WizardSession</code> state</td>
+</tr>
+<tr>
+<td><code>WizardResult.success</code> is <code>False</code> but no error message</td>
+<td>The <code>WizardResult.error</code> field and exception handling in <code>BaseWizard.run()</code></td>
+</tr>
+<tr>
+<td>Wizard hangs on a step</td>
+<td>Token limits (<code>max_tokens</code>) and provider response timeouts</td>
+</tr>
+<tr>
+<td>Empty or malformed wizard output</td>
+<td>The <code>prompt_template</code> and <code>prompt_context_template</code> for the failing step</td>
+</tr>
+</tbody>
+</table>
+<h2>Step-by-step diagnosis</h2>
+<ol>
+<li>
+<p><strong>Reproduce the failure with a minimal wizard run.</strong>
+Create a simple test that calls <code>BaseWizard.run()</code> with the same <code>initial_context</code> that triggers the issue. This isolates the problem from surrounding application logic.</p>
+</li>
+<li>
+<p><strong>Check wizard registration and retrieval.</strong>
+Verify the wizard is properly registered by running:</p>
+<pre><code class="language-python">from attune.wizards import list_wizards, get_wizard
+print([w.wizard_id for w in list_wizards()])
+wizard_class = get_wizard(&quot;your-wizard-id&quot;)
+print(f&quot;Found: {wizard_class}&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Enable debug logging and examine step execution.</strong>
+Set logging to <code>DEBUG</code> level before running the wizard. Look for patterns in the step processing, particularly around <code>build_prompt_context()</code> and <code>process_step_result()</code> calls.</p>
+</li>
+<li>
+<p><strong>Inspect the <code>WizardResult</code> object.</strong>
+After a failed run, examine these fields in order:</p>
+<ul>
+<li><code>WizardResult.error</code> - Contains the failure reason</li>
+<li><code>WizardResult.steps_completed</code> - Shows how far the wizard got</li>
+<li><code>WizardResult.collected_data</code> - Reveals what data was gathered</li>
+<li><code>WizardResult.total_cost</code> and <code>total_duration_ms</code> - Indicates resource usage</li>
+</ul>
+</li>
+<li>
+<p><strong>Validate step configuration.</strong>
+For each failing step, check:</p>
+<ul>
+<li><code>step_type</code> matches the intended execution mode</li>
+<li><code>prompt_template</code> is not None for steps that need AI interaction</li>
+<li><code>questions</code> list is properly defined for form-based steps</li>
+<li><code>tier</code> setting matches your provider capabilities</li>
+</ul>
+</li>
+</ol>
+<h2>Common fixes</h2>
+<ul>
+<li>
+<p><strong>Fix wizard registration errors.</strong></p>
+<pre><code class="language-python">from attune.wizards import register_wizard
+register_wizard(&quot;my-wizard&quot;, MyWizardClass)
+</code></pre>
+<p>Ensure you call <code>register_wizard()</code> before trying to retrieve the wizard with <code>get_wizard()</code>.</p>
+</li>
+<li>
+<p><strong>Resolve custom wizard file permissions.</strong></p>
+<pre><code class="language-bash"># Make wizard directory writable
+chmod 755 ~/.attune/wizards/
+# Check available disk space
+df -h ~/.attune/
+</code></pre>
+</li>
+<li>
+<p><strong>Fix step condition logic.</strong>
+If steps are skipping unexpectedly, verify the condition function:</p>
+<pre><code class="language-python"># In your WizardStep definition
+condition=lambda session: session.collected_data.get('prerequisite_done', False)
+</code></pre>
+</li>
+<li>
+<p><strong>Adjust token limits for complex steps.</strong>
+Increase <code>max_tokens</code> for steps that generate long outputs:</p>
+<pre><code class="language-python">WizardStep(
+    id=&quot;analysis&quot;,
+    step_type=StepType.QUESTION,
+    max_tokens=8192  # Increase from default 4096
+)
+</code></pre>
+</li>
+<li>
+<p><strong>Handle missing ask_user_callback.</strong>
+For interactive wizards, ensure you provide a callback function:</p>
+<pre><code class="language-python">def my_callback(question):
+    return input(f&quot;{question}: &quot;)
+
+wizard = MyWizard(ask_user_callback=my_callback)
+</code></pre>
+</li>
+</ul>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/wizards/base.py</code> - <code>BaseWizard</code> class and core logic</li>
+<li><code>src/attune/wizards/types.py</code> - Data structures (<code>WizardStep</code>, <code>WizardConfig</code>, etc.)</li>
+<li><code>src/attune/wizards/registry.py</code> - Wizard registration and management</li>
+<li><code>src/attune/wizards/builtin/</code> - Built-in wizard implementations</li>
+</ul>
+<p><strong>Tags:</strong> <code>wizards</code>, <code>interactive</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

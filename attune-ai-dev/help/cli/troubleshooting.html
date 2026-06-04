@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot cli — troubleshooting</title>
+  <meta name="description" content="This page covers the `attune` CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behaviora" />
+  <meta property="og:title" content="Troubleshoot cli — troubleshooting" />
+  <meta property="og:description" content="This page covers the `attune` CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behaviora" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot cli</h1>
+<h2>Before you start</h2>
+<p>This page covers the <code>attune</code> CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behavioral symptom, check the <code>errors/</code> templates first.</p>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Concrete check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune &lt;subcommand&gt;</code> exits with a non-zero code but prints nothing</td>
+<td>Run <code>attune doctor</code> — it checks your environment and configuration and reports what is wrong</td>
+</tr>
+<tr>
+<td>A cost subcommand (<code>costs</code>, <code>costs-today</code>, <code>costs-export</code>) shows no data or wrong totals</td>
+<td>Run <code>attune costs</code> to see the full report, then <code>attune costs today</code> to narrow to today; if both show nothing, run <code>attune costs reset</code> <strong>only if</strong> you want to clear all data — this is irreversible</td>
+</tr>
+<tr>
+<td><code>attune help</code> returns no results or the wrong template</td>
+<td>Confirm the template files exist under the expected <code>_CATEGORIES</code> (<code>errors</code>, <code>warnings</code>, <code>tips</code>, <code>references</code>)</td>
+</tr>
+<tr>
+<td>Routing sends input to the wrong skill</td>
+<td>Run <code>attune telemetry routing-stats</code> to see historical routing decisions, then <code>attune telemetry routing-check</code> to test a specific input against the current routing logic</td>
+</tr>
+<tr>
+<td>A memory command (<code>remember</code>, <code>forget</code>, <code>lessons</code>) acts on the wrong entry</td>
+<td>Run <code>attune lessons</code> to list all current lessons with line numbers, then use the line number with <code>attune forget</code> to target the exact entry</td>
+</tr>
+<tr>
+<td><code>route_user_input</code> returns an unexpected skill</td>
+<td>Check the <code>RoutingPreference</code> records — specifically the <code>keyword</code>, <code>skill</code>, and <code>confidence</code> fields — by calling <code>HybridRouter.get_suggestions(partial)</code> with your input prefix</td>
+</tr>
+<tr>
+<td>The CLI version does not match what you installed</td>
+<td>Run <code>attune version</code> and compare against <code>get_version()</code> output; a mismatch points to a stale <code>.egg-info</code> or editable-install cache</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnosis steps</h2>
+<p>Work through these in order — each step is cheaper than the next.</p>
+<h3>1. Reproduce the failure with a minimal command</h3>
+<p>Strip the invocation to its bare required arguments and run it directly in your terminal. Confirm the failure occurs outside any wrapper script or IDE integration. For example:</p>
+<pre><code class="language-bash">attune costs
+attune telemetry routing-check
+attune memory recall &lt;keyword&gt;
+</code></pre>
+<p>If the failure disappears with a minimal invocation, the problem is in the calling context (environment variables, shell aliases, argument escaping), not in the CLI itself.</p>
+<h3>2. Run <code>attune doctor</code></h3>
+<p><code>cmd_doctor</code> performs built-in environment checks. Run it before inspecting any code:</p>
+<pre><code class="language-bash">attune doctor
+</code></pre>
+<p>Review every item it flags. Many setup and configuration issues are caught here without any further debugging.</p>
+<h3>3. Run <code>attune validate</code></h3>
+<p>If <code>attune doctor</code> passes but behavior is still wrong, run:</p>
+<pre><code class="language-bash">attune validate
+</code></pre>
+<p><code>cmd_validate</code> checks that the CLI's internal configuration and data files are consistent.</p>
+<h3>4. Check telemetry and routing state</h3>
+<p>For routing or skill-dispatch problems, use the telemetry subcommands to inspect live state before touching any code:</p>
+<pre><code class="language-bash">attune telemetry show
+attune telemetry routing-stats
+attune telemetry routing-check
+</code></pre>
+<p>For model or agent-level dispatch issues, also run:</p>
+<pre><code class="language-bash">attune telemetry models
+attune telemetry agents
+</code></pre>
+<h3>5. Inspect the relevant entry point</h3>
+<p>Once you have a minimal reproduction, identify which command function is failing and look at its return value. All command functions return <code>int</code> — a non-zero return signals failure. The entry points grouped by area are:</p>
+<p><strong>Cost tracking:</strong> <code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code> in <code>cli_commands/cost_commands.py</code></p>
+<p><strong>Memory:</strong> <code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code> in <code>cli_commands/memory_commands.py</code></p>
+<p><strong>Telemetry:</strong> <code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code> in <code>cli_commands/telemetry_commands.py</code></p>
+<p><strong>Routing:</strong> <code>route_user_input</code>, <code>HybridRouter.route</code> in <code>attune/cli_router.py</code></p>
+<p><strong>Dispatch and setup:</strong> <code>main</code>, <code>create_parser</code> in <code>attune/cli_minimal.py</code>; <code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_doctor</code>, <code>cmd_features</code> in <code>cli_commands/utility_commands.py</code></p>
+<h3>6. Run the CLI test suite</h3>
+<pre><code class="language-bash">pytest -k &quot;cli&quot; -v
+</code></pre>
+<p>A failing test that covers your scenario gives you a reproducible fixture and confirms the regression boundary. If all tests pass but you still see the failure, the issue is likely environment- or state-specific — see &quot;Common fixes&quot; below.</p>
+<h2>Common fixes</h2>
+<p><strong>Stale routing preferences</strong>
+If <code>HybridRouter</code> routes to the wrong skill, a learned <code>RoutingPreference</code> with a high <code>usage_count</code> may be overriding the default. Call <code>HybridRouter.learn_preference(keyword, skill, args)</code> to correct the mapping, which resets the association for that keyword.</p>
+<p><strong>Cost data is empty after a reset</strong>
+<code>cmd_costs_reset</code> clears all cost tracking data and returns <code>0</code> on success. If you ran it unintentionally, the data cannot be recovered — cost tracking restarts from the next recorded event.</p>
+<p><strong>Wrong provider active</strong>
+If commands behave unexpectedly due to model selection, check the active provider:</p>
+<pre><code class="language-bash">attune provider show
+</code></pre>
+<p>To change it:</p>
+<pre><code class="language-bash">attune provider set &lt;provider-name&gt;
+</code></pre>
+<p>This change affects all subsequent CLI invocations and is outside the CLI code itself — it modifies persisted provider configuration.</p>
+<p><strong>Dependency version mismatch</strong>
+A dependency upgrade can silently change routing or parsing behavior. Confirm installed versions match your lockfile:</p>
+<pre><code class="language-bash">pip show attune
+</code></pre>
+<p>For editable installs, a stale build cache can cause <code>get_version()</code> and <code>attune version</code> to disagree. Reinstall with:</p>
+<pre><code class="language-bash">pip install -e . --no-build-isolation
+</code></pre>
+<p><strong><code>is_slash_command</code> returning unexpected results</strong>
+If input that starts with <code>/</code> is not being routed as a slash command, confirm you are passing the raw user string — not a pre-processed or stripped version — to <code>is_slash_command(text)</code> or <code>route_user_input(user_input, context)</code>.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/cli_minimal.py</code></li>
+<li><code>src/attune/cli_router.py</code></li>
+<li><code>src/attune/cli_commands/cost_commands.py</code></li>
+<li><code>src/attune/cli_commands/help_commands.py</code></li>
+<li><code>src/attune/cli_commands/memory_commands.py</code></li>
+<li><code>src/attune/cli_commands/provider_commands.py</code></li>
+<li><code>src/attune/cli_commands/telemetry_commands.py</code></li>
+<li><code>src/attune/cli_commands/utility_commands.py</code></li>
+<li><code>src/attune/cli_commands/workflow_commands.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

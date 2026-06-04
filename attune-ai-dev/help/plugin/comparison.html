@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comparison: Plugin hooks vs direct scripting — comparison</title>
+  <meta name="description" content="The plugin ships a suite of lifecycle hooks for Claude Code — session handoff, compact warnings, security validation, spec orientation, and post-commit help. Each hook is a standalone entry point back" />
+  <meta property="og:title" content="Comparison: Plugin hooks vs direct scripting — comparison" />
+  <meta property="og:description" content="The plugin ships a suite of lifecycle hooks for Claude Code — session handoff, compact warnings, security validation, spec orientation, and post-commit help. Each hook is a standalone entry point back" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/plugin">Plugin</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Comparison: Plugin hooks vs direct scripting</h1>
+<h2>Context</h2>
+<p>The plugin ships a suite of lifecycle hooks for Claude Code — session handoff, compact warnings, security validation, spec orientation, and post-commit help. Each hook is a standalone entry point backed by shared state helpers in <code>hooks._state</code>. This page helps you decide when to use the plugin's hooks and when a simpler approach is the better fit.</p>
+<h2>Hook-by-hook summary</h2>
+<table>
+<thead>
+<tr>
+<th>Hook module</th>
+<th>Entry point</th>
+<th>What it does</th>
+<th>Requires git?</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hooks._handoff_cli</code></td>
+<td><code>main() -&gt; int</code></td>
+<td>Drives the <code>/handoff</code> slash command</td>
+<td>Yes — reads <code>GitState</code></td>
+</tr>
+<tr>
+<td><code>hooks._resume_prompt</code></td>
+<td><code>build_resume_prompt(...)  -&gt; str</code></td>
+<td>Renders the session-resume prompt with spec and git context</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>hooks.compact_warning</code></td>
+<td><code>main() -&gt; int</code></td>
+<td>Emits a context-utilization warning when <code>estimate_utilization()</code> exceeds a threshold</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>hooks.format_on_save</code></td>
+<td><code>main() -&gt; None</code></td>
+<td>Runs the formatter on save events</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>hooks.help_freshness_check</code></td>
+<td><code>main() -&gt; None</code></td>
+<td>Checks whether help content is stale</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>hooks.help_on_error</code></td>
+<td><code>main() -&gt; None</code></td>
+<td>Surfaces contextual help after an error</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>hooks.help_post_commit</code></td>
+<td><code>main() -&gt; None</code></td>
+<td>Surfaces help after a commit</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>hooks.security_guard</code></td>
+<td><code>main(context) -&gt; dict</code></td>
+<td>Validates bash commands and file paths before execution</td>
+<td>No</td>
+</tr>
+<tr>
+<td><code>hooks.spec_orient</code></td>
+<td><code>main() -&gt; int</code></td>
+<td>Formats and pins the active spec for the current session</td>
+<td>Yes</td>
+</tr>
+<tr>
+<td><code>hooks.welcome</code></td>
+<td><code>main() -&gt; None</code></td>
+<td>Runs once at session start</td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h2>Plugin hooks vs a throwaway script</h2>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th>Plugin hook</th>
+<th>Throwaway script</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>State discovery</strong></td>
+<td><code>discover_specs()</code> + <code>workspace_roots()</code> handle multi-root workspaces automatically</td>
+<td>You must locate and parse spec files manually</td>
+</tr>
+<tr>
+<td><strong>Git context</strong></td>
+<td><code>git_state(cwd)</code> returns branch, last SHA, last subject, and uncommitted files in one call</td>
+<td>You shell out to <code>git</code> and parse the output yourself</td>
+</tr>
+<tr>
+<td><strong>Session continuity</strong></td>
+<td><code>session_sentinel_path()</code> and <code>prune_stale_sentinels()</code> manage once-per-session deduplication</td>
+<td>You implement your own sentinel logic</td>
+</tr>
+<tr>
+<td><strong>Context utilization</strong></td>
+<td><code>estimate_utilization(transcript_path)</code> returns a <code>[0.0, 1.0]</code> float ready to threshold</td>
+<td>You compute transcript size and derive a ratio manually</td>
+</tr>
+<tr>
+<td><strong>Security validation</strong></td>
+<td><code>validate_bash_command()</code> and <code>validate_file_path()</code> check against <code>SYSTEM_DIRECTORIES</code> and <code>SEARCH_COMMAND_PREFIXES</code></td>
+<td>You replicate or skip the allow/deny logic</td>
+</tr>
+<tr>
+<td><strong>Prompt rendering</strong></td>
+<td><code>build_resume_prompt()</code> composes spec info, git state, workspace path, and todo summary into a single string</td>
+<td>You template the prompt yourself</td>
+</tr>
+<tr>
+<td><strong>Maintenance</strong></td>
+<td>Hooks evolve with the plugin; your callers get fixes automatically</td>
+<td>Each script is independent and drifts separately</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Persistent, production-grade Claude Code integrations</td>
+<td>One-off investigation or a feature not yet in the API</td>
+</tr>
+</tbody>
+</table>
+<p>The plugin hooks are clearly the stronger choice for anything that runs regularly. A throwaway script is reasonable for exploratory work — but once you find yourself re-implementing <code>git_state()</code> or sentinel management, that is a signal to switch.</p>
+<h2>Plugin hooks vs calling Claude Code directly (no hooks)</h2>
+<p>Without the hooks layer, Claude Code has no automatic access to:</p>
+<ul>
+<li>In-flight spec metadata (<code>SpecInfo</code>: <code>slug</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, <code>mtime</code>)</li>
+<li>Workspace root discovery across multiple directories</li>
+<li>Compact warnings tied to real transcript utilization</li>
+<li>Session-scoped deduplication of warnings and orientation prompts</li>
+</ul>
+<p>If you skip the hooks, you lose these capabilities entirely — they are not duplicated elsewhere in the plugin's public API.</p>
+<h2>Use the plugin hooks when…</h2>
+<ul>
+<li><strong>You need session continuity.</strong> <code>session_sentinel_path()</code> and <code>prune_stale_sentinels()</code> keep once-per-session behaviour correct without manual bookkeeping.</li>
+<li><strong>You are working in a multi-root workspace.</strong> <code>workspace_roots()</code> and <code>discover_specs()</code> handle the traversal; a script cannot match this without replicating the logic.</li>
+<li><strong>You need git context reliably.</strong> <code>git_state(cwd)</code> returns a typed <code>GitState</code> dataclass — branch, last SHA, last subject, and uncommitted files — rather than fragile shell output parsing.</li>
+<li><strong>You are building a security boundary.</strong> <code>validate_bash_command()</code> and <code>validate_file_path()</code> enforce the <code>SYSTEM_DIRECTORIES</code> and <code>SEARCH_COMMAND_PREFIXES</code> allow/deny rules that you would otherwise have to maintain yourself.</li>
+<li><strong>You are rendering a resume or orientation prompt.</strong> <code>build_resume_prompt()</code> and <code>format_orientation()</code> produce consistent output; hand-rolled prompts diverge over time.</li>
+</ul>
+<h2>Skip the plugin hooks when…</h2>
+<ul>
+<li>Your task is purely exploratory and you do not plan to run it more than once or twice.</li>
+<li>The behaviour you need is not exposed by the public API — in that case, file an issue or propose an extension point rather than patching internals.</li>
+<li>Your integration lives at the orchestration layer above the plugin; in that case, call the orchestration API rather than individual hooks directly.</li>
+</ul>
+<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

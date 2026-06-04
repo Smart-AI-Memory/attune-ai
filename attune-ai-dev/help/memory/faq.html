@@ -1,0 +1,341 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Memory FAQ — faq</title>
+  <meta name="description" content="It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (`MemoryBackend`, `SearchableMemoryBackend`), loads `CLAUDE.md` memory files v" />
+  <meta property="og:title" content="Memory FAQ — faq" />
+  <meta property="og:description" content="It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (`MemoryBackend`, `SearchableMemoryBackend`), loads `CLAUDE.md` memory files v" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/memory">Memory</a><span class="sep">&rsaquo;</span><span>faq</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Memory FAQ</h1>
+<h2>What does the memory module do?</h2>
+<p>It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (<code>MemoryBackend</code>, <code>SearchableMemoryBackend</code>), loads <code>CLAUDE.md</code> memory files via <code>ClaudeMemoryLoader</code>, and exposes an enterprise control panel (<code>MemoryControlPanel</code>) for managing patterns, statistics, and Redis lifecycle.</p>
+<h2>When should I use this module?</h2>
+<p>Use it when your code needs to stash or retrieve keyed values across agent sessions, load project-level memory from <code>CLAUDE.md</code> files, or manage memory patterns with access classification and audit logging. If you only need simple in-process state, you don't need this module.</p>
+<h2>What are the key entry points?</h2>
+<table>
+<thead>
+<tr>
+<th>Function or class</th>
+<th>Where it lives</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_redis_available()</code></td>
+<td><code>memory/__init__.py</code></td>
+<td>Checks whether Redis is available without importing it — safe to call at startup</td>
+</tr>
+<tr>
+<td><code>get_redis_memory()</code></td>
+<td><code>memory/__init__.py</code></td>
+<td>Creates a <code>RedisShortTermMemory</code> instance using environment-based config</td>
+</tr>
+<tr>
+<td><code>get_railway_redis()</code></td>
+<td><code>memory/__init__.py</code></td>
+<td>Creates a Redis instance pre-configured for Railway deployments</td>
+</tr>
+<tr>
+<td><code>ClaudeMemoryLoader.load_all_memory()</code></td>
+<td><code>memory/claude_memory.py</code></td>
+<td>Loads and merges all <code>CLAUDE.md</code> files for a project</td>
+</tr>
+<tr>
+<td><code>create_default_project_memory()</code></td>
+<td><code>memory/claude_memory.py</code></td>
+<td>Scaffolds a default <code>.claude/CLAUDE.md</code> for a new project</td>
+</tr>
+<tr>
+<td><code>MemoryControlPanel</code></td>
+<td><code>memory/control_panel.py</code></td>
+<td>Enterprise panel for status, stats, pattern management, and Redis control</td>
+</tr>
+</tbody>
+</table>
+<p>Start with <code>is_redis_available()</code> if you're not sure whether your environment has Redis — it's safe to call without side effects.</p>
+<h2>What's the difference between <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>?</h2>
+<p><code>MemoryBackend</code> is the base protocol: stash, retrieve, delete, list keys, check connection, and get stats. <code>SearchableMemoryBackend</code> extends it with <code>search()</code> for semantic queries and <code>promote()</code> to move session memory into longer-term storage. Use <code>SearchableMemoryBackend</code> when your backend needs to answer fuzzy or semantic queries, not just exact key lookups.</p>
+<h2>How do I check whether Redis is running?</h2>
+<p>Call <code>check_redis_connection()</code> — it returns a status dict without raising an exception. You can also call <code>is_redis_available()</code> for a simple boolean check that avoids importing the Redis subsystem entirely.</p>
+<h2>What happens if Redis isn't available?</h2>
+<p><code>get_redis_memory()</code> accepts a <code>use_mock</code> parameter. When you set it to <code>True</code>, you get a mock backend instead of a live Redis connection, which is useful for testing. <code>get_railway_redis()</code> raises <code>OSError</code> with a message telling you to add Redis to your Railway project if <code>REDIS_URL</code> is not set.</p>
+<h2>How do I configure Claude memory file loading?</h2>
+<p>Pass a <code>ClaudeMemoryConfig</code> to <code>ClaudeMemoryLoader</code>. The key fields are:</p>
+<ul>
+<li><code>enabled</code> — must be <code>True</code> to load any files (defaults to <code>False</code>)</li>
+<li><code>load_enterprise</code>, <code>load_user</code>, <code>load_project</code> — control which memory levels are loaded</li>
+<li><code>max_import_depth</code> — limits recursive <code>CLAUDE.md</code> imports (default <code>5</code>)</li>
+<li><code>max_file_size_bytes</code> — skips files larger than this (default <code>1 000 000</code> bytes)</li>
+<li><code>validate_files</code> — toggles file validation before loading</li>
+</ul>
+<h2>How do I debug memory issues?</h2>
+<ol>
+<li>Call <code>is_redis_available()</code> or <code>check_redis_connection()</code> to confirm the backend is reachable.</li>
+<li>Run <code>pytest -k &quot;memory&quot; -v</code> to check whether the problem is in your code or the module itself.</li>
+<li>Call <code>MemoryControlPanel.health_check()</code> for a structured report of subsystem status.</li>
+<li>If a specific key is missing, use <code>MemoryBackend.keys(pattern)</code> to inspect what's actually stored.</li>
+<li>Add <code>logger.debug</code> at the point where <code>stash()</code> or <code>retrieve()</code> is called and re-run with logging enabled.</li>
+</ol>
+<h2>Where is the source code?</h2>
+<p>All memory source files are under <code>src/attune/memory/</code>.</p>
+<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>
