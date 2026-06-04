@@ -3,51 +3,45 @@ type: note
 name: models-note
 feature: models
 depth: note
-generated_at: 2026-05-16T06:19:45.856870+00:00
+generated_at: 2026-06-04T23:45:26.771777+00:00
 source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
 # Note: models
 
-## Context
+The `models` package covers three related concerns: LLM authentication strategy, provider routing, and adaptive tier selection. These concerns are implemented across a small set of source files under `src/attune/models/`.
 
-The `models` package handles three related concerns: authenticating with LLM providers, selecting the right model tier for a given task, and routing requests based on historical telemetry. These concerns are spread across four source files under `src/attune/models/`.
+## Public surface
 
-## Package boundary
-
-The package exposes two kinds of public symbols.
+The package exports classes and top-level functions that are designed to work together.
 
 **Classes** (defined in `adaptive_routing.py` and `auth_strategy.py`):
 
-| Class | File | Purpose |
-|---|---|---|
-| `ModelPerformance` | `adaptive_routing.py` | Holds per-task performance metrics: success rate, latency, cost, and a computed `quality_score` |
-| `AdaptiveModelRouter` | `adaptive_routing.py` | Selects the best model for a workflow stage using telemetry; supports cost and latency caps |
-| `SubscriptionTier` | `auth_strategy.py` | Enumerates Claude subscription tiers |
-| `AuthMode` | `auth_strategy.py` | Enumerates authentication mode options |
-| `AuthStrategy` | `auth_strategy.py` | Stores and persists the active authentication configuration |
+| Class | Purpose |
+|---|---|
+| `ModelPerformance` | Performance metrics for a model on a specific task — holds `success_rate`, `avg_latency_ms`, `avg_cost`, and a derived `quality_score` property |
+| `AdaptiveModelRouter` | Routes tasks to models based on historical telemetry; key method is `get_best_model()` |
+| `SubscriptionTier` | Enumerates Claude subscription tiers |
+| `AuthMode` | Enumerates authentication mode selections (e.g., `AUTO`) |
+| `AuthStrategy` | Authentication strategy configuration; persisted via `save()` / `load()` and introspected via `get_recommended_mode()` and `estimate_cost()` |
 
 **CLI entry points** (defined in `auth_cli.py`):
 
 | Function | Purpose |
 |---|---|
-| `cmd_auth_setup()` | Interactive first-time setup |
-| `cmd_auth_status()` | Displays current strategy configuration |
-| `cmd_auth_reset()` | Clears saved configuration |
-| `cmd_auth_recommend()` | Recommends an auth mode for a specific file |
-| `main()` | CLI entry point |
+| `cmd_auth_setup()` | Runs interactive authentication strategy setup |
+| `cmd_auth_status()` | Shows current authentication strategy configuration |
+| `cmd_auth_reset()` | Resets or clears the authentication strategy configuration |
+| `cmd_auth_recommend()` | Returns an authentication recommendation for a specific file |
+| `main()` | Main CLI entry point |
 
-## Design relationship
+## How the pieces relate
 
-The CLI functions and the `AuthStrategy` class are designed to compose. `AuthStrategy` owns the data model and persistence (`save()` / `load()`), while the `cmd_auth_*` functions in `auth_cli.py` wrap it for interactive use. Similarly, `AdaptiveModelRouter` consumes `ModelPerformance` records produced by the telemetry layer to make routing decisions.
+The CLI functions in `auth_cli.py` and the `AuthStrategy` dataclass in `auth_strategy.py` are complementary surfaces for the same configuration state. `AuthStrategy` handles persistence and introspection programmatically; the `cmd_auth_*` functions expose the same operations interactively. `AdaptiveModelRouter` is independent of authentication — it reads telemetry to select the best model for a given workflow stage, using `ModelPerformance` records as its data source.
 
-The package also includes resilience infrastructure (`CircuitBreaker`, `ResilientExecutor`) and a standardized response envelope (`LLMResponse`) that all executors return, making provider-switching transparent to callers.
+## Additional context
 
-## Source files
-
-- `src/attune/models/adaptive_routing.py`
-- `src/attune/models/auth_strategy.py`
-- `src/attune/models/auth_cli.py`
-
-**Tags:** `models`, `auth`, `llm`
+- `AuthStrategy` defaults to `SubscriptionTier.PRO`, `AuthMode.AUTO`, and `cost_optimization = True`. These defaults reflect an assumption that most users prefer subscription-based access with automatic mode selection.
+- `CircuitBreaker` and `ResilientExecutor` (also exported from `__all__`) provide fault-tolerance primitives that sit between the router and the underlying LLM provider calls.
+- The full list of exported names is in `__all__` across the package's source files.

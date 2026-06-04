@@ -3,65 +3,55 @@ type: concept
 name: cli-concept
 feature: cli
 depth: concept
-generated_at: 2026-06-02T10:56:02.701360+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-06-04T23:39:47.633186+00:00
+source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
 status: generated
 ---
 
-# CLI and routing
+# CLI
 
-The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keyword.
-
-## Command groups
-
-`create_parser()` in `attune.cli_minimal` assembles the top-level argument parser. Commands are organized into five groups, each in its own module:
-
-| Group | Module | What it does |
-|---|---|---|
-| **Cost tracking** | `cli_commands.cost_commands` | Show, export, and reset API cost data (`cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset`) |
-| **Memory** | `cli_commands.memory_commands` | Store and retrieve cross-session notes (`cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic`) |
-| **Telemetry** | `cli_commands.telemetry_commands` | Inspect routing stats, savings, model usage, and agent signals |
-| **Provider** | `cli_commands.provider_commands` | Show or change the active model provider (`cmd_provider_show`, `cmd_provider_set`) |
-| **Utility** | `cli_commands.utility_commands` | One-off operations: `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_features`, `cmd_doctor` |
-
-`main()` in `attune.cli_minimal` ties these together: it calls `create_parser()`, runs the matched command function, and returns an integer exit code.
-
-## Routing layer
-
-Not every user input is a structured CLI subcommand. `route_user_input()` in `attune.cli_router` handles free-form text by mapping it to a Claude Code skill invocation. `is_slash_command()` lets callers quickly test whether a string starts with a slash before routing it.
-
-The router that does this work is `HybridRouter`. It holds a list of `RoutingPreference` records and uses them to decide which skill to invoke:
-
-```
-user input → HybridRouter.route() → { skill, args, … }
-```
-
-`HybridRouter.learn_preference(keyword, skill, args)` writes a new `RoutingPreference` for a keyword. `HybridRouter.get_suggestions(partial)` returns completions for partial input.
-
-## RoutingPreference record
-
-Each learned mapping is a `RoutingPreference` dataclass:
-
-| Field | Type | Meaning |
-|---|---|---|
-| `keyword` | `str` | Trigger word or phrase |
-| `skill` | `str` | Claude Code skill to invoke |
-| `args` | `str` | Default arguments passed to the skill |
-| `usage_count` | `int` | How many times this preference has fired |
-| `confidence` | `float` | Router's confidence in the mapping (default `1.0`) |
-
-Over time, `usage_count` and `confidence` give the router a signal about which preferences are reliable and which might need updating.
+The `attune` CLI is the command-line surface that lets you run workflows, inspect telemetry and costs, manage memory, and configure providers — all through a single entry point defined in `attune.cli_minimal`.
 
 ## How the pieces fit together
 
-```
-attune.cli_minimal.main()
-  └─ create_parser()          # builds subcommand tree
-  └─ dispatch to cmd_*()      # structured subcommands
+The CLI has two distinct layers that work in tandem.
 
-attune.cli_router.route_user_input()
-  └─ HybridRouter.route()     # free-form text → skill
-       └─ RoutingPreference   # per-keyword learned mapping
+**The command layer** is built around `create_parser()` and `main()` in `attune.cli_minimal`. When you invoke `attune`, `main()` parses your arguments and delegates to one of the command modules:
+
+| Module | Commands |
+|--------|----------|
+| `cli_commands.workflow_commands` | `cmd_workflow_list`, `cmd_workflow_info`, `cmd_workflow_run` |
+| `cli_commands.cost_commands` | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` |
+| `cli_commands.memory_commands` | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` |
+| `cli_commands.telemetry_commands` | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_export`, `cmd_telemetry_routing_stats`, `cmd_telemetry_routing_check`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` |
+| `cli_commands.provider_commands` | `cmd_provider_show`, `cmd_provider_set` |
+| `cli_commands.utility_commands` | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_features`, `cmd_doctor` |
+| `cli_commands.help_commands` | `cmd_help` |
+
+Every command function takes an `argparse.Namespace` and returns an integer exit code.
+
+**The routing layer** sits in `attune.cli_router` and handles free-form or slash-command input. When you type a slash command, `is_slash_command()` detects it. `route_user_input()` then resolves the input to a Claude Code skill invocation. Under the hood, `HybridRouter` does this resolution and can learn from your usage over time.
+
+## Exit-code contract
+
+`run_workflow_with_exit_code()` in `cli_commands._exit_codes` is the bridge between a workflow class and the shell. It instantiates and executes the workflow, then returns a standardised integer that your shell or CI pipeline can act on. All `cmd_*` functions follow the same contract: return `0` on success, non-zero on failure.
+
+## Routing preferences
+
+`HybridRouter` personalises routing by building a set of `RoutingPreference` entries. Each entry captures a `keyword`, the `skill` it should map to, optional `args`, and two learned fields — `usage_count` and `confidence` — that improve over time as you use `learn_preference()`. You can call `get_suggestions()` with a partial string to see what the router would suggest completing.
+
+```python
+router = HybridRouter(preferences_path="~/.attune/prefs.json")
+router.learn_preference(keyword="deploy", skill="run-deploy-workflow")
+router.get_suggestions("dep")   # returns completions ranked by confidence
 ```
 
-Structured subcommands (everything under `cmd_*`) and the routing layer are independent paths through the same CLI surface. A slash command detected by `is_slash_command()` can bypass the argument parser entirely and go straight to `HybridRouter`.
+## When this matters
+
+You interact with this layer whenever you:
+
+- Run `attune workflow run` and need a predictable exit code for scripting
+- Use `attune costs today` or `attune costs export` to track spend
+- Manage cross-session memory with `attune remember` or `attune lessons`
+- Inspect routing behaviour with `attune telemetry routing-stats` or `attune telemetry routing-check`
+- Configure or verify your setup with `attune doctor` or `attune validate`

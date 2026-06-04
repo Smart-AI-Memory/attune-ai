@@ -3,15 +3,30 @@ type: tip
 name: cli-tip
 feature: cli
 depth: tip
-generated_at: 2026-06-02T10:56:02.740077+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-06-04T23:39:47.662711+00:00
+source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
 status: generated
 ---
 
-# Tip: Working effectively with the CLI
+# Tip: working effectively with cli
 
-Use `cmd_doctor` and `cmd_validate` before debugging routing problems — they surface configuration issues in seconds rather than minutes of log reading.
+Use `HybridRouter.learn_preference()` to teach the router your shortcuts — it's the fastest way to make the CLI feel native to your workflow.
 
-**Why:** `HybridRouter.route` makes decisions based on learned `RoutingPreference` entries; if the preference data is corrupt or missing, every route silently falls back to defaults. Catching that early saves a long detour.
+**Why it sticks:** every preference you record increments `usage_count` and raises `confidence` on the matching `RoutingPreference`, so the router surfaces your patterns first instead of falling back to defaults.
 
-**Tradeoff:** `cmd_doctor` and `cmd_validate` report on the current state of your environment, not on code changes you haven't committed yet. If you've just modified routing logic, they won't catch regressions — run your tests for that.
+**Tradeoff:** learned preferences are stored in a file (configured via `preferences_path` in `HybridRouter.__init__`). If you share a project across machines without syncing that file, each environment starts from scratch.
+
+## How to apply this
+
+1. Spot a command sequence you run often — for example, checking today's spend with `cmd_costs_today`.
+2. Call `HybridRouter.learn_preference(keyword, skill, args='')` to record the mapping. The `keyword` field is what you type; `skill` is what gets invoked.
+3. Use `HybridRouter.get_suggestions(partial)` while typing to confirm the router recognises your shorthand.
+4. If a preference becomes stale, remove it rather than letting a low-`confidence` entry linger and produce unexpected routing results.
+
+## Source files
+
+- `src/attune/cli_minimal.py`
+- `src/attune/cli_router.py`
+- `src/attune/cli_commands/**`
+
+**Tags:** `cli`, `commands`

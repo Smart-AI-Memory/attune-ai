@@ -3,7 +3,7 @@ type: error
 name: models-error
 feature: models
 depth: error
-generated_at: 2026-05-16T06:19:45.839514+00:00
+generated_at: 2026-06-04T23:45:26.754109+00:00
 source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
@@ -14,32 +14,38 @@ status: generated
 
 Failures in the `models` feature fall into three categories: authentication strategy errors, provider routing failures, and circuit breaker trips.
 
-- **Authentication errors** — `AuthStrategy.load()` raises when the strategy file at `AUTH_STRATEGY_FILE` is missing, corrupt, or contains unrecognized field values. `configure_auth_interactive()` can fail if the file cannot be written.
-- **Routing errors** — `AdaptiveModelRouter.get_best_model()` raises when no model in `MODEL_REGISTRY` meets the caller's `max_cost`, `max_latency_ms`, or `min_success_rate` constraints, or when the requested `workflow`/`stage` combination has no telemetry history.
-- **Provider failures** — `AllProvidersFailedError` is raised by `ResilientExecutor` after every entry in a `FallbackPolicy` has been exhausted. Each individual attempt can fail with a provider-level exception before the circuit breaker in `CircuitBreaker` opens for that provider/tier pair.
-- **Executor errors** — `EmpathyLLMExecutor.run()` propagates provider exceptions when the underlying `EmpathyLLM` call fails. Check `LLMResponse.success` (returns `False` when `content` is empty) before assuming a returned response is valid.
+**Authentication errors** occur when `AuthStrategy` cannot be loaded or saved, or when `configure_auth_interactive()` receives invalid input. Look for:
+
+- `FileNotFoundError` — `AuthStrategy.load()` cannot find the file at the path defined by `AUTH_STRATEGY_FILE`.
+- `ValueError` — `AuthStrategy.from_dict()` receives a malformed or incomplete configuration dict, or `get_recommended_mode()` receives a `module_lines` value it cannot classify.
+
+**Provider routing errors** occur when `AdaptiveModelRouter.get_best_model()` cannot find a model that satisfies the given constraints (`max_cost`, `max_latency_ms`, `min_success_rate`). This typically means no `ModelPerformance` entry in the telemetry store meets all three thresholds simultaneously.
+
+**Circuit breaker trips** are raised by `CircuitBreaker` when `CircuitBreakerState.is_open` is `True` for a provider. `AllProvidersFailedError` indicates that every configured provider's circuit breaker is open and no fallback remains in the `FallbackStrategy`.
 
 ## Where errors originate
 
-Authentication CLI commands are the most common entry points for user-facing failures. Routing and executor errors typically originate deeper in the stack and are reported back to CLI callers.
+The following CLI entry points are the most common places where upstream callers first observe a failure:
 
-- `cmd_auth_setup()` — interactive first-time setup; fails if the strategy file cannot be created or if `AuthStrategy.save()` encounters a permissions error.
-- `cmd_auth_status()` — reads the current strategy; fails if `AuthStrategy.load()` cannot parse an existing file.
-- `cmd_auth_reset()` — clears the strategy file; fails on filesystem permission errors.
-- `cmd_auth_recommend()` — calls `count_lines_of_code()` and `AuthStrategy.get_recommended_mode()`; fails if the target file does not exist or is not a valid Python file.
-- `main()` — top-level CLI entry point; always returns `1` on failure.
+- `cmd_auth_setup()` — interactive setup; fails if the target path is not writable or if the user provides input that cannot be parsed into a valid `AuthStrategy`.
+- `cmd_auth_status()` — reads the saved strategy; fails with `FileNotFoundError` if setup has not been completed (`AuthStrategy.setup_completed` is `False` or the file is absent).
+- `cmd_auth_reset()` — deletes the saved strategy; fails if the file cannot be removed.
+- `cmd_auth_recommend()` — calls `count_lines_of_code()` then `get_recommended_mode()`; fails if the target file path does not exist or is not a valid Python file.
+- `main()` — the top-level CLI entry point; returns exit code `1` on any unhandled error from the above commands.
+
+Errors that originate deeper in routing or circuit-breaker logic (for example, inside `EmpathyLLMExecutor.run()`) propagate up through these commands, so the CLI exit code and stderr output are usually the first visible symptom.
 
 ## How to diagnose
 
-1. **Check the exception type first.** `AllProvidersFailedError` means every fallback in the active `FallbackPolicy` was tried and failed — look at `CircuitBreaker.get_status()` to see which providers are open. A `ValueError` or `KeyError` from `AdaptiveModelRouter.get_best_model()` usually means the `workflow`/`stage` pair has no telemetry data yet.
+1. **Read the exit code and stderr together.** `main()` returns `1` on failure. The stderr output names the exception type and message, which tells you which category — auth, routing, or circuit breaker — you are dealing with.
 
-2. **Inspect the circuit breaker state.** Call `CircuitBreaker.get_status()` to see `failure_count`, `is_open`, and `opened_at` for each provider/tier pair. A provider whose circuit is open will not be attempted until `recovery_timeout_seconds` has elapsed. Use `CircuitBreaker.reset()` to force recovery during debugging.
+2. **Check `CircuitBreaker.get_status()`.** If you see `AllProvidersFailedError`, call `get_status()` to inspect each provider's `CircuitBreakerState`. A state with `is_open: True` and a recent `opened_at` timestamp means the provider hit `failure_threshold` consecutive failures. Use `CircuitBreaker.reset()` to manually clear a specific provider while you investigate.
 
-3. **Validate the auth strategy file.** If `AuthStrategy.load()` fails, confirm the file at `AUTH_STRATEGY_FILE` exists and contains valid JSON with all required fields (see `AuthStrategy.from_dict()`). Run `attune auth-status` to surface the parsed values, or `attune auth-reset` followed by `attune auth-setup` to rebuild the file from scratch.
+3. **Inspect `ModelPerformance` fields for routing failures.** When `get_best_model()` fails to return a model, check the `success_rate`, `avg_latency_ms`, and `avg_cost` fields on the relevant `ModelPerformance` records. Compare them against the constraints you passed. A high `recent_failures` count alongside a low `success_rate` means the model has degraded and no longer clears the default `min_success_rate` of `0.8`.
 
-4. **Check routing constraints against telemetry.** If `get_best_model()` returns no candidate, the `max_cost`, `max_latency_ms`, or `min_success_rate` thresholds may be too strict for the available `ModelPerformance` data. Call `AdaptiveModelRouter.get_routing_stats()` for the relevant `workflow` and `stage` to see actual success rates and latencies before tightening constraints.
+4. **Verify the auth strategy file.** Run `cmd_auth_status()` to confirm `setup_completed` is `True` and the strategy loaded from `AUTH_STRATEGY_FILE` is valid. If it is missing or corrupt, run `cmd_auth_setup()` to regenerate it, or call `AuthStrategy.load()` directly and inspect the returned object's fields.
 
-5. **Examine `LLMResponse` fields on apparent success.** A response object can be returned without raising an exception even when the call failed — `LLMResponse.success` is `False` whenever `content` is empty. Always check this property before treating the response as valid output.
+5. **Check `recommend_tier_upgrade()` output.** If routing consistently fails for a `(workflow, stage)` pair, call `AdaptiveModelRouter.recommend_tier_upgrade()`. A `True` return value means historical telemetry shows the current `SubscriptionTier` is insufficient for the workload.
 
 ## Source files
 

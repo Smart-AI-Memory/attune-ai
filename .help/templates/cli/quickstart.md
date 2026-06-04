@@ -3,79 +3,71 @@ type: quickstart
 name: cli-quickstart
 feature: cli
 depth: quickstart
-generated_at: 2026-06-02T10:56:02.737376+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-06-04T23:39:47.660441+00:00
+source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
 status: generated
 ---
 
 # Quickstart: attune CLI
 
-Run your first attune command and route user input to a skill in under a minute.
+Run your first attune command and confirm the CLI is working.
 
 ```bash
 attune version
 ```
 
-Expected output:
-
-```
-attune x.y.z
-```
+You should see the current version string printed to stdout and the process exit with code `0`.
 
 ## Prerequisites
 
 - attune is installed and available on your `PATH`
-- You have a terminal open in your project directory
+- You have access to the source under `src/attune/`
 
 ## Step 1: Verify your setup
 
-Run the doctor command to confirm everything is configured correctly:
+Run the built-in doctor command to confirm all dependencies and configuration are in order:
 
 ```bash
 attune doctor
 ```
 
-If the output shows no errors, you're ready to proceed.
+A passing check prints a status line for each component. Fix any failures before continuing.
 
-## Step 2: Check today's costs
+## Step 2: List available workflows
+
+```bash
+attune workflow list
+```
+
+This calls `cmd_workflow_list` and prints every registered workflow by name.
+
+## Step 3: Run a workflow
+
+Pick a workflow name from the previous output and run it:
+
+```bash
+attune workflow run <workflow-name>
+```
+
+`attune workflow run` calls `run_workflow_with_exit_code()` internally. Exit code `0` means success; any non-zero value signals a contract failure.
+
+## Step 4: Check today's costs
 
 ```bash
 attune costs today
 ```
 
-This calls `cmd_costs_today` and prints a summary of your AI usage costs for the current day.
+This calls `cmd_costs_today` and prints a summary of token spend for the current day. A zero-spend summary is a valid, successful result.
 
-## Step 3: Route user input programmatically
+**Expected output:**
 
-Use `route_user_input` to send a plain-language string to the appropriate skill:
-
-```python
-from attune.cli_router import route_user_input
-
-result = route_user_input("show me my lessons")
-print(result)
+```
+Today's cost summary
+  Requests : 1
+  Tokens   : 312
+  Cost     : $0.0004
 ```
 
-Expected output is a dict describing the routed skill and any arguments resolved from your input.
+## Next:
 
-## Step 4: Teach the router a custom shortcut
-
-```python
-from attune.cli_router import HybridRouter
-
-router = HybridRouter()
-router.learn_preference(keyword="costs", skill="cmd_costs_today")
-result = router.route("costs")
-print(result)
-```
-
-`learn_preference` stores a `RoutingPreference` entry (with fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`) so the router recognises your shorthand on every future call.
-
-## What you just did
-
-- Confirmed your installation with `cmd_doctor`
-- Viewed a cost summary with `cmd_costs_today`
-- Routed plain-language input with `route_user_input`
-- Registered a custom routing shortcut with `HybridRouter.learn_preference`
-
-Next: say **"how do I configure routing preferences?"** for a full walkthrough of `HybridRouter`, `RoutingPreference` fields, and persistent preference storage.
+Run `attune help` to open the interactive help browser and find commands for memory, telemetry, and provider configuration.

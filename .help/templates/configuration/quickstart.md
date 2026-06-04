@@ -1,56 +1,101 @@
 ---
 type: quickstart
+name: configuration-quickstart
 feature: configuration
 depth: quickstart
-generated_at: 2026-04-14T15:31:23.324935+00:00
-source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
+generated_at: 2026-06-04T23:45:26.718993+00:00
+source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
 status: generated
 ---
 
-# Quickstart: configuration
+# Quickstart: Attune Configuration
 
-Load and manage your Attune AI configuration with a single function call.
+Load your first `UnifiedConfig` object and confirm it reads correctly:
 
 ```python
 from attune.config.loader import load_unified_config
 
 config = load_unified_config()
-print(f"Model: {config.model_id}")
-print(f"Provider: {config.provider}")
+print(config.to_dict())
 ```
 
-## Set up your configuration
+If a config file exists at one of the default search paths (`./attune.config.json`, `~/.attune/config.json`, or `~/.config/attune/config.json`), you'll see its contents printed as a dictionary. If no file is found, you'll see the defaults.
 
-1. **Create a configuration file** in one of these locations:
-   - `./attune.config.json` (project directory)
-   - `~/.attune/config.json` (user directory)
-   - `~/.config/attune/config.json` (XDG config directory)
+## Prerequisites
 
-2. **Add basic settings** to your JSON file:
-   ```json
-   {
-     "provider": "openai",
-     "model": "gpt-4",
-     "temperature": 0.7,
-     "max_tokens": 2000
-   }
-   ```
+- The package is installed in your local environment
+- Optionally, a config file exists at one of the `CONFIG_SEARCH_PATHS` locations
 
-3. **Load and verify** your configuration:
-   ```python
-   from attune.config.loader import load_unified_config
+## Step 1: Validate the loaded config
 
-   config = load_unified_config()
-   print(f"Using {config.provider} with model {config.model_id}")
-   ```
+Pass the config object to `validate_config` to catch any missing or malformed values before they cause runtime errors:
+
+```python
+from attune.config.loader import load_unified_config
+from attune.config.validation import validate_config
+
+config = load_unified_config()
+errors = validate_config(config)
+
+if errors:
+    for e in errors:
+        print(e)
+else:
+    print("Config is valid.")
+```
+
+Expected output when config is valid:
+
+```
+Config is valid.
+```
+
+## Step 2: Override a value and save
+
+Use `set_value` to change a config value in memory, then write it back to disk with `save_unified_config`:
+
+```python
+from attune.config.loader import load_unified_config, save_unified_config
+
+config = load_unified_config()
+config.set_value("telemetry.enabled", False)
+
+saved_path = save_unified_config(config)
+print(f"Saved to: {saved_path}")
+```
 
 Expected output:
+
 ```
-Using openai with model gpt-4
+Saved to: /home/you/.attune/config.json
 ```
 
-You can also override any setting using environment variables with the `ATTUNE_` prefix, like `ATTUNE_MODEL=gpt-3.5-turbo`.
+## Step 3: Apply environment variable overrides
 
-## Next steps
+`ATTUNE_` environment variables override file-based config at load time. To apply them explicitly to an existing config object, call `apply_env_overrides`:
 
-Configure Redis integration for state management by adding a `redis` section to your config file.
+```python
+from attune.config.loader import load_unified_config, ConfigLoader
+
+config = load_unified_config()
+config = ConfigLoader.apply_env_overrides(config)
+print(config.get_value("telemetry.enabled"))
+```
+
+Set `ATTUNE_TELEMETRY_ENABLED=false` in your shell before running to see the override take effect.
+
+## Step 4: Read a value and check all available keys
+
+```python
+from attune.config.loader import load_unified_config
+
+config = load_unified_config()
+print(config.get_all_keys())
+print(config.get_value("telemetry.enabled"))
+```
+
+This prints every key the config object knows about, then the current value of one of them — confirming the config is fully loaded and accessible.
+
+---
+
+**Next:** Read the `UnifiedAgentConfig` reference to learn how agent-specific settings — including `ModelTier`, `Provider`, and `WorkflowMode` — layer on top of `UnifiedConfig`.

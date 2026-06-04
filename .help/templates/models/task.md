@@ -1,57 +1,57 @@
 ---
+type: task
+name: models-task
 feature: models
 depth: task
-generated_at: 2026-06-03T02:40:23.612344+00:00
-source_hash: eaf005e9abad245619a99d4824c4b03d726a7b59f62c01ae3437da4261b3bb55
+generated_at: 2026-06-04T23:45:26.745205+00:00
+source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
 # Work with models
 
-Use models when you need to llm authentication, provider routing, and tier management.
+Use the models module when you need to configure authentication strategies, route tasks to the right LLM provider, or manage model tiers based on historical telemetry.
 
 ## Prerequisites
 
-- Access to the project source code
-- Familiarity with the files under src/attune/models/**
+- Access to the project source code under `src/attune/models/`
+- Python environment with the project dependencies installed
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what models
-   does today before making changes.
-   The primary functions are:
-   - `cmd_auth_setup()` in `src/attune/models/auth_cli.py` — Run interactive authentication strategy setup.
-   - `cmd_auth_status()` in `src/attune/models/auth_cli.py` — Show current authentication strategy configuration.
-   - `cmd_auth_reset()` in `src/attune/models/auth_cli.py` — Reset/clear authentication strategy configuration.
-   - `cmd_auth_recommend()` in `src/attune/models/auth_cli.py` — Get authentication recommendation for a specific file.
-   - `main()` in `src/attune/models/auth_cli.py` — Main CLI entry point.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Choose the entry point that matches your goal.**
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   The models module exposes distinct functions for each authentication and routing concern:
+
+   | Goal | Function | File |
+   |---|---|---|
+   | Run first-time auth setup interactively | `configure_auth_interactive()` | `auth_strategy.py` |
+   | Read the active auth configuration | `get_auth_strategy()` | `auth_strategy.py` |
+   | Measure a file's size before routing decisions | `count_lines_of_code()` | `auth_strategy.py` |
+   | Set up auth via CLI | `cmd_auth_setup()` | `auth_cli.py` |
+   | Inspect current CLI auth status | `cmd_auth_status()` | `auth_cli.py` |
+   | Clear the CLI auth configuration | `cmd_auth_reset()` | `auth_cli.py` |
+   | Get a routing recommendation for a specific file | `cmd_auth_recommend()` | `auth_cli.py` |
+
+2. **Read the function signature and its dataclass.**
+
+   Before calling or modifying a function, check its inputs and outputs against the relevant dataclass. For example, `configure_auth_interactive()` returns an `AuthStrategy` whose fields — including `subscription_tier`, `default_mode`, `prefer_subscription`, and `cost_optimization` — control downstream routing behaviour. Confirm that the fields you need are already present before adding new ones.
+
+3. **Call or modify the function.**
+
+   - To run interactive setup programmatically, call `configure_auth_interactive(module_lines=<int>)`. It returns a fully populated `AuthStrategy` instance.
+   - To retrieve the current strategy without prompting, call `get_auth_strategy()`.
+   - To determine how many tokens a module will consume before committing to a mode, call `count_lines_of_code(file_path)` and pass the result to `AuthStrategy.estimate_tokens()`.
+   - To invoke the CLI directly, call `main()` from `auth_cli.py`; it returns an exit code of `1` on failure.
 
 4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "models"`.
 
-## Key files
+   Run `pytest -k "models"` to catch regressions before they affect other developers.
 
-- `src/attune/models/**`
+## Verify success
 
-## Common modifications
+Your task succeeded when:
 
-Functions you are most likely to modify:
-
-- `cmd_auth_setup()` in `src/attune/models/auth_cli.py`
-- `cmd_auth_status()` in `src/attune/models/auth_cli.py`
-- `cmd_auth_reset()` in `src/attune/models/auth_cli.py`
-- `cmd_auth_recommend()` in `src/attune/models/auth_cli.py`
-- `main()` in `src/attune/models/auth_cli.py`
-- `configure_auth_interactive()` in `src/attune/models/auth_strategy.py`
-- `get_auth_strategy()` in `src/attune/models/auth_strategy.py`
-- `count_lines_of_code()` in `src/attune/models/auth_strategy.py`
+- `get_auth_strategy()` returns an `AuthStrategy` instance with `setup_completed` set to `True`.
+- `pytest -k "models"` passes with no failures or errors.
+- `cmd_auth_status()` prints the configuration you expect without raising an exception.

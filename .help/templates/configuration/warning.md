@@ -1,48 +1,77 @@
 ---
 type: warning
+name: configuration-warning
 feature: configuration
 depth: warning
-generated_at: 2026-04-14T15:30:33.691904+00:00
-source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
+generated_at: 2026-06-04T23:45:26.711774+00:00
+source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
 status: generated
 ---
 
 # Configuration cautions
 
-## What to watch for
-
-Configuration management in Attune AI involves multiple layers of settings, environment variables, and global state that can interact in unexpected ways.
-
 ## Risk areas
 
-### Environment variable precedence conflicts
+### Silent fallback in `get_attune_env()` masks missing variables
 
-The `get_attune_env()` function checks `ATTUNE_` prefixed variables first, then falls back to `EMPATHY_` prefixed ones. This dual-prefix system can mask configuration issues when both prefixes are set to different values. You might think you're using the `EMPATHY_` value when `ATTUNE_` is actually taking precedence.
+`get_attune_env()` checks `ATTUNE_` prefixed variables first, then silently falls back to the legacy `EMPATHY_` prefix. If you rename an environment variable from `EMPATHY_*` to `ATTUNE_*` in one environment but not another, the function returns the stale `EMPATHY_` value without any warning. You will not see an error — just behavior driven by an outdated variable.
 
-### Global configuration state mutations
+**Mitigation:** After migrating variable names, explicitly verify that no `EMPATHY_` counterparts remain set in your environment. Search your shell configuration, CI secrets, and deployment manifests.
 
-The global `ConfigLoader` instance returned by `get_loader()` maintains state across your application. If multiple parts of your code call `load()` or modify the configuration path, later calls may use a different configuration than expected. This is especially problematic in test suites where configuration changes can leak between tests.
+---
 
-### Configuration file discovery ambiguity
+### `get_loader()` returns a shared global instance
 
-The `discover_config_path()` method searches multiple locations (`./attune.config.json`, `~/.attune/config.json`, `~/.config/attune/config.json`) and returns the first match. If you have configuration files in multiple locations, you may not be loading the file you expect, particularly when running code from different working directories.
+`get_loader()` returns a single global `ConfigLoader` instance. Calling `ConfigLoader.apply_env_overrides()` or mutating the config through `set_value()` on that instance affects every caller in the same process. In tests, this means a configuration change in one test can leak into later tests.
 
-### Backward compatibility property access
+**Mitigation:** In test code, construct a separate `ConfigLoader` instance directly rather than using `get_loader()`. Reset any shared state explicitly between tests.
 
-`BookProductionConfig` exposes properties like `model`, `max_tokens`, and `temperature` for backward compatibility. These properties may return different values than direct field access if the underlying configuration structure has changed, creating subtle inconsistencies in agent behavior.
+---
 
-### Environment override timing
+### `load_unified_config()` path discovery can load an unexpected file
 
-The `apply_env_overrides()` function modifies configuration after the base config is loaded. If you cache configuration values before applying environment overrides, those cached values won't reflect the environment variable changes.
+When you call `load_unified_config()` without a `path` argument, `ConfigLoader.discover_config_path()` searches the following locations in order:
+
+- `./attune.config.json`
+- `~/.attune/config.json`
+- `~/.config/attune/config.json`
+
+If a file exists at a higher-priority path that you did not intend to use — for example, a leftover `./attune.config.json` in the working directory — it silently takes precedence over your user-level config. Behavior differs between environments without any error.
+
+**Mitigation:** Pass an explicit `path` argument to `load_unified_config()` in production code and CI scripts. Reserve path-discovery for interactive use only.
+
+---
+
+### `save_unified_config()` overwrites without a backup
+
+`save_unified_config()` writes the `UnifiedConfig` to disk immediately. There is no built-in versioning, confirmation step, or rollback mechanism. Passing a partially constructed `UnifiedConfig` — for example, one where `validate_config()` returns `ValidationError` items — will overwrite a valid config file with invalid data.
+
+**Mitigation:** Call `validate_config(config)` and confirm the returned list is empty before calling `save_unified_config()`. Consider writing to a temporary path first and renaming only on success.
+
+---
+
+### `iter_attune_env_prefix()` yields unexpected keys when the suffix is empty
+
+`iter_attune_env_prefix(prefix, suffix='')` matches any environment variable of the form `ATTUNE_{prefix}*{suffix}`. With the default empty suffix, this is a prefix-only match, so an environment that contains loosely named variables (for example, `ATTUNE_MODEL_EXTRA_DEBUG`) can produce unexpected entries alongside the ones you intended to iterate.
+
+**Mitigation:** Pass an explicit `suffix` when you need to narrow the match. Enumerate the yielded `(middle_part, value)` pairs in a log statement during development to confirm you are capturing exactly the variables you expect.
+
+---
+
+### `set_config()` replaces the process-wide `EmpathyXMLConfig` instance
+
+`set_config()` overwrites the global `EmpathyXMLConfig` returned by every subsequent call to `get_config()`. Calling it mid-request or during concurrent operations leaves part of the call graph using the old config and part using the new one, with no coordination between them.
+
+**Mitigation:** Call `set_config()` only during application startup, before any concurrent work begins. Treat the global config as immutable after that point.
+
+---
 
 ## How to avoid problems
 
-**Pin your configuration path explicitly** instead of relying on discovery. Pass a specific path to `ConfigLoader()` rather than letting it search multiple locations.
+1. **Validate before saving.** Call `validate_config(config)` and check that it returns an empty list before persisting changes with `save_unified_config()`.
 
-**Isolate configuration in tests** by creating fresh `ConfigLoader` instances for each test case rather than using the global instance from `get_loader()`.
+2. **Isolate global state in tests.** Avoid `get_loader()` and `get_config()` in test code. Instantiate `ConfigLoader` directly and pass config objects explicitly to keep tests independent.
 
-**Validate environment variable conflicts** by checking both `ATTUNE_` and `EMPATHY_` prefixes during deployment. Set up monitoring to alert when both prefixes exist for the same configuration key.
+3. **Prefer explicit paths in automation.** Supply a `path` argument to `load_unified_config()` and `save_unified_config()` in scripts and CI pipelines so the file being read or written is always unambiguous.
 
-**Load configuration once per process** and pass it down rather than calling `load_unified_config()` from multiple places. This prevents inconsistent configuration states within the same application run.
-
-**Use `validate_config()` after any configuration changes** to catch structural issues before they affect agent operations.
+4. **Depend only on the public API.** Names starting with `_` — such as `_validate_file_path` — can change without notice. Use the exported names listed in `__all__` instead.
