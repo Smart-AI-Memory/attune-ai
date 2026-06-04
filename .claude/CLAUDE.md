@@ -1,4 +1,4 @@
-# Attune AI Framework v7.3.1
+# Attune AI Framework v7.4.0
 
 AI-powered developer workflows with cost optimization and multi-agent orchestration.
 
@@ -148,7 +148,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ---
 
-**Version:** 7.3.1 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+**Version:** 7.4.0 | **License:** Apache 2.0 | **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
 <!-- attune-lessons-start -->
 

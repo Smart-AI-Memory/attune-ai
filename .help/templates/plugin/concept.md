@@ -1,8 +1,8 @@
 ---
 feature: plugin
 depth: concept
-generated_at: 2026-06-03T02:46:55.572515+00:00
-source_hash: 57b8e505bab7ccba5ff519e5f59111f1ef50f2e629841d8c034de4c1391df086
+generated_at: 2026-06-04T10:52:19.406858+00:00
+source_hash: 3564938306a66c3c29641900b4227debc9ca0a266533d177666962f7158ba391
 status: generated
 ---
 
@@ -17,7 +17,7 @@ The main building blocks are:
 - **`SpecInfo`** — One in-flight spec discovered under a workspace root.
 - **`GitState`** — Snapshot of the worktree's git state at hook fire time.
 
-Under the hood, this feature spans 964 source
+Under the hood, this feature spans 967 source
 files covering:
 
 - CLI wrapper for the ``/handoff`` slash command.
