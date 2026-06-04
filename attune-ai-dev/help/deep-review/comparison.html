@@ -1,0 +1,384 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comparison: Deep Review vs alternatives — comparison</title>
+  <meta name="description" content="`deep_review` runs a multi-pass code review by coordinating three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — in parallel, then synthesizes their finding" />
+  <meta property="og:title" content="Comparison: Deep Review vs alternatives — comparison" />
+  <meta property="og:description" content="`deep_review` runs a multi-pass code review by coordinating three specialized subagents — `security-reviewer`, `quality-reviewer`, and `test-gap-reviewer` — in parallel, then synthesizes their finding" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/deep-review">Deep Review</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Comparison: Deep Review vs alternatives</h1>
+<h2>What deep review does</h2>
+<p><code>deep_review</code> runs a multi-pass code review by coordinating three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — in parallel, then synthesizes their findings into a single consolidated report. The report includes an overall health score (0–100), severity-ordered findings per domain, and up to ten prioritized next steps tied back to specific findings.</p>
+<p>The entry point is <code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code> from <code>workflows.deep_review</code>.</p>
+<h2>Feature comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Criterion</th>
+<th><code>deep_review</code></th>
+<th><code>code_review</code></th>
+<th><code>security_audit</code></th>
+<th><code>bug_predict</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Passes</strong></td>
+<td>3 (security, quality, test gaps)</td>
+<td>1</td>
+<td>1 (security only)</td>
+<td>1 (bug patterns only)</td>
+</tr>
+<tr>
+<td><strong>Security findings</strong></td>
+<td>✅ Included</td>
+<td>⚠️ Surface-level</td>
+<td>✅ Primary focus</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Code quality findings</strong></td>
+<td>✅ Included</td>
+<td>✅ Primary focus</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Test gap analysis</strong></td>
+<td>✅ Included</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Consolidated report</strong></td>
+<td>✅ Single synthesized output</td>
+<td>❌ Per-pass output</td>
+<td>❌ Per-pass output</td>
+<td>❌ Per-pass output</td>
+</tr>
+<tr>
+<td><strong>Health score (0–100)</strong></td>
+<td>✅</td>
+<td>❌</td>
+<td>❌</td>
+<td>❌</td>
+</tr>
+<tr>
+<td><strong>Relative cost</strong></td>
+<td>Higher — three subagents run per invocation</td>
+<td>Lower</td>
+<td>Lower</td>
+<td>Lower</td>
+</tr>
+<tr>
+<td><strong>Best for</strong></td>
+<td>Pre-merge / release gates</td>
+<td>Iterative development</td>
+<td>Targeted security triage</td>
+<td>Predicting regression risk</td>
+</tr>
+</tbody>
+</table>
+<h2>Tradeoffs</h2>
+<p><strong><code>deep_review</code> wins when completeness matters.</strong> Running all three subagents in one call means you get cross-domain findings in a single report, with the orchestrator citing file paths and line numbers across all domains. You don't have to reconcile the output of three separate tool calls yourself.</p>
+<p><strong><code>deep_review</code> costs more per call.</strong> Because <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> all run for every invocation, using <code>deep_review</code> in a tight feedback loop (e.g., after every file save) is significantly more expensive than calling <code>code_review</code> alone. For quick, iterative checks during development, <code>code_review</code> is the better fit.</p>
+<p><strong><code>security_audit</code> is sharper for targeted security triage.</strong> If you already have quality and test coverage under control and need the deepest possible security analysis, <code>security_audit</code> focuses all available capacity on that one domain instead of splitting it three ways.</p>
+<p><strong><code>bug_predict</code> solves a different problem entirely.</strong> It analyzes code patterns to predict where bugs are likely to appear — a forward-looking signal, not a review of current state. It does not overlap with <code>deep_review</code>'s output.</p>
+<h2>Use <code>deep_review</code> when…</h2>
+<ul>
+<li>You are preparing a PR for merge and need a single authoritative report covering security, quality, and test gaps.</li>
+<li>Your team or CI pipeline requires a health score and a prioritized action list before a release.</li>
+<li>You want one consolidated output rather than manually correlating results from multiple tools.</li>
+</ul>
+<h2>Use an alternative when…</h2>
+<table>
+<thead>
+<tr>
+<th>Situation</th>
+<th>Better choice</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Fast feedback during active development</td>
+<td><code>code_review</code></td>
+</tr>
+<tr>
+<td>Focused investigation of a potential vulnerability</td>
+<td><code>security_audit</code></td>
+</tr>
+<tr>
+<td>Estimating regression risk before a refactor</td>
+<td><code>bug_predict</code></td>
+</tr>
+<tr>
+<td>Exploratory work or a throwaway script</td>
+<td>None — a direct inspection is faster than wiring up any workflow tool</td>
+</tr>
+</tbody>
+</table>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/deep_review.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>review</code>, <code>security</code>, <code>quality</code>, <code>tests</code>, <code>comprehensive-review</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

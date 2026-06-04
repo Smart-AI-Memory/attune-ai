@@ -1,0 +1,54 @@
+name: Build Help Site
+
+# Regenerate the public help pages (attune-ai-dev/help/) from the
+# .help/ corpus whenever the corpus or the build script changes.
+# Eventual-rebuild policy (docs/specs/public-help-site/ D3): this
+# auto-commits the regenerated pages on main; it never hard-fails on
+# drift. Vercel serves the committed static files as-is.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".help/**"
+      - "attune-ai-dev/build_help.py"
+      - "attune-ai-dev/brand.css"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: build-help-site
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install (core + markdown-it-py)
+        run: |
+          python -m pip install --upgrade pip
+          pip install -e .
+          pip install markdown-it-py
+
+      - name: Rebuild help pages
+        run: python attune-ai-dev/build_help.py
+
+      - name: Commit regenerated pages if changed
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add attune-ai-dev/help
+          if git diff --cached --quiet; then
+            echo "help pages already up to date"
+          else
+            git commit -m "chore(help-site): rebuild help pages [skip ci]"
+            git push
+          fi

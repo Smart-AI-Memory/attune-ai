@@ -1,0 +1,410 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot smart-test — troubleshooting</title>
+  <meta name="description" content="| If you observe | Check | |----------------|-------| | `FileNotFoundError: Coverage file not found` | Confirm `coverage.json` exists at the path you passed. Run `pytest --cov --cov-report=json` first" />
+  <meta property="og:title" content="Troubleshoot smart-test — troubleshooting" />
+  <meta property="og:description" content="| If you observe | Check | |----------------|-------| | `FileNotFoundError: Coverage file not found` | Confirm `coverage.json` exists at the path you passed. Run `pytest --cov --cov-report=json` first" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/smart-test">Smart Test</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot smart-test</h1>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FileNotFoundError: Coverage file not found</code></td>
+<td>Confirm <code>coverage.json</code> exists at the path you passed. Run <code>pytest --cov --cov-report=json</code> first to generate it.</td>
+</tr>
+<tr>
+<td><code>ValueError: Invalid coverage JSON</code> or <code>'files' key missing</code></td>
+<td>Open the JSON file and verify it is valid and produced by pytest-cov. A truncated or empty file causes this error in <code>parse_coverage_json()</code>.</td>
+</tr>
+<tr>
+<td>Coverage gap report is empty or missing modules</td>
+<td>Check that <code>prioritize_modules()</code> isn't filtering everything out — the default <code>min_threshold</code> is <code>50.0</code>. Modules above 50% coverage are excluded by design.</td>
+</tr>
+<tr>
+<td>Generated tests reference the wrong function signatures</td>
+<td>The <code>ASTFunctionAnalyzer</code> parsed stale source. Confirm you're pointing smart-test at the current file, not a compiled <code>.pyc</code> or cached copy.</td>
+</tr>
+<tr>
+<td>No tests generated for a module</td>
+<td>Verify the module isn't matched by <code>DEFAULT_SKIP_PATTERNS</code> (e.g., paths containing <code>migrations</code>, <code>alembic</code>, <code>venv</code>, <code>build</code>, or <code>dist</code> are skipped automatically).</td>
+</tr>
+<tr>
+<td>Parallel workflow stalls or produces no output</td>
+<td><code>ParallelTestGenerationWorkflow</code> batches up to 200 modules in groups of 10 by default. If <code>discover_low_coverage_modules()</code> returns an empty list, coverage data is missing or all modules exceed the threshold.</td>
+</tr>
+<tr>
+<td>Workflow exits with no report</td>
+<td>Check that <code>TestAuditWorkflow.execute()</code> or <code>TestGenerationWorkflow.execute()</code> received valid <code>src_path</code> / <code>path</code> kwargs — omitting them produces no subagent output to synthesize.</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnose the problem</h2>
+<p>Work through these steps in order — each one is cheaper than the next.</p>
+<h3>1. Confirm coverage data exists</h3>
+<p>Smart-test reads <code>coverage.json</code> produced by pytest-cov. If that file is missing or malformed, nothing downstream works.</p>
+<pre><code class="language-bash">pytest --cov=src --cov-report=json
+ls -lh coverage.json   # should be non-empty
+python -c &quot;import json; json.load(open('coverage.json'))&quot;  # validates JSON
+</code></pre>
+<p>If the last command raises an error, regenerate the file before proceeding.</p>
+<h3>2. Check what modules are being picked up</h3>
+<p>Run <code>parse_coverage_json()</code> directly to confirm the parser sees your modules:</p>
+<pre><code class="language-python">from src.attune.workflows.test_audit.coverage_parser import parse_coverage_json, prioritize_modules
+
+modules = parse_coverage_json(&quot;coverage.json&quot;)
+print(f&quot;{len(modules)} modules parsed&quot;)
+
+prioritized = prioritize_modules(modules, min_threshold=0.0)  # lower threshold to see everything
+for m in prioritized[:10]:
+    print(m.path, m.pct)
+</code></pre>
+<p>If <code>modules</code> is empty, the <code>files</code> key is missing from your coverage JSON — regenerate it. If <code>prioritized</code> is much shorter than <code>modules</code>, your modules are above the 50% threshold and filtered out intentionally.</p>
+<h3>3. Check DEFAULT_SKIP_PATTERNS</h3>
+<p>If a module you expect to see is absent from the gap report, verify its path doesn't match a skip pattern:</p>
+<pre><code class="language-python">from src.attune.workflows.test_gen.test_templates import DEFAULT_SKIP_PATTERNS
+
+target = &quot;src/your/module/path&quot;
+matched = [p for p in DEFAULT_SKIP_PATTERNS if p in target]
+print(matched)  # non-empty means the module is being skipped
+</code></pre>
+<p>Common surprises: paths containing <code>migrations</code>, <code>alembic</code>, <code>build</code>, or <code>dist</code>.</p>
+<h3>4. Verify AST analysis on the target module</h3>
+<p>If tests are generated with wrong signatures, check what <code>ASTFunctionAnalyzer</code> actually sees:</p>
+<pre><code class="language-python">from src.attune.workflows.test_gen.test_templates import ASTFunctionAnalyzer
+
+analyzer = ASTFunctionAnalyzer()
+code = open(&quot;src/your/module.py&quot;).read()
+functions, classes = analyzer.analyze(code, file_path=&quot;src/your/module.py&quot;)
+for f in functions:
+    print(f.name, f.params, f.return_type)
+</code></pre>
+<p>If the output doesn't match the current source, you're reading the wrong file or a stale version.</p>
+<h3>5. Run the related tests</h3>
+<pre><code class="language-bash">pytest -k &quot;smart_test or test_audit or test_gen&quot; -v
+</code></pre>
+<p>A failing test here often pins down exactly which component is misbehaving and provides fixtures you can reuse when writing a reproduction case.</p>
+<h2>Common fixes</h2>
+<p><strong>Coverage JSON is missing or stale</strong>
+Generate it before running smart-test:</p>
+<pre><code class="language-bash">pytest --cov=src --cov-report=json
+</code></pre>
+<p><strong>All modules filtered out by <code>min_threshold</code></strong>
+The default threshold is <code>50.0</code> — modules with ≥50% coverage are excluded from the gap report. If you want to generate tests for well-covered modules too, call <code>prioritize_modules()</code> with a higher threshold or pass <code>min_threshold=0.0</code> to include everything:</p>
+<pre><code class="language-python">prioritize_modules(modules, min_threshold=0.0)
+</code></pre>
+<p><strong>Module skipped by DEFAULT_SKIP_PATTERNS</strong>
+Move generated or vendored code out of <code>src/</code>, or restructure so the path doesn't contain a skip token (<code>migrations</code>, <code>build</code>, <code>dist</code>, <code>venv</code>, etc.). You cannot override <code>DEFAULT_SKIP_PATTERNS</code> without modifying the source.</p>
+<p><strong>Wrong function signatures in generated tests</strong>
+This means <code>ASTFunctionAnalyzer</code> parsed the wrong file. Pass the absolute path to <code>analyze()</code> and confirm the file reflects your latest changes — if you've edited the module but haven't saved, or if your editor writes to a temp file, the analyzer sees stale code.</p>
+<p><strong>Workflow kwargs missing</strong>
+<code>TestAuditWorkflow.execute()</code> requires <code>src_path</code>; <code>TestGenerationWorkflow.execute()</code> requires <code>path</code>. Omitting either produces an empty report with no subagent output. Check your invocation:</p>
+<pre><code class="language-python">workflow = TestAuditWorkflow()
+result = workflow.execute(src_path=&quot;src/&quot;)  # required
+</code></pre>
+<p><strong>Parallel workflow produces no output</strong>
+<code>ParallelTestGenerationWorkflow.discover_low_coverage_modules()</code> returns an empty list when no modules fall below the coverage threshold, or when coverage data is absent entirely. Confirm coverage data exists (step 1) and that at least one module has a gap worth filling.</p>
+<p><strong>Dependency version mismatch</strong>
+Smart-test uses pytest-cov to produce its input data. If the JSON structure changes across versions, <code>parse_coverage_json()</code> raises <code>ValueError</code>. Run:</p>
+<pre><code class="language-bash">pip show pytest-cov
+</code></pre>
+<p>and confirm you're on a version that produces a <code>files</code>-keyed JSON object.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/test_audit/</code> — <code>TestAuditWorkflow</code>, <code>parse_coverage_json()</code>, <code>prioritize_modules()</code>, <code>group_into_batches()</code></li>
+<li><code>src/attune/workflows/test_gen/</code> — <code>TestGenerationWorkflow</code>, <code>ASTFunctionAnalyzer</code>, <code>generate_test_for_function()</code>, <code>generate_test_for_class()</code></li>
+<li><code>src/attune/workflows/test_gen_parallel.py</code> — <code>ParallelTestGenerationWorkflow</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>tests</code>, <code>coverage</code>, <code>generation</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 45 (code fence)</td>
+<td>error</td>
+<td><code>from src.attune.workflows.test_audit.coverage_parser import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 62 (code fence)</td>
+<td>error</td>
+<td><code>from src.attune.workflows.test_gen.test_templates import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

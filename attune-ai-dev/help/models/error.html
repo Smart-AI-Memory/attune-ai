@@ -1,0 +1,308 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Models errors — error</title>
+  <meta name="description" content="Failures in the `models` feature fall into three categories: authentication strategy errors, provider routing failures, and circuit breaker trips." />
+  <meta property="og:title" content="Models errors — error" />
+  <meta property="og:description" content="Failures in the `models` feature fall into three categories: authentication strategy errors, provider routing failures, and circuit breaker trips." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/models">Models</a><span class="sep">&rsaquo;</span><span>error</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Models errors</h1>
+<h2>Common error signatures</h2>
+<p>Failures in the <code>models</code> feature fall into three categories: authentication strategy errors, provider routing failures, and circuit breaker trips.</p>
+<ul>
+<li><strong>Authentication errors</strong> — <code>AuthStrategy.load()</code> raises when the strategy file at <code>AUTH_STRATEGY_FILE</code> is missing, corrupt, or contains unrecognized field values. <code>configure_auth_interactive()</code> can fail if the file cannot be written.</li>
+<li><strong>Routing errors</strong> — <code>AdaptiveModelRouter.get_best_model()</code> raises when no model in <code>MODEL_REGISTRY</code> meets the caller's <code>max_cost</code>, <code>max_latency_ms</code>, or <code>min_success_rate</code> constraints, or when the requested <code>workflow</code>/<code>stage</code> combination has no telemetry history.</li>
+<li><strong>Provider failures</strong> — <code>AllProvidersFailedError</code> is raised by <code>ResilientExecutor</code> after every entry in a <code>FallbackPolicy</code> has been exhausted. Each individual attempt can fail with a provider-level exception before the circuit breaker in <code>CircuitBreaker</code> opens for that provider/tier pair.</li>
+<li><strong>Executor errors</strong> — <code>EmpathyLLMExecutor.run()</code> propagates provider exceptions when the underlying <code>EmpathyLLM</code> call fails. Check <code>LLMResponse.success</code> (returns <code>False</code> when <code>content</code> is empty) before assuming a returned response is valid.</li>
+</ul>
+<h2>Where errors originate</h2>
+<p>Authentication CLI commands are the most common entry points for user-facing failures. Routing and executor errors typically originate deeper in the stack and are reported back to CLI callers.</p>
+<ul>
+<li><code>cmd_auth_setup()</code> — interactive first-time setup; fails if the strategy file cannot be created or if <code>AuthStrategy.save()</code> encounters a permissions error.</li>
+<li><code>cmd_auth_status()</code> — reads the current strategy; fails if <code>AuthStrategy.load()</code> cannot parse an existing file.</li>
+<li><code>cmd_auth_reset()</code> — clears the strategy file; fails on filesystem permission errors.</li>
+<li><code>cmd_auth_recommend()</code> — calls <code>count_lines_of_code()</code> and <code>AuthStrategy.get_recommended_mode()</code>; fails if the target file does not exist or is not a valid Python file.</li>
+<li><code>main()</code> — top-level CLI entry point; always returns <code>1</code> on failure.</li>
+</ul>
+<h2>How to diagnose</h2>
+<ol>
+<li>
+<p><strong>Check the exception type first.</strong> <code>AllProvidersFailedError</code> means every fallback in the active <code>FallbackPolicy</code> was tried and failed — look at <code>CircuitBreaker.get_status()</code> to see which providers are open. A <code>ValueError</code> or <code>KeyError</code> from <code>AdaptiveModelRouter.get_best_model()</code> usually means the <code>workflow</code>/<code>stage</code> pair has no telemetry data yet.</p>
+</li>
+<li>
+<p><strong>Inspect the circuit breaker state.</strong> Call <code>CircuitBreaker.get_status()</code> to see <code>failure_count</code>, <code>is_open</code>, and <code>opened_at</code> for each provider/tier pair. A provider whose circuit is open will not be attempted until <code>recovery_timeout_seconds</code> has elapsed. Use <code>CircuitBreaker.reset()</code> to force recovery during debugging.</p>
+</li>
+<li>
+<p><strong>Validate the auth strategy file.</strong> If <code>AuthStrategy.load()</code> fails, confirm the file at <code>AUTH_STRATEGY_FILE</code> exists and contains valid JSON with all required fields (see <code>AuthStrategy.from_dict()</code>). Run <code>attune auth-status</code> to surface the parsed values, or <code>attune auth-reset</code> followed by <code>attune auth-setup</code> to rebuild the file from scratch.</p>
+</li>
+<li>
+<p><strong>Check routing constraints against telemetry.</strong> If <code>get_best_model()</code> returns no candidate, the <code>max_cost</code>, <code>max_latency_ms</code>, or <code>min_success_rate</code> thresholds may be too strict for the available <code>ModelPerformance</code> data. Call <code>AdaptiveModelRouter.get_routing_stats()</code> for the relevant <code>workflow</code> and <code>stage</code> to see actual success rates and latencies before tightening constraints.</p>
+</li>
+<li>
+<p><strong>Examine <code>LLMResponse</code> fields on apparent success.</strong> A response object can be returned without raising an exception even when the call failed — <code>LLMResponse.success</code> is <code>False</code> whenever <code>content</code> is empty. Always check this property before treating the response as valid output.</p>
+</li>
+</ol>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/models/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

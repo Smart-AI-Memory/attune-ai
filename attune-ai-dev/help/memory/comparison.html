@@ -1,0 +1,386 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Comparison: Memory backends and storage strategies — comparison</title>
+  <meta name="description" content="The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (`RedisSh" />
+  <meta property="og:title" content="Comparison: Memory backends and storage strategies — comparison" />
+  <meta property="og:description" content="The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (`RedisSh" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/memory">Memory</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Comparison: Memory backends and storage strategies</h1>
+<h2>Context</h2>
+<p>The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (<code>RedisShortTermMemory</code>), file-based session memory (<code>FileSessionMemory</code>), and Claude Code memory files (<code>ClaudeMemoryLoader</code>). Each targets a different combination of persistence, distribution, and search capability.</p>
+<h2>Feature comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Capability</th>
+<th>Redis (<code>RedisShortTermMemory</code>)</th>
+<th>File session (<code>FileSessionMemory</code>)</th>
+<th>Claude memory (<code>ClaudeMemoryLoader</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Primary purpose</strong></td>
+<td>Fast short-term storage for live agents</td>
+<td>Durable per-session storage without a running server</td>
+<td>Load static project and user context from <code>CLAUDE.md</code> files</td>
+</tr>
+<tr>
+<td><strong>Persistence across restarts</strong></td>
+<td>No — data lives until TTL expires or <code>clear_short_term()</code> is called</td>
+<td>Yes — written to <code>storage_dir</code> on disk</td>
+<td>Yes — reads from committed files</td>
+</tr>
+<tr>
+<td><strong>Distributed / multi-agent</strong></td>
+<td>Yes — <code>supports_distributed()</code> returns <code>True</code>; sessions coordinated via <code>CrossSessionCoordinator</code></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Semantic search</strong></td>
+<td>Yes — <code>SearchableMemoryBackend.search()</code> with filters and <code>promote()</code></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>Real-time pub/sub</strong></td>
+<td>Yes — <code>supports_realtime()</code> returns <code>True</code>; uses <code>CHANNEL_SESSIONS</code></td>
+<td>No</td>
+<td>No</td>
+</tr>
+<tr>
+<td><strong>TTL-based expiry</strong></td>
+<td>Yes — per-key TTL via <code>stash(key, value, ttl=…)</code></td>
+<td>No built-in TTL</td>
+<td>N/A — read-only</td>
+</tr>
+<tr>
+<td><strong>External dependency</strong></td>
+<td>Redis server required; check with <code>is_redis_available()</code></td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Security / PII controls</strong></td>
+<td><code>PIIScrubber</code>, <code>SecretsDetector</code>, <code>EncryptionManager</code>, <code>AuditLogger</code></td>
+<td>Inherits audit dir via <code>ControlPanelConfig</code></td>
+<td><code>validate_files</code>, <code>max_file_size_bytes</code>, <code>max_import_depth</code></td>
+</tr>
+<tr>
+<td><strong>Railway / cloud setup</strong></td>
+<td><code>get_railway_redis()</code> — raises <code>OSError</code> if <code>REDIS_URL</code> is absent</td>
+<td>Not cloud-specific</td>
+<td>Not cloud-specific</td>
+</tr>
+<tr>
+<td><strong>Read-only?</strong></td>
+<td>No</td>
+<td>No</td>
+<td>Yes — <code>load_all_memory()</code> only</td>
+</tr>
+<tr>
+<td><strong>Deprecated?</strong></td>
+<td>No</td>
+<td>No</td>
+<td>Redis config module (<code>config.py</code>) is deprecated; use <code>get_redis_memory()</code> or <code>get_railway_redis()</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Tradeoffs in detail</h2>
+<h3>Redis short-term memory</h3>
+<p>Redis is the right backend when multiple agents share state in the same session or across sessions. <code>CrossSessionCoordinator</code> uses <code>KEY_ACTIVE_AGENTS</code> and a service lock (<code>KEY_SERVICE_LOCK</code>) to prevent conflicts. <code>stash()</code> accepts a per-key TTL, so entries expire automatically without manual cleanup. The cost is an external dependency: if Redis is unavailable, <code>is_redis_available()</code> returns <code>False</code> and you must fall back to a mock or file backend.</p>
+<h3>File session memory</h3>
+<p><code>FileSessionMemory</code> writes to a local <code>storage_dir</code> and requires no running server, making it suitable for single-agent workflows, CI environments, or offline development. It does not implement <code>supports_realtime()</code> or <code>supports_distributed()</code>, and it has no TTL mechanism — callers are responsible for pruning stale entries.</p>
+<h3>Claude memory files</h3>
+<p><code>ClaudeMemoryLoader</code> reads <code>CLAUDE.md</code> files at up to <code>max_import_depth</code> levels (default 5) and merges them into a single string via <code>load_all_memory()</code>. It is read-only: there is no <code>stash()</code> or <code>delete()</code> equivalent. Use it to inject stable project conventions, enterprise policies, or user preferences into an agent's context, not to store runtime state.</p>
+<h2>Use Redis when…</h2>
+<ul>
+<li>You run more than one agent concurrently and need shared, consistent state.</li>
+<li>You need key expiry without manual cleanup (<code>ttl</code> parameter in <code>stash()</code>).</li>
+<li>You need semantic search over stored patterns (<code>SearchableMemoryBackend.search()</code>).</li>
+<li>You are deploying to Railway or another cloud platform — use <code>get_railway_redis()</code> and ensure <code>REDIS_URL</code> is set.</li>
+</ul>
+<h2>Use file session memory when…</h2>
+<ul>
+<li>You are running a single agent in a CI job or offline environment where Redis is unavailable.</li>
+<li>You need persistence across process restarts but have no infrastructure budget for a Redis instance.</li>
+<li>You do not need semantic search or cross-agent coordination.</li>
+</ul>
+<h2>Use Claude memory files when…</h2>
+<ul>
+<li>You want to load static project conventions (<code>CLAUDE.md</code>) or enterprise-level guidelines (<code>load_enterprise=True</code>) into an agent at startup.</li>
+<li>Your memory content changes infrequently — it is committed to the repository and versioned there.</li>
+<li>You need to impose file-size and depth limits on what an agent can read (<code>max_file_size_bytes</code>, <code>max_import_depth</code>, <code>validate_files</code>).</li>
+</ul>
+<h2>What to avoid</h2>
+<ul>
+<li>Do not call <code>get_redis_config()</code> in new code — the Redis config module is marked deprecated. Use <code>get_redis_memory()</code> or <code>get_railway_redis()</code> instead.</li>
+<li>Do not patch the internal <code>MemoryBackend</code> protocol methods directly. If the public API (<code>stash</code>, <code>retrieve</code>, <code>delete</code>, <code>keys</code>) does not meet your needs, propose an extension via <code>SearchableMemoryBackend</code> or file an issue.</li>
+<li>Do not wire up <code>RedisShortTermMemory</code> for a single throwaway script. If you only need to pass data between two functions in the same process, a plain dict is faster and has no external dependency.</li>
+</ul>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/memory/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

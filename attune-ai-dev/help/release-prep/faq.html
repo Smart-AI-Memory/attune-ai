@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Release Prep FAQ — faq</title>
+  <meta name="description" content="Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a `Re" />
+  <meta property="og:title" content="Release Prep FAQ — faq" />
+  <meta property="og:description" content="Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a `Re" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-prep">Release Prep</a><span class="sep">&rsaquo;</span><span>faq</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Release Prep FAQ</h1>
+<h2>What is release prep?</h2>
+<p>Release prep runs a preflight checklist across your project before you publish. It coordinates specialized agents to check code quality, test coverage, security, and documentation, then produces a <code>ReleaseReadinessReport</code> with a go/no-go verdict.</p>
+<h2>When should I use it?</h2>
+<p>Use release prep before tagging a release, bumping a version, or uploading to PyPI. It's also useful after merging a large feature branch when you want to confirm the codebase is in a shippable state.</p>
+<h2>What checks does it run?</h2>
+<p>Four specialized agents run in parallel:</p>
+<ul>
+<li><strong><code>CodeQualityAgent</code></strong> — runs ruff, checks type hints and complexity.</li>
+<li><strong><code>TestCoverageAgent</code></strong> — runs <code>pytest --cov</code> and parses the coverage report.</li>
+<li><strong><code>SecurityAuditorAgent</code></strong> — scans for vulnerabilities, secret leaks, and unsafe patterns.</li>
+<li><strong><code>DocumentationAgent</code></strong> — checks docstring coverage, README currency, and CHANGELOG presence.</li>
+</ul>
+<p>Each agent returns a <code>ReleaseAgentResult</code> with a <code>score</code>, <code>confidence</code>, and <code>findings</code> dict.</p>
+<h2>What does the final report look like?</h2>
+<p><code>assess_readiness()</code> returns a <code>ReleaseReadinessReport</code>. The key fields are:</p>
+<ul>
+<li><code>approved</code> — <code>True</code> if every critical <code>QualityGate</code> passed.</li>
+<li><code>blockers</code> — list of issues that must be fixed before release.</li>
+<li><code>warnings</code> — non-blocking advisories.</li>
+<li><code>quality_gates</code> — list of <code>QualityGate</code> results, each with <code>name</code>, <code>threshold</code>, <code>actual</code>, and <code>passed</code>.</li>
+</ul>
+<p>Call <code>format_console_output()</code> to print a human-readable summary, or <code>to_dict()</code> to serialize the report.</p>
+<h2>What's the fastest way to run it?</h2>
+<p>Instantiate <code>ReleasePrepTeam</code> and call <code>assess_readiness()</code>:</p>
+<pre><code class="language-python">from release import ReleasePrepTeam
+
+team = ReleasePrepTeam()
+report = team.assess_readiness(codebase_path=&quot;.&quot;)
+print(report.format_console_output())
+</code></pre>
+<p>If you need workflow integration, use <code>ReleasePrepTeamWorkflow.execute()</code> instead, which accepts a <code>path</code> and optional <code>context</code> dict.</p>
+<h2>Can I customize the quality gate thresholds?</h2>
+<p>Yes. Pass a <code>quality_gates</code> dict to <code>ReleasePrepTeam</code> or <code>ReleasePrepTeamWorkflow</code>:</p>
+<pre><code class="language-python">team = ReleasePrepTeam(quality_gates={&quot;coverage&quot;: 0.90, &quot;security&quot;: 0.95})
+</code></pre>
+<p>Each key is a gate name and the value is the minimum passing threshold. Gates with <code>critical=True</code> block the <code>approved</code> verdict if they fail.</p>
+<h2>What happens when a check needs more analysis?</h2>
+<p><code>ReleaseAgent</code> uses progressive tier escalation — it starts at a cheap model tier and escalates to more capable tiers if confidence is low. The <code>ReleaseAgentResult.escalated</code> field tells you whether escalation occurred, and <code>tier_used</code> records which tier produced the final result.</p>
+<h2>How do I check what the run cost?</h2>
+<p>Call <code>get_total_cost()</code> on your <code>ReleasePrepTeam</code> instance after <code>assess_readiness()</code> returns. The same value is also available as <code>ReleaseReadinessReport.total_cost</code>.</p>
+<h2>How do I debug a failed run?</h2>
+<p>Run <code>pytest -k &quot;release-prep&quot; -v</code> first. If the tests pass but your results look wrong, inspect the <code>findings</code> dict on each <code>ReleaseAgentResult</code> in <code>report.agent_results</code> — each agent records its raw output there. You can also check <code>execution_time_ms</code> and <code>success</code> per agent to identify which one failed.</p>
+<h2>Where are the source files?</h2>
+<ul>
+<li><code>src/attune/agents/release/</code> — individual agents (<code>base_agent</code>, <code>coverage_agent</code>, <code>documentation_agent</code>, <code>quality_agent</code>, <code>security_agent</code>)</li>
+<li><code>src/attune/workflows/release_prep.py</code> — <code>ReleasePreparationWorkflow</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>release</code>, <code>publishing</code>, <code>quality</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 47 (code fence)</td>
+<td>error</td>
+<td><code>from release import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

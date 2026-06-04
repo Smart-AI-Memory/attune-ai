@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>CLI errors — error</title>
+  <meta name="description" content="CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where `route_user_input()` or `HybridRouter.route()` cannot match input to a skill, and argume" />
+  <meta property="og:title" content="CLI errors — error" />
+  <meta property="og:description" content="CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where `route_user_input()` or `HybridRouter.route()` cannot match input to a skill, and argume" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>error</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>CLI errors</h1>
+<h2>Common error signatures</h2>
+<p>CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where <code>route_user_input()</code> or <code>HybridRouter.route()</code> cannot match input to a skill, and argument errors where a required field on the <code>Namespace</code> object is missing or has an unexpected type.</p>
+<p>Specific situations to watch for:</p>
+<ul>
+<li><strong><code>cmd_costs_export</code> fails silently</strong> — the export target path may be unwritable or the cost data store may be empty. Check file permissions and run <code>cmd_costs</code> first to confirm data exists.</li>
+<li><strong><code>cmd_forget</code> removes the wrong lesson</strong> — <code>cmd_forget</code> operates by line number or keyword. If the lessons file has changed since you last ran <code>cmd_lessons</code>, the line numbers may no longer match. Run <code>cmd_lessons</code> immediately before <code>cmd_forget</code> to get current line numbers.</li>
+<li><strong><code>HybridRouter.route()</code> returns an unexpected result</strong> — a <code>RoutingPreference</code> with a low <code>confidence</code> value (below <code>1.0</code>) or a <code>usage_count</code> of <code>0</code> may cause the router to select an unintended skill. Inspect the returned dict and check stored preferences with <code>HybridRouter.get_suggestions()</code>.</li>
+<li><strong><code>cmd_memory_recall</code> returns nothing</strong> — the search term may not match any stored content, or the memory file targeted by <code>cmd_memory_capture</code> may be in a different location than expected.</li>
+</ul>
+<h2>Where errors originate</h2>
+<p>The following command functions each return an <code>int</code> exit code. A return value other than <code>0</code> indicates failure — trace the non-zero code back to the specific command to narrow the cause.</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Module</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cmd_costs()</code></td>
+<td><code>cli_commands.cost_commands</code></td>
+<td>Show cost report for recent period</td>
+</tr>
+<tr>
+<td><code>cmd_costs_today()</code></td>
+<td><code>cli_commands.cost_commands</code></td>
+<td>Show today's cost summary</td>
+</tr>
+<tr>
+<td><code>cmd_costs_export()</code></td>
+<td><code>cli_commands.cost_commands</code></td>
+<td>Export cost data to file</td>
+</tr>
+<tr>
+<td><code>cmd_costs_reset()</code></td>
+<td><code>cli_commands.cost_commands</code></td>
+<td>Clear all cost tracking data</td>
+</tr>
+<tr>
+<td><code>cmd_help()</code></td>
+<td><code>cli_commands.help_commands</code></td>
+<td>Handle the <code>attune help</code> command</td>
+</tr>
+<tr>
+<td><code>cmd_remember()</code></td>
+<td><code>cli_commands.memory_commands</code></td>
+<td>Add a lesson to the lessons file</td>
+</tr>
+<tr>
+<td><code>cmd_forget()</code></td>
+<td><code>cli_commands.memory_commands</code></td>
+<td>Remove a lesson by line number or keyword</td>
+</tr>
+<tr>
+<td><code>cmd_lessons()</code></td>
+<td><code>cli_commands.memory_commands</code></td>
+<td>List current lessons with line numbers</td>
+</tr>
+<tr>
+<td><code>cmd_memory_capture()</code></td>
+<td><code>cli_commands.memory_commands</code></td>
+<td>Save content to personal cross-session memory</td>
+</tr>
+<tr>
+<td><code>cmd_memory_recall()</code></td>
+<td><code>cli_commands.memory_commands</code></td>
+<td>Search personal cross-session memory</td>
+</tr>
+<tr>
+<td><code>route_user_input()</code></td>
+<td><code>attune.cli_router</code></td>
+<td>Route user input to a skill invocation</td>
+</tr>
+</tbody>
+</table>
+<h2>How to diagnose</h2>
+<ol>
+<li>
+<p><strong>Check the integer return code.</strong> Every command function returns an <code>int</code>. If you called a command through <code>main()</code>, its return value is the exit code. A non-zero value tells you which command failed before you look at any output.</p>
+</li>
+<li>
+<p><strong>Identify whether the failure is in argument parsing or command execution.</strong> <code>create_parser()</code> in <code>attune.cli_minimal</code> handles argument parsing. If the error occurs before your command function is called, the <code>Namespace</code> object passed to it may be incomplete — print <code>args</code> at the top of the failing command function to confirm all expected fields are present.</p>
+</li>
+<li>
+<p><strong>For routing failures, inspect the <code>RoutingPreference</code> fields.</strong> If <code>HybridRouter.route()</code> produces an unexpected skill match, retrieve stored preferences and check the <code>keyword</code>, <code>skill</code>, <code>confidence</code>, and <code>usage_count</code> fields on the relevant <code>RoutingPreference</code>. A preference with <code>confidence &lt; 1.0</code> was learned implicitly and may not match your intent. Use <code>HybridRouter.learn_preference()</code> to set an explicit mapping.</p>
+</li>
+<li>
+<p><strong>For memory command failures, confirm the target file path.</strong> <code>cmd_memory_capture()</code> and <code>cmd_memory_recall()</code> operate on a cross-session memory file. If recall returns no results, verify that capture was directed at the same location by checking the <code>args</code> passed to each command.</p>
+</li>
+<li>
+<p><strong>For cost command failures, verify that data exists before exporting or resetting.</strong> Run <code>cmd_costs_today()</code> to confirm the cost store is populated before calling <code>cmd_costs_export()</code>. <code>cmd_costs_reset()</code> returns <code>0</code> even when the store is already empty, so a successful reset does not confirm prior data existed.</p>
+</li>
+</ol>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/cli_minimal.py</code></li>
+<li><code>src/attune/cli_router.py</code></li>
+<li><code>src/attune/cli_commands/**</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

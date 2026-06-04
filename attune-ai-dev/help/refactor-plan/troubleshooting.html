@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Troubleshoot refactor plan — troubleshooting</title>
+  <meta name="description" content="| If you observe | Check | |----------------|-------| | `RefactorPlanWorkflow.execute()` raises an exception | Read the full traceback — the raise site names the file and line. Confirm the path argume" />
+  <meta property="og:title" content="Troubleshoot refactor plan — troubleshooting" />
+  <meta property="og:description" content="| If you observe | Check | |----------------|-------| | `RefactorPlanWorkflow.execute()` raises an exception | Read the full traceback — the raise site names the file and line. Confirm the path argume" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/refactor-plan">Refactor Plan</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Troubleshoot refactor plan</h1>
+<h2>Symptom table</h2>
+<table>
+<thead>
+<tr>
+<th>If you observe</th>
+<th>Check</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RefactorPlanWorkflow.execute()</code> raises an exception</td>
+<td>Read the full traceback — the raise site names the file and line. Confirm the path argument passed to <code>execute()</code> exists and is readable.</td>
+</tr>
+<tr>
+<td>Report is empty or missing sections (Summary, Refactoring, Suggestions)</td>
+<td>Check what <code>format_refactor_plan_report(result, input_data)</code> received. A missing key in <code>result</code> or <code>input_data</code> causes sections to be skipped silently.</td>
+</tr>
+<tr>
+<td>One or more subagents produce no output</td>
+<td>The workflow coordinates three subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, <code>plan-generator</code>). Confirm each can reach the target path and has sufficient read permissions.</td>
+</tr>
+<tr>
+<td>CLI (<code>main()</code>) exits without output</td>
+<td>Run with a concrete path argument and check stderr for errors before assuming the workflow itself failed.</td>
+</tr>
+<tr>
+<td>Results are inconsistent across runs</td>
+<td>Check for environment drift — changed files, modified environment variables, or a caching layer between runs.</td>
+</tr>
+<tr>
+<td>Execution is unexpectedly slow</td>
+<td>The workflow calls three subagents sequentially. Large directory trees multiply the cost; try scoping the path to a subdirectory first.</td>
+</tr>
+</tbody>
+</table>
+<h2>Diagnose the issue</h2>
+<h3>1. Reproduce with a minimal path</h3>
+<p>Narrow the input to the smallest path that still triggers the failure:</p>
+<pre><code class="language-python">from workflows.refactor_plan import RefactorPlanWorkflow
+
+workflow = RefactorPlanWorkflow()
+result = workflow.execute(path=&quot;src/auth/&quot;)  # swap in the failing path
+print(result)
+</code></pre>
+<p>If the failure disappears with a smaller scope, the problem is likely in the content being analyzed, not the workflow itself.</p>
+<h3>2. Inspect what <code>execute()</code> returns</h3>
+<p><code>execute()</code> returns a <code>WorkflowResult</code>. Before blaming report formatting, confirm the result object is well-formed:</p>
+<pre><code class="language-python">result = workflow.execute(path=&quot;src/auth/&quot;)
+print(type(result))
+print(vars(result))  # or result.__dict__ if dataclass
+</code></pre>
+<p>If <code>result</code> is <code>None</code> or missing expected fields, the failure is inside <code>execute()</code>, not in <code>format_refactor_plan_report()</code>.</p>
+<h3>3. Check the report formatter in isolation</h3>
+<p>If <code>execute()</code> returns data but the report looks wrong, test <code>format_refactor_plan_report()</code> directly:</p>
+<pre><code class="language-python">from workflows.refactor_plan_report import format_refactor_plan_report
+
+# Use the raw dict from your execute() call
+report = format_refactor_plan_report(result=your_result_dict, input_data=your_input_dict)
+print(report)
+</code></pre>
+<p>A <code>KeyError</code> or empty string here points to a mismatch between what <code>execute()</code> produces and what the formatter expects.</p>
+<h3>4. Run the targeted tests</h3>
+<pre><code class="language-bash">pytest -k &quot;refactor_plan&quot; -v
+</code></pre>
+<p>A failing test that covers your scenario gives you a reproducible fixture and a clear pass/fail signal before you change any code.</p>
+<h3>5. Enable debug logging</h3>
+<p>If the above steps don't isolate the issue, raise the log level to <code>DEBUG</code> and re-run. The subagent coordination layer logs state transitions that can reveal which of the three subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, <code>plan-generator</code>) stalled or returned unexpected output.</p>
+<h2>Common fixes</h2>
+<p><strong>The path does not exist or is not readable</strong>
+<code>execute()</code> requires a valid, accessible path. Verify it before invoking the workflow:</p>
+<pre><code class="language-bash">ls -la src/auth/   # confirm the path exists and is readable
+</code></pre>
+<p><strong>A required key is missing from <code>result</code> or <code>input_data</code></strong>
+<code>format_refactor_plan_report(result, input_data)</code> expects both arguments to contain the keys the formatter references. If <code>execute()</code> returned an error state, the result dict may be incomplete. Add a guard before calling the formatter:</p>
+<pre><code class="language-python">if result and not result.get(&quot;error&quot;):
+    report = format_refactor_plan_report(result=dict(result), input_data=input_data)
+</code></pre>
+<p><strong>Subagent output is missing a required section</strong>
+The synthesized report must include <code>## Summary</code>, <code>## Refactoring</code>, and <code>## Suggestions</code> sections. If a subagent returns no findings, that section may be absent, causing the formatter to produce an incomplete report. Re-run with a broader path to confirm there is analyzable content.</p>
+<p><strong>Dependency version mismatch</strong>
+A dependency upgrade can change the behavior of the Agent SDK subagents. If the workflow worked previously, check whether a recent <code>pip install --upgrade</code> changed a relevant package:</p>
+<pre><code class="language-bash">pip show &lt;dependency-name&gt;
+</code></pre>
+<p>Pin the version in your requirements file if the upgrade introduced a regression.</p>
+<p><strong>Stale environment state</strong>
+If the workflow fails intermittently without a code change, check for modified environment variables or cached state from a previous run. A clean environment often resolves this:</p>
+<pre><code class="language-bash">unset &lt;relevant-env-var&gt;
+# then re-run
+</code></pre>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/refactor_plan.py</code></li>
+<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 30 (code fence)</td>
+<td>error</td>
+<td><code>from workflows.refactor_plan import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 56 (code fence)</td>
+<td>error</td>
+<td><code>from workflows.refactor_plan_report import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>
