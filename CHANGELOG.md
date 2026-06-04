@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **int8 embedding quantization for Redis Agent Memory Server** —
+  `attune_redis.vector_db_int8.create_int8_memory_db` plugs into AMS
+  via its `MEMORY_VECTOR_DB_FACTORY` seam (no fork) to store
+  long-term-memory embeddings as int8 instead of float32 (~75% less
+  index memory, ~30% faster search). A thin `Int8VectorIndexProxy`
+  re-encodes vectors to int8 at the RedisVL index boundary (write +
+  query), avoiding ~200 lines of AMS method duplication; drift-guard
+  tests catch upstream changes to the internals it relies on.
+  Phase-0 benchmark on the `.help` corpus showed zero recall loss
+  vs float32 (P@1/recall@5 delta 0.0, 0.925 top-1 agreement).
+  Requires a Redis 8 Query Engine (`TYPE INT8`); fails loudly
+  otherwise. See `docs/specs/ams-int8-quantization/`.
+
+### Changed
+
+- `attune_redis.__init__` now exposes `RedisPlugin` lazily (PEP 562
+  `__getattr__`) so importing submodules like `vector_db_int8` no
+  longer forces an `attune` import — required for the AMS server
+  venv, which loads the int8 factory but does not have `attune`.
+
 ## [7.3.1] — 2026-06-02
 
 ### Added
