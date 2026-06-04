@@ -7492,3 +7492,46 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   transcript. Pairs with the existing worktree-Write/PYTHONPATH
   lessons — same family (correctly locating the right tree
   for a write), new surface (cross-REPO, not cross-worktree).
+
+- **`git cherry -v origin/main <branch>` is the worktree-prune
+  triage primitive — but a `+` (patch-not-in-main) is NOT proof
+  of unmerged work**: when culling abandoned worktrees,
+  `git cherry -v origin/main <branch>` marks each of the
+  branch's commits `-` (patch content already on main) or `+`
+  (not found by patch-id). `-` commits are safe-to-prune. A `+`
+  can STILL be already-shipped content if it merged via a
+  DIFFERENT patch (squash, rebase, or a cleaner
+  re-implementation) — patch-id only matches identical diffs.
+  Hit 2026-06-03 on `funny-hoover` (fix/ams-backend-parity): its
+  WIP 30-day-TTL commit showed `+`, but `origin/main` already
+  had the full feature (`DEFAULT_TTL_DAYS=30`,
+  `AMSMemoryBackend.prune()`, the protocol `prune()`) via a
+  cleaner tested patch — the branch was even BEHIND main.
+  Verification rule: for every `+` commit, grep the actual
+  symbols/feature it adds against `origin/main`
+  (`git show origin/main:<file> | grep <symbol>`) before
+  declaring it unmerged work. Pairs with the existing
+  "`git diff --stat` on an abandoned branch misleads" and
+  "Audits with possibly-delete-if-X" lessons — same family
+  (surface signal != content truth); `git cherry` is the sharper
+  primitive and `+`-is-not-always-new is the trap.
+
+- **Spec "readiness" from a raw `[ ]` checkbox count is wrong —
+  struck-through / closed-empty tasks inflate the "todo"
+  figure**: ranking the spec backlog by leverage-per-effort, a
+  script counted `- [ ]` lines as remaining work. `discovery-
+  sweep` scored "26 done / 4 todo" and ranked #1 ("nearly done,
+  finish 4 tasks") — but the 4 `[ ]` were ALL struck-through
+  closed-empty Phase 4 items (`~~4.1 ...~~ (No candidates.)`),
+  and the Status header literally said "Phase 4 closed empty."
+  The spec was already complete; only its per-file `**Status:**`
+  headers lagged at "approved" (which made the in-flight list
+  show it `(unknown)`). Hit 2026-06-03 during a spec-menu
+  re-rank. Rules: (1) parse strikethrough-aware —
+  `grep '^- \[ \]' tasks.md | grep -v '~~'` for genuinely-open
+  tasks; (2) ALWAYS read the `**Status:**` header and the phase
+  table before trusting a derived count — the header often
+  states completion the checkboxes don't reflect. This is the
+  exact drift `spec-status-self-truthing` is designed to
+  eliminate; until it ships, never rank or triage specs on raw
+  checkbox counts alone.
