@@ -155,7 +155,8 @@ must not change exit-code semantics for non-gated runs
 
 ## T5 — Regression guard, docs, dogfood
 
-**Status:** todo
+**Status:** in progress (2026-06-05) — guard + docs + CHANGELOG done;
+live dogfood deferred (spends real budget, needs an explicit go)
 **Depends on:** T4
 
 **Objective.** Lock the core invariant, document the gate, and

@@ -46,6 +46,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exit code is honest. See
   `docs/specs/workflow-failure-exit-propagation/`.
 
+### Added
+
+- **Spend gate on `attune workflow run`.** The first billable run of a
+  session surfaces an estimate and asks for an explicit go before any
+  paid call, then establishes a ~5h spend window (aligned to
+  Anthropic's rolling usage window) so later runs proceed silently
+  until it expires or a run would exceed it. Framing matches your
+  meter — a dollar band for API users, usage-headroom (no misleading
+  `$0`) for subscription users. A non-interactive run with no
+  pre-authorization **blocks** rather than spending silently. Knobs:
+  `ATTUNE_SPEND_GATE=off` (or `ATTUNE_MAX_BUDGET_USD=0`) disables it;
+  `ATTUNE_SPEND_GATE_AUTHORIZED=1` opts a CI / daemon context in.
+  `--no-llm` runs never reach the gate. See
+  `docs/specs/collaboration-gates/` and the CLI reference's
+  "Spend gate" section. (Phase 1: T1–T5.)
+
 ## [7.4.0] — 2026-06-04
 
 ### Added
