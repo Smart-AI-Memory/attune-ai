@@ -3197,6 +3197,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#spend-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spend gate
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -4434,6 +4445,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#spend-gate" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Spend gate
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -5171,6 +5193,46 @@ Subagent names are matched against keywords (first match wins):
 security/vuln/architect → opus; quality/plan/research → sonnet;
 complexity/lint/coverage/dep/scanner/finder/detector → haiku;
 reviewer → inherit (override hook).</p>
+<h3 id="spend-gate">Spend gate<a class="headerlink" href="#spend-gate" title="Permanent link">&para;</a></h3>
+<p>The first billable <code>attune workflow run</code> of a session surfaces an
+estimate and asks for an explicit go before any paid call. Once you
+confirm, a session <strong>spend window</strong> (~5h, aligned to Anthropic's
+rolling usage window) is established and later runs proceed silently
+until the window expires or a run would exceed it. A <code>--no-llm</code> run
+never reaches the gate.</p>
+<p>The framing matches your billing meter: API users see a dollar band
+(<code>≈ up to $X</code>), subscription users see usage-headroom framing (no
+dollar figure).</p>
+<table>
+<thead>
+<tr>
+<th>Env var</th>
+<th>Effect</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ATTUNE_SPEND_GATE=off</code></td>
+<td>Disable the gate entirely (always proceed).</td>
+</tr>
+<tr>
+<td><code>ATTUNE_MAX_BUDGET_USD=0</code></td>
+<td>Also disables the gate (the existing cap-disable; <code>0</code> = no cap).</td>
+</tr>
+<tr>
+<td><code>ATTUNE_MAX_BUDGET_USD=&lt;n&gt;</code></td>
+<td>Sets the per-run estimate band / cap (positive float).</td>
+</tr>
+<tr>
+<td><code>ATTUNE_SPEND_GATE_AUTHORIZED=1</code></td>
+<td>Pre-authorize a <strong>non-interactive</strong> run (CI, the ops daemon) — required because a context that can't prompt blocks by default rather than spending silently.</td>
+</tr>
+</tbody>
+</table>
+<p>In a non-interactive run (no TTY) with no pre-authorization, the gate
+<strong>blocks</strong> rather than spend silently, and prints the
+<code>ATTUNE_SPEND_GATE_AUTHORIZED=1</code> hint. The ops dashboard and the
+<code>security-scan</code> CI workflow set this opt-in automatically.</p>
 <hr />
 <h2 id="telemetry-commands">Telemetry Commands<a class="headerlink" href="#telemetry-commands" title="Permanent link">&para;</a></h2>
 <h3 id="attune-telemetry-show"><code>attune telemetry show</code><a class="headerlink" href="#attune-telemetry-show" title="Permanent link">&para;</a></h3>
