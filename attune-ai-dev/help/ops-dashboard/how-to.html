@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cli reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
-  <meta property="og:title" content="Cli reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
+  <title>How to use the ops dashboard — how-to</title>
+  <meta name="description" content="Use this guide when you want to launch the attune operations dashboard, configure its server settings, and work with its core APIs to surface workflow runs, telemetry, and spec status in your project." />
+  <meta property="og:title" content="How to use the ops dashboard — how-to" />
+  <meta property="og:description" content="Use this guide when you want to launch the attune operations dashboard, configure its server settings, and work with its core APIs to surface workflow runs, telemetry, and spec status in your project." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,234 +250,236 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/ops-dashboard">Ops Dashboard</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Cli reference</h1>
-<h2>Classes</h2>
+<h1>How to use the ops dashboard</h1>
+<p>Use this guide when you want to launch the attune operations dashboard, configure its server settings, and work with its core APIs to surface workflow runs, telemetry, and spec status in your project.</p>
+<h2>Quick start</h2>
+<p>Start the dashboard from the command line against your project root:</p>
+<pre><code class="language-bash">attune ops --project-root /path/to/your/project --port 8765
+</code></pre>
+<p>Or launch it directly as a Python module:</p>
+<pre><code class="language-bash">python -m attune.ops
+</code></pre>
+<p>The dashboard starts a blocking server at <code>http://127.0.0.1:8765</code>. Open that URL to see the home page with today's KPIs, a cost sparkline, and the workflow catalog. Press <code>Ctrl+C</code> in the terminal to stop the server.</p>
+<h2>Core API</h2>
+<table>
+<thead>
+<tr>
+<th>Function or class</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build_config(project_root, *, host, port, allow_run, ...)</code></td>
+<td>Build a <code>Config</code> from explicit inputs and environment defaults.</td>
+</tr>
+<tr>
+<td><code>create_app()</code></td>
+<td>Build the FastAPI app, wiring <code>Config</code> and templates into request state.</td>
+</tr>
+<tr>
+<td><code>cmd_ops(args)</code></td>
+<td>Run the dashboard server (blocking); returns <code>0</code> on clean exit.</td>
+</tr>
+<tr>
+<td><code>main()</code></td>
+<td>Standalone entry point for <code>python -m attune.ops</code>.</td>
+</tr>
+<tr>
+<td><code>attune_home()</code></td>
+<td>Resolve the user's attune home directory (<code>ATTUNE_HOME</code> env override → <code>~/.attune</code>).</td>
+</tr>
+<tr>
+<td><code>list_features(project_root)</code></td>
+<td>Return features parsed from <code>&lt;project_root&gt;/.help/features.yaml</code>.</td>
+</tr>
+<tr>
+<td><code>first_feature(project_root)</code></td>
+<td>Return the alphabetically first feature that has a renderable scope.</td>
+</tr>
+<tr>
+<td><code>home_kpis(summary, *, today)</code></td>
+<td>Derive home-page KPI numbers from a <code>TelemetrySummary</code>.</td>
+</tr>
+<tr>
+<td><code>list_workflows()</code></td>
+<td>Return the registered workflow catalog; empty list if the registry is unavailable.</td>
+</tr>
+<tr>
+<td><code>env_health()</code></td>
+<td>Lightweight environment snapshot for the Health page.</td>
+</tr>
+<tr>
+<td><code>family_versions()</code></td>
+<td>Resolve installed versions for every related attune package.</td>
+</tr>
+<tr>
+<td><code>list_runs(workflow)</code></td>
+<td>Return up to 20 newest runs for a workflow, newest first.</td>
+</tr>
+<tr>
+<td><code>prune_old_runs(days)</code></td>
+<td>Delete persisted run files older than <code>days</code>; returns the deletion count.</td>
+</tr>
+<tr>
+<td><code>list_specs()</code></td>
+<td>Federated listing of specs across all configured spec roots.</td>
+</tr>
+<tr>
+<td><code>update_phase_status()</code></td>
+<td>Rewrite the <code>**Status**</code> line in a named phase file.</td>
+</tr>
+<tr>
+<td><code>read_telemetry_summary()</code></td>
+<td>Aggregate <code>usage.jsonl</code> into a UI-friendly <code>TelemetrySummary</code>.</td>
+</tr>
+<tr>
+<td><code>compute_allowlist()</code></td>
+<td>Compute the merged default + user-supplied <code>Host</code> header allowlist.</td>
+</tr>
+<tr>
+<td><code>is_persistence_enabled()</code></td>
+<td>Returns <code>True</code> when <code>ATTUNE_OPS_SWEEP_RESULTS</code> is set to a non-empty value.</td>
+</tr>
+<tr>
+<td><code>persist_result()</code></td>
+<td>Atomically write a <code>SweepResult</code> to <code>&lt;attune_home&gt;/ops/sweep-results/&lt;hash&gt;.json</code>.</td>
+</tr>
+<tr>
+<td><code>watch_and_persist()</code></td>
+<td>Subscribe to a discovery-sweep run and persist its result on success.</td>
+</tr>
+</tbody>
+</table>
+<h3>Key dataclasses</h3>
 <table>
 <thead>
 <tr>
 <th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RoutingPreference</code></td>
-<td>User's learned routing preferences.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>Config</code></td>
+<td>Holds all runtime configuration for the dashboard (paths, host, port, retention, etc.).</td>
 </tr>
 <tr>
-<td><code>HybridRouter</code></td>
-<td>Routes user input to Claude Code skill invocations.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>HomeKpis</code></td>
+<td>Summary numbers shown above the fold on the home page.</td>
+</tr>
+<tr>
+<td><code>TelemetrySummary</code></td>
+<td>Aggregated request counts, costs, and savings by workflow and day.</td>
+</tr>
+<tr>
+<td><code>WorkflowEntry</code></td>
+<td>One entry in the workflow catalog (name, description, stage count, tier map).</td>
+</tr>
+<tr>
+<td><code>Feature</code></td>
+<td>One feature from <code>.help/features.yaml</code>, used by the scope picker.</td>
+</tr>
+<tr>
+<td><code>SpecPhase</code></td>
+<td>Status snapshot for one phase file within a spec.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h2>Configuration</h2>
+<p><code>build_config()</code> accepts these parameters, all of which fall back to sensible defaults:</p>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Description</th>
-<th>File</th>
+<th>Parameter</th>
+<th>Default</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>get_version()</code></td>
-<td>Get package version.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>project_root</code></td>
+<td>current directory</td>
+<td>Root of the project being inspected.</td>
 </tr>
 <tr>
-<td><code>create_parser()</code></td>
-<td>Create the argument parser.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>host</code></td>
+<td><code>127.0.0.1</code></td>
+<td>Interface the server binds to.</td>
 </tr>
 <tr>
-<td><code>main()</code></td>
-<td>Main entry point.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>port</code></td>
+<td><code>8765</code></td>
+<td>Port the server listens on.</td>
 </tr>
 <tr>
-<td><code>route_user_input()</code></td>
-<td>Quick routing helper.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>allow_run</code></td>
+<td><code>False</code></td>
+<td>Enable the workflow run-trigger endpoint.</td>
 </tr>
 <tr>
-<td><code>is_slash_command()</code></td>
-<td>Check if text is a slash command.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>specs_roots</code></td>
+<td><code>()</code></td>
+<td>Additional directories to include in the federated spec listing.</td>
 </tr>
 <tr>
-<td><code>run_workflow_with_exit_code()</code></td>
-<td>Instantiate + execute a workflow and return the contract exit code.</td>
-<td><code>src/attune/cli_commands/_exit_codes.py</code></td>
+<td><code>trusted_hosts</code></td>
+<td><code>()</code></td>
+<td>Extra hostnames added to the <code>Host</code> header allowlist.</td>
 </tr>
 <tr>
-<td><code>cmd_costs()</code></td>
-<td>Show cost report for recent period.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_today()</code></td>
-<td>Show today's cost summary.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_export()</code></td>
-<td>Export cost data to file.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_reset()</code></td>
-<td>Clear all cost tracking data.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_help()</code></td>
-<td>Handle the <code>attune help</code> command.</td>
-<td><code>src/attune/cli_commands/help_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_remember()</code></td>
-<td>Add a lesson to the lessons file.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_forget()</code></td>
-<td>Remove a lesson by line number or keyword.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_lessons()</code></td>
-<td>List current lessons with line numbers.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture()</code></td>
-<td>Save content to personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall()</code></td>
-<td>Search personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_topics()</code></td>
-<td>List all personal memory topics.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_forget_topic()</code></td>
-<td>Delete a topic (or specific kind) from personal memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_show()</code></td>
-<td>Show current provider configuration.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_set()</code></td>
-<td>Set the LLM provider.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_show()</code></td>
-<td>Display usage summary.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_savings()</code></td>
-<td>Show cost savings from tier routing.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_export()</code></td>
-<td>Export telemetry data to file.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_stats()</code></td>
-<td>Show adaptive routing statistics.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_check()</code></td>
-<td>Check for tier upgrade recommendations.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_models()</code></td>
-<td>Show model performance by provider.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_agents()</code></td>
-<td>Show active agents and their status.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_signals()</code></td>
-<td>Show coordination signals.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_setup()</code></td>
-<td>Install Attune slash commands for Claude Code.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_validate()</code></td>
-<td>Validate configuration.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_version()</code></td>
-<td>Show version information.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_features()</code></td>
-<td>Show available memory and telemetry features.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_doctor()</code></td>
-<td>Run comprehensive environment health check.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_list()</code></td>
-<td>List available workflows.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_info()</code></td>
-<td>Show workflow details.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run()</code></td>
-<td>Execute a workflow.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
+<td><code>runs_retention_days</code></td>
+<td><code>30</code></td>
+<td>How many days to keep persisted run files before <code>prune_old_runs()</code> removes them.</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
+<p>The <code>ATTUNE_OPS_SWEEP_RESULTS</code> environment variable must be set to a non-empty value to enable sweep-result persistence (<code>is_persistence_enabled()</code>).</p>
+<h2>Integration patterns</h2>
+<h3>Building a config and launching the app programmatically</h3>
+<p>When you want to embed the dashboard inside a larger process rather than use the CLI, build a <code>Config</code> explicitly and pass it to <code>create_app()</code>. Keep the bind on <code>127.0.0.1</code> so the dashboard isn't reachable from outside the local machine:</p>
+<pre><code class="language-python">from pathlib import Path
+from attune.ops import build_config, create_app
+
+config = build_config(
+    project_root=Path(&quot;/path/to/your/project&quot;),
+    host=&quot;127.0.0.1&quot;,
+    port=9000,
+    allow_run=True,
+)
+
+app = create_app(config)
+
+# Hand `app` to any ASGI server, e.g. uvicorn:
+import uvicorn
+uvicorn.run(app, host=config.host, port=config.port)
+</code></pre>
+<p>If you genuinely need to reach the dashboard from another machine, prefer an SSH tunnel (<code>ssh -L 8765:127.0.0.1:8765 user@host</code>) or a reverse proxy that handles auth — do not bind the server to <code>0.0.0.0</code> directly. The dashboard has no built-in authentication.</p>
+<h3>Reading telemetry and KPIs without starting the server</h3>
+<p>If you only need the dashboard's data layer — for example, to pipe numbers into a CI report — you can call the reader functions directly without launching the HTTP server:</p>
+<pre><code class="language-python">from pathlib import Path
+from attune.ops import build_config, read_telemetry_summary, home_kpis
+
+config = build_config(project_root=Path(&quot;/path/to/your/project&quot;))
+
+summary = read_telemetry_summary(config.telemetry_path)
+kpis = home_kpis(summary)
+
+print(f&quot;Today: {kpis.today_events} events, ${kpis.today_cost:.4f}&quot;)
+print(f&quot;7-day savings: ${kpis.seven_day_savings:.4f}&quot;)
+</code></pre>
+<h2>See also</h2>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><a href="../tutorials/ops-dashboard.md">Tutorial: ops-dashboard walkthrough</a> — end-to-end first run, including the workflow runner and scope picker</li>
+<li><a href="../reference/ops-dashboard.md">Reference: ops-dashboard API</a> — full symbol-by-symbol API listing</li>
+<li><a href="../architecture/ops-dashboard.md">Architecture: ops-dashboard</a> — how the configuration, FastAPI app, and persistence layers fit together</li>
 </ul>
-<h2>Tags</h2>
-<p><code>cli</code>, <code>commands</code></p>
+<p>&lt;!-- attune-generated: source_hash=395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42 feature=ops-dashboard kind=how-to generated_at=2026-05-14 --&gt;</p>
 
   </article>
   <footer>

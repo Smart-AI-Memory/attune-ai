@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Unified Memory System — how-to</title>
+  <meta name="description" content="*A single API for short-term (Redis) and long-term (persistent) memory*" />
+  <meta property="og:title" content="Unified Memory System — how-to" />
+  <meta property="og:description" content="*A single API for short-term (Redis) and long-term (persistent) memory*" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/memory">Memory</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Unified Memory System</h1>
+<p><em>A single API for short-term (Redis) and long-term (persistent) memory</em></p>
+<hr />
+<h2>Overview</h2>
+<p>The Attune AI provides a <strong>two-tier memory architecture</strong> that mirrors how humans think:</p>
+<table>
+<thead>
+<tr>
+<th>Memory Tier</th>
+<th>Purpose</th>
+<th>Backend</th>
+<th>Lifetime</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Short-Term</strong></td>
+<td>Working memory, task coordination</td>
+<td>Redis</td>
+<td>Minutes to hours (TTL-based)</td>
+</tr>
+<tr>
+<td><strong>Long-Term</strong></td>
+<td>Cross-session patterns, validated knowledge</td>
+<td>Persistent storage</td>
+<td>Months to years</td>
+</tr>
+</tbody>
+</table>
+<p>The <code>UnifiedMemory</code> class provides a single interface to both tiers, with automatic environment detection and pattern promotion workflows.</p>
+<hr />
+<h2>Quick Start</h2>
+<h3>Basic Usage</h3>
+<pre><code class="language-python">from attune import EmpathyOS
+
+# Create an agent with unified memory (auto-configured)
+empathy = EmpathyOS(user_id=&quot;analyst@company.com&quot;)
+
+# Short-term memory (working data, expires)
+empathy.stash(&quot;current_task&quot;, {&quot;files&quot;: [&quot;api.py&quot;], &quot;status&quot;: &quot;analyzing&quot;})
+task = empathy.retrieve(&quot;current_task&quot;)
+
+# Long-term memory (persistent patterns)
+result = empathy.persist_pattern(
+    content=&quot;When handling API errors, always include request_id for tracing&quot;,
+    pattern_type=&quot;best_practice&quot;
+)
+pattern = empathy.recall_pattern(result[&quot;pattern_id&quot;])
+</code></pre>
+<h3>Direct Memory Access</h3>
+<pre><code class="language-python"># Access the unified memory interface directly
+memory = empathy.memory
+
+# Check health of both tiers
+health = memory.health_check()
+print(f&quot;Short-term available: {health['short_term']['available']}&quot;)
+print(f&quot;Long-term available: {health['long_term']['available']}&quot;)
+print(f&quot;Environment: {health['environment']}&quot;)
+</code></pre>
+<hr />
+<h2>Environment Configuration</h2>
+<p>The memory system auto-detects its environment and configures storage accordingly:</p>
+<h3>Automatic Detection</h3>
+<pre><code class="language-python">from attune.memory import UnifiedMemory, MemoryConfig
+
+# Auto-detect from environment variables
+memory = UnifiedMemory(user_id=&quot;agent@company.com&quot;)
+# Checks: REDIS_URL, ATTUNE_ENV, ATTUNE_STORAGE_DIR
+</code></pre>
+<h3>Manual Configuration</h3>
+<pre><code class="language-python">from attune.memory import UnifiedMemory, MemoryConfig, Environment
+
+# Development (mock Redis, local storage)
+dev_config = MemoryConfig(
+    environment=Environment.DEVELOPMENT,
+    redis_mock=True,
+    storage_dir=&quot;./dev_storage&quot;,
+    encryption_enabled=False
+)
+
+# Production (real Redis, encrypted storage)
+prod_config = MemoryConfig(
+    environment=Environment.PRODUCTION,
+    redis_url=&quot;redis://user:pass@host:6379&quot;,
+    storage_dir=&quot;/var/empathy/patterns&quot;,
+    encryption_enabled=True
+)
+
+memory = UnifiedMemory(user_id=&quot;agent@company.com&quot;, config=prod_config)
+</code></pre>
+<h3>Environment Variables</h3>
+<table>
+<thead>
+<tr>
+<th>Variable</th>
+<th>Purpose</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ATTUNE_ENV</code></td>
+<td>Environment tier</td>
+<td><code>development</code>, <code>staging</code>, <code>production</code></td>
+</tr>
+<tr>
+<td><code>REDIS_URL</code></td>
+<td>Redis connection</td>
+<td><code>redis://localhost:6379</code></td>
+</tr>
+<tr>
+<td><code>ATTUNE_REDIS_MOCK</code></td>
+<td>Force mock mode</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>ATTUNE_STORAGE_DIR</code></td>
+<td>Long-term storage</td>
+<td><code>./patterns</code></td>
+</tr>
+<tr>
+<td><code>ATTUNE_ENCRYPTION</code></td>
+<td>Enable encryption</td>
+<td><code>true</code></td>
+</tr>
+<tr>
+<td><code>ATTUNE_CLAUDE_MEMORY</code></td>
+<td>Load Claude memory</td>
+<td><code>true</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Short-Term Memory Operations</h2>
+<p>Short-term memory is for <strong>working data</strong> that expires automatically.</p>
+<h3>Stash and Retrieve</h3>
+<pre><code class="language-python"># Store with default TTL (1 hour)
+empathy.stash(&quot;analysis_results&quot;, {
+    &quot;files_reviewed&quot;: 10,
+    &quot;issues_found&quot;: 3,
+    &quot;timestamp&quot;: &quot;2025-12-10T10:00:00&quot;
+})
+
+# Store with custom TTL (24 hours)
+empathy.memory.stash(&quot;weekly_summary&quot;, summary_data, ttl_seconds=86400)
+
+# Retrieve
+results = empathy.retrieve(&quot;analysis_results&quot;)
+</code></pre>
+<h3>Stage Patterns for Validation</h3>
+<p>Before committing patterns to long-term memory, stage them for review:</p>
+<pre><code class="language-python"># Stage a discovered pattern
+staged_id = empathy.memory.stage_pattern(
+    pattern_data={
+        &quot;content&quot;: &quot;Always validate user input at API boundaries&quot;,
+        &quot;code_example&quot;: &quot;def validate(input): ...&quot;,
+        &quot;metadata&quot;: {&quot;discovered_in&quot;: &quot;pr_review_42&quot;}
+    },
+    pattern_type=&quot;security&quot;,
+    ttl_hours=24  # Auto-expires if not promoted
+)
+
+# View all staged patterns
+staged = empathy.memory.get_staged_patterns()
+for p in staged:
+    print(f&quot;Pattern: {p['pattern_type']} - Confidence: {p.get('confidence', 'N/A')}&quot;)
+</code></pre>
+<hr />
+<h2>Long-Term Memory Operations</h2>
+<p>Long-term memory is for <strong>validated patterns</strong> that persist across sessions.</p>
+<h3>Persist Patterns</h3>
+<pre><code class="language-python"># Basic pattern storage
+result = empathy.persist_pattern(
+    content=&quot;Use dependency injection for testable code&quot;,
+    pattern_type=&quot;architecture&quot;
+)
+print(f&quot;Pattern ID: {result['pattern_id']}&quot;)
+print(f&quot;Classification: {result['classification']}&quot;)  # AUTO-DETECTED
+
+# With explicit classification
+result = empathy.persist_pattern(
+    content=&quot;Patient data handling protocol for HIPAA compliance&quot;,
+    pattern_type=&quot;clinical_protocol&quot;,
+    classification=&quot;SENSITIVE&quot;,  # Forces encryption
+    metadata={&quot;compliance&quot;: [&quot;HIPAA&quot;], &quot;author&quot;: &quot;compliance_team&quot;}
+)
+</code></pre>
+<h3>Recall Patterns</h3>
+<pre><code class="language-python"># Retrieve by ID
+pattern = empathy.recall_pattern(&quot;pat_abc123&quot;)
+if pattern:
+    print(f&quot;Content: {pattern['content']}&quot;)
+    print(f&quot;Type: {pattern['pattern_type']}&quot;)
+    print(f&quot;Created: {pattern['created_at']}&quot;)
+</code></pre>
+<h3>Classification Levels</h3>
+<p>Patterns are automatically classified based on content:</p>
+<table>
+<thead>
+<tr>
+<th>Classification</th>
+<th>Description</th>
+<th>Encryption</th>
+<th>Retention</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PUBLIC</code></td>
+<td>General patterns, shareable</td>
+<td>No</td>
+<td>365 days</td>
+</tr>
+<tr>
+<td><code>INTERNAL</code></td>
+<td>Proprietary patterns</td>
+<td>Optional</td>
+<td>180 days</td>
+</tr>
+<tr>
+<td><code>SENSITIVE</code></td>
+<td>Healthcare/PII patterns</td>
+<td><strong>Required</strong> (AES-256)</td>
+<td>90 days</td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python">from attune.memory import Classification
+
+# Auto-classification (recommended)
+result = empathy.persist_pattern(
+    content=&quot;JWT refresh pattern for auth tokens&quot;,
+    pattern_type=&quot;security&quot;,
+    auto_classify=True  # Default
+)
+# Result: {&quot;classification&quot;: &quot;INTERNAL&quot;}
+
+# Explicit classification
+result = empathy.persist_pattern(
+    content=&quot;Patient handoff protocol&quot;,
+    pattern_type=&quot;clinical&quot;,
+    classification=Classification.SENSITIVE
+)
+# Result: {&quot;classification&quot;: &quot;SENSITIVE&quot;, &quot;encrypted&quot;: True}
+</code></pre>
+<hr />
+<h2>Pattern Promotion Workflow</h2>
+<p>The pattern promotion workflow moves validated patterns from short-term to long-term memory:</p>
+<pre><code>  ┌─────────────┐         ┌──────────────┐         ┌─────────────┐
+  │  Discovery  │───────▶│   Staging    │───────▶│  Long-Term  │
+  │  (Agent)    │         │  (Review)    │         │  (Library)  │
+  └─────────────┘         └──────────────┘         └─────────────┘
+        │                       │                        │
+        │                       │                        │
+    Contributor            Validator                 Anyone
+    discovers              reviews &amp;                can recall
+                           promotes
+</code></pre>
+<h3>Example Workflow</h3>
+<pre><code class="language-python">from attune import EmpathyOS, AccessTier
+
+# 1. Contributor discovers a pattern
+contributor = EmpathyOS(
+    user_id=&quot;code_reviewer&quot;,
+    access_tier=AccessTier.CONTRIBUTOR
+)
+
+staged_id = contributor.memory.stage_pattern(
+    pattern_data={
+        &quot;content&quot;: &quot;Use connection pooling for database access&quot;,
+        &quot;confidence&quot;: 0.92,
+        &quot;discovered_in&quot;: &quot;performance_review&quot;
+    },
+    pattern_type=&quot;optimization&quot;
+)
+print(f&quot;Pattern staged: {staged_id}&quot;)
+
+# 2. Validator reviews and promotes
+validator = EmpathyOS(
+    user_id=&quot;senior_architect&quot;,
+    access_tier=AccessTier.VALIDATOR
+)
+
+# Review staged patterns
+staged = validator.memory.get_staged_patterns()
+for p in staged:
+    if p.get(&quot;confidence&quot;, 0) &gt; 0.85:
+        # Promote to long-term storage
+        result = validator.memory.promote_pattern(
+            staged_pattern_id=p[&quot;pattern_id&quot;],
+            classification=&quot;INTERNAL&quot;,  # Optional override
+        )
+        print(f&quot;Promoted: {result['pattern_id']}&quot;)
+</code></pre>
+<hr />
+<h2>Security Integration</h2>
+<p>The unified memory system includes enterprise-grade security controls.</p>
+<h3>PII Scrubbing</h3>
+<p>Content is automatically scrubbed before storage:</p>
+<pre><code class="language-python"># PII in content is automatically redacted
+result = empathy.persist_pattern(
+    content=&quot;User john.doe@company.com reported issue with SSN 123-45-6789&quot;,
+    pattern_type=&quot;support_pattern&quot;
+)
+# Stored as: &quot;User [EMAIL] reported issue with SSN [SSN]&quot;
+</code></pre>
+<h3>Secrets Detection</h3>
+<p>Secrets are detected and blocked:</p>
+<pre><code class="language-python"># This will trigger a security warning
+result = empathy.persist_pattern(
+    content=&quot;API key: sk-proj-abc123...&quot;,
+    pattern_type=&quot;api_integration&quot;
+)
+# Result: {&quot;error&quot;: &quot;secrets_detected&quot;, &quot;blocked&quot;: True}
+</code></pre>
+<h3>Audit Logging</h3>
+<p>All operations are logged for compliance:</p>
+<pre><code class="language-python"># Audit events are automatically generated for:
+# - Pattern storage/retrieval
+# - Classification decisions
+# - Access control checks
+# - Security violations
+
+# View audit events programmatically
+from attune.memory import AuditLogger
+logger = AuditLogger(log_file=&quot;/var/log/empathy/audit.jsonl&quot;)
+</code></pre>
+<hr />
+<h2>Complete Example: Multi-Agent Knowledge Building</h2>
+<pre><code class="language-python">&quot;&quot;&quot;
+Multi-agent system where agents discover and share patterns.
+&quot;&quot;&quot;
+import asyncio
+from attune import EmpathyOS, AccessTier, get_redis_memory
+
+async def knowledge_building_demo():
+    # Shared memory for all agents
+    memory = get_redis_memory()
+
+    # Specialist agents discover patterns
+    security_agent = EmpathyOS(
+        user_id=&quot;security_specialist&quot;,
+        short_term_memory=memory,
+        access_tier=AccessTier.CONTRIBUTOR
+    )
+
+    performance_agent = EmpathyOS(
+        user_id=&quot;performance_specialist&quot;,
+        short_term_memory=memory,
+        access_tier=AccessTier.CONTRIBUTOR
+    )
+
+    # Lead architect validates and promotes
+    architect = EmpathyOS(
+        user_id=&quot;lead_architect&quot;,
+        short_term_memory=memory,
+        access_tier=AccessTier.VALIDATOR
+    )
+
+    # 1. Security agent discovers a pattern
+    security_agent.memory.stage_pattern(
+        pattern_data={
+            &quot;content&quot;: &quot;Always sanitize SQL inputs using parameterized queries&quot;,
+            &quot;code&quot;: &quot;cursor.execute('SELECT * FROM users WHERE id = ?', (user_id,))&quot;,
+            &quot;confidence&quot;: 0.95,
+            &quot;source&quot;: &quot;code_review_auth_module&quot;
+        },
+        pattern_type=&quot;security&quot;
+    )
+    print(&quot;Security pattern staged&quot;)
+
+    # 2. Performance agent discovers a pattern
+    performance_agent.memory.stage_pattern(
+        pattern_data={
+            &quot;content&quot;: &quot;Use bulk operations for batch database updates&quot;,
+            &quot;code&quot;: &quot;session.bulk_insert_mappings(Model, data_list)&quot;,
+            &quot;confidence&quot;: 0.88,
+            &quot;source&quot;: &quot;performance_analysis_q4&quot;
+        },
+        pattern_type=&quot;optimization&quot;
+    )
+    print(&quot;Performance pattern staged&quot;)
+
+    # 3. Architect reviews all staged patterns
+    staged = architect.memory.get_staged_patterns()
+    print(f&quot;\nPatterns awaiting review: {len(staged)}&quot;)
+
+    for p in staged:
+        print(f&quot;\n--- {p['pattern_type'].upper()} Pattern ---&quot;)
+        print(f&quot;Content: {p['content'][:50]}...&quot;)
+        print(f&quot;Confidence: {p.get('confidence', 'N/A')}&quot;)
+
+        # Promote high-confidence patterns
+        if p.get('confidence', 0) &gt; 0.85:
+            result = architect.memory.promote_pattern(p['pattern_id'])
+            print(f&quot;PROMOTED -&gt; Long-term ID: {result['pattern_id']}&quot;)
+        else:
+            print(&quot;NEEDS MORE VALIDATION&quot;)
+
+    # 4. Check long-term library
+    health = architect.memory.health_check()
+    print(f&quot;\n=== Memory Health ===&quot;)
+    print(f&quot;Short-term: {health['short_term']['available']}&quot;)
+    print(f&quot;Long-term: {health['long_term']['available']}&quot;)
+    print(f&quot;Environment: {health['environment']}&quot;)
+
+if __name__ == &quot;__main__&quot;:
+    asyncio.run(knowledge_building_demo())
+</code></pre>
+<hr />
+<h2>Migration from Legacy APIs</h2>
+<h3>From <code>short_term_memory</code> parameter</h3>
+<pre><code class="language-python"># OLD (still works, but deprecated)
+from attune import EmpathyOS, get_redis_memory
+empathy = EmpathyOS(
+    user_id=&quot;agent&quot;,
+    short_term_memory=get_redis_memory()  # Manual setup
+)
+empathy.short_term_memory.stash(...)  # Direct access
+
+# NEW (recommended)
+empathy = EmpathyOS(user_id=&quot;agent&quot;)
+empathy.stash(...)  # Convenience method
+empathy.memory.stash(...)  # Or via unified interface
+</code></pre>
+<h3>From <code>attune.security</code></h3>
+<pre><code class="language-python"># OLD (still works via re-exports)
+from attune.security import PIIScrubber, SecretsDetector
+
+# NEW (recommended)
+from attune.memory import PIIScrubber, SecretsDetector
+from attune.memory.security import AuditLogger
+</code></pre>
+<hr />
+<h2>Next Steps</h2>
+<ul>
+<li><strong><a href="./security-architecture.md">Security Architecture</a></strong>: PII scrubbing, audit logging</li>
+<li><strong><a href="../reference/multi-agent.md">API Reference: Memory</a></strong>: Complete class documentation</li>
+</ul>
+<hr />
+<p><em>The unified memory system was introduced in v1.10.0 as part of the MemDocs consolidation effort. It combines the best of short-term Redis coordination with long-term pattern persistence.</em></p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

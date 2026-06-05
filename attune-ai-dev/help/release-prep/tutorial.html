@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tutorial: Release Prep — tutorial</title>
+  <meta name="description" content="You want to know whether your project is safe to ship — not just a gut feeling, but a structured verdict backed by code quality scores, security findings, and documentation checks. This tutorial walks" />
+  <meta property="og:title" content="Tutorial: Release Prep — tutorial" />
+  <meta property="og:description" content="You want to know whether your project is safe to ship — not just a gut feeling, but a structured verdict backed by code quality scores, security findings, and documentation checks. This tutorial walks" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-prep">Release Prep</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Tutorial: Release Prep</h1>
+<p>You want to know whether your project is safe to ship — not just a gut feeling, but a structured verdict backed by code quality scores, security findings, and documentation checks. This tutorial walks you through building a small Python script that runs the full release-prep pipeline against a real codebase and prints a formatted go/no-go report to your terminal.</p>
+<p>When you finish, you'll have a running script that:</p>
+<ul>
+<li>Spins up <code>ReleasePrepTeam</code> with custom quality-gate thresholds</li>
+<li>Runs four specialized agents in parallel (code quality, test coverage, security, and documentation)</li>
+<li>Prints the formatted assessment, including any blockers, to your console</li>
+</ul>
+<h2>Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li>The <code>release</code> package installed in your environment</li>
+<li>A local Python project you want to assess (the current directory works fine)</li>
+</ul>
+<h2>What you will build</h2>
+<p>A single file — <code>check_release.py</code> — that you run from the command line:</p>
+<pre><code>python check_release.py
+</code></pre>
+<p>It exits with code <code>0</code> on GO and <code>1</code> on NO-GO, so you can drop it straight into a CI pipeline later.</p>
+<hr />
+<h2>Step 1 — Import the public surface</h2>
+<p>Open a new file called <code>check_release.py</code> and add these imports. Each name comes from the <code>release</code> package's public API, so you only need one import line for the classes and one for the models.</p>
+<pre><code class="language-python">from release import ReleasePrepTeam, ReleaseReadinessReport
+</code></pre>
+<p><code>ReleasePrepTeam</code> orchestrates all four agents; <code>ReleaseReadinessReport</code> is the dataclass you'll inspect to read the verdict.</p>
+<p><strong>Verify:</strong> Run <code>python -c &quot;from release import ReleasePrepTeam, ReleaseReadinessReport; print('OK')&quot;</code>. You should see <code>OK</code> with no import errors.</p>
+<hr />
+<h2>Step 2 — Define your quality gates</h2>
+<p>Quality gates tell the team what scores count as a pass. Each gate maps a check area to a minimum threshold between <code>0.0</code> and <code>1.0</code>. You pass these into <code>ReleasePrepTeam</code> at construction time so the agents know what bar to clear.</p>
+<pre><code class="language-python">gates = {
+    &quot;coverage&quot;:    0.80,   # 80 % line coverage minimum
+    &quot;quality&quot;:     0.75,   # code-quality score from ruff + type hints
+    &quot;security&quot;:    0.90,   # security audit score
+    &quot;documentation&quot;: 0.70, # docstring coverage + README + CHANGELOG
+}
+
+team = ReleasePrepTeam(quality_gates=gates)
+</code></pre>
+<p>Passing <code>None</code> uses the built-in defaults; this explicit dict lets you see exactly which thresholds drive the verdict.</p>
+<p><strong>Verify:</strong> Add <code>print(team)</code> temporarily and run the script. Python should print the object representation without raising an error. Remove the <code>print</code> before continuing.</p>
+<hr />
+<h2>Step 3 — Run the assessment</h2>
+<p><code>assess_readiness</code> is the single method that triggers all agents and blocks until every result is collected. Pass it the path to your project root — <code>'.'</code> targets whatever directory you run the script from.</p>
+<pre><code class="language-python">report: ReleaseReadinessReport = team.assess_readiness(codebase_path='.')
+</code></pre>
+<p>Under the hood, <code>ReleasePrepTeam</code> runs <code>TestCoverageAgent</code> (pytest --cov), <code>CodeQualityAgent</code> (ruff, type hints, complexity), <code>SecurityAuditorAgent</code>, and <code>DocumentationAgent</code> in parallel, then aggregates their <code>ReleaseAgentResult</code> objects into the report.</p>
+<p><strong>Verify:</strong> While this runs you should see agent activity in your terminal (log output from each agent). The call typically takes 30–90 seconds depending on project size.</p>
+<hr />
+<h2>Step 4 — Print the formatted report</h2>
+<p><code>ReleaseReadinessReport</code> has a <code>format_console_output()</code> method that renders the full assessment — verdict, per-gate scores, blockers, and warnings — in a human-readable layout.</p>
+<pre><code class="language-python">print(report.format_console_output())
+</code></pre>
+<p>Run the script now. You'll see something like:</p>
+<pre><code>Release Readiness Assessment
+Verdict: NO-GO   Confidence: medium
+─────────────────────────────────────────────────────
+coverage        PASS   actual=0.87  threshold=0.80
+quality         PASS   actual=0.79  threshold=0.75
+security        FAIL   actual=0.61  threshold=0.90
+documentation   PASS   actual=0.72  threshold=0.70
+
+Blockers (1)
+  security — 3 high-severity findings in src/auth/tokens.py
+
+Warnings (1)
+  coverage — branch coverage below 70%
+</code></pre>
+<p>Each <code>QualityGate</code> in <code>report.quality_gates</code> has <code>name</code>, <code>threshold</code>, <code>actual</code>, and <code>passed</code> fields if you want to process results programmatically instead of printing them.</p>
+<p><strong>Verify:</strong> Confirm the verdict line reads either <code>GO</code> or <code>NO-GO</code>. If it reads <code>NO-GO</code>, the <code>report.blockers</code> list will be non-empty — that's expected and correct behavior.</p>
+<hr />
+<h2>Step 5 — Exit with the right code</h2>
+<p>Wire the verdict to the process exit code so CI treats a NO-GO as a failure.</p>
+<pre><code class="language-python">import sys
+sys.exit(0 if report.approved else 1)
+</code></pre>
+<p><code>report.approved</code> is a <code>bool</code> field on <code>ReleaseReadinessReport</code> that is <code>True</code> only when every critical quality gate passed.</p>
+<p><strong>Verify:</strong> Run <code>python check_release.py; echo &quot;Exit code: $?&quot;</code>. A passing project prints <code>Exit code: 0</code>; a project with blockers prints <code>Exit code: 1</code>.</p>
+<hr />
+<h2>Complete script</h2>
+<pre><code class="language-python">import sys
+from release import ReleasePrepTeam, ReleaseReadinessReport
+
+gates = {
+    &quot;coverage&quot;:      0.80,
+    &quot;quality&quot;:       0.75,
+    &quot;security&quot;:      0.90,
+    &quot;documentation&quot;: 0.70,
+}
+
+team = ReleasePrepTeam(quality_gates=gates)
+report: ReleaseReadinessReport = team.assess_readiness(codebase_path='.')
+
+print(report.format_console_output())
+sys.exit(0 if report.approved else 1)
+</code></pre>
+<hr />
+<h2>What you learned</h2>
+<ul>
+<li><strong>Step 1</strong> showed you that <code>ReleasePrepTeam</code> and <code>ReleaseReadinessReport</code> are the two public names you need — everything else is an implementation detail the team manages internally.</li>
+<li><strong>Step 2</strong> made quality gates concrete: you saw how <code>coverage</code>, <code>quality</code>, <code>security</code>, and <code>documentation</code> thresholds map to the <code>QualityGate</code> dataclass fields <code>threshold</code> and <code>actual</code>.</li>
+<li><strong>Step 3</strong> revealed what <code>assess_readiness</code> actually does — it runs <code>TestCoverageAgent</code>, <code>CodeQualityAgent</code>, <code>SecurityAuditorAgent</code>, and <code>DocumentationAgent</code> in parallel and collects their <code>ReleaseAgentResult</code> objects.</li>
+<li><strong>Step 4</strong> showed you the two ways to consume a <code>ReleaseReadinessReport</code>: human-readable via <code>format_console_output()</code>, and programmatic via fields like <code>blockers</code>, <code>warnings</code>, and <code>quality_gates</code>.</li>
+<li><strong>Step 5</strong> closed the loop by connecting <code>report.approved</code> to a process exit code, turning your script into a real CI gate.</li>
+</ul>
+<h2>Next steps</h2>
+<p>To understand how the individual agents decide their scores — what ruff rules <code>CodeQualityAgent</code> enforces, what patterns <code>SecurityAuditorAgent</code> flags, and how the <code>Tier</code> escalation works when an agent's confidence is too low — read the agent source files directly under <code>src/attune/agents/release/</code>.</p>
+<p>&lt;!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=tutorial generated_at=2026-06-02 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 38 (code fence)</td>
+<td>error</td>
+<td><code>from release import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 162</td>
+<td>error</td>
+<td><code>[release prep reference](../reference/ref-release-prep.md)</code> — target does not exist</td>
+</tr>
+<tr>
+<td>Line 60 (python fence)</td>
+<td>error</td>
+<td>Name &quot;ReleasePrepTeam&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 74 (python fence)</td>
+<td>error</td>
+<td>Name &quot;ReleaseReadinessReport&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 74 (python fence)</td>
+<td>error</td>
+<td>Name &quot;team&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 88 (python fence)</td>
+<td>error</td>
+<td>Name &quot;report&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 121 (python fence)</td>
+<td>error</td>
+<td>Name &quot;report&quot; is not defined  [name-defined]</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

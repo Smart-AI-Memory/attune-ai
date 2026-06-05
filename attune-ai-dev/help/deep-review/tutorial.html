@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>Tutorial: Deep Review — tutorial</title>
+  <meta name="description" content="In this tutorial, you&#x27;ll build a script that runs a multi-pass deep code review on a directory of your choice. When the script finishes, you&#x27;ll have a consolidated report covering security findings, c" />
+  <meta property="og:title" content="Tutorial: Deep Review — tutorial" />
+  <meta property="og:description" content="In this tutorial, you&#x27;ll build a script that runs a multi-pass deep code review on a directory of your choice. When the script finishes, you&#x27;ll have a consolidated report covering security findings, c" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,111 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/deep-review">Deep Review</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>Tutorial: Deep Review</h1>
+<p>In this tutorial, you'll build a script that runs a multi-pass deep code review on a directory of your choice. When the script finishes, you'll have a consolidated report covering security findings, code quality issues, and test gaps — each ordered by severity and tied to specific file paths and line numbers.</p>
+<h2>What you are building</h2>
+<p>A short Python script that invokes <code>DeepReviewAgentSDKWorkflow</code> against a real codebase path and prints the consolidated review report. By the last step, you'll understand how the orchestrator coordinates three specialized subagents and why the result arrives as a single structured document rather than three separate outputs.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li>The <code>attune</code> package installed in your environment</li>
+<li>A local directory you want to review (any Python project works)</li>
+</ul>
+<hr />
+<h2>Step 1 — Import the workflow class</h2>
+<p>The <code>DeepReviewAgentSDKWorkflow</code> class lives in the <code>workflows.deep_review</code> module. Import it directly — no intermediate package needed.</p>
+<pre><code class="language-python">from workflows.deep_review import DeepReviewAgentSDKWorkflow
+</code></pre>
+<p><strong>Verify:</strong> Run <code>python -c &quot;from workflows.deep_review import DeepReviewAgentSDKWorkflow; print('ok')&quot;</code> in your terminal. You should see <code>ok</code> with no import errors.</p>
+<hr />
+<h2>Step 2 — Create a workflow instance</h2>
+<p>Instantiate the class with no arguments. The constructor sets up the three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — that will each analyze the codebase independently.</p>
+<pre><code class="language-python">workflow = DeepReviewAgentSDKWorkflow()
+</code></pre>
+<p><strong>Verify:</strong> <code>print(type(workflow))</code> should output <code>&lt;class 'workflows.deep_review.DeepReviewAgentSDKWorkflow'&gt;</code>.</p>
+<hr />
+<h2>Step 3 — Run the review against a path</h2>
+<p>Call <code>execute</code> with the <code>path</code> keyword argument pointing at the directory you want to review. This is where the orchestration happens: the three subagents run their focused passes, then their findings are synthesized into one report.</p>
+<pre><code class="language-python">result = workflow.execute(path=&quot;./my_project&quot;)
+</code></pre>
+<p>The <code>path</code> you supply can be a directory or a single file. Use a real path on your machine so the output is meaningful.</p>
+<p><strong>Verify:</strong> <code>result</code> should be a <code>WorkflowResult</code>. Print it — you should see sections titled <strong>Summary</strong>, <strong>Security</strong>, <strong>Quality</strong>, <strong>Test Gaps</strong>, and <strong>Suggestions</strong>.</p>
+<hr />
+<h2>Step 4 — Read the consolidated report</h2>
+<p>The report structure is predictable because the orchestrator always produces the same five sections. Print each section to confirm the subagents ran and contributed findings.</p>
+<pre><code class="language-python">print(result)
+</code></pre>
+<p>Look for the <strong>Summary</strong> section first — it contains an overall code health score (0–100) and a count of findings by severity. If the score is present, all three subagents completed successfully.</p>
+<p><strong>Verify:</strong> You see a numeric score in the Summary and at least one finding under Security, Quality, or Test Gaps.</p>
+<hr />
+<h2>Putting it together</h2>
+<p>Here is the complete script you've built step by step:</p>
+<pre><code class="language-python">from workflows.deep_review import DeepReviewAgentSDKWorkflow
+
+workflow = DeepReviewAgentSDKWorkflow()
+result = workflow.execute(path=&quot;./my_project&quot;)
+print(result)
+</code></pre>
+<p>Run it. You should have a full multi-pass review report in your terminal within a few moments.</p>
+<hr />
+<h2>What you learned</h2>
+<ul>
+<li><strong>Step 1</strong> — The correct import path for <code>DeepReviewAgentSDKWorkflow</code> is <code>from workflows.deep_review import DeepReviewAgentSDKWorkflow</code>.</li>
+<li><strong>Step 2</strong> — Instantiating the class wires up three independent subagents: <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code>.</li>
+<li><strong>Step 3</strong> — <code>execute(path=&quot;...&quot;)</code> is the single entry point; it accepts a directory or file path and coordinates all three subagents before returning.</li>
+<li><strong>Step 4</strong> — The returned <code>WorkflowResult</code> always contains the same five sections (Summary, Security, Quality, Test Gaps, Suggestions), so you can parse or display them reliably.</li>
+</ul>
+<h2>Next steps</h2>
+<p>Use <code>inspect.signature(DeepReviewAgentSDKWorkflow.execute)</code> to see every parameter <code>execute</code> accepts, and read <code>src/attune/workflows/deep_review.py</code> directly to understand the severity scale used in findings and how to call <code>deep_review</code> from an MCP tool context instead of directly from Python.</p>
+<p>&lt;!-- attune-generated: source_hash=e32648187b67c25e74699fc7a341857694ff7edd49f5c3d2fd4b545c1bdf65e4 feature=deep-review kind=tutorial generated_at=2026-06-02 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 28 (code fence)</td>
+<td>error</td>
+<td><code>from workflows.deep_review import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 101</td>
+<td>error</td>
+<td><code>[Deep Review tool reference](references/tool-deep-review.md)</code> — target does not exist</td>
+</tr>
+<tr>
+<td>Line 41 (python fence)</td>
+<td>error</td>
+<td>Name &quot;DeepReviewAgentSDKWorkflow&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 53 (python fence)</td>
+<td>error</td>
+<td>Name &quot;workflow&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 67 (python fence)</td>
+<td>error</td>
+<td>Name &quot;result&quot; is not defined  [name-defined]</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

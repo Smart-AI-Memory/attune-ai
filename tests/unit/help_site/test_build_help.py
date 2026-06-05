@@ -122,6 +122,135 @@ class TestBuild:
         assert "<h1>Demo</h1>" in page  # markdown rendered
         assert "A demo feature." in page
 
+
+# ---------------------------------------------------------------------------
+# PR-B: hand-written guide migration
+# ---------------------------------------------------------------------------
+
+
+def _fake_guides(root: Path) -> None:
+    (root / "docs" / "tutorials").mkdir(parents=True)
+    (root / "docs" / "how-to").mkdir(parents=True)
+    (root / "docs" / "getting-started").mkdir(parents=True)
+    # slug-matches the `demo` feature → merges into its page
+    (root / "docs" / "tutorials" / "demo.md").write_text(
+        "# Demo tutorial\n\nWalk through demo.\n", encoding="utf-8"
+    )
+    (root / "docs" / "how-to" / "demo.md").write_text(
+        "# Demo how-to\n\nDo demo tasks.\n", encoding="utf-8"
+    )
+    # no feature match → orphan in /help/guides/
+    (root / "docs" / "how-to" / "widget-thing.md").write_text(
+        "# Widget Thing\n\nCross-cutting guidance.\n", encoding="utf-8"
+    )
+    # excluded (maintainer)
+    (root / "docs" / "how-to" / "help-system-maintenance.md").write_text(
+        "# Maint\n\nInternal.\n", encoding="utf-8"
+    )
+    # install source with pymdownx tabs
+    (root / "docs" / "getting-started" / "installation.md").write_text(
+        '# Installation\n\nSetup.\n\n=== "Recommended"\n    ```bash\n'
+        "    pip install 'attune-ai[developer]'\n    ```\n",
+        encoding="utf-8",
+    )
+
+
+class TestGuideHelpers:
+    def test_strip_frontmatter(self):
+        # the closing-delimiter regex also consumes the blank line after it
+        assert bh._strip_frontmatter("---\na: 1\n---\n\nbody") == "body"
+        assert bh._strip_frontmatter("no fm") == "no fm"
+
+    def test_doc_title_from_heading(self):
+        assert bh._doc_title("# Real Title\n\nx", "slug") == "Real Title"
+        assert bh._doc_title("no heading", "my-slug") == "My Slug"
+
+    def test_strip_admonition(self):
+        out, n = bh._strip_mkdocs_isms('!!! note "Heads up"\n    content\n')
+        assert "**Heads up**" in out
+        assert n >= 1
+
+    def test_strip_fenced_div(self):
+        out, n = bh._strip_mkdocs_isms("::: callout\ntext\n:::\n")
+        assert ":::" not in out
+        assert "text" in out
+        assert n == 2
+
+    def test_tabbed_becomes_heading_and_deindents(self):
+        text = '=== "Tab A"\n    ```bash\n    pip install x\n    ```\n'
+        out, n = bh._strip_mkdocs_isms(text)
+        assert "#### Tab A" in out
+        assert "```bash" in out  # fence preserved
+        assert "    ```bash" not in out  # de-indented
+        assert "pip install x" in out
+        assert n >= 1
+
+
+class TestCollectGuides:
+    def test_slug_match_topic_map_and_orphan(self, tmp_path):
+        _fake_guides(tmp_path)
+        by_feature, orphans, _isms = bh._collect_guides(tmp_path, {"demo"})
+
+        assert "demo" in by_feature
+        sources = {g.source for g in by_feature["demo"]}
+        assert sources == {"tutorial", "how-to"}
+        assert any(o.slug == "widget-thing" for o in orphans)
+        # maintainer doc excluded entirely
+        all_slugs = {g.slug for gs in by_feature.values() for g in gs} | {o.slug for o in orphans}
+        assert "help-system-maintenance" not in all_slugs
+
+    def test_topic_map_routes_to_named_feature(self, tmp_path):
+        (tmp_path / "docs" / "how-to").mkdir(parents=True)
+        (tmp_path / "docs" / "how-to" / "telemetry-and-signals.md").write_text(
+            "# Telemetry\n\nx\n", encoding="utf-8"
+        )
+        by_feature, orphans, _ = bh._collect_guides(tmp_path, {"telemetry"})
+        assert "telemetry" in by_feature  # mapped via GUIDE_FEATURE_MAP
+        assert not orphans
+
+
+class TestBuildWithGuides:
+    def test_guides_merge_orphans_and_install(self, tmp_path):
+        _fake_corpus(tmp_path)
+        _fake_guides(tmp_path)
+        cfg = _config_for(tmp_path)
+        out = tmp_path / "help"
+
+        assert bh.build(out, cfg=cfg) == 0
+
+        # merged into the feature
+        assert (out / "demo" / "tutorial.html").is_file()
+        assert (out / "demo" / "how-to.html").is_file()
+        feat_page = (out / "demo" / "index.html").read_text(encoding="utf-8")
+        assert "Guides" in feat_page
+        assert "/help/demo/tutorial" in feat_page
+
+        # orphan + guides index
+        assert (out / "guides" / "widget-thing.html").is_file()
+        assert (out / "guides" / "index.html").is_file()
+
+        # install page renders the tab content (no raw fences / === left)
+        inst = (out / "installation.html").read_text(encoding="utf-8")
+        assert "pip install" in inst
+        assert "=== &quot;Recommended&quot;" not in inst
+        assert "Recommended" in inst
+
+        # search index carries guide + install entries
+        idx = json.loads((out / "search-index.json").read_text(encoding="utf-8"))
+        kinds = {e["kind"] for e in idx}
+        assert {"tutorial", "how-to", "guide"} <= kinds
+
+    def test_landing_links_guides_and_install(self, tmp_path):
+        _fake_corpus(tmp_path)
+        _fake_guides(tmp_path)
+        cfg = _config_for(tmp_path)
+        out = tmp_path / "help"
+        bh.build(out, cfg=cfg)
+
+        landing = (out / "index.html").read_text(encoding="utf-8")
+        assert "/help/installation" in landing
+        assert "/help/guides" in landing
+
     def test_search_index_is_well_formed(self, tmp_path):
         _fake_corpus(tmp_path)
         cfg = _config_for(tmp_path)

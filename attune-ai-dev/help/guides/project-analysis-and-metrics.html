@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cli reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
-  <meta property="og:title" content="Cli reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
+  <title>Project Analysis and Code Metrics — how-to</title>
+  <meta name="description" content="The Attune AI project index scans your codebase and builds a structured model of its files, dependencies, and code quality metrics. This powers the `health-check` and `code-review` workflows under the" />
+  <meta property="og:title" content="Project Analysis and Code Metrics — how-to" />
+  <meta property="og:description" content="The Attune AI project index scans your codebase and builds a structured model of its files, dependencies, and code quality metrics. This powers the `health-check` and `code-review` workflows under the" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,234 +250,252 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/guides">Guides</a><span class="sep">&rsaquo;</span><span>Project Analysis and Code Metrics</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Cli reference</h1>
-<h2>Classes</h2>
+<h1>Project Analysis and Code Metrics</h1>
+<p>The Attune AI project index scans your codebase and builds a structured
+model of its files, dependencies, and code quality metrics. This powers
+the <code>health-check</code> and <code>code-review</code> workflows under the hood.</p>
+<p>Use this guide directly when you want to query project metrics
+programmatically — for example, to find the highest-complexity files
+before a refactoring sprint, to compute test-to-source ratios in a
+script, or to integrate project health into a CI dashboard. For
+one-off analysis, <code>attune workflow run health-check</code> is simpler.</p>
+<hr />
+<h2>What the Project Index Does</h2>
+<pre><code>attune workflow run health-check
+         │
+         ▼
+┌──────────────────────────────┐
+│  ProjectScanner               │
+│  Walks the file tree          │
+│  Categorizes every .py file   │
+│  Computes per-file metrics    │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│  ProjectIndex                 │
+│  Builds searchable index      │
+│  Caches to .attune/           │
+└──────────────┬───────────────┘
+               │
+               ▼
+┌──────────────────────────────┐
+│  ReportGenerator              │
+│  Health score, risk files,    │
+│  dependency graph             │
+└──────────────────────────────┘
+</code></pre>
+<hr />
+<h2>Quick Start</h2>
+<pre><code class="language-python">from attune.project_index import ProjectIndex
+
+# Initialize and scan the project
+index = ProjectIndex(project_root=&quot;.&quot;)
+index.scan()
+
+summary = index.get_summary()
+print(f&quot;Total files:   {summary.total_files}&quot;)
+print(f&quot;Python files:  {summary.python_files}&quot;)
+print(f&quot;Test files:    {summary.test_files}&quot;)
+print(f&quot;Health score:  {summary.health_score:.0f}/100&quot;)
+</code></pre>
+<hr />
+<h2>File Categories</h2>
+<p>Every file is classified into one of these categories:</p>
 <table>
 <thead>
 <tr>
-<th>Class</th>
+<th>Category</th>
 <th>Description</th>
-<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RoutingPreference</code></td>
-<td>User's learned routing preferences.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>SOURCE</code></td>
+<td>Production source code</td>
 </tr>
 <tr>
-<td><code>HybridRouter</code></td>
-<td>Routes user input to Claude Code skill invocations.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>TEST</code></td>
+<td>Test files (<code>test_*.py</code>, <code>*_test.py</code>)</td>
+</tr>
+<tr>
+<td><code>CONFIG</code></td>
+<td>Configuration files</td>
+</tr>
+<tr>
+<td><code>DOCUMENTATION</code></td>
+<td>Markdown and text docs</td>
+</tr>
+<tr>
+<td><code>SCRIPT</code></td>
+<td>Utility scripts</td>
+</tr>
+<tr>
+<td><code>DATA</code></td>
+<td>Data files</td>
+</tr>
+<tr>
+<td><code>UNKNOWN</code></td>
+<td>Unclassified</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<pre><code class="language-python">from attune.project_index.models import FileCategory
+
+source_files = index.get_files_by_category(FileCategory.SOURCE)
+test_files   = index.get_files_by_category(FileCategory.TEST)
+
+print(f&quot;Source files: {len(source_files)}&quot;)
+print(f&quot;Test files:   {len(test_files)}&quot;)
+print(f&quot;Coverage ratio: {len(test_files)/len(source_files):.1%}&quot;)
+</code></pre>
+<hr />
+<h2>Code Metrics</h2>
+<p>For each Python file, the scanner computes:</p>
 <table>
 <thead>
 <tr>
-<th>Function</th>
+<th>Metric</th>
 <th>Description</th>
-<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>get_version()</code></td>
-<td>Get package version.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>line_count</code></td>
+<td>Total lines</td>
 </tr>
 <tr>
-<td><code>create_parser()</code></td>
-<td>Create the argument parser.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>function_count</code></td>
+<td>Number of functions and methods</td>
 </tr>
 <tr>
-<td><code>main()</code></td>
-<td>Main entry point.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
+<td><code>class_count</code></td>
+<td>Number of class definitions</td>
 </tr>
 <tr>
-<td><code>route_user_input()</code></td>
-<td>Quick routing helper.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>complexity</code></td>
+<td>Average cyclomatic complexity</td>
 </tr>
 <tr>
-<td><code>is_slash_command()</code></td>
-<td>Check if text is a slash command.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>import_count</code></td>
+<td>Number of import statements</td>
 </tr>
 <tr>
-<td><code>run_workflow_with_exit_code()</code></td>
-<td>Instantiate + execute a workflow and return the contract exit code.</td>
-<td><code>src/attune/cli_commands/_exit_codes.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs()</code></td>
-<td>Show cost report for recent period.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_today()</code></td>
-<td>Show today's cost summary.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_export()</code></td>
-<td>Export cost data to file.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_reset()</code></td>
-<td>Clear all cost tracking data.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_help()</code></td>
-<td>Handle the <code>attune help</code> command.</td>
-<td><code>src/attune/cli_commands/help_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_remember()</code></td>
-<td>Add a lesson to the lessons file.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_forget()</code></td>
-<td>Remove a lesson by line number or keyword.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_lessons()</code></td>
-<td>List current lessons with line numbers.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture()</code></td>
-<td>Save content to personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall()</code></td>
-<td>Search personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_topics()</code></td>
-<td>List all personal memory topics.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_forget_topic()</code></td>
-<td>Delete a topic (or specific kind) from personal memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_show()</code></td>
-<td>Show current provider configuration.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_set()</code></td>
-<td>Set the LLM provider.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_show()</code></td>
-<td>Display usage summary.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_savings()</code></td>
-<td>Show cost savings from tier routing.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_export()</code></td>
-<td>Export telemetry data to file.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_stats()</code></td>
-<td>Show adaptive routing statistics.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_check()</code></td>
-<td>Check for tier upgrade recommendations.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_models()</code></td>
-<td>Show model performance by provider.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_agents()</code></td>
-<td>Show active agents and their status.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_signals()</code></td>
-<td>Show coordination signals.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_setup()</code></td>
-<td>Install Attune slash commands for Claude Code.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_validate()</code></td>
-<td>Validate configuration.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_version()</code></td>
-<td>Show version information.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_features()</code></td>
-<td>Show available memory and telemetry features.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_doctor()</code></td>
-<td>Run comprehensive environment health check.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_list()</code></td>
-<td>List available workflows.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_info()</code></td>
-<td>Show workflow details.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run()</code></td>
-<td>Execute a workflow.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
+<td><code>has_docstrings</code></td>
+<td>Whether public items have docstrings</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
+<pre><code class="language-python"># Get metrics for a specific file
+record = index.get_file(&quot;src/attune/mcp/server.py&quot;)
+if record:
+    print(f&quot;Lines:       {record.line_count}&quot;)
+    print(f&quot;Functions:   {record.function_count}&quot;)
+    print(f&quot;Classes:     {record.class_count}&quot;)
+    print(f&quot;Complexity:  {record.complexity:.1f}&quot;)
+</code></pre>
+<h3>Finding High-Complexity Files</h3>
+<pre><code class="language-python"># Files sorted by complexity — candidates for refactoring
+complex_files = sorted(
+    index.get_files_by_category(FileCategory.SOURCE),
+    key=lambda r: r.complexity,
+    reverse=True,
+)
+
+print(&quot;Top 10 most complex files:&quot;)
+for record in complex_files[:10]:
+    print(f&quot;  {record.path:50s}  complexity={record.complexity:.1f}&quot;)
+</code></pre>
+<hr />
+<h2>Dependency Analysis</h2>
+<pre><code class="language-python"># What does a module import?
+deps = index.get_dependencies(&quot;src/attune/mcp/server.py&quot;)
+print(&quot;Direct imports:&quot;)
+for dep in deps.direct:
+    print(f&quot;  {dep}&quot;)
+
+# What imports a given module?
+dependents = index.get_dependents(&quot;src/attune/security/path_validation.py&quot;)
+print(f&quot;Used by {len(dependents)} modules&quot;)
+</code></pre>
+<hr />
+<h2>Project Summary</h2>
+<pre><code class="language-python">summary = index.get_summary()
+
+print(f&quot;Health score:        {summary.health_score:.0f}/100&quot;)
+print(f&quot;Total files:         {summary.total_files}&quot;)
+print(f&quot;Python files:        {summary.python_files}&quot;)
+print(f&quot;Test coverage ratio: {summary.test_coverage_ratio:.0%}&quot;)
+print(f&quot;Avg complexity:      {summary.avg_complexity:.2f}&quot;)
+print(f&quot;Files with docs:     {summary.documented_ratio:.0%}&quot;)
+print(f&quot;High-risk files:     {len(summary.high_risk_files)}&quot;)
+
+# High-risk files flagged by the scanner
+for f in summary.high_risk_files:
+    print(f&quot;  ⚠  {f.path}  (risk: {f.risk_score:.2f})&quot;)
+</code></pre>
+<hr />
+<h2>Index CLI</h2>
+<p>The project index ships its own CLI for one-off analysis:</p>
+<pre><code class="language-bash"># Scan and save index
+python -m attune.project_index refresh
+
+# Show summary table
+python -m attune.project_index summary
+
+# Full text report
+python -m attune.project_index report
+
+# Query specific files
+python -m attune.project_index query &quot;auth&quot;
+
+# Show one file's record
+python -m attune.project_index file src/attune/mcp/server.py
+</code></pre>
+<hr />
+<h2>Incremental Scanning</h2>
+<p>The index caches results to <code>.attune/project_index.json</code>. On subsequent
+calls, only modified files are re-scanned.</p>
+<pre><code class="language-python"># Full rescan
+index.scan(force=True)
+
+# Incremental (default)
+index.scan()
+print(f&quot;Last scanned: {index.last_scanned_at}&quot;)
+</code></pre>
+<hr />
+<h2>Integration with Workflows</h2>
+<p>The <code>health-check</code> and <code>code-review</code> workflows use the project index
+internally. If you are already running a workflow and want to inspect
+the index it built, access it through the workflow result rather than
+re-scanning:</p>
+<pre><code class="language-python">from attune import EmpathyOS  # main entry point for workflow execution
+
+empathy = EmpathyOS(user_id=&quot;dev&quot;)
+result = await empathy.run_workflow(
+    &quot;health-check&quot;,
+    {&quot;path&quot;: &quot;.&quot;},
+)
+
+# The workflow populates the index as a side effect — no second scan
+index = empathy.project_index
+summary = index.get_summary()
+</code></pre>
+<hr />
+<h2>See Also</h2>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><a href="../reference/API_REFERENCE.md">health-check workflow</a> — The
+primary consumer of project index data</li>
+<li><a href="../reference/API_REFERENCE.md">code-review workflow</a> — Uses
+metrics for prioritizing review focus</li>
+<li><a href="practical-patterns.md">Practical Patterns</a> — Code quality patterns and
+refactoring guidance</li>
 </ul>
-<h2>Tags</h2>
-<p><code>cli</code>, <code>commands</code></p>
 
   </article>
   <footer>

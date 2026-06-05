@@ -1,0 +1,388 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tutorial: Ops Dashboard — tutorial</title>
+  <meta name="description" content="You are going to build a running local ops dashboard — a FastAPI-backed server that exposes a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming. When y" />
+  <meta property="og:title" content="Tutorial: Ops Dashboard — tutorial" />
+  <meta property="og:description" content="You are going to build a running local ops dashboard — a FastAPI-backed server that exposes a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming. When y" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/ops-dashboard">Ops Dashboard</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Tutorial: Ops Dashboard</h1>
+<p>You are going to build a running local ops dashboard — a FastAPI-backed server that exposes a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming. When you finish, you will have a process you can open in a browser and use to trigger attune workflows against a real project directory.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li><code>attune</code> installed in your environment (<code>pip install attune</code>)</li>
+<li>A project directory on disk (any folder with at least one workflow configured)</li>
+</ul>
+<h2>What you will build</h2>
+<p>A local server started from Python that:</p>
+<ol>
+<li>Reads your project and attune state through a <code>Config</code> object</li>
+<li>Serves the ops dashboard on <code>http://127.0.0.1:8765</code></li>
+<li>Exposes KPI numbers and a cost sparkline on the home page</li>
+<li>Lists features and workflows scoped to your project directory</li>
+</ol>
+<p>You will write roughly fifteen lines of Python and end up with a browser tab showing live dashboard data.</p>
+<hr />
+<h2>Step 1 — Import the public API</h2>
+<p>The <code>attune.ops</code> module uses lazy imports so that loading <code>attune</code> in other contexts doesn't pull FastAPI into memory. Import only what the public API exposes:</p>
+<pre><code class="language-python">from attune.ops import create_app, build_config
+</code></pre>
+<p><strong>You should see:</strong> no import errors. If you get <code>ModuleNotFoundError</code>, confirm that <code>attune</code> is installed in the active virtual environment.</p>
+<hr />
+<h2>Step 2 — Build a <code>Config</code> for your project</h2>
+<p><code>Config</code> is the single source of truth for where the dashboard reads project state and attune data. You build one with <code>build_config</code>, which resolves environment defaults for anything you leave unspecified:</p>
+<pre><code class="language-python">from pathlib import Path
+
+config = build_config(
+    project_root=Path(&quot;.&quot;),   # your project directory
+    host=&quot;127.0.0.1&quot;,
+    port=8765,
+)
+</code></pre>
+<p><code>build_config</code> fills in <code>attune_home</code> automatically (checking the <code>ATTUNE_HOME</code> environment variable, then falling back to <code>~/.attune</code>), so you only need to supply values that differ from the defaults.</p>
+<p><strong>You should see:</strong> a <code>Config</code> instance. Print it to confirm the paths resolved correctly:</p>
+<pre><code class="language-python">print(config.project_root)   # absolute path to your project
+print(config.attune_home)    # e.g. /home/you/.attune
+print(config.runs_dir)       # where run history will be persisted
+</code></pre>
+<hr />
+<h2>Step 3 — Inspect what the dashboard will surface</h2>
+<p>Before starting the server, confirm that the dashboard can find your project's features. This step teaches you the data model the home page is built from.</p>
+<p><code>list_features</code> reads <code>.help/features.yaml</code> from your project root and returns a list of <code>Feature</code> objects — one per entry in that file:</p>
+<pre><code class="language-python">from attune.ops.data import list_features, first_feature
+
+features = list_features(config.project_root)
+for f in features:
+    print(f.name, f.path, f.tags)
+
+lead = first_feature(config.project_root)
+print(&quot;Scope picker will default to:&quot;, lead)
+</code></pre>
+<p>Each <code>Feature</code> has a <code>name</code>, a <code>description</code>, an optional <code>path</code> (used as the scope argument), and a tuple of <code>tags</code>. The scope picker in the dashboard UI uses exactly this list.</p>
+<p><strong>You should see:</strong> one line per feature defined in <code>.help/features.yaml</code>. If the file doesn't exist yet, both calls return an empty list / <code>None</code> — that's fine; the dashboard still starts.</p>
+<hr />
+<h2>Step 4 — Create the FastAPI application</h2>
+<p><code>create_app</code> wraps the FastAPI factory. Calling it wires up all routes — the home page KPIs, the workflow runner endpoints, the SSE log stream, and the <code>TrustedHostMiddleware</code> that guards the server using <code>config.trusted_hosts</code>:</p>
+<pre><code class="language-python">app = create_app(config)
+</code></pre>
+<p><code>create_app</code> is intentionally lazy: it imports FastAPI only at this call site, not at module import time. That is why it takes a <code>Config</code> rather than raw kwargs — all runtime decisions are already resolved before the factory runs.</p>
+<p><strong>You should see:</strong> a FastAPI application object. Confirm with:</p>
+<pre><code class="language-python">print(type(app))   # &lt;class 'fastapi.applications.FastAPI'&gt;
+print([r.path for r in app.routes])  # list of registered URL paths
+</code></pre>
+<hr />
+<h2>Step 5 — Start the server</h2>
+<p>Use <code>uvicorn</code> to serve the app. The dashboard is a blocking process, so run this as the last statement in your script (or from the command line):</p>
+<pre><code class="language-python">import uvicorn
+
+uvicorn.run(app, host=config.host, port=config.port)
+</code></pre>
+<p>Alternatively, use the built-in CLI entrypoint, which does exactly the same thing:</p>
+<pre><code class="language-bash">attune ops
+</code></pre>
+<p>Or invoke the module directly:</p>
+<pre><code class="language-bash">python -m attune.ops
+</code></pre>
+<p><strong>You should see:</strong> uvicorn startup lines followed by:</p>
+<pre><code>INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)
+</code></pre>
+<p>Open <code>http://127.0.0.1:8765</code> in a browser. The home page should display today's event count, today's cost, and a seven-day cost sparkline drawn from your telemetry data in <code>~/.attune</code>.</p>
+<hr />
+<h2>Step 6 — Verify the KPI data model</h2>
+<p>While the server is running, step back and look at how the home page numbers are derived. <code>home_kpis</code> takes a <code>TelemetrySummary</code> and produces a <code>HomeKpis</code> — this is what the dashboard's home-page endpoint calls internally:</p>
+<pre><code class="language-python">from datetime import date
+from attune.ops.data import home_kpis, TelemetrySummary
+
+# Construct a minimal summary to see the shape of the output
+summary = TelemetrySummary(
+    total_requests=42,
+    total_cost=1.25,
+    total_savings=0.30,
+    by_workflow=[(&quot;my-workflow&quot;, 10, 0.50)],
+    by_day=[(&quot;2026-05-14&quot;, 10, 0.50)],
+    last_event_at=&quot;2026-05-14T12:00:00&quot;,
+)
+
+kpis = home_kpis(summary, today=date(2026, 5, 14))
+print(kpis.today_events)       # 10
+print(kpis.seven_day_cost)     # 0.50
+print(kpis.sparkline)          # list[DailyCost]
+</code></pre>
+<p><code>HomeKpis.sparkline</code> is the list of <code>DailyCost</code> objects that the front end uses to draw the cost chart. Each <code>DailyCost</code> holds a <code>day</code> string, an <code>events</code> count, and a <code>cost</code> float.</p>
+<p><strong>You should see:</strong> the printed values match what you put into <code>TelemetrySummary</code>. This confirms you understand the data flow from raw telemetry to the numbers above the fold.</p>
+<hr />
+<h2>What you learned</h2>
+<ul>
+<li><strong>Step 2</strong> — <code>build_config</code> is the single place where project paths, host/port, and attune home are resolved. You never pass raw strings to <code>create_app</code>.</li>
+<li><strong>Step 3</strong> — The scope picker is backed by <code>list_features</code>, which reads <code>.help/features.yaml</code>. If that file is empty or absent, the picker is empty — not broken.</li>
+<li><strong>Step 4</strong> — <code>create_app</code> is a lazy factory. FastAPI is imported only when you call it, keeping <code>attune</code> importable in environments that don't have FastAPI installed.</li>
+<li><strong>Step 5</strong> — The same server is reachable three ways: as a library (<code>uvicorn.run(app, ...)</code>), as a CLI subcommand (<code>attune ops</code>), or as a module (<code>python -m attune.ops</code>). All three paths converge on the same <code>Config</code> and <code>create_app</code>.</li>
+<li><strong>Step 6</strong> — <code>home_kpis</code> is a pure function. You can unit-test the KPI logic without starting a server by constructing a <code>TelemetrySummary</code> directly.</li>
+</ul>
+<h2>Next steps</h2>
+<ul>
+<li><a href="../how-to/ops-dashboard.md">How-to: use the ops dashboard</a> — task-focused recipes for the dashboard's core API</li>
+<li><a href="../reference/ops-dashboard.md">Reference: ops-dashboard CLI</a> — every command-line flag, environment variable, and exit code</li>
+<li><a href="../architecture/ops-dashboard.md">Architecture: ops-dashboard</a> — design decisions, key classes, and the data-flow diagram</li>
+</ul>
+<p>&lt;!-- attune-generated: source_hash=395f221f9a789d9b8851955c90a8bcc4904e7c84a247bacee7036e1583b0ea42 feature=ops-dashboard kind=tutorial generated_at=2026-05-14 --&gt;</p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

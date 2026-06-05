@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cli reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
-  <meta property="og:title" content="Cli reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
+  <title>Prerequisites — how-to</title>
+  <meta name="description" content="*What you need before building with the Attune AI*" />
+  <meta property="og:title" content="Prerequisites — how-to" />
+  <meta property="og:description" content="*What you need before building with the Attune AI*" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,234 +250,292 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/guides">Guides</a><span class="sep">&rsaquo;</span><span>Prerequisites</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Cli reference</h1>
-<h2>Classes</h2>
-<table>
-<thead>
-<tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>RoutingPreference</code></td>
-<td>User's learned routing preferences.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-<tr>
-<td><code>HybridRouter</code></td>
-<td>Routes user input to Claude Code skill invocations.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Description</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_version()</code></td>
-<td>Get package version.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>create_parser()</code></td>
-<td>Create the argument parser.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>main()</code></td>
-<td>Main entry point.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>route_user_input()</code></td>
-<td>Quick routing helper.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-<tr>
-<td><code>is_slash_command()</code></td>
-<td>Check if text is a slash command.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-<tr>
-<td><code>run_workflow_with_exit_code()</code></td>
-<td>Instantiate + execute a workflow and return the contract exit code.</td>
-<td><code>src/attune/cli_commands/_exit_codes.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs()</code></td>
-<td>Show cost report for recent period.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_today()</code></td>
-<td>Show today's cost summary.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_export()</code></td>
-<td>Export cost data to file.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_reset()</code></td>
-<td>Clear all cost tracking data.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_help()</code></td>
-<td>Handle the <code>attune help</code> command.</td>
-<td><code>src/attune/cli_commands/help_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_remember()</code></td>
-<td>Add a lesson to the lessons file.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_forget()</code></td>
-<td>Remove a lesson by line number or keyword.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_lessons()</code></td>
-<td>List current lessons with line numbers.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture()</code></td>
-<td>Save content to personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall()</code></td>
-<td>Search personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_topics()</code></td>
-<td>List all personal memory topics.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_forget_topic()</code></td>
-<td>Delete a topic (or specific kind) from personal memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_show()</code></td>
-<td>Show current provider configuration.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_set()</code></td>
-<td>Set the LLM provider.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_show()</code></td>
-<td>Display usage summary.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_savings()</code></td>
-<td>Show cost savings from tier routing.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_export()</code></td>
-<td>Export telemetry data to file.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_stats()</code></td>
-<td>Show adaptive routing statistics.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_check()</code></td>
-<td>Check for tier upgrade recommendations.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_models()</code></td>
-<td>Show model performance by provider.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_agents()</code></td>
-<td>Show active agents and their status.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_signals()</code></td>
-<td>Show coordination signals.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_setup()</code></td>
-<td>Install Attune slash commands for Claude Code.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_validate()</code></td>
-<td>Validate configuration.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_version()</code></td>
-<td>Show version information.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_features()</code></td>
-<td>Show available memory and telemetry features.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_doctor()</code></td>
-<td>Run comprehensive environment health check.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_list()</code></td>
-<td>List available workflows.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_info()</code></td>
-<td>Show workflow details.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run()</code></td>
-<td>Execute a workflow.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
+<h1>Prerequisites</h1>
+<p><em>What you need before building with the Attune AI</em></p>
+<hr />
+<h2>Quick Checklist</h2>
+<p>Before you begin, ensure you have:</p>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li>[ ] <strong>Python 3.10+</strong> installed</li>
+<li>[ ] <strong>Redis</strong> running locally OR a cloud Redis URL</li>
+<li>[ ] <strong>30 minutes</strong> for initial setup</li>
+<li>[ ] <strong>Anthropic API key</strong> (<a href="https://console.anthropic.com/">console.anthropic.com</a>)</li>
 </ul>
-<h2>Tags</h2>
-<p><code>cli</code>, <code>commands</code></p>
+<hr />
+<h2>Detailed Requirements</h2>
+<h3>1. Python Environment</h3>
+<p><strong>Minimum version</strong>: Python 3.10</p>
+<p><strong>Recommended</strong>: Python 3.11+ for best async performance</p>
+<pre><code class="language-bash"># Check your version
+python --version
+
+# Create a virtual environment (recommended)
+python -m venv attune-env
+source attune-env/bin/activate  # macOS/Linux
+# or
+attune-env\Scripts\activate      # Windows
+</code></pre>
+<p><strong>Required knowledge</strong>:</p>
+<ul>
+<li>Basic Python syntax</li>
+<li>Package installation with pip</li>
+<li>(Optional) async/await for advanced patterns</li>
+</ul>
+<hr />
+<h3>2. Redis for Short-Term Memory</h3>
+<p>The framework uses Redis for agent coordination. You have three options:</p>
+<h4>Option A: Local Redis (Development)</h4>
+<pre><code class="language-bash"># macOS with Homebrew
+brew install redis
+brew services start redis
+
+# Ubuntu/Debian
+sudo apt-get install redis-server
+sudo systemctl start redis
+
+# Windows (WSL recommended)
+# Use WSL and follow Ubuntu instructions
+
+# Docker (any platform)
+docker run -d -p 6379:6379 redis:alpine
+</code></pre>
+<p><strong>Verify it's running</strong>:</p>
+<pre><code class="language-bash">redis-cli ping
+# Should return: PONG
+</code></pre>
+<h4>Option B: Cloud Redis (Production)</h4>
+<p>For production or team environments, use a managed Redis service:</p>
+<table>
+<thead>
+<tr>
+<th>Provider</th>
+<th>Free Tier</th>
+<th>Setup Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://railway.app">Railway</a></td>
+<td>500MB</td>
+<td>2 minutes</td>
+</tr>
+<tr>
+<td><a href="https://upstash.com">Upstash</a></td>
+<td>10K commands/day</td>
+<td>2 minutes</td>
+</tr>
+<tr>
+<td><a href="https://redis.com/try-free/">Redis Cloud</a></td>
+<td>30MB</td>
+<td>5 minutes</td>
+</tr>
+<tr>
+<td>AWS ElastiCache</td>
+<td>No free tier</td>
+<td>15 minutes</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Set the connection URL</strong>:</p>
+<pre><code class="language-bash">export REDIS_URL=&quot;redis://default:password@your-host:port&quot;
+</code></pre>
+<h4>Option C: Mock Mode (No Redis)</h4>
+<p>For quick experiments without Redis:</p>
+<pre><code class="language-python">import os
+os.environ[&quot;ATTUNE_REDIS_MOCK&quot;] = &quot;true&quot;
+
+from attune import EmpathyOS
+empathy = EmpathyOS(user_id=&quot;test&quot;)  # Uses in-memory mock
+</code></pre>
+<p><strong>Limitations</strong>: Mock mode doesn't persist across restarts or support multi-agent coordination.</p>
+<hr />
+<h3>3. Anthropic API Key</h3>
+<p>Attune AI runs on Anthropic's Claude models exclusively.</p>
+<pre><code class="language-bash">export ANTHROPIC_API_KEY=&quot;sk-ant-...&quot;
+</code></pre>
+<p>Get your key: <a href="https://console.anthropic.com/">console.anthropic.com</a></p>
+<hr />
+<h3>4. Install the Framework</h3>
+<pre><code class="language-bash"># Core framework
+pip install attune-ai
+
+# With Redis support (recommended)
+pip install attune-ai[redis]
+
+# With all optional dependencies
+pip install attune-ai[all]
+</code></pre>
+<p><strong>Verify installation</strong>:</p>
+<pre><code class="language-python">from attune import EmpathyOS
+print(&quot;Attune AI installed successfully!&quot;)
+</code></pre>
+<hr />
+<h2>Knowledge Prerequisites</h2>
+<h3>Required</h3>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>Why It's Needed</th>
+<th>Quick Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python basics</td>
+<td>All examples are in Python</td>
+<td><a href="https://docs.python.org/3/tutorial/">Python Tutorial</a></td>
+</tr>
+<tr>
+<td>Environment variables</td>
+<td>Configuration and API keys</td>
+<td><a href="https://12factor.net/config">12-Factor App</a></td>
+</tr>
+</tbody>
+</table>
+<h3>Helpful But Optional</h3>
+<table>
+<thead>
+<tr>
+<th>Skill</th>
+<th>When You'll Need It</th>
+<th>Quick Resource</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>async/await</td>
+<td>Multi-agent patterns</td>
+<td><a href="https://realpython.com/async-io-python/">Real Python Async</a></td>
+</tr>
+<tr>
+<td>Redis basics</td>
+<td>Custom memory patterns</td>
+<td><a href="https://redis.io/docs/getting-started/">Redis Quickstart</a></td>
+</tr>
+<tr>
+<td>Docker</td>
+<td>Production deployment</td>
+<td><a href="https://docs.docker.com/get-started/">Docker Getting Started</a></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Environment Setup Script</h2>
+<p>Run this script to verify your environment:</p>
+<pre><code class="language-python">#!/usr/bin/env python3
+&quot;&quot;&quot;Verify Attune AI prerequisites.&quot;&quot;&quot;
+
+import sys
+import os
+
+def check_python():
+    version = sys.version_info
+    if version &gt;= (3, 10):
+        print(f&quot;[OK] Python {version.major}.{version.minor}.{version.micro}&quot;)
+        return True
+    else:
+        print(f&quot;[FAIL] Python {version.major}.{version.minor} (need 3.10+)&quot;)
+        return False
+
+def check_redis():
+    try:
+        import redis
+        r = redis.from_url(os.getenv(&quot;REDIS_URL&quot;, &quot;redis://localhost:6379&quot;))
+        r.ping()
+        print(&quot;[OK] Redis connected&quot;)
+        return True
+    except Exception as e:
+        if os.getenv(&quot;ATTUNE_REDIS_MOCK&quot;) == &quot;true&quot;:
+            print(&quot;[OK] Redis mock mode enabled&quot;)
+            return True
+        print(f&quot;[WARN] Redis not available: {e}&quot;)
+        print(&quot;       Set ATTUNE_REDIS_MOCK=true to use mock mode&quot;)
+        return False
+
+def check_api_keys():
+    if os.getenv(&quot;ANTHROPIC_API_KEY&quot;):
+        print(&quot;[OK] Anthropic API key configured&quot;)
+        return True
+    print(&quot;[WARN] ANTHROPIC_API_KEY not set&quot;)
+    print(&quot;       Get your key at console.anthropic.com&quot;)
+    return False
+
+def check_empathy():
+    try:
+        from attune import EmpathyOS
+        print(&quot;[OK] Attune AI installed&quot;)
+        return True
+    except ImportError:
+        print(&quot;[FAIL] Attune AI not installed&quot;)
+        print(&quot;       Run: pip install attune-ai&quot;)
+        return False
+
+if __name__ == &quot;__main__&quot;:
+    print(&quot;=== Attune AI Prerequisites Check ===\n&quot;)
+
+    results = [
+        check_python(),
+        check_empathy(),
+        check_redis(),
+        check_api_keys(),
+    ]
+
+    print(&quot;\n&quot; + &quot;=&quot; * 45)
+    if all(results):
+        print(&quot;All prerequisites met! You're ready to start.&quot;)
+    else:
+        print(&quot;Some prerequisites need attention. See above.&quot;)
+</code></pre>
+<p>Save as <code>check_prereqs.py</code> and run:</p>
+<pre><code class="language-bash">python check_prereqs.py
+</code></pre>
+<hr />
+<h2>Troubleshooting</h2>
+<h3>&quot;Redis connection refused&quot;</h3>
+<p>Redis isn't running. Start it with:</p>
+<pre><code class="language-bash"># macOS
+brew services start redis
+
+# Linux
+sudo systemctl start redis
+
+# Docker
+docker run -d -p 6379:6379 redis:alpine
+</code></pre>
+<h3>&quot;No module named 'attune'&quot;</h3>
+<p>Install the framework:</p>
+<pre><code class="language-bash">pip install attune-ai
+</code></pre>
+<h3>&quot;API key not found&quot;</h3>
+<p>Set your environment variable:</p>
+<pre><code class="language-bash"># Add to ~/.bashrc or ~/.zshrc for persistence
+export ANTHROPIC_API_KEY=&quot;your-key-here&quot;
+</code></pre>
+<h3>&quot;Python version too old&quot;</h3>
+<p>Use pyenv to manage Python versions:</p>
+<pre><code class="language-bash"># Install pyenv
+curl https://pyenv.run | bash
+
+# Install Python 3.11
+pyenv install 3.11.0
+pyenv local 3.11.0
+</code></pre>
+<hr />
+<h2>Next Steps</h2>
+<p>Once prerequisites are met:</p>
+<ol>
+<li><strong>Quick start</strong>: <a href="./unified-memory-system.md">Unified Memory System</a></li>
+<li><strong>Understand the philosophy</strong>: Multi-Agent Philosophy</li>
+<li><strong>See patterns</strong>: <a href="./practical-patterns.md">Practical Patterns</a></li>
+</ol>
+<hr />
+<p><em>Estimated setup time: 15-30 minutes depending on your starting point</em></p>
 
   </article>
   <footer>

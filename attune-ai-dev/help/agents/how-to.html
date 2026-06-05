@@ -1,0 +1,678 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Agent Factory — how-to</title>
+  <meta name="description" content="`attune.agent_factory` provides a **universal factory** for creating agents and workflows across multiple frameworks through one common interface. Pick your framework once, and the same `create_agent`" />
+  <meta property="og:title" content="Agent Factory — how-to" />
+  <meta property="og:description" content="`attune.agent_factory` provides a **universal factory** for creating agents and workflows across multiple frameworks through one common interface. Pick your framework once, and the same `create_agent`" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/agents">Agents</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Agent Factory</h1>
+<p><code>attune.agent_factory</code> provides a <strong>universal factory</strong> for creating agents
+and workflows across multiple frameworks through one common interface.
+Pick your framework once, and the same <code>create_agent</code> / <code>create_workflow</code>
+calls work whether the underlying agents are LangChain chains, LangGraph
+state machines, AutoGen conversational agents, Haystack pipelines, or
+Attune's native adapter.</p>
+<p>The factory layers Attune-side features — model-tier routing,
+cost-tracking flags, optional Memory Graph integration, optional
+resilience wrapping — on top of the chosen framework.</p>
+<h2>Supported frameworks</h2>
+<table>
+<thead>
+<tr>
+<th>Framework value</th>
+<th>Adapter</th>
+<th>Install</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>Framework.NATIVE</code></td>
+<td><code>NativeAdapter</code> (built-in)</td>
+<td>included</td>
+</tr>
+<tr>
+<td><code>Framework.LANGCHAIN</code></td>
+<td><code>LangChainAdapter</code> (lazy)</td>
+<td><code>pip install langchain langchain-anthropic</code></td>
+</tr>
+<tr>
+<td><code>Framework.LANGGRAPH</code></td>
+<td><code>LangGraphAdapter</code> (lazy)</td>
+<td><code>pip install langgraph langchain-anthropic</code></td>
+</tr>
+<tr>
+<td><code>Framework.AUTOGEN</code></td>
+<td><code>AutoGenAdapter</code> (lazy)</td>
+<td><code>pip install pyautogen</code></td>
+</tr>
+<tr>
+<td><code>Framework.HAYSTACK</code></td>
+<td><code>HaystackAdapter</code> (lazy)</td>
+<td><code>pip install haystack-ai</code></td>
+</tr>
+</tbody>
+</table>
+<p>Framework adapters are imported lazily — you only pay the import cost for
+the one you use. <code>Framework.NATIVE</code> is always available.</p>
+<p>If a framework isn't selected explicitly, <code>AgentFactory</code> picks one based
+on what's installed and the <code>use_case</code> argument, falling back to
+<code>Framework.NATIVE</code>.</p>
+<h2>Quick start</h2>
+<pre><code class="language-python">from attune.agent_factory import AgentFactory, Framework
+
+# Create factory with your preferred framework
+factory = AgentFactory(framework=Framework.LANGGRAPH)
+
+# Create agents
+researcher = factory.create_agent(
+    name=&quot;researcher&quot;,
+    role=&quot;researcher&quot;,
+    model_tier=&quot;capable&quot;,
+)
+
+writer = factory.create_agent(
+    name=&quot;writer&quot;,
+    role=&quot;writer&quot;,
+    model_tier=&quot;premium&quot;,
+)
+
+# Create workflow
+pipeline = factory.create_workflow(
+    name=&quot;research_pipeline&quot;,
+    agents=[researcher, writer],
+    mode=&quot;sequential&quot;,
+)
+
+# Run (workflows are async)
+result = await pipeline.run(&quot;Research AI trends in 2025&quot;)
+print(result[&quot;output&quot;])
+</code></pre>
+<p><code>framework=</code> can be a <code>Framework</code> enum value or a string like
+<code>&quot;langgraph&quot;</code> / <code>&quot;langchain&quot;</code> / <code>&quot;autogen&quot;</code> / <code>&quot;haystack&quot;</code> / <code>&quot;native&quot;</code>.</p>
+<h2>The <code>AgentFactory</code> class</h2>
+<h3>Constructor</h3>
+<pre><code class="language-python">AgentFactory(
+    framework: Framework | str | None = None,
+    provider: str = &quot;anthropic&quot;,
+    api_key: str | None = None,
+    use_case: str = &quot;general&quot;,
+)
+</code></pre>
+<ul>
+<li><code>framework</code> — explicit framework choice. If <code>None</code>, auto-selected from
+installed packages and <code>use_case</code> (falls back to <code>Framework.NATIVE</code>).</li>
+<li><code>provider</code> — LLM provider name. Defaults to <code>&quot;anthropic&quot;</code>.</li>
+<li><code>api_key</code> — API key string. If not provided, falls back to the
+<code>ANTHROPIC_API_KEY</code> env var (or <code>OPENAI_API_KEY</code> when <code>provider=&quot;openai&quot;</code>).</li>
+<li><code>use_case</code> — recommendation hint when <code>framework</code> is <code>None</code>. Valid values:
+<code>&quot;general&quot;</code>, <code>&quot;rag&quot;</code>, <code>&quot;multi_agent&quot;</code>, <code>&quot;code_analysis&quot;</code>, <code>&quot;workflow&quot;</code>,
+<code>&quot;conversational&quot;</code>.</li>
+</ul>
+<h3><code>create_agent(...) -&gt; BaseAgent</code></h3>
+<p>Creates an agent through the active adapter. Frequently used arguments:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>required</td>
+<td>Unique agent name (tracked for <code>get_agent</code> / <code>list_agents</code>)</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td><code>AgentRole</code> or <code>str</code></td>
+<td><code>AgentRole.CUSTOM</code></td>
+<td>One of the values in <code>AgentRole</code> (see below)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+<td><code>&quot;&quot;</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>model_tier</code></td>
+<td><code>str</code></td>
+<td><code>&quot;capable&quot;</code></td>
+<td><code>&quot;cheap&quot;</code>, <code>&quot;capable&quot;</code>, <code>&quot;premium&quot;</code></td>
+</tr>
+<tr>
+<td><code>model_override</code></td>
+<td>`str</td>
+<td>None`</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td>`list[AgentCapability]</td>
+<td>None`</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td>`list[Any]</td>
+<td>None`</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>system_prompt</code></td>
+<td>`str</td>
+<td>None`</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>float</code></td>
+<td><code>0.7</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>int</code></td>
+<td><code>4096</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>empathy_level</code></td>
+<td><code>int</code></td>
+<td><code>4</code></td>
+<td>1–5; used by Attune-side features</td>
+</tr>
+<tr>
+<td><code>use_patterns</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Load learned patterns (config flag)</td>
+</tr>
+<tr>
+<td><code>track_costs</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Track API costs (config flag)</td>
+</tr>
+<tr>
+<td><code>memory_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Conversation memory</td>
+</tr>
+<tr>
+<td><code>memory_type</code></td>
+<td><code>str</code></td>
+<td><code>&quot;conversation&quot;</code></td>
+<td><code>&quot;conversation&quot;</code>, <code>&quot;summary&quot;</code>, <code>&quot;vector&quot;</code></td>
+</tr>
+<tr>
+<td><code>resilience_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Wraps result in a <code>ResilientAgent</code> (see below)</td>
+</tr>
+<tr>
+<td><code>memory_graph_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Wraps result in a <code>MemoryAwareAgent</code> (see below)</td>
+</tr>
+</tbody>
+</table>
+<p>Returns an object that implements <code>BaseAgent</code> — i.e. has
+<code>async def invoke(input_data, context=None) -&gt; dict</code> and
+<code>async def stream(input_data, context=None)</code>.</p>
+<h3><code>create_workflow(name, agents, mode=&quot;sequential&quot;, ...) -&gt; BaseWorkflow</code></h3>
+<p>Creates a workflow from a list of agents.</p>
+<ul>
+<li><code>mode</code> — <code>&quot;sequential&quot;</code>, <code>&quot;parallel&quot;</code>, <code>&quot;graph&quot;</code>, or <code>&quot;conversation&quot;</code>.
+Which modes are actually supported depends on the active adapter
+(e.g. <code>&quot;conversation&quot;</code> is most natural in AutoGen, <code>&quot;graph&quot;</code> in
+LangGraph).</li>
+<li>Other arguments: <code>max_iterations=10</code>, <code>timeout_seconds=300</code>,
+<code>state_schema=None</code>, <code>checkpointing=True</code>, <code>retry_on_error=True</code>,
+<code>max_retries=3</code>, <code>framework_options=None</code>.</li>
+</ul>
+<p>Returns an object implementing <code>BaseWorkflow</code> —
+<code>async def run(input_data, initial_state=None) -&gt; dict</code> and
+<code>async def stream(input_data, initial_state=None)</code>.</p>
+<h3><code>create_tool(name, description, func, args_schema=None) -&gt; Any</code></h3>
+<p>Creates a tool in the active adapter's native format. The exact return
+type is adapter-specific; the default <code>BaseAdapter</code> implementation
+returns a <code>dict</code> and individual adapters may override.</p>
+<h3><code>get_agent(name) -&gt; BaseAgent | None</code> / <code>list_agents() -&gt; list[str]</code></h3>
+<p>Look up an agent (or list names of agents) previously created on this
+factory instance. Agents are tracked by name inside the factory.</p>
+<h3><code>switch_framework(framework)</code></h3>
+<p>Switches the factory to a new framework. <strong>Clears the agent registry</strong> —
+existing agents created under the previous framework are not migrated.</p>
+<h3><code>list_frameworks(installed_only=True)</code> (classmethod)</h3>
+<p>Returns a list of dicts describing frameworks. Each dict has
+<code>framework</code>, <code>installed</code>, plus the fields from
+<code>framework.get_framework_info</code> (<code>name</code>, <code>description</code>, <code>best_for</code>,
+<code>install_command</code>, <code>docs_url</code>). When <code>installed_only=False</code>, all five
+supported frameworks are returned regardless of installation status.</p>
+<h3><code>recommend_framework(use_case=&quot;general&quot;)</code> (classmethod)</h3>
+<p>Returns a <code>Framework</code> enum value: the best-installed framework for the
+given use case, or <code>Framework.NATIVE</code> if no preferred option is
+installed.</p>
+<h3>Convenience constructors</h3>
+<p>Thin wrappers around <code>create_agent</code> with role + sensible tier defaults:</p>
+<ul>
+<li><code>create_researcher(name=&quot;researcher&quot;, model_tier=&quot;capable&quot;, **kwargs)</code></li>
+<li><code>create_writer(name=&quot;writer&quot;, model_tier=&quot;premium&quot;, **kwargs)</code></li>
+<li><code>create_reviewer(name=&quot;reviewer&quot;, model_tier=&quot;capable&quot;, **kwargs)</code></li>
+<li><code>create_debugger(name=&quot;debugger&quot;, model_tier=&quot;capable&quot;, **kwargs)</code> —
+also enables <code>AgentCapability.CODE_EXECUTION</code></li>
+<li><code>create_coordinator(name=&quot;coordinator&quot;, model_tier=&quot;premium&quot;, **kwargs)</code></li>
+</ul>
+<h3>Pipeline helpers</h3>
+<ul>
+<li><code>create_research_pipeline(topic=&quot;&quot;, include_reviewer=True)</code> —
+research → write → (review) sequential pipeline.</li>
+<li><code>create_code_review_pipeline()</code> — security → debug → review sequential
+pipeline.</li>
+</ul>
+<h2>Enums</h2>
+<h3><code>AgentRole</code></h3>
+<p>Built-in roles (string values shown):</p>
+<pre><code>COORDINATOR    &quot;coordinator&quot;
+RESEARCHER     &quot;researcher&quot;
+WRITER         &quot;writer&quot;
+REVIEWER       &quot;reviewer&quot;
+EDITOR         &quot;editor&quot;
+EXECUTOR       &quot;executor&quot;
+DEBUGGER       &quot;debugger&quot;
+SECURITY       &quot;security&quot;
+ARCHITECT      &quot;architect&quot;
+TESTER         &quot;tester&quot;
+DOCUMENTER     &quot;documenter&quot;
+RETRIEVER      &quot;retriever&quot;
+SUMMARIZER     &quot;summarizer&quot;
+ANSWERER       &quot;answerer&quot;
+CUSTOM         &quot;custom&quot;
+</code></pre>
+<p>You can pass either the enum value (<code>role=AgentRole.RESEARCHER</code>) or the
+lowercase string (<code>role=&quot;researcher&quot;</code>).</p>
+<h3><code>AgentCapability</code></h3>
+<pre><code>CODE_EXECUTION     &quot;code_execution&quot;
+TOOL_USE           &quot;tool_use&quot;
+WEB_SEARCH         &quot;web_search&quot;
+FILE_ACCESS        &quot;file_access&quot;
+MEMORY             &quot;memory&quot;
+RETRIEVAL          &quot;retrieval&quot;
+VISION             &quot;vision&quot;
+FUNCTION_CALLING   &quot;function_calling&quot;
+</code></pre>
+<h2>Model tiers</h2>
+<p><code>model_tier</code> is resolved by the adapter's <code>get_model_for_tier</code>, which
+delegates to <code>attune.routing.ModelRouter</code> when available. The hard-coded
+fallback for <code>provider=&quot;anthropic&quot;</code> (used when the router is not
+importable) maps:</p>
+<table>
+<thead>
+<tr>
+<th>Tier</th>
+<th>Fallback model (Anthropic)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>cheap</code></td>
+<td><code>claude-haiku-4-5-20251001</code></td>
+</tr>
+<tr>
+<td><code>capable</code></td>
+<td><code>claude-sonnet-4-6</code></td>
+</tr>
+<tr>
+<td><code>premium</code></td>
+<td><code>claude-opus-4-6</code></td>
+</tr>
+</tbody>
+</table>
+<p>These IDs are fallback constants — the live mapping is whatever
+<code>ModelRouter</code> resolves at runtime.</p>
+<h2>Optional wrappers</h2>
+<p>When you set the right flags on <code>create_agent</code>, the returned agent is
+wrapped with one or both of:</p>
+<h3><code>MemoryAwareAgent</code> — Memory Graph integration</h3>
+<p>Enabled by <code>memory_graph_enabled=True</code>. Queries similar past findings
+before invocation and stores new findings after. Imported lazily from
+<code>attune.agent_factory.memory_integration</code>; if the import fails, the flag
+is logged and ignored (the underlying agent is returned unwrapped).</p>
+<p>Tuning args on <code>create_agent</code>: <code>memory_graph_path</code> (default
+<code>&quot;patterns/memory_graph.json&quot;</code>), <code>store_findings</code> (default <code>True</code>),
+<code>query_similar</code> (default <code>True</code>).</p>
+<h3><code>ResilientAgent</code> — Circuit breaker / retry / timeout</h3>
+<p>Enabled by <code>resilience_enabled=True</code>. Imported lazily from
+<code>attune.agent_factory.resilient</code>; same fail-soft behavior on import
+error. Tuning args: <code>circuit_breaker_threshold</code> (default <code>3</code>),
+<code>retry_max_attempts</code> (default <code>2</code>), <code>timeout_seconds</code> (default <code>30.0</code>).</p>
+<p>When both flags are set, <code>ResilientAgent</code> is applied as the <em>outer</em>
+wrapper around <code>MemoryAwareAgent</code>.</p>
+<h2>Public exports</h2>
+<pre><code class="language-python">from attune.agent_factory import (
+    AgentCapability,
+    AgentConfig,
+    AgentFactory,
+    AgentRole,
+    BaseAdapter,
+    BaseAgent,
+    Framework,
+    WorkflowConfig,
+)
+</code></pre>
+<p>That list is the <code>__all__</code> of <code>attune.agent_factory</code>. <code>MemoryAwareAgent</code>,
+<code>ResilientAgent</code>, <code>ResilienceConfig</code>, and the framework-specific
+adapters are importable from their submodules but not re-exported at the
+top level.</p>
+<h2>Example: code review pipeline</h2>
+<pre><code class="language-python">from attune.agent_factory import AgentFactory, AgentRole
+
+factory = AgentFactory(framework=&quot;langgraph&quot;)
+
+security = factory.create_agent(
+    name=&quot;security&quot;,
+    role=AgentRole.SECURITY,
+    model_tier=&quot;capable&quot;,
+    system_prompt=&quot;Analyze code for security vulnerabilities.&quot;,
+)
+
+quality = factory.create_agent(
+    name=&quot;quality&quot;,
+    role=AgentRole.REVIEWER,
+    model_tier=&quot;capable&quot;,
+    system_prompt=&quot;Review code quality and suggest improvements.&quot;,
+)
+
+coordinator = factory.create_agent(
+    name=&quot;coordinator&quot;,
+    role=AgentRole.COORDINATOR,
+    model_tier=&quot;premium&quot;,
+    system_prompt=&quot;Synthesize reviews into actionable feedback.&quot;,
+)
+
+pipeline = factory.create_workflow(
+    name=&quot;code_review&quot;,
+    agents=[security, quality, coordinator],
+    mode=&quot;sequential&quot;,
+)
+
+result = await pipeline.run(&quot;Review this code:\n&lt;paste code here&gt;&quot;)
+print(result[&quot;output&quot;])
+</code></pre>
+<p>The same code works with <code>framework=&quot;langchain&quot;</code>, <code>&quot;autogen&quot;</code>,
+<code>&quot;haystack&quot;</code>, or <code>&quot;native&quot;</code> — the adapter handles the framework-specific
+mechanics, and the call sites are identical.</p>
+<h2>Next steps</h2>
+<ul>
+<li><a href="./resilience-patterns.md">Resilience patterns</a> — deeper detail on
+<code>ResilientAgent</code> configuration.</li>
+<li><a href="../reference/index.md">Reference index</a></li>
+</ul>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

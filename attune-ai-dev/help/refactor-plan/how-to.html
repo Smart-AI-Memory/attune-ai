@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>How to Use Refactor Plan — how-to</title>
+  <meta name="description" content="Use this guide when you need to scan a codebase for technical debt and produce a prioritized refactoring roadmap — programmatically or from the command line." />
+  <meta property="og:title" content="How to Use Refactor Plan — how-to" />
+  <meta property="og:description" content="Use this guide when you need to scan a codebase for technical debt and produce a prioritized refactoring roadmap — programmatically or from the command line." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,114 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/refactor-plan">Refactor Plan</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>How to Use Refactor Plan</h1>
+<p>Use this guide when you need to scan a codebase for technical debt and produce a prioritized refactoring roadmap — programmatically or from the command line.</p>
+<h2>Quick start</h2>
+<pre><code class="language-python">from workflows.refactor_plan import RefactorPlanWorkflow
+from workflows.refactor_plan_report import format_refactor_plan_report
+
+workflow = RefactorPlanWorkflow()
+result = workflow.execute(path=&quot;src/auth/&quot;)
+
+input_data = {&quot;path&quot;: &quot;src/auth/&quot;}
+report = format_refactor_plan_report(result=result.__dict__, input_data=input_data)
+print(report)
+</code></pre>
+<p>Running this prints a structured report with a tech debt score, a prioritized refactoring list with effort and risk estimates, and actionable next steps.</p>
+<h2>Core API</h2>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RefactorPlanWorkflow</code></td>
+<td>Orchestrates three subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, <code>plan-generator</code>) to produce a unified refactoring roadmap</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.execute(**kwargs)</code></td>
+<td>Runs the workflow and returns a <code>WorkflowResult</code></td>
+</tr>
+<tr>
+<td><code>format_refactor_plan_report(result, input_data)</code></td>
+<td>Formats a <code>WorkflowResult</code> dict as a human-readable report</td>
+</tr>
+<tr>
+<td><code>main()</code></td>
+<td>CLI entry point — runs the workflow and prints the report to stdout</td>
+</tr>
+</tbody>
+</table>
+<h2>Integration patterns</h2>
+<h3>Run from the command line</h3>
+<p>If you only need a one-off report, call the CLI entry point directly:</p>
+<pre><code class="language-python">from workflows.refactor_plan_report import main
+
+main()
+</code></pre>
+<p>Or invoke it as a script. <code>main()</code> handles argument parsing, calls <code>RefactorPlanWorkflow.execute</code>, and prints the formatted report.</p>
+<h3>Embed in a larger pipeline</h3>
+<p>When you want to act on the results programmatically — for example, to gate a CI step on the debt score — consume the <code>WorkflowResult</code> before formatting:</p>
+<pre><code class="language-python">from workflows.refactor_plan import RefactorPlanWorkflow
+from workflows.refactor_plan_report import format_refactor_plan_report
+
+def check_debt_gate(path: str, score_threshold: int = 50) -&gt; bool:
+    workflow = RefactorPlanWorkflow()
+    result = workflow.execute(path=path)
+
+    report = format_refactor_plan_report(
+        result=result.__dict__,
+        input_data={&quot;path&quot;: path},
+    )
+    print(report)
+
+    # WorkflowResult carries the raw findings; inspect them
+    # before deciding whether to fail the pipeline.
+    return result.score &gt;= score_threshold
+</code></pre>
+<p>The workflow internally coordinates <code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code> subagents; your code only needs to handle the final <code>WorkflowResult</code>.</p>
+<h2>See also</h2>
+<ul>
+<li><code>tasks/use-refactor-plan.md</code> — slash-command usage and how to read the roadmap output</li>
+<li><code>concepts/tool-refactor-plan.md</code> — how scoring, severity, and prioritization work</li>
+</ul>
+<p>&lt;!-- attune-generated: source_hash=048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38 feature=refactor-plan kind=how-to generated_at=2026-06-02 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 7 (code fence)</td>
+<td>error</td>
+<td><code>from workflows.refactor_plan import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 7 (code fence)</td>
+<td>error</td>
+<td><code>from workflows.refactor_plan_report import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

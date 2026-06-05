@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>Telemetry and Agent Coordination Signals — how-to</title>
+  <meta name="description" content="Attune AI records detailed telemetry on every workflow run and tracks coordination signals between agents. Use this guide when you want to understand where your AI budget is going, whether the tier ro" />
+  <meta property="og:title" content="Telemetry and Agent Coordination Signals — how-to" />
+  <meta property="og:description" content="Attune AI records detailed telemetry on every workflow run and tracks coordination signals between agents. Use this guide when you want to understand where your AI budget is going, whether the tier ro" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,207 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/telemetry">Telemetry</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>Telemetry and Agent Coordination Signals</h1>
+<p>Attune AI records detailed telemetry on every workflow run and tracks
+coordination signals between agents. Use this guide when you want to
+understand where your AI budget is going, whether the tier router is
+making good decisions (e.g., a stage that keeps failing at Haiku may
+need promotion to Sonnet), or what is happening across agents in a
+multi-agent workflow.</p>
+<hr />
+<h2>Telemetry Data Model</h2>
+<p>Every workflow run records:</p>
+<ul>
+<li><strong>Task type</strong> — which workflow was called</li>
+<li><strong>Model used</strong> — which Claude model tier executed the stage</li>
+<li><strong>Actual cost</strong> vs <strong>baseline cost</strong> (what it would cost at Opus-only pricing)</li>
+<li><strong>Latency</strong> — end-to-end duration in milliseconds</li>
+<li><strong>Success</strong> — whether the stage completed successfully</li>
+<li><strong>Cache hits</strong> — whether prompt caching reduced input tokens</li>
+</ul>
+<p>Data is stored in <code>~/.attune/telemetry/usage.jsonl</code> (JSONL, one record per
+run) and summarized in <code>~/.attune/costs.json</code>.</p>
+<hr />
+<h2>Cost Tracking</h2>
+<h3>Daily Report</h3>
+<pre><code class="language-bash">attune costs
+attune costs --days 30
+attune costs --workflow security-audit
+</code></pre>
+<p><strong>Example output:</strong></p>
+<pre><code>Cost Report — Last 7 days
+--------------------------------------------------
+  Requests:        142
+  Actual cost:     $0.4821
+  Baseline (Opus): $6.3900
+  Saved:           $5.9079  (92.5%)
+</code></pre>
+<p>The &quot;Baseline&quot; figure is the estimated cost if every call had used Claude
+Opus 4 at premium tier. The gap shows how much intelligent tier routing saved.</p>
+<h3>Today's Spend</h3>
+<pre><code class="language-bash">attune costs today
+</code></pre>
+<h3>Export for Analysis</h3>
+<pre><code class="language-bash">attune costs export -o costs.json
+attune costs export -o costs.csv --format csv --days 90
+</code></pre>
+<hr />
+<h2>Adaptive Routing Statistics</h2>
+<p>The adaptive router assigns each workflow stage to CHEAP, CAPABLE, or PREMIUM
+tier based on learned performance data. The routing stats commands let you
+inspect those decisions.</p>
+<h3>Overall Routing Health</h3>
+<pre><code class="language-bash">attune telemetry routing-stats
+</code></pre>
+<p>Shows tier distribution, cost breakdown, and cache hit rate across all
+workflows for the past 7 days.</p>
+<h3>Per-Workflow Breakdown</h3>
+<pre><code class="language-bash">attune telemetry routing-stats --workflow code-review
+attune telemetry routing-stats --workflow code-review --stage scan --days 14
+</code></pre>
+<p><strong>Example output:</strong></p>
+<pre><code>📊 Adaptive Routing Statistics
+
+  Workflow:      code-review
+  Period:        Last 14 days
+  Total calls:   56
+  Avg cost:      $0.0028
+  Success rate:  98.2%
+
+  Models used:   claude-haiku-4-5, claude-sonnet-4-5
+
+  Per-Model Performance:
+    claude-sonnet-4-5:
+      Calls:         40   Success rate: 100.0%
+      Avg cost:      $0.0042  Avg latency: 1380ms
+      Quality score: 0.94
+    claude-haiku-4-5:
+      Calls:         16   Success rate: 93.8%
+      Avg cost:      $0.0004  Avg latency: 620ms
+      Quality score: 0.81
+</code></pre>
+<p>The <strong>quality score</strong> is a composite of success rate, output length, and
+user feedback signals. A score below 0.80 suggests the assigned model
+tier is not performing well for this stage — use
+<code>attune telemetry routing-check</code> to get an explicit promotion
+recommendation.</p>
+<h3>Routing Recommendations</h3>
+<pre><code class="language-bash">attune telemetry routing-check
+attune telemetry routing-check --workflow perf-audit
+</code></pre>
+<p>Analyzes recent routing decisions and flags stages where the current tier
+is underperforming. Output indicates whether to promote a stage to a higher
+tier.</p>
+<h3>Model Performance by Provider</h3>
+<pre><code class="language-bash">attune telemetry models
+attune telemetry models --days 30
+</code></pre>
+<p>Shows cost, latency, and success rate broken down by model across all
+workflows — useful for identifying which models are most cost-effective.</p>
+<hr />
+<h2>Agent Coordination Signals</h2>
+<p>Use this section when running multi-agent workflows (e.g., parallel
+test generation or the release-prep team) and you want to verify that
+all agents are alive and communicating, or to diagnose a workflow that
+appears to have stalled. In single-agent workflows, this section is
+not relevant.</p>
+<p>In multi-agent workflows, agents communicate via a coordination bus. Each
+agent registers itself, sends heartbeats, and can publish and subscribe to
+coordination signals.</p>
+<h3>Viewing Active Agents</h3>
+<pre><code class="language-bash">attune telemetry agents
+</code></pre>
+<p><strong>Output:</strong></p>
+<pre><code>Active Agents
+--------------------------------------------------
+  ID           Type      Tier          Last heartbeat
+  claude_...   claude    CONTRIBUTOR   2026-04-23 14:32:01
+  worker_...   worker    STEWARD       2026-04-23 14:31:58
+</code></pre>
+<ul>
+<li><strong>Type</strong>: <code>claude</code>, <code>worker</code>, or <code>service</code></li>
+<li><strong>Tier</strong>: <code>OBSERVER</code>, <code>CONTRIBUTOR</code>, <code>VALIDATOR</code>, or <code>STEWARD</code></li>
+<li>Access tier controls what resources an agent can read/modify</li>
+</ul>
+<h3>Inspecting Signals for a Specific Agent</h3>
+<pre><code class="language-bash">attune telemetry signals --agent claude_20260423_abc123
+</code></pre>
+<p>Shows all coordination messages — lock acquisitions, heartbeats,
+announcements, and departures — for the given agent ID.</p>
+<hr />
+<h2>Python API for Telemetry</h2>
+<pre><code class="language-python">from attune.telemetry import UsageTracker
+
+tracker = UsageTracker.get_instance()
+
+# Overall stats
+stats = tracker.get_stats(days=7)
+print(f&quot;Total calls:    {stats['total_calls']:,}&quot;)
+print(f&quot;Total cost:     ${stats['total_cost']:.4f}&quot;)
+print(f&quot;Cache hit rate: {stats['cache_hit_rate']:.1f}%&quot;)
+
+# Cost by workflow
+for name, cost in stats[&quot;by_workflow&quot;].items():
+    print(f&quot;  {name:30s}: ${cost:.4f}&quot;)
+</code></pre>
+<h3>Recording a Custom Event</h3>
+<pre><code class="language-python">tracker.record(
+    task_type=&quot;custom-analysis&quot;,
+    model=&quot;claude-sonnet-4-5&quot;,
+    actual_cost=0.0025,
+    baseline_cost=0.0150,
+    latency_ms=1200,
+    success=True,
+    cache_hit=False,
+)
+</code></pre>
+<hr />
+<h2>Telemetry Storage Locations</h2>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>~/.attune/telemetry/usage.jsonl</code></td>
+<td>Full request log (one JSON object per line)</td>
+</tr>
+<tr>
+<td><code>~/.attune/costs.json</code></td>
+<td>Aggregated cost summary by day and workflow</td>
+</tr>
+<tr>
+<td><code>~/.attune/telemetry/help_queries.jsonl</code></td>
+<td>Help system lookup events</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Privacy and Data Control</h2>
+<p>All telemetry is stored locally — nothing is sent to any external service.</p>
+<pre><code class="language-bash"># Clear all cost data
+attune costs reset --confirm
+
+# Export before clearing
+attune costs export -o backup.json &amp;&amp; attune costs reset --confirm
+</code></pre>
+<hr />
+<h2>See Also</h2>
+<ul>
+<li><a href="../reference/cli-reference.md#costs-commands">Cost Commands</a> — Full CLI reference</li>
+<li><a href="../reference/multi-agent.md">Agent Coordination</a> — Multi-agent architecture
+and access tiers</li>
+</ul>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

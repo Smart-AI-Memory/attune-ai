@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Cli reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
-  <meta property="og:title" content="Cli reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `RoutingPreference` | User&#x27;s learned routing preferences. | `src/attune/cli_router.py` | | `HybridRouter` | Routes user input to Claude " />
+  <title>How to use the Claude Code plugin — how-to</title>
+  <meta name="description" content="Use this guide when you need to wire up, call, or extend the Claude Code plugin&#x27;s hooks and commands — session continuity, security validation, spec orientation, and context-utilization warnings." />
+  <meta property="og:title" content="How to use the Claude Code plugin — how-to" />
+  <meta property="og:description" content="Use this guide when you need to wire up, call, or extend the Claude Code plugin&#x27;s hooks and commands — session continuity, security validation, spec orientation, and context-utilization warnings." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,234 +250,287 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/cli">Cli</a><span class="sep">&rsaquo;</span><span>reference</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/plugin">Plugin</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Cli reference</h1>
-<h2>Classes</h2>
+<h1>How to use the Claude Code plugin</h1>
+<p>Use this guide when you need to wire up, call, or extend the Claude Code plugin's hooks and commands — session continuity, security validation, spec orientation, and context-utilization warnings.</p>
+<h2>Quick start</h2>
+<p>The following snippet checks context utilization and prints a compact warning when the transcript is getting full:</p>
+<pre><code class="language-python">from hooks._transcript_size import estimate_utilization
+from hooks._state import git_state, workspace_roots, discover_specs
+from hooks._resume_prompt import build_resume_prompt
+from hooks.compact_warning import format_warning
+from pathlib import Path
+
+cwd = Path.cwd()
+roots = workspace_roots(cwd)
+specs = discover_specs(roots)
+spec = specs[0] if specs else None
+
+util = estimate_utilization(&quot;~/.claude/transcript.jsonl&quot;)
+if util &gt; 0.8:
+    state = git_state(cwd)
+    resume = build_resume_prompt(spec, state, workspace_path=&quot;~/attune&quot;)
+    print(format_warning(util, threshold=0.8, resume_body=resume))
+</code></pre>
+<p>Running this prints a formatted warning block to stdout when the transcript exceeds 80 % utilization.</p>
+<h2>Core API</h2>
+<p>Each hook module exposes a <code>main()</code> entry point callable by Claude Code directly. The shared helpers in <code>hooks._state</code> and <code>hooks._transcript_size</code> are the building blocks the other hooks rely on.</p>
+<h3>State discovery (<code>hooks._state</code>)</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Function / Class</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RoutingPreference</code></td>
-<td>User's learned routing preferences.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>workspace_roots(cwd)</code></td>
+<td>Returns candidate workspace root paths to scan for specs</td>
 </tr>
 <tr>
-<td><code>HybridRouter</code></td>
-<td>Routes user input to Claude Code skill invocations.</td>
-<td><code>src/attune/cli_router.py</code></td>
+<td><code>discover_specs(roots)</code></td>
+<td>Walks <code>specs/</code> directories under each root; returns <code>list[SpecInfo]</code></td>
+</tr>
+<tr>
+<td><code>git_state(cwd)</code></td>
+<td>Snapshots branch, last commit SHA + subject, and uncommitted files</td>
+</tr>
+<tr>
+<td><code>session_sentinel_path(session_id)</code></td>
+<td>Returns the path of the once-per-session compact-warning sentinel file</td>
+</tr>
+<tr>
+<td><code>prune_stale_sentinels(now)</code></td>
+<td>Deletes sentinel files older than the TTL; returns count removed</td>
+</tr>
+<tr>
+<td><code>SpecInfo</code></td>
+<td>Dataclass: <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, <code>mtime</code></td>
+</tr>
+<tr>
+<td><code>GitState</code></td>
+<td>Dataclass: <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, <code>uncommitted</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>Context utilization (<code>hooks._transcript_size</code>)</h3>
 <table>
 <thead>
 <tr>
 <th>Function</th>
-<th>Description</th>
-<th>File</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>get_version()</code></td>
-<td>Get package version.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>create_parser()</code></td>
-<td>Create the argument parser.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>main()</code></td>
-<td>Main entry point.</td>
-<td><code>src/attune/cli_minimal.py</code></td>
-</tr>
-<tr>
-<td><code>route_user_input()</code></td>
-<td>Quick routing helper.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-<tr>
-<td><code>is_slash_command()</code></td>
-<td>Check if text is a slash command.</td>
-<td><code>src/attune/cli_router.py</code></td>
-</tr>
-<tr>
-<td><code>run_workflow_with_exit_code()</code></td>
-<td>Instantiate + execute a workflow and return the contract exit code.</td>
-<td><code>src/attune/cli_commands/_exit_codes.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs()</code></td>
-<td>Show cost report for recent period.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_today()</code></td>
-<td>Show today's cost summary.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_export()</code></td>
-<td>Export cost data to file.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_costs_reset()</code></td>
-<td>Clear all cost tracking data.</td>
-<td><code>src/attune/cli_commands/cost_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_help()</code></td>
-<td>Handle the <code>attune help</code> command.</td>
-<td><code>src/attune/cli_commands/help_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_remember()</code></td>
-<td>Add a lesson to the lessons file.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_forget()</code></td>
-<td>Remove a lesson by line number or keyword.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_lessons()</code></td>
-<td>List current lessons with line numbers.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture()</code></td>
-<td>Save content to personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall()</code></td>
-<td>Search personal cross-session memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_topics()</code></td>
-<td>List all personal memory topics.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_memory_forget_topic()</code></td>
-<td>Delete a topic (or specific kind) from personal memory.</td>
-<td><code>src/attune/cli_commands/memory_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_show()</code></td>
-<td>Show current provider configuration.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_provider_set()</code></td>
-<td>Set the LLM provider.</td>
-<td><code>src/attune/cli_commands/provider_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_show()</code></td>
-<td>Display usage summary.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_savings()</code></td>
-<td>Show cost savings from tier routing.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_export()</code></td>
-<td>Export telemetry data to file.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_stats()</code></td>
-<td>Show adaptive routing statistics.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_routing_check()</code></td>
-<td>Check for tier upgrade recommendations.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_models()</code></td>
-<td>Show model performance by provider.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_agents()</code></td>
-<td>Show active agents and their status.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_telemetry_signals()</code></td>
-<td>Show coordination signals.</td>
-<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_setup()</code></td>
-<td>Install Attune slash commands for Claude Code.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_validate()</code></td>
-<td>Validate configuration.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_version()</code></td>
-<td>Show version information.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_features()</code></td>
-<td>Show available memory and telemetry features.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_doctor()</code></td>
-<td>Run comprehensive environment health check.</td>
-<td><code>src/attune/cli_commands/utility_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_list()</code></td>
-<td>List available workflows.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_info()</code></td>
-<td>Show workflow details.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_workflow_run()</code></td>
-<td>Execute a workflow.</td>
-<td><code>src/attune/cli_commands/workflow_commands.py</code></td>
+<td><code>estimate_utilization(transcript_path)</code></td>
+<td>Returns context utilization as a float in <code>[0.0, 1.0]</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
+<h3>Resume prompt (<code>hooks._resume_prompt</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)</code></td>
+<td>Renders the user-facing resume prompt body</td>
+</tr>
+</tbody>
+</table>
+<h3>Compact warning (<code>hooks.compact_warning</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format_warning(util, threshold, resume_body)</code></td>
+<td>Composes the full warning message + resume prompt</td>
+</tr>
+</tbody>
+</table>
+<h3>Security (<code>hooks.security_guard</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>validate_bash_command(command)</code></td>
+<td>Checks a Bash command against security policies; returns <code>(allowed, reason)</code></td>
+</tr>
+<tr>
+<td><code>validate_file_path(file_path)</code></td>
+<td>Checks a file path against security policies; returns <code>(allowed, reason)</code></td>
+</tr>
+<tr>
+<td><code>main(context)</code></td>
+<td>Validates a tool call dict; returns an updated context dict</td>
+</tr>
+</tbody>
+</table>
+<h3>Spec orientation (<code>hooks.spec_orient</code>)</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>format_orientation(specs)</code></td>
+<td>Returns a short markdown list of in-flight specs for session start</td>
+</tr>
+<tr>
+<td><code>render_spec_pin(spec, char_budget)</code></td>
+<td>Renders a spec body for post-compact context restoration</td>
+</tr>
+</tbody>
+</table>
+<h3>Hook entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th><code>main()</code> behavior</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hooks._handoff_cli</code></td>
+<td>CLI wrapper for the <code>/handoff</code> slash command</td>
+</tr>
+<tr>
+<td><code>hooks.compact_warning</code></td>
+<td>Entry point — never raises</td>
+</tr>
+<tr>
+<td><code>hooks.format_on_save</code></td>
+<td>Reads a tool result from stdin and formats Python files</td>
+</tr>
+<tr>
+<td><code>hooks.help_freshness_check</code></td>
+<td>Checks help-template freshness on session start</td>
+</tr>
+<tr>
+<td><code>hooks.help_on_error</code></td>
+<td>Reads a <code>PostToolUse</code> payload and suggests help if applicable</td>
+</tr>
+<tr>
+<td><code>hooks.help_post_commit</code></td>
+<td>Checks for stale help after a git commit</td>
+</tr>
+<tr>
+<td><code>hooks.spec_orient</code></td>
+<td>Branches on <code>source</code>; never raises</td>
+</tr>
+<tr>
+<td><code>hooks.welcome</code></td>
+<td>Prints a welcome message to stderr (Claude Code surfaces stderr)</td>
+</tr>
+</tbody>
+</table>
+<h2>Integration patterns</h2>
+<h3>Security guard in a tool-call pipeline</h3>
+<p>Wrap any outgoing tool call through <code>hooks.security_guard.main()</code> before execution. The function accepts the raw context dict Claude Code passes to a <code>PreToolUse</code> hook and returns the same dict, potentially with a blocking annotation:</p>
+<pre><code class="language-python">from hooks.security_guard import main as security_check, validate_bash_command
+
+# Quick inline check
+allowed, reason = validate_bash_command(&quot;rm -rf /private/etc/hosts&quot;)
+if not allowed:
+    raise PermissionError(reason)
+
+# Full hook integration — called by Claude Code automatically,
+# but you can invoke it directly in tests:
+context = {&quot;tool&quot;: &quot;Bash&quot;, &quot;input&quot;: {&quot;command&quot;: &quot;ls -la&quot;}}
+result = security_check(context)
+</code></pre>
+<p><code>SYSTEM_DIRECTORIES</code> (<code>{'/etc', '/sys', '/proc', ...}</code>) and <code>SEARCH_COMMAND_PREFIXES</code> are the policy constants the validator checks against.</p>
+<h3>Spec orientation at session start</h3>
+<p>Call <code>format_orientation</code> immediately after <code>discover_specs</code> to surface in-flight work to the model:</p>
+<pre><code class="language-python">from hooks._state import workspace_roots, discover_specs
+from hooks.spec_orient import format_orientation, render_spec_pin
+from pathlib import Path
+
+roots = workspace_roots(Path.cwd())
+specs = discover_specs(roots)
+
+# Short list for a fresh session
+print(format_orientation(specs))
+
+# Detailed pin for post-compact restoration (default 4 000-char budget)
+if specs:
+    print(render_spec_pin(specs[0]))
+</code></pre>
+<h2>See also</h2>
 <ul>
-<li><code>src/attune/cli_minimal.py</code></li>
-<li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/**</code></li>
+<li><code>concepts/task-template-design-patterns.md</code> — how attune structures help content the plugin surfaces</li>
+<li><code>concepts/task-template-migration.md</code> — background on the session-continuity model the hooks support</li>
 </ul>
-<h2>Tags</h2>
-<p><code>cli</code>, <code>commands</code></p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 16 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._transcript_size import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 16 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._state import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 16 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._resume_prompt import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 16 (code fence)</td>
+<td>error</td>
+<td><code>from hooks.compact_warning import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 105 (code fence)</td>
+<td>error</td>
+<td><code>from hooks.security_guard import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 125 (code fence)</td>
+<td>error</td>
+<td><code>from hooks.spec_orient import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

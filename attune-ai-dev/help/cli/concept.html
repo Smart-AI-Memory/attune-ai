@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI and routing — concept</title>
-  <meta name="description" content="The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keywo" />
-  <meta property="og:title" content="CLI and routing — concept" />
-  <meta property="og:description" content="The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keywo" />
+  <title>Cli — concept</title>
+  <meta name="description" content="Command-line interface and routing." />
+  <meta property="og:title" content="Cli — concept" />
+  <meta property="og:description" content="Command-line interface and routing." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -255,102 +255,46 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI and routing</h1>
-<p>The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keyword.</p>
-<h2>Command groups</h2>
-<p><code>create_parser()</code> in <code>attune.cli_minimal</code> assembles the top-level argument parser. Commands are organized into five groups, each in its own module:</p>
+<h1>Cli</h1>
+<h2>How it works</h2>
+<p>Command-line interface and routing.</p>
+<p>The main building blocks are:</p>
+<ul>
+<li><strong><code>RoutingPreference</code></strong> — User's learned routing preferences.</li>
+<li><strong><code>HybridRouter</code></strong> — Routes user input to Claude Code skill invocations.</li>
+</ul>
+<p>Under the hood, this feature spans 11 source
+files covering:</p>
+<ul>
+<li>Hybrid CLI Router - Skills + Natural Language</li>
+<li>CLI command modules for attune.</li>
+<li>Exit-code contract for <code>attune workflow run</code>.</li>
+</ul>
+<h2>What connects to it</h2>
+<p>This feature relates to: cli, commands.</p>
+<p>Other parts of the codebase interact with
+cli through these interfaces:</p>
 <table>
 <thead>
 <tr>
-<th>Group</th>
-<th>Module</th>
-<th>What it does</th>
+<th>Interface</th>
+<th>Purpose</th>
+<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Cost tracking</strong></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Show, export, and reset API cost data (<code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code>)</td>
+<td><code>RoutingPreference</code></td>
+<td>User's learned routing preferences.</td>
+<td><code>src/attune/cli_router.py</code></td>
 </tr>
 <tr>
-<td><strong>Memory</strong></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Store and retrieve cross-session notes (<code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code>)</td>
-</tr>
-<tr>
-<td><strong>Telemetry</strong></td>
-<td><code>cli_commands.telemetry_commands</code></td>
-<td>Inspect routing stats, savings, model usage, and agent signals</td>
-</tr>
-<tr>
-<td><strong>Provider</strong></td>
-<td><code>cli_commands.provider_commands</code></td>
-<td>Show or change the active model provider (<code>cmd_provider_show</code>, <code>cmd_provider_set</code>)</td>
-</tr>
-<tr>
-<td><strong>Utility</strong></td>
-<td><code>cli_commands.utility_commands</code></td>
-<td>One-off operations: <code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_features</code>, <code>cmd_doctor</code></td>
+<td><code>HybridRouter</code></td>
+<td>Routes user input to Claude Code skill invocations.</td>
+<td><code>src/attune/cli_router.py</code></td>
 </tr>
 </tbody>
 </table>
-<p><code>main()</code> in <code>attune.cli_minimal</code> ties these together: it calls <code>create_parser()</code>, runs the matched command function, and returns an integer exit code.</p>
-<h2>Routing layer</h2>
-<p>Not every user input is a structured CLI subcommand. <code>route_user_input()</code> in <code>attune.cli_router</code> handles free-form text by mapping it to a Claude Code skill invocation. <code>is_slash_command()</code> lets callers quickly test whether a string starts with a slash before routing it.</p>
-<p>The router that does this work is <code>HybridRouter</code>. It holds a list of <code>RoutingPreference</code> records and uses them to decide which skill to invoke:</p>
-<pre><code>user input → HybridRouter.route() → { skill, args, … }
-</code></pre>
-<p><code>HybridRouter.learn_preference(keyword, skill, args)</code> writes a new <code>RoutingPreference</code> for a keyword. <code>HybridRouter.get_suggestions(partial)</code> returns completions for partial input.</p>
-<h2>RoutingPreference record</h2>
-<p>Each learned mapping is a <code>RoutingPreference</code> dataclass:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>keyword</code></td>
-<td><code>str</code></td>
-<td>Trigger word or phrase</td>
-</tr>
-<tr>
-<td><code>skill</code></td>
-<td><code>str</code></td>
-<td>Claude Code skill to invoke</td>
-</tr>
-<tr>
-<td><code>args</code></td>
-<td><code>str</code></td>
-<td>Default arguments passed to the skill</td>
-</tr>
-<tr>
-<td><code>usage_count</code></td>
-<td><code>int</code></td>
-<td>How many times this preference has fired</td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>float</code></td>
-<td>Router's confidence in the mapping (default <code>1.0</code>)</td>
-</tr>
-</tbody>
-</table>
-<p>Over time, <code>usage_count</code> and <code>confidence</code> give the router a signal about which preferences are reliable and which might need updating.</p>
-<h2>How the pieces fit together</h2>
-<pre><code>attune.cli_minimal.main()
-  └─ create_parser()          # builds subcommand tree
-  └─ dispatch to cmd_*()      # structured subcommands
-
-attune.cli_router.route_user_input()
-  └─ HybridRouter.route()     # free-form text → skill
-       └─ RoutingPreference   # per-keyword learned mapping
-</code></pre>
-<p>Structured subcommands (everything under <code>cmd_*</code>) and the routing layer are independent paths through the same CLI surface. A slash command detected by <code>is_slash_command()</code> can bypass the argument parser entirely and go straight to <code>HybridRouter</code>.</p>
 
   </article>
   <footer>

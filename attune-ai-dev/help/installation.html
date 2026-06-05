@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>Installation — attune help</title>
+  <meta name="description" content="Get Attune AI installed and configured in about 2 minutes." />
+  <meta property="og:title" content="Installation — attune help" />
+  <meta property="og:description" content="Get Attune AI installed and configured in about 2 minutes." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,114 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Installation</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>Installation</h1>
+<p>Get Attune AI installed and configured in about 2 minutes.</p>
+<hr />
+<h2>Step 1: Install the Package</h2>
+<p>Choose your installation option:</p>
+<h4>Recommended (Developer)</h4>
+<pre><code class="language-bash">pip install 'attune-ai[developer]'
+</code></pre>
+<p>Includes: CLI tools, VSCode extension support, all workflows, local telemetry.</p>
+<h4>Minimal</h4>
+<pre><code class="language-bash">pip install attune-ai
+</code></pre>
+<p>Core functionality only. Add extras later as needed.</p>
+<h4>All Features</h4>
+<pre><code class="language-bash">pip install 'attune-ai[all]'
+</code></pre>
+<p>Everything: agents, memory, semantic caching, enterprise
+features.</p>
+<h3>Verify Installation</h3>
+<pre><code class="language-bash">python -c &quot;import attune; print(f'Attune AI v{attune.__version__}')&quot;
+</code></pre>
+<hr />
+<h2>Step 2: Configure an LLM Provider</h2>
+<p>Attune AI uses Anthropic Claude as its LLM provider.</p>
+<h3>Option A: Environment Variable (Quick)</h3>
+<pre><code class="language-bash">export ANTHROPIC_API_KEY=&quot;sk-ant-...&quot;
+</code></pre>
+<h3>Option B: .env File (Persistent)</h3>
+<p>Create a <code>.env</code> file in your project root:</p>
+<pre><code class="language-bash"># .env
+ANTHROPIC_API_KEY=sk-ant-...
+</code></pre>
+<p>The framework auto-detects <code>.env</code> files.</p>
+<h3>Option C: Interactive Setup</h3>
+<pre><code class="language-bash">python -m attune.models.cli provider --interactive
+</code></pre>
+<h3>Verify Provider</h3>
+<pre><code class="language-bash">python -m attune.models.cli provider
+</code></pre>
+<p>Expected output:</p>
+<pre><code>Current provider: anthropic
+Available models: claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5
+API key configured
+</code></pre>
+<hr />
+<h2>Step 3: Optional - Redis for Memory</h2>
+<p>Redis enables multi-agent coordination and session persistence. Skip this for now if you just want to try the framework.</p>
+<h4>macOS (Homebrew)</h4>
+<pre><code class="language-bash">brew install redis
+brew services start redis
+redis-cli ping  # Should return: PONG
+</code></pre>
+<h4>Docker</h4>
+<pre><code class="language-bash">docker run -d -p 6379:6379 --name attune-redis redis:alpine
+</code></pre>
+<h4>Skip for Now</h4>
+<p>The framework works without Redis (falls back to in-memory storage).</p>
+<p>You can add Redis later when you need:</p>
+<ul>
+<li>Multi-agent coordination</li>
+<li>Session persistence</li>
+<li>Pattern staging</li>
+</ul>
+<p>See <a href="redis-setup.md">Redis Setup</a> for production configuration.</p>
+<hr />
+<h2>Troubleshooting</h2>
+<h3>&quot;No API key configured&quot;</h3>
+<pre><code class="language-bash"># Check your environment
+env | grep API_KEY
+
+# Set it
+export ANTHROPIC_API_KEY=&quot;sk-ant-...&quot;
+
+# Verify
+python -m attune.models.cli provider --check
+</code></pre>
+<h3>&quot;ModuleNotFoundError: attune&quot;</h3>
+<pre><code class="language-bash"># Reinstall
+pip install --upgrade attune-ai[developer]
+
+# Or for development
+pip install -e '.[dev]'
+</code></pre>
+<h3>Python version too old</h3>
+<pre><code class="language-bash">python --version  # Need 3.10+
+
+# Use pyenv to manage versions
+pyenv install 3.11
+pyenv local 3.11
+</code></pre>
+<hr />
+<h2>See Also</h2>
+<ul>
+<li><a href="redis-setup.md">Redis Setup</a> - Configure Redis for production use</li>
+<li><a href="mcp-integration.md">MCP Integration</a> - Connect to Claude Code</li>
+<li><a href="../reference/config.md">Configuration Reference</a> - Customize settings</li>
+<li><a href="first-steps.md">First Steps</a> - Run your first workflow</li>
+</ul>
+<hr />
+<h2>Next Step</h2>
+<p>You're installed! Continue to <a href="first-steps.md">First Steps</a> to run your first workflow.</p>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

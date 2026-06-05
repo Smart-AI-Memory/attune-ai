@@ -1,0 +1,520 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Smart Router — how-to</title>
+  <meta name="description" content="The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router figures out which wizard(s) to invoke." />
+  <meta property="og:title" content="Smart Router — how-to" />
+  <meta property="og:description" content="The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router figures out which wizard(s) to invoke." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/guides">Guides</a><span class="sep">&rsaquo;</span><span>Smart Router</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Smart Router</h1>
+<p>The Smart Router enables natural language wizard dispatch - instead of knowing wizard names, developers describe what they need and the router figures out which wizard(s) to invoke.</p>
+<h2>Quick Start</h2>
+<pre><code class="language-python">from attune.routing import SmartRouter
+
+router = SmartRouter()
+
+# Natural language routing
+decision = router.route_sync(&quot;Fix the security issue in auth.py&quot;)
+print(f&quot;Primary: {decision.primary_wizard}&quot;)      # → security-audit
+print(f&quot;Secondary: {decision.secondary_wizards}&quot;)  # → [code-review]
+print(f&quot;Confidence: {decision.confidence}&quot;)        # → 0.85
+</code></pre>
+<h2>How It Works</h2>
+<pre><code>┌─────────────────────────────────────────────────────────────────┐
+│                      SMART ROUTER                                │
+│   Developer: &quot;Fix performance in auth.py&quot;                        │
+│   → Routes to: PerformanceWizard + SecurityWizard               │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│                     WIZARD REGISTRY                              │
+│   17+ wizards with keywords, descriptions, and capabilities     │
+└─────────────────────────────────────────────────────────────────┘
+</code></pre>
+<p>The router uses a keyword-based classifier to match requests to wizards. Each wizard is registered with:</p>
+<ul>
+<li><strong>Name</strong>: Unique identifier (e.g., <code>security-audit</code>)</li>
+<li><strong>Description</strong>: What the wizard does</li>
+<li><strong>Keywords</strong>: Terms that trigger this wizard</li>
+</ul>
+<h2>Routing Methods</h2>
+<h3>route_sync() / route()</h3>
+<p>Route a natural language request to wizard(s):</p>
+<pre><code class="language-python"># Synchronous
+decision = router.route_sync(&quot;Check for SQL injection vulnerabilities&quot;)
+
+# Asynchronous
+decision = await router.route(&quot;Optimize slow database queries&quot;)
+</code></pre>
+<h3>suggest_for_file()</h3>
+<p>Get wizard suggestions based on a file path:</p>
+<pre><code class="language-python"># Python file → security, code-review
+suggestions = router.suggest_for_file(&quot;src/auth.py&quot;)
+
+# Package.json → dependency-check
+suggestions = router.suggest_for_file(&quot;package.json&quot;)
+
+# Dockerfile → security-audit
+suggestions = router.suggest_for_file(&quot;Dockerfile&quot;)
+</code></pre>
+<h3>suggest_for_error()</h3>
+<p>Get wizard suggestions based on an error message:</p>
+<pre><code class="language-python"># Null reference → bug-predict
+suggestions = router.suggest_for_error(&quot;NullPointerException at line 42&quot;)
+
+# Security error → security-audit
+suggestions = router.suggest_for_error(&quot;SecurityException: Access denied&quot;)
+</code></pre>
+<h2>RoutingDecision</h2>
+<p>The router returns a <code>RoutingDecision</code> with:</p>
+<pre><code class="language-python">@dataclass
+class RoutingDecision:
+    primary_wizard: str          # Best matching wizard
+    secondary_wizards: List[str] # Related wizards to consider
+    confidence: float            # 0.0-1.0 match confidence
+    reasoning: str               # Why this routing was chosen
+    suggested_chain: List[str]   # Recommended execution order
+    context: Dict                # Preserved context from request
+    classification_method: str   # &quot;keyword&quot; or &quot;llm&quot;
+    request_summary: str         # Original request
+</code></pre>
+<h2>Context Preservation</h2>
+<p>Pass context through to the wizard:</p>
+<pre><code class="language-python">decision = router.route_sync(
+    &quot;Review this code&quot;,
+    context={
+        &quot;file&quot;: &quot;auth.py&quot;,
+        &quot;language&quot;: &quot;python&quot;,
+        &quot;team&quot;: &quot;backend&quot;
+    }
+)
+
+# Context is preserved in decision.context
+print(decision.context)  # {&quot;file&quot;: &quot;auth.py&quot;, ...}
+</code></pre>
+<h2>List Available Wizards</h2>
+<pre><code class="language-python">wizards = router.list_wizards()
+for wizard in wizards:
+    print(f&quot;{wizard.name}: {wizard.description}&quot;)
+    print(f&quot;  Keywords: {wizard.keywords}&quot;)
+</code></pre>
+<h2>Integration with Chain Executor</h2>
+<p>The Smart Router works seamlessly with auto-chaining:</p>
+<pre><code class="language-python">from attune.routing import SmartRouter, ChainExecutor
+
+router = SmartRouter()
+executor = ChainExecutor()
+
+# Route the request
+decision = router.route_sync(&quot;Security review of auth module&quot;)
+
+# Execute the suggested chain
+for wizard_name in decision.suggested_chain:
+    print(f&quot;Running: {wizard_name}&quot;)
+</code></pre>
+<h2>Confidence Thresholds</h2>
+<p>Route only when the router is confident enough:</p>
+<pre><code class="language-python">decision = router.route_sync(&quot;Fix the issue&quot;)
+
+if decision.confidence &lt; 0.6:
+    # Too ambiguous — ask for clarification
+    print(&quot;Ambiguous request. Did you mean:&quot;)
+    print(f&quot;  {decision.primary_wizard}: {decision.reasoning}&quot;)
+    for alt in decision.secondary_wizards[:2]:
+        print(f&quot;  {alt}&quot;)
+elif decision.confidence &lt; 0.90:
+    # Moderate confidence — confirm before running
+    print(f&quot;Routing to: {decision.primary_wizard} (confidence: {decision.confidence:.0%})&quot;)
+    confirm = input(&quot;Proceed? [y/n] &quot;)
+    if confirm.lower() != &quot;y&quot;:
+        return
+else:
+    # High confidence (0.90+) — run directly without confirmation
+    pass
+</code></pre>
+<p><strong>Confidence ranges:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Range</th>
+<th>Interpretation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0.90+</td>
+<td>Unambiguous — safe to run without confirmation</td>
+</tr>
+<tr>
+<td>0.60–0.89</td>
+<td>Good match — confirm before running</td>
+</tr>
+<tr>
+<td>&lt; 0.60</td>
+<td>Low — request is ambiguous; ask for clarification</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2>Real-World Integration Patterns</h2>
+<h3>Pattern 1: CLI Dispatcher</h3>
+<p>Route a user's natural language command to the right workflow:</p>
+<pre><code class="language-python">import asyncio
+from attune.routing import SmartRouter
+
+async def run_from_description(description: str, path: str = &quot;.&quot;):
+    router = SmartRouter()
+    decision = await router.route(description)
+
+    if decision.confidence &lt; 0.6:
+        print(f&quot;Not sure what to run. Best guess: {decision.primary_wizard}&quot;)
+        print(f&quot;Reason: {decision.reasoning}&quot;)
+        return
+
+    from attune import EmpathyOS
+    empathy = EmpathyOS(user_id=&quot;cli&quot;)
+    result = await empathy.run_workflow(
+        decision.primary_wizard,
+        {&quot;path&quot;: path},
+    )
+    print(result.final_output)
+
+asyncio.run(run_from_description(&quot;Check for security issues in my API code&quot;))
+</code></pre>
+<h3>Pattern 2: Multi-Wizard Fan-Out</h3>
+<p>Run the primary wizard and all secondaries when the primary is a strong match.
+The secondary list is always narrower in scope than the primary, so a
+high primary confidence is a reasonable proxy for running them all:</p>
+<pre><code class="language-python">decision = router.route_sync(&quot;Full quality pass on authentication module&quot;)
+
+# Run secondaries only when the overall routing is high-confidence
+wizards_to_run = [decision.primary_wizard] + (
+    decision.secondary_wizards if decision.confidence &gt; 0.75 else []
+)
+
+for wizard_name in wizards_to_run:
+    print(f&quot;→ Running {wizard_name}...&quot;)
+    result = await empathy.run_workflow(wizard_name, {&quot;path&quot;: &quot;src/auth/&quot;})
+    print(f&quot;  {result.final_output.get('summary', 'done')}&quot;)
+</code></pre>
+<h3>Pattern 3: File-Based Auto-Routing</h3>
+<p>Automatically route to the right wizard when a file changes:</p>
+<pre><code class="language-python">def on_file_changed(filepath: str):
+    router = SmartRouter()
+
+    # suggest_for_file uses file extension and path heuristics
+    suggestions = router.suggest_for_file(filepath)
+
+    if suggestions:
+        primary = suggestions[0]
+        print(f&quot;Changed: {filepath} → suggested: {primary}&quot;)
+        run_wizard(primary, filepath)
+</code></pre>
+<h3>Pattern 4: Error-Driven Routing</h3>
+<p>Route to the appropriate wizard based on an error message:</p>
+<pre><code class="language-python">def on_test_failure(error_output: str):
+    router = SmartRouter()
+    suggestions = router.suggest_for_error(error_output)
+
+    # Most test failures → bug-predict or code-review
+    if suggestions:
+        decision = router.route_sync(f&quot;Fix this error: {error_output[:200]}&quot;)
+        return decision.primary_wizard
+    return &quot;bug-predict&quot;  # safe default
+</code></pre>
+<hr />
+<h2>CLI Usage</h2>
+<p>The smart router is accessible from the CLI via natural language workflow
+dispatch:</p>
+<pre><code class="language-bash"># Run the router's suggestion directly
+attune workflow run &quot;$(attune route 'check security in auth module')&quot;
+
+# Or use the meta-router directly
+attune route &quot;Fix performance in the database layer&quot;
+# → Suggests: perf-audit (0.88 confidence)
+</code></pre>
+<hr />
+<h2>Customizing the Registry</h2>
+<p>Register a custom wizard or workflow to make it routable:</p>
+<pre><code class="language-python">from attune.routing import SmartRouter
+
+router = SmartRouter()
+router.register_wizard(
+    name=&quot;compliance-check&quot;,
+    description=&quot;Check code for HIPAA and SOC2 compliance requirements&quot;,
+    keywords=[&quot;hipaa&quot;, &quot;compliance&quot;, &quot;soc2&quot;, &quot;audit&quot;, &quot;gdpr&quot;, &quot;phi&quot;],
+)
+
+# Now routes naturally
+decision = router.route_sync(&quot;Check for HIPAA compliance issues&quot;)
+print(decision.primary_wizard)  # → compliance-check
+</code></pre>
+<hr />
+<h2>See Also</h2>
+<ul>
+<li><a href="memory-graph.md">Memory Graph</a> — Cross-wizard knowledge sharing</li>
+<li><a href="auto-chaining.md">Auto-Chaining</a> — Automatic wizard sequencing</li>
+<li><a href="telemetry-and-signals.md">Telemetry and Signals</a> — Monitor routing
+decisions over time with <code>attune telemetry routing-stats</code></li>
+<li><a href="../reference/API_REFERENCE.md">API Reference</a> — Full API documentation</li>
+</ul>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

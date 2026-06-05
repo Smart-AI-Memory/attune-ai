@@ -1,0 +1,1083 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Meta-Orchestration Tutorial: AI Agents That Compose Themselves — tutorial</title>
+  <meta name="description" content="**Level:** Beginner to Advanced **Time:** 30 minutes **Last Updated:** April 23, 2026" />
+  <meta property="og:title" content="Meta-Orchestration Tutorial: AI Agents That Compose Themselves — tutorial" />
+  <meta property="og:description" content="**Level:** Beginner to Advanced **Time:** 30 minutes **Last Updated:** April 23, 2026" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/orchestration">Orchestration</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Meta-Orchestration Tutorial: AI Agents That Compose Themselves</h1>
+<p><strong>Level:</strong> Beginner to Advanced
+<strong>Time:</strong> 30 minutes
+<strong>Last Updated:</strong> April 23, 2026</p>
+<hr />
+<h2>🎭 What You'll Learn</h2>
+<p>By the end of this tutorial, you'll understand:</p>
+<ol>
+<li><strong>What meta-orchestration is</strong> and why it's a paradigm shift</li>
+<li><strong>How to use the three built-in workflows</strong> (Release Prep, Test Coverage Boost, Health Check)</li>
+<li><strong>How to compose custom agent teams</strong> using Python</li>
+<li><strong>How the system learns</strong> from successful compositions</li>
+<li><strong>How to build your own orchestrated workflows</strong></li>
+</ol>
+<blockquote>
+<p><strong>📘 About This Tutorial</strong></p>
+<p>This tutorial uses <strong>software development agents</strong> as examples (security auditing, test coverage, code quality), since the framework is primarily used by developers. However, <strong>meta-orchestration is domain-agnostic</strong> and works with any type of agent.</p>
+<p>The Attune AI also includes:</p>
+<ul>
+<li><strong>Healthcare-specific agents</strong>: HIPAA compliance, patient data validation, clinical workflows</li>
+<li><strong>Code analysis tools</strong>: Static analysis, SARIF reports, architectural insights</li>
+</ul>
+<p>The meta-orchestration system can compose teams from <em>any</em> domain. The principles you learn here apply universally.</p>
+</blockquote>
+<hr />
+<h2>📚 Table of Contents</h2>
+<ol>
+<li><a href="#the-big-idea">The Big Idea: From Static to Dynamic</a></li>
+<li><a href="#quick-start">Quick Start: Your First Orchestrated Workflow</a></li>
+<li><a href="#understanding-agent-templates">Understanding Agent Templates</a></li>
+<li><a href="#composition-patterns">The Six Composition Patterns</a></li>
+<li><a href="#building-custom-workflows">Building Custom Workflows</a></li>
+<li><a href="#learning-loop">The Learning Loop</a></li>
+<li><a href="#advanced-techniques">Advanced Techniques</a></li>
+<li><a href="#troubleshooting">Troubleshooting</a></li>
+</ol>
+<hr />
+<h2>&lt;a name=&quot;the-big-idea&quot;&gt;&lt;/a&gt;🧠 The Big Idea: From Static to Dynamic</h2>
+<h3>The Problem with Traditional Workflows</h3>
+<p>In traditional AI systems, you manually wire together agents:</p>
+<pre><code class="language-python"># Traditional approach: Manual wiring
+security_agent = SecurityAgent()
+test_agent = TestAgent()
+quality_agent = QualityAgent()
+
+# You decide the execution order
+security_results = security_agent.run()
+test_results = test_agent.run()
+quality_results = quality_agent.run()
+
+# You manually combine results
+combined = combine_results([security_results, test_results, quality_results])
+</code></pre>
+<p><strong>Problems:</strong></p>
+<ul>
+<li>🔧 <strong>Rigid</strong>: Can't adapt to different tasks</li>
+<li>📈 <strong>Doesn't scale</strong>: Each new task requires manual wiring</li>
+<li>🧠 <strong>No learning</strong>: Doesn't improve over time</li>
+<li>💰 <strong>Inefficient</strong>: Always uses the same agents regardless of task complexity</li>
+</ul>
+<h3>The Meta-Orchestration Solution</h3>
+<p>With meta-orchestration, you describe <strong>what you want</strong>, and the system figures out <strong>how to do it</strong>:</p>
+<pre><code class="language-python"># Meta-orchestration approach: Declarative
+from attune.orchestration import MetaOrchestrator
+
+orchestrator = MetaOrchestrator()
+
+# Just describe the task
+plan = orchestrator.analyze_and_compose(
+    task=&quot;Prepare for production release&quot;,
+    context={&quot;project_path&quot;: &quot;.&quot;}
+)
+
+# System automatically:
+# 1. Analyzes task complexity and domain
+# 2. Selects optimal agents (security, testing, quality, docs)
+# 3. Chooses best composition pattern (parallel for speed)
+# 4. Estimates cost and duration
+# 5. Executes with quality gates
+</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>✨ <strong>Adaptive</strong>: Different tasks get different agent teams</li>
+<li>📊 <strong>Intelligent</strong>: Chooses optimal composition patterns</li>
+<li>🎯 <strong>Cost-aware</strong>: Uses cheaper agents when appropriate</li>
+<li>📚 <strong>Self-learning</strong>: Improves from past successes</li>
+</ul>
+<hr />
+<h2>&lt;a name=&quot;quick-start&quot;&gt;&lt;/a&gt;🚀 Quick Start: Your First Orchestrated Workflow</h2>
+<h3>Prerequisites</h3>
+<pre><code class="language-bash">pip install attune-ai[developer]==4.0.0
+</code></pre>
+<h3>Example 1: Release Preparation (5 minutes)</h3>
+<p>The <strong>Release Prep</strong> workflow runs 4 validation agents in parallel:</p>
+<pre><code class="language-bash"># Basic usage
+attune orchestrate release-prep
+
+# With custom quality gates
+attune orchestrate release-prep \
+    --min-coverage 90 \
+    --min-quality 8 \
+    --max-critical 0
+
+# JSON output for CI/CD
+attune orchestrate release-prep --json &gt; report.json
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ol>
+<li>✅ <strong>Security Auditor</strong> scans for vulnerabilities</li>
+<li>✅ <strong>Test Coverage Analyzer</strong> identifies testing gaps</li>
+<li>✅ <strong>Code Quality Reviewer</strong> checks best practices</li>
+<li>✅ <strong>Documentation Writer</strong> verifies completeness</li>
+</ol>
+<p>All run <strong>in parallel</strong> for speed! ⚡</p>
+<p><strong>Sample output:</strong></p>
+<pre><code>============================================================
+  RELEASE PREPARATION REPORT
+============================================================
+
+  ✓ Security Auditor: No critical issues
+  ✓ Test Coverage: 87.5% (target: 80%)
+  ✓ Code Quality: 8.2/10 (target: 7.0)
+  ⚠ Documentation: 95% (target: 100%)
+
+  🎯 QUALITY GATES
+  --------------------------------------------------------
+  ✅ All critical gates passed!
+  ⚠  1 warning (documentation below 100%)
+
+  ✅ RELEASE APPROVED (confidence: medium)
+
+  Duration: 2.3 seconds
+============================================================
+</code></pre>
+<h3>Example 2: Test Coverage Boost (10 minutes)</h3>
+<p>The <strong>Test Coverage Boost</strong> workflow improves test coverage in 3 sequential stages:</p>
+<pre><code class="language-bash"># Basic usage
+attune orchestrate test-coverage
+
+# Set target coverage
+attune orchestrate test-coverage --target 90
+
+# Specify project root
+attune orchestrate test-coverage \
+    --project-root ./my-project \
+    --target 85
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ol>
+<li>🔍 <strong>Stage 1: Analysis</strong> - Identifies gaps by importance</li>
+<li>🔨 <strong>Stage 2: Generation</strong> - Creates tests for high-priority gaps</li>
+<li>✅ <strong>Stage 3: Validation</strong> - Verifies tests pass and coverage improves</li>
+</ol>
+<p><strong>Sample output:</strong></p>
+<pre><code>============================================================
+  TEST COVERAGE BOOST
+============================================================
+
+  Target Coverage: 90.0%
+  Current Coverage: 75.0%
+
+  🔍 Stage 1: Coverage Gap Analysis
+  ✓ Identified 12 high-priority gaps
+  ✓ Found 8 untested edge cases
+
+  🔨 Stage 2: Test Generation
+  ✓ Generated 23 tests
+  ✓ Expected coverage increase: +15%
+
+  ✅ Stage 3: Test Validation
+  ✓ All tests pass
+  ✓ Final coverage: 90.2%
+  ✓ Improvement: +15.2%
+
+  🎯 SUCCESS: Coverage target achieved!
+
+  Duration: 8.7 seconds
+============================================================
+</code></pre>
+<h3>Example 3: Health Check (2 minutes)</h3>
+<p>The <strong>Health Check</strong> workflow provides adaptive health assessment with 3 modes:</p>
+<pre><code class="language-bash"># Quick daily check (3 agents in parallel)
+attune orchestrate health-check --mode daily
+
+# Comprehensive weekly (5 agents)
+attune orchestrate health-check --mode weekly
+
+# Pre-release deep dive (6 agents)
+attune orchestrate health-check --mode release
+
+# JSON output for CI integration
+attune orchestrate health-check --mode daily --json
+</code></pre>
+<p><strong>What happens:</strong></p>
+<ul>
+<li><strong>Daily</strong>: Security, Coverage, Quality (fast parallel check)</li>
+<li><strong>Weekly</strong>: Adds Performance, Documentation (comprehensive)</li>
+<li><strong>Release</strong>: Adds Architecture analysis (deep refinement)</li>
+</ul>
+<p><strong>Sample output:</strong></p>
+<pre><code class="language-text">============================================================
+  🏥 HEALTH CHECK REPORT
+============================================================
+
+  Health Score: 85/100 (Grade: B)
+  Trend: Improving (+5 from last week)
+  Duration: 1.2s
+
+  ⚠️  Issues Found (1):
+    • Documentation below 100% (92%)
+
+  💡 Recommendations:
+    1. 📚 Complete API documentation for 3 modules
+    2. ✅ Maintain current test coverage (excellent!)
+
+============================================================
+</code></pre>
+<hr />
+<h2>&lt;a name=&quot;understanding-agent-templates&quot;&gt;&lt;/a&gt;🤖 Understanding Agent Templates</h2>
+<p>Agent templates are <strong>reusable archetypes</strong> with specific capabilities. Think of them as specialized experts you can call upon.</p>
+<h3>The 7 Built-in Templates</h3>
+<table>
+<thead>
+<tr>
+<th>Template</th>
+<th>Tier</th>
+<th>Role</th>
+<th>Capabilities</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>test_coverage_analyzer</strong></td>
+<td>CAPABLE</td>
+<td>Test Coverage Expert</td>
+<td>analyze_gaps, suggest_tests, validate_coverage</td>
+</tr>
+<tr>
+<td><strong>security_auditor</strong></td>
+<td>PREMIUM</td>
+<td>Security Auditor</td>
+<td>vulnerability_scan, threat_modeling, compliance_check</td>
+</tr>
+<tr>
+<td><strong>code_reviewer</strong></td>
+<td>CAPABLE</td>
+<td>Code Quality Reviewer</td>
+<td>code_review, quality_assessment, best_practices_check</td>
+</tr>
+<tr>
+<td><strong>documentation_writer</strong></td>
+<td>CHEAP</td>
+<td>Documentation Writer</td>
+<td>generate_docs, check_completeness, update_examples</td>
+</tr>
+<tr>
+<td><strong>performance_optimizer</strong></td>
+<td>CAPABLE</td>
+<td>Performance Optimizer</td>
+<td>profile_code, identify_bottlenecks, suggest_optimizations</td>
+</tr>
+<tr>
+<td><strong>architecture_analyst</strong></td>
+<td>PREMIUM</td>
+<td>Architecture Analyst</td>
+<td>analyze_architecture, identify_patterns, suggest_improvements</td>
+</tr>
+<tr>
+<td><strong>refactoring_specialist</strong></td>
+<td>CAPABLE</td>
+<td>Refactoring Specialist</td>
+<td>identify_code_smells, suggest_refactorings, validate_changes</td>
+</tr>
+</tbody>
+</table>
+<h3>Exploring Templates (Python)</h3>
+<pre><code class="language-python">from attune.orchestration import get_all_templates, get_template
+
+# List all templates
+templates = get_all_templates()
+for t in templates:
+    print(f&quot;{t.id}: {t.role} ({t.tier_preference})&quot;)
+
+# Get specific template
+security_template = get_template(&quot;security_auditor&quot;)
+print(f&quot;Role: {security_template.role}&quot;)
+print(f&quot;Capabilities: {security_template.capabilities}&quot;)
+print(f&quot;Tools: {security_template.tools}&quot;)
+</code></pre>
+<h3>Tier System: Cost vs. Capability</h3>
+<ul>
+<li><strong>CHEAP</strong>: Fast, inexpensive (e.g., documentation_writer)</li>
+<li><strong>CAPABLE</strong>: Balanced performance/cost (e.g., test_coverage_analyzer)</li>
+<li><strong>PREMIUM</strong>: Highest quality, most expensive (e.g., security_auditor)</li>
+</ul>
+<p>The orchestrator <strong>automatically selects tiers</strong> based on task complexity!</p>
+<hr />
+<h2>&lt;a name=&quot;composition-patterns&quot;&gt;&lt;/a&gt;📐 The Six Composition Patterns</h2>
+<p>Meta-orchestration provides six <strong>&quot;grammar rules&quot;</strong> for combining agents:</p>
+<h3>1. Sequential (A → B → C)</h3>
+<p><strong>When to use:</strong> Pipeline processing where each stage builds on previous results</p>
+<p><strong>Example:</strong> Test coverage boost (Analyze → Generate → Validate)</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import SequentialStrategy
+
+strategy = SequentialStrategy()
+result = await strategy.execute(agents, context)
+
+# Stage 1 output feeds into Stage 2
+# Stage 2 output feeds into Stage 3
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>⏱️ Duration: Sum of all stages</li>
+<li>🔄 Context passing between stages</li>
+<li>📊 Best for: Iterative improvement, multi-stage pipelines</li>
+</ul>
+<h3>2. Parallel (A ‖ B ‖ C)</h3>
+<p><strong>When to use:</strong> Independent validations that can run simultaneously</p>
+<p><strong>Example:</strong> Release prep (Security ‖ Coverage ‖ Quality ‖ Docs)</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import ParallelStrategy
+
+strategy = ParallelStrategy()
+result = await strategy.execute(agents, context)
+
+# All agents run at the same time
+# Results aggregated at the end
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>⚡ Duration: Max of all agents (fastest!)</li>
+<li>🎯 Best for: Independent checks, validation workflows</li>
+<li>💰 Slightly higher cost (all agents run)</li>
+</ul>
+<h3>3. Debate (A ⇄ B ⇄ C → Synthesis)</h3>
+<p><strong>When to use:</strong> Need consensus or multiple perspectives</p>
+<p><strong>Example:</strong> Architecture decisions, design reviews</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import DebateStrategy
+
+strategy = DebateStrategy()
+result = await strategy.execute(agents, context)
+
+# Agents propose independent solutions
+# Synthesis agent reconciles differences
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>🤔 Duration: Multiple rounds + synthesis</li>
+<li>🎯 Best for: Subjective decisions, architecture choices</li>
+<li>💰 Higher cost (multiple agents + synthesis)</li>
+</ul>
+<h3>4. Teaching (Junior → Expert)</h3>
+<p><strong>When to use:</strong> Cost optimization with quality gate fallback</p>
+<p><strong>Example:</strong> Documentation (cheap agent tries, expert validates)</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import TeachingStrategy
+
+strategy = TeachingStrategy()
+result = await strategy.execute([junior_agent, expert_agent], context)
+
+# Junior attempts task (cheap)
+# If quality score &lt; threshold, expert takes over
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>💰 Cost: Low if junior succeeds, medium if expert needed</li>
+<li>🎯 Best for: Tasks where cheaper agents often succeed</li>
+<li>⚖️ Balances cost and quality</li>
+</ul>
+<h3>5. Refinement (Draft → Review → Polish)</h3>
+<p><strong>When to use:</strong> Progressive quality improvement</p>
+<p><strong>Example:</strong> Documentation refinement, code polishing</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import RefinementStrategy
+
+strategy = RefinementStrategy()
+result = await strategy.execute(agents, context)
+
+# Draft stage (fast, rough)
+# Review stage (checks quality)
+# Polish stage (final touches)
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>📈 Duration: Progressive (each stage improves previous)</li>
+<li>🎯 Best for: Content creation, iterative improvement</li>
+<li>✨ Each stage increases quality score</li>
+</ul>
+<h3>6. Adaptive (Classifier → Specialist)</h3>
+<p><strong>When to use:</strong> Right-sizing based on task complexity</p>
+<p><strong>Example:</strong> Bug fixes (simple bugs get cheap agent, complex get expert)</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import AdaptiveStrategy
+
+strategy = AdaptiveStrategy()
+result = await strategy.execute(agents, context)
+
+# Classifier determines complexity
+# Routes to appropriate specialist
+</code></pre>
+<p><strong>Characteristics:</strong></p>
+<ul>
+<li>🎯 Cost: Depends on task complexity</li>
+<li>🧠 Best for: Variable complexity tasks</li>
+<li>📊 Optimizes cost/quality tradeoff</li>
+</ul>
+<hr />
+<h2>&lt;a name=&quot;building-custom-workflows&quot;&gt;&lt;/a&gt;🛠️ Building Custom Workflows</h2>
+<h3>Example: Custom Security Deep Dive</h3>
+<p>Let's build a workflow that uses <strong>Debate</strong> pattern for security analysis:</p>
+<pre><code class="language-python">from attune.orchestration import MetaOrchestrator, get_template
+from attune.orchestration.execution_strategies import DebateStrategy
+
+class SecurityDeepDiveWorkflow:
+    &quot;&quot;&quot;Multi-perspective security analysis with debate.&quot;&quot;&quot;
+
+    def __init__(self):
+        self.orchestrator = MetaOrchestrator()
+
+    async def execute(self, project_path: str):
+        # Compose security-focused agent team
+        plan = self.orchestrator.analyze_and_compose(
+            task=&quot;Comprehensive security audit with multiple perspectives&quot;,
+            context={
+                &quot;project_path&quot;: project_path,
+                &quot;domain&quot;: &quot;security&quot;,
+                &quot;capabilities&quot;: [&quot;vulnerability_scan&quot;, &quot;threat_modeling&quot;]
+            }
+        )
+
+        # Override with Debate strategy for consensus
+        strategy = DebateStrategy()
+        result = await strategy.execute(plan.agents, {
+            &quot;project_path&quot;: project_path
+        })
+
+        # Process results
+        if result.success:
+            print(f&quot;✅ Security audit complete&quot;)
+            print(f&quot;Consensus: {result.final_output.get('consensus')}&quot;)
+            print(f&quot;Confidence: {result.final_output.get('confidence')}&quot;)
+
+        return result
+
+# Usage
+workflow = SecurityDeepDiveWorkflow()
+result = await workflow.execute(&quot;./my-project&quot;)
+</code></pre>
+<h3>Example: Cost-Optimized Documentation</h3>
+<p>Using <strong>Teaching</strong> pattern to minimize costs:</p>
+<pre><code class="language-python">from attune.orchestration import get_template
+from attune.orchestration.execution_strategies import TeachingStrategy
+
+class CostOptimizedDocWorkflow:
+    &quot;&quot;&quot;Documentation with cost optimization.&quot;&quot;&quot;
+
+    async def execute(self, module_path: str):
+        # Get cheap and capable agents
+        junior = get_template(&quot;documentation_writer&quot;)  # CHEAP
+        expert = get_template(&quot;code_reviewer&quot;)  # CAPABLE
+
+        # Teaching strategy: junior tries, expert validates
+        strategy = TeachingStrategy()
+        result = await strategy.execute(
+            agents=[junior, expert],
+            context={
+                &quot;module_path&quot;: module_path,
+                &quot;quality_threshold&quot;: 7.0  # Expert takes over if &lt; 7
+            }
+        )
+
+        # Check which agent completed the task
+        if result.final_output.get(&quot;completed_by&quot;) == junior.id:
+            print(f&quot;💰 Cost-optimized: Junior completed successfully&quot;)
+        else:
+            print(f&quot;🎓 Quality-optimized: Expert took over&quot;)
+
+        return result
+</code></pre>
+<h3>Example: Progressive Content Refinement</h3>
+<p>Using <strong>Refinement</strong> pattern for iterative improvement:</p>
+<pre><code class="language-python">from attune.orchestration.execution_strategies import RefinementStrategy
+
+class ContentRefinementWorkflow:
+    &quot;&quot;&quot;Progressive quality improvement for content.&quot;&quot;&quot;
+
+    async def execute(self, content: str):
+        # Get agents for each refinement stage
+        drafter = get_template(&quot;documentation_writer&quot;)
+        reviewer = get_template(&quot;code_reviewer&quot;)
+        polisher = get_template(&quot;documentation_writer&quot;)  # Reuse
+
+        strategy = RefinementStrategy()
+        result = await strategy.execute(
+            agents=[drafter, reviewer, polisher],
+            context={
+                &quot;content&quot;: content,
+                &quot;target_quality&quot;: 9.0  # High quality target
+            }
+        )
+
+        # Show quality progression
+        print(f&quot;Draft quality: {result.outputs[0].quality_score}&quot;)
+        print(f&quot;Review quality: {result.outputs[1].quality_score}&quot;)
+        print(f&quot;Final quality: {result.outputs[2].quality_score}&quot;)
+
+        return result
+</code></pre>
+<hr />
+<h2>&lt;a name=&quot;learning-loop&quot;&gt;&lt;/a&gt;📚 The Learning Loop: How the System Improves</h2>
+<h3>How Configuration Store Works</h3>
+<p>The system <strong>saves successful compositions</strong> and <strong>reuses them</strong> for similar tasks:</p>
+<pre><code class="language-python">from attune.orchestration.config_store import ConfigurationStore
+from attune.pattern_library import PatternLibrary
+
+# Initialize store
+store = ConfigurationStore(pattern_library=PatternLibrary())
+
+# After successful workflow execution
+config = AgentConfiguration(
+    id=&quot;release_prep_001&quot;,
+    task_pattern=&quot;release_preparation&quot;,
+    agents=[
+        {&quot;role&quot;: &quot;security_auditor&quot;, &quot;tier&quot;: &quot;PREMIUM&quot;},
+        {&quot;role&quot;: &quot;test_coverage_analyzer&quot;, &quot;tier&quot;: &quot;CAPABLE&quot;}
+    ],
+    strategy=&quot;parallel&quot;,
+    quality_gates={&quot;min_coverage&quot;: 80}
+)
+
+# Save configuration
+store.save(config)
+
+# Record outcome
+config.record_outcome(success=True, quality_score=87.5)
+store.save(config)  # Update metrics
+</code></pre>
+<h3>Querying Learned Compositions</h3>
+<pre><code class="language-python"># Find best composition for a task
+best = store.get_best_for_task(&quot;release_preparation&quot;)
+print(f&quot;Success rate: {best.success_rate:.1%}&quot;)
+print(f&quot;Avg quality: {best.avg_quality_score:.1f}&quot;)
+print(f&quot;Usage count: {best.usage_count}&quot;)
+
+# Search with filters
+proven_configs = store.search(
+    task_pattern=&quot;release_preparation&quot;,
+    min_success_rate=0.8,
+    min_quality_score=75.0
+)
+
+# Reuse proven composition
+for config in proven_configs:
+    print(f&quot;  {config.id}: {config.success_rate:.1%} success&quot;)
+</code></pre>
+<h3>Pattern Library Integration</h3>
+<p>After <strong>3+ successful uses</strong> with <strong>70%+ success rate</strong>, compositions are contributed to the Pattern Library:</p>
+<pre><code class="language-python"># Automatic contribution after thresholds met
+if config.usage_count &gt;= 3 and config.success_rate &gt;= 0.7:
+    store.pattern_library.contribute_successful_composition(config)
+    print(f&quot;✅ Configuration promoted to pattern library!&quot;)
+</code></pre>
+<p><strong>Benefits:</strong></p>
+<ul>
+<li>📊 Cross-project learning</li>
+<li>🎯 Team knowledge sharing</li>
+<li>📈 Continuous improvement</li>
+</ul>
+<hr />
+<h2>&lt;a name=&quot;advanced-techniques&quot;&gt;&lt;/a&gt;🎓 Advanced Techniques</h2>
+<h3>1. Dynamic Agent Selection</h3>
+<p>Let the orchestrator choose agents based on task analysis:</p>
+<pre><code class="language-python">orchestrator = MetaOrchestrator()
+
+# Orchestrator analyzes task and picks agents automatically
+plan = orchestrator.analyze_and_compose(
+    task=&quot;Improve performance of slow API endpoint&quot;,
+    context={&quot;domain&quot;: &quot;performance&quot;}
+)
+
+print(f&quot;Selected agents: {[a.role for a in plan.agents]}&quot;)
+print(f&quot;Strategy: {plan.strategy.value}&quot;)
+print(f&quot;Estimated cost: ${plan.estimated_cost:.2f}&quot;)
+</code></pre>
+<h3>2. Hybrid Strategies</h3>
+<p>Combine multiple strategies in one workflow:</p>
+<pre><code class="language-python">class HybridWorkflow:
+    &quot;&quot;&quot;Combines parallel validation + sequential refinement.&quot;&quot;&quot;
+
+    async def execute(self, project_path: str):
+        # Phase 1: Parallel validation
+        validators = [
+            get_template(&quot;security_auditor&quot;),
+            get_template(&quot;test_coverage_analyzer&quot;),
+            get_template(&quot;code_reviewer&quot;)
+        ]
+
+        parallel_strategy = ParallelStrategy()
+        validation_results = await parallel_strategy.execute(
+            validators,
+            {&quot;path&quot;: project_path}
+        )
+
+        # Phase 2: Sequential refinement if issues found
+        if validation_results.has_issues():
+            refiners = [
+                get_template(&quot;refactoring_specialist&quot;),
+                get_template(&quot;code_reviewer&quot;)
+            ]
+
+            sequential_strategy = SequentialStrategy()
+            refinement_results = await sequential_strategy.execute(
+                refiners,
+                {&quot;issues&quot;: validation_results.issues}
+            )
+
+        return validation_results, refinement_results
+</code></pre>
+<h3>3. Custom Agent Templates</h3>
+<p>Create your own specialized agents:</p>
+<pre><code class="language-python">from attune.orchestration.agent_templates import (
+    AgentTemplate,
+    AgentCapability,
+    ResourceRequirements
+)
+
+# Define custom template
+api_optimizer = AgentTemplate(
+    id=&quot;api_optimizer&quot;,
+    role=&quot;API Performance Optimizer&quot;,
+    capabilities=[
+        AgentCapability(
+            name=&quot;profile_api&quot;,
+            description=&quot;Profile API endpoint performance&quot;,
+            required_context=[&quot;endpoint_url&quot;],
+            output_schema={&quot;response_time&quot;: &quot;float&quot;, &quot;bottlenecks&quot;: &quot;list&quot;}
+        ),
+        AgentCapability(
+            name=&quot;optimize_queries&quot;,
+            description=&quot;Optimize database queries&quot;,
+            required_context=[&quot;db_connection&quot;],
+            output_schema={&quot;queries_optimized&quot;: &quot;int&quot;, &quot;improvement&quot;: &quot;float&quot;}
+        )
+    ],
+    tier_preference=&quot;CAPABLE&quot;,
+    resource_requirements=ResourceRequirements(
+        max_tokens=8000,
+        timeout_seconds=600
+    ),
+    tools=[&quot;profiler&quot;, &quot;query_analyzer&quot;, &quot;cache_optimizer&quot;],
+    quality_gates={&quot;min_improvement&quot;: 20.0}
+)
+
+# Register template
+from attune.orchestration.agent_templates import AGENT_REGISTRY
+AGENT_REGISTRY[api_optimizer.id] = api_optimizer
+</code></pre>
+<h3>4. Conditional Execution</h3>
+<p>Execute different agents based on runtime conditions:</p>
+<pre><code class="language-python">class ConditionalWorkflow:
+    &quot;&quot;&quot;Adapts execution based on project characteristics.&quot;&quot;&quot;
+
+    async def execute(self, project_path: str):
+        # Analyze project
+        has_tests = self._check_tests(project_path)
+        has_security = self._check_security(project_path)
+
+        # Build agent list conditionally
+        agents = []
+
+        if not has_tests:
+            agents.append(get_template(&quot;test_coverage_analyzer&quot;))
+
+        if not has_security:
+            agents.append(get_template(&quot;security_auditor&quot;))
+
+        agents.append(get_template(&quot;code_reviewer&quot;))  # Always
+
+        # Execute with appropriate strategy
+        strategy = ParallelStrategy() if len(agents) &gt; 1 else SequentialStrategy()
+        result = await strategy.execute(agents, {&quot;path&quot;: project_path})
+
+        return result
+</code></pre>
+<hr />
+<h2>&lt;a name=&quot;troubleshooting&quot;&gt;&lt;/a&gt;🔧 Troubleshooting</h2>
+<h3>Issue: Orchestrator selects wrong agents</h3>
+<p><strong>Problem:</strong> Task analysis picks agents that don't match your needs</p>
+<p><strong>Solution:</strong> Provide explicit context hints</p>
+<pre><code class="language-python"># Instead of vague task description
+plan = orchestrator.analyze_and_compose(
+    task=&quot;Fix the code&quot;
+)
+
+# Provide explicit domain and capabilities
+plan = orchestrator.analyze_and_compose(
+    task=&quot;Fix security vulnerabilities in authentication module&quot;,
+    context={
+        &quot;domain&quot;: &quot;security&quot;,
+        &quot;capabilities&quot;: [&quot;vulnerability_scan&quot;, &quot;threat_modeling&quot;],
+        &quot;complexity&quot;: &quot;high&quot;
+    }
+)
+</code></pre>
+<h3>Issue: Quality gates always fail</h3>
+<p><strong>Problem:</strong> Default quality gates are too strict</p>
+<p><strong>Solution:</strong> Customize thresholds</p>
+<pre><code class="language-python">from attune.workflows.orchestrated_release_prep import (
+    OrchestratedReleasePrepWorkflow
+)
+
+# Custom quality gates
+workflow = OrchestratedReleasePrepWorkflow(
+    quality_gates={
+        &quot;min_coverage&quot;: 70.0,      # Lower threshold
+        &quot;min_quality_score&quot;: 6.0,  # More lenient
+        &quot;max_critical_issues&quot;: 1,  # Allow 1 critical
+        &quot;min_doc_coverage&quot;: 80.0   # Adjust docs requirement
+    }
+)
+</code></pre>
+<h3>Issue: Workflows too slow</h3>
+<p><strong>Problem:</strong> Sequential execution is bottleneck</p>
+<p><strong>Solution:</strong> Use parallel strategy when possible</p>
+<pre><code class="language-python"># Slow: Sequential
+strategy = SequentialStrategy()
+
+# Fast: Parallel (if agents are independent)
+strategy = ParallelStrategy()
+
+# Or use Teaching pattern for cost optimization
+strategy = TeachingStrategy()  # Cheap agent tries first
+</code></pre>
+<h3>Issue: Costs too high</h3>
+<p><strong>Problem:</strong> Always using PREMIUM tier agents</p>
+<p><strong>Solution:</strong> Adjust tier preferences or use Teaching strategy</p>
+<pre><code class="language-python"># Option 1: Override agent selection
+cheap_agents = [
+    get_template(&quot;documentation_writer&quot;),  # CHEAP
+    get_template(&quot;code_reviewer&quot;)  # CAPABLE
+]
+
+# Option 2: Use Teaching strategy
+strategy = TeachingStrategy()  # Tries cheap first, expert if needed
+
+# Option 3: Provide complexity hint
+plan = orchestrator.analyze_and_compose(
+    task=&quot;Write API documentation&quot;,
+    context={&quot;complexity&quot;: &quot;simple&quot;}  # Favors cheaper agents
+)
+</code></pre>
+<h3>Issue: Configuration not learning</h3>
+<p><strong>Problem:</strong> Compositions aren't being saved</p>
+<p><strong>Solution:</strong> Ensure you're recording outcomes</p>
+<pre><code class="language-python">from attune.orchestration.config_store import ConfigurationStore
+
+store = ConfigurationStore()
+
+# Save configuration after creation
+config_id = store.save(config)
+
+# IMPORTANT: Record outcome after execution
+config.record_outcome(success=True, quality_score=85.0)
+store.save(config)  # Update with metrics
+
+# Verify learning
+best = store.get_best_for_task(config.task_pattern)
+print(f&quot;Usage count: {best.usage_count}&quot;)  # Should increment
+</code></pre>
+<hr />
+<h2>🎉 Conclusion</h2>
+<p>You've learned:</p>
+<p>✅ <strong>What meta-orchestration is</strong> - AI agents that compose themselves
+✅ <strong>How to use built-in workflows</strong> - Release Prep, Test Coverage Boost, Health Check
+✅ <strong>The 6 composition patterns</strong> - Sequential, Parallel, Debate, Teaching, Refinement, Adaptive
+✅ <strong>How to build custom workflows</strong> - Combining agents and strategies
+✅ <strong>How the system learns</strong> - Configuration store and pattern library
+✅ <strong>Advanced techniques</strong> - Hybrid strategies, custom templates, conditional execution</p>
+<h3>Domain-Specific Extensions</h3>
+<p>While this tutorial focused on software development workflows, the Attune AI includes additional domain-specific capabilities:</p>
+<p><strong>Healthcare &amp; Compliance:</strong></p>
+<ul>
+<li>HIPAA compliance validation agents</li>
+<li>Patient data privacy checkers</li>
+<li>Clinical workflow orchestration</li>
+<li>Regulatory audit trail generation</li>
+</ul>
+<p><strong>Code Analysis &amp; Quality:</strong></p>
+<ul>
+<li>Static analysis with SARIF output</li>
+<li>Architectural dependency mapping</li>
+<li>Security vulnerability scanning</li>
+<li>Technical debt quantification</li>
+</ul>
+<p><strong>Custom Domains:</strong></p>
+<p>The meta-orchestration system is designed to work with agents from <em>any</em> domain. You can:</p>
+<ol>
+<li>Create custom agent templates for your industry</li>
+<li>Use the same composition patterns (Sequential, Parallel, etc.)</li>
+<li>Benefit from the learning loop across all domains</li>
+<li>Mix and match agents from different domains in one workflow</li>
+</ol>
+<h3>Next Steps</h3>
+<ol>
+<li><strong>Experiment</strong> with the built-in workflows</li>
+<li><strong>Build</strong> your first custom workflow</li>
+<li><strong>Monitor</strong> the learning loop (check configuration store)</li>
+<li><strong>Share</strong> successful compositions with your team</li>
+<li><strong>Explore</strong> domain-specific features if relevant to your work</li>
+</ol>
+<h3>Additional Resources</h3>
+<ul>
+<li><a href="../reference/API_REFERENCE.md">API Reference</a> - API overview</li>
+<li><a href="../reference/multi-agent.md">Multi-Agent Reference</a> - Agent coordination</li>
+<li>Healthcare Wizards - HIPAA compliance and clinical workflows (see <code>attune wizard --help</code>)</li>
+</ul>
+<hr />
+<p><strong>Welcome to the Meta-Orchestration Era!</strong> 🎭</p>
+<p>The future of AI collaboration is dynamic, intelligent, and self-improving. You're now part of that future.</p>
+<p>Happy orchestrating! 🚀</p>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Security Architecture — how-to</title>
+  <meta name="description" content="Attune&#x27;s security surface is a set of composable primitives in `attune.security` (re-exported from `attune.memory.security`) plus an Agent-SDK-backed `SecurityAuditWorkflow` that scans a codebase. Thi" />
+  <meta property="og:title" content="Security Architecture — how-to" />
+  <meta property="og:description" content="Attune&#x27;s security surface is a set of composable primitives in `attune.security` (re-exported from `attune.memory.security`) plus an Agent-SDK-backed `SecurityAuditWorkflow` that scans a codebase. Thi" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/security-audit">Security Audit</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Security Architecture</h1>
+<p>Attune's security surface is a set of composable primitives in
+<code>attune.security</code> (re-exported from <code>attune.memory.security</code>) plus an
+Agent-SDK-backed <code>SecurityAuditWorkflow</code> that scans a codebase. This
+page describes what actually ships in the source tree.</p>
+<hr />
+<h2>Overview</h2>
+<p>The security module exposes four primitive families and one workflow:</p>
+<ol>
+<li><strong>PII scrubbing</strong> — <code>PIIScrubber</code>, <code>PIIPattern</code>, <code>PIIDetection</code>.</li>
+<li><strong>Secrets detection</strong> — <code>SecretsDetector</code>, <code>detect_secrets()</code>,
+<code>SecretType</code>, <code>SecretDetection</code>.</li>
+<li><strong>Audit logging</strong> — <code>AuditLogger</code>, <code>AuditEvent</code>,
+<code>SecurityViolation</code>, <code>Severity</code>.</li>
+<li><strong>Path validation</strong> — <code>_validate_file_path()</code> (private helper used
+by the CLI to block path traversal).</li>
+<li><strong>Workflow</strong> — <code>SecurityAuditWorkflow</code> runs a multi-subagent audit
+against a directory or file.</li>
+</ol>
+<p>All public symbols are importable from either
+<code>attune.security</code> or <code>attune.memory.security</code> — the former re-exports
+the latter for convenience.</p>
+<pre><code class="language-python">from attune.security import (
+    PIIScrubber,
+    SecretsDetector,
+    AuditLogger,
+    AuditEvent,
+    SecurityViolation,
+    Severity,
+    detect_secrets,
+)
+</code></pre>
+<hr />
+<h2>PII Protection</h2>
+<p><code>PIIScrubber</code> detects PII in text and returns a tuple of
+<code>(sanitized_text, detections)</code>. Each detection is a <code>PIIDetection</code>
+dataclass with the matched text, position, replacement token, and
+confidence.</p>
+<h3>Built-in patterns</h3>
+<p><code>PIIScrubber._init_default_patterns()</code> ships nine patterns:</p>
+<table>
+<thead>
+<tr>
+<th>Pattern name</th>
+<th>Replacement</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>email</code></td>
+<td><code>[EMAIL]</code></td>
+<td>RFC 5322 simplified</td>
+</tr>
+<tr>
+<td><code>ssn</code></td>
+<td><code>[SSN]</code></td>
+<td>Excludes invalid area numbers (000/666/9xx)</td>
+</tr>
+<tr>
+<td><code>phone</code></td>
+<td><code>[PHONE]</code></td>
+<td>US + international formats</td>
+</tr>
+<tr>
+<td><code>credit_card</code></td>
+<td><code>[CC]</code></td>
+<td>Visa / MC / Amex / Discover</td>
+</tr>
+<tr>
+<td><code>ipv4</code></td>
+<td><code>[IP]</code></td>
+<td>Octet-validated</td>
+</tr>
+<tr>
+<td><code>ipv6</code></td>
+<td><code>[IP]</code></td>
+<td>Simplified IPv6</td>
+</tr>
+<tr>
+<td><code>address</code></td>
+<td><code>[ADDRESS]</code></td>
+<td>US street address heuristic</td>
+</tr>
+<tr>
+<td><code>name</code></td>
+<td><code>[NAME]</code></td>
+<td>Title-prefixed names; <strong>disabled by default</strong> (high false-positive rate)</td>
+</tr>
+<tr>
+<td><code>mrn</code></td>
+<td><code>[MRN]</code></td>
+<td>Medical Record Number</td>
+</tr>
+<tr>
+<td><code>patient_id</code></td>
+<td><code>[PATIENT_ID]</code></td>
+<td>Patient identifier (<code>Patient ID:</code> / <code>PID-</code>)</td>
+</tr>
+</tbody>
+</table>
+<h3>Usage</h3>
+<pre><code class="language-python">from attune.security import PIIScrubber
+
+scrubber = PIIScrubber()  # name detection disabled by default
+
+text = &quot;Email user@example.com or call 555-123-4567 (MRN: 1234567).&quot;
+sanitized, detections = scrubber.scrub(text)
+
+print(sanitized)
+# &quot;Email [EMAIL] or call [PHONE] (MRN: [MRN]).&quot;
+
+for d in detections:
+    print(d.pii_type, d.replacement, d.confidence)
+</code></pre>
+<p><code>PIIDetection.to_audit_safe_dict()</code> returns a dict that omits the
+matched value — safe to forward to an audit log.</p>
+<h3>Custom patterns</h3>
+<pre><code class="language-python">scrubber.add_custom_pattern(
+    name=&quot;employee_id&quot;,
+    pattern=r&quot;EMP-\d{6}&quot;,
+    replacement=&quot;[EMPLOYEE_ID]&quot;,
+    confidence=1.0,
+    description=&quot;Company employee identifier&quot;,
+)
+</code></pre>
+<p>Default patterns can be disabled with <code>disable_pattern(name)</code> and
+re-enabled with <code>enable_pattern(name)</code>. Custom patterns are removed
+with <code>remove_custom_pattern(name)</code>.</p>
+<hr />
+<h2>Secrets Detection</h2>
+<p><code>SecretsDetector</code> scans content for hardcoded credentials using
+compiled regex patterns plus optional Shannon-entropy fallback. The
+detector <strong>never stores the matched secret value</strong> — only metadata
+(type, severity, line/column, redacted context snippet).</p>
+<h3>Supported secret types</h3>
+<p>From <code>SecretType</code> (see <code>secrets_types.py</code>):</p>
+<ul>
+<li>API keys: <code>ANTHROPIC_API_KEY</code>, <code>OPENAI_API_KEY</code>, <code>AWS_ACCESS_KEY</code>,
+<code>AWS_SECRET_KEY</code>, <code>GITHUB_TOKEN</code>, <code>SLACK_TOKEN</code>, <code>STRIPE_KEY</code>,
+<code>GENERIC_API_KEY</code></li>
+<li>Passwords: <code>PASSWORD</code>, <code>BASIC_AUTH</code></li>
+<li>Private keys: <code>RSA_PRIVATE_KEY</code>, <code>SSH_PRIVATE_KEY</code>,
+<code>EC_PRIVATE_KEY</code>, <code>PGP_PRIVATE_KEY</code>, <code>TLS_CERTIFICATE_KEY</code></li>
+<li>Tokens: <code>JWT_TOKEN</code>, <code>OAUTH_TOKEN</code>, <code>BEARER_TOKEN</code></li>
+<li>Databases: <code>DATABASE_URL</code>, <code>CONNECTION_STRING</code></li>
+<li>Heuristic: <code>HIGH_ENTROPY_STRING</code></li>
+</ul>
+<h3>Severity model</h3>
+<p><code>Severity</code> is an enum with four levels:</p>
+<table>
+<thead>
+<tr>
+<th>Level</th>
+<th>Typical members</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CRITICAL</td>
+<td>Private keys, AWS access/secret keys</td>
+</tr>
+<tr>
+<td>HIGH</td>
+<td>API keys (Anthropic, OpenAI, GitHub, Slack, Stripe), passwords, database URLs</td>
+</tr>
+<tr>
+<td>MEDIUM</td>
+<td>OAuth tokens, JWT tokens, bearer tokens</td>
+</tr>
+<tr>
+<td>LOW</td>
+<td>High-entropy strings (heuristic catch)</td>
+</tr>
+</tbody>
+</table>
+<h3>Usage</h3>
+<pre><code class="language-python">from attune.security import SecretsDetector, detect_secrets
+
+# One-shot:
+detections = detect_secrets(source_code)
+
+# Reusable instance with custom thresholds:
+detector = SecretsDetector(
+    enable_entropy_analysis=True,
+    entropy_threshold=4.5,
+    min_entropy_length=20,
+)
+detections = detector.detect(source_code)
+
+for d in detections:
+    print(
+        d.secret_type.value,
+        d.severity.value,
+        f&quot;line {d.line_number} col {d.column_start}&quot;,
+        d.context_snippet,  # secret value replaced with [REDACTED]
+    )
+</code></pre>
+<p><code>SecretDetection.to_dict()</code> is JSON-safe. Custom patterns are added
+via <code>detector.add_custom_pattern(name, pattern, severity)</code> where
+<code>severity</code> is <code>&quot;critical&quot; | &quot;high&quot; | &quot;medium&quot; | &quot;low&quot;</code>.</p>
+<hr />
+<h2>Audit Logging</h2>
+<p><code>AuditLogger</code> writes append-only JSON-Lines (<code>.jsonl</code>) events to a
+log directory, with optional size-based rotation and age-based
+cleanup. The constructor accepts:</p>
+<pre><code class="language-python">AuditLogger(
+    log_dir=None,                  # defaults to platform_utils.get_default_log_dir()
+    log_filename=&quot;audit.jsonl&quot;,
+    max_file_size_mb=100,
+    retention_days=365,
+    enable_rotation=True,
+    enable_console_logging=False,
+)
+</code></pre>
+<p>The log directory is created with <code>0o700</code> permissions; on init
+failure it falls back to <code>./logs</code>.</p>
+<h3>Event types</h3>
+<p>Logging methods on <code>AuditLogger</code> (mixed in from
+<code>AuditLogMethodsMixin</code>):</p>
+<ul>
+<li><code>log_llm_request(user_id, empathy_level, provider, model, memory_sources, pii_count=0, secrets_count=0, ...)</code>
+— records an LLM API call with per-request size, duration, and
+PII/secret counts.</li>
+<li><code>log_pattern_store(user_id, pattern_id, pattern_type, classification, pii_scrubbed=0, secrets_detected=0, ...)</code>
+— records storage of a MemDocs pattern.</li>
+<li><code>log_pattern_retrieve(user_id, pattern_id, classification, access_granted=True, ...)</code>
+— records pattern retrieval and unauthorized-access attempts.</li>
+<li><code>log_security_violation(user_id, violation_type, severity, details, ...)</code>
+— records a security policy violation.</li>
+</ul>
+<p><code>log_llm_request</code> and <code>log_pattern_store</code> automatically escalate to
+<code>log_security_violation</code> when <code>secrets_count &gt; 0</code> or when sensitive
+classifications are stored unencrypted.</p>
+<h3>Event shape</h3>
+<p>Every event is an <code>AuditEvent</code> dataclass:</p>
+<pre><code class="language-python">AuditEvent(
+    event_id=&quot;evt_&lt;12-hex&gt;&quot;,        # auto-generated
+    timestamp=&quot;&lt;UTC ISO-8601&gt;&quot;,     # auto-generated
+    version=&quot;1.0&quot;,
+    event_type=&quot;llm_request&quot;,       # or store_pattern / retrieve_pattern / security_violation
+    user_id=&quot;...&quot;,
+    session_id=&quot;...&quot;,
+    status=&quot;success&quot;,               # or failed / blocked
+    error=&quot;&quot;,
+    data={...},                     # event-specific fields
+)
+</code></pre>
+<p><code>to_dict()</code> flattens <code>data</code> into the top level for easier querying.</p>
+<h3>Querying logs</h3>
+<p><code>AuditLogger.query()</code> (from <code>AuditQueryMixin</code>) supports filtering by
+<code>event_type</code>, <code>user_id</code>, <code>status</code>, date range, and arbitrary
+field/value filters:</p>
+<pre><code class="language-python">events = logger.query(
+    event_type=&quot;llm_request&quot;,
+    user_id=&quot;user@example.com&quot;,
+    start_date=datetime(2026, 1, 1),
+    end_date=datetime(2026, 1, 31),
+    limit=1000,
+)
+</code></pre>
+<hr />
+<h2>Path Validation</h2>
+<blockquote>
+<p><strong>Internal API.</strong> The <code>_validate_file_path</code> helper has a leading
+underscore — treat it as internal. The signature and behavior may
+change between releases. It is documented here because it is the
+single source of truth for path-traversal defense across the
+codebase; prefer calling it via the higher-level workflows rather
+than depending on its signature directly.</p>
+</blockquote>
+<p><code>attune.security.path_validation._validate_file_path(path, allowed_dir=None)</code>
+is the internal guard the CLI uses to block path-traversal attacks
+(CWE-22) before running workflows against user-supplied paths.</p>
+<ul>
+<li>Rejects empty paths, non-string paths, and paths containing null
+bytes.</li>
+<li>Resolves the path with <code>Path.resolve()</code> and (optionally) asserts
+it lies under <code>allowed_dir</code>.</li>
+<li>Refuses to operate on platform system directories
+(e.g. <code>/etc</code>, <code>/private/etc</code>, <code>/usr/bin</code>, <code>/bin</code> on Unix;
+<code>C:\Windows\System32</code>, <code>Program Files</code> on Windows).</li>
+</ul>
+<p>The leading underscore is intentional: this is a private primitive
+used internally by <code>attune.cli_commands.workflow_commands.cmd_workflow_run</code>,
+not a public API. Callers outside the CLI should not import it.</p>
+<hr />
+<h2>SecurityAuditWorkflow</h2>
+<p><code>SecurityAuditWorkflow</code> (slug: <code>security-audit</code>) is the public,
+SDK-native security audit. It delegates to four Claude Agent SDK
+subagents and synthesizes their findings into a <code>WorkflowResult</code>:</p>
+<ul>
+<li><strong>vuln-scanner</strong> — injection flaws, <code>eval</code>/<code>exec</code>, XSS, path
+traversal, command injection, insecure deserialization.</li>
+<li><strong>secret-detector</strong> — hardcoded credentials, API keys, tokens,
+private keys, database credentials.</li>
+<li><strong>auth-reviewer</strong> — missing auth checks, broken access control,
+insecure session management, privilege-escalation risks.</li>
+<li><strong>remediation-planner</strong> — prioritized fix plan grouped by effort.</li>
+</ul>
+<h3>Run from the CLI</h3>
+<pre><code class="language-bash">attune workflow run security-audit --path src/
+attune workflow run security-audit --path src/ --depth deep
+</code></pre>
+<p>Supported <code>--depth</code> values are <code>quick</code>, <code>standard</code> (default), and
+<code>deep</code>. Depth maps to a <code>max_turns</code> budget for the orchestrator
+(10 / 20 / 40 respectively) and engages extended thinking on <code>deep</code>.</p>
+<h3>Run from Python</h3>
+<pre><code class="language-python">import asyncio
+from attune.workflows.security_audit import SecurityAuditWorkflow
+
+async def run_audit():
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path=&quot;src/&quot;, depth=&quot;standard&quot;)
+    print(result.final_output)
+    print(result.summary)
+
+asyncio.run(run_audit())
+</code></pre>
+<h3>Output</h3>
+<p>The orchestrator's synthesis covers three sections —
+<strong>Summary</strong> (a security score 0–100 + 2-3 sentence executive
+summary), <strong>Security</strong> (consolidated findings by severity), and
+<strong>Suggestions</strong> (prioritized remediation). Per-subagent transcripts
+are recovered separately and appended under
+<code>## Subagent findings</code> so the orchestrator's summary cannot silently
+drop their detail.</p>
+<p>The returned <code>WorkflowResult</code> carries <code>final_output</code>, <code>summary</code>,
+<code>success</code>, <code>stages</code>, <code>cost_report</code>, <code>metadata</code> (with the resolved
+path, depth, and subagent transcripts), plus optional <code>error</code> /
+<code>error_type</code> / <code>transient</code> fields when the SDK call fails.</p>
+<hr />
+<h2>See also</h2>
+<ul>
+<li><a href="../reference/wizards.md">Wizards</a> — the wizard runtime; the <code>security</code> builtin delegates to <code>SecurityAuditWorkflow</code>.</li>
+<li><a href="../reference/cli-reference.md">CLI Reference</a> — <code>attune workflow run security-audit</code> invocation and flags.</li>
+</ul>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

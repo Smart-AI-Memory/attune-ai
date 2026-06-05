@@ -1,0 +1,607 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Resilience Patterns — how-to</title>
+  <meta name="description" content="Production-ready patterns for fault tolerance and reliability. These patterns help your application handle failures gracefully, prevent cascading failures, and maintain service availability." />
+  <meta property="og:title" content="Resilience Patterns — how-to" />
+  <meta property="og:description" content="Production-ready patterns for fault tolerance and reliability. These patterns help your application handle failures gracefully, prevent cascading failures, and maintain service availability." />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/resilience">Resilience</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Resilience Patterns</h1>
+<p>Production-ready patterns for fault tolerance and reliability. These patterns help your application handle failures gracefully, prevent cascading failures, and maintain service availability.</p>
+<h2>Overview</h2>
+<pre><code class="language-python">from attune.resilience import (
+    retry,              # Retry failed operations
+    circuit_breaker,    # Prevent cascading failures
+    timeout,            # Prevent hanging operations
+    fallback,           # Graceful degradation
+    HealthCheck,        # Monitor system health
+)
+</code></pre>
+<h2>Retry with Exponential Backoff</h2>
+<p>Automatically retry failed operations with increasing delays:</p>
+<pre><code class="language-python">from attune.resilience import retry, RetryConfig
+
+@retry(max_attempts=3, initial_delay=1.0, backoff_factor=2.0)
+async def call_external_api():
+    response = await api.get(&quot;/data&quot;)
+    return response.json()
+</code></pre>
+<h3>How Backoff Works</h3>
+<p>With <code>initial_delay=1.0</code> and <code>backoff_factor=2.0</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Attempt</th>
+<th>Delay Before Retry</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>1</td>
+<td>0s (immediate)</td>
+</tr>
+<tr>
+<td>2</td>
+<td>1.0s</td>
+</tr>
+<tr>
+<td>3</td>
+<td>2.0s</td>
+</tr>
+<tr>
+<td>4</td>
+<td>4.0s</td>
+</tr>
+<tr>
+<td>5</td>
+<td>8.0s (capped at max_delay)</td>
+</tr>
+</tbody>
+</table>
+<h3>Parameters</h3>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>max_attempts</code></td>
+<td><code>3</code></td>
+<td>Maximum retry attempts</td>
+</tr>
+<tr>
+<td><code>initial_delay</code></td>
+<td><code>1.0</code></td>
+<td>Initial delay in seconds</td>
+</tr>
+<tr>
+<td><code>backoff_factor</code></td>
+<td><code>2.0</code></td>
+<td>Multiply delay by this each retry</td>
+</tr>
+<tr>
+<td><code>max_delay</code></td>
+<td><code>60.0</code></td>
+<td>Maximum delay cap</td>
+</tr>
+<tr>
+<td><code>jitter</code></td>
+<td><code>True</code></td>
+<td>Add randomness to prevent thundering herd</td>
+</tr>
+</tbody>
+</table>
+<h3>Jitter</h3>
+<p>Jitter adds randomness to prevent all clients from retrying simultaneously:</p>
+<pre><code class="language-python"># Without jitter: All clients retry at exactly 1s, 2s, 4s...
+# With jitter: Clients retry at ~0.8s, ~2.3s, ~3.7s...
+
+@retry(max_attempts=3, jitter=True)  # Recommended for distributed systems
+async def call_api():
+    ...
+</code></pre>
+<hr />
+<h2>Circuit Breaker</h2>
+<p>Prevent cascading failures by failing fast when a service is down:</p>
+<pre><code class="language-python">from attune.resilience import circuit_breaker, CircuitOpenError
+
+@circuit_breaker(
+    name=&quot;external_api&quot;,
+    failure_threshold=5,    # Open after 5 failures
+    reset_timeout=60.0,     # Try again after 60s
+    half_open_max_calls=3   # 3 successes to fully close
+)
+async def call_external_api():
+    return await api.get(&quot;/data&quot;)
+</code></pre>
+<h3>Circuit States</h3>
+<pre><code>     ┌─────────┐
+     │ CLOSED  │ ◄─── Normal operation
+     └────┬────┘
+          │ failures &gt;= threshold
+          ▼
+     ┌─────────┐
+     │  OPEN   │ ◄─── Fail immediately
+     └────┬────┘
+          │ after reset_timeout
+          ▼
+   ┌───────────────┐
+   │  HALF_OPEN    │ ◄─── Testing recovery
+   └───────┬───────┘
+           │
+     ┌─────┴─────┐
+     │           │
+   success    failure
+     │           │
+     ▼           ▼
+  CLOSED       OPEN
+</code></pre>
+<h3>With Fallback</h3>
+<pre><code class="language-python">async def cached_fallback():
+    return {&quot;status&quot;: &quot;cached&quot;, &quot;data&quot;: cache.get(&quot;last_known&quot;)}
+
+@circuit_breaker(
+    name=&quot;api&quot;,
+    failure_threshold=3,
+    fallback=cached_fallback
+)
+async def get_data():
+    return await api.get(&quot;/data&quot;)
+
+# When circuit is open, cached_fallback() is called instead of raising
+</code></pre>
+<h3>Monitoring Circuit State</h3>
+<pre><code class="language-python">from attune.resilience import get_circuit_breaker
+
+cb = get_circuit_breaker(&quot;external_api&quot;)
+
+print(f&quot;State: {cb.state}&quot;)           # CLOSED, OPEN, HALF_OPEN
+print(f&quot;Failures: {cb.get_stats()['failure_count']}&quot;)
+print(f&quot;Resets in: {cb.get_time_until_reset()}s&quot;)
+</code></pre>
+<hr />
+<h2>Timeout</h2>
+<p>Prevent operations from hanging indefinitely:</p>
+<pre><code class="language-python">from attune.resilience import timeout, with_timeout, ResilienceTimeoutError
+
+@timeout(30.0)  # 30 second timeout
+async def slow_operation():
+    return await long_running_task()
+</code></pre>
+<h3>With Fallback</h3>
+<pre><code class="language-python">@timeout(5.0, fallback=lambda: &quot;default_value&quot;)
+async def quick_lookup():
+    return await cache.get(&quot;key&quot;)
+</code></pre>
+<h3>One-off Timeout</h3>
+<pre><code class="language-python">from attune.resilience import with_timeout
+
+result = await with_timeout(
+    some_coroutine(),
+    timeout_seconds=10.0,
+    fallback_value=&quot;timeout_default&quot;
+)
+</code></pre>
+<hr />
+<h2>Fallback Chain</h2>
+<p>Graceful degradation with multiple fallback options:</p>
+<pre><code class="language-python">from attune.resilience import Fallback, fallback
+
+# Decorator approach
+@fallback(fallback_func=get_cached_data, default=&quot;No data available&quot;)
+async def get_live_data():
+    return await api.get(&quot;/live&quot;)
+</code></pre>
+<h3>Fallback Chain</h3>
+<p>Try multiple sources in order:</p>
+<pre><code class="language-python">fb = Fallback(name=&quot;data_source&quot;, default_value=&quot;offline_mode&quot;)
+
+@fb.add
+async def primary_api():
+    return await api1.get(&quot;/data&quot;)
+
+@fb.add
+async def backup_api():
+    return await api2.get(&quot;/data&quot;)
+
+@fb.add
+async def local_cache():
+    return cache.get(&quot;data&quot;)
+
+# Tries primary → backup → cache → default
+result = await fb.execute()
+</code></pre>
+<hr />
+<h2>Health Checks</h2>
+<p>Monitor system component health:</p>
+<pre><code class="language-python">from attune.resilience import HealthCheck, HealthStatus
+
+health = HealthCheck(version=&quot;3.1.0&quot;)
+
+@health.register(&quot;database&quot;, timeout=5.0)
+async def check_database():
+    await db.ping()
+    return True  # Healthy
+
+@health.register(&quot;cache&quot;, timeout=2.0)
+async def check_cache():
+    return {
+        &quot;healthy&quot;: redis.ping(),
+        &quot;connections&quot;: redis.info()[&quot;connected_clients&quot;],
+        &quot;memory_mb&quot;: redis.info()[&quot;used_memory_mb&quot;]
+    }
+
+@health.register(&quot;external_api&quot;, timeout=10.0)
+async def check_api():
+    response = await api.get(&quot;/health&quot;)
+    return response.status_code == 200
+</code></pre>
+<h3>Running Health Checks</h3>
+<pre><code class="language-python"># Run all checks
+system_health = await health.run_all()
+
+print(f&quot;Status: {system_health.status}&quot;)  # HEALTHY, DEGRADED, UNHEALTHY
+print(f&quot;Uptime: {system_health.uptime_seconds}s&quot;)
+print(f&quot;Version: {system_health.version}&quot;)
+
+# Serialize for API response
+return system_health.to_dict()
+</code></pre>
+<h3>Health Check Return Values</h3>
+<pre><code class="language-python"># Boolean - simple healthy/unhealthy
+@health.register(&quot;simple&quot;)
+async def simple_check():
+    return True  # or False
+
+# Dict - with details
+@health.register(&quot;detailed&quot;)
+async def detailed_check():
+    return {
+        &quot;healthy&quot;: True,
+        &quot;connections&quot;: 42,
+        &quot;latency_ms&quot;: 15
+    }
+
+# Exception - unhealthy with error message
+@health.register(&quot;error&quot;)
+async def error_check():
+    raise RuntimeError(&quot;Database connection failed&quot;)
+    # Caught and reported as unhealthy
+</code></pre>
+<hr />
+<h2>Combining Patterns</h2>
+<p>Stack decorators for robust services:</p>
+<pre><code class="language-python">from attune.resilience import retry, circuit_breaker, timeout, fallback
+
+async def cached_fallback():
+    return cache.get(&quot;last_known_good&quot;)
+
+@circuit_breaker(name=&quot;api&quot;, failure_threshold=5)
+@retry(max_attempts=3, initial_delay=0.5)
+@timeout(10.0)
+@fallback(cached_fallback)
+async def reliable_api_call():
+    return await external_api.get(&quot;/data&quot;)
+</code></pre>
+<h3>Execution Order</h3>
+<ol>
+<li><strong>fallback</strong> - Catches any unhandled exception, returns fallback</li>
+<li><strong>timeout</strong> - Cancels if takes too long</li>
+<li><strong>retry</strong> - Retries on failure (within timeout)</li>
+<li><strong>circuit_breaker</strong> - Fails fast if circuit is open</li>
+</ol>
+<hr />
+<h2>Best Practices</h2>
+<h3>1. Use Jitter for Distributed Systems</h3>
+<pre><code class="language-python">@retry(max_attempts=5, jitter=True)
+async def distributed_call():
+    ...
+</code></pre>
+<h3>2. Name Circuit Breakers</h3>
+<pre><code class="language-python"># Good: Named for the service being protected
+@circuit_breaker(name=&quot;payment_gateway&quot;)
+
+# Bad: Default name (function name)
+@circuit_breaker()
+</code></pre>
+<h3>3. Set Appropriate Timeouts</h3>
+<pre><code class="language-python"># API calls: 5-30 seconds
+@timeout(10.0)
+async def api_call(): ...
+
+# Database queries: 1-5 seconds
+@timeout(3.0)
+async def db_query(): ...
+
+# Background tasks: 60+ seconds
+@timeout(300.0)
+async def batch_process(): ...
+</code></pre>
+<h3>4. Log Circuit State Changes</h3>
+<p>The circuit breaker automatically logs state transitions:</p>
+<pre><code>INFO  Circuit breaker 'api' transitioning to HALF_OPEN
+WARN  Circuit breaker 'api' OPEN after 5 failures
+INFO  Circuit breaker 'api' CLOSED - service recovered
+</code></pre>
+<h3>5. Monitor Health Endpoints</h3>
+<pre><code class="language-python">from fastapi import FastAPI
+from attune.resilience import HealthCheck
+
+app = FastAPI()
+health = HealthCheck(version=&quot;3.1.0&quot;)
+
+@app.get(&quot;/health&quot;)
+async def health_endpoint():
+    status = await health.run_all()
+    return status.to_dict()
+</code></pre>
+<hr />
+<h2>See Also</h2>
+<ul>
+<li><a href="../reference/API_REFERENCE.md">API Reference</a> - Full API documentation</li>
+<li><a href="smart-router.md">Smart Router</a> - Natural language wizard dispatch</li>
+<li><a href="memory-graph.md">Memory Graph</a> - Cross-wizard knowledge sharing</li>
+</ul>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

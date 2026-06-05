@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>Using discovery-sweep on the ops dashboard — how-to</title>
+  <meta name="description" content="The ops dashboard surfaces [`discovery-sweep`](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows/discovery_sweep) results in three places once you&#x27;ve recorded at least one sw" />
+  <meta property="og:title" content="Using discovery-sweep on the ops dashboard — how-to" />
+  <meta property="og:description" content="The ops dashboard surfaces [`discovery-sweep`](https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows/discovery_sweep) results in three places once you&#x27;ve recorded at least one sw" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,88 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/guides">Guides</a><span class="sep">&rsaquo;</span><span>Using discovery-sweep on the ops dashboard</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>Using discovery-sweep on the ops dashboard</h1>
+<p>The ops dashboard surfaces <a href="https://github.com/Smart-AI-Memory/attune-ai/tree/main/src/attune/workflows/discovery_sweep"><code>discovery-sweep</code></a> results in three places once you've recorded at least one sweep for a scope: per-bucket chips on the workflows page, live source-by-source progress on the run page, and a scope-keyed drill-in detail page.</p>
+<p>This guide assumes the dashboard is running locally — <code>attune ops</code> in your project root opens it on <code>http://127.0.0.1:8765</code>.</p>
+<h2>Enable result persistence</h2>
+<p>Set <code>ATTUNE_OPS_SWEEP_RESULTS=1</code> in the environment that launched the dashboard. The dashboard reads sweep results from <code>~/.attune/ops/sweep-results/&lt;scope-hash&gt;.json</code>; without the flag the runner never writes those files, so the chips stay at <code>0</code> and the drill-in returns 404.</p>
+<pre><code class="language-bash">ATTUNE_OPS_SWEEP_RESULTS=1 attune ops
+</code></pre>
+<h2>Trigger a sweep</h2>
+<p>Either kick off the run from the dashboard's <strong>Run</strong> button on the <code>discovery-sweep</code> row (after picking a scope from the dropdown), or from the CLI:</p>
+<pre><code class="language-bash">attune workflow run discovery-sweep --path src/
+</code></pre>
+<p>The CLI path is the same one the dashboard's runner invokes — it streams <code>ATTUNE_DS</code> events to stdout that the daemon captures and persists when the run finishes.</p>
+<h2>Read the chips</h2>
+<p>The discovery-sweep row on <code>/workflows</code> shows three chips after the description:</p>
+<table>
+<thead>
+<tr>
+<th>Chip</th>
+<th>Color</th>
+<th>What it counts</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>queue</code></td>
+<td>red</td>
+<td>Findings the engine routed for immediate review</td>
+</tr>
+<tr>
+<td><code>questions</code></td>
+<td>amber</td>
+<td>Findings that couldn't be auto-routed — needs your call</td>
+</tr>
+<tr>
+<td><code>rejected</code></td>
+<td>muted</td>
+<td>Findings filtered out by deterministic rules</td>
+</tr>
+</tbody>
+</table>
+<p>Each chip links to the detail page filtered to that bucket. Pick a different scope from the dropdown and the chip counts refresh asynchronously — the chips always reflect the most recent sweep recorded for the <em>currently-picked</em> scope.</p>
+<p>The label next to the chips reads <code>latest result</code> when a sweep has been recorded, or <code>no sweep recorded for this scope yet</code> when the persisted file is missing.</p>
+<h2>Watch live progress</h2>
+<p>While a sweep is running, navigate to its run page (the dashboard auto-redirects when you click <strong>Run</strong>). The page renders a <strong>Sources</strong> panel above the streaming log with one row per source:</p>
+<ul>
+<li><code>⌛ pattern-scan</code> — pending</li>
+<li><code>⏳ bug-predict running…</code> — in flight</li>
+<li><code>✓ doc-audit 3 finding(s)</code> — completed</li>
+<li><code>✗ security-audit BudgetExceededError</code> — failed (with the exception class)</li>
+</ul>
+<p>Status flips arrive as <code>ATTUNE_DS source_started</code> / <code>source_finished</code> / <code>source_failed</code> lines on the existing SSE stream. The DOM order is fixed alphabetically so the layout doesn't reflow as sources transition.</p>
+<h2>Drill into findings</h2>
+<p>Click any chip (or any bucket-link tab on the detail page) to open <code>/workflows/discovery-sweep/results/&lt;scope-hash&gt;?bucket=&lt;bucket&gt;</code>. Each finding row shows:</p>
+<ul>
+<li>Severity chip (<code>critical</code> / <code>high</code> / <code>medium</code> / <code>low</code> / <code>info</code>)</li>
+<li>Source name (<code>bug-predict</code>, <code>security-audit</code>, etc.)</li>
+<li>Title + description</li>
+<li>File:line link (when present)</li>
+<li>Tags</li>
+<li>Routing metadata: the <code>reason</code> + <code>next_step</code> for questions, or the <code>rule</code> for rejected findings</li>
+<li>Collapsed <strong>Evidence</strong> snippet — the matched code or context</li>
+</ul>
+<p>The detail page is read-only; it shows the <em>current state</em> of a scope (latest sweep), independent of which specific run produced it.</p>
+<h2>Troubleshooting</h2>
+<ul>
+<li><strong>Chips stay at <code>0</code>.</strong> Check <code>ATTUNE_OPS_SWEEP_RESULTS=1</code> is set in the dashboard's environment, then run a sweep against the picked scope and refresh. Counts read from <code>~/.attune/ops/sweep-results/&lt;scope-hash&gt;.json</code>; a missing or empty file renders as zeros.</li>
+<li><strong>Detail page 404s.</strong> Same root cause — no sweep has been persisted for that scope hash. Trigger a sweep first.</li>
+<li><strong>Progress panel doesn't appear on the run page.</strong> Only sweeps emit <code>ATTUNE_DS</code> events; other workflows' run pages skip the panel entirely. Confirm the run is <code>discovery-sweep</code> and that the engine emitted at least one event line in the captured log.</li>
+</ul>
+<h2>Related</h2>
+<ul>
+<li><a href="../specs/discovery-sweep-ops-integration/">Spec: discovery-sweep-ops-integration</a> — design + tasks.</li>
+<li><a href="../specs/discovery-sweep/">Spec: discovery-sweep</a> — the underlying workflow.</li>
+<li><code>attune workflow run discovery-sweep --help</code> — CLI flags.</li>
+</ul>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

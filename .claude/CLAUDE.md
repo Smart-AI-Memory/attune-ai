@@ -7635,3 +7635,57 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   lesson (same mechanism, different purpose: keeping an optional
   dep OFF the submodule import path). Pairs with "Unused
   `__init__.py` re-exports become invisible runtime deps."
+
+- **A git-connected Vercel project deploying the WRONG Root
+  Directory makes the whole custom-domain site 404 — and it looks
+  like DNS but isn't**: 2026-06-04, after connecting the
+  `attune-ai-dev` Vercel project (→ attune-ai.dev) to the repo, the
+  ENTIRE site (`/`, `/discipline`, `/help`) returned 404. It reads
+  like a DNS failure, but it's not: the 404 body is Vercel's own
+  `NOT_FOUND` served from an `iad1::` edge, which proves DNS
+  resolved to Vercel fine — the problem is deployment *content*.
+  Root cause via `vercel project inspect <proj>`:
+  `Root Directory = .` (repo root) instead of `attune-ai-dev`. The
+  static site lives in `attune-ai-dev/`, so git-triggered prod
+  builds from `.` find no `index.html` and serve 404 everywhere.
+  Four corollaries: (1) **separate projects under one account** —
+  `vercel projects ls` shows `website` (→ smartaimemory.com, the
+  `website/` Next.js dir) and `attune-ai-dev` (→ attune-ai.dev) as
+  distinct projects; don't conflate them. (2) **`vercel projects
+  ls` shows per-project "Updated" age** — attune-ai-dev was *8 days
+  stale* because it wasn't auto-deploying at all until the git
+  connection; connecting fixed auto-deploy-firing but exposed the
+  Root Directory misconfig. (3) **a CLI `vercel --prod` from INSIDE
+  `attune-ai-dev/` works regardless** (the CLI deploys cwd,
+  ignoring the dashboard Root Directory) — the band-aid restore,
+  but the next git-triggered deploy breaks it again until the
+  dashboard setting is fixed. (4) **the GitHub deployments API only
+  surfaces the `website` project's statuses** — don't infer
+  attune-ai.dev's deploy state from `gh api .../deployments`; use
+  `vercel ls` / `vercel inspect` in the linked subdir. Fix:
+  dashboard → project → Settings → General → Root Directory =
+  `attune-ai-dev`, then **Redeploy** (changing the setting alone
+  doesn't rebuild). `attune-ai-dev/README.md` setup already says
+  "Root Directory: attune-ai-dev" — a repo (re)connect reset it.
+
+- **pymdownx tabbed (`=== "Tab"`) + admonitions break markdown-it
+  rendering — convert before rendering mkdocs docs with a
+  non-mkdocs renderer**: 2026-06-04 building the public help site
+  (`build_help.py`, markdown-it-py). Migrating a hand-written
+  mkdocs doc (`docs/getting-started/installation.md`) rendered the
+  `pymdownx.tabbed` syntax `=== "Recommended"` as **literal `===`
+  text**, AND the 4-space-indented fenced code under each tab
+  showed **raw ```` ```bash ```` fences** because markdown-it
+  treats indented content as a code block (not a fence). Material
+  admonitions (`!!! note "T"`, `??? `) and fenced divs (`:::`)
+  similarly pass through as literal text. Fix in the build: a
+  preprocessor (`_strip_mkdocs_isms`) that converts `=== "Title"`
+  → `#### Title` and **de-indents the tab body one level** (so the
+  fences render), converts `!!! type "T"` → `**T**`, and drops
+  `:::` markers — counting what it touched so a stray construct
+  surfaces in the build log instead of rendering as garbage.
+  Crucial scoping: the `.help/` *generated* corpus has NONE of
+  these (it renders clean), so the risk is specifically in
+  HAND-WRITTEN mkdocs docs being migrated. Before rendering any
+  `docs/` markdown with a non-mkdocs renderer, grep for `^=== "`,
+  `^!!! `, `^::: ` and Material-for-MkDocs extensions.

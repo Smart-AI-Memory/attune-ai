@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>How to use the spec engine — how-to</title>
+  <meta name="description" content="Use this guide when you need to drive a spec plan programmatically — reading task blocks from a plan file, running tasks through quality gates, tracking state across sessions, and presenting results t" />
+  <meta property="og:title" content="How to use the spec engine — how-to" />
+  <meta property="og:description" content="Use this guide when you need to drive a spec plan programmatically — reading task blocks from a plan file, running tasks through quality gates, tracking state across sessions, and presenting results t" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,270 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/spec-engine">Spec Engine</a><span class="sep">&rsaquo;</span><span>how-to</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>How to use the spec engine</h1>
+<p>Use this guide when you need to drive a spec plan programmatically — reading task blocks from a plan file, running tasks through quality gates, tracking state across sessions, and presenting results to users.</p>
+<h2>Quick start</h2>
+<pre><code class="language-python">from pipeline import PipelineOrchestrator, PipelineResult
+from spec import load_state, find_resumable_plans
+
+# Run all tasks in a plan with quality gates enabled
+orchestrator = PipelineOrchestrator(&quot;.claude/plans/my-feature.md&quot;)
+result: PipelineResult = orchestrator.run_all()
+
+print(result.summary)   # Human-readable run summary
+print(result.success)   # True if all tasks executed and passed gates
+</code></pre>
+<p>Running this produces a <code>PipelineResult</code> with per-task outcomes, total cost, and duration.</p>
+<h2>Core API</h2>
+<h3>Pipeline execution</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>PipelineOrchestrator(spec_path, *, skip_gates, skip_tests, skip_simplify)</code></td>
+<td>Load a plan file and prepare tasks for execution with optional gate overrides</td>
+</tr>
+<tr>
+<td><code>PipelineOrchestrator.run_all(*, on_task_complete, skip_task_ids)</code></td>
+<td>Execute all tasks, firing an optional callback after each</td>
+</tr>
+<tr>
+<td><code>PipelineOrchestrator.run_gates_for_task(task)</code></td>
+<td>Run quality gates for a single <code>DecomposedTask</code> and return a <code>TaskResult</code></td>
+</tr>
+<tr>
+<td><code>execute_with_approval(spec_path, on_task_complete, *, skip_gates, skip_tests, skip_simplify)</code></td>
+<td>Execute a spec with an interactive per-task approval loop</td>
+</tr>
+<tr>
+<td><code>read_spec(plan_path)</code></td>
+<td>Parse a plan file and extract its XML task blocks into <code>DecomposedTask</code> objects</td>
+</tr>
+</tbody>
+</table>
+<h3>State management</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_state(plan_path)</code></td>
+<td>Read a <code>SpecState</code> from the HTML comment embedded in a plan file; returns <code>None</code> if no state exists</td>
+</tr>
+<tr>
+<td><code>save_state(state)</code></td>
+<td>Write or update the spec-state comment in a plan file</td>
+</tr>
+<tr>
+<td><code>clear_state(plan_path)</code></td>
+<td>Remove the spec-state comment from a plan file</td>
+</tr>
+<tr>
+<td><code>find_resumable_plans(plans_dir)</code></td>
+<td>Return all <code>SpecState</code> objects from <code>.claude/plans/</code> that have incomplete execution</td>
+</tr>
+<tr>
+<td><code>get_pending_tasks(tasks, state)</code></td>
+<td>Filter a task list to those whose IDs are not in <code>state.completed</code></td>
+</tr>
+</tbody>
+</table>
+<h3>Presentation</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>present_tasks(tasks, state)</code></td>
+<td>Format a task list as a markdown table, optionally annotated with completion state</td>
+</tr>
+<tr>
+<td><code>present_task_detail(task)</code></td>
+<td>Format a single task with its full acceptance criteria and metadata</td>
+</tr>
+<tr>
+<td><code>present_task_result(task, gate_result)</code></td>
+<td>Format execution output including quality gate status and score</td>
+</tr>
+<tr>
+<td><code>format_progress_bar(completed, total)</code></td>
+<td>Render a visual progress indicator for a running pipeline</td>
+</tr>
+</tbody>
+</table>
+<h3>Result fields</h3>
+<p><code>TaskResult</code> fields you'll inspect most often:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quality_gate_passed</code></td>
+<td><code>bool | None</code></td>
+<td>Gate outcome; <code>None</code> when gates were skipped</td>
+</tr>
+<tr>
+<td><code>tests_passed</code></td>
+<td><code>bool | None</code></td>
+<td>Test outcome; <code>None</code> when tests were skipped</td>
+</tr>
+<tr>
+<td><code>gate_score</code></td>
+<td><code>float | None</code></td>
+<td>Numeric quality score from the gate</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>str</code> (property)</td>
+<td>Classified severity of the gate result</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str | None</code></td>
+<td>Error message if the task failed to execute</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td><code>float</code></td>
+<td>Cost attributed to this task</td>
+</tr>
+</tbody>
+</table>
+<p><code>PipelineResult</code> top-level properties:</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td><code>True</code> only when all tasks executed and passed gates</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str</code></td>
+<td>Human-readable run summary</td>
+</tr>
+<tr>
+<td><code>total_cost</code></td>
+<td><code>float</code></td>
+<td>Aggregated cost across all tasks</td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td><code>int</code></td>
+<td>Wall-clock time for the full run</td>
+</tr>
+</tbody>
+</table>
+<h2>Integration patterns</h2>
+<h3>Resume an interrupted run</h3>
+<pre><code class="language-python">from pipeline import PipelineOrchestrator, read_spec
+from spec import load_state, get_pending_tasks, find_resumable_plans
+
+# Discover plans that didn't finish
+resumable = find_resumable_plans(&quot;.claude/plans&quot;)
+
+for spec_state in resumable:
+    tasks = read_spec(spec_state.plan_path)
+    pending = get_pending_tasks(tasks, spec_state)
+
+    if not pending:
+        continue
+
+    # Skip tasks already recorded in state
+    completed_ids = set(spec_state.completed)
+    orchestrator = PipelineOrchestrator(spec_state.plan_path)
+    result = orchestrator.run_all(skip_task_ids=completed_ids)
+    print(result.summary)
+</code></pre>
+<h3>Stream progress to a UI</h3>
+<pre><code class="language-python">from pipeline import PipelineOrchestrator, TaskResult
+from pipeline import PipelineResult
+from spec import present_task_result, format_progress_bar
+from pipeline import read_spec
+
+plan_path = &quot;.claude/plans/my-feature.md&quot;
+tasks = read_spec(plan_path)
+total = len(tasks)
+completed_count = 0
+
+def on_task_complete(task, gate_result: TaskResult) -&gt; None:
+    global completed_count
+    completed_count += 1
+    print(format_progress_bar(completed_count, total))
+    print(present_task_result(task, gate_result))
+
+orchestrator = PipelineOrchestrator(plan_path)
+result: PipelineResult = orchestrator.run_all(on_task_complete=on_task_complete)
+
+if not result.success:
+    failed = [t for t in result.tasks if not t.quality_gate_passed]
+    for t in failed:
+        print(f&quot;FAILED [{t.severity}] {t.task_name}: {t.error}&quot;)
+</code></pre>
+<h2>See also</h2>
+<ul>
+<li><code>concepts/tool-spec.md</code> — the five phases of spec-driven development and what each phase produces</li>
+<li><code>quickstarts/skill-spec.md</code> — interactive use via <code>/spec</code> in Claude Code</li>
+</ul>
+<p>&lt;!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=how-to generated_at=2026-06-02 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 7 (code fence)</td>
+<td>error</td>
+<td><code>from pipeline import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 7 (code fence)</td>
+<td>error</td>
+<td><code>from spec import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

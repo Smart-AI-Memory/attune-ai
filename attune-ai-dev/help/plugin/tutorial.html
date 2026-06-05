@@ -1,0 +1,437 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tutorial: Plugin — tutorial</title>
+  <meta name="description" content="You&#x27;ll build a small Python script that wires together three of attune&#x27;s plugin hooks — security validation, workspace state inspection, and a formatted resume prompt — and see exactly what each hook " />
+  <meta property="og:title" content="Tutorial: Plugin — tutorial" />
+  <meta property="og:description" content="You&#x27;ll build a small Python script that wires together three of attune&#x27;s plugin hooks — security validation, workspace state inspection, and a formatted resume prompt — and see exactly what each hook " />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/plugin">Plugin</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Tutorial: Plugin</h1>
+<p>You'll build a small Python script that wires together three of attune's plugin hooks — security validation, workspace state inspection, and a formatted resume prompt — and see exactly what each hook returns. When you're done, you'll have a runnable file you can adapt as the foundation for your own hook integrations.</p>
+<h2>What you will build</h2>
+<p>A script called <code>plugin_tour.py</code> that:</p>
+<ol>
+<li>Validates a shell command through the security guard</li>
+<li>Reads live workspace state (Git branch, last commit, in-flight specs)</li>
+<li>Renders a resume prompt the same way attune's <code>/handoff</code> command does</li>
+</ol>
+<hr />
+<h2>Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li>attune installed in your environment (<code>import hooks</code> must succeed)</li>
+<li>A Git repository to run the script inside (any repo works)</li>
+</ul>
+<hr />
+<h2>Step by step</h2>
+<h3>Step 1 — Create the script file</h3>
+<p>Create a new file called <code>plugin_tour.py</code> in any directory inside your Git repository. Starting here rather than in a REPL means you'll have a persistent artifact to review and modify.</p>
+<pre><code class="language-python"># plugin_tour.py
+</code></pre>
+<p><strong>What you should see:</strong> The file exists. Nothing runs yet.</p>
+<hr />
+<h3>Step 2 — Import the hooks you'll use</h3>
+<p>Add these imports to <code>plugin_tour.py</code>. Each import maps to one subsystem: security validation, state discovery, and resume-prompt rendering.</p>
+<pre><code class="language-python">from hooks.security_guard import validate_bash_command
+from hooks._state import git_state, discover_specs, workspace_roots
+from hooks._resume_prompt import build_resume_prompt
+from pathlib import Path
+</code></pre>
+<p>The <code>hooks._state</code> module is the shared source of truth that most other hooks call internally, so reading it directly gives you the same data the plugin runtime sees.</p>
+<p><strong>What you should see:</strong> Running <code>python plugin_tour.py</code> produces no output and exits cleanly.</p>
+<hr />
+<h3>Step 3 — Validate a shell command</h3>
+<p>Append this block. The security guard exposes <code>validate_bash_command</code>, which returns a <code>(bool, str)</code> tuple — <code>True</code> means the command is allowed, <code>False</code> means it was blocked, and the string explains why.</p>
+<pre><code class="language-python">allowed, reason = validate_bash_command(&quot;grep -r TODO .&quot;)
+print(f&quot;[security] allowed={allowed}, reason={reason!r}&quot;)
+</code></pre>
+<p><code>grep</code> appears in <code>SEARCH_COMMAND_PREFIXES</code>, so attune treats it as a safe read-only operation and passes it through.</p>
+<p><strong>What you should see:</strong></p>
+<pre><code>[security] allowed=True, reason=''
+</code></pre>
+<p>Now try a blocked command to see the other branch:</p>
+<pre><code class="language-python">blocked, why = validate_bash_command(&quot;rm -rf /tmp/scratch&quot;)
+print(f&quot;[security] allowed={blocked}, reason={why!r}&quot;)
+</code></pre>
+<p><strong>What you should see:</strong> <code>allowed=False</code> with a non-empty reason string explaining the block.</p>
+<hr />
+<h3>Step 4 — Read live Git and workspace state</h3>
+<p>Append this block. <code>git_state</code> snapshots the working tree; <code>workspace_roots</code> guesses which directories to scan for specs; <code>discover_specs</code> walks those roots and returns every in-flight spec it finds.</p>
+<pre><code class="language-python">cwd = Path(&quot;.&quot;)
+state = git_state(cwd)
+print(f&quot;[git] branch={state.branch!r}&quot;)
+print(f&quot;[git] last_sha={state.last_sha!r}&quot;)
+print(f&quot;[git] last_subject={state.last_subject!r}&quot;)
+print(f&quot;[git] uncommitted={state.uncommitted}&quot;)
+
+roots = workspace_roots(cwd)
+specs = discover_specs(roots)
+print(f&quot;[specs] found {len(specs)} in-flight spec(s)&quot;)
+for s in specs:
+    print(f&quot;  slug={s.slug!r} layer={s.layer!r} phase={s.phase!r} status={s.status!r}&quot;)
+</code></pre>
+<p><code>GitState</code> and <code>SpecInfo</code> are plain dataclasses, so you can read any field directly without further parsing.</p>
+<p><strong>What you should see:</strong> Your current branch name, the short SHA of your last commit, its subject line, any uncommitted filenames, and a list of specs (possibly empty if you have no specs directory yet).</p>
+<hr />
+<h3>Step 5 — Render a resume prompt</h3>
+<p>Append this block. <code>build_resume_prompt</code> combines the Git snapshot and the first spec (if any) into the exact formatted string that attune's <code>/handoff</code> command uses. Calling it yourself shows you how session-continuity context is assembled.</p>
+<pre><code class="language-python">first_spec = specs[0] if specs else None
+prompt = build_resume_prompt(first_spec, state)
+print(&quot;\n[resume prompt] ---&quot;)
+print(prompt)
+</code></pre>
+<p><code>spec_info</code> is <code>SpecInfo | None</code> — passing <code>None</code> is valid and produces a prompt without spec context.</p>
+<p><strong>What you should see:</strong> A multi-line string describing your branch, last commit, and (if present) the in-flight spec. This is the text Claude receives when a session resumes.</p>
+<hr />
+<h3>Step 6 — Run the complete script</h3>
+<p>Run the finished script from inside your Git repository:</p>
+<pre><code class="language-bash">python plugin_tour.py
+</code></pre>
+<p><strong>What you should see:</strong> All five sections of output — the two security checks, the Git state block, the spec list, and the resume prompt — printed in order with no exceptions.</p>
+<hr />
+<h2>What you learned</h2>
+<ul>
+<li><strong>Step 3</strong> — <code>validate_bash_command</code> from <code>hooks.security_guard</code> returns a <code>(bool, str)</code> tuple and uses <code>SEARCH_COMMAND_PREFIXES</code> to allow safe read-only commands automatically.</li>
+<li><strong>Step 4</strong> — <code>git_state</code>, <code>workspace_roots</code>, and <code>discover_specs</code> from <code>hooks._state</code> give you a live snapshot of the repository and any in-flight specs as typed dataclasses (<code>GitState</code>, <code>SpecInfo</code>) you can read field by field.</li>
+<li><strong>Step 5</strong> — <code>build_resume_prompt</code> from <code>hooks._resume_prompt</code> assembles that state into the session-continuity prompt, and accepts <code>None</code> for <code>spec_info</code> when no spec is active.</li>
+<li><strong>All steps</strong> — The plugin hooks are ordinary Python functions; wiring them together is a matter of importing each module and passing the outputs of one function as inputs to the next.</li>
+</ul>
+<hr />
+<h2>Next steps</h2>
+<p>Read the <code>hooks.security_guard</code> reference to see the full list of blocked path prefixes in <code>SYSTEM_DIRECTORIES</code> and understand which command patterns <code>validate_bash_command</code> allows or rejects by default — that's the right place to go before writing a hook that needs to make security decisions.</p>
+<p>&lt;!-- attune-generated: source_hash=ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f feature=plugin kind=tutorial generated_at=2026-05-27 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 48 (code fence)</td>
+<td>error</td>
+<td><code>from hooks.security_guard import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 48 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._state import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 48 (code fence)</td>
+<td>error</td>
+<td><code>from hooks._resume_prompt import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 66 (python fence)</td>
+<td>error</td>
+<td>Name &quot;validate_bash_command&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 81 (python fence)</td>
+<td>error</td>
+<td>Name &quot;validate_bash_command&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 94 (python fence)</td>
+<td>error</td>
+<td>Name &quot;Path&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 95 (python fence)</td>
+<td>error</td>
+<td>Name &quot;git_state&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 101 (python fence)</td>
+<td>error</td>
+<td>Name &quot;workspace_roots&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 102 (python fence)</td>
+<td>error</td>
+<td>Name &quot;discover_specs&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 119 (python fence)</td>
+<td>error</td>
+<td>Name &quot;specs&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 120 (python fence)</td>
+<td>error</td>
+<td>Name &quot;build_resume_prompt&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 120 (python fence)</td>
+<td>error</td>
+<td>Name &quot;state&quot; is not defined  [name-defined]</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

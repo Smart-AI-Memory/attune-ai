@@ -1,0 +1,497 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Tutorial: Build a Spec Engine Pipeline Runner — tutorial</title>
+  <meta name="description" content="This tutorial walks you through the spec engine&#x27;s Python API from first import to a verified `PipelineResult`. When you finish, you&#x27;ll have a working script that reads a plan file, runs every task thr" />
+  <meta property="og:title" content="Tutorial: Build a Spec Engine Pipeline Runner — tutorial" />
+  <meta property="og:description" content="This tutorial walks you through the spec engine&#x27;s Python API from first import to a verified `PipelineResult`. When you finish, you&#x27;ll have a working script that reads a plan file, runs every task thr" />
+  <meta property="og:type" content="website" />
+  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <style>
+    :root {
+      --primary: #004ac6;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+      --draft: #8a5a00;
+      --draft-bg: #fff4e0;
+      --draft-rule: #f0d49a;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #e8ecf5;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+        --draft: #f0c674;
+        --draft-bg: #2a2310;
+        --draft-rule: #4a3d18;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 18px;
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    .draft-banner {
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      background: var(--draft-bg);
+      color: var(--draft);
+      border-bottom: 1px solid var(--draft-rule);
+      text-align: center;
+      padding: 0.6rem 1rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+    .draft-banner a { color: var(--draft); text-decoration: underline; }
+
+    article {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 3.5rem 1.5rem 5rem;
+    }
+
+    .home-link {
+      display: inline-block;
+      margin-bottom: 2.5rem;
+      color: var(--muted);
+      text-decoration: none;
+      font-size: 0.9rem;
+    }
+    .home-link:hover { color: var(--primary); }
+
+    article h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 2.6rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+      margin: 0 0 1rem;
+    }
+    article h2 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.7rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      line-height: 1.2;
+      margin: 3.5rem 0 1rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+    }
+    article h3 {
+      font-size: 1.25rem;
+      font-weight: 700;
+      margin: 2.25rem 0 0.75rem;
+    }
+    article h1 + blockquote {
+      margin-top: 0;
+      font-size: 1.2rem;
+      color: var(--muted);
+    }
+    article p { margin: 0 0 1.3rem; }
+    article a { color: var(--primary); }
+    article strong { font-weight: 700; }
+    article em { font-style: italic; }
+
+    article blockquote {
+      margin: 1.5rem 0;
+      padding: 0.5rem 0 0.5rem 1.25rem;
+      border-left: 3px solid var(--primary);
+      color: var(--muted);
+      font-style: italic;
+    }
+    article blockquote p { margin: 0 0 0.5rem; }
+
+    article ul, article ol { margin: 0 0 1.3rem; padding-left: 1.4rem; }
+    article li { margin: 0 0 0.5rem; }
+
+    article code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, Menlo, monospace;
+      font-size: 0.88em;
+      background: var(--surface-high);
+      padding: 0.12em 0.4em;
+      border-radius: 4px;
+    }
+    article pre {
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      overflow-x: auto;
+      margin: 0 0 1.5rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    article pre code { background: none; padding: 0; }
+
+    article table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0 0 1.5rem;
+      font-size: 0.92rem;
+    }
+    article th, article td {
+      text-align: left;
+      padding: 0.55rem 0.75rem;
+      border-bottom: 1px solid var(--rule);
+      vertical-align: top;
+    }
+    article th { font-weight: 700; }
+
+    article hr {
+      border: none;
+      border-top: 1px solid var(--rule);
+      margin: 2.5rem 0;
+    }
+
+    footer {
+      max-width: 42rem;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      body { font-size: 17px; }
+      article { padding: 2.5rem 1.25rem 3rem; }
+      article h1 { font-size: 2rem; }
+      article h2 { font-size: 1.4rem; }
+    }
+
+    .help-nav {
+      max-width: 60rem; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between;
+      gap: 1rem; padding: 1.25rem 1.5rem; font-size: 0.9rem;
+    }
+    .help-nav .crumbs a { color: var(--muted); text-decoration: none; }
+    .help-nav .crumbs a:hover { color: var(--primary); }
+    .help-nav .crumbs .sep { color: var(--rule); margin: 0 0.4rem; }
+    .help-nav .api-link { color: var(--primary); text-decoration: none; font-weight: 600; }
+    main.help-home { max-width: 60rem; margin: 0 auto; padding: 1rem 1.5rem 5rem; }
+    .help-home h1 {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 2.4rem; font-weight: 800; letter-spacing: -0.03em;
+      margin: 1rem 0 0.5rem;
+    }
+    .help-home .lede { color: var(--muted); font-size: 1.15rem; margin: 0 0 2rem; }
+    .search-wrap { margin: 0 0 2.5rem; }
+    #help-search {
+      width: 100%; font-size: 1.05rem; padding: 0.85rem 1.1rem;
+      border: 1px solid var(--rule); border-radius: 10px;
+      background: var(--surface-low); color: var(--ink);
+    }
+    #help-search:focus { outline: 2px solid var(--primary); border-color: var(--primary); }
+    #search-results { list-style: none; margin: 0.75rem 0 0; padding: 0; }
+    #search-results li { margin: 0 0 0.4rem; }
+    #search-results a {
+      display: block; padding: 0.6rem 0.8rem; border-radius: 8px;
+      text-decoration: none; color: var(--ink); border: 1px solid transparent;
+    }
+    #search-results a:hover { background: var(--surface-low); border-color: var(--rule); }
+    #search-results .r-kind { color: var(--muted); font-size: 0.85rem; }
+    #search-results .r-snip { color: var(--muted); font-size: 0.9rem; display: block; margin-top: 0.15rem; }
+    .section-h {
+      font-family: "Manrope", -apple-system, sans-serif;
+      font-size: 1.3rem; font-weight: 700; margin: 2.5rem 0 1rem;
+      padding-top: 1.25rem; border-top: 1px solid var(--rule);
+    }
+    .intent-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); gap: 1rem; }
+    .intent-card {
+      display: block; padding: 1.1rem 1.2rem; border: 1px solid var(--rule);
+      border-radius: 12px; text-decoration: none; color: var(--ink);
+      background: var(--surface-low);
+    }
+    .intent-card:hover { border-color: var(--primary); }
+    .intent-card .it-title { display: block; font-weight: 700; font-size: 1.05rem; }
+    .intent-card .it-sub { display: block; color: var(--muted); font-size: 0.9rem; margin-top: 0.2rem; }
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr)); gap: 0.85rem; }
+    .feature-card {
+      display: block; padding: 0.9rem 1.1rem; border: 1px solid var(--rule);
+      border-radius: 10px; text-decoration: none; color: var(--ink);
+    }
+    .feature-card:hover { border-color: var(--primary); background: var(--surface-low); }
+    .feature-card .fc-name { display: block; font-weight: 700; }
+    .feature-card .fc-meta { display: block; color: var(--muted); font-size: 0.82rem; margin-top: 0.2rem; }
+    .kind-tabs { display: flex; flex-wrap: wrap; gap: 0.5rem; margin: 0 0 2rem; }
+    .kind-tabs a {
+      padding: 0.35rem 0.75rem; border: 1px solid var(--rule); border-radius: 999px;
+      text-decoration: none; color: var(--muted); font-size: 0.88rem;
+    }
+    .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
+    .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    @media (max-width: 480px) {
+      .help-home h1 { font-size: 1.9rem; }
+    }
+</style>
+</head>
+<body>
+  <nav class="help-nav">
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/spec-engine">Spec Engine</a><span class="sep">&rsaquo;</span><span>tutorial</span></span>
+    <a class="api-link" href="https://smartaimemory.com/framework-docs/"
+      >API &amp; contributor docs &rarr;</a>
+  </nav>
+  <article class="markdown-body">
+<h1>Tutorial: Build a Spec Engine Pipeline Runner</h1>
+<p>This tutorial walks you through the spec engine's Python API from first import to a verified <code>PipelineResult</code>. When you finish, you'll have a working script that reads a plan file, runs every task through quality gates, tracks progress with a visual bar, and prints a pass/fail summary — enough to understand how the pieces fit together before you use them in a real project.</p>
+<h2>Prerequisites</h2>
+<ul>
+<li>Python 3.10 or newer</li>
+<li>The project installed in your environment</li>
+<li>A plan file saved at <code>.claude/plans/</code> (the spec skill produces these)</li>
+</ul>
+<h2>What you will build</h2>
+<p>A self-contained Python script, <code>run_pipeline.py</code>, that:</p>
+<ol>
+<li>Reads task definitions from a plan file</li>
+<li>Shows a formatted task table before execution</li>
+<li>Runs all tasks through <code>PipelineOrchestrator</code>, printing a progress bar after each one completes</li>
+<li>Exits with a human-readable summary and a non-zero code if any gate failed</li>
+</ol>
+<hr />
+<h2>Step 1 — Import the public API</h2>
+<p>The spec engine exposes everything you need through two packages. Open a new file called <code>run_pipeline.py</code> and add these imports:</p>
+<pre><code class="language-python">from pipeline import PipelineOrchestrator, PipelineResult, TaskResult, read_spec
+from spec import present_tasks, present_task_result, format_progress_bar, load_state
+</code></pre>
+<p>Both <code>pipeline</code> and <code>spec</code> are top-level packages — drop the <code>src.</code> prefix that appears in the source tree. Keeping these two imports separate reflects how the packages divide responsibility: <code>pipeline</code> owns execution, <code>spec</code> owns presentation and state.</p>
+<p><strong>Verify:</strong> Run <code>python -c &quot;from pipeline import read_spec; print('ok')&quot;</code>. You should see <code>ok</code> with no import errors.</p>
+<hr />
+<h2>Step 2 — Read the plan file</h2>
+<p><code>read_spec</code> parses your plan file and returns a list of <code>DecomposedTask</code> objects — one per XML task block in the file. This is the data structure every other function in the engine consumes.</p>
+<pre><code class="language-python">PLAN_PATH = &quot;.claude/plans/my-feature.md&quot;
+
+tasks = read_spec(PLAN_PATH)
+print(f&quot;Found {len(tasks)} tasks&quot;)
+</code></pre>
+<p><code>read_spec</code> raises <code>FileNotFoundError</code> if the path doesn't exist and <code>ValueError</code> if you pass an empty string, so bad inputs fail loudly rather than silently.</p>
+<p><strong>Verify:</strong> The printed count should match the number of task blocks in your plan file. If you see <code>0</code>, open the plan and confirm it contains XML task blocks.</p>
+<hr />
+<h2>Step 3 — Display the task table before running</h2>
+<p>Before any code executes, show yourself (or your user) what is about to run. <code>present_tasks</code> formats the task list as a markdown table; passing the current <code>SpecState</code> marks already-completed tasks, which matters if you're resuming a partial run.</p>
+<pre><code class="language-python">state = load_state(PLAN_PATH)   # returns None if no prior run exists
+print(present_tasks(tasks, state))
+</code></pre>
+<p>This step is why spec-driven development separates reading from executing: you can inspect the full plan before committing to a run.</p>
+<p><strong>Verify:</strong> You should see a markdown table with one row per task. If <code>state</code> is not <code>None</code>, tasks listed in <code>state.completed</code> will be marked accordingly.</p>
+<hr />
+<h2>Step 4 — Define a progress callback</h2>
+<p><code>run_all</code> accepts an optional <code>on_task_complete</code> callback that fires after each task finishes. Use it to print a progress bar and the gate result for every completed task:</p>
+<pre><code class="language-python">completed_count = 0
+
+def on_task_complete(task, task_result: TaskResult) -&gt; None:
+    global completed_count
+    completed_count += 1
+    print(format_progress_bar(completed_count, len(tasks)))
+    print(present_task_result(task, task_result))
+</code></pre>
+<p><code>format_progress_bar</code> takes two integers — completed and total — so it always reflects the live run state rather than a snapshot. <code>present_task_result</code> renders the quality gate outcome, including <code>task_result.gate_score</code> and <code>task_result.severity</code>, without you having to format those fields manually.</p>
+<p><strong>Verify:</strong> This is a function definition — nothing runs yet. Move on to Step 5 to wire it in.</p>
+<hr />
+<h2>Step 5 — Run the pipeline</h2>
+<p>Construct <code>PipelineOrchestrator</code> with your plan path and call <code>run_all</code>, passing the callback you defined above:</p>
+<pre><code class="language-python">orchestrator = PipelineOrchestrator(PLAN_PATH)
+result: PipelineResult = orchestrator.run_all(on_task_complete=on_task_complete)
+</code></pre>
+<p><code>PipelineOrchestrator.__init__</code> also accepts <code>skip_gates</code>, <code>skip_tests</code>, and <code>skip_simplify</code> keyword arguments if you want a faster feedback loop during development — but run with gates enabled first so you understand what the defaults do.</p>
+<p><strong>Verify:</strong> As the run proceeds, your terminal should show a growing progress bar and one result block per task. If a task raises an error, <code>TaskResult.error</code> will be non-<code>None</code> and the progress bar will still advance.</p>
+<hr />
+<h2>Step 6 — Print the summary and exit</h2>
+<p><code>PipelineResult.summary</code> is a human-readable string that covers all tasks and the total cost. <code>PipelineResult.success</code> is <code>True</code> only when every task executed and every quality gate passed.</p>
+<pre><code class="language-python">print(result.summary())
+
+if not result.success():
+    raise SystemExit(1)
+</code></pre>
+<p>Exiting with a non-zero code lets CI systems treat a failed gate as a build failure automatically.</p>
+<p><strong>Verify:</strong> A fully passing run prints the summary and exits with code <code>0</code>. Run <code>echo $?</code> (or <code>echo %ERRORLEVEL%</code> on Windows) immediately after to confirm.</p>
+<hr />
+<h2>Complete script</h2>
+<pre><code class="language-python">from pipeline import PipelineOrchestrator, PipelineResult, TaskResult, read_spec
+from spec import present_tasks, present_task_result, format_progress_bar, load_state
+
+PLAN_PATH = &quot;.claude/plans/my-feature.md&quot;
+
+tasks = read_spec(PLAN_PATH)
+print(f&quot;Found {len(tasks)} tasks&quot;)
+
+state = load_state(PLAN_PATH)
+print(present_tasks(tasks, state))
+
+completed_count = 0
+
+def on_task_complete(task, task_result: TaskResult) -&gt; None:
+    global completed_count
+    completed_count += 1
+    print(format_progress_bar(completed_count, len(tasks)))
+    print(present_task_result(task, task_result))
+
+orchestrator = PipelineOrchestrator(PLAN_PATH)
+result: PipelineResult = orchestrator.run_all(on_task_complete=on_task_complete)
+
+print(result.summary())
+
+if not result.success():
+    raise SystemExit(1)
+</code></pre>
+<hr />
+<h2>What you learned</h2>
+<ul>
+<li><strong>Step 1–2:</strong> <code>read_spec</code> is the entry point that converts a plan file into <code>DecomposedTask</code> objects. Every other API in the engine takes those objects as input, which is why reading comes first.</li>
+<li><strong>Step 3:</strong> <code>present_tasks</code> and <code>load_state</code> let you inspect the plan and any prior run state before committing to execution — the separation between reading and running is intentional.</li>
+<li><strong>Step 4:</strong> The <code>on_task_complete</code> callback is the hook where <code>format_progress_bar</code> and <code>present_task_result</code> belong, because they are per-task concerns, not pipeline-level ones.</li>
+<li><strong>Step 5:</strong> <code>PipelineOrchestrator</code> owns the execution loop. Its <code>skip_gates</code>, <code>skip_tests</code>, and <code>skip_simplify</code> flags let you trade thoroughness for speed, but you should understand the default (all enabled) before reaching for them.</li>
+<li><strong>Step 6:</strong> <code>PipelineResult.success</code> and <code>PipelineResult.summary</code> give you the two things a caller needs: a boolean for control flow and a string for humans.</li>
+</ul>
+<h2>Next steps</h2>
+<p>Now that you can run a pipeline programmatically, read the <code>execute_with_approval</code> reference in <code>spec.runner</code> to see how the interactive approval loop wraps the same orchestrator — it adds per-task human confirmation on top of exactly the machinery you just built.</p>
+<p>&lt;!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=tutorial generated_at=2026-06-02 --&gt;</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 26 (code fence)</td>
+<td>error</td>
+<td><code>from pipeline import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 26 (code fence)</td>
+<td>error</td>
+<td><code>from spec import …</code> — module not importable</td>
+</tr>
+<tr>
+<td>Line 9</td>
+<td>error</td>
+<td><code>[Spec-Driven Development concept](concepts/tool-spec.md)</code> — target does not exist</td>
+</tr>
+<tr>
+<td>Line 44 (python fence)</td>
+<td>error</td>
+<td>Name &quot;read_spec&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 59 (python fence)</td>
+<td>error</td>
+<td>Name &quot;load_state&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 59 (python fence)</td>
+<td>error</td>
+<td>Name &quot;PLAN_PATH&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 60 (python fence)</td>
+<td>error</td>
+<td>Name &quot;present_tasks&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 60 (python fence)</td>
+<td>error</td>
+<td>Name &quot;tasks&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 76 (python fence)</td>
+<td>error</td>
+<td>Function is missing a type annotation for one or more arguments  [no-untyped-def]</td>
+</tr>
+<tr>
+<td>Line 76 (python fence)</td>
+<td>error</td>
+<td>Name &quot;TaskResult&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 79 (python fence)</td>
+<td>error</td>
+<td>Name &quot;format_progress_bar&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 79 (python fence)</td>
+<td>error</td>
+<td>Name &quot;tasks&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 80 (python fence)</td>
+<td>error</td>
+<td>Name &quot;present_task_result&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 94 (python fence)</td>
+<td>error</td>
+<td>Name &quot;PipelineOrchestrator&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 94 (python fence)</td>
+<td>error</td>
+<td>Name &quot;PLAN_PATH&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 95 (python fence)</td>
+<td>error</td>
+<td>Name &quot;PipelineResult&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 95 (python fence)</td>
+<td>error</td>
+<td>Name &quot;on_task_complete&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 109 (python fence)</td>
+<td>error</td>
+<td>Name &quot;result&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 111 (python fence)</td>
+<td>error</td>
+<td>Name &quot;result&quot; is not defined  [name-defined]</td>
+</tr>
+<tr>
+<td>Line 137 (python fence)</td>
+<td>error</td>
+<td>Function is missing a type annotation for one or more arguments  [no-untyped-def]</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
+  <footer>
+    <span>Smart AI Memory</span>
+    <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
+      &nbsp;&middot;&nbsp;
+      <a href="https://pypi.org/project/attune-ai/">PyPI</a></span>
+  </footer>
+</body>
+</html>

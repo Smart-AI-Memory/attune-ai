@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Telemetry</title>
-  <meta name="description" content="Telemetry — help, tasks, reference, and troubleshooting." />
-  <meta property="og:title" content="Telemetry" />
-  <meta property="og:description" content="Telemetry — help, tasks, reference, and troubleshooting." />
+  <title>Context Management and Compaction — how-to</title>
+  <meta name="description" content="Attune AI tracks session state and preserves it across context window resets (compaction events). This guide explains how the context system works and how to use it in long-running sessions." />
+  <meta property="og:title" content="Context Management and Compaction — how-to" />
+  <meta property="og:description" content="Attune AI tracks session state and preserves it across context window resets (compaction events). This guide explains how the context system works and how to use it in long-running sessions." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help" />
   <style>
@@ -250,18 +250,186 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><span>Telemetry</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/guides">Guides</a><span class="sep">&rsaquo;</span><span>Context Management and Compaction</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>Telemetry</h1>
-    <p class="lede">11 of 11 help kinds available.</p>
-    <div class="kind-tabs"><a href="/help/telemetry/comparison">comparison</a><a href="/help/telemetry/concept">concept</a><a href="/help/telemetry/error">error</a><a href="/help/telemetry/faq">faq</a><a href="/help/telemetry/note">note</a><a href="/help/telemetry/quickstart">quickstart</a><a href="/help/telemetry/reference">reference</a><a href="/help/telemetry/task">task</a><a href="/help/telemetry/tip">tip</a><a href="/help/telemetry/troubleshooting">troubleshooting</a><a href="/help/telemetry/warning">warning</a></div>
-    <div class="feature-grid"><a class="feature-card" href="/help/telemetry/comparison"><span class="fc-name">comparison</span></a><a class="feature-card" href="/help/telemetry/concept"><span class="fc-name">concept</span></a><a class="feature-card" href="/help/telemetry/error"><span class="fc-name">error</span></a><a class="feature-card" href="/help/telemetry/faq"><span class="fc-name">faq</span></a><a class="feature-card" href="/help/telemetry/note"><span class="fc-name">note</span></a><a class="feature-card" href="/help/telemetry/quickstart"><span class="fc-name">quickstart</span></a><a class="feature-card" href="/help/telemetry/reference"><span class="fc-name">reference</span></a><a class="feature-card" href="/help/telemetry/task"><span class="fc-name">task</span></a><a class="feature-card" href="/help/telemetry/tip"><span class="fc-name">tip</span></a><a class="feature-card" href="/help/telemetry/troubleshooting"><span class="fc-name">troubleshooting</span></a><a class="feature-card" href="/help/telemetry/warning"><span class="fc-name">warning</span></a></div>
-    <div class="section-h">Guides</div>
-    <div class="kind-tabs"><a href="/help/telemetry/how-to">how-to</a></div>
-  </main>
+  <article class="markdown-body">
+<h1>Context Management and Compaction</h1>
+<p>Attune AI tracks session state and preserves it across context window resets
+(compaction events). This guide explains how the context system works and how
+to use it in long-running sessions.</p>
+<hr />
+<h2>Why Context Management Matters</h2>
+<p>Claude Code has a finite context window. When a long session approaches the
+limit, Claude Code fires a <code>PreCompact</code> hook before compressing the
+conversation. Without intervention, all accumulated collaboration state —
+detected patterns, pending work, trust level, session phase — is lost.</p>
+<p>Attune's context layer captures that state before compaction and restores it
+afterward so the session continues without a cold start.</p>
+<hr />
+<h2>How It Works</h2>
+<pre><code>Session running...
+        │
+        ▼ (context nearing limit)
+┌───────────────────────────────────┐
+│  PreCompact hook fires             │
+│  ContextManager.save_before()      │
+│  → CompactState saved to disk      │
+└───────────────────────────────────┘
+        │
+        ▼ (Claude Code compresses context)
+┌───────────────────────────────────┐
+│  PostCompact hook fires            │
+│  ContextManager.restore_after()    │
+│  → State reloaded from disk        │
+│  → Restoration prompt injected     │
+└───────────────────────────────────┘
+        │
+        ▼
+Session continues with full context
+</code></pre>
+<p>The state is persisted to <code>.attune/compact_states/</code> as JSON. Each state
+snapshot captures:</p>
+<ul>
+<li>Current session ID and work phase</li>
+<li>Completed and pending phases</li>
+<li>Detected collaboration patterns</li>
+<li>work handoff for pending work</li>
+<li>Trust metrics and empathy level</li>
+</ul>
+<hr />
+<h2>Quick Start</h2>
+<p>The context system is automatic when hooks are configured. No code changes
+are required for basic use.</p>
+<h3>Verify It's Active</h3>
+<pre><code class="language-bash"># Check hook configuration
+attune validate
+
+# See existing compact states
+ls .attune/compact_states/
+</code></pre>
+<h3>Manual State Save</h3>
+<pre><code class="language-python">from attune.context.manager import ContextManager
+
+ctx = ContextManager(
+    storage_dir=&quot;.attune/compact_states&quot;,
+    token_threshold=80,  # Save state when context is 80% full
+    auto_save=True,
+)
+
+# Save current state before a known reset
+state_id = ctx.save_state(
+    session_id=&quot;my-session-001&quot;,
+    phase=&quot;implementing-auth&quot;,
+    collaboration_state=llm.collaboration_state,
+)
+print(f&quot;State saved: {state_id}&quot;)
+</code></pre>
+<h3>Restore After Compaction</h3>
+<pre><code class="language-python"># On session restart, restore the last state
+restored = ctx.restore_latest()
+
+if restored:
+    print(f&quot;Restored session: {restored.session_id}&quot;)
+    print(f&quot;Last phase: {restored.current_phase}&quot;)
+    print(restored.restoration_prompt)  # Inject into first message
+</code></pre>
+<hr />
+<h2>Work Handoff</h2>
+<p>Use an work handoff when you are in the middle of a multi-step task
+and want the restored session to continue exactly where you left off —
+not just know the phase, but know what the next concrete action is.
+The Situation-Background-Assessment-Recommendation format gives the
+restored session enough context to act without re-reading the conversation.</p>
+<pre><code class="language-python">from attune.context.compaction import WorkHandoff
+
+handoff = WorkHandoff(
+    situation=&quot;Implementing JWT refresh token rotation&quot;,
+    background=&quot;Auth module uses RS256 keys; current tokens expire in 1h&quot;,
+    assessment=&quot;Rotation logic is written; edge case for concurrent requests unresolved&quot;,
+    recommendation=&quot;Resolve concurrent refresh race condition, then run auth test suite&quot;,
+    priority=&quot;high&quot;,
+)
+
+ctx.set_pending_handoff(handoff)
+
+# The handoff is included in the next save and injected on restore
+</code></pre>
+<hr />
+<h2>CompactState</h2>
+<p>The <code>CompactState</code> dataclass is the unit of persistence:</p>
+<pre><code class="language-python">@dataclass
+class CompactState:
+    session_id: str
+    created_at: datetime
+    current_phase: str
+    completed_phases: list[str]
+    patterns: list[PatternSummary]   # Detected collaboration patterns
+    pending_handoff: WorkHandoff | None
+    trust_level: float               # 0.0–1.0
+    empathy_level: int               # 1–5
+    metadata: dict[str, Any]
+</code></pre>
+<h3>Listing Saved States</h3>
+<pre><code class="language-python">states = ctx.list_states()
+for state in states:
+    print(f&quot;{state.session_id}  phase={state.current_phase}  &quot;
+          f&quot;saved={state.created_at.strftime('%Y-%m-%d %H:%M')}&quot;)
+</code></pre>
+<hr />
+<h2>Configuration</h2>
+<table>
+<thead>
+<tr>
+<th>Parameter</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>storage_dir</code></td>
+<td><code>.attune/compact_states</code></td>
+<td>Where state files are written</td>
+</tr>
+<tr>
+<td><code>token_threshold</code></td>
+<td>80</td>
+<td>% token usage that triggers a save suggestion</td>
+</tr>
+<tr>
+<td><code>auto_save</code></td>
+<td><code>True</code></td>
+<td>Save automatically on <code>PreCompact</code> hook</td>
+</tr>
+</tbody>
+</table>
+<h3>Override Storage Location</h3>
+<pre><code class="language-python">ctx = ContextManager(
+    storage_dir=&quot;/tmp/my-session-states&quot;,
+    auto_save=False,  # Manual saves only
+)
+</code></pre>
+<hr />
+<h2>Hook Integration</h2>
+<p>The <code>PreCompact</code> hook script at
+<code>src/attune/hooks/scripts/pre_compact.py</code> calls the context manager
+automatically. When using a standard Attune setup, you don't need to wire
+this manually.</p>
+<p>To verify the hook is registered:</p>
+<pre><code class="language-bash">cat .claude/settings.json | python3 -m json.tool | grep -A 5 &quot;PreCompact&quot;
+</code></pre>
+<hr />
+<h2>See Also</h2>
+<ul>
+<li><a href="../reference/hooks.md">Hooks</a> — How hook events fire during compaction</li>
+<li><a href="../reference/pattern-library.md">Patterns</a> — Collaboration pattern detection</li>
+<li><a href="learning-and-patterns.md">Learning and Patterns</a> — How patterns are extracted
+and persisted across sessions</li>
+</ul>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
