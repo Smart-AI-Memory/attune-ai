@@ -46,9 +46,17 @@ Is this trivial per xml-enhanced-prompts.md?
 
 Does this need decision recording, premise validation,
 or multi-session coordination?
-├─ YES → Spec via /spec
+├─ YES, and NO spec exists for it → Spec via /spec
 │        Within the spec, individual tasks use XML-enhanced
 │        prompts per xml-enhanced-prompts.md criteria.
+├─ YES, and a spec ALREADY exists (docs/specs/<x>/) → amend it;
+│   name the choice out loud (don't silently pick):
+│   ├─ originating or advancing a PHASE (new requirements/
+│   │   design/tasks, or a phase gate) → OFFER /spec (re-enter
+│   │   the approval loop + Socratic scoping)
+│   └─ recording a decision / logging evidence / status fix
+│       (decisions.md, a targeted task) → direct edit is
+│       correct; mention /spec is available but don't force it
 └─ NO  → continue
 
 Does this meet xml-enhanced-prompts.md's "When to Use" criteria?
