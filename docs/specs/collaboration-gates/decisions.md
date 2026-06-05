@@ -168,3 +168,32 @@ callers, not the spec's assumption). T4 therefore also:
 
 Approved 2026-06-05 (Patrick: "Full T4 with opt-ins"). The MCP-layer
 gating for agent-invoked runs remains deferred to a later phase.
+
+### D12 — Re-gate on actual exhaustion, not pre-emptive worst-case (dogfood fix)
+
+The T5 live dogfood surfaced a bug: after a confirm, the **second**
+run re-prompted, contradicting the confirm's "later runs won't
+re-prompt" promise. Root cause: the gate re-gated when
+`spent_usd + next_run_estimate > cap_usd`, and the envelope `cap_usd`
+was set to the per-run budget band (`get_max_budget_usd(depth)`). So
+after a single $0.16 run on a $2 quick window, the *next* run's
+worst-case estimate ($2) added to $0.16 exceeded the $2 cap → instant
+re-prompt.
+
+Fix: the envelope re-gates **post-hoc** — when cumulative `spent_usd`
+has actually reached `cap_usd` (`Envelope.is_exhausted`), not
+pre-emptively on the next run's worst case. `would_breach(cost)` is
+removed in favor of the `is_exhausted` property. Per-run spend is
+still bounded separately by the existing `ATTUNE_MAX_BUDGET_USD` SDK
+cap, so dropping the gate's pre-emptive per-run check loses no real
+protection — it only fixes the false re-prompt. The confirm framing
+drops "for this run" → "this session window," and the re-gate message
+becomes "this session's spend window is used up." Regression locked by
+`test_partial_spend_proceeds_silently` (core) and
+`test_partial_spend_below_cap_is_not_exhausted` (envelope).
+
+Touches `gates/envelope.py`, `gates/spend_gate.py`, `gates/meter.py`
+(framing wording), `cli_commands/workflow_commands.py` (confirm
+message) — modules introduced in #637/#638 but corrected here on the
+T4 branch before Phase 1 merges. Approved 2026-06-05 (Patrick: "fold a
+fix into Phase 1 — yes").

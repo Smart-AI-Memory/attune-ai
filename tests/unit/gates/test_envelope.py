@@ -89,17 +89,26 @@ def test_is_expired_within_window() -> None:
     assert env.is_expired(NOW + 60.0) is False
 
 
-def test_would_breach() -> None:
-    env = Envelope(window_start=NOW, cap_usd=5.0, spent_usd=4.0)
-    assert env.would_breach(0.5) is False
-    assert env.would_breach(1.0) is False  # exactly at cap, not over
-    assert env.would_breach(1.5) is True
+def test_is_exhausted_post_hoc() -> None:
+    # Below cap → not exhausted (later runs proceed silently).
+    assert Envelope(window_start=NOW, cap_usd=5.0, spent_usd=4.0).is_exhausted is False
+    # At cap → exhausted (>= , not just >).
+    assert Envelope(window_start=NOW, cap_usd=5.0, spent_usd=5.0).is_exhausted is True
+    # Over cap → exhausted.
+    assert Envelope(window_start=NOW, cap_usd=5.0, spent_usd=6.0).is_exhausted is True
 
 
-def test_disabled_envelope_never_breaches() -> None:
+def test_partial_spend_below_cap_is_not_exhausted() -> None:
+    # The dogfood regression: one run's spend on a cap-sized-as-band
+    # window must NOT re-gate the next run.
+    env = Envelope(window_start=NOW, cap_usd=2.0, spent_usd=0.16, authorized=True)
+    assert env.is_exhausted is False
+
+
+def test_disabled_envelope_never_exhausted() -> None:
     env = Envelope(window_start=NOW, cap_usd=0.0, spent_usd=100.0)
     assert env.disabled is True
-    assert env.would_breach(50.0) is False
+    assert env.is_exhausted is False
 
 
 def test_disabled_latch_on_nonpositive_cap() -> None:

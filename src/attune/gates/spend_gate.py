@@ -136,16 +136,21 @@ def evaluate_spend_gate(
             ),
         )
 
-    # Authorized — re-gate only if this run would breach the envelope.
-    if env.would_breach(estimate):
-        breach = (env.spent_usd + estimate) - env.cap_usd
+    # Authorized — re-gate only once the window's budget is actually
+    # used up (cumulative spend >= cap), not pre-emptively on the next
+    # run's worst-case estimate. Pre-emptive checking would re-prompt
+    # after the very first run when the cap equals one run's budget
+    # band, breaking the "later runs won't re-prompt" promise; per-run
+    # spend is bounded separately by the ATTUNE_MAX_BUDGET_USD SDK cap.
+    if env.is_exhausted:
+        breach = env.spent_usd - env.cap_usd
         if interactive:
             return GateDecision(
                 action=ACTION_CONFIRM,
                 estimate_usd=estimate,
                 framing=framing,
                 envelope=env,
-                reason="this run would exceed the session spend envelope",
+                reason="this session's spend window is used up",
                 breach_usd=breach,
             )
         return GateDecision(
@@ -153,7 +158,7 @@ def evaluate_spend_gate(
             estimate_usd=estimate,
             framing=framing,
             envelope=env,
-            reason="non-interactive run would exceed the session spend envelope",
+            reason="non-interactive run: session spend window is used up",
             breach_usd=breach,
         )
 

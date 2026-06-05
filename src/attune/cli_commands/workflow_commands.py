@@ -192,25 +192,23 @@ def cmd_workflow_run(args: Namespace) -> int:
 def _confirm_spend(decision: object) -> bool:
     """Prompt the user to authorize the session spend window.
 
-    Returns True on an explicit yes. A breach decision (the run would
-    exceed an already-authorized envelope) is framed as "proceed
-    anyway."
+    Returns True on an explicit yes. An exhausted-window decision (the
+    session has spent its authorized budget) is framed as "extend it."
     """
     breach = getattr(decision, "breach_usd", 0.0)
     framing = getattr(decision, "framing", "")
     if breach > 0:
         print(
-            f"\n💰 Spend gate — this run would exceed your session spend "
-            f"envelope (over by ${breach:.2f})."
+            f"\n💰 Spend gate — this session's spend window is used up " f"(over by ${breach:.2f})."
         )
         print(f"   {framing}")
-        prompt = "Proceed anyway? [y/N]: "
+        prompt = "Extend the window and proceed? [y/N]: "
     else:
         print("\n💰 Spend gate — first paid run of this session.")
         print(f"   {framing}")
         print(
             "   Proceeding authorizes this session's spend window (~5h); "
-            "later runs won't re-prompt."
+            "later runs proceed silently until the budget is used up."
         )
         prompt = "Proceed? [y/N]: "
     try:

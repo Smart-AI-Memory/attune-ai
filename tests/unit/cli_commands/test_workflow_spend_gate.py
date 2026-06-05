@@ -199,11 +199,11 @@ def test_record_envelope_cost_zero_is_noop(env_file):
 # --- confirm-prompt helper branches --------------------------------------
 
 
-def test_confirm_spend_breach_branch_frames_overage(monkeypatch, capsys):
+def test_confirm_spend_exhausted_branch_frames_overage(monkeypatch, capsys):
     monkeypatch.setattr("builtins.input", lambda _prompt: "y")
     assert workflow_commands._confirm_spend(_decision(ACTION_CONFIRM, breach=3.25)) is True
     out = capsys.readouterr().out
-    assert "would exceed" in out
+    assert "used up" in out
     assert "over by $3.25" in out
 
 
