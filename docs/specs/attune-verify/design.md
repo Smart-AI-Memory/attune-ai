@@ -196,6 +196,16 @@ failure in one does not abort the others (each wrapped, errors
 surfaced as `warning` findings, mirroring the discovery-sweep
 source-isolation pattern).
 
+> **Revision pending — see [decisions.md](decisions.md) D1
+> (2026-06-04).** Deterministic and semantic findings are NOT fully
+> independent: a 2026-06-04 dogfood showed the semantic judge emits
+> false-positive entity-existence findings when source context is
+> incomplete (9 of 9 flags were real symbols past the judge's
+> window). D1 makes the layers **compose** — deterministic resolution
+> is authoritative for entity existence and **suppresses** any
+> semantic finding whose named entity resolves deterministically.
+> This section's union semantics need a Phase-2 update accordingly.
+
 ---
 
 ## The `/verify` skill (attune-ai plugin)
