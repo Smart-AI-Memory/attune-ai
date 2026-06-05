@@ -16,7 +16,7 @@ from attune_author.generator import generate_feature_templates
 generate_feature_templates(feature, help_dir=".help", project_root=".")
 
 # 2. attune-rag — keyword + semantic retrieval keeps
-#    answers grounded. P@1 ≥ 73% on benchmarks.
+#    answers grounded. Mean faithfulness ≥ 0.97, CI-gated.
 
 # 3. attune-help — read them at runtime. 1 dependency,
 #    no API key required. Embed anywhere.
@@ -176,8 +176,8 @@ export default function Home() {
                     <div>
                       <div className="font-semibold text-sm"><code className="font-mono">attune-rag</code></div>
                       <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Keyword + semantic retrieval. P@1 &ge; 73% on
-                        benchmarks &mdash; answers stay grounded in your code.
+                        Keyword + semantic retrieval, mean faithfulness &ge; 0.97
+                        (CI-gated) &mdash; answers stay grounded in your code.
                       </p>
                     </div>
                   </li>
@@ -278,7 +278,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-3">attune-rag</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Keyword + semantic retrieval over your Markdown corpus. P&#64;1 &ge; 73% on benchmarks &mdash; answers stay grounded.
+                Keyword + semantic retrieval over your Markdown corpus. Mean faithfulness &ge; 0.97, CI-gated &mdash; answers stay grounded.
               </p>
             </div>
 
