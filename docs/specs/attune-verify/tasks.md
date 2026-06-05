@@ -90,6 +90,27 @@ deterministic findings intact.
 
 ---
 
+## T4b — Semantic/deterministic cross-check suppression ([decisions.md](decisions.md) D1)
+
+**Objective:** stop the semantic layer from emitting false-positive
+entity-existence findings. Per D1, deterministic resolution is
+authoritative for "does this entity exist?" and disciplines the judge.
+
+- After both layers run, **suppress** any `SEMANTIC` finding whose
+  evidence names an entity (import, symbol, flag, link) that the
+  deterministic resolvers can resolve — it is a context-truncation
+  false positive, not a hallucination.
+- v1: post-filter the union. v2 (follow-up): scope the judge prompt
+  to non-entity claims so the false positive never forms.
+
+**Acceptance:** a fixture where the judge flags a symbol that IS
+defined in the (caller-supplied) source yields **no** finding;
+a fixture where the judge flags a genuinely-absent symbol **does**
+surface. Regression: replay the 2026-06-04 dogfood shape — 9 flagged,
+all real → 0 surfaced findings.
+
+---
+
 ## T5 — rag adapter ([rag] extra)
 
 **Objective:** headless semantic judge via attune-rag.
