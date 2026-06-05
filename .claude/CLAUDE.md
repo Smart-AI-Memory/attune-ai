@@ -7760,3 +7760,39 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "formatter strips imports added before usage" lesson again
   here (`import re` added before its usage was stripped by ruff
   in both build scripts — re-add AFTER the usage exists).
+
+- **Using an LLM faithfulness judge to fact-check generated content
+  is context-completeness-bound — cross-check every flagged claim
+  against the COMPLETE source before believing it**: dogfooded
+  2026-06-04 using `attune_rag.eval.faithfulness.FaithfulnessJudge`
+  to verify 6 regenerated attune-ai help features against their
+  source. Three durable findings. (1) **`FaithfulnessJudge.score
+  (query, answer, passages)` is async** despite `inspect.signature`
+  rendering it as a plain `def` — wrap in `asyncio.run`. (2) **The
+  judge's accuracy on entity-existence claims is bounded by
+  `passages` completeness, and the bound breaks exactly where it
+  matters most.** Truncating source context (I capped files at 12KB;
+  `memory` dropped 51 of 75 files past a 180KB cap) makes it
+  confidently flag REAL symbols as "unsupported" — 9 of 9 flags
+  across the run were false positives (real `def`/`class` past the
+  judge's window). A consumer that trusts `unsupported_claims` cries
+  wolf precisely on the largest, highest-value targets. **Always
+  cross-check each flagged claim against the FULL untruncated source
+  deterministically** (grep `^\s*(?:async )?def NAME\b` /
+  `^\s*class NAME\b`); a flagged symbol that resolves is a
+  truncation artifact, not a hallucination. This is the load-bearing
+  insight behind attune-verify decision D1 (deterministic resolution
+  is authoritative for entity existence; the semantic judge is
+  cross-checked/suppressed against it — see
+  `docs/specs/attune-verify/decisions.md`). (3) **Counterweight to
+  the attune-author "six hallucination shapes" lessons**:
+  empirically, attune-author's polish pass was 100% faithful on all
+  6 features (0 genuine hallucinations) — better than the worst-case
+  fear. The risk is real but not constant; **measure per-run, don't
+  assume**. Companion: 3 features judged "0 supported + 0 flagged" —
+  the reference doc had no checkable structural claims, a CONTENT
+  signal (thin docs), not a faithfulness signal; "score 1.0" there
+  is degenerate, so a real verifier should report "0 verifiable
+  entities" distinctly from "all verified." Pairs with the existing
+  "Forced Anthropic tool-use ... FaithfulnessJudge" and
+  attune-author-hallucination lessons.
