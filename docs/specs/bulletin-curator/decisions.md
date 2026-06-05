@@ -63,3 +63,37 @@ Implemented strictly: an item survives only if **every** id in its
 `sources` resolves to a real `SourceItem` from the inputs. Strictness
 is the faithfulness lever — a partially-fabricated citation is still a
 fabrication. Drops are logged at WARNING.
+
+---
+
+## Phase 3 — Dashboard surface, Task 3.1 (2026-06-05)
+
+### D5 — `POST /curator/answer` records, does not auto-flip spec status
+
+`design.md` sketched `/curator/answer` calling the spec-status setter
+when a "Mark complete?" item is answered Yes. But the LLM's
+`suggested_action` schema carries `question`/`choices`/`label`/`url`/
+`workflow`/`scope` — it has **no structured "set spec X to status Y"**
+field, so the handler can't generically perform that write. v1
+`/answer` records the `{item_id, choice}` to
+`<attune_home>/curator/answers.jsonl` (audit journal, best-effort) and
+returns. Wiring a real spec-status side-effect needs a richer
+`suggested_action` (e.g. an explicit `spec_slug` + `target_status`) and
+should reuse the existing allow_run-gated setter — deferred to a
+follow-up. `/curator/dismiss` (snooze 14d → `dismissals.json`) is fully
+implemented; the GET route filters snoozed items.
+
+### D6 — Summary `[item_id]` markers render as plain text in v1
+
+`design.md` wants the summary's `[item_id]` citation markers rendered as
+inline anchor chips linking to each source. v1 renders the summary
+verbatim (markers as text) to keep Task 3.1 focused. Chip-linking is a
+self-contained polish follow-up (parse markers → resolve to source
+links).
+
+### D7 — Task 3.1 only; CLI (3.2) + bulletin cross-link (3.3) deferred
+
+Phase 3 ships in two PRs: the `/curator` page first (route + template +
+CSS + answer/dismiss + tests), then `attune curator` CLI and the
+bulletin-strip "View briefing" cross-link in a follow-up. Each surface
+is independently shippable per `tasks.md`.

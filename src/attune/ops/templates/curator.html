@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Briefing{% endblock %}
+{% block content %}
+<section class="page-head">
+  <h1>Briefing</h1>
+  <p class="page-sub">
+    What needs attention now, ranked across project sources.
+    {% if result.model %}<code>{{ result.model }}</code>{% endif %}
+    {% if result.cost_usd %}· ${{ "%.4f"|format(result.cost_usd) }}{% endif %}
+  </p>
+</section>
+
+{# Hero: the executive summary. [item_id] markers are rendered as
+   plain text in v1; turning them into inline anchor chips is a polish
+   follow-up (see decisions.md D6). #}
+<section class="curator-summary">
+  <p>{{ result.summary }}</p>
+</section>
+
+{% if items %}
+  <div class="curator-cards">
+    {% for item in items %}
+      <article class="curator-card curator-card--{{ item.severity }}"
+               id="card-{{ item.id }}">
+        <div class="curator-card-head">
+          <span class="curator-sev chip chip-{{ item.severity }}">{{ item.severity }}</span>
+          <h2 class="curator-card-title">{{ item.title }}</h2>
+        </div>
+        <p class="curator-card-rationale">{{ item.rationale }}</p>
+
+        {% if item.sources %}
+          <div class="curator-sources">
+            {% for src in item.sources %}
+              <code class="curator-src-chip">{{ src }}</code>
+            {% endfor %}
+          </div>
+        {% endif %}
+
+        <div class="curator-card-actions">
+          {% set action = item.suggested_action %}
+          {% if action and action.kind == "open" and action.url %}
+            <a class="btn btn-primary" href="{{ action.url }}">
+              {{ action.label or "Open" }}
+            </a>
+          {% elif action and action.kind == "ask" and action.question %}
+            <div class="curator-ask">
+              <p class="curator-ask-q">{{ action.question }}</p>
+              <div class="curator-ask-choices">
+                {% for choice in action.choices %}
+                  <button class="btn curator-answer-btn"
+                          data-item-id="{{ item.id }}"
+                          data-choice="{{ choice }}">{{ choice }}</button>
+                {% endfor %}
+              </div>
+            </div>
+          {% elif action and action.kind == "run" and action.workflow %}
+            <span class="curator-run-hint">
+              Suggested: run <code>{{ action.workflow }}</code>
+              {% if action.scope %}on <code>{{ action.scope }}</code>{% endif %}
+              — <a href="/workflows">go to Workflows →</a>
+            </span>
+          {% endif %}
+          <button class="btn btn-muted curator-dismiss-btn"
+                  data-item-id="{{ item.id }}">Snooze 14d</button>
+        </div>
+      </article>
+    {% endfor %}
+  </div>
+{% else %}
+  <section class="curator-empty">
+    <p>Nothing pressing right now. The briefing is quiet — no items rank above noise.</p>
+  </section>
+{% endif %}
+
+<footer class="curator-foot">
+  <a class="btn btn-muted" href="/curator?refresh=1">Refresh</a>
+  {% if result.sources_consulted %}
+    <span class="curator-foot-sources">
+      Sources: {{ result.sources_consulted|join(", ") }}
+    </span>
+  {% endif %}
+  {% if result.cost_usd %}
+    <span class="curator-foot-cost">${{ "%.4f"|format(result.cost_usd) }}</span>
+  {% endif %}
+</footer>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  // Minimal interactivity: dismiss snoozes an item; answer records a
+  // choice. Both POST JSON then reload to reflect the new state.
+  async function _post(url, payload) {
+    const resp = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    return resp.ok;
+  }
+  document.querySelectorAll(".curator-dismiss-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      if (await _post("/curator/dismiss", { item_id: btn.dataset.itemId })) {
+        window.location.reload();
+      } else {
+        btn.disabled = false;
+      }
+    });
+  });
+  document.querySelectorAll(".curator-answer-btn").forEach((btn) => {
+    btn.addEventListener("click", async () => {
+      btn.disabled = true;
+      await _post("/curator/answer", {
+        item_id: btn.dataset.itemId,
+        choice: btn.dataset.choice,
+      });
+      window.location.reload();
+    });
+  });
+</script>
+{% endblock %}
