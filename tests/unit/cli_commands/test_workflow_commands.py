@@ -13,6 +13,20 @@ import json
 import types
 from unittest.mock import patch
 
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def _disable_spend_gate(monkeypatch):
+    """Disable the spend gate for these pre-gate tests.
+
+    These exercise workflow-run dispatch, not the gate; without this
+    the gate (collaboration-gates) would block every non-TTY run.
+    The gate has dedicated tests in ``test_workflow_spend_gate.py``.
+    """
+    monkeypatch.setenv("ATTUNE_SPEND_GATE", "off")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

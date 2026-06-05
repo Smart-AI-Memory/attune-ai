@@ -132,6 +132,7 @@ def run_workflow_with_exit_code(
     name: str,
     json_mode: bool,
     print_result: Callable[[Any], None],
+    on_result: Callable[[Any], None] | None = None,
 ) -> int:
     """Instantiate + execute a workflow and return the contract exit code.
 
@@ -154,6 +155,11 @@ def run_workflow_with_exit_code(
         print_result: Callback rendering the human-readable
             voice-layer output (injected to avoid an import cycle and
             to preserve the ops daemon side-channel emission).
+        on_result: Optional side-effect callback invoked with the
+            result after a (non-exception) run, in both json and
+            human modes — used by the spend gate to record the run's
+            actual cost into the session envelope (R4). Wrapped in a
+            best-effort guard so it can never alter the exit code.
 
     Returns:
         The process exit code (0, 1, or 2).
@@ -182,5 +188,14 @@ def run_workflow_with_exit_code(
         _emit_json_result(result, exit_code=exit_code)
     else:
         print_result(result)
+
+    if on_result is not None:
+        try:
+            on_result(result)
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: the post-run hook (spend-gate cost record)
+            # is best-effort; a failure here must never change the
+            # exit-code contract.
+            logger.exception("on_result hook failed for workflow %r", name)
 
     return exit_code

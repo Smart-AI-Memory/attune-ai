@@ -46,6 +46,11 @@ jobs:
       - name: Run security audit
         id: security_scan
         continue-on-error: true  # Don't fail job, we'll control blocking in next step
+        env:
+          # Non-interactive CI run — opt into the spend gate explicitly
+          # (collaboration-gates D10). Without this the gate would block
+          # the run by default in a context that can't confirm.
+          ATTUNE_SPEND_GATE_AUTHORIZED: "1"
         run: |
           # Run security audit and capture raw output
           # --json flag outputs JSON but CLI also prints rich text (progress, panels)

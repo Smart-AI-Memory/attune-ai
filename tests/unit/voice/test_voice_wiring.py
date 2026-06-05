@@ -19,6 +19,16 @@ import pytest
 from attune.voice import personality
 from attune.workflows.data_classes import CostReport, WorkflowResult
 
+
+@pytest.fixture(autouse=True)
+def _disable_spend_gate(monkeypatch):
+    """Disable the spend gate so these voice-wiring tests run the
+    workflow (the gate, collaboration-gates, would otherwise block a
+    non-TTY run before execution).
+    """
+    monkeypatch.setenv("ATTUNE_SPEND_GATE", "off")
+
+
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------

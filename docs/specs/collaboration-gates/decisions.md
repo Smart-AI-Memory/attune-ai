@@ -133,3 +133,38 @@ opts CI / the ops daemon in explicitly; the existing
 `ATTUNE_MAX_BUDGET_USD` cap still bounds any proceeding run. This
 translates the discipline's "first paid call gets an explicit
 go" into a machine context as an explicit env grant.
+
+---
+
+## Phase 1 — Implementation deviations
+
+### D11 — T4 touches more files than tasks.md listed (machine-caller opt-ins)
+
+`tasks.md` T4 named only `workflow_commands.py` + its test. But the
+gated path (`attune workflow run`) is **shared by non-interactive
+machine callers** that the D10 fail-safe would otherwise block —
+discovered when wiring the CLI (verify-first against the real
+callers, not the spec's assumption). T4 therefore also:
+
+- **`src/attune/cli_commands/_exit_codes.py`** — added an optional,
+  additive `on_result` hook (best-effort, guarded) so the CLI can
+  record actual cost into the envelope (R4) without the runner
+  returning the result. Exit-code semantics unchanged
+  (workflow-failure-exit-propagation contract preserved).
+- **`src/attune/ops/runner.py`** — the dashboard daemon spawns the
+  CLI non-interactively, so its subprocess env gets
+  `ATTUNE_SPEND_GATE_AUTHORIZED=1` (the D10 machine-context "go").
+  The dashboard's *own confirm modal* remains a later phase; this
+  just keeps today's dashboard runs working rather than blocking.
+- **`.github/workflows/security-scan.yml`** — the one CI workflow
+  that actually runs `attune workflow run` (security-audit) gets the
+  same explicit opt-in. (`scorecard.yml` / `windows-debug.yml` only
+  mention "workflow run" in prose — they don't invoke the CLI.)
+- **Test opt-out** — `ATTUNE_SPEND_GATE=off` autouse fixtures in the
+  three pre-gate test files that exercise `cmd_workflow_run`
+  (`test_workflow_commands.py`, `test_workflow_exit_codes.py`,
+  `test_voice_wiring.py`) so they test dispatch/exit-codes/voice, not
+  the gate. New `test_workflow_spend_gate.py` covers the CLI surface.
+
+Approved 2026-06-05 (Patrick: "Full T4 with opt-ins"). The MCP-layer
+gating for agent-invoked runs remains deferred to a later phase.

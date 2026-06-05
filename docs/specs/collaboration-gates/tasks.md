@@ -17,7 +17,7 @@ PR unless two are trivially small.
 
 ## T1 — Envelope persistence module
 
-**Status:** todo
+**Status:** done (2026-06-05) — merged #637
 
 **Objective.** Build `src/attune/gates/envelope.py`: a TTL'd,
 on-disk session spend envelope modeled on the `Budget` dataclass
@@ -52,7 +52,7 @@ Anthropic's rolling window), D2 (envelope model).
 
 ## T2 — Meter resolution module
 
-**Status:** todo
+**Status:** done (2026-06-05) — merged #638
 
 **Objective.** Build `src/attune/gates/meter.py`: resolve the
 active meter from `AuthStrategy`/`AuthMode` and produce the
@@ -79,7 +79,7 @@ framing string.
 
 ## T3 — Spend-gate core (compose envelope + meter)
 
-**Status:** todo
+**Status:** done (2026-06-05) — merged #638
 **Depends on:** T1, T2
 
 **Objective.** Build `src/attune/gates/spend_gate.py`:
@@ -117,7 +117,7 @@ regression guard (T5) locks its core property.
 
 ## T4 — CLI wiring (gate goes live)
 
-**Status:** todo
+**Status:** done (2026-06-05) — wider file set per [decisions.md](decisions.md) D11
 **Depends on:** T3
 
 **Objective.** Wire `evaluate_spend_gate` into `cmd_workflow_run`
