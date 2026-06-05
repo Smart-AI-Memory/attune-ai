@@ -102,7 +102,7 @@ if it picks up these candidates.
 
 ## See also
 
-- [`docs/specs/redis-decoupling/audit.md`](../specs/redis-decoupling/audit.md) — Phase A audit findings
-- [`docs/specs/redis-decoupling/decisions.md`](../specs/redis-decoupling/decisions.md) — per-phase decision log
+- [`redis-decoupling/audit.md`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/specs/archive/redis-decoupling/audit.md) — Phase A audit findings (archived)
+- [`redis-decoupling/decisions.md`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/specs/archive/redis-decoupling/decisions.md) — per-phase decision log (archived)
 - PR [#279](https://github.com/Smart-AI-Memory/attune-ai/pull/279) — P1 (delete `attune.coordination`)
 - PR [#281](https://github.com/Smart-AI-Memory/attune-ai/pull/281) — P2 (drop `[memory]` extra)
