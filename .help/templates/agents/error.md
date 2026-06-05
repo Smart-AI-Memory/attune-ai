@@ -1,62 +1,44 @@
 ---
-depth: error
-feature: agents
-generated_at: 2026-04-14 15:08:45.078322+00:00
-manual: true
-source_hash: dee340db6e093bcd99d9c92c2873020de79933812d17cc3e14cb5331294ac993
-status: generated
 type: error
+name: agents-error
+feature: agents
+depth: error
+generated_at: 2026-06-04T23:45:26.749017+00:00
+source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+status: generated
 ---
 
 # Agents errors
 
-This page covers failures in the Attune AI agent system, including release preparation agents, state management, and agent factory adapters.
-
 ## Common error signatures
 
-**Agent operation failures:**
-- `AgentOperationError` — Raised by the `@safe_agent_operation` decorator when agent operations fail
-- `ValueError: Input must be a dict, got {type}` — Input validation failure from `@validate_input`
-- `ValueError: Missing required fields: {fields}` — Required field validation failure
+Failures in the agents feature fall into three categories: input validation errors, framework adapter initialization errors, and agent operation errors.
 
-**State and persistence errors:**
-- Redis connection errors when `redis_client` is misconfigured
-- State store serialization failures during agent state persistence
-- Recovery manager errors when restoring agent execution state
-
-**Adapter initialization failures:**
-- Import errors from lazy-loaded framework adapters (`get_langchain_adapter`, `get_langgraph_adapter`, etc.)
-- Missing dependencies for AutoGen, Haystack, or other framework integrations
-- Configuration errors in `WizardAgent` wrapper initialization
-
-**Release preparation failures:**
-- Quality gate threshold violations in `ReleasePrepTeam.assess_readiness()`
-- Command execution failures in specialized agents (pytest, ruff, coverage tools)
-- Tier escalation timeouts during CHEAP -> CAPABLE -> PREMIUM progression
+- `ValueError: Input must be a dict, got {...}` — raised by `validate_input` when an `invoke()` or `run()` call receives a non-dict argument.
+- `ValueError: Missing required fields: {...}` — raised by `validate_input` when a required field is absent from the input dict passed to `invoke()` or `run()`.
+- `AgentOperationError` — raised by `safe_agent_operation` when a decorated agent method fails. The decorator logs the failure before re-raising, so the log output will describe the operation that failed.
+- Framework unavailability — `is_available()` returning `False` on `AutoGenAdapter`, `HaystackAdapter`, or `LangChainAdapter` indicates the optional framework dependency is not installed. Any subsequent call to `create_agent()` or `create_workflow()` on that adapter will fail.
+- Retry exhaustion — `retry_on_failure` re-raises the last exception after `max_attempts` attempts. When you see a repeated exception logged multiple times in quick succession, the cause is usually a transient failure that exceeded the retry budget.
 
 ## Where errors originate
 
-Agent system errors typically originate from these key operations:
+Errors typically arise at one of the following call sites:
 
-- **Agent processing**: `ReleaseAgent.process()` and specialized agent implementations (`TestCoverageAgent`, `DocumentationAgent`, `CodeQualityAgent`)
-- **Team coordination**: `ReleasePrepTeam.assess_readiness()` during parallel agent execution
-- **State management**: Agent state store operations and Redis persistence
-- **Framework adapters**: Lazy imports in `get_*_adapter()` functions and `wrap_wizard()` calls
-- **Input validation**: Decorator-enforced validation in agent operations
+- `get_langchain_adapter()`, `get_langgraph_adapter()`, `get_autogen_adapter()`, `get_haystack_adapter()` — these lazy-import functions fail at call time if the corresponding framework is not installed, not at import time.
+- `wrap_wizard()` — wraps a wizard as a `WizardAgent`; fails if the wizard argument is incompatible with `AgentConfig` expectations.
+- `AgentRecoveryManager` — manages recovery for failed agent executions; errors here affect `AgentExecutionRecord` and `AgentStateStore` persistence.
 
 ## How to diagnose
 
-1. **Check agent execution logs.** The `@safe_agent_operation` decorator logs all failures with context. Look for agent operation names and error details in your logs.
+1. **Check whether the framework adapter is available.** Call `is_available()` on the relevant adapter (`AutoGenAdapter`, `HaystackAdapter`, or `LangChainAdapter`) before calling `create_agent()` or `create_workflow()`. A `False` return means the optional dependency is missing — install it first.
 
-2. **Verify codebase path and permissions.** Release preparation agents run external tools (pytest, ruff) on the codebase. Ensure the `codebase_path` parameter points to a readable directory with proper permissions.
+2. **Read the `AgentOperationError` message.** The `safe_agent_operation` decorator logs the operation name and exception details before raising `AgentOperationError`. Check your log output at `ERROR` level for the decorated operation name; it identifies which agent method failed and the underlying cause.
 
-3. **Test Redis connectivity.** If using state persistence, verify your Redis connection with a simple ping. State store errors often cascade from Redis connectivity issues.
+3. **Identify which `validate_input` field is missing.** When you see `ValueError: Missing required fields: {...}`, the set in the message names the exact keys absent from your input dict. Ensure the dict passed to `invoke()` or `run()` includes every field declared in `required_fields` for that decorator.
 
-4. **Validate quality gate configuration.** `ReleasePrepTeam` failures often stem from misconfigured quality gates. Check that threshold values are reasonable for your project (coverage percentages, complexity scores).
+4. **Check for retry exhaustion.** If `retry_on_failure` has re-raised, you will see the same exception logged `max_attempts` times. Confirm whether the underlying cause is a transient issue (network, rate limit) or a persistent misconfiguration — the latter will not resolve with more retries.
 
-5. **Check tier escalation limits.** Review your model tier configuration if agents are failing during escalation. Budget limits or API rate limits can cause tier progression failures.
-
-6. **Verify framework dependencies.** Adapter import errors indicate missing optional dependencies. Install the required package for your target framework (langchain, autogen, etc.).
+5. **Enable `DEBUG` logging.** The agents module uses Python's `logging` facility. Set the log level to `DEBUG` and re-run the failing scenario. `safe_agent_operation` and `log_performance` both emit structured log entries that trace execution state before and after each operation.
 
 ## Source files
 

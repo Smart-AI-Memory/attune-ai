@@ -3,8 +3,8 @@ type: troubleshooting
 name: memory-troubleshooting
 feature: memory
 depth: troubleshooting
-generated_at: 2026-05-16T06:14:13.797051+00:00
-source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
+generated_at: 2026-06-04T23:45:26.861810+00:00
+source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
 status: generated
 ---
 
@@ -12,121 +12,150 @@ status: generated
 
 ## Before you start
 
-The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis connectivity, memory file loading, or classification and security access.
+The memory subsystem handles short-term storage (backed by Redis), long-term pattern storage, and Claude Code memory file loading (`CLAUDE.md`). Symptoms often fall into one of three areas: Redis connectivity, memory file loading, or security/classification errors.
 
 ## Symptom table
 
 | If you observe | Check |
-|----------------|-------|
-| `OSError: REDIS_URL not found` | Run `is_redis_available()` before calling `get_railway_redis()`. Confirm `REDIS_URL` is set in your environment, or add Redis to your Railway project with `railway add --database redis`. |
-| `stash()` or `retrieve()` returns `None` unexpectedly | Call `backend.is_connected()` to confirm the backend is live. Then call `backend.get_stats()` to check key counts and TTL state. |
-| CLAUDE.md memory files are not loaded | Check `ClaudeMemoryConfig.enabled` — it defaults to `False`. Confirm `project_root` resolves to the directory containing `.claude/CLAUDE.md`. Call `loader.get_loaded_files()` to see what was actually imported. |
-| Memory files load but content is missing or truncated | Check `ClaudeMemoryConfig.max_file_size_bytes` (default: 1,000,000 bytes) and `max_import_depth` (default: 5). Files exceeding the size limit or beyond the import depth are silently skipped when `validate_files=True`. |
-| `MemoryPermissionError` or `SecurityError` on pattern access | Call `check_access()` with the pattern's classification. Confirm the agent's credentials cover the required `Classification` level (e.g., `HEALTHCARE`, `FINANCIAL`, `PROPRIETARY`). |
-| Redis starts but the control panel reports unhealthy | Call `panel.health_check()` and inspect the returned dict. Then call `panel.status()` to see whether `auto_start_redis` succeeded. |
-| Intermittent failures across agents or sessions | Check for stale state under the `empathy:active_agents` and `empathy:service_lock` Redis keys. Call `panel.clear_short_term(agent_id=...)` to flush a specific agent's short-term memory. |
+|---|---|
+| `OSError: REDIS_URL not found` | The `REDIS_URL` environment variable is unset. On Railway, run `railway add --database redis`. For external access, use `REDIS_PUBLIC_URL`. |
+| `is_redis_available()` returns `False` | Call `check_redis_connection()` to get a detailed status dict, then verify Redis is reachable at the configured host and port. |
+| `stash()` or `retrieve()` returns `None` unexpectedly | Confirm `is_connected()` returns `True` on your `MemoryBackend` instance. A `False` result means the backend silently dropped the operation. |
+| `load_all_memory()` returns empty or partial content | Check `get_loaded_files()` on your `ClaudeMemoryLoader` instance to see which `CLAUDE.md` files were found. Verify `ClaudeMemoryConfig.enabled` is `True` and that `project_root` points to the correct directory. |
+| Memory file imports not resolving | `ClaudeMemoryConfig.max_import_depth` defaults to `5`. A deeply nested import chain beyond this limit is silently truncated. |
+| Large memory files silently skipped | `ClaudeMemoryConfig.max_file_size_bytes` defaults to `1000000` (1 MB). Files exceeding this limit are not loaded. |
+| `MemoryControlPanel.status()` reports Redis stopped | Call `panel.start_redis(verbose=True)` to attempt a restart and read the returned `RedisStatus` for the failure reason. |
+| `SecurityError` or `MemoryPermissionError` on pattern access | The pattern's `Classification` level exceeds your agent's `AccessTier`. Check the pattern's classification with `list_patterns()` and confirm the calling agent's credentials. |
+| Intermittent key misses under load | The `RateLimiter` may be dropping requests. Call `get_remaining(client_ip)` to check remaining quota for the client IP. The default window is 60 seconds / 100 requests. |
+| `get_railway_redis()` raises `OSError` | `REDIS_URL` is not set in the Railway environment. Add Redis to your project (`railway add --database redis`) or set `REDIS_PUBLIC_URL` for external access. |
 
 ## Diagnosis steps
 
-Work through these in order — each step is cheaper than the one that follows it.
+Follow these steps in order — each one is cheaper than the next.
 
-1. **Confirm Redis availability.**
-   Before investigating application logic, verify the Redis subsystem is reachable:
+### 1. Check Redis availability
 
-   ```python
-   from attune.memory import is_redis_available
-   print(is_redis_available())
-   ```
+Before investigating application code, confirm Redis itself is reachable:
 
-   If this returns `False`, fix connectivity before continuing. For Railway deployments, ensure `REDIS_URL` is set; for local deployments, confirm Redis is running on `localhost:6379` (the default `ControlPanelConfig` values).
+```python
+from attune.memory import check_redis_connection
 
-2. **Check the connection status explicitly.**
-   If Redis appears available but behavior is wrong, get a detailed status report:
+status = check_redis_connection()
+print(status)
+```
 
-   ```python
-   from attune.memory import check_redis_connection
-   print(check_redis_connection())
-   ```
+If the status dict shows a connection failure, fix the Redis issue before continuing. Use `is_redis_available()` for a quick boolean check when you don't need details.
 
-   This returns a dict with connection state you can inspect without modifying any code.
+### 2. Inspect your environment variables
 
-3. **Inspect what memory files were loaded.**
-   If CLAUDE.md content is missing, call `get_loaded_files()` after `load_all_memory()` to see the exact file list:
+`get_redis_config()` reads connection parameters from environment variables. Confirm the expected variables are set:
 
-   ```python
-   from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
+```bash
+echo $REDIS_URL
+```
 
-   config = ClaudeMemoryConfig(enabled=True, project_root="/your/project")
-   loader = ClaudeMemoryLoader(config)
-   content = loader.load_all_memory()
-   print(loader.get_loaded_files())
-   ```
+If you use `parse_redis_url()` directly, verify the URL string is well-formed (e.g., `redis://localhost:6379/0`).
 
-   Cross-reference the output against your `max_import_depth` and `max_file_size_bytes` settings.
+### 3. Verify backend connectivity in code
 
-4. **Run the memory test suite.**
-   Before modifying any code, confirm which paths are already covered:
+Instantiate your backend and call `is_connected()` before performing any operations:
 
-   ```
-   pytest -k "memory" -v
-   ```
+```python
+backend = get_redis_memory()  # or get_railway_redis() on Railway
+print(backend.is_connected())
+print(backend.get_stats())
+```
 
-   A failing test that exercises your symptom gives you a reproducible baseline and a fixture you can reuse.
+A `False` result from `is_connected()` means all subsequent `stash()` and `retrieve()` calls will fail silently.
 
-5. **Enable DEBUG logging.**
-   If the above steps don't isolate the problem, increase log verbosity and re-run:
+### 4. Check Claude memory file loading
 
-   ```python
-   import logging
-   logging.getLogger("attune.memory").setLevel(logging.DEBUG)
-   ```
+If `load_all_memory()` returns less content than expected, inspect which files were actually loaded:
 
-   Look for unexpected early returns, TTL expirations, or classification rejections in the output.
+```python
+from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
 
-6. **Pull a full health and statistics report.**
-   For control-panel issues, call both `health_check()` and `get_statistics()` together:
+config = ClaudeMemoryConfig(enabled=True, project_root="/path/to/project")
+loader = ClaudeMemoryLoader(config)
+loader.load_all_memory()
+print(loader.get_loaded_files())
+```
 
-   ```python
-   panel = MemoryControlPanel()
-   print(panel.health_check())
-   print(panel.get_statistics())
-   ```
+Cross-check the output against your `CLAUDE.md` file locations and the `max_import_depth` / `max_file_size_bytes` limits in `ClaudeMemoryConfig`.
 
-   The statistics report exposes pattern counts, storage usage, and audit log state that are not visible in the basic status output.
+### 5. Query control panel health
+
+If you are running `MemoryControlPanel`, call `health_check()` for a unified status report:
+
+```python
+from attune.memory.control_panel import MemoryControlPanel
+
+panel = MemoryControlPanel()
+print(panel.health_check())
+print(panel.status())
+```
+
+Use `get_statistics()` to identify abnormal counts (e.g., unexpectedly high or zero pattern counts).
+
+### 6. Run the related tests
+
+```bash
+pytest -k "memory" -v
+```
+
+A failing test that exercises the same path as your bug will also give you a fixture you can reuse to isolate the issue.
 
 ## Common fixes
 
-- **Redis not found on Railway.** Set the `REDIS_URL` environment variable or run `railway add --database redis`. For external access use `REDIS_PUBLIC_URL`. This is a deployment environment change, not a code change.
+**Redis not running — start it via the control panel:**
 
-- **Claude memory loading is silently disabled.** `ClaudeMemoryConfig.enabled` defaults to `False`. Explicitly set it to `True` when constructing the config, or pass a config with `enabled=True` to `ClaudeMemoryLoader`.
+```python
+panel = MemoryControlPanel()
+result = panel.start_redis(verbose=True)
+print(result)  # RedisStatus with reason if startup failed
+```
 
-- **Files skipped due to size or depth limits.** Increase `max_file_size_bytes` or `max_import_depth` in `ClaudeMemoryConfig`. Alternatively, restructure deep import chains so critical content appears within the first five levels.
+If `ControlPanelConfig.auto_start_redis` is `False`, Redis will not start automatically. Set it to `True` or start Redis manually before initializing the panel.
 
-- **Missing default CLAUDE.md.** If no memory file exists for a project, create one with:
+**Missing `REDIS_URL` on Railway:**
 
-  ```python
-  from attune.memory.claude_memory import create_default_project_memory
-  create_default_project_memory(project_root="/your/project", framework="empathy")
-  ```
+```bash
+railway add --database redis
+```
 
-- **Stale short-term memory causing incorrect agent behavior.** Clear a specific agent's short-term store:
+For external access, set `REDIS_PUBLIC_URL` instead and pass it explicitly to `get_redis_memory(url=...)`.
 
-  ```python
-  panel = MemoryControlPanel()
-  cleared = panel.clear_short_term(agent_id="your-agent-id")
-  print(f"Cleared {cleared} entries")
-  ```
+**Memory files not loading — create a default file:**
 
-- **Classification access denied.** Pattern access is gated by `Classification` level. If you see `MemoryPermissionError`, confirm the agent's credentials include the required tier before calling `retrieve()` or `search()`. This may require changes to how agent credentials are provisioned, outside the memory module itself.
+```python
+from attune.memory.claude_memory import create_default_project_memory
 
-- **Redis URL parse failure.** If `get_redis_memory()` raises on an unexpected URL format, test the URL directly:
+create_default_project_memory("/path/to/project", framework="empathy")
+```
 
-  ```python
-  from attune.memory.config import parse_redis_url
-  print(parse_redis_url("redis://your-host:6379"))
-  ```
+This creates `.claude/CLAUDE.md` under the given project root.
 
-  This isolates whether the problem is in the URL string or in the broader connection setup.
+**Stale short-term memory causing unexpected hits:**
+
+```python
+panel = MemoryControlPanel()
+cleared = panel.clear_short_term(agent_id="your-agent-id")
+print(f"Cleared {cleared} entries")
+```
+
+**Import depth or file size limits blocking content:**
+Increase the limits in `ClaudeMemoryConfig` when constructing `ClaudeMemoryLoader`:
+
+```python
+config = ClaudeMemoryConfig(
+    enabled=True,
+    max_import_depth=10,        # default is 5
+    max_file_size_bytes=5000000  # default is 1000000
+)
+```
+
+**Dependency version mismatch:**
+The Redis backend behavior depends on the installed Redis client library. Run `pip show redis` to confirm the version matches what your environment expects, then reinstall if needed.
 
 ## Source files
 

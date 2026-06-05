@@ -3,8 +3,8 @@ type: warning
 name: memory-warning
 feature: memory
 depth: warning
-generated_at: 2026-05-16T06:14:13.794835+00:00
-source_hash: 54f52a79be1ecfe32e99b4f09f84bda845815a0129b603c252aa4c74c2e1a61c
+generated_at: 2026-06-04T23:45:26.859307+00:00
+source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
 status: generated
 ---
 
@@ -12,51 +12,49 @@ status: generated
 
 ## What to watch for
 
-The memory subsystem handles storage, lookup, and security across Redis-backed short-term memory, file-based Claude memory (CLAUDE.md), and long-term pattern storage. Mistakes here can silently drop data, expose secrets, or produce different behavior between local development and production.
+The memory subsystem spans Redis-backed short-term storage, file-based CLAUDE.md loading, long-term pattern storage, and a security/classification layer. Mistakes in this area can expose secrets, corrupt cached state, or silently drop data with no error raised.
 
 ## Risk areas
 
-### Redis availability check swallows import errors silently
+### `get_redis_memory()` silently falls back to a mock
 
-`is_redis_available()` returns `False` for both "Redis is not installed" and "Redis is installed but unreachable." If your code branches on this return value and Redis is actually misconfigured, you will silently fall back to a mock or no-op backend with no error logged. Always follow a `False` result by checking `check_redis_connection()` to distinguish missing dependencies from connection failures.
+`get_redis_memory()` accepts a `use_mock` parameter that, when `None`, resolves its value from the environment. If `REDIS_URL` is unset and no explicit `use_mock=False` is passed, the function may return a mock backend instead of a real Redis connection — and your code will appear to work while writing to nowhere. Always verify the backend type in environments where persistence matters, and pass `use_mock` explicitly rather than relying on environment inference.
 
-### `get_redis_config()` is a legacy API with environment coupling
+### `get_railway_redis()` raises `OSError` when `REDIS_URL` is missing
 
-`get_redis_config()` reads connection parameters directly from environment variables and returns a plain dict. It does not validate the values it reads. If `REDIS_URL` is malformed or missing, downstream callers like `get_redis_memory()` will fail at connection time rather than at configuration time — often with a misleading error. Prefer constructing a `RedisConfig` object explicitly, or validate the URL with `parse_redis_url()` before passing it on.
+`get_railway_redis()` raises `OSError` if `REDIS_URL` is not set in the environment. The error message instructs you to run `railway add --database redis`, but the failure happens at call time, not at import time. If you use this function in an initialization path, an unconfigured deployment will fail at startup rather than at the first memory operation. Add an `is_redis_available()` check before calling it, or handle the `OSError` explicitly.
 
-### `parse_redis_url()` does not raise on invalid input
+### `ClaudeMemoryLoader` follows `@import` chains up to `max_import_depth`
 
-`parse_redis_url()` returns a dict of connection parameters parsed from a URL string. It does not raise an exception if the URL is structurally invalid — it may return partial or empty values. Code that calls this function and then passes results directly to a Redis client can fail with an obscure connection error rather than a clear parse error. Check the returned dict for required keys (`host`, `port`) before using it.
+`ClaudeMemoryConfig` has a `max_import_depth` field (default `5`) and a `max_file_size_bytes` field (default `1_000_000`). `ClaudeMemoryLoader` will silently stop following imports once either limit is reached. If your CLAUDE.md hierarchy is deeper than five levels, the loader loads a partial view without raising an error. Set `max_import_depth` explicitly when your project structure requires deeper nesting, and call `get_loaded_files()` after `load_all_memory()` to confirm which files were actually read.
 
-### `get_railway_redis()` raises `OSError` when `REDIS_URL` is absent
+### `MemoryBackend.stash()` TTL defaults to `None` (no expiry)
 
-Unlike the other config helpers, `get_railway_redis()` raises `OSError` if `REDIS_URL` is not set in the environment. If you call this function outside a Railway deployment, you will get an `OSError` with instructions to run `railway add --database redis`. Wrap calls to this function in an environment check or a `try/except OSError` block when using it in code that may run locally.
+The `stash` method on `MemoryBackend` accepts an optional `ttl` parameter. When `ttl=None`, entries are stored without an expiry. In long-running processes or multi-agent deployments, unbounded entries accumulate in Redis and are never evicted. Pass an explicit TTL for any data that does not need to survive the session, and use `get_stats()` periodically to monitor key counts.
 
-### `ClaudeMemoryConfig.max_import_depth` caps recursive CLAUDE.md loading
+### `SecretsDetector` and `PIIScrubber` must be called explicitly
 
-`ClaudeMemoryLoader` follows `@import` directives in CLAUDE.md files up to `max_import_depth` (default: `5`). Import chains deeper than this limit are silently truncated — no warning is raised and `load_all_memory()` returns whatever it loaded before hitting the limit. If your project uses nested imports and memory content appears incomplete, lower `max_import_depth` incrementally and call `get_loaded_files()` to confirm which files were actually loaded.
+The memory subsystem includes `SecretsDetector` and `PIIScrubber`, but neither runs automatically when you call `stash()` or `remember()`. If you store user-supplied content or environment-derived strings without first running them through these utilities, secrets and PII can end up in Redis or in exported pattern files. Call `detect_secrets()` on any externally sourced content before storing it.
 
-### `max_file_size_bytes` silently skips large memory files
+### `MemoryControlPanel.clear_short_term()` defaults to the `admin` agent
 
-`ClaudeMemoryConfig` sets a default `max_file_size_bytes` of 1,000,000 bytes (1 MB). Files exceeding this limit are skipped without raising an error. If a CLAUDE.md file is not being loaded and `validate_files` is `True`, check whether the file size exceeds this threshold before investigating other causes.
+`clear_short_term()` accepts an `agent_id` parameter that defaults to `'admin'`. In a multi-agent deployment, calling it without specifying an `agent_id` clears only keys belonging to the `admin` agent — which may give a false impression that short-term memory has been fully flushed. Pass the correct `agent_id` for each agent whose memory you intend to clear.
 
-### Security classification keywords drive access control
+### `get_redis_config()` is marked legacy
 
-The `classify_pattern()` function uses hardcoded keyword lists (`HEALTHCARE_KEYWORDS`, `FINANCIAL_KEYWORDS`, `PROPRIETARY_KEYWORDS`) to assign classification levels that gate access via `check_access()`. Patterns containing words like `patient`, `credit card`, or `confidential` will be classified automatically. If a pattern is unexpectedly restricted, inspect its content against these keyword lists rather than assuming a bug in the access control logic.
+`get_redis_config()` returns a plain `dict` built from environment variables and is documented as a legacy API. New code should use `parse_redis_url()` or construct a `RedisConfig` instance directly. Mixing both approaches in the same codebase can produce inconsistent connection parameters if environment variables are partially set.
 
 ## How to avoid problems
 
-- **Distinguish unavailability from misconfiguration.** When `is_redis_available()` returns `False`, call `check_redis_connection()` to get a status dict that separates import failures from connection failures.
+- **Confirm your backend before writing data.** After constructing a memory backend, call `is_connected()` to verify you have a live connection. A mock backend returns `True` from `is_connected()` in some configurations, so also check `supports_distributed()` if your workload requires cross-session coordination.
 
-- **Validate Redis URLs before use.** Call `parse_redis_url()` and confirm the returned dict contains `host` and `port` before passing parameters to a Redis client.
+- **Audit loaded files after initialization.** Call `ClaudeMemoryLoader.get_loaded_files()` immediately after `load_all_memory()` and log the result. Truncated import chains are not reported as errors, so this is the only way to confirm the full context was loaded.
 
-- **Audit loaded memory files explicitly.** After calling `load_all_memory()`, call `get_loaded_files()` to verify the full set of files was loaded. Gaps indicate truncated import chains or files exceeding `max_file_size_bytes`.
+- **Set explicit TTLs for short-lived data.** Any entry stored with `ttl=None` persists until manually deleted. Prefer explicit TTLs in development and staging environments to avoid stale keys interfering with test runs.
 
-- **Guard `get_railway_redis()` with an environment check.** Check for `REDIS_URL` in `os.environ` before calling this function in code that runs outside Railway, or catch `OSError` and surface a clear message.
+- **Run secret detection before storing external content.** Use `detect_secrets()` on any string that originates outside your codebase before passing it to `stash()` or `remember()`.
 
-- **Treat `_`-prefixed helpers as unstable.** Private functions in this module can change without notice. Depend only on the public API surface documented in `MemoryBackend` and `SearchableMemoryBackend`.
-
-- **Run `pytest -k "memory"` before merging changes.** Environment variables and module-level cached values can cause memory behavior to differ between local runs and CI. If a test passes locally but fails in CI, check for implicit state from `get_redis_config()` or cached `ClaudeMemoryLoader` instances — call `clear_cache()` between tests.
+- **Depend only on the public API.** Names prefixed with `_` — including `_CLAUDE_MD_START` and `_CLAUDE_MD_END` — are implementation details that can change without notice.
 
 ## Source files
 

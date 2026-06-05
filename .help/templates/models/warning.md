@@ -3,7 +3,7 @@ type: warning
 name: models-warning
 feature: models
 depth: warning
-generated_at: 2026-05-16T06:19:45.845318+00:00
+generated_at: 2026-06-04T23:45:26.760258+00:00
 source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
@@ -12,41 +12,43 @@ status: generated
 
 ## What to watch for
 
-The `models` feature spans LLM authentication, adaptive model routing, circuit breaking, and telemetry. The risks below reflect the areas where misconfiguration or missed edge cases produce failures that are hard to trace after the fact.
+The `models` feature spans LLM authentication strategy management, adaptive provider routing, and circuit-breaker resilience. The risks below apply whether you are calling the Python API directly or using the CLI commands in `src/attune/models/auth_cli.py`.
 
 ## Risk areas
 
-### `cmd_auth_reset()` silently discards your `AuthStrategy`
+### `cmd_auth_reset()` permanently clears your stored strategy
 
-`cmd_auth_reset()` clears the saved authentication strategy file at `AUTH_STRATEGY_FILE`. If you call it programmatically — or a user runs it from the CLI — all customized fields (`subscription_tier`, `small_module_threshold`, `loc_to_tokens_multiplier`, and so on) are lost without a confirmation prompt in non-interactive contexts. Back up or serialize the current strategy via `AuthStrategy.to_dict()` before invoking a reset.
+`cmd_auth_reset()` deletes the file at `AUTH_STRATEGY_FILE`. There is no confirmation prompt. Running it in a shared or CI environment removes the strategy for every process that calls `get_auth_strategy()`, causing them to fall back to defaults (`AuthMode.AUTO`, `SubscriptionTier.PRO`, `prefer_subscription=True`). Run `cmd_auth_status()` first to record the current configuration if you may need to restore it.
 
-### `AdaptiveModelRouter.get_best_model()` falls back silently when no model meets your constraints
+### `AdaptiveModelRouter.get_best_model()` silently falls back when filters are too strict
 
-When you pass `max_cost`, `max_latency_ms`, or `min_success_rate` to `get_best_model()`, the router filters against `ModelPerformance` telemetry. If no recorded model meets all constraints, the method still returns a model — it does not raise. Low `sample_size` values on a `ModelPerformance` record mean the `quality_score` and `success_rate` fields are statistically weak, so routing decisions made early in a workflow's lifetime may not reflect real performance. Check `get_routing_stats()` before tightening constraint values in production.
+`get_best_model()` accepts `max_cost`, `max_latency_ms`, and `min_success_rate` filters. If no model in telemetry satisfies all three constraints, the router returns a fallback rather than raising an error. A `min_success_rate` of `0.8` (the default) combined with a tight `max_cost` can silently route tasks to a lower-quality model. Call `get_routing_stats(workflow, stage)` after tightening constraints to verify the model being selected is the one you expect.
 
-### Circuit breaker state is per-process and resets on restart
+### `CircuitBreaker` state is not persisted across process restarts
 
-`CircuitBreaker` tracks `CircuitBreakerState` (failure count, `is_open`, `opened_at`) in memory. A provider that tripped the breaker in one process appears healthy to any new process or worker. In multi-process or containerized deployments, a provider can be simultaneously open in one worker and closed in another. If you need consistent circuit state across workers, you must persist and share it externally — the current implementation has no built-in backend for this.
+`CircuitBreakerState` holds `failure_count`, `last_failure`, `is_open`, and `opened_at` in memory only. When a process restarts — including test runners that spawn subprocesses — the circuit breaker resets to closed regardless of recent provider failures. A provider that was open at shutdown will receive requests immediately on restart. If you need persistent open/closed state, serialize it yourself via `CircuitBreaker.get_status()` and restore it before traffic resumes.
 
-### `AuthStrategy.get_recommended_mode()` uses line-count thresholds that may not match your modules
+### `AuthStrategy.loc_to_tokens_multiplier` drives cost estimates; the default may not fit your codebase
 
-`get_recommended_mode()` categorizes a module as small, medium, or large based on `small_module_threshold` (default 500 lines) and `medium_module_threshold` (default 2000 lines), then recommends an `AuthMode`. Generated files, data files checked in as `.py`, or auto-formatted files can have artificially high line counts. Run `count_lines_of_code()` on the specific file before accepting the recommendation at face value, and adjust the thresholds in your saved `AuthStrategy` if the defaults misclassify your modules.
+`estimate_cost()` and `estimate_tokens()` both multiply lines of code by `loc_to_tokens_multiplier` (default `4.0`). Codebases with dense imports, long strings, or generated code can have actual token-to-line ratios well above 4.0, causing cost estimates returned to callers to be understated. Calibrate this field against a representative sample before relying on `estimate_cost()` for budget decisions.
 
-### `EmpathyLLMExecutor` telemetry is only recorded if a `TelemetryBackend` is provided at construction
+### `LLMResponse` compatibility aliases mask field renames
 
-`EmpathyLLMExecutor.__init__()` accepts an optional `telemetry_store`. If you construct the executor without one, calls still succeed, but no `LLMCallRecord` is written. `AdaptiveModelRouter` depends on telemetry to rank models; an executor running without a store silently starves the router of signal. Always pass a `telemetry_store` in production configurations, and verify with `get_routing_stats()` that records are accumulating.
+`LLMResponse` exposes `input_tokens`, `output_tokens`, `model_used`, and `cost` as read-only properties that alias `tokens_input`, `tokens_output`, `model_id`, and `cost_estimate` respectively. Code that writes to the alias names (e.g., `response.cost = 0`) will not update the underlying field. Always read and write using the canonical field names (`tokens_input`, `tokens_output`, `model_id`, `cost_estimate`) to avoid silent no-ops.
+
+### `cmd_auth_recommend()` result depends on the file's line count at call time
+
+`cmd_auth_recommend()` calls `count_lines_of_code()` on the target file and passes the result to `AuthStrategy.get_recommended_mode()`, which applies the `small_module_threshold` (default 500 lines) and `medium_module_threshold` (default 2000 lines) breakpoints. If the file is mid-edit when you run the recommendation, the line count — and therefore the recommendation — reflects the unsaved state. Save the file before calling `cmd_auth_recommend()` for a stable result.
 
 ## How to avoid problems
 
-1. **Serialize `AuthStrategy` before any reset.** Call `AuthStrategy.to_dict()` and store the result before running `cmd_auth_reset()` or any code path that may call it transitively.
+1. **Verify routing decisions with `get_routing_stats()`** before deploying constraint changes to `get_best_model()`. The method accepts `workflow`, an optional `stage`, and a `days` lookback window, and returns the full distribution of model selections.
 
-2. **Warm up telemetry before tightening routing constraints.** Use `get_routing_stats(workflow, stage, days=7)` to confirm you have a meaningful `sample_size` before setting strict `max_cost` or `min_success_rate` values in `get_best_model()`.
+2. **Snapshot `CircuitBreaker.get_status()` in integration tests** that exercise failure paths. Compare the snapshot before and after to confirm the breaker opens and closes as expected, rather than relying on in-memory state that resets between test sessions.
 
-3. **Always construct `EmpathyLLMExecutor` with a `telemetry_store` in production.** Without it, the adaptive router receives no feedback and defaults to static tier assignments.
+3. **Use the canonical `AuthStrategy` fields** (`small_module_threshold`, `medium_module_threshold`, `loc_to_tokens_multiplier`) when serializing and deserializing via `to_dict()` / `from_dict()`. The compatibility properties on `LLMResponse` are read aliases, not writeable fields.
 
-4. **Do not share `CircuitBreaker` instances across process boundaries.** Treat each instance as local to its process and design your deployment to tolerate divergent breaker states between workers.
-
-5. **Depend only on the public API.** Names listed in `__all__` are stable. Private helpers (names starting with `_`) can change without notice across refactors.
+4. **Treat `AUTH_STRATEGY_FILE` as shared state** in multi-process setups. `AuthStrategy.save()` and `AuthStrategy.load()` both operate on the same path; concurrent writes are not coordinated.
 
 ## Source files
 

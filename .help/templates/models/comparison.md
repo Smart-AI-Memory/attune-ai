@@ -3,90 +3,98 @@ type: comparison
 name: models-comparison
 feature: models
 depth: comparison
-generated_at: 2026-05-16T06:19:45.859347+00:00
+generated_at: 2026-06-04T23:45:26.774404+00:00
 source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
-# Comparison: Models feature — authentication modes and routing strategies
+# Comparison: Authentication modes and routing strategies in `models`
 
 ## Context
 
-The `models` feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetry, and managing circuit breakers when providers fail. Understanding the tradeoffs within this feature helps you configure it correctly for your workload.
+The `models` feature covers three distinct but related decisions you make when integrating LLM calls in attune:
 
-## Authentication mode comparison
+1. **Authentication mode** — how attune authenticates with Claude (subscription vs. API key, controlled by `AuthMode` and `AuthStrategy`)
+2. **Model routing** — how attune selects a model for a given task (static tier assignment vs. telemetry-driven via `AdaptiveModelRouter`)
+3. **Resilience strategy** — how attune handles provider failures (direct calls vs. `CircuitBreaker` + `ResilientExecutor`)
 
-`AuthStrategy` supports two authentication modes, selected via `AuthMode`. The system defaults to `AuthMode.AUTO`, which picks a mode based on module size.
+Each axis has two or more options. The sections below help you choose.
 
-| Factor | Subscription mode (`prefer_subscription=True`) | API key mode (`prefer_subscription=False`) |
+---
+
+## Authentication mode: `AuthMode.AUTO` vs. explicit modes
+
+`AuthStrategy` defaults to `default_mode: AuthMode.AUTO` with `prefer_subscription: bool = True`. In AUTO mode, the strategy calls `get_recommended_mode(module_lines)` to pick between subscription and API-key auth based on the size of the file being processed.
+
+| Factor | `AuthMode.AUTO` | Explicit mode |
 |---|---|---|
-| **Cost model** | Flat subscription fee; no per-token charge | Pay-per-token; cost scales with usage |
-| **Best for** | High-volume, continuous workflows | Sporadic or exploratory use |
-| **Token estimation** | `estimate_tokens()` uses `loc_to_tokens_multiplier=4.0` | Same estimation; cost calculated differently via `estimate_cost()` |
-| **Small modules (<500 LOC)** | May be cost-inefficient | Generally cheaper |
-| **Large modules (>2000 LOC)** | Cost advantage grows with volume | Costs accumulate quickly |
-| **Setup** | `cmd_auth_setup()` interactive wizard | `cmd_auth_setup()` interactive wizard |
-| **Switching** | `cmd_auth_reset()` then re-run setup | `cmd_auth_reset()` then re-run setup |
+| **When it applies** | Module size crosses `small_module_threshold` (500 LOC) or `medium_module_threshold` (2000 LOC) | You override `default_mode` in `AuthStrategy` |
+| **Cost optimization** | Applies `cost_optimization` logic automatically | You own the cost tradeoff |
+| **Token estimation** | Calls `estimate_tokens(module_lines)` using `loc_to_tokens_multiplier` (4.0) | Not used |
+| **Best for** | Mixed codebases where module size varies widely | Environments where you have a fixed billing arrangement or need deterministic behavior |
+| **Risk** | May switch modes unexpectedly as files grow past thresholds | Requires manual recalibration when codebase grows |
 
-`AuthStrategy.get_recommended_mode()` encodes this logic: pass your module's line count and it returns the optimal `AuthMode` for that size category (`get_module_size_category()` returns `'small'`, `'medium'`, or `'large'`).
+`estimate_cost(module_lines, mode)` and `get_pros_cons(module_lines)` both accept an optional `mode` argument — use them to preview the cost and tradeoff of each mode before committing.
 
-## Model tier comparison
+---
 
-The registry maps tasks to three tiers. `TASK_TIER_MAP` and `AdaptiveModelRouter` use these distinctions to select models at runtime.
+## Model routing: static tier map vs. `AdaptiveModelRouter`
 
-| Tier | Task examples | Latency expectation | Cost expectation | When the router selects it |
-|---|---|---|---|---|
-| **Cheap** (`CHEAP_TASKS`) | Background analysis, batch summarization | Higher acceptable | Lowest | `max_cost` constraint set, `success_rate ≥ 0.8` on telemetry |
-| **Capable** (`CAPABLE_TASKS`) | Code generation, test writing | Moderate | Moderate | Default for most workflow stages |
-| **Premium** (`PREMIUM_TASKS`) | Complex reasoning, architecture review | Lowest acceptable | Highest | `recommend_tier_upgrade()` returns `True` based on historical failure rates |
-| **Realtime** (`REALTIME_REQUIRED_TASKS`) | `chat`, `live_coding`, `security_incident`, `emergency_response` | Must be minimal | Varies | Task type is in the frozenset; cannot be overridden by cost constraints |
+The registry exposes a static `TASK_TIER_MAP` that assigns every known task type to a tier (`CHEAP_TASKS`, `CAPABLE_TASKS`, `PREMIUM_TASKS`). `AdaptiveModelRouter` layers telemetry on top: it reads historical `ModelPerformance` records and re-ranks models by `quality_score` within a tier.
 
-The router scores candidates using `ModelPerformance.quality_score`, which combines `success_rate`, `avg_latency_ms`, and `avg_cost`. You can constrain selection with `max_cost`, `max_latency_ms`, and `min_success_rate` parameters on `get_best_model()`.
-
-## Routing strategy comparison
-
-`AdaptiveModelRouter` and direct model selection via the registry represent two different approaches.
-
-| Aspect | `AdaptiveModelRouter` | Direct registry lookup (`get_model()`, `get_tier_for_task()`) |
+| Factor | Static tier map | `AdaptiveModelRouter` |
 |---|---|---|
-| **Selection basis** | Live telemetry over a configurable window (default 7 days) | Static registry configuration |
-| **Adapts to failures** | Yes — `recent_failures` and `sample_size` factor into `quality_score` | No — returns the registered model regardless of runtime behavior |
-| **Circuit breaker integration** | Works alongside `CircuitBreaker`; failing providers are excluded | Not integrated; caller is responsible |
-| **Best for** | Production workflows where model reliability varies | Testing, scripting, or when you need deterministic model selection |
-| **Upgrade recommendations** | `recommend_tier_upgrade()` signals when a higher tier would improve outcomes | Not available |
-| **Observability** | `get_routing_stats(workflow, stage, days=7)` returns structured performance data | None built in |
+| **Selection basis** | Task type only | Task type + `success_rate`, `avg_latency_ms`, `avg_cost`, `sample_size`, `recent_failures` |
+| **Cost cap** | None | `max_cost` parameter on `get_best_model()` |
+| **Latency cap** | None | `max_latency_ms` parameter on `get_best_model()` |
+| **Minimum quality gate** | None | `min_success_rate` (default 0.8) on `get_best_model()` |
+| **Upgrade advice** | None | `recommend_tier_upgrade(workflow, stage)` returns `(bool, str)` |
+| **Stats window** | N/A | `get_routing_stats(workflow, stage, days=7)` — configurable lookback |
+| **Cold-start behavior** | Works immediately | Requires telemetry data; falls back to tier map when `sample_size` is low |
+| **Best for** | Predictable workloads, new deployments, or when telemetry isn't yet available | Production workflows where you want cost or latency guardrails and have accumulated call history |
 
-## Circuit breaker behavior
+`AdaptiveModelRouter` is the better choice for long-running deployments. The static tier map is the right starting point — and the fallback — when telemetry is unavailable.
 
-`CircuitBreaker` sits between `EmpathyLLMExecutor` and the provider. It opens after `failure_threshold` failures (default: 5) and stays open for `recovery_timeout_seconds` (default: 60). During the half-open state, `half_open_calls` (default: 1) probe call is allowed before fully re-enabling the provider.
+---
 
-If you call providers directly without going through `EmpathyLLMExecutor`, the circuit breaker does not apply — you are responsible for handling provider failures.
+## Resilience strategy: direct execution vs. `CircuitBreaker` + `ResilientExecutor`
 
-## CLI entry points
+`EmpathyLLMExecutor` calls a provider directly. `ResilientExecutor` wraps execution with a `CircuitBreaker` that tracks per-provider failure counts and temporarily disables a provider when `failure_count` exceeds `failure_threshold` (default 5), waiting `recovery_timeout_seconds` (default 60) before allowing half-open probes (`half_open_calls`, default 1).
 
-| Command function | Purpose | Use when |
+| Factor | Direct via `EmpathyLLMExecutor` | `CircuitBreaker` + `ResilientExecutor` |
 |---|---|---|
-| `cmd_auth_setup()` | Interactive first-time configuration | Setting up a new environment |
-| `cmd_auth_status()` | Display current `AuthStrategy` fields | Debugging unexpected auth behavior |
-| `cmd_auth_reset()` | Clear saved strategy from disk | Switching providers or subscription tiers |
-| `cmd_auth_recommend(args)` | Score a specific file and return the recommended `AuthMode` | Deciding auth mode for a single large module |
+| **Failure handling** | Raises on provider error | Opens circuit after `failure_threshold` failures; reroutes automatically |
+| **Recovery** | Manual retry logic in your code | Automatic after `recovery_timeout_seconds` |
+| **Fallback chain** | None built-in | `FallbackStrategy` / `FallbackPolicy` define ordered fallback steps |
+| **Observability** | `LLMResponse.success`, `latency_ms`, `cost_estimate` per call | `CircuitBreaker.get_status()` shows per-provider state across calls |
+| **Overhead** | Minimal | Slight per-call state check against `CircuitBreakerState` |
+| **Best for** | Development, single-provider setups, or when you own retry logic externally | Production multi-provider deployments where uptime matters more than call simplicity |
+
+---
+
+## CLI entry points: interactive setup vs. programmatic configuration
+
+The auth CLI provides four commands for managing `AuthStrategy`. The table below shows when each is appropriate.
+
+| Command | Function | Best for |
+|---|---|---|
+| `auth setup` | `cmd_auth_setup()` | First-time configuration; calls `configure_auth_interactive()` |
+| `auth status` | `cmd_auth_status()` | Auditing current strategy fields without editing |
+| `auth reset` | `cmd_auth_reset()` | Wiping configuration to start over |
+| `auth recommend` | `cmd_auth_recommend()` | Getting a per-file recommendation before committing to a mode |
+
+For automation, call `get_auth_strategy()` directly; it returns the persisted `AuthStrategy` without launching an interactive prompt. Use `AuthStrategy.save()` and `AuthStrategy.load()` to manage configuration files programmatically.
+
+---
 
 ## Use X when...
 
-**Use `AuthMode.AUTO` with `prefer_subscription=True`** when you run continuous workflows against large codebases (>2000 LOC per module). The subscription tier amortizes cost across high token volumes, and `get_recommended_mode()` will select it automatically.
-
-**Use API key mode** when your usage is infrequent or you are running one-off scripts. Token costs stay low when volume is low, and you avoid paying for subscription capacity you do not use.
-
-**Use `AdaptiveModelRouter`** in any production workflow. It is the better default: it reacts to real failure rates, avoids degraded providers automatically, and surfaces upgrade recommendations before failures compound.
-
-**Use direct registry lookup** only in tests or throwaway scripts where you need a fixed, predictable model and do not want telemetry to influence selection.
-
-**Use the `REALTIME_REQUIRED_TASKS` path** for anything user-facing or time-critical (`chat`, `live_coding`, `security_incident`, `emergency_response`). Cost constraints passed to `get_best_model()` are not applied to these tasks — latency takes priority unconditionally.
-
-**Do not use this feature directly** if your workflow spans multiple providers and you need coordinated fallback logic. The `ResilientExecutor` and `FallbackStrategy` layer above `models` handles multi-provider orchestration; wiring `AdaptiveModelRouter` and `CircuitBreaker` together manually duplicates logic that already exists there.
-
-## Source files
-
-- `src/attune/models/**`
-
-**Tags:** `models`, `auth`, `llm`
+| Situation | Recommendation |
+|---|---|
+| You're setting up attune for the first time | Run `cmd_auth_setup()` (or `auth setup` CLI); accept `AuthMode.AUTO` defaults |
+| Your modules are uniformly small (< 500 LOC) or uniformly large (> 2000 LOC) | Set `default_mode` explicitly in `AuthStrategy` — AUTO adds no value when modules don't cross thresholds |
+| You've accumulated LLM call history and want cost or latency guardrails | Switch from the static tier map to `AdaptiveModelRouter.get_best_model()` with `max_cost` or `max_latency_ms` |
+| You're running against a single provider in development | `EmpathyLLMExecutor` directly; skip `CircuitBreaker` overhead |
+| You're running in production with multiple providers | `ResilientExecutor` with a configured `FallbackPolicy`; let `CircuitBreaker` handle transient outages |
+| You want to know whether to upgrade a workflow's tier | Call `AdaptiveModelRouter.recommend_tier_upgrade(workflow, stage)` — it returns a `(bool, str)` with a human-readable reason |
+| You need to inspect current routing health | Call `AdaptiveModelRouter.get_routing_stats(workflow, stage, days=7)` or `CircuitBreaker.get_status()` |

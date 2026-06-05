@@ -3,95 +3,114 @@ type: quickstart
 name: models-quickstart
 feature: models
 depth: quickstart
-generated_at: 2026-05-16T06:19:45.852411+00:00
+generated_at: 2026-06-04T23:45:26.767168+00:00
 source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
 status: generated
 ---
 
 # Quickstart: Model Routing and Authentication
 
-Route your first LLM call through Attune's model registry and confirm the authentication strategy is configured correctly.
+Route your first LLM task and inspect the response.
 
 ```python
-from attune.models import get_auth_strategy, EmpathyLLMExecutor
+from attune.models import EmpathyLLMExecutor, ExecutionContext
 
-strategy = get_auth_strategy()
-print(strategy.to_dict())
+executor = EmpathyLLMExecutor(provider="anthropic")
+response = executor.run(
+    task_type="user_query",
+    prompt="Hello — which model am I talking to?",
+    context=ExecutionContext(workflow_name="demo", step_name="greeting"),
+)
+print(response.model_id, response.cost_estimate, response.content)
 ```
 
-Expected output (values reflect your local config):
+Expected output (values vary by tier and usage):
 
 ```
-{
-  "subscription_tier": "pro",
-  "default_mode": "auto",
-  "prefer_subscription": true,
-  "cost_optimization": true,
-  "setup_completed": true,
-  ...
-}
+claude-3-5-sonnet-20241022 0.00041 Hello! You're talking to ...
 ```
 
-If `setup_completed` is `false`, complete step 1 before continuing.
+If `response.success` is `True`, your executor is wired up correctly.
 
 ## Prerequisites
 
 - The project is cloned and installed locally
-- An Anthropic API key or Claude subscription
+- An Anthropic API key is set in your environment, **or** you have completed authentication setup (see Step 1)
 
-## Step 1: Set up your authentication strategy
+## Step 1: Set up authentication
 
-Run the interactive setup to configure your subscription tier and cost preferences:
+If you haven't configured an auth strategy yet, run the interactive setup:
 
 ```python
 from attune.models import configure_auth_interactive
 
 strategy = configure_auth_interactive(module_lines=1000)
-strategy.save()
+strategy.save()          # persists to AUTH_STRATEGY_FILE
+print(strategy.to_dict())
 ```
 
-The CLI equivalent is:
-
-```
-python -m attune.models auth setup
-```
-
-## Step 2: Run a task through the executor
-
-Create an `EmpathyLLMExecutor` and run a task. The executor automatically selects the best model for the task type:
+To check your current configuration at any time:
 
 ```python
-from attune.models import EmpathyLLMExecutor
+from attune.models import get_auth_strategy
 
-executor = EmpathyLLMExecutor(provider="anthropic")
-response = executor.run(
-    task_type="user_query",
-    prompt="Summarize the purpose of adaptive model routing.",
-)
-
-print(response.model_id)       # which model was selected
-print(response.cost_estimate)  # estimated cost in USD
-print(response.content)        # the response text
+print(get_auth_strategy().to_dict())
 ```
 
-## Step 3: Inspect routing statistics
+## Step 2: Inspect the model registry
 
-Check how the `AdaptiveModelRouter` scored models for your workflow:
+See every registered model and its tier:
+
+```python
+from attune.models import print_registry
+
+print_registry(format="table")
+```
+
+This lists all entries in `MODEL_REGISTRY` grouped by provider and tier.
+
+## Step 3: Route a task with cost and latency constraints
+
+Use `AdaptiveModelRouter` when you want telemetry-driven selection instead of a fixed model:
 
 ```python
 from attune.models import AdaptiveModelRouter, get_telemetry_store
 
 router = AdaptiveModelRouter(telemetry=get_telemetry_store())
-stats = router.get_routing_stats(workflow="my_workflow", days=7)
-print(stats)
+model_id = router.get_best_model(
+    workflow="my_workflow",
+    stage="summarize",
+    max_cost=0.01,
+    max_latency_ms=3000,
+    min_success_rate=0.9,
+)
+print(model_id)
 ```
 
-## What you just did
+The router reads `ModelPerformance` records — including `success_rate`, `avg_latency_ms`, and `avg_cost` — and returns the highest-scoring model that satisfies your constraints.
 
-- Loaded your `AuthStrategy` and confirmed it is configured
-- Ran a prompt through `EmpathyLLMExecutor`, which selected a model from the registry based on task type
-- Queried `AdaptiveModelRouter` for routing statistics drawn from historical telemetry
+## Step 4: Check circuit-breaker health
+
+Before running a long batch, confirm providers are available:
+
+```python
+from attune.models import CircuitBreaker
+
+cb = CircuitBreaker(failure_threshold=5, recovery_timeout_seconds=60)
+print(cb.get_status())   # shows is_open, failure_count per provider
+```
+
+If a provider's `is_open` is `True`, the circuit breaker is blocking it until the recovery timeout passes. Call `cb.reset(provider="anthropic")` to force-reset it.
 
 ## Next:
 
-Say **"how does adaptive model routing work?"** to understand how `ModelPerformance.quality_score`, success rates, and latency constraints combine to pick the best model for each task.
+Run `get_auth_strategy()` and confirm `setup_completed` is `True` — that is the single prerequisite for every other models feature.
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 64 (code fence) | error | `from attune.models import print_registry` — `print_registry` not found in `attune.models` |

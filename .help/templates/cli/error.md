@@ -3,58 +3,51 @@ type: error
 name: cli-error
 feature: cli
 depth: error
-generated_at: 2026-06-02T10:56:02.717530+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-06-04T23:39:47.647790+00:00
+source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
 status: generated
 ---
 
 # CLI errors
 
+This page covers failures that occur during command dispatch, workflow execution, routing, and memory or cost command handling.
+
 ## Common error signatures
 
-CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where `route_user_input()` or `HybridRouter.route()` cannot match input to a skill, and argument errors where a required field on the `Namespace` object is missing or has an unexpected type.
+Non-zero exit codes are the primary signal that something went wrong. Each command function returns an `int` — a non-zero value means the command failed. Beyond exit codes, watch for these failure patterns:
 
-Specific situations to watch for:
-
-- **`cmd_costs_export` fails silently** — the export target path may be unwritable or the cost data store may be empty. Check file permissions and run `cmd_costs` first to confirm data exists.
-- **`cmd_forget` removes the wrong lesson** — `cmd_forget` operates by line number or keyword. If the lessons file has changed since you last ran `cmd_lessons`, the line numbers may no longer match. Run `cmd_lessons` immediately before `cmd_forget` to get current line numbers.
-- **`HybridRouter.route()` returns an unexpected result** — a `RoutingPreference` with a low `confidence` value (below `1.0`) or a `usage_count` of `0` may cause the router to select an unintended skill. Inspect the returned dict and check stored preferences with `HybridRouter.get_suggestions()`.
-- **`cmd_memory_recall` returns nothing** — the search term may not match any stored content, or the memory file targeted by `cmd_memory_capture` may be in a different location than expected.
+- `run_workflow_with_exit_code()` returns a non-zero exit code when a workflow fails to instantiate or execute. The returned integer is the contract exit code for `attune workflow run`.
+- `cmd_costs_reset()` always returns `0` on success. Any other return value indicates a failure to clear cost tracking data.
+- `cmd_forget()` fails when the line number or keyword passed to it doesn't match an existing lesson entry.
+- `HybridRouter.route()` may produce unexpected routing when a `RoutingPreference` has a low `confidence` value or a `usage_count` of `0`, meaning the preference has never been reinforced.
 
 ## Where errors originate
 
-The following command functions each return an `int` exit code. A return value other than `0` indicates failure — trace the non-zero code back to the specific command to narrow the cause.
+Failures tend to cluster in three areas:
 
-| Function | Module | Purpose |
-|---|---|---|
-| `cmd_costs()` | `cli_commands.cost_commands` | Show cost report for recent period |
-| `cmd_costs_today()` | `cli_commands.cost_commands` | Show today's cost summary |
-| `cmd_costs_export()` | `cli_commands.cost_commands` | Export cost data to file |
-| `cmd_costs_reset()` | `cli_commands.cost_commands` | Clear all cost tracking data |
-| `cmd_help()` | `cli_commands.help_commands` | Handle the `attune help` command |
-| `cmd_remember()` | `cli_commands.memory_commands` | Add a lesson to the lessons file |
-| `cmd_forget()` | `cli_commands.memory_commands` | Remove a lesson by line number or keyword |
-| `cmd_lessons()` | `cli_commands.memory_commands` | List current lessons with line numbers |
-| `cmd_memory_capture()` | `cli_commands.memory_commands` | Save content to personal cross-session memory |
-| `cmd_memory_recall()` | `cli_commands.memory_commands` | Search personal cross-session memory |
-| `route_user_input()` | `attune.cli_router` | Route user input to a skill invocation |
+**Workflow execution** — `run_workflow_with_exit_code()` in `cli_commands/_exit_codes.py` is the boundary between the CLI and workflow logic. A failure here means the workflow either couldn't be instantiated or raised during execution. Check the `workflow_cls` type and the shape of `input_data`.
+
+**Cost commands** — `cmd_costs()`, `cmd_costs_today()`, `cmd_costs_export()`, and `cmd_costs_reset()` in `cli_commands/cost_commands.py` depend on cost tracking state being present and readable. `cmd_costs_export()` additionally requires a writable output path.
+
+**Memory commands** — `cmd_remember()`, `cmd_forget()`, `cmd_lessons()`, and `cmd_memory_capture()` in `cli_commands/memory_commands.py` read from and write to the lessons file. Missing files, malformed line numbers, or unknown keywords are common causes of failure here.
 
 ## How to diagnose
 
-1. **Check the integer return code.** Every command function returns an `int`. If you called a command through `main()`, its return value is the exit code. A non-zero value tells you which command failed before you look at any output.
+1. **Check the exit code first.** Every command in this CLI returns an `int`. A non-zero return from `main()` in `attune.cli_minimal` means at least one command handler returned failure. Identify which command ran and trace it to the specific handler — for example, `cmd_workflow_run()` calls `run_workflow_with_exit_code()`, so a failure there points to workflow instantiation or execution.
 
-2. **Identify whether the failure is in argument parsing or command execution.** `create_parser()` in `attune.cli_minimal` handles argument parsing. If the error occurs before your command function is called, the `Namespace` object passed to it may be incomplete — print `args` at the top of the failing command function to confirm all expected fields are present.
+2. **Inspect routing output for unexpected dispatch.** If `attune` ran the wrong command, call `route_user_input()` from `attune.cli_router` directly with the same input. Check whether `is_slash_command()` returns the value you expect. If `HybridRouter.route()` is in use, inspect the matching `RoutingPreference` — a low `confidence` or zero `usage_count` on the matched preference means the router is guessing. Use `HybridRouter.learn_preference()` to reinforce the correct mapping.
 
-3. **For routing failures, inspect the `RoutingPreference` fields.** If `HybridRouter.route()` produces an unexpected skill match, retrieve stored preferences and check the `keyword`, `skill`, `confidence`, and `usage_count` fields on the relevant `RoutingPreference`. A preference with `confidence < 1.0` was learned implicitly and may not match your intent. Use `HybridRouter.learn_preference()` to set an explicit mapping.
+3. **Narrow memory command failures to the operation.** `cmd_forget()` requires either a valid line number or a keyword that exists in the lessons file — passing an unrecognized value is the most common cause of failure. Run `cmd_lessons()` first to see current entries with their line numbers, then retry the forget operation with a confirmed value.
 
-4. **For memory command failures, confirm the target file path.** `cmd_memory_capture()` and `cmd_memory_recall()` operate on a cross-session memory file. If recall returns no results, verify that capture was directed at the same location by checking the `args` passed to each command.
-
-5. **For cost command failures, verify that data exists before exporting or resetting.** Run `cmd_costs_today()` to confirm the cost store is populated before calling `cmd_costs_export()`. `cmd_costs_reset()` returns `0` even when the store is already empty, so a successful reset does not confirm prior data existed.
+4. **Check the workflow input shape for `run_workflow_with_exit_code()`.** This function takes `input_data: dict[str, Any]`. If the workflow raises during instantiation, the `input_data` keys are likely mismatched against what `workflow_cls` expects. Enable `json_mode=True` to capture structured output that may include error detail.
 
 ## Source files
 
 - `src/attune/cli_minimal.py`
 - `src/attune/cli_router.py`
-- `src/attune/cli_commands/**`
+- `src/attune/cli_commands/_exit_codes.py`
+- `src/attune/cli_commands/cost_commands.py`
+- `src/attune/cli_commands/memory_commands.py`
+- `src/attune/cli_commands/workflow_commands.py`
 
 **Tags:** `cli`, `commands`

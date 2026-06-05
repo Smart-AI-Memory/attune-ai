@@ -1,57 +1,118 @@
 ---
+type: task
+name: memory-task
 feature: memory
 depth: task
-generated_at: 2026-06-03T16:28:50.323109+00:00
-source_hash: a5579e8907712bf584f1ae5f2c1991e29aa4fdc4f749495b823c67f323543a57
+generated_at: 2026-06-04T23:45:26.843315+00:00
+source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
 status: generated
 ---
 
 # Work with memory
 
-Use memory when you need to memory subsystem — storage, lookup, and security.
+Use the memory subsystem when you need to store, retrieve, or manage agent memory — including short-term Redis-backed storage, Claude memory file loading, and the enterprise control panel API.
 
 ## Prerequisites
 
-- Access to the project source code
-- Familiarity with the files under src/attune/memory/**
+- Access to the project source code under `src/attune/memory/`
+- A running Redis instance, or the ability to use a mock backend (see `get_redis_memory()`)
+- Python environment with project dependencies installed
 
 ## Steps
 
-1. **Understand the current behavior.**
-   Read the entry points to see what memory
-   does today before making changes.
-   The primary functions are:
-   - `is_redis_available()` in `src/attune/memory/__init__.py` — Check if Redis subsystem is available without importing it.
-   - `create_default_project_memory()` in `src/attune/memory/claude_memory.py` — Create a default .claude/CLAUDE.md file for a project.
-   - `parse_redis_url()` in `src/attune/memory/config.py` — Parse Redis URL into connection parameters.
-   - `get_redis_config()` in `src/attune/memory/config.py` — Get Redis configuration from environment variables (legacy dict API).
-   - `get_redis_memory()` in `src/attune/memory/config.py` — Create a RedisShortTermMemory instance with environment-based config.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+1. **Check whether Redis is available.**
+   Call `is_redis_available()` before any Redis-dependent work. This function checks availability without importing the Redis subsystem, so it is safe to call at startup or in conditional logic.
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+   ```python
+   from attune.memory import is_redis_available
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "memory"`.
+   if not is_redis_available():
+       # fall back to a mock or file-based backend
+       ...
+   ```
 
-## Key files
+2. **Obtain a memory backend instance.**
+   Choose the factory function that matches your deployment:
 
-- `src/attune/memory/**`
+   - `get_redis_memory(url=None, use_mock=None)` — creates a `RedisShortTermMemory` instance configured from environment variables. Pass `use_mock=True` to force a mock backend during local development.
+   - `get_railway_redis()` — creates a `RedisShortTermMemory` pre-configured for Railway deployments. Raises `OSError` if `REDIS_URL` is not set in the environment.
 
-## Common modifications
+   ```python
+   from attune.memory.config import get_redis_memory
 
-Functions you are most likely to modify:
+   memory = get_redis_memory()          # uses env vars
+   # or
+   memory = get_redis_memory(use_mock=True)  # mock for local dev
+   ```
 
-- `is_redis_available()` in `src/attune/memory/__init__.py`
-- `create_default_project_memory()` in `src/attune/memory/claude_memory.py`
-- `parse_redis_url()` in `src/attune/memory/config.py`
-- `get_redis_config()` in `src/attune/memory/config.py`
-- `get_redis_memory()` in `src/attune/memory/config.py`
-- `check_redis_connection()` in `src/attune/memory/config.py`
-- `get_railway_redis()` in `src/attune/memory/config.py`
-- `run_api_server()` in `src/attune/memory/control_panel_api.py`
+3. **Store and retrieve values.**
+   Use the `MemoryBackend` protocol methods on the instance you created:
+
+   - `stash(key, value, ttl=None, agent_id=None)` — write a value; returns `True` on success.
+   - `retrieve(key, agent_id=None)` — read a value; returns `None` if the key does not exist.
+   - `delete(key)` — remove a key; returns `True` on success.
+   - `keys(pattern='*')` — list keys matching a glob pattern.
+
+   ```python
+   memory.stash("session:42:context", {"user": "alice"}, ttl=3600)
+   value = memory.retrieve("session:42:context")
+   ```
+
+4. **Load Claude memory files (CLAUDE.md), if needed.**
+   To integrate project-level memory files into your agent context, use `ClaudeMemoryLoader`:
+
+   ```python
+   from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
+
+   config = ClaudeMemoryConfig(enabled=True, load_project=True, max_import_depth=5)
+   loader = ClaudeMemoryLoader(config)
+   context_text = loader.load_all_memory(project_root="/path/to/project")
+   ```
+
+   To scaffold a new project memory file, call:
+
+   ```python
+   from attune.memory.claude_memory import create_default_project_memory
+
+   create_default_project_memory(project_root="/path/to/project")
+   ```
+
+   This creates `.claude/CLAUDE.md` in the project root.
+
+5. **Inspect connection health.**
+   Call `check_redis_connection()` to get a status dictionary describing the current Redis connection state. Use this in health-check endpoints or startup diagnostics.
+
+   ```python
+   from attune.memory.config import check_redis_connection
+
+   status = check_redis_connection()
+   print(status)
+   ```
+
+6. **Start the Memory Control Panel API (enterprise).**
+   If you need the HTTP management API, create a `MemoryControlPanel` and pass it to `run_api_server()`:
+
+   ```python
+   from attune.memory.control_panel import MemoryControlPanel, ControlPanelConfig
+   from attune.memory.control_panel_api import run_api_server
+
+   config = ControlPanelConfig(redis_host="localhost", redis_port=6379)
+   panel = MemoryControlPanel(config)
+   run_api_server(panel, host="localhost", port=8765, api_key="secret")
+   ```
+
+   The server exposes GET, POST, and DELETE endpoints handled by `MemoryAPIHandler`. Pass `enable_rate_limit=True` (the default) to cap requests via `RateLimiter`.
+
+7. **Run the tests.**
+   After any change, run the memory test suite to catch regressions:
+
+   ```bash
+   pytest -k "memory"
+   ```
+
+## Verify the task succeeded
+
+- `is_redis_available()` returns `True` (or your mock backend initialises without errors).
+- `memory.stash(key, value)` returns `True` and `memory.retrieve(key)` returns the same value.
+- `check_redis_connection()` returns a dict without error keys.
+- `pytest -k "memory"` exits with zero failures.

@@ -3,20 +3,25 @@ type: reference
 name: cli-reference
 feature: cli
 depth: reference
-generated_at: 2026-06-02T10:56:02.712869+00:00
-source_hash: 8c67b256a4817afea8eb428fdc577d8217d9e0d03adf9db67b00bc30a3c490a3
+generated_at: 2026-06-04T23:39:47.643616+00:00
+source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
 status: generated
 ---
 
 # CLI reference
 
-Use this reference to look up every command handler, routing function, parser entry point, and data class in the attune command-line interface.
+Use this reference to look up the command handlers, routing utilities, entry point, and data types that make up the attune command-line interface.
 
 ## Classes
 
-### `RoutingPreference`
+| Class | Description | File |
+|-------|-------------|------|
+| `RoutingPreference` | User's learned routing preference for a keyword. | `src/attune/cli_router.py` |
+| `HybridRouter` | Routes user input to Claude Code skill invocations. | `src/attune/cli_router.py` |
 
-`attune.cli_router` — `[dataclass]` — Stores a user's learned routing preference for a keyword.
+### `RoutingPreference` fields
+
+`RoutingPreference` is a dataclass.
 
 | Field | Type | Default |
 |-------|------|---------|
@@ -26,18 +31,14 @@ Use this reference to look up every command handler, routing function, parser en
 | `usage_count` | `int` | `0` |
 | `confidence` | `float` | `1.0` |
 
-### `HybridRouter`
-
-`attune.cli_router` — Routes user input to Claude Code skill invocations.
-
-#### Methods
+### `HybridRouter` methods
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `__init__` | `preferences_path: str \| None = None` | — | Initialize the router, optionally loading preferences from a file path. |
-| `route` | `user_input: str, context: dict[str, Any] \| None = None` | `dict[str, Any]` | Route user input to a skill, returning a routing result dict. |
-| `learn_preference` | `keyword: str, skill: str, args: str = ''` | — | Record a keyword-to-skill mapping to improve future routing. |
-| `get_suggestions` | `partial: str` | `list[str]` | Return autocomplete suggestions for a partial input string. |
+| `__init__` | `preferences_path: str | None = None` | — | Initialize the router, optionally loading preferences from a file path. |
+| `route` | `user_input: str, context: dict[str, Any] | None = None` | `dict[str, Any]` | Route user input to a skill invocation. |
+| `learn_preference` | `keyword: str, skill: str, args: str = ''` | — | Record a keyword-to-skill mapping as a learned preference. |
+| `get_suggestions` | `partial: str` | `list[str]` | Return completions for a partial keyword string. |
 
 ## Functions
 
@@ -45,20 +46,24 @@ Use this reference to look up every command handler, routing function, parser en
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `main` | `argv: list[str] \| None = None` | `int` | CLI entry point; parses `argv` (or `sys.argv`) and dispatches to the appropriate command handler. |
+| `get_version` | — | `str` | Return the installed package version. |
 | `create_parser` | — | `argparse.ArgumentParser` | Build and return the top-level argument parser. |
-| `get_version` | — | `str` | Return the installed package version string. |
+| `main` | `argv: list[str] | None = None` | `int` | CLI entry point; parses `argv` and dispatches to the appropriate command handler. |
 
 ### Routing
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
-| `route_user_input` | `user_input: str, context: dict[str, Any] \| None = None` | `dict[str, Any]` | Quick routing helper; resolve user input to a skill invocation dict without instantiating `HybridRouter` directly. |
-| `is_slash_command` | `text: str` | `bool` | Return `True` if `text` is a slash command. |
+| `route_user_input` | `user_input: str, context: dict[str, Any] | None = None` | `dict[str, Any]` | Route a user input string to a skill invocation and return the result dict. |
+| `is_slash_command` | `text: str` | `bool` | Return `True` if `text` begins with a slash command prefix. |
+
+### Workflow execution
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `run_workflow_with_exit_code` | `workflow_cls: type, input_data: dict[str, Any], *, name: str, json_mode: bool, print_result: Callable[[Any], None]` | `int` | Instantiate and execute a workflow, then return the contract exit code. |
 
 ### Cost commands
-
-`cli_commands.cost_commands`
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
@@ -69,15 +74,11 @@ Use this reference to look up every command handler, routing function, parser en
 
 ### Help commands
 
-`cli_commands.help_commands`
-
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `cmd_help` | `args: argparse.Namespace` | `int` | Handle the `attune help` command. |
 
 ### Memory commands
-
-`cli_commands.memory_commands`
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
@@ -91,16 +92,12 @@ Use this reference to look up every command handler, routing function, parser en
 
 ### Provider commands
 
-`cli_commands.provider_commands`
-
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `cmd_provider_show` | `args: Namespace` | `int` | Show current provider configuration. |
 | `cmd_provider_set` | `args: Namespace` | `int` | Set the LLM provider. |
 
 ### Telemetry commands
-
-`cli_commands.telemetry_commands`
 
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
@@ -115,8 +112,6 @@ Use this reference to look up every command handler, routing function, parser en
 
 ### Utility commands
 
-`cli_commands.utility_commands`
-
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `cmd_setup` | `args: Namespace` | `int` | Install Attune slash commands for Claude Code. |
@@ -127,23 +122,11 @@ Use this reference to look up every command handler, routing function, parser en
 
 ### Workflow commands
 
-`cli_commands.workflow_commands`
-
 | Function | Parameters | Returns | Description |
 |----------|------------|---------|-------------|
 | `cmd_workflow_list` | `args: Namespace` | `int` | List available workflows. |
 | `cmd_workflow_info` | `args: Namespace` | `int` | Show workflow details. |
 | `cmd_workflow_run` | `args: Namespace` | `int` | Execute a workflow. |
-
-## Constants
-
-### `_CATEGORIES`
-
-Members used to filter help template listings.
-
-| Constant | Type | Values |
-|----------|------|--------|
-| `_CATEGORIES` | `tuple` | `'errors'`, `'warnings'`, `'tips'`, `'references'` |
 
 ## Source files
 

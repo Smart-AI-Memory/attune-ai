@@ -1,41 +1,66 @@
 ---
 type: note
+name: configuration-note
 feature: configuration
 depth: note
-generated_at: 2026-04-14T15:31:37.439004+00:00
-source_hash: 4aba109a0dfc8d51fc39c5be662b4c0ce340e3fe680c780d425e04060f8e199d
+generated_at: 2026-06-04T23:45:26.723581+00:00
+source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
 status: generated
 ---
 
-# Note: configuration
+# Note: Configuration
 
-## Context
+## How the configuration surface is organized
 
-Attune AI's configuration system provides unified settings management across all agents and workflows, with support for multiple file formats and environment variable overrides.
+The `config` package exposes two kinds of public symbols: **section dataclasses** that hold typed values, and **top-level functions** that load, save, and validate those values.
 
-## Configuration architecture
+The section dataclasses cover distinct concerns:
 
-The configuration system centers on the `UnifiedAgentConfig` class, which normalizes settings for all agent types. The `ConfigLoader` class handles file discovery, loading, and saving, while maintaining backward compatibility with legacy configuration formats.
+| Class | Purpose |
+|---|---|
+| `UnifiedAgentConfig` | Unified configuration model for all agents |
+| `BookProductionConfig` | Runtime parameters for book production agents (model, token limits, timeouts, retry behavior) |
+| `MemDocsConfig` | MemDocs pattern storage integration settings |
+| `RedisConfig` | Redis state management settings |
+| `ModelTier` | Model tier selection for cost optimization |
+| `Provider` | LLM provider options |
+| `WorkflowMode` | Workflow execution modes |
 
-Configuration files are discovered automatically using a search path hierarchy:
-1. `./attune.config.json` (project-local)
-2. `~/.attune/config.json` (user-specific)
-3. `~/.config/attune/config.json` (XDG standard)
+Section dataclasses in `config.sections` (`AnalysisConfig`, `AuthConfig`, `EnvironmentConfig`, `PersistenceConfig`, `RoutingConfig`, `TelemetryConfig`, `WorkflowConfig`) each expose `to_dict()` and `from_dict()` for serialization. `UnifiedConfig` composes these sections and adds `get_value()`, `set_value()`, and `get_all_keys()` for key-based access.
 
-## Environment variable compatibility
+The top-level functions wrap `ConfigLoader` for convenience:
 
-The system maintains compatibility with legacy `EMPATHY_` environment variables while transitioning to the `ATTUNE_` prefix. The `get_attune_env()` function checks for `ATTUNE_` variables first, then falls back to `EMPATHY_` equivalents.
+| Function | What it does |
+|---|---|
+| `load_unified_config()` | Loads a `UnifiedConfig` from a path or from a discovered location |
+| `save_unified_config()` | Saves a `UnifiedConfig` and returns the path written |
+| `get_loader()` | Returns the global `ConfigLoader` instance |
+| `validate_config()` | Returns a list of `ValidationError` objects for a given `UnifiedConfig` |
+| `get_config()` / `set_config()` | Get or replace the global `EmpathyXMLConfig` instance |
 
-## Agent specialization
+## Environment variable behavior
 
-While `UnifiedAgentConfig` provides the base configuration model, specialized configurations like `BookProductionConfig` extend it with agent-specific settings. The `for_book_production()` method creates these specialized configurations while preserving the unified structure.
+`get_attune_env(name)` checks the `ATTUNE_` prefix first, then falls back to the legacy `EMPATHY_` prefix. This means existing `EMPATHY_*` variables continue to work without changes.
 
-## Workflow integration
+`iter_attune_env_prefix(prefix, suffix)` yields `(middle_part, value)` tuples for all variables matching `ATTUNE_{prefix}*{suffix}`, which lets the loader enumerate families of related variables (for example, all provider API keys) without hardcoding each name.
 
-The `WorkflowConfig` class manages agent workflow execution, supporting different modes through the `WorkflowMode` enum. This allows workflows to run in development, production, or testing configurations without code changes.
+`ConfigLoader.apply_env_overrides()` applies these environment values on top of whatever was read from disk, so environment variables always win over file-based settings.
 
-## Source files
+## Config file discovery
 
-Configuration management spans multiple modules in `src/attune/config/`, including agent configurations, environment compatibility layers, and the core configuration loader.
+`ConfigLoader` searches for a configuration file in the following locations, in order:
 
-**Tags:** `config`, `settings`
+- `./attune.config.json`
+- `~/.attune/config.json`
+- `~/.config/attune/config.json`
+
+`ConfigLoader.discover_config_path()` returns the first path that exists, or `None` if none do. `ConfigLoader.get_default_config_path()` returns the default write location regardless of whether the file exists. `EmpathyXMLConfig.load_from_file()` and `save_to_file()` use `.attune/config.json` by default.
+
+## Two config subsystems
+
+The package contains two distinct configuration subsystems that coexist:
+
+- **`UnifiedConfig` + `ConfigLoader`** — the primary system for agent and workflow configuration, loaded via `load_unified_config()`.
+- **`EmpathyXMLConfig`** — an older global-singleton system accessed via `get_config()` and `set_config()`, with XML-oriented sub-configs (`XMLConfig`, `OptimizationConfig`, `AdaptiveConfig`, `I18nConfig`, `MetricsConfig`). It can also be populated from environment variables via `EmpathyXMLConfig.from_env()`.
+
+Code that reads agent settings should use `UnifiedAgentConfig` and `load_unified_config()`. The `EmpathyXMLConfig` path exists for compatibility with earlier tooling.
