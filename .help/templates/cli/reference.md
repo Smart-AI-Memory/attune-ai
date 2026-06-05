@@ -1,132 +1,62 @@
 ---
-type: reference
-name: cli-reference
 feature: cli
 depth: reference
-generated_at: 2026-06-04T23:39:47.643616+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-05T16:32:09.120968+00:00
+source_hash: 198ad869d0b029e3926d86fd51b53c7d1a800d65335cb982b9331b5ee6c9bcaa
 status: generated
 ---
 
-# CLI reference
-
-Use this reference to look up the command handlers, routing utilities, entry point, and data types that make up the attune command-line interface.
+# Cli reference
 
 ## Classes
 
 | Class | Description | File |
 |-------|-------------|------|
-| `RoutingPreference` | User's learned routing preference for a keyword. | `src/attune/cli_router.py` |
+| `RoutingPreference` | User's learned routing preferences. | `src/attune/cli_router.py` |
 | `HybridRouter` | Routes user input to Claude Code skill invocations. | `src/attune/cli_router.py` |
-
-### `RoutingPreference` fields
-
-`RoutingPreference` is a dataclass.
-
-| Field | Type | Default |
-|-------|------|---------|
-| `keyword` | `str` | — |
-| `skill` | `str` | — |
-| `args` | `str` | `''` |
-| `usage_count` | `int` | `0` |
-| `confidence` | `float` | `1.0` |
-
-### `HybridRouter` methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `preferences_path: str | None = None` | — | Initialize the router, optionally loading preferences from a file path. |
-| `route` | `user_input: str, context: dict[str, Any] | None = None` | `dict[str, Any]` | Route user input to a skill invocation. |
-| `learn_preference` | `keyword: str, skill: str, args: str = ''` | — | Record a keyword-to-skill mapping as a learned preference. |
-| `get_suggestions` | `partial: str` | `list[str]` | Return completions for a partial keyword string. |
 
 ## Functions
 
-### Entry point
+| Function | Description | File |
+|----------|-------------|------|
+| `get_version()` | Get package version. | `src/attune/cli_minimal.py` |
+| `create_parser()` | Create the argument parser. | `src/attune/cli_minimal.py` |
+| `main()` | Main entry point. | `src/attune/cli_minimal.py` |
+| `route_user_input()` | Quick routing helper. | `src/attune/cli_router.py` |
+| `is_slash_command()` | Check if text is a slash command. | `src/attune/cli_router.py` |
+| `run_workflow_with_exit_code()` | Instantiate + execute a workflow and return the contract exit code. | `src/attune/cli_commands/_exit_codes.py` |
+| `cmd_costs()` | Show cost report for recent period. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_today()` | Show today's cost summary. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_export()` | Export cost data to file. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_costs_reset()` | Clear all cost tracking data. | `src/attune/cli_commands/cost_commands.py` |
+| `cmd_curator()` | Render the curator briefing for the current project. | `src/attune/cli_commands/curator.py` |
+| `cmd_help()` | Handle the `attune help` command. | `src/attune/cli_commands/help_commands.py` |
+| `cmd_remember()` | Add a lesson to the lessons file. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_forget()` | Remove a lesson by line number or keyword. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_lessons()` | List current lessons with line numbers. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_memory_capture()` | Save content to personal cross-session memory. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_memory_recall()` | Search personal cross-session memory. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_memory_topics()` | List all personal memory topics. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_memory_forget_topic()` | Delete a topic (or specific kind) from personal memory. | `src/attune/cli_commands/memory_commands.py` |
+| `cmd_provider_show()` | Show current provider configuration. | `src/attune/cli_commands/provider_commands.py` |
+| `cmd_provider_set()` | Set the LLM provider. | `src/attune/cli_commands/provider_commands.py` |
+| `cmd_telemetry_show()` | Display usage summary. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_savings()` | Show cost savings from tier routing. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_export()` | Export telemetry data to file. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_routing_stats()` | Show adaptive routing statistics. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_routing_check()` | Check for tier upgrade recommendations. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_models()` | Show model performance by provider. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_agents()` | Show active agents and their status. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_signals()` | Show coordination signals. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_setup()` | Install Attune slash commands for Claude Code. | `src/attune/cli_commands/utility_commands.py` |
+| `cmd_validate()` | Validate configuration. | `src/attune/cli_commands/utility_commands.py` |
+| `cmd_version()` | Show version information. | `src/attune/cli_commands/utility_commands.py` |
+| `cmd_features()` | Show available memory and telemetry features. | `src/attune/cli_commands/utility_commands.py` |
+| `cmd_doctor()` | Run comprehensive environment health check. | `src/attune/cli_commands/utility_commands.py` |
+| `cmd_workflow_list()` | List available workflows. | `src/attune/cli_commands/workflow_commands.py` |
+| `cmd_workflow_info()` | Show workflow details. | `src/attune/cli_commands/workflow_commands.py` |
+| `cmd_workflow_run()` | Execute a workflow. | `src/attune/cli_commands/workflow_commands.py` |
 
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `get_version` | — | `str` | Return the installed package version. |
-| `create_parser` | — | `argparse.ArgumentParser` | Build and return the top-level argument parser. |
-| `main` | `argv: list[str] | None = None` | `int` | CLI entry point; parses `argv` and dispatches to the appropriate command handler. |
-
-### Routing
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `route_user_input` | `user_input: str, context: dict[str, Any] | None = None` | `dict[str, Any]` | Route a user input string to a skill invocation and return the result dict. |
-| `is_slash_command` | `text: str` | `bool` | Return `True` if `text` begins with a slash command prefix. |
-
-### Workflow execution
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `run_workflow_with_exit_code` | `workflow_cls: type, input_data: dict[str, Any], *, name: str, json_mode: bool, print_result: Callable[[Any], None]` | `int` | Instantiate and execute a workflow, then return the contract exit code. |
-
-### Cost commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_costs` | `args: Namespace` | `int` | Show cost report for recent period. |
-| `cmd_costs_today` | `args: Namespace` | `int` | Show today's cost summary. |
-| `cmd_costs_export` | `args: Namespace` | `int` | Export cost data to file. |
-| `cmd_costs_reset` | `args: Namespace` | `int` | Clear all cost tracking data. |
-
-### Help commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_help` | `args: argparse.Namespace` | `int` | Handle the `attune help` command. |
-
-### Memory commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_remember` | `args: Namespace` | `int` | Add a lesson to the lessons file. |
-| `cmd_forget` | `args: Namespace` | `int` | Remove a lesson by line number or keyword. |
-| `cmd_lessons` | `args: Namespace` | `int` | List current lessons with line numbers. |
-| `cmd_memory_capture` | `args: Namespace` | `int` | Save content to personal cross-session memory. |
-| `cmd_memory_recall` | `args: Namespace` | `int` | Search personal cross-session memory. |
-| `cmd_memory_topics` | `args: Namespace` | `int` | List all personal memory topics. |
-| `cmd_memory_forget_topic` | `args: Namespace` | `int` | Delete a topic (or specific kind) from personal memory. |
-
-### Provider commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_provider_show` | `args: Namespace` | `int` | Show current provider configuration. |
-| `cmd_provider_set` | `args: Namespace` | `int` | Set the LLM provider. |
-
-### Telemetry commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_telemetry_show` | `args: Namespace` | `int` | Display usage summary. |
-| `cmd_telemetry_savings` | `args: Namespace` | `int` | Show cost savings from tier routing. |
-| `cmd_telemetry_export` | `args: Namespace` | `int` | Export telemetry data to file. |
-| `cmd_telemetry_routing_stats` | `args: Namespace` | `int` | Show adaptive routing statistics. |
-| `cmd_telemetry_routing_check` | `args: Namespace` | `int` | Check for tier upgrade recommendations. |
-| `cmd_telemetry_models` | `args: Namespace` | `int` | Show model performance by provider. |
-| `cmd_telemetry_agents` | `args: Namespace` | `int` | Show active agents and their status. |
-| `cmd_telemetry_signals` | `args: Namespace` | `int` | Show coordination signals. |
-
-### Utility commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_setup` | `args: Namespace` | `int` | Install Attune slash commands for Claude Code. |
-| `cmd_validate` | `args: Namespace` | `int` | Validate configuration. |
-| `cmd_version` | `args: Namespace` | `int` | Show version information. |
-| `cmd_features` | `args: Namespace` | `int` | Show available memory and telemetry features. |
-| `cmd_doctor` | `args: Namespace` | `int` | Run comprehensive environment health check. |
-
-### Workflow commands
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `cmd_workflow_list` | `args: Namespace` | `int` | List available workflows. |
-| `cmd_workflow_info` | `args: Namespace` | `int` | Show workflow details. |
-| `cmd_workflow_run` | `args: Namespace` | `int` | Execute a workflow. |
 
 ## Source files
 

@@ -418,11 +418,20 @@ budget) recorded in [`decisions.md`](decisions.md) D1–D4.
 
 ## Phase 3 — Dashboard `/curator` + CLI
 
-**Task 3.1 done (2026-06-05).** `GET /curator` route + `curator.html`
-template + CSS + `POST /curator/{answer,dismiss}` + 6 route tests,
-wired into `server.py` (router + "Briefing" nav). Two v1 deferrals
-recorded in [`decisions.md`](decisions.md) D5–D6. Tasks 3.2 (CLI) and
-3.3 (cross-link) follow in a second PR (D7).
+**Phase 3 done (2026-06-05).**
+
+- **Task 3.1** — `GET /curator` route + `curator.html` template + CSS +
+  `POST /curator/{answer,dismiss}` + 6 route tests, wired into
+  `server.py` (router + "Briefing" nav). Two v1 deferrals in
+  [`decisions.md`](decisions.md) D5–D6.
+- **Task 3.2** — `attune curator` CLI (`--refresh` / `--json` /
+  `--max-items`) in `cli_commands/curator.py`, dispatched from
+  `cli_minimal.py`; 6 CLI tests.
+- **Task 3.3** — bulletin-strip "View briefing" cross-link on the
+  Workflows page (`workflows.html` + `.bulletin-strip-link` CSS).
+
+Task 4.1 (live verification + prompt iteration) is the remaining
+phase — a manual review cycle, run when desired.
 
 ### Task 3.1 — Dashboard route + template
 

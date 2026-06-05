@@ -61,6 +61,7 @@ from attune.cli_commands.cost_commands import (
     cmd_costs_reset,
     cmd_costs_today,
 )
+from attune.cli_commands.curator import cmd_curator
 from attune.cli_commands.help_commands import cmd_help
 from attune.cli_commands.memory_commands import (
     cmd_forget,
@@ -408,6 +409,21 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
     subparsers.add_parser("features", help="Show available features and dependencies")
     subparsers.add_parser("validate", help="Validate configuration")
 
+    curator_parser = subparsers.add_parser(
+        "curator", help="Show the project briefing (ranked attention items)"
+    )
+    curator_parser.add_argument(
+        "--refresh", action="store_true", help="Bypass cache and re-synthesize"
+    )
+    curator_parser.add_argument("--json", action="store_true", help="Output as JSON")
+    curator_parser.add_argument(
+        "--max-items",
+        type=int,
+        default=5,
+        dest="max_items",
+        help="Max attention items to surface (default: 5)",
+    )
+
     version_parser = subparsers.add_parser("version", help="Show version")
     version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
 
@@ -541,6 +557,7 @@ _SIMPLE_DISPATCH: dict[str, object] = {
     "validate": cmd_validate,
     "version": cmd_version,
     "ops": cmd_ops,
+    "curator": cmd_curator,
 }
 
 
