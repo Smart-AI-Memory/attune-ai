@@ -1623,6 +1623,18 @@ a.kpi:hover {
   color: var(--fg-muted);
   letter-spacing: 0;
 }
+.bulletin-strip-link {
+  float: right;
+  font-size: 12px;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--accent);
+  text-decoration: none;
+}
+.bulletin-strip-link:hover {
+  text-decoration: underline;
+}
 .bulletin-strip-chips {
   display: flex;
   flex-wrap: wrap;

@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-06-03T02:40:23.550318+00:00
-source_hash: 9d40fc6564f1c4cf6ab6839bf1b973ced7daa7230432b038f45b7e79011d84f4
+generated_at: 2026-06-05T16:31:34.140171+00:00
+source_hash: d0b3106e2fbde27c37ade74472102cbda4a87e7f2a061ae53a55d516e5881c21
 status: generated
 ---
 
@@ -100,6 +100,9 @@ status: generated
 | `make_entry()` | Construct a JournalEntry, filling in defaults from runtime context. | `src/attune/ops/pending_writes.py` |
 | `append_entry()` | Append a journal entry to the JSONL journal. | `src/attune/ops/pending_writes.py` |
 | `list_active()` | Return active bulletin entries across all actors. | `src/attune/ops/routes/bulletin.py` |
+| `curator_page()` | Render the curator briefing, filtering snoozed items. | `src/attune/ops/routes/curator.py` |
+| `curator_dismiss()` | Snooze an item for 14 days. | `src/attune/ops/routes/curator.py` |
+| `curator_answer()` | Record a user's response to an item's suggested action. | `src/attune/ops/routes/curator.py` |
 | `home()` | — | `src/attune/ops/routes/dashboard.py` |
 | `workflows_page()` | — | `src/attune/ops/routes/dashboard.py` |
 | `telemetry_page()` | — | `src/attune/ops/routes/dashboard.py` |
