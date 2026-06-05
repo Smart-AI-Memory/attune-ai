@@ -146,6 +146,31 @@ security/vuln/architect → opus; quality/plan/research → sonnet;
 complexity/lint/coverage/dep/scanner/finder/detector → haiku;
 reviewer → inherit (override hook).
 
+### Spend gate
+
+The first billable `attune workflow run` of a session surfaces an
+estimate and asks for an explicit go before any paid call. Once you
+confirm, a session **spend window** (~5h, aligned to Anthropic's
+rolling usage window) is established and later runs proceed silently
+until the window expires or a run would exceed it. A `--no-llm` run
+never reaches the gate.
+
+The framing matches your billing meter: API users see a dollar band
+(`≈ up to $X`), subscription users see usage-headroom framing (no
+dollar figure).
+
+| Env var | Effect |
+|---------|--------|
+| `ATTUNE_SPEND_GATE=off` | Disable the gate entirely (always proceed). |
+| `ATTUNE_MAX_BUDGET_USD=0` | Also disables the gate (the existing cap-disable; `0` = no cap). |
+| `ATTUNE_MAX_BUDGET_USD=<n>` | Sets the per-run estimate band / cap (positive float). |
+| `ATTUNE_SPEND_GATE_AUTHORIZED=1` | Pre-authorize a **non-interactive** run (CI, the ops daemon) — required because a context that can't prompt blocks by default rather than spending silently. |
+
+In a non-interactive run (no TTY) with no pre-authorization, the gate
+**blocks** rather than spend silently, and prints the
+`ATTUNE_SPEND_GATE_AUTHORIZED=1` hint. The ops dashboard and the
+`security-scan` CI workflow set this opt-in automatically.
+
 ---
 
 ## Telemetry Commands
