@@ -1,0 +1,310 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>attune-rag — LLM-agnostic RAG with measured faithfulness</title>
+  <meta name="description" content="A lightweight, LLM-agnostic RAG pipeline that ships measured quality numbers and gates merges against them — P@1 ≥ 0.95, recall@3 = 1.00, mean faithfulness ≥ 0.9686. Works with Claude, Gemini, or any LLM." />
+
+  <!-- Social sharing -->
+  <meta property="og:title" content="attune-rag" />
+  <meta property="og:description" content="LLM-agnostic RAG with measured faithfulness — and CI that fails when the numbers drop." />
+  <meta property="og:url" content="https://attune-rag.dev" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://attune-rag.dev/og.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <link rel="canonical" href="https://attune-rag.dev" />
+
+  <style>
+    :root {
+      /* Matches smartaimemory.com brand tokens (app/globals.css) */
+      --primary: #004ac6;
+      --primary-light: #2563eb;
+      --bg: #f8f9ff;
+      --ink: #0b1c30;
+      --muted: #434655;
+      --rule: #c3c6d7;
+      --surface-low: #eff4ff;
+      --surface-high: #dce9ff;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --bg: #0b1c30;
+        --ink: #f8f9ff;
+        --muted: #b7c8e1;
+        --rule: #38485d;
+        --surface-low: #132438;
+        --surface-high: #213145;
+        --primary: #6ea1ff;
+      }
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; padding: 0; background: var(--bg); color: var(--ink); }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, sans-serif;
+      font-size: 17px;
+      line-height: 1.55;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    main {
+      max-width: 38rem;
+      margin: 0 auto;
+      padding: 5rem 1.5rem 3rem;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.25rem 0.75rem;
+      border-radius: 999px;
+      background: var(--surface-high);
+      color: var(--primary);
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .eyebrow .dot {
+      width: 4px; height: 4px; border-radius: 50%;
+      background: var(--primary);
+    }
+
+    h1 {
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 3rem;
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      line-height: 1.05;
+      margin: 0 0 0.75rem;
+    }
+    .tagline {
+      font-size: 1.25rem;
+      color: var(--muted);
+      margin: 0 0 2.5rem;
+      font-weight: 400;
+      line-height: 1.45;
+    }
+
+    .install {
+      display: flex;
+      align-items: stretch;
+      background: var(--surface-low);
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      margin: 0 0 2rem;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace;
+      font-size: 0.95rem;
+    }
+    .install code {
+      flex: 1;
+      padding: 0.85rem 1rem;
+      background: none;
+      color: var(--ink);
+      user-select: all;
+    }
+    .install button {
+      background: none;
+      border: none;
+      border-left: 1px solid var(--rule);
+      padding: 0 1.1rem;
+      color: var(--muted);
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.85rem;
+      transition: color 120ms ease;
+    }
+    .install button:hover { color: var(--primary); }
+
+    .stats {
+      display: flex;
+      border: 1px solid var(--rule);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 0 0 0.75rem;
+    }
+    .stat {
+      flex: 1;
+      padding: 1rem 0.5rem;
+      text-align: center;
+      border-right: 1px solid var(--rule);
+    }
+    .stat:last-child { border-right: none; }
+    .stat .num {
+      display: block;
+      font-family: "Manrope", -apple-system, BlinkMacSystemFont, sans-serif;
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: var(--primary);
+      letter-spacing: -0.01em;
+    }
+    .stat .lbl {
+      display: block;
+      font-size: 0.68rem;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-top: 0.25rem;
+    }
+    .stats-note {
+      font-size: 0.85rem;
+      color: var(--muted);
+      margin: 0 0 3rem;
+    }
+
+    nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+      border-top: 1px solid var(--rule);
+    }
+    nav li { border-bottom: 1px solid var(--rule); }
+    nav a {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 1.35rem 0;
+      text-decoration: none;
+      color: var(--ink);
+      transition: color 120ms ease;
+    }
+    nav a:hover { color: var(--primary); }
+    nav a:hover .arrow { transform: translateX(2px); color: var(--primary); }
+    .label { font-weight: 600; font-size: 1.05rem; }
+    .desc {
+      display: block;
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 0.2rem;
+      font-weight: 400;
+    }
+    .arrow {
+      color: var(--muted);
+      font-size: 1.1rem;
+      transition: transform 120ms ease, color 120ms ease;
+      flex-shrink: 0;
+    }
+
+    footer {
+      margin-top: 4rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--rule);
+      color: var(--muted);
+      font-size: 0.85rem;
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+    footer a { color: var(--muted); text-decoration: none; }
+    footer a:hover { color: var(--ink); }
+
+    @media (max-width: 480px) {
+      main { padding: 3rem 1.25rem 2rem; }
+      h1 { font-size: 2.25rem; }
+      .tagline { font-size: 1.1rem; }
+      .stat .num { font-size: 1.15rem; }
+    }
+  </style>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  <link rel="icon" href="/favicon.ico" sizes="32x32" />
+  <script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+  <main>
+    <span class="eyebrow">
+      <span>v0.2.0</span>
+      <span class="dot"></span>
+      <span>LLM-agnostic RAG pipeline</span>
+    </span>
+
+    <h1>attune-rag</h1>
+    <p class="tagline">
+      Lightweight, LLM-agnostic retrieval that ships measured
+      faithfulness — and CI that fails when the numbers drop.
+    </p>
+
+    <div class="install" aria-label="Install command">
+      <code id="install-cmd">pip install attune-rag</code>
+      <button type="button" onclick="copyInstall()" aria-label="Copy install command">copy</button>
+    </div>
+
+    <div class="stats" aria-label="Measured, CI-gated quality baselines">
+      <div class="stat"><span class="num">≥ 0.95</span><span class="lbl">P@1</span></div>
+      <div class="stat"><span class="num">1.00</span><span class="lbl">Recall@3</span></div>
+      <div class="stat"><span class="num">≥ 0.969</span><span class="lbl">Faithfulness</span></div>
+    </div>
+    <p class="stats-note">
+      Locked baselines, not aspirations. A PR that regresses any of
+      them fails CI automatically.
+    </p>
+
+    <nav aria-label="Primary">
+      <ul>
+        <li>
+          <a href="https://github.com/Smart-AI-Memory/attune-rag">
+            <span>
+              <span class="label">Source on GitHub</span>
+              <span class="desc">Smart-AI-Memory / attune-rag &middot; Apache 2.0</span>
+            </span>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://pypi.org/project/attune-rag/">
+            <span>
+              <span class="label">PyPI</span>
+              <span class="desc">pip install attune-rag &middot; LLM provider deps are optional extras.</span>
+            </span>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://attune-ai.dev">
+            <span>
+              <span class="label">attune-ai.dev</span>
+              <span class="desc">The agent workflow OS — same family.</span>
+            </span>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+        <li>
+          <a href="https://smartaimemory.com">
+            <span>
+              <span class="label">smartaimemory.com</span>
+              <span class="desc">Full docs, blog, and the rest of the attune family.</span>
+            </span>
+            <span class="arrow" aria-hidden="true">→</span>
+          </a>
+        </li>
+      </ul>
+    </nav>
+
+    <footer>
+      <span>Smart AI Memory</span>
+      <span>
+        <a href="https://pypi.org/project/attune-rag/">PyPI</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://github.com/Smart-AI-Memory/attune-rag/blob/main/LICENSE">Apache 2.0</a>
+      </span>
+    </footer>
+  </main>
+
+  <script>
+    function copyInstall() {
+      const text = document.getElementById('install-cmd').textContent;
+      navigator.clipboard.writeText(text).then(() => {
+        const btn = document.querySelector('.install button');
+        const orig = btn.textContent;
+        btn.textContent = 'copied';
+        setTimeout(() => btn.textContent = orig, 1200);
+      });
+    }
+  </script>
+</body>
+</html>
