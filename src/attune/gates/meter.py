@@ -50,7 +50,7 @@ class Meter:
         """
         if self.is_dollars:
             return (
-                f"≈ up to ${estimate_usd:.2f} for this run "
+                f"≈ up to ${estimate_usd:.2f} this session window "
                 "— counts against your Anthropic API spend."
             )
         return (

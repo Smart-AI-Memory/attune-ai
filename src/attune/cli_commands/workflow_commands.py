@@ -77,9 +77,11 @@ def cmd_workflow_info(args: Namespace) -> int:
 def cmd_workflow_run(args: Namespace) -> int:
     """Execute a workflow."""
     import os
+    import sys
 
     from attune.cli_commands._exit_codes import (
         EXIT_CLI_ERROR,
+        EXIT_SUCCESS,
         run_workflow_with_exit_code,
     )
     from attune.security.path_validation import _validate_file_path
@@ -141,6 +143,37 @@ def cmd_workflow_run(args: Namespace) -> int:
         # for nested dataclasses).
         input_data["output_format"] = "json"
 
+    # Spend gate (collaboration-gates Phase 1) — guard the first
+    # billable run of the session. Free/local runs never reach it
+    # (R8): a ``--no-llm`` run makes no billable call. The gate's own
+    # off switch (``ATTUNE_SPEND_GATE=off`` / ``ATTUNE_MAX_BUDGET_USD=0``)
+    # short-circuits to proceed. ``record_cost`` stays False unless an
+    # enforced (non-disabled) envelope is in play, so the off path and
+    # ``--no-llm`` never touch the envelope store.
+    record_cost = False
+    if not getattr(args, "no_llm", False):
+        from attune.gates.spend_gate import (
+            ACTION_BLOCK,
+            ACTION_CONFIRM,
+            evaluate_spend_gate,
+        )
+
+        depth = input_data.get("depth", "standard")
+        interactive = sys.stdin.isatty() and sys.stdout.isatty()
+        decision = evaluate_spend_gate(name, depth, interactive=interactive)
+
+        if decision.action == ACTION_BLOCK:
+            _print_spend_block(decision)
+            return EXIT_SUCCESS
+        if decision.action == ACTION_CONFIRM:
+            if not _confirm_spend(decision):
+                print("Skipped — no workflow run, no charge.")
+                return EXIT_SUCCESS
+            _authorize_envelope(decision)
+        # Record actual cost into the envelope only when the gate is
+        # enforced (a real dollar-capped window), never on the off path.
+        record_cost = not decision.envelope.disabled
+
     print(f"\n🚀 Running workflow: {name}\n")
 
     # Execution outcomes map to exit codes via the centralized
@@ -152,7 +185,84 @@ def cmd_workflow_run(args: Namespace) -> int:
         name=name,
         json_mode=bool(getattr(args, "json", False)),
         print_result=lambda result: _print_workflow_result(result, workflow_name=name),
+        on_result=_record_envelope_cost if record_cost else None,
     )
+
+
+def _confirm_spend(decision: object) -> bool:
+    """Prompt the user to authorize the session spend window.
+
+    Returns True on an explicit yes. An exhausted-window decision (the
+    session has spent its authorized budget) is framed as "extend it."
+    """
+    breach = getattr(decision, "breach_usd", 0.0)
+    framing = getattr(decision, "framing", "")
+    if breach > 0:
+        print(
+            f"\n💰 Spend gate — this session's spend window is used up " f"(over by ${breach:.2f})."
+        )
+        print(f"   {framing}")
+        prompt = "Extend the window and proceed? [y/N]: "
+    else:
+        print("\n💰 Spend gate — first paid run of this session.")
+        print(f"   {framing}")
+        print(
+            "   Proceeding authorizes this session's spend window (~5h); "
+            "later runs proceed silently until the budget is used up."
+        )
+        prompt = "Proceed? [y/N]: "
+    try:
+        answer = input(prompt).strip().lower()
+    except EOFError:
+        return False
+    return answer in {"y", "yes"}
+
+
+def _print_spend_block(decision: object) -> None:
+    """Explain a non-interactive block and name the env override (D10)."""
+    print("\n🚫 Spend gate — not spending silently in a non-interactive run.")
+    print(f"   {getattr(decision, 'framing', '')}")
+    print(
+        "   To allow: set ATTUNE_SPEND_GATE_AUTHORIZED=1 (or "
+        "ATTUNE_SPEND_GATE=off to disable the gate)."
+    )
+
+
+def _authorize_envelope(decision: object) -> None:
+    """Mark the decision's envelope authorized and persist it.
+
+    Establishes the session spend window after an explicit yes so
+    subsequent runs within the window proceed silently (R3).
+    """
+    from attune.gates.envelope import save_envelope
+
+    envelope = getattr(decision, "envelope", None)
+    if envelope is None:
+        return
+    envelope.authorized = True
+    save_envelope(envelope)
+
+
+def _record_envelope_cost(result: object) -> None:
+    """Record a completed run's actual cost into the session envelope (R4).
+
+    Best-effort: reads ``result.cost_report.total_cost`` and adds it to
+    the live envelope. Subscription-mode runs report ``$0`` and are a
+    no-op. Never raises into the caller (the runner guards it too).
+    """
+    import time
+
+    from attune.gates.envelope import load_envelope, save_envelope
+
+    cost_report = getattr(result, "cost_report", None)
+    cost = float(getattr(cost_report, "total_cost", 0.0) or 0.0)
+    if cost <= 0:
+        return
+    envelope = load_envelope()
+    if envelope is None or envelope.is_expired(time.time()):
+        return
+    envelope.record(cost)
+    save_envelope(envelope)
 
 
 def _print_workflow_result(

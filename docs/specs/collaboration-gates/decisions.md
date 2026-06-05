@@ -133,3 +133,67 @@ opts CI / the ops daemon in explicitly; the existing
 `ATTUNE_MAX_BUDGET_USD` cap still bounds any proceeding run. This
 translates the discipline's "first paid call gets an explicit
 go" into a machine context as an explicit env grant.
+
+---
+
+## Phase 1 — Implementation deviations
+
+### D11 — T4 touches more files than tasks.md listed (machine-caller opt-ins)
+
+`tasks.md` T4 named only `workflow_commands.py` + its test. But the
+gated path (`attune workflow run`) is **shared by non-interactive
+machine callers** that the D10 fail-safe would otherwise block —
+discovered when wiring the CLI (verify-first against the real
+callers, not the spec's assumption). T4 therefore also:
+
+- **`src/attune/cli_commands/_exit_codes.py`** — added an optional,
+  additive `on_result` hook (best-effort, guarded) so the CLI can
+  record actual cost into the envelope (R4) without the runner
+  returning the result. Exit-code semantics unchanged
+  (workflow-failure-exit-propagation contract preserved).
+- **`src/attune/ops/runner.py`** — the dashboard daemon spawns the
+  CLI non-interactively, so its subprocess env gets
+  `ATTUNE_SPEND_GATE_AUTHORIZED=1` (the D10 machine-context "go").
+  The dashboard's *own confirm modal* remains a later phase; this
+  just keeps today's dashboard runs working rather than blocking.
+- **`.github/workflows/security-scan.yml`** — the one CI workflow
+  that actually runs `attune workflow run` (security-audit) gets the
+  same explicit opt-in. (`scorecard.yml` / `windows-debug.yml` only
+  mention "workflow run" in prose — they don't invoke the CLI.)
+- **Test opt-out** — `ATTUNE_SPEND_GATE=off` autouse fixtures in the
+  three pre-gate test files that exercise `cmd_workflow_run`
+  (`test_workflow_commands.py`, `test_workflow_exit_codes.py`,
+  `test_voice_wiring.py`) so they test dispatch/exit-codes/voice, not
+  the gate. New `test_workflow_spend_gate.py` covers the CLI surface.
+
+Approved 2026-06-05 (Patrick: "Full T4 with opt-ins"). The MCP-layer
+gating for agent-invoked runs remains deferred to a later phase.
+
+### D12 — Re-gate on actual exhaustion, not pre-emptive worst-case (dogfood fix)
+
+The T5 live dogfood surfaced a bug: after a confirm, the **second**
+run re-prompted, contradicting the confirm's "later runs won't
+re-prompt" promise. Root cause: the gate re-gated when
+`spent_usd + next_run_estimate > cap_usd`, and the envelope `cap_usd`
+was set to the per-run budget band (`get_max_budget_usd(depth)`). So
+after a single $0.16 run on a $2 quick window, the *next* run's
+worst-case estimate ($2) added to $0.16 exceeded the $2 cap → instant
+re-prompt.
+
+Fix: the envelope re-gates **post-hoc** — when cumulative `spent_usd`
+has actually reached `cap_usd` (`Envelope.is_exhausted`), not
+pre-emptively on the next run's worst case. `would_breach(cost)` is
+removed in favor of the `is_exhausted` property. Per-run spend is
+still bounded separately by the existing `ATTUNE_MAX_BUDGET_USD` SDK
+cap, so dropping the gate's pre-emptive per-run check loses no real
+protection — it only fixes the false re-prompt. The confirm framing
+drops "for this run" → "this session window," and the re-gate message
+becomes "this session's spend window is used up." Regression locked by
+`test_partial_spend_proceeds_silently` (core) and
+`test_partial_spend_below_cap_is_not_exhausted` (envelope).
+
+Touches `gates/envelope.py`, `gates/spend_gate.py`, `gates/meter.py`
+(framing wording), `cli_commands/workflow_commands.py` (confirm
+message) — modules introduced in #637/#638 but corrected here on the
+T4 branch before Phase 1 merges. Approved 2026-06-05 (Patrick: "fold a
+fix into Phase 1 — yes").

@@ -91,9 +91,23 @@ def test_authorized_within_envelope_proceeds(env_path):
     assert decision.action == ACTION_PROCEED
 
 
-def test_would_breach_confirms_with_breach_amount(env_path):
-    # cap 10, already spent 9.5, a standard run estimates +10 → breach.
-    _authorized_envelope(env_path, cap_usd=10.0, spent_usd=9.5)
+def test_partial_spend_proceeds_silently(env_path):
+    # Dogfood regression: cap == one run's band ($2 quick), one run
+    # spent $0.16 → the next run must PROCEED, not re-prompt.
+    _authorized_envelope(env_path, cap_usd=2.0, spent_usd=0.16)
+    decision = evaluate_spend_gate(
+        "simplify-code",
+        "quick",
+        now=NOW,
+        strategy=API_STRATEGY,
+        envelope_path=env_path,
+    )
+    assert decision.action == ACTION_PROCEED
+
+
+def test_exhausted_window_confirms_with_overage(env_path):
+    # cap 10, cumulative spend 10.5 → window used up → re-gate.
+    _authorized_envelope(env_path, cap_usd=10.0, spent_usd=10.5)
     decision = evaluate_spend_gate(
         "deep-review",
         "standard",
@@ -102,7 +116,7 @@ def test_would_breach_confirms_with_breach_amount(env_path):
         envelope_path=env_path,
     )
     assert decision.action == ACTION_CONFIRM
-    assert decision.breach_usd == pytest.approx(9.5)  # (9.5 + 10) - 10
+    assert decision.breach_usd == pytest.approx(0.5)  # 10.5 - 10
 
 
 def test_expired_window_regates(env_path):
@@ -175,11 +189,11 @@ def test_non_interactive_with_preauth_proceeds(env_path, monkeypatch):
     assert decision.action == ACTION_PROCEED
 
 
-def test_non_interactive_preauth_breach_blocks(env_path, monkeypatch):
-    # Pre-auth lets a non-interactive run proceed, but a breach can't be
-    # confirmed without a TTY → block (fail-safe).
+def test_non_interactive_preauth_exhausted_blocks(env_path, monkeypatch):
+    # Pre-auth lets a non-interactive run proceed, but an exhausted
+    # window can't be re-confirmed without a TTY → block (fail-safe).
     monkeypatch.setenv("ATTUNE_SPEND_GATE_AUTHORIZED", "1")
-    _authorized_envelope(env_path, cap_usd=10.0, spent_usd=9.5)
+    _authorized_envelope(env_path, cap_usd=10.0, spent_usd=10.5)
     decision = evaluate_spend_gate(
         "deep-review",
         "standard",

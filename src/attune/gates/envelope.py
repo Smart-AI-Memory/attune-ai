@@ -45,8 +45,9 @@ class Envelope:
 
     The envelope is established (``authorized=True``) by an explicit
     first-run confirm and is then session-durable within its TTL
-    window. A run that would push ``spent_usd`` past ``cap_usd``
-    re-gates (see :meth:`would_breach`).
+    window. Runs proceed silently until cumulative ``spent_usd``
+    reaches the window budget ``cap_usd``, at which point the window
+    is exhausted and the next run re-gates (see :attr:`is_exhausted`).
     """
 
     window_start: float
@@ -81,7 +82,7 @@ class Envelope:
 
         Mirrors the ``Budget`` ``cap_usd <= 0`` latch — the gate core
         reads a disabled envelope as "proceed" (R6 off switch). A
-        disabled envelope never breaches on dollars.
+        disabled envelope is never exhausted.
         """
         return self.cap_usd <= 0
 
@@ -89,15 +90,22 @@ class Envelope:
         """True once the TTL window has elapsed (``now`` is epoch s)."""
         return (now - self.window_start) >= self.ttl_seconds
 
-    def would_breach(self, cost_usd: float) -> bool:
-        """True if adding ``cost_usd`` would exceed the dollar cap.
+    @property
+    def is_exhausted(self) -> bool:
+        """True once cumulative spend has used up the window budget.
 
-        Only meaningful for a dollar-metered (``api``) envelope with a
-        positive cap; a disabled envelope never breaches.
+        Post-hoc, not pre-emptive: runs proceed silently until actual
+        ``spent_usd`` reaches ``cap_usd``, then the window re-gates.
+        This is what lets the confirm's "later runs won't re-prompt"
+        promise hold — a per-run worst-case check would re-gate after
+        the very first run when ``cap_usd`` equals a single run's
+        budget band. Per-run spend is still bounded separately by the
+        ``ATTUNE_MAX_BUDGET_USD`` SDK cap. A disabled envelope is never
+        exhausted; subscription runs report ``$0`` so never exhaust.
         """
         if self.disabled:
             return False
-        return (self.spent_usd + cost_usd) > self.cap_usd
+        return self.spent_usd >= self.cap_usd
 
     def record(self, cost_usd: float) -> None:
         """Add a completed run's actual cost to the ledger."""
