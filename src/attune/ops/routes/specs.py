@@ -28,9 +28,10 @@ from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Body, HTTPException, Request
+from fastapi import APIRouter, Body, Depends, HTTPException, Request
 
 from attune.ops import dismiss_store, pending_writes
+from attune.ops.security import require_client_token
 
 logger = logging.getLogger(__name__)
 
@@ -496,6 +497,7 @@ async def update_phase_status(
     phase: str,
     request: Request,
     body: dict[str, Any] = Body(...),  # noqa: B008
+    _client: None = Depends(require_client_token),  # noqa: B008
 ) -> dict[str, Any]:
     """Rewrite the ``**Status**`` line in the named phase file.
 
@@ -589,6 +591,7 @@ async def dismiss_completion_candidate(
     slug: str,
     request: Request,
     body: dict[str, Any] = Body(...),  # noqa: B008
+    _client: None = Depends(require_client_token),  # noqa: B008
 ) -> dict[str, Any]:
     """Suppress a completion candidate for the default TTL (14 days).
 

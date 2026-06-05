@@ -92,7 +92,7 @@
   async function _post(url, payload) {
     const resp = await fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: attuneClientHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(payload),
     });
     return resp.ok;

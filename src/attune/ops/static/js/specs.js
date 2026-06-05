@@ -104,7 +104,7 @@
           "/status",
         {
           method: "PUT",
-          headers: { "Content-Type": "application/json" },
+          headers: attuneClientHeaders({ "Content-Type": "application/json" }),
           body: JSON.stringify({ status: next }),
         }
       );

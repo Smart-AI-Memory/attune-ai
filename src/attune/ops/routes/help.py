@@ -18,10 +18,11 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from attune.ops import help_data
+from attune.ops.security import require_client_token
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,10 @@ async def help_recent(request: Request, limit: int = 5) -> JSONResponse:
 
 
 @router.post("/api/help/regen")
-async def help_regen_start(request: Request) -> JSONResponse:
+async def help_regen_start(
+    request: Request,
+    _client: None = Depends(require_client_token),  # noqa: B008
+) -> JSONResponse:
     """Start an attune-author regen job.
 
     Body shape (JSON)::

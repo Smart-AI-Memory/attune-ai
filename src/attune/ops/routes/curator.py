@@ -22,10 +22,11 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from fastapi import APIRouter, Body, Request
+from fastapi import APIRouter, Body, Depends, Request
 from fastapi.responses import HTMLResponse, JSONResponse
 
 from attune.curator import run_curator
+from attune.ops.security import require_client_token
 from attune.security.path_validation import _validate_file_path
 
 from .dashboard import _ctx
@@ -95,6 +96,7 @@ async def curator_page(request: Request, refresh: int = 0) -> HTMLResponse:
 async def curator_dismiss(
     request: Request,
     body: dict[str, Any] = Body(...),  # noqa: B008
+    _client: None = Depends(require_client_token),  # noqa: B008
 ) -> JSONResponse:
     """Snooze an item for 14 days.
 
@@ -127,6 +129,7 @@ async def curator_dismiss(
 async def curator_answer(
     request: Request,
     body: dict[str, Any] = Body(...),  # noqa: B008
+    _client: None = Depends(require_client_token),  # noqa: B008
 ) -> JSONResponse:
     """Record a user's response to an item's suggested action.
 

@@ -19,11 +19,12 @@ from __future__ import annotations
 
 import logging
 
-from fastapi import APIRouter, Request
+from fastapi import APIRouter, Depends, Request
 from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, Field
 
 from attune.ops.interaction_counters import EVENTS, InteractionCounters
+from attune.ops.security import require_client_token
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +60,11 @@ def _counters(request: Request) -> InteractionCounters:
 
 
 @router.post("/api/telemetry/interaction")
-async def record_interaction(payload: InteractionEvent, request: Request) -> Response:
+async def record_interaction(
+    payload: InteractionEvent,
+    request: Request,
+    _client: None = Depends(require_client_token),  # noqa: B008
+) -> Response:
     """Increment a UI interaction counter.
 
     Returns 204 No Content on success AND on unknown events (so a

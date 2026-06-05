@@ -305,7 +305,7 @@
     pill.classList.add("pill-disabled");
     fetch("/workflows/" + encodeURIComponent(target) + "/run", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: attuneClientHeaders({ "Content-Type": "application/json", Accept: "application/json" }),
       body: JSON.stringify(body)
     })
       .then(function (resp) {
@@ -527,7 +527,7 @@
         }
         fetch("/workflows/" + encodeURIComponent(name) + "/run", {
           method: "POST",
-          headers: {"Content-Type": "application/json"},
+          headers: attuneClientHeaders({"Content-Type": "application/json"}),
           body: JSON.stringify(body_json)
         }).then(function (resp) {
           if (resp.status === 201) {
@@ -667,7 +667,7 @@
       }
       fetch("/workflows/" + encodeURIComponent(suggestion.name) + "/run", {
         method: "POST",
-        headers: {"Content-Type": "application/json"},
+        headers: attuneClientHeaders({"Content-Type": "application/json"}),
         body: JSON.stringify(body)
       }).then(function (resp) {
         if (resp.status === 201) {
