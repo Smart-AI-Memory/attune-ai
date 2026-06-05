@@ -264,6 +264,12 @@ Phase 1.
 
 ## Phase 2 — Agent invocation + structured output
 
+**Status: done (2026-06-05).** Implemented `prompt.py`, `schema.py`,
+and `core.py` (`run_curator`) with raw-`anthropic` forced tool-use.
+129 curator tests pass; new Phase 2 modules at 96% branch coverage.
+Design deviations (agent-SDK → raw `anthropic`, model `4-6`, advisory
+budget) recorded in [`decisions.md`](decisions.md) D1–D4.
+
 ### Task 2.1 — Curator system prompt + output schema
 
 ```xml
