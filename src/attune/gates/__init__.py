@@ -26,6 +26,11 @@ from attune.gates.meter import (
     resolve,
 )
 
+# Note: ``spend_gate`` is intentionally NOT eagerly imported here — it
+# pulls ``attune.workflows.agent_sdk_adapter`` (the Agent SDK), which
+# would weigh down ``import attune.gates``. Consumers import it
+# directly: ``from attune.gates.spend_gate import evaluate_spend_gate``.
+
 __all__ = [
     "DEFAULT_TTL_SECONDS",
     "METER_API",
