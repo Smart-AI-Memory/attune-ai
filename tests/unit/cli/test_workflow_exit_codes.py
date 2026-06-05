@@ -312,3 +312,39 @@ class TestJsonModeThreadsExitCode:
         assert parsed["success"] is True
         assert parsed["sdk_error_kind"] is None
         assert parsed["result"] == "plain text report"
+
+
+class TestOnResultHookGuard:
+    """The optional on_result hook must never alter the exit code."""
+
+    def test_on_result_failure_does_not_change_exit_code(self):
+        from attune.cli_commands._exit_codes import run_workflow_with_exit_code
+
+        def _boom(_result):
+            raise RuntimeError("hook blew up")
+
+        rc = run_workflow_with_exit_code(
+            _workflow_returning(_make_result(success=True)),
+            {},
+            name="ok-wf",
+            json_mode=False,
+            print_result=lambda _r: None,
+            on_result=_boom,
+        )
+        assert rc == 0  # success exit code preserved despite the hook raising
+
+    def test_on_result_receives_result_on_success(self):
+        from attune.cli_commands._exit_codes import run_workflow_with_exit_code
+
+        seen = []
+        result = _make_result(success=True)
+        rc = run_workflow_with_exit_code(
+            _workflow_returning(result),
+            {},
+            name="ok-wf",
+            json_mode=False,
+            print_result=lambda _r: None,
+            on_result=seen.append,
+        )
+        assert rc == 0
+        assert seen == [result]

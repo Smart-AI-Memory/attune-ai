@@ -194,3 +194,35 @@ def test_record_envelope_cost_zero_is_noop(env_file):
     result = types.SimpleNamespace(cost_report=types.SimpleNamespace(total_cost=0.0))
     workflow_commands._record_envelope_cost(result)
     assert load_envelope(env_file).spent_usd == pytest.approx(1.0)
+
+
+# --- confirm-prompt helper branches --------------------------------------
+
+
+def test_confirm_spend_breach_branch_frames_overage(monkeypatch, capsys):
+    monkeypatch.setattr("builtins.input", lambda _prompt: "y")
+    assert workflow_commands._confirm_spend(_decision(ACTION_CONFIRM, breach=3.25)) is True
+    out = capsys.readouterr().out
+    assert "would exceed" in out
+    assert "over by $3.25" in out
+
+
+def test_confirm_spend_eof_returns_false(monkeypatch):
+    def _eof(_prompt):
+        raise EOFError
+
+    monkeypatch.setattr("builtins.input", _eof)
+    assert workflow_commands._confirm_spend(_decision(ACTION_CONFIRM)) is False
+
+
+def test_authorize_envelope_with_no_envelope_is_noop():
+    # A decision carrying no envelope must not crash or persist anything.
+    workflow_commands._authorize_envelope(types.SimpleNamespace(envelope=None))
+
+
+def test_record_envelope_cost_no_live_envelope_is_noop(env_file):
+    # cost > 0 but no envelope on disk (off-switch/proceed path never
+    # wrote one) → no crash, nothing persisted.
+    result = types.SimpleNamespace(cost_report=types.SimpleNamespace(total_cost=2.5))
+    workflow_commands._record_envelope_cost(result)
+    assert load_envelope(env_file) is None
