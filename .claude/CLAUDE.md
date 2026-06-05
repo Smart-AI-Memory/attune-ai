@@ -7796,3 +7796,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   entities" distinctly from "all verified." Pairs with the existing
   "Forced Anthropic tool-use ... FaithfulnessJudge" and
   attune-author-hallucination lessons.
+
+- **"docs-only" is a path heuristic, NOT a CI-safety guarantee —
+  `attune-ai-dev/**` build scripts and `docs/specs/**` paths are
+  both under the Python test matrix; admin-merging past it on such
+  PRs can red main**: 2026-06-05, `main` went matrix-wide red, and
+  it surfaced ONLY when an unrelated later PR (#627, a static-site
+  add that touches no `src/`/`tests/`) inherited the red on its CI.
+  Two earlier PRs I'd admin-merged as "docs-only" (path-anchored:
+  changes confined to `attune-ai-dev/`, `.help/`, or `docs/specs/`)
+  actually had test dependencies: (1) **#623** changed
+  `attune-ai-dev/build_help.py::_page()` to require a `canonical=`
+  kwarg, but `tests/unit/help_site/test_build_help.py` loads that
+  build script via `importlib` and calls `_page()` — the SITE BUILD
+  IS UNDER TEST. (2) **#613**'s spec-backlog triage archived
+  `docs/specs/ops-runner-tier2/` → `docs/specs/archive/...`, but
+  `tests/unit/ops/test_path_support_registry.py::test_audit_doc_exists`
+  asserts that doc's pre-archive path (a drift-guard). Both
+  admin-merges bypassed the very matrix that would have caught them.
+  Three durable rules: (a) the "docs-only → admin-merge past Python
+  CI" shortcut must EXCLUDE `attune-ai-dev/**` (site build scripts
+  are tested in `tests/unit/help_site/`) and `docs/specs/**`
+  path-existence (drift-guard tests hardcode spec paths) — for PRs
+  touching those, let the matrix run, don't admin-merge. (b)
+  Moving/archiving any `docs/specs/<x>/` dir breaks tests that
+  assert its path — grep `tests/` for the dir name BEFORE archiving
+  (same family as the "Admin-merging a deletion PR without checking
+  the build docs check" lesson). (c) Diagnosis tell: matrix-wide red
+  that first appears on an UNRELATED new PR, where the failing tests
+  don't touch that PR's files, = inherited main breakage, not the
+  PR's fault; `git log --oneline -- <failing-test-file>` plus
+  reading the test's subject (what symbol/path it asserts) points
+  straight at the recent merge that changed that subject. Pairs with
+  the existing "CI matrix-wide red is usually one root-cause test"
+  and "docs-only PR admin-merge" lessons.
