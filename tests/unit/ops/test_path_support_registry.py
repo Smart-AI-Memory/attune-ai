@@ -163,7 +163,7 @@ class TestRegistryShape:
 def test_audit_doc_exists() -> None:
     """The audit doc backing this registry should be in the repo."""
     repo_root = Path(__file__).resolve().parents[3]
-    audit = repo_root / "docs" / "specs" / "ops-runner-tier2" / "audit.md"
+    audit = repo_root / "docs" / "specs" / "archive" / "ops-runner-tier2" / "audit.md"
     assert audit.is_file(), (
         f"Expected audit doc at {audit} — it's the source of truth for "
         "PATH_ARG_REGISTRY's three-way categorization. If the audit is "

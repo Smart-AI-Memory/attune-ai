@@ -64,7 +64,13 @@ class TestHelpers:
         assert "a&lt;b" in c
 
     def test_page_carries_brand_and_help_css(self):
-        page = bh._page(title="T", desc="D", crumbs="C", body="<main></main>")
+        page = bh._page(
+            title="T",
+            desc="D",
+            crumbs="C",
+            body="<main></main>",
+            canonical="https://attune-ai.dev/help",
+        )
         assert "<title>T</title>" in page
         assert "--primary" in page  # brand.css token reused
         assert ".help-nav" in page  # help-specific css
