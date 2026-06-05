@@ -418,6 +418,12 @@ budget) recorded in [`decisions.md`](decisions.md) D1–D4.
 
 ## Phase 3 — Dashboard `/curator` + CLI
 
+**Task 3.1 done (2026-06-05).** `GET /curator` route + `curator.html`
+template + CSS + `POST /curator/{answer,dismiss}` + 6 route tests,
+wired into `server.py` (router + "Briefing" nav). Two v1 deferrals
+recorded in [`decisions.md`](decisions.md) D5–D6. Tasks 3.2 (CLI) and
+3.3 (cross-link) follow in a second PR (D7).
+
 ### Task 3.1 — Dashboard route + template
 
 ```xml

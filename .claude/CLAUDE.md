@@ -7898,3 +7898,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   heredocs + `git -C ~/attune-rag` for commits, and
   `git archive <branch> <path> | tar -x` to extract committed files
   from a branch that isn't checked out in the working tree.
+
+- **`claude_agent_sdk.ClaudeAgentOptions` cannot do forced
+  guaranteed-schema tool-use — use the raw `anthropic` SDK for that**:
+  hit 2026-06-05 implementing bulletin-curator Phase 2, whose
+  `design.md` sketched the synthesis call as
+  `ClaudeAgentOptions(tools=[{...schema...}], tool_choice={"type":
+  "tool","name":...})`. Introspecting the SDK (0.1.63 via
+  `dataclasses.fields(ClaudeAgentOptions)`) showed that shape is
+  unsupported: (1) there is **no `tool_choice` field** at all; (2)
+  the `tools` field is `list[str] | ToolsPreset | None` — an
+  ALLOWLIST OF TOOL NAMES, not raw Anthropic tool definitions with
+  `input_schema`. The agent SDK routes through the `claude` CLI's own
+  tool loop and can't force a single schema-guaranteed call. The
+  existing CLAUDE.md "Forced Anthropic tool-use is the cleanest path
+  to guaranteed-schema JSON" lesson is about the **raw `anthropic`
+  SDK** (`client.messages.create(tools=[{...}], tool_choice={"type":
+  "tool","name":...})`), as `attune_rag`'s `FaithfulnessJudge` does —
+  the two SDKs are easy to conflate because both live in this repo.
+  Rule of thumb: a single synthesis/judge call with no agent loop, no
+  subagents, no file tools wants the raw `anthropic` SDK (guaranteed
+  schema, cheap, testable with an injected fake client); reserve
+  `claude_agent_sdk.query()` for actual agentic work (file tools,
+  subagent fan-out, multi-turn). This is the "research subagents
+  confabulate SDK signatures — introspect before coding" lesson with
+  a concrete instance: the SPEC ITSELF (`design.md`, written before
+  introspection) carried the confabulated signature, so spec
+  pseudocode is no more trustworthy than a research agent's — a
+  one-minute `dataclasses.fields()` check is the antidote. Deviation
+  recorded in `docs/specs/bulletin-curator/decisions.md` D1.
