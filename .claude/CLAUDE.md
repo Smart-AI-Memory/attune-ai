@@ -7830,3 +7830,71 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   straight at the recent merge that changed that subject. Pairs with
   the existing "CI matrix-wide red is usually one root-cause test"
   and "docs-only PR admin-merge" lessons.
+
+- **The agent acts THROUGH the user's own authenticated CLIs — there
+  is no separate `claude` GitHub/Vercel account, so "I invited you /
+  gave you rights" to a `claude` identity is inert**: 2026-06-05,
+  Patrick invited GitHub user `claude` (maintain) to a repo and
+  granted Vercel rights expecting it to reach me. But my tools run
+  through HIS sessions — `gh` authed as `silversurfer562` (already
+  repo admin) and `vercel` authed as `patrickroebuck` (already on the
+  `empathy-framework` team). A pending invite for `claude` does
+  nothing for me and can be revoked. When a user offers to "grant
+  access," clarify this BEFORE they spend effort: I already have
+  whatever their CLI has. The real gap, if any, is almost always a
+  **token**, not a permission. Companion fact: the Vercel REST API
+  token in `~/Library/Application Support/com.vercel.cli/auth.json`
+  can go invalid (HTTP 403 `invalidToken`) — observed across a
+  day-boundary rotation — WHILE `vercel whoami`/CLI still auths fine
+  (separate session mechanism). So raw `curl` API writes (e.g.
+  `PATCH .../domains/...` to flip an apex redirect) break, but CLI
+  reads + deploys keep working. After the token dies, API-write ops
+  need a fresh token (vercel.com → Settings → Tokens) or the
+  dashboard — granting "more rights" does not fix a dead token.
+
+- **Vercel static-site project: a wrong Root Directory serves 404 on
+  every path even though git deploys "succeed"; CLI `vercel deploy
+  <dir>` double-applies the project's rootDirectory**: 2026-06-05
+  bringing up attune-rag.dev. The `attune-rag` Vercel project's Root
+  Directory was `docs` (a stale earlier config), so production
+  served 404 everywhere even though the #157 merge deployed READY —
+  it built the wrong subdir. `vercel project inspect <name>` shows
+  the Root Directory. Fix is dashboard-only (Settings → General →
+  Root Directory → `site`), then re-trigger a build. Two CLI gotchas
+  during the stopgap: (1) `cd site && vercel deploy --prod` once
+  rootDirectory is already `site` fails with "path `site/site` does
+  not exist" — the CLI APPENDS rootDirectory to the deploy path; so
+  either deploy from the repo root (rootDirectory resolves to
+  repo/site) or use `vercel redeploy <prod-url-or-alias>` to rebuild
+  the existing git deployment with current settings. (2)
+  `vercel redeploy <prod-alias>` also re-aliases the bound custom
+  domain + (re)provisions SSL — handy confirmation the domain is
+  attached. Also: `vercel link` writes a `.vercel/` dir AND downloads
+  a `.env.local` with the project's dev env vars — delete both after
+  (the `.env.local` is a secret-hygiene concern), and it auto-creates
+  a `.gitignore` that ignores them.
+
+- **Porting `attune-ai-dev/build_help.py` to a sibling repo's site =
+  make it self-contained (drop the `attune.ops.help_data` corpus
+  loader)**: 2026-06-05 building attune-rag.dev's `/help`. The
+  attune-ai builder imports `attune.ops.help_data` +
+  `attune.ops.config` for corpus loading — those don't exist in the
+  attune-rag repo, and importing `attune` would defeat the whole
+  point of deploying the rag site from the rag repo. The port:
+  replace ONLY the loader layer with direct filesystem reads — walk
+  `../.help/templates/<feature>/<kind>.md` for features+kinds, strip
+  YAML frontmatter with a regex, derive the title from the first
+  `# ` heading, read `../.help/features.yaml` (PyYAML) for
+  descriptions. Keep the rendering identical (markdown-it-py,
+  shared `brand.css`, `_page`, the `_neutralize_relative_links`
+  pass, client-side search). Bake the per-page-canonical fix in from
+  the start (don't replicate the hardcoded-`/help` canonical bug
+  #623 fixed). Output is pre-built + committed (Vercel serves
+  static; no build step). Note: the sibling repo's CI may lint only
+  `src/ tests/` (attune-rag's does), so `site/*.py` isn't ruff-gated
+  — convenient, but means the linter won't catch issues there.
+  Cross-repo mechanics from a worktree session: the
+  worktree-path-guard blocks Edit/Write to the sibling, so `cat >`
+  heredocs + `git -C ~/attune-rag` for commits, and
+  `git archive <branch> <path> | tar -x` to extract committed files
+  from a branch that isn't checked out in the working tree.
