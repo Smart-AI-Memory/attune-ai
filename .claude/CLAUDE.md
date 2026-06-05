@@ -7951,3 +7951,26 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `attune.gates.envelope.save_envelope` (collaboration-gates T1,
   PR #637); the fix was to skip `_validate_file_path` in `save` with
   a comment explaining the desync, keeping save/load path-symmetric.
+
+- **Detect an off-switch through an existing primitive's return
+  contract, not by re-parsing the env var it already reads**: when
+  layering a NEW budget/spend check on top of the existing cap
+  machinery, `get_max_budget_usd(depth)`
+  (`workflows/agent_sdk_adapter.py`) returns `None` **exactly** when
+  `ATTUNE_MAX_BUDGET_USD=0` (the documented cap-disable) — so the
+  spend gate's off-switch is `cap is None`, single-sourced with the
+  existing cap-disable, rather than a second independent
+  `os.environ["ATTUNE_MAX_BUDGET_USD"] == "0"` read that could drift
+  out of sync. Used in `attune.gates.spend_gate.evaluate_spend_gate`
+  (collaboration-gates T3, PR #638). This is now the THIRD place
+  encoding the same "0 / `<=0` / `None` = off" budget semantics —
+  the `Budget` `cap_usd <= 0` `__post_init__` latch
+  (`ops/session_summarizer.py`, see the "Budget/cap ledgers need
+  `__post_init__` to latch `cap <= 0`" lesson), `get_max_budget_usd`'s
+  `None` return, and the spend gate — so when adding a fourth, reuse
+  the nearest existing signal (the `None` return or the `disabled`
+  property) instead of re-deriving "is it off?" from the raw env var.
+  General rule: a function that already encodes the off/disabled
+  state in its return value (here `None`) is the single source of
+  truth for that state; layered callers should branch on the return,
+  not re-read the underlying config.
