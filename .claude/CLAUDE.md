@@ -7927,3 +7927,27 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   pseudocode is no more trustworthy than a research agent's — a
   one-minute `dataclasses.fields()` check is the antidote. Deviation
   recorded in `docs/specs/bulletin-curator/decisions.md` D1.
+
+- **Don't run an INTERNAL state-file path through
+  `_validate_file_path()` (or `.resolve()`) in `save` when `load`
+  reads the unresolved path — on macOS the `/var` → `/private/var`
+  symlink desyncs them**: the production-code companion to the
+  existing "macOS `/var` → `/private/var` symlink breaks path
+  assertions" lesson (which is about *test assertions* of `f.name`
+  vs resolved). New angle: when a module persists a state file with
+  separate `save`/`load` functions, resolving the path in only one
+  of them (e.g. `save` calls `_validate_file_path`, which
+  `.resolve()`s `/var/folders/...` → `/private/var/folders/...`,
+  while `load` reads the unresolved path) writes to one location and
+  reads from another. Symptom on macOS: the state "never loads /
+  always reads fresh" — a confusing, macOS-only, silent-fail bug
+  (here it would have made the spend-gate envelope re-gate every
+  run). The coding-standard "ALWAYS validate file paths" rule
+  (Rule 2) targets **user-controlled** paths; an internal state-file
+  path constructed by the module itself (or supplied by tests as
+  `tmp_path`) carries no traversal risk and should NOT be resolved —
+  write and read the SAME unresolved `Path` object, and use atomic
+  `Path.replace` (not `rename`) for the swap. Discovered designing
+  `attune.gates.envelope.save_envelope` (collaboration-gates T1,
+  PR #637); the fix was to skip `_validate_file_path` in `save` with
+  a comment explaining the desync, keeping save/load path-symmetric.
