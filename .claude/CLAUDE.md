@@ -1276,6 +1276,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   re-export removal can cascade through 5+ test files. After removing
   any re-export, run `pytest -x` iteratively — each failure reveals
   the next test file to fix.
+
 - **Version bumps touch 7+ files AND rebuild dist — full
   release-prep checklist**: The version lives in
   `pyproject.toml`, `plugin/.claude-plugin/plugin.json`,
@@ -1387,6 +1388,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Instead, convert globs to regex: `**` → `.*`, `*` → `[^/]*`,
   `?` → `[^/]`, then `re.fullmatch()`. See `_glob_match()` in
   `help/manifest.py`.
+
 - **`/coach` is the user-facing entry point for the `.help`
   system**: The skill was renamed from `/help` to `/coach`
   because Claude Code's built-in `/help` command shadows
@@ -1396,6 +1398,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   still exists but is for quick command reference only —
   `/coach` is the one that connects to `.help/features.yaml`,
   staleness detection, and template generation.
+
 - **`text-white` on `gradient-primary` sections gets overridden**:
   Tailwind's `text-white` class is overridden by global styles
   on sections using `gradient-primary`. Use `!text-white`
@@ -5042,6 +5045,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is only useful if "completed" means "the work I
   said I'd do is done in reality" — not "I called the
   tool and it didn't error."
+
 - **Worktree dirty-state recovery via tar + 3-way merge —
   the safe pattern when a parallel session left
   uncommitted work on a branch you need to move off**:
@@ -5153,6 +5157,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   CheckRun + StatusContext + RequiredStatusCheck records,
   not all of which carry the same fields. Same fix shape
   for `.workflowName`, `.detailsUrl`, etc.
+
 - **xdist worker pollution from a stale module-level
   patch recurs in the SAME test file when new test files
   shift worker distribution — and the fix is to mirror the
