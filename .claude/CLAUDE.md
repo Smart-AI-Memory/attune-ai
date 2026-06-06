@@ -1004,12 +1004,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `pydantic>=2.0.0` permits 2.0–2.3 which have CVEs). Fix: bump
   lower bounds past the patched version, not just the lockfile.
 
-- **`enforce_admins: false` defeats Code-Review Scorecard check**:
-  Even with `required_approving_review_count: 1`, admins bypass
-  reviews when `enforce_admins` is off. Scorecard sees 0/25
-  approved changesets. For solo devs: enable `enforce_admins` and
-  add an auto-approve workflow triggered by CI success.
-
 - **YAML `run:` values with colons cause parse errors**: A GitHub
   Actions `run:` like `run: gh pr review --body "Auto-approved:
   update"` fails YAML parsing because the colon after
@@ -1022,11 +1016,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   -f dismissed_comment="..."` to batch-dismiss with documented
   reasons. Valid reasons: `false positive`, `won't fix`,
   `used in tests`.
-
-- **Repo merge policy may restrict merge strategies**: `gh pr merge
-  --merge` failed with "Merge method merge commits are not allowed".
-  This repo only allows squash merges. Always use `--squash` for
-  `gh pr merge` in this repo.
 
 - **CodeQL `py/clear-text-logging-sensitive-data` traces data flow,
   not literal secrets**: CodeQL flagged `user_id` in a log message
@@ -1085,35 +1074,103 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   entry in the dispatch table itself. This caused 20+
   pre-existing test failures.
 
-- **GitHub branch protection and admin-merge — four
-  interlocking constraints**: (1) **Exact check names matter**:
-  required status checks must match GitHub's *exact* check
-  names (e.g. `Analyze (python)`, not `Analyze Python`).
-  Mismatched names silently block merges — the expected
-  check never appears, so the gate sits "pending" forever.
-  Always run `gh pr checks <PR>` first to see actual names
-  before adding them to branch protection. (2) **`--admin`
-  doesn't override in-progress checks**: the `--admin` flag
-  only bypasses failed or missing checks; it returns
-  `Required status check "X" is in progress` if a check is
-  still running. Wait for required checks (or cancel them)
-  before admin-merging. Budget for the matrix — a 12-platform
-  matrix takes ~15 min. (3) **`enforce_admins: true` blocks
-  solo-dev self-approval**: with `enforce_admins: true` and
-  `required_approving_review_count >= 1`, the repo owner
-  cannot self-approve and `--admin` also fails. The
-  auto-approve workflow's `GITHUB_TOKEN` can't approve the
-  PR author's own PRs. For solo-dev repos, use the
+### Branch protection & admin-merge
+
+- **attune-ai branch protection — current state, and the "merge
+  tax" that's now fixed**: as of 2026-06-03 (PR #598) the gate
+  is minimal — `required_approving_review_count: 0`, `security`
+  removed from `required_status_checks` (CodeQL stays required),
+  and the dead `auto-approve-owner` job deleted. Owner PRs with
+  green required checks now merge via the normal button — NO
+  admin-override, NO temp-remove-reviews dance. The prior
+  recurring "merge tax" had two mechanical causes: (Tax 1)
+  `auto-approve-owner`'s `lewagon/wait-on-check-action` had
+  `timeout-minutes: 5` but its `check-regexp: ^(test |lint|
+  Analyze )` matched the ~20-min Windows `test ` lanes → timed
+  out before approving → `review_count: 1` unmet → every owner
+  PR `BLOCKED`; (Tax 2) `security` was a REQUIRED check but
+  runs bandit/safety with `|| true` (toothless) AND
+  `concurrency.cancel-in-progress: true`, so any superseding
+  push cancels the in-flight run and a cancelled-but-required
+  check blocks until rerun. (The earlier diagnosis blaming an
+  `auto-approve-owner` actor-login mismatch — `github.actor ==
+  'patrickroebuck'` vs the real login `silversurfer562` — was
+  partly wrong: the guard had already been corrected yet the
+  job kept failing, not skipping.) **Diagnostic**: when a PR is
+  `BLOCKED` with every visible check green, read `gh api
+  repos/<o>/<r>/branches/main/protection` FIRST to see which
+  checks are actually required and whether the gate is
+  reviews-vs-a-required-check — don't chase scary-red
+  NON-required checks (verify-first-on-infra). The Tax-2
+  symptom (recurs on sibling repos that still require
+  `security`): the check fires CANCELLED on every non-dependabot
+  PR; rerun the specific job — `gh run rerun <run-id> --job
+  <job-id>` (ids from the check's `detailsUrl`) — which
+  re-enters the dependabot-or-rerun branch and runs the real
+  scan.
+
+- **GitHub branch-protection semantics + the admin-merge dance
+  (still live on restricted sibling repos)** — four interlocking
+  constraints: (1) **Exact check names** — required status
+  checks must match GitHub's EXACT names (`Analyze (python)`,
+  not `Analyze Python`); a mismatch sits "pending" forever. Run
+  `gh pr checks <PR>` first. (2) **`--admin` doesn't override
+  IN-PROGRESS checks** — returns `Required status check "X" is
+  in progress`; wait or cancel (budget ~15 min for a 12-platform
+  matrix). (3) **`enforce_admins: true` + `review_count >= 1`
+  blocks solo-dev self-approval** (the `GITHUB_TOKEN` can't
+  approve the author's own PR, and `--admin` also fails) → the
   temp-remove-reviews dance: drop `required_approving_review_count`
-  to 0 via API, `gh pr merge --squash --admin`, then restore
-  to 1. The auto-approve workflow still handles Dependabot
-  and collaborator PRs correctly. (4) **Don't re-enable
-  reviews while `--auto` is queued**: setting
-  `gh pr merge --auto` while reviews are removed and
-  re-enabling before the merge fires blocks auto-merge (no
-  approval exists). Either wait for auto-merge to complete
-  before restoring reviews, or skip `--auto` entirely and
-  use the remove-merge-restore pattern synchronously.
+  to 0 via API, `gh pr merge --squash --admin`, restore to 1.
+  (4) **Don't re-enable reviews while `--auto` is queued** (no
+  approval exists → blocks); use the remove-merge-restore
+  pattern synchronously. Related config facts: `enforce_admins:
+  false` lets admins bypass reviews but Scorecard then counts
+  0/25 approved changesets; repo merge policy may allow squash
+  ONLY (`--merge` → "Merge method merge commits are not allowed"
+  — use `--squash`); removing a check from
+  `required_status_checks` must PATCH the FULL `checks` array
+  preserving exact app_ids (15368 GitHub Actions, 57789 CodeQL)
+  — a contexts-only PATCH trips the "not set by the expected
+  app" trap. **Dance mechanics**: run the protection-drop /
+  merge / protection-restore as SEPARATE commands or
+  `;`-separated, NEVER `&&`-chained — the merge step reliably
+  exits 1 from a sub-worktree (parent owns `main`) even when the
+  remote merge succeeded, and `&&` would skip the
+  protection-restore, leaving `review_count=0` on main.
+
+- **Diagnosing "this branch cannot be merged", and "the command
+  errored but the merge actually succeeded"**:
+  - **`mergeStateStatus` is the first read, before CI logs** —
+    `gh pr view <n> --json mergeStateStatus,statusCheckRollup`.
+    The UI renders every case identically ("This branch cannot
+    be merged"): **DIRTY** = textual conflict (rebase + resolve);
+    **UNSTABLE** = a required check failing / fail-ignore-
+    tolerable (address checks or admin-merge); **BEHIND** = base
+    moved, needs fast-forward; **BLOCKED** = waiting on review /
+    required gate.
+  - **`gh pr merge --admin` errors from the LOCAL post-merge
+    step even when the REMOTE merge succeeded** — two shapes: a
+    non-worktree with diverged local main prints `fatal: Not
+    possible to fast-forward` (the local refresh failed, not the
+    merge); from a sub-worktree it exits 1 with `failed to run
+    git: fatal: 'main' is already used by worktree at <parent>`.
+    In BOTH, verify with `gh pr view <n> --json
+    state,mergedAt,mergeCommit` before retrying — a retry 404s
+    because the PR is already merged.
+  - **Batch-merge** — `gh pr list --json mergeable` returns
+    MERGEABLE for DRAFTS too (merge then errors "still a
+    draft"); filter `select(.mergeable=="MERGEABLE" and
+    .isDraft==false)`. An intentionally-failing diagnostic PR
+    marked draft is legitimate — close, don't merge.
+  - **`--delete-branch` on a base PR ORPHANS stacked PRs** whose
+    base is that branch — they auto-close and `gh api -f
+    state=open` 422s ("branch has been deleted"); the PR view
+    stays stuck at the old headRefOid. Prevention: before
+    admin-merging a base with `--delete-branch`, re-target
+    stacked PRs to main (`gh pr edit <stacked> --base main`);
+    check via `gh pr list --base <branch> --state open`.
+    Recovery: open a fresh PR targeting main.
 
 - **ClusterFuzzLite `--no-deps` misses transitive imports**:
   `.clusterfuzzlite/build.sh` used `pip3 install --no-deps`
@@ -1532,18 +1589,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   matters for `branches/<name>/protection/required_pull_request_reviews`
   updates during the temp-remove-review/admin-merge/restore
   dance.
-
-- **`gh pr merge --admin` prints a fast-forward warning even
-  when the remote merge succeeds**: After an admin-merge, the
-  CLI attempts a local fast-forward of your local main to
-  origin/main. If your local main diverged (e.g., you had
-  feature-branch commits before the squash), the CLI prints
-  `fatal: Not possible to fast-forward, aborting` and
-  `! warning: not possible to fast-forward to: "main"`. The
-  remote merge already succeeded — the warning is about the
-  local refresh failing. Always verify the actual merge state
-  via `gh pr view <n> --json state,mergedAt,mergeCommit`
-  before assuming the command failed.
 
 - **After a squash merge of a feature branch, local main can
   have "extra" commits that are already in the squash**: If
@@ -3066,23 +3111,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   explicitly at test-file top) rather than relying on
   the parallel-execution side effect.
 
-- **`gh pr merge --squash --admin` from a sub-
-  worktree exits non-zero but the remote merge
-  succeeds**: when running from
-  `.claude/worktrees/<name>/`, `gh pr merge` prints
-  `failed to run git: fatal: 'main' is already
-  used by worktree at '/Users/<...>/attune-ai'` —
-  the parent worktree owns `main` and the post-merge
-  local checkout step can't take it. The REMOTE
-  merge already succeeded by the time this error
-  fires. Distinct from the existing "fast-forward
-  warning when remote merge succeeds" lesson
-  (that's about the local fast-forward of `main`
-  failing after merge from a non-worktree). Always
-  verify with `gh pr view <PR> --json
-  state,mergedAt,mergeCommit` before retrying —
-  retry would 404 because the PR is already merged.
-
 - **When rebasing a long-lived branch, upstream
   fixup commits can be missed**: PR #242's rebase
   picked up PR #263 (which originally introduced a
@@ -3375,22 +3403,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   named both shipped). Don't pick one — replace with
   a static pointer to "the most recent spec's
   decisions.md."
-
-- **Batch-merging MERGEABLE PRs needs a draft filter
-  AND a fail-state read**: `gh pr list --json
-  mergeable` returns MERGEABLE for both
-  ready-to-merge AND draft PRs; the merge call
-  itself errors with "Pull Request is still a draft"
-  when you try. Filter the batch with `gh pr list
-  --json number,mergeable,isDraft --jq '.[] |
-  select(.mergeable=="MERGEABLE" and .isDraft==false)
-  | .number'` before iterating. Also: an
-  intentionally-failing diagnostic PR (like
-  `windows-memory-detection Phase 1`) marked draft
-  is a legitimate state — close, don't merge.
-  Diagnostic for "should this draft close?": does
-  the spec it served reference a closing PR? does a
-  successor PR ship the actual fix?
 
 - **Stale duplicate PRs: confirm via merged-commit
   grep, then close with a pointer**: when two
@@ -3826,38 +3838,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   'possibly delete if X' qualifiers require verifying
   both X and the alternative before acting" lesson —
   same shape, different mechanism.
-
-- **`gh pr merge <base> --squash --admin --delete-branch`
-  permanently orphans stacked PRs whose base is that
-  branch — they auto-close and CANNOT be reopened**: hit
-  2026-05-14 when admin-merging #324 (Phase 2 scope
-  picker) with `--delete-branch`. #326 (Phases 3+4) was
-  stacked on `feat/ops-runner-tier2-phase2` as its base
-  branch, not on `main`. GitHub auto-closed #326 the
-  moment the base branch was deleted. The fatal kicker:
-  `gh api .../pulls/326 -X PATCH -f state=open` returns
-  HTTP 422 with `"state cannot be changed. The
-  feat/ops-runner-tier2-phase2 branch has been
-  deleted"`. Force-pushing a rebased commit to the
-  stacked PR's branch doesn't help — GitHub's PR view
-  stays stuck at the OLD headRefOid even though the
-  branch ref on origin moved to the new SHA, because
-  the PR machinery is detached from the orphaned base.
-  Recovery: open a fresh PR with the same content
-  targeting `main` (`gh pr create --base main --head
-  <branch> --title ... --body ...`); reference the
-  orphaned PR in the body. Prevention: BEFORE admin-
-  merging a base PR with `--delete-branch`, re-target
-  every stacked PR to `main` via
-  `gh pr edit <stacked> --base main`. Alternative:
-  omit `--delete-branch` from the base merge and clean
-  up the branch manually after all dependents have
-  re-targeted or merged. Quick check before merging
-  any PR with `--delete-branch`:
-  `gh pr list --base <branch> --state open --json
-  number,headRefName --jq '.[] | "#\(.number)
-  \(.headRefName)"'` — if non-empty, retarget those
-  PRs first.
 
 - **`uv run python -m build` fails with `No module named
   build` — use `uv run --with build python -m build`
@@ -4306,36 +4286,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   destination branch tracks files your source branch
   doesn't, pop with `git checkout stash@{0} -- <files>`
   to force the overwrite, then drop manually.
-
-- **`mergeStateStatus: DIRTY` and `mergeStateStatus:
-  UNSTABLE` look identical in the GitHub UI ("This
-  branch cannot be merged") but need different
-  remedies — diagnose with `gh pr view` BEFORE
-  reading CI logs**: hit 2026-05-14 on PR #365. The
-  user asked me to "resolve issues" with the PR. My
-  instinct was to read failing test logs and find a
-  regression. But `gh pr view 365 --json
-  mergeStateStatus,statusCheckRollup` showed
-  `mergeStateStatus: DIRTY` with zero failing
-  checks — main had moved underneath the branch and
-  the conflict was structural, not behavioral. Fix
-  is `git fetch origin main && git rebase
-  origin/main` + resolve conflicts, not "find the
-  failing test." Recognition shape:
-  - **DIRTY** = textual merge conflict with the
-    target branch. Fix: rebase + resolve.
-  - **UNSTABLE** = mergeable but ≥1 required check
-    is failing OR fail-ignore-tolerable. Fix:
-    address the failing checks (or admin-merge if
-    they're structural fail-ignore guards).
-  - **BEHIND** = no conflicts but base branch moved;
-    GitHub wants a fast-forward update before
-    merge.
-  - **BLOCKED** = waiting on review or other
-    required gates.
-  The default `gh pr view` JSON output exposes this
-  field cleanly — make it the first read when a PR
-  "can't merge," not the last.
 
 - **CSS / static-file regex tests for "this rule
   must not exist" need comment stripping before
@@ -5834,37 +5784,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   CheckRun + StatusContext + RequiredStatusCheck records,
   not all of which carry the same fields. Same fix shape
   for `.workflowName`, `.detailsUrl`, etc.
-- **Required `security` check fires CANCELLED on every non-
-  dependabot PR — the guard-skip pattern collides with
-  branch protection**: the `Security Scan` workflow's
-  `security` job uses a job-level conditional that
-  cancels-on-skip when not running against a dependabot
-  PR. The cancelled status surfaces as a failed required
-  check in branch protection, blocking merge on EVERY
-  regular PR until manually rerun. Hit on three separate
-  PRs in one session (#477, #478, #480) — same fingerprint
-  each time. **Workaround that works:**
-  ```
-  URL=$(gh pr view <N> --json statusCheckRollup --jq \
-    '.statusCheckRollup[] | select(.name == "security") | .detailsUrl')
-  RUN=$(echo "$URL" | grep -oE 'runs/[0-9]+' | grep -oE '[0-9]+')
-  JOB=$(echo "$URL" | grep -oE 'job/[0-9]+' | grep -oE '[0-9]+')
-  gh run rerun "$RUN" --job "$JOB"
-  ```
-  Rerun typically lands SUCCESS — the second invocation
-  enters the dependabot-or-rerun branch and runs the real
-  scan. The proper fix is workflow- or branch-protection-
-  level: either remove `security` from
-  `required_status_checks` (it's also in the merged
-  rollup of `Run Security Scanner` which already runs),
-  or rewrite the workflow to emit SUCCESS instead of
-  CANCELLED for non-dependabot PRs. Until that's done,
-  budget ~30s per PR to rerun the security job. Pairs
-  with the existing "GitHub branch protection and
-  admin-merge — four interlocking constraints" lesson —
-  same root cause family (required-check semantics) but
-  a different specific failure (cancellation vs missing).
-
 - **xdist worker pollution from a stale module-level
   patch recurs in the SAME test file when new test files
   shift worker distribution — and the fix is to mirror the
@@ -6510,37 +6429,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (background CI activity that surfaces in the PR UI
   but isn\'t a merge-blocking failure).
 
-- **Admin-merge dance: run as separate commands or
-  `;`-separated, never `&&`-chained — the merge
-  step reliably exits 1 from a sub-worktree (per the
-  existing sub-worktree lesson) and an `&&` chain
-  stops the protection-restore from running**: hit
-  2026-06-02 on PRs #556 and #558 during the v7.3.1
-  release sequence. Wrote the dance as
-  `gh api .../required_approving_review_count=0 &&
-  gh pr merge --squash --admin --delete-branch &&
-  gh api .../required_approving_review_count=1`.
-  Run from a sub-worktree, step 2 exited 1 because
-  the parent worktree owns `main` so the post-merge
-  local checkout step couldn\'t run (per the existing
-  "gh pr merge --squash --admin from a sub-worktree
-  exits non-zero" lesson) — but the REMOTE merge
-  succeeded. The `&&` chain short-circuited and
-  step 3 never ran, leaving
-  `required_approving_review_count=0` on main. Had
-  to manually re-issue step 3 to restore protection.
-  **Fix**: use `;` (run regardless) or three
-  independent commands. The protection-restore must
-  run even when the merge command exits non-zero
-  because that exit code does NOT mean the merge
-  failed when running from a sub-worktree. From the
-  parent worktree (where `main` is owned), the
-  merge step exits 0 and `&&` works — but be
-  defensive across both surfaces. Pairs with the
-  existing sub-worktree-merge-error lesson — that
-  one names the cause; this one names the dance-
-  specific consequence.
-
 - **"Create a new worktree to continue last session"
   usually means "use the existing worktree on that
   branch," not "create a second one" — git refuses
@@ -6825,43 +6713,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / "create a new worktree to continue last session" lessons —
   same family (correctly locating the right worktree+branch for a
   piece of work), this one is the commit-destination surface.
-
-- **The recurring PR "merge tax" had two mechanical causes — both
-  now fixed structurally — and the prior 2026-06-03 diagnosis was
-  partly wrong**: that lesson blamed `auto-approve-owner` *skipping*
-  on an actor-login guard mismatch (`github.actor == 'patrickroebuck'`
-  vs the real login `silversurfer562`). By 2026-06-03 the guard had
-  ALREADY been corrected to `silversurfer562`, yet the job kept
-  *failing* (not skipping). Real cause (Tax 1 — the review gate):
-  `auto-approve-owner` in `.github/workflows/auto-approve.yml` had
-  `timeout-minutes: 5`, but its `lewagon/wait-on-check-action` step
-  used `check-regexp: ^(test |lint|Analyze )` — which matches the
-  ~20-min Windows `test ` lanes. It timed out at 5 min before the
-  approve step ran → no approval → `required_approving_review_count:
-  1` unmet → every owner PR sat `BLOCKED`. Tax 2 (the security
-  check): `security` was a REQUIRED status check, but its job runs
-  bandit/safety with `|| true` on every step (never gates on
-  findings — toothless) AND has `concurrency.cancel-in-progress:
-  true`, so any superseding push cancels the in-flight run and a
-  cancelled-but-required check blocks until rerun. **Fix applied
-  (all reversible `gh api` PATCHes):** (1) `required_approving_review_count`
-  1→0 on `branches/main/protection/required_pull_request_reviews`
-  (solo-dev — self-approval is theater); (2) removed `security` from
-  `required_status_checks` by PATCHing the FULL `checks` array
-  minus that entry, preserving exact app_ids (15368 GitHub Actions,
-  57789 CodeQL/Advanced Security) per the required-check-app-id rule
-  — a contexts-only PATCH risks the "not set by the expected app"
-  trap; (3) deleted the dead `auto-approve-owner` job (PR #598).
-  Result: owner PRs with green required checks now merge via the
-  normal button — no admin-override dance, no temp-remove-reviews.
-  CodeQL (still required) + the informational `Run Security Scanner`
-  keep real security coverage. **Diagnostic for next time:** when a
-  PR is `BLOCKED` with every visible check green, read
-  `gh api repos/<o>/<r>/branches/main/protection` FIRST to see which
-  checks are actually required and whether the gate is reviews vs a
-  required check — don't chase the scary-red NON-required checks
-  (this is the verify-first-on-infra discipline applied to the gate
-  itself).
 
 - **Claude Code's `Stop` hook fires per-turn, not per-session — gate
   once-per-session work with a sentinel + a utilization threshold**:
