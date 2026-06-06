@@ -1,8 +1,9 @@
 # Design: Workflow result formatting
 
 > **Status:** plan (2026-06-06) — resolves the 5 items the
-> [proposal](proposal.md) "Next step" named. Grounded in the current
-> code state (see Findings). Awaiting approval before implementation.
+> [proposal](proposal.md) "Next step" named, plus the 3 plan questions
+> (see Resolved). Grounded in the current code state (see Findings).
+> Ready for implementation on merge.
 
 The [proposal](proposal.md) is approved and settled the *primitives*
 (reuse `WorkflowReport`, grow `sections: list[Section]` with tiers, one
@@ -162,13 +163,17 @@ Bounded PRs: (T0 test audit) → (T1 data model + delete old) →
 (T4 CLI `rich.markdown`) → (T5 MCP verbatim) → (T6 dashboard panel) →
 (T7 release-prep migration) → (T8+ migrate the rest by D5 rank).
 
-## Open questions for approval
+## Resolved (2026-06-06)
 
-1. **Delete the old `output.py` rich path in T1**, or deprecate it for
-   one release? (Recommend delete — it's unwired; deprecation adds a
-   dead parallel model.)
-2. **Renderer module name:** `attune.voice.report_renderer` (proposed)
-   vs `attune.workflows.report_render`. (Recommend voice — it's the
-   rendering layer; output.py stays pure data.)
-3. **`show_cost_metrics` config key name** — confirm `show_cost_metrics`
-   vs `show_cost` / `cost_metrics`.
+The three plan questions are decided:
+
+1. **Delete the old unwired `output.py` rich path in T1** — not
+   deprecate. It has no real consumers (Findings), so a deprecation
+   window would only carry a dead parallel model.
+2. **Renderer module: `attune.voice.report_renderer`** — rendering is
+   the voice layer's job; `output.py` stays pure data.
+3. **Config key: `show_cost_metrics`** (`bool | None`, `None` = auto:
+   on iff `ANTHROPIC_API_KEY` is set).
+
+Plan is fully specified; implementation proceeds as the T0–T8+ sequence
+on merge.
