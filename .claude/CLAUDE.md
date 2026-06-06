@@ -273,29 +273,92 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and markers leaking into code blocks. Use plain ASCII like
   `--- CODE START ---` / `--- CODE END ---` instead.
 
-- **Pre-commit stash conflicts with auto-fix hooks — one
-  root cause, several symptoms**: When black/ruff auto-fix
-  staged files AND any tracked file is unstaged (even
-  unrelated — `uv.lock`, a JSON fixture, anything),
-  pre-commit's stash/restore cycle conflicts with the fixes
-  and the commit fails (sometimes silently, sometimes in a
-  loop). Three remediation patterns: (1) **Preempt the
-  hooks**: run `uv run --with pre-commit pre-commit run
-  black --files <files>` (pinned tool, not venv) and
-  `uv run ruff check --fix <files>` manually before
-  staging, so hooks see already-clean files. The pinned
-  pre-commit version is the one that will actually run, so
-  use it — venv versions can format differently. (2)
-  **Quarantine the unstaged**: `git add` all related files
-  OR `git stash push <unrelated files>` before committing,
-  then `git stash pop` after. (3) **Re-stage on hook
-  failure**: if a commit fails because black reformatted
-  staged files (commit succeeded format-wise but was
-  rejected because content changed), the reformatted files
-  are in the working tree but unstaged — `git add <files>`
-  again and retry. This is distinct from the stash-conflict
-  loop: here the hook ran successfully, the commit just
-  needs to be repeated.
+### Pre-commit & ruff — auto-fix, staging, and rule gotchas
+
+- **Pre-commit black/ruff/detect-secrets auto-fix vs staging —
+  the dance, one root cause and several symptoms**: the
+  auto-fix hooks modify staged files during `git commit`,
+  which interacts badly with staging. Core rule: **pre-flight
+  the PINNED hooks before `git add`** so they see already-clean
+  files. The symptoms and remedies:
+  - **Pre-flight the pinned tool** — run `uv run --with
+    pre-commit pre-commit run black --files <f>` (and `ruff`)
+    before staging. Use the PINNED version, not `.venv`'s —
+    they can format differently (saw py3.10 venv black leave a
+    triple-quoted layout that pinned black reformatted). Also
+    pre-flight `uv run ruff check <f>` for the non-autofixable
+    lint (F841, E402) that the format hooks don't catch. This
+    avoids the stash/restore dance entirely.
+  - **Stash conflict** — if a hook auto-fixed staged files AND
+    any tracked file is unstaged (even unrelated — `uv.lock`, a
+    fixture), pre-commit's stash/restore cycle conflicts and
+    the commit fails (silently or in a loop). Quarantine:
+    `git add` the related files OR `git stash push <unrelated>`,
+    commit, then pop.
+  - **Re-stage after auto-fix** — when a hook reformats staged
+    files, the commit fails but the fixes land in the working
+    tree UNSTAGED; `git add <files>` again and retry. Distinct
+    from the stash conflict: here the hook ran fine and there
+    are no unstaged siblings — the commit just needs repeating.
+  - **`git commit -q` can exit 0 yet SKIP the commit** — when
+    end-of-file-fixer / trailing-whitespace modify files, the
+    tail shows "Passed" with no "Aborted" line, but the commit
+    is skipped and the files left re-staged. ALWAYS verify with
+    `git log --oneline -1` / `git status --short` after
+    committing — no error message ≠ commit landed.
+  - **detect-secrets** — (a) it flags obvious placeholders like
+    `"fake"` in `{"ANTHROPIC_API_KEY": "fake"}` via the
+    Secret-Keyword heuristic (even a 4-char string fires); add
+    `# pragma: allowlist secret` on the line. (b) when the hook
+    bumps `.secrets.baseline`'s schema (e.g. 1.4.0→1.5.0), a
+    previously-stashed `.secrets.baseline` reverts the bump on
+    `git stash pop` — after popping, `git diff .secrets.baseline`
+    then `git checkout .secrets.baseline` to discard the revert.
+  - **`SKIP=hookname` ≠ `--no-verify`** — `SKIP=check-docs-
+    freshness git commit …` runs every OTHER hook and skips
+    only the named one (surgical; defensible when one hook
+    fails on state orthogonal to the commit). `--no-verify`
+    skips ALL hooks and is forbidden by the rules; `SKIP=` is
+    the allowed alternative.
+
+- **The Claude Code edit-formatter strips imports added before
+  their usage — add usage first, import second**: ruff/black
+  autofix runs on EVERY Edit in the CC hook pipeline, and
+  ruff's F401 fix removes any import not yet referenced (at
+  module scope OR in a function body). Adding an import in one
+  edit and its usage in a later edit silently loses the import
+  (the edit succeeds, the import vanishes). Robust sequence:
+  add the *usage* first, the import second — once the name is
+  referenced, F401 leaves it alone. Two fixes: (1) introduce
+  the import in the SAME edit that first uses it; (2) scope the
+  import inside the function body that uses it (the detector
+  never fires even mid-edit) — more robust for tests.
+
+- **Ruff rule gotchas — rules that fire on correct code**:
+  - **`pytest.ini` parsed as Python** — committing `pytest.ini`
+    alongside `.py` makes ruff try to parse it as Python
+    (syntax errors); commit it in a SEPARATE commit from Python
+    files.
+  - **E402 after `pytest.importorskip`** — imports below an
+    `importorskip(...)` call get flagged E402 (not-at-top); add
+    `# noqa: E402` per import. Intentional pattern; ruff can't
+    see the skip.
+  - **B904 not auto-fixable** — `ruff check --fix` won't add
+    `raise X from e`; edit manually (`from e` when the exc is
+    captured, `from None` to suppress). After fixing all,
+    remove B904 from the ignore list to enforce going forward.
+  - **B023 loop-variable capture** — a closure defined inside a
+    loop that references a loop var trips B023 even when it's
+    only invoked within the same iteration. Fix: extract the
+    helper to module level and pass the var as a parameter
+    (cleanest, also testable in isolation) — not the
+    `def f(x, _v=loopvar)` default-arg trick or `# noqa: B023`.
+  - **`# noqa: F401` re-exports break on satellite-file
+    deletion** — `from .x import Y  # noqa: F401` re-exports
+    survive lint but break at RUNTIME if the satellite file is
+    deleted (ruff doesn't check import resolution). Before
+    deleting a workflow satellite file, grep the parent for
+    `noqa: F401` imports from it AND check `__all__`.
 
 - **Next.js shared data libs prevent page duplication**: When multiple
   pages need the same data array (e.g. wizard list), extract it to
@@ -315,11 +378,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   bridge. The website must explain this distinction or users assume
   overlap.
 
-- **ruff parses pytest.ini as Python**: When committing `pytest.ini`
-  alongside `.py` files, ruff's pre-commit hook tries to parse it as
-  Python and produces syntax errors. Commit `pytest.ini` in a separate
-  commit from Python files so the ruff hook only sees valid Python.
-
 - **Background processes from previous sessions persist across
   restarts**: Long-running processes started by Claude (e.g.
   `npm run dev`) survive session end and keep running silently.
@@ -327,13 +385,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   next session. Always `kill` them explicitly when removing a
   feature, and check `ps aux` if unexpected behavior is observed
   (Chrome tabs opening, ports already in use, etc.).
-
-- **`pytest.importorskip` triggers ruff E402**: Test files that call
-  `pytest.importorskip(...)` before optional imports cause ruff to
-  flag those imports as E402 (module level import not at top of file).
-  Fix: add `# noqa: E402` to each import line after the `importorskip`
-  call. The pattern is intentional and correct — ruff just can't see
-  the skip logic.
 
 - **`**kwargs` collides with explicit params of the same name**: If a
   helper like `_result_from_plan(plan, status, **kwargs)` builds a
@@ -522,14 +573,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   behavior — the outer try/except only fires if `_run_simplify`
   itself raises, not if individual files fail.
 
-- **Pre-commit auto-fix requires re-stage before retry**: When
-  black/ruff auto-fix staged files during `git commit`, the
-  commit fails but the fixes are applied to the working tree.
-  The files must be `git add`-ed again before retrying the
-  commit. This is different from the stash conflict issue —
-  here there are no unstaged siblings, just the hook modifying
-  staged files.
-
 - **`datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
   through the entire codebase**: Replacing `utcnow()` (naive) with
   `now(timezone.utc)` (aware) in source code causes `TypeError:
@@ -573,12 +616,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `type: ignore` comments. Always re-run the tool before assuming
   old error counts are still accurate — they may have been fixed
   as a side effect of other refactors.
-
-- **B904 (`raise X from e`) is not auto-fixable by ruff**: Despite
-  `ruff check --fix`, B904 violations require manual edits. Use
-  `from e` when the exception variable is captured, `from None`
-  when suppressing the original. After fixing all violations,
-  remove B904 from the ruff ignore list to enforce going forward.
 
 - **`claude-agent-sdk` is now a core dependency of attune-ai**:
   As of v4.2.0, the Agent SDK is included in core dependencies.
@@ -1183,14 +1220,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `"command": "uv", "args": ["run", "--from", "attune-ai", ...]`
   to ensure the correct package resolution.
 
-- **Ruff auto-fix strips imports before usage code exists**:
-  When adding `from mcp.server import Server` at the top of a
-  file but the code using `Server(...)` is at the bottom (not
-  yet written), ruff's `--fix` removes the import as unused.
-  The edit succeeds but the import silently vanishes. Fix: add
-  imports and their usage code in the same edit, or add usage
-  first then imports.
-
 - **Template generators overwrite hand-written files**: The
   `generate_concept_templates.py` auto-discovery creates bland
   stubs that overwrite rich hand-written concept files. Fix:
@@ -1222,15 +1251,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `total_cost` raises `TypeError`. Read the dataclass definition
   (`data_classes.py` or equivalent) before constructing; named
   kwargs only, no positional bets.
-
-- **`# noqa: F401` re-exports break silently on satellite file
-  deletion**: SDK-native workflows re-export constants from legacy
-  satellite files (e.g. `from .security_audit_patterns import
-  SECURITY_PATTERNS  # noqa: F401`). Deleting the satellite file
-  breaks the import at runtime, not at lint time (ruff doesn't
-  check import resolution). Before deleting any workflow satellite
-  file, grep the parent workflow for `noqa: F401` imports from it.
-  Also check `__all__` — it may reference the re-exported names.
 
 - **Re-export accessibility tests are scattered across batch files**:
   Tests like `test_format_code_review_report_accessible` appear in
@@ -1416,27 +1436,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   pytest` after `uv sync --extra developer`. Fix: sync both
   with `uv sync --extra dev --extra developer`.
 
-- **`git stash pop` after pre-commit can resurrect stale
-  tool state**: When pre-commit's `detect-secrets` hook
-  bumps `.secrets.baseline`'s schema version (e.g.
-  `1.4.0 → 1.5.0`) during a commit, a previously stashed
-  copy of `.secrets.baseline` will conflict on `git stash
-  pop` and revert the schema bump. After popping, always
-  `git diff .secrets.baseline` and `git checkout
-  .secrets.baseline` to discard any reverted changes that
-  came from the stash.
-
-- **`detect-secrets` flags `"fake"` as a secret in test
-  fixtures**: The `Secret Keyword` heuristic matches any
-  string assigned to a key that looks like a credential
-  variable, including the obvious placeholder `"fake"` in
-  `patch.dict("os.environ", {"ANTHROPIC_API_KEY": "fake"})`.
-  Add `# pragma: allowlist secret` on the same line to
-  silence it. This is the same pattern as the existing
-  `# pragma: allowlist secret` lessons but the trigger
-  string is non-obvious — even a 4-char placeholder fires
-  it.
-
 - **Unused `__init__.py` re-exports become invisible
   runtime deps**: Adding `from sibling_pkg.foo import Bar`
   to a package's `__init__.py` for "backward compat" makes
@@ -1463,19 +1462,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   except ImportError: ...` — so the loss was safe — but
   this is the kind of thing that breaks silently in
   production if you skip the verification step.
-
-- **Pre-flight pre-commit's pinned black/ruff on new files
-  before staging**: Running `.venv/bin/python -m black` or
-  `uv run black` against a file doesn't guarantee pre-commit
-  will leave it alone — pre-commit pins its own black/ruff
-  versions that can format differently than whatever is in
-  `.venv` (I saw py3.10 black leave a file "clean" while
-  pre-commit's black reformatted triple-quoted-string
-  argument layouts). Fix: use the pinned tool directly —
-  `uv run --with pre-commit pre-commit run black --files
-  path/to/file.py` — before `git add`. This catches format
-  mismatches with the exact version pre-commit will enforce,
-  avoiding the stash/restore dance on commit.
 
 - **Release branches carry unmerged commits that feature
   branches may depend on**: `release/v5.10.0` had 8 commits
@@ -1588,16 +1574,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   doesn't replay any commits, just moves the branch pointer.
   Useful when local main is strictly behind origin/main and
   you have unrelated in-flight work.
-
-- **Selective hook skip with `SKIP=hookname` is not the same
-  as `--no-verify`**: `SKIP=check-docs-freshness git commit …`
-  runs every other pre-commit hook (black, ruff, bandit,
-  detect-secrets, etc.) and skips only the named one. This is
-  defensible when one specific hook fails on state orthogonal
-  to the commit (e.g., docs-freshness flagging pre-existing
-  template staleness when the commit is unrelated). `--no-verify`
-  skips ALL hooks and is what the rules forbid; `SKIP=` is the
-  surgical alternative.
 
 - **uv.lock can drift from pyproject.toml on shared branches**:
   Saw this on origin/main — pyproject.toml had
@@ -1783,30 +1759,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `claude_agent_sdk.ResultMessage(subtype="success", ...)`.
   Use `dataclasses.fields(Cls)` to discover the real
   field list.
-
-- **Formatter strips imports that are "unused" at the
-  moment you save, even if a later edit will use them**:
-  When staging multiple edits that together introduce a
-  new import, the ruff/black autofix can run between
-  edits and remove the import as unused. Happens reliably
-  in the Claude Code hook pipeline. Two fixes:
-  (1) introduce the import in the SAME edit that first
-  uses it, not in a preceding edit; (2) scope the import
-  inside the function body that uses it so the unused-
-  import detector never fires even if the file is saved
-  mid-edit. Scoping is more robust for tests.
-
-- **`git commit -q` can exit 0 with pre-commit hook
-  feedback that looks like success but isn't**: When
-  pre-commit hooks (end-of-file-fixer, trailing-
-  whitespace) modify files during the commit, the tail
-  output shows "Passed" for each hook and gives no
-  explicit "Aborted" line — but the commit is skipped
-  and the files are left re-staged for retry. Always
-  verify with `git log --oneline -1` or `git status
-  --short` immediately after `git commit`; don't trust
-  that absence-of-error-message means the commit
-  landed.
 
 - **Golden-query test fixtures must match the actual
   corpus layout, not an assumed one**: When writing a
@@ -2130,20 +2082,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   block with `type == "tool_use"`, read `.input`. Raise
   if no tool-use block is present (indicates a
   capability/version mismatch, not a parse error).
-
-- **Re-adding an import after the formatter strips it —
-  use function-body usage as the anchor, not trust that
-  "I'll import it first"**: the edit-formatter cycle runs
-  on every Edit, and ruff's F401 fix removes any import
-  not currently referenced at module scope OR in a
-  function body. The robust sequence when adding an
-  import + new usage across edits: (1) add the *usage*
-  in a function body first, (2) add the import in a
-  follow-up edit — the name is now referenced so F401
-  leaves it alone. This extends the existing
-  "Formatter strips imports" lesson with the concrete
-  workaround: add usage first, import second, never the
-  other way around.
 
 - **Forced cite-per-claim prompting is the structural
   lever for RAG faithfulness; soft grounding
@@ -6301,35 +6239,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `ls docs/specs/<spec>/` and check which artifact files
   exist. Phase X authors artifact X; presence-on-disk tells
   you whether the phase is done. Only Phase 4 produces code.
-
-- **Per-loop function definitions trigger ruff B023
-  (loop-variable capture) even when the closure is invoked
-  only within the same iteration — extract to module-level
-  helper instead of suppressing**: hit 2026-05-31 building
-  `scripts/audit_docs_wiring.py`. Pattern that fires:
-  ```python
-  for md in docs.glob("*.md"):
-      line_starts = compute_starts(md.read_text())
-      def offset_to_line(offset: int) -> int:
-          return bisect.bisect_right(line_starts, offset)
-      for match in pattern.finditer(text):
-          finding.line = offset_to_line(match.start())
-  ```
-  Ruff B023 flags `line_starts` as captured by closure
-  reference. In this exact code the closure is only invoked
-  within the same outer iteration, so the late-binding bug
-  ruff is warning about can't actually occur — but ruff
-  can't see that. Three fixes ranked: (a) extract the
-  helper to module level and pass the variable as a
-  parameter (cleanest — clean code, lint-silent, also
-  testable in isolation); (b) use a default-arg trick
-  (`def offset_to_line(offset, _starts=line_starts):`) —
-  ugly, signals "I'm working around lint"; (c)
-  `# noqa: B023` — silences without cleaning up. Pick (a)
-  by default. The extracted helper often also wants
-  `_compute_line_starts(text)` separated, which composes
-  nicely (testable in isolation, no per-iteration cost
-  surprises).
 
 - **`scripts/` is not a Python package in attune-ai — adding
   a directory `scripts/foo/` and a file `scripts/foo.py` is
