@@ -9,7 +9,7 @@
 
 ## Phase 1: Requirements
 
-**Status**: approved (design + tasks complete; implemented in one PR —
+**Status**: complete (shipped — cli_commands/_exit_codes.py exit-code contract)
 see `design.md`, `tasks.md`)
 
 ### Problem statement

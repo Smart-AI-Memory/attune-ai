@@ -9,7 +9,7 @@
 
 ## Phase 1: Requirements
 
-**Status**: approved
+**Status**: complete (shipped — completion_candidates.js + dismiss route)
 
 ### Problem statement
 
