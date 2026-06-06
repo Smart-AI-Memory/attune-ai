@@ -236,10 +236,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   instead — same coverage data, no instrumentation
   interaction with conftest's lazy workflow loader.
 
-- **Windows CI encoding**: Always use `encoding="utf-8"` on
-  `Path.read_text()` calls. Windows defaults to `cp1252` which
-  fails on any file containing non-ASCII bytes.
-
 - **Test mocks must match imports**: When a function changes its
   import path, all test mocks must be updated to match or side
   effects are silently ignored and assertions fail.
@@ -666,13 +662,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the entire module — partial fixes leave runtime crashes in
   untouched calls.
 
-- **Windows `Path.resolve()` prepends the drive letter to Unix
-  paths**: `Path("/code").resolve()` on Windows returns
-  `D:\code`, not `/code`. Tests that assert exact path strings
-  passed through `_validate_file_path` fail on Windows CI. Fix:
-  patch `_validate_file_path` in tests that verify handler logic
-  (not path validation) so paths pass through unchanged.
-
 - **Stacked `@patch` decorators inject args bottom-up**: When a
   test has `@patch("A") @patch("B") def test(self, mock_b,
   mock_a)`, the innermost (bottom) decorator's mock is the first
@@ -684,13 +673,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   files**: If tests call `read_spec(".claude/plans/foo.md")` but
   `.gitignore` excludes `.claude/plans/`, CI will never have the
   file. Either track the files or skip the tests when absent.
-
-- **Windows `time.time()` can return 0.0 duration for fast
-  operations**: On Windows 3.10-3.12, `time.time()` has ~15ms
-  resolution. Tests asserting `execution_time > 0` fail when
-  the operation completes within one tick. Use
-  `time.perf_counter()` for sub-millisecond timing, or assert
-  `>= 0` if the operation may be instant.
 
 - **`config.py` alongside `config/` creates a mypy duplicate
   module**: Having both `src/attune/config.py` and
@@ -1291,14 +1273,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `git tag -d v5.8.0 && git tag -a v5.8.0 -m "..." && git push
   origin v5.8.0 --force`. GitHub tag protection may block the
   force-push — see the existing lesson on protected tags.
-- **`Path.rename()` fails on Windows when target exists**: On
-  Linux/macOS, `Path.rename()` atomically overwrites the target.
-  On Windows, it raises `FileExistsError` if the target already
-  exists. Use `Path.replace()` instead — it works cross-platform.
-  This caused 2 Windows-only CI failures in `help/session.py`
-  where the atomic-write pattern wrote to `.json.tmp` then
-  renamed to `.json`.
-
 - **PyPI publishing: prefer GitHub Actions trusted publishing
   (OIDC), not local tokens**: The repo has
   `.github/workflows/publish-pypi.yml` configured with trusted
@@ -2993,7 +2967,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   what" confusion that two adjacent unreleased
   sections create.
 
-
 ### Worktrees — running & testing code resolves to the WRONG place
 
 - **The editable install's MAPPING points `attune` at the MAIN
@@ -3151,49 +3124,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   qualifiers" lesson — same family (spec/audit text goes
   stale; verify against current code before acting).
 
-- **xdist worker crashes on Windows can come from
-  repeated socket probes in fixture/helper code,
-  not from the test itself**:
-  `MemoryFeatures.list_all_features()` iterated 5
-  Redis features and called `is_redis_running()`
-  per feature. Each call opened a real socket to
-  localhost:6379 with a 1s connect timeout. Under
-  xdist on Windows with 12 workers concurrently
-  probing the same closed port, the cumulative
-  socket pressure crashed workers — pytest
-  reported `worker 'gw1' crashed` with no
-  traceback. Same pattern in
-  `BaseOperations.__init__` which blocks ~17s on
-  `_create_client_with_retry` (3 retries × 5s
-  socket timeout) when no Redis is running.
-  Fixes: (1) production-side, dedupe repeated
-  probes in feature-listing helpers (one probe
-  per call, not N); (2) test-side, patch
-  `_create_client_with_retry` to skip the retry
-  loop when the test doesn't care about
-  connection. Grep for `is_X_running` /
-  `_create_X_with_retry` patterns in any code
-  reached from unit tests under xdist — repeated
-  network probes are the smell.
-
-- **`subprocess.run(text=True, ...)` with no
-  explicit `encoding` on Windows can yield
-  `stdout=None`, not garbage and not exception**:
-  extends the existing Windows-encoding lesson
-  with a specific failure mode. When a subprocess
-  emits non-ASCII bytes (e.g. `⚠️` U+26A0) and the
-  parent reads with `subprocess.run(text=True,
-  capture_output=True)` but no explicit
-  `encoding`, the parent uses cp1252 by default on
-  Windows runners. Observed failure mode:
-  `CompletedProcess.stdout = None`, surfacing as
-  `TypeError: argument of type 'NoneType' is not
-  iterable` when the test asserts `"x" in
-  proc.stdout`. Always pass `encoding="utf-8",
-  errors="replace"` on `subprocess.run` when the
-  child may emit non-ASCII. Same fix shape as the
-  `Path.read_text(encoding="utf-8")` lesson.
-
 - **`gh workflow run --ref <tag>` validates the
   `workflow_dispatch` trigger against the workflow file
   at the SPECIFIED REF, not at the default branch**:
@@ -3267,45 +3197,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (delete the dead `patch.dict`, or `import pkg.submodule`
   explicitly at test-file top) rather than relying on
   the parallel-execution side effect.
-
-- **Restoring parallelism exposes Windows xdist worker
-  crashes that `-n 1` was hiding by being too slow**:
-  When PR #242 flipped to `-n auto`, the Windows lanes
-  finished within timeout for the first time and
-  surfaced 4 worker crashes (`test_memory_features.py`
-  × 2, `test_redis_auto_detect.py`, plus 1
-  TypeError-NoneType in
-  `test_session_continuity_io.py`). With `-n 1`, those
-  tests would have hit the 75-min job timeout before
-  reaching them. Lesson: when restoring parallelism
-  after a sequential cap, expect to find platform-
-  specific failures that were hidden not by serial
-  execution itself but by the suite never completing
-  on the slower platforms. Plan for a dedicated
-  follow-up spec to characterize and fix the platform
-  fragility — don't iterate ad-hoc in the original
-  restoration PR. (Convert to draft + write a deferral
-  comment that enumerates each failure and links to a
-  separate investigation track.)
-
-- **`path.endswith("/docs/specs")` fails on Windows;
-  use `os.path.join("docs", "specs")` for cross-platform
-  suffix checks**: Path-suffix assertions in tests
-  routinely break on Windows because the resolved
-  filesystem paths use `\` separators. The bug doesn't
-  surface in Linux CI or local Mac dev, only when
-  Windows runners actually finish (which they sometimes
-  don't under `-n 1`). Fix pattern:
-  ```python
-  import os
-  assert body["root"].endswith(os.path.join("docs", "specs"))
-  ```
-  Generalize: any test asserting on path suffixes should
-  use `os.sep` or `os.path.join` for the platform-
-  agnostic separator, never a hardcoded literal `/`.
-  Doubles as a quick grep target when triaging Windows
-  CI failures: `grep -r 'endswith("/' tests/` catches
-  the antipattern.
 
 - **`gh pr merge --squash --admin` from a sub-
   worktree exits non-zero but the remote merge
@@ -4712,34 +4603,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   checks` reads) pass the classifier fine and are the
   right home for unattended logic during long CI waits.
 
-- **`str.replace("/", X)` on a resolved `Path` is silently
-  broken on Windows — and the downstream `Path / encoded`
-  concatenation silently discards the prefix**: pairs with
-  the existing "Windows `Path.resolve()` prepends the drive
-  letter" lesson but covers a sharper failure mode. Code
-  like `str(Path(p).resolve()).replace("/", "-")` (used to
-  encode project paths to match Claude Code's
-  `~/.claude/projects/<encoded>/` convention) works on POSIX
-  but produces a string with literal backslashes on Windows.
-  The subtle kill: when that backslash-laden "encoded" string
-  is then used as `Path.home() / ".claude" / "projects" /
-  encoded`, pathlib sees the `D:\` prefix INSIDE the rightmost
-  segment and treats the whole thing as an absolute path —
-  silently discarding the `~/.claude/projects/` prefix. No
-  exception, no warning. Observed symptom in CI:
-  `assert sessions_dir.parent.parent.name == ".claude"` →
-  `AssertionError: assert 'pytest-0' == '.claude'` (the dir
-  resolved to the tmp tree itself, not under `.claude/`).
-  Fix: replace BOTH separators —
-  `.replace("/", "-").replace("\\", "-")`. POSIX paths have
-  no backslashes so this is a no-op there. Cross-platform
-  regression test pattern: pass a literal-backslash input
-  string (e.g. `"fake\\drive\\project"`) — on POSIX it's a
-  single filename containing backslashes, on Windows it's a
-  real path; either way the encoder must return a string
-  with no surviving separators. Lands in PR #382 alongside
-  the fix to `src/attune/ops/data.py::_encoded_project_path`.
-
 - **Admin-merging a PR before Windows lanes complete buries
   a real bug on main**: extends the existing "Admin-merging
   a deletion PR without checking the `build` docs check"
@@ -4855,41 +4718,117 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   otherwise the first push surfaces it and costs a
   force-push or per-secret unblock.
 
-- **Cross-platform path handling has at least FOUR Windows-
-  specific surfaces, not one — plan to hit all of them at
-  once or expect N rounds of CI**: extends the existing
-  ``str.replace("/", X)`` and ``Path.resolve() drive
-  letter`` lessons. Iterating on the ops-sessions-page
-  Windows fix on 2026-05-15 took **three rounds** of CI
-  (~13 min each) because each fix unblocked the next layer:
-  (1) **Backslash separators in resolved paths** — POSIX
-  `/` and Windows `\\` need to be replaced. (2) **Drive-
-  letter colons** — `C:` survives backslash replacement
-  and triggers pathlib's drive-specifier handling on
-  subsequent path concatenation (silent prefix discard).
-  Strip `:` too. (3) **`str(Path)` produces native
-  separators** — on Windows, ``str(some_path)`` returns
-  backslash form. Any code that builds a DISPLAY string
-  from a Path via ``str()`` will show backslashes on
-  Windows; tests asserting forward-slash output will fail.
-  Fix: ``.as_posix()`` for display paths. (4) **`Path.home
-  ()` reads `USERPROFILE`, not `HOME`, on Windows** — a
-  test that does ``monkeypatch.setenv("HOME", ...)`` will
-  work on POSIX but silently no-op on Windows, leaving
-  ``Path.home()`` to return the real user-profile dir.
-  Fix: set BOTH env vars (helper function with one call).
-  Pattern recognition: when you're starting the SECOND
-  Windows-fix iteration, stop and either (a) plan all
-  four mitigations preemptively, or (b) spin up a fast-
-  feedback channel (workflow_dispatch one-shot or local
-  Windows VM). The amortized cost flips after round 3.
-  See the "Windows debug one-shot" workflow (#386) for
-  the workflow_dispatch route. Also: a defensive encoder
-  shape like ``re.sub(r"[\\\\/:]", "-", resolved)`` is
-  preferable to chained ``.replace()`` calls because new
-  Windows-special chars (CRLF in test fixtures, MAX_PATH
-  long-path quirks, NTFS reserved names) get caught by
-  the same surface.
+### Windows / cross-platform — one divergence, many surfaces
+
+- **Cross-platform path/string/encoding handling has many
+  Windows-specific surfaces — plan to hit ALL of them at once
+  or pay N rounds of ~13-min Windows CI**: each fix unblocks
+  the next layer, so iterating one-surface-at-a-time is a
+  tar-pit (the ops-sessions-page fix took three CI rounds,
+  2026-05-15). When you start the SECOND Windows-path fix,
+  stop and either plan every mitigation below preemptively, or
+  open a fast-feedback channel (the `workflow_dispatch`
+  "Windows debug one-shot" #386, or a local Windows VM).
+  Amortized cost flips after round 3. The surfaces, each with
+  its fix:
+  - **Drive letter on `resolve()`** — `Path("/code").resolve()`
+    returns `D:\code`, not `/code`. Tests asserting exact path
+    strings through `_validate_file_path` fail; patch it to
+    pass paths unchanged in handler-logic tests.
+  - **Separators survive `str.replace("/", X)`** —
+    `str(Path(p).resolve()).replace("/", "-")` produces literal
+    backslashes on Windows. The subtle kill: feed that
+    backslash-laden string back as a Path segment
+    (`Path.home() / ".claude" / "projects" / encoded`) and
+    pathlib sees the `D:\` prefix INSIDE the segment, treats
+    the whole thing as absolute, and SILENTLY discards the
+    prefix — no exception (symptom:
+    `assert sessions_dir.parent.parent.name == ".claude"` →
+    `'pytest-0' == '.claude'`). Fix: replace BOTH separators
+    AND the drive colon — prefer the defensive
+    `re.sub(r"[\\/:]", "-", resolved)` over chained
+    `.replace()` (it also catches future Windows-special chars:
+    CRLF, MAX_PATH, NTFS reserved names). Regression test: pass
+    a literal-backslash input (`"fake\\drive\\project"`) — a
+    plain filename on POSIX, a real path on Windows; either way
+    the encoder must return zero surviving separators. (PR #382,
+    `ops/data.py::_encoded_project_path`.)
+  - **Drive-letter colon** — `C:` survives backslash
+    replacement and re-triggers pathlib's drive-specifier
+    prefix-discard on the next concat; strip `:` too (the
+    `re.sub` above already does).
+  - **`str(Path)` yields native separators** — backslash form
+    on Windows. Any DISPLAY string built via `str(some_path)`
+    breaks forward-slash assertions; use `.as_posix()` for
+    display paths.
+  - **`path.endswith("/docs/specs")`** — resolved paths use
+    `\`, so literal-slash suffix checks fail. Use
+    `os.path.join("docs", "specs")` / `os.sep`. Grep the
+    antipattern: `grep -r 'endswith("/' tests/`.
+  - **`is_absolute()` on a POSIX-literal path returns False** —
+    `Path("/tmp/x.py").is_absolute()` is False on Windows
+    (pathlib needs a drive letter), so POSIX-anchored test
+    fixtures silently early-return guard checks (`if not
+    target_path.is_absolute(): return 0` → `DID NOT RAISE`).
+    Fix: use the `tmp_path` fixture — always platform-correct
+    absolute. (PR #521.)
+  - **`Path.home()` reads `USERPROFILE`, not `HOME`** —
+    `monkeypatch.setenv("HOME", ...)` silently no-ops on
+    Windows; set BOTH env vars via a helper.
+  - **CRLF: the runner strips `\n` but leaves `\r`** —
+    `raw.decode(...).rstrip("\n")` leaves the CR, so exact
+    list-membership (`"text" in run.lines`, actual
+    `['text\r']`) fails while substring checks tolerate it.
+    Fix: `[l.rstrip() for l in run.lines]` before the
+    membership check. (PR #531; `run_meta_stdout.parse_line`
+    already does `.rstrip("\r\n")`.)
+  - **Text encoding defaults to cp1252** — always pass
+    `encoding="utf-8"` to `Path.read_text()` (cp1252 fails on
+    any non-ASCII byte). Same for `subprocess.run(text=True,
+    capture_output=True)` reading a child that emits non-ASCII:
+    with no explicit encoding the parent decodes cp1252 and
+    yields `CompletedProcess.stdout = None` (not garbage, not
+    an exception) → `TypeError: NoneType is not iterable` on
+    `"x" in proc.stdout`. Pass `encoding="utf-8",
+    errors="replace"`.
+  - **`Path.rename()` raises `FileExistsError` when the target
+    exists** — atomic-overwrite on POSIX, not on Windows. Use
+    `Path.replace()` (the atomic-write `.tmp`→final pattern
+    broke 2 Windows lanes in `help/session.py`).
+
+- **Windows timing tests flake from two distinct clock
+  quirks**: (1) **Resolution** — `time.time()` has ~15 ms
+  resolution on Windows 3.10–3.12, so `execution_time > 0`
+  fails when an op finishes within one tick; use
+  `time.perf_counter()` or assert `>= 0`. (2) **Cross-API
+  jitter** — `time.time()` and `datetime.now(tz).timestamp()`
+  disagree by sub-second amounts, so edge-of-bucket tests at
+  EXACT bucket multiples (60/300/3600/7200/86400/172800 s)
+  flake: `now - 300` expecting `"5m ago"` can land in
+  `[240, 300)` → `"4m ago"` on Windows. Fix: inject
+  `now: float | None = None` into the time-bucketing fn and
+  pin it in tests (keep one default-now test on a comfortably-
+  buffered value for real-clock coverage), or use inside-bucket
+  values (`bucket_size * N + bucket_size // 2`). Diagnostic:
+  any bucket test using exact-multiple boundaries is fragile.
+
+- **Windows xdist worker crashes often come from the harness,
+  not the test**: under 12 concurrent xdist workers, repeated
+  real socket probes in fixture/helper code crash workers with
+  no traceback (`worker 'gw1' crashed`).
+  `MemoryFeatures.list_all_features()` called
+  `is_redis_running()` per-feature (5 sockets to a closed
+  port, 1 s timeout each); `BaseOperations.__init__` blocked
+  ~17 s on `_create_client_with_retry` (3×5 s). Fixes: dedupe
+  probes production-side (one per call), and patch
+  `_create_X_with_retry` test-side to skip the retry loop.
+  Grep `is_X_running` / `_create_X_with_retry` reached from
+  unit tests as the smell. Corollary: **restoring parallelism
+  (`-n 1` → `-n auto`) EXPOSES these** — the slow serial run
+  was hiding them by never finishing the Windows lanes within
+  timeout (PR #242 surfaced 4 at once). Expect platform
+  failures when you re-enable parallelism; characterize them
+  in a dedicated follow-up, not the restoration PR.
 
 - **`workflow_dispatch` requires the workflow file to be
   on the default branch (main) before it can fire against
@@ -6510,74 +6449,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   refactor cost is low; the upfront package-vs-file naming
   collision is needless friction.
 
-- **`Path("/tmp/x.py").is_absolute()` returns `False` on
-  Windows — POSIX-shaped literal absolute paths in tests
-  silently early-return guard checks**: a 5th surface to
-  add to the existing "Cross-platform path handling has at
-  least FOUR Windows-specific surfaces" lesson. Pathlib on
-  Windows requires a drive letter for `is_absolute()` to
-  return `True`; bare POSIX absolutes (e.g. `/tmp/x.py`,
-  `/var/log/foo`) parse fine but return `False` from
-  `is_absolute()`. Hit 2026-05-31 on PR #521 worktree-
-  path-guard hook: `test_main_propagates_unexpected_errors`
-  passed `file_path="/tmp/x.py"` expecting the hook's
-  `if not target_path.is_absolute(): return 0` guard to be
-  skipped so a patched `_git_toplevel` would raise. On
-  macOS/Linux the guard fell through (absolute → False
-  early-return skipped → `_git_toplevel` called → raises).
-  On Windows the guard fired (path treated as relative →
-  early-return 0 → `_git_toplevel` never called) and
-  `pytest.raises(RuntimeError)` reported `DID NOT RAISE`
-  across all 4 Windows lanes. **Diagnostic shortcut**:
-  any test fixture using a literal `/tmp/...`, `/var/...`,
-  or other POSIX-anchored path string for "I need an
-  absolute path" is Windows-fragile. **Fix**: use the
-  `tmp_path` pytest fixture — always platform-appropriate
-  absolute (drive-prefixed on Windows, root-anchored on
-  POSIX). Same shape works as a one-line search-and-
-  replace across the test suite. Pairs with the existing
-  cross-platform path lesson — same root cause family
-  (pathlib's Windows-specific semantic for what "absolute"
-  means), different surface (input validation guards, not
-  path manipulation).
-
-- **Edge-of-bucket time tests fail on Windows from sub-
-  second clock-source jitter between `time.time()` and
-  `datetime.now(tz).timestamp()`**: a separate Windows
-  timing gotcha from the existing `time.time()` 0.0-
-  duration lesson — that one's about resolution; this one
-  is about two clock APIs returning slightly different
-  values for "now." Hit 2026-05-31 on PR #524's
-  `_format_age` tests: production read
-  `datetime.now(timezone.utc).timestamp()` while tests
-  computed `now = time.time()` and passed `now - 300`
-  (exactly 5 minutes) expecting `"5m ago"`. On
-  macOS/Linux the two clock sources agree to enough
-  precision that `delta = production_now - (test_now -
-  300)` is always ≥ 300 → `int(delta / 60) = 5`. On
-  Windows the two sources can disagree by enough sub-
-  second jitter to make `production_now < test_now`,
-  pushing `delta` into `[240, 300)` → `int(delta / 60) =
-  4` → fails with `'4m ago' == '5m ago'`. Same shape
-  for the 2h test (7200s = exact 2h boundary) and 2d
-  test (172800s = exact 2d). 3 of 4 Windows lanes
-  failed; the lane that passed (3.13) was a coincidence
-  of clock-source alignment that round. **Fix**: don't
-  rely on real-clock consistency across two APIs in the
-  same test path. Add an optional `now: float | None =
-  None` parameter to the time-bucketing function;
-  production keeps the same default (real clock), tests
-  pin a fixed `NOW = 1_700_000_000.0` and pass it via
-  `now=`. Keep one test that exercises the default-now
-  path with a comfortably-buffered value (e.g. 5400s in
-  the 1h bucket [60m, 24h)) so the real-clock branch
-  retains coverage. **Diagnostic shortcut**: any time-
-  bucket test using values that are exact multiples of
-  the bucket size (60, 300, 3600, 7200, 86400, 172800
-  …) is fragile on Windows. Either pin `now` or use
-  comfortably-inside-bucket values (`bucket_size *
-  N + bucket_size // 2`).
-
 - **Documentation framing IS a faithfulness decision
   when two metrics measure the same property** —
   README/docs can undersell their own results by leading
@@ -6663,40 +6534,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   treat decisions.md as frozen after Phase 1 approval;
   expect minor wording corrections through Phase 4.
   Pairs with the wireframes-surface-gaps lesson above.
-
-- **Windows runner strips `\n` but leaves `\r` —
-  tests asserting against `run.lines` need rstrip** —
-  pairs with the existing "Cross-platform path
-  handling" + `is_absolute()` + edge-of-bucket timing
-  + `Path("/tmp")` lessons as a 6th surface in the
-  same family. The runner's existing line-read at
-  `src/attune/ops/runner.py::_execute` does
-  `raw.decode("utf-8", errors="replace").rstrip("\n")`
-  — only strips the LF half of CRLF, leaving the CR
-  attached to every line in `run.lines` on Windows.
-  Substring checks (`"text" in joined_string`) tolerate
-  the trailing CR; **exact-match list membership
-  checks (`"text" in run.lines`) don't**. Hit
-  2026-05-31 on PR #531 Phase 3b: all 4 Windows lanes
-  failed identically on
-  `assert "running code-review" in real_log_lines`
-  because the actual list was
-  `['running code-review\r', 'done\r']`. **Diagnostic
-  shortcut**: any test asserting
-  `"exact text" in some_list_of_log_lines` where
-  lines come from a subprocess's `print()` is
-  Windows-fragile. **Fix**: `[line.rstrip() for line in
-  run.lines if ...]` before the membership check —
-  cross-platform safe (`rstrip()` with no arg strips
-  all trailing whitespace including CR). **Production-
-  side is fine for this PR**: the new
-  `attune.ops.run_meta_stdout.parse_line` already does
-  `.rstrip("\r\n")` internally so the side-channel
-  marker parsing works cross-platform — only direct
-  line-comparison tests are affected. A broader fix
-  (strip CR in `_execute` itself) is worth its own
-  PR; this lesson exists so the bug doesn't re-surface
-  in tests of future runner-adjacent code.
 
 - **Don't re-mitigate what the system already
   solves** — when listing risks for a plan, lean on
