@@ -1,6 +1,6 @@
 # Claude Cross-Session Memory — Requirements
 
-**Status:** approved
+**Status:** complete (shipped — session_recall/session_stash hooks + /recall skill; live-hook activation is a deploy step)
 **Approved:** 2026-06-02
 
 ## Problem

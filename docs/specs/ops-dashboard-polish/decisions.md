@@ -1,5 +1,5 @@
 # Decisions — Ops Dashboard Polish
-**Status:** approved
+**Status:** partial — Phase A complete; Phase B (4/5), C (Sessions shipped, Memory not started), D (1/6) in progress
 **Owner:** Patrick
 **Opened:** 2026-05-14
 **Predecessors:**

@@ -5,7 +5,7 @@
 > summary, and dispatches focused follow-ups via
 > `AskUserQuestion`. Fires on-demand when Patrick opens the
 > bulletin — not continuously.
-**Status:** approved
+**Status:** complete (Phases 2–3 shipped #631–#635; Task 4.1 optional manual verify)
 **Created:** 2026-05-17
 **Owner:** TBD
 **Related:**

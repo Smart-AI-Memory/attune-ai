@@ -1,6 +1,6 @@
 # Decisions — Port spec-handling features from attune-gui to attune ops
 
-**Status:** Approved & Prioritized (2026-05-11) — gate relaxed; ready when next main CI settles
+**Status:** complete (Phases 1–3 shipped — routes/specs.py; Phase 4 closed empty)
 **Owner:** Patrick
 
 ---

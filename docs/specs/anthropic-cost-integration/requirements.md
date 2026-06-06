@@ -1,5 +1,5 @@
 # Requirements — Anthropic Cost Integration
-**Status:** approved
+**Status:** partial — Phases 1–2 shipped (anthropic_cost.py backend + home KPI wired in dashboard.py); Phases 3–4 (telemetry per-day panel, setup-billing CLI) deferred
 **Owner:** Patrick
 
 ---
