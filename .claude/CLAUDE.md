@@ -998,70 +998,43 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   must be self-contained — embed the instructions directly instead
   of referencing skill files.
 
-- **Dependency lower bounds trigger Scorecard vulnerability alerts**:
-  Even if installed versions are safe, OpenSSF Scorecard flags
-  `pyproject.toml` specs that *allow* vulnerable versions (e.g.,
-  `pydantic>=2.0.0` permits 2.0–2.3 which have CVEs). Fix: bump
-  lower bounds past the patched version, not just the lockfile.
-
 - **YAML `run:` values with colons cause parse errors**: A GitHub
   Actions `run:` like `run: gh pr review --body "Auto-approved:
   update"` fails YAML parsing because the colon after
   "Auto-approved" is interpreted as a mapping. Remove the colon
   or quote the entire value.
 
-- **CodeQL alerts dismissible in bulk via `gh api`**: Use
-  `gh api repos/OWNER/REPO/code-scanning/alerts/ID -X PATCH
-  -f state=dismissed -f dismissed_reason="false positive"
-  -f dismissed_comment="..."` to batch-dismiss with documented
-  reasons. Valid reasons: `false positive`, `won't fix`,
-  `used in tests`.
-
-- **CodeQL `py/clear-text-logging-sensitive-data` traces data flow,
-  not literal secrets**: CodeQL flagged `user_id` in a log message
-  inside `security.py` even though only the count of secrets was
-  logged (not secret values). It traces any variable that flows
-  through a security-sensitive method. Fix: use `%s` formatting
-  without user identifiers, or move audit correlation to the
-  dedicated audit logger which is designed for that purpose.
-
-- **CodeQL `js/stored-xss` flags JSX even though React auto-escapes**:
-  CodeQL flagged `{tag}` rendered in `<h1>` as stored XSS despite
-  React's automatic text escaping. Defense-in-depth fix:
-  `decodeURIComponent` on input + `encodeURIComponent` on `href`
-  values. `generateStaticParams` constrains valid values but CodeQL
-  can't see that.
-
-- **CodeQL `py/incomplete-url-substring-sanitization` fires on
-  ANY URL substring in `<literal> in <text>` expressions —
-  including in test assertions that aren't doing URL validation**:
-  Hit 2026-06-01 on PR #536 with a source-grep test asserting
-  `"github.com/" in js_text` to confirm specs_kebab.js builds the
-  GitHub PR search URL. CodeQL flagged it as an "incomplete URL
-  whitelist" (the bypassable-substring antipattern), even though
-  the assertion is a presence check, not URL validation.
-  Tightening to `"https://github.com/" in js_text` did NOT
-  silence the rule — CodeQL's detector treats domain-following
-  slashes as still-incomplete sanitization. Three workarounds that
-  DO work, ranked: (a) **Anchor on path fragments that identify
-  the URL without naming the domain** — e.g. `'"/pulls?q="' in
-  js_text` is enough to confirm GitHub-PR-search URL construction
-  without triggering the rule. (b) **Split the URL literal across
-  string concat at the test site** — `"g" + "ithub.com" in
-  js_text` evaluates equivalently at runtime but the SOURCE text
-  doesn't contain a bare URL substring, so CodeQL's static
-  analysis can't match. (c) **Use `re.search` with a regex** that
-  contains the domain as a character pattern (`r"github\.com"`)
-  rather than a string literal. CodeQL's substring detector keys
-  on string literals, not regex char classes. **Last resort**:
-  dismiss the alert via `gh api repos/X/code-scanning/alerts/ID
-  -X PATCH -f state=dismissed -f dismissed_reason="false
-  positive"` per the existing batch-dismiss lesson. Don't dismiss
-  without trying (a)/(b)/(c) first — those are zero-cost code
-  changes that pass the rule cleanly. Pairs with the existing
-  `py/clear-text-logging-sensitive-data` and `js/stored-xss`
-  lessons — same shape (CodeQL pattern-matches without seeing the
-  surrounding intent), different specific rules.
+- **CodeQL alerts pattern-match without seeing intent — fix at
+  the source first, bulk-dismiss only as last resort**: the same
+  shape recurs across rules (CodeQL flags safe code because it
+  can't see the surrounding logic). The rules hit so far:
+  - **`py/incomplete-url-substring-sanitization`** fires on ANY
+    URL substring in `<literal> in <text>` — even presence-check
+    test assertions that aren't URL validation. Tightening
+    `"github.com/"` → `"https://github.com/"` does NOT silence it
+    (domain-following slashes still read as incomplete). Three
+    zero-cost workarounds, ranked: (a) anchor on a path fragment
+    that identifies the URL without naming the domain
+    (`'"/pulls?q="' in js_text`); (b) split the literal across
+    concat at the test site (`"g" + "ithub.com"`) so the source
+    has no bare URL substring; (c) `re.search(r"github\.com")` —
+    the detector keys on string literals, not regex char classes.
+  - **`py/clear-text-logging-sensitive-data`** traces DATA FLOW,
+    not literal secrets — it flagged `user_id` in a log even
+    though only a count was logged, because the var flows through
+    a security-sensitive method. Fix: `%s` formatting without
+    user identifiers, or move audit correlation to the dedicated
+    audit logger.
+  - **`js/stored-xss`** flags JSX (`{tag}` in `<h1>`) despite
+    React's auto-escaping. Defense-in-depth: `decodeURIComponent`
+    on input + `encodeURIComponent` on `href`
+    (`generateStaticParams` constrains values but CodeQL can't
+    see that).
+  - **Bulk-dismiss (last resort, after source fixes)**: `gh api
+    repos/OWNER/REPO/code-scanning/alerts/ID -X PATCH -f
+    state=dismissed -f dismissed_reason="false positive" -f
+    dismissed_comment="..."` — valid reasons: `false positive`,
+    `won't fix`, `used in tests`.
 
 - **Dispatch tables hold direct function references — mocks
   must target the table, not the module name**: When
@@ -1182,20 +1155,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   don't install missing packages. Fix: explicitly `pip3
   install <dep>` for any dependency reachable from fuzz target
   imports.
-- **OpenSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are
-  process metrics, not code bugs**: They measure the ratio of
-  approved/analyzed changesets over time. No single PR can fix
-  them — they improve incrementally as future PRs flow through
-  review and SAST gates. Setting up the gates (required reviews,
-  required CodeQL checks) is the fix; the score follows.
-- **Scorecard's pip parser ignores `--hash` flags entirely**:
-  Even single-line `pip3 install 'pkg==1.0' --hash=sha256:abc...`
-  is flagged as "not pinned by hash". Scorecard's `PinnedDependenciesID`
-  check does not recognize pip's `--hash` CLI flag — it only
-  recognizes `--require-hashes` with a requirements file, or
-  possibly other formats. For ClusterFuzzLite `build.sh`, dismiss
-  as false positive since the deps ARE hash-pinned. The alerts
-  recur on each Scorecard re-scan so expect to re-dismiss.
+
+- **OpenSSF Scorecard alerts — process metrics and parser false
+  positives**:
+  - **#2 CodeReviewID / #3 SASTID are process metrics, not code
+    bugs** — they measure the ratio of approved/analyzed
+    changesets over time; no single PR fixes them. Setting up the
+    gates (required reviews, required CodeQL checks) is the fix;
+    the score follows incrementally.
+  - **Dependency lower bounds trigger vuln alerts** — Scorecard
+    flags `pyproject.toml` specs that ALLOW vulnerable versions
+    (e.g. `pydantic>=2.0.0` permits CVE'd 2.0–2.3) even when
+    installed versions are safe. Fix: bump the lower bound past
+    the patch, not just the lockfile.
+  - **The pip parser ignores `--hash` flags** — `pip3 install
+    'pkg==1.0' --hash=sha256:...` is still flagged "not pinned by
+    hash" (`PinnedDependenciesID` only recognizes
+    `--require-hashes` with a requirements file). For
+    ClusterFuzzLite `build.sh`, dismiss as false positive —
+    recurs on each re-scan, expect to re-dismiss.
 
 - **Skill descriptions must be under 250 characters**: Anthropic
   truncates skill descriptions longer than 250 chars, which breaks
@@ -2759,22 +2737,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   first `COPY .`. Option (b) is less maintenance
   when adding more companion files over time.
 
-- **GitHub Copilot Autofix pushes commits directly to PR
-  branches when CodeQL finds fixable issues — expect a
-  rebase mid-session**: Commits like `Potential fix for
-  pull request finding 'Empty except'` appear on the PR
-  branch with no local action; author shows as your account
-  but co-authored-by `Copilot Autofix powered by AI
-  <...@github-code-quality[bot]...>`. Usually cosmetic
-  (comment additions, trivial guards), not logic changes.
-  Your next `git push` rejects with non-fast-forward; fix
-  with `git pull --rebase` then `git commit --amend -S
-  --no-edit` (rebase replays commits unsigned, see the
-  signing lesson). Always `git fetch` and inspect before
-  assuming a push failure is a race with a human
-  collaborator — Autofix lands silently. The commits are
-  safe to keep; review the diff, confirm cosmetic, rebase
-  on top.
+- **Copilot Autofix (the `github-code-quality` bot) interacts
+  with PRs two ways — commits and inline suggestions**: when
+  CodeQL finds fixable issues, the bot acts on the PR; expect it
+  mid-session.
+  - **Direct commits** — `Potential fix for ...` commits appear
+    on the PR branch with no local action (author = your account,
+    co-authored-by the `github-code-quality[bot]`), usually
+    cosmetic (comment/guard, not logic). Your next `git push`
+    rejects non-fast-forward; `git fetch` and inspect BEFORE
+    assuming a human-collaborator race (Autofix lands silently),
+    then `git pull --rebase` and `git commit --amend -S --no-edit`
+    (rebase replays unsigned — see the signing lesson). The
+    commits are safe to keep; review the diff, confirm cosmetic,
+    rebase on top.
+  - **Inline review suggestions** (state `COMMENTED`, advisory,
+    non-blocking) — judge each: an empty `except OSError: pass`
+    with no comment → fix it (add `# INTENTIONAL:` per the BLE001
+    convention); a `...` body in a `typing.Protocol` method
+    flagged "Statement has no effect" → decline (`...` is the
+    idiomatic Protocol body; changing one is inconsistent). Note
+    declines + reasons in the fixing commit so the rationale is
+    durable.
 
 - **"Must go through PR" is a derived property of branch
   protection, not a single flag**: Dropping
@@ -6732,20 +6716,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the work so a mid-work crash retries next stop. The Stop payload
   also carries `transcript_path` directly — no need to reconstruct the
   encoded `~/.claude/projects/<enc>/<session>.jsonl` path.
-
-- **`github-code-quality` (Copilot Autofix) posts inline review
-  SUGGESTIONS on PRs, not always commits — two recurring shapes, one
-  fix one decline**: distinct from the existing "Copilot Autofix
-  pushes commits directly to PR branches" lesson — here it leaves
-  review *comments* (state `COMMENTED`, advisory, non-blocking). On
-  PR #600 it flagged: (1) an empty `except OSError: pass` with no
-  explanatory comment → **legit, fix it** by adding an `# INTENTIONAL:`
-  comment (matches the repo's BLE001 convention); (2) a `...` body in a
-  `typing.Protocol` method, flagged as "Statement has no effect" with a
-  suggestion to use `raise NotImplementedError` → **decline**: `...` is
-  the idiomatic Protocol-method body and matches every sibling method
-  in the file; changing one is inconsistent. Neither blocks merge; note
-  the decline + reason in the fixing commit so the rationale is durable.
 
 - **"Registered ≠ working" — dogfood the live loop; a non-mocked
   round-trip test is the receipt**: the P2 memory hooks were registered
