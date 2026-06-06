@@ -736,12 +736,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   names (e.g. `SecurityAuditAgentSDKWorkflow`) across all test files
   when changing registry size.
 
-- **SDK-native workflows validate in `execute()`, not `input_schema`**:
-  After merging to SDK-native, workflows no longer declare
-  `input_schema` as a class attribute — path validation happens inside
-  `execute()`. Tests asserting `Workflow.input_schema is not None`
-  must be removed or updated.
-
 - **Hardcoded strings in method bodies survive class attribute
   renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
   on the class didn't fix a hardcoded `"workflow": "deep-review-sdk"`
@@ -811,19 +805,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   same validation rigor as file paths — add
   `_validate_webhook_url()` alongside `_validate_file_path()`.
 
-- **`ResultMessage.result` is often `None` — capture
-  `AssistantMessage` text too**: All 15 SDK-native workflows
-  only checked `ResultMessage.result` for the agent's output.
-  But `ResultMessage` is a metadata-only final message; its
-  `result` field is `str | None` and frequently `None`. The
-  actual analysis text lives in `AssistantMessage.content`
-  `TextBlock` entries emitted throughout the conversation.
-  Fix: `collect_agent_output()` and `build_result_text()` in
-  `agent_sdk_adapter.py` now collect from both message types,
-  preferring `ResultMessage.result` when present and falling
-  back to `AssistantMessage` text. Filter with
-  `parent_tool_use_id is None` to skip subagent tool-call
-  messages.
+- **SDK message/output flow — what you collect, and what
+  crosses into the parent**:
+  - **`ResultMessage.result` is often `None` — also collect
+    `AssistantMessage` text** — `ResultMessage` is a
+    metadata-only final message; the analysis text lives in
+    `AssistantMessage.content` `TextBlock` entries throughout
+    the conversation. `collect_agent_output()` /
+    `build_result_text()` in `agent_sdk_adapter.py` collect from
+    both, preferring `ResultMessage.result` when present. The
+    `parent_tool_use_id is None` filter selects the parent's own
+    text; subagent TextBlocks carry a non-None id and are still
+    collected (see the failure-diagnosis lesson).
+  - **MCP-invoked SDK workflows ALREADY isolate their
+    intermediate stream from the calling agent** — when a plugin
+    skill invokes an MCP tool, the workflow's `query()` runs in
+    its own SDK session; the orchestrator's intermediate
+    `AssistantMessage` text and subagent transcripts STAY there
+    and are discarded on return. Only `WorkflowResult.final_output`
+    crosses into the calling agent's context (measured:
+    security-audit emitted 6,821 B intermediate + 19.66 KB
+    subagent transcripts inside, only 3,710 B reached the main
+    agent). Don't draft specs to "fix" context bloat that
+    doesn't exist — the Agent Surface Rebalance spec was paused
+    for exactly this reason.
 
 - **Exploration agents fabricate names — verify against
   source**: When generating docs, the Explore agent fabricated
@@ -1431,17 +1436,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `px-8 py-4 rounded-lg font-medium !text-white border-2
   border-white/60 hover:bg-white/15 transition-colors`.
 
-- **SDK-native `security-audit` workflow swallows subagent
-  findings**: `attune workflow run security-audit` returns
-  successfully but `metadata.findings` is `{}` and
-  `final_output` only contains the orchestrator's planning
-  message ("I'll launch four subagents..."). The SDK adapter
-  doesn't aggregate `AssistantMessage` content from the
-  spawned subagents back into the parent result. For real
-  pre-release security checks, run bandit, detect-secrets,
-  and pip-audit directly against the venv until the SDK
-  adapter is fixed.
-
 - **`attune.help` re-exports create a hidden cross-package
   dep on `attune-author`**: `src/attune/help/__init__.py`
   does `from attune_author.generator import ...` at module
@@ -1691,29 +1685,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the primary blue and add an underline, producing invisible
   blue-on-blue text. Use `!text-white no-underline` on
   anchor-styled buttons, even outside gradient sections.
-
-- **"SDK adapter swallows subagent findings" lesson was
-  wrong — adapter is fine, budget cap cuts the stream
-  early**: Verified with a 157-message trace of
-  `security-audit` (max_turns=30).
-  `collect_agent_output()` at
-  `src/attune/workflows/agent_sdk_adapter.py:48-91` already
-  captures all `AssistantMessage` TextBlocks (including from
-  subagents — those carry `parent_tool_use_id=<task-id>`,
-  no filter needed). The real issue: with 4-5 Opus subagents
-  spawned in parallel, the stream ends with
-  `ResultMessage(result=None, num_turns=2, is_error=False)`
-  — looks clean but is actually silent early termination at
-  the `max_budget_usd` cap (was $2.00 for "standard"
-  depth; bumped to $10.00 in the fix). Subagents were still
-  exploring (emitting
-  `ToolUseBlock`, not terminal `TextBlock`) when the stream
-  was cut, so the orchestrator never received their
-  findings to synthesize. Fix is in workflow config
-  (budgets), not the adapter: raise `max_budget_usd` for
-  multi-subagent workflows, or set
-  `ATTUNE_MAX_BUDGET_USD=0` to disable caps, or
-  restructure to run fewer/cheaper subagents.
 
 - **Squash-merge deletes the remote branch; subsequent push
   silently recreates it with no PR attached**: After a squash
@@ -2212,36 +2183,58 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / attune-help all share attune-help as a transitive
   dep with sometimes-divergent cap ranges.
 
-- **SDK workflows accepting a file path used to crash
-  silently with `Command failed with exit code 1` —
-  fixed 2026-05-16 via `resolve_cwd_for_path()`
-  helper, but the underlying gotcha is broader**: the
-  Claude Agent SDK's `ClaudeAgentOptions(cwd=...)`
-  must be an existing directory; passing a file raises
-  `CLIConnectionError: [Errno 20] Not a directory` at
-  subprocess startup, which the SDK message reader
-  bubbles as the opaque `Command failed with exit
-  code 1` (no other diagnostic). All 15 SDK-native
-  workflows (`security_audit`, `code_review`,
-  `bug_predict`, `test_gen`, etc.) had the
-  `cwd=resolved_path` antipattern. Fix: every workflow
-  now wraps with `resolve_cwd_for_path(resolved_path)`
-  from `attune.workflows.agent_sdk_adapter`, which
-  returns `path.parent` when `path.is_file()` else
-  `path` unchanged. A drift-guard test
-  (`tests/unit/workflows/test_agent_sdk_adapter.py::
-  TestSdkWorkflowsUseCwdHelper`) asserts the
-  antipattern stays absent. The broader gotcha for
-  any future code calling `claude_agent_sdk.query()`:
-  always use `resolve_cwd_for_path()` for
-  user-supplied paths, even when the path "looks
-  like" a directory at the docstring level —
-  user invocations vary. Companion observation: when
-  workflows fail with `Command failed with exit
-  code 1` and `Cost & Time` shows `$0.0000 | 0.0s`,
-  the failure is at subprocess startup (cwd, auth,
-  CLI binary missing) — NOT a runtime budget/turn
-  issue. The `$0.0` is the diagnostic.
+- **Diagnosing SDK workflow failures — `Command failed with
+  exit code 1` + `$0.0000 | 0.0s`**: the opaque
+  `Command failed with exit code 1` with `$0.00 / 0.0s` in
+  Cost & Time means failure at subprocess STARTUP (the `$0.0`
+  is the diagnostic), NOT a runtime issue — the SDK swallows
+  the real error. Root causes, in order:
+  - **cwd is a file, not a directory** —
+    `ClaudeAgentOptions(cwd=<file>)` raises `CLIConnectionError:
+    [Errno 20] Not a directory` at startup. Fixed 2026-05-16:
+    every workflow wraps with `resolve_cwd_for_path()` (from
+    `attune.workflows.agent_sdk_adapter`, returns `path.parent`
+    when `path.is_file()`), guarded by a drift-test
+    (`TestSdkWorkflowsUseCwdHelper`). Always use it for
+    user-supplied paths in any `claude_agent_sdk.query()` call,
+    even when the path "looks like" a directory.
+  - **auth / PATH / SDK version** — ANTHROPIC_API_KEY
+    unset/expired, `claude` CLI not on PATH, claude-agent-sdk
+    version mismatch.
+  - **API account usage cap reached** — the SDK swallows a 400
+    `invalid_request_error: "You have reached your specified
+    API usage limits…"` into the generic error. Diagnose by
+    calling `claude` directly with the SDK's flags (`echo "" |
+    claude --json-schema '<schema>' -p "say hi"`) — if it
+    returns the 400, that's it. (The workflow's "What Went
+    Wrong" voice-layer lists auth/PATH/version but never this.)
+  - **`ATTUNE_MAX_BUDGET_USD` cap hit at STARTUP** — a different
+    path from the mid-stream cap (which gives a clean "Reached
+    maximum budget ($X)"); at startup it raises the generic
+    exit-1 with `$0.00`. Tell it apart: `claude -p` works AND a
+    minimal 1-subagent `max_turns=2` probe succeeds at the same
+    cap → it's the cap. Raise `ATTUNE_MAX_BUDGET_USD=10` and
+    retry. Budget rule: single-agent workflows (simplify-code,
+    doc-gen, dependency-check) fit under ~$1.50; multi-subagent
+    (security-audit, code-review, bug-predict, test-gen,
+    deep-review) need ≥$5 even on tiny inputs (each subagent's
+    planning emits costly setup tokens before useful output).
+    The `quick`-depth `$2` default
+    (`agent_sdk_adapter._DEFAULT_BUDGET_USD`) is unusable for
+    ANY multi-subagent workflow — 4 subagents exceed $2 before
+    the orchestrator finishes spawning; set
+    `ATTUNE_MAX_BUDGET_USD=0` or use `standard` ($10).
+  - **The adapter is NOT the culprit** — an earlier belief that
+    the SDK adapter "swallows subagent findings" (empty
+    `metadata.findings`, `final_output` only the planning
+    message) was WRONG. A 157-message trace showed
+    `collect_agent_output()` already captures all subagent
+    `AssistantMessage` TextBlocks (they carry
+    `parent_tool_use_id=<task-id>`, no filter needed); the empty
+    result is the budget cap cutting the stream while subagents
+    still emit `ToolUseBlock` (not terminal `TextBlock`). Fix is
+    budget config, not the adapter. (Error-surface improvement
+    tracked in the `sdk-error-message-fidelity` spec.)
 
 - **Citation-forced prompting and prompt-injection
   resistance are separate threat models — solving one
@@ -2298,23 +2291,41 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   reword), isolate them in the recovery A/B rather
   than reverting everything.
 
-- **Research subagents can confabulate SDK signatures —
-  introspect before coding**: Research agents
-  reconstruct API shapes from documentation-style priors
-  without importing the code, so they can be confidently
-  wrong about types (e.g. 6.2.0 planning claimed
-  `SystemPromptPreset(exclude_dynamic_sections=["cwd",
-  "git_status"])` — actually a boolean toggle, not a
-  list of section names). Cost of verifying with
-  `inspect.signature(obj)` + `.__annotations__`: ~1
-  minute. Cost of skipping: an entire task's worth of
-  misdirected code. Pattern: before implementing any
-  task that depends on an SDK symbol named by a research
-  agent, run a short introspection check
-  (`hasattr`, `inspect.signature`, `__annotations__`)
-  as the first step — especially for TypedDict /
-  kwarg-only classes where there's no constructor
-  signature to catch mistakes at call time.
+- **Introspect claude-agent-sdk signatures before coding —
+  research agents AND spec pseudocode confabulate them**:
+  research agents (and `design.md` pseudocode) reconstruct API
+  shapes from doc-style priors without importing the code, so
+  they're confidently wrong about types. Cost of verifying with
+  `inspect.signature(obj)` / `dataclasses.fields(obj)` /
+  `.__annotations__`: ~1 minute; cost of skipping: a task's
+  worth of misdirected code. Run the check as the FIRST step
+  for any task depending on an SDK symbol named by an agent or
+  spec — especially TypedDict / kwarg-only classes with no
+  constructor signature. Confabulations caught this way:
+  - **`SystemPromptPreset`** — planning claimed
+    `exclude_dynamic_sections=["cwd","git_status"]` (a list);
+    it's actually a boolean toggle. And (as of 0.1.63)
+    `SystemPromptPreset` is Claude-Code-preset-ONLY: `type:
+    "preset"`, `preset: "claude_code"` (one value), `append:
+    NotRequired[str]`, `exclude_dynamic_sections:
+    NotRequired[bool]`. For CUSTOM system prompts pass a plain
+    string to `ClaudeAgentOptions(system_prompt=...)` (already
+    cache-friendly — static string; `cwd=` is a tool-config
+    field, not injected prompt text).
+  - **`ClaudeAgentOptions(tools=[{schema}], tool_choice={...})`
+    is unsupported** — there's NO `tool_choice` field, and
+    `tools` is `list[str] | ToolsPreset | None` (a tool-name
+    ALLOWLIST, not Anthropic tool defs). The agent SDK routes
+    through the `claude` CLI's tool loop and can't force a
+    schema-guaranteed call. For forced guaranteed-schema JSON
+    use the RAW `anthropic` SDK
+    (`client.messages.create(tools=[...], tool_choice={"type":
+    "tool","name":...})`, as `attune_rag`'s `FaithfulnessJudge`
+    does) — the two SDKs are easy to conflate. Rule: a single
+    synthesis/judge call (no agent loop, no subagents, no file
+    tools) → raw `anthropic` SDK; reserve
+    `claude_agent_sdk.query()` for agentic work (file tools,
+    subagent fan-out, multi-turn).
 
 - **`getattr(module, "name", None)` at call site is the
   clean degradation pattern for optional SDK surface**:
@@ -2338,26 +2349,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   expose it; reserve try/except for when the feature
   is definitely available but the call itself may
   fail at runtime.
-
-- **Claude-agent-sdk `SystemPromptPreset` (as of
-  0.1.63) is Claude-Code-preset-only, not a vehicle
-  for custom system prompts**: the name suggests "a
-  preset for building system prompts" but the real
-  schema is narrower: `type: Literal["preset"]`,
-  `preset: Literal["claude_code"]` (only one
-  acceptable value), `append: NotRequired[str]` to
-  append text, `exclude_dynamic_sections:
-  NotRequired[bool]` as an all-or-nothing toggle for
-  the built-in preset's dynamic sections. For
-  **custom** system prompts, pass a plain string to
-  `ClaudeAgentOptions(system_prompt=...)` — that path
-  is already cache-friendly since the string is
-  static and `cwd=` is a tool-execution config field,
-  not text injected into the prompt stream. No
-  action needed to get cross-run cache hits when
-  using string prompts; `SystemPromptPreset` only
-  applies when building on top of the claude_code
-  preset.
 
 - **`mcp__attune-ai__doc_orchestrator` is a no-op
   stub**: calling the MCP tool on a real project
@@ -3074,42 +3065,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   current main, OR re-rebase before merge to pick
   up any post-rebase upstream fixes.
 
-- **MCP-invoked SDK workflows ALREADY isolate their
-  intermediate AssistantMessage stream from the
-  calling agent — don't draft specs to "fix" what's
-  already fixed**: when a plugin skill invokes an
-  MCP tool (e.g. `mcp__attune-ai__security_audit
-  (...)`), the workflow's `claude_agent_sdk.query()`
-  runs in its own SDK session. The orchestrator's
-  intermediate `AssistantMessage` text and subagent
-  transcripts STAY in that session and are
-  discarded when the tool returns. Only
-  `WorkflowResult.final_output` crosses into the
-  calling agent's context. Measured 2026-05-12 on
-  `src/attune/security/` (2 files, 134 LOC):
-  security-audit emitted 6,821 B of intermediate
-  orchestrator text + 19.66 KB of subagent
-  transcripts inside its SDK session, but only
-  3,710 B reached the main agent; refactor-plan:
-  4,914 B inside, 486 B out. The Agent Surface
-  Rebalance spec (`docs/specs/agent-surface-
-  rebalance/`) was drafted on the assumption that
-  the intermediate bytes reach the parent — they
-  don't, and the spec is paused for that reason.
-  Pair lesson: the `quick`-depth `$2`
-  `max_budget_usd` default in
-  `agent_sdk_adapter._DEFAULT_BUDGET_USD` is
-  functionally unusable for ANY multi-subagent
-  workflow on ANY target, because 4 subagents ×
-  even-modest-cost > $2 before the orchestrator
-  finishes spawning them. Surfaces as
-  `Exception: Claude Code returned an error
-  result: Reached maximum budget ($2)` from inside
-  `query.receive_messages()`. For real measurement
-  or production use of security-audit / code-review
-  / similar, set `ATTUNE_MAX_BUDGET_USD=0` or use
-  `standard` ($10) depth.
-
 - **Patching `Path.stat` to raise breaks `Path.exists()`
   before the test reaches the intended `.stat()` call**:
   `pathlib.Path.exists()` is implemented as a `try:
@@ -3165,42 +3120,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is opened. Don't waste a cycle re-confirming a module
   that's already well-covered.
 
-- **The SDK-native workflow shell scaffold is reusable
-  across 6+ siblings — single-pass rename**: same
-  test scaffold (real `AssistantMessage`/`ResultMessage`/
-  `TextBlock` fixtures, validation/execute/depth-mapping/
-  exception/run_agent_X classes, `_error_result` shape
-  test) shipped verbatim across `dependency_check`,
-  `bug_predict`, `perf_audit`, `refactor_plan`,
-  `doc_audit/workflow`, and `document_gen/workflow`.
-  Renames needed: import path, patch path (e.g.
-  `attune.workflows.foo.claude_agent_sdk.query`),
-  subagent name strings (typically 2-3 per workflow),
-  the method name (`_run_agent_check` →
-  `_run_agent_predict` etc.), system-prompt substring
-  assertion, and the `stage.name` in TestErrorResult.
-  Each cycle ~5 min by hand from copy-paste. After 6
-  consecutive cycles the generator-script idea (script
-  it as `scripts/scaffold_sdk_workflow_tests.py`) keeps
-  surfacing but the cluster is now drained — defer until
-  a future rubric refresh surfaces ≥2 more.
-
-- **Edge cases unique to specific SDK shells (worth
-  remembering when reading the scaffold)**: (a)
-  `perf_audit.py` has an inline `main()` CLI entry
-  point — needs two extra tests (success + error paths
-  via `capsys`). (b) `document_gen/workflow.py` has a
-  `default_context()` classmethod for `WorkflowContext`
-  composition — three extra tests cover the
-  `PromptService` + `ParsingService` wire-up and the
-  `xml_config` kwarg path. (c) `bug_predict.py`
-  delegates its `main` to a sibling `bug_predict_report.py`
-  module — no inline `main()` to test. (d)
-  `dependency_check.py` uses two subagents while
-  `bug_predict` / `perf_audit` / `refactor_plan` /
-  `doc_audit` / `document_gen` each use three —
-  count subagents in the source before writing the
-  `test_passes_subagent_definitions` assertion.
+- **SDK-native workflow test scaffold — reusable across
+  siblings, single-pass rename**: the same scaffold (real
+  `AssistantMessage`/`ResultMessage`/`TextBlock` fixtures,
+  validation/execute/depth-mapping/exception/run_agent_X
+  classes, `_error_result` shape test) ships verbatim across
+  6+ workflows (`dependency_check`, `bug_predict`, `perf_audit`,
+  `refactor_plan`, `doc_audit/workflow`, `document_gen/
+  workflow`). Per-workflow renames: import path, patch path
+  (`attune.workflows.foo.claude_agent_sdk.query`), subagent
+  name strings (2-3 each), the method name (`_run_agent_check`
+  → `_run_agent_predict`), the system-prompt substring
+  assertion, and `stage.name` in TestErrorResult. ~5 min/cycle
+  by hand (the cluster is drained; a generator script is
+  deferred until a rubric refresh surfaces ≥2 more). Also: SDK
+  -native workflows validate in `execute()`, NOT via an
+  `input_schema` class attribute — tests asserting
+  `Workflow.input_schema is not None` must be removed/updated.
+  Edge cases per shell: (a) `perf_audit.py` has an inline
+  `main()` → two extra capsys tests (success + error); (b)
+  `document_gen/workflow.py` has a `default_context()`
+  classmethod → three extra tests for the
+  `PromptService`+`ParsingService` wire-up + the `xml_config`
+  kwarg; (c) `bug_predict.py` delegates `main` to
+  `bug_predict_report.py` (no inline main); (d) COUNT subagents
+  in source before the `test_passes_subagent_definitions`
+  assertion (`dependency_check` uses 2, the others 3).
 
 - **Parallel test-quality-program sessions cause
   predictable three-file conflicts**: CHANGELOG.md,
@@ -4965,31 +4910,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   extension — these workflows assume Python source and will
   silent-fail on `.html`, `.css`, `.md`, `.json`, etc.
 
-- **API quota exhaustion masquerades as SDK startup failure
-  with $0.00 / 0.0s — the workflow's "What Went Wrong" lists
-  three plausible-but-wrong causes and never names the real
-  one**: extends the existing "Command failed with exit code
-  1 + $0.0000 | 0.0s = subprocess startup failure" lesson with
-  a fourth root cause to consider. When the symptom shape is
-  `claude_agent_sdk.query()` failing in 2.6 seconds with
-  exit_code 0 at the CLI boundary, the workflow's voice-layer
-  suggests "ANTHROPIC_API_KEY unset/expired, claude CLI not
-  on PATH, claude-agent-sdk version incompatible" — but the
-  actual fourth cause is **API account usage cap reached**.
-  The SDK swallows the underlying 400
-  `invalid_request_error: "You have reached your specified
-  API usage limits. You will regain access on YYYY-MM-DD..."`
-  into the generic `Exception: Command failed`. Diagnosis
-  shortcut: call `claude` directly with the same flags the
-  SDK passes (`echo "" | claude --json-schema '<minimal-schema>'
-  -p "say hi"`). If the direct call returns the 400 quota
-  message, you've found the root cause. The
-  three-listed-causes are red herrings; auth + PATH + SDK
-  version are all fine. This drove ~15 minutes of misdiagnosis
-  on 2026-05-17 — and is the exact trigger for the
-  [`sdk-error-message-fidelity`](../../../docs/specs/sdk-error-message-fidelity/requirements.md)
-  spec.
-
 - **Pre-commit's `.help` template regen creates a
   stash-and-reappear dance — every commit touching source
   files that bump a feature's source_hash spawns a follow-up
@@ -5131,33 +5051,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Home's 7-day spend always shows 0" lesson (which is a different
   bug in the READ path) — same surface symptom, three distinct root
   causes (read field name, write path missing, write path buffered).
-
-- **Multi-subagent workflows hitting `ATTUNE_MAX_BUDGET_USD` during
-  startup planning surface as opaque `Command failed with exit
-  code 1`, NOT the structured "Reached maximum budget" message**:
-  discovered 2026-05-19. The existing CLAUDE.md lesson covers the
-  case where the cap fires mid-stream — that path produces a clean
-  `Exception: Claude Code returned an error result: Reached
-  maximum budget ($X)` from the SDK. A DIFFERENT path fires when
-  the cap is checked at subprocess-startup-time (before the first
-  turn completes), and that path raises the generic
-  `Command failed with exit code 1` from the SDK transport layer
-  with `$0.0000 | 0.0s` and no budget-message subtype. Diagnostic
-  shortcut: when a multi-subagent workflow (`bug-predict`,
-  `test-gen`, `code-review`, `security-audit`, `deep-review`)
-  fails with exit-1 and `$0.0000` on a small target, raise the
-  cap (`ATTUNE_MAX_BUDGET_USD=10`) and retry. If it succeeds at
-  real cost > old cap, the cap was the culprit. The hint that
-  this is a cap-hit rather than auth/PATH/quota: `claude -p`
-  works directly, AND the minimal SDK probe (`max_turns=2`,
-  one subagent) succeeds with the same cap value. The error
-  surface needs improvement — flagged in
-  [sdk-error-message-fidelity](docs/specs/sdk-error-message-fidelity/).
-  Practical rule for users: single-agent SDK workflows
-  (`simplify-code`, `doc-gen`, `dependency-check`) fit under
-  `$1.50`. Multi-subagent workflows need `≥$5` even on tiny
-  inputs because each subagent's planning phase emits costly
-  setup tokens before producing useful output.
 
 - **Specs and XML-enhanced prompts are LAYERED in
   attune-ai, not alternatives — a spec contains XML
@@ -7102,35 +6995,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   heredocs + `git -C ~/attune-rag` for commits, and
   `git archive <branch> <path> | tar -x` to extract committed files
   from a branch that isn't checked out in the working tree.
-
-- **`claude_agent_sdk.ClaudeAgentOptions` cannot do forced
-  guaranteed-schema tool-use — use the raw `anthropic` SDK for that**:
-  hit 2026-06-05 implementing bulletin-curator Phase 2, whose
-  `design.md` sketched the synthesis call as
-  `ClaudeAgentOptions(tools=[{...schema...}], tool_choice={"type":
-  "tool","name":...})`. Introspecting the SDK (0.1.63 via
-  `dataclasses.fields(ClaudeAgentOptions)`) showed that shape is
-  unsupported: (1) there is **no `tool_choice` field** at all; (2)
-  the `tools` field is `list[str] | ToolsPreset | None` — an
-  ALLOWLIST OF TOOL NAMES, not raw Anthropic tool definitions with
-  `input_schema`. The agent SDK routes through the `claude` CLI's own
-  tool loop and can't force a single schema-guaranteed call. The
-  existing CLAUDE.md "Forced Anthropic tool-use is the cleanest path
-  to guaranteed-schema JSON" lesson is about the **raw `anthropic`
-  SDK** (`client.messages.create(tools=[{...}], tool_choice={"type":
-  "tool","name":...})`), as `attune_rag`'s `FaithfulnessJudge` does —
-  the two SDKs are easy to conflate because both live in this repo.
-  Rule of thumb: a single synthesis/judge call with no agent loop, no
-  subagents, no file tools wants the raw `anthropic` SDK (guaranteed
-  schema, cheap, testable with an injected fake client); reserve
-  `claude_agent_sdk.query()` for actual agentic work (file tools,
-  subagent fan-out, multi-turn). This is the "research subagents
-  confabulate SDK signatures — introspect before coding" lesson with
-  a concrete instance: the SPEC ITSELF (`design.md`, written before
-  introspection) carried the confabulated signature, so spec
-  pseudocode is no more trustworthy than a research agent's — a
-  one-minute `dataclasses.fields()` check is the antidote. Deviation
-  recorded in `docs/specs/bulletin-curator/decisions.md` D1.
 
 - **Don't run an INTERNAL state-file path through
   `_validate_file_path()` (or `.resolve()`) in `save` when `load`
