@@ -6763,3 +6763,178 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   swallows findings" → the budget-cap correction) — that's
   consolidation, not loss. Edit-tool-only (no shell splice) per
   the spec guardrail; back up `CLAUDE.md` first.
+
+- **Subscription `claude` CLI is structurally broken for
+  `claude_agent_sdk.query()` in this repo — SessionStart hooks
+  pollute the stream-json channel**: hit 2026-06-06 trying to run
+  bug-predict through the ops dashboard while logged in to Claude
+  Max (no `ANTHROPIC_API_KEY` exported). The SDK spawns `claude
+  --output-format stream-json --verbose --input-format stream-json
+  …`; the subscription CLI loads the FULL session context on every
+  invocation (CLAUDE.md ~348k chars, the spec-status starter, the
+  `.help` freshness reminder, in-flight specs) and responds with
+  conversational prose (`"I see the session orientation. Ready for
+  your next instruction — let me know what you'd like to work on."`)
+  instead of stream-json. The SDK's `receive_messages` reader hits
+  the non-JSON line, raises `Command failed with exit code 1`, and
+  the workflow dies after ~6 min of CLI churn. **The #650
+  `ATTUNE_SDK_ERROR_PROBE` health probe paid off exactly as
+  designed** — its captured `sdk_stderr` in the on-disk run record
+  contained the literal "session orientation" prose, making the
+  cause unambiguous (without it: opaque exit 1). Workarounds:
+  (a) **API mode** — `set -a && source ~/.attune/anthropic.env &&
+  set +a && export ATTUNE_MAX_BUDGET_USD=10` before launching the
+  dashboard; bug-predict on `src/attune/gates/` then ran clean in
+  ~6 min, returning real findings. (b) Real fix (small follow-up
+  spec, not done): gate SessionStart hooks on a marker like
+  `CLAUDE_CODE_SDK_SUBPROCESS=1` and set it in `runner.py`'s
+  `proc_env` alongside the existing `ATTUNE_SDK_ERROR_PROBE=1`.
+  Pairs with the existing "MCP server process doesn't inherit .env"
+  and "SDK error fidelity" lessons — same family (process-environment
+  boundaries shape SDK subprocess behavior), new specific surface
+  (SessionStart-hook output poisoning the stream-json channel that
+  the SDK reader requires).
+
+- **Ops dashboard `_SESSION_TOKEN` regenerates on every server
+  restart, and the Cowork preview pane caches the page across
+  restarts — every restart costs a Cmd+R on the pane or every
+  mutating click 403s**: hit 2026-06-06 multiple times. The
+  `attune.ops.security._SESSION_TOKEN = secrets.token_urlsafe(32)`
+  is per-process, injected into each rendered page as
+  `<meta name="attune-client-token">`. After `preview_stop` +
+  `preview_start` (or any backend restart), the live server mints
+  a fresh token, but the Cowork preview proxy serves the previous
+  process's cached HTML — so the open page holds a dead token and
+  every mutating POST returns 403 invalid_client. Three distinct
+  tokens were observed on port 8765 in one diagnosis pass (page
+  meta `aZxrk4`, live `curl` `7fNWqG`, next-restart `_2keAk`).
+  **Cache-busted URL navigation (`?cb=Date.now()`) does NOT fix
+  it** — the preview proxy's cache ignores the query string.
+  Cmd+R / Cmd+Shift+R on the pane DOES. **Diagnostic playbook**
+  when the dashboard 403s after a restart: (1) `curl -s
+  http://127.0.0.1:8765/workflows | grep attune-client-token` —
+  the live server-injected token; (2) `preview_eval` reading
+  `document.querySelector('meta[name="attune-client-token"]')
+  .content` — the page's token; (3) if they differ → stale-page,
+  Cmd+R is the only reliable fix; if they match → validate against
+  a cheap protected endpoint (`POST /api/telemetry/interaction
+  {"event":"test"}` returns 204 with token, 403 without) before
+  suspecting a dual-module problem. Three-token confusion is the
+  single biggest source of "403 invalid_client" UX time-sink
+  during dashboard development.
+
+- **bug-predict on small recently-touched leaf modules produces
+  real, actionable findings — validated by running it on
+  just-shipped code**: 2026-06-06 ran `bug-predict
+  src/attune/gates/` (the collaboration-gates T1 code shipped
+  24 h earlier in #637, ~150 LOC) in API mode after subscription
+  failed (see above). ~6 min, returned TWO real findings, both
+  verified against the actual code: (1) `envelope.py:151` —
+  deterministic `.tmp` filename (`path.name + ".tmp"`) →
+  last-writer-wins race under concurrent processes (fix: append
+  `.{os.getpid()}-{secrets.token_hex(4)}.tmp`); (2)
+  `envelope.py:170-178` — `load_or_new(ttl_seconds=, cap_usd=,
+  meter=)` silently discards those kwargs when an existing live
+  envelope is found, but the function name implies they're
+  effective. Pattern: bug-predict's value-per-dollar is highest
+  on **recently-touched, small, leaf modules** where the
+  workflow's full attention fits the scope. ~6 min runtime on
+  ~150 LOC is the normal/healthy duration for a real
+  multi-subagent run; pairs with the existing "duration <5s on
+  any LLM-backed workflow = startup failure" lesson as the
+  positive-direction companion.
+
+- **`asyncio.create_task()` holds only a weak reference to the
+  task — discarding the return value lets GC reap it mid-flight
+  and the workflow silently dies**: Python documents this
+  explicitly (`cpython.discard-task-issue`): "Save a reference
+  to the result of this function, to avoid a task disappearing
+  mid-execution. The event loop only keeps weak references to
+  tasks." Hit 2026-06-06 in `attune.ops.runner.RunnerService.start`
+  (#651): the executor task at `runner.py:622` was created with
+  `asyncio.create_task(self._executor(run))` — return value
+  discarded. **The smell that diagnosed it**: heartbeat tasks
+  at `:699` were pinned in `self._heartbeat_tasks[run.id]`,
+  proving the team knew the pattern existed; the executor was
+  an inconsistency in the same file. Fix shape — pin the task
+  in a dict + auto-prune on completion (so the dict stays
+  bounded at `len(active_runs)`):
+  ```python
+  self._executor_tasks: dict[str, asyncio.Task[None]] = {}
+  task = asyncio.create_task(self._executor(run))
+  self._executor_tasks[run.id] = task
+  task.add_done_callback(lambda _t, rid=run.id: self._executor_tasks.pop(rid, None))
+  ```
+  Detection grep when reviewing any new code: search for
+  `asyncio\.create_task\(` and verify each one is either
+  awaited, assigned to a variable, or stored on an instance
+  attribute. Pattern is intermittent — under low load you'd
+  never see it; under GC pressure (long sessions, many
+  concurrent ops) the task vanishes mid-stream and the run
+  hangs in 'running' status until a side-channel cancels it.
+  Pairs with the existing "monkey-patching a service instance
+  method at construction" lesson (same file's wiring patterns).
+
+- **Sync SDK calls inside an async FastAPI route block the
+  uvicorn event loop; `asyncio.to_thread` is the minimal fix**:
+  hit 2026-06-06 in the `/sessions` + `/api/sessions` routes
+  (#652). The chain went async route → sync wrapper → sync
+  loop → sync `summarize_session` → sync `_call_haiku` → sync
+  `Anthropic(...).messages.create()` — every Haiku batch
+  blocked the entire FastAPI loop, freezing SSE streams, the
+  runner, and every other concurrent request. Fix: wrap each
+  call site in `await asyncio.to_thread(sync_fn, *args,
+  **kwargs)` at the async boundary. The `anthropic` SDK is
+  documented thread-safe; this preserves the sync API of the
+  inner function (tests + other paths unaffected). Architectural
+  alternative is `AsyncAnthropic` migration, which cascades
+  through ~4 files and breaks sync test fixtures — only worth
+  it when there's genuine async-native usage downstream. The
+  detection signal: any `async def` route handler that calls
+  a function which eventually invokes `anthropic.Anthropic(...)`,
+  `openai.OpenAI(...)`, `redis.Redis(...)`, or any blocking-IO
+  client. **Regression-test shape**: install a fake SDK that
+  records `threading.get_ident()` on each call; assert the
+  recorded id ≠ the test's main-thread id. Reverting the
+  `to_thread` wrap puts the call back on the main thread and
+  fails the test loudly. Pairs with the existing "asyncio
+  create_task weak-ref" lesson (same workflow, same file's
+  async-discipline class).
+
+- **`ANTHROPIC_API_KEY` exported in the dev shell leaks into
+  pytest and breaks tests that assert heuristic (non-LLM)
+  rendering — CI green, local red for keys-exported devs**: hit
+  2026-06-06 in `tests/unit/ops/test_sessions.py`'s
+  `test_sessions_page_renders_session_rows_when_data_present`
+  (#653). The test creates a session with `content="Test prompt
+  for session listing."` and asserts `"Test prompt"` appears in
+  the rendered HTML. Pytest inherits the parent shell's process
+  env — when `ANTHROPIC_API_KEY` is set (common during local
+  dashboard work or any session that sourced
+  `~/.attune/anthropic.env`), the route's `enrich_with_summaries`
+  sees a live key, calls real Haiku, and REPLACES the heuristic
+  starter with the LLM's summary. The fixture content vanishes
+  from the rendered body; assertion fails. CI has no key set
+  so it passes there — the failure surfaces only for
+  keys-exported devs and is doubly easy to miss in a normal
+  review cycle. **Fix at the test-helper level, not per-test**:
+  in the file's `_make_app`, default-disable Haiku via
+  `monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)` +
+  `monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "0")`. Tests
+  in this file all target the heuristic path; tests that
+  EXERCISE the LLM live in a sibling file with their own
+  `_make_app` and `_install_fake_anthropic` fixture. The
+  helper-level fix prevents the entire class of bug for any
+  test added later. **Generalization**: any test that asserts
+  on fixture content rendered through a code path that calls
+  a real LLM API (or any external service) MUST gate the env
+  variables that route to the live service. The "CI passes
+  because CI doesn't have the secret" footgun is recurring;
+  consider an autouse conftest fixture for tests/ that
+  blanket-clears provider keys (`ANTHROPIC_API_KEY`,
+  `OPENAI_API_KEY`, `OLLAMA_HOST`, etc.) unless a specific
+  test opts in. Pairs with the existing "Editor settings-sync
+  leaks credentials" lesson — same family (credentials
+  bleeding across process/session boundaries in unexpected
+  ways), different surface (parent-shell env into pytest, vs
+  IDE config into cloud sync).

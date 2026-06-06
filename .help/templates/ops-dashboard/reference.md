@@ -1,8 +1,8 @@
 ---
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-06-05T16:31:34.140171+00:00
-source_hash: d0b3106e2fbde27c37ade74472102cbda4a87e7f2a061ae53a55d516e5881c21
+generated_at: 2026-06-06T18:14:56.651029+00:00
+source_hash: 6a0538b0cebace5e840d9be6acadb6c803434f46a9c70de40931c4bdcfd70e93
 status: generated
 ---
 
@@ -134,6 +134,7 @@ status: generated
 | `stream_run()` | — | `src/attune/ops/routes/runner.py` |
 | `list_runs()` | Return up to 20 newest runs for ``workflow``, newest first. | `src/attune/ops/routes/runs_history.py` |
 | `get_run_record()` | Return one persisted run record (metadata + log). | `src/attune/ops/routes/runs_history.py` |
+| `get_session_token()` | Return the in-process client token for page bootstrap. | `src/attune/ops/routes/session.py` |
 | `enrich_with_summaries()` | Public helper used by both the JSON route and the HTML page. | `src/attune/ops/routes/sessions.py` |
 | `list_sessions()` | ``GET /api/sessions`` — JSON listing of recent sessions. | `src/attune/ops/routes/sessions.py` |
 | `list_specs()` | Federated listing across all configured spec roots. | `src/attune/ops/routes/specs.py` |
@@ -152,6 +153,8 @@ status: generated
 | `parse_line()` | Parse one ATTUNE_RUN_META line back into a dict. None on no match. | `src/attune/ops/run_meta_stdout.py` |
 | `echo_command_builder()` | Test helper: produce a portable subprocess that prints two lines + exits 0. | `src/attune/ops/runner.py` |
 | `prune_old_runs()` | Delete persisted run files older than ``days``. Returns the deletion count. | `src/attune/ops/runner.py` |
+| `current_session_token()` | Return the in-process session token. | `src/attune/ops/security.py` |
+| `require_client_token()` | FastAPI dependency: 403 unless ``X-Attune-Client`` matches the token. | `src/attune/ops/security.py` |
 | `create_app()` | Build the FastAPI app, wiring config + templates into request state. | `src/attune/ops/server.py` |
 | `redact()` | Run all redaction passes over ``text`` and return the result. | `src/attune/ops/session_redaction.py` |
 | `redact_json_line()` | Redact one JSON-serialized line in-place, preserving structure. | `src/attune/ops/session_redaction.py` |
