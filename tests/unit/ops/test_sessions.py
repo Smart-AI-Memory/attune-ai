@@ -524,7 +524,26 @@ def test_list_recent_sessions_handles_no_content_events(tmp_path, monkeypatch):
 
 
 def _make_app(tmp_path, monkeypatch):
+    """Build a TestClient-ready app with the heuristic-only data layer.
+
+    Default-disables the Haiku summarizer so a developer with
+    ``ANTHROPIC_API_KEY`` exported in their shell doesn't silently
+    trigger real LLM calls on test runs — manifests as the route
+    REPLACING heuristic ``starter_prompt`` strings with the
+    real-Haiku summary, breaking any assertion that checks for
+    fixture content in the rendered output. The CI matrix has no
+    key set so the failure only surfaces locally for keys-exported
+    devs, which makes it doubly easy to miss.
+
+    Tests in this file all target the deterministic heuristic
+    path (see file docstring). Tests that EXERCISE the LLM live
+    in ``test_sessions_route_s3b.py`` and install their own fake
+    ``anthropic`` module via ``_install_fake_anthropic`` (and use
+    their own ``_make_app`` in that file).
+    """
     monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "attune-home"))
+    monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+    monkeypatch.setenv("ATTUNE_OPS_SESSIONS_LLM", "0")
     _patch_home(monkeypatch, tmp_path / "home")
     config = build_config(
         project_root=tmp_path / "project",
