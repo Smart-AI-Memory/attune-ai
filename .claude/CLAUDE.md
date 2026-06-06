@@ -154,25 +154,44 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ## Lessons Learned
 
-- **Coverage omit `*/test_*.py` silently hides production
-  modules named `test_*.py`**: `pyproject.toml`'s
-  `[tool.coverage.run]` omit pattern `*/test_*.py` matches
-  any file whose basename starts with `test_` — including
-  legitimate production modules like
-  `src/attune/workflows/test_gen/test_templates.py` and
-  six `src/attune/workflows/test_*.py` workflow source
-  files. coverage.py never measures them, so the rubric
-  script reports them with `?` covered_pct and a coverage
-  gap of 1.0. Two effects: (1) genuinely uncovered code
-  passes the 85% project gate because it's not counted in
-  the denominator; (2) the test-quality-program rubric
-  promotes these `?` rows to the top of the working set
-  with spuriously-high scores. Two fixes: tighten omit to
-  `tests/test_*.py` (root-anchored) or have the rubric
-  script drop `?` covered_pct rows from the working-set
-  top before surfacing picks. Discovered during the fourth
-  test-quality-program cycle when the top 11 rubric rows
-  were all coverage-omit artifacts.
+- **Coverage measurement mechanics — omit traps, --cov
+  crashes, line-vs-branch, and skipped-not-failed**:
+  - **omit `*/test_*.py` hides production `test_*.py`
+    modules** — the pattern matches production modules whose
+    basename starts with `test_` (e.g.
+    `workflows/test_gen/test_templates.py`, six
+    `workflows/test_*.py` source files); coverage.py never
+    measures them → `?` covered_pct, gap 1.0, so
+    genuinely-uncovered code passes the 85% gate (not in the
+    denominator) AND the rubric promotes the `?` rows to the
+    top with spurious scores. Fix: tighten omit to
+    root-anchored `tests/test_*.py`, or drop `?` rows from the
+    rubric working set.
+  - **`pytest --cov` triggers `KeyError: 'pydantic.root_model'`**
+    via the workflows conftest's `discover_workflows()` —
+    coverage instrumentation changes import timing so pydantic's
+    generic submodel creation looks up an unpopulated
+    `sys.modules['pydantic.root_model']`. Use `coverage run -m
+    pytest <targets>` + `coverage combine && coverage report
+    --include=...` instead of `pytest --cov`.
+  - **Full coverage runs timeout** — `pytest --cov=src/attune`
+    on the full suite takes 10+ min; for dev feedback use
+    targeted `pytest tests/unit/module/ --cov=attune.module
+    --no-cov-on-fail`.
+  - **Local coverage defaults to LINE; codecov runs BRANCH** —
+    always `coverage run --branch` locally to match CI;
+    line-only reports lie by omission about partial branches
+    (e.g. `elif isinstance(...)` False, `if reason:` False —
+    100% line yet 99.74% patch). `coverage report -m --branch`
+    shows a "BrPart" column and `103->96` branch-arrow notation.
+    The local pre-push hook MUST use `--branch`
+    (test-discipline-controls D5).
+  - **`codecov/patch` 0% usually means tests SKIPPED, not
+    failed** — if new tests `pytest.importorskip` an optional
+    dep CI doesn't install, the diff shows 0% covered though all
+    "pass". Fix: make the dep installable (`[dev]`), or add
+    unconditional error-path tests via `sys.modules[name] =
+    None`.
 
 - **structlog gotchas — config leaks, stdout pollution, stdlib
   kwargs**:
@@ -210,23 +229,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     keyword argument`. Use `logger.info("msg: key=%s", value)`;
     grep the whole module when fixing (partial fixes leave
     runtime crashes in untouched calls).
-
-- **`pytest --cov` triggers
-  `KeyError: 'pydantic.root_model'` via the workflows
-  conftest's `discover_workflows()`**: running `pytest`
-  with `--cov` enabled fails at conftest import time when
-  the project's `tests/conftest.py` calls
-  `attune.workflows.discover_workflows()`. The chain:
-  coverage instrumentation changes module import timing →
-  `mcp.types.JSONRPCMessage(RootModel[...])` triggers
-  pydantic's generic submodel creation → pydantic looks
-  up `sys.modules['pydantic.root_model']` which isn't
-  populated yet → `KeyError`. Workaround: skip
-  `pytest --cov` for ad-hoc measurement. Use
-  `coverage run -m pytest <targets>` then
-  `coverage combine && coverage report --include="..."`
-  instead — same coverage data, no instrumentation
-  interaction with conftest's lazy workflow loader.
 
 - **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
   fixtures — CI runners often execute as root, making the path
@@ -491,12 +493,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   exercise `execute()` end-to-end in tests to catch dataclass
   mismatches that lint can't see.
 
-- **Full coverage runs on 15k+ test suites timeout easily**:
-  `pytest --cov=src/attune` with the full test suite takes 10+
-  minutes. For development feedback, use targeted coverage:
-  `pytest tests/unit/module/ --cov=attune.module --no-cov-on-fail`
-  to measure specific modules in seconds.
-
 - **Bandit B108 blocks hardcoded `/tmp` paths**: Using a literal
   `/tmp/...` string in `subprocess.run` or `open()` triggers
   bandit B108 (insecure temp file usage). Fix: use
@@ -543,12 +539,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to `docs/archive/` (excluded by mkdocs `exclude_docs`
   config) rather than fixing every dead link.
 
-- **MCP tool count tests are hardcoded**: When adding new MCP
-  tools to `server.py`, grep tests for the old tool count
-  (e.g., `assert len(tools) == 22`). The assertion in
-  `test_mcp_memory_tools.py` is the main one but others may
-  exist. Also check workflow description assertions if
-  descriptions were changed.
+- **Changing a shared string or count cascades through scattered
+  test assertions — grep the whole test tree before you change
+  it**: any hardcoded value duplicated across tests (error
+  messages, user-facing output, registry/tool counts) breaks many
+  tests at once when the source changes; grep the old value and
+  update every caller in the same commit. Instances:
+  - **Error messages** — changing `_validate_file_path()`'s
+    `"path must be within"` → `"outside allowed directory"` broke
+    10 test files; grep `match="<old message>"`.
+  - **User-facing output strings** — replacing "Workflow
+    completed" with voice-layer messaging broke 6 assertions
+    across 4 classes; grep the old string (broader than error
+    messages — any output text in a shared path like
+    `_print_workflow_result`).
+  - **Registry counts + class names** — reducing `_SDK_WORKFLOW_MAP`
+    12→9 broke `assert len(...)==12` and expected-set assertions
+    across routing, validation, and coverage-batch tests; grep
+    the old count AND old class names
+    (`SecurityAuditAgentSDKWorkflow`).
+  - **MCP tool counts** — adding tools to `server.py` breaks
+    `assert len(tools)==22` (`test_mcp_memory_tools.py` is the
+    main one, but others exist); also check workflow-description
+    assertions.
 
 - **`list_wizards()` is a function, not a class method**:
   The wizard registry exposes `from attune.wizards import
@@ -666,13 +679,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   ordering matters in both IP literal checks and DNS resolution
   checks.
 
-- **Changing error messages breaks tests across the codebase**:
-  Updating `_validate_file_path()`'s error from `"path must be
-  within"` to `"outside allowed directory"` broke 10 test files.
-  Before changing any error message in a shared function, grep the
-  entire test suite for `match="<old message>"` and update all
-  callers in the same commit.
-
 - **Adding DNS resolution to `_validate_webhook_url` breaks tests
   that pass real hostnames**: Any test calling `_validate_webhook_url`
   with a non-IP hostname (e.g. `example.com`) now needs
@@ -720,15 +726,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Grep for ALL method names being removed across the entire test tree
   before considering the migration done — `pytest -k "code_review"`
   catches failures that file-specific runs miss.
-
-- **Registry count assertions are scattered across test files**: When
-  merging SDK workflow variants (reducing `_SDK_WORKFLOW_MAP` from
-  12→9 entries), hardcoded count assertions like
-  `assert len(_SDK_WORKFLOW_MAP) == 12` and expected-set assertions
-  exist in routing behavioral tests, validation framework tests, and
-  coverage batch tests. Always grep for the old count and old class
-  names (e.g. `SecurityAuditAgentSDKWorkflow`) across all test files
-  when changing registry size.
 
 - **Hardcoded strings in method bodies survive class attribute
   renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
@@ -945,14 +942,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   caching with `sentence-transformers` (420MB dep) delivered
   0.4% savings vs Anthropic's automatic server-side caching.
   Removed in favor of the native solution.
-
-- **Changing user-facing output strings cascades through test
-  assertions**: Replacing "Workflow completed" with voice layer
-  personality messaging broke 6 assertions across 4 test classes.
-  When changing any user-facing output string in a shared path
-  (like `_print_workflow_result`), grep the entire test suite for
-  the old string before considering the change done. This is
-  broader than just error messages — any output text change.
 
 - **MCP `call_tool` wrapper pattern**: When adding a cross-cutting
   concern (like voice layer) to the MCP server, rename the
@@ -1797,18 +1786,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `[dev]` → tests run → coverage lands. Before publish,
   rag tests use `importorskip` and patch coverage
   reports 0% for the new code.
-
-- **`codecov/patch` 0% usually means tests *skipped*, not
-  failed**: The `codecov/patch` check measures coverage
-  of the diff — new/changed lines. If new tests use
-  `pytest.importorskip` on an optional dep that CI
-  doesn't install, every assertion skips, and the diff
-  shows 0% covered even though all tests "pass". Fix
-  by making the dep installable (add to `[dev]` or move
-  to required), or by adding unconditional error-path
-  tests that don't need the optional dep (use
-  `sys.modules[name] = None` sentinel to exercise the
-  "missing extra" branches).
 
 - **Adding a plugin skill has THREE enforcement gates,
   not one**: Besides creating `plugin/skills/<name>/SKILL.md`,
@@ -3011,40 +2988,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   current main, OR re-rebase before merge to pick
   up any post-rebase upstream fixes.
 
-- **When existing coverage on a module is ≥85%, write
-  a focused "fallback-paths" test file rather than
-  rewriting the existing surface**: the test-quality-
-  program rubric surfaced `memory/control_panel.py`
-  at 93% with 2,723 lines of existing tests across 4
-  files. The right move was a 168-line targeted file
-  (`test_control_panel_error_paths.py`) that named the
-  remaining branches by line number in its docstring
-  and exercised each with strategic patching: storage_bytes
-  Exception fallback, long-term get_statistics() Exception
-  handler, health_check unavailable branch, _count_patterns
-  OSError handler. Coverage 93% → 99% (only `if __name__
-  == "__main__"` guard left) without touching 2.7k lines
-  of correct existing tests. Pattern: when rubric points
-  at a high-existing-coverage module, scan its missing
-  branches first (`coverage report -m`) and write a
-  targeted file naming each by line — don't start from
-  scratch.
-
-- **`rubric_cache.csv` for the test-quality-program
-  goes stale within a single working session**: the csv
-  is regenerated only when `scripts/score_test_quality.py`
-  runs against fresh `coverage.xml`. After ~6 cycles in
-  one session, the csv's per-module `covered_pct` values
-  are wildly off — `memory/control_panel.py` was
-  reported at 53.9% in the morning snapshot but was
-  93% by the time it was picked (existing test work had
-  landed earlier today). Operational fix: re-run
-  `scripts/score_test_quality.py` against a fresh
-  `pytest --cov=src/attune --cov-report=xml` before
-  picking each cycle's module, OR cross-check the csv's
-  `covered_pct` against actual coverage when the module
-  is opened. Don't waste a cycle re-confirming a module
-  that's already well-covered.
+- **Test-quality-program rubric — operational gotchas**:
+  - **High existing coverage (≥85%): write a focused
+    fallback-paths test file, don't rewrite** — when the rubric
+    points at a 93%-covered module with thousands of lines of
+    existing tests, scan its missing branches (`coverage report
+    -m`) and write a small targeted file naming each by line
+    (e.g. `test_control_panel_error_paths.py`, 168 lines →
+    93%→99%), not from scratch.
+  - **`rubric_cache.csv` goes stale within a session** — it's
+    regenerated only when `scripts/score_test_quality.py` runs
+    against fresh `coverage.xml`; after ~6 cycles the per-module
+    `covered_pct` is wildly off (a module showed 53.9% in the
+    morning, was 93% by pick time). Re-run the scorer against a
+    fresh `pytest --cov=src/attune --cov-report=xml` before each
+    pick, or cross-check `covered_pct` when opening the module.
+  - **Low coverage + a nominal test file → grep
+    `pytest.importorskip` FIRST** — if existing tests gate the
+    whole module on `importorskip("X")` and X isn't in `[dev]`,
+    all of them silently skip in CI; the fix is one line
+    (add X to `[dev]`) and coverage jumps 60+ pts without
+    writing anything (PR #287: `python-frontmatter` was only in
+    `[author]`). If there's NO test file, check inbound imports
+    (`grep -rn "from ...module" src/`) before writing — it may
+    be dead code.
+  - **The rubric needs a USAGE signal, not just a coverage-gap
+    signal** — `weight × gap × risk` ranks dead/skipped modules
+    as top picks (skipped-in-CI, zero-inbound-import "Removed"
+    modules, dead defensive try/except). Proposed (in
+    test-quality-program/decisions.md): multiply the score by
+    `min(1.0, inbound_imports / 5)` to push orphan modules off
+    the working-set top.
 
 - **SDK-native workflow test scaffold — reusable across
   siblings, single-pass rename**: the same scaffold (real
@@ -3085,57 +3059,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   deleted on squash merge — push new cycles from a
   fresh branch off `origin/main`, not the prior cycle's
   branch.
-
-- **Diagnostic for the rubric: low coverage + nominal
-  test file → grep for `pytest.importorskip` FIRST**:
-  three test-quality-program cycles in a row hit
-  modules where the rubric reported low coverage but
-  the gap was an artifact, not a coverage need.
-  Combined with the existing "codecov/patch 0%" and
-  "Tests for optional-dep code" lessons, the rule
-  is: when the rubric picks a module with surprisingly
-  low `covered_pct` AND a non-trivial test file
-  exists in `tests/`, run
-  `grep -l "pytest.importorskip" tests/<path>` BEFORE
-  writing new tests. If the existing tests gate the
-  whole module on an `importorskip("X")` and X isn't
-  in `[dev]`, the fix is one line in pyproject.toml
-  (add X to `[dev]`) — 16 existing tests start
-  running, coverage jumps 60+ percentage points
-  without writing anything new. Hit in PR #287
-  (`cli_commands/help_commands.py`,
-  `python-frontmatter` was only in `[author]`,
-  CI's `--extra dev --extra developer` didn't
-  install it → all 16 tests silently skipped). The
-  diagnostic also reveals "dead code wearing
-  defensive clothes" — if there's no test file at
-  all, check inbound imports (`grep -rn
-  "from ...module" src/`) before writing tests.
-
-- **Coverage rubric needs a usage signal, not just
-  a coverage-gap signal**: the formula
-  `weight × gap × risk` ranks modules purely by
-  "user value × untested surface," which is exactly
-  right for healthy code but wrong for dead/skipped
-  code. Three consecutive cycles surfaced
-  unused-or-silently-skipped modules as top picks:
-  (a) `cli_commands/help_commands.py` 16 tests
-  silently skip in CI (#287),
-  (b) `workflows/test_lifecycle.py` +
-  `test_maintenance_cli.py` 0% covered, zero
-  inbound imports outside each other, source
-  comments mark "Removed",
-  (c) `workflows/test_runner_helpers.py` 2% gap is
-  dead defensive try/except. Proposed refinement
-  (flagged in `docs/specs/test-quality-program/decisions.md`,
-  not committed): add inbound-import count to
-  `scripts/score_test_quality.py`. Modules with 0
-  external consumers should auto-flag as
-  retirement candidates rather than coverage
-  targets. The score formula should multiply by
-  `min(1.0, inbound_imports / 5)` or similar to
-  push orphan modules off the top of the working
-  set.
 
 - **Test scaffold archetype for external-process
   trackers**: `workflows/test_runner.py` (PR #288)
@@ -5287,34 +5210,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that flips it, you've found a CI-vs-dev environment
   drift bug. Don't bundle the fix into an unrelated PR;
   flag in the PR body and file separately.
-
-- **Local `coverage run -m pytest` defaults to LINE
-  coverage; codecov runs BRANCH coverage — always use
-  `coverage run --branch` locally to match what CI
-  enforces**: hit 2026-05-27 on PR #485 (bulletin-
-  curator Phase 1). After lifting line coverage to 100%
-  and pushing, codecov flagged 2 partial branches in
-  `sources/sweep.py` at 99.74% patch coverage. Local
-  re-run with `--branch` immediately reproduced the gap
-  (`Branch=28, BrPart=2`). The two partials were
-  `elif isinstance(row, dict)` False (non-dict bucket
-  rows) and `if reason:` False (empty reason in
-  questions-bucket finding) — both reachable by adding
-  one fixture each. Three corollaries: (1) when fixing
-  coverage gaps on any PR with codecov, run
-  `coverage run --branch -m pytest` from the start;
-  line-only reports lie by omission about partial
-  branches. (2) When writing the local-fast-feedback
-  pre-push hook, it MUST run with `--branch` (see
-  `docs/specs/test-discipline-controls/decisions.md` D5).
-  (3) When the report shows `Branch=N, BrPart=0,
-  Cover=100%`, you actually have full coverage; when
-  the same numbers say `Cover=100% line` only without
-  branch columns, treat as suspicious until verified.
-  Diagnostic: `coverage report -m` with `--branch`
-  prints a "BrPart" column and "Missing" lines with
-  `103->96` notation for branch arrows; line-only
-  prints integer line numbers only.
 
 - **Rapid pushes to a PR with `cancel-in-progress`
   concurrency cancel the prior workflow run — and
