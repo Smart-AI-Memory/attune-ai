@@ -729,6 +729,12 @@ class RunnerService:
             **_os.environ,
             "ATTUNE_RUN_META_EMIT": "1",
             "ATTUNE_SPEND_GATE_AUTHORIZED": "1",
+            # On an SDK subprocess failure the argv isn't recoverable, so
+            # opt this daemon-spawned run into the live `claude` health
+            # probe — surfaces the real auth/quota error in the run-view
+            # details instead of a generic "no stderr" note. Off by
+            # default elsewhere (keeps unit tests deterministic).
+            "ATTUNE_SDK_ERROR_PROBE": "1",
         }
         try:
             proc = await asyncio.create_subprocess_exec(

@@ -177,10 +177,23 @@ class TestCaptureSubprocessFailure:
         # The exact token should NOT appear in output (redacted away)
         assert fake_key not in out
 
+    def test_empty_argv_default_no_probe(self, monkeypatch):
+        """Default (probe disabled): empty argv returns a deterministic
+        'no stderr' note — no crash, no real subprocess — so the failure
+        classifies as 'unknown' (what every workflow test expects)."""
+        monkeypatch.delenv("ATTUNE_SDK_ERROR_PROBE", raising=False)
+        out = capture_subprocess_failure([])
+        assert "no" in out.lower() and "capture" in out.lower()
+        assert "IndexError" not in out  # the old bug must not recur
+        kind, _ = classify_subprocess_failure(out)
+        assert kind == "unknown"
+
     def test_empty_argv_runs_claude_health_probe(self, monkeypatch):
-        """Empty argv (the SDK exposes none) falls back to the `claude`
-        health probe and surfaces its real output — NOT a crash. The probe
-        is monkeypatched to a deterministic 401 so no real `claude` runs."""
+        """With ATTUNE_SDK_ERROR_PROBE on, empty argv falls back to the
+        `claude` health probe and surfaces its real output — NOT a crash.
+        The probe is monkeypatched to a deterministic 401 so no real
+        `claude` runs."""
+        monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
         monkeypatch.setattr(
             "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
             lambda: ["sh", "-c", "echo '401 Invalid authentication credentials' 1>&2; exit 1"],

@@ -650,6 +650,24 @@ def classify_subprocess_failure(stderr: str) -> tuple[SdkErrorKind, str]:
     return "unknown", "The claude CLI subprocess failed; see raw stderr below."
 
 
+def _sdk_error_probe_enabled() -> bool:
+    """Whether to fall back to a live ``claude`` health probe when the
+    failing argv can't be recovered from the SDK exception.
+
+    OFF by default so unit tests (which mock the SDK to raise) never spawn
+    a real ``claude`` subprocess and stay deterministic. The ops dashboard
+    runner sets ``ATTUNE_SDK_ERROR_PROBE=1`` when spawning workflows so a
+    real failure surfaces the actual auth/quota error instead of a generic
+    "no stderr" note.
+    """
+    return os.environ.get("ATTUNE_SDK_ERROR_PROBE", "").strip().lower() in {
+        "1",
+        "true",
+        "yes",
+        "on",
+    }
+
+
 def _claude_health_probe_argv() -> list[str]:
     """Minimal ``claude`` invocation used as the fallback diagnostic when
     the exact failing argv can't be recovered from the SDK exception.
@@ -704,9 +722,15 @@ def capture_subprocess_failure(
     """
     probe_note = ""
     if not args:
-        # No recoverable argv (the SDK exception carries none) — probe
-        # `claude` directly so the real auth/quota/not-found error shows
-        # up instead of crashing on subprocess.run([]).
+        # No recoverable argv (the SDK exception carries none). Only probe
+        # `claude` directly when explicitly enabled — default-off keeps
+        # unit tests deterministic (no real subprocess); the dashboard
+        # runner opts in so the real auth/quota error surfaces.
+        if not _sdk_error_probe_enabled():
+            return (
+                "(the SDK reported a subprocess failure but exposed no "
+                "command or stderr to capture)"
+            )
         args = _claude_health_probe_argv()
         probe_note = (
             "(could not recover the exact failing command from the SDK; "
