@@ -154,95 +154,81 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
 
 ## Lessons Learned
 
-- **Coverage omit `*/test_*.py` silently hides production
-  modules named `test_*.py`**: `pyproject.toml`'s
-  `[tool.coverage.run]` omit pattern `*/test_*.py` matches
-  any file whose basename starts with `test_` — including
-  legitimate production modules like
-  `src/attune/workflows/test_gen/test_templates.py` and
-  six `src/attune/workflows/test_*.py` workflow source
-  files. coverage.py never measures them, so the rubric
-  script reports them with `?` covered_pct and a coverage
-  gap of 1.0. Two effects: (1) genuinely uncovered code
-  passes the 85% project gate because it's not counted in
-  the denominator; (2) the test-quality-program rubric
-  promotes these `?` rows to the top of the working set
-  with spuriously-high scores. Two fixes: tighten omit to
-  `tests/test_*.py` (root-anchored) or have the rubric
-  script drop `?` covered_pct rows from the working-set
-  top before surfacing picks. Discovered during the fourth
-  test-quality-program cycle when the top 11 rubric rows
-  were all coverage-omit artifacts.
+- **Coverage measurement mechanics — omit traps, --cov
+  crashes, line-vs-branch, and skipped-not-failed**:
+  - **omit `*/test_*.py` hides production `test_*.py`
+    modules** — the pattern matches production modules whose
+    basename starts with `test_` (e.g.
+    `workflows/test_gen/test_templates.py`, six
+    `workflows/test_*.py` source files); coverage.py never
+    measures them → `?` covered_pct, gap 1.0, so
+    genuinely-uncovered code passes the 85% gate (not in the
+    denominator) AND the rubric promotes the `?` rows to the
+    top with spurious scores. Fix: tighten omit to
+    root-anchored `tests/test_*.py`, or drop `?` rows from the
+    rubric working set.
+  - **`pytest --cov` triggers `KeyError: 'pydantic.root_model'`**
+    via the workflows conftest's `discover_workflows()` —
+    coverage instrumentation changes import timing so pydantic's
+    generic submodel creation looks up an unpopulated
+    `sys.modules['pydantic.root_model']`. Use `coverage run -m
+    pytest <targets>` + `coverage combine && coverage report
+    --include=...` instead of `pytest --cov`.
+  - **Full coverage runs timeout** — `pytest --cov=src/attune`
+    on the full suite takes 10+ min; for dev feedback use
+    targeted `pytest tests/unit/module/ --cov=attune.module
+    --no-cov-on-fail`.
+  - **Local coverage defaults to LINE; codecov runs BRANCH** —
+    always `coverage run --branch` locally to match CI;
+    line-only reports lie by omission about partial branches
+    (e.g. `elif isinstance(...)` False, `if reason:` False —
+    100% line yet 99.74% patch). `coverage report -m --branch`
+    shows a "BrPart" column and `103->96` branch-arrow notation.
+    The local pre-push hook MUST use `--branch`
+    (test-discipline-controls D5).
+  - **`codecov/patch` 0% usually means tests SKIPPED, not
+    failed** — if new tests `pytest.importorskip` an optional
+    dep CI doesn't install, the diff shows 0% covered though all
+    "pass". Fix: make the dep installable (`[dev]`), or add
+    unconditional error-path tests via `sys.modules[name] =
+    None`.
 
-- **structlog config leaks via `structlog.configure(...)`
-  break unrelated log-event tests on the same xdist
-  worker**: any test that exercises a real call to
-  `structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(WARNING))`
-  (e.g. via a CLI's `_configure_logging` function) mutates
-  the GLOBAL structlog wrapper class, and that mutation
-  persists across the rest of the worker's test session.
-  Subsequent `logger.info(...)` calls are silently
-  filtered at the wrapper layer — before the
-  `structlog.testing.capture_logs()` processor can capture
-  them — so `capture_logs()` returns `[]` and assertions
-  like `assert any(e["event"] == "..." for e in cap)` fail
-  with empty captures. The same mechanism makes the older
-  `capsys`-based pattern unreliable, but the root cause is
-  the config leak, not the capture primitive. **Fix at
-  the READ site, not the leak site.** PR #265 spent three
-  commits trying to contain the leak (class-scoped
-  autouse → module-scoped autouse → still missed
-  `TestMain.test_main_*` which transitively calls
-  `_configure_logging` via `main()`). Each fix narrowed
-  scope but missed another caller — whack-a-mole. The
-  durable fix is in the assertion test itself: call
-  `structlog.reset_defaults()` immediately before the
-  `capture_logs()` context. That single line makes the
-  assertion resilient to ANY prior worker state — past,
-  present, and future polluting callers — and doesn't
-  require auditing every CLI entry point in the suite. As
-  belt-and-suspenders the module-level autouse in
-  `tests/unit/memory/test_control_panel_display.py`
-  stays, but the load-bearing fix is the in-test reset.
-  Local macOS xdist rarely surfaces this because the
-  12-worker distribution usually doesn't put the
-  polluting test and the assertion test on the same
-  worker in the leak-then-read order; Linux CI scheduling
-  is different enough to hit it almost
-  deterministically across all Python versions.
-  Pair lesson:
-  **`structlog.testing.capture_logs()` is still the
-  preferred capture primitive over `capsys`** because it
-  bypasses I/O entirely (capsys is also vulnerable to
-  structlog's `WriteLogger` caching `sys.stdout` at
-  logger-creation time). But `capture_logs()` alone
-  doesn't help if a leaked filtering wrapper drops the
-  event before it reaches the capture processor.
-
-- **`pytest --cov` triggers
-  `KeyError: 'pydantic.root_model'` via the workflows
-  conftest's `discover_workflows()`**: running `pytest`
-  with `--cov` enabled fails at conftest import time when
-  the project's `tests/conftest.py` calls
-  `attune.workflows.discover_workflows()`. The chain:
-  coverage instrumentation changes module import timing →
-  `mcp.types.JSONRPCMessage(RootModel[...])` triggers
-  pydantic's generic submodel creation → pydantic looks
-  up `sys.modules['pydantic.root_model']` which isn't
-  populated yet → `KeyError`. Workaround: skip
-  `pytest --cov` for ad-hoc measurement. Use
-  `coverage run -m pytest <targets>` then
-  `coverage combine && coverage report --include="..."`
-  instead — same coverage data, no instrumentation
-  interaction with conftest's lazy workflow loader.
-
-- **Windows CI encoding**: Always use `encoding="utf-8"` on
-  `Path.read_text()` calls. Windows defaults to `cp1252` which
-  fails on any file containing non-ASCII bytes.
-
-- **Test mocks must match imports**: When a function changes its
-  import path, all test mocks must be updated to match or side
-  effects are silently ignored and assertions fail.
+- **structlog gotchas — config leaks, stdout pollution, stdlib
+  kwargs**:
+  - **Config leaks break log-capture tests on the same xdist
+    worker** — a real `structlog.configure(wrapper_class=
+    make_filtering_bound_logger(WARNING))` (e.g. via a CLI's
+    `_configure_logging`) mutates the GLOBAL wrapper class for
+    the rest of the worker; subsequent `logger.info(...)` is
+    silently filtered BEFORE `structlog.testing.capture_logs()`
+    sees it, so `capture_logs()` returns `[]` and `assert
+    any(e["event"]==… for e in cap)` fails empty. **Fix at the
+    READ site, not the leak site**: call
+    `structlog.reset_defaults()` immediately before the
+    `capture_logs()` context — one line, resilient to ANY
+    prior/future polluting caller (PR #265 burned three commits
+    trying to contain the leak with class/module-scoped autouse
+    fixtures — whack-a-mole, kept missing callers like
+    `TestMain` that reach `_configure_logging` via `main()`).
+    Local macOS xdist rarely hits it (worker distribution);
+    Linux CI hits it near-deterministically. `capture_logs()`
+    is still preferred over `capsys` (bypasses I/O; capsys is
+    also vulnerable to `WriteLogger` caching `sys.stdout` at
+    logger-creation) — but it can't help if a leaked filtering
+    wrapper drops the event first.
+  - **Default ConsoleRenderer writes to stdout, not stderr** —
+    it prepends log lines (`2026-… [info] rag.run …`) to
+    `capsys.readouterr().out`, breaking `json.loads()` on a
+    CLI's JSON payload. Parse from the first `{`
+    (`json.loads(text[text.find("{"):])`) or configure
+    structlog to stderr in `main()` before the pipeline. Don't
+    silence logs — they're useful in prod.
+  - **structlog kwargs crash a stdlib Logger** —
+    `logger.info("msg", key=value)` is structlog syntax; a
+    stdlib `logging.Logger` raises `TypeError: unexpected
+    keyword argument`. Use `logger.info("msg: key=%s", value)`;
+    grep the whole module when fixing (partial fixes leave
+    runtime crashes in untouched calls).
 
 - **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
   fixtures — CI runners often execute as root, making the path
@@ -277,29 +263,92 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and markers leaking into code blocks. Use plain ASCII like
   `--- CODE START ---` / `--- CODE END ---` instead.
 
-- **Pre-commit stash conflicts with auto-fix hooks — one
-  root cause, several symptoms**: When black/ruff auto-fix
-  staged files AND any tracked file is unstaged (even
-  unrelated — `uv.lock`, a JSON fixture, anything),
-  pre-commit's stash/restore cycle conflicts with the fixes
-  and the commit fails (sometimes silently, sometimes in a
-  loop). Three remediation patterns: (1) **Preempt the
-  hooks**: run `uv run --with pre-commit pre-commit run
-  black --files <files>` (pinned tool, not venv) and
-  `uv run ruff check --fix <files>` manually before
-  staging, so hooks see already-clean files. The pinned
-  pre-commit version is the one that will actually run, so
-  use it — venv versions can format differently. (2)
-  **Quarantine the unstaged**: `git add` all related files
-  OR `git stash push <unrelated files>` before committing,
-  then `git stash pop` after. (3) **Re-stage on hook
-  failure**: if a commit fails because black reformatted
-  staged files (commit succeeded format-wise but was
-  rejected because content changed), the reformatted files
-  are in the working tree but unstaged — `git add <files>`
-  again and retry. This is distinct from the stash-conflict
-  loop: here the hook ran successfully, the commit just
-  needs to be repeated.
+### Pre-commit & ruff — auto-fix, staging, and rule gotchas
+
+- **Pre-commit black/ruff/detect-secrets auto-fix vs staging —
+  the dance, one root cause and several symptoms**: the
+  auto-fix hooks modify staged files during `git commit`,
+  which interacts badly with staging. Core rule: **pre-flight
+  the PINNED hooks before `git add`** so they see already-clean
+  files. The symptoms and remedies:
+  - **Pre-flight the pinned tool** — run `uv run --with
+    pre-commit pre-commit run black --files <f>` (and `ruff`)
+    before staging. Use the PINNED version, not `.venv`'s —
+    they can format differently (saw py3.10 venv black leave a
+    triple-quoted layout that pinned black reformatted). Also
+    pre-flight `uv run ruff check <f>` for the non-autofixable
+    lint (F841, E402) that the format hooks don't catch. This
+    avoids the stash/restore dance entirely.
+  - **Stash conflict** — if a hook auto-fixed staged files AND
+    any tracked file is unstaged (even unrelated — `uv.lock`, a
+    fixture), pre-commit's stash/restore cycle conflicts and
+    the commit fails (silently or in a loop). Quarantine:
+    `git add` the related files OR `git stash push <unrelated>`,
+    commit, then pop.
+  - **Re-stage after auto-fix** — when a hook reformats staged
+    files, the commit fails but the fixes land in the working
+    tree UNSTAGED; `git add <files>` again and retry. Distinct
+    from the stash conflict: here the hook ran fine and there
+    are no unstaged siblings — the commit just needs repeating.
+  - **`git commit -q` can exit 0 yet SKIP the commit** — when
+    end-of-file-fixer / trailing-whitespace modify files, the
+    tail shows "Passed" with no "Aborted" line, but the commit
+    is skipped and the files left re-staged. ALWAYS verify with
+    `git log --oneline -1` / `git status --short` after
+    committing — no error message ≠ commit landed.
+  - **detect-secrets** — (a) it flags obvious placeholders like
+    `"fake"` in `{"ANTHROPIC_API_KEY": "fake"}` via the
+    Secret-Keyword heuristic (even a 4-char string fires); add
+    `# pragma: allowlist secret` on the line. (b) when the hook
+    bumps `.secrets.baseline`'s schema (e.g. 1.4.0→1.5.0), a
+    previously-stashed `.secrets.baseline` reverts the bump on
+    `git stash pop` — after popping, `git diff .secrets.baseline`
+    then `git checkout .secrets.baseline` to discard the revert.
+  - **`SKIP=hookname` ≠ `--no-verify`** — `SKIP=check-docs-
+    freshness git commit …` runs every OTHER hook and skips
+    only the named one (surgical; defensible when one hook
+    fails on state orthogonal to the commit). `--no-verify`
+    skips ALL hooks and is forbidden by the rules; `SKIP=` is
+    the allowed alternative.
+
+- **The Claude Code edit-formatter strips imports added before
+  their usage — add usage first, import second**: ruff/black
+  autofix runs on EVERY Edit in the CC hook pipeline, and
+  ruff's F401 fix removes any import not yet referenced (at
+  module scope OR in a function body). Adding an import in one
+  edit and its usage in a later edit silently loses the import
+  (the edit succeeds, the import vanishes). Robust sequence:
+  add the *usage* first, the import second — once the name is
+  referenced, F401 leaves it alone. Two fixes: (1) introduce
+  the import in the SAME edit that first uses it; (2) scope the
+  import inside the function body that uses it (the detector
+  never fires even mid-edit) — more robust for tests.
+
+- **Ruff rule gotchas — rules that fire on correct code**:
+  - **`pytest.ini` parsed as Python** — committing `pytest.ini`
+    alongside `.py` makes ruff try to parse it as Python
+    (syntax errors); commit it in a SEPARATE commit from Python
+    files.
+  - **E402 after `pytest.importorskip`** — imports below an
+    `importorskip(...)` call get flagged E402 (not-at-top); add
+    `# noqa: E402` per import. Intentional pattern; ruff can't
+    see the skip.
+  - **B904 not auto-fixable** — `ruff check --fix` won't add
+    `raise X from e`; edit manually (`from e` when the exc is
+    captured, `from None` to suppress). After fixing all,
+    remove B904 from the ignore list to enforce going forward.
+  - **B023 loop-variable capture** — a closure defined inside a
+    loop that references a loop var trips B023 even when it's
+    only invoked within the same iteration. Fix: extract the
+    helper to module level and pass the var as a parameter
+    (cleanest, also testable in isolation) — not the
+    `def f(x, _v=loopvar)` default-arg trick or `# noqa: B023`.
+  - **`# noqa: F401` re-exports break on satellite-file
+    deletion** — `from .x import Y  # noqa: F401` re-exports
+    survive lint but break at RUNTIME if the satellite file is
+    deleted (ruff doesn't check import resolution). Before
+    deleting a workflow satellite file, grep the parent for
+    `noqa: F401` imports from it AND check `__all__`.
 
 - **Next.js shared data libs prevent page duplication**: When multiple
   pages need the same data array (e.g. wizard list), extract it to
@@ -319,11 +368,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   bridge. The website must explain this distinction or users assume
   overlap.
 
-- **ruff parses pytest.ini as Python**: When committing `pytest.ini`
-  alongside `.py` files, ruff's pre-commit hook tries to parse it as
-  Python and produces syntax errors. Commit `pytest.ini` in a separate
-  commit from Python files so the ruff hook only sees valid Python.
-
 - **Background processes from previous sessions persist across
   restarts**: Long-running processes started by Claude (e.g.
   `npm run dev`) survive session end and keep running silently.
@@ -332,13 +376,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   feature, and check `ps aux` if unexpected behavior is observed
   (Chrome tabs opening, ports already in use, etc.).
 
-- **`pytest.importorskip` triggers ruff E402**: Test files that call
-  `pytest.importorskip(...)` before optional imports cause ruff to
-  flag those imports as E402 (module level import not at top of file).
-  Fix: add `# noqa: E402` to each import line after the `importorskip`
-  call. The pattern is intentional and correct — ruff just can't see
-  the skip logic.
-
 - **`**kwargs` collides with explicit params of the same name**: If a
   helper like `_result_from_plan(plan, status, **kwargs)` builds a
   dataclass and callers pass `reason_codes=...` in `**kwargs`, it
@@ -346,41 +383,68 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the function body. Fix: add an explicit `reason_codes: list[str] |
   None = None` parameter so the signature is unambiguous.
 
-- **Patchable imports require module-level binding — four
-  techniques for four import shapes**: `unittest.mock.patch
-  ("module.Name")` looks up the attribute on the module
-  object at patch time, so any name imported INSIDE a
-  function body raises `AttributeError`. Pick the technique
-  by import shape: (1) **Optional SDK with availability
-  guard** — for `import optional_sdk` in function bodies,
-  hoist to module scope with a guard:
-  `_optional_sdk = None; _AVAILABLE = False` (set on
-  successful import), then patch `module._optional_sdk`.
-  Established pattern across our adapters. (2) **Plain
-  module-scope hoist** — for `from X import Y` deferred
-  inside a function, move the import to module scope and
-  patch `module.Y`. (3) **Patch the source module instead**
-  — when hoisting is undesirable (e.g.
-  `from ..real_tools import RealSecurityAuditor` inside a
-  function in `_strategies/base.py`), patch
-  `real_tools.RealSecurityAuditor` — the source module
-  where the name IS at module scope. The deferred import
-  resolves from the patched source at call time. Cleaner
-  than hoisting or `patch.dict`. (4) **`patch.dict("sys.modules",
-  ...)` for bare `import X`** — when a function does
-  `import attune` (bare module, not `from X import Y`),
-  neither (1) nor (3) applies. Build a fake:
-  `mock = types.ModuleType("attune"); mock.__version__ = "..."`,
-  then `patch.dict("sys.modules", {"attune": mock})`. Same
-  technique simulates `ImportError` if you set the entry to
-  `None`.
-
-- **Verify new dispatch branches with a known fixture, not just
-  imports**: When adding a new runtime case (e.g. `local_python`)
-  to an existing dispatch table, a clean import doesn't prove the
-  branch fires. Run `Executor.run()` directly with a spec whose
-  `runtime` matches the new case and assert `result.status ==
-  "success"` before considering the feature done.
+- **Mocking & patching in tests — get the target right, then
+  watch the pitfalls**: `unittest.mock.patch("module.Name")`
+  looks up the attribute on the module object AT PATCH TIME, so
+  the patch must target where the name is BOUND, not where it's
+  defined.
+  - **Pick the patch target by import shape (four techniques)**:
+    (1) **optional SDK with availability guard** — hoist `import
+    optional_sdk` to module scope with `_sdk = None; _AVAILABLE =
+    False` (set on success), patch `module._optional_sdk`;
+    (2) **plain module-scope hoist** — for a `from X import Y`
+    deferred in a function, move it to module scope and patch
+    `module.Y`; (3) **patch the source module** — when hoisting
+    is undesirable, patch `real_tools.RealSecurityAuditor` (the
+    source where the name IS at module scope); the deferred
+    import resolves from the patched source at call time;
+    (4) **`patch.dict("sys.modules", {...})` for bare `import
+    X`** — build a fake `types.ModuleType("attune")` (set the
+    entry to `None` to simulate `ImportError`).
+  - **Import-path changes silently break mocks** — when a
+    function's import path changes, every mock targeting the old
+    path is silently ignored (side effects lost, assertions
+    fail). Update all mocks to match.
+  - **Mock at the import site, not the definition site** —
+    mocking a function where it's defined doesn't stop a consumer
+    reading the real thing via a different binding; patch the
+    consuming module's name (`attune.voice.formatter.get_next_steps`,
+    not `attune.voice.next_steps.get_next_steps`), or
+    `monkeypatch.chdir(tmp_path)` to isolate from the real
+    filesystem.
+  - **Dispatch tables hold DIRECT function references** —
+    `_SUBCOMMAND_DISPATCH` captures `cmd_foo` at import time, so
+    `@patch("module.cmd_foo")` swaps the module attr but the
+    table still calls the original. Patch the TABLE:
+    `patch.dict("module._SUBCOMMAND_DISPATCH", {cmd: {**orig,
+    sub: mock}})` (this caused 20+ failures).
+  - **Facade read-only properties need backing-attribute
+    injection** — `RedisShortTermMemory._client` is a read-only
+    property; inject via `memory._base._client = mock` (the plain
+    `BaseOperations` attribute), not `memory._client =
+    MagicMock()`.
+  - **Stacked `@patch` decorators inject bottom-up** —
+    `@patch("A") @patch("B") def test(self, mock_b, mock_a)`: the
+    innermost (bottom) decorator is the first positional arg; a
+    missing decorator → `NameError` at runtime. Count decorators
+    vs params.
+  - **Duck-typed fakes fall through `isinstance` collectors
+    silently** — a shape-compatible fake fails `isinstance(msg,
+    RealClass)` and the collector leaves its default ("No results
+    returned"), so the test passes against the wrong answer.
+    Construct REAL class instances (`dataclasses.fields(Cls)`
+    finds the field list).
+  - **Patching `Path.stat` to raise breaks `Path.exists()`
+    first** — `exists()`/`is_file()`/`is_dir()` all call `.stat()`
+    internally (wrapped in try/except), so monkeypatching `stat`
+    to raise makes a surrounding `if path.exists():` guard
+    swallow it before the intended `.stat()` call runs. Patch a
+    different surface (`Path.glob` to raise, or the glob result's
+    `__iter__`).
+  - **A clean import doesn't prove a new dispatch branch fires**
+    — when adding a runtime case to a dispatch table, run the
+    real entry point (`Executor.run()` with a matching spec) and
+    assert success; imports alone don't exercise the branch.
 
 - **Shadow directories at repo root break imports**: An `attune/`
   directory at the repo root (from prototyping) shadows the installed
@@ -388,18 +452,60 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that only exist in one copy. Always check for rogue top-level
   directories matching the package name before debugging import errors.
 
-- **BaseWorkflow uses class attributes, not constructor params**: The
-  `name`, `description`, `stages`, and `tier_map` fields on
-  BaseWorkflow are CLASS ATTRIBUTES, not `__init__()` parameters.
-  Passing them to `super().__init__()` raises `TypeError`. Define them
-  as class-level assignments on the subclass.
+- **Authoring `BaseWorkflow` subclasses — class attributes,
+  logger, result construction, rename hygiene**:
+  - **`name`/`description`/`stages`/`tier_map` are CLASS
+    attributes, not `__init__()` params** — passing them to
+    `super().__init__()` raises `TypeError`; define them as
+    class-level assignments on the subclass.
+  - **`BaseWorkflow.__init__` provides `self.logger`** (since
+    `c67ad740`): `logging.getLogger(type(self).__module__)` — no
+    manual `wf.logger = …` in test fixtures.
+  - **`WorkflowResult` constructor mismatches surface only at
+    runtime** — `execute()` passing non-existent kwargs
+    (`workflow_name`, `stages_executed`) isn't caught by lint;
+    the required fields are `success`, `stages`, `started_at`,
+    `completed_at`, `total_duration_ms`. Always exercise
+    `execute()` end-to-end in tests.
+  - **`ModelTier` has TWO copies — imports must match** — the
+    enum exists in both `attune.models` and
+    `attune.workflows.base` as separate classes (`id()`
+    differs); tests comparing `tier_map` values fail if the
+    import source doesn't match the workflow's. Use the same
+    module the workflow imports from.
+  - **Hardcoded strings in method bodies survive class-attribute
+    renames** — changing `name = "deep-review-sdk"` →
+    `"deep-review"` on the class didn't fix a hardcoded
+    `"workflow": "deep-review-sdk"` inside `execute()`; after
+    renaming a class attribute, grep the old value across the
+    whole source file (method bodies, metadata dicts).
 
-- **Non-BaseWorkflow classes in workflow registry crash the CLI**:
-  Classes registered in `_DEFAULT_WORKFLOW_NAMES` that don't inherit
-  BaseWorkflow (missing `execute()`, `run_stage()`, or wrong method
-  signatures) will crash `attune workflow run`. Only register true
-  BaseWorkflow subclasses; keep standalone utilities importable but
-  out of the registry.
+- **Registering a workflow or skill has MULTIPLE drift-guard
+  gates, not one — and only true subclasses belong**:
+  - **Adding a workflow to `_DEFAULT_WORKFLOW_NAMES` has FOUR
+    gates** — `src/attune/workflows/__init__.py` (three sites:
+    `_LAZY_WORKFLOW_IMPORTS`, `_DEFAULT_WORKFLOW_NAMES`,
+    `__all__`) plus: (1) `PATH_ARG_REGISTRY` in `ops/data.py`
+    (ops scope-picker drift-guard, `test_path_support_registry.py`
+    — an entry naming the kwarg `execute()` consumes);
+    (2) `KNOWN_GAPS` in `scripts/check_help_coverage.py` or a
+    real `.help/features.yaml` entry (`test_no_new_workflow_drift`);
+    (3) `WORKFLOW_NAMES` array in `ops/static/js/runner.js`
+    (`test_workflow_names_match_canonical_list` — keeps the
+    dashboard pills in sync).
+  - **Adding a plugin skill has THREE gates** — besides
+    `plugin/skills/<name>/SKILL.md`: (1) bump the hardcoded count
+    in `test_plugin_config_validation.py::test_skill_count`;
+    (2) add a row to the "Skills Reference" table in
+    `plugin/skills/attune-hub/SKILL.md`
+    (`test_all_skill_dirs_referenced_by_attune_hub`); (3) run
+    `python scripts/sync_agents_skills.py` to regenerate the
+    `.agents/skills/` mirror (`test_skill_body_content_matches`).
+  - **Only true `BaseWorkflow` subclasses belong in
+    `_DEFAULT_WORKFLOW_NAMES`** — a registered class missing
+    `execute()`/`run_stage()` (or with wrong signatures) crashes
+    `attune workflow run`. Keep standalone utilities importable
+    but out of the registry.
 
 - **Validate infrastructure against user value before extending**:
   BEP middleware was well-built (93 tests, clean protocol) but had
@@ -407,40 +513,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   surface where all user value lives. Always validate that new
   infrastructure serves actual users before investing in production
   hardening.
-
-- **`ModelTier` has two copies — imports must match**: The enum
-  `ModelTier` exists in both `attune.models` and
-  `attune.workflows.base` as separate classes (`id()` differs).
-  Tests comparing `tier_map` values will fail if the import source
-  doesn't match the workflow's import. Check which module the
-  workflow imports from and use the same one in tests.
-
-- **BaseWorkflow now provides `self.logger`**: Fixed in `c67ad740`.
-  `BaseWorkflow.__init__` sets
-  `self.logger = logging.getLogger(type(self).__module__)` so all
-  subclasses get an instance logger namespaced to their own module.
-  No more manual `wf.logger = ...` workarounds in test fixtures.
-
-- **`WorkflowResult` constructor mismatches surface only at
-  runtime**: `ParallelTestGenerationWorkflow.execute()` was passing
-  non-existent kwargs (`workflow_name`, `stages_executed`). Fixed in
-  `c67ad740` — now passes all required fields (`success`, `stages`,
-  `started_at`, `completed_at`, `total_duration_ms`). Lesson: always
-  exercise `execute()` end-to-end in tests to catch dataclass
-  mismatches that lint can't see.
-
-- **RedisShortTermMemory mock injection path**: After the facade
-  refactor, `_client` is a read-only property on the facade.
-  Tests must inject mocks via `memory._base._client = mock_client`
-  (the plain attribute on `BaseOperations`), not
-  `memory._client = MagicMock()`. Old tests using the direct
-  path were all skipped with "Redis mocking API changed".
-
-- **Full coverage runs on 15k+ test suites timeout easily**:
-  `pytest --cov=src/attune` with the full test suite takes 10+
-  minutes. For development feedback, use targeted coverage:
-  `pytest tests/unit/module/ --cov=attune.module --no-cov-on-fail`
-  to measure specific modules in seconds.
 
 - **Bandit B108 blocks hardcoded `/tmp` paths**: Using a literal
   `/tmp/...` string in `subprocess.run` or `open()` triggers
@@ -457,12 +529,15 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   or use `@pytest.mark.skipif` to skip gracefully. This caused
   5 failures in PR #98 (3 redis, 1 jinja2, 1 redis auto-detect).
 
-- **CI timeout tests enforce the range you set**: The test
-  `test_timeout_values_are_reasonable` in `tests/unit/ci/`
-  asserts that all workflow job timeouts fall within an
-  allowed range. When bumping `timeout-minutes` in a workflow
-  YAML, also update the test's upper bound or it fails on
-  every platform.
+- **`timeout-minutes` changes must also update
+  `test_timeout_values_are_reasonable`**: the test in
+  `tests/unit/ci/` asserts every workflow job timeout falls in
+  an allowed range — bump a workflow's `timeout-minutes` and you
+  must update the test's bound or it fails on every platform.
+  Sizing: Windows runners are ~3x slower than Ubuntu/macOS (a
+  16k-test suite is ~15 min on macOS, ~17 on Ubuntu, ~45+ on
+  Windows), so the Windows matrix needs `timeout-minutes: 60` or
+  it always times out.
 
 - **`/sbin` is a symlink to `/usr/sbin` on modern Ubuntu**:
   `Path("/sbin/init").resolve()` does NOT follow the `/sbin`
@@ -473,13 +548,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `/usr/sbin` entry in the blocklist. Use `/usr/sbin/...`
   directly in tests.
 
-- **Windows CI runners are ~3x slower than Ubuntu/macOS**: A
-  16k+ test suite that finishes in ~15min on macOS and ~17min
-  on Ubuntu needs ~45min+ on Windows. Set `timeout-minutes`
-  high enough (60) or the Windows matrix will always time out.
-  Remember to update `test_timeout_values_are_reasonable` when
-  changing the upper bound.
-
 - **mkdocs `--strict` treats broken links as fatal errors**:
   The CI docs build uses `mkdocs build --strict` even though
   `mkdocs.yml` has `strict: false`. When source files are
@@ -488,12 +556,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to `docs/archive/` (excluded by mkdocs `exclude_docs`
   config) rather than fixing every dead link.
 
-- **MCP tool count tests are hardcoded**: When adding new MCP
-  tools to `server.py`, grep tests for the old tool count
-  (e.g., `assert len(tools) == 22`). The assertion in
-  `test_mcp_memory_tools.py` is the main one but others may
-  exist. Also check workflow description assertions if
-  descriptions were changed.
+- **Changing a shared string or count cascades through scattered
+  test assertions — grep the whole test tree before you change
+  it**: any hardcoded value duplicated across tests (error
+  messages, user-facing output, registry/tool counts) breaks many
+  tests at once when the source changes; grep the old value and
+  update every caller in the same commit. Instances:
+  - **Error messages** — changing `_validate_file_path()`'s
+    `"path must be within"` → `"outside allowed directory"` broke
+    10 test files; grep `match="<old message>"`.
+  - **User-facing output strings** — replacing "Workflow
+    completed" with voice-layer messaging broke 6 assertions
+    across 4 classes; grep the old string (broader than error
+    messages — any output text in a shared path like
+    `_print_workflow_result`).
+  - **Registry counts + class names** — reducing `_SDK_WORKFLOW_MAP`
+    12→9 broke `assert len(...)==12` and expected-set assertions
+    across routing, validation, and coverage-batch tests; grep
+    the old count AND old class names
+    (`SecurityAuditAgentSDKWorkflow`).
+  - **MCP tool counts** — adding tools to `server.py` breaks
+    `assert len(tools)==22` (`test_mcp_memory_tools.py` is the
+    main one, but others exist); also check workflow-description
+    assertions.
 
 - **`list_wizards()` is a function, not a class method**:
   The wizard registry exposes `from attune.wizards import
@@ -525,14 +610,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `result.simplified = True` regardless. Tests must match this
   behavior — the outer try/except only fires if `_run_simplify`
   itself raises, not if individual files fail.
-
-- **Pre-commit auto-fix requires re-stage before retry**: When
-  black/ruff auto-fix staged files during `git commit`, the
-  commit fails but the fixes are applied to the working tree.
-  The files must be `git add`-ed again before retrying the
-  commit. This is different from the stash conflict issue —
-  here there are no unstaged siblings, just the hook modifying
-  staged files.
 
 - **`datetime.utcnow()` → `datetime.now(timezone.utc)` cascades
   through the entire codebase**: Replacing `utcnow()` (naive) with
@@ -578,12 +655,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   old error counts are still accurate — they may have been fixed
   as a side effect of other refactors.
 
-- **B904 (`raise X from e`) is not auto-fixable by ruff**: Despite
-  `ruff check --fix`, B904 violations require manual edits. Use
-  `from e` when the exception variable is captured, `from None`
-  when suppressing the original. After fixing all violations,
-  remove B904 from the ruff ignore list to enforce going forward.
-
 - **`claude-agent-sdk` is now a core dependency of attune-ai**:
   As of v4.2.0, the Agent SDK is included in core dependencies.
   No need for `pip install 'attune-ai[agent-sdk]'` — a plain
@@ -596,10 +667,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that have an SDK variant — those are the names users see and type.
   The resolver routes base names to SDK implementations transparently.
 
-- **Push specific tags, not `--tags`**: `git push origin main --tags`
-  pushes ALL local tags, causing "already exists" rejections for old
-  tags. Use `git push origin main v4.0.0` to push only the intended
-  tag.
+- **Tag mechanics — push, protection, squash-timing, and the
+  auto-release body**:
+  - **Push specific tags, not `--tags`** — `git push origin main
+    --tags` pushes ALL local tags ("already exists" rejections
+    for old ones); use `git push origin main vX.Y.Z`.
+  - **Protected tags can't be force-updated** — once pushed,
+    `git push --force` fails under tag-protection rules; tag the
+    correct commit BEFORE pushing (no easy fix after).
+  - **Don't tag before a squash-merge** — a tag pushed on the
+    feature branch points to the pre-squash commit; after squash
+    the merge commit has a different hash. Recovery: `git tag -d
+    vX && git tag -a vX -m "…" && git push origin vX --force`
+    (tag protection may block the force-push). Better: tag the
+    merge commit after the squash.
+  - **Pushing a signed tag auto-creates a GitHub release with a
+    flat commit-log body** — GitHub silently creates a release
+    whose `body` is every commit since the previous tag
+    (including unrelated prior-PR commits); a later `gh release
+    create` then 422s "tag_name already exists". Fix: `gh release
+    edit vX --notes-file <CHANGELOG-extract>` (NOT create). Bake
+    into release-prep: extract the `[X.Y.Z]` CHANGELOG section
+    before the tag push (`awk '/^## \[X\.Y\.Z\]/{flag=1;next}
+    /^## \[/{flag=0} flag' CHANGELOG.md`), prepend a `Released
+    DATE · [PyPI](…)` header, then `gh release edit` right after
+    pushing.
 
 - **Pull `main` before merging `develop` to avoid merge commits**:
   If `origin/main` has commits not in local `main`, merging `develop`
@@ -607,37 +699,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `git merge develop`. This also avoids the GitHub "no merge commits"
   rule violation.
 
-- **GitHub protected tags cannot be force-updated**: Once a tag is
-  pushed, `git push --force` fails if repository rules protect tags.
-  Tag the correct commit before pushing — there's no easy fix after.
-
 - **`BugPredictionWorkflow` not `BugPredictWorkflow`**: The class in
   `attune.workflows.bug_predict` is `BugPredictionWorkflow`. The
   MCP server had `BugPredictWorkflow` which caused `ImportError`.
   Always verify the actual class name with `grep` before writing
   an import.
 
-- **`is_private` is a superset in Python `ipaddress`**: Loopback
-  (`127.0.0.1`), link-local (`169.254.x.x`), and unspecified
-  (`0.0.0.0`) all have `is_private=True`. When checking IP safety,
-  test specific attributes (`is_loopback`, `is_link_local`, etc.)
-  before `is_private` so error messages are precise. The same
-  ordering matters in both IP literal checks and DNS resolution
-  checks.
-
-- **Changing error messages breaks tests across the codebase**:
-  Updating `_validate_file_path()`'s error from `"path must be
-  within"` to `"outside allowed directory"` broke 10 test files.
-  Before changing any error message in a shared function, grep the
-  entire test suite for `match="<old message>"` and update all
-  callers in the same commit.
-
-- **Adding DNS resolution to `_validate_webhook_url` breaks tests
-  that pass real hostnames**: Any test calling `_validate_webhook_url`
-  with a non-IP hostname (e.g. `example.com`) now needs
-  `@patch("attune.monitoring.validators.socket.getaddrinfo")` to
-  mock DNS resolution. Grep for all callers when adding network
-  validation to an existing function.
+- **SSRF / webhook-URL validation — `_validate_webhook_url` and
+  the bypasses it must close**: webhook handlers
+  (`_execute_webhook()` in `executor.py`) that accept arbitrary
+  URLs without IP-blocklist / scheme / DNS checks are CWE-918 and
+  need the same rigor as `_validate_file_path()`. The bypasses to
+  close, and the test fallout:
+  - **Decode percent-encoding BEFORE parsing** — `urllib.parse.
+    urlparse` does NOT decode `%`-encoding, so
+    `http://%31%32%37%2e%30%2e%30%2e%31/` parses with a hostname
+    that bypasses a `127.0.0.1` blocklist. `urllib.parse.unquote
+    (url)` first.
+  - **Strip IPv6 zone IDs before IP validation** — `fe80::1%25eth0`
+    makes `ipaddress.ip_address()` fail or misparse; `hostname.
+    split("%")[0]` first.
+  - **`is_private` is a SUPERSET** — loopback (`127.0.0.1`),
+    link-local (`169.254.x.x`), and unspecified (`0.0.0.0`) all
+    have `is_private=True`; test the specific attributes
+    (`is_loopback`, `is_link_local`, …) BEFORE `is_private` for
+    precise error messages (same ordering for IP-literal and
+    DNS-resolution checks).
+  - **Adding DNS resolution breaks tests passing real hostnames**
+    — any test calling `_validate_webhook_url` with a non-IP
+    hostname (`example.com`) now needs `@patch("attune.monitoring.
+    validators.socket.getaddrinfo")`; grep all callers when adding
+    network validation to an existing function.
 
 - **MCP `workspace_root` defaults to `os.getcwd()` — tests with
   `tmp_path` fail**: Tests that create files in `tmp_path` and pass
@@ -646,51 +738,15 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `workspace_root=str(tmp_path)` when constructing the server in
   tests.
 
-- **SSRF: always decode URLs before validating hostnames**:
-  `urllib.parse.urlparse` does NOT decode percent-encoded
-  characters. `http://%31%32%37%2e%30%2e%30%2e%31/` parses with
-  hostname `%31%32%37%2e%30%2e%30%2e%31` which bypasses blocklist
-  checks for `127.0.0.1`. Always `urllib.parse.unquote(url)` before
-  parsing and validating.
-
-- **SSRF: strip IPv6 zone IDs before IP validation**: IPv6 zone
-  IDs (e.g., `fe80::1%25eth0`) can bypass `ipaddress.ip_address()`
-  checks because the `%` suffix makes parsing fail or return
-  unexpected results. Strip zone IDs with `hostname.split("%")[0]`
-  before any IP validation.
-
-- **structlog kwargs vs stdlib Logger**: `logger.info("msg",
-  key=value)` is structlog syntax. stdlib `logging.Logger` raises
-  `TypeError: info() got an unexpected keyword argument`. Use
-  `logger.info("msg: key=%s", value)` instead. When fixing, grep
-  the entire module — partial fixes leave runtime crashes in
-  untouched calls.
-
-- **Windows `Path.resolve()` prepends the drive letter to Unix
-  paths**: `Path("/code").resolve()` on Windows returns
-  `D:\code`, not `/code`. Tests that assert exact path strings
-  passed through `_validate_file_path` fail on Windows CI. Fix:
-  patch `_validate_file_path` in tests that verify handler logic
-  (not path validation) so paths pass through unchanged.
-
-- **Stacked `@patch` decorators inject args bottom-up**: When a
-  test has `@patch("A") @patch("B") def test(self, mock_b,
-  mock_a)`, the innermost (bottom) decorator's mock is the first
-  positional arg. Forgetting a decorator while referencing its
-  mock variable causes `NameError` at runtime, not import time.
-  Always count decorators vs method params.
-
-- **`.gitignore` exclusions break CI tests that read those
-  files**: If tests call `read_spec(".claude/plans/foo.md")` but
-  `.gitignore` excludes `.claude/plans/`, CI will never have the
-  file. Either track the files or skip the tests when absent.
-
-- **Windows `time.time()` can return 0.0 duration for fast
-  operations**: On Windows 3.10-3.12, `time.time()` has ~15ms
-  resolution. Tests asserting `execution_time > 0` fail when
-  the operation completes within one tick. Use
-  `time.perf_counter()` for sub-millisecond timing, or assert
-  `>= 0` if the operation may be instant.
+- **CI lacks files that exist only locally — `.gitignore`'d
+  paths and untracked scripts break tests**: (a) a test reading
+  a `.gitignore`'d path (`read_spec(".claude/plans/foo.md")`)
+  fails in CI where the file never exists — track the files or
+  skip the test when absent; (b) a test importing an untracked
+  script (`from scripts.sync_agents_skills`) fails
+  `ModuleNotFoundError` on all platforms — `git status` scripts
+  referenced by tests before pushing, and guard with
+  `pytest.importorskip()`.
 
 - **`config.py` alongside `config/` creates a mypy duplicate
   module**: Having both `src/attune/config.py` and
@@ -707,28 +763,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Grep for ALL method names being removed across the entire test tree
   before considering the migration done — `pytest -k "code_review"`
   catches failures that file-specific runs miss.
-
-- **Registry count assertions are scattered across test files**: When
-  merging SDK workflow variants (reducing `_SDK_WORKFLOW_MAP` from
-  12→9 entries), hardcoded count assertions like
-  `assert len(_SDK_WORKFLOW_MAP) == 12` and expected-set assertions
-  exist in routing behavioral tests, validation framework tests, and
-  coverage batch tests. Always grep for the old count and old class
-  names (e.g. `SecurityAuditAgentSDKWorkflow`) across all test files
-  when changing registry size.
-
-- **SDK-native workflows validate in `execute()`, not `input_schema`**:
-  After merging to SDK-native, workflows no longer declare
-  `input_schema` as a class attribute — path validation happens inside
-  `execute()`. Tests asserting `Workflow.input_schema is not None`
-  must be removed or updated.
-
-- **Hardcoded strings in method bodies survive class attribute
-  renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
-  on the class didn't fix a hardcoded `"workflow": "deep-review-sdk"`
-  string inside `execute()`. After renaming a class attribute, always
-  grep for the old value across the entire source file to catch
-  hardcoded duplicates in method bodies and metadata dicts.
 
 - **GPG signing fails in non-interactive terminals (VSCode
   extension, Claude Code) — configure pinentry-mac**: `gpg`
@@ -785,26 +819,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   publishing to PyPI. Run `/deep-review` on changed files
   BEFORE `/release prep`, not after.
 
-- **SSRF in webhook handlers is easy to miss**: The
-  `_execute_webhook()` method in `executor.py` accepts
-  arbitrary URLs without IP blocklist, scheme validation, or
-  DNS resolution checks (CWE-918). Webhook endpoints need the
-  same validation rigor as file paths — add
-  `_validate_webhook_url()` alongside `_validate_file_path()`.
-
-- **`ResultMessage.result` is often `None` — capture
-  `AssistantMessage` text too**: All 15 SDK-native workflows
-  only checked `ResultMessage.result` for the agent's output.
-  But `ResultMessage` is a metadata-only final message; its
-  `result` field is `str | None` and frequently `None`. The
-  actual analysis text lives in `AssistantMessage.content`
-  `TextBlock` entries emitted throughout the conversation.
-  Fix: `collect_agent_output()` and `build_result_text()` in
-  `agent_sdk_adapter.py` now collect from both message types,
-  preferring `ResultMessage.result` when present and falling
-  back to `AssistantMessage` text. Filter with
-  `parent_tool_use_id is None` to skip subagent tool-call
-  messages.
+- **SDK message/output flow — what you collect, and what
+  crosses into the parent**:
+  - **`ResultMessage.result` is often `None` — also collect
+    `AssistantMessage` text** — `ResultMessage` is a
+    metadata-only final message; the analysis text lives in
+    `AssistantMessage.content` `TextBlock` entries throughout
+    the conversation. `collect_agent_output()` /
+    `build_result_text()` in `agent_sdk_adapter.py` collect from
+    both, preferring `ResultMessage.result` when present. The
+    `parent_tool_use_id is None` filter selects the parent's own
+    text; subagent TextBlocks carry a non-None id and are still
+    collected (see the failure-diagnosis lesson).
+  - **MCP-invoked SDK workflows ALREADY isolate their
+    intermediate stream from the calling agent** — when a plugin
+    skill invokes an MCP tool, the workflow's `query()` runs in
+    its own SDK session; the orchestrator's intermediate
+    `AssistantMessage` text and subagent transcripts STAY there
+    and are discarded on return. Only `WorkflowResult.final_output`
+    crosses into the calling agent's context (measured:
+    security-audit emitted 6,821 B intermediate + 19.66 KB
+    subagent transcripts inside, only 3,710 B reached the main
+    agent). Don't draft specs to "fix" context bloat that
+    doesn't exist — the Agent Surface Rebalance spec was paused
+    for exactly this reason.
 
 - **Exploration agents fabricate names — verify against
   source**: When generating docs, the Explore agent fabricated
@@ -928,23 +966,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   0.4% savings vs Anthropic's automatic server-side caching.
   Removed in favor of the native solution.
 
-- **Changing user-facing output strings cascades through test
-  assertions**: Replacing "Workflow completed" with voice layer
-  personality messaging broke 6 assertions across 4 test classes.
-  When changing any user-facing output string in a shared path
-  (like `_print_workflow_result`), grep the entire test suite for
-  the old string before considering the change done. This is
-  broader than just error messages — any output text change.
-
-- **Real project files on disk override test mocks**: Tests that
-  mock `_get_raw_suggestions()` at the definition site still get
-  real suggestions from `_get_spec_suggestions()` which reads
-  actual `.claude/plans/` files. Fix: mock at the *import site*
-  in the consuming module (`attune.voice.formatter.get_next_steps`
-  not `attune.voice.next_steps.get_next_steps`), or use
-  `monkeypatch.chdir(tmp_path)` to isolate from the real
-  filesystem.
-
 - **MCP `call_tool` wrapper pattern**: When adding a cross-cutting
   concern (like voice layer) to the MCP server, rename the
   original `call_tool()` to `_dispatch_tool()` and create a new
@@ -979,122 +1000,141 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   must be self-contained — embed the instructions directly instead
   of referencing skill files.
 
-- **Dependency lower bounds trigger Scorecard vulnerability alerts**:
-  Even if installed versions are safe, OpenSSF Scorecard flags
-  `pyproject.toml` specs that *allow* vulnerable versions (e.g.,
-  `pydantic>=2.0.0` permits 2.0–2.3 which have CVEs). Fix: bump
-  lower bounds past the patched version, not just the lockfile.
-
-- **`enforce_admins: false` defeats Code-Review Scorecard check**:
-  Even with `required_approving_review_count: 1`, admins bypass
-  reviews when `enforce_admins` is off. Scorecard sees 0/25
-  approved changesets. For solo devs: enable `enforce_admins` and
-  add an auto-approve workflow triggered by CI success.
-
 - **YAML `run:` values with colons cause parse errors**: A GitHub
   Actions `run:` like `run: gh pr review --body "Auto-approved:
   update"` fails YAML parsing because the colon after
   "Auto-approved" is interpreted as a mapping. Remove the colon
   or quote the entire value.
 
-- **CodeQL alerts dismissible in bulk via `gh api`**: Use
-  `gh api repos/OWNER/REPO/code-scanning/alerts/ID -X PATCH
-  -f state=dismissed -f dismissed_reason="false positive"
-  -f dismissed_comment="..."` to batch-dismiss with documented
-  reasons. Valid reasons: `false positive`, `won't fix`,
-  `used in tests`.
+- **CodeQL alerts pattern-match without seeing intent — fix at
+  the source first, bulk-dismiss only as last resort**: the same
+  shape recurs across rules (CodeQL flags safe code because it
+  can't see the surrounding logic). The rules hit so far:
+  - **`py/incomplete-url-substring-sanitization`** fires on ANY
+    URL substring in `<literal> in <text>` — even presence-check
+    test assertions that aren't URL validation. Tightening
+    `"github.com/"` → `"https://github.com/"` does NOT silence it
+    (domain-following slashes still read as incomplete). Three
+    zero-cost workarounds, ranked: (a) anchor on a path fragment
+    that identifies the URL without naming the domain
+    (`'"/pulls?q="' in js_text`); (b) split the literal across
+    concat at the test site (`"g" + "ithub.com"`) so the source
+    has no bare URL substring; (c) `re.search(r"github\.com")` —
+    the detector keys on string literals, not regex char classes.
+  - **`py/clear-text-logging-sensitive-data`** traces DATA FLOW,
+    not literal secrets — it flagged `user_id` in a log even
+    though only a count was logged, because the var flows through
+    a security-sensitive method. Fix: `%s` formatting without
+    user identifiers, or move audit correlation to the dedicated
+    audit logger.
+  - **`js/stored-xss`** flags JSX (`{tag}` in `<h1>`) despite
+    React's auto-escaping. Defense-in-depth: `decodeURIComponent`
+    on input + `encodeURIComponent` on `href`
+    (`generateStaticParams` constrains values but CodeQL can't
+    see that).
+  - **Bulk-dismiss (last resort, after source fixes)**: `gh api
+    repos/OWNER/REPO/code-scanning/alerts/ID -X PATCH -f
+    state=dismissed -f dismissed_reason="false positive" -f
+    dismissed_comment="..."` — valid reasons: `false positive`,
+    `won't fix`, `used in tests`.
 
-- **Repo merge policy may restrict merge strategies**: `gh pr merge
-  --merge` failed with "Merge method merge commits are not allowed".
-  This repo only allows squash merges. Always use `--squash` for
-  `gh pr merge` in this repo.
+### Branch protection & admin-merge
 
-- **CodeQL `py/clear-text-logging-sensitive-data` traces data flow,
-  not literal secrets**: CodeQL flagged `user_id` in a log message
-  inside `security.py` even though only the count of secrets was
-  logged (not secret values). It traces any variable that flows
-  through a security-sensitive method. Fix: use `%s` formatting
-  without user identifiers, or move audit correlation to the
-  dedicated audit logger which is designed for that purpose.
+- **attune-ai branch protection — current state, and the "merge
+  tax" that's now fixed**: as of 2026-06-03 (PR #598) the gate
+  is minimal — `required_approving_review_count: 0`, `security`
+  removed from `required_status_checks` (CodeQL stays required),
+  and the dead `auto-approve-owner` job deleted. Owner PRs with
+  green required checks now merge via the normal button — NO
+  admin-override, NO temp-remove-reviews dance. The prior
+  recurring "merge tax" had two mechanical causes: (Tax 1)
+  `auto-approve-owner`'s `lewagon/wait-on-check-action` had
+  `timeout-minutes: 5` but its `check-regexp: ^(test |lint|
+  Analyze )` matched the ~20-min Windows `test ` lanes → timed
+  out before approving → `review_count: 1` unmet → every owner
+  PR `BLOCKED`; (Tax 2) `security` was a REQUIRED check but
+  runs bandit/safety with `|| true` (toothless) AND
+  `concurrency.cancel-in-progress: true`, so any superseding
+  push cancels the in-flight run and a cancelled-but-required
+  check blocks until rerun. (The earlier diagnosis blaming an
+  `auto-approve-owner` actor-login mismatch — `github.actor ==
+  'patrickroebuck'` vs the real login `silversurfer562` — was
+  partly wrong: the guard had already been corrected yet the
+  job kept failing, not skipping.) **Diagnostic**: when a PR is
+  `BLOCKED` with every visible check green, read `gh api
+  repos/<o>/<r>/branches/main/protection` FIRST to see which
+  checks are actually required and whether the gate is
+  reviews-vs-a-required-check — don't chase scary-red
+  NON-required checks (verify-first-on-infra). The Tax-2
+  symptom (recurs on sibling repos that still require
+  `security`): the check fires CANCELLED on every non-dependabot
+  PR; rerun the specific job — `gh run rerun <run-id> --job
+  <job-id>` (ids from the check's `detailsUrl`) — which
+  re-enters the dependabot-or-rerun branch and runs the real
+  scan.
 
-- **CodeQL `js/stored-xss` flags JSX even though React auto-escapes**:
-  CodeQL flagged `{tag}` rendered in `<h1>` as stored XSS despite
-  React's automatic text escaping. Defense-in-depth fix:
-  `decodeURIComponent` on input + `encodeURIComponent` on `href`
-  values. `generateStaticParams` constrains valid values but CodeQL
-  can't see that.
-
-- **CodeQL `py/incomplete-url-substring-sanitization` fires on
-  ANY URL substring in `<literal> in <text>` expressions —
-  including in test assertions that aren't doing URL validation**:
-  Hit 2026-06-01 on PR #536 with a source-grep test asserting
-  `"github.com/" in js_text` to confirm specs_kebab.js builds the
-  GitHub PR search URL. CodeQL flagged it as an "incomplete URL
-  whitelist" (the bypassable-substring antipattern), even though
-  the assertion is a presence check, not URL validation.
-  Tightening to `"https://github.com/" in js_text` did NOT
-  silence the rule — CodeQL's detector treats domain-following
-  slashes as still-incomplete sanitization. Three workarounds that
-  DO work, ranked: (a) **Anchor on path fragments that identify
-  the URL without naming the domain** — e.g. `'"/pulls?q="' in
-  js_text` is enough to confirm GitHub-PR-search URL construction
-  without triggering the rule. (b) **Split the URL literal across
-  string concat at the test site** — `"g" + "ithub.com" in
-  js_text` evaluates equivalently at runtime but the SOURCE text
-  doesn't contain a bare URL substring, so CodeQL's static
-  analysis can't match. (c) **Use `re.search` with a regex** that
-  contains the domain as a character pattern (`r"github\.com"`)
-  rather than a string literal. CodeQL's substring detector keys
-  on string literals, not regex char classes. **Last resort**:
-  dismiss the alert via `gh api repos/X/code-scanning/alerts/ID
-  -X PATCH -f state=dismissed -f dismissed_reason="false
-  positive"` per the existing batch-dismiss lesson. Don't dismiss
-  without trying (a)/(b)/(c) first — those are zero-cost code
-  changes that pass the rule cleanly. Pairs with the existing
-  `py/clear-text-logging-sensitive-data` and `js/stored-xss`
-  lessons — same shape (CodeQL pattern-matches without seeing the
-  surrounding intent), different specific rules.
-
-- **Dispatch tables hold direct function references — mocks
-  must target the table, not the module name**: When
-  `_SUBCOMMAND_DISPATCH` or `_SIMPLE_DISPATCH` in
-  `cli_minimal.py` captures `cmd_foo` at import time,
-  `@patch("attune.cli_minimal.cmd_foo")` replaces the module
-  attribute but the dispatch table still calls the original.
-  Fix: use `patch.dict("attune.cli_minimal._SUBCOMMAND_DISPATCH",
-  {command: {**orig, subcommand: mock_fn}})` to replace the
-  entry in the dispatch table itself. This caused 20+
-  pre-existing test failures.
-
-- **GitHub branch protection and admin-merge — four
-  interlocking constraints**: (1) **Exact check names matter**:
-  required status checks must match GitHub's *exact* check
-  names (e.g. `Analyze (python)`, not `Analyze Python`).
-  Mismatched names silently block merges — the expected
-  check never appears, so the gate sits "pending" forever.
-  Always run `gh pr checks <PR>` first to see actual names
-  before adding them to branch protection. (2) **`--admin`
-  doesn't override in-progress checks**: the `--admin` flag
-  only bypasses failed or missing checks; it returns
-  `Required status check "X" is in progress` if a check is
-  still running. Wait for required checks (or cancel them)
-  before admin-merging. Budget for the matrix — a 12-platform
-  matrix takes ~15 min. (3) **`enforce_admins: true` blocks
-  solo-dev self-approval**: with `enforce_admins: true` and
-  `required_approving_review_count >= 1`, the repo owner
-  cannot self-approve and `--admin` also fails. The
-  auto-approve workflow's `GITHUB_TOKEN` can't approve the
-  PR author's own PRs. For solo-dev repos, use the
+- **GitHub branch-protection semantics + the admin-merge dance
+  (still live on restricted sibling repos)** — four interlocking
+  constraints: (1) **Exact check names** — required status
+  checks must match GitHub's EXACT names (`Analyze (python)`,
+  not `Analyze Python`); a mismatch sits "pending" forever. Run
+  `gh pr checks <PR>` first. (2) **`--admin` doesn't override
+  IN-PROGRESS checks** — returns `Required status check "X" is
+  in progress`; wait or cancel (budget ~15 min for a 12-platform
+  matrix). (3) **`enforce_admins: true` + `review_count >= 1`
+  blocks solo-dev self-approval** (the `GITHUB_TOKEN` can't
+  approve the author's own PR, and `--admin` also fails) → the
   temp-remove-reviews dance: drop `required_approving_review_count`
-  to 0 via API, `gh pr merge --squash --admin`, then restore
-  to 1. The auto-approve workflow still handles Dependabot
-  and collaborator PRs correctly. (4) **Don't re-enable
-  reviews while `--auto` is queued**: setting
-  `gh pr merge --auto` while reviews are removed and
-  re-enabling before the merge fires blocks auto-merge (no
-  approval exists). Either wait for auto-merge to complete
-  before restoring reviews, or skip `--auto` entirely and
-  use the remove-merge-restore pattern synchronously.
+  to 0 via API, `gh pr merge --squash --admin`, restore to 1.
+  (4) **Don't re-enable reviews while `--auto` is queued** (no
+  approval exists → blocks); use the remove-merge-restore
+  pattern synchronously. Related config facts: `enforce_admins:
+  false` lets admins bypass reviews but Scorecard then counts
+  0/25 approved changesets; repo merge policy may allow squash
+  ONLY (`--merge` → "Merge method merge commits are not allowed"
+  — use `--squash`); removing a check from
+  `required_status_checks` must PATCH the FULL `checks` array
+  preserving exact app_ids (15368 GitHub Actions, 57789 CodeQL)
+  — a contexts-only PATCH trips the "not set by the expected
+  app" trap. **Dance mechanics**: run the protection-drop /
+  merge / protection-restore as SEPARATE commands or
+  `;`-separated, NEVER `&&`-chained — the merge step reliably
+  exits 1 from a sub-worktree (parent owns `main`) even when the
+  remote merge succeeded, and `&&` would skip the
+  protection-restore, leaving `review_count=0` on main.
+
+- **Diagnosing "this branch cannot be merged", and "the command
+  errored but the merge actually succeeded"**:
+  - **`mergeStateStatus` is the first read, before CI logs** —
+    `gh pr view <n> --json mergeStateStatus,statusCheckRollup`.
+    The UI renders every case identically ("This branch cannot
+    be merged"): **DIRTY** = textual conflict (rebase + resolve);
+    **UNSTABLE** = a required check failing / fail-ignore-
+    tolerable (address checks or admin-merge); **BEHIND** = base
+    moved, needs fast-forward; **BLOCKED** = waiting on review /
+    required gate.
+  - **`gh pr merge --admin` errors from the LOCAL post-merge
+    step even when the REMOTE merge succeeded** — two shapes: a
+    non-worktree with diverged local main prints `fatal: Not
+    possible to fast-forward` (the local refresh failed, not the
+    merge); from a sub-worktree it exits 1 with `failed to run
+    git: fatal: 'main' is already used by worktree at <parent>`.
+    In BOTH, verify with `gh pr view <n> --json
+    state,mergedAt,mergeCommit` before retrying — a retry 404s
+    because the PR is already merged.
+  - **Batch-merge** — `gh pr list --json mergeable` returns
+    MERGEABLE for DRAFTS too (merge then errors "still a
+    draft"); filter `select(.mergeable=="MERGEABLE" and
+    .isDraft==false)`. An intentionally-failing diagnostic PR
+    marked draft is legitimate — close, don't merge.
+  - **`--delete-branch` on a base PR ORPHANS stacked PRs** whose
+    base is that branch — they auto-close and `gh api -f
+    state=open` 422s ("branch has been deleted"); the PR view
+    stays stuck at the old headRefOid. Prevention: before
+    admin-merging a base with `--delete-branch`, re-target
+    stacked PRs to main (`gh pr edit <stacked> --base main`);
+    check via `gh pr list --base <branch> --state open`.
+    Recovery: open a fresh PR targeting main.
 
 - **ClusterFuzzLite `--no-deps` misses transitive imports**:
   `.clusterfuzzlite/build.sh` used `pip3 install --no-deps`
@@ -1106,20 +1146,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   don't install missing packages. Fix: explicitly `pip3
   install <dep>` for any dependency reachable from fuzz target
   imports.
-- **OpenSSF Scorecard alerts (#2 CodeReviewID, #3 SASTID) are
-  process metrics, not code bugs**: They measure the ratio of
-  approved/analyzed changesets over time. No single PR can fix
-  them — they improve incrementally as future PRs flow through
-  review and SAST gates. Setting up the gates (required reviews,
-  required CodeQL checks) is the fix; the score follows.
-- **Scorecard's pip parser ignores `--hash` flags entirely**:
-  Even single-line `pip3 install 'pkg==1.0' --hash=sha256:abc...`
-  is flagged as "not pinned by hash". Scorecard's `PinnedDependenciesID`
-  check does not recognize pip's `--hash` CLI flag — it only
-  recognizes `--require-hashes` with a requirements file, or
-  possibly other formats. For ClusterFuzzLite `build.sh`, dismiss
-  as false positive since the deps ARE hash-pinned. The alerts
-  recur on each Scorecard re-scan so expect to re-dismiss.
+
+- **OpenSSF Scorecard alerts — process metrics and parser false
+  positives**:
+  - **#2 CodeReviewID / #3 SASTID are process metrics, not code
+    bugs** — they measure the ratio of approved/analyzed
+    changesets over time; no single PR fixes them. Setting up the
+    gates (required reviews, required CodeQL checks) is the fix;
+    the score follows incrementally.
+  - **Dependency lower bounds trigger vuln alerts** — Scorecard
+    flags `pyproject.toml` specs that ALLOW vulnerable versions
+    (e.g. `pydantic>=2.0.0` permits CVE'd 2.0–2.3) even when
+    installed versions are safe. Fix: bump the lower bound past
+    the patch, not just the lockfile.
+  - **The pip parser ignores `--hash` flags** — `pip3 install
+    'pkg==1.0' --hash=sha256:...` is still flagged "not pinned by
+    hash" (`PinnedDependenciesID` only recognizes
+    `--require-hashes` with a requirements file). For
+    ClusterFuzzLite `build.sh`, dismiss as false positive —
+    recurs on each re-scan, expect to re-dismiss.
 
 - **Skill descriptions must be under 250 characters**: Anthropic
   truncates skill descriptions longer than 250 chars, which breaks
@@ -1157,14 +1202,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   deprecate the old one and uninstall it before installing the
   replacement.
 
-- **Untracked scripts break CI when tests import them**: The
-  `test_sync_agents_skills.py` test imported from
-  `scripts/sync_agents_skills.py` which existed locally but was
-  never committed. CI failed with `ModuleNotFoundError` on all 12
-  platforms. Always `git status` scripts referenced by tests
-  before pushing. Guard with `pytest.importorskip()` for
-  resilience.
-
 - **PR test workflows may not auto-trigger after close/reopen or
   branch reuse**: When a PR branch is reused after a previous PR
   was merged, the `pull_request` trigger may not fire on new
@@ -1201,14 +1238,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `"command": "uv", "args": ["run", "--from", "attune-ai", ...]`
   to ensure the correct package resolution.
 
-- **Ruff auto-fix strips imports before usage code exists**:
-  When adding `from mcp.server import Server` at the top of a
-  file but the code using `Server(...)` is at the bottom (not
-  yet written), ruff's `--fix` removes the import as unused.
-  The edit succeeds but the import silently vanishes. Fix: add
-  imports and their usage code in the same edit, or add usage
-  first then imports.
-
 - **Template generators overwrite hand-written files**: The
   `generate_concept_templates.py` auto-discovery creates bland
   stubs that overwrite rich hand-written concept files. Fix:
@@ -1241,21 +1270,13 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (`data_classes.py` or equivalent) before constructing; named
   kwargs only, no positional bets.
 
-- **`# noqa: F401` re-exports break silently on satellite file
-  deletion**: SDK-native workflows re-export constants from legacy
-  satellite files (e.g. `from .security_audit_patterns import
-  SECURITY_PATTERNS  # noqa: F401`). Deleting the satellite file
-  breaks the import at runtime, not at lint time (ruff doesn't
-  check import resolution). Before deleting any workflow satellite
-  file, grep the parent workflow for `noqa: F401` imports from it.
-  Also check `__all__` — it may reference the re-exported names.
-
 - **Re-export accessibility tests are scattered across batch files**:
   Tests like `test_format_code_review_report_accessible` appear in
   SDK agent tests, workflow tests, and coverage batch files. A single
   re-export removal can cascade through 5+ test files. After removing
   any re-export, run `pytest -x` iteratively — each failure reveals
   the next test file to fix.
+
 - **Version bumps touch 7+ files AND rebuild dist — full
   release-prep checklist**: The version lives in
   `pyproject.toml`, `plugin/.claude-plugin/plugin.json`,
@@ -1283,44 +1304,76 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   skills, or the `test_skill_body_content_matches` test will also
   fail.
 
-- **Tags pushed before squash-merge point to the wrong commit**: If
-  you push a tag before the PR merges (e.g., `git push origin
-  v5.8.0`), the tag points to the pre-squash commit on the feature
-  branch. After squash-merge, the main branch has a different commit
-  hash. You must delete the old tag and re-tag the merge commit:
-  `git tag -d v5.8.0 && git tag -a v5.8.0 -m "..." && git push
-  origin v5.8.0 --force`. GitHub tag protection may block the
-  force-push — see the existing lesson on protected tags.
-- **`Path.rename()` fails on Windows when target exists**: On
-  Linux/macOS, `Path.rename()` atomically overwrites the target.
-  On Windows, it raises `FileExistsError` if the target already
-  exists. Use `Path.replace()` instead — it works cross-platform.
-  This caused 2 Windows-only CI failures in `help/session.py`
-  where the atomic-write pattern wrote to `.json.tmp` then
-  renamed to `.json`.
-
-- **PyPI publishing: prefer GitHub Actions trusted publishing
-  (OIDC), not local tokens**: The repo has
-  `.github/workflows/publish-pypi.yml` configured with trusted
-  publishing — no tokens needed. Trigger with
-  `gh workflow run publish-pypi.yml --ref main`. This runs on
-  GitHub's infrastructure, bypassing local SSL cert mismatches
-  (VPN/proxy intercepting `upload.pypi.org`) and 504 Gateway
-  Timeouts on large wheels. Three corollaries: (1) the `pypi`
-  environment has a required-reviewer gate — after the build
-  job passes, the publish job sits as "running" but is actually
-  waiting for approval at the Actions run page (the approval
-  can be self-served via the API:
-  `gh api repos/X/Y/actions/runs/<id>/pending_deployments -X POST
-  -F "environment_ids[]=<env-id>" -F state=approved`). Without
-  approval the job hangs indefinitely, not a PyPI timeout.
-  (2) If you MUST use local `twine`, pass the token via env
-  var — `twine upload` hangs/EOFErrors when prompting in
-  Claude Code's non-interactive terminal. Use
-  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
-  (3) Never paste PyPI tokens into chat or logs — pasted tokens
-  are permanently exposed; if it happens, revoke immediately at
-  pypi.org/manage/account/token.
+- **Publishing to PyPI via GitHub Actions trusted publishing —
+  the trigger / env-approval / duplicate-publish / false-failure
+  gotchas**: prefer trusted publishing (OIDC), NOT local tokens.
+  `.github/workflows/publish-pypi.yml` is configured for it —
+  trigger `gh workflow run publish-pypi.yml --ref main`, which
+  runs on GitHub's infra and bypasses local SSL-cert mismatches
+  (VPN/proxy intercepting `upload.pypi.org`) and 504s on large
+  wheels. The recurring gotchas:
+  - **Env reviewer gate** — after the build job passes, the
+    publish job sits "running" but is actually awaiting approval
+    on the `pypi` environment; it hangs indefinitely (NOT a PyPI
+    timeout). Self-approve via `gh api` when
+    `current_user_can_approve: true` (check via the same
+    endpoint) instead of the web-UI "Review deployments":
+    ```
+    RUN=<run-id>
+    ENV_ID=$(gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments --jq '.[0].environment.id')
+    gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
+      -X POST -F "environment_ids[]=$ENV_ID" -F state=approved -F comment="..."
+    ```
+  - **Trusted-publisher "Workflow name" field = the FILENAME**
+    (`publish.yml`), NOT the YAML `name:` value (`Publish to
+    PyPI`). Mismatch → `invalid-publisher: valid token, but no
+    corresponding publisher`. The OIDC debug output prints the
+    actual `workflow_ref` claim — compare field-by-field. Other
+    common mismatches: owner case / hyphen-vs-underscore,
+    environment name case, repository name.
+  - **`gh workflow run --ref` semantics (two facts)** — (a) it
+    re-triggers a release-gated (`release: published`) workflow
+    cleanly against a tag WITHOUT re-cutting the release, IF the
+    workflow also declares `workflow_dispatch:`; (b) BUT it
+    validates the `workflow_dispatch` trigger against the
+    workflow file AT THE REF — adding the trigger on `main`
+    does NOT enable dispatch against a pre-existing tag
+    (`HTTP 422: Workflow does not have 'workflow_dispatch'
+    trigger`). So add `workflow_dispatch` BEFORE cutting the
+    tag, and re-trigger with `--ref main` (the wheel name comes
+    from `pyproject.toml`, not the ref).
+  - **Env deployment-branch policies may whitelist branches
+    only** → a tag-triggered run (`refs/tags/vX`) is rejected
+    ("Tag X is not allowed to deploy due to environment
+    protection rules"). Fix: trigger via `--ref main`, OR add a
+    `v*` tag policy: `gh api repos/<o>/<r>/environments/pypi/
+    deployment-branch-policies -F name=v* -F type=tag`.
+    (attune-rag / attune-author `pypi` envs have no restriction.)
+  - **Duplicate publish from two triggers** — when the workflow
+    has BOTH an auto-trigger (`release: published` OR
+    `push: tags: 'v*.*.*'`, the latter since v7.1.1) AND
+    `workflow_dispatch:`, both runs fire and both await env
+    approval. Approving BOTH → the second 400/422s "File already
+    exists" (the first uploaded fine; the release IS live, the
+    failure just looks alarming). Choose ONE path: for
+    tag-triggered publishes let the tag push do it and skip the
+    explicit `gh workflow run`; if both fired, approve one and
+    `gh run cancel` the other; or guard the job with
+    `if: github.event_name == 'workflow_dispatch'`.
+  - **Run-level "failure" can hide a successful upload** —
+    `twine upload` succeeds but a downstream step (attestations,
+    sigstore, slack) fails, so the run shows
+    `conclusion: failure`. A retry returns `400 File already
+    exists`. Cross-check `curl https://pypi.org/pypi/<pkg>/<ver>/json`
+    — valid JSON = the upload landed (compare `upload_time` to
+    the run start). Don't chase "the publish failed"; only a
+    later step did.
+  - **Local `twine` fallback** — if you must, pass the token via
+    env var (`TWINE_PASSWORD=pypi-... uv run twine upload dist/*
+    --username __token__`); interactive prompts hang/EOFError in
+    Claude Code's non-interactive terminal. NEVER paste PyPI
+    tokens into chat/logs — pasted = permanently exposed; revoke
+    immediately at pypi.org/manage/account/token.
 
 - **`Path.glob()` and `PurePosixPath.match()` handle `**`
   unexpectedly — convert to regex for cross-version reliability**:
@@ -1335,6 +1388,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Instead, convert globs to regex: `**` → `.*`, `*` → `[^/]*`,
   `?` → `[^/]`, then `re.fullmatch()`. See `_glob_match()` in
   `help/manifest.py`.
+
 - **`/coach` is the user-facing entry point for the `.help`
   system**: The skill was renamed from `/help` to `/coach`
   because Claude Code's built-in `/help` command shadows
@@ -1344,6 +1398,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   still exists but is for quick command reference only —
   `/coach` is the one that connects to `.help/features.yaml`,
   staleness detection, and template generation.
+
 - **`text-white` on `gradient-primary` sections gets overridden**:
   Tailwind's `text-white` class is overridden by global styles
   on sections using `gradient-primary`. Use `!text-white`
@@ -1353,27 +1408,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Use inline Tailwind classes instead:
   `px-8 py-4 rounded-lg font-medium !text-white border-2
   border-white/60 hover:bg-white/15 transition-colors`.
-
-- **`uv run pip-audit` runs the pyenv shim, not the venv**:
-  The pyenv `pip-audit` shim takes precedence on PATH, so
-  `uv run pip-audit` audits whatever Python pyenv points at —
-  not `.venv/`. Symptom: bumping a dep in the venv (verified
-  with `uv pip show`) doesn't change the pip-audit output.
-  Fix: install pip-audit *into* the venv with
-  `.venv/bin/python -m pip install pip-audit` and run
-  `.venv/bin/python -m pip_audit`. The `uv run` form is
-  unreliable for security audits.
-
-- **SDK-native `security-audit` workflow swallows subagent
-  findings**: `attune workflow run security-audit` returns
-  successfully but `metadata.findings` is `{}` and
-  `final_output` only contains the orchestrator's planning
-  message ("I'll launch four subagents..."). The SDK adapter
-  doesn't aggregate `AssistantMessage` content from the
-  spawned subagents back into the parent result. For real
-  pre-release security checks, run bandit, detect-secrets,
-  and pip-audit directly against the venv until the SDK
-  adapter is fixed.
 
 - **`attune.help` re-exports create a hidden cross-package
   dep on `attune-author`**: `src/attune/help/__init__.py`
@@ -1393,27 +1427,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `.venv/bin/python -m pytest` exits with `No module named
   pytest` after `uv sync --extra developer`. Fix: sync both
   with `uv sync --extra dev --extra developer`.
-
-- **`git stash pop` after pre-commit can resurrect stale
-  tool state**: When pre-commit's `detect-secrets` hook
-  bumps `.secrets.baseline`'s schema version (e.g.
-  `1.4.0 → 1.5.0`) during a commit, a previously stashed
-  copy of `.secrets.baseline` will conflict on `git stash
-  pop` and revert the schema bump. After popping, always
-  `git diff .secrets.baseline` and `git checkout
-  .secrets.baseline` to discard any reverted changes that
-  came from the stash.
-
-- **`detect-secrets` flags `"fake"` as a secret in test
-  fixtures**: The `Secret Keyword` heuristic matches any
-  string assigned to a key that looks like a credential
-  variable, including the obvious placeholder `"fake"` in
-  `patch.dict("os.environ", {"ANTHROPIC_API_KEY": "fake"})`.
-  Add `# pragma: allowlist secret` on the same line to
-  silence it. This is the same pattern as the existing
-  `# pragma: allowlist secret` lessons but the trigger
-  string is non-obvious — even a 4-char placeholder fires
-  it.
 
 - **Unused `__init__.py` re-exports become invisible
   runtime deps**: Adding `from sibling_pkg.foo import Bar`
@@ -1441,19 +1454,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   except ImportError: ...` — so the loss was safe — but
   this is the kind of thing that breaks silently in
   production if you skip the verification step.
-
-- **Pre-flight pre-commit's pinned black/ruff on new files
-  before staging**: Running `.venv/bin/python -m black` or
-  `uv run black` against a file doesn't guarantee pre-commit
-  will leave it alone — pre-commit pins its own black/ruff
-  versions that can format differently than whatever is in
-  `.venv` (I saw py3.10 black leave a file "clean" while
-  pre-commit's black reformatted triple-quoted-string
-  argument layouts). Fix: use the pinned tool directly —
-  `uv run --with pre-commit pre-commit run black --files
-  path/to/file.py` — before `git add`. This catches format
-  mismatches with the exact version pre-commit will enforce,
-  avoiding the stash/restore dance on commit.
 
 - **Release branches carry unmerged commits that feature
   branches may depend on**: `release/v5.10.0` had 8 commits
@@ -1525,35 +1525,58 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   updates during the temp-remove-review/admin-merge/restore
   dance.
 
-- **`gh pr merge --admin` prints a fast-forward warning even
-  when the remote merge succeeds**: After an admin-merge, the
-  CLI attempts a local fast-forward of your local main to
-  origin/main. If your local main diverged (e.g., you had
-  feature-branch commits before the squash), the CLI prints
-  `fatal: Not possible to fast-forward, aborting` and
-  `! warning: not possible to fast-forward to: "main"`. The
-  remote merge already succeeded — the warning is about the
-  local refresh failing. Always verify the actual merge state
-  via `gh pr view <n> --json state,mergedAt,mergeCommit`
-  before assuming the command failed.
+- **ff-merge and post-squash local-main aftermath**:
+  - **`git merge --ff-only` fails silently with conflicting
+    staged changes** — it prints "Your local changes … would be
+    overwritten" and exits non-zero, but the error can scroll
+    past unnoticed. Verify `git rev-parse main` == `git rev-parse
+    origin/main` after. Pre-check: `git merge-base --is-ancestor
+    main origin/main` (must be true) AND no overlap between `git
+    diff --cached --name-only` and `git diff main..origin/main
+    --name-only`; if overlap, unstage/stash those files first.
+  - **After a squash-merge, local main can carry "extra" commits
+    already in the squash** — if you had feature-branch commits
+    locally on main before the squash (e.g. from a release-branch
+    pull replayed onto main), `git pull` tries to rebase and
+    conflicts (same tree content, different hash). Confirm via
+    `git log --oneline main ^origin/main` + `git show
+    <squash-commit> --stat`, then `git reset --hard origin/main`.
 
-- **After a squash merge of a feature branch, local main can
-  have "extra" commits that are already in the squash**: If
-  you had any of the feature branch commits locally on main
-  before the squash (e.g., from a pull on release/v5.10.0
-  that got replayed onto main), `git pull` after the squash
-  merge tries to rebase and conflicts because the same tree
-  content exists on main at a different commit hash. Safe
-  fix: run `git log --oneline main ^origin/main` to see the
-  "extra" local commits, confirm the content is included in
-  the squash (`git show <squash-commit> --stat` shows the
-  expected files), then `git reset --hard origin/main`.
-
-- **`gh pr checks --json` field names**: the field is
-  `bucket` (pass/fail/pending/skipping/cancel), not
-  `conclusion`. Full field list is exposed by passing an
-  invalid field name and reading the error message. Useful
-  for scripted pre-merge checks.
+- **Diagnosing CI from the `gh` CLI — field names, cancellation
+  traps, and in-flight log availability**:
+  - **`gh pr checks --json` field is `bucket`**
+    (pass/fail/pending/skipping/cancel), NOT `conclusion`
+    (discover the full field list by passing an invalid field
+    name and reading the error).
+  - **`--watch --fail-fast` exits prematurely (exit 0) on
+    cancelled-but-"fail"-tagged guard jobs** — `--fail-fast`
+    triggers on any row reading `fail` even when the job
+    conclusion is `cancelled` (zero steps — e.g. a
+    dependabot-only guard skipping on a regular PR; `Run
+    Security Scanner` does this). Exit 0 makes it look like all
+    passed. Drop `--fail-fast` (wait the full matrix), or
+    post-process to ignore rows whose actual conclusion (`gh api
+    .../jobs/<id>`) is `cancelled`. Always re-fetch `gh pr
+    checks <PR>` after the watcher exits — never trust its exit
+    code as "CI done".
+  - **`gh run view --log-failed` returns nothing while the run
+    is in flight** — even when jobs already show `fail` it says
+    "run is still in progress; logs available when complete"
+    (the job-level link doesn't help). You can DETECT failures
+    early via `gh pr checks --json bucket` polling but can't
+    DEBUG until the whole run completes — don't start
+    speculative fixes on the fail count alone (could be a flake,
+    real bug, or tolerable cancellation).
+  - **Rapid pushes + `cancel-in-progress` cancel the prior run,
+    and cancelled-but-required = BLOCKING** — N commits within
+    minutes trigger N runs; `concurrency` + `cancel-in-progress:
+    true` cancels each prior, and the latest can also get
+    cancelled (webhook race), leaving a required check in
+    `cancel` bucket → PR BLOCKED. Recovery: `gh run rerun
+    <run-id>` on the latest SHA. Prevention: before pushing a
+    fix, check `gh run list --workflow=X.yml --branch=<name>
+    --limit=1 --json status` — if `in_progress`, wait ~5-7 min
+    or accept the re-run.
 
 - **`git pull` refuses with unstaged changes when
   `pull.rebase=true`**: This repo's git config sets
@@ -1567,35 +1590,100 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Useful when local main is strictly behind origin/main and
   you have unrelated in-flight work.
 
-- **Selective hook skip with `SKIP=hookname` is not the same
-  as `--no-verify`**: `SKIP=check-docs-freshness git commit …`
-  runs every other pre-commit hook (black, ruff, bandit,
-  detect-secrets, etc.) and skips only the named one. This is
-  defensible when one specific hook fails on state orthogonal
-  to the commit (e.g., docs-freshness flagging pre-existing
-  template staleness when the commit is unrelated). `--no-verify`
-  skips ALL hooks and is what the rules forbid; `SKIP=` is the
-  surgical alternative.
+### uv — lockfile, sync & editable installs
 
-- **uv.lock can drift from pyproject.toml on shared branches**:
-  Saw this on origin/main — pyproject.toml had
-  `attune-help>=0.5.1,<0.6` (cap added in PR #152) but uv.lock
-  still showed `>=0.5.1` (no cap). The cap-adding PR didn't
-  re-run `uv lock`, so the lockfile silently went out of sync.
-  Symptom: a stale local working tree change to uv.lock isn't a
-  no-op after `git pull` — it's a real drift fix. Always
-  `uv lock --check` after pulling, and bundle uv.lock fixes with
-  the next reasonable PR rather than treating them as noise.
+- **uv lockfile & sync semantics — drift, enforcement, and
+  conservative resolution**:
+  - **uv.lock drifts from pyproject.toml on shared branches** —
+    a cap-adding PR (`attune-help>=0.5.1,<0.6`) that didn't
+    re-run `uv lock` leaves the lock at `>=0.5.1` (no cap). A
+    stale local uv.lock change after `git pull` is then a real
+    drift fix, not noise. Always `uv lock --check` after pulling;
+    bundle the fix with the next reasonable PR.
+  - **`uv sync` ENFORCES the lockfile — it WIPES `pip install`'d
+    packages** — `.venv/bin/python -m pip install pip-audit`
+    looks fine until a later `uv sync` removes it (`No module
+    named pip_audit` right after a successful install). Use
+    `uv run --with <tool>` for ephemeral tools, or add the tool
+    to a dev extra so the lock keeps it.
+  - **`[tool.uv.sources]` edits don't refresh the lock** —
+    deleting/changing an editable-sibling entry leaves the old
+    `editable = "../name"` path in uv.lock; CI `uv sync`/`uv run`
+    then fails "Failed to generate package metadata for pkg==ver
+    @ editable+../path" (the sibling dir isn't in a CI checkout).
+    Re-run `uv lock` immediately and commit it in the same
+    change; verify `grep -A2 'name = "pkg"' uv.lock` shows
+    `{ registry = "https://pypi.org/simple" }`. (This is also why
+    `uv run` in a pre-commit hook can fail with an "unrelated"
+    message — e.g. check-docs-freshness "Failed" with a
+    metadata-resolution traceback that says nothing about docs;
+    check uv.lock resolvability before blaming the hook.)
+  - **`uv sync` keeps existing pins that still satisfy a WIDENED
+    cap** — bumping `<0.6`→`<0.8` and running `uv sync` leaves
+    the old version (it still satisfies the range). Force
+    re-resolution with `uv lock --upgrade-package <name>`
+    (repeatable), then sync. Distinct from the
+    `[tool.uv.sources]` drift above — here the lock is
+    structurally correct, just conservative.
+  - **`uv lock` may briefly fail on a JUST-published version** —
+    the simple index (used by uv/pip) lags the JSON API by a few
+    seconds, so within ~30 s of a publish `uv lock
+    --upgrade-package <pkg>` reports "only <prev> is available …
+    unsatisfiable" while `curl …/pypi/<pkg>/<ver>/json` already
+    returns it. Wait ~30 s and rerun with `--refresh` (bypasses
+    uv's cached index). Relevant for cross-repo release chains.
+  - **Long-stale uv.lock + a release-time `uv lock` regen pulls a
+    dep CASCADE beyond the bump** — refreshing a far-behind lock
+    pulled a sibling upgrade (attune-help 0.10.1→0.11.0) plus
+    three un-locked dev deps, nearly derailing the release via
+    sibling-workspace snapshot drift. Check `git diff uv.lock
+    --stat` for unexpected scope BEFORE regenerating during
+    release ceremony; defer the catch-up to a separate PR so the
+    release commit stays version-only. (If CI uses `pip install
+    -e ".[dev]"` not `uv sync`, uv.lock isn't on the release
+    critical path — the defer is safe.)
 
-- **`uv sync` wipes packages installed via `pip install`**:
-  Running `.venv/bin/python -m pip install pip-audit` into the
-  venv looks successful, but a subsequent `uv sync --extra dev
-  --extra developer` removes it because `uv sync` enforces the
-  lockfile. The symptom is a confusing `No module named
-  pip_audit` right after a successful install. Fix: use
-  `uv run --with pip-audit pip-audit --strict` for ephemeral
-  audit tools, or add the tool to a dev extra in
-  `pyproject.toml` so the lockfile keeps it.
+- **uv editable-install gotchas**:
+  - **`uv pip install -e .` does NOT regenerate
+    `[project.scripts]` console scripts** — after adding/changing
+    an entry the old `.venv/bin/<name>` stays (or is absent if
+    new); `ls .venv/bin/<cli>` returns nothing despite a clean
+    install log. Use `uv sync --extra dev --reinstall-package
+    <pkg>` (rebuilds the wheel + entry_points);
+    `uv pip install --force-reinstall -e .` also works, slower.
+  - **`uv pip install -e <path>` ships STALE package-data even
+    with `--force-reinstall --no-cache`** — a new shipped JSON
+    appeared in a built wheel but not via the editable install.
+    Fixes: `uv sync` (refresh from lock), build a wheel and
+    install it, or delete `site-packages/<pkg>` before
+    reinstalling. Editable caching is unreliable for non-Python
+    content.
+  - **`uv pip install -e <sibling> --no-deps` is the clean
+    venv-local shadow** when a sibling's in-flight version
+    exceeds the current cap (e.g. need 0.9.0 visible while the
+    cap is `<0.8`): `--no-deps` bypasses cap resolution and drops
+    the editable path in site-packages; any later `uv sync`
+    overwrites it (intended). Prefer this over a committed
+    `[tool.uv.sources]` override when the cap bump isn't ready.
+  - **Editable paths LEAK into `pip list` and break naive grep**
+    — a worktree path containing "redis" false-positives `pip
+    list | grep redis`. Anchor to the package-name column:
+    `pip list | awk '{print $1}' | grep -ixE "redis|..."`.
+
+- **uv tooling — pip-audit and build**:
+  - **`uv run pip-audit` runs the PYENV SHIM, not the venv** —
+    the shim takes PATH precedence, so it audits the wrong Python
+    (bumping a venv dep doesn't change its output). Install into
+    the venv (`.venv/bin/python -m pip install pip-audit` then
+    `… -m pip_audit`) or use `uv run --with pip-audit pip-audit
+    --strict` for the ephemeral form (the reliable one — note the
+    "uv sync wipes pip-installed" caveat above for the venv-install
+    route).
+  - **`uv run python -m build` fails `No module named build`** —
+    `build` isn't in the dev/developer extras; use `uv run --with
+    build python -m build`. The local build is verification-only
+    (PyPI trusted publishing rebuilds the wheel on the tag), so
+    `dist/` artifacts never upload.
 
 - **Anchor-tag buttons need `!text-white no-underline`**: The
   existing lesson about `text-white` being overridden on
@@ -1605,29 +1693,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the primary blue and add an underline, producing invisible
   blue-on-blue text. Use `!text-white no-underline` on
   anchor-styled buttons, even outside gradient sections.
-
-- **"SDK adapter swallows subagent findings" lesson was
-  wrong — adapter is fine, budget cap cuts the stream
-  early**: Verified with a 157-message trace of
-  `security-audit` (max_turns=30).
-  `collect_agent_output()` at
-  `src/attune/workflows/agent_sdk_adapter.py:48-91` already
-  captures all `AssistantMessage` TextBlocks (including from
-  subagents — those carry `parent_tool_use_id=<task-id>`,
-  no filter needed). The real issue: with 4-5 Opus subagents
-  spawned in parallel, the stream ends with
-  `ResultMessage(result=None, num_turns=2, is_error=False)`
-  — looks clean but is actually silent early termination at
-  the `max_budget_usd` cap (was $2.00 for "standard"
-  depth; bumped to $10.00 in the fix). Subagents were still
-  exploring (emitting
-  `ToolUseBlock`, not terminal `TextBlock`) when the stream
-  was cut, so the orchestrator never received their
-  findings to synthesize. Fix is in workflow config
-  (budgets), not the adapter: raise `max_budget_usd` for
-  multi-subagent workflows, or set
-  `ATTUNE_MAX_BUDGET_USD=0` to disable caps, or
-  restructure to run fewer/cheaper subagents.
 
 - **Squash-merge deletes the remote branch; subsequent push
   silently recreates it with no PR attached**: After a squash
@@ -1652,27 +1717,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `../attune-<name>/`, pointer stub at
   `packages/attune-<name>/README.md`, and a `[tool.uv.sources]`
   entry.
-
-- **`uv pip install -e .` does not regenerate
-  `[project.scripts]` console scripts**: Editable reinstalls
-  after adding or changing a `[project.scripts]` entry leave
-  the old `.venv/bin/<name>` in place — or absent entirely if
-  it's new. Symptom: `ls .venv/bin/<cli>` returns nothing
-  despite a clean install log. Fix: use
-  `uv sync --extra dev --reinstall-package <pkg>` which
-  rebuilds the wheel and refreshes entry_points. `uv pip
-  install --force-reinstall -e .` also works but is slower.
-
-- **structlog default output pollutes stdout-captured CLI
-  tests**: structlog's default `ConsoleRenderer` writes log
-  lines to `sys.stdout`, not stderr. `capsys.readouterr().out`
-  in a pytest CLI test that emits JSON ends up with log lines
-  like `2026-04-17 [info     ] rag.run ...` prepended to the
-  JSON payload, breaking `json.loads()`. Fix: parse from the
-  first `{` (`json.loads(text[text.find("{"):])`) or
-  configure structlog to stderr in the CLI's `main()` before
-  running the pipeline. Don't just silence logs — they're
-  useful in prod.
 
 - **attune-help's sidecar schemas don't match path-keyed
   assumptions**: `attune_help/templates/summaries.json` is
@@ -1745,47 +1789,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   and well-suited to local-corpus use cases. Consider it
   before reaching for hosted providers.
 
-- **Duck-typed test fakes fail isinstance-based
-  collectors silently**: `collect_agent_output()` in
-  `src/attune/workflows/agent_sdk_adapter.py` does
-  `isinstance(message, claude_agent_sdk.AssistantMessage)`.
-  A shape-compatible fake class (`class _FakeAssistantMessage:
-  def __init__(self, text): self.content = [...]`) will
-  fall through the isinstance check and leave
-  `result_text="No results returned."` untouched — the
-  test passes against that default answer and may
-  appear successful. Fix: construct real SDK class
-  instances in tests:
-  `claude_agent_sdk.AssistantMessage(content=[...],
-  model="...", parent_tool_use_id=None)` and
-  `claude_agent_sdk.ResultMessage(subtype="success", ...)`.
-  Use `dataclasses.fields(Cls)` to discover the real
-  field list.
-
-- **Formatter strips imports that are "unused" at the
-  moment you save, even if a later edit will use them**:
-  When staging multiple edits that together introduce a
-  new import, the ruff/black autofix can run between
-  edits and remove the import as unused. Happens reliably
-  in the Claude Code hook pipeline. Two fixes:
-  (1) introduce the import in the SAME edit that first
-  uses it, not in a preceding edit; (2) scope the import
-  inside the function body that uses it so the unused-
-  import detector never fires even if the file is saved
-  mid-edit. Scoping is more robust for tests.
-
-- **`git commit -q` can exit 0 with pre-commit hook
-  feedback that looks like success but isn't**: When
-  pre-commit hooks (end-of-file-fixer, trailing-
-  whitespace) modify files during the commit, the tail
-  output shows "Passed" for each hook and gives no
-  explicit "Aborted" line — but the commit is skipped
-  and the files are left re-staged for retry. Always
-  verify with `git log --oneline -1` or `git status
-  --short` immediately after `git commit`; don't trust
-  that absence-of-error-message means the commit
-  landed.
-
 - **Golden-query test fixtures must match the actual
   corpus layout, not an assumed one**: When writing a
   `queries.yaml` file for retrieval regression tests,
@@ -1816,60 +1819,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   turn into XPASS if a retriever upgrade starts passing
   them.
 
-- **PyPI trusted publisher "Workflow name" field wants the
-  FILENAME, not the YAML display name**: The PyPI
-  pending-publisher form has a "Workflow name" field that
-  must match the `workflow_ref` claim GitHub sends — which
-  is the filename (`publish.yml`), NOT the value of `name:`
-  at the top of the YAML (`Publish to PyPI`). If they
-  mismatch, the publish job fails with `invalid-publisher:
-  valid token, but no corresponding publisher`. The OIDC
-  debug output shows the actual claim — compare it to the
-  PyPI config field-by-field. Other common mismatches:
-  owner with wrong case or underscore-vs-hyphen,
-  environment name case, repository name.
-
-- **`uv.lock` retains `editable = "../name"` paths after
-  `[tool.uv.sources]` edits — always re-run `uv lock`**:
-  Deleting (or changing) a `[tool.uv.sources]` entry in
-  `pyproject.toml` does NOT automatically refresh the
-  lockfile. The lock keeps the old editable-sibling path,
-  and any `uv sync` / `uv run` in CI (pre-commit hooks,
-  fuzzing, etc.) fails with "Failed to generate package
-  metadata for pkg==ver @ editable+../path" because the
-  sibling directory doesn't exist in a CI checkout. Always
-  re-run `uv lock` immediately after editing
-  `[tool.uv.sources]` and commit `uv.lock` in the same
-  change. Verify with
-  `grep -A 2 "name = \"pkg\"" uv.lock` — the `source` line
-  should read `{ registry = "https://pypi.org/simple" }`
-  once the dep is published.
-
-- **`uv run` in pre-commit hooks propagates lockfile
-  errors as hook failures that look unrelated**: The
-  `check-docs-freshness` hook uses
-  `uv run python scripts/check_docs_freshness.py`. When
-  the lockfile has an unresolvable dep (e.g. sibling
-  editable path missing in CI), the failure renders as
-  "Check Help Template Freshness ... Failed" with a
-  metadata-resolution traceback in the log — nothing
-  about docs or templates. When seemingly-unrelated
-  pre-commit hooks start failing, read the actual log
-  and check `uv.lock` resolvability before assuming the
-  hook's nominal responsibility is the issue.
-
-- **`gh workflow run <file.yml> --ref <tag>` re-triggers
-  a release-gated workflow cleanly without churning the
-  release**: When a `publish.yml` triggered by
-  `release: types: [published]` fails on the first shot
-  (e.g. invalid trusted publisher config on PyPI side),
-  don't delete and recreate the release — if the workflow
-  also declares `workflow_dispatch:`,
-  `gh workflow run publish.yml --repo owner/repo --ref
-  <tag>` fires a fresh run against the same tag, skipping
-  the release-tag churn. Build + publish steps run
-  identically.
-
 - **Chicken-and-egg for optional extras in [dev]**: If
   you want `pkg>=X,<Y` in `[dev]` extra so CI tests
   actually exercise the code paths (rather than
@@ -1882,33 +1831,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `[dev]` → tests run → coverage lands. Before publish,
   rag tests use `importorskip` and patch coverage
   reports 0% for the new code.
-
-- **`codecov/patch` 0% usually means tests *skipped*, not
-  failed**: The `codecov/patch` check measures coverage
-  of the diff — new/changed lines. If new tests use
-  `pytest.importorskip` on an optional dep that CI
-  doesn't install, every assertion skips, and the diff
-  shows 0% covered even though all tests "pass". Fix
-  by making the dep installable (add to `[dev]` or move
-  to required), or by adding unconditional error-path
-  tests that don't need the optional dep (use
-  `sys.modules[name] = None` sentinel to exercise the
-  "missing extra" branches).
-
-- **Adding a plugin skill has THREE enforcement gates,
-  not one**: Besides creating `plugin/skills/<name>/SKILL.md`,
-  you must also (1) bump the hardcoded count in
-  `tests/unit/plugins/test_plugin_config_validation.py::
-  TestPluginStructure::test_skill_count`, (2) add a row
-  to the "Skills Reference" table in
-  `plugin/skills/attune-hub/SKILL.md` (enforced by
-  `tests/unit/plugins/test_plugin_reference_validation.py::
-  TestCoverage::test_all_skill_dirs_referenced_by_attune_hub`),
-  and (3) run `python scripts/sync_agents_skills.py` to
-  regenerate the `.agents/skills/` mirror (enforced by
-  `test_skill_body_content_matches`). Missing any one
-  fails CI. Keep this sequence in mind as a single
-  "add a skill" checklist, not as separate surprises.
 
 - **After a PR merges while you're AFK, pull main before
   tagging**: When a background wakeup fires and finds a
@@ -1923,28 +1845,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   This pairs with the existing "Tags pushed before squash-
   merge point to the wrong commit" lesson — same class
   of bug, opposite direction in time.
-
-- **PyPI env policies may whitelist branches only — tag-
-  triggered publishes get rejected**: `pypi` environment
-  deployment branch policies on attune-ai allowed `main`
-  and `release/*` branches but not any tag pattern. A
-  `publish-pypi.yml` run fired by
-  `release: types: [published]` executes against the tag
-  ref (`refs/tags/v6.1.0`), which the env rejected with
-  "Tag <X> is not allowed to deploy due to environment
-  protection rules." Previous releases never hit this
-  because they all ran via `workflow_dispatch --ref main`.
-  Fix (fastest): re-trigger via
-  `gh workflow run publish-pypi.yml --ref main` — the
-  build pulls the latest main which already has the
-  version bump merged in. Alternative fix (if you prefer
-  tag-triggered publishes): add `v*` to the env's
-  `deployment-branch-policies` via
-  `gh api repos/<owner>/<repo>/environments/pypi/deployment-branch-policies -F name=v* -F type=tag`.
-  attune-rag and attune-author don't have this issue
-  because I set up their `pypi` envs with no
-  branch/tag restriction when creating them for the RAG
-  release.
 
 - **Naive suffix-strip stemming fails on English
   doubling-consonant words**: A simple stemmer that
@@ -2087,22 +1987,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the **feature level** (merge the features), not at
   the prompt level.
 
-- **`uv pip install -e <path>` can ship stale
-  package-data even after `--force-reinstall
-  --no-cache`**: added
-  `src/attune_help/templates/summaries_by_path.json`
-  and expected editable-installed attune-help to see
-  it. It didn't — the file appeared in a freshly
-  built wheel but not via the editable install.
-  Wasted ~20 min debugging. Workarounds that work:
-  (1) `uv sync` refreshes the whole venv from the
-  lockfile, (2) build a wheel with `python -m build
-  --wheel` and install it directly, (3) delete the
-  `site-packages/<pkg>` dir manually before
-  reinstalling. Use these when iterating on a
-  package's shipped data files — editable install's
-  caching is unreliable for non-Python content.
-
 - **Pre-committed decision matrices survive contact
   with data**: the fastembed "if Golden P@1 ≥ 70%,
   defer" matrix was written into
@@ -2156,20 +2040,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   if no tool-use block is present (indicates a
   capability/version mismatch, not a parse error).
 
-- **Re-adding an import after the formatter strips it —
-  use function-body usage as the anchor, not trust that
-  "I'll import it first"**: the edit-formatter cycle runs
-  on every Edit, and ruff's F401 fix removes any import
-  not currently referenced at module scope OR in a
-  function body. The robust sequence when adding an
-  import + new usage across edits: (1) add the *usage*
-  in a function body first, (2) add the import in a
-  follow-up edit — the name is now referenced so F401
-  leaves it alone. This extends the existing
-  "Formatter strips imports" lesson with the concrete
-  workaround: add usage first, import second, never the
-  other way around.
-
 - **Forced cite-per-claim prompting is the structural
   lever for RAG faithfulness; soft grounding
   instructions cap much lower**: attune-rag v0.1.3 A/B
@@ -2190,27 +2060,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   forced prompt variant, not a "please use the
   context" one. Decision + data in
   `docs/rag/faithfulness-decision-2026-04-19.md`.
-
-- **GitHub Actions environment deployment approvals can
-  be self-approved via `gh api` when
-  `current_user_can_approve: true`** — no need to visit
-  the web UI for routine releases on repos you own.
-  Sequence:
-  ```
-  RUN=<run-id>
-  ENV_ID=$(gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
-    --jq '.[0].environment.id')
-  gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
-    -X POST -F "environment_ids[]=$ENV_ID" -F state=approved \
-    -F comment="release notes here"
-  ```
-  Check `current_user_can_approve` first via the same
-  pending_deployments endpoint. Useful for the `pypi`
-  environment gate on attune-rag / attune-help /
-  attune-ai publishes when the CLI user is the repo
-  owner. Supersedes the older "go to the Actions run
-  page and click Review deployments" pattern for the
-  common solo-owner case.
 
 - **PR scope after commits have already landed: expand
   the existing PR, don't split**: when new commits are
@@ -2268,21 +2117,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the kind count you expect. Don't trust the status
   report alone.
 
-- **`uv sync` respects existing lockfile pins when they
-  still satisfy widened constraints — cap bumps require
-  `uv lock --upgrade-package <name>` to actually
-  upgrade**: bumping `attune-help>=0.5.1,<0.6` to
-  `<0.8` in pyproject.toml and running `uv sync
-  --all-extras` left attune-help at 0.5.1 because 0.5.1
-  still satisfies `>=0.5.1,<0.8`. The resolver picks
-  the existing pin over a newer available version. Fix:
-  after widening a cap, run `uv lock --upgrade-package
-  <name>` (repeatable for multiple packages) to force
-  re-resolution; then `uv sync` installs the newly-
-  resolved versions. This is distinct from the existing
-  `[tool.uv.sources]`-edit drift lesson — here the
-  lockfile is structurally correct, just conservative.
-
 - **Adding a workspace-sibling package as an extra can
   silently downgrade shared transitive deps via
   most-restrictive-cap-wins**: attune-ai has attune-rag
@@ -2302,36 +2136,58 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   / attune-help all share attune-help as a transitive
   dep with sometimes-divergent cap ranges.
 
-- **SDK workflows accepting a file path used to crash
-  silently with `Command failed with exit code 1` —
-  fixed 2026-05-16 via `resolve_cwd_for_path()`
-  helper, but the underlying gotcha is broader**: the
-  Claude Agent SDK's `ClaudeAgentOptions(cwd=...)`
-  must be an existing directory; passing a file raises
-  `CLIConnectionError: [Errno 20] Not a directory` at
-  subprocess startup, which the SDK message reader
-  bubbles as the opaque `Command failed with exit
-  code 1` (no other diagnostic). All 15 SDK-native
-  workflows (`security_audit`, `code_review`,
-  `bug_predict`, `test_gen`, etc.) had the
-  `cwd=resolved_path` antipattern. Fix: every workflow
-  now wraps with `resolve_cwd_for_path(resolved_path)`
-  from `attune.workflows.agent_sdk_adapter`, which
-  returns `path.parent` when `path.is_file()` else
-  `path` unchanged. A drift-guard test
-  (`tests/unit/workflows/test_agent_sdk_adapter.py::
-  TestSdkWorkflowsUseCwdHelper`) asserts the
-  antipattern stays absent. The broader gotcha for
-  any future code calling `claude_agent_sdk.query()`:
-  always use `resolve_cwd_for_path()` for
-  user-supplied paths, even when the path "looks
-  like" a directory at the docstring level —
-  user invocations vary. Companion observation: when
-  workflows fail with `Command failed with exit
-  code 1` and `Cost & Time` shows `$0.0000 | 0.0s`,
-  the failure is at subprocess startup (cwd, auth,
-  CLI binary missing) — NOT a runtime budget/turn
-  issue. The `$0.0` is the diagnostic.
+- **Diagnosing SDK workflow failures — `Command failed with
+  exit code 1` + `$0.0000 | 0.0s`**: the opaque
+  `Command failed with exit code 1` with `$0.00 / 0.0s` in
+  Cost & Time means failure at subprocess STARTUP (the `$0.0`
+  is the diagnostic), NOT a runtime issue — the SDK swallows
+  the real error. Root causes, in order:
+  - **cwd is a file, not a directory** —
+    `ClaudeAgentOptions(cwd=<file>)` raises `CLIConnectionError:
+    [Errno 20] Not a directory` at startup. Fixed 2026-05-16:
+    every workflow wraps with `resolve_cwd_for_path()` (from
+    `attune.workflows.agent_sdk_adapter`, returns `path.parent`
+    when `path.is_file()`), guarded by a drift-test
+    (`TestSdkWorkflowsUseCwdHelper`). Always use it for
+    user-supplied paths in any `claude_agent_sdk.query()` call,
+    even when the path "looks like" a directory.
+  - **auth / PATH / SDK version** — ANTHROPIC_API_KEY
+    unset/expired, `claude` CLI not on PATH, claude-agent-sdk
+    version mismatch.
+  - **API account usage cap reached** — the SDK swallows a 400
+    `invalid_request_error: "You have reached your specified
+    API usage limits…"` into the generic error. Diagnose by
+    calling `claude` directly with the SDK's flags (`echo "" |
+    claude --json-schema '<schema>' -p "say hi"`) — if it
+    returns the 400, that's it. (The workflow's "What Went
+    Wrong" voice-layer lists auth/PATH/version but never this.)
+  - **`ATTUNE_MAX_BUDGET_USD` cap hit at STARTUP** — a different
+    path from the mid-stream cap (which gives a clean "Reached
+    maximum budget ($X)"); at startup it raises the generic
+    exit-1 with `$0.00`. Tell it apart: `claude -p` works AND a
+    minimal 1-subagent `max_turns=2` probe succeeds at the same
+    cap → it's the cap. Raise `ATTUNE_MAX_BUDGET_USD=10` and
+    retry. Budget rule: single-agent workflows (simplify-code,
+    doc-gen, dependency-check) fit under ~$1.50; multi-subagent
+    (security-audit, code-review, bug-predict, test-gen,
+    deep-review) need ≥$5 even on tiny inputs (each subagent's
+    planning emits costly setup tokens before useful output).
+    The `quick`-depth `$2` default
+    (`agent_sdk_adapter._DEFAULT_BUDGET_USD`) is unusable for
+    ANY multi-subagent workflow — 4 subagents exceed $2 before
+    the orchestrator finishes spawning; set
+    `ATTUNE_MAX_BUDGET_USD=0` or use `standard` ($10).
+  - **The adapter is NOT the culprit** — an earlier belief that
+    the SDK adapter "swallows subagent findings" (empty
+    `metadata.findings`, `final_output` only the planning
+    message) was WRONG. A 157-message trace showed
+    `collect_agent_output()` already captures all subagent
+    `AssistantMessage` TextBlocks (they carry
+    `parent_tool_use_id=<task-id>`, no filter needed); the empty
+    result is the budget cap cutting the stream while subagents
+    still emit `ToolUseBlock` (not terminal `TextBlock`). Fix is
+    budget config, not the adapter. (Error-surface improvement
+    tracked in the `sdk-error-message-fidelity` spec.)
 
 - **Citation-forced prompting and prompt-injection
   resistance are separate threat models — solving one
@@ -2388,40 +2244,41 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   reword), isolate them in the recovery A/B rather
   than reverting everything.
 
-- **`uv lock` may briefly fail to find a just-published
-  PyPI version because the simple index lags the JSON
-  API**: within ~30 seconds of a successful PyPI
-  publish, `curl https://pypi.org/pypi/<pkg>/<ver>/json`
-  returns the new version but `uv lock
-  --upgrade-package <pkg>` fails with "only
-  <previous-version> is available. [...]  requirements
-  are unsatisfiable." Both surfaces eventually
-  converge, but the simple index (used by uv / pip)
-  refreshes a few seconds behind the JSON API. Fix:
-  wait ~30s and rerun with `uv lock
-  --upgrade-package <pkg> --refresh` — the `--refresh`
-  flag bypasses uv's local cache of the simple index.
-  Relevant for cross-repo release chains where one
-  sibling publishes, then another sibling's lockfile
-  refresh follows immediately.
-
-- **Research subagents can confabulate SDK signatures —
-  introspect before coding**: Research agents
-  reconstruct API shapes from documentation-style priors
-  without importing the code, so they can be confidently
-  wrong about types (e.g. 6.2.0 planning claimed
-  `SystemPromptPreset(exclude_dynamic_sections=["cwd",
-  "git_status"])` — actually a boolean toggle, not a
-  list of section names). Cost of verifying with
-  `inspect.signature(obj)` + `.__annotations__`: ~1
-  minute. Cost of skipping: an entire task's worth of
-  misdirected code. Pattern: before implementing any
-  task that depends on an SDK symbol named by a research
-  agent, run a short introspection check
-  (`hasattr`, `inspect.signature`, `__annotations__`)
-  as the first step — especially for TypedDict /
-  kwarg-only classes where there's no constructor
-  signature to catch mistakes at call time.
+- **Introspect claude-agent-sdk signatures before coding —
+  research agents AND spec pseudocode confabulate them**:
+  research agents (and `design.md` pseudocode) reconstruct API
+  shapes from doc-style priors without importing the code, so
+  they're confidently wrong about types. Cost of verifying with
+  `inspect.signature(obj)` / `dataclasses.fields(obj)` /
+  `.__annotations__`: ~1 minute; cost of skipping: a task's
+  worth of misdirected code. Run the check as the FIRST step
+  for any task depending on an SDK symbol named by an agent or
+  spec — especially TypedDict / kwarg-only classes with no
+  constructor signature. Confabulations caught this way:
+  - **`SystemPromptPreset`** — planning claimed
+    `exclude_dynamic_sections=["cwd","git_status"]` (a list);
+    it's actually a boolean toggle. And (as of 0.1.63)
+    `SystemPromptPreset` is Claude-Code-preset-ONLY: `type:
+    "preset"`, `preset: "claude_code"` (one value), `append:
+    NotRequired[str]`, `exclude_dynamic_sections:
+    NotRequired[bool]`. For CUSTOM system prompts pass a plain
+    string to `ClaudeAgentOptions(system_prompt=...)` (already
+    cache-friendly — static string; `cwd=` is a tool-config
+    field, not injected prompt text).
+  - **`ClaudeAgentOptions(tools=[{schema}], tool_choice={...})`
+    is unsupported** — there's NO `tool_choice` field, and
+    `tools` is `list[str] | ToolsPreset | None` (a tool-name
+    ALLOWLIST, not Anthropic tool defs). The agent SDK routes
+    through the `claude` CLI's tool loop and can't force a
+    schema-guaranteed call. For forced guaranteed-schema JSON
+    use the RAW `anthropic` SDK
+    (`client.messages.create(tools=[...], tool_choice={"type":
+    "tool","name":...})`, as `attune_rag`'s `FaithfulnessJudge`
+    does) — the two SDKs are easy to conflate. Rule: a single
+    synthesis/judge call (no agent loop, no subagents, no file
+    tools) → raw `anthropic` SDK; reserve
+    `claude_agent_sdk.query()` for agentic work (file tools,
+    subagent fan-out, multi-turn).
 
 - **`getattr(module, "name", None)` at call site is the
   clean degradation pattern for optional SDK surface**:
@@ -2446,26 +2303,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is definitely available but the call itself may
   fail at runtime.
 
-- **Claude-agent-sdk `SystemPromptPreset` (as of
-  0.1.63) is Claude-Code-preset-only, not a vehicle
-  for custom system prompts**: the name suggests "a
-  preset for building system prompts" but the real
-  schema is narrower: `type: Literal["preset"]`,
-  `preset: Literal["claude_code"]` (only one
-  acceptable value), `append: NotRequired[str]` to
-  append text, `exclude_dynamic_sections:
-  NotRequired[bool]` as an all-or-nothing toggle for
-  the built-in preset's dynamic sections. For
-  **custom** system prompts, pass a plain string to
-  `ClaudeAgentOptions(system_prompt=...)` — that path
-  is already cache-friendly since the string is
-  static and `cwd=` is a tool-execution config field,
-  not text injected into the prompt stream. No
-  action needed to get cross-run cache hits when
-  using string prompts; `SystemPromptPreset` only
-  applies when building on top of the claude_code
-  preset.
-
 - **`mcp__attune-ai__doc_orchestrator` is a no-op
   stub**: calling the MCP tool on a real project
   returns `{items_found: 0, docs_generated: [],
@@ -2479,26 +2316,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   MCP tools and do a direct `ast` parse + docstring
   check in Bash — takes seconds and actually returns
   signal.
-
-- **`release: published` + `workflow_dispatch` both
-  approved for `pypi` env = duplicate publish, the
-  second fails "File already exists"**: on v6.2.0,
-  approving the `pypi` environment deployment on BOTH
-  the tag-triggered (`release: published`) and manual
-  (`workflow_dispatch`) runs caused the first to
-  upload successfully and the second to 400 with
-  `File already exists ('attune_ai-6.2.0-py3-none-any
-  .whl', with blake2_256 hash ...)`. The release is
-  fine — files are live on PyPI — but the failed run
-  looks alarming. Two fixes: (1) only approve ONE of
-  the two runs per release; (2) guard the publish
-  job with `if: ${{ github.event_name ==
-  'workflow_dispatch' }}` so tag-triggered runs
-  short-circuit before twine uploads. Related to the
-  existing `pypi` env branch-policy lesson — that
-  one bites when only tag-triggered runs exist; this
-  one bites when both paths are enabled and both get
-  approved.
 
 - **YAML `run:` block scalars break on blank lines
   inside multi-line bash strings**: a `run:` block
@@ -2781,21 +2598,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is past-due deprecated — if yes, implementation is
   strictly wrong.
 
-- **`HAS_API_KEY`-gated integration tests poison the matrix
-  when Anthropic's network flakes**: Tests guarded with
-  `pytest.mark.skipif(not HAS_API_KEY, ...)` make real API
-  calls when the key is set, so a transient
-  `api.anthropic.com` outage fails identically on every
-  platform that has the key — looks like a code regression.
-  Diagnosis signal: same test IDs fail across all OS/Python
-  combinations with the *same* error string, and no unit
-  tests fail (saw `AllProvidersFailedError: ... Connection
-  error` on PR #169). Fix: either mock at the HTTP boundary
-  or add `@pytest.mark.integration` and exclude from the
-  default `-m "not integration"` selector. Short-circuit
-  rule: matched-string failures only in files with a
-  network-gated skip = infra flake, not code regression.
-
 - **`import X` inside a `try` block + `except X.SomeError`
   crashes with `UnboundLocalError` when the import fails**:
   Python evaluates the except expression only when an
@@ -2842,22 +2644,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   first `COPY .`. Option (b) is less maintenance
   when adding more companion files over time.
 
-- **GitHub Copilot Autofix pushes commits directly to PR
-  branches when CodeQL finds fixable issues — expect a
-  rebase mid-session**: Commits like `Potential fix for
-  pull request finding 'Empty except'` appear on the PR
-  branch with no local action; author shows as your account
-  but co-authored-by `Copilot Autofix powered by AI
-  <...@github-code-quality[bot]...>`. Usually cosmetic
-  (comment additions, trivial guards), not logic changes.
-  Your next `git push` rejects with non-fast-forward; fix
-  with `git pull --rebase` then `git commit --amend -S
-  --no-edit` (rebase replays commits unsigned, see the
-  signing lesson). Always `git fetch` and inspect before
-  assuming a push failure is a race with a human
-  collaborator — Autofix lands silently. The commits are
-  safe to keep; review the diff, confirm cosmetic, rebase
-  on top.
+- **Copilot Autofix (the `github-code-quality` bot) interacts
+  with PRs two ways — commits and inline suggestions**: when
+  CodeQL finds fixable issues, the bot acts on the PR; expect it
+  mid-session.
+  - **Direct commits** — `Potential fix for ...` commits appear
+    on the PR branch with no local action (author = your account,
+    co-authored-by the `github-code-quality[bot]`), usually
+    cosmetic (comment/guard, not logic). Your next `git push`
+    rejects non-fast-forward; `git fetch` and inspect BEFORE
+    assuming a human-collaborator race (Autofix lands silently),
+    then `git pull --rebase` and `git commit --amend -S --no-edit`
+    (rebase replays unsigned — see the signing lesson). The
+    commits are safe to keep; review the diff, confirm cosmetic,
+    rebase on top.
+  - **Inline review suggestions** (state `COMMENTED`, advisory,
+    non-blocking) — judge each: an empty `except OSError: pass`
+    with no comment → fix it (add `# INTENTIONAL:` per the BLE001
+    convention); a `...` body in a `typing.Protocol` method
+    flagged "Statement has no effect" → decline (`...` is the
+    idiomatic Protocol body; changing one is inconsistent). Note
+    declines + reasons in the fixing commit so the rationale is
+    durable.
 
 - **"Must go through PR" is a derived property of branch
   protection, not a single flag**: Dropping
@@ -2959,24 +2767,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   branches at call sites. Pattern generalizes to any
   additive schema widening from scalar → list.
 
-- **`uv pip install -e <sibling-path> --no-deps` is the
-  clean venv-local shadow when a sibling dep's
-  in-flight version exceeds the current cap**:
-  attune-ai caps `attune-help>=0.5.1,<0.8` but we
-  needed 0.9.0 visible in the venv for local testing
-  before the cap bump lands. A plain `uv pip install
-  -e ../attune-help/` might fail on cap resolution;
-  `--force-reinstall --no-deps` bypasses dependency
-  checks entirely and just drops the editable path in
-  site-packages. Any `uv sync` afterwards will
-  overwrite it (per the existing lesson) — that's the
-  intended property: shadow lives until the next sync
-  cycle or a real release. Companion to the
-  "`[tool.uv.sources]` overrides are discouraged"
-  policy comment in attune-ai's pyproject.toml: use
-  venv shadow, not a committed source override, when
-  the cap bump isn't ready yet.
-
 - **Combine two unreleased CHANGELOG drafts into one
   version when neither has shipped to PyPI**:
   attune-help had both 0.7.0 and 0.8.0 marked
@@ -2992,7 +2782,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   they never existed. Avoids the "which version got
   what" confusion that two adjacent unreleased
   sections create.
-
 
 ### Worktrees — running & testing code resolves to the WRONG place
 
@@ -3151,79 +2940,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   qualifiers" lesson — same family (spec/audit text goes
   stale; verify against current code before acting).
 
-- **xdist worker crashes on Windows can come from
-  repeated socket probes in fixture/helper code,
-  not from the test itself**:
-  `MemoryFeatures.list_all_features()` iterated 5
-  Redis features and called `is_redis_running()`
-  per feature. Each call opened a real socket to
-  localhost:6379 with a 1s connect timeout. Under
-  xdist on Windows with 12 workers concurrently
-  probing the same closed port, the cumulative
-  socket pressure crashed workers — pytest
-  reported `worker 'gw1' crashed` with no
-  traceback. Same pattern in
-  `BaseOperations.__init__` which blocks ~17s on
-  `_create_client_with_retry` (3 retries × 5s
-  socket timeout) when no Redis is running.
-  Fixes: (1) production-side, dedupe repeated
-  probes in feature-listing helpers (one probe
-  per call, not N); (2) test-side, patch
-  `_create_client_with_retry` to skip the retry
-  loop when the test doesn't care about
-  connection. Grep for `is_X_running` /
-  `_create_X_with_retry` patterns in any code
-  reached from unit tests under xdist — repeated
-  network probes are the smell.
-
-- **`subprocess.run(text=True, ...)` with no
-  explicit `encoding` on Windows can yield
-  `stdout=None`, not garbage and not exception**:
-  extends the existing Windows-encoding lesson
-  with a specific failure mode. When a subprocess
-  emits non-ASCII bytes (e.g. `⚠️` U+26A0) and the
-  parent reads with `subprocess.run(text=True,
-  capture_output=True)` but no explicit
-  `encoding`, the parent uses cp1252 by default on
-  Windows runners. Observed failure mode:
-  `CompletedProcess.stdout = None`, surfacing as
-  `TypeError: argument of type 'NoneType' is not
-  iterable` when the test asserts `"x" in
-  proc.stdout`. Always pass `encoding="utf-8",
-  errors="replace"` on `subprocess.run` when the
-  child may emit non-ASCII. Same fix shape as the
-  `Path.read_text(encoding="utf-8")` lesson.
-
-- **`gh workflow run --ref <tag>` validates the
-  `workflow_dispatch` trigger against the workflow file
-  at the SPECIFIED REF, not at the default branch**:
-  Adding `workflow_dispatch:` to `.github/workflows/foo.yml`
-  on `main` does NOT enable manual dispatch against
-  pre-existing tags. `gh workflow run --ref v0.11.1`
-  still returns `HTTP 422: Workflow does not have
-  'workflow_dispatch' trigger` because the workflow file
-  on the v0.11.1 tag still lacks the trigger. Fix:
-  `--ref main` (the version in `pyproject.toml` is what
-  determines the published wheel name, not the ref). For
-  any release-triggered publish workflow, add
-  `workflow_dispatch` BEFORE cutting the tag, not after.
-
-- **PyPI run-level "failure" can hide a successful wheel
-  upload that subsequent retries surface as "File
-  already exists"**: A `release: published`-triggered
-  publish job that wraps `twine upload` plus downstream
-  steps (attestations, sigstore, slack notify) can have
-  the upload succeed and a downstream step fail. The
-  GitHub Actions run shows `conclusion: failure`, making
-  it look like nothing was published. Diagnosis: a
-  retry returns `400 File already exists` on the wheel
-  filename. Cross-check
-  `curl https://pypi.org/pypi/<pkg>/<ver>/json` — if it
-  returns a valid release JSON, the upload landed.
-  Compare the JSON's `upload_time` against the run's
-  start time to confirm. Don't keep chasing "the publish
-  failed" — the publish succeeded; only a later step did.
-
 - **Py 3.10 doesn't reliably bind submodule attributes
   from `from .submodule import X` in `__init__.py`,
   breaking `patch.dict("pkg.submodule.__dict__", ...)`**:
@@ -3268,62 +2984,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   explicitly at test-file top) rather than relying on
   the parallel-execution side effect.
 
-- **Restoring parallelism exposes Windows xdist worker
-  crashes that `-n 1` was hiding by being too slow**:
-  When PR #242 flipped to `-n auto`, the Windows lanes
-  finished within timeout for the first time and
-  surfaced 4 worker crashes (`test_memory_features.py`
-  × 2, `test_redis_auto_detect.py`, plus 1
-  TypeError-NoneType in
-  `test_session_continuity_io.py`). With `-n 1`, those
-  tests would have hit the 75-min job timeout before
-  reaching them. Lesson: when restoring parallelism
-  after a sequential cap, expect to find platform-
-  specific failures that were hidden not by serial
-  execution itself but by the suite never completing
-  on the slower platforms. Plan for a dedicated
-  follow-up spec to characterize and fix the platform
-  fragility — don't iterate ad-hoc in the original
-  restoration PR. (Convert to draft + write a deferral
-  comment that enumerates each failure and links to a
-  separate investigation track.)
-
-- **`path.endswith("/docs/specs")` fails on Windows;
-  use `os.path.join("docs", "specs")` for cross-platform
-  suffix checks**: Path-suffix assertions in tests
-  routinely break on Windows because the resolved
-  filesystem paths use `\` separators. The bug doesn't
-  surface in Linux CI or local Mac dev, only when
-  Windows runners actually finish (which they sometimes
-  don't under `-n 1`). Fix pattern:
-  ```python
-  import os
-  assert body["root"].endswith(os.path.join("docs", "specs"))
-  ```
-  Generalize: any test asserting on path suffixes should
-  use `os.sep` or `os.path.join` for the platform-
-  agnostic separator, never a hardcoded literal `/`.
-  Doubles as a quick grep target when triaging Windows
-  CI failures: `grep -r 'endswith("/' tests/` catches
-  the antipattern.
-
-- **`gh pr merge --squash --admin` from a sub-
-  worktree exits non-zero but the remote merge
-  succeeds**: when running from
-  `.claude/worktrees/<name>/`, `gh pr merge` prints
-  `failed to run git: fatal: 'main' is already
-  used by worktree at '/Users/<...>/attune-ai'` —
-  the parent worktree owns `main` and the post-merge
-  local checkout step can't take it. The REMOTE
-  merge already succeeded by the time this error
-  fires. Distinct from the existing "fast-forward
-  warning when remote merge succeeds" lesson
-  (that's about the local fast-forward of `main`
-  failing after merge from a non-worktree). Always
-  verify with `gh pr view <PR> --json
-  state,mergedAt,mergeCommit` before retrying —
-  retry would 404 because the PR is already merged.
-
 - **When rebasing a long-lived branch, upstream
   fixup commits can be missed**: PR #242's rebase
   picked up PR #263 (which originally introduced a
@@ -3343,133 +3003,64 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   current main, OR re-rebase before merge to pick
   up any post-rebase upstream fixes.
 
-- **MCP-invoked SDK workflows ALREADY isolate their
-  intermediate AssistantMessage stream from the
-  calling agent — don't draft specs to "fix" what's
-  already fixed**: when a plugin skill invokes an
-  MCP tool (e.g. `mcp__attune-ai__security_audit
-  (...)`), the workflow's `claude_agent_sdk.query()`
-  runs in its own SDK session. The orchestrator's
-  intermediate `AssistantMessage` text and subagent
-  transcripts STAY in that session and are
-  discarded when the tool returns. Only
-  `WorkflowResult.final_output` crosses into the
-  calling agent's context. Measured 2026-05-12 on
-  `src/attune/security/` (2 files, 134 LOC):
-  security-audit emitted 6,821 B of intermediate
-  orchestrator text + 19.66 KB of subagent
-  transcripts inside its SDK session, but only
-  3,710 B reached the main agent; refactor-plan:
-  4,914 B inside, 486 B out. The Agent Surface
-  Rebalance spec (`docs/specs/agent-surface-
-  rebalance/`) was drafted on the assumption that
-  the intermediate bytes reach the parent — they
-  don't, and the spec is paused for that reason.
-  Pair lesson: the `quick`-depth `$2`
-  `max_budget_usd` default in
-  `agent_sdk_adapter._DEFAULT_BUDGET_USD` is
-  functionally unusable for ANY multi-subagent
-  workflow on ANY target, because 4 subagents ×
-  even-modest-cost > $2 before the orchestrator
-  finishes spawning them. Surfaces as
-  `Exception: Claude Code returned an error
-  result: Reached maximum budget ($2)` from inside
-  `query.receive_messages()`. For real measurement
-  or production use of security-audit / code-review
-  / similar, set `ATTUNE_MAX_BUDGET_USD=0` or use
-  `standard` ($10) depth.
+- **Test-quality-program rubric — operational gotchas**:
+  - **High existing coverage (≥85%): write a focused
+    fallback-paths test file, don't rewrite** — when the rubric
+    points at a 93%-covered module with thousands of lines of
+    existing tests, scan its missing branches (`coverage report
+    -m`) and write a small targeted file naming each by line
+    (e.g. `test_control_panel_error_paths.py`, 168 lines →
+    93%→99%), not from scratch.
+  - **`rubric_cache.csv` goes stale within a session** — it's
+    regenerated only when `scripts/score_test_quality.py` runs
+    against fresh `coverage.xml`; after ~6 cycles the per-module
+    `covered_pct` is wildly off (a module showed 53.9% in the
+    morning, was 93% by pick time). Re-run the scorer against a
+    fresh `pytest --cov=src/attune --cov-report=xml` before each
+    pick, or cross-check `covered_pct` when opening the module.
+  - **Low coverage + a nominal test file → grep
+    `pytest.importorskip` FIRST** — if existing tests gate the
+    whole module on `importorskip("X")` and X isn't in `[dev]`,
+    all of them silently skip in CI; the fix is one line
+    (add X to `[dev]`) and coverage jumps 60+ pts without
+    writing anything (PR #287: `python-frontmatter` was only in
+    `[author]`). If there's NO test file, check inbound imports
+    (`grep -rn "from ...module" src/`) before writing — it may
+    be dead code.
+  - **The rubric needs a USAGE signal, not just a coverage-gap
+    signal** — `weight × gap × risk` ranks dead/skipped modules
+    as top picks (skipped-in-CI, zero-inbound-import "Removed"
+    modules, dead defensive try/except). Proposed (in
+    test-quality-program/decisions.md): multiply the score by
+    `min(1.0, inbound_imports / 5)` to push orphan modules off
+    the working-set top.
 
-- **Patching `Path.stat` to raise breaks `Path.exists()`
-  before the test reaches the intended `.stat()` call**:
-  `pathlib.Path.exists()` is implemented as a `try:
-  self.stat(); return True except: return False`
-  wrapper, so monkeypatching the class's `stat` to
-  raise `PermissionError` makes every `exists()` check
-  on that Path subclass fail before any user code can
-  iterate the contents. Symptom: a test that intends
-  to break a `sum(f.stat().st_size for f in glob(...))`
-  comprehension never gets that far — the surrounding
-  `if storage_path.exists():` guard catches the
-  exception first and the inner sum never runs.
-  Workaround: patch a different surface
-  (`Path.glob` to raise, or override the `__iter__` on
-  the glob result) so `exists()` keeps working. Same
-  caveat applies to `Path.is_file()` / `Path.is_dir()`,
-  both of which call `.stat()` internally. Hit while
-  testing `MemoryControlPanel.get_statistics()` error
-  paths in PR #286.
-
-- **When existing coverage on a module is ≥85%, write
-  a focused "fallback-paths" test file rather than
-  rewriting the existing surface**: the test-quality-
-  program rubric surfaced `memory/control_panel.py`
-  at 93% with 2,723 lines of existing tests across 4
-  files. The right move was a 168-line targeted file
-  (`test_control_panel_error_paths.py`) that named the
-  remaining branches by line number in its docstring
-  and exercised each with strategic patching: storage_bytes
-  Exception fallback, long-term get_statistics() Exception
-  handler, health_check unavailable branch, _count_patterns
-  OSError handler. Coverage 93% → 99% (only `if __name__
-  == "__main__"` guard left) without touching 2.7k lines
-  of correct existing tests. Pattern: when rubric points
-  at a high-existing-coverage module, scan its missing
-  branches first (`coverage report -m`) and write a
-  targeted file naming each by line — don't start from
-  scratch.
-
-- **`rubric_cache.csv` for the test-quality-program
-  goes stale within a single working session**: the csv
-  is regenerated only when `scripts/score_test_quality.py`
-  runs against fresh `coverage.xml`. After ~6 cycles in
-  one session, the csv's per-module `covered_pct` values
-  are wildly off — `memory/control_panel.py` was
-  reported at 53.9% in the morning snapshot but was
-  93% by the time it was picked (existing test work had
-  landed earlier today). Operational fix: re-run
-  `scripts/score_test_quality.py` against a fresh
-  `pytest --cov=src/attune --cov-report=xml` before
-  picking each cycle's module, OR cross-check the csv's
-  `covered_pct` against actual coverage when the module
-  is opened. Don't waste a cycle re-confirming a module
-  that's already well-covered.
-
-- **The SDK-native workflow shell scaffold is reusable
-  across 6+ siblings — single-pass rename**: same
-  test scaffold (real `AssistantMessage`/`ResultMessage`/
-  `TextBlock` fixtures, validation/execute/depth-mapping/
-  exception/run_agent_X classes, `_error_result` shape
-  test) shipped verbatim across `dependency_check`,
-  `bug_predict`, `perf_audit`, `refactor_plan`,
-  `doc_audit/workflow`, and `document_gen/workflow`.
-  Renames needed: import path, patch path (e.g.
-  `attune.workflows.foo.claude_agent_sdk.query`),
-  subagent name strings (typically 2-3 per workflow),
-  the method name (`_run_agent_check` →
-  `_run_agent_predict` etc.), system-prompt substring
-  assertion, and the `stage.name` in TestErrorResult.
-  Each cycle ~5 min by hand from copy-paste. After 6
-  consecutive cycles the generator-script idea (script
-  it as `scripts/scaffold_sdk_workflow_tests.py`) keeps
-  surfacing but the cluster is now drained — defer until
-  a future rubric refresh surfaces ≥2 more.
-
-- **Edge cases unique to specific SDK shells (worth
-  remembering when reading the scaffold)**: (a)
-  `perf_audit.py` has an inline `main()` CLI entry
-  point — needs two extra tests (success + error paths
-  via `capsys`). (b) `document_gen/workflow.py` has a
-  `default_context()` classmethod for `WorkflowContext`
-  composition — three extra tests cover the
-  `PromptService` + `ParsingService` wire-up and the
-  `xml_config` kwarg path. (c) `bug_predict.py`
-  delegates its `main` to a sibling `bug_predict_report.py`
-  module — no inline `main()` to test. (d)
-  `dependency_check.py` uses two subagents while
-  `bug_predict` / `perf_audit` / `refactor_plan` /
-  `doc_audit` / `document_gen` each use three —
-  count subagents in the source before writing the
-  `test_passes_subagent_definitions` assertion.
+- **SDK-native workflow test scaffold — reusable across
+  siblings, single-pass rename**: the same scaffold (real
+  `AssistantMessage`/`ResultMessage`/`TextBlock` fixtures,
+  validation/execute/depth-mapping/exception/run_agent_X
+  classes, `_error_result` shape test) ships verbatim across
+  6+ workflows (`dependency_check`, `bug_predict`, `perf_audit`,
+  `refactor_plan`, `doc_audit/workflow`, `document_gen/
+  workflow`). Per-workflow renames: import path, patch path
+  (`attune.workflows.foo.claude_agent_sdk.query`), subagent
+  name strings (2-3 each), the method name (`_run_agent_check`
+  → `_run_agent_predict`), the system-prompt substring
+  assertion, and `stage.name` in TestErrorResult. ~5 min/cycle
+  by hand (the cluster is drained; a generator script is
+  deferred until a rubric refresh surfaces ≥2 more). Also: SDK
+  -native workflows validate in `execute()`, NOT via an
+  `input_schema` class attribute — tests asserting
+  `Workflow.input_schema is not None` must be removed/updated.
+  Edge cases per shell: (a) `perf_audit.py` has an inline
+  `main()` → two extra capsys tests (success + error); (b)
+  `document_gen/workflow.py` has a `default_context()`
+  classmethod → three extra tests for the
+  `PromptService`+`ParsingService` wire-up + the `xml_config`
+  kwarg; (c) `bug_predict.py` delegates `main` to
+  `bug_predict_report.py` (no inline main); (d) COUNT subagents
+  in source before the `test_passes_subagent_definitions`
+  assertion (`dependency_check` uses 2, the others 3).
 
 - **Parallel test-quality-program sessions cause
   predictable three-file conflicts**: CHANGELOG.md,
@@ -3483,57 +3074,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   deleted on squash merge — push new cycles from a
   fresh branch off `origin/main`, not the prior cycle's
   branch.
-
-- **Diagnostic for the rubric: low coverage + nominal
-  test file → grep for `pytest.importorskip` FIRST**:
-  three test-quality-program cycles in a row hit
-  modules where the rubric reported low coverage but
-  the gap was an artifact, not a coverage need.
-  Combined with the existing "codecov/patch 0%" and
-  "Tests for optional-dep code" lessons, the rule
-  is: when the rubric picks a module with surprisingly
-  low `covered_pct` AND a non-trivial test file
-  exists in `tests/`, run
-  `grep -l "pytest.importorskip" tests/<path>` BEFORE
-  writing new tests. If the existing tests gate the
-  whole module on an `importorskip("X")` and X isn't
-  in `[dev]`, the fix is one line in pyproject.toml
-  (add X to `[dev]`) — 16 existing tests start
-  running, coverage jumps 60+ percentage points
-  without writing anything new. Hit in PR #287
-  (`cli_commands/help_commands.py`,
-  `python-frontmatter` was only in `[author]`,
-  CI's `--extra dev --extra developer` didn't
-  install it → all 16 tests silently skipped). The
-  diagnostic also reveals "dead code wearing
-  defensive clothes" — if there's no test file at
-  all, check inbound imports (`grep -rn
-  "from ...module" src/`) before writing tests.
-
-- **Coverage rubric needs a usage signal, not just
-  a coverage-gap signal**: the formula
-  `weight × gap × risk` ranks modules purely by
-  "user value × untested surface," which is exactly
-  right for healthy code but wrong for dead/skipped
-  code. Three consecutive cycles surfaced
-  unused-or-silently-skipped modules as top picks:
-  (a) `cli_commands/help_commands.py` 16 tests
-  silently skip in CI (#287),
-  (b) `workflows/test_lifecycle.py` +
-  `test_maintenance_cli.py` 0% covered, zero
-  inbound imports outside each other, source
-  comments mark "Removed",
-  (c) `workflows/test_runner_helpers.py` 2% gap is
-  dead defensive try/except. Proposed refinement
-  (flagged in `docs/specs/test-quality-program/decisions.md`,
-  not committed): add inbound-import count to
-  `scripts/score_test_quality.py`. Modules with 0
-  external consumers should auto-flag as
-  retirement candidates rather than coverage
-  targets. The score formula should multiply by
-  `min(1.0, inbound_imports / 5)` or similar to
-  push orphan modules off the top of the working
-  set.
 
 - **Test scaffold archetype for external-process
   trackers**: `workflows/test_runner.py` (PR #288)
@@ -3598,40 +3138,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is now resolved — see [docs/specs/vercel-noise-cleanup/](../docs/specs/vercel-noise-cleanup/)
   for the spec.)
 
-- **Stacked PR rebase pattern after merging the
-  base**: when PR A and PR B both touch CHANGELOG
-  (each adding their own `### Removed (Breaking)` /
-  `### Changed (Breaking)` section under
-  `## [Unreleased]`) and A merges first, B's rebase
-  conflicts on the changelog. Resolution: keep BOTH
-  sections in the same Unreleased block, with the
-  earlier-merged PR's section first (severity-order:
-  Removed → Changed → Deprecated → Added → Fixed).
-  Same pattern works for `docs/specs/<spec>/tasks.md`
-  status rows — A's `**done**` overrides B's `todo`
-  for any row both touched. The `_sequencing.md`
-  "Today's recommended pick" section is the
-  exception: both sides are guaranteed stale by the
-  time you're resolving the conflict (the picks they
-  named both shipped). Don't pick one — replace with
-  a static pointer to "the most recent spec's
-  decisions.md."
-
-- **Batch-merging MERGEABLE PRs needs a draft filter
-  AND a fail-state read**: `gh pr list --json
-  mergeable` returns MERGEABLE for both
-  ready-to-merge AND draft PRs; the merge call
-  itself errors with "Pull Request is still a draft"
-  when you try. Filter the batch with `gh pr list
-  --json number,mergeable,isDraft --jq '.[] |
-  select(.mergeable=="MERGEABLE" and .isDraft==false)
-  | .number'` before iterating. Also: an
-  intentionally-failing diagnostic PR (like
-  `windows-memory-detection Phase 1`) marked draft
-  is a legitimate state — close, don't merge.
-  Diagnostic for "should this draft close?": does
-  the spec it served reference a closing PR? does a
-  successor PR ship the actual fix?
+- **Rebasing a stacked PR after its base squash-merges — the
+  invocation and the conflict shapes**:
+  - **Use `git rebase --onto origin/main <old-base-commit>`, not
+    plain `git rebase origin/main`** — after the base PR
+    squash-merges as a NEW SHA, the stacked branch still has the
+    OLD base commit in its ancestry; a plain rebase replays it
+    and conflicts (its content is already in main under a
+    different SHA). `--onto origin/main <old-base-commit>`
+    replays ONLY the stacked PR's own commits (collapsed a
+    6-file conflict to 2).
+  - **CHANGELOG / tasks.md conflicts** — when both PRs add a
+    section under `## [Unreleased]`, keep BOTH (severity order
+    Removed→Changed→Deprecated→Added→Fixed, earlier-merged
+    first); for `tasks.md` status rows the `**done**` side wins;
+    for a `_sequencing.md` "recommended pick" both sides are
+    stale — replace with a static pointer to the latest spec's
+    decisions.md.
+  - **"My PR removes X / main extends X" = union, not either
+    side** — if your branch deletes a structure that main has
+    since added an ORTHOGONAL field to, keep the structure,
+    remove only the fields your PR targeted, preserve main's new
+    field. The conflict markers don't say which extension is
+    orthogonal — the commit messages on both sides do.
 
 - **Stale duplicate PRs: confirm via merged-commit
   grep, then close with a pointer**: when two
@@ -3706,22 +3235,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   extra name so users can connect "I need this
   plugin" → "I install this extra."
 
-- **Editable-install package paths leak into `pip
-  list` output and break naive grep checks**: when
-  verifying "no redis runtime deps installed" via
-  `pip list | grep -iE "redis|agent-memory"`, the
-  output included `attune-ai 6.7.1
-  /path/to/worktree/redis-p2-extras` because the
-  WORKTREE PATH contains "redis". For strict
-  package-name matching, use `pip list | awk
-  '{print $1}' | grep -ixE
-  "redis|agent-memory-client"` — strip the version +
-  path columns first, then case-insensitive exact
-  match. Same gotcha shape as: any pip-list-scraping
-  diagnostic that doesn't anchor to the
-  package-name column will false-positive on path
-  metadata.
-
 - **Audits with "possibly delete if X" qualifiers
   require verifying both X and the alternative**:
   the redis-decoupling Phase A audit flagged
@@ -3762,35 +3275,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   becomes wrong the moment the version passes; treat
   migration docs as having a shelf life tied to the
   marker's target version.
-
-- **Adding a workflow to `_DEFAULT_WORKFLOW_NAMES`
-  has FOUR drift-guard gates, not one**: registering
-  in `src/attune/workflows/__init__.py` (three sites:
-  `_LAZY_WORKFLOW_IMPORTS`, `_DEFAULT_WORKFLOW_NAMES`,
-  `__all__`) is necessary but not sufficient. Three
-  more gates fail CI immediately if missed:
-  (1) `PATH_ARG_REGISTRY` in `src/attune/ops/data.py`
-  — the ops scope-picker drift-guard
-  (`tests/unit/ops/test_path_support_registry.py`)
-  requires an entry naming the kwarg the workflow's
-  `execute()` consumes;
-  (2) `KNOWN_GAPS` set in
-  `scripts/check_help_coverage.py` (or a real entry
-  in `.help/features.yaml`) — the
-  `test_no_new_workflow_drift` test in
-  `tests/unit/help/test_coverage_script.py` asserts
-  every registered workflow is documented or
-  explicitly waived;
-  (3) `WORKFLOW_NAMES` array in
-  `src/attune/ops/static/js/runner.js` — the
-  `test_workflow_names_match_canonical_list` test in
-  `tests/unit/ops/test_runner_js_parsing.py` keeps
-  the dashboard's pill-rendering list in sync with
-  the Python registry. Mirrors the "plugin skill has
-  three gates" lesson but distinct site set.
-  Discovered when discovery-sweep Phase 1 PR #303
-  passed local tests then failed three CI checks on
-  push.
 
 - **PatternScanSource (discovery-sweep) has known
   self-match false positives**: the dangerous-eval /
@@ -3874,27 +3358,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   food can mask this — only whole-tree contact with
   real production docstrings surfaces the gap.
 
-- **`gh pr checks <PR> --watch --fail-fast` exits
-  prematurely (exit 0) on cancelled-but-tagged-"fail"
-  guard jobs**: `--fail-fast` triggers on any row
-  whose status column reads `fail`, even when the
-  underlying job conclusion is `cancelled` (zero
-  steps executed — e.g. a dependabot-only guard
-  skipping on a regular PR). On this repo `Run
-  Security Scanner` fires this pattern and made the
-  watcher exit ~1 minute into a 15-minute CI run.
-  Worst part: exit code is 0, so it looks like every
-  check passed. Two workarounds: (a) drop
-  `--fail-fast` entirely — cost is waiting the full
-  matrix even on real failures, fine at solo-dev
-  pace; (b) post-process the output to ignore rows
-  where the actual conclusion (via
-  `gh api .../jobs/<id>`) is `cancelled`. Always
-  re-fetch `gh pr checks <PR>` after a
-  `--watch --fail-fast` exits to confirm what truly
-  finished — never trust the watcher's exit code
-  alone as a "CI is done" signal.
-
 - **Daemon-parseable structured stdout should gate
   on an explicit env var, not `sys.stdout.isatty()`**:
   the intuitive design ("emit machine-readable lines
@@ -3962,32 +3425,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   method (e.g. PR #324 adding `path=None` to
   `RunnerService.start`).
 
-- **`git stash pop` after fast-forwarding to upstream
-  inverts `--ours` / `--theirs` semantics — and the
-  most common conflict shape is a spec status field
-  that upstream changed since the stash**: classic
-  flow during the "merge + restore wip" dance when
-  the main checkout has uncommitted spec edits.
-  Stash → ff merge → pop → conflicts on any file
-  where both sides edited the same line. During the
-  pop, the merge base is HEAD (the just-merged
-  upstream content), so `--ours` = upstream (HEAD),
-  `--theirs` = the stashed content. This is INVERTED
-  from a regular merge. Concretely, hit on
-  2026-05-12 with spec status field collisions —
-  upstream had moved `coverage-canonical-pattern`
-  to "paused 2026-05-12" while the stash had stale
-  "approved" edits. `git checkout --ours <file>`
-  on each conflicted file took the upstream
-  (correct) version. ALWAYS follow a deliberate-
-  discard resolution with `git stash drop` to clear
-  the stash entry — otherwise it lingers with stale
-  content and is easy to revive later by mistake.
-  The conflict shape (status fields, sometimes
-  status-line + decisions reference) is predictable
-  enough that a one-line resolution checklist works:
-  `git checkout --ours <conflicted files> && git add
-  <files> && git stash drop`.
+- **`git stash pop` gotchas — inverted --ours/--theirs and
+  silent skips**:
+  - **--ours/--theirs are INVERTED from a regular merge** —
+    stash-pop has `git apply` semantics: `--ours` = the CURRENT
+    working tree (e.g. main after a ff-merge — the authoritative
+    content), `--theirs` = the STASHED content (same direction
+    as `git merge`, opposite of `git rebase`). In the "ff-merge +
+    restore wip" dance, the common conflict is a spec status
+    field upstream changed since the stash; `git checkout --ours
+    <files>` keeps upstream. ALWAYS `git stash drop` after a
+    deliberate-discard resolution (else the stale entry lingers
+    and is easy to revive by mistake): `git checkout --ours
+    <files> && git add <files> && git stash drop`.
+  - **Silent skip when the destination branch TRACKS files the
+    stash treated as untracked** — stashing untracked-on-branch-A
+    files, switching to a branch where they're tracked, then
+    popping: the stash is retained but those files are silently
+    dropped from the working tree (the branch's tracked versions
+    stay, your stashed versions vanish — no conflict marker, no
+    warning). Diagnostic: after pop, `git diff stash@{0} --
+    <path>`; non-empty diff + `git status` showing the file
+    unchanged = silently skipped. Mitigation: pop with `git
+    checkout stash@{0} -- <files>` to force the overwrite, then
+    drop manually.
 
 - **Scheduled-tasks display time uses Claude Code's
   configured local timezone, NOT the timezone passed
@@ -4067,88 +3528,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   'possibly delete if X' qualifiers require verifying
   both X and the alternative before acting" lesson —
   same shape, different mechanism.
-
-- **`gh pr merge <base> --squash --admin --delete-branch`
-  permanently orphans stacked PRs whose base is that
-  branch — they auto-close and CANNOT be reopened**: hit
-  2026-05-14 when admin-merging #324 (Phase 2 scope
-  picker) with `--delete-branch`. #326 (Phases 3+4) was
-  stacked on `feat/ops-runner-tier2-phase2` as its base
-  branch, not on `main`. GitHub auto-closed #326 the
-  moment the base branch was deleted. The fatal kicker:
-  `gh api .../pulls/326 -X PATCH -f state=open` returns
-  HTTP 422 with `"state cannot be changed. The
-  feat/ops-runner-tier2-phase2 branch has been
-  deleted"`. Force-pushing a rebased commit to the
-  stacked PR's branch doesn't help — GitHub's PR view
-  stays stuck at the OLD headRefOid even though the
-  branch ref on origin moved to the new SHA, because
-  the PR machinery is detached from the orphaned base.
-  Recovery: open a fresh PR with the same content
-  targeting `main` (`gh pr create --base main --head
-  <branch> --title ... --body ...`); reference the
-  orphaned PR in the body. Prevention: BEFORE admin-
-  merging a base PR with `--delete-branch`, re-target
-  every stacked PR to `main` via
-  `gh pr edit <stacked> --base main`. Alternative:
-  omit `--delete-branch` from the base merge and clean
-  up the branch manually after all dependents have
-  re-targeted or merged. Quick check before merging
-  any PR with `--delete-branch`:
-  `gh pr list --base <branch> --state open --json
-  number,headRefName --jq '.[] | "#\(.number)
-  \(.headRefName)"'` — if non-empty, retarget those
-  PRs first.
-
-- **`uv run python -m build` fails with `No module named
-  build` — use `uv run --with build python -m build`
-  instead**: the project's `.venv` does NOT include the
-  `build` PEP-517 frontend (it's not in `pyproject.toml`'s
-  `[dev]` or `[developer]` extras). The release-prep
-  checklist in `chore(release): X.Y.Z` PR bodies says
-  `rm -rf dist/ && uv run python -m build`, but that
-  command bombs unless `build` is somehow already on
-  PATH. The fix is the explicit `--with build` flag:
-  `rm -rf dist/ && uv run --with build python -m build`.
-  Verified during the v6.8.0 release ceremony 2026-05-14
-  — produced `attune_ai-6.8.0-py3-none-any.whl` (1.78 MB)
-  and `attune_ai-6.8.0.tar.gz` (1.75 MB) cleanly. The
-  build step is verification-only since PyPI trusted
-  publishing re-builds the wheel inside the
-  `publish-pypi.yml` workflow on the tag; locally-built
-  artifacts in `dist/` never get uploaded. Either update
-  the release-prep PR template to use `--with build` or
-  add `build` to the `[dev]` extra so the plain command
-  works.
-
-- **`git rebase origin/main` on a stacked PR after its
-  BASE PR has been squash-merged tries to replay the
-  OLD pre-squash commit and conflicts — use `git rebase
-  --onto origin/main <old-base-commit>` to skip past
-  it**: when a base PR (say #324, with branch commit
-  `08c56ecf`) gets squash-merged into main as a new SHA
-  (`cc9f6913`), the stacked PR's branch still has the
-  OLD `08c56ecf` as part of its ancestry. A plain `git
-  rebase origin/main` will try to replay `08c56ecf`
-  first — even though its content is already absorbed
-  into main via the squash — and will conflict because
-  the file-level changes in main came from a different
-  SHA. The fix is `git rebase --onto origin/main
-  <old-base-commit>` which tells git "replay only the
-  commits AFTER `<old-base-commit>` on top of main."
-  Concretely on 2026-05-14:
-  ```
-  # Wrong (replays 2 commits, both conflict)
-  git rebase origin/main
-  # Right (replays only the stacked PR's commits)
-  git rebase --onto origin/main 08c56ecf
-  ```
-  Conflict surface collapses dramatically — in this
-  case from 6 files to 2 files. Pairs with the existing
-  "Stacked PR rebase pattern after merging the base"
-  lesson; that one covers CHANGELOG/tasks.md/
-  _sequencing.md content patterns, this one covers the
-  rebase invocation itself.
 
 - **`/static/*.js` is served without `Cache-Control`, so
   returning users keep the OLD JS after a release — any
@@ -4286,37 +3665,36 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   where the wall-clock between your read and your
   write isn't a vacuum.
 
-- **CI matrix-wide red on a feature PR is usually
-  one root-cause test, not N independent bugs —
-  diagnose the count BEFORE diagnosing the failures**:
-  PR #358 showed 12-of-12 platform×Python test cells
-  failing plus the coverage check. Reading the output
-  naively suggests a major regression. Actual count
-  of *unique* failing tests across the whole matrix:
-  **one** —
-  `tests/unit/ops/test_specs_dashboard.py::
-  test_specs_page_writeable_mode_shows_dropdowns`,
-  failing identically on every cell because PR #358
-  intentionally replaced the inline `<select>`
-  markup the test asserted on. Diagnosis pattern:
-  before opening any CI log, run
-  ```bash
-  gh run view <run-id> --log-failed --job <job-id> \
-    | grep -oE 'FAILED tests/[^[:space:]]+' \
-    | sort -u
-  ```
-  on one cell. If the unique failure count is small
-  (often 1), the matrix-wide spread is a
-  multiplier-on-one-bug, not many bugs. Pairs with
-  the existing "Markdown-asserting test breaks on UI
-  redesign" pattern — markup-asserting tests are
-  *especially* prone to this matrix-wide-from-one-
-  failure shape because the assertion runs on every
-  platform but the production change is platform-
-  independent. Operational rule: a markup change in a
-  feature PR's production code should update the
-  markup-asserting tests in the same commit, or CI
-  will be 100% red until you do.
+- **Matrix-wide CI red — diagnose the count and the cause
+  before assuming N bugs**:
+  - **Usually ONE root-cause test, not N** — 12-of-12 cells
+    failing identically is a multiplier-on-one-bug. Before
+    opening any log, get the unique failing-test count from one
+    cell: `gh run view <run-id> --log-failed --job <job-id> |
+    grep -oE 'FAILED tests/[^ ]+' | sort -u`. Markup/markdown-
+    asserting tests are especially prone (the assertion runs on
+    every platform, the production change is platform-
+    independent) — update markup-asserting tests in the SAME
+    commit as the markup change.
+  - **Same-commit green→red flip = a third-party dep release
+    between runs** — CI does a fresh `pip install` each run, so
+    a PyPI release in the gap flips the outcome on the same SHA
+    (typer 0.26.0 vendored click and broke 6 tests asserting on
+    `click.exceptions.Exit`). General rule: import an exception
+    from the library that RAISES it (`from typer import Exit`),
+    never a transitive dep it re-uses — transitive-coincidence
+    imports break when the library vendors its dep. When a
+    previously-green build flips red on the same commit,
+    cross-reference PyPI release timestamps for the failing
+    test's deps.
+  - **Same error string across all OS/Python + no unit failures
+    = infra flake, not a regression** — `HAS_API_KEY`-gated
+    integration tests make real API calls when the key is set,
+    so an `api.anthropic.com` outage fails identically
+    everywhere (looks like a code regression; e.g.
+    `AllProvidersFailedError: Connection error`). Fix: mock at
+    the HTTP boundary, or mark `@pytest.mark.integration` and
+    exclude from the default `-m "not integration"` selector.
 
 - **CSS `[data-tooltip]::after` pseudo-element gets
   silently clipped by `overflow: hidden` on the
@@ -4526,58 +3904,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   verification proportional to how much surface
   detail (names, flags, paths) the output references.
 
-- **`git stash pop` silently skips overwriting tracked
-  files when the destination branch tracks files the
-  stash treated as untracked**: hit 2026-05-14 when
-  stashing untracked-on-branch-A files (because branch
-  A predated their addition to main), switching to a
-  new branch off origin/main (where they ARE tracked),
-  and popping. The stash entry was retained ("kept in
-  case you need it again") but 3 of 11 files in the
-  stash were silently dropped from the working tree —
-  the tracked versions from the new branch's HEAD
-  stayed in place, my stashed regenerated versions
-  vanished. No conflict marker, no warning. Diagnostic
-  to catch the silent skip: after `git stash pop`,
-  diff the affected files against the stash with
-  `git diff stash@{0} -- <path>` before dropping. If
-  there's a non-empty diff and `git status` shows the
-  file unchanged, the pop silently skipped it.
-  Mitigation when planning the stash: if you know the
-  destination branch tracks files your source branch
-  doesn't, pop with `git checkout stash@{0} -- <files>`
-  to force the overwrite, then drop manually.
-
-- **`mergeStateStatus: DIRTY` and `mergeStateStatus:
-  UNSTABLE` look identical in the GitHub UI ("This
-  branch cannot be merged") but need different
-  remedies — diagnose with `gh pr view` BEFORE
-  reading CI logs**: hit 2026-05-14 on PR #365. The
-  user asked me to "resolve issues" with the PR. My
-  instinct was to read failing test logs and find a
-  regression. But `gh pr view 365 --json
-  mergeStateStatus,statusCheckRollup` showed
-  `mergeStateStatus: DIRTY` with zero failing
-  checks — main had moved underneath the branch and
-  the conflict was structural, not behavioral. Fix
-  is `git fetch origin main && git rebase
-  origin/main` + resolve conflicts, not "find the
-  failing test." Recognition shape:
-  - **DIRTY** = textual merge conflict with the
-    target branch. Fix: rebase + resolve.
-  - **UNSTABLE** = mergeable but ≥1 required check
-    is failing OR fail-ignore-tolerable. Fix:
-    address the failing checks (or admin-merge if
-    they're structural fail-ignore guards).
-  - **BEHIND** = no conflicts but base branch moved;
-    GitHub wants a fast-forward update before
-    merge.
-  - **BLOCKED** = waiting on review or other
-    required gates.
-  The default `gh pr view` JSON output exposes this
-  field cleanly — make it the first read when a PR
-  "can't merge," not the last.
-
 - **CSS / static-file regex tests for "this rule
   must not exist" need comment stripping before
   matching**: when a guard test asserts that a
@@ -4595,39 +3921,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to any absence-assertion against a static text
   file where comments may quote the forbidden
   pattern.
-
-- **Rebase conflict shape — when your PR removes a
-  structure that main has added a new orthogonal
-  feature to, the right resolution is the union,
-  not either side wholesale**: hit 2026-05-14 on
-  PR #365. My branch deleted the
-  ``<script id="scope-picker-config">`` block from
-  workflows.html entirely (replacing
-  ``firstFeaturePath`` / ``allCodePath`` with
-  per-row ``data-scope-default`` attributes). While
-  my branch was open, main's PR #344 follow-up
-  added a NEW field ``workspaceRoot`` to that same
-  script block for cross-worktree localStorage
-  validation — orthogonal feature, also
-  load-bearing on ``runner.js``. The auto-merger
-  surfaced this as a textual conflict but couldn't
-  infer which side should "win." Neither extreme
-  was right: taking HEAD undoes my A3 work, taking
-  theirs drops main's workspaceRoot validation.
-  Correct resolution: KEEP the block, REMOVE only
-  the fields my PR specifically targeted
-  (``firstFeaturePath``, ``allCodePath``),
-  PRESERVE the new orthogonal field
-  (``workspaceRoot``). Test surface gets stronger
-  as a side effect (288 ops tests post-rebase vs
-  282 pre-rebase because main's new tests came
-  along too). Generalize: when a rebase conflict
-  spans "my PR removes X / main extends X,"
-  diagnose whether the extension is the same
-  concern (collapse it) or orthogonal (preserve
-  the orthogonal parts). The conflict markers
-  don't tell you which — but the commit messages
-  on both sides usually do.
 
 - **When main is actively churning, expect to
   re-rebase between resolving conflicts and merging
@@ -4711,34 +4004,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (no merges, no protection changes — just `gh pr
   checks` reads) pass the classifier fine and are the
   right home for unattended logic during long CI waits.
-
-- **`str.replace("/", X)` on a resolved `Path` is silently
-  broken on Windows — and the downstream `Path / encoded`
-  concatenation silently discards the prefix**: pairs with
-  the existing "Windows `Path.resolve()` prepends the drive
-  letter" lesson but covers a sharper failure mode. Code
-  like `str(Path(p).resolve()).replace("/", "-")` (used to
-  encode project paths to match Claude Code's
-  `~/.claude/projects/<encoded>/` convention) works on POSIX
-  but produces a string with literal backslashes on Windows.
-  The subtle kill: when that backslash-laden "encoded" string
-  is then used as `Path.home() / ".claude" / "projects" /
-  encoded`, pathlib sees the `D:\` prefix INSIDE the rightmost
-  segment and treats the whole thing as an absolute path —
-  silently discarding the `~/.claude/projects/` prefix. No
-  exception, no warning. Observed symptom in CI:
-  `assert sessions_dir.parent.parent.name == ".claude"` →
-  `AssertionError: assert 'pytest-0' == '.claude'` (the dir
-  resolved to the tmp tree itself, not under `.claude/`).
-  Fix: replace BOTH separators —
-  `.replace("/", "-").replace("\\", "-")`. POSIX paths have
-  no backslashes so this is a no-op there. Cross-platform
-  regression test pattern: pass a literal-backslash input
-  string (e.g. `"fake\\drive\\project"`) — on POSIX it's a
-  single filename containing backslashes, on Windows it's a
-  real path; either way the encoder must return a string
-  with no surviving separators. Lands in PR #382 alongside
-  the fix to `src/attune/ops/data.py::_encoded_project_path`.
 
 - **Admin-merging a PR before Windows lanes complete buries
   a real bug on main**: extends the existing "Admin-merging
@@ -4855,41 +4120,117 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   otherwise the first push surfaces it and costs a
   force-push or per-secret unblock.
 
-- **Cross-platform path handling has at least FOUR Windows-
-  specific surfaces, not one — plan to hit all of them at
-  once or expect N rounds of CI**: extends the existing
-  ``str.replace("/", X)`` and ``Path.resolve() drive
-  letter`` lessons. Iterating on the ops-sessions-page
-  Windows fix on 2026-05-15 took **three rounds** of CI
-  (~13 min each) because each fix unblocked the next layer:
-  (1) **Backslash separators in resolved paths** — POSIX
-  `/` and Windows `\\` need to be replaced. (2) **Drive-
-  letter colons** — `C:` survives backslash replacement
-  and triggers pathlib's drive-specifier handling on
-  subsequent path concatenation (silent prefix discard).
-  Strip `:` too. (3) **`str(Path)` produces native
-  separators** — on Windows, ``str(some_path)`` returns
-  backslash form. Any code that builds a DISPLAY string
-  from a Path via ``str()`` will show backslashes on
-  Windows; tests asserting forward-slash output will fail.
-  Fix: ``.as_posix()`` for display paths. (4) **`Path.home
-  ()` reads `USERPROFILE`, not `HOME`, on Windows** — a
-  test that does ``monkeypatch.setenv("HOME", ...)`` will
-  work on POSIX but silently no-op on Windows, leaving
-  ``Path.home()`` to return the real user-profile dir.
-  Fix: set BOTH env vars (helper function with one call).
-  Pattern recognition: when you're starting the SECOND
-  Windows-fix iteration, stop and either (a) plan all
-  four mitigations preemptively, or (b) spin up a fast-
-  feedback channel (workflow_dispatch one-shot or local
-  Windows VM). The amortized cost flips after round 3.
-  See the "Windows debug one-shot" workflow (#386) for
-  the workflow_dispatch route. Also: a defensive encoder
-  shape like ``re.sub(r"[\\\\/:]", "-", resolved)`` is
-  preferable to chained ``.replace()`` calls because new
-  Windows-special chars (CRLF in test fixtures, MAX_PATH
-  long-path quirks, NTFS reserved names) get caught by
-  the same surface.
+### Windows / cross-platform — one divergence, many surfaces
+
+- **Cross-platform path/string/encoding handling has many
+  Windows-specific surfaces — plan to hit ALL of them at once
+  or pay N rounds of ~13-min Windows CI**: each fix unblocks
+  the next layer, so iterating one-surface-at-a-time is a
+  tar-pit (the ops-sessions-page fix took three CI rounds,
+  2026-05-15). When you start the SECOND Windows-path fix,
+  stop and either plan every mitigation below preemptively, or
+  open a fast-feedback channel (the `workflow_dispatch`
+  "Windows debug one-shot" #386, or a local Windows VM).
+  Amortized cost flips after round 3. The surfaces, each with
+  its fix:
+  - **Drive letter on `resolve()`** — `Path("/code").resolve()`
+    returns `D:\code`, not `/code`. Tests asserting exact path
+    strings through `_validate_file_path` fail; patch it to
+    pass paths unchanged in handler-logic tests.
+  - **Separators survive `str.replace("/", X)`** —
+    `str(Path(p).resolve()).replace("/", "-")` produces literal
+    backslashes on Windows. The subtle kill: feed that
+    backslash-laden string back as a Path segment
+    (`Path.home() / ".claude" / "projects" / encoded`) and
+    pathlib sees the `D:\` prefix INSIDE the segment, treats
+    the whole thing as absolute, and SILENTLY discards the
+    prefix — no exception (symptom:
+    `assert sessions_dir.parent.parent.name == ".claude"` →
+    `'pytest-0' == '.claude'`). Fix: replace BOTH separators
+    AND the drive colon — prefer the defensive
+    `re.sub(r"[\\/:]", "-", resolved)` over chained
+    `.replace()` (it also catches future Windows-special chars:
+    CRLF, MAX_PATH, NTFS reserved names). Regression test: pass
+    a literal-backslash input (`"fake\\drive\\project"`) — a
+    plain filename on POSIX, a real path on Windows; either way
+    the encoder must return zero surviving separators. (PR #382,
+    `ops/data.py::_encoded_project_path`.)
+  - **Drive-letter colon** — `C:` survives backslash
+    replacement and re-triggers pathlib's drive-specifier
+    prefix-discard on the next concat; strip `:` too (the
+    `re.sub` above already does).
+  - **`str(Path)` yields native separators** — backslash form
+    on Windows. Any DISPLAY string built via `str(some_path)`
+    breaks forward-slash assertions; use `.as_posix()` for
+    display paths.
+  - **`path.endswith("/docs/specs")`** — resolved paths use
+    `\`, so literal-slash suffix checks fail. Use
+    `os.path.join("docs", "specs")` / `os.sep`. Grep the
+    antipattern: `grep -r 'endswith("/' tests/`.
+  - **`is_absolute()` on a POSIX-literal path returns False** —
+    `Path("/tmp/x.py").is_absolute()` is False on Windows
+    (pathlib needs a drive letter), so POSIX-anchored test
+    fixtures silently early-return guard checks (`if not
+    target_path.is_absolute(): return 0` → `DID NOT RAISE`).
+    Fix: use the `tmp_path` fixture — always platform-correct
+    absolute. (PR #521.)
+  - **`Path.home()` reads `USERPROFILE`, not `HOME`** —
+    `monkeypatch.setenv("HOME", ...)` silently no-ops on
+    Windows; set BOTH env vars via a helper.
+  - **CRLF: the runner strips `\n` but leaves `\r`** —
+    `raw.decode(...).rstrip("\n")` leaves the CR, so exact
+    list-membership (`"text" in run.lines`, actual
+    `['text\r']`) fails while substring checks tolerate it.
+    Fix: `[l.rstrip() for l in run.lines]` before the
+    membership check. (PR #531; `run_meta_stdout.parse_line`
+    already does `.rstrip("\r\n")`.)
+  - **Text encoding defaults to cp1252** — always pass
+    `encoding="utf-8"` to `Path.read_text()` (cp1252 fails on
+    any non-ASCII byte). Same for `subprocess.run(text=True,
+    capture_output=True)` reading a child that emits non-ASCII:
+    with no explicit encoding the parent decodes cp1252 and
+    yields `CompletedProcess.stdout = None` (not garbage, not
+    an exception) → `TypeError: NoneType is not iterable` on
+    `"x" in proc.stdout`. Pass `encoding="utf-8",
+    errors="replace"`.
+  - **`Path.rename()` raises `FileExistsError` when the target
+    exists** — atomic-overwrite on POSIX, not on Windows. Use
+    `Path.replace()` (the atomic-write `.tmp`→final pattern
+    broke 2 Windows lanes in `help/session.py`).
+
+- **Windows timing tests flake from two distinct clock
+  quirks**: (1) **Resolution** — `time.time()` has ~15 ms
+  resolution on Windows 3.10–3.12, so `execution_time > 0`
+  fails when an op finishes within one tick; use
+  `time.perf_counter()` or assert `>= 0`. (2) **Cross-API
+  jitter** — `time.time()` and `datetime.now(tz).timestamp()`
+  disagree by sub-second amounts, so edge-of-bucket tests at
+  EXACT bucket multiples (60/300/3600/7200/86400/172800 s)
+  flake: `now - 300` expecting `"5m ago"` can land in
+  `[240, 300)` → `"4m ago"` on Windows. Fix: inject
+  `now: float | None = None` into the time-bucketing fn and
+  pin it in tests (keep one default-now test on a comfortably-
+  buffered value for real-clock coverage), or use inside-bucket
+  values (`bucket_size * N + bucket_size // 2`). Diagnostic:
+  any bucket test using exact-multiple boundaries is fragile.
+
+- **Windows xdist worker crashes often come from the harness,
+  not the test**: under 12 concurrent xdist workers, repeated
+  real socket probes in fixture/helper code crash workers with
+  no traceback (`worker 'gw1' crashed`).
+  `MemoryFeatures.list_all_features()` called
+  `is_redis_running()` per-feature (5 sockets to a closed
+  port, 1 s timeout each); `BaseOperations.__init__` blocked
+  ~17 s on `_create_client_with_retry` (3×5 s). Fixes: dedupe
+  probes production-side (one per call), and patch
+  `_create_X_with_retry` test-side to skip the retry loop.
+  Grep `is_X_running` / `_create_X_with_retry` reached from
+  unit tests as the smell. Corollary: **restoring parallelism
+  (`-n 1` → `-n auto`) EXPOSES these** — the slow serial run
+  was hiding them by never finishing the Windows lanes within
+  timeout (PR #242 surfaced 4 at once). Expect platform
+  failures when you re-enable parallelism; characterize them
+  in a dedicated follow-up, not the restoration PR.
 
 - **`workflow_dispatch` requires the workflow file to be
   on the default branch (main) before it can fire against
@@ -5075,33 +4416,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   logs, transaction logs) where you want O(1) staleness
   detection without re-hashing megabytes of unchanged
   history.
-
-- **Long-stale `uv.lock` + `uv lock` regen during
-  a release pulls in a dep cascade beyond the
-  version bump — defer the lock catch-up to a
-  separate PR**: hit 2026-05-15 releasing
-  attune-author 0.12.0. The lockfile had
-  `attune-author 0.6.1` (multiple minor versions
-  behind 0.11.1 current). Running `uv lock` to
-  refresh pulled in: attune-author 0.6.1 → 0.12.0
-  (expected), attune-help 0.10.1 → 0.11.0 (real
-  dep upgrade — unexpected during a release), AND
-  three new dev deps (pytest-asyncio, syrupy,
-  backports-asyncio-runner) added to pyproject
-  without re-locking. The attune-help bump
-  triggered a local snapshot-test failure via
-  sibling-workspace drift, almost derailing the
-  release. Lesson: **before running `uv lock`
-  during release ceremony, check `git diff
-  uv.lock --stat` for unexpected scope.** If the
-  lock is far behind, the catch-up resolution is
-  a separate concern from "ship the release" —
-  defer to a follow-up PR so the release commit
-  stays auditable as version-only. Counter-rule:
-  if CI uses `pip install -e ".[dev]"` (not `uv
-  sync`), uv.lock isn't on the release critical
-  path — PyPI consumers never see it, so the
-  defer is safe.
 
 - **Sibling-workspace drift causes local-only
   snapshot test failures while CI is green —
@@ -5328,31 +4642,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   extension — these workflows assume Python source and will
   silent-fail on `.html`, `.css`, `.md`, `.json`, etc.
 
-- **API quota exhaustion masquerades as SDK startup failure
-  with $0.00 / 0.0s — the workflow's "What Went Wrong" lists
-  three plausible-but-wrong causes and never names the real
-  one**: extends the existing "Command failed with exit code
-  1 + $0.0000 | 0.0s = subprocess startup failure" lesson with
-  a fourth root cause to consider. When the symptom shape is
-  `claude_agent_sdk.query()` failing in 2.6 seconds with
-  exit_code 0 at the CLI boundary, the workflow's voice-layer
-  suggests "ANTHROPIC_API_KEY unset/expired, claude CLI not
-  on PATH, claude-agent-sdk version incompatible" — but the
-  actual fourth cause is **API account usage cap reached**.
-  The SDK swallows the underlying 400
-  `invalid_request_error: "You have reached your specified
-  API usage limits. You will regain access on YYYY-MM-DD..."`
-  into the generic `Exception: Command failed`. Diagnosis
-  shortcut: call `claude` directly with the same flags the
-  SDK passes (`echo "" | claude --json-schema '<minimal-schema>'
-  -p "say hi"`). If the direct call returns the 400 quota
-  message, you've found the root cause. The
-  three-listed-causes are red herrings; auth + PATH + SDK
-  version are all fine. This drove ~15 minutes of misdiagnosis
-  on 2026-05-17 — and is the exact trigger for the
-  [`sdk-error-message-fidelity`](../../../docs/specs/sdk-error-message-fidelity/requirements.md)
-  spec.
-
 - **Pre-commit's `.help` template regen creates a
   stash-and-reappear dance — every commit touching source
   files that bump a feature's source_hash spawns a follow-up
@@ -5375,34 +4664,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   one trailing `chore(.help)` commit pick up all hash bumps
   at once. Don't be surprised when committing source files
   produces "free" follow-up commits — plan for them.
-
-- **Pushing a signed tag auto-creates a GitHub release with a
-  flat commit-log body — `gh release create` then 422s, and
-  the auto-body is unstructured noise covering pre-release
-  commits too**: hit on the v7.0.0 release 2026-05-18. Sequence:
-  `git push origin v7.0.0` → GitHub silently creates a release
-  object whose `body` is a bullet-list of EVERY commit since
-  the previous tag, including commits from prior PRs that have
-  nothing to do with this release (PR #421's flaky-test xfail,
-  PR #414's test-quality cycle, etc.). The body length on
-  v7.0.0 was 6,544 chars of brain-dump. Then `gh release create
-  v7.0.0 --notes-file ...` fails with `HTTP 422: Validation
-  Failed - Release.tag_name already exists`. Fix: use
-  `gh release edit v7.0.0 --notes-file <CHANGELOG-extract>` to
-  replace the auto-body with structured notes. Even better,
-  bake into the release-prep skill: extract the
-  `[X.Y.Z]` CHANGELOG section to a temp file BEFORE the tag
-  push, then immediately after the tag push run
-  `gh release edit` (not create) to overwrite the auto-body
-  with the prepared notes. The CHANGELOG-extract shell pattern
-  is `awk '/^## \[X\.Y\.Z\]/{flag=1; next} /^## \[/{flag=0} flag'
-  CHANGELOG.md > /tmp/release_notes.md`. Prepend a one-line
-  header with the date + PyPI link
-  (`Released YYYY-MM-DD · [PyPI](https://pypi.org/project/<pkg>/<ver>/)`)
-  for readability. The auto-generated body is technically
-  "fine" (no missing info — it covers all commits) but
-  reads as a changelog DUMP rather than RELEASE NOTES; the
-  structured CHANGELOG section is what you want users to see.
 
 - **attune-author CLI does NOT auto-load
   `~/.attune/anthropic.env` — every shell
@@ -5494,33 +4755,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Home's 7-day spend always shows 0" lesson (which is a different
   bug in the READ path) — same surface symptom, three distinct root
   causes (read field name, write path missing, write path buffered).
-
-- **Multi-subagent workflows hitting `ATTUNE_MAX_BUDGET_USD` during
-  startup planning surface as opaque `Command failed with exit
-  code 1`, NOT the structured "Reached maximum budget" message**:
-  discovered 2026-05-19. The existing CLAUDE.md lesson covers the
-  case where the cap fires mid-stream — that path produces a clean
-  `Exception: Claude Code returned an error result: Reached
-  maximum budget ($X)` from the SDK. A DIFFERENT path fires when
-  the cap is checked at subprocess-startup-time (before the first
-  turn completes), and that path raises the generic
-  `Command failed with exit code 1` from the SDK transport layer
-  with `$0.0000 | 0.0s` and no budget-message subtype. Diagnostic
-  shortcut: when a multi-subagent workflow (`bug-predict`,
-  `test-gen`, `code-review`, `security-audit`, `deep-review`)
-  fails with exit-1 and `$0.0000` on a small target, raise the
-  cap (`ATTUNE_MAX_BUDGET_USD=10`) and retry. If it succeeds at
-  real cost > old cap, the cap was the culprit. The hint that
-  this is a cap-hit rather than auth/PATH/quota: `claude -p`
-  works directly, AND the minimal SDK probe (`max_turns=2`,
-  one subagent) succeeds with the same cap value. The error
-  surface needs improvement — flagged in
-  [sdk-error-message-fidelity](docs/specs/sdk-error-message-fidelity/).
-  Practical rule for users: single-agent SDK workflows
-  (`simplify-code`, `doc-gen`, `dependency-check`) fit under
-  `$1.50`. Multi-subagent workflows need `≥$5` even on tiny
-  inputs because each subagent's planning phase emits costly
-  setup tokens before producing useful output.
 
 - **Specs and XML-enhanced prompts are LAYERED in
   attune-ai, not alternatives — a spec contains XML
@@ -5650,24 +4884,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   checkpoint until a new minor is released. Relevant files to grep: any that call the
   Anthropic API directly (`polish.py`, `cost_tracker.py`, workflow configs, MCP server).
 
-- **`gh run view --log-failed` returns nothing while the parent
-  run is still in flight, even when individual jobs have already
-  flipped to "fail"**: discovered 2026-05-26 on PR #472. The
-  PR's check rollup showed 4 jobs as `fail` bucket and 9 as
-  `pending`, but `gh run view <id> --log-failed` returned
-  *"run X is still in progress; logs will be available when it
-  is complete."* The job-level link in `gh pr checks --json link`
-  doesn't help either — same gh CLI restriction. Implication:
-  during background CI watching, you can **detect** failures
-  early via `gh pr checks <PR> --json bucket` polling, but you
-  cannot **debug** them until the whole run completes. Don't
-  start speculative fixes based on the fail count alone — the
-  fail might be a flake, a real bug, or a known-tolerable guard
-  cancellation. Wait for the run-complete signal, then read the
-  logs. Companion to the existing `--watch --fail-fast` lesson
-  but a distinct gotcha (that one's about premature exit; this
-  one's about deferred log availability).
-
 - **Derivative writing tempts toward "what would be tidy to say"
   rather than "what actually happened" — verify the framing
   against the session record before shipping**: caught 2026-05-26
@@ -5688,37 +4904,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   writing about its own session* rather than scanning unfamiliar
   code. Catch it by asking explicitly: "Did this happen?"
   before each non-trivial claim in derivative content.
-
-- **typer 0.26 vendored its own click — tests asserting on
-  `click.exceptions.Exit` break the moment typer auto-upgrades
-  past 0.25.x**: pre-0.26, `typer.Exit` was a direct re-export
-  from `click.exceptions.Exit`, so tests that did
-  `from click.exceptions import Exit as ClickExit` /
-  `pytest.raises(ClickExit)` worked by *coincidence* — they
-  were asserting on the same class typer happened to be raising.
-  typer 0.26 vendored click; `typer.Exit` is now
-  `typer._click.exceptions.Exit`, a distinct class from
-  `click.exceptions.Exit`. The fix is one line: import the
-  exception from the library that actually raises it —
-  `from typer import Exit as ClickExit`. Works across all typer
-  versions (0.9 → 0.26+). General rule for exception
-  assertions in tests: import the exception from the library
-  that raises it, never from a transitive dep it happens to
-  re-use. Transitive-coincidence imports break the moment the
-  library vendors its dep. Diagnostic shape worth remembering
-  separately: **matrix-wide CI red after a green-on-same-commit
-  run earlier in the same day is almost always a third-party
-  dep release between the two runs.** CI does fresh `pip
-  install` each run; a PyPI release in the gap produces
-  opposite outcomes on the same SHA. Today's timeline:
-  typer 0.26.0 released 14:37 UTC, PR #471 merged 14:39, Tests
-  on main installed fresh 0.26 and broke 6 tests in
-  `TestCLIWorkflowCommands` with `typer._click.exceptions.Exit`
-  uncaught; the earlier same-commit Tests run at 13:16 used
-  typer 0.25.1 and passed. When a previously-green build flips
-  red on the same commit, cross-reference PyPI release
-  timestamps for deps in the failing test's stack. Companion to
-  the existing "matrix-wide red from one root cause" lesson.
 
 - **Cross-platform concurrent file appends — pick the
   mechanism by platform reach, encode the trade-off in
@@ -5832,62 +5017,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   drift bug. Don't bundle the fix into an unrelated PR;
   flag in the PR body and file separately.
 
-- **Local `coverage run -m pytest` defaults to LINE
-  coverage; codecov runs BRANCH coverage — always use
-  `coverage run --branch` locally to match what CI
-  enforces**: hit 2026-05-27 on PR #485 (bulletin-
-  curator Phase 1). After lifting line coverage to 100%
-  and pushing, codecov flagged 2 partial branches in
-  `sources/sweep.py` at 99.74% patch coverage. Local
-  re-run with `--branch` immediately reproduced the gap
-  (`Branch=28, BrPart=2`). The two partials were
-  `elif isinstance(row, dict)` False (non-dict bucket
-  rows) and `if reason:` False (empty reason in
-  questions-bucket finding) — both reachable by adding
-  one fixture each. Three corollaries: (1) when fixing
-  coverage gaps on any PR with codecov, run
-  `coverage run --branch -m pytest` from the start;
-  line-only reports lie by omission about partial
-  branches. (2) When writing the local-fast-feedback
-  pre-push hook, it MUST run with `--branch` (see
-  `docs/specs/test-discipline-controls/decisions.md` D5).
-  (3) When the report shows `Branch=N, BrPart=0,
-  Cover=100%`, you actually have full coverage; when
-  the same numbers say `Cover=100% line` only without
-  branch columns, treat as suspicious until verified.
-  Diagnostic: `coverage report -m` with `--branch`
-  prints a "BrPart" column and "Missing" lines with
-  `103->96` notation for branch arrows; line-only
-  prints integer line numbers only.
-
-- **Rapid pushes to a PR with `cancel-in-progress`
-  concurrency cancel the prior workflow run — and
-  cancelled-but-required = blocking, indistinguishable
-  from real failure to the PR gate**: extends the
-  existing "`gh pr checks --watch --fail-fast` mistakes
-  cancellations for failures" lesson with the
-  inbound-cause variant. Hit 2026-05-27 on PR #485
-  during the coverage-fix cycle: 4 commits pushed
-  within 17 minutes triggered 4 security-workflow runs
-  via `pull_request` events. The workflow's
-  `concurrency.group: $workflow-$head_ref` plus
-  `cancel-in-progress: true` meant each new push
-  cancelled the prior run mid-execution. The LATEST
-  commit's security run was also cancelled (likely a
-  webhook race or stale dispatch), leaving the
-  required `security` check in `cancel` bucket and the
-  PR `BLOCKED`. Recovery: `gh run rerun <run-id>` on
-  the cancelled run for the latest SHA. Prevention:
-  before pushing a fix, check whether a security /
-  long workflow is still in-flight via
-  `gh run list --workflow=security.yml --branch=<name>
-  --limit=1 --json status`. If `in_progress`, either
-  wait for it to settle (~5-7 min) or accept the
-  re-run cost. The `cancel-in-progress` design assumes
-  the new push superseded the old one, but for
-  required checks the cancellation is treated as a
-  fail-state by branch protection.
-
 - **Mark tasks complete on outcome verification, not
   on tool-call success — especially "open PR" tasks**:
   Hit 2026-05-27 across multiple PR-opening tasks in
@@ -5916,6 +5045,7 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is only useful if "completed" means "the work I
   said I'd do is done in reality" — not "I called the
   tool and it didn't error."
+
 - **Worktree dirty-state recovery via tar + 3-way merge —
   the safe pattern when a parallel session left
   uncommitted work on a branch you need to move off**:
@@ -6027,36 +5157,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   CheckRun + StatusContext + RequiredStatusCheck records,
   not all of which carry the same fields. Same fix shape
   for `.workflowName`, `.detailsUrl`, etc.
-- **Required `security` check fires CANCELLED on every non-
-  dependabot PR — the guard-skip pattern collides with
-  branch protection**: the `Security Scan` workflow's
-  `security` job uses a job-level conditional that
-  cancels-on-skip when not running against a dependabot
-  PR. The cancelled status surfaces as a failed required
-  check in branch protection, blocking merge on EVERY
-  regular PR until manually rerun. Hit on three separate
-  PRs in one session (#477, #478, #480) — same fingerprint
-  each time. **Workaround that works:**
-  ```
-  URL=$(gh pr view <N> --json statusCheckRollup --jq \
-    '.statusCheckRollup[] | select(.name == "security") | .detailsUrl')
-  RUN=$(echo "$URL" | grep -oE 'runs/[0-9]+' | grep -oE '[0-9]+')
-  JOB=$(echo "$URL" | grep -oE 'job/[0-9]+' | grep -oE '[0-9]+')
-  gh run rerun "$RUN" --job "$JOB"
-  ```
-  Rerun typically lands SUCCESS — the second invocation
-  enters the dependabot-or-rerun branch and runs the real
-  scan. The proper fix is workflow- or branch-protection-
-  level: either remove `security` from
-  `required_status_checks` (it's also in the merged
-  rollup of `Run Security Scanner` which already runs),
-  or rewrite the workflow to emit SUCCESS instead of
-  CANCELLED for non-dependabot PRs. Until that's done,
-  budget ~30s per PR to rerun the security job. Pairs
-  with the existing "GitHub branch protection and
-  admin-merge — four interlocking constraints" lesson —
-  same root cause family (required-check semantics) but
-  a different specific failure (cancellation vs missing).
 
 - **xdist worker pollution from a stale module-level
   patch recurs in the SAME test file when new test files
@@ -6272,30 +5372,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   miss since v7.0.0. Forward correction lives in a bump-only
   follow-up PR; don't try to re-tag historical releases.
 
-- **Tag push + workflow_dispatch both fire ``publish-pypi.yml`` —
-  approve ONE, cancel the other**: extends the existing
-  "``release: published`` + ``workflow_dispatch`` both
-  approved for ``pypi`` env = duplicate publish" lesson with
-  the second auto-trigger shape. Repo's ``publish-pypi.yml``
-  is triggered by ``push: tags: 'v*.*.*'`` (changed to this
-  in v7.1.1 per its CHANGELOG entry). Pushing ``v7.2.0``
-  auto-fires a publish run. Additionally calling
-  ``gh workflow run publish-pypi.yml --ref main`` fires a
-  SECOND run via ``workflow_dispatch``. Both then sit waiting
-  for ``pypi`` environment approval. If both get approved,
-  the second 422s on "File already exists" — but the alarming
-  "failed" appearance hides that the first uploaded
-  successfully. **Operational rule** for any release whose
-  workflow has BOTH an auto-trigger AND
-  ``workflow_dispatch:``: choose ONE path, not both. For
-  ``push: tags``-triggered publishes, the cleaner default is
-  to let the tag push do it and skip the explicit
-  ``gh workflow run``. If you've already triggered both,
-  approve the tag-run via
-  ``gh api .../pending_deployments -X POST`` and
-  ``gh run cancel <dispatch-run-id>`` the duplicate before it
-  reaches the upload step.
-
 - **`dig @8.8.8.8 <domain>` returning NXDOMAIN is the
   definitive "this domain is unregistered" signal — local
   `whois` and `whois.com` via WebFetch are both unreliable
@@ -6385,37 +5461,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   preserves the upstream growth, and flags only
   the actual conflicts.
 
-- **`git merge --ff-only` can fail silently when
-  staged changes conflict with incoming files**:
-  the error ("Your local changes to the following
-  files would be overwritten by merge") prints and
-  exit is non-zero, but a user pasting a
-  multi-command block may not see it scroll past.
-  Always verify post-merge HEAD: `git rev-parse
-  main` and `git rev-parse origin/main` should
-  match. Diagnostic check before merging:
-  `git merge-base --is-ancestor main origin/main`
-  (must be true) AND look for overlap between
-  `git diff --cached --name-only` and `git diff
-  main..origin/main --name-only` — must be empty
-  for ff to succeed with a staged tree. If
-  non-empty, unstage or stash those files before
-  the merge.
-
-- **`git stash pop` after a ff-merge that touched
-  the same files: resolve with `--ours` to keep
-  main, NOT `--theirs`**: counterintuitive flag
-  direction. For `git stash pop`, `--ours` is the
-  WORKING TREE state (main's authoritative content
-  after the ff) and `--theirs` is the STASHED
-  content. Memory hook: stash-pop has `git apply`
-  semantics — what's CURRENTLY in the tree is
-  "ours", what you're applying is "theirs". Same
-  direction as `git merge`, opposite of `git
-  rebase`. When the goal is to keep main's newer
-  content over older stashed prep, `git checkout
-  --ours <file>`.
-
 - **`Write` to an absolute `/Users/patrickroebuck/attune-ai/...`
   path from a worktree session lands the file on the PARENT
   MAIN checkout, not the worktree** — extends the existing
@@ -6457,35 +5502,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   exist. Phase X authors artifact X; presence-on-disk tells
   you whether the phase is done. Only Phase 4 produces code.
 
-- **Per-loop function definitions trigger ruff B023
-  (loop-variable capture) even when the closure is invoked
-  only within the same iteration — extract to module-level
-  helper instead of suppressing**: hit 2026-05-31 building
-  `scripts/audit_docs_wiring.py`. Pattern that fires:
-  ```python
-  for md in docs.glob("*.md"):
-      line_starts = compute_starts(md.read_text())
-      def offset_to_line(offset: int) -> int:
-          return bisect.bisect_right(line_starts, offset)
-      for match in pattern.finditer(text):
-          finding.line = offset_to_line(match.start())
-  ```
-  Ruff B023 flags `line_starts` as captured by closure
-  reference. In this exact code the closure is only invoked
-  within the same outer iteration, so the late-binding bug
-  ruff is warning about can't actually occur — but ruff
-  can't see that. Three fixes ranked: (a) extract the
-  helper to module level and pass the variable as a
-  parameter (cleanest — clean code, lint-silent, also
-  testable in isolation); (b) use a default-arg trick
-  (`def offset_to_line(offset, _starts=line_starts):`) —
-  ugly, signals "I'm working around lint"; (c)
-  `# noqa: B023` — silences without cleaning up. Pick (a)
-  by default. The extracted helper often also wants
-  `_compute_line_starts(text)` separated, which composes
-  nicely (testable in isolation, no per-iteration cost
-  surprises).
-
 - **`scripts/` is not a Python package in attune-ai — adding
   a directory `scripts/foo/` and a file `scripts/foo.py` is
   a name collision Python can't resolve**: the
@@ -6509,74 +5525,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `_scripts_helpers/` package with a different name. The
   refactor cost is low; the upfront package-vs-file naming
   collision is needless friction.
-
-- **`Path("/tmp/x.py").is_absolute()` returns `False` on
-  Windows — POSIX-shaped literal absolute paths in tests
-  silently early-return guard checks**: a 5th surface to
-  add to the existing "Cross-platform path handling has at
-  least FOUR Windows-specific surfaces" lesson. Pathlib on
-  Windows requires a drive letter for `is_absolute()` to
-  return `True`; bare POSIX absolutes (e.g. `/tmp/x.py`,
-  `/var/log/foo`) parse fine but return `False` from
-  `is_absolute()`. Hit 2026-05-31 on PR #521 worktree-
-  path-guard hook: `test_main_propagates_unexpected_errors`
-  passed `file_path="/tmp/x.py"` expecting the hook's
-  `if not target_path.is_absolute(): return 0` guard to be
-  skipped so a patched `_git_toplevel` would raise. On
-  macOS/Linux the guard fell through (absolute → False
-  early-return skipped → `_git_toplevel` called → raises).
-  On Windows the guard fired (path treated as relative →
-  early-return 0 → `_git_toplevel` never called) and
-  `pytest.raises(RuntimeError)` reported `DID NOT RAISE`
-  across all 4 Windows lanes. **Diagnostic shortcut**:
-  any test fixture using a literal `/tmp/...`, `/var/...`,
-  or other POSIX-anchored path string for "I need an
-  absolute path" is Windows-fragile. **Fix**: use the
-  `tmp_path` pytest fixture — always platform-appropriate
-  absolute (drive-prefixed on Windows, root-anchored on
-  POSIX). Same shape works as a one-line search-and-
-  replace across the test suite. Pairs with the existing
-  cross-platform path lesson — same root cause family
-  (pathlib's Windows-specific semantic for what "absolute"
-  means), different surface (input validation guards, not
-  path manipulation).
-
-- **Edge-of-bucket time tests fail on Windows from sub-
-  second clock-source jitter between `time.time()` and
-  `datetime.now(tz).timestamp()`**: a separate Windows
-  timing gotcha from the existing `time.time()` 0.0-
-  duration lesson — that one's about resolution; this one
-  is about two clock APIs returning slightly different
-  values for "now." Hit 2026-05-31 on PR #524's
-  `_format_age` tests: production read
-  `datetime.now(timezone.utc).timestamp()` while tests
-  computed `now = time.time()` and passed `now - 300`
-  (exactly 5 minutes) expecting `"5m ago"`. On
-  macOS/Linux the two clock sources agree to enough
-  precision that `delta = production_now - (test_now -
-  300)` is always ≥ 300 → `int(delta / 60) = 5`. On
-  Windows the two sources can disagree by enough sub-
-  second jitter to make `production_now < test_now`,
-  pushing `delta` into `[240, 300)` → `int(delta / 60) =
-  4` → fails with `'4m ago' == '5m ago'`. Same shape
-  for the 2h test (7200s = exact 2h boundary) and 2d
-  test (172800s = exact 2d). 3 of 4 Windows lanes
-  failed; the lane that passed (3.13) was a coincidence
-  of clock-source alignment that round. **Fix**: don't
-  rely on real-clock consistency across two APIs in the
-  same test path. Add an optional `now: float | None =
-  None` parameter to the time-bucketing function;
-  production keeps the same default (real clock), tests
-  pin a fixed `NOW = 1_700_000_000.0` and pass it via
-  `now=`. Keep one test that exercises the default-now
-  path with a comfortably-buffered value (e.g. 5400s in
-  the 1h bucket [60m, 24h)) so the real-clock branch
-  retains coverage. **Diagnostic shortcut**: any time-
-  bucket test using values that are exact multiples of
-  the bucket size (60, 300, 3600, 7200, 86400, 172800
-  …) is fragile on Windows. Either pin `now` or use
-  comfortably-inside-bucket values (`bucket_size *
-  N + bucket_size // 2`).
 
 - **Documentation framing IS a faithfulness decision
   when two metrics measure the same property** —
@@ -6663,40 +5611,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   treat decisions.md as frozen after Phase 1 approval;
   expect minor wording corrections through Phase 4.
   Pairs with the wireframes-surface-gaps lesson above.
-
-- **Windows runner strips `\n` but leaves `\r` —
-  tests asserting against `run.lines` need rstrip** —
-  pairs with the existing "Cross-platform path
-  handling" + `is_absolute()` + edge-of-bucket timing
-  + `Path("/tmp")` lessons as a 6th surface in the
-  same family. The runner's existing line-read at
-  `src/attune/ops/runner.py::_execute` does
-  `raw.decode("utf-8", errors="replace").rstrip("\n")`
-  — only strips the LF half of CRLF, leaving the CR
-  attached to every line in `run.lines` on Windows.
-  Substring checks (`"text" in joined_string`) tolerate
-  the trailing CR; **exact-match list membership
-  checks (`"text" in run.lines`) don't**. Hit
-  2026-05-31 on PR #531 Phase 3b: all 4 Windows lanes
-  failed identically on
-  `assert "running code-review" in real_log_lines`
-  because the actual list was
-  `['running code-review\r', 'done\r']`. **Diagnostic
-  shortcut**: any test asserting
-  `"exact text" in some_list_of_log_lines` where
-  lines come from a subprocess's `print()` is
-  Windows-fragile. **Fix**: `[line.rstrip() for line in
-  run.lines if ...]` before the membership check —
-  cross-platform safe (`rstrip()` with no arg strips
-  all trailing whitespace including CR). **Production-
-  side is fine for this PR**: the new
-  `attune.ops.run_meta_stdout.parse_line` already does
-  `.rstrip("\r\n")` internally so the side-channel
-  marker parsing works cross-platform — only direct
-  line-comparison tests are affected. A broader fix
-  (strip CR in `_execute` itself) is worth its own
-  PR; this lesson exists so the bug doesn't re-surface
-  in tests of future runner-adjacent code.
 
 - **Don't re-mitigate what the system already
   solves** — when listing risks for a plan, lean on
@@ -6857,37 +5771,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   directly to PR branches" lesson — same family
   (background CI activity that surfaces in the PR UI
   but isn\'t a merge-blocking failure).
-
-- **Admin-merge dance: run as separate commands or
-  `;`-separated, never `&&`-chained — the merge
-  step reliably exits 1 from a sub-worktree (per the
-  existing sub-worktree lesson) and an `&&` chain
-  stops the protection-restore from running**: hit
-  2026-06-02 on PRs #556 and #558 during the v7.3.1
-  release sequence. Wrote the dance as
-  `gh api .../required_approving_review_count=0 &&
-  gh pr merge --squash --admin --delete-branch &&
-  gh api .../required_approving_review_count=1`.
-  Run from a sub-worktree, step 2 exited 1 because
-  the parent worktree owns `main` so the post-merge
-  local checkout step couldn\'t run (per the existing
-  "gh pr merge --squash --admin from a sub-worktree
-  exits non-zero" lesson) — but the REMOTE merge
-  succeeded. The `&&` chain short-circuited and
-  step 3 never ran, leaving
-  `required_approving_review_count=0` on main. Had
-  to manually re-issue step 3 to restore protection.
-  **Fix**: use `;` (run regardless) or three
-  independent commands. The protection-restore must
-  run even when the merge command exits non-zero
-  because that exit code does NOT mean the merge
-  failed when running from a sub-worktree. From the
-  parent worktree (where `main` is owned), the
-  merge step exits 0 and `&&` works — but be
-  defensive across both surfaces. Pairs with the
-  existing sub-worktree-merge-error lesson — that
-  one names the cause; this one names the dance-
-  specific consequence.
 
 - **"Create a new worktree to continue last session"
   usually means "use the existing worktree on that
@@ -7174,43 +6057,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   same family (correctly locating the right worktree+branch for a
   piece of work), this one is the commit-destination surface.
 
-- **The recurring PR "merge tax" had two mechanical causes — both
-  now fixed structurally — and the prior 2026-06-03 diagnosis was
-  partly wrong**: that lesson blamed `auto-approve-owner` *skipping*
-  on an actor-login guard mismatch (`github.actor == 'patrickroebuck'`
-  vs the real login `silversurfer562`). By 2026-06-03 the guard had
-  ALREADY been corrected to `silversurfer562`, yet the job kept
-  *failing* (not skipping). Real cause (Tax 1 — the review gate):
-  `auto-approve-owner` in `.github/workflows/auto-approve.yml` had
-  `timeout-minutes: 5`, but its `lewagon/wait-on-check-action` step
-  used `check-regexp: ^(test |lint|Analyze )` — which matches the
-  ~20-min Windows `test ` lanes. It timed out at 5 min before the
-  approve step ran → no approval → `required_approving_review_count:
-  1` unmet → every owner PR sat `BLOCKED`. Tax 2 (the security
-  check): `security` was a REQUIRED status check, but its job runs
-  bandit/safety with `|| true` on every step (never gates on
-  findings — toothless) AND has `concurrency.cancel-in-progress:
-  true`, so any superseding push cancels the in-flight run and a
-  cancelled-but-required check blocks until rerun. **Fix applied
-  (all reversible `gh api` PATCHes):** (1) `required_approving_review_count`
-  1→0 on `branches/main/protection/required_pull_request_reviews`
-  (solo-dev — self-approval is theater); (2) removed `security` from
-  `required_status_checks` by PATCHing the FULL `checks` array
-  minus that entry, preserving exact app_ids (15368 GitHub Actions,
-  57789 CodeQL/Advanced Security) per the required-check-app-id rule
-  — a contexts-only PATCH risks the "not set by the expected app"
-  trap; (3) deleted the dead `auto-approve-owner` job (PR #598).
-  Result: owner PRs with green required checks now merge via the
-  normal button — no admin-override dance, no temp-remove-reviews.
-  CodeQL (still required) + the informational `Run Security Scanner`
-  keep real security coverage. **Diagnostic for next time:** when a
-  PR is `BLOCKED` with every visible check green, read
-  `gh api repos/<o>/<r>/branches/main/protection` FIRST to see which
-  checks are actually required and whether the gate is reviews vs a
-  required check — don't chase the scary-red NON-required checks
-  (this is the verify-first-on-infra discipline applied to the gate
-  itself).
-
 - **Claude Code's `Stop` hook fires per-turn, not per-session — gate
   once-per-session work with a sentinel + a utilization threshold**:
   building the P2 memory `session_stash.py` Stop hook surfaced that
@@ -7229,20 +6075,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the work so a mid-work crash retries next stop. The Stop payload
   also carries `transcript_path` directly — no need to reconstruct the
   encoded `~/.claude/projects/<enc>/<session>.jsonl` path.
-
-- **`github-code-quality` (Copilot Autofix) posts inline review
-  SUGGESTIONS on PRs, not always commits — two recurring shapes, one
-  fix one decline**: distinct from the existing "Copilot Autofix
-  pushes commits directly to PR branches" lesson — here it leaves
-  review *comments* (state `COMMENTED`, advisory, non-blocking). On
-  PR #600 it flagged: (1) an empty `except OSError: pass` with no
-  explanatory comment → **legit, fix it** by adding an `# INTENTIONAL:`
-  comment (matches the repo's BLE001 convention); (2) a `...` body in a
-  `typing.Protocol` method, flagged as "Statement has no effect" with a
-  suggestion to use `raise NotImplementedError` → **decline**: `...` is
-  the idiomatic Protocol-method body and matches every sibling method
-  in the file; changing one is inconsistent. Neither blocks merge; note
-  the decline + reason in the fixing commit so the rationale is durable.
 
 - **"Registered ≠ working" — dogfood the live loop; a non-mocked
   round-trip test is the receipt**: the P2 memory hooks were registered
@@ -7734,35 +6566,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `git archive <branch> <path> | tar -x` to extract committed files
   from a branch that isn't checked out in the working tree.
 
-- **`claude_agent_sdk.ClaudeAgentOptions` cannot do forced
-  guaranteed-schema tool-use — use the raw `anthropic` SDK for that**:
-  hit 2026-06-05 implementing bulletin-curator Phase 2, whose
-  `design.md` sketched the synthesis call as
-  `ClaudeAgentOptions(tools=[{...schema...}], tool_choice={"type":
-  "tool","name":...})`. Introspecting the SDK (0.1.63 via
-  `dataclasses.fields(ClaudeAgentOptions)`) showed that shape is
-  unsupported: (1) there is **no `tool_choice` field** at all; (2)
-  the `tools` field is `list[str] | ToolsPreset | None` — an
-  ALLOWLIST OF TOOL NAMES, not raw Anthropic tool definitions with
-  `input_schema`. The agent SDK routes through the `claude` CLI's own
-  tool loop and can't force a single schema-guaranteed call. The
-  existing CLAUDE.md "Forced Anthropic tool-use is the cleanest path
-  to guaranteed-schema JSON" lesson is about the **raw `anthropic`
-  SDK** (`client.messages.create(tools=[{...}], tool_choice={"type":
-  "tool","name":...})`), as `attune_rag`'s `FaithfulnessJudge` does —
-  the two SDKs are easy to conflate because both live in this repo.
-  Rule of thumb: a single synthesis/judge call with no agent loop, no
-  subagents, no file tools wants the raw `anthropic` SDK (guaranteed
-  schema, cheap, testable with an injected fake client); reserve
-  `claude_agent_sdk.query()` for actual agentic work (file tools,
-  subagent fan-out, multi-turn). This is the "research subagents
-  confabulate SDK signatures — introspect before coding" lesson with
-  a concrete instance: the SPEC ITSELF (`design.md`, written before
-  introspection) carried the confabulated signature, so spec
-  pseudocode is no more trustworthy than a research agent's — a
-  one-minute `dataclasses.fields()` check is the antidote. Deviation
-  recorded in `docs/specs/bulletin-curator/decisions.md` D1.
-
 - **Don't run an INTERNAL state-file path through
   `_validate_file_path()` (or `.resolve()`) in `save` when `load`
   reads the unresolved path — on macOS the `/var` → `/private/var`
@@ -7933,3 +6736,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `gh api ...hosted-runners` image is under `.image_details`,
   not `.image` (a `.image.id` jq path returns null and looks
   like a missing image when it isn't).
+
+- **Consolidating the CLAUDE.md Lessons section — method and
+  its faithfulness ceiling** (the `consolidate-claude-md-lessons`
+  spec, executed across PRs #646 + #647): three durable
+  mechanics. (1) **The title-keyed extract undercounts** — the
+  awk `/^- \*\*/{b=(tolower($0)~kw)} b` matches only lesson
+  TITLES, so a family's members whose titles don't contain the
+  keyword (the cross-referenced "extends the existing X" ones)
+  are missed; grep BODIES and titles to find the full family,
+  or a fold leaves a dangling cross-ref. (2) **Line numbers
+  shift after every deletion** — re-grep each sub-cluster by
+  content right before editing it; never reuse stale line
+  numbers from an earlier scan (hit this mid-session, re-grepped
+  each time). (3) **The 30–40% line-cut target conflicts with
+  the "never drop a distinct lesson" guardrail** — after
+  draining the clusters with genuine duplication the cut
+  plateaus (~15% here: 435→327 lessons, −1202 lines across 12
+  commits) because the rest are genuinely distinct domain
+  singletons (RAG, docs-pipeline, Vercel, release-ceremony).
+  Report the honest ceiling; don't amputate to hit a number.
+  Per-cluster verification that worked, after each commit:
+  lesson-count delta + `wc -l` + a zero-consecutive-blanks awk +
+  grep for dangling `existing …lesson` refs. Wrong/superseded
+  lessons fold INTO their corrections (the WRONG "SDK adapter
+  swallows findings" → the budget-cap correction) — that's
+  consolidation, not loss. Edit-tool-only (no shell splice) per
+  the spec guardrail; back up `CLAUDE.md` first.

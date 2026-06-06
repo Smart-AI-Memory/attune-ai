@@ -1,8 +1,9 @@
 # Spec: consolidate-claude-md-lessons
 
-> **Status:** handoff artifact (2026-06-03) — ready for a dedicated
-> execution session. Not started. The full pass needs review runway,
-> so it was deliberately spun off rather than tail-ended.
+> **Status:** complete (2026-06-06, PRs #646 + #647). All
+> high-redundancy clusters consolidated (435→~327 lessons, −1202
+> lines, ~15%); editorial ceiling reached. Domain singletons left
+> intact by design — see [decisions.md](decisions.md) D1.
 
 ## Goal
 
