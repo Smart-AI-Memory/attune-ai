@@ -18,6 +18,11 @@ on:
       - 'mkdocs.yml'
       - 'src/**'
       - 'scripts/audit_docs_wiring.py'
+      # .help/** regen feeds rendered docs; include it so a regen PR
+      # hits the mkdocs --strict pre-flight (docs-link-prevalidation
+      # CI safety net — no separate workflow needed, this job already
+      # runs `mkdocs build --strict`).
+      - '.help/**'
   workflow_dispatch:
 
 permissions:
