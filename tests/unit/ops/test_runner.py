@@ -488,3 +488,59 @@ async def test_subscriber_queue_does_not_block_fast_subscribers(tmp_path, monkey
     assert fast_queue.qsize() == 10
     received = [fast_queue.get_nowait() for _ in range(10)]
     assert received == [("line", f"event-{i}") for i in range(10)]
+
+
+@pytest.mark.asyncio
+async def test_executor_task_is_pinned_while_running_and_popped_on_completion(
+    tmp_path, monkeypatch
+):
+    """Regression: the workflow-executor task must be stored in
+    ``RunnerService._executor_tasks`` while in flight (asyncio holds
+    only weak references to tasks; a discarded ``create_task`` return
+    value can be GC'd mid-flight and the workflow silently dies). On
+    completion the entry must be popped by the done-callback so the
+    dict stays bounded at ``len(active_runs)``.
+    """
+    proceed = asyncio.Event()
+
+    async def _slow_executor(run):
+        # Hold here until the test releases us, so we can observe the
+        # in-flight state of _executor_tasks deterministically.
+        await proceed.wait()
+        run.mark_done(0)
+
+    app, runner = _make_app(
+        tmp_path,
+        monkeypatch,
+        allow_run=True,
+        command_builder=_echo_cmd,
+        executor=_slow_executor,
+    )
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.post("/workflows/code-review/run")
+        assert resp.status_code == 201
+        run_id = resp.json()["run_id"]
+
+        # Yield so start() returns and the executor task is scheduled.
+        await asyncio.sleep(0)
+
+        # While the run is still in flight the executor task must be pinned.
+        assert run_id in runner._executor_tasks, (
+            "executor task was not stored in _executor_tasks — "
+            "could be GC'd mid-flight (cpython weak-ref task issue)"
+        )
+
+        # Release the executor and wait for terminal status.
+        proceed.set()
+        await _wait_terminal(runner, run_id)
+
+        # Give the done-callback one event-loop iteration to fire.
+        await asyncio.sleep(0)
+
+        # After completion the entry must be popped so the dict stays
+        # bounded — no per-run memory leak.
+        assert run_id not in runner._executor_tasks, (
+            "executor task entry was not popped on completion — "
+            "done_callback wiring is broken (dict will grow unbounded)"
+        )
