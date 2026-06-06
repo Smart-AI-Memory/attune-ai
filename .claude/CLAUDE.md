@@ -666,20 +666,37 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that have an SDK variant — those are the names users see and type.
   The resolver routes base names to SDK implementations transparently.
 
-- **Push specific tags, not `--tags`**: `git push origin main --tags`
-  pushes ALL local tags, causing "already exists" rejections for old
-  tags. Use `git push origin main v4.0.0` to push only the intended
-  tag.
+- **Tag mechanics — push, protection, squash-timing, and the
+  auto-release body**:
+  - **Push specific tags, not `--tags`** — `git push origin main
+    --tags` pushes ALL local tags ("already exists" rejections
+    for old ones); use `git push origin main vX.Y.Z`.
+  - **Protected tags can't be force-updated** — once pushed,
+    `git push --force` fails under tag-protection rules; tag the
+    correct commit BEFORE pushing (no easy fix after).
+  - **Don't tag before a squash-merge** — a tag pushed on the
+    feature branch points to the pre-squash commit; after squash
+    the merge commit has a different hash. Recovery: `git tag -d
+    vX && git tag -a vX -m "…" && git push origin vX --force`
+    (tag protection may block the force-push). Better: tag the
+    merge commit after the squash.
+  - **Pushing a signed tag auto-creates a GitHub release with a
+    flat commit-log body** — GitHub silently creates a release
+    whose `body` is every commit since the previous tag
+    (including unrelated prior-PR commits); a later `gh release
+    create` then 422s "tag_name already exists". Fix: `gh release
+    edit vX --notes-file <CHANGELOG-extract>` (NOT create). Bake
+    into release-prep: extract the `[X.Y.Z]` CHANGELOG section
+    before the tag push (`awk '/^## \[X\.Y\.Z\]/{flag=1;next}
+    /^## \[/{flag=0} flag' CHANGELOG.md`), prepend a `Released
+    DATE · [PyPI](…)` header, then `gh release edit` right after
+    pushing.
 
 - **Pull `main` before merging `develop` to avoid merge commits**:
   If `origin/main` has commits not in local `main`, merging `develop`
   creates a merge commit. Always `git pull origin main` first, then
   `git merge develop`. This also avoids the GitHub "no merge commits"
   rule violation.
-
-- **GitHub protected tags cannot be force-updated**: Once a tag is
-  pushed, `git push --force` fails if repository rules protect tags.
-  Tag the correct commit before pushing — there's no easy fix after.
 
 - **`BugPredictionWorkflow` not `BugPredictWorkflow`**: The class in
   `attune.workflows.bug_predict` is `BugPredictionWorkflow`. The
@@ -1301,14 +1318,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   skills, or the `test_skill_body_content_matches` test will also
   fail.
 
-- **Tags pushed before squash-merge point to the wrong commit**: If
-  you push a tag before the PR merges (e.g., `git push origin
-  v5.8.0`), the tag points to the pre-squash commit on the feature
-  branch. After squash-merge, the main branch has a different commit
-  hash. You must delete the old tag and re-tag the merge commit:
-  `git tag -d v5.8.0 && git tag -a v5.8.0 -m "..." && git push
-  origin v5.8.0 --force`. GitHub tag protection may block the
-  force-push — see the existing lesson on protected tags.
 - **Publishing to PyPI via GitHub Actions trusted publishing —
   the trigger / env-approval / duplicate-publish / false-failure
   gotchas**: prefer trusted publishing (OIDC), NOT local tokens.
@@ -1528,17 +1537,22 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   updates during the temp-remove-review/admin-merge/restore
   dance.
 
-- **After a squash merge of a feature branch, local main can
-  have "extra" commits that are already in the squash**: If
-  you had any of the feature branch commits locally on main
-  before the squash (e.g., from a pull on release/v5.10.0
-  that got replayed onto main), `git pull` after the squash
-  merge tries to rebase and conflicts because the same tree
-  content exists on main at a different commit hash. Safe
-  fix: run `git log --oneline main ^origin/main` to see the
-  "extra" local commits, confirm the content is included in
-  the squash (`git show <squash-commit> --stat` shows the
-  expected files), then `git reset --hard origin/main`.
+- **ff-merge and post-squash local-main aftermath**:
+  - **`git merge --ff-only` fails silently with conflicting
+    staged changes** — it prints "Your local changes … would be
+    overwritten" and exits non-zero, but the error can scroll
+    past unnoticed. Verify `git rev-parse main` == `git rev-parse
+    origin/main` after. Pre-check: `git merge-base --is-ancestor
+    main origin/main` (must be true) AND no overlap between `git
+    diff --cached --name-only` and `git diff main..origin/main
+    --name-only`; if overlap, unstage/stash those files first.
+  - **After a squash-merge, local main can carry "extra" commits
+    already in the squash** — if you had feature-branch commits
+    locally on main before the squash (e.g. from a release-branch
+    pull replayed onto main), `git pull` tries to rebase and
+    conflicts (same tree content, different hash). Confirm via
+    `git log --oneline main ^origin/main` + `git show
+    <squash-commit> --stat`, then `git reset --hard origin/main`.
 
 - **Diagnosing CI from the `gh` CLI — field names, cancellation
   traps, and in-flight log availability**:
@@ -3136,24 +3150,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is now resolved — see [docs/specs/vercel-noise-cleanup/](../docs/specs/vercel-noise-cleanup/)
   for the spec.)
 
-- **Stacked PR rebase pattern after merging the
-  base**: when PR A and PR B both touch CHANGELOG
-  (each adding their own `### Removed (Breaking)` /
-  `### Changed (Breaking)` section under
-  `## [Unreleased]`) and A merges first, B's rebase
-  conflicts on the changelog. Resolution: keep BOTH
-  sections in the same Unreleased block, with the
-  earlier-merged PR's section first (severity-order:
-  Removed → Changed → Deprecated → Added → Fixed).
-  Same pattern works for `docs/specs/<spec>/tasks.md`
-  status rows — A's `**done**` overrides B's `todo`
-  for any row both touched. The `_sequencing.md`
-  "Today's recommended pick" section is the
-  exception: both sides are guaranteed stale by the
-  time you're resolving the conflict (the picks they
-  named both shipped). Don't pick one — replace with
-  a static pointer to "the most recent spec's
-  decisions.md."
+- **Rebasing a stacked PR after its base squash-merges — the
+  invocation and the conflict shapes**:
+  - **Use `git rebase --onto origin/main <old-base-commit>`, not
+    plain `git rebase origin/main`** — after the base PR
+    squash-merges as a NEW SHA, the stacked branch still has the
+    OLD base commit in its ancestry; a plain rebase replays it
+    and conflicts (its content is already in main under a
+    different SHA). `--onto origin/main <old-base-commit>`
+    replays ONLY the stacked PR's own commits (collapsed a
+    6-file conflict to 2).
+  - **CHANGELOG / tasks.md conflicts** — when both PRs add a
+    section under `## [Unreleased]`, keep BOTH (severity order
+    Removed→Changed→Deprecated→Added→Fixed, earlier-merged
+    first); for `tasks.md` status rows the `**done**` side wins;
+    for a `_sequencing.md` "recommended pick" both sides are
+    stale — replace with a static pointer to the latest spec's
+    decisions.md.
+  - **"My PR removes X / main extends X" = union, not either
+    side** — if your branch deletes a structure that main has
+    since added an ORTHOGONAL field to, keep the structure,
+    remove only the fields your PR targeted, preserve main's new
+    field. The conflict markers don't say which extension is
+    orthogonal — the commit messages on both sides do.
 
 - **Stale duplicate PRs: confirm via merged-commit
   grep, then close with a pointer**: when two
@@ -3418,32 +3437,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   method (e.g. PR #324 adding `path=None` to
   `RunnerService.start`).
 
-- **`git stash pop` after fast-forwarding to upstream
-  inverts `--ours` / `--theirs` semantics — and the
-  most common conflict shape is a spec status field
-  that upstream changed since the stash**: classic
-  flow during the "merge + restore wip" dance when
-  the main checkout has uncommitted spec edits.
-  Stash → ff merge → pop → conflicts on any file
-  where both sides edited the same line. During the
-  pop, the merge base is HEAD (the just-merged
-  upstream content), so `--ours` = upstream (HEAD),
-  `--theirs` = the stashed content. This is INVERTED
-  from a regular merge. Concretely, hit on
-  2026-05-12 with spec status field collisions —
-  upstream had moved `coverage-canonical-pattern`
-  to "paused 2026-05-12" while the stash had stale
-  "approved" edits. `git checkout --ours <file>`
-  on each conflicted file took the upstream
-  (correct) version. ALWAYS follow a deliberate-
-  discard resolution with `git stash drop` to clear
-  the stash entry — otherwise it lingers with stale
-  content and is easy to revive later by mistake.
-  The conflict shape (status fields, sometimes
-  status-line + decisions reference) is predictable
-  enough that a one-line resolution checklist works:
-  `git checkout --ours <conflicted files> && git add
-  <files> && git stash drop`.
+- **`git stash pop` gotchas — inverted --ours/--theirs and
+  silent skips**:
+  - **--ours/--theirs are INVERTED from a regular merge** —
+    stash-pop has `git apply` semantics: `--ours` = the CURRENT
+    working tree (e.g. main after a ff-merge — the authoritative
+    content), `--theirs` = the STASHED content (same direction
+    as `git merge`, opposite of `git rebase`). In the "ff-merge +
+    restore wip" dance, the common conflict is a spec status
+    field upstream changed since the stash; `git checkout --ours
+    <files>` keeps upstream. ALWAYS `git stash drop` after a
+    deliberate-discard resolution (else the stale entry lingers
+    and is easy to revive by mistake): `git checkout --ours
+    <files> && git add <files> && git stash drop`.
+  - **Silent skip when the destination branch TRACKS files the
+    stash treated as untracked** — stashing untracked-on-branch-A
+    files, switching to a branch where they're tracked, then
+    popping: the stash is retained but those files are silently
+    dropped from the working tree (the branch's tracked versions
+    stay, your stashed versions vanish — no conflict marker, no
+    warning). Diagnostic: after pop, `git diff stash@{0} --
+    <path>`; non-empty diff + `git status` showing the file
+    unchanged = silently skipped. Mitigation: pop with `git
+    checkout stash@{0} -- <files>` to force the overwrite, then
+    drop manually.
 
 - **Scheduled-tasks display time uses Claude Code's
   configured local timezone, NOT the timezone passed
@@ -3523,35 +3540,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   'possibly delete if X' qualifiers require verifying
   both X and the alternative before acting" lesson —
   same shape, different mechanism.
-
-- **`git rebase origin/main` on a stacked PR after its
-  BASE PR has been squash-merged tries to replay the
-  OLD pre-squash commit and conflicts — use `git rebase
-  --onto origin/main <old-base-commit>` to skip past
-  it**: when a base PR (say #324, with branch commit
-  `08c56ecf`) gets squash-merged into main as a new SHA
-  (`cc9f6913`), the stacked PR's branch still has the
-  OLD `08c56ecf` as part of its ancestry. A plain `git
-  rebase origin/main` will try to replay `08c56ecf`
-  first — even though its content is already absorbed
-  into main via the squash — and will conflict because
-  the file-level changes in main came from a different
-  SHA. The fix is `git rebase --onto origin/main
-  <old-base-commit>` which tells git "replay only the
-  commits AFTER `<old-base-commit>` on top of main."
-  Concretely on 2026-05-14:
-  ```
-  # Wrong (replays 2 commits, both conflict)
-  git rebase origin/main
-  # Right (replays only the stacked PR's commits)
-  git rebase --onto origin/main 08c56ecf
-  ```
-  Conflict surface collapses dramatically — in this
-  case from 6 files to 2 files. Pairs with the existing
-  "Stacked PR rebase pattern after merging the base"
-  lesson; that one covers CHANGELOG/tasks.md/
-  _sequencing.md content patterns, this one covers the
-  rebase invocation itself.
 
 - **`/static/*.js` is served without `Cache-Control`, so
   returning users keep the OLD JS after a release — any
@@ -3928,28 +3916,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   verification proportional to how much surface
   detail (names, flags, paths) the output references.
 
-- **`git stash pop` silently skips overwriting tracked
-  files when the destination branch tracks files the
-  stash treated as untracked**: hit 2026-05-14 when
-  stashing untracked-on-branch-A files (because branch
-  A predated their addition to main), switching to a
-  new branch off origin/main (where they ARE tracked),
-  and popping. The stash entry was retained ("kept in
-  case you need it again") but 3 of 11 files in the
-  stash were silently dropped from the working tree —
-  the tracked versions from the new branch's HEAD
-  stayed in place, my stashed regenerated versions
-  vanished. No conflict marker, no warning. Diagnostic
-  to catch the silent skip: after `git stash pop`,
-  diff the affected files against the stash with
-  `git diff stash@{0} -- <path>` before dropping. If
-  there's a non-empty diff and `git status` shows the
-  file unchanged, the pop silently skipped it.
-  Mitigation when planning the stash: if you know the
-  destination branch tracks files your source branch
-  doesn't, pop with `git checkout stash@{0} -- <files>`
-  to force the overwrite, then drop manually.
-
 - **CSS / static-file regex tests for "this rule
   must not exist" need comment stripping before
   matching**: when a guard test asserts that a
@@ -3967,39 +3933,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   to any absence-assertion against a static text
   file where comments may quote the forbidden
   pattern.
-
-- **Rebase conflict shape — when your PR removes a
-  structure that main has added a new orthogonal
-  feature to, the right resolution is the union,
-  not either side wholesale**: hit 2026-05-14 on
-  PR #365. My branch deleted the
-  ``<script id="scope-picker-config">`` block from
-  workflows.html entirely (replacing
-  ``firstFeaturePath`` / ``allCodePath`` with
-  per-row ``data-scope-default`` attributes). While
-  my branch was open, main's PR #344 follow-up
-  added a NEW field ``workspaceRoot`` to that same
-  script block for cross-worktree localStorage
-  validation — orthogonal feature, also
-  load-bearing on ``runner.js``. The auto-merger
-  surfaced this as a textual conflict but couldn't
-  infer which side should "win." Neither extreme
-  was right: taking HEAD undoes my A3 work, taking
-  theirs drops main's workspaceRoot validation.
-  Correct resolution: KEEP the block, REMOVE only
-  the fields my PR specifically targeted
-  (``firstFeaturePath``, ``allCodePath``),
-  PRESERVE the new orthogonal field
-  (``workspaceRoot``). Test surface gets stronger
-  as a side effect (288 ops tests post-rebase vs
-  282 pre-rebase because main's new tests came
-  along too). Generalize: when a rebase conflict
-  spans "my PR removes X / main extends X,"
-  diagnose whether the extension is the same
-  concern (collapse it) or orthogonal (preserve
-  the orthogonal parts). The conflict markers
-  don't tell you which — but the commit messages
-  on both sides usually do.
 
 - **When main is actively churning, expect to
   re-rebase between resolving conflicts and merging
@@ -4743,34 +4676,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   one trailing `chore(.help)` commit pick up all hash bumps
   at once. Don't be surprised when committing source files
   produces "free" follow-up commits — plan for them.
-
-- **Pushing a signed tag auto-creates a GitHub release with a
-  flat commit-log body — `gh release create` then 422s, and
-  the auto-body is unstructured noise covering pre-release
-  commits too**: hit on the v7.0.0 release 2026-05-18. Sequence:
-  `git push origin v7.0.0` → GitHub silently creates a release
-  object whose `body` is a bullet-list of EVERY commit since
-  the previous tag, including commits from prior PRs that have
-  nothing to do with this release (PR #421's flaky-test xfail,
-  PR #414's test-quality cycle, etc.). The body length on
-  v7.0.0 was 6,544 chars of brain-dump. Then `gh release create
-  v7.0.0 --notes-file ...` fails with `HTTP 422: Validation
-  Failed - Release.tag_name already exists`. Fix: use
-  `gh release edit v7.0.0 --notes-file <CHANGELOG-extract>` to
-  replace the auto-body with structured notes. Even better,
-  bake into the release-prep skill: extract the
-  `[X.Y.Z]` CHANGELOG section to a temp file BEFORE the tag
-  push, then immediately after the tag push run
-  `gh release edit` (not create) to overwrite the auto-body
-  with the prepared notes. The CHANGELOG-extract shell pattern
-  is `awk '/^## \[X\.Y\.Z\]/{flag=1; next} /^## \[/{flag=0} flag'
-  CHANGELOG.md > /tmp/release_notes.md`. Prepend a one-line
-  header with the date + PyPI link
-  (`Released YYYY-MM-DD · [PyPI](https://pypi.org/project/<pkg>/<ver>/)`)
-  for readability. The auto-generated body is technically
-  "fine" (no missing info — it covers all commits) but
-  reads as a changelog DUMP rather than RELEASE NOTES; the
-  structured CHANGELOG section is what you want users to see.
 
 - **attune-author CLI does NOT auto-load
   `~/.attune/anthropic.env` — every shell
@@ -5565,37 +5470,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   main. 3-way picks up the surgical change,
   preserves the upstream growth, and flags only
   the actual conflicts.
-
-- **`git merge --ff-only` can fail silently when
-  staged changes conflict with incoming files**:
-  the error ("Your local changes to the following
-  files would be overwritten by merge") prints and
-  exit is non-zero, but a user pasting a
-  multi-command block may not see it scroll past.
-  Always verify post-merge HEAD: `git rev-parse
-  main` and `git rev-parse origin/main` should
-  match. Diagnostic check before merging:
-  `git merge-base --is-ancestor main origin/main`
-  (must be true) AND look for overlap between
-  `git diff --cached --name-only` and `git diff
-  main..origin/main --name-only` — must be empty
-  for ff to succeed with a staged tree. If
-  non-empty, unstage or stash those files before
-  the merge.
-
-- **`git stash pop` after a ff-merge that touched
-  the same files: resolve with `--ours` to keep
-  main, NOT `--theirs`**: counterintuitive flag
-  direction. For `git stash pop`, `--ours` is the
-  WORKING TREE state (main's authoritative content
-  after the ff) and `--theirs` is the STASHED
-  content. Memory hook: stash-pop has `git apply`
-  semantics — what's CURRENTLY in the tree is
-  "ours", what you're applying is "theirs". Same
-  direction as `git merge`, opposite of `git
-  rebase`. When the goal is to keep main's newer
-  content over older stashed prep, `git checkout
-  --ours <file>`.
 
 - **`Write` to an absolute `/Users/patrickroebuck/attune-ai/...`
   path from a worktree session lands the file on the PARENT
