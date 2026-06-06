@@ -1431,16 +1431,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `px-8 py-4 rounded-lg font-medium !text-white border-2
   border-white/60 hover:bg-white/15 transition-colors`.
 
-- **`uv run pip-audit` runs the pyenv shim, not the venv**:
-  The pyenv `pip-audit` shim takes precedence on PATH, so
-  `uv run pip-audit` audits whatever Python pyenv points at —
-  not `.venv/`. Symptom: bumping a dep in the venv (verified
-  with `uv pip show`) doesn't change the pip-audit output.
-  Fix: install pip-audit *into* the venv with
-  `.venv/bin/python -m pip install pip-audit` and run
-  `.venv/bin/python -m pip_audit`. The `uv run` form is
-  unreliable for security audits.
-
 - **SDK-native `security-audit` workflow swallows subagent
   findings**: `attune workflow run security-audit` returns
   successfully but `metadata.findings` is `{}` and
@@ -1598,25 +1588,100 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Useful when local main is strictly behind origin/main and
   you have unrelated in-flight work.
 
-- **uv.lock can drift from pyproject.toml on shared branches**:
-  Saw this on origin/main — pyproject.toml had
-  `attune-help>=0.5.1,<0.6` (cap added in PR #152) but uv.lock
-  still showed `>=0.5.1` (no cap). The cap-adding PR didn't
-  re-run `uv lock`, so the lockfile silently went out of sync.
-  Symptom: a stale local working tree change to uv.lock isn't a
-  no-op after `git pull` — it's a real drift fix. Always
-  `uv lock --check` after pulling, and bundle uv.lock fixes with
-  the next reasonable PR rather than treating them as noise.
+### uv — lockfile, sync & editable installs
 
-- **`uv sync` wipes packages installed via `pip install`**:
-  Running `.venv/bin/python -m pip install pip-audit` into the
-  venv looks successful, but a subsequent `uv sync --extra dev
-  --extra developer` removes it because `uv sync` enforces the
-  lockfile. The symptom is a confusing `No module named
-  pip_audit` right after a successful install. Fix: use
-  `uv run --with pip-audit pip-audit --strict` for ephemeral
-  audit tools, or add the tool to a dev extra in
-  `pyproject.toml` so the lockfile keeps it.
+- **uv lockfile & sync semantics — drift, enforcement, and
+  conservative resolution**:
+  - **uv.lock drifts from pyproject.toml on shared branches** —
+    a cap-adding PR (`attune-help>=0.5.1,<0.6`) that didn't
+    re-run `uv lock` leaves the lock at `>=0.5.1` (no cap). A
+    stale local uv.lock change after `git pull` is then a real
+    drift fix, not noise. Always `uv lock --check` after pulling;
+    bundle the fix with the next reasonable PR.
+  - **`uv sync` ENFORCES the lockfile — it WIPES `pip install`'d
+    packages** — `.venv/bin/python -m pip install pip-audit`
+    looks fine until a later `uv sync` removes it (`No module
+    named pip_audit` right after a successful install). Use
+    `uv run --with <tool>` for ephemeral tools, or add the tool
+    to a dev extra so the lock keeps it.
+  - **`[tool.uv.sources]` edits don't refresh the lock** —
+    deleting/changing an editable-sibling entry leaves the old
+    `editable = "../name"` path in uv.lock; CI `uv sync`/`uv run`
+    then fails "Failed to generate package metadata for pkg==ver
+    @ editable+../path" (the sibling dir isn't in a CI checkout).
+    Re-run `uv lock` immediately and commit it in the same
+    change; verify `grep -A2 'name = "pkg"' uv.lock` shows
+    `{ registry = "https://pypi.org/simple" }`. (This is also why
+    `uv run` in a pre-commit hook can fail with an "unrelated"
+    message — e.g. check-docs-freshness "Failed" with a
+    metadata-resolution traceback that says nothing about docs;
+    check uv.lock resolvability before blaming the hook.)
+  - **`uv sync` keeps existing pins that still satisfy a WIDENED
+    cap** — bumping `<0.6`→`<0.8` and running `uv sync` leaves
+    the old version (it still satisfies the range). Force
+    re-resolution with `uv lock --upgrade-package <name>`
+    (repeatable), then sync. Distinct from the
+    `[tool.uv.sources]` drift above — here the lock is
+    structurally correct, just conservative.
+  - **`uv lock` may briefly fail on a JUST-published version** —
+    the simple index (used by uv/pip) lags the JSON API by a few
+    seconds, so within ~30 s of a publish `uv lock
+    --upgrade-package <pkg>` reports "only <prev> is available …
+    unsatisfiable" while `curl …/pypi/<pkg>/<ver>/json` already
+    returns it. Wait ~30 s and rerun with `--refresh` (bypasses
+    uv's cached index). Relevant for cross-repo release chains.
+  - **Long-stale uv.lock + a release-time `uv lock` regen pulls a
+    dep CASCADE beyond the bump** — refreshing a far-behind lock
+    pulled a sibling upgrade (attune-help 0.10.1→0.11.0) plus
+    three un-locked dev deps, nearly derailing the release via
+    sibling-workspace snapshot drift. Check `git diff uv.lock
+    --stat` for unexpected scope BEFORE regenerating during
+    release ceremony; defer the catch-up to a separate PR so the
+    release commit stays version-only. (If CI uses `pip install
+    -e ".[dev]"` not `uv sync`, uv.lock isn't on the release
+    critical path — the defer is safe.)
+
+- **uv editable-install gotchas**:
+  - **`uv pip install -e .` does NOT regenerate
+    `[project.scripts]` console scripts** — after adding/changing
+    an entry the old `.venv/bin/<name>` stays (or is absent if
+    new); `ls .venv/bin/<cli>` returns nothing despite a clean
+    install log. Use `uv sync --extra dev --reinstall-package
+    <pkg>` (rebuilds the wheel + entry_points);
+    `uv pip install --force-reinstall -e .` also works, slower.
+  - **`uv pip install -e <path>` ships STALE package-data even
+    with `--force-reinstall --no-cache`** — a new shipped JSON
+    appeared in a built wheel but not via the editable install.
+    Fixes: `uv sync` (refresh from lock), build a wheel and
+    install it, or delete `site-packages/<pkg>` before
+    reinstalling. Editable caching is unreliable for non-Python
+    content.
+  - **`uv pip install -e <sibling> --no-deps` is the clean
+    venv-local shadow** when a sibling's in-flight version
+    exceeds the current cap (e.g. need 0.9.0 visible while the
+    cap is `<0.8`): `--no-deps` bypasses cap resolution and drops
+    the editable path in site-packages; any later `uv sync`
+    overwrites it (intended). Prefer this over a committed
+    `[tool.uv.sources]` override when the cap bump isn't ready.
+  - **Editable paths LEAK into `pip list` and break naive grep**
+    — a worktree path containing "redis" false-positives `pip
+    list | grep redis`. Anchor to the package-name column:
+    `pip list | awk '{print $1}' | grep -ixE "redis|..."`.
+
+- **uv tooling — pip-audit and build**:
+  - **`uv run pip-audit` runs the PYENV SHIM, not the venv** —
+    the shim takes PATH precedence, so it audits the wrong Python
+    (bumping a venv dep doesn't change its output). Install into
+    the venv (`.venv/bin/python -m pip install pip-audit` then
+    `… -m pip_audit`) or use `uv run --with pip-audit pip-audit
+    --strict` for the ephemeral form (the reliable one — note the
+    "uv sync wipes pip-installed" caveat above for the venv-install
+    route).
+  - **`uv run python -m build` fails `No module named build`** —
+    `build` isn't in the dev/developer extras; use `uv run --with
+    build python -m build`. The local build is verification-only
+    (PyPI trusted publishing rebuilds the wheel on the tag), so
+    `dist/` artifacts never upload.
 
 - **Anchor-tag buttons need `!text-white no-underline`**: The
   existing lesson about `text-white` being overridden on
@@ -1673,16 +1738,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `../attune-<name>/`, pointer stub at
   `packages/attune-<name>/README.md`, and a `[tool.uv.sources]`
   entry.
-
-- **`uv pip install -e .` does not regenerate
-  `[project.scripts]` console scripts**: Editable reinstalls
-  after adding or changing a `[project.scripts]` entry leave
-  the old `.venv/bin/<name>` in place — or absent entirely if
-  it's new. Symptom: `ls .venv/bin/<cli>` returns nothing
-  despite a clean install log. Fix: use
-  `uv sync --extra dev --reinstall-package <pkg>` which
-  rebuilds the wheel and refreshes entry_points. `uv pip
-  install --force-reinstall -e .` also works but is slower.
 
 - **structlog default output pollutes stdout-captured CLI
   tests**: structlog's default `ConsoleRenderer` writes log
@@ -1812,35 +1867,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   document the gap without breaking CI and automatically
   turn into XPASS if a retriever upgrade starts passing
   them.
-
-- **`uv.lock` retains `editable = "../name"` paths after
-  `[tool.uv.sources]` edits — always re-run `uv lock`**:
-  Deleting (or changing) a `[tool.uv.sources]` entry in
-  `pyproject.toml` does NOT automatically refresh the
-  lockfile. The lock keeps the old editable-sibling path,
-  and any `uv sync` / `uv run` in CI (pre-commit hooks,
-  fuzzing, etc.) fails with "Failed to generate package
-  metadata for pkg==ver @ editable+../path" because the
-  sibling directory doesn't exist in a CI checkout. Always
-  re-run `uv lock` immediately after editing
-  `[tool.uv.sources]` and commit `uv.lock` in the same
-  change. Verify with
-  `grep -A 2 "name = \"pkg\"" uv.lock` — the `source` line
-  should read `{ registry = "https://pypi.org/simple" }`
-  once the dep is published.
-
-- **`uv run` in pre-commit hooks propagates lockfile
-  errors as hook failures that look unrelated**: The
-  `check-docs-freshness` hook uses
-  `uv run python scripts/check_docs_freshness.py`. When
-  the lockfile has an unresolvable dep (e.g. sibling
-  editable path missing in CI), the failure renders as
-  "Check Help Template Freshness ... Failed" with a
-  metadata-resolution traceback in the log — nothing
-  about docs or templates. When seemingly-unrelated
-  pre-commit hooks start failing, read the actual log
-  and check `uv.lock` resolvability before assuming the
-  hook's nominal responsibility is the issue.
 
 - **Chicken-and-egg for optional extras in [dev]**: If
   you want `pkg>=X,<Y` in `[dev]` extra so CI tests
@@ -2037,22 +2063,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the **feature level** (merge the features), not at
   the prompt level.
 
-- **`uv pip install -e <path>` can ship stale
-  package-data even after `--force-reinstall
-  --no-cache`**: added
-  `src/attune_help/templates/summaries_by_path.json`
-  and expected editable-installed attune-help to see
-  it. It didn't — the file appeared in a freshly
-  built wheel but not via the editable install.
-  Wasted ~20 min debugging. Workarounds that work:
-  (1) `uv sync` refreshes the whole venv from the
-  lockfile, (2) build a wheel with `python -m build
-  --wheel` and install it directly, (3) delete the
-  `site-packages/<pkg>` dir manually before
-  reinstalling. Use these when iterating on a
-  package's shipped data files — editable install's
-  caching is unreliable for non-Python content.
-
 - **Pre-committed decision matrices survive contact
   with data**: the fastembed "if Golden P@1 ≥ 70%,
   defer" matrix was written into
@@ -2183,21 +2193,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the kind count you expect. Don't trust the status
   report alone.
 
-- **`uv sync` respects existing lockfile pins when they
-  still satisfy widened constraints — cap bumps require
-  `uv lock --upgrade-package <name>` to actually
-  upgrade**: bumping `attune-help>=0.5.1,<0.6` to
-  `<0.8` in pyproject.toml and running `uv sync
-  --all-extras` left attune-help at 0.5.1 because 0.5.1
-  still satisfies `>=0.5.1,<0.8`. The resolver picks
-  the existing pin over a newer available version. Fix:
-  after widening a cap, run `uv lock --upgrade-package
-  <name>` (repeatable for multiple packages) to force
-  re-resolution; then `uv sync` installs the newly-
-  resolved versions. This is distinct from the existing
-  `[tool.uv.sources]`-edit drift lesson — here the
-  lockfile is structurally correct, just conservative.
-
 - **Adding a workspace-sibling package as an extra can
   silently downgrade shared transitive deps via
   most-restrictive-cap-wins**: attune-ai has attune-rag
@@ -2302,23 +2297,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   change bundles two axes (format + instruction
   reword), isolate them in the recovery A/B rather
   than reverting everything.
-
-- **`uv lock` may briefly fail to find a just-published
-  PyPI version because the simple index lags the JSON
-  API**: within ~30 seconds of a successful PyPI
-  publish, `curl https://pypi.org/pypi/<pkg>/<ver>/json`
-  returns the new version but `uv lock
-  --upgrade-package <pkg>` fails with "only
-  <previous-version> is available. [...]  requirements
-  are unsatisfiable." Both surfaces eventually
-  converge, but the simple index (used by uv / pip)
-  refreshes a few seconds behind the JSON API. Fix:
-  wait ~30s and rerun with `uv lock
-  --upgrade-package <pkg> --refresh` — the `--refresh`
-  flag bypasses uv's local cache of the simple index.
-  Relevant for cross-repo release chains where one
-  sibling publishes, then another sibling's lockfile
-  refresh follows immediately.
 
 - **Research subagents can confabulate SDK signatures —
   introspect before coding**: Research agents
@@ -2859,24 +2837,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   attribute is convenient. One `__post_init__`, no
   branches at call sites. Pattern generalizes to any
   additive schema widening from scalar → list.
-
-- **`uv pip install -e <sibling-path> --no-deps` is the
-  clean venv-local shadow when a sibling dep's
-  in-flight version exceeds the current cap**:
-  attune-ai caps `attune-help>=0.5.1,<0.8` but we
-  needed 0.9.0 visible in the venv for local testing
-  before the cap bump lands. A plain `uv pip install
-  -e ../attune-help/` might fail on cap resolution;
-  `--force-reinstall --no-deps` bypasses dependency
-  checks entirely and just drops the editable path in
-  site-packages. Any `uv sync` afterwards will
-  overwrite it (per the existing lesson) — that's the
-  intended property: shadow lives until the next sync
-  cycle or a real release. Companion to the
-  "`[tool.uv.sources]` overrides are discouraged"
-  policy comment in attune-ai's pyproject.toml: use
-  venv shadow, not a committed source override, when
-  the cap bump isn't ready yet.
 
 - **Combine two unreleased CHANGELOG drafts into one
   version when neither has shipped to PyPI**:
@@ -3461,22 +3421,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   extra name so users can connect "I need this
   plugin" → "I install this extra."
 
-- **Editable-install package paths leak into `pip
-  list` output and break naive grep checks**: when
-  verifying "no redis runtime deps installed" via
-  `pip list | grep -iE "redis|agent-memory"`, the
-  output included `attune-ai 6.7.1
-  /path/to/worktree/redis-p2-extras` because the
-  WORKTREE PATH contains "redis". For strict
-  package-name matching, use `pip list | awk
-  '{print $1}' | grep -ixE
-  "redis|agent-memory-client"` — strip the version +
-  path columns first, then case-insensitive exact
-  match. Same gotcha shape as: any pip-list-scraping
-  diagnostic that doesn't anchor to the
-  package-name column will false-positive on path
-  metadata.
-
 - **Audits with "possibly delete if X" qualifiers
   require verifying both X and the alternative**:
   the redis-decoupling Phase A audit flagged
@@ -3822,27 +3766,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   'possibly delete if X' qualifiers require verifying
   both X and the alternative before acting" lesson —
   same shape, different mechanism.
-
-- **`uv run python -m build` fails with `No module named
-  build` — use `uv run --with build python -m build`
-  instead**: the project's `.venv` does NOT include the
-  `build` PEP-517 frontend (it's not in `pyproject.toml`'s
-  `[dev]` or `[developer]` extras). The release-prep
-  checklist in `chore(release): X.Y.Z` PR bodies says
-  `rm -rf dist/ && uv run python -m build`, but that
-  command bombs unless `build` is somehow already on
-  PATH. The fix is the explicit `--with build` flag:
-  `rm -rf dist/ && uv run --with build python -m build`.
-  Verified during the v6.8.0 release ceremony 2026-05-14
-  — produced `attune_ai-6.8.0-py3-none-any.whl` (1.78 MB)
-  and `attune_ai-6.8.0.tar.gz` (1.75 MB) cleanly. The
-  build step is verification-only since PyPI trusted
-  publishing re-builds the wheel inside the
-  `publish-pypi.yml` workflow on the tag; locally-built
-  artifacts in `dist/` never get uploaded. Either update
-  the release-prep PR template to use `--with build` or
-  add `build` to the `[dev]` extra so the plain command
-  works.
 
 - **`git rebase origin/main` on a stacked PR after its
   BASE PR has been squash-merged tries to replay the
@@ -4816,33 +4739,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   logs, transaction logs) where you want O(1) staleness
   detection without re-hashing megabytes of unchanged
   history.
-
-- **Long-stale `uv.lock` + `uv lock` regen during
-  a release pulls in a dep cascade beyond the
-  version bump — defer the lock catch-up to a
-  separate PR**: hit 2026-05-15 releasing
-  attune-author 0.12.0. The lockfile had
-  `attune-author 0.6.1` (multiple minor versions
-  behind 0.11.1 current). Running `uv lock` to
-  refresh pulled in: attune-author 0.6.1 → 0.12.0
-  (expected), attune-help 0.10.1 → 0.11.0 (real
-  dep upgrade — unexpected during a release), AND
-  three new dev deps (pytest-asyncio, syrupy,
-  backports-asyncio-runner) added to pyproject
-  without re-locking. The attune-help bump
-  triggered a local snapshot-test failure via
-  sibling-workspace drift, almost derailing the
-  release. Lesson: **before running `uv lock`
-  during release ceremony, check `git diff
-  uv.lock --stat` for unexpected scope.** If the
-  lock is far behind, the catch-up resolution is
-  a separate concern from "ship the release" —
-  defer to a follow-up PR so the release commit
-  stays auditable as version-only. Counter-rule:
-  if CI uses `pip install -e ".[dev]"` (not `uv
-  sync`), uv.lock isn't on the release critical
-  path — PyPI consumers never see it, so the
-  defer is safe.
 
 - **Sibling-workspace drift causes local-only
   snapshot test failures while CI is green —
