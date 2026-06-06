@@ -203,6 +203,18 @@ class TestCaptureSubprocessFailure:
         assert "401 Invalid authentication credentials" in out  # real error surfaced
         assert "IndexError" not in out  # the old bug must not recur
 
+    def test_probe_with_no_output_reports_exit_code(self, monkeypatch):
+        """When the health probe exits with no stdout/stderr, report its
+        exit code instead of an empty string (covers the `if not text`
+        branch)."""
+        monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            lambda: ["sh", "-c", "exit 7"],
+        )
+        out = capture_subprocess_failure([])
+        assert "claude exited 7 with no stderr/stdout" in out
+
     def test_health_probe_argv_invokes_claude(self):
         """The fallback probe is a minimal `claude -p` invocation."""
         from attune.workflows.agent_sdk_adapter import _claude_health_probe_argv
