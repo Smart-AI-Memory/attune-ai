@@ -266,3 +266,119 @@ def test_sessions_page_renders_over_budget_marker(tmp_path, monkeypatch):
     # Heuristic content survived
     assert "First prompt" in body
     assert "Second prompt" in body
+
+
+# ---------------------------------------------------------------------------
+# Regression: Anthropic SDK calls must run OFF the main event-loop thread.
+#
+# The ``anthropic`` SDK's ``Anthropic(...).messages.create(...)`` is
+# SYNCHRONOUS. Calling it directly inside an async FastAPI route blocks
+# the uvicorn event loop for the duration of the Haiku batch
+# (~0.5–2s per session × N sessions), freezing every other request —
+# SSE streams, runner control, page renders.
+#
+# Fix: ``await asyncio.to_thread(enrich_with_summaries, ...)`` in
+# ``routes/sessions.py:list_sessions`` and the equivalent in
+# ``routes/dashboard.py:sessions_page`` (both branches). These tests
+# guard the fix by asserting the Anthropic call captures a thread id
+# DIFFERENT from the test's main thread — proving the chain runs in a
+# worker thread, not on the loop.
+# ---------------------------------------------------------------------------
+
+
+def _install_thread_recording_anthropic(monkeypatch, *, summary_text: str = "Recorded."):
+    """Like _install_fake_anthropic, but records the thread id of each call.
+
+    Returns the recorded-ids list (mutated by ``create``). Test asserts
+    every recorded id != ``threading.get_ident()`` captured on the
+    main thread.
+    """
+    import threading
+
+    content_block = types.SimpleNamespace(text=summary_text, type="text")
+    usage = types.SimpleNamespace(input_tokens=100, output_tokens=20)
+    response = types.SimpleNamespace(content=[content_block], usage=usage)
+    recorded_thread_ids: list[int] = []
+
+    def _create(**_kwargs):
+        recorded_thread_ids.append(threading.get_ident())
+        return response
+
+    client = types.SimpleNamespace(messages=types.SimpleNamespace(create=_create))
+
+    class _FakeAnthropic:
+        def __new__(cls, *, api_key):
+            return client
+
+    fake_module = types.ModuleType("anthropic")
+    fake_module.Anthropic = _FakeAnthropic
+    monkeypatch.setitem(sys.modules, "anthropic", fake_module)
+    return recorded_thread_ids
+
+
+@pytest.mark.asyncio
+async def test_api_sessions_runs_anthropic_off_event_loop_thread(tmp_path, monkeypatch):
+    """``GET /api/sessions`` must defer the sync Anthropic call to a
+    worker thread via ``asyncio.to_thread``. Reverting the wrap would
+    make ``recorded_thread_ids[0] == main_thread_id``.
+    """
+    import threading
+
+    from httpx import ASGITransport, AsyncClient
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # pragma: allowlist secret
+    recorded = _install_thread_recording_anthropic(monkeypatch)
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _write_session(tmp_path / "home", project_root, "sess-001", "Some content")
+
+    app = _make_app(tmp_path, monkeypatch)
+    main_thread_id = threading.get_ident()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/api/sessions")
+
+    assert resp.status_code == 200
+    assert len(recorded) >= 1, "Anthropic was never called — test setup is wrong"
+    assert all(tid != main_thread_id for tid in recorded), (
+        f"Anthropic SDK ran on the event-loop thread {main_thread_id} "
+        f"(recorded: {recorded}). The ``asyncio.to_thread`` wrap in "
+        f"``routes/sessions.py:list_sessions`` was reverted — every "
+        f"slow Haiku call now blocks the uvicorn loop."
+    )
+
+
+@pytest.mark.asyncio
+async def test_sessions_page_runs_anthropic_off_event_loop_thread(tmp_path, monkeypatch):
+    """The HTML ``GET /sessions`` page (normal branch) must also defer
+    Anthropic to a worker thread. Symmetric to the JSON test above
+    but covers ``routes/dashboard.py:sessions_page``.
+    """
+    import threading
+
+    from httpx import ASGITransport, AsyncClient
+
+    monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key")  # pragma: allowlist secret
+    recorded = _install_thread_recording_anthropic(monkeypatch)
+
+    project_root = tmp_path / "project"
+    project_root.mkdir()
+    _write_session(tmp_path / "home", project_root, "sess-002", "Other content")
+
+    app = _make_app(tmp_path, monkeypatch)
+    main_thread_id = threading.get_ident()
+
+    transport = ASGITransport(app=app)
+    async with AsyncClient(transport=transport, base_url="http://test") as client:
+        resp = await client.get("/sessions")
+
+    assert resp.status_code == 200
+    assert len(recorded) >= 1, "Anthropic was never called — test setup is wrong"
+    assert all(tid != main_thread_id for tid in recorded), (
+        f"Anthropic SDK ran on the event-loop thread {main_thread_id} "
+        f"(recorded: {recorded}). The ``asyncio.to_thread`` wrap in "
+        f"``routes/dashboard.py:sessions_page`` was reverted — every "
+        f"slow Haiku call now blocks the uvicorn loop."
+    )

@@ -364,6 +364,16 @@ async def sessions_page(request: Request) -> HTMLResponse:
     cfg = request.app.state.config
     compare_mode = request.query_params.get("compare") == "1"
 
+    # Both branches below call the SYNCHRONOUS Anthropic SDK
+    # (``anthropic.Anthropic(...).messages.create()``) inside a
+    # per-session loop. Running them directly inside this async route
+    # blocks the uvicorn event loop for the duration of the Haiku
+    # batch (~0.5–2s per session × N sessions), freezing every other
+    # request. Defer to a thread; the ``anthropic`` SDK is documented
+    # thread-safe and ``summarize_session``'s sync API is preserved
+    # for tests and other paths.
+    import asyncio
+
     if compare_mode:
         # Compare mode renders both columns. Keep the heuristic
         # version (paths-included call) and run the enrichment
@@ -373,8 +383,8 @@ async def sessions_page(request: Request) -> HTMLResponse:
         budget = new_budget()
         from attune.ops.routes.sessions import _enrich_sessions
 
-        haiku_sessions, over_budget = _enrich_sessions(
-            pairs, attune_home=cfg.attune_home, budget=budget
+        haiku_sessions, over_budget = await asyncio.to_thread(
+            _enrich_sessions, pairs, attune_home=cfg.attune_home, budget=budget
         )
         sessions = heuristic_sessions
         compare_columns = [
@@ -382,7 +392,9 @@ async def sessions_page(request: Request) -> HTMLResponse:
             {"label": "Haiku", "sessions": haiku_sessions},
         ]
     else:
-        sessions, over_budget = enrich_with_summaries(cfg.project_root, cfg.attune_home)
+        sessions, over_budget = await asyncio.to_thread(
+            enrich_with_summaries, cfg.project_root, cfg.attune_home
+        )
         compare_columns = None
 
     # Where the sessions live — surfaced in the empty-state so users
