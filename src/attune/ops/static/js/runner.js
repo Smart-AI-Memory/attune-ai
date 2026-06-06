@@ -173,7 +173,7 @@
     try {
       fetch("/api/telemetry/interaction", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: attuneClientHeaders({ "Content-Type": "application/json" }),
         body: JSON.stringify(body),
         // keepalive lets the request survive a navigation away
         // from the page (e.g. pill-click → navigate to new run).
@@ -644,9 +644,11 @@
       setStatus(row, "starting…");
       try {
         var scope = getScope(row);
-        var fetchOpts = { method: "POST" };
+        // Always send the client token; add Content-Type + body only
+        // when a scope path is set (else it's a bare project-wide run).
+        var fetchOpts = { method: "POST", headers: attuneClientHeaders() };
         if (scope !== null) {
-          fetchOpts.headers = { "Content-Type": "application/json" };
+          fetchOpts.headers = attuneClientHeaders({ "Content-Type": "application/json" });
           fetchOpts.body = JSON.stringify({ path: scope });
         }
         var resp = await fetch("/workflows/" + encodeURIComponent(name) + "/run", fetchOpts);

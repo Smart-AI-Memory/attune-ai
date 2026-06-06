@@ -9,6 +9,14 @@
 
 ## 0. Critical issue surfaced during the review
 
+> **RESOLVED (2026-06-05).** Closed by
+> [`docs/specs/ops-mutating-endpoint-auth/`](../ops-mutating-endpoint-auth/) —
+> every mutating endpoint now requires a per-process `X-Attune-Client`
+> token, so a client that never loaded the page (the a11y-tool /
+> stray-fetch trigger class here) cannot mutate state. The original
+> JS trigger was separately fixed in PR #446 (cancel-on-blur); this
+> reduces the blast radius for any future trigger.
+
 ⚠️ **Spec status files were mutated without explicit user confirmation during the review session.** Nine `PUT /api/specs/{slug}/{phase}/status` requests fired while driving the dashboard via the preview MCP tool, modifying six spec files. All mutations were reverted via `git checkout HEAD -- docs/specs/<paths>` before any commit; no data was lost.
 
 This is Finding 0 — high-priority either way:

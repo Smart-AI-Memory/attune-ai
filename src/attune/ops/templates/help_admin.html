@@ -194,7 +194,7 @@
     if (opts && opts.dry_run) body.dry_run = true;
     fetch("/api/help/regen", {
       method: "POST",
-      headers: { "Content-Type": "application/json", Accept: "application/json" },
+      headers: attuneClientHeaders({ "Content-Type": "application/json", Accept: "application/json" }),
       body: JSON.stringify(body),
     })
       .then(function (r) {

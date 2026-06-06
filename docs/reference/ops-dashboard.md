@@ -67,6 +67,33 @@ The dashboard UI is then available in your browser at the printed URL. API respo
 | `ATTUNE_HOME` | Overrides the default attune home directory (`~/.attune`) |
 | `ATTUNE_OPS_SWEEP_RESULTS` | When set to a non-empty value, enables persistence of discovery-sweep results under `<attune_home>/ops/sweep-results/` |
 
+## Localhost security model
+
+The dashboard is a single-user, same-machine tool. Its protection is
+layered, not a multi-user auth system (network exposure is an explicit
+non-goal):
+
+1. **Loopback bind.** The server binds `127.0.0.1` by default — not
+   reachable off the machine.
+2. **Trusted-host middleware.** Requests whose `Host` header isn't on
+   the allowlist are rejected (`--trusted-host` extends it).
+3. **Read-only flag.** `--read-only` disables all mutation (workflow
+   runs, status writes) — purely observational.
+4. **Per-process client token.** Every mutating endpoint
+   (`POST /workflows/{name}/run`, `PUT /api/specs/{slug}/{phase}/status`,
+   the curator/help/dismiss mutations, …) requires an `X-Attune-Client`
+   header matching a token minted at startup. The page reads the token
+   once (a `<meta name="attune-client-token">` tag) and echoes it on
+   mutating requests; `GET /api/session/token` exposes it for
+   bootstrap. A client that never loaded the page — a stray `curl`, a
+   browser extension, an a11y-traversing tool — gets `403` and cannot
+   mutate state. The token resets each server run.
+
+The token gate closes the "accidental mutation from a non-page client"
+bug class (see `docs/specs/ops-mutating-endpoint-auth/`). It is *not* a
+defense against a local attacker who can read process memory or the
+page — that's out of scope for a localhost dev tool.
+
 ## Related commands
 
 - `attune help-docs` — browse the help template library with optional `--tag` filters

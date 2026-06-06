@@ -163,7 +163,7 @@
       "/api/specs/" + encodeURIComponent(candidate.slug) + "/decisions/status";
     fetchJson(url, {
       method: "PUT",
-      headers: { "Content-Type": "application/json" },
+      headers: attuneClientHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ status: "complete" }),
     })
       .then(function () {
@@ -189,7 +189,7 @@
       "/completion-candidates/dismiss";
     fetchJson(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: attuneClientHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({ snapshot_hash: candidate.snapshot_hash }),
     })
       .then(function () {

@@ -23,10 +23,12 @@ from attune.ops.routes import interaction_counters as interaction_counters_route
 from attune.ops.routes import pending_writes as pending_writes_routes
 from attune.ops.routes import runner as runner_routes
 from attune.ops.routes import runs_history as runs_history_routes
+from attune.ops.routes import session as session_routes
 from attune.ops.routes import sessions as sessions_routes
 from attune.ops.routes import specs as specs_routes
 from attune.ops.routes import sweep_results as sweep_results_routes
 from attune.ops.runner import RunnerService, prune_old_runs
+from attune.ops.security import current_session_token
 from attune.ops.sweep_results_watcher import watch_and_persist
 
 
@@ -93,6 +95,10 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
 
     templates = Jinja2Templates(directory=str(templates_dir))
     templates.env.globals["attune_version"] = __version__
+    # Per-process client token injected into every page (base.html meta
+    # tag); the page echoes it as X-Attune-Client on mutating fetches.
+    # See attune.ops.security / docs/specs/ops-mutating-endpoint-auth/.
+    templates.env.globals["client_token"] = current_session_token()
     templates.env.globals["nav_items"] = [
         ("/", "Home"),
         ("/workflows", "Workflows"),
@@ -120,6 +126,7 @@ def create_app(config: Config, *, runner: RunnerService | None = None) -> FastAP
 
     app.state.help_regen = HelpRegenRunner()
 
+    app.include_router(session_routes.router)
     app.include_router(dashboard.router)
     app.include_router(runner_routes.router)
     app.include_router(runs_history_routes.router)

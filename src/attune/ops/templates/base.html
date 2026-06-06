@@ -3,6 +3,10 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {# Per-process client token; mutating fetches echo it as the
+       X-Attune-Client header (see static/js/client_token.js and
+       docs/specs/ops-mutating-endpoint-auth/). #}
+    <meta name="attune-client-token" content="{{ client_token }}" />
     <title>{% block title %}attune ops{% endblock %} · attune ops</title>
     {# Release-keyed cache-bust: version pinning lets browsers cache the
        file BETWEEN requests within a release while busting reliably on
@@ -53,6 +57,9 @@
       </div>
     </header>
     <main class="main">{% block content %}{% endblock %}</main>
+    {# Loaded before per-page scripts so every mutating fetch can read
+       the client token (window.attuneClientHeaders). #}
+    <script src="{{ url_for('static', path='js/client_token.js') }}?v={{ attune_version }}"></script>
     {% block scripts %}{% endblock %}
     <footer class="footer">
       attune ops · reads from <code>{{ attune_home }}</code> · refresh page for live data

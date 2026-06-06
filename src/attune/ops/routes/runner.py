@@ -7,11 +7,12 @@ import logging
 from collections.abc import AsyncIterator
 from pathlib import Path
 
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import JSONResponse, StreamingResponse
 
 from attune.ops import data
 from attune.ops.runner import RunnerBusyError, RunnerService
+from attune.ops.security import require_client_token
 from attune.security.path_validation import _validate_file_path
 
 
@@ -83,7 +84,11 @@ async def _read_scope(request: Request) -> str | None:
 
 
 @router.post("/workflows/{name}/run")
-async def start_run(name: str, request: Request) -> JSONResponse:
+async def start_run(
+    name: str,
+    request: Request,
+    _client: None = Depends(require_client_token),  # noqa: B008
+) -> JSONResponse:
     _ensure_allowed(request)
     svc = _service(request)
 

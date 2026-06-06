@@ -7974,3 +7974,39 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   state in its return value (here `None`) is the single source of
   truth for that state; layered callers should branch on the return,
   not re-read the underlying config.
+
+- **Adding a FastAPI `Depends` auth/gate to existing routes — three
+  interlocking testing facts**: discovered 2026-06-05 executing
+  ops-mutating-endpoint-auth (the per-process `X-Attune-Client` token
+  gate on `attune.ops`'s 7 mutating routes). (1) **`Depends` captures
+  the dependency callable by reference at route-definition time**, so
+  monkeypatching the source module (`attune.ops.security.require_client_token`)
+  does NOT disable the gate — the route already holds the original
+  function object. To bypass in tests, either use
+  `app.dependency_overrides[require_client_token] = lambda: None`
+  (needs the app instance) OR null the *module global the dependency
+  reads at call time* — `require_client_token` compares
+  `x_attune_client != _SESSION_TOKEN`, so a conftest autouse fixture
+  doing `monkeypatch.setattr("attune.ops.security._SESSION_TOKEN", None)`
+  makes no-header requests pass (`None == None`) for every pre-gate
+  route test in the directory. (2) **The gate's OWN test file
+  re-enables the gate by overriding the conftest fixture by name** —
+  define a module-level `@pytest.fixture(autouse=True) def
+  _bypass_client_token(...)` that sets a real token; a same-name
+  module fixture deterministically shadows the conftest one (cleaner
+  than relying on autouse ordering). (3) **A route can return 403 for
+  more than one reason** — the ops `/run` route 403s for `--read-only`
+  (`allow_run=False`, the Config dataclass default, though the CLI
+  default is True) with a *string* `detail`, AND for the token gate
+  with a `{"code": "invalid_client"}` *dict* detail. A test asserting
+  "the token gate passed" must distinguish them: assert on the detail
+  shape/code, or use an `allow_run=True` client so the token gate is
+  the only 403 source. Adding the gate broke 74 existing ops route
+  tests across 8 files at once (the expected blast radius — same shape
+  as the spend-gate `ATTUNE_SPEND_GATE=off` fixture lesson, but here
+  there's no env off-switch so the conftest-null-the-global technique
+  is the equivalent). Pairs with the "migrating tests when adding a
+  layer" and "formatter strips imports added before usage" lessons
+  (the latter re-bit across all 5 route files — re-adding the stripped
+  `Depends`/`require_client_token` imports via Bash, which doesn't
+  trigger the Edit PostToolUse formatter, was the fix).
