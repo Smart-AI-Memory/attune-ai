@@ -1,12 +1,21 @@
-"""Unified output formatting for workflows.
+"""Workflow result data model.
 
-Provides consistent Rich-based output components for workflow results:
-- WorkflowReport: Main report container with sections
-- FindingsTable: Render findings as Rich Table or plain text
-- MetricsPanel: Color-coded score display
-- ReportSection: Individual report sections
+The universal result type every workflow returns at the boundary into
+the voice / CLI / dashboard / MCP surfaces. This module is **pure data**
+— it knows nothing about rendering. Rendering markdown from a
+``WorkflowReport`` is the job of ``attune.voice.report_renderer``
+(workflow-result-formatting spec, T2).
 
-Supports graceful fallback to plain text when Rich is unavailable.
+Content model:
+
+- ``WorkflowReport`` carries ordered ``sections``; each ``Section`` is a
+  typed subclass (callout / prose / table / list / findings / next-steps)
+  with a ``tier`` (``"essential"`` / ``"useful"`` / ``"detail"``) that
+  drives progressive disclosure at render time.
+- ``to_dict()`` / ``from_dict()`` round-trip through a plain dict (with a
+  ``_type`` discriminator and a per-section ``kind``) so a report
+  survives the SDK / MCP / JSON boundary that ``WorkflowResult.final_output``
+  crosses; the voice layer detects the discriminator and reconstructs.
 
 Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
@@ -15,29 +24,14 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING, Any
+from typing import ClassVar, Literal
 
-# Rich imports with fallback
-try:
-    from rich.console import Console
-    from rich.panel import Panel
-    from rich.table import Table
-    from rich.text import Text
-
-    RICH_AVAILABLE = True
-except ImportError:
-    RICH_AVAILABLE = False
-    Console = None  # type: ignore[misc,assignment]
-    Panel = None  # type: ignore[misc,assignment]
-    Table = None  # type: ignore[misc,assignment]
-    Text = None  # type: ignore[misc,assignment]
-
-if TYPE_CHECKING:
-    from rich.console import Console as ConsoleType
+Tier = Literal["essential", "useful", "detail"]
+Emphasis = Literal["info", "ok", "warn", "danger"]
 
 
 # =============================================================================
-# DATA CLASSES
+# Leaf content types
 # =============================================================================
 
 
@@ -52,386 +46,281 @@ class Finding:
     code: str | None = None
 
     @property
-    def severity_icon(self) -> str:
-        """Get icon for severity level."""
-        icons = {
-            "high": "[red]:x:[/red]" if RICH_AVAILABLE else "X",
-            "medium": "[yellow]:warning:[/yellow]" if RICH_AVAILABLE else "!",
-            "low": "[blue]:information:[/blue]" if RICH_AVAILABLE else "i",
-            "info": "[dim]o[/dim]" if RICH_AVAILABLE else "o",
-        }
-        return icons.get(self.severity.lower(), "o")
-
-    @property
     def location(self) -> str:
-        """Get file:line location string."""
+        """Get ``file:line`` location string (``file`` alone if no line)."""
         if self.line:
             return f"{self.file}:{self.line}"
         return self.file
 
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict."""
+        return {
+            "severity": self.severity,
+            "file": self.file,
+            "line": self.line,
+            "message": self.message,
+            "code": self.code,
+        }
+
+    @classmethod
+    def from_dict(cls, d: dict[str, object]) -> Finding:
+        """Reconstruct from a plain dict (ignores unknown keys)."""
+        return cls(
+            severity=str(d.get("severity", "info")),
+            file=str(d.get("file", "unknown")),
+            line=d.get("line"),  # type: ignore[arg-type]
+            message=str(d.get("message", "")),
+            code=d.get("code"),  # type: ignore[arg-type]
+        )
+
 
 @dataclass
-class ReportSection:
-    """Individual section of a workflow report."""
+class NextAction:
+    """A single forward-looking step the user can take after a report.
+
+    ``text`` is the bullet's main line. ``command`` is an optional shell
+    command a surface can wire to a one-click run button (CLI prints it
+    syntax-highlighted). ``file`` is an optional ``path[:line]`` reference
+    a surface can turn into a link.
+    """
+
+    text: str
+    command: str | None = None
+    file: str | None = None
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict."""
+        return {"text": self.text, "command": self.command, "file": self.file}
+
+    @classmethod
+    def from_dict(cls, d: dict[str, object]) -> NextAction:
+        """Reconstruct from a plain dict."""
+        return cls(
+            text=str(d.get("text", "")),
+            command=d.get("command"),  # type: ignore[arg-type]
+            file=d.get("file"),  # type: ignore[arg-type]
+        )
+
+
+# =============================================================================
+# Sections
+# =============================================================================
+
+
+@dataclass
+class Section:
+    """Base class for report sections. Subclasses carry kind-specific
+    content and set ``kind`` for serialization."""
 
     title: str
-    content: Any  # str, list[Finding], dict, or Rich renderable
-    collapsed: bool = False
-    style: str = "default"  # "default", "success", "warning", "error"
+    tier: Tier
+    kind: ClassVar[str] = "section"
+
+    def _payload(self) -> dict[str, object]:
+        """Kind-specific fields (overridden by subclasses)."""
+        return {}
+
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict with a ``kind`` discriminator."""
+        return {"kind": self.kind, "title": self.title, "tier": self.tier, **self._payload()}
+
+
+@dataclass
+class CalloutSection(Section):
+    """A short highlighted statement (verdict, headline)."""
+
+    text: str = ""
+    emphasis: Emphasis = "info"
+    kind: ClassVar[str] = "callout"
+
+    def _payload(self) -> dict[str, object]:
+        return {"text": self.text, "emphasis": self.emphasis}
+
+
+@dataclass
+class ProseSection(Section):
+    """A paragraph of free text."""
+
+    text: str = ""
+    kind: ClassVar[str] = "prose"
+
+    def _payload(self) -> dict[str, object]:
+        return {"text": self.text}
+
+
+@dataclass
+class TableSection(Section):
+    """A table with named columns and row dicts."""
+
+    columns: list[str] = field(default_factory=list)
+    rows: list[dict[str, object]] = field(default_factory=list)
+    kind: ClassVar[str] = "table"
+
+    def _payload(self) -> dict[str, object]:
+        return {"columns": list(self.columns), "rows": [dict(r) for r in self.rows]}
+
+
+@dataclass
+class ListSection(Section):
+    """An unordered list of strings."""
+
+    items: list[str] = field(default_factory=list)
+    kind: ClassVar[str] = "list"
+
+    def _payload(self) -> dict[str, object]:
+        return {"items": list(self.items)}
+
+
+@dataclass
+class FindingsSection(Section):
+    """A collection of :class:`Finding` objects."""
+
+    findings: list[Finding] = field(default_factory=list)
+    kind: ClassVar[str] = "findings"
+
+    def _payload(self) -> dict[str, object]:
+        return {"findings": [f.to_dict() for f in self.findings]}
+
+
+@dataclass
+class NextStepsSection(Section):
+    """Forward-momentum section, rendered last in summary mode and
+    omitted entirely when ``items`` is empty. Tier is ``"essential"`` by
+    convention."""
+
+    items: list[NextAction] = field(default_factory=list)
+    kind: ClassVar[str] = "next-steps"
+
+    def _payload(self) -> dict[str, object]:
+        return {"items": [a.to_dict() for a in self.items]}
+
+
+# kind -> subclass, for from_dict dispatch.
+_SECTION_REGISTRY: dict[str, type[Section]] = {
+    CalloutSection.kind: CalloutSection,
+    ProseSection.kind: ProseSection,
+    TableSection.kind: TableSection,
+    ListSection.kind: ListSection,
+    FindingsSection.kind: FindingsSection,
+    NextStepsSection.kind: NextStepsSection,
+}
+
+
+def _section_from_dict(d: dict[str, object]) -> Section:
+    """Reconstruct the right :class:`Section` subclass from its dict."""
+    kind = str(d.get("kind", ""))
+    cls = _SECTION_REGISTRY.get(kind)
+    if cls is None:
+        raise ValueError(f"Unknown section kind: {kind!r}")
+    title = str(d.get("title", ""))
+    tier: Tier = d.get("tier", "useful")  # type: ignore[assignment]
+    if cls is CalloutSection:
+        return CalloutSection(
+            title=title,
+            tier=tier,
+            text=str(d.get("text", "")),
+            emphasis=d.get("emphasis", "info"),  # type: ignore[arg-type]
+        )
+    if cls is ProseSection:
+        return ProseSection(title=title, tier=tier, text=str(d.get("text", "")))
+    if cls is TableSection:
+        return TableSection(
+            title=title,
+            tier=tier,
+            columns=list(d.get("columns", [])),  # type: ignore[arg-type]
+            rows=list(d.get("rows", [])),  # type: ignore[arg-type]
+        )
+    if cls is ListSection:
+        return ListSection(title=title, tier=tier, items=list(d.get("items", [])))  # type: ignore[arg-type]
+    if cls is FindingsSection:
+        raw = d.get("findings", []) or []
+        return FindingsSection(
+            title=title,
+            tier=tier,
+            findings=[Finding.from_dict(f) for f in raw],  # type: ignore[union-attr]
+        )
+    # NextStepsSection
+    raw_items = d.get("items", []) or []
+    return NextStepsSection(
+        title=title,
+        tier=tier,
+        items=[NextAction.from_dict(a) for a in raw_items],  # type: ignore[union-attr]
+    )
+
+
+# =============================================================================
+# Report
+# =============================================================================
 
 
 @dataclass
 class WorkflowReport:
-    """Main workflow report container."""
+    """The universal workflow result type. Pure data; rendering lives in
+    ``attune.voice.report_renderer``."""
 
     title: str
     summary: str = ""
-    sections: list[ReportSection] = field(default_factory=list)
     score: int | None = None
-    level: str = "info"  # "info", "success", "warning", "error"
-    metadata: dict[str, Any] = field(default_factory=dict)
+    metadata: dict[str, object] = field(default_factory=dict)
+    suggestions: list = field(default_factory=list)
+    sections: list[Section] = field(default_factory=list)
 
-    def add_section(
-        self,
+    @property
+    def findings(self) -> list[Finding]:
+        """Back-compat read: all findings across any FindingsSection."""
+        out: list[Finding] = []
+        for s in self.sections:
+            if isinstance(s, FindingsSection):
+                out.extend(s.findings)
+        return out
+
+    @classmethod
+    def from_findings(
+        cls,
         title: str,
-        content: Any,
-        collapsed: bool = False,
-        style: str = "default",
-    ) -> None:
-        """Add a section to the report."""
-        self.sections.append(
-            ReportSection(title=title, content=content, collapsed=collapsed, style=style),
+        findings: list[Finding],
+        *,
+        tier: Tier = "essential",
+        **kwargs: object,
+    ) -> WorkflowReport:
+        """Convenience: build a one-section report for findings-only workflows."""
+        return cls(
+            title=title,
+            sections=[FindingsSection(title=title, tier=tier, findings=findings)],
+            **kwargs,  # type: ignore[arg-type]
         )
 
-    def render(self, console: ConsoleType | None = None, use_rich: bool = True) -> str:
-        """Render the report.
+    def to_dict(self) -> dict[str, object]:
+        """Serialize to a plain dict with a ``_type`` discriminator.
 
-        Args:
-            console: Rich Console instance (optional)
-            use_rich: Whether to use Rich formatting
-
-        Returns:
-            Rendered report as string (for plain text) or prints to console (for Rich)
-
+        Suitable for ``WorkflowResult.final_output`` — survives the
+        SDK / MCP / JSON boundary; the voice layer detects ``_type`` and
+        reconstructs via :meth:`from_dict`.
         """
-        if use_rich and RICH_AVAILABLE and console is not None:
-            self._render_rich(console)
-            return ""
-        return self._render_plain()
-
-    def _render_rich(self, console: ConsoleType) -> None:
-        """Render report using Rich."""
-        # Score panel (title shown via score panel)
-        if self.score is not None:
-            score_panel = MetricsPanel.render_score(self.score)
-            console.print(score_panel)
-
-        if self.summary:
-            console.print(f"\n{self.summary}\n")
-
-        # Sections
-        for section in self.sections:
-            self._render_section_rich(console, section)
-
-    def _render_section_rich(self, console: ConsoleType, section: ReportSection) -> None:
-        """Render a single section using Rich."""
-        border_style = {
-            "success": "green",
-            "warning": "yellow",
-            "error": "red",
-            "default": "blue",
-        }.get(section.style, "blue")
-
-        if isinstance(section.content, str):
-            console.print(Panel(section.content, title=section.title, border_style=border_style))
-        elif isinstance(section.content, list) and all(
-            isinstance(f, Finding) for f in section.content
-        ):
-            table = FindingsTable(section.content).to_rich_table()
-            console.print(Panel(table, title=section.title, border_style=border_style))
-        elif isinstance(section.content, dict):
-            # Render dict as key-value table
-            table = Table(show_header=False, box=None)
-            table.add_column("Key", style="cyan")
-            table.add_column("Value")
-            for key, value in section.content.items():
-                table.add_row(str(key), str(value))
-            console.print(Panel(table, title=section.title, border_style=border_style))
-        else:
-            # Try to print directly (might be a Rich renderable)
-            try:
-                console.print(
-                    Panel(section.content, title=section.title, border_style=border_style),
-                )
-            except Exception:  # noqa: BLE001
-                # INTENTIONAL: Graceful fallback for unknown content types
-                console.print(f"\n[bold]{section.title}[/bold]")
-                console.print(str(section.content))
-
-    def _render_plain(self) -> str:
-        """Render report as plain text."""
-        lines = []
-        separator = "=" * 60
-
-        # Header
-        lines.append(separator)
-        lines.append(self.title.upper())
-        lines.append(separator)
-
-        if self.score is not None:
-            level = MetricsPanel.get_level(self.score)
-            lines.append(f"Score: {self.score}/100 ({level.upper()})")
-            lines.append("")
-
-        if self.summary:
-            lines.append(self.summary)
-            lines.append("")
-
-        # Sections
-        for section in self.sections:
-            lines.append("-" * 60)
-            lines.append(section.title.upper())
-            lines.append("-" * 60)
-
-            if isinstance(section.content, str):
-                lines.append(section.content)
-            elif isinstance(section.content, list) and all(
-                isinstance(f, Finding) for f in section.content
-            ):
-                lines.append(FindingsTable(section.content).to_plain())
-            elif isinstance(section.content, dict):
-                for key, value in section.content.items():
-                    lines.append(f"  {key}: {value}")
-            else:
-                lines.append(str(section.content))
-
-            lines.append("")
-
-        lines.append(separator)
-        return "\n".join(lines)
-
-
-# =============================================================================
-# FINDINGS TABLE
-# =============================================================================
-
-
-class FindingsTable:
-    """Render a list of Finding objects as a Rich Table or plain text.
-
-    Args:
-        findings: List of Finding objects to render.
-
-    """
-
-    def __init__(self, findings: list[Finding]) -> None:
-        """Initialize with list of findings."""
-        self.findings = findings
-
-    def to_rich_table(self) -> Table:
-        """Convert findings to a color-coded Rich Table.
-
-        Returns:
-            Rich Table with Severity, Location, and Message columns.
-
-        """
-        table = Table(show_header=True, header_style="bold magenta")
-        table.add_column("Severity", style="bold", width=8)
-        table.add_column("Location", style="cyan")
-        table.add_column("Message")
-
-        for finding in self.findings:
-            severity_style = {
-                "high": "red",
-                "medium": "yellow",
-                "low": "blue",
-                "info": "dim",
-            }.get(finding.severity.lower(), "white")
-
-            table.add_row(
-                Text(finding.severity.upper(), style=severity_style),
-                finding.location,
-                finding.message,
-            )
-
-        return table
-
-    def to_plain(self) -> str:
-        """Convert findings to indented plain text.
-
-        Returns:
-            Multi-line string with ``[SEVERITY] file:line``
-            format, or ``"  No findings."`` if empty.
-
-        """
-        if not self.findings:
-            return "  No findings."
-
-        lines = []
-        for finding in self.findings:
-            lines.append(f"  [{finding.severity.upper()}] {finding.location}")
-            if finding.message:
-                lines.append(f"      {finding.message}")
-
-        return "\n".join(lines)
-
-
-# =============================================================================
-# METRICS PANEL
-# =============================================================================
-
-
-class MetricsPanel:
-    """Display score with color-coded indicator."""
-
-    @staticmethod
-    def get_level(score: int) -> str:
-        """Get level name for score."""
-        if score >= 85:
-            return "excellent"
-        if score >= 70:
-            return "good"
-        if score >= 50:
-            return "needs work"
-        return "critical"
-
-    @staticmethod
-    def get_style(score: int) -> str:
-        """Get Rich style for score."""
-        if score >= 85:
-            return "green"
-        if score >= 70:
-            return "yellow"
-        if score >= 50:
-            return "orange1"
-        return "red"
-
-    @staticmethod
-    def get_icon(score: int) -> str:
-        """Get icon for score."""
-        if score >= 85:
-            return "[green]:heavy_check_mark:[/green]"
-        if score >= 70:
-            return "[yellow]:large_yellow_circle:[/yellow]"
-        if score >= 50:
-            return "[orange1]:warning:[/orange1]"
-        return "[red]:x:[/red]"
-
-    @staticmethod
-    def get_plain_icon(score: int) -> str:
-        """Get plain text icon for score."""
-        if score >= 85:
-            return "[OK]"
-        if score >= 70:
-            return "[--]"
-        if score >= 50:
-            return "[!!]"
-        return "[XX]"
+        return {
+            "_type": "WorkflowReport",
+            "title": self.title,
+            "summary": self.summary,
+            "score": self.score,
+            "metadata": dict(self.metadata),
+            "suggestions": list(self.suggestions),
+            "sections": [s.to_dict() for s in self.sections],
+        }
 
     @classmethod
-    def render_score(cls, score: int, label: str = "Score") -> Panel:
-        """Render score as Rich Panel.
+    def from_dict(cls, d: dict[str, object]) -> WorkflowReport:
+        """Reconstruct from a :meth:`to_dict` payload."""
+        raw_sections = d.get("sections", []) or []
+        return cls(
+            title=str(d.get("title", "")),
+            summary=str(d.get("summary", "")),
+            score=d.get("score"),  # type: ignore[arg-type]
+            metadata=dict(d.get("metadata", {}) or {}),  # type: ignore[arg-type]
+            suggestions=list(d.get("suggestions", []) or []),  # type: ignore[arg-type]
+            sections=[_section_from_dict(s) for s in raw_sections],  # type: ignore[union-attr]
+        )
 
-        Args:
-            score: Score value (0-100)
-            label: Label for the score
-
-        Returns:
-            Rich Panel with formatted score
-
-        """
-        if not RICH_AVAILABLE or Panel is None:
-            raise RuntimeError("Rich library not available. Install with: pip install rich")
-
-        style = cls.get_style(score)
-        icon = cls.get_icon(score)
-        level = cls.get_level(score)
-
-        content = f"{icon} [bold]{score}[/bold]/100 ({level.upper()})"
-        return Panel(content, title=f"[bold]{label}[/bold]", border_style=style)
-
-    @classmethod
-    def render_plain(cls, score: int, label: str = "Score") -> str:
-        """Render score as plain text.
-
-        Args:
-            score: Score value (0-100)
-            label: Label for the score
-
-        Returns:
-            Plain text score display
-
-        """
-        icon = cls.get_plain_icon(score)
-        level = cls.get_level(score)
-        return f"{label}: {icon} {score}/100 ({level.upper()})"
-
-
-# =============================================================================
-# HELPER FUNCTIONS
-# =============================================================================
-
-
-def format_workflow_result(
-    title: str,
-    summary: str = "",
-    findings: list[dict] | None = None,
-    score: int | None = None,
-    recommendations: str = "",
-    metadata: dict[str, Any] | None = None,
-    suggestions: list | None = None,
-) -> WorkflowReport:
-    """Create a standardized workflow report.
-
-    Args:
-        title: Report title
-        summary: Brief summary text
-        findings: List of finding dicts with severity, file, line, message
-        score: Overall score (0-100)
-        recommendations: Recommendations text
-        metadata: Additional metadata
-        suggestions: List of NextAction for project-aware guidance
-
-    Returns:
-        WorkflowReport instance
-
-    """
-    report = WorkflowReport(
-        title=title,
-        summary=summary,
-        score=score,
-        metadata=metadata or {},
-    )
-
-    if findings:
-        finding_objs = [
-            Finding(
-                severity=f.get("severity", "info"),
-                file=f.get("file", "unknown"),
-                line=f.get("line"),
-                message=f.get("message", ""),
-                code=f.get("code"),
-            )
-            for f in findings
-        ]
-        report.add_section("Findings", finding_objs)
-
-    if recommendations:
-        report.add_section("Recommendations", recommendations)
-
-    # Project-aware guidance (v3.5)
-    if suggestions:
-        from .suggestions import format_suggestions_markdown
-
-        guidance_text = format_suggestions_markdown(suggestions)
-        if guidance_text:
-            report.add_section("What's Next", guidance_text, style="success")
-
-    return report
-
-
-def get_console() -> Console | None:
-    """Get Rich Console if available."""
-    if RICH_AVAILABLE and Console is not None:
-        return Console()
-    return None
+    @staticmethod
+    def is_report_dict(value: object) -> bool:
+        """True if ``value`` is a serialized WorkflowReport (voice detection)."""
+        return isinstance(value, dict) and value.get("_type") == "WorkflowReport"
