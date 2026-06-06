@@ -1273,28 +1273,76 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `git tag -d v5.8.0 && git tag -a v5.8.0 -m "..." && git push
   origin v5.8.0 --force`. GitHub tag protection may block the
   force-push — see the existing lesson on protected tags.
-- **PyPI publishing: prefer GitHub Actions trusted publishing
-  (OIDC), not local tokens**: The repo has
-  `.github/workflows/publish-pypi.yml` configured with trusted
-  publishing — no tokens needed. Trigger with
-  `gh workflow run publish-pypi.yml --ref main`. This runs on
-  GitHub's infrastructure, bypassing local SSL cert mismatches
-  (VPN/proxy intercepting `upload.pypi.org`) and 504 Gateway
-  Timeouts on large wheels. Three corollaries: (1) the `pypi`
-  environment has a required-reviewer gate — after the build
-  job passes, the publish job sits as "running" but is actually
-  waiting for approval at the Actions run page (the approval
-  can be self-served via the API:
-  `gh api repos/X/Y/actions/runs/<id>/pending_deployments -X POST
-  -F "environment_ids[]=<env-id>" -F state=approved`). Without
-  approval the job hangs indefinitely, not a PyPI timeout.
-  (2) If you MUST use local `twine`, pass the token via env
-  var — `twine upload` hangs/EOFErrors when prompting in
-  Claude Code's non-interactive terminal. Use
-  `TWINE_PASSWORD=pypi-... uv run twine upload dist/* --username __token__`.
-  (3) Never paste PyPI tokens into chat or logs — pasted tokens
-  are permanently exposed; if it happens, revoke immediately at
-  pypi.org/manage/account/token.
+- **Publishing to PyPI via GitHub Actions trusted publishing —
+  the trigger / env-approval / duplicate-publish / false-failure
+  gotchas**: prefer trusted publishing (OIDC), NOT local tokens.
+  `.github/workflows/publish-pypi.yml` is configured for it —
+  trigger `gh workflow run publish-pypi.yml --ref main`, which
+  runs on GitHub's infra and bypasses local SSL-cert mismatches
+  (VPN/proxy intercepting `upload.pypi.org`) and 504s on large
+  wheels. The recurring gotchas:
+  - **Env reviewer gate** — after the build job passes, the
+    publish job sits "running" but is actually awaiting approval
+    on the `pypi` environment; it hangs indefinitely (NOT a PyPI
+    timeout). Self-approve via `gh api` when
+    `current_user_can_approve: true` (check via the same
+    endpoint) instead of the web-UI "Review deployments":
+    ```
+    RUN=<run-id>
+    ENV_ID=$(gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments --jq '.[0].environment.id')
+    gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
+      -X POST -F "environment_ids[]=$ENV_ID" -F state=approved -F comment="..."
+    ```
+  - **Trusted-publisher "Workflow name" field = the FILENAME**
+    (`publish.yml`), NOT the YAML `name:` value (`Publish to
+    PyPI`). Mismatch → `invalid-publisher: valid token, but no
+    corresponding publisher`. The OIDC debug output prints the
+    actual `workflow_ref` claim — compare field-by-field. Other
+    common mismatches: owner case / hyphen-vs-underscore,
+    environment name case, repository name.
+  - **`gh workflow run --ref` semantics (two facts)** — (a) it
+    re-triggers a release-gated (`release: published`) workflow
+    cleanly against a tag WITHOUT re-cutting the release, IF the
+    workflow also declares `workflow_dispatch:`; (b) BUT it
+    validates the `workflow_dispatch` trigger against the
+    workflow file AT THE REF — adding the trigger on `main`
+    does NOT enable dispatch against a pre-existing tag
+    (`HTTP 422: Workflow does not have 'workflow_dispatch'
+    trigger`). So add `workflow_dispatch` BEFORE cutting the
+    tag, and re-trigger with `--ref main` (the wheel name comes
+    from `pyproject.toml`, not the ref).
+  - **Env deployment-branch policies may whitelist branches
+    only** → a tag-triggered run (`refs/tags/vX`) is rejected
+    ("Tag X is not allowed to deploy due to environment
+    protection rules"). Fix: trigger via `--ref main`, OR add a
+    `v*` tag policy: `gh api repos/<o>/<r>/environments/pypi/
+    deployment-branch-policies -F name=v* -F type=tag`.
+    (attune-rag / attune-author `pypi` envs have no restriction.)
+  - **Duplicate publish from two triggers** — when the workflow
+    has BOTH an auto-trigger (`release: published` OR
+    `push: tags: 'v*.*.*'`, the latter since v7.1.1) AND
+    `workflow_dispatch:`, both runs fire and both await env
+    approval. Approving BOTH → the second 400/422s "File already
+    exists" (the first uploaded fine; the release IS live, the
+    failure just looks alarming). Choose ONE path: for
+    tag-triggered publishes let the tag push do it and skip the
+    explicit `gh workflow run`; if both fired, approve one and
+    `gh run cancel` the other; or guard the job with
+    `if: github.event_name == 'workflow_dispatch'`.
+  - **Run-level "failure" can hide a successful upload** —
+    `twine upload` succeeds but a downstream step (attestations,
+    sigstore, slack) fails, so the run shows
+    `conclusion: failure`. A retry returns `400 File already
+    exists`. Cross-check `curl https://pypi.org/pypi/<pkg>/<ver>/json`
+    — valid JSON = the upload landed (compare `upload_time` to
+    the run start). Don't chase "the publish failed"; only a
+    later step did.
+  - **Local `twine` fallback** — if you must, pass the token via
+    env var (`TWINE_PASSWORD=pypi-... uv run twine upload dist/*
+    --username __token__`); interactive prompts hang/EOFError in
+    Claude Code's non-interactive terminal. NEVER paste PyPI
+    tokens into chat/logs — pasted = permanently exposed; revoke
+    immediately at pypi.org/manage/account/token.
 
 - **`Path.glob()` and `PurePosixPath.match()` handle `**`
   unexpectedly — convert to regex for cross-version reliability**:
@@ -1790,19 +1838,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   turn into XPASS if a retriever upgrade starts passing
   them.
 
-- **PyPI trusted publisher "Workflow name" field wants the
-  FILENAME, not the YAML display name**: The PyPI
-  pending-publisher form has a "Workflow name" field that
-  must match the `workflow_ref` claim GitHub sends — which
-  is the filename (`publish.yml`), NOT the value of `name:`
-  at the top of the YAML (`Publish to PyPI`). If they
-  mismatch, the publish job fails with `invalid-publisher:
-  valid token, but no corresponding publisher`. The OIDC
-  debug output shows the actual claim — compare it to the
-  PyPI config field-by-field. Other common mismatches:
-  owner with wrong case or underscore-vs-hyphen,
-  environment name case, repository name.
-
 - **`uv.lock` retains `editable = "../name"` paths after
   `[tool.uv.sources]` edits — always re-run `uv lock`**:
   Deleting (or changing) a `[tool.uv.sources]` entry in
@@ -1831,18 +1866,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   pre-commit hooks start failing, read the actual log
   and check `uv.lock` resolvability before assuming the
   hook's nominal responsibility is the issue.
-
-- **`gh workflow run <file.yml> --ref <tag>` re-triggers
-  a release-gated workflow cleanly without churning the
-  release**: When a `publish.yml` triggered by
-  `release: types: [published]` fails on the first shot
-  (e.g. invalid trusted publisher config on PyPI side),
-  don't delete and recreate the release — if the workflow
-  also declares `workflow_dispatch:`,
-  `gh workflow run publish.yml --repo owner/repo --ref
-  <tag>` fires a fresh run against the same tag, skipping
-  the release-tag churn. Build + publish steps run
-  identically.
 
 - **Chicken-and-egg for optional extras in [dev]**: If
   you want `pkg>=X,<Y` in `[dev]` extra so CI tests
@@ -1897,28 +1920,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   This pairs with the existing "Tags pushed before squash-
   merge point to the wrong commit" lesson — same class
   of bug, opposite direction in time.
-
-- **PyPI env policies may whitelist branches only — tag-
-  triggered publishes get rejected**: `pypi` environment
-  deployment branch policies on attune-ai allowed `main`
-  and `release/*` branches but not any tag pattern. A
-  `publish-pypi.yml` run fired by
-  `release: types: [published]` executes against the tag
-  ref (`refs/tags/v6.1.0`), which the env rejected with
-  "Tag <X> is not allowed to deploy due to environment
-  protection rules." Previous releases never hit this
-  because they all ran via `workflow_dispatch --ref main`.
-  Fix (fastest): re-trigger via
-  `gh workflow run publish-pypi.yml --ref main` — the
-  build pulls the latest main which already has the
-  version bump merged in. Alternative fix (if you prefer
-  tag-triggered publishes): add `v*` to the env's
-  `deployment-branch-policies` via
-  `gh api repos/<owner>/<repo>/environments/pypi/deployment-branch-policies -F name=v* -F type=tag`.
-  attune-rag and attune-author don't have this issue
-  because I set up their `pypi` envs with no
-  branch/tag restriction when creating them for the RAG
-  release.
 
 - **Naive suffix-strip stemming fails on English
   doubling-consonant words**: A simple stemmer that
@@ -2164,27 +2165,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   forced prompt variant, not a "please use the
   context" one. Decision + data in
   `docs/rag/faithfulness-decision-2026-04-19.md`.
-
-- **GitHub Actions environment deployment approvals can
-  be self-approved via `gh api` when
-  `current_user_can_approve: true`** — no need to visit
-  the web UI for routine releases on repos you own.
-  Sequence:
-  ```
-  RUN=<run-id>
-  ENV_ID=$(gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
-    --jq '.[0].environment.id')
-  gh api repos/OWNER/REPO/actions/runs/$RUN/pending_deployments \
-    -X POST -F "environment_ids[]=$ENV_ID" -F state=approved \
-    -F comment="release notes here"
-  ```
-  Check `current_user_can_approve` first via the same
-  pending_deployments endpoint. Useful for the `pypi`
-  environment gate on attune-rag / attune-help /
-  attune-ai publishes when the CLI user is the repo
-  owner. Supersedes the older "go to the Actions run
-  page and click Review deployments" pattern for the
-  common solo-owner case.
 
 - **PR scope after commits have already landed: expand
   the existing PR, don't split**: when new commits are
@@ -2453,26 +2433,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   MCP tools and do a direct `ast` parse + docstring
   check in Bash — takes seconds and actually returns
   signal.
-
-- **`release: published` + `workflow_dispatch` both
-  approved for `pypi` env = duplicate publish, the
-  second fails "File already exists"**: on v6.2.0,
-  approving the `pypi` environment deployment on BOTH
-  the tag-triggered (`release: published`) and manual
-  (`workflow_dispatch`) runs caused the first to
-  upload successfully and the second to 400 with
-  `File already exists ('attune_ai-6.2.0-py3-none-any
-  .whl', with blake2_256 hash ...)`. The release is
-  fine — files are live on PyPI — but the failed run
-  looks alarming. Two fixes: (1) only approve ONE of
-  the two runs per release; (2) guard the publish
-  job with `if: ${{ github.event_name ==
-  'workflow_dispatch' }}` so tag-triggered runs
-  short-circuit before twine uploads. Related to the
-  existing `pypi` env branch-policy lesson — that
-  one bites when only tag-triggered runs exist; this
-  one bites when both paths are enabled and both get
-  approved.
 
 - **YAML `run:` block scalars break on blank lines
   inside multi-line bash strings**: a `run:` block
@@ -3123,36 +3083,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   above and the "Audits with 'possibly delete if X'
   qualifiers" lesson — same family (spec/audit text goes
   stale; verify against current code before acting).
-
-- **`gh workflow run --ref <tag>` validates the
-  `workflow_dispatch` trigger against the workflow file
-  at the SPECIFIED REF, not at the default branch**:
-  Adding `workflow_dispatch:` to `.github/workflows/foo.yml`
-  on `main` does NOT enable manual dispatch against
-  pre-existing tags. `gh workflow run --ref v0.11.1`
-  still returns `HTTP 422: Workflow does not have
-  'workflow_dispatch' trigger` because the workflow file
-  on the v0.11.1 tag still lacks the trigger. Fix:
-  `--ref main` (the version in `pyproject.toml` is what
-  determines the published wheel name, not the ref). For
-  any release-triggered publish workflow, add
-  `workflow_dispatch` BEFORE cutting the tag, not after.
-
-- **PyPI run-level "failure" can hide a successful wheel
-  upload that subsequent retries surface as "File
-  already exists"**: A `release: published`-triggered
-  publish job that wraps `twine upload` plus downstream
-  steps (attestations, sigstore, slack notify) can have
-  the upload succeed and a downstream step fail. The
-  GitHub Actions run shows `conclusion: failure`, making
-  it look like nothing was published. Diagnosis: a
-  retry returns `400 File already exists` on the wheel
-  filename. Cross-check
-  `curl https://pypi.org/pypi/<pkg>/<ver>/json` — if it
-  returns a valid release JSON, the upload landed.
-  Compare the JSON's `upload_time` against the run's
-  start time to confirm. Don't keep chasing "the publish
-  failed" — the publish succeeded; only a later step did.
 
 - **Py 3.10 doesn't reliably bind submodule attributes
   from `from .submodule import X` in `__init__.py`,
@@ -6210,30 +6140,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   manifests — that one new assertion would have caught every
   miss since v7.0.0. Forward correction lives in a bump-only
   follow-up PR; don't try to re-tag historical releases.
-
-- **Tag push + workflow_dispatch both fire ``publish-pypi.yml`` —
-  approve ONE, cancel the other**: extends the existing
-  "``release: published`` + ``workflow_dispatch`` both
-  approved for ``pypi`` env = duplicate publish" lesson with
-  the second auto-trigger shape. Repo's ``publish-pypi.yml``
-  is triggered by ``push: tags: 'v*.*.*'`` (changed to this
-  in v7.1.1 per its CHANGELOG entry). Pushing ``v7.2.0``
-  auto-fires a publish run. Additionally calling
-  ``gh workflow run publish-pypi.yml --ref main`` fires a
-  SECOND run via ``workflow_dispatch``. Both then sit waiting
-  for ``pypi`` environment approval. If both get approved,
-  the second 422s on "File already exists" — but the alarming
-  "failed" appearance hides that the first uploaded
-  successfully. **Operational rule** for any release whose
-  workflow has BOTH an auto-trigger AND
-  ``workflow_dispatch:``: choose ONE path, not both. For
-  ``push: tags``-triggered publishes, the cleaner default is
-  to let the tag push do it and skip the explicit
-  ``gh workflow run``. If you've already triggered both,
-  approve the tag-run via
-  ``gh api .../pending_deployments -X POST`` and
-  ``gh run cancel <dispatch-run-id>`` the duplicate before it
-  reaches the upload step.
 
 - **`dig @8.8.8.8 <domain>` returning NXDOMAIN is the
   definitive "this domain is unregistered" signal — local
