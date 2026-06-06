@@ -18,15 +18,15 @@ Sequencing:
 
 ## Phase 1 — Switch to larger runners
 
-- [ ] **1.1** Verify the org has larger runners enabled. Check
+- [x] **1.1** Verify the org has larger runners enabled. Check
       [GitHub Actions runner groups settings](https://github.com/organizations/Smart-AI-Memory/settings/actions/runner-groups)
       or run a probe workflow with `runs-on: ubuntu-latest-large`
       to confirm. Cost-attribution + billing limits should be set.
-- [ ] **1.2** Update `.github/workflows/tests.yml`:
+- [x] **1.2** Update `.github/workflows/tests.yml`:
       - `runs-on: ubuntu-latest` → `runs-on: ubuntu-latest-large`
         on the `test` matrix job's ubuntu entries.
       - Leave macOS and Windows runners on defaults.
-- [ ] **1.3** Trigger a fresh CI run. Verify matrix completes
+- [~] **1.3** (verifying on this PR's run) Trigger a fresh CI run. Verify matrix completes
       faster than the default-runner baseline (expectation: ~2x
       speedup from 8 workers vs 4 with `-n auto`).
 
