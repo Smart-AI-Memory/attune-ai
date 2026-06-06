@@ -174,50 +174,42 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   test-quality-program cycle when the top 11 rubric rows
   were all coverage-omit artifacts.
 
-- **structlog config leaks via `structlog.configure(...)`
-  break unrelated log-event tests on the same xdist
-  worker**: any test that exercises a real call to
-  `structlog.configure(wrapper_class=structlog.make_filtering_bound_logger(WARNING))`
-  (e.g. via a CLI's `_configure_logging` function) mutates
-  the GLOBAL structlog wrapper class, and that mutation
-  persists across the rest of the worker's test session.
-  Subsequent `logger.info(...)` calls are silently
-  filtered at the wrapper layer — before the
-  `structlog.testing.capture_logs()` processor can capture
-  them — so `capture_logs()` returns `[]` and assertions
-  like `assert any(e["event"] == "..." for e in cap)` fail
-  with empty captures. The same mechanism makes the older
-  `capsys`-based pattern unreliable, but the root cause is
-  the config leak, not the capture primitive. **Fix at
-  the READ site, not the leak site.** PR #265 spent three
-  commits trying to contain the leak (class-scoped
-  autouse → module-scoped autouse → still missed
-  `TestMain.test_main_*` which transitively calls
-  `_configure_logging` via `main()`). Each fix narrowed
-  scope but missed another caller — whack-a-mole. The
-  durable fix is in the assertion test itself: call
-  `structlog.reset_defaults()` immediately before the
-  `capture_logs()` context. That single line makes the
-  assertion resilient to ANY prior worker state — past,
-  present, and future polluting callers — and doesn't
-  require auditing every CLI entry point in the suite. As
-  belt-and-suspenders the module-level autouse in
-  `tests/unit/memory/test_control_panel_display.py`
-  stays, but the load-bearing fix is the in-test reset.
-  Local macOS xdist rarely surfaces this because the
-  12-worker distribution usually doesn't put the
-  polluting test and the assertion test on the same
-  worker in the leak-then-read order; Linux CI scheduling
-  is different enough to hit it almost
-  deterministically across all Python versions.
-  Pair lesson:
-  **`structlog.testing.capture_logs()` is still the
-  preferred capture primitive over `capsys`** because it
-  bypasses I/O entirely (capsys is also vulnerable to
-  structlog's `WriteLogger` caching `sys.stdout` at
-  logger-creation time). But `capture_logs()` alone
-  doesn't help if a leaked filtering wrapper drops the
-  event before it reaches the capture processor.
+- **structlog gotchas — config leaks, stdout pollution, stdlib
+  kwargs**:
+  - **Config leaks break log-capture tests on the same xdist
+    worker** — a real `structlog.configure(wrapper_class=
+    make_filtering_bound_logger(WARNING))` (e.g. via a CLI's
+    `_configure_logging`) mutates the GLOBAL wrapper class for
+    the rest of the worker; subsequent `logger.info(...)` is
+    silently filtered BEFORE `structlog.testing.capture_logs()`
+    sees it, so `capture_logs()` returns `[]` and `assert
+    any(e["event"]==… for e in cap)` fails empty. **Fix at the
+    READ site, not the leak site**: call
+    `structlog.reset_defaults()` immediately before the
+    `capture_logs()` context — one line, resilient to ANY
+    prior/future polluting caller (PR #265 burned three commits
+    trying to contain the leak with class/module-scoped autouse
+    fixtures — whack-a-mole, kept missing callers like
+    `TestMain` that reach `_configure_logging` via `main()`).
+    Local macOS xdist rarely hits it (worker distribution);
+    Linux CI hits it near-deterministically. `capture_logs()`
+    is still preferred over `capsys` (bypasses I/O; capsys is
+    also vulnerable to `WriteLogger` caching `sys.stdout` at
+    logger-creation) — but it can't help if a leaked filtering
+    wrapper drops the event first.
+  - **Default ConsoleRenderer writes to stdout, not stderr** —
+    it prepends log lines (`2026-… [info] rag.run …`) to
+    `capsys.readouterr().out`, breaking `json.loads()` on a
+    CLI's JSON payload. Parse from the first `{`
+    (`json.loads(text[text.find("{"):])`) or configure
+    structlog to stderr in `main()` before the pipeline. Don't
+    silence logs — they're useful in prod.
+  - **structlog kwargs crash a stdlib Logger** —
+    `logger.info("msg", key=value)` is structlog syntax; a
+    stdlib `logging.Logger` raises `TypeError: unexpected
+    keyword argument`. Use `logger.info("msg: key=%s", value)`;
+    grep the whole module when fixing (partial fixes leave
+    runtime crashes in untouched calls).
 
 - **`pytest --cov` triggers
   `KeyError: 'pydantic.root_model'` via the workflows
@@ -235,10 +227,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `coverage combine && coverage report --include="..."`
   instead — same coverage data, no instrumentation
   interaction with conftest's lazy workflow loader.
-
-- **Test mocks must match imports**: When a function changes its
-  import path, all test mocks must be updated to match or side
-  effects are silently ignored and assertions fail.
 
 - **Hardcoded `/root/` paths in tests**: Avoid `/root/` in test
   fixtures — CI runners often execute as root, making the path
@@ -393,41 +381,68 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the function body. Fix: add an explicit `reason_codes: list[str] |
   None = None` parameter so the signature is unambiguous.
 
-- **Patchable imports require module-level binding — four
-  techniques for four import shapes**: `unittest.mock.patch
-  ("module.Name")` looks up the attribute on the module
-  object at patch time, so any name imported INSIDE a
-  function body raises `AttributeError`. Pick the technique
-  by import shape: (1) **Optional SDK with availability
-  guard** — for `import optional_sdk` in function bodies,
-  hoist to module scope with a guard:
-  `_optional_sdk = None; _AVAILABLE = False` (set on
-  successful import), then patch `module._optional_sdk`.
-  Established pattern across our adapters. (2) **Plain
-  module-scope hoist** — for `from X import Y` deferred
-  inside a function, move the import to module scope and
-  patch `module.Y`. (3) **Patch the source module instead**
-  — when hoisting is undesirable (e.g.
-  `from ..real_tools import RealSecurityAuditor` inside a
-  function in `_strategies/base.py`), patch
-  `real_tools.RealSecurityAuditor` — the source module
-  where the name IS at module scope. The deferred import
-  resolves from the patched source at call time. Cleaner
-  than hoisting or `patch.dict`. (4) **`patch.dict("sys.modules",
-  ...)` for bare `import X`** — when a function does
-  `import attune` (bare module, not `from X import Y`),
-  neither (1) nor (3) applies. Build a fake:
-  `mock = types.ModuleType("attune"); mock.__version__ = "..."`,
-  then `patch.dict("sys.modules", {"attune": mock})`. Same
-  technique simulates `ImportError` if you set the entry to
-  `None`.
-
-- **Verify new dispatch branches with a known fixture, not just
-  imports**: When adding a new runtime case (e.g. `local_python`)
-  to an existing dispatch table, a clean import doesn't prove the
-  branch fires. Run `Executor.run()` directly with a spec whose
-  `runtime` matches the new case and assert `result.status ==
-  "success"` before considering the feature done.
+- **Mocking & patching in tests — get the target right, then
+  watch the pitfalls**: `unittest.mock.patch("module.Name")`
+  looks up the attribute on the module object AT PATCH TIME, so
+  the patch must target where the name is BOUND, not where it's
+  defined.
+  - **Pick the patch target by import shape (four techniques)**:
+    (1) **optional SDK with availability guard** — hoist `import
+    optional_sdk` to module scope with `_sdk = None; _AVAILABLE =
+    False` (set on success), patch `module._optional_sdk`;
+    (2) **plain module-scope hoist** — for a `from X import Y`
+    deferred in a function, move it to module scope and patch
+    `module.Y`; (3) **patch the source module** — when hoisting
+    is undesirable, patch `real_tools.RealSecurityAuditor` (the
+    source where the name IS at module scope); the deferred
+    import resolves from the patched source at call time;
+    (4) **`patch.dict("sys.modules", {...})` for bare `import
+    X`** — build a fake `types.ModuleType("attune")` (set the
+    entry to `None` to simulate `ImportError`).
+  - **Import-path changes silently break mocks** — when a
+    function's import path changes, every mock targeting the old
+    path is silently ignored (side effects lost, assertions
+    fail). Update all mocks to match.
+  - **Mock at the import site, not the definition site** —
+    mocking a function where it's defined doesn't stop a consumer
+    reading the real thing via a different binding; patch the
+    consuming module's name (`attune.voice.formatter.get_next_steps`,
+    not `attune.voice.next_steps.get_next_steps`), or
+    `monkeypatch.chdir(tmp_path)` to isolate from the real
+    filesystem.
+  - **Dispatch tables hold DIRECT function references** —
+    `_SUBCOMMAND_DISPATCH` captures `cmd_foo` at import time, so
+    `@patch("module.cmd_foo")` swaps the module attr but the
+    table still calls the original. Patch the TABLE:
+    `patch.dict("module._SUBCOMMAND_DISPATCH", {cmd: {**orig,
+    sub: mock}})` (this caused 20+ failures).
+  - **Facade read-only properties need backing-attribute
+    injection** — `RedisShortTermMemory._client` is a read-only
+    property; inject via `memory._base._client = mock` (the plain
+    `BaseOperations` attribute), not `memory._client =
+    MagicMock()`.
+  - **Stacked `@patch` decorators inject bottom-up** —
+    `@patch("A") @patch("B") def test(self, mock_b, mock_a)`: the
+    innermost (bottom) decorator is the first positional arg; a
+    missing decorator → `NameError` at runtime. Count decorators
+    vs params.
+  - **Duck-typed fakes fall through `isinstance` collectors
+    silently** — a shape-compatible fake fails `isinstance(msg,
+    RealClass)` and the collector leaves its default ("No results
+    returned"), so the test passes against the wrong answer.
+    Construct REAL class instances (`dataclasses.fields(Cls)`
+    finds the field list).
+  - **Patching `Path.stat` to raise breaks `Path.exists()`
+    first** — `exists()`/`is_file()`/`is_dir()` all call `.stat()`
+    internally (wrapped in try/except), so monkeypatching `stat`
+    to raise makes a surrounding `if path.exists():` guard
+    swallow it before the intended `.stat()` call runs. Patch a
+    different surface (`Path.glob` to raise, or the glob result's
+    `__iter__`).
+  - **A clean import doesn't prove a new dispatch branch fires**
+    — when adding a runtime case to a dispatch table, run the
+    real entry point (`Executor.run()` with a matching spec) and
+    assert success; imports alone don't exercise the branch.
 
 - **Shadow directories at repo root break imports**: An `attune/`
   directory at the repo root (from prototyping) shadows the installed
@@ -475,13 +490,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `started_at`, `completed_at`, `total_duration_ms`). Lesson: always
   exercise `execute()` end-to-end in tests to catch dataclass
   mismatches that lint can't see.
-
-- **RedisShortTermMemory mock injection path**: After the facade
-  refactor, `_client` is a read-only property on the facade.
-  Tests must inject mocks via `memory._base._client = mock_client`
-  (the plain attribute on `BaseOperations`), not
-  `memory._client = MagicMock()`. Old tests using the direct
-  path were all skipped with "Redis mocking API changed".
 
 - **Full coverage runs on 15k+ test suites timeout easily**:
   `pytest --cov=src/attune` with the full test suite takes 10+
@@ -691,20 +699,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   checks because the `%` suffix makes parsing fail or return
   unexpected results. Strip zone IDs with `hostname.split("%")[0]`
   before any IP validation.
-
-- **structlog kwargs vs stdlib Logger**: `logger.info("msg",
-  key=value)` is structlog syntax. stdlib `logging.Logger` raises
-  `TypeError: info() got an unexpected keyword argument`. Use
-  `logger.info("msg: key=%s", value)` instead. When fixing, grep
-  the entire module — partial fixes leave runtime crashes in
-  untouched calls.
-
-- **Stacked `@patch` decorators inject args bottom-up**: When a
-  test has `@patch("A") @patch("B") def test(self, mock_b,
-  mock_a)`, the innermost (bottom) decorator's mock is the first
-  positional arg. Forgetting a decorator while referencing its
-  mock variable causes `NameError` at runtime, not import time.
-  Always count decorators vs method params.
 
 - **`.gitignore` exclusions break CI tests that read those
   files**: If tests call `read_spec(".claude/plans/foo.md")` but
@@ -960,15 +954,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the old string before considering the change done. This is
   broader than just error messages — any output text change.
 
-- **Real project files on disk override test mocks**: Tests that
-  mock `_get_raw_suggestions()` at the definition site still get
-  real suggestions from `_get_spec_suggestions()` which reads
-  actual `.claude/plans/` files. Fix: mock at the *import site*
-  in the consuming module (`attune.voice.formatter.get_next_steps`
-  not `attune.voice.next_steps.get_next_steps`), or use
-  `monkeypatch.chdir(tmp_path)` to isolate from the real
-  filesystem.
-
 - **MCP `call_tool` wrapper pattern**: When adding a cross-cutting
   concern (like voice layer) to the MCP server, rename the
   original `call_tool()` to `_dispatch_tool()` and create a new
@@ -1040,17 +1025,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     state=dismissed -f dismissed_reason="false positive" -f
     dismissed_comment="..."` — valid reasons: `false positive`,
     `won't fix`, `used in tests`.
-
-- **Dispatch tables hold direct function references — mocks
-  must target the table, not the module name**: When
-  `_SUBCOMMAND_DISPATCH` or `_SIMPLE_DISPATCH` in
-  `cli_minimal.py` captures `cmd_foo` at import time,
-  `@patch("attune.cli_minimal.cmd_foo")` replaces the module
-  attribute but the dispatch table still calls the original.
-  Fix: use `patch.dict("attune.cli_minimal._SUBCOMMAND_DISPATCH",
-  {command: {**orig, subcommand: mock_fn}})` to replace the
-  entry in the dispatch table itself. This caused 20+
-  pre-existing test failures.
 
 ### Branch protection & admin-merge
 
@@ -1710,17 +1684,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `packages/attune-<name>/README.md`, and a `[tool.uv.sources]`
   entry.
 
-- **structlog default output pollutes stdout-captured CLI
-  tests**: structlog's default `ConsoleRenderer` writes log
-  lines to `sys.stdout`, not stderr. `capsys.readouterr().out`
-  in a pytest CLI test that emits JSON ends up with log lines
-  like `2026-04-17 [info     ] rag.run ...` prepended to the
-  JSON payload, breaking `json.loads()`. Fix: parse from the
-  first `{` (`json.loads(text[text.find("{"):])`) or
-  configure structlog to stderr in the CLI's `main()` before
-  running the pipeline. Don't just silence logs — they're
-  useful in prod.
-
 - **attune-help's sidecar schemas don't match path-keyed
   assumptions**: `attune_help/templates/summaries.json` is
   keyed by feature name (`"security-audit"`) — NOT by
@@ -1791,23 +1754,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is comparable to sentence-transformers for retrieval
   and well-suited to local-corpus use cases. Consider it
   before reaching for hosted providers.
-
-- **Duck-typed test fakes fail isinstance-based
-  collectors silently**: `collect_agent_output()` in
-  `src/attune/workflows/agent_sdk_adapter.py` does
-  `isinstance(message, claude_agent_sdk.AssistantMessage)`.
-  A shape-compatible fake class (`class _FakeAssistantMessage:
-  def __init__(self, text): self.content = [...]`) will
-  fall through the isinstance check and leave
-  `result_text="No results returned."` untouched — the
-  test passes against that default answer and may
-  appear successful. Fix: construct real SDK class
-  instances in tests:
-  `claude_agent_sdk.AssistantMessage(content=[...],
-  model="...", parent_tool_use_id=None)` and
-  `claude_agent_sdk.ResultMessage(subtype="success", ...)`.
-  Use `dataclasses.fields(Cls)` to discover the real
-  field list.
 
 - **Golden-query test fixtures must match the actual
   corpus layout, not an assumed one**: When writing a
@@ -3064,26 +3010,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   network-probe helpers) and verify they match
   current main, OR re-rebase before merge to pick
   up any post-rebase upstream fixes.
-
-- **Patching `Path.stat` to raise breaks `Path.exists()`
-  before the test reaches the intended `.stat()` call**:
-  `pathlib.Path.exists()` is implemented as a `try:
-  self.stat(); return True except: return False`
-  wrapper, so monkeypatching the class's `stat` to
-  raise `PermissionError` makes every `exists()` check
-  on that Path subclass fail before any user code can
-  iterate the contents. Symptom: a test that intends
-  to break a `sum(f.stat().st_size for f in glob(...))`
-  comprehension never gets that far — the surrounding
-  `if storage_path.exists():` guard catches the
-  exception first and the inner sum never runs.
-  Workaround: patch a different surface
-  (`Path.glob` to raise, or override the `__iter__` on
-  the glob result) so `exists()` keeps working. Same
-  caveat applies to `Path.is_file()` / `Path.is_dir()`,
-  both of which call `.stat()` internally. Hit while
-  testing `MemoryControlPanel.get_statistics()` error
-  paths in PR #286.
 
 - **When existing coverage on a module is ≥85%, write
   a focused "fallback-paths" test file rather than
