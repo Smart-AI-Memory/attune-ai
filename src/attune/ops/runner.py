@@ -370,6 +370,13 @@ class RunnerService:
         # Maps run_id -> heartbeat asyncio task so _finish_run can
         # cancel cleanly. Pruned when the task is cancelled.
         self._heartbeat_tasks: dict[str, asyncio.Task[None]] = {}
+        # Maps run_id -> the workflow-executor asyncio task. The event
+        # loop only holds *weak* references to tasks created via
+        # ``asyncio.create_task``; if we discard the return value the GC
+        # can reap the task mid-flight (cpython.discard-task-issue). A
+        # ``done_callback`` pops the entry on completion so the dict
+        # stays bounded at ``len(active_runs)``.
+        self._executor_tasks: dict[str, asyncio.Task[None]] = {}
 
     @property
     def persistence_dir(self) -> Path | None:
@@ -618,8 +625,16 @@ class RunnerService:
         # Bulletin start record. Errors swallowed by the backend — never
         # blocks workflow start. See multi-actor-bulletin spec.
         self._bulletin_write(run, "running")
-        # Fire and forget — execution streams events via the run's subscribers
-        asyncio.create_task(self._executor(run))
+        # Fire and forget — execution streams events via the run's
+        # subscribers. The task is pinned in ``self._executor_tasks``
+        # because the event loop only holds weak references to tasks
+        # created via ``asyncio.create_task``; a discarded reference can
+        # be GC'd mid-flight and the workflow silently dies. The
+        # done-callback pops the entry on completion (success, failure,
+        # or cancellation), so the dict stays bounded at ``len(active_runs)``.
+        task = asyncio.create_task(self._executor(run))
+        self._executor_tasks[run.id] = task
+        task.add_done_callback(lambda _t, rid=run.id: self._executor_tasks.pop(rid, None))
         return run
 
     def _finish_run(self, run: Run, exit_code: int) -> None:
