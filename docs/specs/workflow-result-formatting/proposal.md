@@ -1,6 +1,7 @@
 # Proposal: Workflow result formatting — kill the dataclass repr
 
-**Status:** Approved (2026-05-14) — ready for plan
+**Status:** Planned (2026-06-06) — see [design.md](design.md) +
+[tasks.md](tasks.md). Awaiting plan approval before implementation.
 **Author:** Patrick (with Claude as drafter)
 **Scope:** `src/attune/workflows/output.py` (data model),
 `src/attune/voice/` (renderer), `src/attune/cli_commands/`,
