@@ -2993,30 +2993,65 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   what" confusion that two adjacent unreleased
   sections create.
 
-- **`uv run attune <cmd>` from a worktree serves the
-  MAIN repo's code, not the worktree's**: the
-  attune-ai editable install at
-  `.venv/lib/python3.10/site-packages/__editable___attune_ai_*_finder.py`
-  has `MAPPING['attune'] = '/Users/patrickroebuck/
-  attune-ai/src/attune'` — the main checkout, NOT
-  whatever worktree the command runs from. Symptom:
-  ops dashboard launched from
-  `.claude/worktrees/<name>` shows pre-recent-commit
-  state (e.g. missing Specs tab) because main is
-  behind origin/main even though the worktree is
-  current. Diagnosis: `curl -s
-  http://127.0.0.1:8765/api/info` returns the running
-  version; `ps -p <pid> -o command=` shows
-  `.venv/bin/attune` (always the main venv); `cat
-  .venv/lib/python*/site-packages/__editable__*_finder.py
-  | grep MAPPING` reveals the bound path. Fixes:
-  (a) update the main checkout via `git -C
-  /Users/patrickroebuck/attune-ai pull --ff-only
-  origin main` then restart the server; or (b) run
-  one-off from the worktree with `PYTHONPATH=$(pwd)/
-  src python -m attune.ops` to bypass the editable
-  install. Worktree-local code changes do NOT affect
-  the running editable install's resolution.
+
+### Worktrees — running & testing code resolves to the WRONG place
+
+- **The editable install's MAPPING points `attune` at the MAIN
+  checkout, not your worktree — so code/deps resolve wrong when run
+  from a worktree.** `.venv/.../__editable___attune_ai_*_finder.py`
+  maps `attune` → main's `src/`, so `uv run attune …` /
+  `python -m attune.X` from a worktree runs MAIN's code (often behind
+  origin/main) and worktree-local edits are invisible to the running
+  process. Diagnose: `cat .venv/lib/python*/site-packages/
+  __editable__*_finder.py | grep MAPPING`; `ps -p <pid> -o command=`
+  (always the main venv); `curl -s localhost:8765/api/info` for the
+  live version. The fixes below all stem from this one root cause.
+  - **Run worktree code:** `PYTHONPATH=<ABSOLUTE-worktree>/src
+    <python> -m attune.X`. Use an **absolute** worktree path — NEVER
+    `$(pwd)/src`: if the cwd shifted out of the worktree (or a pasted
+    `cd` got dropped), `$(pwd)` silently resolves to main's src and the
+    process runs main's branch while looking identical (a wrong-version
+    trap caught only by render-time tells). `uv run --project /main`
+    does NOT help — main's venv MAPPING still points at main's src; the
+    PYTHONPATH override is mandatory.
+  - **Which python (worktree venv lacks extras):** the worktree
+    `.venv` is `uv sync`'d with only `--extra dev --extra developer`,
+    so `[ops]` deps (fastapi/uvicorn/jinja2) are absent →
+    `ModuleNotFoundError`. Either (a) use the MAIN venv's python (it
+    usually has all extras) + `PYTHONPATH=<worktree>/src`, or
+    (b) bring up the worktree venv: `uv pip install -q fastapi
+    'uvicorn[standard]' jinja2 python-multipart pytest pytest-xdist
+    pytest-asyncio httpx` (quote bracket-extras; a later `uv sync`
+    WIPES these — durable fix: add the deps to `[dev]` in pyproject).
+  - **`attune.ops` / `python -m <pkg>` launch:** working invocation is
+    `/path/to/main/.venv/bin/python -m attune.ops --project-root
+    /path/to/main --port <p> --no-browser` with
+    `PYTHONPATH=/path/to/worktree/src`. `--project-root` overrides the
+    cwd-based default so the PROJECT label / `cfg.project_root` resolve
+    to main, not the worktree slug.
+  - **Coverage measurement** from a worktree reports 0% (the
+    `[tool.coverage.run] source=["attune",…]` filter can't map the
+    worktree path to the package name via the main-pointing MAPPING).
+    Workaround: `cd /tmp && rm -f .coverage && PYTHONPATH=<repo>/src
+    PYTEST_ADDOPTS="-p no:xdist -o addopts=" <venv>/bin/python -m
+    coverage run --rcfile=/dev/null --source=attune.<mod> -m pytest
+    <repo>/tests/…` (cwd in /tmp skips the rcfile; strip
+    `-n auto`/`--cov`). Plain test *execution* from a worktree is
+    fine — only coverage measurement needs this.
+  - **MCP server in a worktree** (e.g. `rag_knowledge_query` failing
+    `…requires the [attune-help] extra`): the worktree venv lacks the
+    extra. Fix `uv pip install --python <worktree-venv> attune-help`;
+    the ALREADY-running MCP server self-heals on the next query (lazy
+    per-query load — no restart). Recurs per worktree until the extra
+    is in `[dev]` + lockfile.
+  - **Entry-point-resolved backends** (`resolve_backend()` via the
+    `attune.memory_backends` entry point) resolve DIFFERENTLY per env —
+    which python + cwd + installed extras + service reachability all
+    matter, and `import attune_redis` shadows to the worktree's
+    cwd-local copy. Verify the LIVE process's resolution (log
+    `type(resolve_backend()).__name__` from inside the hook), never
+    infer from a convenient `python -c`.
+  *(Consolidated 2026-06-05 from 8 separate lessons.)*
 
 - **`git diff --shortstat HEAD` vs
   `git diff --shortstat origin/main`** — when the
@@ -4182,30 +4217,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   field has been `ts` since the v1.0 schema; `timestamp`
   was never a key our writers emitted.
 
-- **Launching `attune.ops` from a worktree when the
-  main checkout is behind origin/main — use main's venv
-  with `PYTHONPATH` override, NOT `uv run` from the
-  worktree**: the existing "`uv run attune` from a
-  worktree serves the MAIN repo's code" lesson covers
-  the routing problem but not the fix when main is
-  stale. Two specific pitfalls: (1) `uv run python -m
-  attune.ops` from the worktree resolves to the
-  worktree's own `.venv` which doesn't have `fastapi`
-  etc.; (2) `uv run --project /main` uses main's venv
-  but main's editable-install MAPPING still points at
-  main's `src/`, so worktree code is invisible. The
-  working invocation is
-  `/path/to/main/.venv/bin/python -m attune.ops
-  --project-root /path/to/main --port 8765
-  --no-browser` with
-  `PYTHONPATH=/path/to/worktree/src` in the env.
-  `--project-root` overrides the cwd-based default so
-  the dashboard's PROJECT label and `cfg.project_root`
-  resolve to the main directory instead of the
-  worktree's slug. Works for any `python -m <pkg>`
-  invocation where you want sibling-venv deps +
-  non-installed source.
-
 - **`overflow: hidden` on a parent clips CSS `::after`
   tooltip pseudo-elements — move the clip to an inner
   child instead**: hit during the Specs page redesign
@@ -4233,36 +4244,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   but DevTools shows the `::after` rule is matched and
   the element is hovered, suspect overflow clipping —
   not selector specificity or transition timing.
-
-- **The worktree's `.venv` is missing optional extras
-  (e.g. `[ops]`) that the main checkout's `.venv` has —
-  PYTHONPATH-overriding via the main venv is the cheap
-  preview path**: hit when starting the ops dashboard
-  to preview Specs-page changes from a worktree. The
-  worktree's `uv sync` baseline runs with `--extra dev
-  --extra developer` (no `[ops]`), so `fastapi` /
-  `uvicorn[standard]` / `jinja2` are absent. Running
-  `.venv/bin/python -m attune.ops` fails with
-  `ModuleNotFoundError: No module named 'fastapi'`.
-  Workaround that pairs cleanly with the existing
-  worktree-PYTHONPATH lesson: use the MAIN checkout's
-  venv (which usually has all extras installed from
-  ongoing dev work) while pointing PYTHONPATH at the
-  worktree's `src`:
-
-  ```
-  PYTHONPATH=$(pwd)/src \
-    /Users/patrickroebuck/attune-ai/.venv/bin/python \
-    -m attune.ops --port 8775 --no-browser \
-    --project-root /Users/patrickroebuck/attune-ai
-  ```
-
-  This is the inverse of the editable-install lesson:
-  that one was about the editable install pointing at
-  MAIN's source from a worktree command; this one is
-  about the worktree's venv lacking deps the main venv
-  has. Pattern works for any optional-extra-gated
-  subcommand (`ops`, potentially `backend`, `lsp`).
 
 - **Cache-buster query string on linked CSS unblocks
   iteration when static files lack `Cache-Control`**:
@@ -4304,37 +4285,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   multi-agent / multi-session coordination gotchas
   where the wall-clock between your read and your
   write isn't a vacuum.
-
-- **Worktree venv bring-up recipe for QA-via-preview**:
-  Cowork-spawned worktrees often ship with a `.venv`
-  that has `attune` installed editable (pointing at
-  the worktree's own `src/`) but is missing the
-  optional `[ops]` and `[dev]` extras. Symptom: `uv
-  run python -m attune.ops` raises
-  `ModuleNotFoundError: No module named 'fastapi'`,
-  and `python -m pytest` raises `ModuleNotFoundError:
-  No module named 'pytest'`. The minimum bring-up
-  for both the ops server AND test runs is:
-  ```bash
-  cd /path/to/worktree
-  uv pip install -q fastapi 'uvicorn[standard]' \
-    jinja2 python-multipart pytest pytest-xdist \
-    pytest-asyncio httpx
-  ```
-  Quote `'uvicorn[standard]'` — zsh's bracket
-  globbing eats the unquoted form (see the existing
-  "Always quote pip install extras" lesson). Caveat
-  per the existing "`uv sync` wipes packages
-  installed via `pip install`" lesson: any later
-  `uv sync` against this venv erases these. For
-  one-shot QA work that's fine; for repeatable
-  per-worktree environments, add the deps to
-  `pyproject.toml`'s `[dev]` extra instead. Solves
-  the previously-painful step where you can't
-  preview-from-worktree because the editable install
-  finder beats PYTHONPATH and the only way to make
-  the server resolve to the worktree's code is to
-  use the worktree's own venv.
 
 - **CI matrix-wide red on a feature PR is usually
   one root-cause test, not N independent bugs —
@@ -5064,34 +5014,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   both sides, and keep at least one round-trip regression
   test that mirrors real-world nesting depth.
 
-- **`PYTHONPATH=$(pwd)/src` in a launch one-liner silently
-  runs the WRONG version when the shell cwd has shifted
-  out of the worktree between the suggestion and the
-  paste**: extends the existing "worktree-venv bring-up"
-  lesson with a new failure mode. The recommended
-  worktree-test invocation
-  (`PYTHONPATH=$(pwd)/src /path/to/main/.venv/bin/python -m
-  attune.ops ...`) assumes the user's cwd IS the worktree
-  at the moment of execution. If the user `cd`'d back to
-  main between sessions (or pasted a multi-line command
-  whose `cd` step was removed in a follow-up), `$(pwd)/src`
-  resolves to main's source. The dashboard launches
-  cleanly, serves on the right port, looks identical to
-  the worktree version — and runs whatever code is
-  checked out on main's current branch. Hit 2026-05-15
-  during S3b preview: shell prompt showed `attune-ai
-  git:(docs/rubric-script-scope-fix)` (main on a different
-  branch) and the dashboard ran that branch's S2 code with
-  no S3b enrichment visible. Diagnostic: render-time tells
-  in the page (chip values, column count) are usually
-  enough to spot a wrong-version launch, but you have to
-  know what to look for. **Defensive fix:** use an
-  absolute worktree path in `PYTHONPATH`, never `$(pwd)`,
-  for any one-liner intended to preview branch-specific
-  code. Example for the silly-ramanujan-a91ddb worktree:
-  `PYTHONPATH=/Users/patrickroebuck/attune-ai/.claude/
-  worktrees/silly-ramanujan-a91ddb/src`.
-
 - **Budget/cap ledgers need `__post_init__` to latch
   `cap <= 0` as immediately breached — naive
   cap-then-record logic gives one "free" call**: when
@@ -5245,39 +5167,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   topical naming like `Codex-results.txt`). The
   transcript is permanent; revocation is the
   only recovery.
-
-- **Coverage measurement on worktree code requires
-  bypassing the project's coverage rcfile**: extends the
-  existing PYTHONPATH worktree lesson with a new failure
-  mode specific to coverage tooling. When running
-  ``coverage run -m pytest`` from a worktree, the
-  ``pyproject.toml`` ``[tool.coverage.run] source =
-  ["attune", "attune_software"]`` filter records 0%
-  coverage even though tests demonstrably hit the module
-  (verified via ``module.__file__`` resolving to the
-  worktree path AND a direct ``coverage run`` script that
-  imports and calls the module). Coverage's source-name
-  filter doesn't resolve worktree paths to the configured
-  package name because the editable-install MAPPING points
-  to the main checkout. The file appears in the report
-  with all-statements-missed, which looks like "tests
-  never ran" but is actually "tests ran but coverage
-  didn't record the hits." Workaround:
-  ``cd /tmp && rm -f .coverage &&
-  PYTHONPATH=$(repo)/src
-  PYTEST_ADDOPTS="-p no:xdist -o addopts="
-  /path/to/.venv/bin/python -m coverage run
-  --rcfile=/dev/null --source=attune.ops.<modname> -m
-  pytest $(repo)/tests/...`` — cwd in /tmp avoids
-  auto-loading the rcfile, ``--rcfile=/dev/null`` is
-  explicit, ``--source`` filters to the new module by
-  dotted name, and ``PYTEST_ADDOPTS`` strips the
-  ``-n auto`` and ``--cov`` that pytest.ini injects (both
-  break this measurement). Test execution itself doesn't
-  need any of this — ``python -m pytest tests/...`` from
-  the worktree works fine; this is only for coverage
-  measurement of new modules during worktree-based
-  feature work.
 
 - **Modules with subprocess wrappers need direct
   ``subprocess.run``-mocked tests as a standard coverage
@@ -7030,43 +6919,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   multi-session handoff case where the prior session
   left state behind.
 
-- **`rag_knowledge_query` MCP tool fails in a worktree
-  session with `AttuneHelpCorpus.from_attune_help()
-  requires the [attune-help] extra` — and the
-  already-running MCP server self-heals on the next
-  query after you install it, no restart needed**: hit
-  2026-06-02. The worktree's `.venv` (and the `uv run
-  python -m attune.mcp.server` the session spawned) had
-  `attune_rag` but not `attune_help`, so the default
-  corpus backend couldn't load and every RAG query
-  returned `success: false` with the extra-missing
-  error. Fix: `uv pip install --python <worktree-venv>
-  attune-help` (PyPI wheel ships the corpus templates
-  as package data; sibling editable source also exists
-  at `~/attune-help`). The non-obvious part — **the MCP
-  server process that's ALREADY running picks up the
-  install on the very next query without a restart**,
-  because `from_attune_help()` is called lazily
-  per-query, not at server startup, and it reads the
-  same venv `site-packages` the running process is
-  bound to. Two caveats: (1) a future `uv run` re-sync
-  will wipe the pip-install per the existing "`uv sync`
-  wipes packages installed via `pip install`" lesson —
-  so this recurs per worktree session until
-  `attune-help` is added to an extra in
-  `pyproject.toml` + lockfile (the durable fix);
-  (2) the default corpus is `attune-help`, which
-  documents *how to use the skills* — it grounds
-  usage questions, NOT attune-rag's internal
-  faithfulness mechanics, so a query about internals
-  will return on-topic-looking-but-wrong hits and the
-  faithful answer is "context does not cover this."
-  Pairs with the existing "worktree venv missing
-  optional extras" + "`uv sync` wipes pip installs"
-  lessons — this names the specific RAG manifestation
-  plus the lazy-load self-heal that means you don't
-  restart the session to recover.
-
 - **The attune-ai.dev Discipline article is built
   in-repo, and has stale decoy copies OUTSIDE the
   repo**: the live source is
@@ -7443,23 +7295,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   **highest**, check `<version>/hooks/hooks.json` for the expected
   registrations. The loaded `/recall` skill appearing in the session's
   skills list is the fastest positive signal the new version is active.
-
-- **Entry-point-resolved backends resolve DIFFERENTLY per environment —
-  verify the LIVE process's resolution, not a convenient interactive
-  python's**: `resolve_backend()` (via the `attune.memory_backends`
-  entry point) returned `AMSMemoryBackend` from the main checkout's
-  `.venv` (which has `attune-redis` + a reachable AMS) but
-  `FileStashBackend` from a bare pyenv `python` (no `attune-redis`, AMS
-  unreached) — identical code, different env. Compounding it,
-  `import attune_redis` resolved to the **worktree's cwd-local copy**
-  when run from the worktree (top-level package shadowing). So "which
-  backend does the hook actually use" is a function of *which python
-  Claude Code spawns the hook with* + cwd + installed extras + service
-  connectivity, and the answer can differ between an interactive test
-  harness and the live hook. When debugging a hook that touches an
-  entry-point-resolved backend, instrument the **live hook process's**
-  resolution (log `type(resolve_backend()).__name__` from inside the
-  hook); don't infer it from a convenient `python -c`.
 
 - **`worktree-path-guard` blocks Write/Edit to a SEPARATE
   SIBLING REPO, not just attune-ai-worktree-vs-main — and
