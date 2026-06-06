@@ -1,6 +1,6 @@
 # Spec: Self-truthing spec status (derive from completion state, not the header line)
 
-**Status**: approved (2026-05-31; see [decisions.md](./decisions.md))
+**Status**: complete (shipped in #567, 2026-06-05; see [decisions.md](./decisions.md))
 **Created**: 2026-05-29
 **Layer**: attune-ai plugin — session hooks (`plugin/hooks/_state.py`, `spec_orient.py`)
 **Origin**: 2026-05-29 session. The spec-orientation hook reported
@@ -189,6 +189,6 @@ locks them and the exact checklist/terminal-line regexes.
 
 ---
 
-## Phase 2: Design — *(not started; awaiting requirements approval)*
+## Phase 2: Design — complete (see [design.md](./design.md))
 
-## Phase 3: Tasks — *(not started)*
+## Phase 3: Tasks — folded into design.md; implemented + tested in #567

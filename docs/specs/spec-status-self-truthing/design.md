@@ -1,6 +1,6 @@
 # Design — Self-truthing spec status
 
-**Status:** approved
+**Status:** complete (shipped in #567)
 **Phase 1:** [requirements.md](./requirements.md) — locked 2026-05-31
 **Decisions:** [decisions.md](./decisions.md) — 3 DECIDEs ratified
 
@@ -320,4 +320,4 @@ long completion checklist; even then a single regex scan over
 
 ---
 
-## Phase 3: Tasks — *(not started; will be authored after design approval if needed; XML prompt at `~/.attune/next_session_xml_prompts.md` already decomposes implementation)*
+## Phase 3: Tasks — implemented + tested in #567 (no separate tasks.md needed; design.md was the implementation contract)

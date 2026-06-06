@@ -8010,3 +8010,43 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (the latter re-bit across all 5 route files — re-adding the stripped
   `Depends`/`require_client_token` imports via Bash, which doesn't
   trigger the Edit PostToolUse formatter, was the fix).
+
+- **"Approved & unexecuted" is ~80% noise — code-grep a
+  spec's primary artifact before executing, because whole
+  specs ship in PRs without their docs ever being marked
+  complete, and the shipped self-truthing reconciler CANNOT
+  catch this**: 2026-06-05, executing the post-7.4.0 spec
+  backlog, a code-grounded re-triage of ~25 non-draft specs
+  found only 3-4 genuinely unexecuted+valuable+in-repo; the
+  rest were either **shipped-but-status-stale** (~11: e.g.
+  `spec-status-self-truthing` itself shipped in #567 but read
+  "approved"; `anthropic-cost-integration` Phase 1 fully wired
+  in `ops/anthropic_cost.py`; `docs-wiring-audit` v1 live;
+  `ops-sessions-page`/`ops-path-picker` shipped) or
+  **not-a-feature** (orchestration/audit/QA/triage docs,
+  ongoing programs). Five+ "approved" specs this session
+  turned out already-done. **Crucial blind spot:** the
+  self-truthing reconciler (`plugin/hooks/_state.py`,
+  shipped #567) reads completion signals *inside* a spec's
+  files (terminal `Status: complete` line or a fully-checked
+  `## Completion checklist`) — it does NOT cross-reference
+  merged PRs. So a spec whose work landed in a PR but whose
+  docs were never given a terminal marker stays "approved"
+  **forever, undetectably** (spec-status-self-truthing's own
+  header was the last such liar — it had no tasks.md /
+  checklist / terminal line, so nothing to read). **Rule:**
+  before executing any "approved"/"in-flight" spec, identify
+  its primary artifact (a file / symbol / CLI command / CI
+  workflow / hook) from requirements+design and grep the code
+  for it FIRST. If present → the work is "execute = close it
+  out" (flip the header to `complete` + pointer to the
+  shipping PR), not re-implement. Pairs with the existing
+  "Re-validate a spec's premise" and "Spec-named work-scope
+  drifts — grep the actual instances" lessons (same family:
+  the spec docs are a stale hypothesis; the code is ground
+  truth) — this one adds the *whole-spec-already-shipped* case
+  and the reconciler's cross-PR blind spot. Corollary: a
+  periodic code-grounded re-triage (grep each in-flight spec's
+  artifact, bucket shipped/partial/unexecuted/not-a-feature)
+  is worth more than trusting the in-flight list, and doubles
+  as the status-cleanup the reconciler can't do.
