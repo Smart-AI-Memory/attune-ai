@@ -16,7 +16,13 @@ concurrency:
 
 jobs:
   test:
-    runs-on: ${{ matrix.os }}
+    # Route the ubuntu matrix entries to the org's 8-core/32GB larger
+    # runner for ~2x parallelism + memory headroom (larger-runners spec).
+    # The matrix `os` value stays "ubuntu-latest" so the generated job
+    # name — and the required status check "test (ubuntu-latest, 3.12)"
+    # — is unchanged; only the runner the job lands on differs. macOS
+    # and Windows stay on default runners.
+    runs-on: ${{ matrix.os == 'ubuntu-latest' && 'ubuntu-8core-or-linux-32gb' || matrix.os }}
     timeout-minutes: 75
     strategy:
       fail-fast: false
