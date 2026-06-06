@@ -6731,3 +6731,30 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `gh api ...hosted-runners` image is under `.image_details`,
   not `.image` (a `.image.id` jq path returns null and looks
   like a missing image when it isn't).
+
+- **Consolidating the CLAUDE.md Lessons section — method and
+  its faithfulness ceiling** (the `consolidate-claude-md-lessons`
+  spec, executed across PRs #646 + #647): three durable
+  mechanics. (1) **The title-keyed extract undercounts** — the
+  awk `/^- \*\*/{b=(tolower($0)~kw)} b` matches only lesson
+  TITLES, so a family's members whose titles don't contain the
+  keyword (the cross-referenced "extends the existing X" ones)
+  are missed; grep BODIES and titles to find the full family,
+  or a fold leaves a dangling cross-ref. (2) **Line numbers
+  shift after every deletion** — re-grep each sub-cluster by
+  content right before editing it; never reuse stale line
+  numbers from an earlier scan (hit this mid-session, re-grepped
+  each time). (3) **The 30–40% line-cut target conflicts with
+  the "never drop a distinct lesson" guardrail** — after
+  draining the clusters with genuine duplication the cut
+  plateaus (~15% here: 435→327 lessons, −1202 lines across 12
+  commits) because the rest are genuinely distinct domain
+  singletons (RAG, docs-pipeline, Vercel, release-ceremony).
+  Report the honest ceiling; don't amputate to hit a number.
+  Per-cluster verification that worked, after each commit:
+  lesson-count delta + `wc -l` + a zero-consecutive-blanks awk +
+  grep for dangling `existing …lesson` refs. Wrong/superseded
+  lessons fold INTO their corrections (the WRONG "SDK adapter
+  swallows findings" → the budget-cap correction) — that's
+  consolidation, not loss. Edit-tool-only (no shell splice) per
+  the spec guardrail; back up `CLAUDE.md` first.
