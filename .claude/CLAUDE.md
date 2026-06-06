@@ -458,12 +458,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Passing them to `super().__init__()` raises `TypeError`. Define them
   as class-level assignments on the subclass.
 
-- **Non-BaseWorkflow classes in workflow registry crash the CLI**:
-  Classes registered in `_DEFAULT_WORKFLOW_NAMES` that don't inherit
-  BaseWorkflow (missing `execute()`, `run_stage()`, or wrong method
-  signatures) will crash `attune workflow run`. Only register true
-  BaseWorkflow subclasses; keep standalone utilities importable but
-  out of the registry.
+- **Registering a workflow or skill has MULTIPLE drift-guard
+  gates, not one — and only true subclasses belong**:
+  - **Adding a workflow to `_DEFAULT_WORKFLOW_NAMES` has FOUR
+    gates** — `src/attune/workflows/__init__.py` (three sites:
+    `_LAZY_WORKFLOW_IMPORTS`, `_DEFAULT_WORKFLOW_NAMES`,
+    `__all__`) plus: (1) `PATH_ARG_REGISTRY` in `ops/data.py`
+    (ops scope-picker drift-guard, `test_path_support_registry.py`
+    — an entry naming the kwarg `execute()` consumes);
+    (2) `KNOWN_GAPS` in `scripts/check_help_coverage.py` or a
+    real `.help/features.yaml` entry (`test_no_new_workflow_drift`);
+    (3) `WORKFLOW_NAMES` array in `ops/static/js/runner.js`
+    (`test_workflow_names_match_canonical_list` — keeps the
+    dashboard pills in sync).
+  - **Adding a plugin skill has THREE gates** — besides
+    `plugin/skills/<name>/SKILL.md`: (1) bump the hardcoded count
+    in `test_plugin_config_validation.py::test_skill_count`;
+    (2) add a row to the "Skills Reference" table in
+    `plugin/skills/attune-hub/SKILL.md`
+    (`test_all_skill_dirs_referenced_by_attune_hub`); (3) run
+    `python scripts/sync_agents_skills.py` to regenerate the
+    `.agents/skills/` mirror (`test_skill_body_content_matches`).
+  - **Only true `BaseWorkflow` subclasses belong in
+    `_DEFAULT_WORKFLOW_NAMES`** — a registered class missing
+    `execute()`/`run_stage()` (or with wrong signatures) crashes
+    `attune workflow run`. Keep standalone utilities importable
+    but out of the registry.
 
 - **Validate infrastructure against user value before extending**:
   BEP middleware was well-built (93 tests, clean protocol) but had
@@ -508,12 +528,15 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   or use `@pytest.mark.skipif` to skip gracefully. This caused
   5 failures in PR #98 (3 redis, 1 jinja2, 1 redis auto-detect).
 
-- **CI timeout tests enforce the range you set**: The test
-  `test_timeout_values_are_reasonable` in `tests/unit/ci/`
-  asserts that all workflow job timeouts fall within an
-  allowed range. When bumping `timeout-minutes` in a workflow
-  YAML, also update the test's upper bound or it fails on
-  every platform.
+- **`timeout-minutes` changes must also update
+  `test_timeout_values_are_reasonable`**: the test in
+  `tests/unit/ci/` asserts every workflow job timeout falls in
+  an allowed range — bump a workflow's `timeout-minutes` and you
+  must update the test's bound or it fails on every platform.
+  Sizing: Windows runners are ~3x slower than Ubuntu/macOS (a
+  16k-test suite is ~15 min on macOS, ~17 on Ubuntu, ~45+ on
+  Windows), so the Windows matrix needs `timeout-minutes: 60` or
+  it always times out.
 
 - **`/sbin` is a symlink to `/usr/sbin` on modern Ubuntu**:
   `Path("/sbin/init").resolve()` does NOT follow the `/sbin`
@@ -523,13 +546,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   path stays as `/sbin/init` which doesn't match the
   `/usr/sbin` entry in the blocklist. Use `/usr/sbin/...`
   directly in tests.
-
-- **Windows CI runners are ~3x slower than Ubuntu/macOS**: A
-  16k+ test suite that finishes in ~15min on macOS and ~17min
-  on Ubuntu needs ~45min+ on Windows. Set `timeout-minutes`
-  high enough (60) or the Windows matrix will always time out.
-  Remember to update `test_timeout_values_are_reasonable` when
-  changing the upper bound.
 
 - **mkdocs `--strict` treats broken links as fatal errors**:
   The CI docs build uses `mkdocs build --strict` even though
@@ -706,10 +722,15 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   unexpected results. Strip zone IDs with `hostname.split("%")[0]`
   before any IP validation.
 
-- **`.gitignore` exclusions break CI tests that read those
-  files**: If tests call `read_spec(".claude/plans/foo.md")` but
-  `.gitignore` excludes `.claude/plans/`, CI will never have the
-  file. Either track the files or skip the tests when absent.
+- **CI lacks files that exist only locally — `.gitignore`'d
+  paths and untracked scripts break tests**: (a) a test reading
+  a `.gitignore`'d path (`read_spec(".claude/plans/foo.md")`)
+  fails in CI where the file never exists — track the files or
+  skip the test when absent; (b) a test importing an untracked
+  script (`from scripts.sync_agents_skills`) fails
+  `ModuleNotFoundError` on all platforms — `git status` scripts
+  referenced by tests before pushing, and guard with
+  `pytest.importorskip()`.
 
 - **`config.py` alongside `config/` creates a mypy duplicate
   module**: Having both `src/attune/config.py` and
@@ -1179,14 +1200,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   deprecate the old one and uninstall it before installing the
   replacement.
 
-- **Untracked scripts break CI when tests import them**: The
-  `test_sync_agents_skills.py` test imported from
-  `scripts/sync_agents_skills.py` which existed locally but was
-  never committed. CI failed with `ModuleNotFoundError` on all 12
-  platforms. Always `git status` scripts referenced by tests
-  before pushing. Guard with `pytest.importorskip()` for
-  resilience.
-
 - **PR test workflows may not auto-trigger after close/reopen or
   branch reuse**: When a PR branch is reused after a previous PR
   was merged, the `pull_request` trigger may not fire on new
@@ -1527,11 +1540,41 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the squash (`git show <squash-commit> --stat` shows the
   expected files), then `git reset --hard origin/main`.
 
-- **`gh pr checks --json` field names**: the field is
-  `bucket` (pass/fail/pending/skipping/cancel), not
-  `conclusion`. Full field list is exposed by passing an
-  invalid field name and reading the error message. Useful
-  for scripted pre-merge checks.
+- **Diagnosing CI from the `gh` CLI — field names, cancellation
+  traps, and in-flight log availability**:
+  - **`gh pr checks --json` field is `bucket`**
+    (pass/fail/pending/skipping/cancel), NOT `conclusion`
+    (discover the full field list by passing an invalid field
+    name and reading the error).
+  - **`--watch --fail-fast` exits prematurely (exit 0) on
+    cancelled-but-"fail"-tagged guard jobs** — `--fail-fast`
+    triggers on any row reading `fail` even when the job
+    conclusion is `cancelled` (zero steps — e.g. a
+    dependabot-only guard skipping on a regular PR; `Run
+    Security Scanner` does this). Exit 0 makes it look like all
+    passed. Drop `--fail-fast` (wait the full matrix), or
+    post-process to ignore rows whose actual conclusion (`gh api
+    .../jobs/<id>`) is `cancelled`. Always re-fetch `gh pr
+    checks <PR>` after the watcher exits — never trust its exit
+    code as "CI done".
+  - **`gh run view --log-failed` returns nothing while the run
+    is in flight** — even when jobs already show `fail` it says
+    "run is still in progress; logs available when complete"
+    (the job-level link doesn't help). You can DETECT failures
+    early via `gh pr checks --json bucket` polling but can't
+    DEBUG until the whole run completes — don't start
+    speculative fixes on the fail count alone (could be a flake,
+    real bug, or tolerable cancellation).
+  - **Rapid pushes + `cancel-in-progress` cancel the prior run,
+    and cancelled-but-required = BLOCKING** — N commits within
+    minutes trigger N runs; `concurrency` + `cancel-in-progress:
+    true` cancels each prior, and the latest can also get
+    cancelled (webhook race), leaving a required check in
+    `cancel` bucket → PR BLOCKED. Recovery: `gh run rerun
+    <run-id>` on the latest SHA. Prevention: before pushing a
+    fix, check `gh run list --workflow=X.yml --branch=<name>
+    --limit=1 --json status` — if `in_progress`, wait ~5-7 min
+    or accept the re-run.
 
 - **`git pull` refuses with unstaged changes when
   `pull.rebase=true`**: This repo's git config sets
@@ -1786,21 +1829,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `[dev]` → tests run → coverage lands. Before publish,
   rag tests use `importorskip` and patch coverage
   reports 0% for the new code.
-
-- **Adding a plugin skill has THREE enforcement gates,
-  not one**: Besides creating `plugin/skills/<name>/SKILL.md`,
-  you must also (1) bump the hardcoded count in
-  `tests/unit/plugins/test_plugin_config_validation.py::
-  TestPluginStructure::test_skill_count`, (2) add a row
-  to the "Skills Reference" table in
-  `plugin/skills/attune-hub/SKILL.md` (enforced by
-  `tests/unit/plugins/test_plugin_reference_validation.py::
-  TestCoverage::test_all_skill_dirs_referenced_by_attune_hub`),
-  and (3) run `python scripts/sync_agents_skills.py` to
-  regenerate the `.agents/skills/` mirror (enforced by
-  `test_skill_body_content_matches`). Missing any one
-  fails CI. Keep this sequence in mind as a single
-  "add a skill" checklist, not as separate surprises.
 
 - **After a PR merges while you're AFK, pull main before
   tagging**: When a background wakeup fires and finds a
@@ -2568,21 +2596,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   is past-due deprecated — if yes, implementation is
   strictly wrong.
 
-- **`HAS_API_KEY`-gated integration tests poison the matrix
-  when Anthropic's network flakes**: Tests guarded with
-  `pytest.mark.skipif(not HAS_API_KEY, ...)` make real API
-  calls when the key is set, so a transient
-  `api.anthropic.com` outage fails identically on every
-  platform that has the key — looks like a code regression.
-  Diagnosis signal: same test IDs fail across all OS/Python
-  combinations with the *same* error string, and no unit
-  tests fail (saw `AllProvidersFailedError: ... Connection
-  error` on PR #169). Fix: either mock at the HTTP boundary
-  or add `@pytest.mark.integration` and exclude from the
-  default `-m "not integration"` selector. Short-circuit
-  rule: matched-string failures only in files with a
-  network-gated skip = infra flake, not code regression.
-
 - **`import X` inside a `try` block + `except X.SomeError`
   crashes with `UnboundLocalError` when the import fails**:
   Python evaluates the except expression only when an
@@ -3256,35 +3269,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   migration docs as having a shelf life tied to the
   marker's target version.
 
-- **Adding a workflow to `_DEFAULT_WORKFLOW_NAMES`
-  has FOUR drift-guard gates, not one**: registering
-  in `src/attune/workflows/__init__.py` (three sites:
-  `_LAZY_WORKFLOW_IMPORTS`, `_DEFAULT_WORKFLOW_NAMES`,
-  `__all__`) is necessary but not sufficient. Three
-  more gates fail CI immediately if missed:
-  (1) `PATH_ARG_REGISTRY` in `src/attune/ops/data.py`
-  — the ops scope-picker drift-guard
-  (`tests/unit/ops/test_path_support_registry.py`)
-  requires an entry naming the kwarg the workflow's
-  `execute()` consumes;
-  (2) `KNOWN_GAPS` set in
-  `scripts/check_help_coverage.py` (or a real entry
-  in `.help/features.yaml`) — the
-  `test_no_new_workflow_drift` test in
-  `tests/unit/help/test_coverage_script.py` asserts
-  every registered workflow is documented or
-  explicitly waived;
-  (3) `WORKFLOW_NAMES` array in
-  `src/attune/ops/static/js/runner.js` — the
-  `test_workflow_names_match_canonical_list` test in
-  `tests/unit/ops/test_runner_js_parsing.py` keeps
-  the dashboard's pill-rendering list in sync with
-  the Python registry. Mirrors the "plugin skill has
-  three gates" lesson but distinct site set.
-  Discovered when discovery-sweep Phase 1 PR #303
-  passed local tests then failed three CI checks on
-  push.
-
 - **PatternScanSource (discovery-sweep) has known
   self-match false positives**: the dangerous-eval /
   dangerous-exec regexes match `eval(` / `exec(`
@@ -3366,27 +3350,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   state alone**. Single-file and small-package dog-
   food can mask this — only whole-tree contact with
   real production docstrings surfaces the gap.
-
-- **`gh pr checks <PR> --watch --fail-fast` exits
-  prematurely (exit 0) on cancelled-but-tagged-"fail"
-  guard jobs**: `--fail-fast` triggers on any row
-  whose status column reads `fail`, even when the
-  underlying job conclusion is `cancelled` (zero
-  steps executed — e.g. a dependabot-only guard
-  skipping on a regular PR). On this repo `Run
-  Security Scanner` fires this pattern and made the
-  watcher exit ~1 minute into a 15-minute CI run.
-  Worst part: exit code is 0, so it looks like every
-  check passed. Two workarounds: (a) drop
-  `--fail-fast` entirely — cost is waiting the full
-  matrix even on real failures, fine at solo-dev
-  pace; (b) post-process the output to ignore rows
-  where the actual conclusion (via
-  `gh api .../jobs/<id>`) is `cancelled`. Always
-  re-fetch `gh pr checks <PR>` after a
-  `--watch --fail-fast` exits to confirm what truly
-  finished — never trust the watcher's exit code
-  alone as a "CI is done" signal.
 
 - **Daemon-parseable structured stdout should gate
   on an explicit env var, not `sys.stdout.isatty()`**:
@@ -3726,37 +3689,36 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   where the wall-clock between your read and your
   write isn't a vacuum.
 
-- **CI matrix-wide red on a feature PR is usually
-  one root-cause test, not N independent bugs —
-  diagnose the count BEFORE diagnosing the failures**:
-  PR #358 showed 12-of-12 platform×Python test cells
-  failing plus the coverage check. Reading the output
-  naively suggests a major regression. Actual count
-  of *unique* failing tests across the whole matrix:
-  **one** —
-  `tests/unit/ops/test_specs_dashboard.py::
-  test_specs_page_writeable_mode_shows_dropdowns`,
-  failing identically on every cell because PR #358
-  intentionally replaced the inline `<select>`
-  markup the test asserted on. Diagnosis pattern:
-  before opening any CI log, run
-  ```bash
-  gh run view <run-id> --log-failed --job <job-id> \
-    | grep -oE 'FAILED tests/[^[:space:]]+' \
-    | sort -u
-  ```
-  on one cell. If the unique failure count is small
-  (often 1), the matrix-wide spread is a
-  multiplier-on-one-bug, not many bugs. Pairs with
-  the existing "Markdown-asserting test breaks on UI
-  redesign" pattern — markup-asserting tests are
-  *especially* prone to this matrix-wide-from-one-
-  failure shape because the assertion runs on every
-  platform but the production change is platform-
-  independent. Operational rule: a markup change in a
-  feature PR's production code should update the
-  markup-asserting tests in the same commit, or CI
-  will be 100% red until you do.
+- **Matrix-wide CI red — diagnose the count and the cause
+  before assuming N bugs**:
+  - **Usually ONE root-cause test, not N** — 12-of-12 cells
+    failing identically is a multiplier-on-one-bug. Before
+    opening any log, get the unique failing-test count from one
+    cell: `gh run view <run-id> --log-failed --job <job-id> |
+    grep -oE 'FAILED tests/[^ ]+' | sort -u`. Markup/markdown-
+    asserting tests are especially prone (the assertion runs on
+    every platform, the production change is platform-
+    independent) — update markup-asserting tests in the SAME
+    commit as the markup change.
+  - **Same-commit green→red flip = a third-party dep release
+    between runs** — CI does a fresh `pip install` each run, so
+    a PyPI release in the gap flips the outcome on the same SHA
+    (typer 0.26.0 vendored click and broke 6 tests asserting on
+    `click.exceptions.Exit`). General rule: import an exception
+    from the library that RAISES it (`from typer import Exit`),
+    never a transitive dep it re-uses — transitive-coincidence
+    imports break when the library vendors its dep. When a
+    previously-green build flips red on the same commit,
+    cross-reference PyPI release timestamps for the failing
+    test's deps.
+  - **Same error string across all OS/Python + no unit failures
+    = infra flake, not a regression** — `HAS_API_KEY`-gated
+    integration tests make real API calls when the key is set,
+    so an `api.anthropic.com` outage fails identically
+    everywhere (looks like a code regression; e.g.
+    `AllProvidersFailedError: Connection error`). Fix: mock at
+    the HTTP boundary, or mark `@pytest.mark.integration` and
+    exclude from the default `-m "not integration"` selector.
 
 - **CSS `[data-tooltip]::after` pseudo-element gets
   silently clipped by `overflow: hidden` on the
@@ -5029,24 +4991,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   checkpoint until a new minor is released. Relevant files to grep: any that call the
   Anthropic API directly (`polish.py`, `cost_tracker.py`, workflow configs, MCP server).
 
-- **`gh run view --log-failed` returns nothing while the parent
-  run is still in flight, even when individual jobs have already
-  flipped to "fail"**: discovered 2026-05-26 on PR #472. The
-  PR's check rollup showed 4 jobs as `fail` bucket and 9 as
-  `pending`, but `gh run view <id> --log-failed` returned
-  *"run X is still in progress; logs will be available when it
-  is complete."* The job-level link in `gh pr checks --json link`
-  doesn't help either — same gh CLI restriction. Implication:
-  during background CI watching, you can **detect** failures
-  early via `gh pr checks <PR> --json bucket` polling, but you
-  cannot **debug** them until the whole run completes. Don't
-  start speculative fixes based on the fail count alone — the
-  fail might be a flake, a real bug, or a known-tolerable guard
-  cancellation. Wait for the run-complete signal, then read the
-  logs. Companion to the existing `--watch --fail-fast` lesson
-  but a distinct gotcha (that one's about premature exit; this
-  one's about deferred log availability).
-
 - **Derivative writing tempts toward "what would be tidy to say"
   rather than "what actually happened" — verify the framing
   against the session record before shipping**: caught 2026-05-26
@@ -5067,37 +5011,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   writing about its own session* rather than scanning unfamiliar
   code. Catch it by asking explicitly: "Did this happen?"
   before each non-trivial claim in derivative content.
-
-- **typer 0.26 vendored its own click — tests asserting on
-  `click.exceptions.Exit` break the moment typer auto-upgrades
-  past 0.25.x**: pre-0.26, `typer.Exit` was a direct re-export
-  from `click.exceptions.Exit`, so tests that did
-  `from click.exceptions import Exit as ClickExit` /
-  `pytest.raises(ClickExit)` worked by *coincidence* — they
-  were asserting on the same class typer happened to be raising.
-  typer 0.26 vendored click; `typer.Exit` is now
-  `typer._click.exceptions.Exit`, a distinct class from
-  `click.exceptions.Exit`. The fix is one line: import the
-  exception from the library that actually raises it —
-  `from typer import Exit as ClickExit`. Works across all typer
-  versions (0.9 → 0.26+). General rule for exception
-  assertions in tests: import the exception from the library
-  that raises it, never from a transitive dep it happens to
-  re-use. Transitive-coincidence imports break the moment the
-  library vendors its dep. Diagnostic shape worth remembering
-  separately: **matrix-wide CI red after a green-on-same-commit
-  run earlier in the same day is almost always a third-party
-  dep release between the two runs.** CI does fresh `pip
-  install` each run; a PyPI release in the gap produces
-  opposite outcomes on the same SHA. Today's timeline:
-  typer 0.26.0 released 14:37 UTC, PR #471 merged 14:39, Tests
-  on main installed fresh 0.26 and broke 6 tests in
-  `TestCLIWorkflowCommands` with `typer._click.exceptions.Exit`
-  uncaught; the earlier same-commit Tests run at 13:16 used
-  typer 0.25.1 and passed. When a previously-green build flips
-  red on the same commit, cross-reference PyPI release
-  timestamps for deps in the failing test's stack. Companion to
-  the existing "matrix-wide red from one root cause" lesson.
 
 - **Cross-platform concurrent file appends — pick the
   mechanism by platform reach, encode the trade-off in
@@ -5210,34 +5123,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that flips it, you've found a CI-vs-dev environment
   drift bug. Don't bundle the fix into an unrelated PR;
   flag in the PR body and file separately.
-
-- **Rapid pushes to a PR with `cancel-in-progress`
-  concurrency cancel the prior workflow run — and
-  cancelled-but-required = blocking, indistinguishable
-  from real failure to the PR gate**: extends the
-  existing "`gh pr checks --watch --fail-fast` mistakes
-  cancellations for failures" lesson with the
-  inbound-cause variant. Hit 2026-05-27 on PR #485
-  during the coverage-fix cycle: 4 commits pushed
-  within 17 minutes triggered 4 security-workflow runs
-  via `pull_request` events. The workflow's
-  `concurrency.group: $workflow-$head_ref` plus
-  `cancel-in-progress: true` meant each new push
-  cancelled the prior run mid-execution. The LATEST
-  commit's security run was also cancelled (likely a
-  webhook race or stale dispatch), leaving the
-  required `security` check in `cancel` bucket and the
-  PR `BLOCKED`. Recovery: `gh run rerun <run-id>` on
-  the cancelled run for the latest SHA. Prevention:
-  before pushing a fix, check whether a security /
-  long workflow is still in-flight via
-  `gh run list --workflow=security.yml --branch=<name>
-  --limit=1 --json status`. If `in_progress`, either
-  wait for it to settle (~5-7 min) or accept the
-  re-run cost. The `cancel-in-progress` design assumes
-  the new push superseded the old one, but for
-  required checks the cancellation is treated as a
-  fail-state by branch protection.
 
 - **Mark tasks complete on outcome verification, not
   on tool-call success — especially "open PR" tasks**:
