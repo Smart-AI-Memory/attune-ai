@@ -1,6 +1,6 @@
 # Design — Docs Link Prevalidation
 
-**Status:** approved
+**Status:** complete (Phase 4 shipped 2026-06-05; warn mode)
 **Phase 1:** [requirements.md](./requirements.md) — locked 2026-06-02 (merged via #566)
 
 Translates Phase 1's locked decisions into the concrete audit-block
@@ -298,3 +298,31 @@ Integration test via pre-commit:
 ---
 
 ## Phase 3: Tasks — *(not started; will be authored after this design's approval)*
+
+---
+
+## Phase 4 — Implementation (complete, 2026-06-05)
+
+Shipped:
+- `scripts/check_doc_audit_blocks.py` — stdlib audit-block reader
+  (warn mode, exit 0 per D1). Parser refined vs the design example:
+  the Location cell can carry a suffix (`Line 7 (code fence)`), so the
+  row regex allows non-pipe text after the digits. Verified against the
+  real `docs/how-to/release-prep.md` block — flags the 2 broken links
+  ("target does not exist"), ignores the broken import
+  ("module not importable", out of scope).
+- `tests/unit/scripts/test_check_doc_audit_blocks.py` — 11 tests.
+- `.pre-commit-config.yaml` — `check-doc-audit-blocks` local hook on
+  `^docs/.*\.md$`, verbose, warn mode.
+
+**Deviation from the design's CI section (premise-check):** the design
+proposed a standalone `docs-strict.yml` running `mkdocs build --strict`.
+But `.github/workflows/docs.yml` **already** runs `mkdocs build --strict`
+on PRs path-filtered to `docs/**`/`mkdocs.yml`/`src/**` — the safety net
+exists. Creating `docs-strict.yml` would duplicate it. Instead, added
+`.help/**` to `docs.yml`'s PR path filter so regen PRs also hit the
+strict pre-flight (the one gap vs the design's intended filter). No new
+workflow.
+
+**Promotion path (warn -> block) unchanged:** add `return 1` in the
+script when findings exist, after a warn-mode release cycle (D1).

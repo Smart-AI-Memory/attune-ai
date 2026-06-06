@@ -178,3 +178,17 @@ repos:
         pass_filenames: false
         files: ^(src/.*\.py|pyproject\.toml)$
         stages: [pre-commit]
+
+      # docs-link-prevalidation: flag unresolved cross-reference links
+      # that attune-author's audit block already caught, before they
+      # reach mkdocs --strict. v1 is WARN MODE — exits 0, prints
+      # findings (DECIDE-1; promote to blocking by adding `return 1`
+      # in the script after the warn-mode cycle). Override a file with
+      # `<!-- attune-skip-link-check: <reason> -->`.
+      - id: check-doc-audit-blocks
+        name: Check docs/**/*.md for unresolved audit-block links (warn)
+        entry: python scripts/check_doc_audit_blocks.py
+        language: system
+        files: ^docs/.*\.md$
+        verbose: true
+        stages: [pre-commit]

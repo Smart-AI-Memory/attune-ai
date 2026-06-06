@@ -10,7 +10,7 @@
 > catching them at the boundary between attune-author and the
 > attune-ai repo BEFORE they land.
 
-**Status:** approved
+**Status:** complete (Phase 4 shipped 2026-06-05; warn mode)
 **Created:** 2026-06-02
 **Owner:** —
 **Related:**
