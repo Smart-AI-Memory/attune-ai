@@ -1,7 +1,8 @@
 # Tasks: consolidate-claude-md-lessons
 
-> **Status:** handoff (not started). See [README](README.md) for
-> method + inventory.
+> **Status:** complete (2026-06-06, PRs #646 + #647). Phases 1–3
+> executed as 12 per-cluster commits; editorial ceiling reached at
+> ~15%. See [decisions.md](decisions.md) D1.
 
 ## Phase 1 — cross-linked lessons (lowest risk, highest yield)
 
