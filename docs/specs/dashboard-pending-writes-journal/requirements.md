@@ -46,6 +46,24 @@ a question to Patrick, manual review, and a confirmation cycle
 that wouldn't have been needed if the writes had been surfaced
 proactively.
 
+**Recurrence (2026-05-26 → 2026-05-27):** the same shape fired
+again in the `vigorous-pike-a1325f` worktree. A session ended
+at 22:25 on 2026-05-26 with 4 dashboard-driven spec status
+flips uncommitted (`bulletin-curator/design.md`,
+`bulletin-curator/tasks.md`,
+`dashboard-pending-writes-journal/design.md`,
+`dashboard-pending-writes-journal/requirements.md` — all
+flipping `draft → approved`). They sat invisible for 11 hours
+until the 2026-05-27 session opened that worktree to address
+unrelated PR #484 review comments and discovered 43 dirty
+files including the status flips. Recovery via a tar-snapshot
++ 3-way-merge dance against a fresh branch off origin/main
+(see PR #488); the status flips landed cleanly as part of the
+recovery commit `docs(specs): mark bulletin-curator +
+dashboard-pending-writes-journal approved`. Note the irony:
+two of the four silently-lost writes were status flips on
+THIS spec, the one that exists to prevent exactly this.
+
 This is **a class of bug**, not a one-off: any long-running
 service that holds a session-scoped concept of work but
 mutates a shared filesystem outside that scope has the same

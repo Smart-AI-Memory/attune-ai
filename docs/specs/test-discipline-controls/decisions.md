@@ -133,3 +133,57 @@ with the executed set.
 **Reference:** PR #485's second codecov-failure cycle
 (2026-05-27); see commit c4099ac2 which closed the partials
 that line coverage missed.
+
+---
+
+## D6 — Threshold scope: patch-level, not file-level (2026-05-27)
+
+**Question:** does the pre-push hook gate at the patch level
+(matches codecov: aggregate coverage of all lines touched in
+the push) or at the file level (each touched file must
+individually meet the threshold)?
+
+**Decision:** **Patch-level.** The hook computes
+`(executed lines in patch) / (total lines in patch)` across
+all touched files and compares against the 90% threshold.
+Individual files inside a patch may sit below 90% as long as
+the aggregate clears the bar.
+
+**Rationale:**
+
+1. **Matches codecov's gate.** Codecov's `codecov/patch`
+   check is patch-level. The pre-push hook's whole purpose
+   is to catch what codecov will reject — running a stricter
+   file-level gate would block pushes that codecov would
+   accept, creating the inverse drift this spec is built to
+   eliminate.
+2. **PR #484 is the worked example.** That PR shipped 92.05%
+   patch coverage with `help_regen.py` at 89.25% — codecov
+   passed, the work was meaningfully covered, and a
+   file-level gate would have blocked it without producing
+   a real quality improvement. Borderline files inside
+   strong patches are normal; they should not block a push
+   when the overall surface is well-tested.
+3. **Hot files self-correct over time.** A file that
+   chronically sits at 89% will eventually be touched by a
+   commit that's small enough that 89% is the patch result,
+   not just a file-within-a-patch result. The hook fires
+   then. Over a series of commits, weak files self-correct
+   because the patch-level gate forces incremental
+   improvement at each touch.
+4. **File-level is a knob we can add later.** If the
+   patch-level gate proves insufficient (e.g. a feature ships
+   over many small commits and persistently keeps one file
+   at 70%), the hook can grow an opt-in
+   `--per-file-threshold` flag. Default stays patch-level.
+
+**Implication for Phase 1 design:** the
+`scripts/coverage_gate/check_patch.py` script computes one
+aggregate ratio. No per-file breakdown in the failure
+message beyond "these files contributed missing lines",
+ranked by missing-line count, for diagnostic value only —
+not as separate gate conditions.
+
+**Reference:** opportunity surfaced 2026-05-27 during
+post-merge review of PR #484 (`docs/specs/ops-help-page`);
+locked here so Phase 1 implementation doesn't re-litigate.
