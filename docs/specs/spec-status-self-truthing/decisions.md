@@ -149,3 +149,26 @@ Phase 2's design.md will translate these into concrete regexes,
 exact `SpecInfo` field shapes, and the precise `spec_orient`
 output format. No further user-facing decisions are required
 between this approval and Phase 2 authoring.
+
+---
+
+## Close-out (2026-06-05)
+
+Implementation + tests shipped in **#567** ("feat(hooks): self-truthing
+spec status (impl + tests)"): the `_TERMINAL_LINE` / `_CHECKLIST_*` /
+`_DEFERRED_MARKERS` regexes, `_completion_signal()`, `_reconcile_status()`,
+the additive `SpecInfo` fields (`effective_status` / `status_source` /
+`status_conflict`), `_is_in_flight(effective_status)`, and the
+`spec_orient` conflict-hint rendering — all per design.md. 8
+`TestStatusReconciliation` cases pass. Verified live: the reconciler
+runs clean over the 39-spec corpus.
+
+Status flipped to **complete** here on 2026-06-05. Fittingly, this
+spec's *own* header was the last stale one — it read "approved" while
+the work had landed in #567. The reconciler couldn't auto-catch it
+because this spec has no `tasks.md`, no completion checklist, and no
+terminal status line in its body, so there was no in-file completion
+signal to read (the reconciler reads a spec's own files; it doesn't
+cross-reference merged PRs — a known scope boundary). The fix was a
+human marking it done — exactly the "header lags reality" drift the
+spec was written to surface.
