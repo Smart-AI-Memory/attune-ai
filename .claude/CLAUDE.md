@@ -452,11 +452,33 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   that only exist in one copy. Always check for rogue top-level
   directories matching the package name before debugging import errors.
 
-- **BaseWorkflow uses class attributes, not constructor params**: The
-  `name`, `description`, `stages`, and `tier_map` fields on
-  BaseWorkflow are CLASS ATTRIBUTES, not `__init__()` parameters.
-  Passing them to `super().__init__()` raises `TypeError`. Define them
-  as class-level assignments on the subclass.
+- **Authoring `BaseWorkflow` subclasses — class attributes,
+  logger, result construction, rename hygiene**:
+  - **`name`/`description`/`stages`/`tier_map` are CLASS
+    attributes, not `__init__()` params** — passing them to
+    `super().__init__()` raises `TypeError`; define them as
+    class-level assignments on the subclass.
+  - **`BaseWorkflow.__init__` provides `self.logger`** (since
+    `c67ad740`): `logging.getLogger(type(self).__module__)` — no
+    manual `wf.logger = …` in test fixtures.
+  - **`WorkflowResult` constructor mismatches surface only at
+    runtime** — `execute()` passing non-existent kwargs
+    (`workflow_name`, `stages_executed`) isn't caught by lint;
+    the required fields are `success`, `stages`, `started_at`,
+    `completed_at`, `total_duration_ms`. Always exercise
+    `execute()` end-to-end in tests.
+  - **`ModelTier` has TWO copies — imports must match** — the
+    enum exists in both `attune.models` and
+    `attune.workflows.base` as separate classes (`id()`
+    differs); tests comparing `tier_map` values fail if the
+    import source doesn't match the workflow's. Use the same
+    module the workflow imports from.
+  - **Hardcoded strings in method bodies survive class-attribute
+    renames** — changing `name = "deep-review-sdk"` →
+    `"deep-review"` on the class didn't fix a hardcoded
+    `"workflow": "deep-review-sdk"` inside `execute()`; after
+    renaming a class attribute, grep the old value across the
+    whole source file (method bodies, metadata dicts).
 
 - **Registering a workflow or skill has MULTIPLE drift-guard
   gates, not one — and only true subclasses belong**:
@@ -491,27 +513,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   surface where all user value lives. Always validate that new
   infrastructure serves actual users before investing in production
   hardening.
-
-- **`ModelTier` has two copies — imports must match**: The enum
-  `ModelTier` exists in both `attune.models` and
-  `attune.workflows.base` as separate classes (`id()` differs).
-  Tests comparing `tier_map` values will fail if the import source
-  doesn't match the workflow's import. Check which module the
-  workflow imports from and use the same one in tests.
-
-- **BaseWorkflow now provides `self.logger`**: Fixed in `c67ad740`.
-  `BaseWorkflow.__init__` sets
-  `self.logger = logging.getLogger(type(self).__module__)` so all
-  subclasses get an instance logger namespaced to their own module.
-  No more manual `wf.logger = ...` workarounds in test fixtures.
-
-- **`WorkflowResult` constructor mismatches surface only at
-  runtime**: `ParallelTestGenerationWorkflow.execute()` was passing
-  non-existent kwargs (`workflow_name`, `stages_executed`). Fixed in
-  `c67ad740` — now passes all required fields (`success`, `stages`,
-  `started_at`, `completed_at`, `total_duration_ms`). Lesson: always
-  exercise `execute()` end-to-end in tests to catch dataclass
-  mismatches that lint can't see.
 
 - **Bandit B108 blocks hardcoded `/tmp` paths**: Using a literal
   `/tmp/...` string in `subprocess.run` or `open()` triggers
@@ -704,20 +705,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Always verify the actual class name with `grep` before writing
   an import.
 
-- **`is_private` is a superset in Python `ipaddress`**: Loopback
-  (`127.0.0.1`), link-local (`169.254.x.x`), and unspecified
-  (`0.0.0.0`) all have `is_private=True`. When checking IP safety,
-  test specific attributes (`is_loopback`, `is_link_local`, etc.)
-  before `is_private` so error messages are precise. The same
-  ordering matters in both IP literal checks and DNS resolution
-  checks.
-
-- **Adding DNS resolution to `_validate_webhook_url` breaks tests
-  that pass real hostnames**: Any test calling `_validate_webhook_url`
-  with a non-IP hostname (e.g. `example.com`) now needs
-  `@patch("attune.monitoring.validators.socket.getaddrinfo")` to
-  mock DNS resolution. Grep for all callers when adding network
-  validation to an existing function.
+- **SSRF / webhook-URL validation — `_validate_webhook_url` and
+  the bypasses it must close**: webhook handlers
+  (`_execute_webhook()` in `executor.py`) that accept arbitrary
+  URLs without IP-blocklist / scheme / DNS checks are CWE-918 and
+  need the same rigor as `_validate_file_path()`. The bypasses to
+  close, and the test fallout:
+  - **Decode percent-encoding BEFORE parsing** — `urllib.parse.
+    urlparse` does NOT decode `%`-encoding, so
+    `http://%31%32%37%2e%30%2e%30%2e%31/` parses with a hostname
+    that bypasses a `127.0.0.1` blocklist. `urllib.parse.unquote
+    (url)` first.
+  - **Strip IPv6 zone IDs before IP validation** — `fe80::1%25eth0`
+    makes `ipaddress.ip_address()` fail or misparse; `hostname.
+    split("%")[0]` first.
+  - **`is_private` is a SUPERSET** — loopback (`127.0.0.1`),
+    link-local (`169.254.x.x`), and unspecified (`0.0.0.0`) all
+    have `is_private=True`; test the specific attributes
+    (`is_loopback`, `is_link_local`, …) BEFORE `is_private` for
+    precise error messages (same ordering for IP-literal and
+    DNS-resolution checks).
+  - **Adding DNS resolution breaks tests passing real hostnames**
+    — any test calling `_validate_webhook_url` with a non-IP
+    hostname (`example.com`) now needs `@patch("attune.monitoring.
+    validators.socket.getaddrinfo")`; grep all callers when adding
+    network validation to an existing function.
 
 - **MCP `workspace_root` defaults to `os.getcwd()` — tests with
   `tmp_path` fail**: Tests that create files in `tmp_path` and pass
@@ -725,19 +737,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   because the server defaults to the repo root. Fix: pass
   `workspace_root=str(tmp_path)` when constructing the server in
   tests.
-
-- **SSRF: always decode URLs before validating hostnames**:
-  `urllib.parse.urlparse` does NOT decode percent-encoded
-  characters. `http://%31%32%37%2e%30%2e%30%2e%31/` parses with
-  hostname `%31%32%37%2e%30%2e%30%2e%31` which bypasses blocklist
-  checks for `127.0.0.1`. Always `urllib.parse.unquote(url)` before
-  parsing and validating.
-
-- **SSRF: strip IPv6 zone IDs before IP validation**: IPv6 zone
-  IDs (e.g., `fe80::1%25eth0`) can bypass `ipaddress.ip_address()`
-  checks because the `%` suffix makes parsing fail or return
-  unexpected results. Strip zone IDs with `hostname.split("%")[0]`
-  before any IP validation.
 
 - **CI lacks files that exist only locally — `.gitignore`'d
   paths and untracked scripts break tests**: (a) a test reading
@@ -764,13 +763,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Grep for ALL method names being removed across the entire test tree
   before considering the migration done — `pytest -k "code_review"`
   catches failures that file-specific runs miss.
-
-- **Hardcoded strings in method bodies survive class attribute
-  renames**: Changing `name = "deep-review-sdk"` to `"deep-review"`
-  on the class didn't fix a hardcoded `"workflow": "deep-review-sdk"`
-  string inside `execute()`. After renaming a class attribute, always
-  grep for the old value across the entire source file to catch
-  hardcoded duplicates in method bodies and metadata dicts.
 
 - **GPG signing fails in non-interactive terminals (VSCode
   extension, Claude Code) — configure pinentry-mac**: `gpg`
@@ -826,13 +818,6 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   15,555 tests passing. The deep review caught this after
   publishing to PyPI. Run `/deep-review` on changed files
   BEFORE `/release prep`, not after.
-
-- **SSRF in webhook handlers is easy to miss**: The
-  `_execute_webhook()` method in `executor.py` accepts
-  arbitrary URLs without IP blocklist, scheme validation, or
-  DNS resolution checks (CWE-918). Webhook endpoints need the
-  same validation rigor as file paths — add
-  `_validate_webhook_url()` alongside `_validate_file_path()`.
 
 - **SDK message/output flow — what you collect, and what
   crosses into the parent**:
