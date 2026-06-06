@@ -177,10 +177,51 @@ class TestCaptureSubprocessFailure:
         # The exact token should NOT appear in output (redacted away)
         assert fake_key not in out
 
-    def test_empty_argv_returns_synthetic_failure(self):
-        """An empty argv hits the OSError path inside subprocess.run."""
+    def test_empty_argv_default_no_probe(self, monkeypatch):
+        """Default (probe disabled): empty argv returns a deterministic
+        'no stderr' note — no crash, no real subprocess — so the failure
+        classifies as 'unknown' (what every workflow test expects)."""
+        monkeypatch.delenv("ATTUNE_SDK_ERROR_PROBE", raising=False)
         out = capture_subprocess_failure([])
-        assert "capture-call also failed" in out
+        assert "no" in out.lower() and "capture" in out.lower()
+        assert "IndexError" not in out  # the old bug must not recur
+        kind, _ = classify_subprocess_failure(out)
+        assert kind == "unknown"
+
+    def test_empty_argv_runs_claude_health_probe(self, monkeypatch):
+        """With ATTUNE_SDK_ERROR_PROBE on, empty argv falls back to the
+        `claude` health probe and surfaces its real output — NOT a crash.
+        The probe is monkeypatched to a deterministic 401 so no real
+        `claude` runs."""
+        monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            lambda: ["sh", "-c", "echo '401 Invalid authentication credentials' 1>&2; exit 1"],
+        )
+        out = capture_subprocess_failure([])
+        assert "health probe" in out  # the explanatory probe note
+        assert "401 Invalid authentication credentials" in out  # real error surfaced
+        assert "IndexError" not in out  # the old bug must not recur
+
+    def test_probe_with_no_output_reports_exit_code(self, monkeypatch):
+        """When the health probe exits with no stdout/stderr, report its
+        exit code instead of an empty string (covers the `if not text`
+        branch)."""
+        monkeypatch.setenv("ATTUNE_SDK_ERROR_PROBE", "1")
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            lambda: ["sh", "-c", "exit 7"],
+        )
+        out = capture_subprocess_failure([])
+        assert "claude exited 7 with no stderr/stdout" in out
+
+    def test_health_probe_argv_invokes_claude(self):
+        """The fallback probe is a minimal `claude -p` invocation."""
+        from attune.workflows.agent_sdk_adapter import _claude_health_probe_argv
+
+        argv = _claude_health_probe_argv()
+        assert argv[0] == "claude" or argv[0].endswith("/claude")
+        assert "-p" in argv
 
 
 # ---------------------------------------------------------------------
