@@ -3021,6 +3021,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#localhost-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Localhost security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -3868,6 +3879,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#localhost-security-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Localhost security model
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#related-commands" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -4027,6 +4049,31 @@
 </tr>
 </tbody>
 </table>
+<h2 id="localhost-security-model">Localhost security model<a class="headerlink" href="#localhost-security-model" title="Permanent link">&para;</a></h2>
+<p>The dashboard is a single-user, same-machine tool. Its protection is
+layered, not a multi-user auth system (network exposure is an explicit
+non-goal):</p>
+<ol>
+<li><strong>Loopback bind.</strong> The server binds <code>127.0.0.1</code> by default — not
+   reachable off the machine.</li>
+<li><strong>Trusted-host middleware.</strong> Requests whose <code>Host</code> header isn't on
+   the allowlist are rejected (<code>--trusted-host</code> extends it).</li>
+<li><strong>Read-only flag.</strong> <code>--read-only</code> disables all mutation (workflow
+   runs, status writes) — purely observational.</li>
+<li><strong>Per-process client token.</strong> Every mutating endpoint
+   (<code>POST /workflows/{name}/run</code>, <code>PUT /api/specs/{slug}/{phase}/status</code>,
+   the curator/help/dismiss mutations, …) requires an <code>X-Attune-Client</code>
+   header matching a token minted at startup. The page reads the token
+   once (a <code>&lt;meta name="attune-client-token"&gt;</code> tag) and echoes it on
+   mutating requests; <code>GET /api/session/token</code> exposes it for
+   bootstrap. A client that never loaded the page — a stray <code>curl</code>, a
+   browser extension, an a11y-traversing tool — gets <code>403</code> and cannot
+   mutate state. The token resets each server run.</li>
+</ol>
+<p>The token gate closes the "accidental mutation from a non-page client"
+bug class (see <code>docs/specs/ops-mutating-endpoint-auth/</code>). It is <em>not</em> a
+defense against a local attacker who can read process memory or the
+page — that's out of scope for a localhost dev tool.</p>
 <h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
 <ul>
 <li><code>attune help-docs</code> — browse the help template library with optional <code>--tag</code> filters</li>
