@@ -650,22 +650,42 @@ def classify_subprocess_failure(stderr: str) -> tuple[SdkErrorKind, str]:
     return "unknown", "The claude CLI subprocess failed; see raw stderr below."
 
 
+def _claude_health_probe_argv() -> list[str]:
+    """Minimal ``claude`` invocation used as the fallback diagnostic when
+    the exact failing argv can't be recovered from the SDK exception.
+
+    The installed ``claude_agent_sdk`` raises a bare
+    ``Exception("Command failed ...")`` with the argv stored NOWHERE on it
+    (no ``args[0]`` list, no ``__cause__.cmd``, no ``.cmd``), so
+    ``_last_subprocess_argv()`` returns ``[]``. Re-running the exact
+    command is therefore impossible — but a minimal ``claude -p`` probe
+    reproduces the auth / quota / not-found failure modes (the ones this
+    capture exists to reveal), all of which fail fast before any real
+    generation. Factored out so tests can monkeypatch it deterministically
+    instead of invoking the real binary.
+    """
+    return [shutil.which("claude") or "claude", "-p", "ok"]
+
+
 def capture_subprocess_failure(
     args: list[str],
     env: dict[str, str] | None = None,
     timeout_s: float = 10.0,
 ) -> str:
-    """Re-run the failed ``claude`` invocation with stderr capture.
+    """Surface the real cause of a swallowed ``claude`` subprocess failure.
 
     Called from the broad-except branch around a
     ``claude_agent_sdk.query()`` call when the bare 'Command failed'
-    exception fires. The SDK swallows stderr; this helper re-runs
-    the same argv directly via ``subprocess.run()`` so the real
-    cause becomes visible.
+    exception fires. The SDK swallows stderr; this helper runs a
+    ``claude`` invocation directly via ``subprocess.run()`` so the real
+    cause (auth 401, quota, not-found) becomes visible.
 
     Args:
-        args: Exact argv used by the SDK's first invocation. Pulled
-            from the SDK's exception via ``_last_subprocess_argv()``.
+        args: argv to re-run. Normally the exact failing command from
+            ``_last_subprocess_argv()`` — but the current SDK doesn't
+            expose it, so this is usually ``[]``, in which case we fall
+            back to a minimal ``claude`` health probe
+            (``_claude_health_probe_argv()``).
         env: Optional env override. Defaults to the inherited
             process environment.
         timeout_s: Subprocess timeout. The failure modes we care
@@ -673,13 +693,25 @@ def capture_subprocess_failure(
             10s is a generous ceiling.
 
     Returns:
-        Redacted stderr text, or a synthetic
+        Redacted stderr/stdout text, or a synthetic
         ``"(capture-call also failed: <reason>)"`` / ``"(capture-call
-        timed out after <Ns>)"`` string if the second subprocess
-        itself raises. The synthetic strings are intentionally
-        formatted so the classifier's "unknown" fallback still
-        renders them to the user.
+        timed out after <Ns>)"`` string if the subprocess itself raises.
+        When the health-probe fallback was used, the text is prefixed
+        with a one-line note so the user knows it's a probe, not the
+        exact failing command. The synthetic strings are intentionally
+        formatted so the classifier's "unknown" fallback still renders
+        them to the user.
     """
+    probe_note = ""
+    if not args:
+        # No recoverable argv (the SDK exception carries none) — probe
+        # `claude` directly so the real auth/quota/not-found error shows
+        # up instead of crashing on subprocess.run([]).
+        args = _claude_health_probe_argv()
+        probe_note = (
+            "(could not recover the exact failing command from the SDK; "
+            "ran a minimal `claude` health probe instead)\n"
+        )
     try:
         result = subprocess.run(  # noqa: S603
             args,
@@ -688,18 +720,20 @@ def capture_subprocess_failure(
             text=True,
             timeout=timeout_s,
             check=False,  # we want to inspect failure output
+            input="",  # don't block on stdin for `-p` probes
         )
         # Some failures put real errors on stdout (e.g. JSON envelope).
         # Concatenate; the classifier scans both anyway.
         combined = (result.stderr or "") + ("\n" + result.stdout if result.stdout else "")
-        return redact(combined).text
+        text = redact(combined).text.strip()
+        if not text:
+            text = f"(claude exited {result.returncode} with no stderr/stdout)"
+        return probe_note + text
     except subprocess.TimeoutExpired:
-        return f"(capture-call timed out after {timeout_s}s)"
-    except (OSError, subprocess.SubprocessError, IndexError, ValueError) as exc:
-        # IndexError / ValueError: empty or malformed argv from
-        # _last_subprocess_argv() — subprocess.run([]) raises IndexError
-        # on Python's stdlib path; ValueError covers None / non-str entries.
-        return f"(capture-call also failed: {type(exc).__name__}: {exc})"
+        return probe_note + f"(capture-call timed out after {timeout_s}s)"
+    except (OSError, subprocess.SubprocessError, ValueError) as exc:
+        # OSError: binary not found. ValueError: malformed argv.
+        return probe_note + f"(capture-call also failed: {type(exc).__name__}: {exc})"
 
 
 def _last_subprocess_argv(exc: BaseException) -> list[str]:
@@ -718,9 +752,11 @@ def _last_subprocess_argv(exc: BaseException) -> list[str]:
     2. ``exc.__cause__.cmd`` — ``subprocess.CalledProcessError``-shaped
        wrap.
     3. ``exc.cmd`` — direct attribute on the exception.
-    4. Fallback: empty list — caller's downstream
-       ``capture_subprocess_failure([])`` will hit the OSError path
-       and surface a synthetic "(capture-call also failed)" string.
+    4. Fallback: empty list — the installed claude_agent_sdk raises a
+       bare ``Exception`` with the argv stored nowhere, so ``[]`` is the
+       normal result. The caller's ``capture_subprocess_failure([])``
+       then runs a minimal ``claude`` health probe to surface the real
+       auth/quota/not-found error.
 
     Returns:
         The captured argv as ``list[str]``, or ``[]`` if no

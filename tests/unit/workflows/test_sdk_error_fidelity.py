@@ -177,10 +177,26 @@ class TestCaptureSubprocessFailure:
         # The exact token should NOT appear in output (redacted away)
         assert fake_key not in out
 
-    def test_empty_argv_returns_synthetic_failure(self):
-        """An empty argv hits the OSError path inside subprocess.run."""
+    def test_empty_argv_runs_claude_health_probe(self, monkeypatch):
+        """Empty argv (the SDK exposes none) falls back to the `claude`
+        health probe and surfaces its real output — NOT a crash. The probe
+        is monkeypatched to a deterministic 401 so no real `claude` runs."""
+        monkeypatch.setattr(
+            "attune.workflows.agent_sdk_adapter._claude_health_probe_argv",
+            lambda: ["sh", "-c", "echo '401 Invalid authentication credentials' 1>&2; exit 1"],
+        )
         out = capture_subprocess_failure([])
-        assert "capture-call also failed" in out
+        assert "health probe" in out  # the explanatory probe note
+        assert "401 Invalid authentication credentials" in out  # real error surfaced
+        assert "IndexError" not in out  # the old bug must not recur
+
+    def test_health_probe_argv_invokes_claude(self):
+        """The fallback probe is a minimal `claude -p` invocation."""
+        from attune.workflows.agent_sdk_adapter import _claude_health_probe_argv
+
+        argv = _claude_health_probe_argv()
+        assert argv[0] == "claude" or argv[0].endswith("/claude")
+        assert "-p" in argv
 
 
 # ---------------------------------------------------------------------
