@@ -8050,3 +8050,51 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   artifact, bucket shipped/partial/unexecuted/not-a-feature)
   is worth more than trusting the in-flight list, and doubles
   as the status-cleanup the reconciler can't do.
+
+- **A GitHub-hosted larger runner that sits `Ready` while jobs
+  queue forever (no error) on a PUBLIC repo = the runner GROUP's
+  `allows_public_repositories` flag is OFF (default) — NOT billing,
+  and it's invisible in every obvious UI/page; diagnose via
+  `gh api`**: 2026-06-05 wiring `larger-runners` Phase 1
+  (route the ubuntu test-matrix to an 8-core/32GB org runner).
+  The runner was perfectly configured and `status: Ready`
+  (verified via `gh api orgs/<org>/actions/hosted-runners`:
+  image "Ubuntu Latest 24.04", 8c/32GB, Default group, all-repo
+  visibility), yet ubuntu lanes queued indefinitely and the
+  runner never provisioned — two `workflow_dispatch` re-runs,
+  same symptom. Re-running is a tar-pit; stop after 2 and
+  API-diagnose instead. The actual gate:
+  `gh api orgs/<org>/actions/runner-groups/<id>` showed
+  `"allows_public_repositories": false`, and attune-ai is a
+  PUBLIC repo. A public repo's jobs do NOT dispatch to a runner
+  group that disallows public repos — silent queue, no banner in
+  the runner/billing pages. Fix: `gh api -X PATCH
+  orgs/<org>/actions/runner-groups/<id> -F
+  allows_public_repositories=true` (or UI: Settings → Actions →
+  Runner groups → Default → "Allow public repositories").
+  **Security tradeoff to flag before flipping:** this lets
+  fork-PR workflows run on the BILLED larger runner; bound it
+  with an Actions spending limit + GitHub's default
+  "require approval for fork PRs from first-time contributors."
+  **Distinct second silent-queue cause (also Ready-runner /
+  queued-forever / no error):** the org Actions **spending limit
+  still at $0** — larger runners need a >$0 limit + payment
+  method. Neither cause is API-readable as "the reason"; the
+  spending limit isn't in the runners API at all (confirm in
+  Billing UI), and the public-repo flag is only in the
+  runner-GROUP object (not the hosted-runner object). When a
+  larger-runner job won't start: check (1) `runner-groups/<id>`
+  `allows_public_repositories` for public repos, (2) the $0
+  spending-limit, (3) payment method — before assuming a config
+  bug. Companion impl note: route ubuntu→larger via
+  `runs-on: ${{ matrix.os == 'ubuntu-latest' &&
+  '<runner-label>' || matrix.os }}` so `matrix.os` stays
+  `ubuntu-latest` and the REQUIRED check name
+  `test (ubuntu-latest, 3.12)` is unchanged — renaming the
+  matrix label silently breaks branch protection (the
+  "exact check names matter" lesson). Also: the runner LABEL is
+  the NAME you give it at creation (read it back from
+  `hosted-runners` — don't assume `ubuntu-latest-large`); and
+  `gh api ...hosted-runners` image is under `.image_details`,
+  not `.image` (a `.image.id` jq path returns null and looks
+  like a missing image when it isn't).
