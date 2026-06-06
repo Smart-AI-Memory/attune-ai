@@ -15,6 +15,7 @@ where ``source`` is one of ``"heuristic" | "haiku" | "cached"``.
 
 from __future__ import annotations
 
+import asyncio
 import logging
 from dataclasses import asdict
 from typing import Any
@@ -118,7 +119,17 @@ async def list_sessions(request: Request) -> dict[str, Any]:
     it as an error.
     """
     cfg = request.app.state.config
-    sessions, over_budget = enrich_with_summaries(
+    # ``enrich_with_summaries`` calls the SYNCHRONOUS Anthropic SDK
+    # client (``anthropic.Anthropic(...).messages.create()``) inside a
+    # per-session loop. Calling it directly from this async route
+    # blocks the uvicorn event loop for the duration of the Haiku
+    # batch (~0.5–2s per session × N sessions), freezing every other
+    # request — SSE streams, runner control, page renders. Defer the
+    # blocking chain to a thread; the ``anthropic`` SDK is documented
+    # thread-safe. Preserves the existing sync API of
+    # ``summarize_session`` (used by tests and other paths).
+    sessions, over_budget = await asyncio.to_thread(
+        enrich_with_summaries,
         cfg.project_root,
         cfg.attune_home,
     )
