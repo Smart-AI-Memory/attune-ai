@@ -31,7 +31,11 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e '.[author]'
-          pip install PyYAML
+          # attune-help provides the bundled corpus that attune-rag's
+          # AttuneHelpCorpus loads for RAG-grounded regen. Without it,
+          # `attune-author generate` raises (ModuleNotFoundError:
+          # attune_help) and the set -e regen step fails.
+          pip install PyYAML attune-help
 
       - name: Check completeness (pre-regen)
         run: |

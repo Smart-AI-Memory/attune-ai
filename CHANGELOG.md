@@ -7,6 +7,42 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.0] — 2026-06-07
+
+A major release. The headline is a **breaking change to the exit-code
+contract of `attune workflow run`** (an honest `0/1/2/3` instead of an
+always-zero exit — see Migration below), shipped alongside two substantial
+new feature lines — **collaboration spend-gates** and the **curator** — plus
+ops/workflow reliability fixes. Library APIs are otherwise unchanged.
+
+### Added
+
+- **Spend gate on `attune workflow run`.** The first billable run of a
+  session surfaces an estimate and asks for an explicit go before any
+  paid call, then establishes a ~5h spend window (aligned to Anthropic's
+  rolling usage window) so later runs proceed silently until it expires or
+  a run would exceed it. Framing matches your meter — a dollar band for
+  API users, usage-headroom (no misleading `$0`) for subscription users. A
+  non-interactive run with no pre-authorization **blocks** rather than
+  spending silently. Knobs: `ATTUNE_SPEND_GATE=off` (or
+  `ATTUNE_MAX_BUDGET_USD=0`) disables it; `ATTUNE_SPEND_GATE_AUTHORIZED=1`
+  opts a CI / daemon context in. `--no-llm` runs never reach the gate. See
+  `docs/specs/collaboration-gates/` and the CLI reference's "Spend gate"
+  section. (Phase 1: T1–T5; #637–#640)
+- **Curator.** An agent-backed curation feature: agent invocation with
+  structured output (Phase 2), a `/curator` page on the ops dashboard, and
+  a CLI with bulletin cross-linking (Phase 3). (#631, #634, #635)
+- **`WorkflowReport` data model.** Structured, machine-readable workflow
+  run reporting (Section ABC + tiers). (#649)
+- **Per-process client-token gate on mutating ops endpoints.** The ops
+  dashboard API now requires a per-process client token on mutating
+  endpoints — defense-in-depth against cross-process request forgery. (#641)
+- **Doc cross-reference link pre-validation.** A pre-commit reader flags
+  unresolved documentation cross-ref links before they land
+  (docs-link-prevalidation Phase 4). (#644)
+- **Public help pages on `attune-ai.dev`.** The `.help` corpus now renders
+  as browsable web pages. (#615)
+
 ### Changed (Breaking)
 
 - **`attune workflow run` now exits non-zero when the workflow
@@ -46,21 +82,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exit code is honest. See
   `docs/specs/workflow-failure-exit-propagation/`.
 
-### Added
+### Fixed
 
-- **Spend gate on `attune workflow run`.** The first billable run of a
-  session surfaces an estimate and asks for an explicit go before any
-  paid call, then establishes a ~5h spend window (aligned to
-  Anthropic's rolling usage window) so later runs proceed silently
-  until it expires or a run would exceed it. Framing matches your
-  meter — a dollar band for API users, usage-headroom (no misleading
-  `$0`) for subscription users. A non-interactive run with no
-  pre-authorization **blocks** rather than spending silently. Knobs:
-  `ATTUNE_SPEND_GATE=off` (or `ATTUNE_MAX_BUDGET_USD=0`) disables it;
-  `ATTUNE_SPEND_GATE_AUTHORIZED=1` opts a CI / daemon context in.
-  `--no-llm` runs never reach the gate. See
-  `docs/specs/collaboration-gates/` and the CLI reference's
-  "Spend gate" section. (Phase 1: T1–T5.)
+- **Workflow error fidelity** — the capture-call path now surfaces the
+  real underlying error instead of masking it as an `IndexError`. (#650)
+- **Ops `/sessions` no longer blocks the event loop** — the synchronous
+  Anthropic SDK call is deferred to a thread so the dashboard stays
+  responsive during a session fetch. (#652)
+- **Runner stability** — `RunnerService`'s executor task is pinned so it
+  can't be garbage-collected mid-flight. (#651)
 
 ## [7.4.0] — 2026-06-04
 

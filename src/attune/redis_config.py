@@ -1,6 +1,6 @@
 """Redis Configuration for Attune AI (deprecated).
 
-REMOVE IN v8.0.0 — gated on redis-decoupling spec P3 (docs/specs/redis-decoupling/); migration path: docs/migration/redis-plugin-migration.md
+REMOVE IN v9.0.0 — full removal DESCOPED (was gated on redis-decoupling spec P3, now archived/superseded; the migration guide marks these subsystems deferred — removal needs a memory-subsystem rewrite, not a facade delete). migration path: docs/migration/redis-plugin-migration.md
 
 .. deprecated::
     Use ``attune_redis.config.RedisPluginConfig`` for new code.
