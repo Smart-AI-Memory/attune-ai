@@ -1,6 +1,6 @@
 # Claude Cross-Session Memory — Tasks
 
-**Status:** approved
+**Status:** complete (shipped — session_recall/session_stash hooks + /recall; #587/#593/#600; reconciled 2026-06-06)
 **Phase:** ready-to-implement
 
 > **API corrections (2026-06-03 verify pass — authoritative: see

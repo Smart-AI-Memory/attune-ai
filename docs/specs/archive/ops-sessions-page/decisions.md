@@ -1,6 +1,6 @@
 # Spec: Ops Sessions Page — Decisions
 
-**Status:** approved
+**Status:** complete (shipped — routes/sessions.py + sessions.html; #377/#387/#390; reconciled 2026-06-06)
 
 
 > Pre-committed decisions captured 2026-05-14.

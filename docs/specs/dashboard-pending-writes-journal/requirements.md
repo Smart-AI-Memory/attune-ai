@@ -9,7 +9,7 @@
 
 ## Phase 1: Requirements
 
-**Status:** draft (2026-05-25)
+**Status:** complete (Phase 1 shipped — pending_writes.py + routes + tests; PRs #469, #492; reconciled 2026-06-06)
 
 ### Problem statement
 

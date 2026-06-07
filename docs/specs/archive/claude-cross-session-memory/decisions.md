@@ -1,6 +1,6 @@
 # Claude Cross-Session Memory — Decisions
 
-**Status:** approved
+**Status:** complete (shipped — session_recall/session_stash hooks + /recall; #587/#593/#600; reconciled 2026-06-06)
 **Ratified:** 2026-06-02
 
 ## D1 — Recall trigger

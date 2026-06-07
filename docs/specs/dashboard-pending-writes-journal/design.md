@@ -1,6 +1,6 @@
 # Design: Dashboard Pending-Writes Journal
 
-**Status:** draft (2026-05-25)
+**Status:** complete (Phase 1 shipped — pending_writes.py + routes + tests; PRs #469, #492; reconciled 2026-06-06)
 
 **Phase 1 scope:** journal writer + API endpoint. UI chip
 (Phase 2) and session-start hook (Phase 3) are sketched at

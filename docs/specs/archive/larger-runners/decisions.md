@@ -1,5 +1,5 @@
 # Decisions — Larger CI Runners
-**Status:** approved (2026-05-11, revised post-Probe-C)
+**Status:** complete (shipped — tests.yml 8-core matrix; PR #643; reconciled 2026-06-06)
 **Owner:** Patrick
 
 ---
