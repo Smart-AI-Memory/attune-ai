@@ -4,12 +4,14 @@
 
 **Multi-agent developer workflows for Claude Code.**
 
+🌐 **Docs & guides: [attune-ai.dev](https://attune-ai.dev)**
+
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
-[![Tests](https://img.shields.io/badge/tests-19%2C000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-94%25-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Tests](https://img.shields.io/badge/tests-20%2C000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
+[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
@@ -243,8 +245,8 @@ related-but-different things, and the per-claim number is the right
 The gain comes from the prompting contract (citation-per-claim), not
 from retrieval. Full methodology:
 
-- [`docs/rag/faithfulness-decision-2026-04-19.md`](docs/rag/faithfulness-decision-2026-04-19.md)
-- [`docs/rag/ab-report-2026-04-19.json`](docs/rag/ab-report-2026-04-19.json)
+- [`docs/rag/faithfulness-decision-2026-04-19.md`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/faithfulness-decision-2026-04-19.md)
+- [`docs/rag/ab-report-2026-04-19.json`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/rag/ab-report-2026-04-19.json)
 
 ### Help resolver — 48/48 benchmark queries pass at P@1
 
@@ -254,7 +256,7 @@ from retrieval. Full methodology:
 | medium | 26 | 26/26 (100%) | paraphrases + industry terminology |
 | hard | 4 | 0/4 (XFAIL) | shared-tag collisions — structural ambiguity |
 
-- [`tests/unit/help/fixtures/golden_queries.yaml`](tests/unit/help/fixtures/golden_queries.yaml)
+- [`tests/unit/help/fixtures/golden_queries.yaml`](https://github.com/Smart-AI-Memory/attune-ai/blob/main/tests/unit/help/fixtures/golden_queries.yaml)
 
 ---
 
