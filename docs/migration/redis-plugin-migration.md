@@ -57,6 +57,18 @@ with TTL, glob scan, pattern staging, and an in-process EventBus
 "decouple Redis." Not in scope for this spec; deferred to a
 hypothetical follow-up.
 
+> **Deprecation schedule (updated for v8.0.0).** The legacy facade
+> modules (`attune.redis_memory`, `attune.redis_memory_storage`,
+> `attune.redis_memory_coordination`, `attune.redis_memory_patterns`,
+> `attune.redis_config`, and the deprecated parts of
+> `attune.memory.config`) carried `REMOVE IN v8.0.0` markers gated on
+> redis-decoupling spec P3. Because P3 (full removal) was descoped and
+> the spec archived — and because these still power live subsystems —
+> the markers were **rescheduled to `REMOVE IN v9.0.0`** at the 8.0.0
+> cut. They remain supported, deprecated, and Redis-coupled by design;
+> actual removal still awaits the memory-subsystem rewrite described
+> above.
+
 ## Install path
 
 ### Vanilla — Redis-free

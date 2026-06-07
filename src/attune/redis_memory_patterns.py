@@ -1,6 +1,6 @@
 """Deprecated — use attune_redis for pattern promotion.
 
-REMOVE IN v8.0.0 — gated on redis-decoupling spec P3 (docs/specs/redis-decoupling/); migration path: docs/migration/redis-plugin-migration.md
+REMOVE IN v9.0.0 — full removal DESCOPED (was gated on redis-decoupling spec P3, now archived/superseded; the migration guide marks these subsystems deferred — removal needs a memory-subsystem rewrite, not a facade delete). migration path: docs/migration/redis-plugin-migration.md
 
 Legacy pattern staging mixins kept for backward
 compatibility. New code should use

@@ -16,13 +16,15 @@ concurrency:
 
 jobs:
   test:
-    # Route the ubuntu matrix entries to the org's 8-core/32GB larger
-    # runner for ~2x parallelism + memory headroom (larger-runners spec).
-    # The matrix `os` value stays "ubuntu-latest" so the generated job
-    # name — and the required status check "test (ubuntu-latest, 3.12)"
-    # — is unchanged; only the runner the job lands on differs. macOS
-    # and Windows stay on default runners.
-    runs-on: ${{ matrix.os == 'ubuntu-latest' && 'ubuntu-8core-or-linux-32gb' || matrix.os }}
+    # TEMPORARY (2026-06-07): ubuntu matrix entries run on default
+    # GitHub-hosted `ubuntu-latest` runners. The 8-core/32GB larger
+    # runner (`ubuntu-8core-or-linux-32gb`) was de-provisioned, which left
+    # the ubuntu Tests jobs unschedulable (no runner matched the label) —
+    # so the routing was reverted to unblock CI. Follow-up: re-provision a
+    # working larger runner and restore the conditional routing for the
+    # ~2x parallelism + memory headroom (see the larger-runners spec).
+    # macOS and Windows stay on default runners as before.
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 75
     strategy:
       fail-fast: false
