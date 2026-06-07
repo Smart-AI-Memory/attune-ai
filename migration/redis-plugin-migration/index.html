@@ -3839,6 +3839,19 @@ with TTL, glob scan, pattern staging, and an in-process EventBus
 — effectively a memory-subsystem rewrite, not a delta on
 "decouple Redis." Not in scope for this spec; deferred to a
 hypothetical follow-up.</p>
+<blockquote>
+<p><strong>Deprecation schedule (updated for v8.0.0).</strong> The legacy facade
+modules (<code>attune.redis_memory</code>, <code>attune.redis_memory_storage</code>,
+<code>attune.redis_memory_coordination</code>, <code>attune.redis_memory_patterns</code>,
+<code>attune.redis_config</code>, and the deprecated parts of
+<code>attune.memory.config</code>) carried <code>REMOVE IN v8.0.0</code> markers gated on
+redis-decoupling spec P3. Because P3 (full removal) was descoped and
+the spec archived — and because these still power live subsystems —
+the markers were <strong>rescheduled to <code>REMOVE IN v9.0.0</code></strong> at the 8.0.0
+cut. They remain supported, deprecated, and Redis-coupled by design;
+actual removal still awaits the memory-subsystem rewrite described
+above.</p>
+</blockquote>
 <h2 id="install-path">Install path<a class="headerlink" href="#install-path" title="Permanent link">&para;</a></h2>
 <h3 id="vanilla-redis-free">Vanilla — Redis-free<a class="headerlink" href="#vanilla-redis-free" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>pip<span class="w"> </span>install<span class="w"> </span>attune-ai
