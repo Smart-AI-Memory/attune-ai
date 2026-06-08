@@ -277,6 +277,55 @@ def test_stash_findings_round_trips_through_real_file_backend(stash_mod, monkeyp
 
 
 # ==========================================================================
+# session_stash — additionalContext emission (Claude Code >= 2.1.163)
+# ==========================================================================
+
+
+def test_emit_additional_context_envelope(stash_mod, capsys):
+    stash_mod._emit_additional_context(
+        [{"type": "bug", "content": "a race in the stop hook"}], written=1
+    )
+    out = capsys.readouterr().out
+    payload = json.loads(out)
+    hso = payload["hookSpecificOutput"]
+    assert hso["hookEventName"] == "Stop"
+    ctx = hso["additionalContext"]
+    assert "Stashed 1 session finding" in ctx
+    assert "[bug] a race in the stop hook" in ctx
+
+
+def test_emit_additional_context_noop_when_nothing_written(stash_mod, capsys):
+    stash_mod._emit_additional_context([{"type": "note", "content": "x"}], written=0)
+    assert capsys.readouterr().out == ""
+
+
+def test_emit_additional_context_disabled_via_env(stash_mod, monkeypatch, capsys):
+    monkeypatch.setenv("ATTUNE_MEMORY_STASH_CONTEXT", "0")
+    stash_mod._emit_additional_context([{"type": "note", "content": "x"}], written=1)
+    assert capsys.readouterr().out == ""
+
+
+def test_stash_main_emits_additional_context(stash_mod, monkeypatch, tmp_path, capsys):
+    """main() happy path injects the stashed findings into the next turn."""
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path))
+    tpath = tmp_path / "t.jsonl"
+    tpath.write_text(
+        json.dumps({"message": {"role": "assistant", "content": "the bug was a race"}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(stash_mod, "estimate_utilization", lambda _p: 0.9)
+    monkeypatch.setattr(
+        stash_mod, "_extract_via_ollama", lambda _t: [{"type": "bug", "content": "a race"}]
+    )
+    monkeypatch.setattr(stash_mod, "_stash_findings", lambda findings, **k: len(findings))
+    _stdin(monkeypatch, {"session_id": "ctx1", "transcript_path": str(tpath), "cwd": "/proj"})
+    assert stash_mod.main() == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["hookSpecificOutput"]["hookEventName"] == "Stop"
+    assert "[bug] a race" in payload["hookSpecificOutput"]["additionalContext"]
+
+
+# ==========================================================================
 # session_recall
 # ==========================================================================
 
