@@ -174,7 +174,7 @@ class TestEmpathyLLMExecutorHybridMode:
             executor._hybrid_config = {
                 "cheap": "gpt-4o-mini",
                 "capable": "claude-sonnet-4-20250514",
-                "premium": "claude-opus-4-6",
+                "premium": "claude-opus-4-8",
             }
             return executor
 

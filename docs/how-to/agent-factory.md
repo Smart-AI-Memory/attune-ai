@@ -233,7 +233,7 @@ importable) maps:
 |-----------|----------------------------|
 | `cheap`   | `claude-haiku-4-5-20251001` |
 | `capable` | `claude-sonnet-4-6`         |
-| `premium` | `claude-opus-4-6`           |
+| `premium` | `claude-opus-4-8`           |
 
 These IDs are fallback constants — the live mapping is whatever
 `ModelRouter` resolves at runtime.

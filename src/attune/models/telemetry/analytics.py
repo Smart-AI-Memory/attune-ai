@@ -201,7 +201,8 @@ class TelemetryAnalytics:
         anthropic_calls = [
             c
             for c in calls
-            if c.provider == "anthropic" and c.model_id in ["claude-sonnet-4-6", "claude-opus-4-6"]
+            if c.provider == "anthropic"
+            and c.model_id in ["claude-sonnet-4-6", "claude-opus-4-6", "claude-opus-4-8"]
         ]
 
         if not anthropic_calls:
@@ -226,15 +227,17 @@ class TelemetryAnalytics:
 
         # Count Opus fallbacks (calls with fallback_used and ended up on Opus)
         opus_fallbacks = sum(
-            1 for c in anthropic_calls if c.model_id == "claude-opus-4-6" and c.fallback_used
+            1
+            for c in anthropic_calls
+            if c.model_id in ("claude-opus-4-6", "claude-opus-4-8") and c.fallback_used
         )
 
         # Calculate costs
         actual_cost = sum(c.estimated_cost for c in anthropic_calls)
 
         # Calculate what it would cost if everything used Opus
-        opus_input_cost = 15.00 / 1_000_000  # per token
-        opus_output_cost = 75.00 / 1_000_000  # per token
+        opus_input_cost = 5.00 / 1_000_000  # per token
+        opus_output_cost = 25.00 / 1_000_000  # per token
         always_opus_cost = sum(
             (c.input_tokens * opus_input_cost) + (c.output_tokens * opus_output_cost)
             for c in anthropic_calls

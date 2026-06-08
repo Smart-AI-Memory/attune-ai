@@ -72,7 +72,7 @@ class TestEscalationResult:
         result = EscalationResult(
             success=False,
             response=None,
-            final_model="claude-opus-4-6",
+            final_model="claude-opus-4-8",
             attempts=[MagicMock(), MagicMock()],
         )
         assert result.summary().startswith("✗")

@@ -89,7 +89,7 @@ class TestModelRegistryInitialization:
         # Should have cache entries for all Anthropic models
         assert "claude-haiku-4-5" in registry._model_id_cache
         assert "claude-sonnet-4-6" in registry._model_id_cache
-        assert "claude-opus-4-6" in registry._model_id_cache
+        assert "claude-opus-4-8" in registry._model_id_cache
 
 
 @pytest.mark.unit
@@ -122,10 +122,10 @@ class TestGetModelById:
         """Test retrieving Opus model by ID."""
         registry = ModelRegistry()
 
-        model = registry.get_model_by_id("claude-opus-4-6")
+        model = registry.get_model_by_id("claude-opus-4-8")
 
         assert model is not None
-        assert model.id == "claude-opus-4-6"
+        assert model.id == "claude-opus-4-8"
         assert model.provider == "anthropic"
         assert model.tier == "premium"
 
@@ -394,11 +394,11 @@ class TestGetPricingForModel:
         """Test getting pricing for Opus model."""
         registry = ModelRegistry()
 
-        pricing = registry.get_pricing_for_model("claude-opus-4-6")
+        pricing = registry.get_pricing_for_model("claude-opus-4-8")
 
         assert pricing is not None
-        assert pricing["input"] == 15.00
-        assert pricing["output"] == 75.00
+        assert pricing["input"] == 5.00
+        assert pricing["output"] == 25.00
 
     def test_get_pricing_for_nonexistent_model(self):
         """Test that non-existent model returns None."""

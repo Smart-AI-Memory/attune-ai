@@ -52,7 +52,7 @@ class LLMGoalAnalyzer:
     MODELS = {
         "cheap": "claude-haiku-4-5",
         "capable": "claude-sonnet-4-6",
-        "premium": "claude-opus-4-6",
+        "premium": "claude-opus-4-8",
     }
 
     def __init__(

@@ -150,7 +150,7 @@ class UnifiedAgentConfig(BaseModel):
             Provider.ANTHROPIC: {
                 ModelTier.CHEAP: "claude-haiku-4-5",
                 ModelTier.CAPABLE: "claude-sonnet-4-6",
-                ModelTier.PREMIUM: "claude-opus-4-6",
+                ModelTier.PREMIUM: "claude-opus-4-8",
             },
         }
 

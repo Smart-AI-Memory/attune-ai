@@ -149,11 +149,11 @@ MODEL_REGISTRY: dict[str, dict[str, ModelInfo]] = {
             supports_tools=True,
         ),
         "premium": ModelInfo(
-            id="claude-opus-4-6",
+            id="claude-opus-4-8",
             provider="anthropic",
             tier="premium",
-            input_cost_per_million=15.00,
-            output_cost_per_million=75.00,
+            input_cost_per_million=5.00,
+            output_cost_per_million=25.00,
             max_tokens=8192,
             supports_vision=True,
             supports_tools=True,
@@ -183,7 +183,7 @@ class ModelRegistry:
         >>> print(len(models))
         1
 
-        >>> model = registry.get_model_by_id("claude-opus-4-6")
+        >>> model = registry.get_model_by_id("claude-opus-4-8")
         >>> print(model.tier)
         premium
 
@@ -268,7 +268,7 @@ class ModelRegistry:
 
         Example:
             >>> registry = ModelRegistry()
-            >>> model = registry.get_model_by_id("claude-opus-4-6")
+            >>> model = registry.get_model_by_id("claude-opus-4-8")
             >>> print(model.provider)
             anthropic
             >>> print(model.tier)
@@ -299,7 +299,7 @@ class ModelRegistry:
             >>> premium_models = registry.get_models_by_tier("premium")
             >>> for model in premium_models:
             ...     print(f"{model.provider}: {model.id}")
-            anthropic: claude-opus-4-6
+            anthropic: claude-opus-4-8
 
         """
         return self._tier_cache.get(tier.lower(), [])
@@ -364,7 +364,7 @@ class ModelRegistry:
             >>> print(pricing)
             {'input': 3.0, 'output': 15.0}
 
-            >>> pricing = registry.get_pricing_for_model("claude-opus-4-6")
+            >>> pricing = registry.get_pricing_for_model("claude-opus-4-8")
             >>> print(f"${pricing['input']}/M input, ${pricing['output']}/M output")
             $15.0/M input, $75.0/M output
 

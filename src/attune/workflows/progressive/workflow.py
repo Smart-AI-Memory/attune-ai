@@ -51,7 +51,7 @@ def _load_model_config() -> dict[str, str]:
     defaults = {
         "cheap": "gpt-4o-mini",
         "capable": "claude-sonnet-4-6",
-        "premium": "claude-opus-4-6",
+        "premium": "claude-opus-4-8",
     }
 
     # Try to load from unified config

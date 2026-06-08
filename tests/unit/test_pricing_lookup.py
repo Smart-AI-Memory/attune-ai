@@ -26,11 +26,11 @@ class TestRegistryPricingLookup:
         assert pricing["output"] == pytest.approx(15.0)
 
     def test_opus_pricing(self) -> None:
-        """Opus 4.6 returns $15/M input, $75/M output."""
-        pricing = get_pricing_for_model("claude-opus-4-6")
+        """Opus 4.8 returns $5/M input, $25/M output."""
+        pricing = get_pricing_for_model("claude-opus-4-8")
         assert pricing is not None
-        assert pricing["input"] == pytest.approx(15.0)
-        assert pricing["output"] == pytest.approx(75.0)
+        assert pricing["input"] == pytest.approx(5.0)
+        assert pricing["output"] == pytest.approx(25.0)
 
     def test_haiku_pricing(self) -> None:
         """Haiku 4.5 returns $1/M input, $5/M output."""
@@ -54,9 +54,9 @@ class TestCacheSavingsMath:
     """Test that cache savings calculations are correct for different models."""
 
     def test_opus_cache_savings_higher_than_sonnet(self) -> None:
-        """Opus at $15/M should yield 5x savings vs Sonnet at $3/M for same tokens."""
+        """Opus at $5/M should yield 5/3x savings vs Sonnet at $3/M for same tokens."""
         tokens = 10_000
-        opus_pricing = get_pricing_for_model("claude-opus-4-6")
+        opus_pricing = get_pricing_for_model("claude-opus-4-8")
         sonnet_pricing = get_pricing_for_model("claude-sonnet-4-6")
 
         assert opus_pricing is not None
@@ -65,7 +65,7 @@ class TestCacheSavingsMath:
         opus_savings = tokens * (opus_pricing["input"] / 1_000_000) * 0.9
         sonnet_savings = tokens * (sonnet_pricing["input"] / 1_000_000) * 0.9
 
-        assert opus_savings == pytest.approx(sonnet_savings * 5.0)
+        assert opus_savings == pytest.approx(sonnet_savings * (5.0 / 3.0))
 
     def test_haiku_cache_savings_lower_than_sonnet(self) -> None:
         """Haiku at $1/M should yield 1/3 savings vs Sonnet at $3/M."""
@@ -90,14 +90,14 @@ class TestCacheSavingsMath:
 
     def test_write_cost_proportional_to_model(self) -> None:
         """Cache write cost is 125% of input rate, scaled per model."""
-        opus_pricing = get_pricing_for_model("claude-opus-4-6")
+        opus_pricing = get_pricing_for_model("claude-opus-4-8")
         assert opus_pricing is not None
 
         tokens = 1000
         write_cost = tokens * (opus_pricing["input"] / 1_000_000) * 1.25
 
-        # Opus: 1000 * ($15/1M) * 1.25 = $0.01875
-        assert write_cost == pytest.approx(0.01875)
+        # Opus: 1000 * ($5/1M) * 1.25 = $0.00625
+        assert write_cost == pytest.approx(0.00625)
 
 
 # ---------------------------------------------------------------------------
@@ -112,7 +112,7 @@ class TestUsageTrackerPerModelAggregation:
         """Entries with different models should each use their own pricing."""
         entries = [
             {
-                "model": "claude-opus-4-6",
+                "model": "claude-opus-4-8",
                 "prompt_cache": {"hit": True, "read_tokens": 1000, "creation_tokens": 0},
             },
             {
@@ -131,10 +131,10 @@ class TestUsageTrackerPerModelAggregation:
                 cost_per_token = (pricing["input"] if pricing else 3.00) / 1_000_000
                 total_savings += read_tokens * cost_per_token * 0.9
 
-        # Opus: 1000 * ($15/1M) * 0.9 = $0.0135
+        # Opus: 1000 * ($5/1M) * 0.9 = $0.0045
         # Haiku: 1000 * ($1/1M) * 0.9 = $0.0009
-        # Total: $0.0144
-        assert total_savings == pytest.approx(0.0144)
+        # Total: $0.0054
+        assert total_savings == pytest.approx(0.0054)
 
     def test_empty_model_uses_fallback(self) -> None:
         """Entry with empty model string should use $3.00/M fallback."""

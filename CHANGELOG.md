@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Best-effort: degrades to `[]` on any AMS error, never raises.
 
 ### Changed
+- **PREMIUM tier upgraded to Claude Opus 4.8** (`claude-opus-4-8`,
+  was `claude-opus-4-6`) across the registry, adaptive routing,
+  config defaults, and templates. Pricing-neutral ($5/$25 per 1M for
+  both) and a pure quality upgrade — Opus 4.8 takes no `temperature`/
+  `top_p`/`top_k` (a repo-wide grep confirmed attune sets none) and
+  defaults to `high` effort, matching how the SDK adapter already
+  routes. Note: `claude-opus-4-6` is **not** retiring — this is the
+  June-1 quality recommendation, decoupled from any deprecation. The
+  savings-analysis telemetry filter keeps matching historical 4.6
+  records alongside new 4.8 ones.
 - **Self-maintaining README chips.** The coverage badge is now a live
   Codecov badge (auto-updates, zero upkeep) instead of a hardcoded `NN%`.
   The tests badge stays a round floor (`20,000+`); a new
@@ -61,6 +71,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persist; exact repeats don't pile up.
 
 ### Fixed
+- **Premium Opus pricing was wrong by 3×.** The model registry (and the
+  `anthropic` provider's `get_model_info`, and the telemetry
+  savings-baseline) priced the premium tier at `$15/$75` per 1M — the
+  *original* Opus 4 rate — but Opus 4.6/4.8 are `$5/$25`. Cost tracking
+  and "always-Opus" savings figures were inflated accordingly; now
+  corrected. (The `claude-opus-4-20250514` historical pricing *key* in
+  `cost_tracker` keeps its `$15/$75` — it's a lookup for old records of
+  that retiring snapshot, not a live rate, and is now commented to stop
+  audits re-flagging it.)
 - **`attune-redis` semantic queries silently returned `[]` for large
   limits.** AMS hard-caps `search_long_term_memory`'s `limit` at 100 —
   a larger value is a request-validation error, not a clamp. Both

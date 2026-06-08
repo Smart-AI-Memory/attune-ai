@@ -43,7 +43,7 @@ logger = logging.getLogger(__name__)
 # Canonical Opus model for this codebase (matches cost_tracker.BASELINE
 # and is priced in the registry). The spec drafted "claude-opus-4-7",
 # which never existed here — see decisions.md.
-_CURATOR_MODEL = "claude-opus-4-6"
+_CURATOR_MODEL = "claude-opus-4-8"
 
 # Output token budget for the briefing reply. Input is bounded by the
 # source readers (≤50 rows × ≤500 chars each); this caps the reply.

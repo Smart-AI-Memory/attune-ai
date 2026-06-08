@@ -342,10 +342,10 @@ class AnthropicProvider(BaseLLMProvider):
     def get_model_info(self) -> dict[str, Any]:
         """Get Claude model information with extended context capabilities."""
         model_info = {
-            "claude-opus-4-6": {
+            "claude-opus-4-8": {
                 "max_tokens": 200000,
-                "cost_per_1m_input": 15.00,
-                "cost_per_1m_output": 75.00,
+                "cost_per_1m_input": 5.00,
+                "cost_per_1m_output": 25.00,
                 "supports_prompt_caching": True,
                 "supports_thinking": True,
                 "ideal_for": "Complex reasoning, large codebases",

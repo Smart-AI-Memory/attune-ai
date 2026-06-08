@@ -182,7 +182,7 @@ class ModelRouter:
             >>> router.route("fix_bug")
             'claude-sonnet-4-6'
             >>> router.route("coordinate")
-            'claude-opus-4-6'
+            'claude-opus-4-8'
 
         """
         provider = provider or self._default_provider
