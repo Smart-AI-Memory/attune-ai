@@ -100,17 +100,25 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         Args:
             workspace_root: Root directory for workspace path
                 containment. Resolution order: explicit argument >
-                ``ATTUNE_MCP_WORKSPACE_ROOT`` env var > current
-                working directory. Setting the env var lets users
-                broaden the sandbox to a parent directory (e.g. the
-                main checkout when the MCP launches in a worktree)
-                without code changes.
+                ``ATTUNE_MCP_WORKSPACE_ROOT`` env var >
+                ``CLAUDE_PROJECT_DIR`` env var > current working
+                directory. Setting ``ATTUNE_MCP_WORKSPACE_ROOT`` lets
+                users broaden the sandbox to a parent directory (e.g.
+                the main checkout when the MCP launches in a worktree)
+                without code changes. ``CLAUDE_PROJECT_DIR`` is set by
+                Claude Code in the spawned MCP server's environment to
+                the project root, so the sandbox tracks the project
+                even when the server's cwd differs (it is a no-op in
+                environments that don't export the variable).
             user_id: Identity for memory operations. Defaults
                 to the OS login name or "mcp-session".
 
         """
         self._workspace_root = (
-            workspace_root or os.environ.get("ATTUNE_MCP_WORKSPACE_ROOT") or os.getcwd()
+            workspace_root
+            or os.environ.get("ATTUNE_MCP_WORKSPACE_ROOT")
+            or os.environ.get("CLAUDE_PROJECT_DIR")
+            or os.getcwd()
         )
         self._user_id = user_id or _get_default_user_id()
         self.tools = self._register_tools()
