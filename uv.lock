@@ -562,7 +562,7 @@ requires-dist = [
     { name = "starlette", marker = "extra == 'all'", specifier = ">=0.40.0,<2.0.0" },
     { name = "starlette", marker = "extra == 'backend'", specifier = ">=0.40.0,<2.0.0" },
     { name = "starlette", marker = "extra == 'enterprise'", specifier = ">=0.40.0,<2.0.0" },
-    { name = "structlog", specifier = ">=24.0.0,<26.0.0" },
+    { name = "structlog", specifier = ">=24.0.0,<27.0.0" },
     { name = "tiktoken", marker = "extra == 'dev'", specifier = ">=0.7.0,<1.0.0" },
     { name = "tomli", marker = "python_full_version < '3.11'", specifier = ">=2.0.0" },
     { name = "typer", specifier = ">=0.9.0,<1.0.0" },
