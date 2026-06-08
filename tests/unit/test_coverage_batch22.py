@@ -147,9 +147,9 @@ class TestRegistryHelpers:
     def test_get_pricing_for_model_function(self):
         from attune.models.registry import get_pricing_for_model
 
-        pricing = get_pricing_for_model("claude-opus-4-6")
+        pricing = get_pricing_for_model("claude-opus-4-8")
         assert pricing is not None
-        assert pricing["input"] == 15.0
+        assert pricing["input"] == 5.0
 
     def test_get_supported_providers(self):
         from attune.models.registry import get_supported_providers

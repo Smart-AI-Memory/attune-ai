@@ -45,7 +45,12 @@ def _build_model_pricing() -> dict[str, dict[str, float]]:
     # Add tier aliases from registry
     pricing.update(TIER_PRICING)
 
-    # Add legacy Claude model names for backward compatibility
+    # Add legacy Claude model names for backward compatibility.
+    # These are historical pricing keys for cost lookups on OLD telemetry
+    # records — NOT live API-call paths. "claude-opus-4-20250514" (original
+    # Opus 4, $15/$75) retires 2026-06-15, but keeping its key preserves
+    # accurate cost lookups for any pre-retirement records. Do NOT remap it
+    # to claude-opus-4-8 — that model is $5/$25 and would mis-price history.
     legacy_models = {
         "claude-3-haiku-20240307": {"input": 0.25, "output": 1.25},
         "claude-3-5-sonnet-20241022": {"input": 3.00, "output": 15.00},
@@ -60,7 +65,7 @@ def _build_model_pricing() -> dict[str, dict[str, float]]:
 MODEL_PRICING = _build_model_pricing()
 
 # Default premium model for baseline comparison
-BASELINE_MODEL = "claude-opus-4-6"
+BASELINE_MODEL = "claude-opus-4-8"
 
 
 class CostTracker:

@@ -58,7 +58,7 @@ class AdaptiveConfig:
             "simple": "claude-haiku-4-5",
             "moderate": "claude-sonnet-4-6",
             "complex": "claude-sonnet-4-6",
-            "very_complex": "claude-opus-4-6",
+            "very_complex": "claude-opus-4-8",
         },
     )
     complexity_thresholds: dict[str, int] = field(

@@ -607,5 +607,77 @@ class TestAnthropicProviderGenerate:
             assert result.tokens_used == 1500
 
 
+class TestSamplingParamNormalization:
+    """Opus 4.7+ reject temperature/top_p/top_k + enabled-thinking (400)."""
+
+    def test_normalize_strips_sampling_params_for_opus_48(self):
+        from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
+
+        kw = {"model": "claude-opus-4-8", "temperature": 0.7, "top_p": 0.9, "top_k": 5}
+        _normalize_api_kwargs_for_model(kw)
+        assert "temperature" not in kw and "top_p" not in kw and "top_k" not in kw
+
+    def test_normalize_keeps_sampling_params_for_sonnet_and_opus_46(self):
+        from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
+
+        for model in ("claude-sonnet-4-6", "claude-haiku-4-5", "claude-opus-4-6"):
+            kw = {"model": model, "temperature": 0.7}
+            _normalize_api_kwargs_for_model(kw)
+            assert kw["temperature"] == 0.7, model
+
+    def test_normalize_converts_enabled_thinking_to_adaptive_for_opus_48(self):
+        from attune.llm.providers.anthropic import _normalize_api_kwargs_for_model
+
+        kw = {"model": "claude-opus-4-8", "thinking": {"type": "enabled", "budget_tokens": 10000}}
+        _normalize_api_kwargs_for_model(kw)
+        assert kw["thinking"] == {"type": "adaptive"}
+
+    @pytest.mark.asyncio
+    async def test_generate_omits_temperature_for_opus_48(self):
+        """End-to-end: an Opus 4.8 call must not send temperature (would 400)."""
+        mock_anthropic = MagicMock()
+        mock_client = MagicMock()
+        mock_anthropic.AsyncAnthropic.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.model = "claude-opus-4-8"
+        mock_response.stop_reason = "end_turn"
+        mock_response.usage = MagicMock(input_tokens=1, output_tokens=1)
+        block = MagicMock()
+        block.type = "text"
+        block.text = "ok"
+        mock_response.content = [block]
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+            provider = AnthropicProvider(api_key="test-key", model="claude-opus-4-8")
+            await provider.generate([{"role": "user", "content": "hi"}], temperature=0.7)
+
+        sent = mock_client.messages.create.await_args.kwargs
+        assert "temperature" not in sent
+        assert sent["model"] == "claude-opus-4-8"
+
+    @pytest.mark.asyncio
+    async def test_generate_keeps_temperature_for_sonnet(self):
+        mock_anthropic = MagicMock()
+        mock_client = MagicMock()
+        mock_anthropic.AsyncAnthropic.return_value = mock_client
+        mock_response = MagicMock()
+        mock_response.model = "claude-sonnet-4-6"
+        mock_response.stop_reason = "end_turn"
+        mock_response.usage = MagicMock(input_tokens=1, output_tokens=1)
+        block = MagicMock()
+        block.type = "text"
+        block.text = "ok"
+        mock_response.content = [block]
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+
+        with patch.dict("sys.modules", {"anthropic": mock_anthropic}):
+            provider = AnthropicProvider(api_key="test-key", model="claude-sonnet-4-6")
+            await provider.generate([{"role": "user", "content": "hi"}], temperature=0.3)
+
+        sent = mock_client.messages.create.await_args.kwargs
+        assert sent["temperature"] == 0.3
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

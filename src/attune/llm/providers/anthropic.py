@@ -5,12 +5,37 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
+import re
 from collections.abc import AsyncGenerator
 from typing import Any
 
 from .base import BaseLLMProvider, LLMResponse
 
 logger = logging.getLogger(__name__)
+
+# Opus 4.7 and later reject temperature/top_p/top_k and the
+# enabled-thinking shape (HTTP 400). Matches opus-4-7, opus-4-8, and any
+# future opus-4-9 / opus-4-1x. Older models (Opus 4.6-, Sonnet, Haiku)
+# still accept these params, so they're left untouched.
+_OPUS_NO_SAMPLING_RE = re.compile(r"opus-4-(?:[7-9]|\d{2,})")
+
+
+def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
+    """Drop request params that newer Claude models reject (in place).
+
+    This provider defaults ``temperature=0.7`` and can set extended
+    thinking, both of which Opus 4.7+ reject with a 400 — so without this,
+    any premium-tier (Opus 4.8) call through this path would fail. Strip
+    the sampling params and convert ``enabled`` thinking to ``adaptive``
+    for those models; leave older models that still accept them untouched.
+    """
+    if not _OPUS_NO_SAMPLING_RE.search(api_kwargs.get("model", "")):
+        return
+    for param in ("temperature", "top_p", "top_k"):
+        api_kwargs.pop(param, None)
+    thinking = api_kwargs.get("thinking")
+    if isinstance(thinking, dict) and thinking.get("type") == "enabled":
+        api_kwargs["thinking"] = {"type": "adaptive"}
 
 
 class AnthropicProvider(BaseLLMProvider):
@@ -146,6 +171,10 @@ class AnthropicProvider(BaseLLMProvider):
 
         # Add any additional kwargs
         api_kwargs.update(kwargs)
+
+        # Drop params newer models (Opus 4.7+) reject — must run AFTER the
+        # kwargs merge so a caller-supplied temperature is also stripped.
+        _normalize_api_kwargs_for_model(api_kwargs)
 
         # Call Anthropic API (async with AsyncAnthropic) with typed error handling
         try:
@@ -328,6 +357,9 @@ class AnthropicProvider(BaseLLMProvider):
 
         api_kwargs.update(kwargs)
 
+        # Drop params newer models (Opus 4.7+) reject (see generate()).
+        _normalize_api_kwargs_for_model(api_kwargs)
+
         try:
             async with self.client.messages.stream(**api_kwargs) as stream:
                 async for text in stream.text_stream:
@@ -342,10 +374,10 @@ class AnthropicProvider(BaseLLMProvider):
     def get_model_info(self) -> dict[str, Any]:
         """Get Claude model information with extended context capabilities."""
         model_info = {
-            "claude-opus-4-6": {
+            "claude-opus-4-8": {
                 "max_tokens": 200000,
-                "cost_per_1m_input": 15.00,
-                "cost_per_1m_output": 75.00,
+                "cost_per_1m_input": 5.00,
+                "cost_per_1m_output": 25.00,
                 "supports_prompt_caching": True,
                 "supports_thinking": True,
                 "ideal_for": "Complex reasoning, large codebases",

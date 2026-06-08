@@ -34,6 +34,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Best-effort: degrades to `[]` on any AMS error, never raises.
 
 ### Changed
+- **PREMIUM tier upgraded to Claude Opus 4.8** (`claude-opus-4-8`,
+  was `claude-opus-4-6`) across the registry, adaptive routing,
+  config defaults, and templates. Pricing-neutral ($5/$25 per 1M for
+  both) and a pure quality upgrade — Opus 4.8 takes no `temperature`/
+  `top_p`/`top_k` (a repo-wide grep confirmed attune sets none) and
+  defaults to `high` effort, matching how the SDK adapter already
+  routes. Note: `claude-opus-4-6` is **not** retiring — this is the
+  June-1 quality recommendation, decoupled from any deprecation. The
+  savings-analysis telemetry filter keeps matching historical 4.6
+  records alongside new 4.8 ones.
 - **Self-maintaining README chips.** The coverage badge is now a live
   Codecov badge (auto-updates, zero upkeep) instead of a hardcoded `NN%`.
   The tests badge stays a round floor (`20,000+`); a new
@@ -61,6 +71,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persist; exact repeats don't pile up.
 
 ### Fixed
+- **The direct `anthropic` provider now strips request params Opus 4.7+
+  reject.** `AnthropicProvider.generate`/`generate_stream` (and the batch
+  provider) defaulted `temperature=0.7` and could send extended-thinking —
+  both of which Opus 4.7/4.8 return HTTP 400 for. With the PREMIUM tier now
+  on Opus 4.8, any premium call through this path (the Sonnet→Opus
+  fallback, escalation chains, MCP workflow handlers) would have 400'd. A
+  single `_normalize_api_kwargs_for_model` pass drops
+  `temperature`/`top_p`/`top_k` and converts `enabled` thinking to
+  `adaptive` for Opus 4.7+ models, leaving older models (Opus 4.6−,
+  Sonnet, Haiku) untouched. (The SDK-native workflow path was already
+  safe — it sets no sampling params.)
+- **Premium Opus pricing was wrong by 3×.** The model registry (and the
+  `anthropic` provider's `get_model_info`, and the telemetry
+  savings-baseline) priced the premium tier at `$15/$75` per 1M — the
+  *original* Opus 4 rate — but Opus 4.6/4.8 are `$5/$25`. Cost tracking
+  and "always-Opus" savings figures were inflated accordingly; now
+  corrected. (The `claude-opus-4-20250514` historical pricing *key* in
+  `cost_tracker` keeps its `$15/$75` — it's a lookup for old records of
+  that retiring snapshot, not a live rate, and is now commented to stop
+  audits re-flagging it.)
 - **`attune-redis` semantic queries silently returned `[]` for large
   limits.** AMS hard-caps `search_long_term_memory`'s `limit` at 100 —
   a larger value is a request-validation error, not a clamp. Both

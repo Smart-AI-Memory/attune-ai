@@ -89,7 +89,7 @@ class TestModelRouter:
     def test_route_premium_task(self, router):
         """Test routing premium task to premium model."""
         model = router.route("coordinate")
-        assert model == "claude-opus-4-6"  # Opus 4.5
+        assert model == "claude-opus-4-8"  # Opus 4.5
 
     # test_route_with_openai_provider deleted - OpenAI removed in v5.0.0 (Anthropic-only)
     # test_route_with_ollama_provider deleted - Ollama removed in v5.0.0 (Anthropic-only)
@@ -129,8 +129,8 @@ class TestModelRouter:
         """Test cost estimation for premium tier."""
         cost = router.estimate_cost("coordinate", input_tokens=10000, output_tokens=2000)
 
-        # Opus: $15/M input, $75/M output
-        expected = (10000 / 1000) * 0.015 + (2000 / 1000) * 0.075
+        # Opus: $5/M input, $25/M output
+        expected = (10000 / 1000) * 0.005 + (2000 / 1000) * 0.025
         assert cost == pytest.approx(expected, rel=0.01)
 
     def test_compare_costs(self, router):
@@ -152,7 +152,7 @@ class TestModelRouter:
         assert tier == ModelTier.PREMIUM
 
         model = router.route("my_special_task")
-        assert model == "claude-opus-4-6"  # Opus 4.5
+        assert model == "claude-opus-4-8"  # Opus 4.5
 
     def test_add_task_routing(self, router):
         """Test adding custom routing dynamically."""
@@ -227,9 +227,11 @@ class TestCostOptimization:
             + 4 * router.estimate_cost("fix_bug", 30000, 3000)  # Sub-agents: Sonnet
         )
 
-        # Should save significant amount
+        # Should save a meaningful amount. (Opus 4.8 at $5/M narrows the
+        # premium-vs-Sonnet gap vs the old $15/M, so routing now saves ~28%
+        # here rather than >50% — still a real win.)
         savings_percent = (unoptimized - optimized) / unoptimized * 100
-        assert savings_percent > 50, "Should save >50% with smart routing"
+        assert savings_percent > 20, "Should save >20% with smart routing"
 
     # test_ollama_free_routing deleted - Ollama removed in v5.0.0 (Anthropic-only)
 

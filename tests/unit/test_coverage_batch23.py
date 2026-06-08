@@ -81,7 +81,7 @@ class TestCostTrackerLogRequest:
         from attune.cost_tracker import CostTracker
 
         tracker = CostTracker(storage_dir=str(tmp_path / "t"), batch_size=100)
-        record = tracker.log_request("claude-opus-4-6", 100, 50)
+        record = tracker.log_request("claude-opus-4-8", 100, 50)
         assert record["tier"] == "premium"
         tracker.flush()
 
@@ -241,7 +241,7 @@ class TestModelPricingConstant:
 
         assert "claude-sonnet-4-6" in MODEL_PRICING
         assert "claude-haiku-4-5" in MODEL_PRICING
-        assert "claude-opus-4-6" in MODEL_PRICING
+        assert "claude-opus-4-8" in MODEL_PRICING
 
     def test_has_tier_aliases(self):
         from attune.cost_tracker import MODEL_PRICING

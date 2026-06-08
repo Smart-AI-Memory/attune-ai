@@ -528,9 +528,9 @@ class TestCostTrackingAccuracy:
             task_type="generate_code",
         )
 
-        # Opus (premium): $15.00/M input
+        # Opus (premium): $5.00/M input
         opus_req = tracker.log_request(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             input_tokens=1_000_000,
             output_tokens=0,
             task_type="coordinate",
@@ -660,7 +660,7 @@ class TestCostTrackingAccuracy:
 
         # Log expensive request
         tracker.log_request(
-            model="claude-opus-4-6",
+            model="claude-opus-4-8",
             input_tokens=10_000_000,  # 10M tokens
             output_tokens=1_000_000,  # 1M tokens
             task_type="coordinate",

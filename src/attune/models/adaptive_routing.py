@@ -147,7 +147,7 @@ class AdaptiveModelRouter:
         fallbacks = {
             "cheap": "claude-haiku-4-5",
             "capable": "claude-sonnet-4-6",
-            "premium": "claude-opus-4-6",
+            "premium": "claude-opus-4-8",
         }
         return fallbacks.get(tier_lower, "claude-haiku-4-5")
 

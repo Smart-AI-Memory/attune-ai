@@ -126,10 +126,10 @@ class TestNativeAgentCreation:
     def test_model_property_uses_override(self) -> None:
         cfg = AgentConfig(
             name="x",
-            model_override="claude-opus-4-6",
+            model_override="claude-opus-4-8",
         )
         agent = NativeAgent(cfg)
-        assert agent.model == "claude-opus-4-6"
+        assert agent.model == "claude-opus-4-8"
 
 
 # -------------------------------------------------------------------

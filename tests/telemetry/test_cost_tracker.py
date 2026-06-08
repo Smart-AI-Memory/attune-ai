@@ -200,7 +200,7 @@ class TestTierDetection:
     def test_detects_opus_as_premium(self, tmp_path):
         """Test that opus models are detected as premium tier."""
         tracker = CostTracker(storage_dir=str(tmp_path / ".empathy"))
-        assert tracker._get_tier("claude-opus-4-6") == "premium"
+        assert tracker._get_tier("claude-opus-4-8") == "premium"
         assert tracker._get_tier("claude-3-opus-20240229") == "premium"
 
     def test_detects_other_as_capable(self, tmp_path):

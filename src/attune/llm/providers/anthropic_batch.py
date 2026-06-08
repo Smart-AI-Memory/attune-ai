@@ -112,6 +112,16 @@ class AnthropicBatchProvider:
             else:
                 formatted_requests.append(req)
 
+        # Drop params newer models (Opus 4.7+) reject from every request's
+        # params — same root cause as the non-batch provider; an Opus 4.8
+        # batch request carrying temperature would otherwise 400 per-item.
+        from .anthropic import _normalize_api_kwargs_for_model
+
+        for formatted in formatted_requests:
+            params = formatted.get("params")
+            if isinstance(params, dict):
+                _normalize_api_kwargs_for_model(params)
+
         try:
             # Use correct Message Batches API endpoint
             batch = self.client.messages.batches.create(requests=formatted_requests)

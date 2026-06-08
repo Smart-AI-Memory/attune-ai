@@ -37,7 +37,7 @@ def _result(
         items=items,
         sources_consulted=["bulletin", "specs"],
         cost_usd=0.0321,
-        model="claude-opus-4-6",
+        model="claude-opus-4-8",
     )
 
 
@@ -82,7 +82,7 @@ class TestGetCuratorPage:
         assert "Two things need attention" in body
         assert "Spec alpha looks ready to close" in body
         assert "Security finding unreviewed" in body
-        assert "claude-opus-4-6" in body
+        assert "claude-opus-4-8" in body
 
     def test_empty_items_shows_empty_state(self, client, monkeypatch):
         _inject(monkeypatch, _result([], summary="Nothing pressing."))

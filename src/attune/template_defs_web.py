@@ -26,7 +26,7 @@ model_routing:
   models:
     cheap: "claude-haiku-4-5"
     capable: "claude-sonnet-4-6"
-    premium: "claude-opus-4-6"
+    premium: "claude-opus-4-8"
 
 claude_sync:
   enabled: true
@@ -200,7 +200,7 @@ model_routing:
   models:
     cheap: "claude-haiku-4-5"
     capable: "claude-sonnet-4-6"
-    premium: "claude-opus-4-6"
+    premium: "claude-opus-4-8"
   task_overrides:
     summarize: "cheap"
     classify: "cheap"

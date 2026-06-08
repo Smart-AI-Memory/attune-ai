@@ -15,7 +15,7 @@ def _result(items=None, summary="Two things need attention [a:1]."):
         items=items or [],
         sources_consulted=["bulletin", "specs"],
         cost_usd=0.0321,
-        model="claude-opus-4-6",
+        model="claude-opus-4-8",
     )
 
 
@@ -62,7 +62,7 @@ def test_default_render(monkeypatch, capsys):
     rc = cli_curator.cmd_curator(_args())
     assert rc == 0
     out = capsys.readouterr().out
-    assert "Briefing (claude-opus-4-6)" in out
+    assert "Briefing (claude-opus-4-8)" in out
     assert "Two things need attention" in out
     assert "[warn] Spec alpha ready to close" in out
     assert "Sources: spec:alpha" in out
@@ -76,7 +76,7 @@ def test_json_output(monkeypatch, capsys):
     payload = json.loads(capsys.readouterr().out)
     assert payload["summary"].startswith("Two things")
     assert len(payload["items"]) == 2
-    assert payload["model"] == "claude-opus-4-6"
+    assert payload["model"] == "claude-opus-4-8"
 
 
 def test_empty_state(monkeypatch, capsys):
