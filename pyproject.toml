@@ -67,7 +67,8 @@ dependencies = [
     "typer>=0.9.0,<1.0.0",  # Better CLI commands
     "pyyaml>=6.0,<7.0",  # Required by workflows (bug_predict, etc.)
     "anthropic>=0.40.0,<1.0.0",  # Core LLM provider (direct SDK usage)
-    "claude-agent-sdk>=0.1.60,<1.0.0",  # Agents SDK for workflow execution. Floor bumped in 6.2.0 to admit list_subagents/get_subagent_messages (transcript recovery) and TaskBudget (token-aware pacing) as first-class features; older SDKs degrade gracefully but miss the 6.2.0 headline wins.
+    "claude-agent-sdk>=0.1.60,<0.2.82",  # Agents SDK for workflow execution. Floor bumped in 6.2.0 to admit list_subagents/get_subagent_messages (transcript recovery) and TaskBudget (token-aware pacing) as first-class features; older SDKs degrade gracefully but miss the 6.2.0 headline wins. Ceiling <0.2.82 holds back the 0.2.x breaking changes (MCP background connection, TodoWrite->Task tools) so a routine `uv lock --upgrade` can't land them silently; lockfile is at 0.1.63. Remove the cap deliberately when adopting 0.2.x.
+    "mcp>=1.23.0",  # MCP runtime — imported directly by attune.mcp.server (Server/stdio/types). Declared explicitly (was transitive via claude-agent-sdk) to pin the >=1.23.0 security floor; lockfile is at 1.27.0.
     "python-multipart>=0.0.26",  # Pin above GHSA-59g5-xgcq-4qw3 / GHSA-wp53-j4wj-2cfg / CVE-2026-40347 (transitive via mcp)
     "cryptography>=46.0.7",  # CVE-2026-39892 (transitive via PyJWT[crypto])
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
