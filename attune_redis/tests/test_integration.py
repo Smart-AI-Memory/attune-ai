@@ -93,6 +93,20 @@ class TestStashRetrieveRoundTrip:
         result = backend.retrieve("complex")
         assert result == data
 
+    def test_second_stash_preserves_first_key(self, backend):
+        """A second stash must not clobber the first key.
+
+        Regression guard: AMS 0.14.0's set_working_memory_data REPLACES the
+        whole data dict (preserve_existing only preserves messages/memories),
+        so the prior stash(...) over set_working_memory_data wiped earlier
+        keys — breaking multi-key retrieve and keys(). stash() now merges via
+        update_working_memory_data(merge_strategy="merge").
+        """
+        backend.stash("first", "one")
+        backend.stash("second", "two")
+        assert backend.retrieve("first") == "one"
+        assert backend.retrieve("second") == "two"
+
 
 class TestDelete:
     """Test real delete against AMS."""

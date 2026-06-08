@@ -93,11 +93,13 @@ def mock_ams_client() -> AsyncMock:
         namespace: str | None = None,
         preserve_existing: bool = True,
     ) -> FakeWorkingMemoryResponse:
-        if preserve_existing:
-            _data.update(data)
-        else:
-            _data.clear()
-            _data.update(data)
+        # Matches AMS 0.14.0 behavior (verified live): set_working_memory_data
+        # REPLACES the whole data dict regardless of preserve_existing
+        # (preserve_existing preserves messages/memories, not data keys). A
+        # mock that merged here would mask the multi-key clobber bug — to
+        # MERGE data keys, callers must use update_working_memory_data.
+        _data.clear()
+        _data.update(data)
         return FakeWorkingMemoryResponse(data=dict(_data))
 
     async def _update_working_memory_data(
