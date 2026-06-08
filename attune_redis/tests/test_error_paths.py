@@ -63,6 +63,7 @@ def failing_backend(redis_config):
         error = ConnectionError("AMS unreachable")
         client.set_working_memory_data.side_effect = error
         client.get_working_memory.side_effect = error
+        client.get_or_create_working_memory.side_effect = error
         client.update_working_memory_data.side_effect = error
         client.health_check.side_effect = error
         client.list_sessions.side_effect = error
@@ -125,10 +126,12 @@ class TestRetrieveNoneData:
         with patch("agent_memory_client.MemoryAPIClient") as mock_cls:
             client = AsyncMock()
 
-            async def _get_wm(**kwargs):
-                return FakeWorkingMemoryResponse(data=None)
+            async def _get_or_create_wm(**kwargs):
+                # retrieve() reads via get_or_create_working_memory, which
+                # returns (created, WorkingMemory); exercise the data=None branch.
+                return (False, FakeWorkingMemoryResponse(data=None))
 
-            client.get_working_memory.side_effect = _get_wm
+            client.get_or_create_working_memory.side_effect = _get_or_create_wm
             mock_cls.return_value = client
 
             b = AMSMemoryBackend(config=redis_config)
