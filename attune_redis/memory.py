@@ -30,6 +30,11 @@ logger = logging.getLogger(__name__)
 #: constant to avoid a cross-package import into attune-redis.
 _DEFAULT_TTL_DAYS = 30
 
+#: AMS hard-caps ``search_long_term_memory``'s ``limit`` at 100 — passing a
+#: larger value is a request-validation error that returns nothing, not a
+#: clamp. Every search/recency call must bound its limit by this.
+_AMS_MAX_SEARCH_LIMIT = 100
+
 
 class _PersistentLoop:
     """A single event loop running in a daemon thread.
@@ -425,7 +430,8 @@ class AMSMemoryBackend:
 
         Args:
             query: Natural language search query.
-            limit: Maximum results to return.
+            limit: Maximum results to return. Clamped to AMS's hard cap of
+                100 (a larger value is a validation error, not a clamp).
             **filters: Additional AMS filters (topics,
                 entities, memory_type, etc.).
 
@@ -437,7 +443,7 @@ class AMSMemoryBackend:
                 self._client.search_long_term_memory(
                     text=query,
                     namespace={"eq": self._namespace},
-                    limit=limit,
+                    limit=min(limit, _AMS_MAX_SEARCH_LIMIT),
                     **filters,
                 )
             )
@@ -477,9 +483,9 @@ class AMSMemoryBackend:
         # Over-fetch: server ordering isn't recency, so pull a window wide
         # enough that the true most-recent ``limit`` are within it, then sort
         # client-side. 30-day pruning keeps per-namespace counts bounded.
-        # AMS hard-caps the search ``limit`` at 100 — exceeding it is a
-        # validation error (returns nothing), so clamp the window.
-        overscan = min(max(limit * 10, 50), 100)
+        # Server can't recency-sort for us, so the window must hold the true
+        # most-recent ``limit`` while staying under AMS's search-limit cap.
+        overscan = min(max(limit * 10, 50), _AMS_MAX_SEARCH_LIMIT)
         try:
             results = _run_sync(
                 self._client.search_long_term_memory(

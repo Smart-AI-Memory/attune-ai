@@ -46,12 +46,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persist; exact repeats don't pile up.
 
 ### Fixed
-- **`attune-redis` `AMSMemoryBackend.recent()` returned `[]` for
-  `limit ≥ 11`.** The over-fetch window (`limit × 10`) exceeded AMS's
-  hard search-limit cap of 100, which is a validation error rather
-  than a clamp, so larger recall requests silently came back empty.
-  The window is now clamped to 100. (Fixes the recency listing added
-  earlier this cycle, before any release.)
+- **`attune-redis` semantic queries silently returned `[]` for large
+  limits.** AMS hard-caps `search_long_term_memory`'s `limit` at 100 —
+  a larger value is a request-validation error, not a clamp. Both
+  `recent()` (whose `limit × 10` over-fetch tripped it for `limit ≥ 11`)
+  and `search()` (which passed `limit` straight through) now bound the
+  limit by a single `_AMS_MAX_SEARCH_LIMIT = 100` constant. (Fixes the
+  recency listing added earlier this cycle, before any release.)
 - **`attune-redis` working-memory `stash()` clobbered earlier keys.**
   Against AMS 0.14.0, `set_working_memory_data(preserve_existing=True)`
   was verified (live) to REPLACE the entire working-memory `data` dict

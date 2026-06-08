@@ -304,6 +304,13 @@ class TestSearchable:
         results = backend.search("test query")
         assert isinstance(results, list)
 
+    def test_search_clamps_limit_to_ams_cap(self, backend, mock_ams_client):
+        """search() never passes a limit above AMS's hard cap of 100 (a
+        larger value is a validation error that returns nothing)."""
+        backend.search("q", limit=500)
+        _, kwargs = mock_ams_client.search_long_term_memory.call_args
+        assert kwargs["limit"] <= 100
+
     def test_search_maps_records(self, backend, mock_ams_client):
         """search() maps AMS records to dicts."""
         mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
