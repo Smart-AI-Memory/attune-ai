@@ -8,6 +8,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **attune's memory store is now a drop-in backend for Anthropic's
+  Memory tool.** `attune.memory.memory_tool.make_memory_tool()` returns
+  a real `anthropic` `BetaAbstractMemoryTool` (the `memory_20250818`
+  client-side tool) whose `view`/`create`/`str_replace`/`insert`/
+  `delete`/`rename` commands persist through any attune `MemoryBackend`
+  — the file backend by default (zero infra), `attune_redis`'s
+  Agent-Memory-Server backend when configured. Pass it to the Anthropic
+  SDK `tool_runner` to give an agent a `/memories` directory backed by
+  attune (and, with AMS, by Redis). Memory paths are traversal-validated
+  and optionally per-user namespaced. This makes the "follows both
+  Redis's and Anthropic's memory best practices" posture demonstrable:
+  Anthropic's native memory interface, persisted on Redis's reference
+  Agent Memory Server. See
+  `docs/specs/anthropic-memory-tool-backend/`. (Phase 1: the adapter +
+  tests; MCP/CLI surfacing is a follow-up.)
 - **AMS backend now powers SessionStart auto-recall.** The
   `attune-redis` `AMSMemoryBackend.recent()` method is no longer a
   stub — query-less recency listing is implemented, so users on the
