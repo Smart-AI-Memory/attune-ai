@@ -17,14 +17,22 @@ Flow (all best-effort, never blocks a stop):
    backend (file by default, AMS when connected).
 4. Prune expired findings once.
 
+When findings are stashed, the hook also emits a compact summary on
+stdout as Stop-hook ``additionalContext`` (Claude Code >= 2.1.163) so the
+captured insights surface into the CURRENT session's next turn — not only
+on disk for the next ``/recall``. On older Claude Code the JSON line is
+ignored (stdout was previously discarded), so this is purely additive.
+
 Tunables (env): ``ATTUNE_MEMORY_STASH`` (set ``0`` to disable),
 ``ATTUNE_MEMORY_STASH_MIN_UTIL`` (gate, default 0.30),
 ``ATTUNE_MEMORY_OLLAMA_MODEL`` (default ``llama3.1:8b``),
 ``ATTUNE_MEMORY_OLLAMA_URL`` (default ``http://localhost:11434``),
 ``ATTUNE_MEMORY_STASH_TIMEOUT`` (LLM timeout secs, default 40 — a cold
-llama3.1:8b can exceed a tighter cap and starve extraction).
+llama3.1:8b can exceed a tighter cap and starve extraction),
+``ATTUNE_MEMORY_STASH_CONTEXT`` (set ``0`` to suppress the
+``additionalContext`` emission while still stashing to disk).
 
-Exit 0 always; output is irrelevant (Stop-hook stdout is discarded).
+Exit 0 always.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -276,6 +284,53 @@ def _stash_findings(findings: list[dict], session_id: str, cwd: str) -> int:
     return written
 
 
+def _context_enabled() -> bool:
+    return os.environ.get("ATTUNE_MEMORY_STASH_CONTEXT", "1").strip() not in {
+        "0",
+        "false",
+        "no",
+    }
+
+
+def _emit_additional_context(findings: list[dict], written: int) -> None:
+    """Print a compact findings summary as Stop-hook ``additionalContext``.
+
+    Emits the Claude Code >= 2.1.163 envelope
+    ``{"hookSpecificOutput": {"hookEventName": "Stop",
+    "additionalContext": "..."}}`` on stdout so the just-stashed insights
+    surface into the current session's next turn. No-op when nothing was
+    written or the feature is disabled; never raises (best-effort).
+    """
+    if written <= 0 or not findings or not _context_enabled():
+        return
+    lines = [
+        f"\U0001f9e0 Stashed {written} session finding(s) to attune memory "
+        "(recall later with /recall):"
+    ]
+    for f in findings[:written]:
+        content = str(f.get("content", "")).strip().replace("\n", " ")
+        if len(content) > 160:
+            content = content[:157] + "..."
+        lines.append(f"- [{f.get('type', 'note')}] {content}")
+    summary = "\n".join(lines)
+    try:
+        sys.stdout.write(
+            json.dumps(
+                {
+                    "hookSpecificOutput": {
+                        "hookEventName": "Stop",
+                        "additionalContext": summary,
+                    }
+                }
+            )
+        )
+        sys.stdout.flush()
+    except (OSError, ValueError, TypeError):
+        # INTENTIONAL: context injection is best-effort; the disk stash
+        # already succeeded, so a stdout failure must not change exit status.
+        pass
+
+
 def main() -> int:
     """Entry point — acts once per substantive session, never raises."""
     try:
@@ -315,7 +370,7 @@ def main() -> int:
         if not findings:
             return 0
 
-        _stash_findings(findings, session_id=session_id, cwd=cwd)
+        written = _stash_findings(findings, session_id=session_id, cwd=cwd)
 
         # Mark done AFTER work so a crash mid-extract retries next stop.
         if sentinel is not None:
@@ -326,6 +381,10 @@ def main() -> int:
                 # INTENTIONAL: a missing sentinel only means we may re-stash
                 # next stop (idempotent enough); never worth failing on.
                 pass
+
+        # Surface the stashed findings into the current session's next turn
+        # via Stop-hook additionalContext (best-effort; older CC ignores it).
+        _emit_additional_context(findings, written)
         return 0
     except Exception:  # noqa: BLE001 — a Stop hook must never crash the session
         traceback.print_exc(file=sys.stderr)
