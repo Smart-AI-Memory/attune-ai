@@ -18,6 +18,7 @@ import pytest
 from attune.workflows.agent_sdk_adapter import (
     AgentRunResult,
     AgentSDKResultAdapter,
+    collect_agent_output,
     get_max_budget_usd,
     get_subagent_model,
     resolve_cwd_for_path,
@@ -367,6 +368,9 @@ class TestAgentRunResultDataclass:
         assert r.num_turns == 0
         assert r.session_id is None
         assert r.is_error is False
+        assert r.stop_reason is None
+        assert r.subtype is None
+        assert r.errors is None
 
 
 @pytest.mark.unit
@@ -451,6 +455,118 @@ class TestAgentSDKResultAdapterCostExtraction:
         assert result.metadata["num_turns"] == 15
         assert result.metadata["session_id"] == "sess-abc123"
         assert result.metadata["duration_api_ms"] == 5000
+
+    def test_error_signals_surfaced_on_error_path(self) -> None:
+        """A failed run records stop_reason/subtype/errors, not just a bool."""
+        run = AgentRunResult(
+            result_text="",
+            is_error=True,
+            stop_reason="max_tokens",
+            subtype="error_during_execution",
+            errors=["subprocess exited 1", "budget cap reached"],
+        )
+        result = AgentSDKResultAdapter.from_agent_output(
+            result_text="",
+            subagent_names=_SUBAGENT_NAMES,
+            started_at=_now(),
+            completed_at=_now(),
+            agent_run_result=run,
+        )
+        assert result.metadata["is_error"] is True
+        assert result.metadata["stop_reason"] == "max_tokens"
+        assert result.metadata["subtype"] == "error_during_execution"
+        assert result.metadata["errors"] == [
+            "subprocess exited 1",
+            "budget cap reached",
+        ]
+
+    def test_error_signals_surfaced_on_success_path(self) -> None:
+        """Success runs still record the (None/False) error signals."""
+        run = AgentRunResult(
+            result_text=_SAMPLE_REVIEW,
+            is_error=False,
+            stop_reason="end_turn",
+            subtype="success",
+            errors=None,
+        )
+        result = AgentSDKResultAdapter.from_agent_output(
+            result_text=_SAMPLE_REVIEW,
+            subagent_names=_SUBAGENT_NAMES,
+            started_at=_now(),
+            completed_at=_now(),
+            agent_run_result=run,
+        )
+        assert result.metadata["is_error"] is False
+        assert result.metadata["stop_reason"] == "end_turn"
+        assert result.metadata["subtype"] == "success"
+        assert result.metadata["errors"] is None
+
+    def test_error_signals_absent_without_agent_run_result(self) -> None:
+        """No agent_run_result → no error-signal keys (backward compat)."""
+        result = AgentSDKResultAdapter.from_agent_output(
+            result_text=_SAMPLE_REVIEW,
+            subagent_names=_SUBAGENT_NAMES,
+            started_at=_now(),
+            completed_at=_now(),
+        )
+        assert "stop_reason" not in result.metadata
+        assert "subtype" not in result.metadata
+        assert "errors" not in result.metadata
+
+
+@pytest.mark.unit
+class TestCollectAgentOutputErrorFields:
+    """collect_agent_output extracts error signals from ResultMessage."""
+
+    def _result_message(self, **overrides: object) -> object:
+        """Build a real SDK ResultMessage with the required args."""
+        import claude_agent_sdk
+
+        kwargs: dict[str, object] = {
+            "subtype": "error_during_execution",
+            "duration_ms": 1200,
+            "duration_api_ms": 900,
+            "is_error": True,
+            "num_turns": 3,
+            "session_id": "sess-err",
+        }
+        kwargs.update(overrides)
+        return claude_agent_sdk.ResultMessage(**kwargs)
+
+    def test_populates_error_fields_from_result_message(self) -> None:
+        """A real ResultMessage's error signals reach AgentRunResult."""
+        msg = self._result_message(
+            stop_reason="max_tokens",
+            errors=["boom"],
+        )
+        run = collect_agent_output(msg, [], [])
+        assert run is not None
+        assert run.is_error is True
+        assert run.stop_reason == "max_tokens"
+        assert run.subtype == "error_during_execution"
+        assert run.errors == ["boom"]
+
+    def test_getattr_fallback_when_fields_absent(self) -> None:
+        """A ResultMessage-shaped stub missing the fields degrades to None.
+
+        Guards the ``getattr(message, ..., None)`` probe for older SDKs
+        that may not expose stop_reason/subtype/errors.
+        """
+        # Build with only the required args, then strip the optional
+        # error-signal attributes to simulate an older SDK shape.
+        msg = self._result_message()
+        for attr in ("stop_reason", "subtype", "errors"):
+            try:
+                delattr(msg, attr)
+            except AttributeError:
+                pass
+
+        run = collect_agent_output(msg, [], [])
+        assert run is not None
+        # Stripped attributes → getattr falls back to None
+        assert run.stop_reason is None
+        assert run.subtype is None
+        assert run.errors is None
 
 
 @pytest.mark.unit

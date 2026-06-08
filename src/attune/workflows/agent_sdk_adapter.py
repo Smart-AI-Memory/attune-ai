@@ -48,6 +48,9 @@ class AgentRunResult:
     num_turns: int = 0
     session_id: str | None = None
     is_error: bool = False
+    stop_reason: str | None = None
+    subtype: str | None = None
+    errors: list[str] | None = None
 
 
 def collect_agent_output(
@@ -91,6 +94,9 @@ def collect_agent_output(
             num_turns=message.num_turns,
             session_id=message.session_id,
             is_error=message.is_error,
+            stop_reason=getattr(message, "stop_reason", None),
+            subtype=getattr(message, "subtype", None),
+            errors=getattr(message, "errors", None),
         )
 
     return None
@@ -1067,6 +1073,14 @@ class AgentSDKResultAdapter:
             result_metadata["num_turns"] = agent_run_result.num_turns
             result_metadata["session_id"] = agent_run_result.session_id
             result_metadata["duration_api_ms"] = agent_run_result.duration_api_ms
+            # SDK ResultMessage error signals — surfaced so a failed run
+            # records *why* (stop_reason/subtype/errors) instead of only a
+            # boolean is_error. Speeds diagnosis of the "Command failed with
+            # exit code 1" class of SDK failures.
+            result_metadata["is_error"] = agent_run_result.is_error
+            result_metadata["stop_reason"] = agent_run_result.stop_reason
+            result_metadata["subtype"] = agent_run_result.subtype
+            result_metadata["errors"] = agent_run_result.errors
         if metadata:
             result_metadata.update(metadata)
 
