@@ -555,6 +555,42 @@ class TestLangGraphAdapterGetLLM:
             with pytest.raises(ValueError, match="API key required"):
                 adapter._get_llm(config)
 
+    def test_anthropic_omits_temperature_for_opus_4_8(self):
+        """Opus 4.7+ reject temperature/top_p/top_k → not passed to ChatAnthropic."""
+        with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
+            adapter = LangGraphAdapter(provider="anthropic", api_key="sk-test")
+            config = AgentConfig(
+                name="t", role=AgentRole.COORDINATOR, model_override="claude-opus-4-8"
+            )
+            adapter._get_llm(config)
+        kwargs = mock_chat.call_args.kwargs
+        assert "temperature" not in kwargs
+        assert "top_p" not in kwargs
+        assert "top_k" not in kwargs
+        assert kwargs["model"] == "claude-opus-4-8"
+
+    def test_anthropic_keeps_temperature_for_sonnet(self):
+        """Sonnet still accepts temperature → passed through."""
+        with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
+            adapter = LangGraphAdapter(provider="anthropic", api_key="sk-test")
+            config = AgentConfig(
+                name="t", role=AgentRole.COORDINATOR, model_override="claude-sonnet-4-6"
+            )
+            adapter._get_llm(config)
+        kwargs = mock_chat.call_args.kwargs
+        assert "temperature" in kwargs
+
+    def test_anthropic_keeps_temperature_for_opus_4_6(self):
+        """Opus 4.6 still accepts temperature → passed through."""
+        with patch("langchain_anthropic.ChatAnthropic") as mock_chat:
+            adapter = LangGraphAdapter(provider="anthropic", api_key="sk-test")
+            config = AgentConfig(
+                name="t", role=AgentRole.COORDINATOR, model_override="claude-opus-4-6"
+            )
+            adapter._get_llm(config)
+        kwargs = mock_chat.call_args.kwargs
+        assert "temperature" in kwargs
+
     def test_openai_returns_chat_openai(self):
         """Lines 257-265: OpenAI provider creates ChatOpenAI."""
         mock_chat = MagicMock()
