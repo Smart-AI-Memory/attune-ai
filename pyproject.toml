@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "attune-ai"
-version = "8.0.0"
+version = "8.0.1"
 description = "AI-powered developer workflows for Claude with cost optimization, multi-agent orchestration, and workflow automation."
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.10"
@@ -378,7 +378,7 @@ attune = "attune.cli_minimal:main"
 # Use 'attune' CLI instead
 
 [project.urls]
-Homepage = "https://www.smartaimemory.com"
+Homepage = "https://attune-ai.dev"
 Documentation = "https://www.smartaimemory.com/framework-docs/"
 "Getting Started" = "https://www.smartaimemory.com/framework-docs/tutorials/quickstart/"
 FAQ = "https://www.smartaimemory.com/framework-docs/reference/FAQ/"

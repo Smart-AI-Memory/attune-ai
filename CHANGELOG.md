@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.0.1] — 2026-06-07
+
+Docs/metadata patch — no code or library-behaviour changes (identical to 8.0.0).
+
+### Changed
+- **PyPI Homepage → [attune-ai.dev](https://attune-ai.dev)** and a "Docs &
+  guides" link added to the README header. The `smartaimemory.com/framework-docs`
+  Documentation / Getting-Started / FAQ links are unchanged.
+- **README chips refreshed** — tests badge `19,000+` → `20,000+` passing
+  (actual on 8.0.0 CI: 20,379); coverage badge `94%` → `95%` (actual 94.65%).
+- **Fixed 3 repo-relative README links** that 404'd on the PyPI page (now
+  absolute GitHub URLs).
+
 ## [8.0.0] — 2026-06-07
 
 A major release. The headline is a **breaking change to the exit-code
