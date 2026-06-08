@@ -6938,3 +6938,62 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   bleeding across process/session boundaries in unexpected
   ways), different surface (parent-shell env into pytest, vs
   IDE config into cloud sync).
+
+- **AMS (`agent-memory-client`/`-server` 0.14.0) long-term memory has
+  four live-verified behaviors that shape any `attune_redis` backend
+  code — and a mocked unit suite is BLIND to all of them** (found
+  building `AMSMemoryBackend.recent()` + `remember()` dedup, PRs #660 +
+  #666): (1) **Server-side ordering is RELEVANCE-based, not
+  recency-based** — even `search_long_term_memory(..., recency=
+  RecencyConfig(recency_weight=1.0, server_side_recency=True))`
+  returned timestamped records oldest-first and inconsistently across
+  calls. For "most-recent N" you MUST sort client-side by `created_at`
+  desc (None-safe). (2) **Empty-text search is a usable query-less
+  listing primitive** — `search_long_term_memory(text="", namespace=
+  {"eq": ns}, limit=N)` returns the namespace's records (semantic
+  search applies a relevance cutoff and is NOT a reliable count — use
+  empty-text to count/list). (3) **The search `limit` is HARD-CAPPED
+  at 100 — exceeding it is a Pydantic validation error that returns
+  NOTHING, not a clamp.** A `recent(limit*10)` over-fetch silently
+  returned `[]` for `limit>=11` (shipped in #660, caught only when a
+  later dogfood used a bigger limit — the original dogfood used
+  `limit<=10`). Clamp any over-fetch window to 100. (4) **Default
+  `create_long_term_memory(deduplicate=True)` applies SEMANTIC dedup
+  that MERGES distinct-but-similar findings (near in embedding space),
+  and a distinct record `id` does NOT prevent it — the merge is
+  content-driven, not id-keyed.** The only reliable guard is
+  `deduplicate=False`; a stable `id` is the UPSERT key (identical
+  re-write → same id → no duplicate), NOT a merge guard. For an
+  accumulate-style store (session findings) write with
+  `deduplicate=False` + a stable id (caller-supplied or content-hash).
+  **Meta-lesson that nearly cost a wrong fix**: an early single probe
+  ("distinct id + dedup=True → 3 survived") was a TIMING/eventual-
+  consistency FLAKE; re-running with a reliable count (empty-text, not
+  semantic search) showed the merge still happened. Eventual-indexing
+  + relevance-filtered counting make AMS probes easy to misread — poll
+  until a stable count via the empty-text path, vary nothing else, and
+  re-confirm before concluding. Pairs with "passing tests don't prove
+  integration" (all four behaviors were invisible to 100+ green mocked
+  tests; only live round-trips surfaced them) and the existing AMS-
+  setup lesson (Redis Stack / version-pairing / Ollama 768-dim).
+
+- **`agent-memory-server` lives in the uv-tool isolated env;
+  `agent-memory-client` is in attune-ai's `.venv` — introspect each
+  from the right python, and the worktree `.venv` lacks pytest**: read
+  `agent_memory_server.config.Settings.model_fields` (env surface:
+  `REDIS_URL`, `EMBEDDING_MODEL`, `REDISVL_VECTOR_DIMENSIONS`,
+  `ENABLE_DISCRETE_MEMORY_EXTRACTION`, …) via
+  `~/.local/share/uv/tools/agent-memory-server/bin/python`; introspect
+  client signatures (`search_long_term_memory`'s `recency`/`created_at`
+  params, `RecencyConfig` fields) via the MAIN `.venv`. Start the
+  server with `~/.local/bin/agent-memory api --port 8000` under env
+  matching the EXISTING redis-stack index dim (`redis-cli -p 6379
+  FT.INFO memory_records | tr ',' '\n' | grep -A2 -i dim` → 768 for
+  Ollama nomic; a mismatch is a silent embed/index failure). To RUN
+  attune_redis tests from a worktree: the worktree `.venv` has no
+  pytest, so invoke the MAIN venv python explicitly
+  (`/Users/patrickroebuck/attune-ai/.venv/bin/python -m pytest`) with
+  `PYTHONPATH=/abs/main/src:.` and `-o addopts=""` (worktree
+  `pytest.ini` injects `-n auto`). Integration tests gate on
+  `@pytest.mark.integration` + an `_ams_available()` skip, so they
+  no-op in CI (no AMS) and only run locally with `AMS_BASE_URL` set.
