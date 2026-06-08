@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import fnmatch
+import hashlib
 import logging
 import threading
 from typing import Any
@@ -74,6 +75,19 @@ def _run_sync(coro: Any) -> Any:
         if _LOOP is None:
             _LOOP = _PersistentLoop()
     return _LOOP.run(coro)
+
+
+def _content_hash_id(content: str) -> str:
+    """Derive a stable long-term-memory id from a finding's content.
+
+    Used by ``remember`` when no explicit ``memory_id`` is given so that an
+    identical re-write maps to the same id and upserts (instead of piling up
+    duplicates), while distinct content yields a distinct id. Merge-avoidance
+    of *similar* findings is handled separately by writing with
+    ``deduplicate=False`` — the id is the upsert key, not the merge guard.
+    """
+    digest = hashlib.sha256(content.encode("utf-8")).hexdigest()[:32]
+    return f"sha256-{digest}"
 
 
 def _cwd_from_topics(topics: list[str] | None) -> str | None:
@@ -353,9 +367,24 @@ class AMSMemoryBackend:
         can retrieve. Embedding happens server-side on write, so the
         finding is recallable across sessions.
 
+        Deduplication note (both verified against a live AMS): AMS's
+        ``create_long_term_memory(deduplicate=True)`` — the client DEFAULT —
+        applies *semantic* dedup that silently MERGES distinct-but-similar
+        findings (two records near in embedding space), and a distinct ``id``
+        does NOT prevent it (the merge is content-driven, not id-keyed). For
+        an accumulate-style store of findings, losing distinct insights that
+        way is the wrong default, so we pass ``deduplicate=False``. To keep
+        exact re-writes from piling up duplicates, we also key each record on
+        a stable id: a caller-supplied ``memory_id`` when given, otherwise a
+        derived content hash. Same id → AMS upserts (no duplicate); distinct
+        content → distinct id and (with dedup off) every distinct finding
+        survives.
+
         Args:
             content: Text to store and embed.
-            memory_id: Optional stable id (enables dedup on re-write).
+            memory_id: Optional stable id. When omitted, a content-hash id
+                is derived so identical re-writes upsert instead of
+                duplicating.
             session_id: Session id override.
             topics: Free-form tags carried on the record.
 
@@ -364,21 +393,26 @@ class AMSMemoryBackend:
         """
         from agent_memory_client.models import ClientMemoryRecord
 
+        record_id = memory_id or _content_hash_id(content)
         record_kwargs: dict[str, Any] = {
+            "id": record_id,
             "text": content,
             "session_id": session_id or self._session_id,
             "namespace": self._namespace,
             "user_id": self._user_id,
             "topics": list(topics or []),
         }
-        if memory_id:
-            record_kwargs["id"] = memory_id
         try:
-            _run_sync(self._client.create_long_term_memory([ClientMemoryRecord(**record_kwargs)]))
+            _run_sync(
+                self._client.create_long_term_memory(
+                    [ClientMemoryRecord(**record_kwargs)],
+                    deduplicate=False,
+                )
+            )
             return True
         except Exception as e:  # noqa: BLE001
             # INTENTIONAL: Graceful degradation for AMS HTTP errors
-            logger.error("remember_failed: id=%s error=%s", memory_id, e)
+            logger.error("remember_failed: id=%s error=%s", record_id, e)
             return False
 
     def search(
@@ -443,7 +477,9 @@ class AMSMemoryBackend:
         # Over-fetch: server ordering isn't recency, so pull a window wide
         # enough that the true most-recent ``limit`` are within it, then sort
         # client-side. 30-day pruning keeps per-namespace counts bounded.
-        overscan = max(limit * 10, 50)
+        # AMS hard-caps the search ``limit`` at 100 — exceeding it is a
+        # validation error (returns nothing), so clamp the window.
+        overscan = min(max(limit * 10, 50), 100)
         try:
             results = _run_sync(
                 self._client.search_long_term_memory(

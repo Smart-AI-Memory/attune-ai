@@ -238,6 +238,68 @@ class TestRecentLongTerm:
             b.close()
 
 
+class TestRememberDedup:
+    """Live guard for the dedup-safe id derivation in remember()."""
+
+    def _backend(self, ns: str):
+        from attune_redis.memory import AMSMemoryBackend
+
+        return AMSMemoryBackend(
+            config=RedisPluginConfig(
+                ams_base_url=os.environ.get("AMS_BASE_URL", "http://localhost:8000"),
+                ams_namespace=ns,
+            )
+        )
+
+    def test_similar_findings_all_survive_without_explicit_id(self):
+        """Distinct-but-similar findings written via id-less remember() must
+        all persist — AMS's default semantic dedup would otherwise merge
+        near-in-embedding-space records (regression guard for the #660
+        finding)."""
+        import time
+
+        ns = f"dedup-itest-{uuid.uuid4().hex[:8]}"
+        b = self._backend(ns)
+        try:
+            similar = [
+                "alpha apple finding",
+                "beta banana finding",
+                "gamma grape finding",
+            ]
+            for text in similar:
+                assert b.remember(text) is True  # no explicit memory_id
+                time.sleep(0.5)
+            # Count via the query-less recall path (empty-text search returns
+            # the namespace's records); semantic search applies a relevance
+            # cutoff and is not a reliable count.
+            total = 0
+            for _ in range(20):
+                time.sleep(1.0)
+                total = len(b.recent(limit=50))
+                if total >= 3:
+                    break
+            assert total >= 3, f"only {total}/3 similar findings survived (semantic merge)"
+        finally:
+            b.close()
+
+    def test_identical_content_upserts(self):
+        """Re-writing identical content maps to the same derived id, so it
+        upserts rather than accumulating duplicates."""
+        import time
+
+        ns = f"upsert-itest-{uuid.uuid4().hex[:8]}"
+        b = self._backend(ns)
+        try:
+            for _ in range(3):
+                assert b.remember("one repeated identical finding") is True
+                time.sleep(0.5)
+            time.sleep(3.0)
+            results = b.recent(limit=50)
+            assert len(results) == 1, f"expected 1 upserted record, got {len(results)}"
+        finally:
+            b.close()
+
+
 class TestErrorHandling:
     """Test graceful degradation with bad config."""
 
