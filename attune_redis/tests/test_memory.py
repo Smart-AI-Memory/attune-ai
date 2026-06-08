@@ -225,6 +225,73 @@ class TestLifecycle:
 
 
 # =================================================================
+# SearchableMemoryBackend: remember (searchable long-term write)
+# =================================================================
+
+
+def _last_record(mock_ams_client):
+    """Return the single ClientMemoryRecord passed to the last
+    create_long_term_memory call."""
+    args, _ = mock_ams_client.create_long_term_memory.call_args
+    return args[0][0]
+
+
+class TestRemember:
+    """Test searchable long-term writes and dedup-safe id derivation."""
+
+    def test_remember_returns_true(self, backend):
+        """remember() returns True on success."""
+        assert backend.remember("a durable finding") is True
+
+    def test_remember_derives_content_hash_id(self, backend, mock_ams_client):
+        """remember() derives a stable sha256 id when none is supplied."""
+        backend.remember("the event-loop reuse bug")
+        rec = _last_record(mock_ams_client)
+        assert rec.id.startswith("sha256-")
+
+    def test_remember_distinct_content_distinct_ids(self, backend, mock_ams_client):
+        """Different findings get different ids (so AMS won't merge them)."""
+        backend.remember("alpha apple finding")
+        id_a = _last_record(mock_ams_client).id
+        backend.remember("beta banana finding")
+        id_b = _last_record(mock_ams_client).id
+        assert id_a != id_b
+
+    def test_remember_identical_content_same_id(self, backend, mock_ams_client):
+        """Identical content maps to the same id (upsert, not duplicate)."""
+        backend.remember("repeated identical finding")
+        id_1 = _last_record(mock_ams_client).id
+        backend.remember("repeated identical finding")
+        id_2 = _last_record(mock_ams_client).id
+        assert id_1 == id_2
+
+    def test_remember_explicit_id_wins(self, backend, mock_ams_client):
+        """An explicit memory_id is used verbatim, not the derived hash."""
+        backend.remember("some finding", memory_id="finding-42")
+        assert _last_record(mock_ams_client).id == "finding-42"
+
+    def test_remember_disables_semantic_dedup(self, backend, mock_ams_client):
+        """remember() writes with deduplicate=False so distinct-but-similar
+        findings are not silently merged (the stable id handles exact
+        re-writes via upsert instead)."""
+        backend.remember("a finding")
+        _, kwargs = mock_ams_client.create_long_term_memory.call_args
+        assert kwargs.get("deduplicate") is False
+
+    def test_remember_carries_topics_and_session(self, backend, mock_ams_client):
+        """remember() puts topics and session_id on the record."""
+        backend.remember("x", session_id="s-7", topics=["cwd:/p", "type:insight"])
+        rec = _last_record(mock_ams_client)
+        assert rec.topics == ["cwd:/p", "type:insight"]
+        assert rec.session_id == "s-7"
+
+    def test_remember_returns_false_on_error(self, backend, mock_ams_client):
+        """remember() degrades to False on AMS errors, never raises."""
+        mock_ams_client.create_long_term_memory.side_effect = ConnectionError("boom")
+        assert backend.remember("will fail") is False
+
+
+# =================================================================
 # SearchableMemoryBackend: search / promote
 # =================================================================
 
@@ -236,6 +303,13 @@ class TestSearchable:
         """search() returns list of dicts."""
         results = backend.search("test query")
         assert isinstance(results, list)
+
+    def test_search_clamps_limit_to_ams_cap(self, backend, mock_ams_client):
+        """search() never passes a limit above AMS's hard cap of 100 (a
+        larger value is a validation error that returns nothing)."""
+        backend.search("q", limit=500)
+        _, kwargs = mock_ams_client.search_long_term_memory.call_args
+        assert kwargs["limit"] <= 100
 
     def test_search_maps_records(self, backend, mock_ams_client):
         """search() maps AMS records to dicts."""
@@ -300,6 +374,13 @@ class TestRecent:
         assert kwargs["namespace"] == {"eq": "test"}
         # Over-fetches a bounded window (server can't recency-sort for us).
         assert kwargs["limit"] >= 3
+
+    def test_recent_clamps_overscan_to_ams_cap(self, backend, mock_ams_client):
+        """recent()'s over-fetch window never exceeds AMS's hard limit cap of
+        100 — a larger value is a validation error that returns nothing."""
+        backend.recent(limit=50)  # naive overscan would be 500
+        _, kwargs = mock_ams_client.search_long_term_memory.call_args
+        assert kwargs["limit"] <= 100
 
     def test_recent_sorts_newest_first(self, backend, mock_ams_client):
         """recent() orders records by created_at descending, regardless of

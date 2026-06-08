@@ -35,8 +35,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `get_or_create_working_memory` still calls `get_working_memory`
   internally and emits it (an upstream quirk to track); the migration
   future-proofs our call sites regardless.
+- **`attune-redis` `remember()` no longer loses distinct findings to
+  AMS semantic dedup.** Long-term writes now use `deduplicate=False`,
+  because AMS's default `deduplicate=True` was verified (live) to
+  silently *merge* distinct-but-similar findings (records near in
+  embedding space) — and a distinct record id does not prevent it.
+  Each record is keyed on a stable id (a caller-supplied `memory_id`,
+  else a derived content hash) so identical re-writes still upsert
+  instead of accumulating duplicates. Distinct insights now all
+  persist; exact repeats don't pile up.
 
 ### Fixed
+- **`attune-redis` semantic queries silently returned `[]` for large
+  limits.** AMS hard-caps `search_long_term_memory`'s `limit` at 100 —
+  a larger value is a request-validation error, not a clamp. Both
+  `recent()` (whose `limit × 10` over-fetch tripped it for `limit ≥ 11`)
+  and `search()` (which passed `limit` straight through) now bound the
+  limit by a single `_AMS_MAX_SEARCH_LIMIT = 100` constant. (Fixes the
+  recency listing added earlier this cycle, before any release.)
 - **`attune-redis` working-memory `stash()` clobbered earlier keys.**
   Against AMS 0.14.0, `set_working_memory_data(preserve_existing=True)`
   was verified (live) to REPLACE the entire working-memory `data` dict
