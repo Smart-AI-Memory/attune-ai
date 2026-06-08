@@ -6,12 +6,17 @@
 
 🌐 **Docs & guides: [attune-ai.dev](https://attune-ai.dev)**
 
+<!-- Badge maintenance: PyPI/Downloads/Coverage/Security are LIVE (auto-update,
+     no upkeep). The tests count is a manually-maintained round FLOOR — bump it
+     only on major drift (e.g. once the suite clears 25,000); a round floor
+     can't go subtly stale the way a precise value does. `scripts/check_badge_freshness.py`
+     (CI) fails if the floor ever over-claims or drifts too far below reality. -->
 [![PyPI](https://img.shields.io/pypi/v/attune-ai?color=blue)](https://pypi.org/project/attune-ai/)
 [![Downloads](https://static.pepy.tech/badge/attune-ai)](https://pepy.tech/projects/attune-ai)
 [![Downloads/month](https://static.pepy.tech/badge/attune-ai/month)](https://pepy.tech/projects/attune-ai)
 [![Downloads/week](https://static.pepy.tech/badge/attune-ai/week)](https://pepy.tech/projects/attune-ai)
 [![Tests](https://img.shields.io/badge/tests-20%2C000%2B%20passing-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/tests.yml)
-[![Coverage](https://img.shields.io/badge/coverage-95%25-brightgreen)](https://github.com/Smart-AI-Memory/attune-ai)
+[![Coverage](https://img.shields.io/codecov/c/github/Smart-AI-Memory/attune-ai?branch=main)](https://codecov.io/gh/Smart-AI-Memory/attune-ai)
 [![Security](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml/badge.svg)](https://github.com/Smart-AI-Memory/attune-ai/actions/workflows/security.yml)
 [![Python](https://img.shields.io/badge/python-3.10+-blue)](https://www.python.org)
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Self-maintaining README chips.** The coverage badge is now a live
+  Codecov badge (auto-updates, zero upkeep) instead of a hardcoded `NN%`.
+  The tests badge stays a round floor (`20,000+`); a new
+  `scripts/check_badge_freshness.py` (wired into the coverage CI job)
+  fails if that floor ever over-claims or drifts far below the real
+  collected count, or if coverage regresses to a hardcoded value — so the
+  chips can't silently rot (the issue that prompted 8.0.1).
+
 ## [8.0.1] — 2026-06-07
 
 Docs/metadata patch — no code or library-behaviour changes (identical to 8.0.0).

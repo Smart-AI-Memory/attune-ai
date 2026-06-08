@@ -114,6 +114,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
+    # Catch README badge rot: fails if the tests-count floor over-claims or
+    # drifts far below the real collected count, or if coverage regressed to a
+    # hardcoded value instead of the dynamic Codecov badge. Cheap (collect-only).
+    - name: Check README badge freshness
+      run: python scripts/check_badge_freshness.py
+
     - name: Run tests with coverage
       run: |
         echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
