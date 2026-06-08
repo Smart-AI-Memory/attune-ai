@@ -6997,3 +6997,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `pytest.ini` injects `-n auto`). Integration tests gate on
   `@pytest.mark.integration` + an `_ams_available()` skip, so they
   no-op in CI (no AMS) and only run locally with `AMS_BASE_URL` set.
+
+- **AMS 0.14.0 working-memory `set_working_memory_data(preserve_existing=
+  True)` REPLACES the whole `data` dict on every call — it does NOT merge
+  keys** (found fixing the `keys()` clobber, PR #667). `preserve_existing`
+  preserves the session's *messages/memories*, not existing `data` keys, so
+  a second `stash("b")` over `set_working_memory_data` wiped the first key —
+  breaking `keys()` AND multi-key `retrieve()` (`stash("a"); stash("b");
+  retrieve("a")` → `None`). The single-key retrieve test passed only because
+  it never did a second stash. **The merge primitive is
+  `update_working_memory_data(merge_strategy="merge")`** (verified live; also
+  auto-creates the session). Diagnosis ruled out eventual-consistency (reads
+  were immediately consistent) and session-creation prerequisites — it's an
+  API behavior. The mocked test double HID it: its fake `preserve_existing`
+  merged, so the unit suite was green while the real backend was broken — fix
+  the mock to match AMS's real replace-semantics so it can't mask the class
+  of bug again (pairs with "duck-typed fakes fall through silently").
+
+- **`get_or_create_working_memory` (the recommended replacement for the
+  deprecated `get_working_memory` in agent-memory-client 0.14.0) INTERNALLY
+  calls `get_working_memory` and emits its own DeprecationWarning** —
+  migrating call sites off the directly-deprecated method is forward-correct
+  (future-proofs for when `get_working_memory` is removed; the client must
+  fix its own `get_or_create` then) but does NOT silence the warning under
+  0.14.0; that's an upstream quirk to track, not something a consumer can fix.
+  Caveat caught via `-W error::DeprecationWarning`: turning the warning into
+  an error makes the backend's broad `except Exception` SWALLOW it (a Warning
+  subclasses Exception), so a "graceful degradation" catch returns `None`/`[]`
+  and tests fail confusingly — don't run AMS integration tests with
+  `-W error::DeprecationWarning`; the warning is benign upstream noise.
