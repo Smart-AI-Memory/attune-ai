@@ -27,6 +27,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   collected count, or if coverage regresses to a hardcoded value — so the
   chips can't silently rot (the issue that prompted 8.0.1).
 
+### Fixed
+- **`attune-redis` working-memory `stash()` clobbered earlier keys.**
+  Against AMS 0.14.0, `set_working_memory_data(preserve_existing=True)`
+  was verified (live) to REPLACE the entire working-memory `data` dict
+  on every call (`preserve_existing` preserves the session's
+  messages/memories, not existing data keys), so a second `stash(...)`
+  wiped the first — breaking multi-key `retrieve()` and `keys()`.
+  `stash()` now merges via
+  `update_working_memory_data(merge_strategy="merge")`. The mocked test
+  double was corrected to match AMS's real replace-semantics (it
+  previously merged, masking the bug), and a live regression guard now
+  asserts a second stash preserves the first key.
+
 ## [8.0.1] — 2026-06-07
 
 Docs/metadata patch — no code or library-behaviour changes (identical to 8.0.0).

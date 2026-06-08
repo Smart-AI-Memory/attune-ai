@@ -138,9 +138,16 @@ class AMSMemoryBackend:
     ) -> bool:
         """Store data in AMS working memory.
 
-        Maps to ``set_working_memory_data`` with
-        ``preserve_existing=True`` so other keys are
-        not overwritten.
+        Maps to ``update_working_memory_data`` with
+        ``merge_strategy="merge"`` so other keys are preserved.
+
+        NOTE: ``set_working_memory_data(preserve_existing=True)`` was
+        verified against AMS 0.14.0 to REPLACE the whole working-memory
+        ``data`` dict on every call (``preserve_existing`` preserves the
+        session's *messages/memories*, not existing data keys), so a second
+        ``stash`` clobbered the first — breaking ``keys`` and multi-key
+        ``retrieve``. ``update_working_memory_data(merge_strategy="merge")``
+        is the server-side merge primitive that keeps prior keys.
 
         Args:
             key: Storage key.
@@ -154,11 +161,11 @@ class AMSMemoryBackend:
         session_id = agent_id or self._session_id
         try:
             _run_sync(
-                self._client.set_working_memory_data(
+                self._client.update_working_memory_data(
                     session_id=session_id,
-                    data={key: value},
+                    data_updates={key: value},
                     namespace=self._namespace,
-                    preserve_existing=True,
+                    merge_strategy="merge",
                 )
             )
             return True

@@ -84,11 +84,11 @@ class TestStashRetrieve:
     def test_stash_with_agent_id(self, backend, mock_ams_client):
         """agent_id maps to AMS session_id."""
         backend.stash("k", "v", agent_id="session-42")
-        mock_ams_client.set_working_memory_data.assert_called_with(
+        mock_ams_client.update_working_memory_data.assert_called_with(
             session_id="session-42",
-            data={"k": "v"},
+            data_updates={"k": "v"},
             namespace="test",
-            preserve_existing=True,
+            merge_strategy="merge",
         )
 
 
