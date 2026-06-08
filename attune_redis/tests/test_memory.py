@@ -242,3 +242,99 @@ class TestSearchable:
             session_id="s-42",
             namespace="test",
         )
+
+
+# =================================================================
+# SearchableMemoryBackend: recent (query-less SessionStart recall)
+# =================================================================
+
+
+def _rec(record_id, text, ts, *, topics=None):
+    """Build a FakeMemoryRecord with a created_at offset by ``ts`` seconds."""
+    from datetime import datetime, timedelta, timezone
+
+    base = datetime(2026, 1, 1, tzinfo=timezone.utc)
+    return FakeMemoryRecord(
+        record_id=record_id,
+        text=text,
+        topics=topics or [],
+        created_at=base + timedelta(seconds=ts),
+    )
+
+
+class TestRecent:
+    """Test query-less recency listing (powers SessionStart recall)."""
+
+    def test_recent_empty_returns_empty_list(self, backend):
+        """recent() returns [] when the namespace has no memories."""
+        assert backend.recent() == []
+
+    def test_recent_uses_empty_text_query(self, backend, mock_ams_client):
+        """recent() issues an empty-text long-term search scoped to the namespace."""
+        backend.recent(limit=3)
+        _, kwargs = mock_ams_client.search_long_term_memory.call_args
+        assert kwargs["text"] == ""
+        assert kwargs["namespace"] == {"eq": "test"}
+        # Over-fetches a bounded window (server can't recency-sort for us).
+        assert kwargs["limit"] >= 3
+
+    def test_recent_sorts_newest_first(self, backend, mock_ams_client):
+        """recent() orders records by created_at descending, regardless of
+        the order the server returned them in."""
+        mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
+            memories=[
+                _rec("old", "oldest", 0),
+                _rec("new", "newest", 100),
+                _rec("mid", "middle", 50),
+            ]
+        )
+        out = backend.recent(limit=10)
+        assert [d["text"] for d in out] == ["newest", "middle", "oldest"]
+
+    def test_recent_cwd_soft_priority(self, backend, mock_ams_client):
+        """recent(cwd=X) surfaces same-cwd findings first, recency preserved
+        within each group."""
+        mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
+            memories=[
+                _rec("b-new", "beta newer", 100, topics=["cwd:/proj/beta"]),
+                _rec("a-old", "alpha older", 10, topics=["cwd:/proj/alpha"]),
+                _rec("a-new", "alpha newer", 90, topics=["cwd:/proj/alpha"]),
+            ]
+        )
+        out = backend.recent(limit=10, cwd="/proj/alpha")
+        # alpha group first (newer before older), then beta.
+        assert [d["text"] for d in out] == ["alpha newer", "alpha older", "beta newer"]
+        assert out[0]["cwd"] == "/proj/alpha"
+
+    def test_recent_honors_limit(self, backend, mock_ams_client):
+        """recent() truncates to ``limit`` after sorting."""
+        mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
+            memories=[_rec(f"m{i}", f"finding {i}", i) for i in range(10)]
+        )
+        assert len(backend.recent(limit=2)) == 2
+
+    def test_recent_maps_record_shape(self, backend, mock_ams_client):
+        """recent() returns the file-backend record shape (no score)."""
+        mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
+            memories=[_rec("m1", "a finding", 5, topics=["cwd:/p", "tag"])]
+        )
+        out = backend.recent(limit=1)
+        assert set(out[0].keys()) == {"id", "text", "topics", "cwd", "session_id"}
+        assert out[0]["cwd"] == "/p"
+        assert out[0]["topics"] == ["cwd:/p", "tag"]
+
+    def test_recent_handles_missing_created_at(self, backend, mock_ams_client):
+        """recent() tolerates records with created_at=None (sorts them last)."""
+        mock_ams_client.search_long_term_memory.return_value = FakeMemoryRecordResults(
+            memories=[
+                FakeMemoryRecord(record_id="none", text="no-ts", created_at=None),
+                _rec("dated", "dated", 50),
+            ]
+        )
+        out = backend.recent(limit=10)
+        assert [d["text"] for d in out] == ["dated", "no-ts"]
+
+    def test_recent_returns_empty_on_error(self, backend, mock_ams_client):
+        """recent() degrades gracefully to [] on AMS errors, never raises."""
+        mock_ams_client.search_long_term_memory.side_effect = ConnectionError("boom")
+        assert backend.recent() == []

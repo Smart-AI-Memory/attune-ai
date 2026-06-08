@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **AMS backend now powers SessionStart auto-recall.** The
+  `attune-redis` `AMSMemoryBackend.recent()` method is no longer a
+  stub — query-less recency listing is implemented, so users on the
+  Redis Agent Memory Server backend get the same newest-first
+  SessionStart recall (with soft same-project `cwd` priority) that the
+  default file backend already provides. Ordering is applied
+  client-side by `created_at` because AMS's server-side ordering is
+  relevance-based, not recency-based (verified against a live server).
+  Best-effort: degrades to `[]` on any AMS error, never raises.
+
 ### Changed
 - **Self-maintaining README chips.** The coverage badge is now a live
   Codecov badge (auto-updates, zero upkeep) instead of a hardcoded `NN%`.

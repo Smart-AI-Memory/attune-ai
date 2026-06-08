@@ -46,6 +46,7 @@ class FakeMemoryRecord:
         entities: list[str] | None = None,
         memory_type: str = "semantic",
         created_at: Any = None,
+        session_id: str = "test-session",
     ) -> None:
         self.id = record_id
         self.text = text
@@ -53,6 +54,7 @@ class FakeMemoryRecord:
         self.entities = entities or []
         self.memory_type = memory_type
         self.created_at = created_at
+        self.session_id = session_id
 
 
 class FakeMemoryRecordResults:

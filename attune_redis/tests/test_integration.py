@@ -167,6 +167,63 @@ class TestConnectionLifecycle:
         b2.close()
 
 
+class TestRecentLongTerm:
+    """Test query-less recency listing against live AMS (SessionStart recall)."""
+
+    def test_recent_newest_first_with_cwd_priority(self):
+        """recent() returns long-term findings newest-first, cwd-prioritized.
+
+        Uses a per-run namespace for isolation (a persistent semantic store
+        accumulates across runs) and polls for eventual indexing. Findings
+        are phrased distinctly to avoid AMS's semantic dedup on write.
+        """
+        import time
+
+        from attune_redis.memory import AMSMemoryBackend
+
+        ns = f"recent-itest-{uuid.uuid4().hex[:8]}"
+        config = RedisPluginConfig(
+            ams_base_url=os.environ.get("AMS_BASE_URL", "http://localhost:8000"),
+            ams_namespace=ns,
+        )
+        b = AMSMemoryBackend(config=config)
+        try:
+            findings = [
+                ("Repaired the event-loop reuse defect in the wrapper", "/proj/alpha"),
+                ("Switched the corpus loader to direct filesystem reads", "/proj/beta"),
+                ("Wired int8 vector quantization through the factory seam", "/proj/alpha"),
+                ("Observed server ordering is relevance rather than recency", "/proj/beta"),
+            ]
+            for text, cwd in findings:
+                assert b.remember(text, topics=[f"cwd:{cwd}"]) is True
+                time.sleep(0.5)
+
+            # Eventual indexing: poll until all four are visible.
+            out: list = []
+            for _ in range(20):
+                time.sleep(1.0)
+                out = b.recent(limit=10)
+                if len(out) >= 4:
+                    break
+            assert len(out) >= 4, f"only {len(out)} findings indexed"
+
+            # Newest-first: the last-written finding leads.
+            assert out[0]["text"].startswith("Observed server ordering")
+
+            # Soft cwd priority: same-project findings surface first.
+            out_alpha = b.recent(limit=10, cwd="/proj/alpha")
+            assert out_alpha[0]["cwd"] == "/proj/alpha"
+            assert out_alpha[1]["cwd"] == "/proj/alpha"
+
+            # File-backend record shape (no score).
+            assert set(out[0].keys()) == {"id", "text", "topics", "cwd", "session_id"}
+
+            # Limit honored.
+            assert len(b.recent(limit=2)) == 2
+        finally:
+            b.close()
+
+
 class TestErrorHandling:
     """Test graceful degradation with bad config."""
 
