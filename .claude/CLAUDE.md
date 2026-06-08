@@ -7026,3 +7026,50 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   subclasses Exception), so a "graceful degradation" catch returns `None`/`[]`
   and tests fail confusingly — don't run AMS integration tests with
   `-W error::DeprecationWarning`; the warning is benign upstream noise.
+
+- **Migrating a client/SDK method breaks EVERY mock of that method
+  across the whole test tree — grep the test tree for the old method
+  name, not just the package's own conftest**: migrating `attune_redis`'s
+  `retrieve`/`delete`/`keys` from `get_working_memory` to
+  `get_or_create_working_memory` (PR #668) updated the package's own
+  `conftest.py` mock, and local mocked tests passed (38 green) — but TWO
+  other test files mocked the AMS client directly and were missed:
+  (1) `tests/unit/memory/test_memory_backend_protocol.py` (a DIFFERENT
+  package's test tree, `src/attune`) had no `get_or_create` mock at all,
+  so the new `_, response = ...` unpack hit a default `AsyncMock` →
+  `not enough values to unpack (expected 2, got 0)` → the CI `test` lane
+  went red; (2) `attune_redis/tests/test_error_paths.py` PASSED but for
+  the WRONG reason — it injected the error on `get_working_memory` (no
+  longer called), so retrieve/delete/keys hit the unpack error which the
+  broad `except` swallowed into the expected `None`/`False`/`[]`; the
+  injected `ConnectionError`/`data=None` branches were never exercised.
+  Both classes are invisible to the package's own green suite. **Before
+  pushing a client-method migration, `grep -rln "<old_method>" tests/
+  <pkg>/tests/` and update every site** — a passing local suite proves
+  only that the mocks you updated agree, not that the others exist.
+  Generalizes the "import-path changes silently break mocks" lesson to
+  method renames, and adds the "passes for the wrong reason" variant
+  (an unconfigured mock's unpack/attribute error masquerading as the
+  injected failure). Pair with the live round-trip discipline — a real
+  AMS integration test (16/16) caught nothing here because the breakage
+  is purely in the OTHER mocks.
+
+- **Stacked-PR merge where every PR touches the same CHANGELOG region
+  re-conflicts per-commit on rebase — resolve each, and git auto-drops
+  the now-redundant fixup**: merging the #660→#667→#668→#666 Redis chain.
+  #667+#668 (both adding `[Unreleased]` bullets) merged first; rebasing
+  the multi-commit #666 through them conflicted on CHANGELOG **once per
+  #666 commit that had edited that region** (the dedup commit, then the
+  search-clamp commit that REVISED the same bullet) — `git rebase
+  --continue` stops at each. Resolution pattern: keep both siblings'
+  bullets under one `### Fixed`/`### Changed` (don't leave two adjacent
+  same-name section headers — consolidate), and when a later commit
+  supersedes an earlier bullet (recent-only → combined recent+search),
+  take the superseding version. Bonus: a manual "consolidate adjacent
+  Fixed sections" fixup I'd committed on the prior rebase was
+  auto-dropped by the next rebase ("patch contents already upstream")
+  — don't hand-author CHANGELOG-merge fixups during a multi-step stacked
+  rebase; resolve the conflicts directly and let redundant fixups fall
+  out. Pairs with the existing "Rebasing a stacked PR after its base
+  squash-merges" lesson (that one is about `--onto`; this is about the
+  per-commit CHANGELOG churn within the replay).
