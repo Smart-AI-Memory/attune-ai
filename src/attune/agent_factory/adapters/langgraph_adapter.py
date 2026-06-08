@@ -244,16 +244,24 @@ class LangGraphAdapter(BaseAdapter):
         if self.provider == "anthropic":
             from langchain_anthropic import ChatAnthropic
 
+            from attune.llm.providers.anthropic import (
+                _normalize_api_kwargs_for_model,
+            )
+
             # LangChain API varies between versions - use type: ignore for flexibility
             # ChatAnthropic requires api_key as SecretStr (not None)
             if not self.api_key:
                 raise ValueError("API key required for Anthropic provider")
-            return ChatAnthropic(  # type: ignore[call-arg]
-                model=model_id,
-                api_key=SecretStr(self.api_key),
-                temperature=config.temperature,
-                max_tokens_to_sample=config.max_tokens,  # Anthropic uses max_tokens_to_sample
-            )
+            # Opus 4.7+ reject temperature/top_p/top_k (HTTP 400). Reuse the
+            # provider helper to strip those params for matching models.
+            chat_kwargs: dict[str, Any] = {
+                "model": model_id,
+                "api_key": SecretStr(self.api_key),
+                "temperature": config.temperature,
+                "max_tokens_to_sample": config.max_tokens,
+            }
+            _normalize_api_kwargs_for_model(chat_kwargs)
+            return ChatAnthropic(**chat_kwargs)  # type: ignore[call-arg]
         if self.provider == "openai":
             from langchain_openai import ChatOpenAI
 
