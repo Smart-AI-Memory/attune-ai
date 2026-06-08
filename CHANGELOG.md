@@ -71,6 +71,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   persist; exact repeats don't pile up.
 
 ### Fixed
+- **The direct `anthropic` provider now strips request params Opus 4.7+
+  reject.** `AnthropicProvider.generate`/`generate_stream` (and the batch
+  provider) defaulted `temperature=0.7` and could send extended-thinking —
+  both of which Opus 4.7/4.8 return HTTP 400 for. With the PREMIUM tier now
+  on Opus 4.8, any premium call through this path (the Sonnet→Opus
+  fallback, escalation chains, MCP workflow handlers) would have 400'd. A
+  single `_normalize_api_kwargs_for_model` pass drops
+  `temperature`/`top_p`/`top_k` and converts `enabled` thinking to
+  `adaptive` for Opus 4.7+ models, leaving older models (Opus 4.6−,
+  Sonnet, Haiku) untouched. (The SDK-native workflow path was already
+  safe — it sets no sampling params.)
 - **Premium Opus pricing was wrong by 3×.** The model registry (and the
   `anthropic` provider's `get_model_info`, and the telemetry
   savings-baseline) priced the premium tier at `$15/$75` per 1M — the
