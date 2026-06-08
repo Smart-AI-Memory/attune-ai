@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   fails if that floor ever over-claims or drifts far below the real
   collected count, or if coverage regresses to a hardcoded value — so the
   chips can't silently rot (the issue that prompted 8.0.1).
+- **`attune-redis` migrated off the deprecated `get_working_memory`.**
+  Working-memory reads (`retrieve`/`delete`/`keys`) now use
+  `get_or_create_working_memory`, which `agent-memory-client` 0.14.0
+  recommends as the replacement, so the call sites keep working once
+  `get_working_memory` is removed. Note: this does **not** silence the
+  deprecation warning under 0.14.0 — the client's own
+  `get_or_create_working_memory` still calls `get_working_memory`
+  internally and emits it (an upstream quirk to track); the migration
+  future-proofs our call sites regardless.
 
 ### Fixed
 - **`attune-redis` working-memory `stash()` clobbered earlier keys.**
