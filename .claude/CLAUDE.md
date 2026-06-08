@@ -7073,3 +7073,86 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   out. Pairs with the existing "Rebasing a stacked PR after its base
   squash-merges" lesson (that one is about `--onto`; this is about the
   per-commit CHANGELOG churn within the replay).
+
+- **Dependabot pip bumps fail `check-docs-freshness` (and any
+  `uv run` pre-commit hook) via uv.lock drift — diagnose with
+  `--show-diff-on-failure`, fix with `uv lock` on the branch**: a
+  dependabot pip PR edits `pyproject.toml` + `requirements.txt` but
+  NOT `uv.lock`, so the lock's pyproject-hash is stale. CI runs
+  `pre-commit run --all-files`, and the FIRST hook whose entry is
+  `uv run ...` (e.g. `check-docs-freshness`) makes uv re-resolve and
+  rewrite `uv.lock` → pre-commit reports "files were modified by this
+  hook" → red. Two traps: (1) the hook's `files:` filter is irrelevant
+  — `--all-files` runs every hook regardless, which is why pip bumps
+  trip it but github-actions bumps (which don't touch pyproject) don't;
+  (2) the failing hook NAME ("Check Help Template Freshness") is a red
+  herring — it's not a docs problem, it's the lock. Diagnostic: the CI
+  job runs `--show-diff-on-failure`, so the modified-file diff is IN
+  the log — `gh run view --job <id> --log-failed | grep 'diff --git'`
+  names the file (here `uv.lock`), don't assume. Fix: check out the
+  dependabot branch, `uv lock` (widened caps keep the satisfying pin —
+  a 1-line metadata change, no version churn), commit + `git push
+  origin HEAD:<dependabot-branch>`. Recurs on every pip dependabot PR
+  until/unless dependabot is configured to update uv.lock too. Pairs
+  with the existing "uv.lock drifts from pyproject.toml on shared
+  branches" lesson — same root cause, dependabot-specific surface.
+
+- **codecov/patch flags the per-method error branch you only tested on
+  ONE of N near-identical methods — parametrize the error-branch test
+  across all of them**: when a new module has several structurally
+  similar methods that each share an error branch (e.g. six Memory-tool
+  commands each with `except _PathError: return f"Error: {e}"`, or each
+  with a backend-write-failure return), testing the branch on ONE
+  command leaves the others' identical branches uncovered. The project
+  `--cov-fail-under` (whole-package) can still pass while
+  **codecov/patch** (changed lines only) drops below threshold — they
+  measure different denominators. Fix: a `@pytest.mark.parametrize`
+  that drives the SAME error input (a traversal path, a failing
+  backend) through every method, plus tests for the best-effort
+  `except Exception` handlers (inject a backend whose `keys()`/`stash()`
+  raises/returns False). Worktree coverage recipe for a single module:
+  `cd /tmp && coverage run --rcfile=/dev/null --branch
+  --source=attune.<dotted.module> -m pytest <abs path>` then `coverage
+  report --rcfile=/dev/null -m` (the `-m` shows exact missing
+  lines/branches). Took a 24-test suite at 84% patch → 37 tests at 99%.
+
+- **The `.help` regen pre-commit hook does a full LLM RE-POLISH of a
+  feature's entire help corpus when ANY source file under that
+  feature's glob is added/changed — discard it from focused feature
+  PRs (it's warn-only / not CI-required), don't commit a −200-line LLM
+  rewrite**: adding `src/attune/memory/memory_tool.py` (a "memory"
+  feature source) made `regenerate-help-templates` rewrite
+  `.help/templates/memory/{concept,reference,task}.md` with a net
+  −207/+149 diff — NOT additive bridge docs, but the polish pass
+  re-doing the whole memory feature (with the attendant hallucination
+  risk). pre-commit stashes it as "unstaged" and it reappears on the
+  next commit. For a feature PR, `git checkout -- .help/templates/
+  <feature>/` to keep the PR focused — CI doesn't require it (the hook
+  is gated/warn-only). Extends the existing "Pre-commit's .help
+  template regen creates a stash-and-reappear dance" lesson with the
+  key nuance: the regen is a *whole-feature re-polish*, not an additive
+  doc update, so committing it blindly into an unrelated PR risks
+  losing/hallucinating help content. The durable fix (deferred) is to
+  make the regen additive-or-tightly-scoped, or stop leaving unstaged
+  files behind.
+
+- **Composing Anthropic's `BetaAbstractMemoryTool` at call time keeps
+  the SDK helper off the module import path; the Memory tool maps onto
+  a KV `MemoryBackend`, not long-term semantic memory**: two reusable
+  facts from the Memory-tool bridge (`attune.memory.memory_tool`).
+  (1) `anthropic.lib.tools.BetaAbstractMemoryTool` is an ABC with six
+  abstract methods (`view`/`create`/`str_replace`/`insert`/`delete`/
+  `rename`, each taking a typed `BetaMemoryTool20250818*Command` and
+  returning a plain `str`). To avoid forcing the SDK helper as a
+  module-level import (older `anthropic` lacks it), put the handler
+  bodies on a plain class and `type("X", (PlainClass, base), {})` to
+  compose with the abstract base only inside a factory — `isinstance`
+  and `__abstractmethods__` then check out, and `import attune.memory`
+  stays SDK-helper-light (PEP-562-style laziness via a factory instead
+  of `__getattr__`). (2) The Memory tool is a *file/path* model with
+  in-place text edits (`str_replace`/`insert`) — map it onto the
+  backend's KV surface (`stash`/`retrieve`/`keys`/`delete`), one
+  prefixed key per memory file, NOT onto the long-term semantic
+  `remember`/`search` surface (keep those for `/recall`). This is why
+  the bridge rides PR #667's `update_working_memory_data(merge)` fix —
+  multi-file memory needs the non-clobbering KV write.
