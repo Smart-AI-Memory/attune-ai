@@ -99,6 +99,50 @@ class TestServerInit:
         server = EmpathyMCPServer(workspace_root=str(arg_path))
         assert server._workspace_root == str(arg_path)
 
+    def test_claude_project_dir_workspace_root(self, tmp_path: Any, monkeypatch: Any) -> None:
+        """CLAUDE_PROJECT_DIR is used when no explicit arg / ATTUNE var.
+
+        Claude Code sets CLAUDE_PROJECT_DIR in the spawned MCP server's
+        environment to the project root, so the sandbox tracks the
+        project even when the server's cwd differs.
+        """
+        from attune.mcp.server import EmpathyMCPServer
+
+        monkeypatch.delenv("ATTUNE_MCP_WORKSPACE_ROOT", raising=False)
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(tmp_path))
+        server = EmpathyMCPServer()
+        assert server._workspace_root == str(tmp_path)
+
+    def test_attune_var_overrides_claude_project_dir(self, tmp_path: Any, monkeypatch: Any) -> None:
+        """ATTUNE_MCP_WORKSPACE_ROOT wins over CLAUDE_PROJECT_DIR."""
+        from attune.mcp.server import EmpathyMCPServer
+
+        attune_path = tmp_path / "from-attune"
+        attune_path.mkdir()
+        claude_path = tmp_path / "from-claude"
+        claude_path.mkdir()
+
+        monkeypatch.setenv("ATTUNE_MCP_WORKSPACE_ROOT", str(attune_path))
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(claude_path))
+        server = EmpathyMCPServer()
+        assert server._workspace_root == str(attune_path)
+
+    def test_explicit_arg_overrides_claude_project_dir(
+        self, tmp_path: Any, monkeypatch: Any
+    ) -> None:
+        """Explicit workspace_root argument wins over CLAUDE_PROJECT_DIR."""
+        from attune.mcp.server import EmpathyMCPServer
+
+        claude_path = tmp_path / "from-claude"
+        claude_path.mkdir()
+        arg_path = tmp_path / "from-arg"
+        arg_path.mkdir()
+
+        monkeypatch.delenv("ATTUNE_MCP_WORKSPACE_ROOT", raising=False)
+        monkeypatch.setenv("CLAUDE_PROJECT_DIR", str(claude_path))
+        server = EmpathyMCPServer(workspace_root=str(arg_path))
+        assert server._workspace_root == str(arg_path)
+
     def test_custom_user_id(self) -> None:
         server = _make_server(user_id="test-user")
         assert server._user_id == "test-user"
