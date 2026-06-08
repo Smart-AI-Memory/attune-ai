@@ -7156,3 +7156,44 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `remember`/`search` surface (keep those for `/recall`). This is why
   the bridge rides PR #667's `update_working_memory_data(merge)` fix —
   multi-file memory needs the non-clobbering KV write.
+
+- **Changing the PREMIUM model id is a ~40-file sweep with TWO hidden
+  hazard classes a too-narrow pre-flight grep misses — pricing constants
+  (3 sites) and direct sampling-param senders**: a weekly-report rec
+  framed "upgrade PREMIUM to Opus 4.8" as a one-line
+  `adaptive_routing.py` change; `claude-opus-4-6` was actually hardcoded
+  across ~20 `src/` + ~25 test files (PR #674). Two defects neither the
+  rec nor CI surfaced:
+  - **Per-tier pricing is duplicated in THREE source sites** — the
+    registry `ModelInfo` entries AND the separate `TIER_PRICING` dict in
+    `models/registry.py` (which `cost_tracker.MODEL_PRICING` consumes via
+    `pricing.update(TIER_PRICING)`), plus `llm/providers/anthropic.py`'s
+    `get_model_info`, plus the telemetry "always-Opus" savings baseline in
+    `models/telemetry/analytics.py`. Premium was mispriced at `$15/$75`
+    (the original Opus 4 rate) when Opus 4.6/4.8 are `$5/$25` — a 3×
+    cost-tracking overcount. Fixing only the `ModelInfo` left `TIER_PRICING`
+    wrong; **CI caught the third site via `tests/models/test_model_registry.py`
+    — a dir DISTINCT from `tests/unit/models/` that a targeted sweep
+    forgets.** Pricing/registry tests live in BOTH dirs (+ `tests/telemetry/`,
+    `tests/core/`); sweep all of them. Beware `15.0` is also Sonnet's
+    *output* price — don't blanket-replace.
+  - **Opus 4.7+ reject `temperature`/`top_p`/`top_k` and enabled-thinking
+    (HTTP 400); the direct `anthropic` provider sends them, and the proving
+    tests are `network`-marked so CI SKIPS them.** The SDK-native workflow
+    path (`agent_sdk_adapter`) is safe (sets no sampling params), but
+    `AnthropicProvider.generate`/`generate_stream` default `temperature=0.7`
+    — so once PREMIUM became Opus 4.8, every premium call through the
+    Sonnet→Opus fallback / escalation / MCP-handler path would 400. Opus
+    4.6 ACCEPTED temperature, so this was latent until the upgrade. Fix:
+    `_normalize_api_kwargs_for_model()` strips the params + converts
+    `enabled`→`adaptive` thinking for models matching `opus-4-(?:[7-9]|\d{2,})`,
+    applied AFTER the kwargs merge (PR #674; `anthropic_batch.py` too). The
+    langchain/langgraph `agent_factory` adapters (`ChatAnthropic`) have the
+    same gap — open follow-up. **CI did not catch the 400** because the
+    proving suite (`tests/models/test_sonnet_opus_fallback.py`) is
+    `network`-marked and CI runs `-m "not network"`; it surfaced only in a
+    local full-suite run with a real `ANTHROPIC_API_KEY`. When changing a
+    model, run the network tests locally with a key, or reason about every
+    direct `messages.create` path — don't trust green CI. **The pre-flight
+    grep must cover the WHOLE `src/` (pricing constants + every
+    sampling-param sender), not just `workflows/` + `agents/`.**
