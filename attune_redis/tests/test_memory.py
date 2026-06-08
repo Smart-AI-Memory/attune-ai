@@ -144,6 +144,29 @@ class TestKeys:
         assert backend.keys() == []
 
 
+class TestWorkingMemoryReadIsNotDeprecated:
+    """Reads use get_or_create_working_memory, not the deprecated
+    get_working_memory (deprecated in agent-memory-client 0.14.0)."""
+
+    def test_retrieve_uses_get_or_create(self, backend, mock_ams_client):
+        """retrieve() reads via get_or_create_working_memory."""
+        backend.retrieve("k")
+        mock_ams_client.get_or_create_working_memory.assert_called()
+        mock_ams_client.get_working_memory.assert_not_called()
+
+    def test_delete_uses_get_or_create(self, backend, mock_ams_client):
+        """delete() reads via get_or_create_working_memory."""
+        backend.delete("k")
+        mock_ams_client.get_or_create_working_memory.assert_called()
+        mock_ams_client.get_working_memory.assert_not_called()
+
+    def test_keys_uses_get_or_create(self, backend, mock_ams_client):
+        """keys() reads via get_or_create_working_memory."""
+        backend.keys()
+        mock_ams_client.get_or_create_working_memory.assert_called()
+        mock_ams_client.get_working_memory.assert_not_called()
+
+
 # =================================================================
 # is_connected / get_stats / close
 # =================================================================

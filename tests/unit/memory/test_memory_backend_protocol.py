@@ -229,6 +229,11 @@ class TestAMSMemoryBackendProtocol:
         async def _get_wm(**kw):
             return FakeWorkingMemoryResponse(data=dict(_data))
 
+        async def _get_or_create_wm(**kw):
+            # AMS 0.14.0 get_or_create returns (created, WorkingMemory); the
+            # backend unpacks `_, response`. retrieve/delete/keys read via this.
+            return (False, FakeWorkingMemoryResponse(data=dict(_data)))
+
         async def _set_wm(session_id, data, namespace=None, preserve_existing=True):
             if preserve_existing:
                 _data.update(data)
@@ -246,6 +251,7 @@ class TestAMSMemoryBackendProtocol:
             return FakeWorkingMemoryResponse(data=dict(_data))
 
         mock_client.get_working_memory.side_effect = _get_wm
+        mock_client.get_or_create_working_memory.side_effect = _get_or_create_wm
         mock_client.set_working_memory_data.side_effect = _set_wm
         mock_client.update_working_memory_data.side_effect = _update_wm
         mock_client.health_check.return_value = FakeHealthCheckResponse()

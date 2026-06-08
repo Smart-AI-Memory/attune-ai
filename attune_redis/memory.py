@@ -190,8 +190,8 @@ class AMSMemoryBackend:
         """
         session_id = agent_id or self._session_id
         try:
-            response = _run_sync(
-                self._client.get_working_memory(
+            _, response = _run_sync(
+                self._client.get_or_create_working_memory(
                     session_id=session_id,
                     namespace=self._namespace,
                 )
@@ -217,8 +217,8 @@ class AMSMemoryBackend:
             True if deleted, False if not found.
         """
         try:
-            response = _run_sync(
-                self._client.get_working_memory(
+            _, response = _run_sync(
+                self._client.get_or_create_working_memory(
                     session_id=self._session_id,
                     namespace=self._namespace,
                 )
@@ -251,8 +251,8 @@ class AMSMemoryBackend:
             List of matching key names.
         """
         try:
-            response = _run_sync(
-                self._client.get_working_memory(
+            _, response = _run_sync(
+                self._client.get_or_create_working_memory(
                     session_id=self._session_id,
                     namespace=self._namespace,
                 )

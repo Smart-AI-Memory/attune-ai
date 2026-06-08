@@ -87,6 +87,13 @@ def mock_ams_client() -> AsyncMock:
     async def _get_working_memory(**kwargs: Any) -> FakeWorkingMemoryResponse:
         return FakeWorkingMemoryResponse(data=dict(_data))
 
+    async def _get_or_create_working_memory(
+        **kwargs: Any,
+    ) -> tuple[bool, FakeWorkingMemoryResponse]:
+        # AMS 0.14.0's get_or_create returns (created: bool, WorkingMemory);
+        # the backend unpacks ``_, response`` and reads ``response.data``.
+        return (False, FakeWorkingMemoryResponse(data=dict(_data)))
+
     async def _set_working_memory_data(
         session_id: str,
         data: dict[str, Any],
@@ -116,6 +123,7 @@ def mock_ams_client() -> AsyncMock:
         return FakeWorkingMemoryResponse(data=dict(_data))
 
     client.get_working_memory.side_effect = _get_working_memory
+    client.get_or_create_working_memory.side_effect = _get_or_create_working_memory
     client.set_working_memory_data.side_effect = _set_working_memory_data
     client.update_working_memory_data.side_effect = _update_working_memory_data
     client.health_check.return_value = FakeHealthCheckResponse()
