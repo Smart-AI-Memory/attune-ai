@@ -418,18 +418,57 @@ class AMSMemoryBackend:
             return []
 
     def recent(self, limit: int = 5, **filters: Any) -> list[dict]:
-        """Query-less recent findings (SessionStart recall) — best-effort.
+        """Most-recent long-term findings (no query) — powers SessionStart recall.
 
-        AMS is semantic-first; a query-less recency *list* is not a verified
-        primitive of the client yet, so this returns ``[]`` for now rather
-        than guess the API. AMS users still get full query-driven recall via
-        ``search`` (the ``/recall`` skill) and AMS's own auto-surfacing; the
-        file backend implements ``recent`` fully and powers SessionStart
-        auto-recall on the default install. Closing this is tracked as a
-        follow-up (verify the client's list/recency path against a live
-        server, then sort by ``created_at`` desc with a soft ``cwd`` filter).
+        Mirrors the file backend's ``recent``: newest-first, with same-project
+        findings surfaced ahead of others when ``cwd`` is given (soft priority).
+        Returns the same record shape as ``search`` (minus ``score``).
+
+        AMS has no query-less recency *list* primitive, but an empty-text
+        ``search_long_term_memory`` returns the namespace's memories, and the
+        server's ordering is relevance-based (verified not reliably recency-
+        sorted even with ``server_side_recency``), so the recency ordering is
+        applied client-side by ``created_at``. We over-fetch a bounded window
+        (the server can't sort by recency for us) and truncate after sorting.
+        Best-effort; returns ``[]`` on any AMS error, never raises.
         """
-        return []
+        cwd = filters.get("cwd")
+        # Over-fetch: server ordering isn't recency, so pull a window wide
+        # enough that the true most-recent ``limit`` are within it, then sort
+        # client-side. 30-day pruning keeps per-namespace counts bounded.
+        overscan = max(limit * 10, 50)
+        try:
+            results = _run_sync(
+                self._client.search_long_term_memory(
+                    text="",
+                    namespace={"eq": self._namespace},
+                    limit=overscan,
+                )
+            )
+        except Exception as e:  # noqa: BLE001
+            # INTENTIONAL: Graceful degradation for AMS HTTP errors
+            logger.error("recent_failed: limit=%s error=%s", limit, e)
+            return []
+
+        memories = list(results.memories)
+        # Newest-first by created_at (None sorts last via epoch-0 fallback).
+        memories.sort(
+            key=lambda m: (m.created_at.timestamp() if m.created_at else 0.0),
+            reverse=True,
+        )
+        if cwd:
+            # Stable secondary sort: cwd matches first, recency preserved within.
+            memories.sort(key=lambda m: 0 if _cwd_from_topics(m.topics) == cwd else 1)
+        return [
+            {
+                "id": m.id,
+                "text": m.text,
+                "topics": m.topics,
+                "cwd": _cwd_from_topics(m.topics),
+                "session_id": m.session_id,
+            }
+            for m in memories[:limit]
+        ]
 
     def promote(self, session_id: str | None = None) -> bool:
         """Trigger promotion of working memories to long-term.
