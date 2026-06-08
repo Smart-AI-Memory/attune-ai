@@ -464,5 +464,5 @@ def get_tiers() -> list[str]:
 TIER_PRICING: dict[str, dict[str, float]] = {
     "cheap": {"input": 1.00, "output": 5.00},  # Haiku 4.5 pricing
     "capable": {"input": 3.00, "output": 15.00},  # Sonnet 4.6 pricing
-    "premium": {"input": 15.00, "output": 75.00},  # Opus 4.6 pricing
+    "premium": {"input": 5.00, "output": 25.00},  # Opus 4.8 pricing
 }
