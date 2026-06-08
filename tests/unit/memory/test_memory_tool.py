@@ -226,3 +226,120 @@ class TestSDKComposition:
         tool.clear_all_memory()
         assert "Error" in _view(tool, "/memories/a.md")
         assert "Error" in _view(tool, "/memories/b.md")
+
+
+# =====================================================================
+# error / edge branches (per-command path validation + backend failures)
+# =====================================================================
+
+
+class _RaisingKeysBackend(FileStashBackend):
+    """File backend whose keys() always raises (best-effort list/clear paths)."""
+
+    def keys(self, pattern: str = "*"):  # type: ignore[override]
+        raise RuntimeError("boom")
+
+
+class _FailStashBackend(FileStashBackend):
+    """File backend whose stash() always reports failure."""
+
+    def stash(self, key, value, ttl=None, agent_id=None):  # type: ignore[override]
+        return False
+
+
+class TestErrorBranches:
+    @pytest.mark.parametrize(
+        "make",
+        [
+            lambda t: t.str_replace(
+                StrReplaceCommand(
+                    command="str_replace", path="/memories/../x", old_str="a", new_str="b"
+                )
+            ),
+            lambda t: t.insert(
+                InsertCommand(
+                    command="insert", path="/memories/../x", insert_line=0, insert_text="y"
+                )
+            ),
+            lambda t: t.delete(DeleteCommand(command="delete", path="/memories/../x")),
+            lambda t: t.rename(
+                RenameCommand(
+                    command="rename", old_path="/memories/../x", new_path="/memories/y.md"
+                )
+            ),
+        ],
+    )
+    def test_traversal_blocked_on_every_command(self, tool, make):
+        assert "traversal" in make(tool).lower()
+
+    def test_rename_destination_traversal_blocked(self, tool):
+        _create(tool, "/memories/a.md", "x")
+        out = tool.rename(
+            RenameCommand(command="rename", old_path="/memories/a.md", new_path="/memories/../y")
+        )
+        assert "traversal" in out.lower()
+
+    def test_insert_missing_file_is_error(self, tool):
+        out = tool.insert(
+            InsertCommand(command="insert", path="/memories/no.md", insert_line=0, insert_text="x")
+        )
+        assert "not found" in out.lower()
+
+    def test_create_root_path_is_error(self, tool):
+        out = _create(tool, "/memories", "x")
+        assert "root" in out.lower()
+
+    def test_view_directory_list_error_when_keys_raises(self, tmp_path):
+        backend = _RaisingKeysBackend(base_dir=str(tmp_path))
+        tool = AttuneMemoryTool(backend, user_id="u")
+        out = _view(tool, "/memories")
+        assert "could not list" in out.lower()
+
+    def test_create_write_failure_is_error(self, tmp_path):
+        backend = _FailStashBackend(base_dir=str(tmp_path))
+        tool = AttuneMemoryTool(backend, user_id="u")
+        assert "write failed" in _create(tool, "/memories/a.md", "x").lower()
+
+    def test_rename_write_failure_is_error(self):
+        # Source reads back, but the copy stash fails -> rename reports failure.
+        class _ReadOkStashFails:
+            def retrieve(self, key, agent_id=None):
+                return "payload" if key.endswith("a.md") else None
+
+            def stash(self, key, value, ttl=None, agent_id=None):
+                return False
+
+            def delete(self, key):
+                return True
+
+            def keys(self, pattern="*"):
+                return []
+
+        tool = AttuneMemoryTool(_ReadOkStashFails(), user_id="u")
+        out = tool.rename(
+            RenameCommand(command="rename", old_path="/memories/a.md", new_path="/memories/b.md")
+        )
+        assert "write failed" in out.lower()
+
+    def test_clear_all_swallows_keys_error(self, tmp_path):
+        backend = _RaisingKeysBackend(base_dir=str(tmp_path))
+        tool = AttuneMemoryTool(backend, user_id="u")
+        tool.clear_all_memory()  # must not raise
+
+    def test_clear_all_skips_non_prefixed_keys(self, tmp_path):
+        backend = FileStashBackend(base_dir=str(tmp_path))
+        tool = AttuneMemoryTool(backend, user_id="u")
+        _create(tool, "/memories/a.md", "x")
+        backend.stash("unrelated:key", "keep")  # not a memtool: key
+        tool.clear_all_memory()
+        assert backend.retrieve("unrelated:key") == "keep"
+
+    def test_make_memory_tool_resolves_default_backend(self, tmp_path, monkeypatch):
+        backend = FileStashBackend(base_dir=str(tmp_path))
+        monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda _x: backend)
+        tool = make_memory_tool(None, user_id="u")
+        tool.execute(CreateCommand(command="create", path="/memories/a.md", file_text="hi"))
+        assert (
+            tool.execute(ViewCommand(command="view", path="/memories/a.md", view_range=None))
+            == "1\thi"
+        )
