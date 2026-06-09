@@ -20,6 +20,7 @@ Licensed under the Apache License, Version 2.0
 
 import asyncio
 import logging
+import warnings
 from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
@@ -284,6 +285,7 @@ class DocumentationOrchestrator(
         self.export_path = (
             Path(export_path) if export_path else self.project_root / "docs" / "generated"
         )
+        self._export_path_explicit = export_path is not None
         self.include_stale = include_stale
         self.include_missing = include_missing
         self.min_severity = min_severity
@@ -351,6 +353,10 @@ class DocumentationOrchestrator(
         """Execute the full documentation orchestration pipeline.
 
         Args:
+            path: Project root to scope the run to. Canonical kwarg;
+                replaces the deprecated `project_root=` alias.
+            project_root: Deprecated alias for `path` (emits
+                DeprecationWarning).
             context: Additional context for the workflows
             **kwargs: Additional arguments
 
@@ -361,19 +367,45 @@ class DocumentationOrchestrator(
         started_at = datetime.now()
         result = OrchestratorResult(success=False, phase="scout")
         errors: list[str] = []
-        warnings: list[str] = []
+        warning_msgs: list[str] = []
+
+        # Scope resolution (PATH_ARG_REGISTRY unification): `path=` is the
+        # canonical kwarg; `project_root=` is a deprecated alias. Honoring it
+        # here lets the ops scope-picker actually re-scope the run.
+        scope = kwargs.get("path") or kwargs.get("project_root")
+        if kwargs.get("project_root") and kwargs.get("path"):
+            warnings.warn(
+                "DocumentationOrchestrator.execute(): both `path=` and "
+                "`project_root=` supplied; `path=` takes precedence and "
+                "`project_root=` is deprecated.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        elif kwargs.get("project_root"):
+            warnings.warn(
+                "DocumentationOrchestrator.execute(project_root=...) is "
+                "deprecated; use execute(path=...) instead.",
+                DeprecationWarning,
+                stacklevel=2,
+            )
+        if scope:
+            self.project_root = Path(scope).resolve()
+            if not self._export_path_explicit:
+                self.export_path = self.project_root / "docs" / "generated"
 
         # Validate dependencies
         if not HAS_SCOUT:
-            warnings.append("ManageDocumentationCrew not available - using ProjectIndex fallback")
+            warning_msgs.append(
+                "ManageDocumentationCrew not available - using ProjectIndex fallback"
+            )
         if not HAS_WRITER:
             errors.append("DocumentGenerationWorkflow not available - cannot generate docs")
             if not self.dry_run:
                 result.errors = errors
-                result.warnings = warnings
+                result.warnings = warning_msgs
                 return result
         if not HAS_PROJECT_INDEX:
-            warnings.append("ProjectIndex not available - limited file tracking")
+            warning_msgs.append("ProjectIndex not available - limited file tracking")
 
         # Phase 1: Scout
         print("\n" + "=" * 60)
@@ -427,7 +459,7 @@ class DocumentationOrchestrator(
             result.success = True
             result.phase = "awaiting_approval"
             result.docs_skipped = [i.file_path for i in priority_items]
-            result.warnings = warnings
+            result.warnings = warning_msgs
             result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
             result.total_cost = self._total_cost
             result.summary = self._generate_summary(result, priority_items)
@@ -453,7 +485,7 @@ class DocumentationOrchestrator(
         result.phase = "complete"
         result.total_cost = self._total_cost
         result.errors = errors
-        result.warnings = warnings
+        result.warnings = warning_msgs
         result.duration_ms = int((datetime.now() - started_at).total_seconds() * 1000)
         result.summary = self._generate_summary(result, priority_items)
 

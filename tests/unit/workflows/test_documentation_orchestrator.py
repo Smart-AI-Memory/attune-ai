@@ -1580,3 +1580,62 @@ class TestProjectIndexEdgeCases:
         assert len(items) <= 1
         if len(items) > 0:
             assert "requirements.txt" not in items[0].file_path
+
+
+class TestExecutePathKwarg:
+    """execute() honors the canonical `path=` kwarg and the deprecated alias.
+
+    Scout is mocked to return no items so execute() short-circuits right
+    after scope resolution, without running the generation pipeline.
+    """
+
+    @pytest.fixture
+    def orchestrator(self, tmp_path):
+        return DocumentationOrchestrator(project_root=str(tmp_path), dry_run=True)
+
+    async def test_execute_accepts_path_kwarg(self, orchestrator, tmp_path):
+        target = tmp_path / "scoped"
+        target.mkdir()
+        orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        result = await orchestrator.execute(path=str(target))
+        assert result.success is True
+        assert orchestrator.project_root == target.resolve()
+
+    async def test_execute_legacy_project_root_warns(self, orchestrator, tmp_path):
+        target = tmp_path / "legacy"
+        target.mkdir()
+        orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        with pytest.warns(DeprecationWarning, match="project_root"):
+            result = await orchestrator.execute(project_root=str(target))
+        assert result.success is True
+        assert orchestrator.project_root == target.resolve()
+
+    async def test_execute_both_kwargs_path_wins(self, orchestrator, tmp_path):
+        win = tmp_path / "win"
+        win.mkdir()
+        lose = tmp_path / "lose"
+        lose.mkdir()
+        orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        with pytest.warns(DeprecationWarning, match="precedence"):
+            result = await orchestrator.execute(path=str(win), project_root=str(lose))
+        assert result.success is True
+        assert orchestrator.project_root == win.resolve()
+
+    async def test_execute_default_export_path_rederived_under_scope(self, orchestrator, tmp_path):
+        target = tmp_path / "scoped2"
+        target.mkdir()
+        orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        await orchestrator.execute(path=str(target))
+        assert orchestrator.export_path == target.resolve() / "docs" / "generated"
+
+    async def test_execute_explicit_export_path_preserved(self, tmp_path):
+        export = tmp_path / "custom-export"
+        orchestrator = DocumentationOrchestrator(
+            project_root=str(tmp_path), export_path=str(export), dry_run=True
+        )
+        target = tmp_path / "scoped3"
+        target.mkdir()
+        orchestrator._run_scout_phase = AsyncMock(return_value=([], 0.0))
+        await orchestrator.execute(path=str(target))
+        # An explicitly-set export_path must NOT be re-derived on re-scope.
+        assert orchestrator.export_path == export
