@@ -1,6 +1,6 @@
 """Deprecated — use attune_redis for coordination.
 
-REMOVE IN v9.0.0 — full removal DESCOPED (was gated on redis-decoupling spec P3, now archived/superseded; the migration guide marks these subsystems deferred — removal needs a memory-subsystem rewrite, not a facade delete). migration path: docs/migration/redis-plugin-migration.md
+Superseded by attune_redis.AMSMemoryBackend — retained for compatibility, not scheduled for removal. The strategy is to build on the attune_redis leverage path rather than delete these facades (RedisShortTermMemory is still used by memory/control_panel). Migration path: docs/migration/redis-plugin-migration.md
 
 Legacy coordination mixins kept for backward compatibility.
 New code should use ``attune_redis.signals.RedisSignalBus``.

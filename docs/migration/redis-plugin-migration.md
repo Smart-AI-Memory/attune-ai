@@ -57,17 +57,22 @@ with TTL, glob scan, pattern staging, and an in-process EventBus
 "decouple Redis." Not in scope for this spec; deferred to a
 hypothetical follow-up.
 
-> **Deprecation schedule (updated for v8.0.0).** The legacy facade
-> modules (`attune.redis_memory`, `attune.redis_memory_storage`,
-> `attune.redis_memory_coordination`, `attune.redis_memory_patterns`,
-> `attune.redis_config`, and the deprecated parts of
-> `attune.memory.config`) carried `REMOVE IN v8.0.0` markers gated on
-> redis-decoupling spec P3. Because P3 (full removal) was descoped and
-> the spec archived — and because these still power live subsystems —
-> the markers were **rescheduled to `REMOVE IN v9.0.0`** at the 8.0.0
-> cut. They remain supported, deprecated, and Redis-coupled by design;
-> actual removal still awaits the memory-subsystem rewrite described
-> above.
+> **Deprecation status (updated for the facade-direction review).**
+> The legacy facade modules (`attune.redis_memory`,
+> `attune.redis_memory_storage`, `attune.redis_memory_coordination`,
+> `attune.redis_memory_patterns`, `attune.redis_config`, and the
+> deprecated parts of `attune.memory.config`) once carried
+> `REMOVE IN v8.0.0` → `REMOVE IN v9.0.0` removal markers gated on the
+> (since-archived) redis-decoupling spec. Those markers have been
+> **retired**: there is **no scheduled removal**. The governing
+> strategy is to *leverage* Redis via the `attune_redis` /
+> Agent-Memory-Server path, not to exit it, so these facades are now
+> labelled "superseded by `attune_redis`, retained for compatibility"
+> rather than slated for deletion. `RedisShortTermMemory` still powers
+> live subsystems (e.g. `memory/control_panel`); any eventual removal
+> is a memory-subsystem rewrite, not a facade delete, and would be
+> scheduled on its own merits — not pinned to a major-version boundary.
+> See [`docs/specs/redis-facade-direction/`](../specs/redis-facade-direction/decisions.md).
 
 ## Install path
 
