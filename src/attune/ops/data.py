@@ -96,7 +96,7 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     "release-prep": PathArgSpec(kwarg="path"),
     "secure-release": PathArgSpec(kwarg="path"),
     # Category C — aliased to a different kwarg name
-    "doc-orchestrator": PathArgSpec(kwarg="project_root"),
+    "doc-orchestrator": PathArgSpec(kwarg="path"),
     # health-check + orchestrated-health-check migrated to `path` in
     # workflow-path-arg-unification PR-1 (2026-05-13).
     "health-check": PathArgSpec(kwarg="path"),
