@@ -57,17 +57,20 @@ with TTL, glob scan, pattern staging, and an in-process EventBus
 "decouple Redis." Not in scope for this spec; deferred to a
 hypothetical follow-up.
 
-> **Deprecation schedule (updated for v8.0.0).** The legacy facade
-> modules (`attune.redis_memory`, `attune.redis_memory_storage`,
-> `attune.redis_memory_coordination`, `attune.redis_memory_patterns`,
-> `attune.redis_config`, and the deprecated parts of
-> `attune.memory.config`) carried `REMOVE IN v8.0.0` markers gated on
-> redis-decoupling spec P3. Because P3 (full removal) was descoped and
-> the spec archived — and because these still power live subsystems —
-> the markers were **rescheduled to `REMOVE IN v9.0.0`** at the 8.0.0
-> cut. They remain supported, deprecated, and Redis-coupled by design;
-> actual removal still awaits the memory-subsystem rewrite described
-> above.
+> **Status: Redis is a permanent alignment — no removal planned.**
+> The legacy in-tree facade modules (`attune.redis_memory`,
+> `attune.redis_memory_storage`, `attune.redis_memory_coordination`,
+> `attune.redis_memory_patterns`, `attune.redis_config`, and the
+> deprecated parts of `attune.memory.config`) once carried
+> `REMOVE IN v8.0.0` → `REMOVE IN v9.0.0` removal markers. Those markers
+> have been **retired — there is no planned removal of Redis or these
+> facades.** attune's direction is to *align on* Redis (the Agent
+> Memory Server path via `attune_redis`) **and** Anthropic Claude — not
+> to exit Redis. The facades are simply the *older* in-tree way of using
+> Redis, **superseded by the newer `attune_redis` integration**; new
+> code should use `attune_redis.AMSMemoryBackend`. `RedisShortTermMemory`
+> still powers live subsystems (e.g. `memory/control_panel`).
+> See [`docs/specs/redis-facade-direction/`](../specs/redis-facade-direction/decisions.md).
 
 ## Install path
 
@@ -101,16 +104,17 @@ pip install 'attune-ai[memory]'  # still works — empty no-op alias
 
 ## Legacy `attune.redis_*` modules
 
-The top-level legacy modules (`attune.redis_memory`,
+The top-level `attune.redis_*` modules (`attune.redis_memory`,
 `attune.redis_config`, `attune.redis_memory_storage`,
 `attune.redis_memory_coordination`, `attune.redis_memory_patterns`)
-still exist with `DeprecationWarning` for a "v4.0.0 removal" that
-shipped years ago without removing them. Their retirement is
-**not** in scope for this spec.
-
-Track that work under
-[`docs/specs/deprecated-module-retirement/`](../specs/deprecated-module-retirement/)
-if it picks up these candidates.
+are **retained compatibility facades — not retirement candidates.**
+attune's direction is to align on Redis (via the `attune_redis`
+Agent Memory Server integration) and Anthropic Claude, so these
+facades stay. New code can use `attune_redis.AMSMemoryBackend`
+directly for the richer path. (A legacy `DeprecationWarning`
+predating this direction still fires at import; aligning that
+runtime message to drop the removal implication is a separate,
+optional follow-up — no code change was made here.)
 
 ## See also
 

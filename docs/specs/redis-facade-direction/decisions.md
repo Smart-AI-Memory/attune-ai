@@ -6,7 +6,7 @@
 > the morning meeting; once ratified, each decision spawns its own
 > scoped change.
 
-**Status:** PROPOSAL — awaiting Patrick's ratification (2026-06-08)
+**Status:** D1 relabel EXECUTED 2026-06-08 per Patrick's direction (Redis stays — no removal; align on Redis + Anthropic Claude). The `REMOVE IN v9.0.0` exit markers are retired. D2–D5 remain proposed.
 **Owner:** Patrick
 **Related:**
 
@@ -127,7 +127,7 @@ is **not** a facade-removal release.
 
 ## Ratification checklist (for the morning)
 
-- [ ] D1 relabel-not-remove — agree / amend?
+- [x] D1 relabel-not-remove — RATIFIED & EXECUTED 2026-06-08
 - [ ] D2 retire coordination mixins — agree / amend?
 - [ ] D3 capture PatternStaging as pattern-review queue — agree?
 - [ ] D4 AMS bridge + upstream contribute-back + 0.15.2 bump — agree
