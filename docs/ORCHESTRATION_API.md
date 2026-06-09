@@ -1,11 +1,11 @@
 ---
-description: Meta-Orchestration API Reference API reference: **Version:** 3.12.0 **Last Updated:** January 10, 2026 --- ## Table of Contents 1. [Core Components]
+description: Meta-Orchestration API Reference — task analysis, agent templates, composition patterns, execution strategies, dynamic teams, and workflow composition.
 ---
 
 # Meta-Orchestration API Reference
 
-**Version:** 4.0.0
-**Last Updated:** February 10, 2026
+**Version:** 8.0.1
+**Last Updated:** June 9, 2026
 
 ---
 
@@ -27,19 +27,21 @@ description: Meta-Orchestration API Reference API reference: **Version:** 3.12.0
 
 ### Overview
 
-The meta-orchestration system consists of 10 main modules:
+The meta-orchestration system is organized into the following modules:
 
 ```text
 attune.orchestration/
-├── agent_templates.py           # Agent archetypes and capabilities (13 templates)
+├── agent_templates/             # Agent archetypes and capabilities (14 templates)
 ├── meta_orchestrator.py         # Task analysis and agent selection
-├── execution_strategies.py      # 6 composition patterns
+├── execution_strategies.py      # 10 composition patterns (13 strategy classes)
+├── _strategies/                 # Strategy implementations + registry
 ├── config_store.py              # Learning and memory system
-├── dynamic_team.py              # Dynamic team execution (parallel/sequential/two_phase/delegation)
+├── dynamic_team.py              # Dynamic team execution (parallel/sequential/two_phase)
 ├── team_builder.py              # Build teams from specs, plans, or saved configs
 ├── team_store.py                # Persistent team configuration storage
 ├── workflow_agent_adapter.py    # Wrap workflows as agents for team composition
 ├── workflow_composer.py         # Compose workflows into DynamicTeam instances
+├── pattern_learner.py           # Learn successful composition patterns
 └── __init__.py
 ```
 
@@ -237,17 +239,17 @@ templates = get_templates_by_capability("vulnerability_scan")
 **Example:**
 ```python
 cheap_templates = get_templates_by_tier("CHEAP")
-# Returns: [documentation_writer]
+# e.g. [documentation_writer, test_validator, report_generator]
 
 capable_templates = get_templates_by_tier("CAPABLE")
-# Returns: [test_coverage_analyzer, code_reviewer, performance_optimizer, refactoring_specialist]
+# e.g. [test_coverage_analyzer, code_reviewer, performance_optimizer, ...]
 ```
 
 ---
 
 ### Pre-built Templates
 
-**13 templates available:**
+**14 templates available:**
 
 1. `test_coverage_analyzer` (CAPABLE)
 2. `security_auditor` (PREMIUM)
@@ -256,12 +258,13 @@ capable_templates = get_templates_by_tier("CAPABLE")
 5. `performance_optimizer` (CAPABLE)
 6. `architecture_analyst` (PREMIUM)
 7. `refactoring_specialist` (CAPABLE)
-8. `dependency_checker` (CHEAP)
-9. `bug_predictor` (CAPABLE)
-10. `release_coordinator` (CAPABLE)
-11. `integration_tester` (CAPABLE)
-12. `api_designer` (CAPABLE)
-13. `devops_engineer` (CAPABLE)
+8. `test_generator` (CAPABLE)
+9. `test_validator` (CHEAP)
+10. `report_generator` (CHEAP)
+11. `documentation_analyst` (CAPABLE)
+12. `synthesizer` (CAPABLE)
+13. `code_simplifier` (CAPABLE)
+14. `generic_agent` (CAPABLE)
 
 ---
 
@@ -314,6 +317,11 @@ class CompositionPattern(Enum):
     TEACHING = "teaching"      # Junior → Expert validation
     REFINEMENT = "refinement"  # Draft → Review → Polish
     ADAPTIVE = "adaptive"      # Classifier → Specialist
+    CONDITIONAL = "conditional"  # If-then-else routing
+    # Anthropic-inspired patterns (8-10)
+    TOOL_ENHANCED = "tool_enhanced"  # Single agent with tools
+    PROMPT_CACHED_SEQUENTIAL = "prompt_cached_sequential"  # Shared cached context
+    DELEGATION_CHAIN = "delegation_chain"  # Hierarchical delegation (≤3 levels)
 ```
 
 ---
@@ -378,9 +386,31 @@ class ExecutionPlan:
 class MetaOrchestrator:
     def __init__(self): ...
 
-    def analyze_and_compose(
+    def analyze_task(
         self, task: str, context: dict[str, Any] | None = None
+    ) -> TaskRequirements: ...
+
+    def create_execution_plan(
+        self,
+        requirements: TaskRequirements,
+        agents: list[AgentTemplate],
+        strategy: CompositionPattern,
     ) -> ExecutionPlan: ...
+
+    def analyze_and_compose(
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+        interactive: bool = False,
+    ) -> ExecutionPlan: ...
+
+    def compose_team(
+        self,
+        task: str,
+        context: dict[str, Any] | None = None,
+        state_store: Any | None = None,
+        redis_client: Any | None = None,
+    ) -> Any: ...
 ```
 
 **Methods:**
@@ -396,7 +426,35 @@ orchestrator = MetaOrchestrator()
 
 ---
 
-##### `analyze_and_compose(task: str, context: dict[str, Any] | None = None) -> ExecutionPlan`
+##### `analyze_task(task: str, context: dict[str, Any] | None = None) -> TaskRequirements`
+
+**Classify a task into structured requirements** (complexity, domain,
+capabilities needed) without selecting agents. Useful when you want to
+inspect or adjust requirements before composing a plan.
+
+**Returns:**
+- `TaskRequirements`: complexity, domain, capabilities, parallelizability
+
+---
+
+##### `create_execution_plan(requirements, agents, strategy) -> ExecutionPlan`
+
+**Assemble an `ExecutionPlan` from already-resolved requirements,
+selected agents, and a composition pattern.** Used internally by
+`analyze_and_compose`, but exposed for callers that select agents
+themselves.
+
+**Parameters:**
+- `requirements` (TaskRequirements): Task requirements with quality gates
+- `agents` (list[AgentTemplate]): Selected agents for execution
+- `strategy` (CompositionPattern): Composition pattern to use
+
+**Returns:**
+- `ExecutionPlan`: Plan with agents, strategy, and cost/duration estimates
+
+---
+
+##### `analyze_and_compose(task, context=None, interactive=False) -> ExecutionPlan`
 
 **Analyze task and create execution plan.**
 
@@ -405,6 +463,8 @@ This is the main entry point for meta-orchestration.
 **Parameters:**
 - `task` (str): Task description (e.g., "Boost test coverage to 90%")
 - `context` (dict[str, Any] | None): Optional context dictionary
+- `interactive` (bool): If `True`, prompts the user to disambiguate
+  low-confidence classifications (default `False`)
 
 **Returns:**
 - `ExecutionPlan`: Plan with agents and strategy
@@ -417,20 +477,20 @@ This is the main entry point for meta-orchestration.
 orchestrator = MetaOrchestrator()
 
 plan = orchestrator.analyze_and_compose(
-    task="Prepare for v3.12.0 release",
-    context={
-        "version": "3.12.0",
-        "current_coverage": 75.0,
-    }
+    task="Boost test coverage to 90%",
+    context={"current_coverage": 75.0},
 )
 
-print(f"Complexity: {plan.complexity}")
-print(f"Domain: {plan.domain}")
 print(f"Agents: {[a.id for a in plan.agents]}")
 print(f"Strategy: {plan.strategy.value}")
 print(f"Cost: {plan.estimated_cost}")
 print(f"Duration: {plan.estimated_duration}s")
 ```
+
+> **Note:** the returned `ExecutionPlan` carries `agents`, `strategy`,
+> `quality_gates`, `estimated_cost`, and `estimated_duration`. The
+> task's `complexity`/`domain` classification lives on the
+> `TaskRequirements` returned by `analyze_task`, not on `ExecutionPlan`.
 
 **Algorithm:**
 1. Classify task complexity (simple/moderate/complex)
@@ -439,6 +499,20 @@ print(f"Duration: {plan.estimated_duration}s")
 4. Select appropriate agents
 5. Choose composition pattern
 6. Estimate cost and duration
+
+---
+
+##### `compose_team(task, context=None, state_store=None, redis_client=None)`
+
+**End-to-end convenience: analyze the task and build a runnable team**
+(rather than just a plan). Optionally wires in an `AgentStateStore` and
+a Redis client for persistence.
+
+**Parameters:**
+- `task` (str): Task description
+- `context` (dict[str, Any] | None): Optional context dictionary
+- `state_store` (Any | None): Optional agent state store
+- `redis_client` (Any | None): Optional Redis client for persistence
 
 ---
 
@@ -749,6 +823,32 @@ result = await strategy.execute(
 
 ---
 
+#### Conditional & Nested Strategies
+
+These extend the core six with routing and composition:
+
+- **`ConditionalStrategy`** — If-then-else routing: evaluate a
+  condition, then run the matching branch's agents.
+- **`MultiConditionalStrategy`** — Multi-way (switch-style) routing
+  across several conditions.
+- **`NestedStrategy`** — Run a strategy whose "agents" are themselves
+  sub-strategies (compose strategies recursively).
+- **`NestedSequentialStrategy`** — Sequential execution of nested
+  sub-strategies.
+
+#### Anthropic-Inspired Strategies (patterns 8–10)
+
+- **`ToolEnhancedStrategy`** — A single agent augmented with tools.
+- **`PromptCachedSequentialStrategy`** — Sequential agents sharing a
+  cached prompt prefix to cut input-token cost.
+- **`DelegationChainStrategy`** — Hierarchical delegation (≤3 levels):
+  a lead agent delegates subtasks to specialists.
+
+All strategy classes subclass `ExecutionStrategy` and implement the
+same `async execute(agents, context) -> StrategyResult` interface.
+
+---
+
 ### Functions
 
 #### `get_strategy(strategy_name: str) -> ExecutionStrategy`
@@ -756,7 +856,7 @@ result = await strategy.execute(
 **Get strategy instance by name.**
 
 **Parameters:**
-- `strategy_name` (str): Strategy name ("sequential", "parallel", "debate", "teaching", "refinement", "adaptive")
+- `strategy_name` (str): Strategy name (any key in `STRATEGY_REGISTRY`)
 
 **Returns:**
 - `ExecutionStrategy`: Strategy instance
@@ -769,14 +869,24 @@ result = await strategy.execute(
 strategy = get_strategy("parallel")
 isinstance(strategy, ParallelStrategy)  # True
 
-# Available strategies
+# Available strategies (13)
 STRATEGY_REGISTRY = {
+    # Core 7 patterns
     "sequential": SequentialStrategy,
     "parallel": ParallelStrategy,
     "debate": DebateStrategy,
     "teaching": TeachingStrategy,
     "refinement": RefinementStrategy,
     "adaptive": AdaptiveStrategy,
+    "conditional": ConditionalStrategy,
+    # Additional patterns
+    "multi_conditional": MultiConditionalStrategy,
+    "nested": NestedStrategy,
+    "nested_sequential": NestedSequentialStrategy,
+    # Anthropic-inspired patterns (8-10)
+    "tool_enhanced": ToolEnhancedStrategy,
+    "prompt_cached_sequential": PromptCachedSequentialStrategy,
+    "delegation_chain": DelegationChainStrategy,
 }
 ```
 
@@ -1318,166 +1428,23 @@ class AgentRecoveryManager:
 
 **Module:** `attune.workflows`
 
-### Release Preparation
-
-#### `OrchestratedReleasePrepWorkflow`
-
-**Release preparation workflow using meta-orchestration.**
-
-```python
-class OrchestratedReleasePrepWorkflow:
-    DEFAULT_QUALITY_GATES = {
-        "min_coverage": 80.0,
-        "min_quality_score": 7.0,
-        "max_critical_issues": 0.0,
-        "min_doc_coverage": 100.0,
-    }
-
-    def __init__(
-        self,
-        quality_gates: dict[str, float] | None = None,
-        agent_ids: list[str] | None = None,
-    ): ...
-
-    async def execute(
-        self, path: str = ".", context: dict[str, Any] | None = None
-    ) -> ReleaseReadinessReport: ...
-```
-
-**Parameters (\_\_init\_\_):**
-- `quality_gates` (dict[str, float] | None): Custom quality gate thresholds
-- `agent_ids` (list[str] | None): Specific agent IDs to use
-
-**Parameters (execute):**
-- `path` (str): Path to codebase (default: ".")
-- `context` (dict[str, Any] | None): Additional context
-
-**Returns:**
-- `ReleaseReadinessReport`: Consolidated readiness assessment
-
-**Raises:**
-- `ValueError`: If path is invalid or quality gates are invalid
-
-**Example:**
-```python
-workflow = OrchestratedReleasePrepWorkflow(
-    quality_gates={
-        "min_coverage": 90.0,
-        "max_critical_issues": 0,
-    }
-)
-
-report = await workflow.execute(path="./my-project")
-
-if report.approved:
-    print("✅ Release approved!")
-else:
-    for blocker in report.blockers:
-        print(f"❌ {blocker}")
-```
-
----
-
-#### `ReleaseReadinessReport`
-
-**Consolidated release readiness assessment.**
-
-```python
-@dataclass
-class ReleaseReadinessReport:
-    approved: bool
-    confidence: str
-    quality_gates: list[QualityGate] = field(default_factory=list)
-    agent_results: dict[str, dict] = field(default_factory=dict)
-    blockers: list[str] = field(default_factory=list)
-    warnings: list[str] = field(default_factory=list)
-    summary: str = ""
-    timestamp: str = field(default_factory=lambda: datetime.now().isoformat())
-    total_duration: float = 0.0
-```
-
-**Attributes:**
-- `approved` (bool): Overall release approval status
-- `confidence` (str): Confidence level ("high", "medium", "low")
-- `quality_gates` (list[QualityGate]): Quality gate results
-- `agent_results` (dict[str, dict]): Individual agent outputs
-- `blockers` (list[str]): Critical issues blocking release
-- `warnings` (list[str]): Non-critical issues
-- `summary` (str): Executive summary
-- `timestamp` (str): Report generation time (ISO format)
-- `total_duration` (float): Total execution time in seconds
-
-**Methods:**
-
-##### `to_dict() -> dict[str, Any]`
-
-**Convert report to dictionary format.**
-
-**Returns:**
-- `dict[str, Any]`: JSON-serializable dictionary
-
----
-
-##### `format_console_output() -> str`
-
-**Format report for console display.**
-
-**Returns:**
-- `str`: Formatted report
-
-**Example:**
-```python
-print(report.format_console_output())
-```
-
----
-
-### Test Coverage Boost
-
-#### `TestCoverageBoostWorkflow`
-
-**Test coverage boost workflow using meta-orchestration.**
-
-```python
-class TestCoverageBoostWorkflow:
-    def __init__(
-        self,
-        target_coverage: float = 80.0,
-        project_root: str = ".",
-        save_patterns: bool = True,
-    ): ...
-
-    async def execute(
-        self, context: dict[str, Any] | None = None
-    ) -> dict[str, Any]: ...
-```
-
-**Parameters (\_\_init\_\_):**
-- `target_coverage` (float): Target coverage percentage (0-100)
-- `project_root` (str): Project root directory
-- `save_patterns` (bool): Whether to save successful patterns
-
-**Parameters (execute):**
-- `context` (dict[str, Any] | None): Execution context (e.g., current_coverage)
-
-**Returns:**
-- `dict[str, Any]`: Results with coverage improvement metrics
-
-**Example:**
-```python
-workflow = TestCoverageBoostWorkflow(
-    target_coverage=90.0,
-    project_root="./src",
-    save_patterns=True
-)
-
-result = await workflow.execute({
-    "current_coverage": 75.0
-})
-
-print(f"Improvement: {result['coverage_improvement']}%")
-print(f"New tests: {result['tests_generated']}")
-```
+> **Removed in v7.0.0.** The orchestration-specific workflow wrappers
+> `OrchestratedReleasePrepWorkflow` and `TestCoverageBoostWorkflow`
+> (and the `ReleaseReadinessReport` they returned) were removed in
+> v7.0.0. Their functionality is covered by the standard SDK-native
+> workflows registered in `attune.workflows`:
+>
+> - **Release preparation:** `ReleasePreparationWorkflow`
+>   (`attune.workflows.release_prep`), `SecureReleasePipeline`
+>   (`attune.workflows.secure_release`), and the multi-agent
+>   `ReleasePrepTeamWorkflow` (`attune.agents.release`).
+> - **Test coverage / generation:** the `test-gen` workflow family.
+>
+> Run any of them via `attune workflow run <name>` or the MCP tools.
+> See the [API Reference](reference/API_REFERENCE.md) for the current
+> workflow catalog, and use this document for the orchestration
+> primitives (`MetaOrchestrator`, strategies, `DynamicTeam`) that those
+> workflows compose with.
 
 ---
 
@@ -1487,29 +1454,17 @@ print(f"New tests: {result['tests_generated']}")
 
 ```python
 import asyncio
+from attune.orchestration import get_template
 from attune.orchestration.meta_orchestrator import MetaOrchestrator
 from attune.orchestration.execution_strategies import get_strategy
 from attune.orchestration.config_store import (
     ConfigurationStore,
     AgentConfiguration,
 )
-from attune.workflows.orchestrated_release_prep import (
-    OrchestratedReleasePrepWorkflow
-)
 
 async def main():
-    # Option 1: Use pre-built workflow
-    workflow = OrchestratedReleasePrepWorkflow()
-    report = await workflow.execute(path=".")
-
-    if report.approved:
-        print("✅ Release approved!")
-    else:
-        print("❌ Release blocked:")
-        for blocker in report.blockers:
-            print(f"  • {blocker}")
-
-    # Option 2: Manual orchestration
+    # Manual orchestration: analyze a task, reuse a proven
+    # composition if one exists, otherwise compose a fresh plan.
     orchestrator = MetaOrchestrator()
     store = ConfigurationStore()
 
@@ -1524,7 +1479,7 @@ async def main():
         # Create new composition
         plan = orchestrator.analyze_and_compose(
             task="Prepare for release",
-            context={"version": "3.12.0"}
+            context={"version": "8.0.1"}
         )
         agents = plan.agents
         strategy = get_strategy(plan.strategy.value)
