@@ -43,7 +43,7 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 | **Integrated Workflows** | 14 (including 4 meta-workflows) |
 | **Agent Templates** | 7 with 6 composition patterns |
 | **Test Coverage** | 125+ tests, production-stable |
-| **Version** | v4.4.0 (January 2026) |
+| **Status** | Production/Stable |
 
 ---
 
@@ -93,7 +93,7 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 ### Traction
 
 - **Open source:** GitHub at [Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
-- **Production-ready:** v4.4.0 stable release
+- **Production-ready:** stable release
 - **Documentation:** Full MkDocs site + tutorials
 - **VSCode Extension:** Real-time dashboard integration
 
