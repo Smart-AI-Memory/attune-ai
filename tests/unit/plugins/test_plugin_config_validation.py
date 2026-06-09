@@ -301,8 +301,8 @@ class TestPluginStructure:
         """Test that the expected number of skills exist."""
         skills_dir = PLUGIN_ROOT / "skills"
         skill_dirs = [d for d in skills_dir.iterdir() if d.is_dir() and (d / "SKILL.md").exists()]
-        assert len(skill_dirs) == 16, (
-            f"Expected 16 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
+        assert len(skill_dirs) == 17, (
+            f"Expected 17 skills, found {len(skill_dirs)}: " f"{sorted(d.name for d in skill_dirs)}"
         )
 
     def test_commands_directory_only_has_allowlisted_commands(self) -> None:

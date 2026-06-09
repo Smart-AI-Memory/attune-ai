@@ -7382,3 +7382,46 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   BEFORE cutting the release — publishing is irreversible (PyPI rejects
   re-publishing a version). Prefer this over a local token upload
   (tokens must never be pasted into this environment).
+
+- **attune-verify 0.1.0's import checker validates only the TOP-LEVEL
+  package — a fake SUBMODULE of an INSTALLED package passes
+  deterministically, so it misses exactly the author-#351 private-import
+  hallucination class unless the parent isn't installed** (found
+  dogfooding the `/verify` skill, 2026-06-09, #708): `checkers/imports.py
+  ::_module_from_node` does `node.module.split(".")[0]`, then resolves
+  that one top-level name via `find_spec` in a subprocess. So `from
+  attune.ops._readers import _read_templates` is checked as just
+  `attune` — which RESOLVES when attune is installed → no finding.
+  Counter-intuitively, the checker only catches a fully-fake top-level
+  package (`import totally_fake_pkg`) OR a real-package submodule when
+  the *parent* isn't importable in `env_python`. The author-#351
+  regression fixture is green precisely because it PATCHES `_resolves` to
+  simulate "attune not installed" — the exact condition under which the
+  PR-#351 hallucinated import broke; in a normal venv where attune IS
+  installed, 0.1.0 would pass those imports. Two consequences: (1) when
+  documenting/marketing `/verify`, say it catches "an import of a package
+  that doesn't exist" (top-level), NOT "a private-module import" — the
+  latter overstates 0.1.0 and is a faithfulness bug (route fake
+  submodules to the semantic cross-check layer instead); (2) a future
+  attune-verify minor that drills into submodules (`find_spec` on the
+  full dotted path) would close this gap and should re-validate the
+  author-#351 fixture WITHOUT the `_resolves` patch. Separately: calling
+  `check_imports(..., env_python=None)` crashes (`subprocess.run([None,
+  ...])` → `TypeError`); the real skill path is safe because
+  `VerifyContext.env_python` defaults to `sys.executable` (a real
+  string) — only direct callers passing `None` hit it.
+
+- **Promote a stdlib-only sibling package to a CORE dep, not a `[extra]`
+  — the extra-gating convention exists to keep heavy transitive deps
+  optional, and doesn't apply when the package pulls nothing** (#708,
+  wiring `attune-verify` into attune-ai): the repo gates `rag-code-gen`
+  behind `[rag]` because attune-rag historically pulled weight, but
+  attune-rag is ITSELF a core dep now (required for accuracy), and
+  `attune-verify` has `dependencies = []` (pure stdlib). Making it core
+  (`attune-verify>=0.1.0,<0.2`) costs one tiny pure-Python wheel and lets
+  `/verify` work out of the box with no extra caveat in the skill or the
+  attune-hub table. Decision rule for "core vs extra" on a sibling
+  package: weigh the package's TRANSITIVE-dep weight, not a reflex to
+  gate. Zero/light deps + backs a shipped surface → core; heavy deps or
+  niche surface → extra. `uv lock` after adding confirmed a clean
+  single-package add (no cascade), consistent with the lighter footprint.

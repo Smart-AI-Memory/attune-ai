@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **`/verify` skill — output-side generation fact-checker.** A new
+  `verify` skill (`plugin/skills/verify/`) fact-checks LLM-generated
+  content (docs, READMEs, tutorials) against the project as
+  source-of-truth: it confirms imports' top-level packages resolve, CLI
+  flags appear in `--help`, markdown links exist under the project root,
+  and numeric claims match a declared count source — the hallucination
+  classes unit tests never see. Deterministic checks run via the new
+  `attune-verify` library (now a **core dependency**, `>=0.1.0,<0.2`,
+  stdlib-only with zero transitive deps); the agent then acts as an
+  ambient semantic cross-check (the deterministic layer is authoritative,
+  the cross-check never overrides it). The skill is report-only; callers
+  wanting a hard gate use the library's `raise_if_failed`. See
+  `docs/specs/attune-verify/`.
 - **Pattern review queue now has an ops-dashboard panel.** A new
   "Patterns" page (`GET /patterns`) lists staged patterns awaiting
   review — name, type, confidence, source agent, and a code preview —

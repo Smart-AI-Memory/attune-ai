@@ -75,6 +75,7 @@ dependencies = [
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "python-frontmatter>=1.0.0,<2.0.0",  # YAML frontmatter parsing for help templates — required by attune.help.engine which backs the help_lookup MCP tool (progressive/workflow_help/precursor/search_tag modes all parse template files). Vanilla pip install attune-ai without this breaks every help_lookup mode except `preamble`.
     "attune-rag>=0.1.5,<0.6",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap raised to <0.3 in 7.1.2 to admit attune-rag 0.2.0 (purely additive SemVer-binding cut, no breaking API changes); next breaking minor still requires explicit re-validation.
+    "attune-verify>=0.1.0,<0.2",  # Generation fact-checker backing the /verify skill (deterministic entity checks: imports/flags/links/counts). Core dep — stdlib-only (zero transitive deps), so promoting to core is cheap and lets /verify work out of the box without an extra. Semantic layer is opt-in (the skill acts as the ambient judge).
     "tomli>=2.0.0; python_version < '3.11'",  # tomllib fallback for Python 3.10. Used by attune.utils.coverage (loaded transitively from release-prep + orchestrated-health-check workflows). Without this, those workflows fail to load on 3.10.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
     # refactoring help content — NOT a runtime requirement.
@@ -759,9 +760,10 @@ exclude_lines = [
 ]
 
 # Sibling repos — all published to PyPI:
-#   attune-rag     — core dep (>=0.1.5,<0.3) — promoted from optional; required for accuracy
-#   attune-author  — [author] optional extra (>=0.4.1,<0.5)
-#   attune-rag     — [rag] optional extra (>=0.1.5,<0.3) — no-op alias since rag is core
+#   attune-rag     — core dep (>=0.1.5,<0.6) — promoted from optional; required for accuracy
+#   attune-verify  — core dep (>=0.1.0,<0.2) — backs /verify; stdlib-only, zero transitive deps
+#   attune-author  — [author] optional extra (>=0.6.2,<0.15)
+#   attune-rag     — [rag] optional extra (>=0.1.5,<0.6) — no-op alias since rag is core
 #
 # No [tool.uv.sources] overrides needed: CI resolves all three
 # from PyPI (https://pypi.org/simple). For local iteration against
