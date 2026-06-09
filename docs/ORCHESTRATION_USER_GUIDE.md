@@ -4,8 +4,8 @@ description: Meta-Orchestration User Guide: Step-by-step tutorial with examples,
 
 # Meta-Orchestration User Guide
 
-**Version:** 3.12.0
-**Last Updated:** January 10, 2026
+**Version:** 8.0.1
+**Last Updated:** June 9, 2026
 **Status:** Production Ready
 
 ---
@@ -63,10 +63,11 @@ if all(r.passed for r in results):
 
 **Meta-orchestration simplifies this:**
 ```python
-# Meta-orchestration approach - 3 lines
-workflow = OrchestratedReleasePrepWorkflow()
-report = await workflow.execute(path=".")
-print(report.format_console_output())  # Done!
+# Meta-orchestration approach - resolve and run a registered workflow
+from attune.workflows import get_workflow
+
+workflow = get_workflow("release-prep")()
+result = await workflow.execute({"path": "."})  # Done!
 ```
 
 ### Key Benefits
@@ -83,277 +84,161 @@ print(report.format_console_output())  # Done!
 
 ### Installation
 
-Meta-orchestration is included in Attune AI v3.12.0+:
+Meta-orchestration ships with Attune AI:
 
 ```bash
-pip install attune-ai[developer]>=3.12.0
+pip install 'attune-ai[developer]'
 ```
 
 ### Quick Start: Release Preparation
 
-**Run release readiness validation with 4 parallel agents:**
+**Run release readiness validation:**
 
 ```bash
-attune orchestrate release-prep
+attune workflow run release-prep
 ```
 
-This executes:
-- **Security Auditor** (vulnerability scan)
-- **Test Coverage Analyzer** (gap analysis)
-- **Code Quality Reviewer** (best practices)
-- **Documentation Writer** (completeness check)
+This runs the `ReleasePrepTeamWorkflow`, which composes a team of
+validation agents (security audit, test coverage, code quality,
+documentation) and reports readiness against quality gates.
 
-**Output:**
-```
-======================================================================
-RELEASE READINESS REPORT (Meta-Orchestrated)
-======================================================================
+> The legacy `orchestrated-release-prep` name still resolves — it is a
+> migration alias for `release-prep` (`mode="full"`).
 
-Status: ✅ READY FOR RELEASE
-Confidence: HIGH
-Generated: 2026-01-10T14:32:15
-Duration: 12.45s
+### Quick Start: Test Generation
 
-----------------------------------------------------------------------
-QUALITY GATES
-----------------------------------------------------------------------
-✅ Security: PASS (actual: 0.0, threshold: 0.0)
-✅ Test Coverage: PASS (actual: 85.2, threshold: 80.0)
-✅ Code Quality: PASS (actual: 8.5, threshold: 7.0)
-⚠️  Documentation: below threshold (actual: 95.0, threshold: 100.0)
-
-----------------------------------------------------------------------
-AGENTS EXECUTED (4)
-----------------------------------------------------------------------
-✅ security_auditor: 3.21s
-✅ test_coverage_analyzer: 4.55s
-✅ code_reviewer: 2.98s
-✅ documentation_writer: 1.71s
-```
-
-### Quick Start: Test Coverage Boost
-
-**Boost test coverage to 90% using sequential workflow:**
+**Generate tests for uncovered code:**
 
 ```bash
-attune orchestrate test-coverage --target 90
+attune workflow run test-gen
 ```
 
-This executes:
-1. **Coverage Analyzer** → Identify gaps
-2. **Test Generator** → Create tests for gaps
-3. **Test Validator** → Verify tests pass
+This runs the `TestGenerationWorkflow`. The retired
+`test-coverage-boost` name is a migration alias for
+`test-gen` (`target="coverage"`).
 
 ---
 
 ## CLI Reference
 
-### `attune orchestrate`
+### `attune workflow`
 
-Run meta-orchestration workflows from the command line.
+Orchestration-backed workflows are run through the standard
+`attune workflow` command — there is no separate `attune orchestrate`
+command.
 
 ```bash
-attune orchestrate <workflow> [options]
+attune workflow list                 # list available workflows
+attune workflow info <name>          # show details for a workflow
+attune workflow run <name> [opts]    # run a workflow
 ```
 
----
+Common options for `run`:
 
-### Release Preparation Workflow
-
-**Command:**
-```bash
-attune orchestrate release-prep [options]
-```
-
-**Description:**
-Validates release readiness by running 4 parallel validation agents with quality gates.
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--path <path>` | Path to codebase to analyze | `.` (current dir) |
-| `--min-coverage <float>` | Minimum test coverage required (0-100) | `80.0` |
-| `--min-quality <float>` | Minimum code quality score (0-10) | `7.0` |
-| `--max-critical <int>` | Maximum critical security issues | `0` |
-| `--json` | Output results as JSON | `false` |
+| Option | Description |
+|--------|-------------|
+| `--input '<json>'` | JSON payload passed to the workflow (e.g. `'{"path": "./src"}'`) |
+| `--json` | Emit machine-readable JSON instead of formatted output |
 
 **Examples:**
 
 ```bash
-# Basic usage (current directory, default gates)
-attune orchestrate release-prep
+# Release readiness on the current directory
+attune workflow run release-prep
 
-# Custom path with strict quality gates
-attune orchestrate release-prep \
-  --path ./my-project \
-  --min-coverage 90 \
-  --min-quality 8.5 \
-  --max-critical 0
+# Release readiness on a specific path, JSON output for CI
+attune workflow run release-prep --input '{"path": "./my-project"}' --json
 
-# JSON output for CI integration
-attune orchestrate release-prep --json > report.json
+# Test generation targeting coverage gaps
+attune workflow run test-gen --input '{"target": "coverage"}'
 ```
 
-**Exit Codes:**
-- `0` - Release approved (all quality gates passed)
-- `1` - Release blocked (quality gates failed or errors)
-
----
-
-### Test Coverage Boost Workflow
-
-**Command:**
-```bash
-attune orchestrate test-coverage [options]
-```
-
-**Description:**
-Sequentially analyzes gaps, generates tests, and validates coverage improvement.
-
-**Options:**
-
-| Option | Description | Default |
-|--------|-------------|---------|
-| `--target <float>` | Target coverage percentage (0-100) | `80.0` |
-| `--project-root <path>` | Project root directory | `.` |
-| `--current-coverage <float>` | Current coverage (for context) | Auto-detected |
-
-**Examples:**
-
-```bash
-# Boost to 90% coverage
-attune orchestrate test-coverage --target 90
-
-# Specify project root
-attune orchestrate test-coverage \
-  --target 85 \
-  --project-root ./src
-
-# Provide current coverage hint
-attune orchestrate test-coverage \
-  --target 90 \
-  --current-coverage 75
-```
-
-**Exit Codes:**
-- `0` - Target coverage achieved
-- `1` - Failed to reach target or errors
+> Quality gates, target coverage, and agent selection are workflow
+> inputs rather than dedicated flags; pass them in the `--input` JSON
+> payload. Run `attune workflow info <name>` for a workflow's accepted
+> inputs.
 
 ---
 
 ## Python API
 
-### Basic Usage
+### Running a registered workflow
+
+The orchestration-backed workflows (`release-prep`, `test-gen`,
+`orchestrated-health-check`, …) are registered in `attune.workflows`
+and are normally run via `attune workflow run <name>` (above) or the
+MCP tools. To drive one programmatically, resolve it from the registry:
 
 ```python
 import asyncio
-from attune.workflows.orchestrated_release_prep import (
-    OrchestratedReleasePrepWorkflow
-)
+from attune.workflows import get_workflow
 
 async def main():
-    # Create workflow with default quality gates
-    workflow = OrchestratedReleasePrepWorkflow()
-
-    # Execute on current directory
-    report = await workflow.execute(path=".")
-
-    # Check results
-    if report.approved:
-        print("✅ Release approved!")
-        print(f"Confidence: {report.confidence}")
-    else:
-        print("❌ Release blocked")
-        for blocker in report.blockers:
-            print(f"  • {blocker}")
+    WorkflowClass = get_workflow("release-prep")
+    workflow = WorkflowClass()
+    result = await workflow.execute({"path": "."})
+    print(f"Success: {result.success}")
 
 asyncio.run(main())
 ```
 
-### Custom Quality Gates
+> `OrchestratedReleasePrepWorkflow` and `TestCoverageBoostWorkflow`
+> were removed in v7.0.0. Use the registered `release-prep` and
+> `test-gen` workflows instead.
+
+### Composing workflows into a team
+
+`WorkflowComposer` wraps `BaseWorkflow` subclasses as agents and
+composes them into a runnable `DynamicTeam`:
 
 ```python
-from attune.workflows.orchestrated_release_prep import (
-    OrchestratedReleasePrepWorkflow
+from attune.orchestration import WorkflowComposer
+from attune.workflows.security_audit import SecurityAuditWorkflow
+from attune.workflows.code_review import CodeReviewWorkflow
+
+composer = WorkflowComposer()
+team = composer.compose(
+    team_name="comprehensive-review",
+    workflows=[
+        {"workflow": SecurityAuditWorkflow},
+        {"workflow": CodeReviewWorkflow},
+    ],
+    strategy="parallel",                  # parallel | sequential | two_phase
+    quality_gates={"min_score": 70},
 )
 
-# Define custom quality gates
-quality_gates = {
-    "min_coverage": 90.0,           # 90% test coverage
-    "min_quality_score": 8.5,       # High code quality
-    "max_critical_issues": 0,       # Zero critical vulns
-    "min_doc_coverage": 100.0,      # Full API documentation
-}
-
-workflow = OrchestratedReleasePrepWorkflow(quality_gates=quality_gates)
-report = await workflow.execute(path="./my-project")
-```
-
-### Using Specific Agents
-
-```python
-# Override default agents with custom selection
-workflow = OrchestratedReleasePrepWorkflow(
-    agent_ids=[
-        "security_auditor",
-        "test_coverage_analyzer",
-        "performance_optimizer",  # Add performance check
-    ]
-)
-
-report = await workflow.execute(path=".")
-```
-
-### Test Coverage Boost
-
-```python
-from attune.workflows.test_coverage_boost import (
-    TestCoverageBoostWorkflow
-)
-
-# Create workflow
-workflow = TestCoverageBoostWorkflow(
-    target_coverage=90.0,
-    project_root="./src",
-    save_patterns=True,  # Save successful compositions
-)
-
-# Execute with context
-result = await workflow.execute({
-    "current_coverage": 75.0,
-    "priority_modules": ["auth", "payment"],
-})
-
-print(f"Coverage improved by {result['coverage_improvement']}%")
-print(f"New tests: {result['tests_generated']}")
+result = await team.execute({"target": "src/"})
+print(f"Success: {result.success}")
+print(f"Quality gates: {result.quality_gate_results}")
+print(f"Cost: {result.total_cost}")
 ```
 
 ### Direct Meta-Orchestrator Usage
 
-**For custom workflows:**
+**For custom compositions — analyze a task, then run the chosen
+strategy:**
 
 ```python
 from attune.orchestration.meta_orchestrator import MetaOrchestrator
 from attune.orchestration.execution_strategies import get_strategy
 
-# Create orchestrator
 orchestrator = MetaOrchestrator()
 
-# Analyze task and create execution plan
+# Analyze task and create an execution plan
+context = {
+    "current_quality_score": 6.5,
+    "performance_baseline": "10s",
+}
 plan = orchestrator.analyze_and_compose(
     task="Improve code quality and performance",
-    context={
-        "current_quality_score": 6.5,
-        "performance_baseline": "10s",
-    }
+    context=context,
 )
 
 print(f"Selected agents: {[a.id for a in plan.agents]}")
 print(f"Strategy: {plan.strategy.value}")
 print(f"Estimated cost: {plan.estimated_cost}")
 
-# Execute plan
+# Execute the plan's strategy
 strategy = get_strategy(plan.strategy.value)
 result = await strategy.execute(plan.agents, context)
 
@@ -369,7 +254,7 @@ print(f"Duration: {result.total_duration:.2f}s")
 
 Agent templates are **reusable agent archetypes** with pre-defined capabilities, tools, and quality gates.
 
-**7 pre-built templates:**
+**14 pre-built templates:**
 
 1. **Test Coverage Analyzer** - Gap analysis and test suggestions
 2. **Security Auditor** - Vulnerability scanning and compliance
@@ -378,6 +263,13 @@ Agent templates are **reusable agent archetypes** with pre-defined capabilities,
 5. **Performance Optimizer** - Profiling and optimization
 6. **Architecture Analyst** - Design patterns and dependencies
 7. **Refactoring Specialist** - Code smells and improvements
+8. **Test Generator** - Unit/integration tests and fixtures
+9. **Test Validator** - Run tests and verify coverage
+10. **Report Generator** - Summaries and recommendations
+11. **Documentation Analyst** - Doc gaps and freshness
+12. **Information Synthesizer** - Synthesis and action plans
+13. **Code Simplification Specialist** - Complexity and dead-code removal
+14. **General Purpose Agent** - Flexible analyze/generate/review
 
 ### Template Structure
 
@@ -430,6 +322,13 @@ cheap_templates = get_templates_by_tier("CHEAP")
 | **performance_optimizer** | profile_code, identify_bottlenecks, suggest_optimizations | CAPABLE | Performance analysis, optimization |
 | **architecture_analyst** | analyze_architecture, identify_patterns, suggest_improvements | PREMIUM | Architecture review, refactoring |
 | **refactoring_specialist** | identify_code_smells, suggest_refactorings, validate_changes | CAPABLE | Refactoring, technical debt |
+| **test_generator** | generate_unit_tests, generate_integration_tests, create_test_fixtures | CAPABLE | Test authoring, fixtures |
+| **test_validator** | validate_tests, run_tests, verify_coverage | CHEAP | Test execution, coverage verification |
+| **report_generator** | generate_reports, summarize_findings, create_recommendations | CHEAP | Summaries, recommendations |
+| **documentation_analyst** | analyze_docs, find_gaps, check_freshness | CAPABLE | Doc gap/freshness analysis |
+| **synthesizer** | synthesize_findings, create_action_plans, prioritize_work | CAPABLE | Cross-agent synthesis, planning |
+| **code_simplifier** | complexity_analysis, simplification, dead_code_removal | CAPABLE | Complexity reduction, cleanup |
+| **generic_agent** | analyze, generate, review | CAPABLE | Flexible general-purpose tasks |
 
 ---
 
@@ -439,7 +338,7 @@ cheap_templates = get_templates_by_tier("CHEAP")
 
 **Composition patterns define HOW agents work together.** The meta-orchestrator automatically selects the best pattern based on task characteristics.
 
-**6 composition patterns (grammar rules):**
+**10 composition patterns (13 strategy classes in the registry):**
 
 1. **Sequential** (A → B → C) - Pipeline processing
 2. **Parallel** (A ‖ B ‖ C) - Independent validation
@@ -447,6 +346,15 @@ cheap_templates = get_templates_by_tier("CHEAP")
 4. **Teaching** (Junior → Expert validation) - Cost optimization
 5. **Refinement** (Draft → Review → Polish) - Iterative improvement
 6. **Adaptive** (Classifier → Specialist) - Right-sizing
+7. **Conditional** (If-then-else routing) - Branch on a condition
+8. **Tool-Enhanced** (single agent + tools) - Anthropic-inspired
+9. **Prompt-Cached Sequential** (shared cached context) - Anthropic-inspired
+10. **Delegation Chain** (hierarchical delegation, ≤3 levels) - Anthropic-inspired
+
+The registry also includes `multi_conditional`, `nested`, and
+`nested_sequential` variants. The five core patterns below are the
+most common; see the [API reference](ORCHESTRATION_API.md#execution-strategies)
+for the full strategy list.
 
 ---
 
@@ -700,7 +608,7 @@ The **Configuration Store** is the learning/memory system for meta-orchestration
 ```
 .attune/orchestration/compositions/
 ├── release_prep_001.json
-├── test_coverage_boost_001.json
+├── test_gen_001.json
 └── security_deep_dive_001.json
 ```
 
@@ -804,7 +712,9 @@ all_configs = store.list_all()  # Sorted by last_used
 **Workflows automatically use the configuration store:**
 
 ```python
-workflow = OrchestratedReleasePrepWorkflow()
+from attune.workflows import get_workflow
+
+workflow = get_workflow("release-prep")()
 
 # On first run:
 # 1. Executes with default agents
@@ -1088,10 +998,12 @@ from attune.orchestration.agent_templates import get_all_templates
 templates = get_all_templates()
 print(f"Available: {[t.id for t in templates]}")
 
-# Explicitly provide agents
-workflow = OrchestratedReleasePrepWorkflow(
-    agent_ids=["security_auditor", "code_reviewer"]
-)
+# Or compose explicitly from chosen templates and run a strategy
+from attune.orchestration import get_template
+from attune.orchestration.execution_strategies import get_strategy
+
+agents = [get_template("security_auditor"), get_template("code_reviewer")]
+result = await get_strategy("parallel").execute(agents, {"path": "."})
 ```
 
 #### 2. Quality gates always failing
@@ -1100,14 +1012,19 @@ workflow = OrchestratedReleasePrepWorkflow(
 
 **Solution:**
 ```python
-# Relax quality gates
+# Relax quality gates when composing a team
+from attune.orchestration import WorkflowComposer
+
 quality_gates = {
     "min_coverage": 60.0,        # Lower from 80
     "min_quality_score": 6.0,    # Lower from 7
     "max_critical_issues": 2,    # Allow 2 instead of 0
 }
 
-workflow = OrchestratedReleasePrepWorkflow(quality_gates=quality_gates)
+composer = WorkflowComposer()
+team = composer.compose(
+    "release", workflows=[...], quality_gates=quality_gates
+)
 ```
 
 #### 3. Execution timeout
@@ -1161,18 +1078,24 @@ logger = logging.getLogger("attune.orchestration")
 logger.setLevel(logging.DEBUG)
 
 # Now see detailed orchestration decisions
-workflow = OrchestratedReleasePrepWorkflow()
-report = await workflow.execute(path=".")
+from attune.workflows import get_workflow
+
+workflow = get_workflow("release-prep")()
+result = await workflow.execute({"path": "."})
 ```
 
 **Inspect execution plan:**
 
 ```python
 orchestrator = MetaOrchestrator()
-plan = orchestrator.analyze_and_compose(task, context)
 
-print(f"Task complexity: {plan.complexity}")
-print(f"Task domain: {plan.domain}")
+# Complexity/domain live on TaskRequirements (from analyze_task):
+requirements = orchestrator.analyze_task(task, context)
+print(f"Task complexity: {requirements.complexity}")
+print(f"Task domain: {requirements.domain}")
+
+# The plan carries the agents, strategy, and estimates:
+plan = orchestrator.analyze_and_compose(task, context)
 print(f"Selected agents: {[a.id for a in plan.agents]}")
 print(f"Strategy: {plan.strategy.value}")
 print(f"Estimated cost: {plan.estimated_cost}")
@@ -1212,9 +1135,9 @@ from attune.orchestration.agent_templates import get_templates_by_tier
 cheap_agents = get_templates_by_tier("CHEAP")
 
 # 3. Limit number of agents
-workflow = OrchestratedReleasePrepWorkflow(
-    agent_ids=["security_auditor", "test_coverage_analyzer"]  # Only 2
-)
+agents = [get_template("security_auditor"),
+          get_template("test_coverage_analyzer")]  # Only 2
+result = await get_strategy("parallel").execute(agents, {"path": "."})
 
 # 4. Reuse proven configurations (automatic)
 store = ConfigurationStore()
@@ -1234,7 +1157,7 @@ best = store.get_best_for_task("release_prep")
 
 **Report bugs:**
 ```bash
-attune orchestrate release-prep --json > debug.json
+attune workflow run release-prep --json > debug.json
 
 # Then attach debug.json to your issue
 ```
@@ -1245,8 +1168,8 @@ attune orchestrate release-prep --json > debug.json
 
 1. **Try the built-in workflows:**
    ```bash
-   attune orchestrate release-prep
-   attune orchestrate test-coverage --target 90
+   attune workflow run release-prep
+   attune workflow run test-gen --input '{"target": "coverage"}'
    ```
 
 2. **Read the API documentation:** [ORCHESTRATION_API.md](ORCHESTRATION_API.md)
