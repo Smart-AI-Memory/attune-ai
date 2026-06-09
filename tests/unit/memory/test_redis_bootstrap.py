@@ -98,8 +98,12 @@ class TestCheckRedisRunning:
 
     def test_uses_custom_host_and_port(self):
         """Test uses custom host and port without error."""
-        # Just verify it doesn't crash with custom params
-        result = _check_redis_running(host="nonexistent-host", port=6380)
+        # Use a literal IP, NOT a bogus hostname. "nonexistent-host"
+        # triggered a real DNS getaddrinfo() that intermittently crashed
+        # xdist workers under parallelism (windows-xdist-flakes inventory).
+        # A loopback IP + closed port resolves with no DNS and refuses
+        # instantly, exercising the same graceful-False path safely.
+        result = _check_redis_running(host="127.0.0.1", port=16380)
         assert result is False
 
 
