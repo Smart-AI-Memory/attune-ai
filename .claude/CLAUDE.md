@@ -2279,6 +2279,23 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     tools) → raw `anthropic` SDK; reserve
     `claude_agent_sdk.query()` for agentic work (file tools,
     subagent fan-out, multi-turn).
+  - **The agent SDK CANNOT take a client-side
+    `BetaAbstractMemoryTool` (Anthropic Memory tool,
+    `memory_20250818`) — that bridge is raw-`anthropic`-
+    `tool_runner`-ONLY** (verified claude-agent-sdk 0.1.63 /
+    anthropic 0.96.0): `ClaudeAgentOptions.tools` is a name
+    allowlist, `betas` accepts only `['context-1m-2025-08-07']`
+    (NOT `memory_20250818`), and there is no field for a tool
+    object. So `attune.memory.make_memory_tool()`'s bridge
+    composes ONLY with `client.beta.messages.tool_runner(
+    tools=[tool], betas=["context-management-2025-06-27"])`
+    (the `attune memory-agent` CLI). To give agent-SDK
+    *workflows* persistent memory you must instead expose it as
+    an **SDK-MCP tool** (`create_sdk_mcp_server` + `@tool`) — a
+    different surface (function calls, not the `/memories` file
+    model). This is why "wire the Memory tool into SDK-native
+    workflows" (the would-be option ③) is a dead end. See
+    `docs/specs/anthropic-memory-tool-backend/design.md` Phase 2.
 
 - **`getattr(module, "name", None)` at call site is the
   clean degradation pattern for optional SDK surface**:
