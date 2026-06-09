@@ -8,7 +8,7 @@ Copyright 2025 Smart AI Memory, LLC
 Licensed under the Apache License, Version 2.0
 """
 
-# Superseded by attune_redis.AMSMemoryBackend — retained for compatibility, not scheduled for removal. The strategy is to build on the attune_redis leverage path rather than delete these facades (RedisShortTermMemory is still used by memory/control_panel). Migration path: docs/migration/redis-plugin-migration.md
+# Superseded by attune_redis.AMSMemoryBackend (the Redis Agent Memory Server integration). Retained — attune is aligning on Redis + Anthropic Claude, so there is no planned removal. Migration path: docs/migration/redis-plugin-migration.md
 
 import os
 from urllib.parse import urlparse

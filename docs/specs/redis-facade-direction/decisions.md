@@ -6,7 +6,7 @@
 > the morning meeting; once ratified, each decision spawns its own
 > scoped change.
 
-**Status:** D1 RATIFIED & EXECUTED (2026-06-08 — markers relabeled, migration doc updated); D2–D5 remain proposed, pending Patrick
+**Status:** D1 relabel EXECUTED 2026-06-08 per Patrick's direction (Redis stays — no removal; align on Redis + Anthropic Claude). The `REMOVE IN v9.0.0` exit markers are retired. D2–D5 remain proposed.
 **Owner:** Patrick
 **Related:**
 
