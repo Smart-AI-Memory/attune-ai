@@ -12,7 +12,7 @@
 > suggests" into "our memory layer **is** a backend for Anthropic's
 > Memory tool, persisted on Redis's Agent Memory Server."
 
-**Status:** draft (2026-06-08) — overnight autonomous draft for
+**Status:** partial — Phase 1 shipped (`memory/memory_tool.py`, PR #671); Phase 2 (MCP/CLI surfacing) is forward work — verified 2026-06-08 spec triage
 morning review
 **Owner:** Patrick + agent
 **Related:**

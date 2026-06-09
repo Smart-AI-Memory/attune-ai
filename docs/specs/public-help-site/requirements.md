@@ -9,7 +9,7 @@
 
 ## Phase 1: Requirements
 
-**Status**: draft (D4 resolved 2026-06-04 — hybrid; see
+**Status**: complete — shipped (`attune-ai-dev/build_help.py` + `build-help-site.yml` CI) — verified 2026-06-08 spec triage
 `decisions.md`). Design + tasks proceed once requirements are
 approved.
 

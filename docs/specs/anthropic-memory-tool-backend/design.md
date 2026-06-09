@@ -4,7 +4,7 @@
 > attune's memory backends. See
 > [`requirements.md`](requirements.md) for scope.
 
-**Status:** draft (2026-06-08) — for morning review
+**Status:** partial — Phase 1 shipped (`memory/memory_tool.py`, PR #671); Phase 2 (MCP/CLI surfacing) is forward work — verified 2026-06-08 spec triage
 
 ---
 

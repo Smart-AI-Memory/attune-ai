@@ -1,6 +1,6 @@
 # Design: Workflow `path` Kwarg Unification
 
-**Status**: draft
+**Status**: complete (4/5 workflows shipped); remaining gap: `doc-orchestrator` still maps `project_root` in PATH_ARG_REGISTRY — verified 2026-06-08 spec triage
 
 ---
 

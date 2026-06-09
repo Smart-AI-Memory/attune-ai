@@ -1,5 +1,5 @@
 # Tasks — Agent Surface Parallelism Evaluation
-**Status:** approved (2026-05-16)
+**Status:** RETIRED (2026-05-29) — orchestrator already ships in `deep_review.py`; see requirements.md / decisions.md
 | Phase | Status | Owner | Notes |
 |---|---|---|---|
 | Phase 0 — Telemetry + A/B measurement | in progress | | 0.1 done 2026-05-16, see `phase0-findings.md` |

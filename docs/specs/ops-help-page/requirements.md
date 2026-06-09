@@ -5,7 +5,7 @@
 > `.help/templates/` corpus directly from the browser —
 > independent of any chat / CLI flow.
 
-**Status:** draft
+**Status:** complete — shipped (`ops/routes/help.py` + `ops/help_data.py`); Phase 3–4 polish optional — verified 2026-06-08 spec triage
 **Created:** 2026-05-26
 **Owner:** TBD
 **Related:**
