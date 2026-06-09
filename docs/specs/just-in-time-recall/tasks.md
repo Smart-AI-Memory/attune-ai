@@ -1,8 +1,15 @@
 # Just-In-Time Recall — Tasks
 
+**Status:** in progress (2026-06-09) — Phase 0 RESOLVED: the injection
+mechanism is **PreToolUse `additionalContext`** (verified against the CC
+hooks docs + corroborated in-repo; see decisions.md D2). Feature is
+buildable as designed. Phase 1 first task = a ~5-min empirical smoke test
+of PreToolUse `additionalContext` on the current CC version, then the
+curated recall map.
+
 Independently shippable units. **Phase 0 gates everything** — no
 implementation past it until the injection mechanism is logged in
-`decisions.md` (D2).
+`decisions.md` (D2). *(Gate cleared 2026-06-09.)*
 
 ## Phase 0 — verify the injection premise (gate)
 

@@ -18,17 +18,36 @@ bigger retrieval surface). Keeps the first cut focused and low-noise.
 **Chosen by:** Patrick, via AskUserQuestion, over "session-stash findings"
 and "both unified."
 
-## D2 — Trigger mechanism = PENDING Phase 0 (2026-06-03)
+## D2 — Trigger mechanism = PreToolUse `additionalContext` (RESOLVED, Phase 0, 2026-06-09)
 
-**Decision:** Deferred to Phase 0 measurement. The repo's existing
-PreToolUse hooks only allow/block (no context injection), so whether a
-hook can inject model-readable guidance at a tool-call is unverified.
-Phase 0 verifies PreToolUse `additionalContext` first, then
-UserPromptSubmit injection as fallback. No build past Phase 0 until the
-chosen mechanism is logged here.
+**Decision:** **PreToolUse `additionalContext`.** Phase 0 verified
+(2026-06-09) against the official Claude Code hooks docs: a PreToolUse
+hook's JSON output supports `hookSpecificOutput.additionalContext` —
+text that is injected into the model's context next to the tool result
+and read on the next model request, *before* the governed action
+proceeds. This is the exact decision-point injection the feature needs;
+no fallback to the coarser UserPromptSubmit channel is required (it's
+available as a backup). The feature is **buildable as designed.**
 
-**Why:** Verify-first discipline — do not confabulate a hook capability;
-an entire build hangs on whether the injection channel exists.
+**Evidence:** docs JSON schema for PreToolUse includes
+`additionalContext` ("context injected for Claude") alongside
+`permissionDecision`/`permissionDecisionReason`. Corroborated in-repo by
+`plugin/hooks/session_stash.py`, which already emits
+`hookSpecificOutput.additionalContext` (for the Stop event, CC ≥ 2.1.163)
+— the same channel, a different event.
+
+**Caveat / Phase 1 first task:** the docs don't pin a minimum CC version
+for *PreToolUse* `additionalContext` (Stop/SubagentStop got it in
+v2.1.169, 2026-06-08). A ~5-minute empirical smoke test — a trivial
+PreToolUse hook emitting `additionalContext`, observe whether it reaches
+context on the current CC version — is the first Phase 1 task before
+building the real recall map. Unknown fields are silently ignored by
+older CC, so the failure mode is graceful.
+
+**Original (2026-06-03):** Deferred to Phase 0 — the repo's existing
+PreToolUse hooks only allow/block, so injection capability was unverified;
+verify-first discipline (don't confabulate a hook capability) required
+confirming the channel exists before any build.
 
 ## D3 — Matching = one explicit curated map, not semantic retrieval (2026-06-03)
 
