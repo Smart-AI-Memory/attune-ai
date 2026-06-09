@@ -7315,3 +7315,20 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     (attune-verify's stance); the RAG/faithfulness judge is a cross-check
     only — it over-flags on truncated context (CLAUDE.md faithfulness-judge
     lesson).
+  - **Prune conclusion (2026-06-09, #699/#700):** a spec backlog that
+    *looks* full of dead specs to delete is, on verification, almost
+    entirely **stale-status** (shipped, never flipped) + **parked ideas**
+    (deferred, not dead) — very little is actually deletable. A 4-spec
+    "kill list" picked from the artifact heuristic was overturned 4/4 by
+    reading each spec: two were alive (a shipped hook under
+    `enforcement-vs-documentation`; an adopted policy decision in
+    `test-discipline-controls`), two were parked-but-wanted (one named in a
+    project memory as planned). And `docs-completeness-audit`, a "retire?"
+    candidate, turned out to be LIVE growing debt (~170 untracked docs;
+    `ORCHESTRATION_API.md` still says v4.0.0 vs real 8.0.1) — only the
+    requirements read surfaced it. So the lever for backlog health is
+    **disposition, not deletion**: tag every spec (BUILD-NEXT / PHASE-0 /
+    GATED / PARKED / RETIRE), flip the shipped ones, archive only what
+    per-spec code-reading proves dead. "Good shape" = a *truthful,
+    sequenced* backlog, not an empty one. Recorded as a reusable matrix in
+    `docs/specs/spec-status-self-truthing/disposition-2026-06-09.md`.

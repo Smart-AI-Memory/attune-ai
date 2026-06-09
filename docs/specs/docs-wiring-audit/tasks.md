@@ -1,6 +1,6 @@
 # Tasks: Documentation Wiring Audit
 
-**Status:** draft (2026-05-31)
+**Status:** partial (2026-06-09) — v1 shipped (`scripts/audit_docs_wiring.py` + anchor/link checks); remaining findings deferred. Relabelled from "draft" by spec disposition pass.
 **Phase:** 3 — Tasks
 **Predecessor:** [design.md](./design.md) (Phase 2 authored
 2026-05-31)

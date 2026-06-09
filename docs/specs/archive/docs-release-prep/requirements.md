@@ -9,7 +9,12 @@
 > docs in one cut rather than across a string of inconsistent
 > intermediate states.
 
-**Status:** approved (2026-05-31; see [decisions.md](./decisions.md))
+**Status:** retired (2026-06-09) — obsolete by events: this spec orchestrates
+the docs-cleanup arc as a single **v7.3.0** cut, but the project is at v8.0.1
+and the arc shipped piecemeal across the intervening releases. Phases 2–4 were
+never authored; the coherent-single-cut premise can't be reconstructed. Generic
+release mechanics live in `attune-release-check` + `release-train`. Archived by
+the spec disposition pass (Patrick-approved).
 **Created:** 2026-05-30
 **Owner:** TBD
 **Related:** [`doc-fiction-cleanup`](../doc-fiction-cleanup/),
