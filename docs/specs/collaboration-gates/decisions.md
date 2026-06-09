@@ -197,3 +197,39 @@ Touches `gates/envelope.py`, `gates/spend_gate.py`, `gates/meter.py`
 message) — modules introduced in #637/#638 but corrected here on the
 T4 branch before Phase 1 merges. Approved 2026-06-05 (Patrick: "fold a
 fix into Phase 1 — yes").
+
+---
+
+## Phase 3 — Referent gate guidance hardening (2026-06-09)
+
+### D13 — R9/R10 ship as advisory guidance in attune-hub, not a hook
+
+**Decision:** The referent gate (R9 single-referent resolution, R10
+honest advisory framing) ships as a "Single-referent resolution"
+guidance section in `plugin/skills/attune-hub/SKILL.md` — the router
+surface where terse user intent is resolved to an action — rather than
+as a PreToolUse hook.
+
+**Why:** An overnight literature review (`morning_report_2026-06-09.md`)
+confirmed D1's framing: clarification-before-acting is an *agent
+decision*, not something an external gate can enforce, because the
+deciding context (what was said, how many proposals were pending) lives
+in the conversation, which a PreToolUse hook (it sees only `tool_name` +
+`tool_input`) cannot observe. The literature consistently treats
+referent resolution as an agent action (Disambiguate / Ask-before-Plan /
+Active Task Disambiguation), reinforcing advisory-not-enforceable.
+
+**What shipped (R9 + R10):**
+- R9 — the `attune-hub` guidance: resolve a terse `go`/`do it`/`y` to
+  exactly one obvious referent before acting; if multiple proposals are
+  pending, ask which; restate the referent as you act.
+- R10 — the section names itself advisory and points at the one
+  *enforceable* foothold: the `AskUserQuestion` one-question-per-turn
+  guard (`ask_question_format_guard.py`), which structurally prevents
+  bundling multiple ambiguous decisions into a single turn.
+
+**Explicitly NOT built:** a PreToolUse "referent gate" that tries to
+detect conversational ambiguity — it structurally can't (no
+conversation context), and building it would over-claim enforcement of
+the advisory half (the spec's stated anti-goal). Approved 2026-06-09
+(Patrick: "ship as drafted").
