@@ -3808,10 +3808,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#skill-groups-7" class="md-nav__link">
+  <a href="#skill-groups" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Skill Groups (7)
+        Skill Groups
       
     </span>
   </a>
@@ -3908,10 +3908,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#v501-security-controls" class="md-nav__link">
+  <a href="#security-controls" class="md-nav__link">
     <span class="md-ellipsis">
       
-        v5.0.1 Security Controls
+        Security Controls
       
     </span>
   </a>
@@ -4055,10 +4055,15 @@
 
 
 <h1 id="attune-ai-project-overview">Attune AI — Project Overview<a class="headerlink" href="#attune-ai-project-overview" title="Permanent link">&para;</a></h1>
-<p><strong>Version:</strong> 5.1.1 | <strong>License:</strong> Apache 2.0 |
-<strong>Python:</strong> 3.10+ | <strong>PyPI:</strong> <code>attune-ai</code></p>
+<p><strong>License:</strong> Apache 2.0 | <strong>Python:</strong> 3.10+ | <strong>PyPI:</strong> <code>attune-ai</code></p>
+<blockquote>
+<p>For the current version, see the
+<a href="https://pypi.org/project/attune-ai/">PyPI page</a> or the
+README badge. This overview is intentionally version-agnostic
+so it stays accurate across releases.</p>
+</blockquote>
 <p>Attune AI is a production-ready AI workflow operating system
-for Claude Code. It provides 15 multi-agent workflows for
+for Claude Code. It provides multi-agent workflows for
 code review, security, testing, and release — each backed by
 specialized Claude subagents with intelligent model routing,
 budget controls, and structured output.</p>
@@ -4086,17 +4091,17 @@ automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
 <h2 id="architecture">Architecture<a class="headerlink" href="#architecture" title="Permanent link">&para;</a></h2>
 <h3 id="package-structure">Package Structure<a class="headerlink" href="#package-structure" title="Permanent link">&para;</a></h3>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>src/attune/
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── workflows/         # 15 multi-agent workflows (BaseWorkflow)
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>├── workflows/         # Multi-agent workflows (BaseWorkflow)
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>├── agents/            # Agent SDK integration + state persistence
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>│   ├── release/       # ReleaseAgent, ReleasePrepTeam
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>│   └── state/         # AgentStateStore, AgentRecoveryManager
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── wizards/           # 5 interactive guided workflows
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├── mcp/               # MCP server (30 tools for Claude Code)
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>├── wizards/           # Interactive guided workflows
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>├── mcp/               # MCP server (tools for Claude Code)
 <a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>├── models/            # LLM provider abstraction + auth strategy
 <a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>├── memory/            # Two-tier memory (Redis + MemDocs)
 <a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>├── orchestration/     # Dynamic teams, workflow composition
 <a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>├── plugins/           # BasePlugin + register_mcp_tools() hook
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>├── agent_factory/     # 14 built-in agent templates
+<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>├── agent_factory/     # Built-in agent templates
 <a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>├── cli_commands/      # CLI subcommands (cost, telemetry, auth)
 <a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>├── meta_workflows/    # Intent detection + NL routing
 <a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>├── telemetry/         # FeedbackLoop, UsageTracker, cost reports
@@ -4111,7 +4116,7 @@ automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
 <a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>
 <a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>plugin/                # Claude Code plugin
 <a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>├── commands/          # Slash commands (attune, review, test, security)
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>├── skills/            # 7 skill groups (MCP-exposed tasks)
+<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a>├── skills/            # Skill groups (MCP-exposed tasks)
 <a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>└── agents/            # Agent definitions
 <a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>
 <a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>attune_redis/          # Redis plugin (pip install attune-redis)
@@ -4181,8 +4186,10 @@ automatic API fallback when <code>ANTHROPIC_API_KEY</code> is set. Run
 </table>
 <hr />
 <h2 id="workflows">Workflows<a class="headerlink" href="#workflows" title="Permanent link">&para;</a></h2>
-<p>All 15 workflows inherit from <code>BaseWorkflow</code> and use the
-Agent SDK for multi-agent execution.</p>
+<p>Workflows inherit from <code>BaseWorkflow</code> and use the Agent SDK
+for multi-agent execution. Run <code>attune workflow list</code> for the
+canonical, always-current set — the table below is
+representative.</p>
 <table>
 <thead>
 <tr>
@@ -4208,6 +4215,11 @@ Agent SDK for multi-agent execution.</p>
 <td>Predict bug-prone patterns</td>
 </tr>
 <tr>
+<td><strong>discovery-sweep</strong></td>
+<td>pattern scanners</td>
+<td>Sweep a codebase for review candidates</td>
+</tr>
+<tr>
 <td><strong>perf-audit</strong></td>
 <td>complexity-analyzer, bottleneck-finder, optimization-advisor</td>
 <td>Find bottlenecks and O(n²) patterns</td>
@@ -4231,6 +4243,16 @@ Agent SDK for multi-agent execution.</p>
 <td><strong>doc-audit</strong></td>
 <td>staleness-checker, accuracy-reviewer, gap-finder</td>
 <td>Check docs for staleness</td>
+</tr>
+<tr>
+<td><strong>doc-orchestrator</strong></td>
+<td>doc planners</td>
+<td>Coordinate multi-doc generation/update</td>
+</tr>
+<tr>
+<td><strong>rag-code-gen</strong></td>
+<td>retriever, code-writer</td>
+<td>RAG-grounded code generation</td>
 </tr>
 <tr>
 <td><strong>refactor-plan</strong></td>
@@ -4462,7 +4484,8 @@ lower rate-limit pressure and (for API-billed users) ~70% lower
 per-run cost.</p>
 <hr />
 <h2 id="wizards">Wizards<a class="headerlink" href="#wizards" title="Permanent link">&para;</a></h2>
-<p>5 interactive guided workflows using Socratic discovery:</p>
+<p>Interactive guided workflows using Socratic discovery
+(run <code>attune wizard list</code> for the current set):</p>
 <table>
 <thead>
 <tr>
@@ -4525,7 +4548,7 @@ per-run cost.</p>
 </tr>
 </tbody>
 </table>
-<h3 id="skill-groups-7">Skill Groups (7)<a class="headerlink" href="#skill-groups-7" title="Permanent link">&para;</a></h3>
+<h3 id="skill-groups">Skill Groups<a class="headerlink" href="#skill-groups" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4565,7 +4588,7 @@ per-run cost.</p>
 </tbody>
 </table>
 <h3 id="mcp-server">MCP Server<a class="headerlink" href="#mcp-server" title="Permanent link">&para;</a></h3>
-<p>30 tools exposed via Model Context Protocol (stdio
+<p>Tools exposed via Model Context Protocol (stdio
 transport). Configured in <code>.mcp.json</code>. Rate-limited to 60
 calls/min per tool.</p>
 <hr />
@@ -4728,7 +4751,7 @@ calls/min per tool.</p>
 </table>
 <hr />
 <h2 id="security">Security<a class="headerlink" href="#security" title="Permanent link">&para;</a></h2>
-<h3 id="v501-security-controls">v5.0.1 Security Controls<a class="headerlink" href="#v501-security-controls" title="Permanent link">&para;</a></h3>
+<h3 id="security-controls">Security Controls<a class="headerlink" href="#security-controls" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4769,7 +4792,7 @@ calls/min per tool.</p>
 </ul>
 <hr />
 <h2 id="testing">Testing<a class="headerlink" href="#testing" title="Permanent link">&para;</a></h2>
-<p><strong>15,555+ tests</strong> | <strong>85%+ coverage</strong> | <strong>pytest + pytest-cov</strong></p>
+<p><strong>Comprehensive test suite</strong> | <strong>85%+ coverage</strong> | <strong>pytest + pytest-cov</strong></p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>pytest<span class="w"> </span>tests/<span class="w">                              </span><span class="c1"># Full suite</span>
 <a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>pytest<span class="w"> </span>--cov<span class="o">=</span>attune<span class="w"> </span>--cov-report<span class="o">=</span>html<span class="w">      </span><span class="c1"># With coverage</span>
 <a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a>pytest<span class="w"> </span>tests/unit/workflows/<span class="w">               </span><span class="c1"># Specific module</span>
@@ -4786,19 +4809,19 @@ calls/min per tool.</p>
 <tbody>
 <tr>
 <td>tests/unit/</td>
-<td>Unit tests (~13k)</td>
+<td>Unit tests</td>
 </tr>
 <tr>
 <td>tests/integration/</td>
-<td>End-to-end workflow tests (~500)</td>
+<td>End-to-end workflow tests</td>
 </tr>
 <tr>
 <td><code>tests/agent_factory/</code></td>
-<td>Agent template tests (~200)</td>
+<td>Agent template tests</td>
 </tr>
 <tr>
 <td>tests/memory/</td>
-<td>Memory system tests (~400)</td>
+<td>Memory system tests</td>
 </tr>
 </tbody>
 </table>
@@ -4856,7 +4879,7 @@ calls/min per tool.</p>
 </table>
 <hr />
 <h2 id="agent-templates">Agent Templates<a class="headerlink" href="#agent-templates" title="Permanent link">&para;</a></h2>
-<p>14 built-in templates in
+<p>Built-in templates in
 <code>src/attune/orchestration/agent_templates/builtin_templates.py</code>:</p>
 <table>
 <thead>
