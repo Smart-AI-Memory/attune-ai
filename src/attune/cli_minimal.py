@@ -73,6 +73,11 @@ from attune.cli_commands.memory_commands import (
     cmd_memory_topics,
     cmd_remember,
 )
+from attune.cli_commands.pattern_review import (
+    cmd_patterns_promote,
+    cmd_patterns_reject,
+    cmd_patterns_review,
+)
 from attune.cli_commands.provider_commands import (
     cmd_provider_set,
     cmd_provider_show,
@@ -445,6 +450,27 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
         help="Max output tokens per turn (default: 4096)",
     )
 
+    patterns_parser = subparsers.add_parser(
+        "patterns",
+        help="Review staged patterns before they enter the library",
+    )
+    patterns_sub = patterns_parser.add_subparsers(dest="patterns_command")
+    review_p = patterns_sub.add_parser("review", help="List staged patterns")
+    review_p.add_argument("--type", help="Filter by pattern type")
+    review_p.add_argument("--agent", help="Filter by source agent id")
+    review_p.add_argument(
+        "--min-confidence",
+        dest="min_confidence",
+        type=float,
+        help="Only show patterns at or above this confidence",
+    )
+    review_p.add_argument("--json", action="store_true", help="Output as JSON")
+    promote_p = patterns_sub.add_parser("promote", help="Promote a staged pattern")
+    promote_p.add_argument("pattern_id", help="Id of the staged pattern to promote")
+    reject_p = patterns_sub.add_parser("reject", help="Reject a staged pattern")
+    reject_p.add_argument("pattern_id", help="Id of the staged pattern to reject")
+    reject_p.add_argument("--reason", help="Rejection reason (recorded for audit)")
+
     version_parser = subparsers.add_parser("version", help="Show version")
     version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
 
@@ -523,6 +549,12 @@ Documentation: https://smartaimemory.com/framework-docs/
 
 
 _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
+    "patterns": {
+        "_attr": "patterns_command",
+        "review": cmd_patterns_review,
+        "promote": cmd_patterns_promote,
+        "reject": cmd_patterns_reject,
+    },
     "workflow": {
         "_attr": "workflow_command",
         "list": cmd_workflow_list,
