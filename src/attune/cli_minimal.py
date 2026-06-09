@@ -63,6 +63,7 @@ from attune.cli_commands.cost_commands import (
 )
 from attune.cli_commands.curator import cmd_curator
 from attune.cli_commands.help_commands import cmd_help
+from attune.cli_commands.memory_agent import cmd_memory_agent
 from attune.cli_commands.memory_commands import (
     cmd_forget,
     cmd_lessons,
@@ -424,6 +425,26 @@ def _add_misc_subparsers(subparsers: argparse._SubParsersAction) -> None:
         help="Max attention items to surface (default: 5)",
     )
 
+    memory_agent_parser = subparsers.add_parser(
+        "memory-agent",
+        help="Run a single-shot agent with a Redis-backed Anthropic Memory tool",
+    )
+    memory_agent_parser.add_argument("prompt", help="Prompt to send to the agent")
+    memory_agent_parser.add_argument(
+        "--path", help="Memory namespace root the agent addresses (default /memories)"
+    )
+    memory_agent_parser.add_argument(
+        "--model", help="Model id (default: claude-sonnet-4-6, the CAPABLE tier)"
+    )
+    memory_agent_parser.add_argument("--user-id", dest="user_id", help="Namespace memory per user")
+    memory_agent_parser.add_argument(
+        "--max-tokens",
+        dest="max_tokens",
+        type=int,
+        default=4096,
+        help="Max output tokens per turn (default: 4096)",
+    )
+
     version_parser = subparsers.add_parser("version", help="Show version")
     version_parser.add_argument("-v", "--verbose", action="store_true", help="Show detailed info")
 
@@ -558,6 +579,7 @@ _SIMPLE_DISPATCH: dict[str, object] = {
     "version": cmd_version,
     "ops": cmd_ops,
     "curator": cmd_curator,
+    "memory-agent": cmd_memory_agent,
 }
 
 

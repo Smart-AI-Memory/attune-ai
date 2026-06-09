@@ -115,3 +115,28 @@ hosted store. (Confirmed against the `claude-api` skill reference.)
    document the tier split.
 3. **Promote-to-searchable bridge:** ship in v1 or defer? Proposal:
    defer — keep v1 honest about file-vs-semantic.
+
+
+## Phase 2 — surfacing (decided 2026-06-08)
+
+Phase 1 shipped the bridge but left it unreachable (exported nowhere,
+zero consumers). Phase 2 makes it runnable.
+
+**Shipped: `attune memory-agent "<prompt>"` (option ①).** A single-shot
+agent on the **raw `anthropic` SDK** `client.beta.messages.tool_runner`,
+with `make_memory_tool(...)` attached and the `context-management-2025-06-27`
+beta. Claude reads/writes `/memories` persisted on attune's backend (file
+by default, Redis AMS when configured). This is the concrete, runnable
+form of the dual-vendor claim. Requires `ANTHROPIC_API_KEY` — the Memory
+tool is raw-API-only.
+
+**Re-scoped out: wiring the bridge into SDK-native workflows (option ③).**
+Verified against `claude_agent_sdk` 0.1.63: `ClaudeAgentOptions.tools` is a
+tool-name **allowlist** (`list[str] | ToolsPreset`), `betas` does **not**
+include `memory_20250818`, and there is **no field** to pass a
+`BetaAbstractMemoryTool`. Custom tools reach the agent SDK only via
+`mcp_servers` / `create_sdk_mcp_server`. So the bridge composes with the
+raw `anthropic` SDK only. The *goal* behind ③ (workflows with persistent
+Redis-backed memory) is reachable via a separate **SDK-MCP** tool — a
+different surface that overlaps the existing `memory_store`/`retrieve` MCP
+tools, so it is deferred pending a use case those don't already cover.
