@@ -278,7 +278,18 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     triple-quoted layout that pinned black reformatted). Also
     pre-flight `uv run ruff check <f>` for the non-autofixable
     lint (F841, E402) that the format hooks don't catch. This
-    avoids the stash/restore dance entirely.
+    avoids the stash/restore dance entirely. **CI black runs on
+    the WHOLE file your PR touches, not just your diff** — so a
+    pre-existing pinned-black discrepancy on lines you never
+    edited fails your PR's `lint`/`pre-commit` (PR #689: CI black
+    wanted a `print(f"""…""")` wrapped at line 640, nowhere near
+    the change; local `.venv` black left it alone). Especially
+    likely after a **hand-resolved rebase conflict** (the resolved
+    region is only formatted by your LOCAL edit-formatter, which
+    differs from pinned) or when touching a file not pinned-black-
+    checked in a while. Diagnostic for "black fails on lines I
+    didn't write": run `uv run --with pre-commit pre-commit run
+    black --files <f>` and commit whatever it reformats.
   - **Stash conflict** — if a hook auto-fixed staged files AND
     any tracked file is unstaged (even unrelated — `uv.lock`, a
     fixture), pre-commit's stash/restore cycle conflicts and
