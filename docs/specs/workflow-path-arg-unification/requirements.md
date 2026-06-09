@@ -1,6 +1,8 @@
 # Spec: Workflow `path` Kwarg Unification
 
-**Status**: draft
+**Status**: complete (2026-06-08) — all 5 target workflows accept `path`;
+doc-orchestrator closed in #685. Verified by spec triage 2026-06-09
+(`PathArgSpec` present, `test_path_support_registry.py` green).
 **Created**: 2026-05-13
 **Origin**: Follow-up to [`ops-runner-tier2`](../ops-runner-tier2/) Phase 1 audit. The audit (PR #285) found 5 of 19 workflows use a kwarg name other than `path` (`project_root`, `src_path`, `cwd`). PR #294 shipped a three-way `PATH_ARG_REGISTRY` as the bridge solution. This spec is the long-term cleanup that simplifies the registry to a binary.
 

@@ -8,7 +8,9 @@
 > half (spend gate) as a budget-envelope guardrail; the
 > referent gate ships as guidance hardening in a later phase.
 
-**Status:** approved (2026-06-05) — see [`decisions.md`](decisions.md)
+**Status:** complete (2026-06-09) — spend gate (R1–R8) shipped #637/#638/#639;
+referent gate (R9/R10) shipped as advisory attune-hub guidance #694 (decisions.md
+D13). See [`decisions.md`](decisions.md)
 **Created:** 2026-06-05
 **Owner:** Patrick
 **Related:**
