@@ -1205,7 +1205,7 @@ class DynamicTeam:
 
 - `team_name` (str): Human-readable team name
 - `agents` (list): SDKAgent or WorkflowAgentAdapter instances
-- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`, `delegation`)
+- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`)
 - `quality_gates` (list[QualityGate]): Quality thresholds to enforce
 - `phases` (list[dict]): Phase definitions for `two_phase` strategy
 
@@ -1215,8 +1215,7 @@ class DynamicTeam:
 |----------|-------------|
 | `parallel` | Execute all agents concurrently via `asyncio.gather()` |
 | `sequential` | Execute agents one after another, passing results forward |
-| `two_phase` | Split agents into phases with gate checks between them |
-| `delegation` | Lead agent delegates subtasks to specialist agents |
+| `two_phase` | Split agents into gatherer and reasoner phases with a gate between them |
 
 **Example:**
 
@@ -1228,7 +1227,7 @@ team = builder.build_from_spec(spec)
 result = await team.execute({"target": "src/"})
 
 print(f"Success: {result.success}")
-print(f"Quality gates passed: {result.quality_gates_passed}")
+print(f"Quality gate results: {result.quality_gate_results}")
 ```
 
 ---
@@ -1240,13 +1239,14 @@ print(f"Quality gates passed: {result.quality_gates_passed}")
 ```python
 @dataclass
 class DynamicTeamResult:
-    success: bool
-    agent_results: list[SDKAgentResult]
-    quality_gates_passed: bool
-    gate_results: list[dict[str, Any]]
-    execution_time_ms: float
-    total_cost: float
-    strategy_used: str
+    team_name: str
+    strategy: str
+    success: bool = True
+    agent_results: list[SDKAgentResult] = field(default_factory=list)
+    quality_gate_results: dict[str, bool] = field(default_factory=dict)
+    total_cost: float = 0.0
+    execution_time_ms: float = 0.0
+    phase_results: list[dict[str, Any]] = field(default_factory=list)
 ```
 
 ---
@@ -1330,7 +1330,7 @@ class WorkflowComposer:
   - `kwargs` (optional): Dict of keyword arguments for the workflow constructor
   - `role` (optional): Human-readable role name
   - `agent_id` (optional): Unique agent identifier
-- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`, `delegation`)
+- `strategy` (str): Execution strategy (`parallel`, `sequential`, `two_phase`)
 - `quality_gates` (dict): Quality gate specifications
 - `phases` (list[dict]): Phase definitions for `two_phase` strategy
 
