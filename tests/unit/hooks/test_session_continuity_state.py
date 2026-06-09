@@ -510,3 +510,57 @@ def _commit(path: Path, filename: str, content: str, message: str) -> None:
         check=True,
         capture_output=True,
     )
+
+
+class TestInformativeStatusRecognition:
+    """Regression guard: terminal status must be recognized in the
+    *informative* form people actually write — ``complete (date) —
+    reason`` — and across markdown bold variants, not just the bare
+    word. Before this fix a correctly-marked spec stayed in-flight
+    forever because ``"complete (date) — ..." not in _TERMINAL_VERDICTS``.
+    """
+
+    def test_leading_verdict_tokenizes_first_word(self, state_mod) -> None:
+        lv = state_mod._leading_verdict
+        assert lv("complete (2026-06-09) — shipped #694") == "complete"
+        assert lv("  living (ongoing program)") == "living"
+        assert lv("draft") == "draft"
+        assert lv("") == ""
+        assert lv("**complete**") == "complete"
+
+    def test_informative_complete_header_excluded(self, tmp_path: Path, state_mod) -> None:
+        spec = tmp_path / "specs" / "done-informative"
+        _write_spec(
+            spec,
+            requirements_status="complete (2026-06-09) — shipped #694",
+        )
+        assert state_mod.discover_specs([tmp_path]) == []
+
+    def test_colon_inside_bold_variant_parsed(self, tmp_path: Path, state_mod) -> None:
+        # ``**Status:** complete`` — colon inside the bold — was the
+        # exact format the old regex missed (collaboration-gates).
+        spec = tmp_path / "specs" / "colon-inside-bold"
+        spec.mkdir(parents=True)
+        (spec / "requirements.md").write_text(
+            "# Requirements\n\n**Status:** complete (2026-06-09) — shipped\n",
+            encoding="utf-8",
+        )
+        assert state_mod.discover_specs([tmp_path]) == []
+
+    def test_ongoing_living_excluded_not_in_flight(self, tmp_path: Path, state_mod) -> None:
+        spec = tmp_path / "specs" / "living-program"
+        _write_spec(spec, requirements_status="living (ongoing program)")
+        assert state_mod.discover_specs([tmp_path]) == []
+
+    @pytest.mark.parametrize("word", ["shipped", "done", "completed"])
+    def test_done_synonyms_excluded(self, tmp_path: Path, state_mod, word: str) -> None:
+        spec = tmp_path / "specs" / f"done-{word}"
+        _write_spec(spec, requirements_status=f"{word} 2026-06-09")
+        assert state_mod.discover_specs([tmp_path]) == []
+
+    @pytest.mark.parametrize("word", ["draft", "approved", "in-progress"])
+    def test_non_terminal_still_in_flight(self, tmp_path: Path, state_mod, word: str) -> None:
+        spec = tmp_path / "specs" / f"open-{word}"
+        _write_spec(spec, requirements_status=f"{word} (2026-06-09)")
+        result = state_mod.discover_specs([tmp_path])
+        assert [s.slug for s in result] == [f"open-{word}"]
