@@ -12,7 +12,7 @@
 > suggests" into "our memory layer **is** a backend for Anthropic's
 > Memory tool, persisted on Redis's Agent Memory Server."
 
-**Status:** partial — Phase 1 shipped (`memory/memory_tool.py`, PR #671); now exported from `attune.memory`. Phase 2 (user-facing surfacing) is the active Theme A item — see docs/specs/release-train/roadmap.md
+**Status:** Phase 1 shipped (`memory/memory_tool.py`, #671) + exported from `attune.memory`; Phase 2 surfacing shipped as the `attune memory-agent` CLI. Option ③ (SDK-native-workflow surfacing) re-scoped out — see design.md Phase 2.
 morning review
 **Owner:** Patrick + agent
 **Related:**
