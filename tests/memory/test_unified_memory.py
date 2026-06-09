@@ -242,7 +242,21 @@ class TestUnifiedMemoryBackendInit:
         """
         with tempfile.TemporaryDirectory() as tmpdir:
             config = MemoryConfig(storage_dir=tmpdir, redis_auto_start=True, redis_mock=False)
-            memory = UnifiedMemory(user_id="test_user", config=config)
+            # Mock ensure_redis so the auto-start path does NOT spawn real
+            # subprocesses (brew/systemctl/docker) or socket-probe Redis.
+            # Those real-I/O calls under xdist intermittently crashed
+            # workers (the dominant entry in the windows-xdist-flakes
+            # inventory). Returning an unavailable status exercises the
+            # exact file-first fallback this test asserts, deterministically.
+            with patch(
+                "attune.memory.redis_bootstrap.ensure_redis",
+                return_value=RedisStatus(
+                    available=False,
+                    method=RedisStartMethod.MOCK,
+                    message="mocked: redis unavailable (test isolation)",
+                ),
+            ):
+                memory = UnifiedMemory(user_id="test_user", config=config)
 
             # File-first: file session is always available
             assert memory._file_session is not None
