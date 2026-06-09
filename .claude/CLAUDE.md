@@ -7425,3 +7425,81 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   gate. Zero/light deps + backs a shipped surface → core; heavy deps or
   niche surface → extra. `uv lock` after adding confirmed a clean
   single-package add (no cascade), consistent with the lighter footprint.
+
+- **xdist worker crashes — two NEW concrete sources beyond `is_redis_running`
+  socket probes, plus the reusable Probe-A inventory method** (windows-xdist-flakes
+  spec, #710): extends the existing "Windows xdist worker crashes come from real
+  socket probes" lesson with the actual culprits found by inventorying CI history.
+  (1) **`redis_bootstrap.ensure_redis(auto_start=True)` spawns REAL subprocesses**
+  — `brew list/services start redis`, `systemctl start redis`, `docker info` — to
+  start redis-server. A test constructing `UnifiedMemory(MemoryConfig(
+  redis_auto_start=True, redis_mock=False))` triggers this; under xdist the
+  subprocess spawns are the DOMINANT crash source (13 of 23 crashes traced to one
+  such test). Fix: `patch("attune.memory.redis_bootstrap.ensure_redis",
+  return_value=RedisStatus(available=False, method=RedisStartMethod.MOCK))` — the
+  deferred-import-from-source patch technique; exercises the file-first fallback
+  with zero I/O. (2) **`redis.Redis(host="nonexistent-host").ping()` does a real
+  DNS `getaddrinfo()`** on a bogus hostname that hangs/crashes a worker — distinct
+  from a fast connection-refused on a real IP (the safe sibling test used
+  `localhost:16379` and never crashed). Fix: use the literal loopback IP
+  `127.0.0.1` + a closed port (no DNS; instant refused → same graceful `False`).
+  General rule: any unit test that reaches `redis.Redis(host=<name>)`,
+  `socket`/`getaddrinfo` on a non-loopback host, or a subprocess spawn is an xdist
+  crash candidate — mock the boundary or use a literal loopback IP. **Probe-A
+  inventory method (reusable):** `gh run list --workflow tests.yml --status failure
+  --limit 40` → for each, `gh run view <id> --log-failed | grep -oE "worker
+  '[^']+' crashed while running '[^']+'"` (fan out 8-wide with `&`) → aggregate by
+  test file. `<5 distinct files` → fix-the-polluter; `10+` → marker-based xfail.
+  The crashes are NOT Windows-only — the dominant one surfaced on the ubuntu
+  `coverage` job, so cast the net across all OS lanes, not just `windows`.
+
+- **A rebase that only resolves a conflict in a region the branch fully OVERWRITES
+  can yield a tree BYTE-IDENTICAL to the pre-rebase (already-green) commit — prove
+  it with an empty `git diff <pre-rebase-sha> <post-rebase-sha>` and a
+  merge-past-pending-checks is then provably safe** (#708, 2026-06-09): #708 was
+  admin-merged while its `test`/`coverage` lanes were still IN_PROGRESS (the
+  force-pushed rebase re-triggered them). That LOOKS like the "admin-merge before
+  lanes complete buries a bug" hazard — but here the rebase only resolved a
+  `tasks.md` conflict in the exact top-status block #708 overwrote wholesale, so
+  the resulting tree equalled the pre-rebase tree that had ALREADY passed the full
+  matrix. `git diff fef09f6f 41d2f6c5 --stat` returned EMPTY → identical trees →
+  the pending checks were just re-testing identical content → merge was safe.
+  Diagnostic when asked "was it safe to merge past pending checks after a rebase?":
+  `git diff <pre-rebase-tip> <post-rebase-tip>` — empty means the tested content
+  is unchanged and the merge is safe regardless of the re-run's outcome. Pairs
+  with (and bounds) the existing "admin-merging before Windows lanes complete
+  buries a real bug" lesson — the exception is a provably-identical tree.
+
+- **Trusted-publish PyPI env may have NO reviewer gate — verify before assuming
+  you must approve a pending deployment** (attune-verify 0.2.0, 2026-06-09):
+  the existing "Env reviewer gate — publish job awaits approval, self-approve via
+  gh api" lesson assumes the `pypi` environment has a required reviewer. attune-
+  verify's does NOT — a `gh release create v0.2.0` triggered the workflow and it
+  built + published in ~45s with `pending_deployments` always `0` (no approval
+  step). So check `gh api repos/<o>/<r>/actions/runs/<run>/pending_deployments`
+  (empty = no gate) before waiting for / hunting an approval that will never
+  appear. Companion timing fact reconfirmed: PyPI's JSON API + the simple index
+  lag the actual upload — right after a "View at: .../0.2.0/" success line,
+  `pypi.org/pypi/<pkg>/json` still showed the OLD version, and `uv lock
+  --upgrade-package <pkg> --refresh-package` KEPT the old pin until the
+  **simple** index (`curl pypi.org/simple/<pkg>/`) showed the new file; then `uv
+  lock --upgrade-package <pkg> --refresh` (full refresh) pulled it. Gate the cap-
+  bump's lock step on the simple-index check, not the JSON API.
+
+- **Before building an integration that wires capability X into consumer Y, grep Y
+  for an existing implementation of X — the consumer may already do it (a
+  spec-premise-stale variant)** (attune-verify T7, 2026-06-09): T7 specified
+  "wire `attune_verify.verify()` into attune-author's polish as a post-generation
+  fact-check." Investigating found attune-author ALREADY fact-checks post-polish
+  via its own 1191-LOC `fact_check/` subsystem (`generator._run_fact_check`,
+  soft-default, `--fact-check` CLI flag, from its own `polish-fact-check` spec) —
+  richer than the library (config, report formatting, soft-fail block,
+  `tutorial_static_check`). The spec's integration premise was obsolete; forcing
+  the consumer to delegate to the new library would have been a DOWNGRADE.
+  Decision: keep both (library for other consumers + the /verify skill; consumer
+  keeps its integrated subsystem), defer consolidation until drift pain or a third
+  consumer. Pairs with the "spec-named work-scope drifts — grep the actual code
+  before executing" family: same root (the spec is a stale hypothesis; the code is
+  truth), new shape — the *consumer* already implements the feature the spec wants
+  to add to it. The backport that gave the library parity (0.2.0) was still
+  worthwhile — it narrowed future drift — but the integration itself was moot.
