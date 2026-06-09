@@ -1,6 +1,8 @@
 # Spec: Test Quality Program
 
-**Status**: approved
+**Status**: living (ongoing program — never "complete"; the playbook and
+rubric are in continuous use). Relabelled from "approved" 2026-06-09 so the
+in-flight list stops treating an ongoing program as unexecuted work.
 **Created**: 2026-05-12
 **Origin**: Long-running umbrella for module-by-module test
 quality improvement. Codifies a playbook the
