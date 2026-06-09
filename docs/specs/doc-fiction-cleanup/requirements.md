@@ -7,7 +7,7 @@
 > source, retiring what describes nothing real and rewriting
 > what describes a real feature through a fictional API.
 
-**Status:** draft
+**Status:** complete — cleanup executed (see decisions.md); audit/process doc, not a shippable feature — verified 2026-06-08 spec triage
 **Created:** 2026-05-28
 **Owner:** TBD
 **Related:** [`sdk-error-message-fidelity`](../sdk-error-message-fidelity/)
