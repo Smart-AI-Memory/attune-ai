@@ -93,6 +93,7 @@ if TYPE_CHECKING:
         SecurePattern,
         SecurityError,
     )
+    from .memory_tool import AttuneMemoryTool, make_memory_tool
     from .nodes import BugNode, Node, NodeType, PatternNode, PerformanceNode, VulnerabilityNode
     from .personal import PersonalMemory
     from .redis_bootstrap import (
@@ -228,6 +229,10 @@ _LAZY_IMPORTS: dict[str, tuple[str, str]] = {
     "Environment": (".unified", "Environment"),
     "MemoryConfig": (".unified", "MemoryConfig"),
     "UnifiedMemory": (".unified", "UnifiedMemory"),
+    # memory_tool — Anthropic Memory-tool backend bridge (lazy: anthropic
+    # import stays deferred inside the factory)
+    "AttuneMemoryTool": (".memory_tool", "AttuneMemoryTool"),
+    "make_memory_tool": (".memory_tool", "make_memory_tool"),
 }
 
 # Cache for loaded attributes
@@ -272,6 +277,7 @@ __all__ = [
     "AccessTier",
     "AgentContext",
     "AgentCredentials",
+    "AttuneMemoryTool",
     "AuditEvent",
     "AuditLogger",
     "BackgroundService",
@@ -343,5 +349,6 @@ __all__ = [
     "get_redis_memory",
     "get_redis_or_mock",
     "is_redis_available",
+    "make_memory_tool",
     "stop_redis",
 ]
