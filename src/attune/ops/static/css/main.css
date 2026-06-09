@@ -3008,6 +3008,13 @@ a.kpi:hover {
   text-align: center;
   color: var(--fg-muted);
 }
+/* Pattern-review card: code preview (pattern-review-queue R6). */
+.pattern-code {
+  max-height: 220px;
+  overflow: auto;
+  margin: 10px 0 0;
+  font-size: 12px;
+}
 .curator-foot {
   display: flex;
   flex-wrap: wrap;
