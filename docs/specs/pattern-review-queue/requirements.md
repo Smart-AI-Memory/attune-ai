@@ -11,8 +11,9 @@
 > re-homes it on the current backend stack, off the deprecated
 > Redis coupling.
 
-**Status:** draft (2026-06-08) — overnight autonomous draft for
-morning review
+**Status:** in progress (2026-06-09) — R1–R5 + R8(unit) shipped in
+#689; R6 (dashboard panel) shipped this session. R7 (opt-in discovery
+routing) remains.
 **Owner:** Patrick + agent
 **Related:**
 

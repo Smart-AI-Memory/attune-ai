@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Pattern review queue now has an ops-dashboard panel.** A new
+  "Patterns" page (`GET /patterns`) lists staged patterns awaiting
+  review — name, type, confidence, source agent, and a code preview —
+  with **Promote** and **Reject** actions, the dashboard half of the
+  `attune patterns review|promote|reject` CLI. Promote moves the
+  pattern into the durable `PersistentPatternLibrary` (file backend by
+  default, Redis Agent Memory Server when configured) and clears it
+  from the queue; a duplicate id in the active library returns 409 and
+  leaves the pattern staged so the reviewer can rename or reject. The
+  mutating routes are guarded by the existing `X-Attune-Client` token
+  gate (defense in depth, matching the curator/specs/runner routes).
+  Dashboard and CLI share one backend store, so they show one queue.
+  See `docs/specs/pattern-review-queue/` (R6).
 - **attune's memory store is now a drop-in backend for Anthropic's
   Memory tool.** `attune.memory.memory_tool.make_memory_tool()` returns
   a real `anthropic` `BetaAbstractMemoryTool` (the `memory_20250818`
