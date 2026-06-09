@@ -3840,17 +3840,20 @@ with TTL, glob scan, pattern staging, and an in-process EventBus
 "decouple Redis." Not in scope for this spec; deferred to a
 hypothetical follow-up.</p>
 <blockquote>
-<p><strong>Deprecation schedule (updated for v8.0.0).</strong> The legacy facade
-modules (<code>attune.redis_memory</code>, <code>attune.redis_memory_storage</code>,
-<code>attune.redis_memory_coordination</code>, <code>attune.redis_memory_patterns</code>,
-<code>attune.redis_config</code>, and the deprecated parts of
-<code>attune.memory.config</code>) carried <code>REMOVE IN v8.0.0</code> markers gated on
-redis-decoupling spec P3. Because P3 (full removal) was descoped and
-the spec archived — and because these still power live subsystems —
-the markers were <strong>rescheduled to <code>REMOVE IN v9.0.0</code></strong> at the 8.0.0
-cut. They remain supported, deprecated, and Redis-coupled by design;
-actual removal still awaits the memory-subsystem rewrite described
-above.</p>
+<p><strong>Status: Redis is a permanent alignment — no removal planned.</strong>
+The legacy in-tree facade modules (<code>attune.redis_memory</code>,
+<code>attune.redis_memory_storage</code>, <code>attune.redis_memory_coordination</code>,
+<code>attune.redis_memory_patterns</code>, <code>attune.redis_config</code>, and the
+deprecated parts of <code>attune.memory.config</code>) once carried
+<code>REMOVE IN v8.0.0</code> → <code>REMOVE IN v9.0.0</code> removal markers. Those markers
+have been <strong>retired — there is no planned removal of Redis or these
+facades.</strong> attune's direction is to <em>align on</em> Redis (the Agent
+Memory Server path via <code>attune_redis</code>) <strong>and</strong> Anthropic Claude — not
+to exit Redis. The facades are simply the <em>older</em> in-tree way of using
+Redis, <strong>superseded by the newer <code>attune_redis</code> integration</strong>; new
+code should use <code>attune_redis.AMSMemoryBackend</code>. <code>RedisShortTermMemory</code>
+still powers live subsystems (e.g. <code>memory/control_panel</code>).
+See <a href="../../specs/redis-facade-direction/decisions/"><code>docs/specs/redis-facade-direction/</code></a>.</p>
 </blockquote>
 <h2 id="install-path">Install path<a class="headerlink" href="#install-path" title="Permanent link">&para;</a></h2>
 <h3 id="vanilla-redis-free">Vanilla — Redis-free<a class="headerlink" href="#vanilla-redis-free" title="Permanent link">&para;</a></h3>
@@ -3871,15 +3874,17 @@ above.</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[memory]&#39;</span><span class="w">  </span><span class="c1"># still works — empty no-op alias</span>
 </code></pre></div>
 <h2 id="legacy-attuneredis_-modules">Legacy <code>attune.redis_*</code> modules<a class="headerlink" href="#legacy-attuneredis_-modules" title="Permanent link">&para;</a></h2>
-<p>The top-level legacy modules (<code>attune.redis_memory</code>,
+<p>The top-level <code>attune.redis_*</code> modules (<code>attune.redis_memory</code>,
 <code>attune.redis_config</code>, <code>attune.redis_memory_storage</code>,
 <code>attune.redis_memory_coordination</code>, <code>attune.redis_memory_patterns</code>)
-still exist with <code>DeprecationWarning</code> for a "v4.0.0 removal" that
-shipped years ago without removing them. Their retirement is
-<strong>not</strong> in scope for this spec.</p>
-<p>Track that work under
-<a href="../specs/deprecated-module-retirement/"><code>docs/specs/deprecated-module-retirement/</code></a>
-if it picks up these candidates.</p>
+are <strong>retained compatibility facades — not retirement candidates.</strong>
+attune's direction is to align on Redis (via the <code>attune_redis</code>
+Agent Memory Server integration) and Anthropic Claude, so these
+facades stay. New code can use <code>attune_redis.AMSMemoryBackend</code>
+directly for the richer path. (A legacy <code>DeprecationWarning</code>
+predating this direction still fires at import; aligning that
+runtime message to drop the removal implication is a separate,
+optional follow-up — no code change was made here.)</p>
 <h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
 <ul>
 <li><a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/docs/specs/archive/redis-decoupling/audit.md"><code>redis-decoupling/audit.md</code></a> — Phase A audit findings (archived)</li>
