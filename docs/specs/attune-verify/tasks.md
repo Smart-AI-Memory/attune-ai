@@ -1,20 +1,20 @@
 # Tasks: attune-verify — Generation Fact-Checker
 
-**Status:** in progress (2026-06-09) — **library SHIPPED, /verify skill
-SHIPPED; one task (T7) remains.** The `attune-verify` package is published
-to PyPI as v0.1.0 (`Smart-AI-Memory/attune-verify`): T1 (skeleton), T2
-(model), T3 (deterministic checkers + the author-#351 regression fixture),
-T4 (semantic Judge), T5 (rag adapter), T8 (publish) **done**. On the
-attune-ai side: `attune-verify>=0.1.0,<0.2` is now a **core dependency**
-(stdlib-only, zero transitive deps) and the **T6 `/verify` skill** is
-shipped (`plugin/skills/verify/`, all three plugin gates green:
-skill-count, attune-hub reference row, `.agents` mirror sync). The status
-once said "draft" only because the library work landed in a sibling repo
-the spec-status reconciler can't see (caught 2026-06-09 spec triage — the
-status-lies trap across a repo boundary).
-**Remaining:** T7 attune-author polish integration (sibling repo, now
-unblocked — verify is on PyPI so author CI can exercise it, not
-`importorskip`).
+**Status:** effectively complete (2026-06-09) — **all build tasks
+shipped; T7 dispositioned, no blocking work left.** `attune-verify` is
+published to PyPI (now **0.2.0** — full dotted-path import resolution):
+T1 (skeleton), T2 (model), T3 (deterministic checkers + the author-#351
+regression fixture), T4 (semantic Judge), T5 (rag adapter), T8 (publish)
+**done**. On the attune-ai side: `attune-verify>=0.1.0,<0.3` is a **core
+dependency** and the **T6 `/verify` skill** is shipped
+(`plugin/skills/verify/`, all three plugin gates green). The status once
+said "draft" only because the library work landed in a sibling repo the
+spec-status reconciler can't see (the status-lies trap across a repo
+boundary).
+**T7 (author integration):** SATISFIED INDEPENDENTLY — author already
+fact-checks post-polish via its own `fact_check/` subsystem; consolidation
+deferred (see [decisions.md](decisions.md) **D-T7**). No blocking work
+remains; consolidation is future, trigger-gated.
 **Design:** [design.md](design.md) · **Requirements:**
 [requirements.md](requirements.md)
 
@@ -161,17 +161,22 @@ on "fact-check"/"verify docs".
 
 ---
 
-## T7 — attune-author polish integration (first consumer)
+## T7 — attune-author polish integration ⏸️ SATISFIED INDEPENDENTLY / CONSOLIDATION DEFERRED
 
-**Objective:** wire verify as author's post-generation gate.
+**Status:** the premise is obsolete — attune-author **already
+fact-checks post-polish** via its own mature `fact_check/` subsystem
+(`generator._run_fact_check`, soft-default, `--fact-check` CLI flag,
+from its own `polish-fact-check` spec). After the 0.2.0 backport the two
+are at functional parity on the four shared checks. T7 was reframed: the
+integration it specified already exists independently; the real
+remaining work is **consolidation** (attune-verify absorbs author's
+richness → author delegates), deferred until drift pain or a third
+consumer justifies it. Full rationale in [decisions.md](decisions.md)
+**D-T7** (2026-06-09).
 
-- author polish calls `attune_verify.verify(content, ctx)` after
-  generation; surfaces findings (return, not hard-gate by default).
-
-**Acceptance:** author's polish run on a known-hallucinated fixture
-reports verify findings.
-**Blocked on:** T8 (verify on PyPI) so author CI exercises it
-rather than `importorskip`.
+**Original objective (now satisfied by author's own subsystem):** wire a
+post-generation fact-check gate into author's polish, surfacing findings
+(soft by default).
 
 ---
 
