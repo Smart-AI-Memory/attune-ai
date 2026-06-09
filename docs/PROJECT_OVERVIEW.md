@@ -1,10 +1,14 @@
 # Attune AI — Project Overview
 
-**Version:** 5.1.1 | **License:** Apache 2.0 |
-**Python:** 3.10+ | **PyPI:** `attune-ai`
+**License:** Apache 2.0 | **Python:** 3.10+ | **PyPI:** `attune-ai`
+
+> For the current version, see the
+> [PyPI page](https://pypi.org/project/attune-ai/) or the
+> README badge. This overview is intentionally version-agnostic
+> so it stays accurate across releases.
 
 Attune AI is a production-ready AI workflow operating system
-for Claude Code. It provides 15 multi-agent workflows for
+for Claude Code. It provides multi-agent workflows for
 code review, security, testing, and release — each backed by
 specialized Claude subagents with intelligent model routing,
 budget controls, and structured output.
@@ -43,17 +47,17 @@ automatic API fallback when `ANTHROPIC_API_KEY` is set. Run
 
 ```text
 src/attune/
-├── workflows/         # 15 multi-agent workflows (BaseWorkflow)
+├── workflows/         # Multi-agent workflows (BaseWorkflow)
 ├── agents/            # Agent SDK integration + state persistence
 │   ├── release/       # ReleaseAgent, ReleasePrepTeam
 │   └── state/         # AgentStateStore, AgentRecoveryManager
-├── wizards/           # 5 interactive guided workflows
-├── mcp/               # MCP server (30 tools for Claude Code)
+├── wizards/           # Interactive guided workflows
+├── mcp/               # MCP server (tools for Claude Code)
 ├── models/            # LLM provider abstraction + auth strategy
 ├── memory/            # Two-tier memory (Redis + MemDocs)
 ├── orchestration/     # Dynamic teams, workflow composition
 ├── plugins/           # BasePlugin + register_mcp_tools() hook
-├── agent_factory/     # 14 built-in agent templates
+├── agent_factory/     # Built-in agent templates
 ├── cli_commands/      # CLI subcommands (cost, telemetry, auth)
 ├── meta_workflows/    # Intent detection + NL routing
 ├── telemetry/         # FeedbackLoop, UsageTracker, cost reports
@@ -68,7 +72,7 @@ src/attune/
 
 plugin/                # Claude Code plugin
 ├── commands/          # Slash commands (attune, review, test, security)
-├── skills/            # 7 skill groups (MCP-exposed tasks)
+├── skills/            # Skill groups (MCP-exposed tasks)
 └── agents/            # Agent definitions
 
 attune_redis/          # Redis plugin (pip install attune-redis)
@@ -94,19 +98,24 @@ attune_software/       # Software plugin (bundled)
 
 ## Workflows
 
-All 15 workflows inherit from `BaseWorkflow` and use the
-Agent SDK for multi-agent execution.
+Workflows inherit from `BaseWorkflow` and use the Agent SDK
+for multi-agent execution. Run `attune workflow list` for the
+canonical, always-current set — the table below is
+representative.
 
 | Workflow | Agents | Description |
 | --- | --- | --- |
 | **code-review** | security, quality, perf, architect | 4-perspective code review |
 | **security-audit** | vuln-scanner, secret-detector, auth-reviewer, remediation-planner | Find vulnerabilities, secrets, auth issues |
 | **bug-predict** | pattern-scanner, risk-correlator, prevention-advisor | Predict bug-prone patterns |
+| **discovery-sweep** | pattern scanners | Sweep a codebase for review candidates |
 | **perf-audit** | complexity-analyzer, bottleneck-finder, optimization-advisor | Find bottlenecks and O(n²) patterns |
 | **test-gen** | function-identifier, test-designer, test-writer | Generate pytest code |
 | **test-audit** | coverage-auditor, gap-analyzer, test-planner | Audit test coverage |
 | **doc-gen** | outline-planner, content-writer, polish-reviewer | Generate docs from source |
 | **doc-audit** | staleness-checker, accuracy-reviewer, gap-finder | Check docs for staleness |
+| **doc-orchestrator** | doc planners | Coordinate multi-doc generation/update |
+| **rag-code-gen** | retriever, code-writer | RAG-grounded code generation |
 | **refactor-plan** | debt-scanner, impact-analyzer, plan-generator | Plan tech debt refactors |
 | **dependency-check** | inventory-assessor, update-advisor | Audit dependencies |
 | **simplify-code** | complexity-scanner, simplification-designer, safety-reviewer | Reduce over-engineered code |
@@ -226,7 +235,8 @@ per-run cost.
 
 ## Wizards
 
-5 interactive guided workflows using Socratic discovery:
+Interactive guided workflows using Socratic discovery
+(run `attune wizard list` for the current set):
 
 | Wizard | Purpose |
 | --- | --- |
@@ -254,7 +264,7 @@ attune wizard run debug
 | `/attune-test` | Testing hub |
 | `/attune-security` | Security audit shortcut |
 
-### Skill Groups (7)
+### Skill Groups
 
 | Skill Group | Purpose |
 | --- | --- |
@@ -268,7 +278,7 @@ attune wizard run debug
 
 ### MCP Server
 
-30 tools exposed via Model Context Protocol (stdio
+Tools exposed via Model Context Protocol (stdio
 transport). Configured in `.mcp.json`. Rate-limited to 60
 calls/min per tool.
 
@@ -333,7 +343,7 @@ attune auth reset --confirm   # Clear config
 
 ## Security
 
-### v5.0.1 Security Controls
+### Security Controls
 
 | Feature | Description |
 | --- | --- |
@@ -355,7 +365,7 @@ attune auth reset --confirm   # Clear config
 
 ## Testing
 
-**15,555+ tests** | **85%+ coverage** | **pytest + pytest-cov**
+**Comprehensive test suite** | **85%+ coverage** | **pytest + pytest-cov**
 
 ```bash
 pytest tests/                              # Full suite
@@ -368,10 +378,10 @@ pytest -n auto                             # Parallel (4-8x faster)
 
 | Directory | Purpose |
 | --- | --- |
-| tests/unit/ | Unit tests (~13k) |
-| tests/integration/ | End-to-end workflow tests (~500) |
-| `tests/agent_factory/` | Agent template tests (~200) |
-| tests/memory/ | Memory system tests (~400) |
+| tests/unit/ | Unit tests |
+| tests/integration/ | End-to-end workflow tests |
+| `tests/agent_factory/` | Agent template tests |
+| tests/memory/ | Memory system tests |
 
 ---
 
@@ -398,7 +408,7 @@ pytest -n auto                             # Parallel (4-8x faster)
 
 ## Agent Templates
 
-14 built-in templates in
+Built-in templates in
 `src/attune/orchestration/agent_templates/builtin_templates.py`:
 
 | Template | Role |
