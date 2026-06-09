@@ -172,3 +172,52 @@ signal to read (the reconciler reads a spec's own files; it doesn't
 cross-reference merged PRs — a known scope boundary). The fix was a
 human marking it done — exactly the "header lags reality" drift the
 spec was written to surface.
+
+---
+
+## Phase 2 — Informative-status recognition (2026-06-09)
+
+### DECIDE-4 — Recognize terminal status by FIRST WORD, across bold variants
+
+**Problem found.** The reconciler only treated a status as terminal
+when it was the *bare* word: `effective_status in _TERMINAL_VERDICTS`
+(exact set membership) and a `$`-anchored `_TERMINAL_LINE`. So the
+**informative** form everyone naturally writes —
+`**Status:** complete (2026-06-09) — shipped #694` — matched neither,
+and the spec stayed in-flight *forever* despite being correctly marked
+done. Worse, `_STATUS_LINE` didn't even parse the `**Status:**` markdown
+variant (colon inside the bold), so several specs had an empty parsed
+status. Demonstrated live: `discover_specs` returned 34 in-flight; after
+the fix, 24 — ten specs were correctly-marked-done but unrecognized
+(collaboration-gates, pattern-review-queue, dashboard-pending-writes-
+journal, spec-status-self-truthing itself, …).
+
+**Decision.** Recognize terminal/ongoing status by the status value's
+**first alphabetic word** (`_leading_verdict`), not exact-string
+membership, and make `_STATUS_LINE`/`_TERMINAL_LINE` robust to bold
+variants (`Status:`, `**Status**:`, `**Status:**`, `*Status*:`). Also:
+- broaden the terminal vocabulary to natural done-words
+  (`completed`, `shipped`, `done` alongside `closed`/`complete`/
+  `retired`/`superseded`), since excluding them perpetuates the same
+  bug class;
+- add an **ongoing-by-design** category (`living`, `ongoing`) excluded
+  from in-flight — a continuous program / living roadmap is not pending
+  work, but it is not "done" either.
+
+This is the *parser* half of closing the "specs ship without status
+update" trap. The *detection* half (cross-reference a spec's named
+artifact against the codebase, so a never-flipped spec is flagged) is
+the advisory audit recorded in `artifact-triage-2026-06-09.md`.
+
+### Known follow-up — status lives in the highest-phase file
+
+`_phase_for_dir` reads the status from the **most-advanced** phase file
+present (tasks › design › requirements). So editing a status header in
+`requirements.md` is **inert** when a `tasks.md` exists with an older
+status — the reconciler reads `tasks.md`. (Hit live: a
+`test-quality-program` relabel to `living` in `requirements.md` was
+ignored because its `tasks.md` still said `approved`.) Two options for a
+follow-up: (a) reconcile a terminal/ongoing signal found in **any**
+phase file, not just the chosen one; or (b) document "edit the
+highest-phase file's status." Deferred — out of scope for the parser
+fix.

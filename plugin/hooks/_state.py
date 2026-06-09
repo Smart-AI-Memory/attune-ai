@@ -37,16 +37,29 @@ _PHASE_FILES: tuple[tuple[str, str], ...] = (
     ("requirements", "requirements.md"),
 )
 
+# Robust to markdown bold variants around the label and colon:
+# ``Status:``, ``**Status**:``, ``**Status:**`` (colon inside the bold),
+# ``*Status*:``. Brittleness here was a real bug — a ``**Status:**
+# complete`` header matched none of the old pattern and the spec stayed
+# in-flight despite being marked done (see decisions.md DECIDE-2).
 _STATUS_LINE = re.compile(
-    r"^\s*\*\*?Status\*\*?\s*:\s*(.+?)\s*$",
+    r"^\s*\**\s*Status\**\s*:\s*\**\s*(.+?)\s*$",
     re.IGNORECASE | re.MULTILINE,
 )
 
 # Self-truthing additions — match terminal signals anywhere in
 # the spec file (not just the header), so a stale "draft" header
 # above a closed checklist doesn't keep the spec in-flight.
+#
+# NB: no ``$`` anchor and a ``\b`` after the verdict, so an
+# *informative* terminal line — ``Status: complete (2026-06-09) —
+# shipped #694`` — is recognized, not just the bare ``Status:
+# complete``. Before this, the natural human format was silently
+# ignored and the spec stayed in-flight forever despite being marked
+# done (see decisions.md DECIDE-2).
 _TERMINAL_LINE = re.compile(
-    r"^\s*(?:Spec\s+)?Status\s*:\s*(closed|complete|retired|superseded)\s*$",
+    r"^\s*\**\s*(?:Spec\s+)?Status\**\s*:\s*\**\s*"
+    r"(closed|complete|completed|retired|superseded|shipped|done)\b",
     re.IGNORECASE | re.MULTILINE,
 )
 _CHECKLIST_HEADING = re.compile(
@@ -62,7 +75,33 @@ _DEFERRED_MARKERS = re.compile(
     re.IGNORECASE,
 )
 _NEXT_H2 = re.compile(r"^##\s+", re.MULTILINE)
-_TERMINAL_VERDICTS = frozenset({"closed", "complete", "retired", "superseded"})
+_TERMINAL_VERDICTS = frozenset(
+    {"closed", "complete", "completed", "retired", "superseded", "shipped", "done"}
+)
+# Ongoing-by-design statuses: a living roadmap / continuous program is not
+# pending work, so it should NOT show as in-flight — but it is also not
+# "done". Excluded from the in-flight list, kept distinct from terminal.
+_ONGOING_VERDICTS = frozenset({"living", "ongoing"})
+
+# Leading alphabetic word of a status value, for first-word tokenization:
+# ``complete (2026-06-09) — shipped #694`` -> ``complete``.
+_LEADING_WORD = re.compile(r"[a-zA-Z]+")
+
+
+def _leading_verdict(status: str) -> str:
+    """Return the lowercased leading word of a status value, or ``""``.
+
+    Status headers are written informatively (``complete (date) —
+    reason``), so terminal/ongoing recognition keys off the FIRST word,
+    not exact-string membership. This is the fix for the class of bug
+    where a correctly-marked-``complete`` spec stayed in-flight forever
+    because ``"complete (date) — ..."`` is not in ``_TERMINAL_VERDICTS``.
+    """
+    # search (not match) so a stray leading ``**``/punctuation doesn't
+    # swallow the verdict — the first alphabetic run is the word we want.
+    m = _LEADING_WORD.search(status)
+    return m.group(0).lower() if m else ""
+
 
 # Sentinel TTL: anything older than this on a SessionStart prune
 # sweep is considered orphaned from an ungraceful exit.
@@ -222,7 +261,11 @@ def _reconcile_status(header_status: str, phase_text: str) -> tuple[str, str, bo
         return header_status, "header", False
 
     # Terminal signal exists. Per DECIDE-1, terminal wins.
-    header_is_terminal = header_status in _TERMINAL_VERDICTS
+    # First-word tokenization so an informative header (``complete
+    # (date) — reason``) is recognized as terminal, not just the bare
+    # word — otherwise we'd flag a spurious conflict against a header
+    # that actually agrees with the body signal.
+    header_is_terminal = _leading_verdict(header_status) in _TERMINAL_VERDICTS
     return verdict, source, not header_is_terminal
 
 
@@ -271,20 +314,24 @@ def _phase_for_dir(
 def _is_in_flight(phase: str, effective_status: str) -> bool:
     """Decide whether a spec is in-flight per the reconciled verdict.
 
-    Rules:
-    - Any terminal ``effective_status`` (closed / complete / retired
-      / superseded) → done, exclude — regardless of phase.
+    Rules (keyed off the status's FIRST WORD, so an informative
+    header like ``complete (2026-06-09) — shipped #694`` is recognized,
+    not just the bare verdict — see DECIDE-2):
+    - First word is terminal (closed / complete / completed / retired
+      / superseded / shipped / done) → done, exclude — regardless of
+      phase.
+    - First word is ongoing-by-design (living / ongoing) → a continuous
+      program / living roadmap is not pending work, exclude.
     - Empty status (malformed) → still in-flight (don't drop a
       working spec because the heading was malformed).
-    - Anything else → in-flight.
+    - Anything else (draft / approved / in-progress / …) → in-flight.
 
-    The historical "tasks + complete only" rule is now subsumed:
-    a tasks.md whose header says ``complete`` reaches this function
-    with ``effective_status == "complete"`` and is excluded the
-    same way; a requirements.md with a body ``Status: closed`` is
-    ALSO excluded now, which is the self-truthing improvement.
+    The historical "tasks + complete only" rule is subsumed; a
+    requirements.md with a body ``Status: closed`` is excluded too
+    (the self-truthing improvement).
     """
-    if effective_status in _TERMINAL_VERDICTS:
+    lead = _leading_verdict(effective_status)
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
         return False
     return True
 
