@@ -93,3 +93,31 @@ class TestReject:
 
     def test_reject_absent_returns_1(self, backend):
         assert cli.cmd_patterns_reject(_args(pattern_id="nope", reason=None)) == 1
+
+
+class TestEdgeBranches:
+    def test_review_truncates_long_code(self, backend, capsys):
+        _stage(backend, "p1", code="x = " + "a" * 200)
+        cli.cmd_patterns_review(_args(type=None, agent=None, min_confidence=None, json=False))
+        assert "..." in capsys.readouterr().out
+
+    def test_promote_duplicate_returns_1(self, backend, capsys):
+        from attune.pattern_library import Pattern
+
+        PersistentPatternLibrary(backend=backend).contribute_pattern(
+            "a1",
+            Pattern(id="p1", agent_id="a1", pattern_type="behavioral", name="x", description="d"),
+        )
+        _stage(backend, "p1")
+        rc = cli.cmd_patterns_promote(_args(pattern_id="p1"))
+        assert rc == 1
+        assert "Cannot promote" in capsys.readouterr().out
+
+    def test_reject_no_id_returns_2(self, backend):
+        assert cli.cmd_patterns_reject(_args(pattern_id=None, reason=None)) == 2
+
+    def test_review_shows_short_code_untruncated(self, backend, capsys):
+        _stage(backend, "p1", code="y = 2")
+        cli.cmd_patterns_review(_args(type=None, agent=None, min_confidence=None, json=False))
+        out = capsys.readouterr().out
+        assert "y = 2" in out and "..." not in out

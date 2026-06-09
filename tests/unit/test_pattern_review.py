@@ -163,3 +163,46 @@ class TestPersistentLibrary:
         reloaded = PersistentPatternLibrary(backend=FileStashBackend(base_dir=str(tmp_path)))
         assert "good" in reloaded.patterns
         assert "bad" not in reloaded.patterns
+
+
+class TestInternals:
+    def test_default_backend_falls_back_to_file(self, monkeypatch):
+        import attune.pattern_review as pr
+        from attune.memory.file_stash import FileStashBackend
+
+        monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda b=None: None)
+        assert isinstance(pr._default_backend(), FileStashBackend)
+
+    def test_default_backend_prefers_resolved(self, monkeypatch):
+        import attune.pattern_review as pr
+
+        sentinel = object()
+        monkeypatch.setattr("attune.memory.session_stash.resolve_backend", lambda b=None: sentinel)
+        assert pr._default_backend() is sentinel
+
+    def test_list_skips_falsy_value(self, queue):
+        queue.stage(_staged("good"))
+        queue._backend.stash(STAGED_PREFIX + "empty", None)
+        assert [p.pattern_id for p in queue.list()] == ["good"]
+
+    def test_list_skips_non_dict_value(self, queue):
+        queue.stage(_staged("good"))
+        queue._backend.stash(STAGED_PREFIX + "str", "not a dict at all")
+        assert [p.pattern_id for p in queue.list()] == ["good"]
+
+    def test_load_skips_non_dict_active_entry(self, tmp_path):
+        be = FileStashBackend(base_dir=str(tmp_path))
+        be.stash(ACTIVE_PREFIX + "weird", "not a dict")
+        assert "weird" not in PersistentPatternLibrary(backend=be).patterns
+
+    def test_load_skips_duplicate_active_id(self, tmp_path):
+        import attune.pattern_review as pr
+
+        be = FileStashBackend(base_dir=str(tmp_path))
+        d = pr._pattern_to_dict(
+            Pattern(id="dup", agent_id="a", pattern_type="behavioral", name="n", description="d")
+        )
+        be.stash(ACTIVE_PREFIX + "k1", d)
+        be.stash(ACTIVE_PREFIX + "k2", d)  # same id under a second key
+        lib = PersistentPatternLibrary(backend=be)
+        assert "dup" in lib.patterns  # loaded once, dup skipped without error
