@@ -111,3 +111,65 @@ the author-#351 regression fixture committed. Implementation has
 started; the spec status should be reconciled with reality (per the
 `spec-status-self-truthing` concern). Out of scope for this decision —
 noted for a status pass.
+
+---
+
+## D-T7 — author integration: keep both, defer consolidation (2026-06-09)
+
+**Context.** T7 was framed as "wire `attune_verify.verify()` into
+attune-author's polish pass (return, not hard-gate)." Investigating it
+after shipping attune-verify 0.2.0 found the premise is **obsolete**:
+attune-author **already fact-checks post-polish via its own mature
+`fact_check/` subsystem** (its own `polish-fact-check` spec).
+
+**What author already has** (verified in `~/attune-author`):
+
+- `generator._run_fact_check()` runs after every polished file
+  (`generator.py:619`); CLI exposes `--fact-check` / `--no-fact-check`.
+- Modes via `ATTUNE_AUTHOR_FACT_CHECK`: `soft` (default — appends an
+  `## Unresolved references` block), `strict` (raise `FactCheckError`,
+  opt-in), `off`. Opportunistic — never breaks the polish pipeline.
+- A 1191-LOC subsystem: `check_polished_file()` →
+  `FactCheckReport`/`FactCheckConfig` (per-project config from
+  `pyproject.toml`, per-file skips), `report.py` formatting,
+  `apply_soft_fail`, plus **five** checks — `python_refs` (resolves full
+  dotted paths + attributes), `cli_refs` (version-aware `--help`),
+  `md_links`, `numeric_refs`, and `tutorial_static_check` (a
+  static-analysis check attune-verify does not have).
+
+So author's polish **already does exactly what T7 specified** — just via
+its own implementation, not the `attune_verify` library. With the 0.2.0
+backport (full dotted-path resolution), the two are now at **functional
+parity on the four shared checks**.
+
+**Decision: keep both; do NOT force author to delegate now.**
+
+- **attune-verify** stays the standalone family library for *other*
+  consumers — the attune-ai `/verify` skill, future external users, and
+  the semantic/Judge + rag layers author lacks.
+- **author `fact_check/`** stays as author's integrated, richer,
+  already-shipped subsystem (config, report formatting, soft-fail block,
+  tutorial static check).
+- Forcing author to delegate to `attune_verify` today would be a
+  **downgrade** (lose `tutorial_static_check`, report/config richness)
+  unless attune-verify first absorbs those — a multi-release effort with
+  no acute pain to justify it.
+
+**T7 disposition: satisfied-independently / consolidation deferred.**
+The integration T7 called for already exists; the *real* remaining work
+is consolidation, tracked below as future, not blocking.
+
+**Future path (option C, when it bites).** Single source of truth =
+attune-verify absorbs author's richness (`tutorial_static_check`,
+config-from-pyproject, report/soft-fail formatting), then author's
+`fact_check/` becomes a thin delegation shim. Gate this on a real
+trigger: drift pain between the two implementations (the "two parallel
+generators drift" lesson), or a third consumer needing the richer
+surface. The 0.2.0 backport already narrowed the drift surface (imports
+now match).
+
+**Drift mitigation until then.** Both resolve imports/flags/links/counts;
+the 0.2.0 backport aligned the import checker. If they diverge again,
+prefer porting the improvement into *both* (cheap) or starting the
+consolidation (option C). A periodic parity check across the two
+`python_refs`/`imports` checkers is worth a follow-up if drift recurs.
