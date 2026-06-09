@@ -1,6 +1,16 @@
 # Tasks: attune-verify — Generation Fact-Checker
 
-**Status:** draft (2026-06-02) — Phase 3, awaiting review
+**Status:** in progress (2026-06-09) — **library BUILT + green**, not yet
+shipped. The `attune-verify` package exists at `../attune-verify/` (GitHub
+repo `Smart-AI-Memory/attune-verify`, v0.1.0): T1 (skeleton), T2 (model),
+T3 (deterministic checkers + the author-#351 regression fixture), T4
+(semantic Judge), T5 (rag adapter) are implemented — **14 tests pass**
+(`PYTHONPATH=src pytest`). The status said "draft" only because the work
+landed in a sibling repo the spec-status reconciler can't see (caught
+2026-06-09 spec triage — the status-lies trap across a repo boundary).
+**Remaining (the ship phase):** T8 publish 0.1.0 ⛔ (await-Patrick;
+unblocker), then wire into attune-ai `[tool.uv.sources]`, T6 `/verify`
+skill (`plugin/skills/verify/`), T7 attune-author integration.
 **Design:** [design.md](design.md) · **Requirements:**
 [requirements.md](requirements.md)
 
