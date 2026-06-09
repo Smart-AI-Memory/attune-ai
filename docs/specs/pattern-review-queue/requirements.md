@@ -11,9 +11,13 @@
 > re-homes it on the current backend stack, off the deprecated
 > Redis coupling.
 
-**Status:** in progress (2026-06-09) — R1–R5 + R8(unit) shipped in
-#689; R6 (dashboard panel) shipped this session. R7 (opt-in discovery
-routing) remains.
+**Status:** complete (2026-06-09) — R1–R5 + R8(unit) shipped in #689,
+R6 (dashboard panel) and R7 (opt-in routing) shipped 2026-06-09. R7's
+Phase-0 audit found the only live contribution seams are
+`SharedLibraryMixin.contribute_pattern` and
+`ConfigurationStore._contribute_to_pattern_library`; the other
+spec-named paths (`agent_monitoring.py`, `pattern_persistence.py`,
+`core.py`) are metrics/load paths, correctly left untouched.
 **Owner:** Patrick + agent
 **Related:**
 

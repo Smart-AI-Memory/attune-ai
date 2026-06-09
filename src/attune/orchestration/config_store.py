@@ -462,6 +462,16 @@ class ConfigurationStore:
             tags=config.tags,
         )
 
+        from attune.pattern_review import review_routing_enabled, stage_for_review
+
+        if review_routing_enabled():
+            # R7 opt-in: stage for human review instead of contributing
+            # straight to the live library. Default off — see
+            # docs/specs/pattern-review-queue/ (R7).
+            stage_for_review("meta_orchestrator", pattern)
+            logger.info(f"Staged pattern for {config.task_pattern} for review")
+            return
+
         try:
             self.pattern_library.contribute_pattern("meta_orchestrator", pattern)
             logger.info(f"Contributed pattern for {config.task_pattern} to pattern library")

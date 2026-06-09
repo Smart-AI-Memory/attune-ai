@@ -21,6 +21,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   gate (defense in depth, matching the curator/specs/runner routes).
   Dashboard and CLI share one backend store, so they show one queue.
   See `docs/specs/pattern-review-queue/` (R6).
+- **Opt-in review routing for contributed patterns.** Set
+  `ATTUNE_PATTERN_REVIEW=1` (default off) and pattern contributions
+  route to the review queue for human approval instead of entering the
+  active library directly. Two live seams honour the flag — the
+  agent-facing `SharedLibraryMixin.contribute_pattern` and the
+  meta-orchestrator's `ConfigurationStore._contribute_to_pattern_library`
+  — so a reviewer can opt into curation without changing default
+  behaviour. (A Phase-0 audit confirmed these are the only real
+  contribution seams; the spec's other named paths turned out to be
+  metrics counters and storage-load paths, which are correctly left
+  untouched.) Staged patterns surface in `attune patterns review` and
+  the dashboard Patterns panel. See `docs/specs/pattern-review-queue/`
+  (R7).
 - **attune's memory store is now a drop-in backend for Anthropic's
   Memory tool.** `attune.memory.memory_tool.make_memory_tool()` returns
   a real `anthropic` `BetaAbstractMemoryTool` (the `memory_20250818`

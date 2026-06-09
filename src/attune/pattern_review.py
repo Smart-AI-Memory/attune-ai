@@ -18,6 +18,7 @@ abstraction as the rest of attune memory.
 from __future__ import annotations
 
 import logging
+import os
 from datetime import datetime
 from typing import TYPE_CHECKING
 
@@ -33,6 +34,10 @@ logger = logging.getLogger(__name__)
 STAGED_PREFIX = "staged_pattern:"
 #: Key prefix for active (promoted) library patterns in the same store.
 ACTIVE_PREFIX = "pattern:"
+#: Env var gating opt-in review routing of contributed patterns (R7).
+REVIEW_ENABLED_ENV = "ATTUNE_PATTERN_REVIEW"
+#: Truthy spellings that turn review routing on.
+_TRUTHY = frozenset({"1", "true", "yes", "on"})
 
 
 def _default_backend() -> MemoryBackend:
@@ -152,6 +157,43 @@ class PatternReviewQueue:
             code=staged.code,
             confidence=staged.confidence,
         )
+
+
+def review_routing_enabled() -> bool:
+    """True when contributed patterns should route to the review queue (R7).
+
+    Default **OFF** — existing ``contribute_pattern`` behaviour is unchanged
+    until a reviewer opts in by setting ``ATTUNE_PATTERN_REVIEW`` to a truthy
+    value (``1`` / ``true`` / ``yes`` / ``on``). This keeps the opt-in promise:
+    no surprise gating of auto-contribution.
+    """
+    return os.environ.get(REVIEW_ENABLED_ENV, "").strip().lower() in _TRUTHY
+
+
+def stage_for_review(
+    agent_id: str,
+    pattern: Pattern,
+    *,
+    backend: MemoryBackend | None = None,
+) -> str:
+    """Stage a would-be-contributed :class:`Pattern` into the review queue.
+
+    Converts the library ``Pattern`` to a :class:`StagedPattern` and stages it
+    on the same backend the dashboard/CLI read (file by default, AMS when
+    configured), so it surfaces for human review instead of entering the
+    active library directly. Returns the staged pattern id.
+    """
+    staged = StagedPattern(
+        pattern_id=pattern.id,
+        agent_id=agent_id,
+        pattern_type=pattern.pattern_type,
+        name=pattern.name,
+        description=pattern.description,
+        code=pattern.code,
+        context=dict(pattern.context),
+        confidence=pattern.confidence,
+    )
+    return PatternReviewQueue(backend).stage(staged)
 
 
 def _parse(raw: object, key: str) -> StagedPattern | None:
