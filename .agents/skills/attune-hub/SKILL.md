@@ -59,6 +59,23 @@ intent so Claude matches the right skill:
 | "refactor", "tech debt", "simplify" | refactor-plan skill |
 | "spec", "brainstorm", "plan and execute" | spec skill |
 
+## Single-referent resolution
+
+Before acting on a terse confirmation (`go`, `do it`, `y`, `1`),
+make sure exactly **one** referent is obvious from the prior turn —
+that you can fill in "go [doing **X**]" with a single, unambiguous X.
+
+- If the prior turn left **multiple** proposals on the table, the
+  referent is unresolved — ask which one before executing, don't
+  guess the most likely.
+- **Restate the referent as you act** ("Running the security audit
+  on `src/` —") so the user can catch a mismatch immediately.
+
+This is advisory guidance for the broader conversation; the one
+*enforceable* foothold is the `AskUserQuestion` one-question-per-turn
+rule (a single turn can't bundle multiple ambiguous decisions). See
+`docs/specs/collaboration-gates/` (R9/R10).
+
 ## Skills Reference
 
 | Skill | Triggers |
