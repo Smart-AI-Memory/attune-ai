@@ -1,5 +1,5 @@
 # Tasks — Anthropic Cost Integration
-**Status:** approved
+**Status:** complete (2026-06-09) — shipped: `src/attune/ops/anthropic_cost.py` wired; confirmed by spec triage.
 Each phase is independently shippable and reversible.
 
 ---

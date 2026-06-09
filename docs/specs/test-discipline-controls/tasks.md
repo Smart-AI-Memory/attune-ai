@@ -5,7 +5,7 @@
 > Companion to [`requirements.md`](requirements.md) and
 > [`design.md`](design.md).
 
-**Status:** draft
+**Status:** partial (2026-06-09) — decisions recorded (D1–D5); D5 ("pre-push hook MUST run `--branch`") is adopted as live policy (cited in CLAUDE.md); D1 decided (TDD rejected). Remaining controls' implementation deferred.
 **Last updated:** 2026-05-27
 **Total estimate:** ~5.5h across 3 phases.
 

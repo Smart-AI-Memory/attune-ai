@@ -1,5 +1,8 @@
 # Tasks: Documentation Fiction Cleanup
 
+**Status:** complete (2026-06-09) — cleanup executed (see decisions.md);
+the TROUBLESHOOTING.md rewrite was explicitly deferred, not outstanding.
+
 Phased so each phase ships independently and keeps
 `mkdocs build --strict` green.
 

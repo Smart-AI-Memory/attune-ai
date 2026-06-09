@@ -1,5 +1,9 @@
 # Spec: Public Help Site — Tasks
 
+**Status:** complete (2026-06-09) — shipped: `attune-ai-dev/build_help.py`
+renders the `.help/` corpus as the public `/help` site; confirmed by
+spec triage.
+
 > Phase 3 (task decomposition). Sequenced; each task is a reviewable
 > unit. Most carry an XML-enhanced prompt at execution time per
 > `.claude/rules/attune/xml-enhanced-prompts.md`.
