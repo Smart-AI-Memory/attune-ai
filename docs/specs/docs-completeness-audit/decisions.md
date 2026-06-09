@@ -114,3 +114,32 @@ original 10-subagent estimate.
   the final bucket list as a committed artefact under
   `.audit/completeness-inventory.md`. The 135 number is a
   planning estimate; the execution-time count is the budget.
+
+---
+
+### B6 execution record — blog date-classification (2026-06-09)
+
+**Result: closed empty. 0 archived, all 55 blog docs in-scope.**
+
+Applied decision Q1's rule (git first-commit date vs a 6-month
+cutoff). Basis: v8.0.1 released 2026-06-07 → cutoff **2025-12-07**.
+Every doc in the cohort (`git ls-files 'docs/blog/*.md'
+'docs/BLOG_*.md'`, 55 files) was first-committed *after* the
+cutoff — oldest is `2025-12-14` (seven days inside the window),
+newest `2026-05-09`. No file qualifies for
+`docs/archive/blog/<year>/`, so the archive move is a no-op.
+
+**Weak-proxy caveat (deferred to B5, not acted on):** git
+first-commit date marks several posts "recent" even though their
+*content* describes superseded versions — `attune-ai-v4-agent-sdk.md`,
+the `*-v520-*` trio, `discord-v6-release.md`. These are the
+historical record-keeping cohort Q1's rationale wanted to exempt,
+but the blog dir was bulk-committed 2026-01..05 so the date proxy
+can't see content age. Per Q1's own "threshold is revisitable"
+note, the content-vs-version judgment is deferred to the B5
+content-verify pass (which reads each doc) rather than guessed
+from filenames here. B5 may flag genuine-historical posts for
+archive when it reads them.
+
+**Net effect on B5 budget:** all 55 blog docs remain in the
+PENDING content-verify queue (no pruning from the date pass).
