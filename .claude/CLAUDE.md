@@ -7269,3 +7269,49 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   _SESSION_TOKEN, "real")` in the one test proving the gate is wired.
   Cleaner than monkeypatching the module's backend resolver, and keeps
   the dashboard consistent with the CLI (one store, one queue).
+
+- **The "specs ship without status update" trap has TWO root causes,
+  and the spec-status reconciler now keys terminal status off the FIRST
+  WORD across bold variants + reads the HIGHEST-PHASE file** (established
+  2026-06-09, #696/#697, extends the existing "Approved & unexecuted is
+  ~80% noise / the reconciler can't cross-reference merged PRs" lesson):
+  - **Root cause 1 (known):** `plugin/hooks/_state.py`'s reconciler reads
+    only in-spec signals (header / completion checklist / terminal line),
+    never code or merged PRs — so a spec whose work shipped but whose docs
+    were never marked stays in-flight, undetectable in-file. Mitigation:
+    the artifact cross-reference *detection* sweep (grep each spec's named
+    files/symbols/CLI subcommands; present + non-terminal status ⇒ likely
+    stale-shipped). Run it advisory, NOT as a CI gate — a naive sweep
+    over-flags (mine flagged 3 already-`complete` specs by missing the
+    `**Status**:` variant). Reuse `discover_specs`/`_leading_verdict`,
+    don't reinvent the parser.
+  - **Root cause 2 (found + fixed #697):** even when people DID mark a
+    spec done, the reconciler only recognized the BARE word
+    (`effective_status in _TERMINAL_VERDICTS`, `$`-anchored terminal-line),
+    so the informative form everyone writes — `**Status:** complete
+    (2026-06-09) — shipped #694` — and the `**Status:**` bold variant
+    (colon inside the bold, which `_STATUS_LINE` didn't parse AT ALL)
+    matched nothing → the spec stayed in-flight FOREVER despite being
+    correctly marked. Live proof: `discover_specs` went 34 → 24 in-flight
+    after the fix (ten correctly-done specs were unrecognized). Fix:
+    `_leading_verdict()` tokenizes to the first alphabetic word; both
+    status regexes made robust to `Status:` / `**Status**:` /
+    `**Status:**` / `*Status*:`; terminal vocab broadened to
+    closed/complete/completed/retired/superseded/shipped/done; new
+    ongoing-by-design category (living/ongoing) excluded from in-flight.
+  - **Operational fact (DECIDE-4 follow-up):** `_phase_for_dir` reads the
+    status from the MOST-ADVANCED phase file present (tasks › design ›
+    requirements). So flipping a status header in `requirements.md` is
+    **inert** when a `tasks.md` exists with an older status — the
+    reconciler reads `tasks.md`. To mark a spec done, edit the
+    highest-phase file's status (or the open follow-up: reconcile a
+    terminal signal from ANY phase file). Caught live: a
+    `test-quality-program` relabel to `living` in `requirements.md` was
+    ignored because its `tasks.md` still said `approved`.
+  - **Meta:** the grep heuristic NARROWS the candidate list but does not
+    CERTIFY; reading the code certifies (and here found the real bug the
+    heuristic couldn't). For per-spec completion certainty, deterministic
+    code-grep of the spec's acceptance-criteria artifacts is authoritative
+    (attune-verify's stance); the RAG/faithfulness judge is a cross-check
+    only — it over-flags on truncated context (CLAUDE.md faithfulness-judge
+    lesson).
