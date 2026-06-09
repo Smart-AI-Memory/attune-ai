@@ -97,6 +97,15 @@ class SharedLibraryMixin:
             >>> agent.contribute_pattern(pattern)
 
         """
+        from attune.pattern_review import review_routing_enabled, stage_for_review
+
+        if review_routing_enabled():
+            # R7 opt-in: stage for human review instead of contributing
+            # straight to the live library. Default off — see
+            # docs/specs/pattern-review-queue/ (R7).
+            stage_for_review(self.user_id, pattern)
+            return
+
         if self.shared_library is None:
             raise RuntimeError(
                 "No shared library configured. Pass shared_library to __init__ "
