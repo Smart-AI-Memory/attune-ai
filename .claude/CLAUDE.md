@@ -7332,3 +7332,53 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     per-spec code-reading proves dead. "Good shape" = a *truthful,
     sequenced* backlog, not an empty one. Recorded as a reusable matrix in
     `docs/specs/spec-status-self-truthing/disposition-2026-06-09.md`.
+  - **Worst case — status lies ACROSS A REPO BOUNDARY; verify the dir
+    exists before "building" a sibling package (2026-06-09):** the
+    `attune-verify` spec said "draft, awaiting review" while the package
+    was actually BUILT + green (14 tests incl. the load-bearing
+    regression fixture) in the `../attune-verify/` sibling repo. The
+    reconciler reads only attune-ai's own files — it cannot see a sibling
+    repo AT ALL (not cross-PR, not cross-repo). I was about to rebuild a
+    working package from scratch by heredoc; the ONLY thing that stopped
+    it was the reflex of checking whether `~/attune-verify/` already
+    existed before scaffolding. Rule: before building ANY spec whose
+    artifact is a sibling repo / external location, `ls` the target +
+    `git -C <sibling> log` + run its tests FIRST. "Proceed and build"
+    on a stale spec produces a duplicate; "verify, then proceed"
+    produces the truth. For cross-repo specs the status header in
+    attune-ai is *structurally* untrustworthy — the sibling repo's own
+    state is ground truth.
+
+- **PreToolUse hooks CAN inject model-readable context (not just
+  allow/block) — `hookSpecificOutput.additionalContext`** (verified
+  2026-06-09 against the CC hooks docs + corroborated in-repo by
+  `plugin/hooks/session_stash.py`, which emits it for the Stop event).
+  A PreToolUse hook's JSON output supports `additionalContext` — text
+  injected next to the tool result that the model reads on its next
+  request, BEFORE the governed action proceeds — alongside
+  `permissionDecision`/`permissionDecisionReason`. `additionalContext`
+  also works for SessionStart and UserPromptSubmit. So a hook can
+  surface a governing rule at the decision point (the basis of the
+  `just-in-time-recall` spec), not merely deny with a reason. The docs
+  don't pin a minimum CC version for the *PreToolUse* field specifically
+  (Stop/SubagentStop got it in v2.1.169, 2026-06-08); unknown JSON
+  fields degrade gracefully on older CC, so a 5-min smoke test on the
+  current version is the safe confirmation before building on it.
+
+- **First PyPI publish of a BRAND-NEW project via trusted publishing
+  needs a "pending publisher", not a regular one** (2026-06-09,
+  attune-verify 0.1.0): OIDC trusted publishing has nothing to
+  authorize against until the project exists on PyPI, so for the FIRST
+  release you add a **pending publisher** at
+  `pypi.org/manage/account/publishing/` (fields: project name, owner,
+  repo, **workflow = the FILENAME** e.g. `publish-pypi.yml` not the
+  YAML `name:`, environment e.g. `pypi`) — only the PyPI account owner
+  (Patrick) can do this. After the first publish it converts to a normal
+  trusted publisher. Mirror an existing family workflow (attune-rag's
+  `publish-pypi.yml`: `release: published` + `workflow_dispatch`,
+  `environment: pypi`, `id-token: write`, no token). Pre-flight the
+  package with a local `uv run --with build python -m build` +
+  `uv run --with twine python -m twine check dist/*` (PASSED gate)
+  BEFORE cutting the release — publishing is irreversible (PyPI rejects
+  re-publishing a version). Prefer this over a local token upload
+  (tokens must never be pasted into this environment).
