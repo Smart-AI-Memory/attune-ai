@@ -104,16 +104,17 @@ pip install 'attune-ai[memory]'  # still works — empty no-op alias
 
 ## Legacy `attune.redis_*` modules
 
-The top-level legacy modules (`attune.redis_memory`,
+The top-level `attune.redis_*` modules (`attune.redis_memory`,
 `attune.redis_config`, `attune.redis_memory_storage`,
 `attune.redis_memory_coordination`, `attune.redis_memory_patterns`)
-still exist with `DeprecationWarning` for a "v4.0.0 removal" that
-shipped years ago without removing them. Their retirement is
-**not** in scope for this spec.
-
-Track that work under
-[`docs/specs/deprecated-module-retirement/`](../specs/deprecated-module-retirement/)
-if it picks up these candidates.
+are **retained compatibility facades — not retirement candidates.**
+attune's direction is to align on Redis (via the `attune_redis`
+Agent Memory Server integration) and Anthropic Claude, so these
+facades stay. New code can use `attune_redis.AMSMemoryBackend`
+directly for the richer path. (A legacy `DeprecationWarning`
+predating this direction still fires at import; aligning that
+runtime message to drop the removal implication is a separate,
+optional follow-up — no code change was made here.)
 
 ## See also
 
