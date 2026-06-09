@@ -7225,3 +7225,47 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
     direct `messages.create` path — don't trust green CI. **The pre-flight
     grep must cover the WHOLE `src/` (pricing constants + every
     sampling-param sender), not just `workflows/` + `agents/`.**
+
+- **attune's PreToolUse hook (the only enforcement primitive) sees ONLY
+  `tool_name` + `tool_input` — never the conversation — so any discipline
+  needing conversational context is structurally ADVISORY, not
+  enforceable; building it as a hook over-claims enforcement**:
+  established 2026-06-09 shipping the collaboration-gates referent gate
+  (R9/R10, #694). The referent gate ("before acting on a terse
+  `go`/`do it`/`y`, resolve exactly one obvious referent; if multiple
+  proposals were pending, ask which") can't be a PreToolUse hook because
+  the deciding context — what the user said, how many proposals were on
+  the table — lives in the conversation the hook can't observe.
+  `ask_question_format_guard.py` and `security_guard.py` work precisely
+  because they decide from `tool_input` alone (one-question-per-turn; a
+  prohibited builtin in a command). The literature agrees:
+  clarification-before-acting is an *agent decision* (Disambiguate /
+  Ask-before-Plan / Active Task Disambiguation), not an external gate. So
+  the right shape is **advisory guidance embedded in the skill that does
+  the interactive confirmation** — the referent gate shipped as a
+  "Single-referent resolution" section in
+  `plugin/skills/attune-hub/SKILL.md` (the router where terse intent →
+  action), naming its one *enforceable* foothold (the AskUserQuestion
+  one-question-per-turn guard) rather than pretending the whole thing is
+  enforced. General rule for any "should we gate X?" decision: if
+  deciding whether to fire needs anything beyond the single tool call's
+  `tool_input`, it's advisory — ship it as skill guidance + an honest
+  "advisory in the broader conversation" note, not a hook. (Decision:
+  `docs/specs/collaboration-gates/decisions.md` D13.)
+
+- **Testing an ops route that constructs its own default-resolved
+  backend: read an override off `app.state` (default `None`) so tests
+  inject a tmp backend while production uses the real one**: the R6
+  patterns route (`attune.ops.routes.patterns`) does
+  `getattr(request.app.state, "pattern_backend", None)` and passes it to
+  `PatternReviewQueue(backend)` / `PersistentPatternLibrary(backend)`;
+  `None` → each falls back to its own `_default_backend()` (file/AMS, the
+  same store the CLI manages). Tests do `app = create_app(cfg);
+  app.state.pattern_backend = FileStashBackend(tmp); TestClient(app)` —
+  the whole stage→render→promote/reject lifecycle round-trips through a
+  real backend (no mocks), and the `tests/unit/ops/conftest.py` autouse
+  fixture (nulls `attune.ops.security._SESSION_TOKEN`) lets no-header
+  POSTs pass the token gate; re-arm with `monkeypatch.setattr(...
+  _SESSION_TOKEN, "real")` in the one test proving the gate is wired.
+  Cleaner than monkeypatching the module's backend resolver, and keeps
+  the dashboard consistent with the CLI (one store, one queue).
