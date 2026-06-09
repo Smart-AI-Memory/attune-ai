@@ -241,6 +241,7 @@ source = { editable = "." }
 dependencies = [
     { name = "anthropic" },
     { name = "attune-rag" },
+    { name = "attune-verify" },
     { name = "claude-agent-sdk" },
     { name = "cryptography" },
     { name = "defusedxml" },
@@ -439,6 +440,7 @@ requires-dist = [
     { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.15" },
     { name = "attune-rag", specifier = ">=0.1.5,<0.6" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.6" },
+    { name = "attune-verify", specifier = ">=0.1.0,<0.2" },
     { name = "bandit", marker = "extra == 'all'", specifier = ">=1.7,<2.0" },
     { name = "bandit", marker = "extra == 'dev'", specifier = ">=1.7,<2.0" },
     { name = "bcrypt", marker = "extra == 'all'", specifier = ">=4.0.0,<6.0.0" },
@@ -619,6 +621,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/82/da/5de2d3a5e6f9f1830c19998b504f4fbd8e24d77e2a32709403389166bb30/attune_rag-0.2.0.tar.gz", hash = "sha256:d8d5f26bfa4b2379845492d2c36d29359e09ef8c7d03f47435cd06baacba4711", size = 102841, upload-time = "2026-05-25T03:53:32.587Z" }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/ed/49/005cf1581d99227c15bf4afddfa115cada1d666d9836296fd28f3619de29/attune_rag-0.2.0-py3-none-any.whl", hash = "sha256:a8c1b46e18c3336a654cf3609d628fcf2087d4e00459a22ad6ede3c4d88e33ae", size = 114144, upload-time = "2026-05-25T03:53:31.013Z" },
+]
+
+[[package]]
+name = "attune-verify"
+version = "0.1.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/30/80/0bc0f6571897c9d1050b98d15d2d4ecb2726de5b57e416d20de72efa876f/attune_verify-0.1.0.tar.gz", hash = "sha256:e38927168db70ecc0dacf82df6b5b112f9b891343045eb37e57698d172671a9a", size = 14995, upload-time = "2026-06-09T13:56:14.333Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e3/7f/3dcfd375f3844fc4fe1386fa1c0dad819f16e22eeedf4a1b4f8790093222/attune_verify-0.1.0-py3-none-any.whl", hash = "sha256:ee7ac81987a3bba8b7231342c2cebfcfc241fab3d19b5eae69de10a1705206ff", size = 15052, upload-time = "2026-06-09T13:56:13.073Z" },
 ]
 
 [[package]]
