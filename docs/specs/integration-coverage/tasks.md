@@ -1,5 +1,5 @@
 # Tasks: Integration Coverage Program
-**Status:** approved
+**Status:** deferred (parked 2026-06-09) — Phase 1+ deferred until Phase 0 lands; a parked idea, not active work. Revive or retire when the integration-vs-mocked question resurfaces.
 ---
 
 ## Phase 0 — Audit before design

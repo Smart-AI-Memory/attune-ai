@@ -1,5 +1,5 @@
 # Tasks — Doc-Stack Reference Subtypes
-**Status:** approved (2026-05-16)
+**Status:** deferred (parked 2026-06-09) — approved 2026-05-16, no movement since; a planned doc-quality idea (see `project_doc_stack_next` memory), not active work.
 | Phase | Status | Owner | Notes |
 |---|---|---|---|
 | Phase 0 — Inventory + hand-crafted samples | in progress | | 0.1 + 0.2 done 2026-05-26 (see `phase0-data/`). 0.3–0.6 await editorial pass. |

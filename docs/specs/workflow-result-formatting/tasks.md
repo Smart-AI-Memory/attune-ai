@@ -1,8 +1,11 @@
 # Tasks: Workflow result formatting
 
-> **Status:** plan (2026-06-06). Bounded PRs; see [design.md](design.md)
-> for the decisions each task implements. Implementation begins after
-> approval.
+**Status:** partial (2026-06-09) — T1 (the `WorkflowReport` / Section
+data model in `src/attune/workflows/output.py`) shipped in #649 and is
+in use (e.g. `discovery_sweep`); remaining tasks pending.
+
+> Bounded PRs; see [design.md](design.md) for the decisions each task
+> implements.
 
 ## T0 — Test-surface audit (no code)
 

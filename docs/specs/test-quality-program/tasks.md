@@ -1,5 +1,5 @@
 # Tasks: Test Quality Program
-**Status:** approved
+**Status:** living (ongoing program — continuous use; never one-shot "complete")
 ---
 
 ## Phase 3: Tasks
