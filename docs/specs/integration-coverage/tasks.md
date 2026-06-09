@@ -1,5 +1,5 @@
 # Tasks: Integration Coverage Program
-**Status:** deferred (parked 2026-06-09) — Phase 1+ deferred until Phase 0 lands; a parked idea, not active work. Revive or retire when the integration-vs-mocked question resurfaces.
+**Status:** in progress (2026-06-09) — Phase 0 complete (see [phase0-findings.md](phase0-findings.md)): decision is **GO, reframed** — a 351-test integration suite already exists but is dormant + rotting; revive/wire it rather than build new infra. Phase 1 = prune rot + wire the 22 no-auth files into CI; auth nightly is a follow-up.
 ---
 
 ## Phase 0 — Audit before design
