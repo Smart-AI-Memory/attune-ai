@@ -6,6 +6,8 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 
 from agents.notifications import NotificationConfig, NotificationService
@@ -118,6 +120,26 @@ class TestSMSNotifications:
 
 class TestComplianceAlerts:
     """Test compliance alert multi-channel delivery."""
+
+    @pytest.fixture(autouse=True)
+    def _no_real_network(self):
+        """Mock the network boundary so these tests never do real I/O.
+
+        ``send_compliance_alert`` reaches ``send_email`` (``smtplib.SMTP``)
+        and ``send_slack`` (``requests.post``). With the test config's real
+        host/webhook, the unmocked calls attempt real DNS/TCP/HTTP, which
+        intermittently crashed xdist workers under parallelism (the
+        coverage job's "worker crashed" + spurious low-coverage failures).
+        """
+        smtp_cm = MagicMock()
+        with (
+            patch("agents.notifications.smtplib.SMTP") as smtp,
+            patch("agents.notifications.requests.post") as post,
+        ):
+            smtp.return_value.__enter__.return_value = smtp_cm
+            post.return_value.status_code = 200
+            post.return_value.text = ""
+            yield
 
     def test_compliance_alert_structure(self, notification_service):
         """Test compliance alert message structure."""
