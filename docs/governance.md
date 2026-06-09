@@ -122,7 +122,7 @@ The project follows **Semantic Versioning** (SemVer):
 - **MINOR**: New features, backward compatible
 - **PATCH**: Bug fixes, backward compatible
 
-**Current Version**: 1.6.1
+**Current version**: see [PyPI](https://pypi.org/project/attune-ai/)
 
 ### Release Cadence
 
@@ -235,7 +235,6 @@ By contributing to this project, you agree that:
 
 ### Near-Term (Q1-Q2 2025)
 
-- PyPI v2.0.0 release (after 90% coverage)
 - Claude Code partnership case study
 - MemDocs integration showcase
 - Book chapter publication (Q1 2026)

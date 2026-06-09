@@ -12,7 +12,7 @@ description: Attune AI — Technical Brief: **For:** Technical due diligence, en
 
 ```
 ┌─────────────────────────────────────────────────────────────────┐
-│                     Attune AI v4.4.0                     │
+│                        Attune AI                         │
 ├─────────────────────────────────────────────────────────────────┤
 │  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────────┐  │
 │  │  CLI/API    │  │  VSCode     │  │  MCP Server             │  │
@@ -82,7 +82,7 @@ result = router.route(
 # Automatically selects Sonnet for code fix
 ```
 
-### 2. SocraticWorkflowBuilder (v4.4.0)
+### 2. SocraticWorkflowBuilder
 
 Creates optimized agent configurations through guided questions:
 
@@ -102,7 +102,7 @@ session = builder.submit_answers(session, answers)
 workflow = builder.generate_workflow(session)
 ```
 
-### 3. MetaOrchestrator (v4.4.0)
+### 3. MetaOrchestrator
 
 Automatically composes agent teams using 6 composition patterns:
 
