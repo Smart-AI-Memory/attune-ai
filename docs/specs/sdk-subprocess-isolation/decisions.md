@@ -38,4 +38,16 @@
 
 ## Live receipts (Phase 3)
 
-- _pending_
+- **2026-06-10 — PASS.** `ANTHROPIC_API_KEY=""` (strict keyless) +
+  `attune workflow run bug-predict --path src/attune/gates --depth
+  quick` from inside a Claude Code session, on the P2+P4 stack:
+  exit 0, 249.5 s, real multi-subagent run via subscription, genuine
+  structured findings (risk score 32/100; the envelope-persistence
+  TOCTOU race independently re-confirmed the 2026-06-06 API-mode
+  finding). **Before the fix this exact invocation died in seconds
+  with the opaque `Command failed with exit code 1`** from
+  SessionStart-hook stdout poisoning the stream-json channel.
+  Residual nit observed: the voice cost line (`$1.8394 | 249.5s`)
+  still shows for unmigrated workflows on subscription — resolved
+  per-workflow by the wrf T8 migrations (rendered reports already
+  suppress it).

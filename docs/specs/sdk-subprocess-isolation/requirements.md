@@ -1,8 +1,10 @@
 # Spec: SDK Subprocess Isolation — Requirements
 
-**Status:** approved (2026-06-10, "GO") — Phase 0 done
-([findings.md](findings.md)); Phase 2 (adapter isolation) implemented
-first (it directly unblocks the subscription receipt), Phase 1 next.
+**Status:** complete (2026-06-10) — all four phases shipped same-day:
+Phase 0 findings + probe (#748), Phase 2 adapter isolation (#752),
+Phase 1 hook gate (#753), Phase 4 programmatic guard (#755). Phase 3
+live receipt PASSED (keyless bug-predict via subscription, 249.5 s,
+real findings — see decisions.md).
 
 ---
 
