@@ -186,12 +186,12 @@ class SecurityWizard(BaseWizard):
         try:
             from attune.workflows.security_audit import SecurityAuditWorkflow
 
-            self._security_workflow = SecurityAuditWorkflow(
-                skip_remediate_if_clean=True,
-                use_crew_for_assessment=False,
-                use_crew_for_remediation=False,
-                enable_auth_strategy=False,
-            )
+            # No constructor kwargs: the SDK-native SecurityAuditWorkflow
+            # accepts only system_prompt_suffix. The legacy kwargs
+            # (skip_remediate_if_clean, use_crew_*, enable_auth_strategy)
+            # raised TypeError here, which the except below swallowed —
+            # so the wizard silently ALWAYS used the LLM fallback.
+            self._security_workflow = SecurityAuditWorkflow()
             return self._security_workflow
         except ImportError:
             logger.warning("SecurityAuditWorkflow not available, using LLM fallback")

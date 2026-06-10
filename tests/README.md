@@ -24,7 +24,7 @@ tests/
 │   │   └── batch13/       # cli_commands module tests (131 tests)
 │   └── *.py               # Handwritten behavioral tests
 ├── integration/            # Integration tests (cross-component)
-│   └── test_*_with_auth.py
+│   └── test_*.py           # incl. auth-gated real-API tests (nightly job)
 ├── utils/                  # Test utilities and helpers
 │   ├── cli_test_helpers.py # CLI mocking utilities
 │   └── __init__.py
