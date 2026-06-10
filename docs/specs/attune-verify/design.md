@@ -1,6 +1,5 @@
 # Design: attune-verify — Generation Fact-Checker
-
-**Status:** draft (2026-06-02) — Phase 2, awaiting review
+**Status:** complete (2026-06-10) — design realized and shipped: attune-verify 0.2.0 on PyPI (full dotted-path import resolution), core dep of attune-ai (`>=0.1.0,<0.3`), `/verify` skill live (#708). tasks.md has the per-task ship record.
 **Requirements:** [requirements.md](requirements.md) (Phase 1
 approved 2026-06-02)
 
