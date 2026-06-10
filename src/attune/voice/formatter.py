@@ -27,6 +27,7 @@ def format_output(
     result: Any,
     *,
     compact: bool = False,
+    disclosure: str = "summary",
 ) -> str:
     """Format a workflow result in the attune voice.
 
@@ -37,6 +38,9 @@ def format_output(
         workflow_name: Name of the workflow that produced this result.
         result: WorkflowResult, dict, or string to format.
         compact: If True, produce shorter output (for MCP responses).
+        disclosure: ``"summary"`` (default) collapses detail-tier report
+            sections; ``"full"`` inlines everything. Only affects results
+            carrying a serialized ``WorkflowReport``.
 
     Returns:
         Voiced, formatted output string ready for display.
@@ -44,9 +48,14 @@ def format_output(
     """
     lines: list[str] = []
 
+    # A rendered WorkflowReport owns its own score line and next-steps
+    # section — the voice wrapper must not duplicate them around it.
+    rendered_report = _is_report_result(result)
+
     # --- Detect result type and extract data ---
     success, score, report_text, cost_line, error_msg = _extract_result_data(
         result,
+        disclosure=disclosure,
     )
 
     # --- Opening line ---
@@ -66,7 +75,7 @@ def format_output(
         lines.append(report_text)
 
     # --- Score ---
-    if score is not None:
+    if score is not None and not rendered_report:
         lines.append(f"\nScore: {score}/100")
 
     # --- Cost & duration ---
@@ -86,11 +95,15 @@ def format_output(
         lines.append(f"  {error_msg}")
 
     # --- Next steps ---
-    steps = get_next_steps(
-        workflow_name,
-        result,
-        max_steps=2 if compact else 3,
-        compact=compact,
+    steps = (
+        []
+        if rendered_report
+        else get_next_steps(
+            workflow_name,
+            result,
+            max_steps=2 if compact else 3,
+            compact=compact,
+        )
     )
     if steps:
         lines.append("")
@@ -187,13 +200,25 @@ def format_mcp_response(
 # -------------------------------------------------------------------
 
 
+def _is_report_result(result: Any) -> bool:
+    """True when ``result.final_output`` is a serialized WorkflowReport."""
+    try:
+        from attune.workflows.output import WorkflowReport
+    except ImportError:
+        return False
+    return WorkflowReport.is_report_dict(getattr(result, "final_output", None))
+
+
 def _extract_result_data(
     result: Any,
+    *,
+    disclosure: str = "summary",
 ) -> tuple[bool, int | None, str | None, str | None, str | None]:
     """Extract display data from various result types.
 
     Args:
         result: WorkflowResult, dict, or string.
+        disclosure: Report disclosure mode (see :func:`format_output`).
 
     Returns:
         Tuple of (success, score, report_text, cost_line, error_msg).
@@ -206,7 +231,7 @@ def _extract_result_data(
 
     if WorkflowResult is not None and isinstance(result, WorkflowResult):
         try:
-            return _extract_from_workflow_result(result)
+            return _extract_from_workflow_result(result, disclosure=disclosure)
         except Exception:  # noqa: BLE001
             # INTENTIONAL: Degrade gracefully if result fields are unexpected
             logger.debug("Failed to extract from WorkflowResult", exc_info=True)
@@ -222,11 +247,14 @@ def _extract_result_data(
 
 def _extract_from_workflow_result(
     result: Any,
+    *,
+    disclosure: str = "summary",
 ) -> tuple[bool, int | None, str | None, str | None, str | None]:
     """Extract data from a WorkflowResult dataclass.
 
     Args:
         result: WorkflowResult instance.
+        disclosure: Report disclosure mode (see :func:`format_output`).
 
     Returns:
         Tuple of (success, score, report_text, cost_line, error_msg).
@@ -238,6 +266,10 @@ def _extract_from_workflow_result(
     # the safety-net pretty-print) — exempt from the sparse fallback below.
     rendered = False
 
+    # True only when a WorkflowReport actually rendered — the renderer
+    # then owns the cost display (show_cost gate), not the voice wrapper.
+    report_rendered = False
+
     # Extract formatted report from final_output
     fo = result.final_output
     if isinstance(fo, dict):
@@ -245,18 +277,25 @@ def _extract_from_workflow_result(
 
         if WorkflowReport.is_report_dict(fo):
             # Migrated workflow: reconstruct + render (design D2).
-            from attune.config import resolve_show_cost
-            from attune.voice import report_renderer
+            try:
+                from attune.config import resolve_show_cost
+                from attune.voice import report_renderer
 
-            report = WorkflowReport.from_dict(fo)
-            report_text = report_renderer.render_safe(
-                report,
-                disclosure="summary",
-                show_cost=resolve_show_cost(),
-            )
-            score = report.score
-            rendered = True
-        else:
+                report = WorkflowReport.from_dict(fo)
+                report_text = report_renderer.render_safe(
+                    report,
+                    disclosure="full" if disclosure == "full" else "summary",
+                    show_cost=resolve_show_cost(),
+                )
+                score = report.score
+                rendered = True
+                report_rendered = True
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: a malformed report payload degrades to the
+                # legacy dict handling below — never a crash, never a
+                # repr leak of the whole WorkflowResult.
+                logger.exception("WorkflowReport reconstruction failed")
+        if not report_rendered:
             report_text = fo.get("formatted_report")
             score = fo.get("score")
     elif isinstance(fo, str):
@@ -286,10 +325,12 @@ def _extract_from_workflow_result(
         if fallback_parts:
             report_text = "\n".join(fallback_parts)
 
-    # Build cost line (guard against None cost_report)
+    # Build cost line (guard against None cost_report). A rendered
+    # report's show_cost gate owns cost display — no wrapper duplicate,
+    # and no inapplicable cost line for subscription users (design D3).
     cost_line = None
     cr = result.cost_report
-    if cr is not None:
+    if cr is not None and not report_rendered:
         cost_parts = [f"${cr.total_cost:.4f}"]
         if cr.savings_percent > 0:
             cost_parts.append(f"(saved {cr.savings_percent:.0f}% vs premium)")

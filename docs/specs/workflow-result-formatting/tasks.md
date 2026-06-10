@@ -5,10 +5,7 @@ data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
 `render_safe()`, all 4 test layers, 98% branch, #741), and T3 (voice
 wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`)
-shipped; T4+ pending. T4 note: the rendered report embeds
-`**Score:** N/100` and `format_output` appends its own plain
-`Score: N/100` line — resolve the duplication when reworking the CLI
-surface.
+and T4 (CLI terminal rendering) shipped; T5+ pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
@@ -64,13 +61,20 @@ surface.
   `resolve_show_cost()` lives in `attune.config` (env var
   `ATTUNE_SHOW_COST_METRICS` also parsed as bool by `from_env`).
 
-## T4 — CLI
+## T4 — CLI — DONE
 
 - `cli_commands/workflow_commands.py:_print_workflow_result`: render
   `disclosure="summary"` default, `"full"` on `--verbose`; pipe markdown
   through a minimally-themed `rich.markdown.Markdown`; `<details>` → a
   "(run with --verbose to expand: …)" closing line. (Proposal §3,
   Surface map.)
+- Shipped: `format_output(disclosure=...)` threads to the renderer;
+  rich markdown only for report-carrying results AND only on a TTY
+  (legacy results + piped output keep plain text). The CLI converts
+  `<details>` pre-render because `rich.markdown` renders straight
+  through HTML tags. Score-line + voice-next-steps duplication
+  resolved: the wrapper suppresses both for rendered reports (the
+  report's `**Score:**` and `NextStepsSection` own them).
 
 ## T5 — MCP
 

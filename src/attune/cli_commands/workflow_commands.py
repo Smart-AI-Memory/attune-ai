@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import logging
+import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -184,7 +185,11 @@ def cmd_workflow_run(args: Namespace) -> int:
         input_data,
         name=name,
         json_mode=bool(getattr(args, "json", False)),
-        print_result=lambda result: _print_workflow_result(result, workflow_name=name),
+        print_result=lambda result: _print_workflow_result(
+            result,
+            workflow_name=name,
+            verbose=bool(getattr(args, "verbose", False)),
+        ),
         on_result=_record_envelope_cost if record_cost else None,
     )
 
@@ -265,23 +270,76 @@ def _record_envelope_cost(result: object) -> None:
     save_envelope(envelope)
 
 
+# Matches the renderer's exact <details> shape (report_renderer.render):
+# <details><summary>{title}</summary>\n\n{body}\n\n</details>
+_DETAILS_BLOCK_RE = re.compile(
+    r"<details><summary>(?P<title>.*?)</summary>\n\n.*?\n\n</details>",
+    re.DOTALL,
+)
+
+
+def _collapse_details_for_terminal(text: str) -> str:
+    """Replace ``<details>`` blocks with a run-with-verbose hint.
+
+    Terminals have no collapsibles, and ``rich.markdown`` renders
+    straight through the HTML tags (the "collapsed" content would show
+    anyway) — so summary mode swaps each block for a one-line pointer.
+    MCP and the dashboard keep the raw ``<details>`` markdown.
+    """
+    return _DETAILS_BLOCK_RE.sub(
+        lambda m: f'*(section "{m.group("title")}" collapsed — run with --verbose to expand)*',
+        text,
+    )
+
+
 def _print_workflow_result(
     result: object,
     workflow_name: str = "unknown",
+    verbose: bool = False,
 ) -> None:
     """Print a workflow result using the unified voice layer.
 
     Routes through attune.voice.format_output() for consistent
     personality, formatting, and contextual next-step suggestions.
+    Results carrying a serialized ``WorkflowReport`` render as styled
+    markdown on a TTY (``rich.markdown``); everything else keeps the
+    plain text path unchanged.
 
     Args:
         result: Workflow execution result (WorkflowResult, dict, or other)
         workflow_name: Name of the workflow that produced this result
+        verbose: Render the full report (detail sections inline) instead
+            of the summary view
 
     """
-    from attune.voice import format_output
+    import sys
 
-    print(format_output(workflow_name, result))
+    from attune.voice import format_output
+    from attune.voice.formatter import _is_report_result
+
+    is_report = _is_report_result(result)
+    text = format_output(
+        workflow_name,
+        result,
+        disclosure="full" if verbose else "summary",
+    )
+    if is_report and not verbose:
+        text = _collapse_details_for_terminal(text)
+
+    printed = False
+    if is_report and sys.stdout.isatty():
+        try:
+            from rich.console import Console
+            from rich.markdown import Markdown
+
+            Console().print(Markdown(text))
+            printed = True
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: terminal styling is best-effort — fall back
+            # to plain text rather than lose the report.
+            logger.debug("rich markdown rendering failed", exc_info=True)
+    if not printed:
+        print(text)
     _emit_run_meta_for_daemon(result)
 
 
