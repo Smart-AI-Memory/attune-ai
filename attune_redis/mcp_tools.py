@@ -169,7 +169,7 @@ async def handle_redis_memory_store(server: Any, args: dict[str, Any]) -> dict[s
     except ImportError:
         return {
             "success": False,
-            "error": "attune-redis not installed. Run: pip install attune-redis",
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -203,7 +203,7 @@ async def handle_redis_memory_retrieve(server: Any, args: dict[str, Any]) -> dic
     except ImportError:
         return {
             "success": False,
-            "error": "attune-redis not installed. Run: pip install attune-redis",
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -237,7 +237,7 @@ async def handle_redis_memory_search(server: Any, args: dict[str, Any]) -> dict[
     except ImportError:
         return {
             "success": False,
-            "error": "attune-redis not installed. Run: pip install attune-redis",
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -267,7 +267,7 @@ async def handle_redis_memory_promote(server: Any, args: dict[str, Any]) -> dict
     except ImportError:
         return {
             "success": False,
-            "error": "attune-redis not installed. Run: pip install attune-redis",
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
@@ -298,7 +298,7 @@ async def handle_redis_health_check(server: Any, args: dict[str, Any]) -> dict[s
     except ImportError:
         return {
             "success": False,
-            "error": "attune-redis not installed. Run: pip install attune-redis",
+            "error": "Redis support not installed. Run: pip install 'attune-ai[redis]'",
         }
     except Exception as e:  # noqa: BLE001
         # INTENTIONAL: Graceful degradation for MCP tool errors
