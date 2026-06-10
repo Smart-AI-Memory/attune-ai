@@ -122,7 +122,7 @@ original 10-subagent estimate.
 B5 content-verified the PENDING queue (5-batch subagent fan-out
 over the built/discoverable docs) and resolved the remaining open
 questions. See
-[completeness-audit-triage.md](./completeness-audit-triage.md#stage-b5--content-verify-results-2026-06-09)
+[completeness-audit-triage.md](./completeness-audit-triage.md#stage-b5-content-verify-results-2026-06-09)
 for the full method, per-doc disposition, and the `exclude_docs`
 113-built/107-repo-only split.
 
