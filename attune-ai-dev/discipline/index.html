@@ -745,8 +745,9 @@ it. Our implementation is the
 <code>attune-ai</code> as the tool belt (the plugin that orchestrates the
 disciplines), with <code>attune-author</code> (authoring help content),
 <code>attune-gui</code> (the ops dashboard), <code>attune-help</code> (the living-doc
-help layer), and <code>attune-rag</code> (retrieval over the help corpus) as
-the specialized tools the belt carries. The patterns above don't
+help layer), <code>attune-rag</code> (retrieval over the help corpus), and
+<code>attune-verify</code> (fact-checking generated content) as the
+specialized tools the belt carries. The patterns above don't
 require these specific tools — they require <em>some</em> tools that play
 these roles. If you'd rather wire your own, the disciplines stand
 alone; if you'd rather skip the wiring, the family is on PyPI.</p>
@@ -1049,9 +1050,11 @@ link resolves, every numeric claim matches its source. The failure
 modes recur and are therefore automatable — fabricated symbols,
 flags, cross-references, route shapes, version-mismatched samples,
 insecure examples, fabricated counts — so a pass that checks them
-by name catches most of what slips past taste. (We are extracting
-this into a standalone fact-checker, attune-verify, so any
-generation pipeline can call it; it is specced, not yet shipped.)
+by name catches most of what slips past taste. (That pass now
+ships as a standalone fact-checker,
+<a href="https://pypi.org/project/attune-verify/">attune-verify</a> —
+stdlib-only, on PyPI, wired into attune-ai as the <code>/verify</code>
+skill — so any generation pipeline can call it.)
 Grounding verifies the input; fact-checking verifies the output;
 together they bracket generation.</p>
 <h3>Verifying behavior — &quot;does it do the true thing?&quot;</h3>
@@ -1265,10 +1268,11 @@ development plus earlier years in coordination-heavy roles outside
 engineering — patterns that shape his approach to contracts,
 pacing, and multi-party work. The past year-plus has been spent
 building the <a href="https://github.com/Smart-AI-Memory">attune-* ecosystem</a>
-— five PyPI packages (attune-ai, attune-rag, attune-author,
-attune-help, attune-gui) that together ship the workflow patterns
-described above. The evidence base for the claims here is that
-codebase and the multi-month working history that produced it.</p>
+— six PyPI packages (attune-ai, attune-rag, attune-author,
+attune-help, attune-gui, attune-verify) that together ship the
+workflow patterns described above. The evidence base for the
+claims here is that codebase and the multi-month working history
+that produced it.</p>
 
   </article>
   <footer>
