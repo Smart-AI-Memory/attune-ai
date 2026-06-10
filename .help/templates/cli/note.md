@@ -3,49 +3,17 @@ type: note
 name: cli-note
 feature: cli
 depth: note
-generated_at: 2026-06-04T23:39:47.664604+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-10T07:07:04.671376+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
-# Note: cli
+# Note: CLI architecture
 
-The `attune` CLI is built from two layers: a routing layer (`attune.cli_router`) that maps user input to skills, and a command layer (`cli_commands.*`) that implements each subcommand.
+The `attune` CLI is implemented across two top-level modules and a `cli_commands` package.
 
-## Routing layer
+- **`attune.cli_minimal`** owns the entry point. `create_parser()` builds the argument parser, and `main()` dispatches to a command handler based on the parsed subcommand. `get_version()` surfaces the installed package version.
+- **`attune.cli_router`** handles natural-language and slash-command input. `route_user_input()` and `is_slash_command()` are the primary dispatch functions. `HybridRouter` backs them with a learned-preference layer: it calls `learn_preference()` to associate a keyword with a skill invocation, and `get_suggestions()` to complete partial input. Preferences are stored as `RoutingPreference` records with fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`.
+- **`attune.cli_commands`** groups handlers by domain. Each handler receives an `argparse.Namespace` and returns an `int` exit code. The exit-code contract is enforced through `run_workflow_with_exit_code()` in `cli_commands._exit_codes`, which instantiates and executes a workflow class and returns the agreed-upon integer. Command groups include cost tracking (`cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset`), memory (`cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic`), telemetry, provider configuration, workflow management, and utility commands such as `cmd_setup`, `cmd_validate`, and `cmd_doctor`.
 
-`HybridRouter` in `attune.cli_router` maps user input to Claude Code skill invocations. It maintains learned preferences, stored as `RoutingPreference` dataclass instances with the following fields:
-
-| Field | Type | Default | Meaning |
-|---|---|---|---|
-| `keyword` | `str` | — | Trigger word or phrase |
-| `skill` | `str` | — | Skill to invoke |
-| `args` | `str` | `''` | Arguments passed to the skill |
-| `usage_count` | `int` | `0` | Number of times this preference has fired |
-| `confidence` | `float` | `1.0` | Router confidence in this preference |
-
-`route_user_input()` and `is_slash_command()` are the module-level entry points; `HybridRouter` is the stateful class for callers that need learned preferences and tab-completion suggestions via `get_suggestions()`.
-
-## Command layer
-
-Each subcommand group lives in its own module under `cli_commands`:
-
-| Module | Commands |
-|---|---|
-| `cost_commands` | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` |
-| `memory_commands` | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` |
-| `telemetry_commands` | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_export`, `cmd_telemetry_routing_stats`, `cmd_telemetry_routing_check`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` |
-| `workflow_commands` | `cmd_workflow_list`, `cmd_workflow_info`, `cmd_workflow_run` |
-| `utility_commands` | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_features`, `cmd_doctor` |
-| `provider_commands` | `cmd_provider_show`, `cmd_provider_set` |
-| `help_commands` | `cmd_help` |
-
-Every command function accepts an `argparse.Namespace` and returns an `int` exit code.
-
-## Exit-code contract
-
-`run_workflow_with_exit_code()` in `cli_commands._exit_codes` is the standard way to execute a workflow and map its outcome to a process exit code. `cmd_workflow_run` uses this function to satisfy the exit-code contract for `attune workflow run`.
-
-## Entry point
-
-`attune.cli_minimal` exposes `main()`, `create_parser()`, and `get_version()`. `main()` is the top-level entry point registered in the package's console scripts.
+`HybridRouter` and the command handlers are independent of each other. The router resolves natural-language input to a skill invocation before any `argparse` parsing occurs; the command handlers run only after `main()` has dispatched a recognized subcommand.

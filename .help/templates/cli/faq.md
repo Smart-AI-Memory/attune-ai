@@ -3,68 +3,59 @@ type: faq
 name: cli-faq
 feature: cli
 depth: faq
-generated_at: 2026-06-04T23:39:47.658072+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-10T07:07:04.664140+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
 # CLI FAQ
 
-## What does the CLI feature do?
+## What does the CLI feature cover?
 
-It provides the command-line interface for attune, including command dispatch, cost tracking, memory management, telemetry, workflow execution, and input routing via `HybridRouter`.
+It covers two things: the command-line interface (all `attune` subcommands) and the routing layer that maps user input to the right skill or workflow.
 
-## How do I start the CLI?
+## How do I run the CLI?
 
-Call `main()` from `attune.cli_minimal`. It accepts an optional `argv` list — pass `None` to read from `sys.argv`.
+Call `main()` from `attune.cli_minimal`. It accepts an optional `argv` list; when omitted it reads from `sys.argv`. Every command returns an integer exit code.
 
-## How does attune route my input to the right command?
+## How does routing work?
 
-`route_user_input()` in `attune.cli_router` takes a string and an optional context dict and returns a routing decision. For finer control, instantiate `HybridRouter` directly and call its `route()` method.
+`route_user_input()` in `attune.cli_router` takes a string of user input and an optional context dict, then returns a routing decision as a dict. For more control, instantiate `HybridRouter` directly — it lets you call `route()`, teach it new preferences with `learn_preference()`, and get tab-completion candidates with `get_suggestions()`.
 
-## Can attune learn my routing preferences?
+## What is a `RoutingPreference`?
 
-Yes. Call `HybridRouter.learn_preference(keyword, skill, args)` to teach the router that a particular keyword should map to a skill. The router stores each preference as a `RoutingPreference` with a `usage_count` and a `confidence` score that you can inspect later.
+A `RoutingPreference` is a dataclass that records one learned routing rule. Its fields are `keyword`, `skill`, `args` (default `''`), `usage_count` (default `0`), and `confidence` (default `1.0`). The router accumulates these over time to improve its suggestions.
 
-## How do I check whether a string is a slash command?
+## How do I tell whether a string is a slash command?
 
 Call `is_slash_command(text)` from `attune.cli_router`. It returns a boolean.
 
-## What commands are available for cost tracking?
+## Which subcommands are available?
 
-Four commands are available via `cli_commands.cost_commands`:
+The CLI is organized into groups:
 
-- `cmd_costs` — show a cost report for the recent period
-- `cmd_costs_today` — show today's cost summary
-- `cmd_costs_export` — export cost data to a file
-- `cmd_costs_reset` — clear all cost tracking data (returns `0` on success)
+| Group | Subcommands |
+|---|---|
+| **Costs** | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` |
+| **Memory** | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` |
+| **Telemetry** | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_export`, `cmd_telemetry_routing_stats`, `cmd_telemetry_routing_check`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` |
+| **Workflows** | `cmd_workflow_list`, `cmd_workflow_info`, `cmd_workflow_run` |
+| **Patterns** | `cmd_patterns_review`, `cmd_patterns_promote`, `cmd_patterns_reject` |
+| **Providers** | `cmd_provider_show`, `cmd_provider_set` |
+| **Utility** | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_features`, `cmd_doctor` |
 
-## How do I work with memory and lessons?
+## What exit codes does `attune workflow run` return?
 
-The `cli_commands.memory_commands` module exposes:
+`run_workflow_with_exit_code()` in `cli_commands._exit_codes` instantiates and executes a workflow, then returns the contract exit code as an integer. The specific values depend on the workflow result; check `cli_commands._exit_codes` for the full contract.
 
-- `cmd_remember` — add a lesson to the lessons file
-- `cmd_forget` — remove a lesson by line number or keyword
-- `cmd_lessons` — list current lessons with line numbers
-- `cmd_memory_capture` — save content to personal cross-session memory
-- `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` — recall, browse, and remove stored topics
+## How do I debug a failing command?
 
-## How do I run a workflow from the CLI?
-
-Use `cmd_workflow_run` from `cli_commands.workflow_commands`, or call `run_workflow_with_exit_code()` directly if you need the exit code contract in your own code. Pass the workflow class, an `input_data` dict, a `name`, a `json_mode` flag, and a `print_result` callable.
-
-## What exit codes does the CLI return?
-
-`run_workflow_with_exit_code()` returns the contract exit code for a workflow run. `cmd_costs_reset` returns `0` on success. Individual command functions all return `int` — check the specific command's behavior for non-zero values.
-
-## How do I check whether my setup is correct?
-
-Run `cmd_doctor` from `cli_commands.utility_commands`. You can also run `cmd_validate` to validate configuration and `cmd_setup` to walk through initial setup.
+Run the related tests first with `pytest -k "cli" -v`. If the tests pass but your code still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. For symptom-based issues, see the troubleshooting page for this feature.
 
 ## Where are the source files?
 
 - `src/attune/cli_minimal.py`
 - `src/attune/cli_router.py`
-- `src/attune/cli_commands/`
+- `src/attune/cli_commands/**`
 
 **Tags:** `cli`, `commands`

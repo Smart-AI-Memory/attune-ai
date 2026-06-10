@@ -3,17 +3,23 @@ type: tip
 name: memory-tip
 feature: memory
 depth: tip
-generated_at: 2026-06-04T23:45:26.869984+00:00
-source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
+generated_at: 2026-06-10T07:07:04.799881+00:00
+source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
 status: generated
 ---
 
 # Tip: working effectively with memory
 
-Call `is_redis_available()` before you instantiate any Redis-backed component — it checks whether the Redis subsystem is importable and reachable without triggering an import error if Redis is absent. This one call prevents the most common memory initialization failures.
+Call `is_redis_available()` before you instantiate any Redis-backed component.
 
-**Why it's worth the extra line:** Redis availability is an environment concern, not a code concern. Checking it explicitly at startup makes failures visible immediately rather than surfacing as a confusing `OSError` deep in `get_railway_redis()` or as silent no-ops in `stash()`.
+This single guard prevents import-time failures in environments where Redis is not installed — the function checks availability without importing the Redis subsystem at all. Skipping it means a missing dependency surfaces as a confusing runtime error instead of a clear unavailability signal.
 
-**Tradeoff:** `is_redis_available()` does not validate your connection URL or credentials — it only confirms the subsystem is importable. Follow it with `check_redis_connection()` if you need a full connectivity check, and use `get_redis_memory()` (which reads environment variables) rather than constructing connection parameters by hand.
+**Why it works:** `is_redis_available()` is specifically designed for this pre-flight check, so you pay no import cost regardless of the result.
+
+**Tradeoff:** You still need to handle the `False` case explicitly — the function tells you Redis is unavailable but does not fall back to a mock automatically. Use `get_redis_memory(use_mock=True)` if you want an automatic fallback.
+
+## Source files
+
+- `src/attune/memory/**`
 
 **Tags:** `memory`, `storage`

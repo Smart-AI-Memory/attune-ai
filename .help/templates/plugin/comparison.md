@@ -3,8 +3,8 @@ type: comparison
 name: plugin-comparison
 feature: plugin
 depth: comparison
-generated_at: 2026-05-27T13:42:27.354756+00:00
-source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
+generated_at: 2026-06-10T07:07:04.688941+00:00
+source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
 status: generated
 ---
 
@@ -12,61 +12,49 @@ status: generated
 
 ## Context
 
-The plugin ships a suite of lifecycle hooks for Claude Code — session handoff, compact warnings, security validation, spec orientation, and post-commit help. Each hook is a standalone entry point backed by shared state helpers in `hooks._state`. This page helps you decide when to use the plugin's hooks and when a simpler approach is the better fit.
+The attune Claude Code plugin ships a suite of lifecycle hooks — session continuity, security validation, spec orientation, transcript monitoring, and formatting. Each hook exposes a `main()` entry point and shares state helpers from `hooks._state`. The question this page answers: **should you wire up the plugin hooks, or solve the problem with a standalone script?**
 
-## Hook-by-hook summary
+## Feature comparison
 
-| Hook module | Entry point | What it does | Requires git? |
-|---|---|---|---|
-| `hooks._handoff_cli` | `main() -> int` | Drives the `/handoff` slash command | Yes — reads `GitState` |
-| `hooks._resume_prompt` | `build_resume_prompt(...)  -> str` | Renders the session-resume prompt with spec and git context | Yes |
-| `hooks.compact_warning` | `main() -> int` | Emits a context-utilization warning when `estimate_utilization()` exceeds a threshold | No |
-| `hooks.format_on_save` | `main() -> None` | Runs the formatter on save events | No |
-| `hooks.help_freshness_check` | `main() -> None` | Checks whether help content is stale | No |
-| `hooks.help_on_error` | `main() -> None` | Surfaces contextual help after an error | No |
-| `hooks.help_post_commit` | `main() -> None` | Surfaces help after a commit | Yes |
-| `hooks.security_guard` | `main(context) -> dict` | Validates bash commands and file paths before execution | No |
-| `hooks.spec_orient` | `main() -> int` | Formats and pins the active spec for the current session | Yes |
-| `hooks.welcome` | `main() -> None` | Runs once at session start | No |
-
-## Plugin hooks vs a throwaway script
-
-| Criterion | Plugin hook | Throwaway script |
+| Capability | Plugin hooks | Standalone script |
 |---|---|---|
-| **State discovery** | `discover_specs()` + `workspace_roots()` handle multi-root workspaces automatically | You must locate and parse spec files manually |
-| **Git context** | `git_state(cwd)` returns branch, last SHA, last subject, and uncommitted files in one call | You shell out to `git` and parse the output yourself |
-| **Session continuity** | `session_sentinel_path()` and `prune_stale_sentinels()` manage once-per-session deduplication | You implement your own sentinel logic |
-| **Context utilization** | `estimate_utilization(transcript_path)` returns a `[0.0, 1.0]` float ready to threshold | You compute transcript size and derive a ratio manually |
-| **Security validation** | `validate_bash_command()` and `validate_file_path()` check against `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` | You replicate or skip the allow/deny logic |
-| **Prompt rendering** | `build_resume_prompt()` composes spec info, git state, workspace path, and todo summary into a single string | You template the prompt yourself |
-| **Maintenance** | Hooks evolve with the plugin; your callers get fixes automatically | Each script is independent and drifts separately |
-| **Best for** | Persistent, production-grade Claude Code integrations | One-off investigation or a feature not yet in the API |
+| **Session continuity** | `session_recall.main()`, `session_stash.main()` handle sentinel creation, pruning, and resume-prompt rendering automatically | You implement sentinel logic from scratch; no TTL pruning |
+| **Resume prompt quality** | `build_resume_prompt()` is the single source of truth for prompt format, incorporating `SpecInfo` and `GitState` | You assemble the prompt manually; format drifts from the canonical shape |
+| **Spec discovery** | `discover_specs(roots)` walks `specs/` and `docs/specs/` subdirectories and returns typed `SpecInfo` objects | You write your own directory walker with no `effective_status` or `status_conflict` resolution |
+| **Git state snapshot** | `git_state(cwd)` returns a `GitState` with `branch`, `last_sha`, `last_subject`, and `uncommitted` files in one call | You shell out to git and parse output yourself |
+| **Transcript monitoring** | `estimate_utilization(transcript_path)` returns a `[0.0, 1.0]` float; `format_warning()` composes the user-facing alert | You approximate token load without a calibrated utilization curve |
+| **Security validation** | `validate_bash_command()` and `validate_file_path()` check against `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` | You maintain your own allowlist/blocklist |
+| **Spec orientation** | `format_orientation()` and `render_spec_pin()` render context-aware spec summaries with a configurable `char_budget` | You write and maintain your own rendering logic |
+| **JIT recall** | `jit_recall.main()` fires per-session recall with sentinel deduplication via `_SENTINEL_PREFIX` | No deduplication; you re-fire on every invocation |
+| **Stale sentinel cleanup** | `prune_stale_sentinels(now)` removes expired files automatically | Manual cleanup or accumulating sentinel files |
+| **Entry-point contract** | All hooks return `int` (0 on success) or `None`; never raises | Contract is whatever you write |
 
-The plugin hooks are clearly the stronger choice for anything that runs regularly. A throwaway script is reasonable for exploratory work — but once you find yourself re-implementing `git_state()` or sentinel management, that is a signal to switch.
+## Key tradeoffs
 
-## Plugin hooks vs calling Claude Code directly (no hooks)
+**Plugin hooks are more constrained, on purpose.** Each hook does one thing and exposes a narrow surface. If you need to combine `git_state()` with `discover_specs()` in a way the hooks don't anticipate, you call those functions directly from `hooks._state` — the helpers are public.
 
-Without the hooks layer, Claude Code has no automatic access to:
+**Standalone scripts are faster to prototype but slower to maintain.** You avoid the hook wiring overhead, but you re-implement state discovery, sentinel logic, and prompt formatting that the plugin already handles correctly. Once your script grows beyond ~50 lines of state manipulation, you are reimplementing the plugin.
 
-- In-flight spec metadata (`SpecInfo`: `slug`, `layer`, `phase`, `status`, `mtime`)
-- Workspace root discovery across multiple directories
-- Compact warnings tied to real transcript utilization
-- Session-scoped deduplication of warnings and orientation prompts
+**Security validation is non-trivial to get right.** `validate_bash_command()` and `validate_file_path()` encode specific rules about `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES`. A standalone script that skips these checks is not equivalent — it is less safe.
 
-If you skip the hooks, you lose these capabilities entirely — they are not duplicated elsewhere in the plugin's public API.
+## Use plugin hooks when…
 
-## Use the plugin hooks when…
+- You are hooking into Claude Code lifecycle events (session start/end, post-commit, pre-save, error, compact warning).
+- You need reliable resume prompts that stay consistent with `build_resume_prompt()` as the canonical format.
+- You want spec-aware orientation (`spec_orient`) or JIT recall without writing your own discovery and deduplication logic.
+- Security validation of bash commands or file paths is in scope — use `validate_bash_command()` and `validate_file_path()` rather than rolling your own.
+- You need transcript utilization monitoring via `estimate_utilization()`.
 
-- **You need session continuity.** `session_sentinel_path()` and `prune_stale_sentinels()` keep once-per-session behaviour correct without manual bookkeeping.
-- **You are working in a multi-root workspace.** `workspace_roots()` and `discover_specs()` handle the traversal; a script cannot match this without replicating the logic.
-- **You need git context reliably.** `git_state(cwd)` returns a typed `GitState` dataclass — branch, last SHA, last subject, and uncommitted files — rather than fragile shell output parsing.
-- **You are building a security boundary.** `validate_bash_command()` and `validate_file_path()` enforce the `SYSTEM_DIRECTORIES` and `SEARCH_COMMAND_PREFIXES` allow/deny rules that you would otherwise have to maintain yourself.
-- **You are rendering a resume or orientation prompt.** `build_resume_prompt()` and `format_orientation()` produce consistent output; hand-rolled prompts diverge over time.
+## Use a standalone script when…
 
-## Skip the plugin hooks when…
+- You need a one-off automation that touches none of the session, spec, or git state the hooks manage.
+- You are prototyping behavior before deciding whether it belongs in a hook at all.
+- Your logic genuinely doesn't fit any of the hook entry points and you don't need the shared state infrastructure.
 
-- Your task is purely exploratory and you do not plan to run it more than once or twice.
-- The behaviour you need is not exposed by the public API — in that case, file an issue or propose an extension point rather than patching internals.
-- Your integration lives at the orchestration layer above the plugin; in that case, call the orchestration API rather than individual hooks directly.
+In practice, most persistent Claude Code workflow automation belongs in a hook. Standalone scripts are the right starting point, not the right finishing point.
+
+## Source files
+
+- `plugin/**`
 
 **Tags:** `plugin`, `claude-code`

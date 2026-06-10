@@ -3,50 +3,52 @@ type: warning
 name: ops-dashboard-warning
 feature: ops-dashboard
 depth: warning
-generated_at: 2026-06-02T10:56:02.723762+00:00
-source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
+generated_at: 2026-06-10T07:07:04.664173+00:00
+source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
 status: generated
 ---
 
 # Ops Dashboard Cautions
 
-The ops dashboard runs as a blocking server process (`cmd_ops` returns `0` only after the server exits). The areas below describe the pitfalls most likely to cost you debugging time before you hit them.
+The ops dashboard runs a local FastAPI server (`python -m attune.ops`) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises come from three areas: the in-memory cost cache, the admin API key lookup, and configuration fields that silently restrict what the server allows.
 
 ## Risk areas
 
-### Stale cost data served as live data
+### `fetch_summary()` returns stale data by default
 
-`fetch_summary()` returns a `CostSummary` whose `source` field is either `'live'` or `'cached'`. If you call it without `refresh=True`, you may display cached figures without realizing it. Always check `CostSummary.source` before presenting numbers as current, and use `clear_cache()` only in tests — its docstring marks it as a test-only convenience.
+`fetch_summary(*, refresh: bool = False)` returns a cached `CostSummary` when `refresh` is `False`. If you call it without setting `refresh=True`, the `source` field on the returned `CostSummary` will be `'cached'`, and the cost figures (`today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`) will reflect whenever the cache was last populated — not the current moment. Always check `CostSummary.source` before presenting figures as live, and pass `refresh=True` when you need a current snapshot.
 
-### Missing admin key silently disables cost reporting
+### `load_admin_key()` returns `None` silently
 
-`load_admin_key()` returns `None` when the admin API key is unavailable. `fetch_summary()` wraps failures in a `CostFetchError` (fields: `kind`, `message`) rather than raising, so a missing key produces no exception — just a `None` summary alongside a categorized error. If your code unpacks the tuple without inspecting the error half, cost data will silently disappear from the dashboard.
+`load_admin_key()` returns `None` if the admin API key is unavailable rather than raising an exception. Code that passes the result directly to an HTTP client will fail later with a confusing auth error instead of a clear "key not configured" message. Check for `None` before use and surface a clear error to the user at that point.
 
-### FastAPI pulled in at import time if `create_app()` is called early
+### `clear_cache()` is a test helper, not a lifecycle hook
 
-`create_app()` uses a lazy import specifically to avoid pulling FastAPI into the `attune` namespace on import. If you call it at module level — or in a place that runs during `import attune` — you defeat that isolation and add FastAPI to the startup cost of every process that imports the package.
+`clear_cache()` in `attune.ops.anthropic_cost` is documented as a test-only convenience. Calling it in production code to force a refresh will work, but it bypasses the `refresh` parameter contract of `fetch_summary()` and can cause cache stampedes if multiple requests arrive simultaneously. Use `fetch_summary(refresh=True)` instead.
 
-### `Config.allow_run` defaults to `False` and blocks workflow execution
+### `Config.allow_run` gates workflow execution
 
-`Config.allow_run` is `False` by default. Workflows will not execute until this is explicitly set to `True`. This is intentional as a safety default, but it is easy to misconfigure when building a `Config` programmatically and then wonder why the runner does nothing.
+`Config.allow_run` defaults to `False`. With that default, the dashboard will load and display workflows but silently refuse to execute them. If you deploy the dashboard and find that run buttons have no effect, check this field first. Set it to `True` only in environments where you intend to allow workflow execution.
 
-### `Config.specs_candidates_enabled` gates the candidate detector
+### `Config.trusted_hosts` controls which origins the server accepts
 
-`detect_candidates()` scans spec roots only when `Config.specs_candidates_enabled` is `True`. With the default `False`, `detect_candidates()` returns an empty list with no warning. If you expect completion candidates to surface and they do not, check this flag before investigating the detector logic.
+`Config.trusted_hosts` defaults to an empty tuple. Requests from hosts not in this tuple will be rejected. When running the dashboard behind a proxy or in a non-localhost environment, add the proxy's hostname to `trusted_hosts` before starting the server — otherwise every request will fail and the error will appear to come from the network layer, not from configuration.
 
-### `runs_dir` may not exist until the first write
+### `create_app()` and `build_config()` defer their imports
 
-`Config.runs_dir` documents that the directory "may not exist until first write." Code that reads from `runs_dir` before any run has completed will encounter a missing directory. Guard any read path with an existence check rather than assuming the directory is present after `Config` is constructed.
+Both functions use lazy imports to avoid pulling FastAPI into the `attune` namespace at import time. If FastAPI is missing from the environment, the failure surfaces only when you first call one of these functions, not at `import attune`. If the server fails to start unexpectedly, verify FastAPI is installed before looking elsewhere.
 
 ## How to avoid problems
 
-1. **Always inspect both sides of `fetch_summary()`'s return tuple.** The signature is `tuple[CostSummary | None, CostFetchError | None]`. Treat a non-`None` error as a display-worthy event, not a silent no-op.
+1. **Check `CostSummary.source` after every `fetch_summary()` call.** A value of `'cached'` means the figures may be hours old. Pass `refresh=True` when you need current data.
 
-2. **Never call `clear_cache()` in production code.** Both the cost module and the candidate detector expose a `clear_cache()` function marked as a test helper. Calling either in production will cause the next request to make a live API call regardless of cache state.
+2. **Guard against `None` from `load_admin_key()`.** Treat a `None` return as a configuration error and fail fast with a descriptive message rather than propagating `None` into downstream calls.
 
-3. **Build `Config` explicitly for non-default behavior.** The safe defaults (`allow_run=False`, `specs_candidates_enabled=False`, `trusted_hosts=()`) mean a programmatically constructed `Config` will silently restrict dashboard capabilities. Pass each field you intend to use rather than relying on defaults.
+3. **Set `allow_run` and `trusted_hosts` explicitly in production configs.** Both fields have defaults that are safe for local development but will cause silent failures in other environments.
 
-4. **Depend only on the public API.** The module's `__all__` exports `create_app`, `build_config`, and `Config`. Private helpers (names starting with `_`, such as `_COST_REPORT_URL` and `_API_VERSION`) can change without notice.
+4. **Use `fetch_summary(refresh=True)` instead of `clear_cache()`.** Reserve `clear_cache()` for test setup and teardown only.
+
+5. **Depend only on the public API.** `__all__` exports `create_app`, `build_config`, and `Config`. Functions and constants prefixed with `_` (such as `_COST_REPORT_URL` and `_API_VERSION`) can change without notice.
 
 ## Source files
 

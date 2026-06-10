@@ -3,37 +3,45 @@ type: warning
 name: plugin-warning
 feature: plugin
 depth: warning
-generated_at: 2026-05-27T13:42:27.341658+00:00
-source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
+generated_at: 2026-06-10T07:07:04.674384+00:00
+source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
 status: generated
 ---
 
-# Plugin Cautions
+# Plugin cautions
 
-## Stale sentinels accumulate silently
+## Stale sentinels accumulate if you skip pruning
 
-`session_sentinel_path(session_id)` writes a file that gates the once-per-session compact warning. If `prune_stale_sentinels()` is never called — or is called with a stale `now` value — old sentinel files persist and suppress warnings that should fire. Call `prune_stale_sentinels()` without arguments so it uses the real wall-clock time, and confirm the return value (number of deleted files) matches your expectations after any test that creates sentinels.
+`session_sentinel_path()` writes a file prefixed with `.jit-recalled-` to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you call `session_sentinel_path()` without periodically calling `prune_stale_sentinels()`, old sentinels accumulate and can suppress warnings in sessions that should receive them.
 
-## Context utilization threshold is a float comparison
+**Mitigation:** Call `prune_stale_sentinels()` at a predictable point in your hook lifecycle (for example, at startup or after a session ends). Its return value tells you how many files were removed, which is useful for debugging runaway accumulation.
 
-`estimate_utilization(transcript_path)` returns a value in `[0.0, 1.0]`. `format_warning(util, threshold, resume_body)` compares these two floats directly. If you pass `threshold` as an integer (e.g. `1` instead of `1.0`) or derive it from an environment variable without casting, the comparison silently misbehaves. Always pass `threshold` as a `float`.
+## `status_conflict` in `SpecInfo` silently overrides `effective_status`
 
-## `build_resume_prompt` silently degrades when `spec_info` is `None`
+`discover_specs()` populates `SpecInfo` fields including `effective_status` and `status_conflict`. When `status_conflict` is `True`, the `effective_status` field does not simply reflect the `status` header — there is a disagreement between sources. Code that reads `effective_status` without checking `status_conflict` first can act on a resolved value that masks an underlying inconsistency.
 
-`build_resume_prompt(spec_info, git_state, ...)` accepts `spec_info: SpecInfo | None`. When `spec_info` is `None`, the resume prompt omits spec context — the output is valid but incomplete. This happens whenever `discover_specs(roots)` finds no in-flight specs under the given roots. Before calling `build_resume_prompt`, check whether `discover_specs` returned an empty list and decide whether that is expected for your workspace layout.
+**Mitigation:** Always check `spec.status_conflict` before trusting `spec.effective_status` in any logic that gates on spec state (for example, filtering out terminal statuses from `_TERMINAL_VERDICTS`).
 
-## `workspace_roots` may return an empty list
+## `build_resume_prompt()` silently uses a default workspace path
 
-`workspace_roots(cwd)` makes a best-effort guess at roots to scan. If `cwd` is outside a recognized workspace layout, it returns `[]`. Passing an empty list to `discover_specs(roots)` produces no `SpecInfo` results without raising an error, so the absence of specs looks identical to a workspace with no active work. If `discover_specs` returns `[]` unexpectedly, verify that `workspace_roots` is resolving the correct directory.
+`build_resume_prompt()` accepts `workspace_path` with a default of `~/attune`. If the actual workspace is elsewhere and you omit this argument, the rendered resume prompt will reference the wrong path — and the error will not surface as an exception; the output will simply be wrong.
 
-## `GitState.uncommitted` reflects the worktree at hook-fire time
+**Mitigation:** Always pass `workspace_path` explicitly. Derive it from `workspace_roots()` rather than relying on the default.
 
-`git_state(cwd)` captures `uncommitted: tuple[str, ...]` at the moment it is called. If files are staged or modified after `git_state` runs, `GitState.uncommitted` does not update — it is a snapshot, not a live view. Hooks that branch on uncommitted files should call `git_state` as late as possible, immediately before the check.
+## `estimate_utilization()` returns a float in `[0.0, 1.0]`, not a percentage
 
-## `validate_bash_command` and `validate_file_path` return reasons, not exceptions
+`estimate_utilization()` returns a value between `0.0` and `1.0`. Passing this directly to `format_warning()` as the `threshold` argument without converting to the same scale as your threshold constant will produce incorrect warning behavior — for example, a threshold of `80` will never be reached by a utilization of `0.95`.
 
-`validate_bash_command(command)` and `validate_file_path(file_path)` both return `tuple[bool, str]`. A rejected command or path returns `(False, reason)` — no exception is raised. Code that ignores the boolean and only uses the string will silently pass through commands that should have been blocked. Always check the first element of the tuple before proceeding.
+**Mitigation:** Keep your threshold and the return value of `estimate_utilization()` on the same scale. If your threshold is a fraction, express it as a value in `[0.0, 1.0]` as well.
+
+## `git_state()` reflects the working directory at call time
+
+`git_state()` returns a `GitState` snapshot — `branch`, `last_sha`, `last_subject`, and `uncommitted` files — captured at the moment of the call. If you call it once and cache the result across multiple hook operations, the snapshot can go stale: a commit, stash, or branch switch between calls will not be reflected.
+
+**Mitigation:** Call `git_state()` as late as possible in your hook, immediately before you need the data, rather than capturing it at startup.
 
 ## Private helpers in `hooks._state` can change without notice
 
-`hooks._state` is the shared foundation for session-continuity hooks. Its public surface — `discover_specs`, `git_state`, `session_sentinel_path`, `prune_stale_sentinels`, `workspace_roots` — is stable. Any names prefixed with `_` are implementation details that can change between versions without deprecation warnings. Depend only on the documented public functions.
+`discover_specs()`, `workspace_roots()`, and `session_sentinel_path()` are public, but several internal behaviors they depend on — including `_SPEC_SUBDIRS`, `_SENTINEL_PREFIX`, and `_TERMINAL_VERDICTS` — are private module-level constants. Code that reaches past the public functions and reads these constants directly will break silently during refactors.
+
+**Mitigation:** Use only the public functions listed in the API. If you need the list of terminal statuses for comparison, derive it from `SpecInfo.effective_status` values returned by `discover_specs()` rather than importing `_TERMINAL_VERDICTS` directly.

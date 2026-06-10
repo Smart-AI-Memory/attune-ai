@@ -3,63 +3,85 @@ type: comparison
 name: memory-comparison
 feature: memory
 depth: comparison
-generated_at: 2026-06-04T23:45:26.874785+00:00
-source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
+generated_at: 2026-06-10T07:07:04.805059+00:00
+source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
 status: generated
 ---
 
-# Comparison: Memory backends and storage strategies
+# Comparison: Memory backends
 
-## Context
+## Overview
 
-The memory subsystem provides three distinct storage and retrieval strategies: Redis-backed short-term memory (`RedisShortTermMemory`), file-based Claude memory loaded from `CLAUDE.md` files (`ClaudeMemoryLoader`), and enterprise long-term pattern storage (`MemDocsStorage`). Choosing the wrong one for your use case means either over-engineering a simple need or hitting a hard ceiling when your requirements grow.
+The memory subsystem offers two backend tiers — a base protocol (`MemoryBackend`) and an extended protocol (`SearchableMemoryBackend`) — plus two complementary integration paths: Redis-backed short-term memory and Claude Code file-based memory (`ClaudeMemoryLoader`). Choosing the right combination depends on whether you need distributed state, semantic search, or static project context loaded at startup.
 
-## Feature comparison
+## Backend protocol comparison
 
-| Capability | Redis short-term (`RedisShortTermMemory`) | Claude file memory (`ClaudeMemoryLoader`) | Enterprise pattern storage (`MemDocsStorage`) |
-|---|---|---|---|
-| **Primary protocol** | `MemoryBackend` | — (file-based loader) | `SearchableMemoryBackend` |
-| **Semantic search** | No | No | Yes — via `search(query, limit, **filters)` |
-| **Real-time support** | Yes — `supports_realtime()` returns `True` | No | Depends on backend |
-| **Distributed support** | Yes — `supports_distributed()` returns `True` | No | Yes |
-| **TTL / expiry** | Yes — `stash(key, value, ttl=...)` accepts per-key TTL | No — files persist until edited | Yes — `prune(max_age_days=...)` |
-| **Cross-session coordination** | Yes — via `CrossSessionCoordinator` | No | Yes |
-| **Security / classification** | Rate limiting via `RateLimiter`; API key auth via `APIKeyAuth` | File validation via `ClaudeMemoryConfig.validate_files` | Full classification system (`Classification`, `PIIScrubber`, `SecretsDetector`, audit logging) |
-| **Setup complexity** | Requires Redis; use `is_redis_available()` to check before connecting | Zero infrastructure — reads `.claude/CLAUDE.md` from disk | Requires `ControlPanelConfig` and optionally Redis; managed via `MemoryControlPanel` |
-| **Railway deployment** | `get_railway_redis()` — raises `OSError` if `REDIS_URL` is missing | Not applicable | Not applicable |
-| **Observability** | `get_stats()`, `check_redis_connection()` | `get_loaded_files()` | `MemoryControlPanel.get_statistics()`, `health_check()` |
-| **Import depth control** | No | Yes — `ClaudeMemoryConfig.max_import_depth` (default: 5) | No |
-| **Max file size guard** | No | Yes — `ClaudeMemoryConfig.max_file_size_bytes` (default: 1 000 000) | No |
+| Capability | `MemoryBackend` | `SearchableMemoryBackend` |
+|---|---|---|
+| Basic store / retrieve / delete | ✅ `stash`, `retrieve`, `delete` | ✅ inherits all base methods |
+| Key-pattern listing | ✅ `keys(pattern)` | ✅ |
+| Connection health check | ✅ `is_connected()`, `get_stats()` | ✅ |
+| Distributed support | runtime flag via `supports_distributed()` | runtime flag via `supports_distributed()` |
+| Real-time pub/sub support | runtime flag via `supports_realtime()` | runtime flag via `supports_realtime()` |
+| Semantic search | ❌ | ✅ `search(query, limit, **filters)` |
+| Long-term memory promotion | ❌ | ✅ `promote(session_id)` |
+| Content-addressed storage | ❌ | ✅ `remember(content, memory_id, session_id, topics)` |
+| Pruning by age | ❌ | ✅ `prune(max_age_days)` |
+| Recent-item retrieval | ❌ | ✅ `recent(limit, **filters)` |
 
-## Key tradeoffs
+`SearchableMemoryBackend` is a strict superset of `MemoryBackend`. There is no scenario where the base protocol is preferable on features alone; the base protocol exists so that lightweight backends can satisfy the contract without implementing search infrastructure.
 
-**Redis short-term memory** is the fastest path to keyed storage with expiry. `stash`, `retrieve`, `delete`, and `keys` map directly onto Redis primitives, so latency is as low as your Redis instance allows. The tradeoff is infrastructure: you must have Redis running (verify with `is_redis_available()`), and the `get_railway_redis()` helper will raise an `OSError` at startup if `REDIS_URL` is absent from the environment. There is no semantic search — if you need to query by meaning rather than exact key, this backend cannot help.
+## Storage path comparison
 
-**Claude file memory** (`ClaudeMemoryLoader`) has zero infrastructure requirements and is the only option that sources context directly from `CLAUDE.md` files on disk. `load_all_memory(project_root)` walks the project tree up to `max_import_depth` levels and concatenates content for injection into agent context. Because it reads files, it is inherently read-heavy and not suitable for high-frequency writes or real-time coordination between agents.
+| Dimension | Redis short-term memory | Claude file memory (`ClaudeMemoryLoader`) |
+|---|---|---|
+| **Backing store** | Redis instance (local or remote) | Filesystem (`CLAUDE.md` files) |
+| **Persistence** | TTL-controlled; evicted when TTL expires or Redis restarts | Persists as long as the file exists; survives process restarts |
+| **Scope** | Per-agent or shared across agents via `agent_id` param | Per-project; scoped by `project_root` in `ClaudeMemoryConfig` |
+| **Distributed** | Yes — multiple agents share one Redis | No — file reads are local to the process |
+| **Import depth** | N/A | Configurable via `max_import_depth` (default 5 levels) |
+| **File size guard** | N/A | Enforced via `max_file_size_bytes` (default 1 MB) |
+| **Entry point** | `get_redis_memory(url, use_mock)` | `ClaudeMemoryLoader(config).load_all_memory(project_root)` |
+| **Railway support** | `get_railway_redis()` — raises `OSError` if `REDIS_URL` is absent | Not applicable |
+| **Availability check** | `is_redis_available()` — safe to call without importing Redis | No equivalent; file presence is the availability signal |
+| **Typical data** | Ephemeral agent state, session keys, short-lived values | Project conventions, framework guidelines, reusable instructions |
 
-**Enterprise pattern storage** (`MemDocsStorage`, surfaced through `MemoryControlPanel`) is the only option that offers semantic search via `SearchableMemoryBackend.search`, structured promotion (`promote`), and compliance-grade classification (`PIIScrubber`, `SecretsDetector`, `AuditLogger`). It is also the most operationally heavy: `ControlPanelConfig` requires configuring `redis_host`, `redis_port`, `storage_dir`, and `audit_dir`. Use `MemoryControlPanel.health_check()` and `get_statistics()` to monitor it.
+## Feature matrix: enterprise control plane
 
-## Use X when...
+`MemoryControlPanel` adds an operational layer on top of Redis short-term memory. It has no equivalent for file-based memory.
 
-**Use `RedisShortTermMemory` (via `get_redis_memory()`) when:**
-- You need fast keyed reads and writes with optional TTL expiry during a single agent session or deployment.
-- You are coordinating multiple agents in real-time — `supports_realtime()` and `supports_distributed()` both return `True`.
-- You are deploying to Railway and can guarantee `REDIS_URL` is set in the environment.
+| Operation | API method | Notes |
+|---|---|---|
+| Redis lifecycle | `start_redis(verbose)`, `stop_redis()` | Only relevant when `ControlPanelConfig.auto_start_redis` is `True` |
+| Health and stats | `health_check()`, `get_statistics()`, `status()` | Returns `MemoryStats` / `dict` |
+| Pattern management | `list_patterns(classification, limit)`, `delete_pattern(pattern_id, user_id)` | Supports classification filtering |
+| Bulk operations | `clear_short_term(agent_id)`, `export_patterns(output_path, classification)` | Export writes to a file path |
+| HTTP API surface | `run_api_server(panel, host, port, api_key, ...)` | Includes rate limiting, SSL, and CORS via `RateLimiter` and `APIKeyAuth` |
 
-**Use `ClaudeMemoryLoader` (via `ClaudeMemoryConfig`) when:**
-- You want to inject project-level or user-level context from `CLAUDE.md` files into an agent without any infrastructure.
-- You need to control which memory levels load — `load_enterprise`, `load_user`, and `load_project` are individually togglable in `ClaudeMemoryConfig`.
-- You are bootstrapping a new project and want a starter file — call `create_default_project_memory(project_root)`.
+There is no `MemoryControlPanel` equivalent for `ClaudeMemoryLoader`. If you need audit logging, PII scrubbing (`PIIScrubber`), secrets detection (`SecretsDetector`), or access classification (`ClassificationRules`), those are Redis-path concerns.
 
-**Use `MemoryControlPanel` / `MemDocsStorage` when:**
-- You need semantic search over stored patterns — no other backend exposes `search(query, limit, **filters)`.
-- Your environment has compliance requirements: PII scrubbing, secret detection, audit logging, and `Classification`-based access control are only available here.
-- You need long-term pattern retention with pruning by age (`prune(max_age_days=...)`) and bulk export (`export_patterns(output_path)`).
-- You are operating at enterprise scale and need `MemoryControlPanel.status()`, `health_check()`, and `get_statistics()` for operational visibility.
+## Decision guide
 
-**Do not use the memory subsystem directly when:**
-- Your problem spans multiple features and belongs in an orchestration layer above individual backends.
-- You need behavior not exposed by `MemoryBackend` or `SearchableMemoryBackend` — propose an extension point rather than patching internals.
+**Use Redis short-term memory (`get_redis_memory`) when:**
+- Multiple agents need to share state within or across sessions — `supports_distributed()` must return `True`.
+- You need TTL-controlled eviction: stale values should disappear automatically.
+- You are deploying to Railway and have a Redis add-on; use `get_railway_redis()`.
+- You need the enterprise control plane: audit logging, pattern export, PII scrubbing, or the HTTP API.
+- You want real-time coordination between agents (pub/sub via `supports_realtime()`).
+
+**Use `ClaudeMemoryLoader` when:**
+- You need to inject static project context — coding conventions, framework rules, project-specific instructions — into an agent at startup.
+- The content lives in `CLAUDE.md` files and is edited by humans, not written programmatically.
+- You want zero infrastructure: no Redis, no network, no TTLs.
+- Memory must survive process restarts without any explicit persistence code.
+
+**Use `SearchableMemoryBackend` (over `MemoryBackend`) when:**
+- Your backend implementation supports semantic search and you want to expose `search`, `remember`, `promote`, and `prune` to callers.
+- You are writing a backend adapter and the underlying store (e.g., a vector database) can satisfy the full contract.
+
+**Stick with the base `MemoryBackend` when:**
+- You are implementing a lightweight backend (mock, in-memory, or test fixture) that does not need search.
+- You want to enforce at the type level that a component only uses simple key-value operations.
 
 ## Source files
 

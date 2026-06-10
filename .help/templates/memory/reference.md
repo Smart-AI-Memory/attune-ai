@@ -3,18 +3,16 @@ type: reference
 name: memory-reference
 feature: memory
 depth: reference
-generated_at: 2026-06-04T23:45:26.848192+00:00
-source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
+generated_at: 2026-06-10T07:07:04.779091+00:00
+source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
 status: generated
 ---
 
 # Memory reference
 
-Store, retrieve, search, and secure persistent memory across sessions and agents.
+Store, retrieve, search, and secure persistent memory across sessions — short-term Redis-backed storage, long-term pattern storage, CLAUDE.md file loading, cross-session coordination, and security controls including PII scrubbing, secret detection, and audit logging.
 
 ## Classes
-
-The table below lists every public class in `src/attune/memory/`. Protocol classes define the interfaces that backends must implement. Dataclass fields are expanded in the sections that follow.
 
 | Class | Description | File |
 |-------|-------------|------|
@@ -27,7 +25,7 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `MemoryControlPanel` | Enterprise control panel for Empathy memory management. | `src/attune/memory/control_panel.py` |
 | `MemoryAPIHandler` | HTTP request handler for the Memory Control Panel API. | `src/attune/memory/control_panel_api.py` |
 | `RateLimiter` | In-memory rate limiter keyed by IP address. | `src/attune/memory/control_panel_support.py` |
-| `APIKeyAuth` | Simple API key authentication. | `src/attune/memory/control_panel_support.py` |
+| `APIKeyAuth` | API key authentication for the control panel. | `src/attune/memory/control_panel_support.py` |
 | `MemoryStats` | Statistics for the memory system. | `src/attune/memory/control_panel_support.py` |
 | `CrossSessionCoordinator` | Coordinator for cross-session agent communication. | `src/attune/memory/cross_session/coordinator.py` |
 | `SessionType` | Type of session or agent. | `src/attune/memory/cross_session/models.py` |
@@ -37,18 +35,18 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `BackgroundService` | Background service daemon for cross-session coordination. | `src/attune/memory/cross_session/service.py` |
 | `EdgeType` | Types of relationships between nodes. | `src/attune/memory/edges.py` |
 | `Edge` | An edge connecting two nodes in the memory graph. | `src/attune/memory/edges.py` |
-| `EncryptionManager` | Manages encryption and decryption for SENSITIVE patterns. | `src/attune/memory/encryption.py` |
-| `FeatureStatus` | Status of an optional feature. | `src/attune/memory/features.py` |
+| `EncryptionManager` | Manages encryption and decryption for `SENSITIVE` patterns. | `src/attune/memory/encryption.py` |
+| `FeatureStatus` | Status of an optional memory feature. | `src/attune/memory/features.py` |
 | `FeatureInfo` | Information about a memory feature. | `src/attune/memory/features.py` |
 | `MemoryFeatures` | Checks availability of memory subsystem features. | `src/attune/memory/features.py` |
 | `FileSessionMemory` | File-based session memory with persistence. | `src/attune/memory/file_session.py` |
 | `FileSessionConfig` | Configuration for file-based session memory. | `src/attune/memory/file_session_models.py` |
 | `WorkingEntry` | Entry in working memory. | `src/attune/memory/file_session_models.py` |
-| `StagedPatternFile` | Pattern staged for validation (file-based version). | `src/attune/memory/file_session_models.py` |
+| `StagedPatternFile` | Pattern staged for validation (file-based). | `src/attune/memory/file_session_models.py` |
 | `SessionState` | Complete state of a session. | `src/attune/memory/file_session_models.py` |
 | `PatternStagingMixin` | Mixin providing pattern staging operations. | `src/attune/memory/file_session_patterns.py` |
 | `PersistenceMixin` | Mixin providing session persistence operations. | `src/attune/memory/file_session_persistence.py` |
-| `FileStashBackend` | Searchable, zero-infra session stash backed by a local JSONL file. | `src/attune/memory/file_stash.py` |
+| `FileStashBackend` | Searchable, zero-infrastructure session stash backed by a local JSONL file. | `src/attune/memory/file_stash.py` |
 | `MemoryGraph` | Knowledge graph for cross-workflow intelligence. | `src/attune/memory/graph.py` |
 | `LessonsManager` | Manages lessons learned from previous sessions. | `src/attune/memory/lessons.py` |
 | `SecureMemDocsIntegration` | Secure integration between Claude Memory and MemDocs. | `src/attune/memory/long_term_integration.py` |
@@ -60,6 +58,7 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `SecurePattern` | Represents a securely stored pattern. | `src/attune/memory/long_term_types.py` |
 | `SecurityError` | Raised when a security policy is violated. | `src/attune/memory/long_term_types.py` |
 | `MemoryPermissionError` | Raised when access is denied. | `src/attune/memory/long_term_types.py` |
+| `AttuneMemoryTool` | Anthropic Memory tool backed by an attune `MemoryBackend`. | `src/attune/memory/memory_tool.py` |
 | `BackendInitMixin` | Mixin providing backend initialization for `UnifiedMemory`. | `src/attune/memory/mixins/backend_init_mixin.py` |
 | `CapabilitiesMixin` | Mixin providing capability detection and health checks for `UnifiedMemory`. | `src/attune/memory/mixins/capabilities_mixin.py` |
 | `HandoffAndExportMixin` | Mixin providing session handoff and export capabilities for `UnifiedMemory`. | `src/attune/memory/mixins/handoff_mixin.py` |
@@ -73,7 +72,7 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `VulnerabilityNode` | Specialized node for security vulnerabilities. | `src/attune/memory/nodes.py` |
 | `PerformanceNode` | Specialized node for performance issues. | `src/attune/memory/nodes.py` |
 | `PatternNode` | Specialized node for code patterns. | `src/attune/memory/nodes.py` |
-| `PersonalMemory` | Store and retrieve personal cross-session memory. | `src/attune/memory/personal.py` |
+| `PersonalMemory` | Stores and retrieves personal cross-session memory. | `src/attune/memory/personal.py` |
 | `RedisDetectionResult` | Result of Redis auto-detection. | `src/attune/memory/redis_auto_detect.py` |
 | `RedisAutoDetector` | Auto-detects Redis availability and manages user preferences. | `src/attune/memory/redis_auto_detect.py` |
 | `RedisStartMethod` | Methods for starting Redis, in order of preference. | `src/attune/memory/redis_bootstrap.py` |
@@ -87,12 +86,12 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `PIIScrubber` | Comprehensive PII detection and scrubbing system. | `src/attune/memory/security/pii_scrubber.py` |
 | `AuditQueryMixin` | Mixin that adds query capabilities to `AuditLogger`. | `src/attune/memory/security/query.py` |
 | `AuditReportMixin` | Mixin that adds reporting capabilities to `AuditLogger`. | `src/attune/memory/security/reports.py` |
-| `SecretsDetector` | Detects secrets in text using pattern matching and entropy analysis. | `src/attune/memory/security/secrets_detector.py` |
+| `SecretsDetector` | Detects secrets in text content using pattern matching and entropy analysis. | `src/attune/memory/security/secrets_detector.py` |
 | `SecretType` | Types of secrets that can be detected. | `src/attune/memory/security/secrets_types.py` |
 | `Severity` | Severity levels for secret detections. | `src/attune/memory/security/secrets_types.py` |
 | `SecretDetection` | Metadata about a detected secret. | `src/attune/memory/security/secrets_types.py` |
 | `SessionStashEntry` | A single raw cross-session finding awaiting recall or promotion. | `src/attune/memory/session_stash.py` |
-| `BaseOperations` | Core CRUD operations and connection management. | `src/attune/memory/short_term/base.py` |
+| `BaseOperations` | CRUD operations and connection management for short-term memory. | `src/attune/memory/short_term/base.py` |
 | `BatchOperations` | Batch operations using Redis pipelines. | `src/attune/memory/short_term/batch.py` |
 | `CacheManager` | Local LRU cache manager for two-tier caching. | `src/attune/memory/short_term/caching.py` |
 | `ConflictNegotiation` | Conflict context and resolution operations. | `src/attune/memory/short_term/conflicts.py` |
@@ -126,18 +125,12 @@ The table below lists every public class in `src/attune/memory/`. Protocol class
 | `MemoryConfig` | Configuration for the unified memory system. | `src/attune/memory/unified.py` |
 | `UnifiedMemory` | Unified interface for short-term and long-term memory. | `src/attune/memory/unified.py` |
 
-## Dataclass fields
+## Protocols
 
-### `ClaudeMemoryConfig`
+`MemoryBackend` and `SearchableMemoryBackend` define the pluggable backend contracts. Any class that implements all required methods satisfies the protocol without inheriting from it.
 
-Configuration for Claude memory integration.
+### `MemoryBackend`
 
-| Field | Type | Default |
-|-------|------|---------|
-| `enabled` | `bool` | `False` |
-| `load_enterprise` | `bool` | `True` |
-| `load_user` | `bool` | `True` |
-| `load_project` | `bool` | `True` |
-| `enterprise_memory_path` | `str \| None` | `None` |
-| `project_root` | `str \| None` | `None` |
-|
+| Method | Parameters | Returns | Description |
+|--------|------------|---------|-------------|
+| `stash` | `key: str

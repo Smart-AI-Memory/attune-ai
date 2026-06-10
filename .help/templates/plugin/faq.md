@@ -3,8 +3,8 @@ type: faq
 name: plugin-faq
 feature: plugin
 depth: faq
-generated_at: 2026-05-27T13:42:27.346057+00:00
-source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
+generated_at: 2026-06-10T07:07:04.679170+00:00
+source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
 status: generated
 ---
 
@@ -12,47 +12,57 @@ status: generated
 
 ## What is the plugin?
 
-The plugin is the Claude Code integration layer: it bundles hooks, slash commands, MCP configuration, and skills that run alongside your Claude Code sessions.
+The plugin is attune's Claude Code integration — it bundles skills, hooks, slash commands, and MCP configuration that Claude Code needs to work with attune workspaces.
 
 ## What hooks does the plugin provide?
 
-The plugin includes hooks for several lifecycle events:
+Each hook is an independent entry point with its own `main()` function:
 
-- **`hooks.format_on_save`** — formats files when you save
-- **`hooks.help_freshness_check`** — checks whether help content is current
-- **`hooks.help_on_error`** — surfaces help when an error occurs
-- **`hooks.help_post_commit`** — runs help checks after a commit
-- **`hooks.compact_warning`** — warns you when context utilization is high
-- **`hooks.security_guard`** — validates bash commands and file paths before execution
-- **`hooks.spec_orient`** — orients you to in-flight specs in your workspace
-- **`hooks.welcome`** — runs on session start
+| Module | What it does |
+|---|---|
+| `hooks.compact_warning` | Warns when context utilization (via `estimate_utilization`) exceeds a threshold and injects a resume prompt |
+| `hooks.format_on_save` | Runs formatting when a file is saved |
+| `hooks.help_freshness_check` | Checks whether help content is stale |
+| `hooks.help_on_error` | Surfaces help content when an error occurs |
+| `hooks.help_post_commit` | Surfaces help content after a commit |
+| `hooks.jit_recall` | Just-in-time recall of relevant rules at decision points |
+| `hooks.security_guard` | Validates bash commands and file paths before execution |
+| `hooks.session_recall` | Restores session context at the start of a session |
+| `hooks.session_stash` | Saves session context when a session ends |
+| `hooks.spec_orient` | Summarizes in-flight specs to orient Claude at session start |
+| `hooks.welcome` | Runs on first connection to greet and orient Claude |
+| `hooks._handoff_cli` | CLI wrapper for the `/handoff` slash command |
+
+## How does the plugin know which specs are in flight?
+
+`discover_specs(roots)` in `hooks._state` walks `specs/` and `docs/specs/` directories under each workspace root and returns a list of `SpecInfo` objects. Each `SpecInfo` carries the spec's `slug`, `path`, `layer`, `phase`, `status`, `mtime`, `effective_status`, `status_source`, and `status_conflict` fields. Call `workspace_roots()` first if you don't already have a list of roots.
+
+## How does the plugin decide a spec is "done"?
+
+It compares `effective_status` against the terminal verdicts `{'closed', 'complete', 'completed', 'retired', 'superseded', 'shipped', 'done'}`. Any spec whose status matches one of those values is treated as finished and excluded from active orientation output.
 
 ## What does `security_guard` actually check?
 
-It validates two things: the bash command you're about to run (`validate_bash_command`) and the file path you're about to access (`validate_file_path`). Both return a `(bool, str)` tuple — `True` if the input is allowed, along with a message explaining the decision.
+`validate_bash_command(command)` blocks commands that touch system directories such as `/etc`, `/sys`, `/proc`, and `/dev`. `validate_file_path(file_path)` checks the target path against the same set of protected locations. Both functions return a `(bool, str)` tuple — `True` with an empty message means the input is allowed; `False` means it was blocked, and the string explains why.
 
-File path validation blocks access to system directories including `/etc`, `/sys`, `/proc`, `/dev`, `/boot`, `/sbin`, `/usr/sbin`, `/private/etc`, and `/private/var`.
+## How does compact warning decide when to fire?
 
-## How does the compact warning work?
+`estimate_utilization(transcript_path)` returns a float in `[0.0, 1.0]` representing how full the context window is. `format_warning(util, threshold, resume_body)` composes the warning message only when `util` exceeds `threshold`. The resume body is built by `build_resume_prompt()` in `hooks._resume_prompt`.
 
-`estimate_utilization` in `hooks._transcript_size` reads your transcript and returns a float in `[0.0, 1.0]` representing how full your context window is. When that value crosses a threshold, `format_warning` in `hooks.compact_warning` composes a warning that includes a resume prompt so you can continue work in a fresh session.
+## How do I build the resume prompt myself?
 
-The resume prompt itself is built by `build_resume_prompt` in `hooks._resume_prompt`, which pulls in the current `SpecInfo` (if any), the `GitState` snapshot, your workspace path, and an optional to-do summary.
+Call `build_resume_prompt(spec_info, git_state, workspace_path=..., todo_summary=...)` from `hooks._resume_prompt`. Pass a `SpecInfo` (or `None` if there is no active spec) and a `GitState` snapshot from `hooks._state.git_state(cwd)`. The function returns a formatted string ready to inject into a prompt.
 
-## How does the plugin find my in-flight specs?
+## What git information does the plugin capture?
 
-`discover_specs` in `hooks._state` walks the `specs/` directories under each workspace root and returns a list of `SpecInfo` objects. Each `SpecInfo` carries the spec's `slug`, `path`, `layer`, `phase`, `status`, and `mtime`. Workspace roots are resolved by `workspace_roots`, which defaults to `~/attune` if it can't determine them from your current directory.
+`git_state(cwd)` returns a `GitState` with four fields: `branch`, `last_sha`, `last_subject`, and `uncommitted` (a tuple of changed file paths). The plugin uses this snapshot in resume prompts and handoff output.
 
-## What git information does the plugin use?
+## What are session sentinels, and why do they exist?
 
-`git_state` in `hooks._state` returns a `GitState` snapshot containing your current `branch`, the `last_sha` and `last_subject` of your most recent commit, and a tuple of `uncommitted` file paths. Hooks that build resume prompts and orientation output use this snapshot.
-
-## How do I run the handoff command?
-
-Call `main()` in `hooks._handoff_cli` — it's the entry point for the `/handoff` slash command and returns `0` on success.
+A session sentinel is a file whose presence tells `jit_recall` that it has already fired once in the current session, preventing duplicate recalls. `session_sentinel_path(session_id)` returns the path for a given session. `prune_stale_sentinels()` deletes sentinel files older than the TTL and returns the count of files removed.
 
 ## Where are the source files?
 
-All plugin source files live under `plugin/**`.
+All hook modules live under `plugin/**`. The shared state helpers (`SpecInfo`, `GitState`, `discover_specs`, `git_state`, `workspace_roots`, and the sentinel functions) are in `hooks._state`.
 
 **Tags:** `plugin`, `claude-code`

@@ -3,8 +3,8 @@ type: note
 name: plugin-note
 feature: plugin
 depth: note
-generated_at: 2026-05-27T13:42:27.352453+00:00
-source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
+generated_at: 2026-06-10T07:07:04.686067+00:00
+source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
 status: generated
 ---
 
@@ -12,48 +12,30 @@ status: generated
 
 ## Context
 
-The plugin integrates attune with Claude Code by wiring together hooks, slash commands, and MCP configuration. All hook logic lives under `hooks/` and is partitioned into focused modules: lifecycle hooks (`format_on_save`, `help_freshness_check`, `help_on_error`, `help_post_commit`, `welcome`), session-continuity utilities (`_handoff_cli`, `_resume_prompt`, `_state`), context-utilization monitoring (`_transcript_size`, `compact_warning`), orientation (`spec_orient`), and a security layer (`security_guard`).
+The plugin is a Claude Code extension that wires together skills, hooks, slash commands, and MCP configuration. All hook entry points live under `hooks/` and follow a consistent shape: a public `main()` function that the Claude Code runtime calls directly.
 
-## Shared state model
+## Public surface
 
-Two dataclasses in `hooks._state` are the common currency passed between modules:
+The plugin's shared state layer (`hooks/_state.py`) defines two dataclasses that flow through most of the hook pipeline:
 
-**`SpecInfo`** represents one in-flight spec discovered under a workspace root:
+- **`SpecInfo`** — represents one in-flight spec discovered under a workspace root. Fields: `slug`, `path`, `layer`, `phase`, `status`, `mtime`, `effective_status`, `status_source`, and `status_conflict`.
+- **`GitState`** — a snapshot of the worktree at hook-fire time. Fields: `branch`, `last_sha`, `last_subject`, and `uncommitted`.
 
-| Field | Type | Description |
-|---|---|---|
-| `slug` | `str` | Short identifier for the spec |
-| `path` | `Path` | Absolute path to the spec file |
-| `layer` | `str` | Architectural layer the spec targets |
-| `phase` | `str` | Current lifecycle phase |
-| `status` | `str` | Progress status |
-| `mtime` | `float` | Last-modified timestamp |
+Functions in the same module populate these types:
 
-**`GitState`** is a snapshot of the worktree at hook-fire time:
+- `discover_specs(roots)` — walks `specs/` directories under each root and returns a list of `SpecInfo` instances.
+- `git_state(cwd)` — returns a `GitState` for the given working directory.
+- `workspace_roots(cwd)` — makes a best-effort guess at which roots to scan.
+- `session_sentinel_path(session_id)` — returns the path to a per-session compact-warning sentinel file.
+- `prune_stale_sentinels(now)` — removes sentinel files older than the TTL.
 
-| Field | Type | Description |
-|---|---|---|
-| `branch` | `str` | Current branch name |
-| `last_sha` | `str` | SHA of the most recent commit |
-| `last_subject` | `str` | Subject line of the most recent commit |
-| `uncommitted` | `tuple[str, ...]` | Paths with uncommitted changes |
+Other hooks consume these types directly:
 
-`discover_specs(roots)` and `git_state(cwd)` in `hooks._state` are the canonical way to populate these dataclasses. Other modules import and consume them rather than querying git or the filesystem directly.
+- `hooks._resume_prompt.build_resume_prompt(spec_info, git_state, ...)` — renders the user-facing resume prompt from a `SpecInfo` and a `GitState`.
+- `hooks.spec_orient.format_orientation(specs)` and `render_spec_pin(spec, char_budget)` — format spec orientation output for display.
+- `hooks.compact_warning.format_warning(util, threshold, resume_body)` — composes the compact-warning message from a utilization float produced by `hooks._transcript_size.estimate_utilization(transcript_path)`.
+- `hooks.security_guard.validate_bash_command(command)` and `validate_file_path(file_path)` — each return a `(bool, str)` verdict tuple checked before shell operations run.
 
-## Session-continuity flow
+## Design note
 
-When a session ends or context runs long, three functions collaborate to produce a resume prompt:
-
-1. `workspace_roots(cwd)` — resolves the workspace roots to scan.
-2. `discover_specs(roots)` — walks `specs/` directories under each root and returns `list[SpecInfo]`.
-3. `build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)` in `hooks._resume_prompt` — renders the user-facing resume prompt body from a `SpecInfo | None` and a `GitState`.
-
-The `hooks._handoff_cli` module exposes this flow as the `/handoff` slash command via its `main()` entry point.
-
-## Context utilization and compact warning
-
-`estimate_utilization(transcript_path)` in `hooks._transcript_size` returns a float in `[0.0, 1.0]` representing how full the current context window is. When utilization crosses a threshold, `format_warning(util, threshold, resume_body)` in `hooks.compact_warning` composes the visible warning together with the resume prompt. `session_sentinel_path(session_id)` and `prune_stale_sentinels(now)` in `hooks._state` ensure the warning fires at most once per session.
-
-## Security layer
-
-`hooks.security_guard` validates tool calls before execution. `validate_bash_command(command)` blocks commands that target paths in `SYSTEM_DIRECTORIES` (`{'/etc', '/sys', '/proc', '/dev', '/boot', '/sbin', '/usr/sbin', '/private/etc', '/private/var'}`) or that use prefixes listed in `SEARCH_COMMAND_PREFIXES`. `validate_file_path(file_path)` applies the same directory check to file operations. Both return `(bool, str)` — a pass/fail flag and an explanation string. The module's `main(context)` entry point wraps these validators for MCP dispatch.
+The dataclasses in `hooks/_state.py` act as the shared vocabulary of the hook pipeline. Functions that discover or snapshot state return these types; functions that present or validate state accept them. This keeps discovery logic in one place and lets individual hooks stay focused on a single responsibility.

@@ -3,56 +3,62 @@ type: comparison
 name: cli-comparison
 feature: cli
 depth: comparison
-generated_at: 2026-06-04T23:39:47.667247+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-10T07:07:04.674114+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
-# Comparison: CLI vs Claude Code skills
+# Comparison: attune CLI vs HybridRouter
 
-The attune CLI (`attune`) and Claude Code skills are both entry points into attune's workflows and memory system. They share underlying functionality but are optimized for completely different working styles.
+The `attune` CLI and `HybridRouter` are both ways to invoke attune workflows and skills — but they serve different audiences, environments, and interaction patterns.
 
 ## Feature comparison
 
-| Feature | CLI (`attune`) | Claude Code skills |
-| --- | --- | --- |
-| Invocation | `attune workflow run`, `attune costs`, `attune memory` | `/skill-name` slash commands |
-| Routing | `HybridRouter` with learned `RoutingPreference` records | Socratic prompting inside conversation |
-| Output format | Terminal (supports `--json` via `json_mode`) | Conversation markdown |
-| Codebase context | Not available — you supply input explicitly | Full visibility into open files and project |
-| CI/CD use | Yes — `run_workflow_with_exit_code()` returns a contract exit code for pipeline integration | No |
-| Follow-up interaction | Manual — re-run with adjusted flags | Interactive — Claude can propose and apply fixes inline |
-| Cost tracking | Built-in: `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` | Available via MCP tools |
-| Memory commands | `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` | Via skill invocation |
-| Learned routing preferences | `HybridRouter.learn_preference()` stores `RoutingPreference` (keyword, skill, args, usage_count, confidence) | Not applicable |
-| Autocomplete suggestions | `HybridRouter.get_suggestions(partial)` | Not applicable |
-| Setup | `pip install` + API key, then `attune setup` / `attune doctor` | Plugin install inside Claude Code |
+| Feature | `attune` CLI | `HybridRouter` |
+|---|---|---|
+| **Entry point** | `attune <command>` in a terminal | `HybridRouter.route()` in Python code |
+| **Primary audience** | Developers, CI/CD pipelines, shell scripts | Applications embedding attune routing logic |
+| **Workflow execution** | `cmd_workflow_run` / `run_workflow_with_exit_code()` | Not applicable — routes to skills, not workflows |
+| **Exit-code contract** | Yes — `run_workflow_with_exit_code()` returns `int` for scripting | No — `route()` returns `dict[str, Any]` |
+| **Cost tracking** | Yes — `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` | No built-in cost commands |
+| **Memory management** | Yes — `cmd_remember`, `cmd_forget`, `cmd_memory_recall`, `cmd_memory_capture`, and others | No |
+| **Provider control** | Yes — `cmd_provider_show`, `cmd_provider_set` | No |
+| **Telemetry** | Yes — `cmd_telemetry_show`, `cmd_telemetry_savings`, routing stats, model/agent signals | No |
+| **Learned routing preferences** | No | Yes — `learn_preference()` stores `RoutingPreference` (keyword, skill, confidence) |
+| **Autocomplete suggestions** | No | Yes — `get_suggestions(partial)` |
+| **Slash-command detection** | No | Yes — `is_slash_command(text)` |
+| **CI/CD use** | Yes — predictable exit codes, JSON output mode | Not designed for it |
+| **Interactive / conversational** | No — single-shot invocations | Yes — stateful preferences persist across calls |
+| **Setup** | `pip install` + API key, then `attune setup` | Instantiate `HybridRouter(preferences_path=...)` in code |
+| **Self-diagnostics** | Yes — `cmd_doctor`, `cmd_validate`, `cmd_features` | No |
 
 ## Key tradeoffs
 
-**Explicitness vs. context-awareness.** The CLI requires you to supply all input data explicitly — it has no view of your codebase. Claude Code skills can read open files and infer context, which reduces the setup cost for exploratory or iterative tasks.
+**Exit codes vs. structured dicts.** The CLI's `run_workflow_with_exit_code()` is purpose-built for shell scripting: it returns an `int` that upstream tools (Make, GitHub Actions, bash `set -e`) can act on directly. `HybridRouter.route()` returns a `dict[str, Any]`, which is richer for programmatic consumers but useless as a process exit code.
 
-**Scripting and reliability.** `run_workflow_with_exit_code()` returns a well-defined integer exit code, making it straightforward to gate CI/CD steps on workflow outcomes. Claude Code skills have no equivalent contract for automated pipelines.
+**Opinionated commands vs. learnable routing.** The CLI ships a fixed set of commands (`cmd_workflow_run`, `cmd_costs`, `cmd_memory_recall`, etc.) whose behavior is defined at install time. `HybridRouter` is designed to adapt: `learn_preference()` stores a `RoutingPreference` with a `confidence` score and `usage_count`, so routing improves as the application accumulates signal.
 
-**Routing intelligence.** The CLI's `HybridRouter` learns from your behavior: `learn_preference()` persists a `RoutingPreference` record (with `confidence` and `usage_count` fields) that improves routing over time. `get_suggestions()` provides prefix-based completions. Claude Code skills rely on conversational disambiguation instead.
+**Breadth vs. focus.** The CLI covers the full surface — workflows, memory, costs, telemetry, provider settings, curator, patterns, and help. `HybridRouter` does one thing: map user input to a skill invocation, optionally informed by learned preferences.
 
-**Cost and memory management.** Cost tracking (`cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset`) and the full memory command set (`cmd_remember` through `cmd_memory_forget_topic`) are first-class CLI commands with discrete exit codes. These operations are less directly accessible in a conversational context.
+## Use `attune` CLI when…
 
-## Use the CLI when…
+- You are running workflows from a shell, Makefile, or CI/CD pipeline and need reliable exit codes.
+- You want to track, export, or reset API costs (`cmd_costs_export`, `cmd_costs_reset`).
+- You need to manage memory entries directly (`cmd_remember`, `cmd_forget`, `cmd_memory_topics`).
+- You are diagnosing a broken environment (`cmd_doctor`, `cmd_validate`).
+- You want a self-contained tool that requires no Python integration work.
 
-- You are integrating attune into a CI/CD pipeline and need `run_workflow_with_exit_code()` to return a reliable exit code.
-- You want to script batch workflow runs with explicit input data and JSON output (`json_mode=True`).
-- You need direct control over cost data — exporting with `cmd_costs_export`, resetting with `cmd_costs_reset`, or reviewing a daily summary with `cmd_costs_today`.
-- You are managing cross-session memory programmatically (`cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`).
-- You want to build or inspect learned routing preferences via `HybridRouter.learn_preference()` and `HybridRouter.get_suggestions()`.
-- You are validating your setup with `cmd_validate` or `cmd_doctor` outside of a conversation.
+## Use `HybridRouter` when…
 
-## Use Claude Code skills when…
+- You are building an application that accepts freeform user input and needs to route it to Claude Code skills programmatically.
+- You want routing to improve over time — `learn_preference()` lets you bind keywords to specific skills with tunable `confidence`.
+- You need autocomplete UX — `get_suggestions(partial)` returns candidate skill names for a partial input string.
+- You are already in Python and returning a `dict[str, Any]` is more useful than a process exit code.
 
-- You want attune to see your open files and infer context without you describing the project manually.
-- Your task is exploratory and you expect to ask follow-up questions or have Claude apply changes interactively.
-- You are already working inside Claude Code and the overhead of switching to a terminal outweighs the benefits of explicit input control.
+## Source files
 
-The CLI is the stronger default for any automated or repeatable workflow. Claude Code skills have the advantage for interactive, context-heavy tasks where the conversation itself carries useful state.
+- `src/attune/cli_minimal.py`
+- `src/attune/cli_router.py`
+- `src/attune/cli_commands/**`
 
 **Tags:** `cli`, `commands`
