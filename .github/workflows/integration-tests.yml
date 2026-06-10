@@ -3,14 +3,17 @@ name: Integration Tests
 # Runs the FULL no-auth integration suite (docs/specs/integration-
 # coverage/) so it stops rotting from never running. Keyless (empty
 # ANTHROPIC_API_KEY) → CI-representative; auth-required tests (the
-# `*_with_auth` files + the env-gated discovery_sweep files) skip here
-# and run separately (integration-auth.yml — nightly + manual dispatch).
+# env-gated discovery_sweep files + test_llm_integration.py's real
+# calls) skip here via their own skipif gates and run separately
+# (integration-auth.yml — nightly + manual dispatch).
 #
 # History: started as an explicit green-subset file list while the
 # 11-file cleanup backlog in
 # docs/specs/integration-coverage/phase1-triage.md was worked down.
 # Backlog cleared 2026-06-09 (295 passed / 41 skipped / 0 fail
-# locally) → promoted to the full `-k "not with_auth"` selector.
+# locally) → promoted to the full suite. The 6 rotted `*_with_auth`
+# demo files were retired 2026-06-10 (auth-run-triage.md), so the
+# old `-k "not with_auth"` exclusion is gone.
 # Still advisory (not in branch-protection required checks); promote
 # to required after a few weeks of green runs.
 
@@ -52,4 +55,4 @@ jobs:
         run: |
           pytest -m "" -o addopts="" -p no:cacheprovider \
             -n auto --timeout=120 --timeout-method=thread \
-            tests/integration -k "not with_auth"
+            tests/integration

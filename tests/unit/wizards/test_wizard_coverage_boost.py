@@ -86,6 +86,25 @@ class TestSecurityWizardInit:
             result = wizard._get_or_create_workflow()
             assert result is None
 
+    def test_get_or_create_workflow_constructs_real_workflow(self):
+        """The REAL construction path returns a workflow, not None.
+
+        Regression guard: the wizard used to pass legacy kwargs
+        (skip_remediate_if_clean, use_crew_*, enable_auth_strategy)
+        that the SDK-native SecurityAuditWorkflow rejects with
+        TypeError — swallowed by the broad except, so the wizard
+        silently always fell back to the LLM path. No mocks here on
+        purpose: this must exercise the real constructor.
+        """
+        from attune.workflows.security_audit import SecurityAuditWorkflow
+
+        wizard = SecurityWizard()
+        result = wizard._get_or_create_workflow()
+
+        assert isinstance(result, SecurityAuditWorkflow)
+        # And the cache now holds it for subsequent calls.
+        assert wizard._security_workflow is result
+
     def test_build_prompt_context_scan(self):
         """Test build_prompt_context for scan step."""
         wizard = SecurityWizard()

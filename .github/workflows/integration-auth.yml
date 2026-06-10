@@ -1,11 +1,12 @@
 name: Integration Tests (auth)
 
 # Opt-in nightly run of the AUTH bucket of the integration suite
-# (docs/specs/integration-coverage/): the 6 `*_with_auth` files, the
-# 6 env-gated discovery_sweep files, and test_llm_integration.py
-# (33 tests, verified by collect-only dry run 2026-06-09). These hit
-# the real Anthropic API with the repo's ANTHROPIC_API_KEY secret, so
-# they NEVER run on push/PR — schedule + manual dispatch only (no
+# (docs/specs/integration-coverage/): the 6 env-gated
+# discovery_sweep files and test_llm_integration.py. (The 6 rotted
+# `*_with_auth` demo files were retired 2026-06-10 after run
+# 27249886475 — see auth-run-triage.md.) These hit the real
+# Anthropic API with the repo's ANTHROPIC_API_KEY secret, so they
+# NEVER run on push/PR — schedule + manual dispatch only (no
 # pull_request trigger → no fork-PR secret exposure).
 #
 # Spend controls: ATTUNE_MAX_BUDGET_USD caps each SDK workflow run;
@@ -59,4 +60,4 @@ jobs:
         run: |
           pytest -m "" -o addopts="" -p no:cacheprovider \
             -n 2 --timeout=600 --timeout-method=thread \
-            tests/integration -k "with_auth or discovery_sweep or llm_integration"
+            tests/integration -k "discovery_sweep or llm_integration"

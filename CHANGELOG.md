@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Security wizard silently never used `SecurityAuditWorkflow`.**
+  `security_wizard._get_or_create_workflow()` passed legacy
+  pre-SDK-migration kwargs (`skip_remediate_if_clean`,
+  `use_crew_for_*`, `enable_auth_strategy`) that the SDK-native
+  workflow rejects with `TypeError`; the broad `except` swallowed it
+  and the wizard always fell back to the plain LLM path. Surfaced by
+  the first valid-key nightly auth run (run 27249886475). Fixed with
+  kwarg-free construction + a no-mocks regression test on the real
+  construction path.
+
+### Removed
+- **The 6 rotted `test_*_with_auth.py` integration files.** All
+  pre-dated the SDK migration (dead constructor kwargs), and 5 of 6
+  were print-based demo scripts with zero assertions; the feature
+  they demoed (per-workflow auth-mode tracking) no longer exists for
+  those workflows. `AuthStrategy` logic keeps its unit coverage.
+  Verdict + per-file detail:
+  `docs/specs/integration-coverage/auth-run-triage.md`. The
+  `integration-auth.yml` selector and `integration-tests.yml`
+  exclusion were updated to match.
+
 ### Changed
 - **Integration CI job promoted to the full no-auth suite.** The
   `integration-tests.yml` job (advisory, #704) now runs

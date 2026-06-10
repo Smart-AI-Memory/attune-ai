@@ -61,8 +61,83 @@ their assertions to require a successful workflow result.
 ## Sequencing
 
 1. Patrick sets a valid `ANTHROPIC_API_KEY` secret (blocker for
-   everything else).
+   everything else). — DONE 2026-06-10.
 2. Rewrite-or-retire pass over the 6 `*_with_auth` files (one PR).
+   — DONE 2026-06-10, verdict: retire all 6 (below).
 3. Re-dispatch `integration-auth.yml`; judge discovery_sweep pass
    quality and the known `test_thinking_mode` Opus-4.8 400 with real
-   signal.
+   signal. — DONE 2026-06-10 (below).
+
+## Second run — valid key (2026-06-10)
+
+[Run 27249886475](https://github.com/Smart-AI-Memory/attune-ai/actions/runs/27249886475)
+(dispatched 02:53 UTC with the fixed secret): **15 failed /
+18 passed in 6:06** — real API spend this time, and every failure
+carries real signal.
+
+### Finding 1 — RESOLVED
+
+The fixed key works: `test_llm_integration.py`'s real-call tests
+went 16-failed → green (the only remaining failure there is
+`test_thinking_mode`, the known Opus-4.8 `max_tokens` vs
+`thinking.budget_tokens` 400 on the deprecated `use_thinking`
+path — exactly as predicted in phase1-triage.md).
+
+### Finding 2 — confirmed; all 6 `*_with_auth` files RETIRED
+
+Same 8 TypeErrors as the first run (pre-API rot). Per-file
+verdict from the rewrite-or-retire read:
+
+- 5 of 6 (`bug_predict`, `code_review`, `gen`, `perf_audit`,
+  `security_audit`) are print-based demo scripts with ZERO
+  assertions — they could never fail on a wrong answer, only on
+  crash. Nothing to rewrite; the auth-strategy *workflow
+  integration* they demo (`enable_auth_strategy=True` +
+  `auth_mode_used` tracking) no longer exists for these workflows
+  (it survives only in `document_gen`). RETIRED.
+- `test_release_prep_with_auth.py` has real assertions, but they
+  assert the dead feature (`enable_auth_strategy` kwarg,
+  `_auth_mode_used` attribute, `result.provider`) on the pre-SDK
+  workflow shape, and each of its 3 tests runs full release-prep
+  on `src/attune` (~100K LOC) — high spend for a dead contract.
+  RETIRED.
+- `AuthStrategy` itself (recommendation/cost-estimate logic) keeps
+  its coverage in `tests/unit/models/test_auth_strategy_coverage_boost.py`
+  and `test_auth_cli.py` — retiring the demos loses nothing.
+
+**Production bug the retirement read surfaced (fixed in the same
+PR):** `security_wizard._get_or_create_workflow()` passed the same
+dead kwargs to `SecurityAuditWorkflow`; the TypeError was swallowed
+by the broad `except` → the security wizard silently ALWAYS used
+its LLM fallback instead of the real workflow. Fixed (kwarg-free
+construction) + a no-mocks regression test on the real
+construction path.
+
+### Finding 3 — re-judged: NOT vacuous; the tests caught a REAL bug
+
+With a valid key the 6 discovery_sweep tests went
+suspicious-pass → FAIL, all with "structured-emit contract failed
+— adapter fell back to text-only path". Local reproduction
+(BugPredictionWorkflow + STRUCTURED_EMIT_FOOTER on the test's own
+fixture, 131 s real run) confirmed and root-caused it:
+
+- The suffix IS wired (orchestrator system prompt gets the footer).
+- The workflow returns `success=True` with real analysis — but
+  `AgentSDKResultAdapter.from_agent_output()` REWRITES
+  `final_output` whenever its own category parser
+  (`_parse_findings`) extracts findings: it replaces the raw
+  agent text with `_format_findings_markdown(...)`, silently
+  dropping the model's ```json block. `parse_findings_json` then
+  finds no block → text-only fallback. (`metadata["findings"]` is
+  the category→bullet-strings dict — too weak to substitute for
+  the sweep's Finding schema.)
+- Why the first (broken-key) run "passed": workflow failure
+  produces `source-failure`-tagged findings, and the assertions
+  only reject `text-only-fallback` — an assertion hole. The tests
+  should reject BOTH non-organic tags.
+
+**Fix (separate PR):** preserve the raw agent text on a channel
+the sweep adapter can read (e.g. `metadata["raw_result_text"]` in
+`from_agent_output`), point `parse_findings_json` callers at it
+with `final_output` as fallback, and tighten the 6 tests to also
+reject `source-failure` tags.
