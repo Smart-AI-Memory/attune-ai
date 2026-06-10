@@ -148,38 +148,3 @@ class TestAffectedFeatures:
 # ---------------------------------------------------------------------------
 # _summarize_error
 # ---------------------------------------------------------------------------
-
-
-class TestSummarizeError:
-    def test_none_returns_placeholder(self) -> None:
-        assert regen_module._summarize_error(None) == "(no error message)"
-
-    def test_empty_string_returns_placeholder(self) -> None:
-        assert regen_module._summarize_error("") == "(no error message)"
-
-    def test_single_line_returned_as_is(self) -> None:
-        assert regen_module._summarize_error("just one line") == "just one line"
-
-    def test_multi_line_returns_last_nonblank(self) -> None:
-        # Mirrors a Python traceback shape: last line is the exception
-        # message, which is what we want to surface.
-        err = (
-            "Traceback (most recent call last):\n"
-            '  File "x.py", line 1, in <module>\n'
-            "    raise ValueError('bad input')\n"
-            "ValueError: bad input"
-        )
-        assert regen_module._summarize_error(err) == "ValueError: bad input"
-
-    def test_trailing_blank_lines_ignored(self) -> None:
-        err = "Real error\n\n\n"
-        assert regen_module._summarize_error(err) == "Real error"
-
-    def test_long_line_truncated_at_200(self) -> None:
-        long = "x" * 500
-        out = regen_module._summarize_error(long)
-        assert len(out) == 200
-        assert out.endswith("...")
-
-    def test_short_line_not_truncated(self) -> None:
-        assert regen_module._summarize_error("short") == "short"

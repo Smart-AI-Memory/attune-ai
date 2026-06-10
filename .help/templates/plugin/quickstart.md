@@ -5,7 +5,7 @@ feature: plugin
 depth: quickstart
 generated_at: 2026-06-10T07:07:04.681583+00:00
 source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
-status: generated
+status: manual
 ---
 
 # Quickstart: Install the attune-ai plugin

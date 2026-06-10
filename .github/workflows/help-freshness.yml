@@ -1,10 +1,18 @@
 name: Help Freshness
 
+# Report-only by default (polish-cost-reduction lever 1, 2026-06-10):
+# the weekly schedule REPORTS staleness; polish-bearing regeneration
+# runs only on explicit dispatch with regen=true (release-prep cadence).
 on:
   schedule:
     # Sunday 12:00 UTC
     - cron: '0 12 * * 0'
   workflow_dispatch:
+    inputs:
+      regen:
+        description: 'Actually regenerate (LLM polish spend) instead of report-only'
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -53,8 +61,21 @@ jobs:
           count=$(wc -l < /tmp/stale.txt | tr -d ' ')
           echo "count=$count" >> "$GITHUB_OUTPUT"
 
+      - name: Report staleness (report-only mode)
+        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen != 'true'
+        run: |
+          {
+            echo "## Help freshness report (no regen run)"
+            echo
+            echo "Stale features:"
+            sed 's/^/- /' /tmp/stale.txt
+            echo
+            echo "Regenerate deliberately at release-prep, or dispatch this"
+            echo "workflow with regen=true."
+          } >> "$GITHUB_STEP_SUMMARY"
+
       - name: Regenerate stale features
-        if: steps.list_stale.outputs.count != '0'
+        if: steps.list_stale.outputs.count != '0' && github.event.inputs.regen == 'true'
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
@@ -73,6 +94,7 @@ jobs:
           cat /tmp/completeness-after.json
 
       - name: Open PR if there are changes
+        if: github.event.inputs.regen == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
