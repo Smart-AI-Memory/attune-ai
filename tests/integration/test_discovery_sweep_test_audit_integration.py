@@ -15,6 +15,7 @@ spend stays low (~$2 SDK cap per :func:`get_max_budget_usd`).
 
 from __future__ import annotations
 
+import os
 import textwrap
 from pathlib import Path
 
@@ -22,7 +23,13 @@ import pytest
 
 from attune.workflows.discovery_sweep.sources.test_audit import TestAuditSource
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not os.environ.get("ANTHROPIC_API_KEY"),
+        reason="hits the real Anthropic API — auth-gated (nightly auth job)",
+    ),
+]
 
 
 _FIXTURE_UNDER_TESTED_SOURCE = textwrap.dedent(

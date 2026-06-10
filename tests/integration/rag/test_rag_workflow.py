@@ -268,10 +268,11 @@ def test_execute_surfaces_sdk_generic_exception_as_error_result() -> None:
 
     assert result.success is False
     assert result.error is not None
-    # PR #357 (2026-04-17) reshaped sdk_error_message output:
-    # "Agent SDK error" → "Agent SDK failure (<ExceptionType>)".
-    assert "Agent SDK failure" in result.error
-    assert "ValueError" in result.error
+    # PR #543 (sdk-error-message-fidelity) reshaped error results:
+    # unknown exceptions surface as a subprocess-failure message with
+    # metadata.sdk_error_kind == "unknown".
+    assert "claude CLI subprocess failed" in result.error
+    assert result.metadata.get("sdk_error_kind") == "unknown"
 
 
 def test_execute_passes_model_override_to_sdk_options() -> None:

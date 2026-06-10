@@ -17,6 +17,7 @@ mostly Bash/Read calls) — well within the cap.
 
 from __future__ import annotations
 
+import os
 import textwrap
 from pathlib import Path
 
@@ -26,7 +27,13 @@ from attune.workflows.discovery_sweep.sources.dependency_check import (
     DependencyCheckSource,
 )
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not os.environ.get("ANTHROPIC_API_KEY"),
+        reason="hits the real Anthropic API — auth-gated (nightly auth job)",
+    ),
+]
 
 
 # Deliberately pinned to OLD versions of well-known packages so the
