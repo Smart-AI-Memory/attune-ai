@@ -167,6 +167,9 @@ def _read_stdin_context() -> dict[str, Any]:
 
 
 if __name__ == "__main__":
+    from _sdk_gate import exit_if_sdk_subprocess
+
+    exit_if_sdk_subprocess()
     # The hook MAY be invoked outside Claude Code (smoke tests,
     # local manual runs); in that case stdin is empty and we
     # silently allow.
