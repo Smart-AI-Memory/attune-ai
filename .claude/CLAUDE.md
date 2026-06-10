@@ -7759,3 +7759,23 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   safety classifier blocks bundled-destructive scripts" lesson — same
   root cause family (compound commands + interruption), this one is
   the state-reconciliation half.
+
+- **When `gh` misbehaves inconsistently, curl the GitHub status page
+  BEFORE building a token theory — a partial outage mimics auth and
+  CI failures**: 2026-06-10, `gh` showed REST-works-but-GraphQL-401s
+  (the textbook fine-grained-PAT signature) while CodeQL, the PR
+  labeler, and the security scanner all failed with EMPTY output
+  across four unrelated PRs at once. Confidently diagnosed a token
+  problem and had Patrick refresh auth — the actual cause was a
+  GitHub partial system outage. The 5-second check that beats every
+  token theory: `curl -s https://www.githubstatus.com/api/v2/status.json`
+  (read `.status.description`). Trigger pattern: (a) the same gh
+  call flips between success and 401 within minutes, (b) several
+  UNRELATED infra checks (CodeQL/labeler/scanners) fail
+  simultaneously with empty output.summary, (c) a just-refreshed
+  token "fails" again. Any two of those → status page first.
+  Recovery once it clears: `gh run rerun <id> --failed` per failed
+  run; reruns may need one retry themselves while the outage tail
+  flaps. Pairs with the verify-first-on-infra lesson — same
+  discipline, new surface (platform health before credential
+  archaeology).
