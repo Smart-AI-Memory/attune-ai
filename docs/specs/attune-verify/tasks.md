@@ -1,6 +1,5 @@
 # Tasks: attune-verify — Generation Fact-Checker
-
-**Status:** effectively complete (2026-06-09) — **all build tasks
+**Status:** complete (2026-06-09) — **all build tasks
 shipped; T7 dispositioned, no blocking work left.** `attune-verify` is
 published to PyPI (now **0.2.0** — full dotted-path import resolution):
 T1 (skeleton), T2 (model), T3 (deterministic checkers + the author-#351

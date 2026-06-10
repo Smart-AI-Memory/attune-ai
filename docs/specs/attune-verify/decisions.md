@@ -6,8 +6,7 @@ Phase-1 requirements and Phase-2 design. Newest first.
 ---
 
 ## D1 (2026-06-04): Deterministic resolution is authoritative for entity existence; the semantic judge must be cross-checked against it
-
-**Status:** decided — folds into a `design.md` Phase-2 revision and a
+**Status:** approved — folds into a `design.md` Phase-2 revision and a
 `tasks.md` item.
 
 ### Evidence — dogfood, 2026-06-04

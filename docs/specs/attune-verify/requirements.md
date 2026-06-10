@@ -6,8 +6,7 @@
 > layer, that the content is semantically faithful, so
 > hallucinations that pass unit tests are caught before they reach
 > a reader.
-
-**Status:** draft (2026-06-02)
+**Status:** approved (2026-06-02)
 **Created:** 2026-06-02
 **Owner:** TBD
 **Related:** the "Discipline of Agent Collaboration" §7
