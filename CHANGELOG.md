@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.1.0] — 2026-06-10
+
+Minor release rolling up the 2026-06-09 → 06-10 cycle (~50 PRs). Highlights:
+the Anthropic Memory tool bridged onto attune memory backends (file or Redis
+Agent Memory Server), a pattern review queue with CLI + ops-dashboard panel,
+the just-in-time recall hook, the `/verify` generation fact-check skill,
+PREMIUM tier upgraded to Claude Opus 4.8 with corrected pricing, the
+integration suite revived (full no-auth CI job + nightly auth job), and the
+discovery-sweep structured-output fix. Also raises the attune-rag cap to
+admit 0.6.0.
+
 ### Fixed
 - **Deprecated `use_thinking` path 400'd whenever `max_tokens` ≤
   `thinking_budget`.** `AnthropicProvider.generate()` sent
@@ -55,6 +66,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   exclusion were updated to match.
 
 ### Changed
+- **attune-rag dependency cap raised to `<0.7`** (admits attune-rag 0.6.0,
+  published 2026-06-10; purely additive per its compatibility policy —
+  re-validated by running the rag-related test suite against 0.6.0). README
+  ecosystem table and workflow/skill counts refreshed against the live
+  registry (20 workflows, 17 skills, 41 MCP tools).
 - **Integration CI job promoted to the full no-auth suite.** The
   `integration-tests.yml` job (advisory, #704) now runs
   `tests/integration -k "not with_auth"` — 295 tests — instead of an

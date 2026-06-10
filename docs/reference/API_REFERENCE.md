@@ -1,6 +1,6 @@
 # Attune AI API Reference
 
-**Version:** 8.0.1
+**Version:** 8.1.0
 **License:** Apache License 2.0
 **Copyright:** 2025-2026 Smart AI Memory, LLC
 
@@ -1225,5 +1225,5 @@ msg = format_error(
 
 ---
 
-**Version:** 8.0.1 | **License:** Apache 2.0
+**Version:** 8.1.0 | **License:** Apache 2.0
 **Repo:** [attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
