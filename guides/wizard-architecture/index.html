@@ -4646,7 +4646,7 @@
 </code></pre></div>
 <hr />
 <h2 id="wizardinternalworkflow">WizardInternalWorkflow<a class="headerlink" href="#wizardinternalworkflow" title="Permanent link">&para;</a></h2>
-<p>Wizards don't call LLMs directly. They use <code>WizardInternalWorkflow</code>, a thin <code>BaseWorkflow</code> subclass that provides access to all 12 workflow mixins:</p>
+<p>Wizards don't call LLMs directly. They use <code>WizardInternalWorkflow</code>, a thin <code>BaseWorkflow</code> subclass that provides access to all 15 workflow mixins:</p>
 <ul>
 <li>LLM calls (<code>_call_llm</code>)</li>
 <li>XML prompt rendering (<code>_render_xml_prompt</code>)</li>
@@ -4739,7 +4739,7 @@
 <p>Session variable interpolation (<code>{session.xxx}</code>) replaces placeholders with values from earlier question steps. See <a href="../wizards-getting-started/">Getting Started</a>.</p>
 <hr />
 <h2 id="registry-and-discovery">Registry and Discovery<a class="headerlink" href="#registry-and-discovery" title="Permanent link">&para;</a></h2>
-<p>The wizard registry (<code>registry.py</code>) finds wizards through a 3-tier search:</p>
+<p>The wizard registry (<code>registry.py</code>) finds wizards through a 4-tier search:</p>
 <div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a>1. In-memory registry     ← Programmatic registration
 <a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>2. Entry points           ← pip-installed packages (attune.wizards group)
 <a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a>3. Built-in loading       ← src/attune/wizards/builtin/
