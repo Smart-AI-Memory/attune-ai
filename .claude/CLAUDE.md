@@ -7797,3 +7797,29 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   any importlib-shim-loaded module (same family as the "mock at the
   import site" lesson; this names the case where the import site is an
   unregistered module object).
+
+- **claude-agent-sdk subprocess-isolation mechanics (0.1.63, live-
+  verified) — four facts that shape any `ClaudeAgentOptions` work**:
+  (1) `setting_sources=None` (the default) means CLI-DEFAULT, not
+  "no settings" — the transport only emits `--setting-sources=<csv>`
+  when not None, and the CLI then loads user+project settings (hooks,
+  CLAUDE.md) into the spawned session; pass `[]` to exclude (the empty
+  `--setting-sources=` value parses fine — probed live, keyless).
+  (2) The SDK stamps `CLAUDE_CODE_ENTRYPOINT=sdk-py` into EVERY
+  subprocess env and SCRUBS `CLAUDECODE` from the inherited env — so
+  hooks can self-detect SDK sessions via the `sdk-` prefix (free, no
+  adapter changes; interactive sessions carry `claude-desktop`/`cli`),
+  and `CLAUDECODE` is NOT usable as a signal. (3) TRAP: setting
+  `options.skills` with `setting_sources=None` silently forces
+  `["user","project"]` back on (`_apply_skills_defaults`) — never pass
+  skills without an explicit setting_sources (drift-guarded).
+  (4) `options.env` merges OVER the inherited env — the clean home for
+  per-subprocess markers. In attune: `sdk_isolation_kwargs()` in
+  `agent_sdk_adapter` carries `setting_sources=[]` +
+  `ATTUNE_SDK_SUBPROCESS=1`, splatted into all 15 workflow
+  `ClaudeAgentOptions` sites (each workflow builds its OWN options —
+  there is no single adapter construction site), and every hook gates
+  on `_sdk_gate.is_sdk_subprocess()`. This is the fix for the
+  "subscription `claude` CLI structurally broken for query()" lesson
+  above — hook stdout no longer reaches the stream-json channel.
+  Probe: `scripts/probe_sdk_subprocess_env.py` (re-run on SDK bumps).
