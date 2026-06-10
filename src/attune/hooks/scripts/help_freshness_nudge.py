@@ -123,6 +123,9 @@ def main() -> int:
 
 
 if __name__ == "__main__":
+    from _sdk_gate import exit_if_sdk_subprocess
+
+    exit_if_sdk_subprocess()
     try:
         sys.exit(main())
     except Exception:  # noqa: BLE001

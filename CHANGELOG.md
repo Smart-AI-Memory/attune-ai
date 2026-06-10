@@ -26,6 +26,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `Command failed with exit code 1` for keyless users), and
   `ATTUNE_SDK_SUBPROCESS=1` rides the subprocess env so attune hooks
   can self-gate (Phase 1). Drift-guarded like `resolve_cwd_for_path`.
+- **All attune hooks self-gate inside SDK subprocess sessions**
+  (sdk-subprocess-isolation Phase 1). Every registered hook — the 11
+  shipped plugin scripts and the 5 repo-level scripts — exits silently
+  when `ATTUNE_SDK_SUBPROCESS=1` or `CLAUDE_CODE_ENTRYPOINT=sdk-*` is
+  present (`_sdk_gate.exit_if_sdk_subprocess()`, first statement of
+  every `__main__`). Belt-and-suspenders under Phase 2's
+  `setting_sources=[]`: covers older SDKs and third-party SDK scripts
+  run with the plugin installed. Drift-guarded against both hook
+  registries.
 - **CLI renders `WorkflowReport` results as styled terminal markdown**
   (workflow-result-formatting T4). On a TTY, report-carrying results
   render through `rich.markdown` (headings, tables, bullets); piped
