@@ -66,15 +66,18 @@ class CrossSessionCoordinator:
         """Initialize cross-session coordinator.
 
         Args:
-            memory: RedisShortTermMemory instance (must not be mock)
+            memory: RedisShortTermMemory instance (mock mode allowed —
+                coordination runs in degraded mode without Redis)
             session_type: Type of this session
             access_tier: Access tier for this session
             capabilities: List of capabilities this session supports
             auto_announce: Whether to announce presence on init
 
-        Raises:
-            ValueError: If memory is in mock mode (Redis required)
-            ImportError: If Redis package is not installed
+        Note:
+            When memory is in mock mode or Redis is unavailable, the
+            coordinator initializes in degraded mode (logs a warning;
+            cross-process coordination features are unavailable) rather
+            than raising.
 
         """
         # Verify Redis is available -- degrade gracefully in mock mode

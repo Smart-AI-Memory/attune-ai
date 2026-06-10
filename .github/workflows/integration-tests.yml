@@ -1,16 +1,18 @@
 name: Integration Tests
 
-# Runs the *green subset* of the previously-dormant integration suite
-# (docs/specs/integration-coverage/) so it stops rotting from never
-# running. Keyless (no ANTHROPIC_API_KEY) → CI-representative; the
-# auth-required integration tests run separately (opt-in nightly, TODO).
+# Runs the FULL no-auth integration suite (docs/specs/integration-
+# coverage/) so it stops rotting from never running. Keyless (empty
+# ANTHROPIC_API_KEY) → CI-representative; auth-required tests (the
+# `*_with_auth` files + the env-gated discovery_sweep files) skip here
+# and run separately (opt-in nightly, TODO).
 #
-# This job is intentionally NOT in branch-protection's required checks
-# yet — it's advisory while the cleanup backlog in
-# docs/specs/integration-coverage/phase1-triage.md is worked down (11
-# files still red: discovery_sweep timeouts, a stale rag assertion, etc).
-# Promote to required once the full no-auth suite is green and the file
-# list below is replaced with `tests/integration/ -k "not with_auth"`.
+# History: started as an explicit green-subset file list while the
+# 11-file cleanup backlog in
+# docs/specs/integration-coverage/phase1-triage.md was worked down.
+# Backlog cleared 2026-06-09 (295 passed / 41 skipped / 0 fail
+# locally) → promoted to the full `-k "not with_auth"` selector.
+# Still advisory (not in branch-protection required checks); promote
+# to required after a few weeks of green runs.
 
 on:
   push:
@@ -24,7 +26,7 @@ concurrency:
 
 jobs:
   integration:
-    name: integration (green subset)
+    name: integration (no-auth)
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
@@ -41,23 +43,13 @@ jobs:
           python -m pip install --upgrade pip
           pip install -e .[dev]
 
-      - name: Run integration green subset (keyless)
-        # No ANTHROPIC_API_KEY in env → exercises the integration wiring
-        # without real API calls. -m "" overrides the repo default
-        # `-m "not integration"`. Explicit file list = the verified-green
-        # subset (140 passed / 15 skipped / 0 fail locally, 2026-06-09).
+      - name: Run no-auth integration suite (keyless)
+        # Empty ANTHROPIC_API_KEY → exercises the integration wiring
+        # without real API calls (real-API tests env-gate themselves).
+        # -m "" overrides the repo default `-m "not integration"`.
         env:
           ANTHROPIC_API_KEY: ""
         run: |
           pytest -m "" -o addopts="" -p no:cacheprovider \
             -n auto --timeout=120 --timeout-method=thread \
-            tests/integration/test_agents_integration.py \
-            tests/integration/test_commands_integration.py \
-            tests/integration/test_context_integration.py \
-            tests/integration/test_full_workflow.py \
-            tests/integration/test_hooks_integration.py \
-            tests/integration/test_intelligence_integration.py \
-            tests/integration/test_learning_integration.py \
-            tests/integration/test_mcp_dispatch.py \
-            tests/integration/test_meta_workflow_e2e.py \
-            tests/integration/test_natural_language_routing_v5_1.py
+            tests/integration -k "not with_auth"

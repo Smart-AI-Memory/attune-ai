@@ -9,8 +9,6 @@ Licensed under the Apache License, Version 2.0
 
 from unittest.mock import patch
 
-import pytest
-
 
 class TestGracefulDegradationMemory:
     """Test memory module graceful degradation without Redis."""
@@ -28,34 +26,38 @@ class TestGracefulDegradationMemory:
 
         assert result == {"data": "value"}
 
-    def test_redis_short_term_memory_requires_redis(self):
-        """Test RedisShortTermMemory raises helpful error without Redis."""
-        with patch("attune.memory.is_redis_available", return_value=False):
-            with pytest.raises(ImportError) as exc_info:
-                from attune.memory import RedisShortTermMemory
+    def test_redis_short_term_memory_falls_back_to_mock_without_redis(self):
+        """RedisShortTermMemory degrades to in-memory mock mode without Redis.
 
-                # Should fail with helpful message
-                RedisShortTermMemory()
+        Production behavior changed from raising ImportError to graceful
+        degradation: the constructor auto-enables mock mode (with a logged
+        warning) when no Redis server is reachable.
+        """
+        with patch(
+            "attune.memory.short_term.facade.MemoryFeatures.check_redis",
+            return_value=False,
+        ):
+            from attune.memory import RedisShortTermMemory
 
-            error_message = str(exc_info.value)
-            assert "requires Redis" in error_message
-            assert "pip install" in error_message
+            memory = RedisShortTermMemory()
 
-    def test_cross_session_coordinator_requires_redis(self):
-        """Test CrossSessionCoordinator raises error without Redis."""
-        with patch("attune.memory.is_redis_available", return_value=False):
-            from attune.memory import CrossSessionCoordinator
-            from attune.memory.types import RedisConfig
+            assert memory.use_mock is True
 
-            # Create mock memory with use_mock=True
-            with pytest.raises(ImportError) as exc_info:
-                from attune.memory.short_term import RedisShortTermMemory
+    def test_cross_session_coordinator_degrades_without_redis(self):
+        """CrossSessionCoordinator runs in degraded mode without Redis.
 
-                memory = RedisShortTermMemory(config=RedisConfig(use_mock=True))
-                CrossSessionCoordinator(memory)
+        Production behavior changed from raising ImportError to graceful
+        degradation: with a mock-mode memory the coordinator initializes,
+        logs a warning, and sets its internal degraded flag.
+        """
+        from attune.memory import CrossSessionCoordinator
+        from attune.memory.short_term import RedisShortTermMemory
+        from attune.memory.types import RedisConfig
 
-            error_message = str(exc_info.value)
-            assert "requires Redis" in error_message
+        memory = RedisShortTermMemory(config=RedisConfig(use_mock=True))
+        coordinator = CrossSessionCoordinator(memory)
+
+        assert coordinator._degraded is True
 
     def test_long_term_memory_works_without_redis(self, tmp_path):
         """Test long-term memory works without Redis."""
@@ -108,6 +110,10 @@ class TestGracefulDegradationTelemetry:
             cache_type=None,
             duration_ms=100,
         )
+
+        # UsageTracker buffers writes (buffer_size=50 default) and only
+        # persists on flush — flush explicitly before asserting the file.
+        tracker.flush()
 
         # Verify file was created
         assert (tmp_path / "telemetry" / "usage.jsonl").exists()

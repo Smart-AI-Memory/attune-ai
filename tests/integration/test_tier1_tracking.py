@@ -30,15 +30,22 @@ def temp_dir():
 
 @pytest.fixture
 def mock_telemetry_dir(temp_dir, monkeypatch):
-    """Mock the telemetry directory for testing."""
-    # Reset the global telemetry store singleton
-    import attune.models.telemetry
+    """Isolate the telemetry store singleton to a temp directory.
+
+    The singleton consulted by ``get_telemetry_store()`` is
+    ``attune.models.telemetry._store_instance`` — an earlier version of
+    this fixture set a ``_telemetry_store`` attribute that nothing reads
+    (the singleton was renamed in a refactor), so tests silently wrote
+    to a cwd-relative ``.attune/`` directory instead of ``temp_dir``.
+    """
+    import attune.models.telemetry as telemetry_pkg
     from attune.models.telemetry import TelemetryStore
 
-    # Create a fresh telemetry store with the temp directory
-    attune.models.telemetry._telemetry_store = TelemetryStore(storage_dir=str(temp_dir))
-
-    monkeypatch.setenv("EMPATHY_TELEMETRY_DIR", str(temp_dir))
+    monkeypatch.setattr(
+        telemetry_pkg,
+        "_store_instance",
+        TelemetryStore(storage_dir=str(temp_dir)),
+    )
     return temp_dir
 
 

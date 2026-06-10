@@ -1,5 +1,5 @@
 # Tasks: Integration Coverage Program
-**Status:** in progress (2026-06-09) — Phase 0 complete (see [phase0-findings.md](phase0-findings.md)): decision is **GO, reframed** — a 351-test integration suite already exists but is dormant + rotting; revive/wire it rather than build new infra. Phase 1 = prune rot + wire the 22 no-auth files into CI; auth nightly is a follow-up.
+**Status:** in progress (2026-06-09) — Phase 0 complete (see [phase0-findings.md](phase0-findings.md)): decision **GO, reframed** — revive the existing 351-test suite, don't build new infra. Phase 1 **complete**: rot pruned (#703), green subset wired to CI (#704), 16-failure backlog cleared + job promoted to the full no-auth suite (295 passed / 0 failed — see [phase1-triage.md](phase1-triage.md)). Remaining: the opt-in nightly auth job (8 `*_with_auth` files + 6 env-gated discovery_sweep files), then promote the CI job to a required check after a few weeks green.
 ---
 
 ## Phase 0 — Audit before design

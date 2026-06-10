@@ -15,6 +15,7 @@ The test runs against a tiny on-disk fixture so spend stays low
 
 from __future__ import annotations
 
+import os
 import textwrap
 from pathlib import Path
 
@@ -22,7 +23,13 @@ import pytest
 
 from attune.workflows.discovery_sweep.sources.bug_predict import BugPredictSource
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not os.environ.get("ANTHROPIC_API_KEY"),
+        reason="hits the real Anthropic API — auth-gated (nightly auth job)",
+    ),
+]
 
 
 _FIXTURE_BUGGY_SOURCE = textwrap.dedent(

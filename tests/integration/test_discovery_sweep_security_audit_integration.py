@@ -17,6 +17,7 @@ three; budget accordingly when iterating.
 
 from __future__ import annotations
 
+import os
 import textwrap
 from pathlib import Path
 
@@ -24,7 +25,13 @@ import pytest
 
 from attune.workflows.discovery_sweep.sources.security_audit import SecurityAuditSource
 
-pytestmark = pytest.mark.integration
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.skipif(
+        not os.environ.get("ANTHROPIC_API_KEY"),
+        reason="hits the real Anthropic API — auth-gated (nightly auth job)",
+    ),
+]
 
 
 _FIXTURE_VULNERABLE_SOURCE = textwrap.dedent(

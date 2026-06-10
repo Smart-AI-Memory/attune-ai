@@ -86,27 +86,34 @@ async def test_workflow_tracks_llm_calls(tracker):
 
 @pytest.mark.asyncio
 async def test_workflow_tracks_cache_hits(tracker):
-    """Test that cache hits are tracked in telemetry."""
-    # Create workflow with caching enabled
-    workflow = TestWorkflow(enable_cache=True)
+    """Test that cache hits are tracked in telemetry.
 
-    # Mock cache that returns a hit
-    mock_cache = MagicMock()
-    mock_cache.get = MagicMock(
-        return_value={
-            "content": "Cached response",
-            "input_tokens": 100,
-            "output_tokens": 50,
-        },
+    Client-side response caching was removed in favor of Anthropic's
+    server-side prompt caching, so ``_try_cache_lookup`` is a no-op by
+    default (a ``ctx.cache`` service can still supply hits). Patch the
+    lookup directly to exercise the live cache-hit telemetry branch in
+    ``_call_llm``.
+    """
+    from attune.workflows.caching import CachedResponse
+
+    workflow = TestWorkflow()
+
+    cached = CachedResponse(
+        content="Cached response",
+        input_tokens=100,
+        output_tokens=50,
     )
-    workflow._cache = mock_cache
+    workflow._try_cache_lookup = MagicMock(return_value=cached)
 
-    # Call _call_llm to trigger cache hit
+    # Call _call_llm to trigger the cache-hit branch
     content, in_tokens, out_tokens = await workflow._call_llm(
         tier=ModelTier.CAPABLE,
         system="Test system",
         user_message="Test message",
     )
+
+    assert content == "Cached response"
+    assert (in_tokens, out_tokens) == (100, 50)
 
     # Check telemetry
     entries = tracker.get_recent_entries(limit=1)

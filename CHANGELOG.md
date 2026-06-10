@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **Integration CI job promoted to the full no-auth suite.** The
+  `integration-tests.yml` job (advisory, #704) now runs
+  `tests/integration -k "not with_auth"` — 295 tests — instead of an
+  explicit 10-file green-subset list. Enabled by clearing the entire
+  16-failure revival backlog (integration-coverage Phase 1): all
+  failures were stale tests or broken test infrastructure, zero
+  production bugs. Highlights: the 6 `test_discovery_sweep_*` files
+  hit the real Anthropic API by design and are now env-gated to the
+  auth bucket; `test_tier1_tracking`'s telemetry fixture had been
+  silently inert since a singleton rename (tests polluted a
+  cwd-relative `.attune/`); two graceful-degradation tests asserted a
+  raise-ImportError contract that production replaced with graceful
+  mock-mode fallback; the telemetry cache-hit test exercised the
+  removed client-side cache and was rewritten against the live
+  `_try_cache_lookup` branch. Full triage record:
+  `docs/specs/integration-coverage/phase1-triage.md`.
+
 ### Added
 - **`/verify` skill — output-side generation fact-checker.** A new
   `verify` skill (`plugin/skills/verify/`) fact-checks LLM-generated
