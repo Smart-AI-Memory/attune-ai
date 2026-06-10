@@ -1,7 +1,8 @@
 # Spec: SDK Subprocess Isolation — Requirements
 
-**Status:** draft (2026-06-10) — awaiting approval. Phase 0 (SDK
-introspection) already executed; see [findings.md](findings.md).
+**Status:** approved (2026-06-10, "GO") — Phase 0 done
+([findings.md](findings.md)); Phase 2 (adapter isolation) implemented
+first (it directly unblocks the subscription receipt), Phase 1 next.
 
 ---
 

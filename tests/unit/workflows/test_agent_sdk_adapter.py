@@ -1199,3 +1199,96 @@ class TestAgentSDKResultAdapterStructuredOutput:
         )
         # Empty dict is falsy, so falls back to text parsing
         assert "85/100" in result.summary
+
+
+@pytest.mark.unit
+class TestSdkIsolationKwargs:
+    """sdk_isolation_kwargs contract (sdk-subprocess-isolation Phase 2)."""
+
+    def test_excludes_all_setting_sources(self) -> None:
+        """setting_sources=[] keeps hooks + CLAUDE.md out of subprocesses."""
+        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+
+        kwargs = sdk_isolation_kwargs()
+        assert kwargs["setting_sources"] == []
+
+    def test_carries_subprocess_marker_env(self) -> None:
+        """The env marker lets attune hooks self-gate (spec D3/D4)."""
+        from attune.workflows.agent_sdk_adapter import (
+            SDK_SUBPROCESS_ENV_VAR,
+            sdk_isolation_kwargs,
+        )
+
+        kwargs = sdk_isolation_kwargs()
+        assert SDK_SUBPROCESS_ENV_VAR == "ATTUNE_SDK_SUBPROCESS"
+        assert kwargs["env"] == {SDK_SUBPROCESS_ENV_VAR: "1"}
+
+    def test_fresh_dict_per_call(self) -> None:
+        """Callers may mutate the result without cross-call leakage."""
+        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+
+        a = sdk_isolation_kwargs()
+        a["env"]["EXTRA"] = "x"
+        assert "EXTRA" not in sdk_isolation_kwargs()["env"]
+
+    def test_accepted_by_claude_agent_options(self) -> None:
+        """The kwargs splat cleanly into a real ClaudeAgentOptions."""
+        claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
+        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+
+        options = claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs())
+        assert options.setting_sources == []
+        assert options.env["ATTUNE_SDK_SUBPROCESS"] == "1"
+
+
+@pytest.mark.unit
+class TestSdkWorkflowsUseIsolationKwargs:
+    """Drift-guard (spec R6): every ClaudeAgentOptions site is isolated.
+
+    A future workflow constructing ClaudeAgentOptions without
+    sdk_isolation_kwargs() silently reloads user/project settings in
+    the subprocess — SessionStart hook output then poisons the
+    stream-json channel and the workflow fails for subscription users.
+    Also guards the skills trap (findings F4): options.skills with no
+    explicit setting_sources forces ["user","project"] back on.
+    """
+
+    def _workflow_files(self):
+        from pathlib import Path
+
+        root = Path(__file__).resolve().parents[3] / "src" / "attune" / "workflows"
+        return [
+            p
+            for p in root.rglob("*.py")
+            # The adapter is the helper's home (docstring example), not a site.
+            if p.name != "agent_sdk_adapter.py"
+            and "ClaudeAgentOptions(" in p.read_text(encoding="utf-8")
+        ]
+
+    def test_every_options_site_uses_isolation_kwargs(self) -> None:
+        """Each file constructing ClaudeAgentOptions splats the helper."""
+        offenders = [
+            str(p)
+            for p in self._workflow_files()
+            if "sdk_isolation_kwargs" not in p.read_text(encoding="utf-8")
+        ]
+        assert not offenders, (
+            f"ClaudeAgentOptions constructed without sdk_isolation_kwargs() — "
+            f"subscription users' workflows will fail on hook pollution. "
+            f"Offenders: {offenders}"
+        )
+
+    def test_no_workflow_passes_skills(self) -> None:
+        """skills= would silently force setting_sources back on (F4)."""
+        offenders = [
+            str(p) for p in self._workflow_files() if "skills=" in p.read_text(encoding="utf-8")
+        ]
+        assert not offenders, (
+            f"options.skills with setting_sources unset re-enables "
+            f"user+project settings loading (SDK _apply_skills_defaults). "
+            f"Pass an explicit setting_sources alongside. Offenders: {offenders}"
+        )
+
+    def test_sweep_covers_known_workflow_count(self) -> None:
+        """The sweep found the expected 15 construction sites."""
+        assert len(self._workflow_files()) == 15

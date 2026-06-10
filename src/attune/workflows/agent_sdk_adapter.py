@@ -903,6 +903,43 @@ def get_max_budget_usd(depth: str = "standard") -> float | None:
     return _DEFAULT_BUDGET_USD.get(depth, 10.00)
 
 
+#: Env marker every SDK-spawned ``claude`` subprocess carries so attune
+#: hooks can self-gate (sdk-subprocess-isolation spec, D3/D4).
+SDK_SUBPROCESS_ENV_VAR = "ATTUNE_SDK_SUBPROCESS"
+
+
+def sdk_isolation_kwargs() -> dict[str, Any]:
+    """``ClaudeAgentOptions`` kwargs isolating the SDK subprocess session.
+
+    sdk-subprocess-isolation spec (D2–D5): ``setting_sources=[]`` keeps
+    user/project/local settings — and with them SessionStart hooks and
+    CLAUDE.md injection — out of workflow subprocesses, which is what
+    makes SDK workflows usable for subscription users (hook stdout
+    otherwise poisons the stream-json channel). The env marker lets
+    attune hooks self-gate on older SDKs and non-adapter spawn paths.
+
+    Splat into every ``ClaudeAgentOptions`` construction::
+
+        claude_agent_sdk.ClaudeAgentOptions(
+            **sdk_isolation_kwargs(),
+            system_prompt=...,
+        )
+
+    A drift-guard test asserts every construction site uses it. NOTE:
+    never pass ``options.skills`` without an explicit
+    ``setting_sources`` — the SDK silently forces ``["user","project"]``
+    back on (spec findings F4).
+
+    Returns:
+        Kwargs dict with ``setting_sources`` and ``env``.
+
+    """
+    return {
+        "setting_sources": [],
+        "env": {SDK_SUBPROCESS_ENV_VAR: "1"},
+    }
+
+
 def resolve_cwd_for_path(path: str | Path) -> Path:
     """Return a directory path suitable for the Agent SDK ``cwd=`` arg.
 
