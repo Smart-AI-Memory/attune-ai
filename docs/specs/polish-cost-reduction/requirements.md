@@ -1,7 +1,6 @@
 # Polish-Cost Reduction — Requirements
 
-**Status:** approved (2026-06-10) — levers ratified by Patrick in-session;
-lever 1 shipped same day, lever 2 is attune-author work.
+**Status:** complete (2026-06-10) — both levers shipped same day: lever 1 in attune-ai #735, lever 2 in attune-author#53 / v0.15.0 (on PyPI), consumer cap bump #736. Open: Q1 (phantom regenerator) and the gated Project-Docs cleanup.
 
 ## Problem
 
@@ -55,7 +54,7 @@ meaningfully change. Cost surfaces observed 2026-06-10:
   dispatched with `regen=true`. ✅ lever 1
 - AC3: regenerating a feature where only 2 of 11 kinds' scaffolds
   changed makes exactly 2 polish calls (cache misses at most 2).
-  (lever 2, attune-author)
+  ✅ lever 2 (attune-author v0.15.0 — skip matrix covered by 13 tests)
 - AC4: a `status: manual` template is untouched by regeneration. ✅
   (existing attune-author behavior; applied to plugin/quickstart.md)
 

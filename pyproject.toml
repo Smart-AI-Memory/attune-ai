@@ -101,7 +101,12 @@ rag = []
 # to the sibling path for workspace dev; PyPI is the
 # fallback.
 author = [
-    "attune-author>=0.6.2,<0.15",
+    "attune-author>=0.6.2,<0.16",
+    # attune-author 0.15.0 moved attune-help from its core deps to its
+    # dev extra — attune-ai had been receiving it TRANSITIVELY. The
+    # rag_knowledge_query MCP tool and help-corpus tests need it, so
+    # pin it explicitly here rather than ride resolution luck.
+    "attune-help>=0.10.0",
 ]
 
 # `[memory]` extra removed in v6.8.0 (P2 of redis-decoupling spec).
@@ -762,7 +767,7 @@ exclude_lines = [
 # Sibling repos — all published to PyPI:
 #   attune-rag     — core dep (>=0.1.5,<0.7) — promoted from optional; required for accuracy
 #   attune-verify  — core dep (>=0.1.0,<0.3) — backs /verify; stdlib-only, zero transitive deps
-#   attune-author  — [author] optional extra (>=0.6.2,<0.15)
+#   attune-author  — [author] optional extra (>=0.6.2,<0.16)
 #   attune-rag     — [rag] optional extra (>=0.1.5,<0.7) — no-op alias since rag is core
 #
 # No [tool.uv.sources] overrides needed: CI resolves all three

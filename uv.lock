@@ -315,6 +315,7 @@ anthropic = [
 ]
 author = [
     { name = "attune-author" },
+    { name = "attune-help" },
 ]
 backend = [
     { name = "bcrypt" },
@@ -437,7 +438,8 @@ requires-dist = [
     { name = "anthropic", marker = "extra == 'enterprise'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'full'", specifier = ">=0.40.0" },
     { name = "anthropic", marker = "extra == 'llm'", specifier = ">=0.40.0" },
-    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.15" },
+    { name = "attune-author", marker = "extra == 'author'", specifier = ">=0.6.2,<0.16" },
+    { name = "attune-help", marker = "extra == 'author'", specifier = ">=0.10.0" },
     { name = "attune-rag", specifier = ">=0.1.5,<0.7" },
     { name = "attune-rag", marker = "extra == 'dev'", specifier = ">=0.1.5,<0.7" },
     { name = "attune-verify", specifier = ">=0.1.0,<0.3" },
@@ -582,29 +584,28 @@ provides-extras = ["rag", "author", "memory", "redis", "anthropic", "llm", "memd
 
 [[package]]
 name = "attune-author"
-version = "0.6.2"
+version = "0.15.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
-    { name = "attune-help" },
     { name = "jinja2" },
     { name = "python-frontmatter" },
     { name = "pyyaml" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/53/61/7104d4580131a1f4e4ee4598210a57e31bf7ee17aa166c7a00d9ddea37fb/attune_author-0.6.2.tar.gz", hash = "sha256:f3997d902283c53e6046e235f6be8f10540afeef50ff5cf64f4e76d10f0ad43a", size = 129592, upload-time = "2026-05-01T11:07:21.838Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/25/4b/738ff9e52f73af2dd5428690a1101b04c28e5ed9f4f806bcfa1ad3dd2d16/attune_author-0.15.0.tar.gz", hash = "sha256:1c37e513f4ab3f26e96249c8c063c2c1c4bdd148aaded3ba82fda5754ebceef1", size = 243109, upload-time = "2026-06-10T08:17:03.229Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/56/9b/58ea330e9539fdef5a2410793e302eb3dc23458673ce53a608467b6feb6d/attune_author-0.6.2-py3-none-any.whl", hash = "sha256:5be3bcf63d4bcef538c19e5c7fb1e4127f0b8e3c88358ee173072d749d4dc2cf", size = 92968, upload-time = "2026-05-01T11:07:20.105Z" },
+    { url = "https://files.pythonhosted.org/packages/97/02/9722ce375ee9981dc03e4b657c48854c079798fc218d39aa247856e46eec/attune_author-0.15.0-py3-none-any.whl", hash = "sha256:24d8d4c495ea211180c09b94506ca44ce35b587bbeccc1ed800525d458c6acdd", size = 187997, upload-time = "2026-06-10T08:17:01.686Z" },
 ]
 
 [[package]]
 name = "attune-help"
-version = "0.10.2"
+version = "0.11.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "python-frontmatter" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e8/37/6d0e0625d1ae19f39119d2a8ec6a84dd07467b1c7d4da64bc17eca8d3923/attune_help-0.10.2.tar.gz", hash = "sha256:08ad0ef92979cd194ec3570872c60e2c70c2aea244fbcb9e63aedfe11ef015df", size = 433558, upload-time = "2026-05-01T11:07:20.108Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/99/17/560fbdbc4852f199ec572b14c0712a28360f4149bf22a0b9f4eb8c1f009e/attune_help-0.11.1.tar.gz", hash = "sha256:b75e8bcd482ee421c1743899e5b11e913a2daa7174a6e97cb0e721187f5c26ef", size = 436483, upload-time = "2026-05-25T11:55:01.465Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8e/99/641452d2ca4d7d518015e4324c4f9d44eddc41e557918b54ac1b4bd87ece/attune_help-0.10.2-py3-none-any.whl", hash = "sha256:fc201a6cce74dbaac339fd11c65f1bd7607becbbdc2724607e9281a1b92c9281", size = 717718, upload-time = "2026-05-01T11:07:18.156Z" },
+    { url = "https://files.pythonhosted.org/packages/39/bb/2fe1ad5cb4b75c4a6e0d2bfc2081e6be366f50185fd5bbb73d14ff7eeb68/attune_help-0.11.1-py3-none-any.whl", hash = "sha256:bfb3294d7980abc46dd5aecfb42e11549c9eb68dd0492c5e12da081c263ca9a6", size = 711400, upload-time = "2026-05-25T11:54:59.327Z" },
 ]
 
 [[package]]
