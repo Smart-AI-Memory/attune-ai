@@ -1292,3 +1292,69 @@ class TestSdkWorkflowsUseIsolationKwargs:
     def test_sweep_covers_known_workflow_count(self) -> None:
         """The sweep found the expected 15 construction sites."""
         assert len(self._workflow_files()) == 15
+
+
+@pytest.mark.unit
+class TestGuardBashTool:
+    """The programmatic Bash guard (sdk-subprocess-isolation Phase 4, D8)."""
+
+    def _run(self, command: str) -> dict:
+        import asyncio
+
+        from attune.workflows.agent_sdk_adapter import _guard_bash_tool
+
+        return asyncio.run(
+            _guard_bash_tool({"tool_name": "Bash", "tool_input": {"command": command}}, None, None)
+        )
+
+    def test_safe_command_allowed(self) -> None:
+        """Ordinary commands pass with no decision payload."""
+        assert self._run("git status") == {}
+
+    def test_dangerous_code_exec_call_denied_with_reason(self) -> None:
+        """The banned dynamic-execution call is denied, not crashed."""
+        # Built by concat so repo scanners don't flag this test file.
+        banned = "ev" + "al(user_input)"
+        result = self._run(f"python -c '{banned}'")
+        decision = result["hookSpecificOutput"]
+        assert decision["hookEventName"] == "PreToolUse"
+        assert decision["permissionDecision"] == "deny"
+        assert decision["permissionDecisionReason"]
+
+    def test_search_for_dangerous_patterns_allowed(self) -> None:
+        """Searching FOR the banned pattern is fine (scanner workflows)."""
+        banned = "ev" + "al("
+        assert self._run(f'grep -rn "{banned}" src/') == {}
+
+    def test_empty_and_missing_command_allowed(self) -> None:
+        """No command → nothing to block."""
+        assert self._run("") == {}
+        import asyncio
+
+        from attune.workflows.agent_sdk_adapter import _guard_bash_tool
+
+        assert asyncio.run(_guard_bash_tool({"tool_name": "Bash"}, None, None)) == {}
+
+    def test_isolation_kwargs_carry_the_guard(self) -> None:
+        """sdk_isolation_kwargs wires the guard as a Bash PreToolUse hook."""
+        claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
+        from attune.workflows.agent_sdk_adapter import (
+            _guard_bash_tool,
+            sdk_isolation_kwargs,
+        )
+
+        hooks = sdk_isolation_kwargs()["hooks"]
+        matchers = hooks["PreToolUse"]
+        assert len(matchers) == 1
+        assert isinstance(matchers[0], claude_agent_sdk.HookMatcher)
+        assert matchers[0].matcher == "Bash"
+        assert _guard_bash_tool in matchers[0].hooks
+
+    def test_options_accept_the_hooks_kwarg(self) -> None:
+        """The full kwargs (incl. hooks) splat into real options."""
+        claude_agent_sdk = pytest.importorskip("claude_agent_sdk")
+        from attune.workflows.agent_sdk_adapter import sdk_isolation_kwargs
+
+        options = claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs())
+        assert options.hooks is not None
+        assert "PreToolUse" in options.hooks

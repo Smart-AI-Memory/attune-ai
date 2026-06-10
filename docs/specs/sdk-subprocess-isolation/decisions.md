@@ -18,9 +18,14 @@
 | D5 | Where the marker is set | `agent_sdk_adapter.sdk_isolation_kwargs()` helper, splatted into EVERY `ClaudeAgentOptions` construction (15 workflow sites), drift-guarded | REVISED during Phase 2 (2026-06-10): the original "adapter only, one site" premise was wrong — each workflow constructs its own `ClaudeAgentOptions`; there is no single construction site. The helper + `TestSdkWorkflowsUseIsolationKwargs` drift guard (the `resolve_cwd_for_path` pattern) is the equivalent single source. Runner `proc_env` unchanged. |
 | D6 | Gate helper location | One shared `plugin/hooks/_sdk_gate.py` (or extend the existing `_state.py`-style shared module), imported by every hook script | 12 copies of a two-line check WILL drift. The R6a drift guard asserts every hooks.json script references the gate. |
 | D7 | Repo's own `.claude/settings.json` hooks | Out of scope for the product fix; MAY adopt the same gate opportunistically | The shipped plugin is the user-facing surface. The dev repo's hooks polluting Patrick's own dogfooding is real but fixable the same way at any time. |
+| D8 | The Bash security guard inside SDK subprocesses | **Re-inject programmatically** via `ClaudeAgentOptions.hooks` (an in-process `HookMatcher(matcher="Bash")` PreToolUse callback inside `sdk_isolation_kwargs()`), reusing the hook script's own `validate_bash_command` and denying with a reason | Ratified 2026-06-10 after pushback on D1's tradeoff: isolation strips ALL filesystem hooks, so ungating the script (selective D1) would be symbolic — the guard must travel WITH the adapter. D1 stays gate-everything; protection becomes something the workflow carries, not something the environment provides. Bash/eval-exec scope only; extend if workflows gain broader write surfaces. |
 
 ## Calibration record
 
+- 2026-06-10 — Phase 4 added on Patrick's review: "are we going to have
+  some monster refactor?" — no; the helper + drift-guard architecture
+  made the guard re-injection a one-function change with zero edits to
+  the 15 workflow files.
 - 2026-06-10 — Phase 2: live probe confirmed the CLI accepts an empty
   `--setting-sources=` (exit 0, keyless/subscription) — R3's gate passed.
   D5's "one adapter site" premise corrected on contact with code (see
@@ -33,4 +38,16 @@
 
 ## Live receipts (Phase 3)
 
-- _pending_
+- **2026-06-10 — PASS.** `ANTHROPIC_API_KEY=""` (strict keyless) +
+  `attune workflow run bug-predict --path src/attune/gates --depth
+  quick` from inside a Claude Code session, on the P2+P4 stack:
+  exit 0, 249.5 s, real multi-subagent run via subscription, genuine
+  structured findings (risk score 32/100; the envelope-persistence
+  TOCTOU race independently re-confirmed the 2026-06-06 API-mode
+  finding). **Before the fix this exact invocation died in seconds
+  with the opaque `Command failed with exit code 1`** from
+  SessionStart-hook stdout poisoning the stream-json channel.
+  Residual nit observed: the voice cost line (`$1.8394 | 249.5s`)
+  still shows for unmigrated workflows on subscription — resolved
+  per-workflow by the wrf T8 migrations (rendered reports already
+  suppress it).

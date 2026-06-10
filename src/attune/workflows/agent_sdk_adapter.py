@@ -908,6 +908,45 @@ def get_max_budget_usd(depth: str = "standard") -> float | None:
 SDK_SUBPROCESS_ENV_VAR = "ATTUNE_SDK_SUBPROCESS"
 
 
+async def _guard_bash_tool(
+    input_data: dict[str, Any],
+    tool_use_id: str | None,
+    context: Any,
+) -> dict[str, Any]:
+    """In-process PreToolUse guard for SDK subprocess sessions (Phase 4).
+
+    Isolation (``setting_sources=[]``) strips ALL filesystem hooks from
+    workflow subprocesses — including the protective ``security_guard``.
+    This callback re-injects that one control programmatically: the
+    protection travels with the adapter instead of depending on the
+    environment. Reuses the hook script's own ``validate_bash_command``
+    (single source of truth for the banned patterns) and denies with a
+    reason so the workflow agent can adapt rather than crash.
+
+    Args:
+        input_data: PreToolUse hook payload (``tool_name``/``tool_input``).
+        tool_use_id: SDK-provided tool use id (unused).
+        context: SDK hook context (unused).
+
+    Returns:
+        Empty dict to allow; a deny decision with reason to block.
+
+    """
+    from attune.hooks.scripts.security_guard import validate_bash_command
+
+    command = str((input_data.get("tool_input") or {}).get("command", ""))
+    ok, reason = validate_bash_command(command)
+    if ok:
+        return {}
+    return {
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": "deny",
+            "permissionDecisionReason": reason,
+        }
+    }
+
+
 def sdk_isolation_kwargs() -> dict[str, Any]:
     """``ClaudeAgentOptions`` kwargs isolating the SDK subprocess session.
 
@@ -917,6 +956,8 @@ def sdk_isolation_kwargs() -> dict[str, Any]:
     makes SDK workflows usable for subscription users (hook stdout
     otherwise poisons the stream-json channel). The env marker lets
     attune hooks self-gate on older SDKs and non-adapter spawn paths.
+    The programmatic Bash guard (Phase 4, D8) re-injects the eval/exec
+    protection that settings exclusion would otherwise remove.
 
     Splat into every ``ClaudeAgentOptions`` construction::
 
@@ -931,12 +972,17 @@ def sdk_isolation_kwargs() -> dict[str, Any]:
     back on (spec findings F4).
 
     Returns:
-        Kwargs dict with ``setting_sources`` and ``env``.
+        Kwargs dict with ``setting_sources``, ``env``, and ``hooks``.
 
     """
     return {
         "setting_sources": [],
         "env": {SDK_SUBPROCESS_ENV_VAR: "1"},
+        "hooks": {
+            "PreToolUse": [
+                claude_agent_sdk.HookMatcher(matcher="Bash", hooks=[_guard_bash_tool]),
+            ],
+        },
     }
 
 

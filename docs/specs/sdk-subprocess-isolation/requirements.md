@@ -1,8 +1,10 @@
 # Spec: SDK Subprocess Isolation — Requirements
 
-**Status:** approved (2026-06-10, "GO") — Phase 0 done
-([findings.md](findings.md)); Phase 2 (adapter isolation) implemented
-first (it directly unblocks the subscription receipt), Phase 1 next.
+**Status:** complete (2026-06-10) — all four phases shipped same-day:
+Phase 0 findings + probe (#748), Phase 2 adapter isolation (#752),
+Phase 1 hook gate (#753), Phase 4 programmatic guard (#755). Phase 3
+live receipt PASSED (keyless bug-predict via subscription, 249.5 s,
+real findings — see decisions.md).
 
 ---
 
@@ -104,3 +106,7 @@ Claude Code. The breakage is session-content pollution, not auth.
 - **Phase 3 — Live receipt.** Subscription-mode run of one SDK
   workflow (bug-predict on a small leaf module) recorded in
   decisions.md; flip spec to complete.
+- **Phase 4 — Programmatic guard (D8).** `sdk_isolation_kwargs()`
+  carries an in-process PreToolUse `HookMatcher(matcher="Bash")`
+  reusing `validate_bash_command` (deny-with-reason) — re-injects the
+  protection that settings exclusion removes. No workflow-file edits.
