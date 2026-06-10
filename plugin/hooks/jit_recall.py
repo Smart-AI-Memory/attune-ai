@@ -114,8 +114,15 @@ def main() -> int:
             return 0
 
         session_id = payload.get("session_id")
+        tool_input_text = json.dumps(payload.get("tool_input") or {})
         fresh = []
         for rule in rules:
+            # Optional content filter (e.g. a Bash rule scoped to one
+            # command shape) — without it a Bash-keyed rule would fire
+            # on the first bash call of every session (R3: low noise).
+            needle = rule.get("match_substring")
+            if needle and needle not in tool_input_text:
+                continue
             sentinel = _sentinel_path(session_id, rule["rule_id"])
             if sentinel is not None and sentinel.exists():
                 continue

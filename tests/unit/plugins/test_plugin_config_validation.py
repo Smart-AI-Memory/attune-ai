@@ -10,6 +10,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 
 import pytest
@@ -399,6 +400,25 @@ class TestVersionConsistency:
                 versions["plugin/core/__init__.py"] = (
                     line.split("=")[1].strip().strip('"').strip("'")
                 )
+
+        # Docs surfaces that have silently lagged releases before:
+        # .claude/CLAUDE.md sat at 7.4.0 through three releases until
+        # 8.1.0; API_REFERENCE lagged two minors through v6.0-v6.3.
+        claude_md = REPO_ROOT / ".claude" / "CLAUDE.md"
+        text = claude_md.read_text(encoding="utf-8")
+        header = re.search(r"^# Attune AI Framework v(\d+\.\d+\.\d+)", text)
+        assert header, ".claude/CLAUDE.md header version line missing"
+        versions[".claude/CLAUDE.md:header"] = header.group(1)
+        footers = re.findall(r"\*\*Version:\*\* (\d+\.\d+\.\d+)", text)
+        assert footers, ".claude/CLAUDE.md footer version line missing"
+        versions[".claude/CLAUDE.md:footer"] = footers[-1]
+
+        api_ref = REPO_ROOT / "docs" / "reference" / "API_REFERENCE.md"
+        text = api_ref.read_text(encoding="utf-8")
+        found = re.findall(r"\*\*Version:\*\* (\d+\.\d+\.\d+)", text)
+        assert len(found) >= 2, "API_REFERENCE.md version header/footer missing"
+        versions["docs/reference/API_REFERENCE.md:header"] = found[0]
+        versions["docs/reference/API_REFERENCE.md:footer"] = found[-1]
 
         return versions
 

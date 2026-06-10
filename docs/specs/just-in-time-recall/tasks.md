@@ -8,9 +8,9 @@ token appeared verbatim in a headless `claude -p` reply while the call
 proceeded). Shipped: `plugin/hooks/_recall_map.py` (curated map, the
 `AskUserQuestion` proof entry), `plugin/hooks/jit_recall.py`
 (surface-once sentinel, fail-safe, `ATTUNE_JIT_RECALL=0` off-switch),
-`hooks.json` registration, 12 tests. Remaining: T1.4 live-session R6
-proof (needs the updated plugin loaded — verify in the first session
-after the next plugin release), then Phase 2.
+`hooks.json` registration, 12 tests. T1.4 live-proven 2026-06-10;
+Phase 2 started: optional `match_substring` content filter + the
+`release-verify-merge-sha` Bash entry (first T2.1 slip-point).
 
 Independently shippable units. **Phase 0 gates everything** — no
 implementation past it until the injection mechanism is logged in
@@ -41,14 +41,20 @@ implementation past it until the injection mechanism is logged in
   in a session is silent), no-entry silent no-op, crash → exit 0, and the
   injected-text content for the AskUserQuestion case. Mirror the
   `test_session_memory_hooks.py` importlib-loader pattern.
-- [ ] **T1.4** Reproduce the 2026-06-03 slip (an AskUserQuestion call) and
-  confirm the rule surfaces at the decision point (R6). Record the
-  before/after in the PR.
+- [x] **T1.4** Reproduce the 2026-06-03 slip (an AskUserQuestion call) and
+  confirm the rule surfaces at the decision point (R6). **Live-proven
+  2026-06-10** (8.1.0 release session): the session's first
+  AskUserQuestion — the pypi-approval question — received the
+  question-shape rule via PreToolUse `additionalContext`, and the
+  question conformed (one question, '(Recommended)' first option).
 
 ## Phase 2 — grow the map + tune cadence (deferred)
 
 - [ ] **T2.1** Add the next 2–3 highest-value slip-points (e.g. git push
   to a shared branch → fetch-first rule) once the proof case holds.
+  *(1 of 2-3 added 2026-06-10: `release-verify-merge-sha` on
+  `Bash`+`gh release create`, via the new `match_substring` filter —
+  broad tools MUST scope rules this way, drift-guarded in tests.)*
 - [ ] **T2.2** Decide the surface-once vs decay question (D5) from proof-
   case evidence; implement decay only if once-per-session proves too
   sparse.
