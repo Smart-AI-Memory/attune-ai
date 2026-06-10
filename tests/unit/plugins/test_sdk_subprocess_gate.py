@@ -185,3 +185,53 @@ class TestHooksSilentInSdkSubprocess:
         )
         assert result.returncode == 0
         assert result.stdout == "" and result.stderr == ""
+
+
+class TestRepoGateTwin:
+    """Direct coverage of attune.hooks.scripts._sdk_gate (the repo twin).
+
+    The subprocess-based tests above exercise the plugin twin invisibly
+    to coverage; this class imports the packaged twin and exercises the
+    same contract in-process.
+    """
+
+    def test_marker_detected(self, monkeypatch):
+        """ATTUNE_SDK_SUBPROCESS=1 arms the repo twin too."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        monkeypatch.delenv("CLAUDE_CODE_ENTRYPOINT", raising=False)
+        assert _sdk_gate.is_sdk_subprocess() is True
+
+    def test_sdk_entrypoint_detected(self, monkeypatch):
+        """The sdk- entrypoint prefix arms the repo twin too."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "sdk-ts")
+        assert _sdk_gate.is_sdk_subprocess() is True
+
+    def test_interactive_not_detected(self, monkeypatch):
+        """No signal → not an SDK subprocess."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.setenv("CLAUDE_CODE_ENTRYPOINT", "claude-desktop")
+        assert _sdk_gate.is_sdk_subprocess() is False
+
+    def test_exit_helper_exits_zero_when_armed(self, monkeypatch):
+        """exit_if_sdk_subprocess raises SystemExit(0) under the marker."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.setenv("ATTUNE_SDK_SUBPROCESS", "1")
+        with pytest.raises(SystemExit) as excinfo:
+            _sdk_gate.exit_if_sdk_subprocess()
+        assert excinfo.value.code == 0
+
+    def test_exit_helper_noop_when_interactive(self, monkeypatch):
+        """No signal → the helper returns without exiting."""
+        from attune.hooks.scripts import _sdk_gate
+
+        monkeypatch.delenv("ATTUNE_SDK_SUBPROCESS", raising=False)
+        monkeypatch.delenv("CLAUDE_CODE_ENTRYPOINT", raising=False)
+        assert _sdk_gate.exit_if_sdk_subprocess() is None
