@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.1.1] — 2026-06-10
+
+Docs/metadata patch — no code or library-behaviour changes. Regenerates the
+4 stale `.help/templates/` features (`plugin`, `cli`, `ops-dashboard`,
+`memory`) post-8.1.0 with source-verified fact-check fixes: corrected
+import paths in the memory docs, the plugin quickstart rewritten to
+user-facing steps (it previously instructed importing internal hook
+modules), and its skill count corrected to 17. `.help/` is not part of the
+wheel/sdist — this release keeps PyPI ≡ repo ≡ plugin manifests in
+lockstep per the docs-only release policy.
+
 ## [8.1.0] — 2026-06-10
 
 Minor release rolling up the 2026-06-09 → 06-10 cycle (~50 PRs). Highlights:
