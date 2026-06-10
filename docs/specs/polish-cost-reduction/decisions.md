@@ -1,6 +1,6 @@
 # Polish-Cost Reduction — Decisions
 
-**Status:** approved (2026-06-10)
+**Status:** complete (2026-06-10) — D1/D3/D4-short-term/D5 shipped (#735, attune-author v0.15.0, #736); D4 ground-truth injection remains the follow-up.
 
 ## D1 — Two complementary levers, both wanted (ratified 2026-06-10)
 
