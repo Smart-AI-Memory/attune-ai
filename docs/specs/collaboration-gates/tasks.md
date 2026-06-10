@@ -5,7 +5,11 @@
 > Companion to [`requirements.md`](requirements.md),
 > [`design.md`](design.md), [`decisions.md`](decisions.md).
 
-**Status:** approved (2026-06-05)
+**Status:** complete (2026-06-09) — shipped: spend gate R1–R8
+(`src/attune/gates/{spend_gate,envelope,meter}.py`, #637/#638) +
+referent gate R9/R10 as advisory attune-hub guidance (#694; see
+decisions.md D13). Status flip caught by docs-completeness-audit B5
+re-triage (cross-PR drift the reconciler can't see).
 **Last updated:** 2026-06-05
 
 Ordering: T1 and T2 are leaf modules (shippable alone, no
