@@ -26,6 +26,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/specs/integration-coverage/phase1-triage.md`.
 
 ### Added
+- **Nightly auth integration job (`integration-auth.yml`).** Opt-in
+  schedule + `workflow_dispatch` workflow running the auth bucket of
+  the integration suite — the 6 `*_with_auth` files, the 6 env-gated
+  `test_discovery_sweep_*` files, and `test_llm_integration.py`
+  (33 tests) — against the real Anthropic API with the repo
+  `ANTHROPIC_API_KEY` secret and an `ATTUNE_MAX_BUDGET_USD=10` spend
+  cap. Never runs on push/PR (no fork-PR secret exposure). Advisory:
+  failures are triage signal, not merge blockers. Completes the
+  integration-coverage spec's Phase 1 follow-up; the remaining step
+  is promoting the no-auth job to a required check after a few weeks
+  of green runs.
 - **`/verify` skill — output-side generation fact-checker.** A new
   `verify` skill (`plugin/skills/verify/`) fact-checks LLM-generated
   content (docs, READMEs, tutorials) against the project as

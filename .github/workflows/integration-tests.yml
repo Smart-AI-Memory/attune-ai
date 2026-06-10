@@ -4,7 +4,7 @@ name: Integration Tests
 # coverage/) so it stops rotting from never running. Keyless (empty
 # ANTHROPIC_API_KEY) → CI-representative; auth-required tests (the
 # `*_with_auth` files + the env-gated discovery_sweep files) skip here
-# and run separately (opt-in nightly, TODO).
+# and run separately (integration-auth.yml — nightly + manual dispatch).
 #
 # History: started as an explicit green-subset file list while the
 # 11-file cleanup backlog in
