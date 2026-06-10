@@ -9,11 +9,13 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import json
 import logging
 import os
 import re
 import shutil
 import subprocess
+import time
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
@@ -53,6 +55,59 @@ class AgentRunResult:
     errors: list[str] | None = None
 
 
+def _maybe_dump_message(message: Any) -> None:
+    """Append one JSON line describing an SDK message when
+    ``ATTUNE_SDK_STREAM_DUMP=<dir>`` is set.
+
+    Phase-0 instrumentation for the opus-4-8-platform-fit spec: every
+    measured axis (narration volume, subagent/tool counts, ask-rate,
+    effort fit, cost) derives from this dump. Content-free by design —
+    TextBlocks record only ``chars`` and an ``interrogative`` flag,
+    never the text itself, so dump dirs carry no code or prose.
+
+    Off by default; best-effort — never raises into the stream loop.
+    """
+    dump_dir = os.environ.get("ATTUNE_SDK_STREAM_DUMP")
+    if not dump_dir:
+        return
+    try:
+        record: dict[str, Any] = {"ts": time.time(), "type": type(message).__name__}
+        parent_id = getattr(message, "parent_tool_use_id", None)
+        if parent_id is not None:
+            record["parent_tool_use_id"] = parent_id
+        content = getattr(message, "content", None)
+        if isinstance(content, list):
+            blocks: list[dict[str, Any]] = []
+            for block in content:
+                entry: dict[str, Any] = {"kind": type(block).__name__}
+                text = getattr(block, "text", None)
+                if isinstance(text, str):
+                    entry["chars"] = len(text)
+                    entry["interrogative"] = text.rstrip().endswith("?")
+                tool_name = getattr(block, "name", None)
+                if isinstance(tool_name, str):
+                    entry["tool_name"] = tool_name
+                blocks.append(entry)
+            record["blocks"] = blocks
+        if isinstance(message, claude_agent_sdk.ResultMessage):
+            record["result"] = {
+                "total_cost_usd": message.total_cost_usd,
+                "usage": message.usage,
+                "num_turns": message.num_turns,
+                "duration_ms": message.duration_ms,
+                "duration_api_ms": message.duration_api_ms,
+                "is_error": message.is_error,
+                "session_id": message.session_id,
+            }
+        path = Path(dump_dir) / f"stream-{os.getpid()}.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with path.open("a", encoding="utf-8") as fh:
+            fh.write(json.dumps(record, default=str) + "\n")
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: instrumentation must never break the stream loop.
+        logger.debug("ATTUNE_SDK_STREAM_DUMP write failed", exc_info=True)
+
+
 def collect_agent_output(
     message: Any,
     assistant_parts: list[str],
@@ -75,6 +130,8 @@ def collect_agent_output(
         ``run_result.result_text`` after the loop completes using
         ``build_result_text(assistant_parts, result_parts)``.
     """
+    _maybe_dump_message(message)
+
     if isinstance(message, claude_agent_sdk.AssistantMessage):
         for block in message.content:
             if isinstance(block, claude_agent_sdk.types.TextBlock):
