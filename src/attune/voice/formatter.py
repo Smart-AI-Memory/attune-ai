@@ -10,6 +10,8 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import dataclasses
+import enum
 import logging
 from types import SimpleNamespace
 from typing import Any
@@ -232,16 +234,42 @@ def _extract_from_workflow_result(
     """
     report_text = None
     score = None
+    # True when report_text is designed output (rendered WorkflowReport or
+    # the safety-net pretty-print) — exempt from the sparse fallback below.
+    rendered = False
 
     # Extract formatted report from final_output
-    if isinstance(result.final_output, dict):
-        report_text = result.final_output.get("formatted_report")
-        score = result.final_output.get("score")
-    elif result.final_output is not None:
-        report_text = str(result.final_output)
+    fo = result.final_output
+    if isinstance(fo, dict):
+        from attune.workflows.output import WorkflowReport
+
+        if WorkflowReport.is_report_dict(fo):
+            # Migrated workflow: reconstruct + render (design D2).
+            from attune.config import resolve_show_cost
+            from attune.voice import report_renderer
+
+            report = WorkflowReport.from_dict(fo)
+            report_text = report_renderer.render_safe(
+                report,
+                disclosure="summary",
+                show_cost=resolve_show_cost(),
+            )
+            score = report.score
+            rendered = True
+        else:
+            report_text = fo.get("formatted_report")
+            score = fo.get("score")
+    elif isinstance(fo, str):
+        # SDK workflows emit markdown text directly — pass through.
+        report_text = fo
+    elif fo is not None:
+        # Unmigrated bespoke result object: safety net instead of a raw
+        # repr (proposal §6) — banner + generic field pretty-print.
+        report_text = _format_unmigrated(fo)
+        rendered = True
 
     # Fallback: use summary + metadata findings if report_text is sparse
-    if not report_text or len(report_text.strip()) < 50:
+    if not rendered and (not report_text or len(report_text.strip()) < 50):
         fallback_parts: list[str] = []
         summary = getattr(result, "summary", None)
         if summary:
@@ -271,6 +299,62 @@ def _extract_from_workflow_result(
     error_msg = result.error if not result.success else None
 
     return (result.success, score, report_text, cost_line, error_msg)
+
+
+def _format_unmigrated(value: Any) -> str:
+    """Safety net for bespoke result objects with no renderer yet.
+
+    Emits a visible "renderer not yet migrated" banner plus a generic
+    field pretty-print (proposal §6): enums become ``.value``, nested
+    dataclasses indent one level, collections show counts, empties show
+    ``(empty)``. Intentionally not pretty — it satisfies "no repr ever"
+    while making the migration gap obvious.
+
+    Args:
+        value: The unmigrated ``final_output`` object.
+
+    Returns:
+        Banner + indented field summary text.
+
+    """
+    type_name = type(value).__name__
+    lines = [f"⚠ Renderer not yet migrated for {type_name}. Raw fields:", ""]
+    lines.extend(_pretty_fields(value, indent="  ", depth=0))
+    return "\n".join(lines)
+
+
+def _pretty_fields(value: Any, *, indent: str, depth: int) -> list[str]:
+    """One line per field of ``value``; nested dataclasses indent once."""
+    pairs: list[tuple[str, Any]]
+    if dataclasses.is_dataclass(value) and not isinstance(value, type):
+        pairs = [(f.name, getattr(value, f.name, None)) for f in dataclasses.fields(value)]
+    elif hasattr(value, "__dict__"):
+        pairs = [(k, v) for k, v in vars(value).items() if not k.startswith("_")]
+    else:
+        return [f"{indent}{value}"]
+
+    lines: list[str] = []
+    for name, val in pairs:
+        if dataclasses.is_dataclass(val) and not isinstance(val, type) and depth < 1:
+            lines.append(f"{indent}{name}: {type(val).__name__}")
+            lines.extend(_pretty_fields(val, indent=indent + "  ", depth=depth + 1))
+        else:
+            lines.append(f"{indent}{name}: {_summarize_field(val)}")
+    return lines
+
+
+def _summarize_field(val: Any) -> str:
+    """Scalar summary for one field value — counts, not contents."""
+    if isinstance(val, enum.Enum):
+        return str(val.value)
+    if dataclasses.is_dataclass(val) and not isinstance(val, type):
+        return type(val).__name__
+    if isinstance(val, list | tuple | set):
+        return f"[{len(val)} items]" if val else "(empty)"
+    if isinstance(val, dict):
+        return f"[{len(val)} keys]" if val else "(empty)"
+    text = str(val)
+    return text if len(text) <= 120 else text[:117] + "..."
 
 
 def _extract_from_dict(

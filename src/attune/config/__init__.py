@@ -34,11 +34,13 @@ if spec and spec.loader:
     AttuneConfig: Any = legacy_config.AttuneConfig
     EmpathyConfig: Any = legacy_config.EmpathyConfig  # backward-compat alias
     load_config: Any = legacy_config.load_config
+    resolve_show_cost: Any = legacy_config.resolve_show_cost
 else:
     # Fallback if import fails
     AttuneConfig = None
     EmpathyConfig = None
     load_config = None
+    resolve_show_cost = None
 
 # Import XML enhancement configs
 # Import agent configuration models
@@ -71,6 +73,7 @@ __all__ = [
     "AttuneConfig",
     "EmpathyConfig",
     "load_config",
+    "resolve_show_cost",
     "YAML_AVAILABLE",
     "_validate_file_path",
     # XML enhancement configs

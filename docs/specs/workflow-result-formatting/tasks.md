@@ -1,9 +1,14 @@
 # Tasks: Workflow result formatting
 
 **Status:** partial (2026-06-10) — T1 (the `WorkflowReport` / Section
-data model, #649) and T2 (the markdown renderer
+data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
-`render_safe()`, all 4 test layers, 98% branch) shipped; T3+ pending.
+`render_safe()`, all 4 test layers, 98% branch, #741), and T3 (voice
+wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`)
+shipped; T4+ pending. T4 note: the rendered report embeds
+`**Score:** N/100` and `format_output` appends its own plain
+`Score: N/100` line — resolve the duplication when reworking the CLI
+surface.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
@@ -44,14 +49,20 @@ data model, #649) and T2 (the markdown renderer
   renderer-crash visibility.
 - One PR.
 
-## T3 — Voice wiring + safety net
+## T3 — Voice wiring + safety net — DONE
 
 - `_extract_from_workflow_result`: add the `_type=="WorkflowReport"`
   branch before the `str()` fallback → reconstruct + render; turn the
   bare `str()` branch into the safety-net pretty-printer + "renderer not
   migrated" banner. Add `resolve_show_cost()` + `config.show_cost_metrics`.
   (Design D2/D3.)
-- One PR.
+- One PR. Shipped: `WorkflowReport.is_report_dict` branch renders via
+  `render_safe(disclosure="summary", show_cost=resolve_show_cost())`;
+  plain-`str` final_output (SDK markdown) passes through unchanged; the
+  bespoke-object branch emits the §6 banner + field pretty-print;
+  rendered branches are exempt from the sparse summary fallback.
+  `resolve_show_cost()` lives in `attune.config` (env var
+  `ATTUNE_SHOW_COST_METRICS` also parsed as bool by `from_env`).
 
 ## T4 — CLI
 
