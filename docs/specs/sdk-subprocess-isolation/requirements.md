@@ -104,3 +104,7 @@ Claude Code. The breakage is session-content pollution, not auth.
 - **Phase 3 — Live receipt.** Subscription-mode run of one SDK
   workflow (bug-predict on a small leaf module) recorded in
   decisions.md; flip spec to complete.
+- **Phase 4 — Programmatic guard (D8).** `sdk_isolation_kwargs()`
+  carries an in-process PreToolUse `HookMatcher(matcher="Bash")`
+  reusing `validate_bash_command` (deny-with-reason) — re-injects the
+  protection that settings exclusion removes. No workflow-file edits.
