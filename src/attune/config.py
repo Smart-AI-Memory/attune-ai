@@ -11,6 +11,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import json
+import logging
 import os
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
@@ -62,6 +63,12 @@ class AttuneConfig:
     # Metrics settings
     metrics_enabled: bool = True
     metrics_path: str = "./metrics.db"
+
+    # Output settings
+    # None = auto: show cost metrics iff ANTHROPIC_API_KEY is set
+    # (cost figures don't apply to subscription users; see
+    # resolve_show_cost()).
+    show_cost_metrics: bool | None = None
 
     # Logging settings
     log_level: str = "INFO"
@@ -246,6 +253,7 @@ class AttuneConfig:
                     "async_enabled",
                     "feedback_loop_monitoring",
                     "leverage_point_analysis",
+                    "show_cost_metrics",
                 ):
                     data[field_name] = value.lower() in ("true", "1", "yes")
                 else:
@@ -507,6 +515,45 @@ def load_config(
     config.validate()
 
     return config
+
+
+def resolve_show_cost(config: "AttuneConfig | None" = None) -> bool:
+    """Resolve whether human-facing output should show cost metrics.
+
+    Resolution order (workflow-result-formatting design D3):
+
+    1. ``config.show_cost_metrics`` when explicitly set (``True``/``False``).
+    2. Auto default: ``True`` iff ``ANTHROPIC_API_KEY`` is set — cost
+       figures only apply to pay-per-call API users, not subscription
+       users.
+
+    Cost data always stays in ``WorkflowReport.metadata`` and ``--json``
+    output; this flag only gates the human-readable rendering.
+
+    Args:
+        config: Configuration to read the override from. ``None`` loads
+            the ambient configuration via :func:`load_config`.
+
+    Returns:
+        True if cost metrics should be rendered.
+
+    """
+    if config is None:
+        try:
+            config = load_config()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: a malformed user config must never break
+            # output formatting — fall through to the env auto default.
+            logging.getLogger(__name__).warning(
+                "Failed to load config for show_cost resolution",
+                exc_info=True,
+            )
+            config = None
+
+    if config is not None and config.show_cost_metrics is not None:
+        return bool(config.show_cost_metrics)
+
+    return bool(os.environ.get("ANTHROPIC_API_KEY"))
 
 
 # Backward-compatible alias (deprecated: use AttuneConfig)

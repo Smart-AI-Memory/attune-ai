@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Voice layer renders `WorkflowReport` results**
+  (workflow-result-formatting T3). `_extract_from_workflow_result`
+  detects a serialized `WorkflowReport` (`_type` discriminator) in
+  `final_output`, reconstructs it, and renders summary-mode markdown
+  via `attune.voice.report_renderer.render_safe`. Unmigrated bespoke
+  result objects no longer leak dataclass reprs — they get a visible
+  "Renderer not yet migrated for <Type>" banner plus a generic field
+  pretty-print (enums as values, collections as counts, one level of
+  nested-dataclass indent). SDK string output passes through
+  unchanged.
+- **`show_cost_metrics` config + `resolve_show_cost()`** (design D3).
+  `AttuneConfig.show_cost_metrics: bool | None` — `None` (default)
+  auto-resolves to "show cost iff `ANTHROPIC_API_KEY` is set", so
+  subscription users never see inapplicable cost figures; explicit
+  `True`/`False` (file, env `ATTUNE_SHOW_COST_METRICS`) overrides.
+  Cost data always stays in `WorkflowReport.metadata` and `--json`.
+
 ## [8.2.0] — 2026-06-10
 
 The polish-cost-reduction release: LLM polish of generated docs now runs

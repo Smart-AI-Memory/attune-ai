@@ -10,7 +10,7 @@ import tempfile
 
 import pytest
 
-from attune.config import YAML_AVAILABLE, EmpathyConfig
+from attune.config import YAML_AVAILABLE, EmpathyConfig, resolve_show_cost
 from attune.workflows.config import ModelConfig
 
 
@@ -242,3 +242,76 @@ class TestEmpathyConfigEnvironment:
         config = EmpathyConfig.from_env()
         assert config.confidence_threshold == pytest.approx(0.95)
         assert config.trust_building_rate == pytest.approx(0.1)
+
+    def test_show_cost_metrics_env_boolean_conversion(self, monkeypatch):
+        """ATTUNE_SHOW_COST_METRICS parses as a boolean, not a string."""
+        monkeypatch.setenv("ATTUNE_SHOW_COST_METRICS", "true")
+        assert EmpathyConfig.from_env().show_cost_metrics is True
+
+        monkeypatch.setenv("ATTUNE_SHOW_COST_METRICS", "false")
+        assert EmpathyConfig.from_env().show_cost_metrics is False
+
+    def test_show_cost_metrics_defaults_to_none(self, monkeypatch):
+        """Unset show_cost_metrics stays None (auto mode)."""
+        monkeypatch.delenv("ATTUNE_SHOW_COST_METRICS", raising=False)
+        monkeypatch.delenv("EMPATHY_SHOW_COST_METRICS", raising=False)
+        assert EmpathyConfig().show_cost_metrics is None
+        assert EmpathyConfig.from_env().show_cost_metrics is None
+
+
+@pytest.mark.unit
+class TestResolveShowCost:
+    """resolve_show_cost (workflow-result-formatting design D3)."""
+
+    def test_explicit_true_wins_without_api_key(self, monkeypatch):
+        """Config True overrides the missing-key auto default."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        config = EmpathyConfig(show_cost_metrics=True)
+        assert resolve_show_cost(config) is True
+
+    def test_explicit_false_wins_with_api_key(self, monkeypatch):
+        """Config False overrides the key-present auto default."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "FAKE_key_NOT_REAL")
+        config = EmpathyConfig(show_cost_metrics=False)
+        assert resolve_show_cost(config) is False
+
+    def test_auto_on_when_api_key_set(self, monkeypatch):
+        """None (auto) shows cost for pay-per-call API users."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "FAKE_key_NOT_REAL")
+        assert resolve_show_cost(EmpathyConfig()) is True
+
+    def test_auto_off_when_api_key_missing(self, monkeypatch):
+        """None (auto) hides cost for subscription users (no key)."""
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        assert resolve_show_cost(EmpathyConfig()) is False
+
+    def test_auto_off_when_api_key_empty(self, monkeypatch):
+        """Empty-string key (the CI convention) counts as no key."""
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "")
+        assert resolve_show_cost(EmpathyConfig()) is False
+
+    def test_loads_ambient_config_when_none(self, tmp_path, monkeypatch):
+        """config=None reads the cwd config file's explicit override."""
+        (tmp_path / ".attune.json").write_text('{"show_cost_metrics": true}')
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        assert resolve_show_cost() is True
+
+    def test_ambient_config_false_wins_over_key(self, tmp_path, monkeypatch):
+        """An explicit file-level False beats a present API key."""
+        (tmp_path / ".attune.json").write_text('{"show_cost_metrics": false}')
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "FAKE_key_NOT_REAL")
+        assert resolve_show_cost() is False
+
+    def test_config_load_failure_falls_back_to_env(self, monkeypatch):
+        """A crashing load_config degrades to the env auto default."""
+
+        def _boom(*args, **kwargs):
+            raise ValueError("malformed user config")
+
+        monkeypatch.setitem(resolve_show_cost.__globals__, "load_config", _boom)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "FAKE_key_NOT_REAL")
+        assert resolve_show_cost() is True
+        monkeypatch.delenv("ANTHROPIC_API_KEY")
+        assert resolve_show_cost() is False

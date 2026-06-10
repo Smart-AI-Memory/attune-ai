@@ -1,6 +1,9 @@
 """Tests for the unified voice formatter."""
 
+from dataclasses import dataclass
+from dataclasses import field as dc_field
 from datetime import datetime, timezone
+from enum import Enum
 from unittest.mock import patch
 
 from attune.voice import personality
@@ -259,3 +262,263 @@ class TestExtractResultData:
         success, score, text, cost, error = _extract_result_data(None)
         assert success is True
         assert text is None
+
+
+class TestWorkflowReportRendering:
+    """The _type=="WorkflowReport" branch (workflow-result-formatting T3)."""
+
+    def _report_dict(self, **overrides):
+        """Serialized WorkflowReport fixture, as final_output carries it."""
+        from attune.workflows.output import (
+            NextAction,
+            NextStepsSection,
+            ProseSection,
+            WorkflowReport,
+        )
+
+        kwargs = {
+            "title": "Code review",
+            "summary": "3 issues found across 2 files.",
+            "score": 88,
+            "metadata": {"cost_usd": 1.23, "duration_s": 42.0},
+            "sections": [
+                ProseSection(
+                    title="Overview",
+                    tier="essential",
+                    text="Looks solid overall.",
+                ),
+                NextStepsSection(
+                    title="Next steps",
+                    tier="essential",
+                    items=[
+                        NextAction(
+                            text="Fix the loop",
+                            command="attune workflow run fix-test",
+                        )
+                    ],
+                ),
+            ],
+        }
+        kwargs.update(overrides)
+        return WorkflowReport(**kwargs).to_dict()
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_rendered_markdown_included(self, _mock, monkeypatch, tmp_path):
+        """A serialized report renders via the markdown renderer."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(final_output=self._report_dict())
+        output = format_output("code-review", result)
+        assert "# Code review" in output
+        assert "Looks solid overall." in output
+        assert "Fix the loop" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_score_extracted_from_report(self, _mock, monkeypatch, tmp_path):
+        """report.score drives the score commentary and score line."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(final_output=self._report_dict())
+        output = format_output("code-review", result)
+        assert personality.score_commentary(88) in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_no_repr_leak(self, _mock, monkeypatch, tmp_path):
+        """Rendered output never contains dataclass repr fragments."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(final_output=self._report_dict())
+        output = format_output("code-review", result)
+        assert "<class '" not in output
+        assert "WorkflowReport(" not in output
+        assert "ProseSection(" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_cost_hidden_without_api_key(self, _mock, monkeypatch, tmp_path):
+        """Auto show_cost: metadata cost line hidden for subscription users."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(final_output=self._report_dict(), cost_report=None)
+        output = format_output("code-review", result)
+        assert "Cost & time" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_cost_shown_with_api_key(self, _mock, monkeypatch, tmp_path):
+        """Auto show_cost: metadata cost line shown for API users."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "FAKE_key_NOT_REAL")
+        result = _make_result(final_output=self._report_dict(), cost_report=None)
+        output = format_output("code-review", result)
+        assert "Cost & time" in output
+        assert "$1.23" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_rendered_report_skips_sparse_fallback(self, _mock, monkeypatch, tmp_path):
+        """A short rendered report is authoritative — no findings fallback."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(
+            final_output=self._report_dict(
+                title="T", summary="", score=None, metadata={}, sections=[]
+            ),
+        )
+        result.metadata = {"findings": {"security_issues": ["issue one"]}}
+        output = format_output("security-audit", result)
+        assert "# T" in output
+        # The metadata-findings fallback heading must NOT replace the report.
+        assert "## Security Issues" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_renderer_crash_shows_banner(self, _mock, monkeypatch, tmp_path):
+        """A renderer bug stays visible (render_safe banner + fallback)."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        with patch(
+            "attune.voice.report_renderer.render",
+            side_effect=RuntimeError("boom"),
+        ):
+            result = _make_result(final_output=self._report_dict())
+            output = format_output("code-review", result)
+        assert "Report renderer error" in output
+        assert "Code review" in output  # safety-net fallback still shows content
+
+
+class TestUnmigratedSafetyNet:
+    """The bare-object branch: banner + pretty-print (proposal §6)."""
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_banner_names_type_and_no_repr(self, _mock):
+        """Bespoke dataclass gets the migration banner, never a repr."""
+
+        @dataclass
+        class FakeReadinessReport:
+            approved: bool = True
+            blockers: list = dc_field(default_factory=list)
+
+        result = _make_result(final_output=FakeReadinessReport())
+        output = format_output("release-prep", result)
+        assert "Renderer not yet migrated for FakeReadinessReport" in output
+        assert "FakeReadinessReport(" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_field_summaries(self, _mock):
+        """Enums show .value; collections show counts; empties show (empty)."""
+
+        class Confidence(Enum):
+            HIGH = "high"
+
+        @dataclass
+        class FakeReport:
+            confidence: Confidence = Confidence.HIGH
+            gates: list = dc_field(default_factory=lambda: [1, 2, 3, 4])
+            blockers: list = dc_field(default_factory=list)
+            extras: dict = dc_field(default_factory=lambda: {"a": 1, "b": 2})
+
+        result = _make_result(final_output=FakeReport())
+        output = format_output("release-prep", result)
+        assert "confidence: high" in output
+        assert "gates: [4 items]" in output
+        assert "blockers: (empty)" in output
+        assert "extras: [2 keys]" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_nested_dataclass_indents(self, _mock):
+        """One level of nested dataclass expands with deeper indentation."""
+
+        @dataclass
+        class Inner:
+            passed: bool = True
+
+        @dataclass
+        class Outer:
+            inner: Inner = dc_field(default_factory=Inner)
+
+        result = _make_result(final_output=Outer())
+        output = format_output("release-prep", result)
+        assert "  inner: Inner" in output
+        assert "    passed: True" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_long_string_field_truncated(self, _mock):
+        """A long string field is capped, keeping lines readable."""
+
+        @dataclass
+        class FakeReport:
+            notes: str = "x" * 300
+
+        result = _make_result(final_output=FakeReport())
+        output = format_output("release-prep", result)
+        assert "x" * 300 not in output
+        assert "..." in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_plain_object_with_dict(self, _mock):
+        """Non-dataclass objects pretty-print their public attributes."""
+
+        class Legacy:
+            def __init__(self):
+                self.status = "ok"
+                self._private = "hidden"
+
+        result = _make_result(final_output=Legacy())
+        output = format_output("release-prep", result)
+        assert "Renderer not yet migrated for Legacy" in output
+        assert "status: ok" in output
+        assert "_private" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_fieldless_value_stringifies(self, _mock):
+        """A value with no fields still shows under the banner."""
+        result = _make_result(final_output=42)
+        output = format_output("release-prep", result)
+        assert "Renderer not yet migrated for int" in output
+        assert "42" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_string_final_output_passes_through(self, _mock):
+        """SDK markdown text keeps passing through with no banner."""
+        result = _make_result(final_output="## Findings\n\n- one\n- two\n- three!")
+        output = format_output("bug-predict", result)
+        assert "Renderer not yet migrated" not in output
+        assert "## Findings" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_none_final_output_uses_summary_fallback(self, _mock):
+        """final_output=None still reaches the summary fallback, no banner."""
+        now = datetime.now(timezone.utc)
+        result = WorkflowResult(
+            success=True,
+            stages=[],
+            final_output=None,
+            cost_report=None,
+            started_at=now,
+            completed_at=now,
+            total_duration_ms=1000,
+            summary="Run finished with no structured output.",
+        )
+        output = format_output("code-review", result)
+        assert "Renderer not yet migrated" not in output
+        assert "Run finished with no structured output." in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_deep_nesting_collapses_to_type_name(self, _mock):
+        """Past the indent depth cap, nested dataclasses summarize by name."""
+
+        @dataclass
+        class Innermost:
+            value: int = 1
+
+        @dataclass
+        class Inner:
+            deepest: Innermost = dc_field(default_factory=Innermost)
+
+        @dataclass
+        class Outer:
+            inner: Inner = dc_field(default_factory=Inner)
+
+        result = _make_result(final_output=Outer())
+        output = format_output("release-prep", result)
+        assert "  inner: Inner" in output
+        # Depth cap: the second nesting level shows the type name only.
+        assert "deepest: Innermost" in output
+        assert "value: 1" not in output
