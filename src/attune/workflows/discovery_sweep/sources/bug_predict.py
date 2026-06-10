@@ -5,7 +5,7 @@ lives at the workflow-instance level, NEVER class": this adapter
 constructs a fresh :class:`BugPredictionWorkflow` per call with
 :data:`STRUCTURED_EMIT_FOOTER` passed as the ``system_prompt_suffix``
 kwarg, invokes ``execute()`` once per path, and parses each
-workflow's ``final_output`` via :func:`parse_findings_json`. The
+workflow's each result via :func:`findings_from_workflow_result`. The
 wrapped workflow is unchanged for every other caller.
 
 The ``claude_agent_sdk`` import lives inside :meth:`discover` so the
@@ -21,7 +21,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from ..llm_source_base import STRUCTURED_EMIT_FOOTER, LLMSource, parse_findings_json
+from ..llm_source_base import (
+    STRUCTURED_EMIT_FOOTER,
+    LLMSource,
+    findings_from_workflow_result,
+)
 from ..workflow import Finding
 
 logger = logging.getLogger(__name__)
@@ -85,7 +89,7 @@ class BugPredictSource(LLMSource):
                 findings.append(_workflow_unsuccessful_finding(self.name, path, result))
                 continue
 
-            findings.extend(parse_findings_json(result.final_output or "", self.name))
+            findings.extend(findings_from_workflow_result(result, self.name))
 
         return findings
 

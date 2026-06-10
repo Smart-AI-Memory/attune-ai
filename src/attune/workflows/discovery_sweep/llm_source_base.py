@@ -204,6 +204,43 @@ def parse_findings_json(text: str, source_name: str) -> list[Finding]:
     return findings
 
 
+def findings_from_workflow_result(result: object, source_name: str) -> list[Finding]:
+    """Parse structured findings from a WorkflowResult.
+
+    Prefers ``metadata["raw_result_text"]`` — the UNMODIFIED agent
+    text — over ``final_output``. ``AgentSDKResultAdapter`` rewrites
+    ``final_output`` as formatted markdown whenever its category
+    parser extracts findings, which silently drops the ```json block
+    that :data:`STRUCTURED_EMIT_FOOTER` requests (caught by the
+    nightly auth run 27249886475 — every adapter fell back to the
+    text-only path). The raw channel carries the block intact;
+    ``final_output`` remains the fallback for results produced
+    before the channel existed.
+
+    Args:
+        result: A WorkflowResult (or duck-typed equivalent) from a
+            wrapped workflow.
+        source_name: Name of the calling adapter — threaded through
+            to :func:`parse_findings_json`.
+
+    Returns:
+        List of Finding objects (never empty — see
+        :func:`parse_findings_json`).
+    """
+    metadata = getattr(result, "metadata", None)
+    raw_text = ""
+    if isinstance(metadata, dict):
+        raw = metadata.get("raw_result_text")
+        if isinstance(raw, str):
+            raw_text = raw
+
+    final_output = getattr(result, "final_output", "") or ""
+    if not isinstance(final_output, str):
+        final_output = str(final_output)
+
+    return parse_findings_json(raw_text or final_output, source_name)
+
+
 class LLMSource:
     """Optional marker base for LLM-backed FindingSource adapters.
 

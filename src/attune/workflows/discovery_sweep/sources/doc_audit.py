@@ -6,8 +6,8 @@ pattern: constructs a fresh :class:`DocAuditWorkflow` per call
 with :data:`STRUCTURED_EMIT_FOOTER` passed via
 ``system_prompt_suffix`` (workflow-INSTANCE level augmentation
 per Phase 1.5 ``design.md``), invokes ``execute()`` once per
-path, and parses each result's ``final_output`` via
-:func:`parse_findings_json`.
+path, and parses each result via
+:func:`findings_from_workflow_result`.
 
 ``budget_multiplier = 1.0`` — doc-audit sits at the default slot
 in Phase 1.5's ratio table (security=4 / deps=0.5 / default=1).
@@ -27,7 +27,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from ..llm_source_base import STRUCTURED_EMIT_FOOTER, LLMSource, parse_findings_json
+from ..llm_source_base import (
+    STRUCTURED_EMIT_FOOTER,
+    LLMSource,
+    findings_from_workflow_result,
+)
 from ..workflow import Finding
 
 logger = logging.getLogger(__name__)
@@ -93,7 +97,7 @@ class DocAuditSource(LLMSource):
                 findings.append(_workflow_unsuccessful_finding(self.name, path, result))
                 continue
 
-            findings.extend(parse_findings_json(result.final_output or "", self.name))
+            findings.extend(findings_from_workflow_result(result, self.name))
 
         return findings
 
