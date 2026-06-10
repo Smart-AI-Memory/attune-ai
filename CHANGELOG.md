@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **release-prep emits a structured `WorkflowReport`**
+  (workflow-result-formatting T7, the motivating case).
+  `ReleasePrepTeamWorkflow.execute()` returns a `WorkflowResult`
+  carrying the serialized report — verdict callout, quality-gates
+  table, per-agent breakdown (collapsed in summary mode),
+  blockers/warnings, and outcome-conditional next steps — instead of
+  the bespoke dataclass + `format_console_output()` dump. Rendered by
+  the T2–T4 pipeline on every surface.
 - **CLI renders `WorkflowReport` results as styled terminal markdown**
   (workflow-result-formatting T4). On a TTY, report-carrying results
   render through `rich.markdown` (headings, tables, bullets); piped

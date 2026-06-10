@@ -5,7 +5,8 @@ data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
 `render_safe()`, all 4 test layers, 98% branch, #741), and T3 (voice
 wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`)
-and T4 (CLI terminal rendering) shipped; T5+ pending.
+T4 (CLI terminal rendering), and T7 (release-prep
+migration — the motivating case) shipped; T5/T6/T8+ pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
@@ -91,12 +92,18 @@ and T4 (CLI terminal rendering) shipped; T5+ pending.
   → "Run" button (reuse runner infra); `.file` → link. (Surface map,
   proposal §3.) Largest task; may split.
 
-## T7 — Migrate release-prep (motivating case)
+## T7 — Migrate release-prep (motivating case) — DONE
 
 - Add `_to_workflow_report(ReleaseReadinessReport)` (proposal's worked
   example); `execute()` sets `final_output = report.to_dict()`. Update
   the T0 will-change tests in the same commit. Verify the success-
   criteria example renders (proposal §"Illustrative target").
+- Shipped: converter in `release_prep_team.py`; `execute()` returns a
+  real `WorkflowResult` (it previously returned the bespoke dataclass
+  directly — bypassing even the T3 safety net) and no longer prints
+  `format_console_output()`. Note: the MCP `release_prep` handler uses
+  the SDK-native `ReleasePreparationWorkflow`, a separate surface —
+  its migration rides T8+ (adapter-level findings → report).
 
 ## T8+ — Migrate remaining workflows (D5 rank)
 
