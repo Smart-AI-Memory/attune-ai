@@ -1,9 +1,12 @@
 # Tasks: Workflow result formatting
 
 **Status:** partial (2026-06-10) — T1 (the `WorkflowReport` / Section
-data model, #649) and T2 (the markdown renderer
+data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
-`render_safe()`, all 4 test layers, 98% branch) shipped; T3+ pending.
+`render_safe()`, all 4 test layers, 98% branch, #741), and T3 (voice
+wiring: `WorkflowReport` detection branch + safety-net banner +
+`resolve_show_cost()` / `config.show_cost_metrics`) shipped; T4+
+pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.

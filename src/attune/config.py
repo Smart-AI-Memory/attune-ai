@@ -78,6 +78,11 @@ class AttuneConfig:
     feedback_loop_monitoring: bool = True
     leverage_point_analysis: bool = True
 
+    # Output settings — None means auto: show cost metrics only for
+    # API-key users (cost figures don't apply to subscription users).
+    # Resolved by attune.voice.formatter.resolve_show_cost().
+    show_cost_metrics: bool | None = None
+
     # Custom metadata
     metadata: dict[str, Any] = field(default_factory=dict)
 
@@ -246,6 +251,7 @@ class AttuneConfig:
                     "async_enabled",
                     "feedback_loop_monitoring",
                     "leverage_point_analysis",
+                    "show_cost_metrics",
                 ):
                     data[field_name] = value.lower() in ("true", "1", "yes")
                 else:

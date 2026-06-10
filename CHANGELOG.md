@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **Voice wiring for structured workflow reports (workflow-result-formatting
+  T3).** `_extract_from_workflow_result` now detects a serialized
+  `WorkflowReport` (`_type` discriminator) in `final_output` and renders it
+  through `attune.voice.report_renderer.render_safe` (summary disclosure);
+  the report's score travels through, and the formatter's own cost line is
+  suppressed for rendered reports (the renderer owns cost). New
+  `resolve_show_cost()` + `AttuneConfig.show_cost_metrics` (tri-state:
+  explicit override, else auto — on for API-key users, off for
+  subscription users; design D3). The bare `str(final_output)` branch is
+  now a safety net: a visible "Renderer not yet migrated for X" banner
+  plus a repr-free field pretty-printer (proposal §6). Plain-string
+  `final_output` still passes through untouched.
+
 ## [8.2.0] — 2026-06-10
 
 The polish-cost-reduction release: LLM polish of generated docs now runs
