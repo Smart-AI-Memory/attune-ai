@@ -7503,3 +7503,28 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   truth), new shape — the *consumer* already implements the feature the spec wants
   to add to it. The backport that gave the library parity (0.2.0) was still
   worthwhile — it narrowed future drift — but the integration itself was moot.
+
+- **A git-first-commit-date classifier over a BULK-COMMITTED directory marks
+  everything "recent" — git sees the import commit, not authorship — so a
+  date-cutoff rule that returns "all in scope" is a proxy failure, not a real
+  result** (docs-completeness-audit B6, 2026-06-09): B6 classified 55 blog docs
+  by `git log --diff-filter=A` first-commit date against a 6-month cutoff (v8.0.1
+  released 2026-06-07 → cutoff 2025-12-07) to archive historical posts. Every one
+  came back <6 months old (oldest 2025-12-14, 7 days inside the window), so the
+  archive move pruned NOTHING — even though several posts' *content* described
+  superseded versions (`attune-ai-v4-agent-sdk.md`, the `*-v520-*` trio,
+  `discord-v6-release.md`), exactly the historical cohort the rule was meant to
+  catch. Root cause: the whole `docs/blog/` dir was bulk-committed 2026-01..05, so
+  the first-commit date reflects the import, not when each post was written. The
+  real age signal lives in the *content* (version refs in body/frontmatter), which
+  only a content read surfaces — so the age judgment was deferred to the pass that
+  actually reads each doc (B5 content-verify), not guessed from commit dates or
+  filenames. Rule: when a date-based classifier over an imported/migrated/bulk-
+  committed corpus returns "all recent / all in scope," suspect commit-date masking
+  content age; don't trust it — route the judgment to whatever step reads content.
+  Pairs with the "naive proxy gives wrong signal" family (stemming plateau,
+  spec-status raw checkbox counts) — same shape, new mechanism (VCS metadata ≠
+  authorship age). Mechanical note: `git log --follow --diff-filter=A --format=%as`
+  silently returned empty inside a `for f in $(find ...)` loop here (quoting/word-
+  split interaction); a `while IFS= read -r f; do ... done < <(git ls-files ...)`
+  loop with `--format='%ad' --date=short` was reliable.
