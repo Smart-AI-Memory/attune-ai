@@ -26,10 +26,21 @@ from __future__ import annotations
 import asyncio
 import logging
 import time
+from datetime import datetime
 from typing import Any
 
 from attune.workflows.base import BaseWorkflow
 from attune.workflows.compat import ModelTier
+from attune.workflows.data_classes import WorkflowResult
+from attune.workflows.output import (
+    CalloutSection,
+    ListSection,
+    NextAction,
+    NextStepsSection,
+    Section,
+    TableSection,
+    WorkflowReport,
+)
 
 # Re-export agent classes and helpers
 from .release_agents import (  # noqa: F401
@@ -397,7 +408,7 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
         path: str = ".",
         context: dict[str, Any] | None = None,
         **kwargs: Any,
-    ) -> ReleaseReadinessReport:
+    ) -> WorkflowResult:
         """Execute release preparation workflow.
 
         Args:
@@ -406,7 +417,11 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
             **kwargs: Extra parameters (target, etc.)
 
         Returns:
-            ReleaseReadinessReport with consolidated results
+            WorkflowResult whose ``final_output`` carries the serialized
+            :class:`~attune.workflows.output.WorkflowReport` (design D2);
+            the voice layer / CLI render it. ``success`` reflects that
+            the assessment RAN — the release verdict lives in the report
+            (``metadata["approved"]``), so a BLOCKED release still exits 0.
 
         """
         # Map 'target' to 'path' for VSCode/CLI compatibility
@@ -417,9 +432,109 @@ class ReleasePrepTeamWorkflow(BaseWorkflow):
             quality_gates=self.quality_gates,
         )
 
+        started_at = datetime.now()
         report = await team.assess_readiness(codebase_path=path)
+        completed_at = datetime.now()
 
-        # Print formatted output for CLI users
-        print(report.format_console_output())
+        return WorkflowResult(
+            success=True,
+            stages=[],
+            final_output=_to_workflow_report(report).to_dict(),
+            cost_report=None,
+            started_at=started_at,
+            completed_at=completed_at,
+            total_duration_ms=int((completed_at - started_at).total_seconds() * 1000),
+            summary=report.summary,
+            metadata={"approved": report.approved, "confidence": report.confidence},
+        )
 
-        return report
+
+def _to_workflow_report(report: ReleaseReadinessReport) -> WorkflowReport:
+    """Convert the team's bespoke report to the universal WorkflowReport.
+
+    Design D2 (workflow-result-formatting): the converter is co-located
+    with the workflow that owns the semantics; the bespoke type stays
+    rendering-free. Content tiers per the proposal — verdict, gates,
+    blockers/warnings, and next steps are essential; the per-agent
+    breakdown is detail (collapsed in summary mode).
+
+    Args:
+        report: The team's consolidated readiness assessment.
+
+    Returns:
+        WorkflowReport ready for ``to_dict()`` into ``final_output``.
+
+    """
+    verdict = "APPROVED" if report.approved else "BLOCKED"
+    passed = sum(1 for g in report.quality_gates if g.passed)
+
+    sections: list[Section] = [
+        CalloutSection(
+            title="Verdict",
+            tier="essential",
+            text=f"Release **{verdict}** — confidence: {report.confidence}",
+            emphasis="ok" if report.approved else "danger",
+        ),
+        TableSection(
+            title=f"Quality gates ({passed}/{len(report.quality_gates)} passed)",
+            tier="essential",
+            columns=["Gate", "Actual", "Threshold", "Pass"],
+            rows=[
+                {
+                    "Gate": g.name,
+                    "Actual": f"{g.actual:.1f}",
+                    "Threshold": f"{g.threshold:.1f}",
+                    "Pass": "✓" if g.passed else "✗",
+                }
+                for g in report.quality_gates
+            ],
+        ),
+        TableSection(
+            title="Per-agent breakdown",
+            tier="detail",
+            columns=["Agent", "Score", "Confidence", "Tier", "Time"],
+            rows=[
+                {
+                    "Agent": r.agent_role,
+                    "Score": f"{r.score:.1f}",
+                    "Confidence": f"{r.confidence:.2f}",
+                    "Tier": r.tier_used.value,
+                    "Time": f"{r.execution_time_ms / 1000:.1f}s",
+                }
+                for r in report.agent_results
+            ],
+        ),
+    ]
+    if report.blockers:
+        sections.append(
+            ListSection(title="Blockers", tier="essential", items=list(report.blockers))
+        )
+    if report.warnings:
+        sections.append(
+            ListSection(title="Warnings", tier="essential", items=list(report.warnings))
+        )
+
+    if report.approved:
+        next_actions = [
+            NextAction(
+                text="All gates pass — run the composite security pipeline next.",
+                command="attune workflow run secure-release",
+            )
+        ]
+    else:
+        next_actions = [
+            NextAction(text=f"Resolve blocker: {blocker}") for blocker in report.blockers
+        ]
+    sections.append(NextStepsSection(title="Next steps", tier="essential", items=next_actions))
+
+    return WorkflowReport(
+        title="Release readiness",
+        summary=report.summary or f"Release {verdict} — confidence: {report.confidence}",
+        metadata={
+            "cost_usd": report.total_cost,
+            "duration_s": report.total_duration,
+            "approved": report.approved,
+            "confidence": report.confidence,
+        },
+        sections=sections,
+    )
