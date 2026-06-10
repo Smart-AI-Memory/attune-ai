@@ -3,8 +3,8 @@ type: faq
 name: ops-dashboard-faq
 feature: ops-dashboard
 depth: faq
-generated_at: 2026-06-02T10:56:02.731464+00:00
-source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
+generated_at: 2026-06-10T07:07:04.669090+00:00
+source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
 status: generated
 ---
 
@@ -12,50 +12,46 @@ status: generated
 
 ## What is the ops dashboard?
 
-A local operations dashboard that lets you run workflows, pick a feature scope, stream live logs over SSE, and browse persisted run history. Run it with `python -m attune.ops` or via the `attune ops` CLI subcommand.
+A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it with `python -m attune.ops` or via `attune ops` on the CLI.
 
 ## How do I start the dashboard?
 
-Call `cmd_ops(args)` or run `python -m attune.ops`. The server binds to `127.0.0.1:8765` by default. You can change the host and port through the `host` and `port` fields on `Config`.
+Run `python -m attune.ops` (calls `main()`) or use the `attune ops` subcommand (registered by `add_subparser()`). Both block until you stop the server. By default the server listens on `127.0.0.1:8765`; you can change the host and port in `Config`.
 
 ## What does `Config` control?
 
-`Config` is the central configuration dataclass. Its key fields include:
+`Config` is the central settings dataclass for the dashboard. Its key fields are:
 
-- `project_root` and `attune_home` — where the dashboard reads project and attune state from
-- `host` / `port` — server bind address (defaults: `127.0.0.1` / `8765`)
-- `allow_run` — whether workflow execution is permitted
-- `specs_roots` — paths the candidate detector searches
-- `runs_retention_days` — how long persisted run history is kept (default: `30`)
-- `specs_candidates_enabled` — whether the spec-completion candidate detector is active
+| Field | What it controls |
+|---|---|
+| `project_root` | Root of your project tree |
+| `attune_home` | Where attune reads and writes state |
+| `host` / `port` | Server bind address (default `127.0.0.1:8765`) |
+| `allow_run` | Whether workflow execution is permitted |
+| `specs_roots` | Directories the candidate detector scans |
+| `runs_retention_days` | How long persisted run history is kept (default 30) |
+| `specs_candidates_enabled` | Whether spec-completion candidate detection is active |
 
-## How do I get the Anthropic cost data?
+Use `build_config()` to construct a `Config` rather than instantiating it directly.
 
-Call `fetch_summary(refresh=False)`. It returns a `(CostSummary | None, CostFetchError | None)` tuple. If the request fails, inspect the `CostFetchError` fields — `kind` (a `CostFetchErrorKind`) and `message` — to understand why. Pass `refresh=True` to bypass the in-memory cache and fetch a fresh result.
+## How does cost reporting work?
 
-## What does `CostSummary` contain?
+Call `fetch_summary()` to get account-level Anthropic API cost data. It returns a `(CostSummary | None, CostFetchError | None)` tuple. Pass `refresh=True` to bypass the in-memory cache. The `CostSummary` fields cover today, the last 7 days, month-to-date, and the last 30 days, plus breakdowns by day, model, and cost type. If the fetch fails, the `CostFetchError` tells you the `kind` and a human-readable `message`. The dashboard fetches from `https://api.anthropic.com/v1/organizations/cost_report` and requires an admin API key, which `load_admin_key()` resolves.
 
-`CostSummary` holds account-level cost data fetched from the Anthropic admin cost report:
+## How do I tell whether cost data is live or cached?
 
-- `today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd` — pre-aggregated totals
-- `by_day`, `by_model`, `by_cost_type` — breakdowns as lists of tuples
-- `fetched_at` — when the data was retrieved
-- `source` — either `'live'` or `'cached'`
+Check the `source` field on the returned `CostSummary`. It is either `'live'` or `'cached'`. The `fetched_at` field tells you when the data was last retrieved.
 
-## What are spec completion candidates?
+## What are spec-completion candidates?
 
-Candidates are specs that the detector identifies as potentially complete. `detect_candidates(config)` returns a list of `Candidate` objects, each with a `slug`, `path`, `current_status`, `evidence` list, and `snapshot_hash`. The detector only runs when `specs_candidates_enabled` is `True` on your `Config`.
+When `specs_candidates_enabled` is `True` in your `Config`, `detect_candidates()` scans your `specs_roots` and returns a list of `Candidate` objects — specs that appear ready to move to the next phase based on file evidence. Each `Candidate` includes a `slug`, `path`, `current_status`, supporting `evidence`, and a `snapshot_hash`.
 
-## How do I reset the cost cache in tests?
+## How do I run the dashboard in tests?
 
-Call `clear_cache()`. This empties the in-memory cache and is intended for test use only.
-
-## Do I need to import FastAPI directly?
-
-No. `create_app()` uses a lazy import so that importing `attune` does not pull in FastAPI. Similarly, `build_config()` lazy-imports the config builder. Only the symbols in `__all__` — `create_app`, `build_config`, and `Config` — are part of the public API.
+Use `clear_cache()` (available in both `attune.ops.anthropic_cost` and the candidate-detector module) to reset in-memory caches between test cases. This is a test-only helper and is not part of the public API (`__all__` exports only `create_app`, `build_config`, and `Config`).
 
 ## Where are the source files?
 
-All ops dashboard code lives under `src/attune/ops/`.
+All dashboard source lives under `src/attune/ops/`.
 
 **Tags:** `ops`, `dashboard`, `runner`, `workflows`, `scope-picker`, `persistence`, `sse`

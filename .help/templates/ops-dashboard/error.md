@@ -3,8 +3,8 @@ type: error
 name: ops-dashboard-error
 feature: ops-dashboard
 depth: error
-generated_at: 2026-06-02T10:56:02.715960+00:00
-source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
+generated_at: 2026-06-10T07:07:04.658159+00:00
+source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
 status: generated
 ---
 
@@ -12,31 +12,35 @@ status: generated
 
 ## Common error signatures
 
-Most failures in the ops dashboard fall into one of two categories: cost-report fetch failures and configuration or startup failures.
+Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors.
 
-**Cost-report fetch failures** are represented by `CostFetchError`, a categorized error dataclass returned (never raised) by `fetch_summary()`. Its `kind` field contains a `CostFetchErrorKind` value and its `message` field contains a human-readable description. Common causes include:
+**Cost-report fetch errors** are represented by `CostFetchError`, a dataclass with two fields:
 
-- No admin API key available — `load_admin_key()` returns `None`, so `fetch_summary()` cannot authenticate against `https://api.anthropic.com/v1/organizations/cost_report`.
-- A non-success HTTP response or network-level failure reaching the cost-report endpoint.
-- A stale or unparseable cached response when `refresh=False`.
+- `kind: CostFetchErrorKind` — a categorized enum value identifying what went wrong (for example, a missing admin key, a network failure, or an unexpected API response)
+- `message: str` — a human-readable description of the failure
 
-**Configuration and startup failures** occur before the dashboard server is running:
+`fetch_summary()` always returns a `(CostSummary | None, CostFetchError | None)` tuple. When the second element is not `None`, the fetch failed and the first element is `None`. A `CostSummary` with `source='cached'` means the live fetch failed silently and an older result was served instead — check the `fetched_at` field to assess staleness.
 
-- `build_config()` fails when required paths (`project_root`, `attune_home`) cannot be resolved.
-- `create_app()` raises an `ImportError`-family exception if FastAPI is not installed; the lazy-import design means this only surfaces at call time, not at `import attune`.
-- `cmd_ops()` exits non-zero (returns a value other than `0`) when the server cannot bind to `Config.host`/`Config.port` (default `127.0.0.1:8765`).
+**Configuration errors** surface when `build_config()` cannot construct a valid `Config`. Missing or inaccessible paths for `project_root` or `attune_home` are the most common cause.
+
+## Where errors originate
+
+- `fetch_summary(*, refresh: bool = False)` — Returns `(None, CostFetchError)` when the Anthropic admin cost-report endpoint at `https://api.anthropic.com/v1/organizations/cost_report` is unreachable, returns a non-success status, or when `load_admin_key()` returns `None`.
+- `load_admin_key()` — Returns `None` rather than raising when the admin API key is absent. A `None` result here is the most common upstream cause of a failed `fetch_summary()` call.
+- `build_config()` — Raises during startup if the resolved `Config` fields (such as `project_root` or `attune_home`) refer to paths the process cannot access.
+- `create_app()` — Defers the FastAPI import until call time; an `ImportError` here means FastAPI is not installed in the current environment.
 
 ## How to diagnose
 
-1. **Check whether `fetch_summary()` returned an error.** The function signature is `fetch_summary(*, refresh: bool = False) -> tuple[CostSummary | None, CostFetchError | None]`. If the second element of the tuple is not `None`, inspect `CostFetchError.kind` for the error category and `CostFetchError.message` for the detail. A non-`None` error with a `None` summary means no cost data is available.
+1. **Check whether `fetch_summary()` returned a `CostFetchError`.** Inspect the `kind` and `message` fields directly — they identify the failure category without requiring a stack trace.
 
-2. **Verify the admin API key is present.** Call `load_admin_key()` directly. If it returns `None`, the dashboard cannot reach the Anthropic cost-report API and every `fetch_summary()` call will produce a `CostFetchError`.
+2. **Verify the admin key is available.** Call `load_admin_key()` in isolation. If it returns `None`, the dashboard cannot reach the cost-report API regardless of network state. Ensure the key is present in the expected environment variable or credentials file before investigating further.
 
-3. **Confirm FastAPI is installed before calling `create_app()`.** Because the import is deferred, an `ImportError` will not appear until `create_app()` is called. If you see an `ImportError` or `ModuleNotFoundError` mentioning FastAPI at that point, install the ops extras.
+3. **Confirm `CostSummary.source`.** If the dashboard is displaying cost data but the figures look stale, check whether `source == 'cached'`. Compare `fetched_at` against the current time to determine how old the cached result is, then investigate why the live fetch failed.
 
-4. **Check the configured host and port.** If `cmd_ops()` returns a non-zero exit code immediately, the server likely failed to bind. Inspect the `Config` values for `host` (default `127.0.0.1`) and `port` (default `8765`) and confirm nothing else is listening on that address.
+4. **Reproduce the `build_config()` failure path.** If the dashboard fails to start, run `python -m attune.ops` directly. A startup error will print the exception and the `Config` field that could not be resolved, making it straightforward to identify which path is missing or inaccessible.
 
-5. **Review `Config.specs_roots` when `detect_candidates()` returns nothing.** The `specs_candidates_enabled` field must be `True` and `specs_roots` must contain at least one valid `Path` for candidate detection to run. An empty tuple for `specs_roots` is a silent no-op, not an exception.
+5. **Check for a missing FastAPI installation.** If `create_app()` raises `ImportError`, FastAPI is not installed. The lazy-import design means this error only appears at server startup, not at import time.
 
 ## Source files
 

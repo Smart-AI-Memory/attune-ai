@@ -1,37 +1,59 @@
 ---
+type: concept
+name: cli-concept
 feature: cli
 depth: concept
-generated_at: 2026-06-05T16:32:09.109066+00:00
-source_hash: 198ad869d0b029e3926d86fd51b53c7d1a800d65335cb982b9331b5ee6c9bcaa
+generated_at: 2026-06-10T07:07:04.638186+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
-# Cli
+# The attune CLI
 
-## How it works
+The attune CLI is the single entry point — `attune.cli_minimal.main` — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on.
 
-Command-line interface and routing.
+## Structural overview
 
-The main building blocks are:
+The CLI splits into two distinct layers that work together:
 
-- **`RoutingPreference`** — User's learned routing preferences.
-- **`HybridRouter`** — Routes user input to Claude Code skill invocations.
+**Command dispatch** — `create_parser()` builds the argument parser and maps subcommands to handler functions. Every handler follows the same contract: it receives an `argparse.Namespace` and returns an `int` exit code. Workflow-backed commands go through `run_workflow_with_exit_code`, which instantiates a workflow class, runs it, and converts the result into the documented exit code contract for `attune workflow run`.
 
-Under the hood, this feature spans 12 source
-files covering:
+**Input routing** — `HybridRouter` sits alongside the dispatch layer to handle natural-language or shorthand input. When a user types something that isn't a slash command (detected by `is_slash_command()`), `route_user_input()` translates it into a Claude Code skill invocation. The router learns your habits: each time you invoke `learn_preference(keyword, skill)`, it stores a `RoutingPreference` entry that raises the confidence score for that keyword-to-skill mapping on future calls. `get_suggestions(partial)` uses those stored preferences to offer completions as you type.
 
-- Hybrid CLI Router - Skills + Natural Language
-- CLI command modules for attune.
-- Exit-code contract for ``attune workflow run``.
+## Command groups
 
-## What connects to it
+The handler functions are organized into focused modules:
 
-This feature relates to: cli, commands.
+| Group | Example commands | What they do |
+|---|---|---|
+| **Workflows** | `cmd_workflow_run`, `cmd_workflow_list`, `cmd_workflow_info` | Run and inspect registered workflows |
+| **Memory** | `cmd_remember`, `cmd_forget`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_capture`, `cmd_memory_forget_topic`, `cmd_lessons` | Read and write the Redis-backed lesson store |
+| **Costs** | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` | Report, export, and clear cost-tracking data |
+| **Telemetry** | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_routing_stats`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` | Inspect routing and model-usage telemetry |
+| **Providers** | `cmd_provider_show`, `cmd_provider_set` | View and change the active model provider |
+| **Patterns** | `cmd_patterns_review`, `cmd_patterns_promote`, `cmd_patterns_reject` | Curate promoted code patterns |
+| **Utility** | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_doctor`, `cmd_features` | Diagnose, configure, and inspect the installation |
+| **Help** | `cmd_help` | Browse attune-help documentation templates |
+| **Curator** | `cmd_curator` | Render the project briefing in the terminal |
 
-Other parts of the codebase interact with
-cli through these interfaces:
+## Routing preferences
 
-| Interface | Purpose | File |
-|-----------|---------|------|
-| `RoutingPreference` | User's learned routing preferences. | `src/attune/cli_router.py` |
-| `HybridRouter` | Routes user input to Claude Code skill invocations. | `src/attune/cli_router.py` |
+`RoutingPreference` is the unit of learned behavior inside `HybridRouter`. Each preference has five fields:
+
+| Field | Type | Role |
+|---|---|---|
+| `keyword` | `str` | The input fragment that triggers this preference |
+| `skill` | `str` | The Claude Code skill to invoke |
+| `args` | `str` | Default arguments passed to the skill |
+| `usage_count` | `int` | How many times this mapping has fired |
+| `confidence` | `float` | Routing weight (starts at `1.0`, adjusted by usage) |
+
+As `usage_count` grows, the router can weigh this preference more heavily when multiple skills match the same keyword. You can inspect accumulated preferences through `cmd_telemetry_routing_stats` and `cmd_telemetry_routing_check`.
+
+## When the CLI layer matters
+
+You interact with this layer every time you run an `attune` command, but it also matters when you are:
+
+- **Scripting** — all handlers return integer exit codes, so `run_workflow_with_exit_code` gives pipelines a reliable signal to branch on.
+- **Extending attune** — adding a new subcommand means writing a handler that accepts `Namespace` and returns `int`, then registering it with `create_parser()`.
+- **Debugging routing** — if `HybridRouter` sends input to the wrong skill, `cmd_telemetry_routing_stats` and `cmd_telemetry_routing_check` show you which `RoutingPreference` entries are winning and why.

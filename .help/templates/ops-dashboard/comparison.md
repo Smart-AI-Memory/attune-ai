@@ -3,8 +3,8 @@ type: comparison
 name: ops-dashboard-comparison
 feature: ops-dashboard
 depth: comparison
-generated_at: 2026-06-02T10:56:02.742564+00:00
-source_hash: 78a1505f787430bd8780c3c1f1998c5f2effda3f2c6da5faea59340e02c22f53
+generated_at: 2026-06-10T07:07:04.679153+00:00
+source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
 status: generated
 ---
 
@@ -12,54 +12,49 @@ status: generated
 
 ## Context
 
-The ops dashboard (`attune ops` / `python -m attune.ops`) is a local FastAPI server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming into a single interface. It is the primary way to operate the attune workflow OS interactively.
+The ops dashboard (`attune ops` / `python -m attune.ops`) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming into a single interface. It exposes a FastAPI application via `create_app()` and reads project and attune state through a `Config` dataclass.
 
 ## Feature comparison
 
-| Capability | Ops dashboard | Direct API / scripts |
-|---|---|---|
-| **Workflow execution** | Browser UI with scope picker (`Feature.path`, `Feature.tags`) and clickable chaining between workflow stages | Must wire `WorkflowEntry` stage map and `PathArgSpec` arguments by hand |
-| **Cost visibility** | Live Anthropic spend via `fetch_summary()` — today, 7-day, MTD, 30-day, and per-model breakdowns from `CostSummary` | Call `fetch_summary()` yourself and format `CostSummary` fields manually |
-| **Run history** | Runs persisted under `Config.runs_dir`; retained for `Config.runs_retention_days` days (default 30) | No persistence; output is ephemeral unless you add it |
-| **Session tracking** | `/sessions` page surfaces `Session` records (id, duration, message count, starter prompt) | Not available outside the dashboard server |
-| **Spec completion candidates** | Detector runs automatically when `Config.specs_candidates_enabled = True`; surfaces `Candidate` slugs with evidence | Call `detect_candidates(config)` manually and parse results yourself |
-| **Telemetry** | `TelemetrySummary` aggregated by workflow and by day; written to `Config.telemetry_path` | Read the raw telemetry file and aggregate yourself |
-| **Bulletin / multi-actor log** | Streamed from `Config.bulletin_dir`; visible in the UI without extra tooling | Tail the files in `bulletin_dir` manually |
-| **Configuration surface** | Single `Config` dataclass controls host, port, retention, trusted hosts, and spec roots | Must construct `Config` explicitly and pass it through every call |
-| **Startup** | `cmd_ops(args)` — blocking; returns `0` on clean exit | `create_app()` returns the FastAPI app for embedding in your own server |
+| Capability | Ops dashboard | Ad-hoc script | Direct CLI invocation |
+|---|---|---|---|
+| **Workflow execution** | Full — scope picker, `WorkflowEntry` stage map, workflow chaining | Manual — you wire the calls yourself | Single workflow only, no chaining |
+| **Run history** | Persisted to `Config.runs_dir`; retained for `runs_retention_days` days (default 30) | None unless you add it yourself | None |
+| **Cost visibility** | Live Anthropic cost report via `fetch_summary()` with `CostSummary` fields (`today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`, `by_model`) | None | None |
+| **Session tracking** | `Session` records surfaced on `/sessions` page (message count, duration, starter prompt) | None | None |
+| **Spec completion candidates** | Detected via `detect_candidates()` when `specs_candidates_enabled = True` | None | None |
+| **Scope targeting** | Feature-level via `.help/features.yaml` `Feature` entries and `PathArgSpec` | Hardcoded paths | Single `--path` argument at most |
+| **Telemetry** | `TelemetrySummary` tracks requests, cost, savings, and per-workflow breakdowns | None | None |
+| **Startup overhead** | FastAPI server + SSE — not suitable for quick one-off commands | Near-zero | Near-zero |
+| **Remote access** | Configurable `host`/`port`; `trusted_hosts` whitelist | N/A | N/A |
+| **Admin API key required** | Yes, for `fetch_summary()` — `load_admin_key()` returns `None` if unavailable; cost panel is skipped gracefully | N/A | N/A |
 
 ## Tradeoffs
 
-**Ops dashboard strengths**
+**Ops dashboard wins when** you need any combination of: cross-workflow visibility, cost tracking, session history, or scope-targeted execution. All of that infrastructure is built in and requires no extra code on your part.
 
-- Zero boilerplate for the common case: `attune ops` starts the server; `build_config()` resolves all paths from `Config.project_root` and `Config.attune_home`.
-- `fetch_summary(refresh=False)` caches results in memory; subsequent calls in the same process are instant. Pass `refresh=True` to force a live fetch from `_COST_REPORT_URL`.
-- Run history and session data survive process restarts because they are written to disk (`Config.runs_dir`, `Config.sessions_dir`).
-- `Config.allow_run` acts as a safety gate — workflow execution is disabled by default until you opt in.
+**Ops dashboard loses when** you need a fast, stateless command. The server starts on `host:port` (default `127.0.0.1:8765`) and blocks (`cmd_ops()` returns `0` only on clean shutdown). For a single workflow run with no need for history or cost data, launching the full server is unnecessary overhead.
 
-**Direct API / script strengths**
+**Cost data is optional, not required.** `fetch_summary(refresh=False)` returns a `(CostSummary | None, CostFetchError | None)` tuple. If `load_admin_key()` returns `None`, the dashboard still runs — cost panels are simply absent. You do not need Anthropic admin credentials to use the workflow runner.
 
-- `create_app()` lazy-imports FastAPI, so importing `attune` in a script does not pay the FastAPI startup cost unless you actually call it.
-- `detect_candidates(config)` can be called standalone (with an optional `now` float for time-travel in tests) without starting the HTTP server.
-- `load_admin_key()` and `fetch_summary()` are independently usable if you only need cost data.
-- `clear_cache()` is available for test isolation without touching the server.
+**`allow_run`** defaults to `False` in `Config`. The dashboard can display workflow metadata without being allowed to execute runs. This is the safe default for read-only inspection.
 
-## Use ops dashboard when…
+## When to use the ops dashboard
 
-- You want an interactive view of workflow status, cost, sessions, and spec candidates without writing glue code.
-- You need persisted run history across multiple working sessions (`Config.runs_retention_days` controls how far back you can look).
-- You are operating on a specific feature and want the scope picker to filter workflows to the right `Feature.path`.
-- You need `Config.specs_candidates_enabled = True` to surface spec completion candidates automatically as you work.
-- You are sharing a dashboard across a team and need `Config.trusted_hosts` to control access.
+Use the ops dashboard when at least one of these is true:
 
-## Use the API directly when…
+- You are running multiple workflows against different features and want a scope picker rather than manually specifying paths on every invocation.
+- You need to inspect run history across sessions — `Config.runs_dir` and `runs_retention_days` give you durable records without any extra tooling.
+- You want live Anthropic cost data (`CostSummary.today_usd`, `by_model`, etc.) visible alongside your workflow activity.
+- You are working on a project with spec completion tracking and want `detect_candidates()` surfaced automatically (`specs_candidates_enabled = True`).
+- You want clickable workflow chaining — advancing from one `WorkflowEntry` stage to the next without returning to the terminal.
 
-- You are writing a test and need `detect_candidates(config)` or `fetch_summary()` in isolation — the server is unnecessary overhead.
-- You are embedding ops capabilities into an existing FastAPI application and want `create_app()` on your own terms.
-- You only need Anthropic cost data; `fetch_summary()` plus the `CostSummary` fields (`today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`, `by_model`) give you everything without starting a server.
-- You need a one-off candidate scan; call `detect_candidates(config)` and inspect the `Candidate` fields (`slug`, `current_status`, `evidence`) directly.
+## When to use an alternative instead
 
-**Bottom line:** the ops dashboard is the right default for interactive, day-to-day operation of the workflow OS. The direct API surface is the right choice when you need a single capability in a script or test, or when you are embedding attune into a larger application.
+- **Single, quick command with no history needed:** invoke the workflow directly via the `attune` CLI. The ops dashboard's server startup and SSE infrastructure add latency that a one-shot command does not justify.
+- **Automated or CI context:** a blocking server (`cmd_ops`) is the wrong shape for a pipeline step. Call the relevant function directly or use the CLI subcommand in a non-interactive script.
+- **Exploratory or throwaway work:** a small script that calls the relevant functions directly is simpler than standing up a dashboard you will discard.
+- **You need behavior not exposed in `__all__`** (`create_app`, `build_config`, `Config`): do not reach into private internals — the surface is intentionally narrow. File an issue or propose an extension point instead.
 
 ## Source files
 

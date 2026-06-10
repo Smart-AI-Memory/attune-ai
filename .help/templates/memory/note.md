@@ -3,43 +3,45 @@ type: note
 name: memory-note
 feature: memory
 depth: note
-generated_at: 2026-06-04T23:45:26.872218+00:00
-source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
+generated_at: 2026-06-10T07:07:04.802206+00:00
+source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
 status: generated
 ---
 
 # Note: memory
 
-The memory subsystem covers three concerns: short-term storage, semantic search, and Claude Code memory file (`CLAUDE.md`) loading. Its public surface lives under `src/attune/memory/`.
+## Context
 
-## Two backend protocols
+The memory subsystem (`src/attune/memory/`) covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and an enterprise control panel. It is versioned at `2.2.0`.
 
-`MemoryBackend` is the base protocol for any short-term memory backend. It defines the core operations — `stash`, `retrieve`, `delete`, `keys`, `is_connected`, `get_stats`, `close`, `supports_realtime`, and `supports_distributed`.
+## Two-layer public surface
 
-`SearchableMemoryBackend` extends `MemoryBackend` with semantic capabilities: `search`, `remember`, `promote`, `prune`, and `recent`. A backend that implements `SearchableMemoryBackend` can answer natural-language queries in addition to exact-key lookups.
+The package exposes two protocol classes that define the storage contract and a set of top-level functions that configure and instantiate backends.
 
-## Claude memory file loading
+**Protocols** (defined in `src/attune/memory/backend.py`):
 
-`ClaudeMemoryLoader` reads and caches `CLAUDE.md` files from up to three scopes — enterprise, user, and project — controlled by the `ClaudeMemoryConfig` dataclass fields `load_enterprise`, `load_user`, and `load_project`. Each loaded file is represented as a `MemoryFile` with a `level`, `path`, `content`, `imports` list, and `load_order`.
+- `MemoryBackend` — the base protocol for short-term memory backends. Every backend must implement `stash`, `retrieve`, `delete`, `keys`, `is_connected`, `get_stats`, `close`, `supports_realtime`, and `supports_distributed`.
+- `SearchableMemoryBackend` — extends `MemoryBackend` with semantic operations: `search`, `remember`, `promote`, `prune`, and `recent`.
 
-`max_import_depth` (default `5`) and `max_file_size_bytes` (default `1 000 000`) in `ClaudeMemoryConfig` bound how deeply the loader follows `@import` chains and how large a single file may be.
+**Configuration and factory functions** (in `src/attune/memory/config.py` and `src/attune/memory/__init__.py`):
 
-## Top-level convenience functions
+- `is_redis_available()` — probes Redis availability without importing the Redis subsystem, making it safe to call at startup.
+- `parse_redis_url(url)` — converts a Redis URL string into a connection-parameter dict.
+- `get_redis_config()` — reads connection parameters from environment variables; marked legacy because it returns a plain dict rather than a typed config object.
+- `get_redis_memory(url, use_mock)` — the preferred factory; returns a `RedisShortTermMemory` instance configured from the environment.
 
-Several module-level functions wrap common setup steps so callers do not have to instantiate classes directly:
+The functions and classes are designed to compose: factory functions typically return objects that satisfy `MemoryBackend` or `SearchableMemoryBackend`, and backend methods mirror the top-level function signatures.
 
-| Function | Where | What it does |
-|---|---|---|
-| `is_redis_available()` | `__init__.py` | Checks Redis availability without importing the Redis subsystem |
-| `get_redis_config()` | `config.py` | Reads Redis connection parameters from environment variables (legacy dict API) |
-| `parse_redis_url()` | `config.py` | Parses a Redis URL string into a connection-parameter dict |
-| `get_redis_memory()` | `config.py` | Creates a `RedisShortTermMemory` instance from environment-based config |
-| `create_default_project_memory()` | `claude_memory.py` | Writes a starter `.claude/CLAUDE.md` for a project |
+## Claude Code memory integration
 
-## Control panel and API server
+`ClaudeMemoryLoader` (in `src/attune/memory/claude_memory.py`) loads and caches `CLAUDE.md` files. Its behavior is controlled by `ClaudeMemoryConfig`, which lets you enable or disable each memory scope (`load_enterprise`, `load_user`, `load_project`), cap file size with `max_file_size_bytes` (default 1 000 000 bytes), and limit import recursion with `max_import_depth` (default 5). Each loaded file is represented as a `MemoryFile` dataclass carrying its `level`, `path`, `content`, `imports`, and `load_order`.
 
-`MemoryControlPanel` (configured via `ControlPanelConfig`) provides an enterprise management layer: Redis lifecycle (`start_redis`, `stop_redis`), pattern management (`list_patterns`, `delete_pattern`, `export_patterns`), short-term memory clearing (`clear_short_term`), and health reporting (`health_check`, `get_statistics`).
+`create_default_project_memory(project_root, framework)` writes a starter `.claude/CLAUDE.md` file into a project tree. The injected block is delimited by the markers `<!-- attune-lessons-start -->` and `<!-- attune-lessons-end -->`.
 
-`run_api_server` wraps `MemoryControlPanel` in an HTTP server with optional API-key authentication (`APIKeyAuth`), per-IP rate limiting (`RateLimiter`), and SSL.
+## Enterprise control panel
 
-**Tags:** `memory`, `storage`
+`MemoryControlPanel` (configured via `ControlPanelConfig`) provides operational management: starting and stopping Redis, retrieving statistics via `get_statistics()`, listing or deleting stored patterns, clearing short-term memory with `clear_short_term()`, and exporting patterns with `export_patterns()`. `run_api_server()` exposes these operations over HTTP with optional API-key authentication (`APIKeyAuth`), rate limiting (`RateLimiter`), and TLS.
+
+## Railway deployment
+
+`get_railway_redis()` is a convenience factory for Railway-hosted deployments. It raises `OSError` if `REDIS_URL` is not set in the environment, with a message directing you to run `railway add --database redis`.

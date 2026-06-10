@@ -3,8 +3,8 @@ type: warning
 name: memory-warning
 feature: memory
 depth: warning
-generated_at: 2026-06-04T23:45:26.859307+00:00
-source_hash: c6803543f79e6bd38c2393239d6731920690afcab986165d0ce938b8ba0d5c25
+generated_at: 2026-06-10T07:07:04.789830+00:00
+source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
 status: generated
 ---
 
@@ -12,49 +12,61 @@ status: generated
 
 ## What to watch for
 
-The memory subsystem spans Redis-backed short-term storage, file-based CLAUDE.md loading, long-term pattern storage, and a security/classification layer. Mistakes in this area can expose secrets, corrupt cached state, or silently drop data with no error raised.
+The memory subsystem spans short-term Redis storage, long-term `MemDocsStorage`, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the points where these layers interact in ways that are easy to overlook.
 
 ## Risk areas
 
-### `get_redis_memory()` silently falls back to a mock
+### Secrets and PII stored without classification
 
-`get_redis_memory()` accepts a `use_mock` parameter that, when `None`, resolves its value from the environment. If `REDIS_URL` is unset and no explicit `use_mock=False` is passed, the function may return a mock backend instead of a real Redis connection — and your code will appear to work while writing to nowhere. Always verify the backend type in environments where persistence matters, and pass `use_mock` explicitly rather than relying on environment inference.
+`MemDocsStorage` and `SecureMemDocsIntegration` apply classification rules automatically, but only when the content passes through their security layer. If you write directly to a `MemoryBackend` via `stash()`, the `SecretsDetector` and `PIIScrubber` are bypassed entirely. Content containing values that match `HEALTHCARE_KEYWORDS`, `FINANCIAL_KEYWORDS`, or `SENSITIVE_PATTERN_TYPES` will be stored in plaintext with no access controls.
+
+**Mitigation:** Route writes that may contain sensitive content through `SecureMemDocsIntegration` rather than calling `stash()` directly on a backend.
+
+### `get_redis_memory()` silently falls back to a mock backend
+
+`get_redis_memory()` accepts a `use_mock` parameter. When `use_mock` is `None` (the default), the function reads an environment variable to decide. In environments where that variable is unset or Redis is unreachable, it may silently return a mock backend. Code that assumes a real Redis connection — for example, anything relying on TTL expiry or pub/sub via `CHANNEL_SESSIONS` — will appear to work but will not persist data or coordinate across agents.
+
+**Mitigation:** Call `is_redis_available()` before `get_redis_memory()` to confirm the Redis subsystem is reachable, or check `is_connected()` on the returned backend before proceeding.
 
 ### `get_railway_redis()` raises `OSError` when `REDIS_URL` is missing
 
-`get_railway_redis()` raises `OSError` if `REDIS_URL` is not set in the environment. The error message instructs you to run `railway add --database redis`, but the failure happens at call time, not at import time. If you use this function in an initialization path, an unconfigured deployment will fail at startup rather than at the first memory operation. Add an `is_redis_available()` check before calling it, or handle the `OSError` explicitly.
+`get_railway_redis()` has no fallback. If `REDIS_URL` is not set in the environment, it raises `OSError` immediately with instructions to run `railway add --database redis`. This is intentional, but it means any startup path that calls this function without a guard will crash the process rather than degrading gracefully.
 
-### `ClaudeMemoryLoader` follows `@import` chains up to `max_import_depth`
+**Mitigation:** Check for `REDIS_URL` in the environment before calling `get_railway_redis()`, or wrap the call and handle `OSError` explicitly.
 
-`ClaudeMemoryConfig` has a `max_import_depth` field (default `5`) and a `max_file_size_bytes` field (default `1_000_000`). `ClaudeMemoryLoader` will silently stop following imports once either limit is reached. If your CLAUDE.md hierarchy is deeper than five levels, the loader loads a partial view without raising an error. Set `max_import_depth` explicitly when your project structure requires deeper nesting, and call `get_loaded_files()` after `load_all_memory()` to confirm which files were actually read.
+### `ClaudeMemoryLoader` follows imports up to `max_import_depth`
 
-### `MemoryBackend.stash()` TTL defaults to `None` (no expiry)
+`ClaudeMemoryConfig` defaults to `max_import_depth: int = 5`. `ClaudeMemoryLoader.load_all_memory()` follows `@import` directives in CLAUDE.md files recursively to that depth. A deeply nested or circular import chain will not raise an error at depth 5 — it will silently truncate. If your project memory relies on files at depth 6 or beyond, those files will not be loaded and `get_loaded_files()` will not list them.
 
-The `stash` method on `MemoryBackend` accepts an optional `ttl` parameter. When `ttl=None`, entries are stored without an expiry. In long-running processes or multi-agent deployments, unbounded entries accumulate in Redis and are never evicted. Pass an explicit TTL for any data that does not need to survive the session, and use `get_stats()` periodically to monitor key counts.
+**Mitigation:** Keep import chains shallow. Call `get_loaded_files()` after `load_all_memory()` to verify the expected files were included.
 
-### `SecretsDetector` and `PIIScrubber` must be called explicitly
+### `max_file_size_bytes` silently skips large memory files
 
-The memory subsystem includes `SecretsDetector` and `PIIScrubber`, but neither runs automatically when you call `stash()` or `remember()`. If you store user-supplied content or environment-derived strings without first running them through these utilities, secrets and PII can end up in Redis or in exported pattern files. Call `detect_secrets()` on any externally sourced content before storing it.
+`ClaudeMemoryConfig` defaults to `max_file_size_bytes: int = 1000000` (1 MB). Files that exceed this limit are skipped without raising an exception. A CLAUDE.md that grows past 1 MB through accumulated lessons or imports will be excluded from the loaded context with no visible indication.
 
-### `MemoryControlPanel.clear_short_term()` defaults to the `admin` agent
+**Mitigation:** Set `validate_files: bool = True` in your `ClaudeMemoryConfig` (the default) and monitor the size of memory files in long-running projects.
 
-`clear_short_term()` accepts an `agent_id` parameter that defaults to `'admin'`. In a multi-agent deployment, calling it without specifying an `agent_id` clears only keys belonging to the `admin` agent — which may give a false impression that short-term memory has been fully flushed. Pass the correct `agent_id` for each agent whose memory you intend to clear.
+### `promote()` on `SearchableMemoryBackend` moves all session data
 
-### `get_redis_config()` is marked legacy
+`SearchableMemoryBackend.promote()` transfers memory from a session to long-term storage. The `session_id` parameter is optional; if omitted, the method uses a default session. Calling `promote()` without an explicit `session_id` in a multi-agent setup — where multiple agents share a Redis instance via `KEY_ACTIVE_AGENTS` — can promote the wrong session's data.
 
-`get_redis_config()` returns a plain `dict` built from environment variables and is documented as a legacy API. New code should use `parse_redis_url()` or construct a `RedisConfig` instance directly. Mixing both approaches in the same codebase can produce inconsistent connection parameters if environment variables are partially set.
+**Mitigation:** Always pass an explicit `session_id` to `promote()` when running more than one agent against the same backend.
+
+### `clear_short_term()` on `MemoryControlPanel` is not scoped by default
+
+`MemoryControlPanel.clear_short_term()` accepts an `agent_id` parameter that defaults to `'admin'`. Passing the wrong `agent_id`, or relying on the default in a multi-agent deployment, will clear memory belonging to a different agent rather than the intended one.
+
+**Mitigation:** Pass the specific `agent_id` whose short-term memory you intend to clear, and confirm with `get_statistics()` before and after.
 
 ## How to avoid problems
 
-- **Confirm your backend before writing data.** After constructing a memory backend, call `is_connected()` to verify you have a live connection. A mock backend returns `True` from `is_connected()` in some configurations, so also check `supports_distributed()` if your workload requires cross-session coordination.
+1. **Verify backend identity before writing.** Call `is_connected()` on any `MemoryBackend` instance before writing session-critical data. For Railway deployments, confirm `REDIS_URL` is set before calling `get_railway_redis()`.
 
-- **Audit loaded files after initialization.** Call `ClaudeMemoryLoader.get_loaded_files()` immediately after `load_all_memory()` and log the result. Truncated import chains are not reported as errors, so this is the only way to confirm the full context was loaded.
+2. **Route sensitive content through the security layer.** Direct `stash()` calls bypass `SecretsDetector`, `PIIScrubber`, and `EncryptionManager`. Use `SecureMemDocsIntegration` for any content that might contain values matching the HEALTHCARE, FINANCIAL, or PROPRIETARY keyword sets.
 
-- **Set explicit TTLs for short-lived data.** Any entry stored with `ttl=None` persists until manually deleted. Prefer explicit TTLs in development and staging environments to avoid stale keys interfering with test runs.
+3. **Audit loaded memory files explicitly.** After `load_all_memory()`, call `get_loaded_files()` to confirm your expected CLAUDE.md files are present. Missing files are almost always caused by `max_import_depth` or `max_file_size_bytes` limits.
 
-- **Run secret detection before storing external content.** Use `detect_secrets()` on any string that originates outside your codebase before passing it to `stash()` or `remember()`.
-
-- **Depend only on the public API.** Names prefixed with `_` — including `_CLAUDE_MD_START` and `_CLAUDE_MD_END` — are implementation details that can change without notice.
+4. **Scope destructive operations to a specific agent.** Pass explicit `agent_id` and `session_id` arguments to `clear_short_term()` and `promote()` to avoid operating on the wrong agent's data in shared-Redis deployments.
 
 ## Source files
 

@@ -3,17 +3,15 @@ type: tip
 name: plugin-tip
 feature: plugin
 depth: tip
-generated_at: 2026-05-27T13:42:27.350556+00:00
-source_hash: ff7ee791016c71dc1aca7ef059da6fba3d0f06aa842c544cc71910c9900d0b2f
+generated_at: 2026-06-10T07:07:04.684068+00:00
+source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
 status: generated
 ---
 
-# Tip: Working effectively with the plugin hooks
+# Tip: working effectively with plugin
 
-Call the public entry points — `main()` in `hooks.spec_orient`, `hooks.compact_warning`, and `hooks.format_on_save` — rather than reaching into underscore-prefixed modules directly. Those internal modules (`_state`, `_resume_prompt`, `_transcript_size`, `_handoff_cli`) can change between versions; the public `main()` functions are the stable interface.
+Call `estimate_utilization()` before you call `build_resume_prompt()` — passing a bloated transcript into the resume builder wastes context budget that the prompt itself needs.
 
-**Why:** Underscore-prefixed modules in this package are explicitly internal — `_state`, `_resume_prompt`, and `_transcript_size` are shared helpers that multiple hooks import, so their signatures change whenever any of those hooks evolves.
+**Why it sticks:** `estimate_utilization` returns a `float` in `[0.0, 1.0]`; if it's already high, `format_warning` in `hooks.compact_warning` can surface that to the user before you spend tokens on the full resume prompt.
 
-**Tradeoff:** Staying at the public surface means you get less direct access to intermediate values — for example, you can't cheaply reuse a `GitState` object across two calls without going through `hooks._state.git_state()`. That is an acceptable cost; if you genuinely need the intermediate data, import the specific helper by name and treat it as an internal dependency you own.
-
-**Tags:** `plugin`, `claude-code`
+**Tradeoff:** Adding the utilization check is an extra call to `hooks._transcript_size.estimate_utilization`. In fast-path hooks where transcript I/O is expensive, you may choose to skip it and call `build_resume_prompt` unconditionally — just know you're trading responsiveness for accuracy.

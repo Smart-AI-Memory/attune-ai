@@ -3,71 +3,81 @@ type: quickstart
 name: cli-quickstart
 feature: cli
 depth: quickstart
-generated_at: 2026-06-04T23:39:47.660441+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-10T07:07:04.666709+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
-# Quickstart: attune CLI
+# Quickstart: CLI and Routing
 
 Run your first attune command and confirm the CLI is working.
+
+```bash
+attune --help
+```
+
+You should see the top-level command listing. If you do, the CLI is installed and ready.
+
+## Step 1: Confirm your version
 
 ```bash
 attune version
 ```
 
-You should see the current version string printed to stdout and the process exit with code `0`.
+Expected output:
 
-## Prerequisites
-
-- attune is installed and available on your `PATH`
-- You have access to the source under `src/attune/`
-
-## Step 1: Verify your setup
-
-Run the built-in doctor command to confirm all dependencies and configuration are in order:
-
-```bash
-attune doctor
+```
+attune <version string>
 ```
 
-A passing check prints a status line for each component. Fix any failures before continuing.
+This calls `cmd_version` and verifies the entry point resolves correctly.
 
-## Step 2: List available workflows
+## Step 2: Run setup
+
+```bash
+attune setup
+```
+
+`cmd_setup` walks you through the minimum configuration needed before running workflows or using memory commands.
+
+## Step 3: List available workflows
 
 ```bash
 attune workflow list
 ```
 
-This calls `cmd_workflow_list` and prints every registered workflow by name.
+`cmd_workflow_list` prints every registered workflow by name. Pick one from the output to use in the next step.
 
-## Step 3: Run a workflow
-
-Pick a workflow name from the previous output and run it:
+## Step 4: Run a workflow
 
 ```bash
 attune workflow run <workflow-name>
 ```
 
-`attune workflow run` calls `run_workflow_with_exit_code()` internally. Exit code `0` means success; any non-zero value signals a contract failure.
+`cmd_workflow_run` executes the workflow and exits with a contract exit code from `run_workflow_with_exit_code`. Exit code `0` means success.
 
-## Step 4: Check today's costs
+Expected output:
+
+```
+Running <workflow-name>...
+Result: { ... }
+Exit code: 0
+```
+
+## Step 5: Check today's costs
 
 ```bash
 attune costs today
 ```
 
-This calls `cmd_costs_today` and prints a summary of token spend for the current day. A zero-spend summary is a valid, successful result.
+`cmd_costs_today` prints a cost summary for the current session, confirming that telemetry is recording correctly.
 
-**Expected output:**
+## What you just did
 
-```
-Today's cost summary
-  Requests : 1
-  Tokens   : 312
-  Cost     : $0.0004
-```
+- Verified the CLI entry point with `attune --help`
+- Confirmed your installed version with `cmd_version`
+- Configured attune with `cmd_setup`
+- Listed and ran a workflow via `cmd_workflow_list` and `cmd_workflow_run`
+- Checked cost tracking with `cmd_costs_today`
 
-## Next:
-
-Run `attune help` to open the interactive help browser and find commands for memory, telemetry, and provider configuration.
+**Next:** Run `attune doctor` (`cmd_doctor`) to validate your full environment and surface any configuration issues before going further.

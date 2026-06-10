@@ -3,40 +3,46 @@ type: warning
 name: cli-warning
 feature: cli
 depth: warning
-generated_at: 2026-06-04T23:39:47.653380+00:00
-source_hash: 4b177dd28a8ce19bb06606b9ae39e4fe255d7f2fe854f3376d3330f151f3ffac
+generated_at: 2026-06-10T07:07:04.659591+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
 # CLI Cautions
 
-## Exit codes are a contract — don't swallow them
+## Exit codes carry a contract
 
-`run_workflow_with_exit_code()` returns an integer exit code that the shell depends on. If you wrap this function or call `main()` from another process, propagate its return value all the way to `sys.exit()`. Discarding the return value silently reports success to the caller regardless of what the workflow actually did.
+`run_workflow_with_exit_code()` in `cli_commands._exit_codes` returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the process exits `0` even when the workflow failed. Always propagate the return value up to `main()`.
 
-`cmd_costs_reset()` always returns `0`, even when invoked unintentionally — there is no confirmation prompt. Once cost tracking data is cleared, it cannot be recovered from within the CLI.
+The `on_result` parameter is optional (`None` by default). If you pass a callback, it fires before the exit code is returned — a side effect that is easy to miss when reading the call site.
+
+## `cmd_costs_reset` permanently clears all cost data
+
+`cmd_costs_reset()` returns `0` on success and provides no confirmation prompt. Running it by mistake discards every tracked cost record with no built-in undo. Before automating any script that calls this command, verify that cost data has been exported first with `cmd_costs_export()`.
 
 ## Learned routing preferences persist across sessions
 
-`HybridRouter.learn_preference()` writes a `RoutingPreference` entry (with fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`) to a preferences file. If `preferences_path` is not explicitly set in `HybridRouter.__init__()`, the router reads and writes a default path. Automated tests that call `learn_preference()` without an isolated `preferences_path` will pollute the shared preferences file, causing `route()` to behave differently on subsequent runs.
+`HybridRouter.learn_preference()` writes a `RoutingPreference` entry to disk (at the path supplied to `__init__`). Fields like `usage_count` and `confidence` accumulate over time. If you call `learn_preference()` in a test or a one-off script without pointing `preferences_path` to a throwaway location, you silently mutate the user's live routing preferences.
 
-## `route_user_input()` and slash-command detection interact
+The `RoutingPreference` dataclass has a `confidence` field (default `1.0`) that `HybridRouter.route()` reads when selecting a skill. Injecting preferences with arbitrary confidence values can cause `route()` to override user intent in ways that are hard to trace.
 
-`is_slash_command()` gates whether `route_user_input()` treats input as a slash command or freeform text. Passing input that starts with `/` to `route_user_input()` when you intend freeform routing — or the reverse — produces routing results that bypass the `HybridRouter` preference logic entirely. Check `is_slash_command()` before deciding which path to invoke.
+## Slash-command detection happens before routing
 
-## `cmd_forget()` and `cmd_memory_forget_topic()` are not equivalent
+`is_slash_command()` in `attune.cli_router` runs before `route_user_input()` dispatches input. If you pre-process or strip leading characters from user input before passing it to `route_user_input()`, a `/command` string may not be recognized as a slash command, and the router silently falls back to keyword matching instead of raising an error.
 
-`cmd_forget()` removes a lesson by line number or keyword from the lessons file. `cmd_memory_forget_topic()` removes a topic from cross-session memory. Calling the wrong command silently succeeds while leaving the data you intended to delete untouched. Confirm which store you are targeting before automating either command.
+## `cmd_costs_export` and `cmd_telemetry_export` write files silently
 
-## How to avoid problems
+Both export commands return `0` on success without printing the output path unless the caller's `print_result` callback does so. In automated pipelines, check the destination explicitly after the call — a missing file indicates a failure that the exit code alone may not surface.
 
-1. **Propagate exit codes.** Always return or pass through the integer that `run_workflow_with_exit_code()` and every `cmd_*` function returns. The exit-code contract is only meaningful if the caller acts on it.
+## How to reduce risk
 
-2. **Isolate preferences in tests.** When testing any code that calls `HybridRouter`, pass an explicit temporary `preferences_path` to `HybridRouter.__init__()` so tests cannot read from or write to the shared preferences file.
+1. **Always capture and propagate return values.** Every command function in `cli_commands` returns an `int`. Discard it and you lose the only signal that something went wrong.
 
-3. **Distinguish memory stores before deleting.** Use `cmd_memory_topics()` to inspect available topics and `cmd_lessons()` to list lessons before running `cmd_forget()` or `cmd_memory_forget_topic()`. This makes the target explicit.
+2. **Isolate `HybridRouter` in tests.** Pass a temporary file path to `HybridRouter.__init__` in test code so learned preferences don't bleed into the user's real preferences store.
 
-4. **Rely only on the public API.** Names starting with `_` — including `_exit_codes` internals — can change without notice. Depend on the public functions exported from `cli_commands.cost_commands`, `cli_commands.memory_commands`, and the other `__all__` lists instead.
+3. **Export before resetting.** Any workflow that calls `cmd_costs_reset()` should call `cmd_costs_export()` first and verify the export succeeded.
+
+4. **Rely on the public API.** Names prefixed with `_` — including `_CATEGORIES` and `_DEFAULT_MODEL` — can change without notice. Depend on the functions listed in `__all__` for `cost_commands` and `memory_commands`.
 
 ## Source files
 

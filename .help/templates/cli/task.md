@@ -1,59 +1,99 @@
 ---
+type: task
+name: cli-task
 feature: cli
 depth: task
-generated_at: 2026-06-05T16:32:09.116036+00:00
-source_hash: 198ad869d0b029e3926d86fd51b53c7d1a800d65335cb982b9331b5ee6c9bcaa
+generated_at: 2026-06-10T07:07:04.644047+00:00
+source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
 status: generated
 ---
 
-# Work with cli
+# Work with the attune CLI
 
-Use cli when you need to command-line interface and routing.
+Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal.
 
 ## Prerequisites
 
 - Access to the project source code
-- Familiarity with the files under src/attune/cli_minimal.py
+- Python environment with attune installed
+- Familiarity with `src/attune/cli_minimal.py` as the CLI entry point
 
-## Steps
+## Identify the right command module
 
-1. **Understand the current behavior.**
-   Read the entry points to see what cli
-   does today before making changes.
-   The primary functions are:
-   - `get_version()` in `src/attune/cli_minimal.py` — Get package version.
-   - `create_parser()` in `src/attune/cli_minimal.py` — Create the argument parser.
-   - `main()` in `src/attune/cli_minimal.py` — Main entry point.
-   - `route_user_input()` in `src/attune/cli_router.py` — Quick routing helper.
-   - `is_slash_command()` in `src/attune/cli_router.py` — Check if text is a slash command.
-2. **Locate the right function to change.**
-   Each function has a single responsibility. Read its
-   docstring, parameters, and return type to confirm it
-   owns the behavior you need to modify.
+The CLI is organized into focused modules. Before writing or modifying any code, confirm which module owns the behavior you need:
 
-3. **Make your change.**
-   Follow existing patterns in the file — naming
-   conventions, error handling style, and logging.
+| Module | Responsibility |
+|---|---|
+| `cli_commands/_exit_codes.py` | Executes a workflow class and returns a contract exit code via `run_workflow_with_exit_code()` |
+| `cli_commands/cost_commands.py` | Cost reporting and reset: `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` |
+| `cli_commands/curator.py` | Renders the project briefing via `cmd_curator()` |
+| `cli_commands/help_commands.py` | Handles `attune help` via `cmd_help()` |
+| `cli_commands/memory_agent.py` | Runs a single-shot agent with Redis-backed memory via `cmd_memory_agent()` |
+| `cli_commands/memory_commands.py` | Lesson and memory management: `cmd_remember`, `cmd_forget`, `cmd_lessons`, `cmd_memory_capture`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_forget_topic` |
+| `cli_commands/pattern_review.py` | Pattern lifecycle: `cmd_patterns_review`, `cmd_patterns_promote`, `cmd_patterns_reject` |
+| `cli_commands/provider_commands.py` | Provider inspection and switching: `cmd_provider_show`, `cmd_provider_set` |
+| `cli_commands/telemetry_commands.py` | Telemetry, savings, routing stats, and model/agent signals |
+| `cli_commands/utility_commands.py` | Setup, validation, version, features, and diagnostics via `cmd_doctor()` |
+| `cli_commands/workflow_commands.py` | Workflow listing, inspection, and execution: `cmd_workflow_list`, `cmd_workflow_info`, `cmd_workflow_run` |
+| `cli_router.py` | Routes free-text input to skill invocations via `HybridRouter` |
 
-4. **Run the related tests.**
-   This catches regressions before they reach other
-   developers. Target with `pytest -k "cli"`.
+## Add or modify a CLI command
+
+1. **Open the module** that owns the relevant command (see table above). Read the function signature, docstring, and return type to confirm the function handles what you need.
+
+2. **Edit the command function.** Each command function accepts an `argparse.Namespace` argument and returns an `int` exit code. Add your logic inside the matching `cmd_*` function.
+
+3. **Register new commands in the parser.** If you are adding a new subcommand, open `src/attune/cli_minimal.py` and call `create_parser()` to locate where subparsers are registered. Add your subcommand there, pointing its `set_defaults(func=...)` to your new `cmd_*` function.
+
+4. **Run the related tests** to catch regressions before they reach other developers:
+
+   ```
+   pytest -k "cli"
+   ```
+
+## Teach the router a new preference
+
+Use `HybridRouter` from `attune.cli_router` when you want the router to map a keyword to a specific skill automatically.
+
+1. **Instantiate the router:**
+
+   ```python
+   from attune.cli_router import HybridRouter
+
+   router = HybridRouter()
+   ```
+
+2. **Register a keyword preference** with `learn_preference()`:
+
+   ```python
+   router.learn_preference(keyword="costs", skill="cost_report", args="--today")
+   ```
+
+   This creates a `RoutingPreference` with the fields `keyword`, `skill`, `args`, `usage_count`, and `confidence`.
+
+3. **Check autocomplete suggestions** for a partial string:
+
+   ```python
+   suggestions = router.get_suggestions("cos")
+   ```
+
+4. **Route a free-text input** and inspect the result:
+
+   ```python
+   result = router.route("show me today's costs")
+   ```
+
+## Verify your changes
+
+After editing a command or registering a routing preference, confirm the change works end-to-end:
+
+1. Run `attune --help` and verify your subcommand appears in the output.
+2. Run the subcommand directly — for example, `attune costs` — and confirm it exits with code `0` on success.
+3. For routing changes, call `router.get_suggestions()` with a partial keyword and confirm your new keyword appears in the returned list.
+4. Run `pytest -k "cli"` and confirm all tests pass with no new failures.
 
 ## Key files
 
-- `src/attune/cli_minimal.py`
-- `src/attune/cli_router.py`
-- `src/attune/cli_commands/**`
-
-## Common modifications
-
-Functions you are most likely to modify:
-
-- `get_version()` in `src/attune/cli_minimal.py`
-- `create_parser()` in `src/attune/cli_minimal.py`
-- `main()` in `src/attune/cli_minimal.py`
-- `route_user_input()` in `src/attune/cli_router.py`
-- `is_slash_command()` in `src/attune/cli_router.py`
-- `run_workflow_with_exit_code()` in `src/attune/cli_commands/_exit_codes.py`
-- `cmd_costs()` in `src/attune/cli_commands/cost_commands.py`
-- `cmd_costs_today()` in `src/attune/cli_commands/cost_commands.py`
+- `src/attune/cli_minimal.py` — entry point; defines `main()` and `create_parser()`
+- `src/attune/cli_router.py` — `HybridRouter`, `route_user_input()`, `RoutingPreference`
+- `src/attune/cli_commands/` — one module per command group
