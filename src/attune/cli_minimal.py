@@ -162,7 +162,10 @@ def _add_workflow_subparsers(subparsers: argparse._SubParsersAction) -> None:
         "--verbose",
         "-v",
         action="store_true",
-        help="Discovery-sweep: include rejected bucket in markdown output",
+        help=(
+            "Full report disclosure (detail sections inline); "
+            "discovery-sweep: include rejected bucket in markdown output"
+        ),
     )
     run_parser.add_argument(
         "--no-llm",

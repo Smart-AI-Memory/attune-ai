@@ -522,3 +522,89 @@ class TestUnmigratedSafetyNet:
         # Depth cap: the second nesting level shows the type name only.
         assert "deepest: Innermost" in output
         assert "value: 1" not in output
+
+
+class TestReportDisclosureAndDedup:
+    """T4: disclosure threading + wrapper dedup for report results."""
+
+    def _detail_report_result(self):
+        from attune.workflows.output import (
+            NextAction,
+            NextStepsSection,
+            ProseSection,
+            TableSection,
+            WorkflowReport,
+        )
+
+        report = WorkflowReport(
+            title="Code review",
+            summary="3 issues found",
+            score=88,
+            sections=[
+                ProseSection(title="Overview", tier="essential", text="Solid."),
+                TableSection(
+                    title="Hotspots",
+                    tier="detail",
+                    columns=["file", "risk"],
+                    rows=[{"file": "a.py", "risk": "high"}],
+                ),
+                NextStepsSection(
+                    title="Next steps",
+                    tier="essential",
+                    items=[NextAction(text="Fix the loop")],
+                ),
+            ],
+        )
+        return _make_result(final_output=report.to_dict(), cost_report=None)
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_summary_wraps_detail_sections(self, _mock, monkeypatch, tmp_path):
+        """Default disclosure keeps detail sections inside <details>."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        out = format_output("code-review", self._detail_report_result())
+        assert "<details><summary>Hotspots</summary>" in out
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_full_disclosure_inlines_detail_sections(self, _mock, monkeypatch, tmp_path):
+        """disclosure='full' renders detail sections inline, no <details>."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        out = format_output("code-review", self._detail_report_result(), disclosure="full")
+        assert "<details>" not in out
+        assert "a.py" in out
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_score_line_not_duplicated(self, _mock, monkeypatch, tmp_path):
+        """The renderer owns the score line; the wrapper must not repeat it."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        out = format_output("code-review", self._detail_report_result())
+        assert out.count("88/100") == 1
+        # Score commentary (greeting) still applies.
+        assert personality.score_commentary(88) in out
+
+    @patch(
+        "attune.voice.formatter.get_next_steps",
+        return_value=["I'd run `attune workflow run test-gen` next"],
+    )
+    def test_voice_next_steps_suppressed_for_reports(self, _mock, monkeypatch, tmp_path):
+        """The report's NextStepsSection owns guidance — no voice dup."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        out = format_output("code-review", self._detail_report_result())
+        assert personality.HEADER_NEXT_STEPS not in out
+        assert "Fix the loop" in out  # the report's own next steps render
+
+    @patch(
+        "attune.voice.formatter.get_next_steps",
+        return_value=["I'd run `attune workflow run test-gen` next"],
+    )
+    def test_legacy_results_keep_score_line_and_next_steps(self, _mock):
+        """Non-report results keep today's wrapper behavior unchanged."""
+        result = _make_result(
+            final_output={"formatted_report": "plain report text", "score": 70},
+        )
+        out = format_output("code-review", result)
+        assert "Score: 70/100" in out
+        assert personality.HEADER_NEXT_STEPS in out

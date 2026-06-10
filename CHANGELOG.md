@@ -8,6 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **CLI renders `WorkflowReport` results as styled terminal markdown**
+  (workflow-result-formatting T4). On a TTY, report-carrying results
+  render through `rich.markdown` (headings, tables, bullets); piped
+  output stays plain markdown. Default disclosure is `summary` —
+  detail-tier sections collapse to a `(section "X" collapsed — run
+  with --verbose to expand)` hint; `--verbose` renders the full
+  report inline. The voice wrapper no longer duplicates the score
+  line or next-steps around a rendered report (the report's own
+  sections own both). Legacy results keep the plain text path
+  unchanged.
 - **Voice layer renders `WorkflowReport` results**
   (workflow-result-formatting T3). `_extract_from_workflow_result`
   detects a serialized `WorkflowReport` (`_type` discriminator) in
