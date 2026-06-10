@@ -1,11 +1,16 @@
 # Just-In-Time Recall — Tasks
 
-**Status:** in progress (2026-06-09) — Phase 0 RESOLVED: the injection
-mechanism is **PreToolUse `additionalContext`** (verified against the CC
-hooks docs + corroborated in-repo; see decisions.md D2). Feature is
-buildable as designed. Phase 1 first task = a ~5-min empirical smoke test
-of PreToolUse `additionalContext` on the current CC version, then the
-curated recall map.
+**Status:** in progress (2026-06-09) — Phase 0 RESOLVED + Phase 1
+**built**: the injection mechanism is **PreToolUse `additionalContext`**
+(docs-verified D2, then **empirically smoke-tested on the current CC
+version 2026-06-09** — a throwaway PreToolUse hook's injected sentinel
+token appeared verbatim in a headless `claude -p` reply while the call
+proceeded). Shipped: `plugin/hooks/_recall_map.py` (curated map, the
+`AskUserQuestion` proof entry), `plugin/hooks/jit_recall.py`
+(surface-once sentinel, fail-safe, `ATTUNE_JIT_RECALL=0` off-switch),
+`hooks.json` registration, 12 tests. Remaining: T1.4 live-session R6
+proof (needs the updated plugin loaded — verify in the first session
+after the next plugin release), then Phase 2.
 
 Independently shippable units. **Phase 0 gates everything** — no
 implementation past it until the injection mechanism is logged in
@@ -13,26 +18,26 @@ implementation past it until the injection mechanism is logged in
 
 ## Phase 0 — verify the injection premise (gate)
 
-- [ ] **T0.1** Instrument a throwaway PreToolUse hook that returns
+- [x] **T0.1** Instrument a throwaway PreToolUse hook that returns
   `additionalContext` and observe whether the text reaches model context
   while the call still proceeds. Record the exact payload shape that
   works (or fails) for the installed Claude Code version.
-- [ ] **T0.2** If T0.1 fails, repeat for UserPromptSubmit
+- [x] **T0.2** (moot — T0.1 succeeded) If T0.1 fails, repeat for UserPromptSubmit
   `additionalContext`. Record which channel injects reliably.
-- [ ] **T0.3** Log the chosen mechanism + the working payload shape in
+- [x] **T0.3** Log the chosen mechanism + the working payload shape in
   `decisions.md` (resolve D2). Stop and confirm with Patrick before
   Phase 1 if the only working channel is the degraded "advisory block."
 
 ## Phase 1 — proof case: AskUserQuestion → question-shape rule
 
-- [ ] **T1.1** Create the curated map (`plugin/hooks/_recall_map.py` or a
+- [x] **T1.1** Create the curated map (`plugin/hooks/_recall_map.py` or a
   JSON sidecar) with the single `AskUserQuestion` entry → the
   question-shape one-liner (D3/D4).
-- [ ] **T1.2** Create `plugin/hooks/jit_recall.py`: read payload → map
+- [x] **T1.2** Create `plugin/hooks/jit_recall.py`: read payload → map
   lookup → `(session_id, rule_id)` surface-once sentinel → inject via the
   Phase 0 channel → allow → fail-safe try/except (R2–R5). Register in
   `hooks.json` for the verified event.
-- [ ] **T1.3** Tests: map lookup, surface-once gate (second same-rule fire
+- [x] **T1.3** Tests: map lookup, surface-once gate (second same-rule fire
   in a session is silent), no-entry silent no-op, crash → exit 0, and the
   injected-text content for the AskUserQuestion case. Mirror the
   `test_session_memory_hooks.py` importlib-loader pattern.
