@@ -26,6 +26,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   `docs/specs/integration-coverage/phase1-triage.md`.
 
 ### Added
+- **Just-in-time recall hook (`plugin/hooks/jit_recall.py`).** A
+  PreToolUse hook that surfaces the governing durable rule at the
+  moment of the action it governs — targeting the *not-applying*
+  failure mode (a rule stored in two places still slipped three times
+  mid-session on 2026-06-03). Proof case: `AskUserQuestion` surfaces
+  the question-shape rule. Mechanics: a curated, diff-reviewable
+  decision-point → rule map (`_recall_map.py`), one-liner nudges (not
+  lesson walls), a per-`(session, rule)` surface-once sentinel,
+  injection via PreToolUse `additionalContext` (empirically
+  smoke-tested on the current Claude Code version), fail-safe exit 0
+  always, `ATTUNE_JIT_RECALL=0` off-switch. Spec:
+  `docs/specs/just-in-time-recall/`.
 - **Nightly auth integration job (`integration-auth.yml`).** Opt-in
   schedule + `workflow_dispatch` workflow running the auth bucket of
   the integration suite — the 6 `*_with_auth` files, the 6 env-gated

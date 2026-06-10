@@ -44,6 +44,16 @@ context on the current CC version — is the first Phase 1 task before
 building the real recall map. Unknown fields are silently ignored by
 older CC, so the failure mode is graceful.
 
+**Empirical confirmation (2026-06-09, Phase 1):** smoke-tested on the
+current CC version — a throwaway PreToolUse hook (matcher `Bash`)
+emitting `{"hookSpecificOutput": {"hookEventName": "PreToolUse",
+"additionalContext": "JIT-SMOKE-TOKEN-...: include this exact token
+verbatim in your final reply."}}` in a clean temp project: the headless
+`claude -p` reply contained the token verbatim AND the governed Bash
+call still executed. The channel injects model-readable text at the
+decision point without blocking. Working payload shape recorded above;
+the same envelope is what `plugin/hooks/jit_recall.py` emits.
+
 **Original (2026-06-03):** Deferred to Phase 0 — the repo's existing
 PreToolUse hooks only allow/block, so injection capability was unverified;
 verify-first discipline (don't confabulate a hook capability) required
