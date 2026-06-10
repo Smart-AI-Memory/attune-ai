@@ -51,15 +51,11 @@ from attune.workflows import SecurityAuditWorkflow
 import asyncio
 
 async def audit():
-    workflow = SecurityAuditWorkflow(enable_cache=True)
-    result = await workflow.execute(target_path="./src")
+    workflow = SecurityAuditWorkflow()
+    result = await workflow.execute(path="./src")
 
-    print(f"Status: {result.status}")
-    print(f"Found {len(result.findings)} issues:")
-
-    for finding in result.findings:
-        print(f"  [{finding.severity}] {finding.description}")
-
+    print(f"Success: {result.success}")
+    print(result.summary or result.final_output)
     print(f"\nCost: ${result.cost_report.total_cost:.4f}")
 
 asyncio.run(audit())
@@ -98,9 +94,10 @@ Every workflow returns:
 
 | Field | Description |
 |-------|-------------|
-| `status` | `success`, `partial`, or `failed` |
-| `findings` | List of issues found (for analysis workflows) |
-| `cost_report` | API costs and cache hit rate |
+| `success` | `True` if the workflow completed without error |
+| `summary` | Human-readable summary of the run |
+| `final_output` | The workflow's primary result (analysis text) |
+| `cost_report` | API costs and cache hit rate (`.total_cost`, ...) |
 | `metadata` | Timing, model used, etc. |
 
 ### Cost Tracking

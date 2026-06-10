@@ -15,7 +15,7 @@ Attune AI is a production-ready anticipatory intelligence platform that transfor
 **Key differentiators:**
 - **34-86% cost reduction** via intelligent model routing (Haiku/Sonnet/Opus)
 - **Persistent memory** that learns your codebase across sessions
-- **10 smart wizards** for security, testing, documentation, and more
+- **5 interactive wizards + 17 workflows** for security, testing, docs, performance, and more
 - **HIPAA-ready** with built-in PII scrubbing and audit logging
 
 We're seeking strategic partnership with the Anthropic ecosystem to scale enterprise adoption and deepen Claude integration. The framework is open source (Apache License 2.0), production-stable, and optimized for Claude Code workflows.
@@ -30,9 +30,9 @@ We're seeking strategic partnership with the Anthropic ecosystem to scale enterp
 | Metric | Value |
 |--------|-------|
 | Status | Production/Stable |
-| Test Coverage | 125+ tests |
-| Smart Wizards | 10 |
-| Integrated Workflows | 14 |
+| Test Coverage | 21,000+ tests |
+| Smart Wizards | 5 |
+| Integrated Workflows | 17 |
 | Cost Savings | 34-86% |
 | License | Apache License 2.0 |
 

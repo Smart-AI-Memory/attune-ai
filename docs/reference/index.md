@@ -89,8 +89,3 @@ For LLM support:
 ```bash
 pip install attune-ai[llm]
 ```
-
-For healthcare applications:
-```bash
-pip install attune-ai[healthcare]
-```

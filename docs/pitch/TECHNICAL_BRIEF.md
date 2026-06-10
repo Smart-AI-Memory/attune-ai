@@ -104,7 +104,7 @@ workflow = builder.generate_workflow(session)
 
 ### 3. MetaOrchestrator
 
-Automatically composes agent teams using 6 composition patterns:
+Automatically composes agent teams using 10 composition patterns:
 
 | Pattern | Use Case |
 |---------|----------|
@@ -114,6 +114,10 @@ Automatically composes agent teams using 6 composition patterns:
 | Teaching | Expert guides junior agent |
 | Refinement | Iterative improvement loops |
 | Adaptive | Dynamic strategy based on results |
+| Conditional | Branch on intermediate results |
+| Tool-Enhanced | Agents augmented with tool access |
+| Prompt-Cached Sequential | Sequential with shared cached context |
+| Delegation Chain | Orchestrator delegates down a chain |
 
 ### 4. Memory System (Dual-Tier)
 
@@ -145,20 +149,19 @@ memory.store(
 relevant = memory.search("authentication approach")
 ```
 
-### 5. WizardRegistry (10 Smart Wizards)
+### 5. WizardRegistry (5 Interactive Wizards)
+
+Wizards provide guided, multi-step interactive UX. Non-interactive
+analysis (code review, bug prediction, docs, performance, dependency
+health, research) ships as the 17 workflows.
 
 | Wizard | Purpose |
 |--------|---------|
-| SecurityWizard | OWASP scanning, vulnerability detection |
-| TestGenWizard | Parametrized test generation |
-| CodeReviewWizard | Style, complexity, best practices |
-| BugPredictWizard | Pattern-based bug prediction |
-| RefactorWizard | Safe refactoring suggestions |
-| DocGenWizard | Documentation generation |
-| PerfWizard | Performance analysis |
-| DepsWizard | Dependency health checks |
-| ResearchWizard | Technical research assistance |
-| ReleaseWizard | Release preparation workflows |
+| Security Audit Wizard | Guided OWASP scanning, vulnerability detection |
+| Test Generation Wizard | Guided parametrized test generation |
+| Refactoring Wizard | Guided safe refactoring |
+| Release Preparation Wizard | Guided release readiness workflow |
+| Debugging Wizard | Guided failure diagnosis |
 
 ---
 
@@ -186,36 +189,32 @@ relevant = memory.search("authentication approach")
 
 ### Claude Code
 
-```python
-# Native integration with Claude Code workflows
-from attune.claude import ClaudeCodeIntegration
+Native integration ships as a Claude Code plugin. Installing the
+plugin registers the skills and starts the MCP server:
 
-integration = ClaudeCodeIntegration()
-integration.register_wizards()  # Adds all 10 wizards
-integration.enable_memory()     # Persistent context
+```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 ```
 
 ### MCP Server
 
-```python
-# Model Context Protocol server for IDE integration
-from attune.mcp import EmpathyMCPServer
+The plugin launches a Model Context Protocol server
+(`attune.mcp.server`) that exposes the workflows, memory, and help
+tools to any MCP-compatible client:
 
-server = EmpathyMCPServer()
-server.expose_tools([
-    "security_scan",
-    "generate_tests",
-    "predict_bugs",
-    "analyze_performance"
-])
+```python
+from attune.mcp.server import EmpathyMCPServer
+
+server = EmpathyMCPServer()  # exposes 41 MCP tools
 ```
 
-### VSCode Extension
+### Ops Dashboard (web)
 
-- Real-time health score dashboard
-- Cost tracking and analytics
+- Real-time run monitoring and health score
+- Cost tracking and telemetry analytics
 - One-click workflow execution
-- Memory visualization
+- Living-docs and template browser
 
 ---
 
@@ -235,11 +234,11 @@ server.expose_tools([
 
 | Layer | Technology |
 |-------|------------|
-| Language | Python 3.8+ |
+| Language | Python 3.10+ |
 | Async | asyncio, aiohttp |
 | Memory | Redis, SQLite (MemDocs) |
 | LLM SDKs | anthropic |
-| Testing | pytest, 125+ tests |
+| Testing | pytest, 21,000+ tests |
 | CLI | Click |
 | Packaging | Poetry, PyPI |
 

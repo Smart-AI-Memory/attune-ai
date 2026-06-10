@@ -1,5 +1,5 @@
 ---
-description: Install Attune AI with pip in 2 minutes. Choose from developer, minimal, or full packages. Includes CLI tools, VSCode extension, and workflow support.
+description: Install Attune AI with pip in 2 minutes. Choose from developer, minimal, or full packages. Includes CLI tools, the Claude Code plugin, and workflow support.
 ---
 
 # Installation
@@ -18,7 +18,7 @@ Choose your installation option:
     pip install 'attune-ai[developer]'
     ```
 
-    Includes: CLI tools, VSCode extension support, all workflows, local telemetry.
+    Includes: CLI tools, the Claude Code plugin, all workflows, local telemetry.
 
 === "Minimal"
 
@@ -131,7 +131,7 @@ env | grep API_KEY
 export ANTHROPIC_API_KEY="sk-ant-..."
 
 # Verify
-python -m attune.models.cli provider --check
+attune provider show
 ```
 
 ### "ModuleNotFoundError: attune"

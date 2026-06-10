@@ -47,7 +47,7 @@ framework and need to accomplish something specific.
 
 - :material-shield: **[Security Architecture](security-architecture.md)**
 
-    Secure your Empathy deployment
+    Secure your Attune AI deployment
 
 </div>
 

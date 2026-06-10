@@ -132,7 +132,7 @@ The project follows **Semantic Versioning** (SemVer):
 
 ### Release Checklist
 
-1. All tests passing (1,247+ tests)
+1. All tests passing
 2. Coverage requirements met (83%+)
 3. Security scans clean
 4. Documentation updated

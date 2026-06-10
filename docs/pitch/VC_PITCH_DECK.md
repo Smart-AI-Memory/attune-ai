@@ -39,10 +39,10 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 | Metric | Value |
 |--------|-------|
 | **Cost Reduction** | 34-86% via intelligent model routing |
-| **Smart Wizards** | 10 (security, testing, docs, performance...) |
-| **Integrated Workflows** | 14 (including 4 meta-workflows) |
-| **Agent Templates** | 7 with 6 composition patterns |
-| **Test Coverage** | 125+ tests, production-stable |
+| **Smart Wizards** | 5 interactive (security, testing, refactor, release, debug) |
+| **Integrated Workflows** | 17 (security, review, tests, docs, perf, deps, research...) |
+| **Agent Templates** | 14 with 10 composition patterns |
+| **Test Coverage** | 21,000+ tests, production-stable |
 | **Status** | Production/Stable |
 
 ---
@@ -95,7 +95,7 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 - **Open source:** GitHub at [Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 - **Production-ready:** stable release
 - **Documentation:** Full MkDocs site + tutorials
-- **VSCode Extension:** Real-time dashboard integration
+- **Ops dashboard:** Real-time run monitoring and telemetry (web)
 
 ---
 

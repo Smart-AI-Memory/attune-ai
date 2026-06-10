@@ -91,7 +91,7 @@ attribute access.
 pip install 'attune-ai[redis]'
 ```
 
-Pulls `redis>=5.0.0,<8.0.0` and `agent-memory-client>=0.14.0`.
+Pulls `redis>=5.0.0,<9.0.0` and `agent-memory-client>=0.14.0`.
 Enables the bundled `attune_redis/` plugin (Redis Agent Memory
 Server integration) and all Redis-coupled subsystems listed
 above.
