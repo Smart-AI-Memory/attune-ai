@@ -7603,3 +7603,66 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   with_auth files still collect/run under the override. Same family
   as "spec-named work-scope drifts — grep the actual instances": the
   handoff is a hypothesis, the collection run is the receipt.
+
+- **`WorkflowResult.final_output` is NOT the raw agent text —
+  `AgentSDKResultAdapter.from_agent_output()` REWRITES it as formatted
+  markdown whenever its category parser extracts findings, dropping
+  anything else the raw text carried (e.g. a requested ```json
+  block)**: caught by the first valid-key nightly auth run
+  (27249886475, 2026-06-10) — every discovery-sweep LLM adapter
+  degraded to text-only fallback on every SUCCESSFUL run because the
+  model's STRUCTURED_EMIT_FOOTER JSON block never survived into
+  final_output. Fix (#729): the adapter preserves the unmodified text
+  on `metadata["raw_result_text"]`; consumers needing raw output read
+  that channel (`llm_source_base.findings_from_workflow_result()`
+  prefers it, final_output fallback). Rule: any consumer that asks the
+  model to embed machine-readable structure in its response must read
+  the RAW channel, never final_output. Companion assertion hole found
+  in the same triage: the sweep tests rejected only
+  `text-only-fallback` tags, so outright workflow FAILURES
+  (`source-failure` tags — e.g. the broken-key run) read as passes;
+  reject every non-organic tag, not just the one you expect.
+
+- **xdist worker-crash source #3: an "allows valid input" test that
+  deliberately lets the real SDK workflow run after validation —
+  spawns a `claude` CLI subprocess inside the worker**: extends the
+  windows-xdist-flakes crash inventory (subprocess spawns / DNS
+  probes). `test_mcp_path_containment.py::test_allows_in_workspace_path`
+  said "we're not mocking the workflow — that's OK"; after validation
+  passed, the real `claude_agent_sdk.query()` subprocess spawned and
+  crashed workers across ubuntu/macOS/windows + coverage lanes (main
+  red 2026-06-10, surfaced when #722's test-file churn shifted worker
+  distribution). Fix (#728): mock the workflow class at its SOURCE
+  module — the MCP handlers validate BEFORE the lazy workflow import,
+  so the mock preserves exactly the validation contract under test,
+  and the test can additionally assert the validated path reached
+  `execute()`. Rule: "the happy path will just fail later without an
+  API key" is never an acceptable substitute for mocking — keyless
+  failure modes include subprocess churn that kills xdist workers.
+
+- **Keyless-CI-faithful local runs need `ANTHROPIC_API_KEY=""`
+  (EMPTY), not `env -u` (UNSET) — unset lets `load_dotenv` inject the
+  real key from `~/.attune/anthropic.env` and the "keyless" run spends
+  real money**: `env -u ANTHROPIC_API_KEY pytest tests/integration`
+  ran 6 real SDK workflows (~$3, 8m46s) because dotenv only skips
+  variables that EXIST; CI sets the secret to the empty string, which
+  both blocks dotenv's injection AND makes `skipif(not
+  os.environ.get(...))` gates fire. The empty-string run matched CI
+  exactly (295 passed / 41 skipped, 5.8 s). Rule for any
+  provider-key-gated suite: simulate CI-keyless with `KEY="" pytest`,
+  never by unsetting.
+
+- **A lazily-constructed optional collaborator needs ONE no-mocks
+  construction test — cache-seeded and import-error path tests can't
+  catch a constructor that always raises**: the security wizard's
+  `_get_or_create_workflow()` passed four dead pre-SDK kwargs to
+  `SecurityAuditWorkflow`; the TypeError was swallowed by the
+  graceful-degradation `except` and the wizard silently ALWAYS used
+  its LLM fallback. Its tests covered only the pre-seeded-cache and
+  import-error paths, so the real construction never ran in CI
+  (#727's fix added `test_get_or_create_workflow_constructs_real_
+  workflow`). Same family as "registered ≠ working" and "passing
+  tests don't prove integration" — the specific rule: for every
+  `try: construct() except: return None` optional-enhancement
+  pattern, one test must execute the REAL constructor and assert
+  non-None.
