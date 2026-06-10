@@ -23,7 +23,7 @@
 
 ---
 
-16 multi-agent workflows, 15 auto-triggering Claude Code skills, and
+20 multi-agent workflows, 17 auto-triggering Claude Code skills, and
 41 MCP tools — specialist teams of 2–6 Claude subagents that review
 your code, surface vulnerabilities, generate tests, and plan refactors.
 The same system doubles as the authoring and assistance toolkit for
@@ -43,7 +43,7 @@ developer workflow hub; `attune-gui` is the docs hub.
 | ------- | ---- | ------- |
 | **`attune-ai`** | Developer workflow hub (this package) | `pip install attune-ai` |
 | **`attune-gui`** | Living Docs dashboard — create, manage, search help content | standalone app |
-| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.1.11+) | bundled |
+| **`attune-rag`** | RAG pipeline (core dep of attune-ai, v0.6+) | bundled |
 | **`attune-author`** | Help content authoring, staleness detection | `pip install 'attune-ai[author]'` |
 | **`attune-help`** | Progressive-depth template runtime | `pip install attune-help` |
 
@@ -269,7 +269,7 @@ from retrieval. Full methodology:
 
 | | Attune AI | Static Docs | Agent Frameworks | Coding CLIs |
 | --- | --- | --- | --- | --- |
-| **Ready-to-use workflows** | 19 built-in | None | Build from scratch | None |
+| **Ready-to-use workflows** | 20 built-in | None | Build from scratch | None |
 | **Multi-agent teams** | 2–6 agents per workflow | None | Yes | No |
 | **MCP integration** | 41 native tools | None | No | No |
 | **Auto-triggering skills** | 15 skills, natural language | None | None | None |
