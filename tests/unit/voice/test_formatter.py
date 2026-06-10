@@ -608,3 +608,47 @@ class TestReportDisclosureAndDedup:
         out = format_output("code-review", result)
         assert "Score: 70/100" in out
         assert personality.HEADER_NEXT_STEPS in out
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_malformed_report_dict_degrades_to_legacy_handling(self, _mock, monkeypatch, tmp_path):
+        """A corrupt report payload falls back to dict handling, no repr leak.
+
+        Ported from PR #745 (parallel T3): reconstruction failure must
+        not crash and must not surface str(WorkflowResult).
+        """
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        result = _make_result(
+            final_output={
+                "_type": "WorkflowReport",
+                "sections": [{"kind": "no-such-kind"}],
+                "formatted_report": "legacy fallback text",
+            },
+        )
+        output = format_output("code-review", result)
+        assert "WorkflowResult(" not in output
+        assert "legacy fallback text" in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_voice_cost_line_suppressed_for_rendered_reports(self, _mock, monkeypatch, tmp_path):
+        """The renderer's show_cost gate owns cost display (ported from #745)."""
+        monkeypatch.chdir(tmp_path)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+        # _make_result default cost_report carries $0.0042 / 58% savings.
+        result = _make_result(final_output=self._detail_report_result().final_output)
+        output = format_output("code-review", result)
+        assert personality.HEADER_COST not in output
+        assert "$0.0042" not in output
+
+    @patch("attune.voice.formatter.get_next_steps", return_value=[])
+    def test_voice_cost_line_kept_for_safety_net_results(self, _mock):
+        """Unmigrated bespoke results keep the wrapper cost line."""
+
+        @dataclass
+        class FakeReport:
+            approved: bool = True
+
+        result = _make_result(final_output=FakeReport())
+        output = format_output("release-prep", result)
+        assert personality.HEADER_COST in output
+        assert "$0.0042" in output
