@@ -7,6 +7,50 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.2.0] — 2026-06-10
+
+The polish-cost-reduction release: LLM polish of generated docs now runs
+only at release-prep cadence, and within a run only template kinds whose
+content actually changed are polished. Plus the first Phase-2 jit-recall
+rule and the attune-author 0.15.0 / attune-help dependency wiring.
+
+### Added
+- **jit-recall content filter + release rule.** Map entries may carry
+  `match_substring`, scoping a rule to tool calls whose input contains
+  the substring — required for broad tools like `Bash` so rules fire at
+  the actual decision point, not the session's first call. First
+  Phase-2 entry: `release-verify-merge-sha` surfaces the
+  "verify content is IN the target commit; pass the full 40-char SHA"
+  rule on `gh release create`. Drift guards: the hooks.json matcher
+  must equal the map's tool set; broad-tool entries must be scoped.
+  (T1.4 live-proven the same day: the hook surfaced the question-shape
+  rule on a real AskUserQuestion via PreToolUse `additionalContext`.)
+- **Version-drift guard extended to docs surfaces.**
+  `test_all_versions_match` now also covers `.claude/CLAUDE.md` and
+  `docs/reference/API_REFERENCE.md` header+footer versions — both had
+  silently lagged releases before (CLAUDE.md sat at 7.4.0 through
+  three releases).
+
+### Changed
+- **No LLM polish outside release-prep (polish-cost lever 1).** The
+  `regenerate-help-templates` pre-commit hook is check-only (the
+  auto-regen path is deleted); the weekly `help-freshness.yml` is
+  report-only unless dispatched with `regen=true`. Polish-bearing
+  regeneration is a deliberate release-prep step. Combined with
+  attune-author 0.15.0's per-kind `scaffold_hash` skip (lever 2), a
+  regen run now polishes only kinds whose deterministic pre-polish
+  content changed. Spec: `docs/specs/polish-cost-reduction/`.
+- **attune-author cap raised to `<0.16`** (admits 0.15.0, validated)
+  and **attune-help pinned explicitly in `[author]`** — 0.15.0 moved
+  attune-help out of attune-author's core deps, which silently
+  dropped it from the lockfile; `rag_knowledge_query` and the
+  help-corpus tests need it, so the dependency is now intentional
+  rather than transitive luck.
+- `.help/templates/plugin/quickstart.md` is `status: manual` — the
+  hand-rewritten body (the generated one instructed importing
+  internal hook modules) survives regeneration until ground-truth
+  injection lands in the generator.
+
 ## [8.1.1] — 2026-06-10
 
 Docs/metadata patch — no code or library-behaviour changes. Regenerates the
