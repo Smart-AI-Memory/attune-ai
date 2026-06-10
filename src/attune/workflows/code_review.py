@@ -40,6 +40,7 @@ from .agent_sdk_adapter import (
     get_task_budget,
     get_thinking_config,
     resolve_cwd_for_path,
+    sdk_isolation_kwargs,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -324,6 +325,7 @@ class CodeReviewWorkflow(BaseWorkflow):
         async for message in claude_agent_sdk.query(
             prompt=_TASK_PROMPT_TEMPLATE.format(path=resolved_path),
             options=claude_agent_sdk.ClaudeAgentOptions(
+                **sdk_isolation_kwargs(),
                 system_prompt=_SYSTEM_PROMPT,
                 cwd=resolve_cwd_for_path(resolved_path),
                 max_budget_usd=get_max_budget_usd(depth),

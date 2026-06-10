@@ -16,6 +16,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   blockers/warnings, and outcome-conditional next steps — instead of
   the bespoke dataclass + `format_console_output()` dump. Rendered by
   the T2–T4 pipeline on every surface.
+- **SDK workflow subprocesses are now isolated from session settings**
+  (sdk-subprocess-isolation Phase 2) — the fix that makes SDK
+  workflows work for subscription users. Every `ClaudeAgentOptions`
+  construction (15 workflows) splats `sdk_isolation_kwargs()`:
+  `setting_sources=[]` keeps user/project settings, SessionStart
+  hooks, and CLAUDE.md injection out of the spawned `claude` session
+  (hook stdout previously poisoned the stream-json channel →
+  `Command failed with exit code 1` for keyless users), and
+  `ATTUNE_SDK_SUBPROCESS=1` rides the subprocess env so attune hooks
+  can self-gate (Phase 1). Drift-guarded like `resolve_cwd_for_path`.
 - **CLI renders `WorkflowReport` results as styled terminal markdown**
   (workflow-result-formatting T4). On a TTY, report-carrying results
   render through `rich.markdown` (headings, tables, bullets); piped

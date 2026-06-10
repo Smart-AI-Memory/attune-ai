@@ -37,6 +37,7 @@ from .agent_sdk_adapter import (
     get_task_budget,
     get_thinking_config,
     resolve_cwd_for_path,
+    sdk_isolation_kwargs,
 )
 from .base import BaseWorkflow, ModelTier
 from .data_classes import WorkflowResult
@@ -383,7 +384,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
 
         async for message in claude_agent_sdk.query(
             prompt=augmented_prompt,
-            options=claude_agent_sdk.ClaudeAgentOptions(**options_kwargs),
+            options=claude_agent_sdk.ClaudeAgentOptions(**sdk_isolation_kwargs(), **options_kwargs),
         ):
             sdk_result = collect_agent_output(message, assistant_parts, result_parts)
             if sdk_result is not None:
