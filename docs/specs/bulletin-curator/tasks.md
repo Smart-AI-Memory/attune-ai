@@ -4,7 +4,11 @@
 > [`.claude/rules/attune/xml-enhanced-prompts.md`](../../../.claude/rules/attune/xml-enhanced-prompts.md).
 > Companion to [`requirements.md`](requirements.md) and
 > [`design.md`](design.md).
-**Status:** approved
+**Status:** complete (2026-06-09) — shipped in v8.0.0 (#657):
+`src/attune/curator/` package (core/schema/sources/result) +
+`src/attune/ops/routes/curator.py` + tests. Status flip caught by
+docs-completeness-audit B5 re-triage (cross-PR drift the reconciler
+can't see).
 **Last updated:** 2026-05-26
 **Total estimate:** ~10h across 4 phases. Each phase ships
 independently; CLI/dashboard surfaces (Phase 3) can ship after

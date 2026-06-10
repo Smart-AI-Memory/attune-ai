@@ -185,7 +185,7 @@ WizardStep(
 
 ## WizardInternalWorkflow
 
-Wizards don't call LLMs directly. They use `WizardInternalWorkflow`, a thin `BaseWorkflow` subclass that provides access to all 12 workflow mixins:
+Wizards don't call LLMs directly. They use `WizardInternalWorkflow`, a thin `BaseWorkflow` subclass that provides access to all 15 workflow mixins:
 
 - LLM calls (`_call_llm`)
 - XML prompt rendering (`_render_xml_prompt`)
@@ -308,7 +308,7 @@ Session variable interpolation (`{session.xxx}`) replaces placeholders with valu
 
 ## Registry and Discovery
 
-The wizard registry (`registry.py`) finds wizards through a 3-tier search:
+The wizard registry (`registry.py`) finds wizards through a 4-tier search:
 
 ```text
 1. In-memory registry     ← Programmatic registration

@@ -78,4 +78,4 @@ Update documentation for any user-facing changes:
 
 ## Questions?
 
-Open an issue or ask in [Discussions](https://github.com/Smart-AI-Memory/empathy/discussions)!
+Open an issue or ask in [Discussions](https://github.com/Smart-AI-Memory/attune-ai/discussions)!

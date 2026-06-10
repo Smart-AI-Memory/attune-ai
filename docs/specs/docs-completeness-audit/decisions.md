@@ -117,6 +117,85 @@ original 10-subagent estimate.
 
 ---
 
+## Stage B5 — content-verify + close (2026-06-09)
+
+B5 content-verified the PENDING queue (5-batch subagent fan-out
+over the built/discoverable docs) and resolved the remaining open
+questions. See
+[completeness-audit-triage.md](./completeness-audit-triage.md#stage-b5-content-verify-results-2026-06-09)
+for the full method, per-doc disposition, and the `exclude_docs`
+113-built/107-repo-only split.
+
+### Q4 — Blog content-verify: archive, fix, or defer?
+
+**Decision:** **Archive the content-historical version-announcement
+posts; defer the rest as dated artifacts.** B6's git-date rule kept
+all 55 blog posts in-scope, so the content read (Q1's deferred
+half) makes the call. `attune-ai-v4-agent-sdk.md` (v4.0) and
+`discord-v6-release.md` (v6.0) are record-keeping for superseded
+releases → moved to `docs/archive/blog/2026/`. The remaining blog
+tutorial/essay/social posts carry point-in-time counts (e.g. "557
+templates", "18 workflows", "38 MCP tools"); they are treated as
+dated content-marketing artifacts (the same convention applied to
+the dated-historical CLEAN docs in the triage) and a blog-copy
+count refresh is **out of scope** for the completeness audit.
+
+**Rationale:** A version-announcement post IS record-keeping for a
+specific past release (the Q1 "not fiction, record-keeping"
+category). A tutorial/social post written at vX stating the count
+at that time is a dated artifact, not a current-state claim — and
+rewriting marketing copy is not what a fiction audit is for.
+
+### Q5 — Feature-doc quad fiction: hand-fix or fix the generator?
+
+**Decision:** **Fix the attune-author generator + regenerate; do
+NOT hand-patch the ~30 generated docs.** The quad
+(`how-to/`/`reference/`/`tutorials/` per feature) shares identical
+*generated* failure modes (wrong import paths, async-as-sync,
+fabricated CLI binaries, fictional `WorkflowResult.content/.sources`)
+— the docs even ship fact-check footers documenting their own
+unresolved imports. Hand-fixing would regress on the next regen.
+→ spawned follow-up spec **`attune-author-generator-fidelity`**.
+
+### Q6 — Legacy "Empathy framework" docs: spot-fix or rewrite/retire?
+
+**Decision:** **Rewrite/retire as a product-framing editorial pass
+— not spot-fixes.** `index.md`, `reference/{core,empathy-os,
+glossary,llm-toolkit,configuration,config,pattern-library,
+TROUBLESHOOTING,cli-reference}.md`, and
+`getting-started/choose-your-path.md` describe a superseded product
+(5-level empathy maturity model, `EmpathyOS` as "main entry
+point", healthcare/HIPAA) with dead/fabricated APIs. Spot-fixing a
+version string in a doc slated for rewrite is wasted; the framing
+itself is the problem. → spawned follow-up spec
+**`legacy-empathy-framework-doc-retirement`**.
+
+### B5 fixes landed this PR
+
+The cheap, unambiguous MECHANICAL fixes + the one high-impact
+onboarding REWRITE (`getting-started/first-steps.md`) — full list
+in the triage's "FIXED this PR" table. The pitch-doc count/inventory
+fiction (Tier 1) and the 2 blog archives also landed here.
+
+---
+
+## Spec closure (2026-06-09)
+
+Stage A (triage artefact) and Stage B (B2 version sweep #715, B3.1
+ORCHESTRATION_API #717, B3.2 ORCHESTRATION_USER_GUIDE #718, B4
+archive records #716, B6 blog date-classification #719, B5
+content-verify + this PR) are complete. The PENDING content-verify
+queue is **worked-through and routed**: built docs verified and
+either fixed here, confirmed CLEAN, or routed to the two follow-up
+specs above; repo-only excluded docs and blog-copy counts formally
+deferred (Q4). `mkdocs build --strict` passes. The
+docs-completeness-audit spec is therefore **complete** — its job
+was to find and triage fiction, which it did; the remaining
+remediation is owned by the two spawned follow-up specs, not by
+this audit.
+
+---
+
 ### B6 execution record — blog date-classification (2026-06-09)
 
 **Result: closed empty. 0 archived, all 55 blog docs in-scope.**

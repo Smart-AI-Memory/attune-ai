@@ -430,8 +430,8 @@ Automatic cost optimization that tries cheaper tiers first and only upgrades whe
 
 1. Start with CHEAP tier (Haiku - $0.03/1M tokens)
 2. Validate output with quality gates
-3. If validation fails → upgrade to CAPABLE (Sonnet 4.5 - $0.09/1M)
-4. Still failing? → upgrade to PREMIUM (Opus 4.5 - $0.45/1M)
+3. If validation fails → upgrade to CAPABLE (Sonnet 4.6)
+4. Still failing? → upgrade to PREMIUM (Opus 4.8)
 5. Track savings and learn from patterns
 
 #### Enable it

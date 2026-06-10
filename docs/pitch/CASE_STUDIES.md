@@ -218,7 +218,7 @@ Built-in audit trails and security scanning reduce compliance burden.
 | Persistent memory | Yes (dual-tier) | Session-only |
 | Bug prediction | Proactive | Reactive only |
 | HIPAA-ready | Built-in | DIY integration |
-| Multi-agent orchestration | 6 patterns | Manual setup |
+| Multi-agent orchestration | 10 patterns | Manual setup |
 | Enterprise security | Native | Bolt-on |
 
 ---

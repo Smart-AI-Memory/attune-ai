@@ -27,7 +27,7 @@ The AI developer tools market includes several categories:
 |------------|---------|----------------|-----------|--------|--------|
 | **Anticipatory Intelligence** | Yes (5 levels) | No | No | No | No |
 | **Persistent Memory** | Dual-tier | Limited | Manual | Session | Manual |
-| **Multi-Agent Orchestration** | 6 patterns | No | Manual | No | Yes |
+| **Multi-Agent Orchestration** | 10 patterns | No | Manual | No | Yes |
 | **Smart Model Routing** | Automatic | No | Manual | Limited | No |
 | **Cost Optimization** | 34-86% | N/A | Manual | Limited | N/A |
 | **Security Scanning** | Built-in | No | No | No | No |
@@ -73,7 +73,7 @@ The AI developer tools market includes several categories:
 | **Purpose** | General LLM framework | AI development productivity |
 | **Learning curve** | Steep | Gentle (guided wizards) |
 | **Memory** | Manual implementation | Built-in dual-tier system |
-| **Agents** | DIY composition | 7 templates + 6 patterns |
+| **Agents** | DIY composition | 14 templates + 10 patterns |
 | **Security** | Not included | Native scanning + compliance |
 | **Model routing** | Manual | Automatic optimization |
 | **Production-ready** | Framework only | Complete platform |
@@ -98,7 +98,7 @@ The AI developer tools market includes several categories:
 | **Type** | IDE | Framework/CLI/Extension |
 | **Intelligence** | Reactive | Anticipatory (5 levels) |
 | **Memory** | Session-only | Persistent dual-tier |
-| **Multi-agent** | No | Yes (6 patterns) |
+| **Multi-agent** | No | Yes (10 patterns) |
 | **Security** | No | Built-in scanning |
 | **Compliance** | No | HIPAA/SOC2 ready |
 | **Model choice** | Limited | Full flexibility |
@@ -123,7 +123,7 @@ The AI developer tools market includes several categories:
 |--------|--------|-------------------|
 | **Focus** | Multi-agent orchestration | Full development platform |
 | **Agent creation** | Code-based | Socratic guided builder |
-| **Composition patterns** | Role-based | 6 formal patterns |
+| **Composition patterns** | Role-based | 10 formal patterns |
 | **Memory** | Optional add-on | Native dual-tier |
 | **Security** | Not included | Built-in scanning |
 | **Model routing** | Manual | Automatic optimization |
@@ -258,7 +258,7 @@ Level               │                                         │
 ### 2. Ecosystem Moat
 - Claude-native optimization
 - MCP server compatibility
-- VSCode extension ecosystem
+- Claude Code plugin + IDE integration
 
 ### 3. Compliance Moat
 - HIPAA-ready configuration

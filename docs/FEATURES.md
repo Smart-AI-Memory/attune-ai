@@ -528,6 +528,5 @@ else:
 
 ---
 
-**Version:** 2.7.3
-**Last Updated:** 2026-02-14
-**Status:** Complete
+For the current release, see [PyPI](https://pypi.org/project/attune-ai/)
+or the README version badge.

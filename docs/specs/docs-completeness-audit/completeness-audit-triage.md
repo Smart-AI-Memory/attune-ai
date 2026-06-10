@@ -174,3 +174,125 @@ transient limit on the first attempt this session.
 Closing the spec requires the PENDING queue worked through (or
 formally deferred to a follow-up release in decisions.md) and a
 final `mkdocs build --strict`.
+
+---
+
+## Stage B5 — content-verify results (2026-06-09)
+
+The PENDING queue was content-verified by a 5-batch subagent
+fan-out over the **built (site-discoverable)** docs, after a key
+prioritisation finding (below). Method: each subagent read its
+batch line-by-line against `src/` with the canonical facts
+embedded; reported a bucket + specific drift; fixes applied
+centrally (report-only agents, no parallel edits).
+
+### Prioritisation finding — `exclude_docs` splits the corpus
+
+`mkdocs.yml`'s `exclude_docs` block excludes large swaths from the
+built site. Classifying all in-scope `.md` (excl `specs/`,
+`archive/`) through the mkdocs gitwildmatch patterns:
+
+| Set | Count |
+|-----|-------|
+| In-scope `.md` | 220 |
+| **BUILT (on the rendered site — discoverable)** | **113** |
+| EXCLUDED (repo-only; GitHub-readable, not on site) | 107 |
+
+Excluded dirs include `pitch/`, `philosophy/`, `implementation/`,
+`cost-analysis/`, `conversations/`, `plans/`, `examples/*.md`,
+`blog/0*.md`, `BLOG_*.md`, and most top-level `*_*.md` patterns.
+B5 focused verification on the BUILT set (highest discoverability;
+the only set `--strict` link-checks). Excluded docs were not
+content-verified line-by-line — they carry the same drift risk but
+lower reach; recorded as deferred below.
+
+### Canonical ground truth (verified against `src/`, 8.0.1)
+
+17 workflows · 5 wizards (debug, refactor, release-prep, security,
+test-gen) · 14 agent templates · 10 composition patterns · 41 MCP
+tools · 17 plugin skills · ~21,000 tests · Python >=3.10.
+`WorkflowResult` real fields: `success, stages, final_output,
+cost_report, started_at, completed_at, total_duration_ms, provider,
+error, error_type, transient, metadata, summary, suggestions`
+(NO `status`/`findings`/`content`/`sources`). `execute()` is
+`async`, takes `**kwargs` (commonly `path=`).
+
+### Result — the "generated quad is CLEAN" hypothesis FAILED
+
+The fan-out found pervasive, *systemic* fiction across the built
+docs, far beyond the triage's "mostly low-drift" expectation. It
+splits into two root causes that drive two follow-up specs:
+
+**Root cause A — legacy "Empathy framework" hand-written docs.**
+These describe a superseded product surface (5-level empathy
+maturity model, healthcare/HIPAA, `EmpathyOS` as "main entry
+point") with dead/fabricated APIs and legacy naming. → routed to
+the **legacy-doc-retirement** follow-up. Docs: `index.md`,
+`reference/{core,empathy-os,glossary,llm-toolkit,configuration,config,pattern-library,TROUBLESHOOTING,cli-reference}.md`,
+`getting-started/choose-your-path.md`. Representative drift:
+`import attune_llm` (real: `attune.llm`), `coach_wizards` (real:
+`attune.wizards`), `EmpathyOS.from_config` (absent),
+`PatternLibrary.find_patterns`/`remove_pattern` (absent),
+fictional `EmpathyOS(...)` kwargs, stale versions (v1.10.0, v3.9.0,
+"November 2025"), legacy `empathy`/`Empathy-framework` naming,
+fictional `[healthcare]` install, `attune.cli` module (absent),
+`test-coverage` workflow (real: `test-gen`).
+
+**Root cause B — attune-author generator bug in the feature
+quad.** `how-to/`, `reference/`, `tutorials/` per feature share
+identical generated failure modes (the docs' own fact-check
+footers even document the unresolved imports). → routed to the
+**attune-author generator-fidelity** follow-up (fix the generator
++ regenerate; hand-patching ~30 generated docs would regress on
+next regen). Failure modes: wrong import paths (top-level
+`pipeline`/`spec`/`workflows`/`release` instead of `attune.*`);
+async-shown-as-sync (`execute()`/`run_all()`/`assess_readiness()`
+are `async def`); `@property` shown called as `()`; fabricated
+standalone CLI binaries (`spec-engine`, `bug-predict`,
+`release-prep`) when the real surface is `attune workflow run
+<name>` or a skill; fictional `WorkflowResult.content/.sources`;
+MCP tool `document_generation` (real: `doc_gen`);
+`BaseWorkflow.call_llm` (real: `_call_llm`); stale "Opus 4.6"
+(PREMIUM is `claude-opus-4-8`); dead `plugin/commands/attune-security.md`.
+
+### Per-doc disposition (built docs verified)
+
+**FIXED this PR (MECHANICAL + the one onboarding REWRITE):**
+
+| doc | fix |
+|-----|-----|
+| getting-started/first-steps.md | REWRITE the Python example to the real `WorkflowResult` API (`success`/`summary`/`final_output`/`cost_report.total_cost`; `execute(path=)`; drop fictional `enable_cache`/`status`/`findings`) |
+| getting-started/installation.md | VSCode-extension refs → Claude Code plugin; fiction flag `provider --check` → `attune provider show` |
+| guides/wizard-architecture.md | 12 → 15 mixins; "3-tier" → "4-tier" search |
+| contributing.md | repo slug `…/empathy/…` → `…/attune-ai/…` |
+| migration/redis-plugin-migration.md | `redis<8.0.0` → `<9.0.0` |
+| how-to/index.md | "Empathy deployment" → "Attune AI deployment" |
+| reference/index.md | removed fictional `pip install attune-ai[healthcare]` |
+| reference/FAQ.md | stale model names Sonnet 4.5/Opus 4.5 → 4.6/4.8 |
+| docs/pitch/* (6) | counts: 5 wizards, 17 workflows, 14 templates, 10 patterns, 21,000+ tests; fictional `ClaudeCodeIntegration` block → real plugin install; removed-VSCode → ops dashboard; Python 3.8 → 3.10 |
+| FEATURES.md, PERFORMANCE_OPTIMIZATION_ROADMAP.md, governance.md | stripped stale count/version footers (evergreen) |
+
+**CLEAN (no action):** getting-started/{index,redis-setup},
+redis/best-practice-alignment, reference/{wizards,multi-agent,agent-factory-overview,agent-factory-api,ops-dashboard},
+guides/wizards-getting-started, DEVELOPER_GUIDE, integration/claude-code-integration
+(MECHANICAL framing note only), and the dated-historical set
+(rag/*-decision, security/security-fixes-*, testing-audit-*).
+
+**ROUTED to legacy-doc-retirement follow-up (REWRITE/retire):**
+the Root-cause-A doc list above.
+
+**ROUTED to attune-author generator-fidelity follow-up
+(regenerate):** the feature quad (`how-to/<feature>`,
+`reference/<feature>`, `tutorials/<feature>` for the ~15 features).
+
+### Blog (B6 kept all 55 in-scope by git date)
+
+- **Archived** (content-historical version-announcement posts) to
+  `docs/archive/blog/2026/`: `attune-ai-v4-agent-sdk.md` (v4.0),
+  `discord-v6-release.md` (v6.0). No inbound links from built docs.
+- **Deferred:** remaining blog tutorial/essay/social posts carry
+  point-in-time counts (557 templates, 18 workflows, 38 MCP tools,
+  etc.). Treated as dated content-marketing artifacts (same
+  convention as dated-historical CLEAN docs) — a blog-copy refresh
+  is out of scope for the completeness audit. See decisions.md
+  Q4.
