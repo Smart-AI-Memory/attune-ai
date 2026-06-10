@@ -7666,3 +7666,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   `try: construct() except: return None` optional-enhancement
   pattern, one test must execute the REAL constructor and assert
   non-None.
+
+- **A phantom regenerator can rewrite `.help/templates/` outside every
+  known regen path — and pre-commit's stash/restore RESETS mtimes, so
+  post-commit forensics mislead**: extends the "Two parallel
+  help-template generators drift silently" lesson with a live-incident
+  shape (3× on 2026-06-10). Symptom: `gh pr create` warns "N
+  uncommitted changes" right after a clean commit, and `git status`
+  shows the 3 CORE depths (`concept`/`reference`/`task`) of a feature
+  modified with the 3-depth in-repo generator's frontmatter shape
+  (feature/depth only — no `type:`/`name:`/`source_hash`). Both
+  pre-commit regen hooks were ruled out by their `files:` filters and
+  `ATTUNE_DOCS_AUTOREGEN` unset; prime suspects are the running
+  `attune.mcp.server` processes (one per live session + leaked ones).
+  Two durable rules: (1) when pre-commit prints "[WARNING] Unstaged
+  files detected … Stashing", the listed files were modified BEFORE
+  the commit began, and their post-commit mtime is the stash-RESTORE
+  time, not the original write time — don't use mtime to identify the
+  writer; (2) treat unexplained 3-file core-depth modifications as
+  discard-don't-commit (`git checkout -- .help/templates/<feat>/`) —
+  the stub output would overwrite polished content. Open question +
+  diagnostic recipe tracked in
+  docs/specs/polish-cost-reduction/requirements.md Q1.

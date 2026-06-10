@@ -139,14 +139,12 @@ repos:
           ^src/attune/mcp/tool_schemas\.py$
         stages: [pre-commit]
 
-      # .help/templates/ per-feature regeneration on source changes.
+      # .help/templates/ staleness WARNING on source changes (check-only).
       # Detects which features' source globs match the changed files in
-      # this commit (via `attune_author.load_manifest`), runs
-      # `attune-author generate <feature> --all-kinds` for each, and
-      # auto-stages the resulting `.help/templates/<feature>/`.
-      # Gated on ATTUNE_DOCS_AUTOREGEN=1 (matching check-docs-freshness)
-      # — warn-only otherwise. Never blocks the commit. See
-      # docs/specs/ops-specs-completion-candidates/ (B-real-1 follow-up).
+      # this commit (via `attune_author.load_manifest`) and prints them.
+      # Never regenerates, never spends LLM budget, never blocks the
+      # commit — polish-bearing regen runs at release-prep cadence
+      # (docs/specs/polish-cost-reduction/, lever 1).
       - id: regenerate-help-templates
         name: Regenerate .help/templates for changed source files
         entry: uv run python scripts/regenerate_help_templates.py
