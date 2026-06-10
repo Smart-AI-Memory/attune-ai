@@ -60,7 +60,7 @@
     ],
     "PreToolUse": [
       {
-        "matcher": "AskUserQuestion",
+        "matcher": "AskUserQuestion|Bash",
         "hooks": [
           {
             "type": "command",

@@ -84,6 +84,17 @@ def test_map_entries_have_stable_safe_rule_ids(jit_mod):
             assert rule["text"].strip(), f"{tool}: empty rule text"
 
 
+def test_broad_tool_entries_require_match_substring(jit_mod):
+    """A rule keyed on a broad tool MUST scope itself via match_substring,
+    or it fires on the session's first such call (R3: low noise)."""
+    for tool in ("Bash", "Edit", "Write", "Read"):
+        for rule in jit_mod.RECALL_MAP.get(tool, []):
+            assert rule.get("match_substring"), (
+                f"{tool}/{rule['rule_id']}: broad-tool rule without "
+                "match_substring would fire on every session's first call"
+            )
+
+
 # ==========================================================================
 # Injection payload (R6 proof case)
 # ==========================================================================
@@ -104,6 +115,52 @@ def test_unmapped_tool_is_silent_no_op(jit_mod, monkeypatch, capsys):
     rc, out = _run(jit_mod, monkeypatch, capsys, _payload(tool="Read"))
     assert rc == 0
     assert out == ""
+
+
+# ==========================================================================
+# match_substring content filter (release-verify entry)
+# ==========================================================================
+
+
+def _bash_payload(command: str, session: str = "sess-1") -> dict:
+    return {
+        "hook_event_name": "PreToolUse",
+        "tool_name": "Bash",
+        "session_id": session,
+        "tool_input": {"command": command},
+    }
+
+
+def test_release_rule_fires_on_gh_release_create(jit_mod, monkeypatch, capsys):
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "40-char merge SHA" in ctx
+
+
+def test_release_rule_silent_on_ordinary_bash(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("git status"))
+    assert rc == 0
+    assert out == ""
+
+
+def test_non_matching_rule_writes_no_sentinel(jit_mod, monkeypatch, capsys, tmp_path):
+    """A filtered-out rule must stay eligible to fire later in the session."""
+    _run(jit_mod, monkeypatch, capsys, _bash_payload("git status"))
+    base = tmp_path / "sentinels"
+    assert not base.exists() or not list(base.iterdir())
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    assert out != ""
 
 
 # ==========================================================================
@@ -197,9 +254,16 @@ def test_missing_sentinel_dir_still_surfaces(monkeypatch, capsys, tmp_path):
 # ==========================================================================
 
 
-def test_hook_registered_for_ask_user_question():
+def test_hook_registered_for_all_mapped_tools(jit_mod):
+    """The hooks.json matcher must cover every tool keyed in RECALL_MAP —
+    a map entry whose tool isn't matched never fires (silent dead rule)."""
     hooks = json.loads((_HOOKS_DIR / "hooks.json").read_text(encoding="utf-8"))
     pre = hooks["hooks"]["PreToolUse"]
     jit_entries = [g for g in pre if any("jit_recall.py" in h["command"] for h in g["hooks"])]
     assert jit_entries, "jit_recall.py not registered for PreToolUse"
-    assert jit_entries[0]["matcher"] == "AskUserQuestion"
+    matched = set(jit_entries[0]["matcher"].split("|"))
+    assert matched == set(jit_mod.RECALL_MAP.keys()), (
+        f"hooks.json matcher {matched} != RECALL_MAP tools "
+        f"{set(jit_mod.RECALL_MAP.keys())} — update the matcher when "
+        "adding a tool to the map"
+    )
