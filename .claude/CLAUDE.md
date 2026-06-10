@@ -7587,3 +7587,19 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   (`14 (including 4 meta-workflows)`, `7 with 6 composition patterns` slid
   past `[0-9]+\+? (workflows|...)`); only the line-by-line content read
   caught them — the spec's anti-rubber-stamp rule, vindicated concretely.
+
+- **Authoring a CI job around a pytest `-k` selector: verify with a
+  free `--collect-only` dry run (count per-file) BEFORE shipping —
+  and don't trust handoff-stated file counts**: building the nightly
+  auth integration job (`integration-auth.yml`, #723), the handoff
+  said the auth bucket was "8 `*_with_auth` files"; the filesystem
+  had 6. A keyless `pytest -m "" -o addopts="" --collect-only -q
+  tests/integration -k "<expr>" | grep -oE "^tests/[^:]+" | sort |
+  uniq -c` costs ~1 s, proves the selector picks EXACTLY the intended
+  files (here 13 files / 33 tests), and catches both selector typos
+  and stale counts. Companion fact: `-o addopts=""` clears only the
+  `addopts` ini key — other pytest.ini keys (`asyncio_mode = auto`,
+  markers) still apply, so unmarked `async def` tests in the dormant
+  with_auth files still collect/run under the override. Same family
+  as "spec-named work-scope drifts — grep the actual instances": the
+  handoff is a hypothesis, the collection run is the receipt.
