@@ -1,10 +1,10 @@
 # Design — Windows xdist Worker-Crash Flake Investigation
 
-**Status:** partial (2026-06-09) — Probe A + the three known
-xdist-worker-crash polluters fixed (#709/#710, lessons #713);
-remaining xfails + Probe D (gated Windows VM repro) deferred to a
-follow-up. Relabelled from "approved" by docs-completeness-audit B5
-re-triage (core work had shipped without a status flip).
+**Status:** complete (v1, 2026-06-10) — Probe A run, the three known
+xdist-worker-crash polluters fixed (#709/#710 + the #728 SDK-spawner),
+Probe B/C tooling shipped (`scripts/probe_xdist_flakes/`). Remaining
+xfails + Probe D (gated Windows VM repro) are DEFERRED BY DESIGN
+(DECIDE-1 caps v1 at Probe C) — reopen only if crashes recur.
 **Phase 1:** [requirements.md](./requirements.md) — locked 2026-06-02 (merged via #563)
 
 Translates Phase 1's three DECIDEs into concrete probe-execution
