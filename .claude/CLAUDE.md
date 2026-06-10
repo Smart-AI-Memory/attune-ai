@@ -7688,3 +7688,46 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   the stub output would overwrite polished content. Open question +
   diagnostic recipe tracked in
   docs/specs/polish-cost-reduction/requirements.md Q1.
+
+- **A repo CI secret becoming VALID is a spend event — tests.yml passed
+  `secrets.ANTHROPIC_API_KEY` to every push/PR × 12 matrix lanes and
+  burned ~$1200 in ~6 hours the night the dead key was replaced with a
+  live one (2026-06-10 02:52 UTC)**: tests that change behavior when a
+  key is present (mismarked `HAS_API_KEY`-gated tests, real-SDK
+  spawners of the #728 class, keyed Haiku-summary paths) made real API
+  calls at CI scale the moment the secret went live — for weeks prior
+  the key was invalid so the same workflow config burned nothing.
+  Diagnostic chain that pinned it: (1) sum LOCAL telemetry
+  (`~/.attune/telemetry/usage.jsonl` by day — showed only ~$126/month,
+  so the burn wasn't local); (2) `grep -l ANTHROPIC_API_KEY
+  .github/workflows/*.yml` + read HOW each uses it
+  (`integration-tests.yml` sets it to `""` keyless-by-design;
+  `tests.yml` passed the real secret); (3) `gh api .../actions/secrets`
+  `updated_at` correlates the spend window. Rule: per-push/PR test
+  workflows get `ANTHROPIC_API_KEY: ""` ALWAYS; the real secret
+  belongs only to deliberately-scheduled, budget-capped jobs
+  (`integration-auth.yml` with `ATTUNE_MAX_BUDGET_USD`). Pairs with
+  the "keyless-CI-faithful local runs need EMPTY not unset" lesson —
+  same empty-string discipline, opposite direction (CI side).
+
+- **Anthropic API billing forensics from the terminal — org-bound
+  keys, rename-vs-switch, and no-value-exposure diagnostics**: when an
+  API key 400s "credit balance too low": (1) the key is permanently
+  BOUND to the org it was created in — a new key created while the
+  console sits on the same org inherits the same block, and RENAMING
+  an org looks like switching but changes nothing (we burned a cycle
+  on both); (2) identify the key's org without exposing secrets:
+  `curl -si .../v1/messages ... | grep -i anthropic-organization-id`
+  (the 400 response carries it), plus key tail
+  `...${ANTHROPIC_API_KEY: -6}` and length `${#ANTHROPIC_API_KEY}`;
+  (3) `GET /v1/models` is NOT billing-gated — "models list works +
+  messages 400s" = valid key, billing block (vs "invalid x-api-key" =
+  revoked); (4) error-message transitions are signal: "balance too
+  low" → "invalid x-api-key" means the key was revoked, not fixed;
+  (5) top-ups apply against OWED balance first and take minutes to
+  propagate — poll with a 1-token haiku call, don't re-ask the user;
+  (6) when hand-editing `~/.attune/anthropic.env` fails silently,
+  remember the line is `export ANTHROPIC_API_KEY=...` (an
+  unanchored-for-`export` sed matches nothing yet exits 0), and the
+  no-chat-exposure swap is `pbpaste` → validate `sk-ant-` prefix →
+  `printf > file` → report tail only.
