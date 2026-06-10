@@ -7779,3 +7779,21 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   flaps. Pairs with the verify-first-on-infra lesson — same
   discipline, new surface (platform health before credential
   archaeology).
+
+- **`attune/config.py` functions can't be patched via module paths —
+  the legacy module isn't in `sys.modules`; patch through
+  `func.__globals__`**: the config package `__init__` loads the
+  sibling `config.py` via `importlib.util.spec_from_file_location
+  ("attune_config_legacy", ...)` WITHOUT registering it in
+  `sys.modules`, then re-binds names (`AttuneConfig`, `load_config`,
+  `resolve_show_cost`) onto the package. Consequence for tests: a
+  function defined there resolves ITS OWN globals from the unregistered
+  module, so `patch("attune.config.load_config")` swaps only the
+  package binding and the function under test never sees the mock, and
+  `patch("attune_config_legacy.load_config")` errors (not importable).
+  Working pattern (used in `TestResolveShowCost`):
+  `monkeypatch.setitem(resolve_show_cost.__globals__, "load_config",
+  _boom)` — reaches the real lookup site, auto-restores. Generalizes to
+  any importlib-shim-loaded module (same family as the "mock at the
+  import site" lesson; this names the case where the import site is an
+  unregistered module object).
