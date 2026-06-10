@@ -18,6 +18,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   kwarg-free construction + a no-mocks regression test on the real
   construction path.
 
+- **Discovery-sweep structured-emit contract: the model's ```json block
+  was silently dropped.** `AgentSDKResultAdapter.from_agent_output()`
+  rewrites `final_output` as formatted markdown whenever its category
+  parser extracts findings — discarding the raw agent text, including
+  the JSON block `STRUCTURED_EMIT_FOOTER` requests. Every LLM sweep
+  adapter therefore degraded to the text-only fallback (caught by the
+  first valid-key nightly auth run, 27249886475). The adapter now
+  preserves the unmodified agent text on `metadata["raw_result_text"]`,
+  and the six sweep sources parse findings via a shared
+  `findings_from_workflow_result()` helper that prefers the raw channel
+  (with `final_output` fallback). The six discovery_sweep integration
+  tests additionally reject `source-failure` findings, closing the hole
+  that let outright workflow failures read as passes.
 ### Removed
 - **The 6 rotted `test_*_with_auth.py` integration files.** All
   pre-dated the SDK migration (dead constructor kwargs), and 5 of 6

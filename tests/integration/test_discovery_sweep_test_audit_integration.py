@@ -91,3 +91,9 @@ async def test_test_audit_source_returns_findings_for_under_tested_fixture(
     assert not any(
         "text-only-fallback" in f.tags for f in findings
     ), "structured-emit contract failed — adapter fell back to text-only path"
+    # source-failure = the wrapped workflow raised or returned
+    # success=False. Without this assertion a broken key / dead SDK
+    # "passes" the test (it did on run 27249292521 — 18 s, zero spend).
+    assert not any(
+        "source-failure" in f.tags for f in findings
+    ), "wrapped workflow failed — findings are failure markers, not analysis"

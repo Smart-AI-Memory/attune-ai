@@ -105,6 +105,26 @@ class TestAgentSDKResultAdapterConversion:
         assert result.metadata["source"] == "agent_sdk"
         assert result.metadata["subagent_count"] == 4
 
+    def test_raw_result_text_preserved_when_final_output_rewritten(self) -> None:
+        """metadata["raw_result_text"] carries the UNMODIFIED agent text.
+
+        REGRESSION (nightly auth run 27249886475): when _parse_findings
+        fires, final_output is rewritten as formatted markdown — which
+        dropped the ```json block discovery-sweep's structured-emit
+        contract relies on. The raw channel must survive the rewrite.
+        """
+        result = AgentSDKResultAdapter.from_agent_output(
+            result_text=_SAMPLE_REVIEW,
+            subagent_names=_SUBAGENT_NAMES,
+            started_at=_now(),
+            completed_at=_now(),
+        )
+
+        # final_output WAS rewritten (formatted from parsed findings)…
+        assert result.final_output != _SAMPLE_REVIEW
+        # …but the raw channel is byte-identical to the agent text.
+        assert result.metadata["raw_result_text"] == _SAMPLE_REVIEW
+
     def test_custom_metadata_merged(self) -> None:
         """Given extra metadata, it is merged into result metadata."""
         result = AgentSDKResultAdapter.from_agent_output(

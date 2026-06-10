@@ -5,7 +5,7 @@ pattern: constructs a fresh :class:`DependencyCheckWorkflow` per
 call with :data:`STRUCTURED_EMIT_FOOTER` passed via
 ``system_prompt_suffix`` (workflow-INSTANCE level augmentation per
 Phase 1.5 ``design.md``), invokes ``execute()`` once per path, and
-parses each result's ``final_output`` via :func:`parse_findings_json`.
+parses each result via :func:`findings_from_workflow_result`.
 
 ``budget_multiplier = 0.5`` reflects the dependency-check
 workflow's narrower spend profile — two subagents
@@ -27,7 +27,11 @@ from __future__ import annotations
 import logging
 from dataclasses import dataclass
 
-from ..llm_source_base import STRUCTURED_EMIT_FOOTER, LLMSource, parse_findings_json
+from ..llm_source_base import (
+    STRUCTURED_EMIT_FOOTER,
+    LLMSource,
+    findings_from_workflow_result,
+)
 from ..workflow import Finding
 
 logger = logging.getLogger(__name__)
@@ -94,7 +98,7 @@ class DependencyCheckSource(LLMSource):
                 findings.append(_workflow_unsuccessful_finding(self.name, path, result))
                 continue
 
-            findings.extend(parse_findings_json(result.final_output or "", self.name))
+            findings.extend(findings_from_workflow_result(result, self.name))
 
         return findings
 

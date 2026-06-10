@@ -1068,6 +1068,13 @@ class AgentSDKResultAdapter:
             "source": "agent_sdk",
             "subagent_count": len(subagent_names),
             "findings": findings,
+            # The UNMODIFIED agent text. final_output below may be
+            # REWRITTEN as formatted markdown when _parse_findings
+            # fires, which drops content the raw text carried — e.g.
+            # the ```json block discovery-sweep's STRUCTURED_EMIT_FOOTER
+            # requests (its adapters parse this field first; see
+            # llm_source_base.findings_from_workflow_result).
+            "raw_result_text": text,
         }
         if agent_run_result:
             result_metadata["num_turns"] = agent_run_result.num_turns

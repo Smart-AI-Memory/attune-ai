@@ -14,6 +14,7 @@ from attune.workflows.discovery_sweep import Finding
 from attune.workflows.discovery_sweep.llm_source_base import (
     STRUCTURED_EMIT_FOOTER,
     LLMSource,
+    findings_from_workflow_result,
     parse_findings_json,
 )
 
@@ -262,3 +263,72 @@ def test_structured_emit_footer_documents_findings_schema() -> None:
     assert '"findings"' in STRUCTURED_EMIT_FOOTER
     assert '"severity"' in STRUCTURED_EMIT_FOOTER
     assert '"confidence"' in STRUCTURED_EMIT_FOOTER
+
+
+# ---------------------------------------------------------------------------
+# findings_from_workflow_result — raw-text channel preference
+# ---------------------------------------------------------------------------
+
+
+class _FakeResult:
+    """Duck-typed WorkflowResult carrying just what the helper reads."""
+
+    def __init__(self, final_output: object, metadata: object = None) -> None:
+        self.final_output = final_output
+        self.metadata = metadata
+
+
+def _payload() -> dict:
+    return {
+        "findings": [
+            {
+                "severity": "high",
+                "title": "eval() in handler",
+                "description": "untrusted input reaches eval",
+                "confidence": 0.9,
+            }
+        ]
+    }
+
+
+def test_prefers_raw_result_text_over_rewritten_final_output() -> None:
+    """REGRESSION (nightly auth run 27249886475): the adapter rewrites
+    final_output as formatted markdown when its category parser fires,
+    dropping the ```json block. The raw channel must win.
+    """
+    result = _FakeResult(
+        final_output="**Overall Risk Score: 87 / 100**\n\nformatted markdown, no block",
+        metadata={"raw_result_text": _wrap(_payload())},
+    )
+    findings = findings_from_workflow_result(result, SOURCE)
+    assert len(findings) == 1
+    assert findings[0].title == "eval() in handler"
+    assert "text-only-fallback" not in findings[0].tags
+
+
+def test_falls_back_to_final_output_without_raw_channel() -> None:
+    """Results predating the raw channel still parse from final_output."""
+    result = _FakeResult(final_output=_wrap(_payload()), metadata={})
+    findings = findings_from_workflow_result(result, SOURCE)
+    assert len(findings) == 1
+    assert findings[0].severity == "high"
+
+
+def test_missing_metadata_and_empty_output_yields_fallback() -> None:
+    """No metadata + empty output degrades to the fallback Finding."""
+    result = _FakeResult(final_output="", metadata=None)
+    findings = findings_from_workflow_result(result, SOURCE)
+    assert len(findings) == 1
+    assert "text-only-fallback" in findings[0].tags
+
+
+def test_non_string_raw_and_dict_final_output_coerced() -> None:
+    """Defensive shapes: non-str raw ignored, dict final_output stringified."""
+    result = _FakeResult(
+        final_output={"not": "a string"},
+        metadata={"raw_result_text": 12345},
+    )
+    findings = findings_from_workflow_result(result, SOURCE)
+    # No fenced json block anywhere -> fallback, but never a crash.
+    assert len(findings) == 1
+    assert "text-only-fallback" in findings[0].tags
