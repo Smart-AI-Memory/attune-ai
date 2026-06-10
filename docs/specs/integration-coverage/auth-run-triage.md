@@ -141,3 +141,25 @@ the sweep adapter can read (e.g. `metadata["raw_result_text"]` in
 `from_agent_output`), point `parse_findings_json` callers at it
 with `final_output` as fallback, and tighten the 6 tests to also
 reject `source-failure` tags.
+
+## Run 3 verdict — 2026-06-10 05:03 UTC dispatch (post-#727/#728/#729)
+
+Run 27254452440 (`workflow_dispatch`, main at 7e5969a1):
+**23 passed, 1 failed in 5m30s.**
+
+- **The 6 discovery_sweep tests GENUINELY passed.** With the #729
+  fix on main and the tightened assertions (which now reject
+  `source-failure` tags too), a pass means real structured
+  findings via the `metadata["raw_result_text"]` channel — the
+  Finding 3 contract is closed end-to-end on CI, not just in the
+  local receipt.
+- **The transient SDK-startup flake did not fire** this run
+  (seen 2-of-3 locally on 2026-06-10 early AM; keep watching the
+  scheduled nightlies before investing in a probe).
+- **Sole failure: `test_thinking_mode`** — the known 400
+  (`max_tokens must be greater than thinking.budget_tokens`,
+  request_id req_011CbtzxDskegSyNBjZRRqbc) on the deprecated
+  `use_thinking` path. Fix shipped as PR #730: the provider grows
+  `max_tokens` above the budget when needed and forces
+  `temperature=1.0` while thinking is enabled. Expected: the next
+  nightly after #730 merges is the first fully-green auth run.
