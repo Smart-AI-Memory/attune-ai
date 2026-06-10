@@ -7,6 +7,7 @@ Licensed under the Apache License, Version 2.0
 from __future__ import annotations
 
 from pathlib import Path
+from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
@@ -59,28 +60,65 @@ class TestMCPWorkspaceContainment:
             await server._get_auth_recommend({"file_path": "/home/other/app.py"})
 
     @pytest.mark.parametrize(
-        "method_name,path_key",
+        "method_name,path_key,workflow_target",
         [
-            ("_run_security_audit", "path"),
-            ("_run_bug_predict", "path"),
-            ("_run_code_review", "path"),
-            ("_run_performance_audit", "path"),
+            (
+                "_run_security_audit",
+                "path",
+                "attune.workflows.security_audit.SecurityAuditWorkflow",
+            ),
+            (
+                "_run_bug_predict",
+                "path",
+                "attune.workflows.bug_predict.BugPredictionWorkflow",
+            ),
+            (
+                "_run_code_review",
+                "path",
+                "attune.workflows.code_review.CodeReviewWorkflow",
+            ),
+            (
+                "_run_performance_audit",
+                "path",
+                "attune.workflows.perf_audit.PerformanceAuditWorkflow",
+            ),
         ],
     )
     @pytest.mark.asyncio
-    async def test_allows_in_workspace_path(self, server, in_workspace_file, method_name, path_key):
-        """Verify in-workspace paths pass validation."""
+    async def test_allows_in_workspace_path(
+        self, server, in_workspace_file, method_name, path_key, workflow_target
+    ):
+        """Verify in-workspace paths pass validation.
+
+        The workflow class is mocked at its SOURCE module (the handlers
+        lazy-import it at call time): the earlier no-mock version of this
+        test let the real SDK workflow spawn a `claude` CLI subprocess
+        inside the xdist worker, which crashed workers across OS lanes
+        (the windows-xdist-flakes crash class; broke main 2026-06-10).
+        Path validation runs BEFORE the workflow import, so mocking the
+        workflow preserves exactly what this test asserts.
+        """
+        fake_result = MagicMock(
+            success=True,
+            final_output={},
+            cost_report=MagicMock(total_cost=0.0),
+            provider="anthropic",
+        )
+        fake_workflow_cls = MagicMock(
+            return_value=MagicMock(execute=AsyncMock(return_value=fake_result)),
+        )
         method = getattr(server, method_name)
-        # Path validation should pass; workflow execution will
-        # fail because we're not mocking the workflow — that's OK.
-        try:
-            await method({path_key: in_workspace_file})
-        except ValueError as e:
-            if "outside allowed directory" in str(e):
-                pytest.fail(f"In-workspace path was blocked: {e}")
-        except Exception:
-            # Workflow execution errors are expected (no LLM)
-            pass
+        with patch(workflow_target, fake_workflow_cls):
+            try:
+                await method({path_key: in_workspace_file})
+            except ValueError as e:
+                if "outside allowed directory" in str(e):
+                    pytest.fail(f"In-workspace path was blocked: {e}")
+
+        # Validation passed AND the validated path reached the workflow.
+        execute = fake_workflow_cls.return_value.execute
+        execute.assert_awaited_once()
+        assert execute.await_args.kwargs["path"] == str(Path(in_workspace_file).resolve())
 
     @pytest.mark.asyncio
     async def test_blocks_traversal_outside_workspace(self, server):
