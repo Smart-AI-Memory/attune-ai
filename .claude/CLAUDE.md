@@ -7528,3 +7528,62 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   silently returned empty inside a `for f in $(find ...)` loop here (quoting/word-
   split interaction); a `while IFS= read -r f; do ... done < <(git ls-files ...)`
   loop with `--format='%ad' --date=short` was reliable.
+
+- **A docs-fidelity audit must FIRST split the corpus by `mkdocs.yml`
+  `exclude_docs`, because "in-scope `.md`" ≠ "discoverable" — and that
+  split is the priority lever**: hit 2026-06-09 doing docs-completeness-
+  audit B5. `find docs -name '*.md'` (excl `specs/`/`archive/`) returned
+  220 in-scope, but `mkdocs.yml`'s `exclude_docs` block excludes ~half
+  (113 BUILT on the rendered site / 107 repo-only — GitHub-readable but
+  not on the site). Excluded dirs included `pitch/`, `philosophy/`,
+  `implementation/`, `examples/*.md`, `blog/0*.md`, `BLOG_*.md`, most
+  top-level `*_*.md`. The BUILT set is the highest-discoverability AND the
+  ONLY set `mkdocs build --strict` link-checks — so it's where audit
+  effort and the `--strict` gate both land; excluded docs carry equal
+  drift risk but lower reach. Compute the split deterministically with a
+  `pathspec` gitwildmatch matcher over the `exclude_docs` block (it uses
+  gitignore semantics): `spec.match_file(rel)` per `docs/**/*.md`. Doing
+  this FIRST reframed a "verify 93 PENDING docs" fan-out into "verify the
+  ~37 built non-quad/quad docs that actually reach users." Also: archiving
+  into `docs/archive/` is safe because `archive/` is itself in
+  `exclude_docs` (no `--strict` break), and a heading with a spaced
+  em-dash (`## Stage B5 — content-verify results (...)`) slugifies to a
+  SINGLE hyphen (`stage-b5-content-verify-results-...`), NOT double — the
+  repo's `scripts/audit_docs_wiring.py` `slugify` (`re.sub(r"[^\w\s-]","")`
+  then collapse `[-\s]+`) drops the em-dash and merges the surrounding
+  spaces; an inbound anchor link with `b5--content` fails the
+  `Documentation/wiring-audit` CI check. Compute the exact anchor with that
+  regex before writing cross-file `#anchor` links.
+
+- **"attune-author GENERATED docs track source / are CLEAN" is FALSE — the
+  generation path (not just the polish path) emits systematic fiction, and
+  the fix is the generator, not the ~30 docs**: extends the existing
+  "attune-author polish-pass hallucinations have six distinct shapes"
+  lesson from the polish path to the doc-GENERATION path. B5's content-
+  verify (2026-06-09) disproved the triage's "feature-doc quad is generator-
+  tracked ⇒ CLEAN" hypothesis: the quad (`how-to/`/`reference/`/`tutorials/`
+  per feature) shares IDENTICAL generated failure modes across ~15 features
+  — wrong import paths (top-level `pipeline`/`spec`/`workflows`/`release`
+  vs the real `attune.*`), async-shown-as-sync (`execute()`/`run_all()`/
+  `assess_readiness()` are `async def` but called without `await`;
+  `@property` `success`/`summary` shown called as `()`), fabricated
+  standalone CLI binaries (`spec-engine`/`bug-predict`/`release-prep` when
+  the real surface is `attune workflow run <name>` or a skill), fictional
+  `WorkflowResult.content/.sources`, wrong MCP tool name (`document_generation`
+  vs real `doc_gen`). The docs even SHIP fact-check footers documenting
+  their own unresolved imports — so the generator's fact-checker catches
+  the import-path class but MISSES the async/property, fictional-CLI,
+  fictional-field, and wrong-tool-name classes (a partial, not sufficient,
+  signal). Right move: fix the attune-author generator + regenerate, NOT
+  hand-patch (generated docs regress on next regen). The CLEAN/REWRITE
+  split tracked authorship+age, not generated-vs-hand: recently-regenerated
+  reference docs (agent-factory, wizards, multi-agent, ops-dashboard) were
+  CLEAN; the FICTION clustered in (a) the generated quad and (b) old
+  hand-written "Empathy framework" docs (`index`, `reference/core`/
+  `empathy-os`/`glossary`/`cli-reference`/`TROUBLESHOOTING` — dead modules
+  `attune_llm`/`coach_wizards`, `EmpathyOS.from_config`, legacy `empathy`
+  naming) describing a superseded 5-level-maturity product. Audit takeaway:
+  a deterministic count-grep also MISSES table-formatted counts
+  (`14 (including 4 meta-workflows)`, `7 with 6 composition patterns` slid
+  past `[0-9]+\+? (workflows|...)`); only the line-by-line content read
+  caught them — the spec's anti-rubber-stamp rule, vindicated concretely.
