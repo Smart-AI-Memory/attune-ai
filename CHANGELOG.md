@@ -8,6 +8,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- **Deprecated `use_thinking` path 400'd whenever `max_tokens` ≤
+  `thinking_budget`.** `AnthropicProvider.generate()` sent
+  `thinking.budget_tokens=10000` regardless of `max_tokens`, and the
+  API requires `max_tokens > budget_tokens` (thinking output counts
+  toward `max_tokens`) plus `temperature=1`. Seen as the standing
+  `test_thinking_mode` failure in the nightly integration-auth run.
+  The provider now grows `max_tokens` above the budget when needed
+  (never shrinking the configured budget) and forces
+  `temperature=1.0` while thinking is enabled — also fixing the
+  latent 400 for thinking callers using the default
+  `temperature=0.7`.
+
 - **Security wizard silently never used `SecurityAuditWorkflow`.**
   `security_wizard._get_or_create_workflow()` passed legacy
   pre-SDK-migration kwargs (`skip_remediate_if_clean`,

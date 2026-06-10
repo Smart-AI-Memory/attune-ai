@@ -233,6 +233,72 @@ class TestAnthropicProvider:
         assert result.content == "Final answer"
 
     @patch("anthropic.AsyncAnthropic")
+    @pytest.mark.asyncio
+    async def test_thinking_grows_max_tokens_above_budget(self, mock_anthropic_class):
+        """Regression: thinking with max_tokens <= budget_tokens must not 400.
+
+        The API requires max_tokens > thinking.budget_tokens (thinking
+        output counts toward max_tokens). The provider must grow
+        max_tokens — never shrink the configured budget — and force
+        temperature=1.0 (thinking rejects any other value).
+        """
+        mock_response = MagicMock()
+        mock_block = MagicMock()
+        mock_block.type = "text"
+        mock_block.text = "ok"
+        mock_response.content = [mock_block]
+        mock_response.model = "claude-sonnet-4-6"
+        mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
+        mock_response.stop_reason = "end_turn"
+
+        mock_client = MagicMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="sk-test", use_thinking=True)
+
+        # Default thinking_budget=10000, max_tokens=2048 — the exact shape
+        # that 400'd in the nightly integration-auth run.
+        await provider.generate(
+            messages=[{"role": "user", "content": "Q"}],
+            temperature=0.7,
+            max_tokens=2048,
+        )
+
+        call_kwargs = mock_client.messages.create.call_args[1]
+        assert call_kwargs["thinking"] == {"type": "enabled", "budget_tokens": 10000}
+        assert call_kwargs["max_tokens"] > 10000
+        assert call_kwargs["temperature"] == 1.0
+
+    @patch("anthropic.AsyncAnthropic")
+    @pytest.mark.asyncio
+    async def test_thinking_keeps_max_tokens_when_already_large_enough(self, mock_anthropic_class):
+        """A max_tokens already above the budget is passed through unchanged."""
+        mock_response = MagicMock()
+        mock_block = MagicMock()
+        mock_block.type = "text"
+        mock_block.text = "ok"
+        mock_response.content = [mock_block]
+        mock_response.model = "claude-sonnet-4-6"
+        mock_response.usage = MagicMock(input_tokens=10, output_tokens=5)
+        mock_response.stop_reason = "end_turn"
+
+        mock_client = MagicMock()
+        mock_client.messages.create = AsyncMock(return_value=mock_response)
+        mock_anthropic_class.return_value = mock_client
+
+        provider = AnthropicProvider(api_key="sk-test", use_thinking=True, thinking_budget=2000)
+
+        await provider.generate(
+            messages=[{"role": "user", "content": "Q"}],
+            max_tokens=8192,
+        )
+
+        call_kwargs = mock_client.messages.create.call_args[1]
+        assert call_kwargs["max_tokens"] == 8192
+        assert call_kwargs["thinking"] == {"type": "enabled", "budget_tokens": 2000}
+
+    @patch("anthropic.AsyncAnthropic")
     def test_get_model_info_known_model(self, mock_anthropic_class):
         """Test getting model info for known model."""
         provider = AnthropicProvider(

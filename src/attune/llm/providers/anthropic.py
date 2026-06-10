@@ -164,10 +164,17 @@ class AnthropicProvider(BaseLLMProvider):
 
         # Enable extended thinking for complex tasks (Claude-specific)
         if self.use_thinking:
+            # The API requires max_tokens > thinking.budget_tokens (thinking
+            # output counts toward max_tokens) and temperature=1 — otherwise
+            # the request fails with HTTP 400. Grow max_tokens so the answer
+            # keeps its requested room; never shrink the caller's budget.
+            if api_kwargs["max_tokens"] <= self.thinking_budget:
+                api_kwargs["max_tokens"] = self.thinking_budget + max_tokens
             api_kwargs["thinking"] = {
                 "type": "enabled",
                 "budget_tokens": self.thinking_budget,
             }
+            api_kwargs["temperature"] = 1.0
 
         # Add any additional kwargs
         api_kwargs.update(kwargs)
