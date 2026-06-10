@@ -85,7 +85,7 @@ jobs:
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
         fi
       env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Run security and workflow tests
       run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
@@ -129,7 +129,7 @@ jobs:
         pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
       env:
-        ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Track per-file test results
       run: |
