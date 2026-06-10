@@ -1,8 +1,9 @@
 # Tasks: Workflow result formatting
 
-**Status:** partial (2026-06-09) — T1 (the `WorkflowReport` / Section
-data model in `src/attune/workflows/output.py`) shipped in #649 and is
-in use (e.g. `discovery_sweep`); remaining tasks pending.
+**Status:** partial (2026-06-10) — T1 (the `WorkflowReport` / Section
+data model, #649) and T2 (the markdown renderer
+`attune.voice.report_renderer` — `render()` + crash-visible
+`render_safe()`, all 4 test layers, 98% branch) shipped; T3+ pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
