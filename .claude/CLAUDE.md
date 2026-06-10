@@ -7731,3 +7731,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   unanchored-for-`export` sed matches nothing yet exits 0), and the
   no-chat-exposure swap is `pbpaste` → validate `sk-ant-` prefix →
   `printf > file` → report tail only.
+- **An interrupted/rejected compound Bash command may have PARTIALLY
+  executed — re-establish actual git state before continuing, or you
+  build on phantom assumptions**: hit on the 8.2.0 release (2026-06-10,
+  the #737/#738 take-2). A multi-step command (commit prep → switch
+  branch → edit → commit → push → PR) was user-interrupted; the
+  rejection message implies nothing ran, but the branch existed, one
+  commit existed, and the push had landed. Subsequent commands then
+  compounded the misread: `git branch -D release/8.2.0` printed
+  `(was bf88edb1)` — that SHA was the REAL release-prep commit, deleted
+  with its branch; a later "release prep" commit was actually
+  lessons-only (the bumps were already committed away); PR #737's
+  squash merged WITHOUT the version bumps. The release-execute step-10
+  gate (verify content IN the merge SHA before tagging) caught it
+  pre-tag; recovery was cherry-picking the dangling commit. Durable
+  rules: (1) after ANY interrupted/denied compound command, run
+  `git log --oneline -3` + `git status --short` + `git ls-remote
+  --heads origin <branch>` and reconcile EVERY step's expected effect
+  before the next command; (2) `git branch -D` output `(was <sha>)`
+  names a commit — before treating it as disposable, `git show --stat
+  <sha>` to check for unmerged content; (3) verify merge-SHA content
+  via the GitHub API (`gh api repos/<o>/<r>/contents/<file>?ref=<sha>`)
+  — authoritative and immune to the local stale-object trap that
+  muddied diagnosis; (4) when archaeology spirals, stop theorizing and
+  fact-check trees directly (`git diff <ref-a> <ref-b> --stat` — an
+  empty diff settles arguments instantly). Pairs with the "harness
+  safety classifier blocks bundled-destructive scripts" lesson — same
+  root cause family (compound commands + interruption), this one is
+  the state-reconciliation half.
