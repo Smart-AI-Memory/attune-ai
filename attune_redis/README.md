@@ -12,7 +12,7 @@ search over long-term memory, and pub/sub coordination.
 ## Installation
 
 ```bash
-pip install attune-redis
+pip install 'attune-ai[redis]'
 ```
 
 Or as an extra of the core framework:

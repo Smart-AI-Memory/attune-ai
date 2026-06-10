@@ -75,7 +75,7 @@ plugin/                # Claude Code plugin
 ├── skills/            # Skill groups (MCP-exposed tasks)
 └── agents/            # Agent definitions
 
-attune_redis/          # Redis plugin (pip install attune-redis)
+attune_redis/          # Redis plugin (pip install 'attune-ai[redis]')
 attune_software/       # Software plugin (bundled)
 ```
 
