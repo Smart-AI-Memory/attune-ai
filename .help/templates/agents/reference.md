@@ -3,16 +3,33 @@ type: reference
 name: agents-reference
 feature: agents
 depth: reference
-generated_at: 2026-06-04T23:45:26.744532+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-11T04:43:25.152927+00:00
+source_hash: 7ddd0fc96a1f5315731bff455997f261001e41fc40732100eff70032b8dc0689
 status: generated
+scaffold_hash: 4784cd713b49011cc685b0c641b8519c53bcfa436aa96ec99e0886eef0ff9158
 ---
 
 # Agents reference
 
-Create and manage agents, workflows, and framework adapters — including release preparation agents, state persistence, and recovery.
+Create and run framework-agnostic agents and workflows across AutoGen, Haystack, LangChain, LangGraph, and native runtimes. The feature also covers release-preparation agents, persistent agent state, and recovery management.
 
 ## Classes
+
+### Agent factory — base types
+
+| Class | Description | File |
+|-------|-------------|------|
+| `AgentRole` | Standard roles for multi-agent systems. | `src/attune/agent_factory/base.py` |
+| `AgentCapability` | Capabilities an agent can advertise. | `src/attune/agent_factory/base.py` |
+| `AgentConfig` | Configuration for creating an agent. | `src/attune/agent_factory/base.py` |
+| `WorkflowConfig` | Configuration for creating a workflow or graph. | `src/attune/agent_factory/base.py` |
+| `BaseAgent` | Abstract base for framework-agnostic agents. | `src/attune/agent_factory/base.py` |
+| `BaseWorkflow` | Abstract base for framework-agnostic workflows. | `src/attune/agent_factory/base.py` |
+| `BaseAdapter` | Abstract base for framework adapters. | `src/attune/agent_factory/base.py` |
+| `AgentFactory` | Universal factory for creating agents and workflows. | `src/attune/agent_factory/factory.py` |
+| `Framework` | Supported agent frameworks. | `src/attune/agent_factory/framework.py` |
+
+### Framework adapters
 
 | Class | Description | File |
 |-------|-------------|------|
@@ -25,157 +42,83 @@ Create and manage agents, workflows, and framework adapters — including releas
 | `LangChainAgent` | Agent wrapping a LangChain chain or agent. | `src/attune/agent_factory/adapters/langchain_adapter.py` |
 | `LangChainWorkflow` | Workflow using LangChain's SequentialChain or custom routing. | `src/attune/agent_factory/adapters/langchain_adapter.py` |
 | `LangChainAdapter` | Adapter for LangChain framework. | `src/attune/agent_factory/adapters/langchain_adapter.py` |
-| `LangGraphAgent` | Agent wrapping a LangGraph node/runnable. | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
+| `LangGraphAgent` | Agent wrapping a LangGraph node or runnable. | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
 | `LangGraphWorkflow` | Workflow using LangGraph's StateGraph. | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
 | `LangGraphAdapter` | Adapter for LangGraph framework. | `src/attune/agent_factory/adapters/langgraph_adapter.py` |
 | `NativeAgent` | Agent using Empathy's native EmpathyLLM. | `src/attune/agent_factory/adapters/native.py` |
-| `NativeWorkflow` | Workflow using sequential/parallel agent execution. | `src/attune/agent_factory/adapters/native.py` |
+| `NativeWorkflow` | Workflow using sequential or parallel agent execution. | `src/attune/agent_factory/adapters/native.py` |
 | `NativeAdapter` | Adapter for Empathy's native agent system. | `src/attune/agent_factory/adapters/native.py` |
 | `WizardAgent` | Agent wrapper for existing wizards. | `src/attune/agent_factory/adapters/wizard_adapter.py` |
 | `WizardWorkflow` | Workflow for chaining multiple wizards. | `src/attune/agent_factory/adapters/wizard_adapter.py` |
 | `WizardAdapter` | Adapter for integrating wizards with Agent Factory. | `src/attune/agent_factory/adapters/wizard_adapter.py` |
-| `AgentRole` | Standard agent roles for multi-agent systems. | `src/attune/agent_factory/base.py` |
-| `AgentCapability` | Capabilities an agent can have. | `src/attune/agent_factory/base.py` |
-| `AgentConfig` | Configuration for creating an agent. | `src/attune/agent_factory/base.py` |
-| `WorkflowConfig` | Configuration for creating a workflow/graph. | `src/attune/agent_factory/base.py` |
-| `BaseAgent` | Abstract base class for framework-agnostic agents. | `src/attune/agent_factory/base.py` |
-| `BaseWorkflow` | Abstract base class for framework-agnostic workflows. | `src/attune/agent_factory/base.py` |
-| `BaseAdapter` | Abstract base class for framework adapters. | `src/attune/agent_factory/base.py` |
-| `AgentFactory` | Universal factory for creating agents and workflows. | `src/attune/agent_factory/factory.py` |
-| `Framework` | Supported agent frameworks. | `src/attune/agent_factory/framework.py` |
+
+### Resilience and memory
+
+| Class | Description | File |
+|-------|-------------|------|
 | `MemoryAwareAgent` | Agent wrapper that integrates with Memory Graph. | `src/attune/agent_factory/memory_integration.py` |
 | `ResilienceConfig` | Configuration for resilience patterns. | `src/attune/agent_factory/resilient.py` |
 | `ResilientAgent` | Agent wrapper that applies resilience patterns. | `src/attune/agent_factory/resilient.py` |
-| `ReleaseAgent` | Base agent with CHEAP -> CAPABLE -> PREMIUM escalation. | `src/attune/agents/release/base_agent.py` |
-| `TestCoverageAgent` | Runs pytest --cov and parses coverage report. | `src/attune/agents/release/coverage_agent.py` |
+
+### Release agents
+
+| Class | Description | File |
+|-------|-------------|------|
+| `ReleaseAgent` | Base agent with CHEAP → CAPABLE → PREMIUM escalation. | `src/attune/agents/release/base_agent.py` |
+| `TestCoverageAgent` | Runs pytest --cov and parses the coverage report. | `src/attune/agents/release/coverage_agent.py` |
 | `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence. | `src/attune/agents/release/documentation_agent.py` |
 | `CodeQualityAgent` | Runs ruff, checks type hints and complexity. | `src/attune/agents/release/quality_agent.py` |
+| `SecurityAuditorAgent` | Analyzes bandit output and classifies vulnerabilities by severity. | `src/attune/agents/release/security_agent.py` |
 | `Tier` | Model tier for progressive escalation. | `src/attune/agents/release/release_models.py` |
 | `ReleaseAgentResult` | Result from an individual release agent. | `src/attune/agents/release/release_models.py` |
 | `QualityGate` | Quality gate threshold for release readiness. | `src/attune/agents/release/release_models.py` |
 | `ReleaseReadinessReport` | Aggregated release readiness assessment. | `src/attune/agents/release/release_models.py` |
 | `ReleasePrepTeam` | Coordinates parallel execution of release preparation agents. | `src/attune/agents/release/release_prep_team.py` |
-| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates ReleasePrepTeam with the CLI registry. | `src/attune/agents/release/release_prep_team.py` |
-| `SecurityAuditorAgent` | Analyzes bandit output and classifies vulnerabilities by severity. | `src/attune/agents/release/security_agent.py` |
+| `ReleasePrepTeamWorkflow` | Workflow wrapper that integrates `ReleasePrepTeam` with the CLI registry. | `src/attune/agents/release/release_prep_team.py` |
+
+### State management
+
+| Class | Description | File |
+|-------|-------------|------|
 | `AgentExecutionRecord` | Single execution record for an agent. | `src/attune/agents/state/models.py` |
 | `AgentStateRecord` | Persistent state for a single agent identity. | `src/attune/agents/state/models.py` |
-| `AgentRecoveryManager` | Handles agent restart recovery from persistent state. | `src/attune/agents/state/recovery.py` |
 | `AgentStateStore` | Persistent storage for agent state and execution history. | `src/attune/agents/state/store.py` |
+| `AgentRecoveryManager` | Handles agent restart recovery from persistent state. | `src/attune/agents/state/recovery.py` |
 
-## Class methods
+## Properties
 
-### `AutoGenAgent`
+Each framework adapter exposes a read-only `framework_name` property.
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: AgentConfig, autogen_agent = None` | — | Initializes the agent with the given config and optional AutoGen agent instance. |
-| `invoke` | `input_data: str \| dict, context: dict \| None = None` | `dict` | Invokes the agent synchronously and returns a result dict. |
-| `stream` | `input_data: str \| dict, context: dict \| None = None` | `AsyncGenerator[dict, None]` | Streams agent responses as an async generator of result dicts. |
-| `get_autogen_agent` | — | `object \| None` | Returns the underlying AutoGen agent instance, or `None` if not set. |
-
-### `AutoGenWorkflow`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: WorkflowConfig, agents: list[BaseAgent], group_chat = None, manager = None` | — | Initializes the workflow with config, agents, and optional GroupChat components. |
-| `run` | `input_data: str \| dict, initial_state: dict \| None = None` | `dict` | Runs the workflow and returns a result dict. |
-| `stream` | `input_data: str \| dict, initial_state: dict \| None = None` | — | Streams workflow execution results. |
-
-### `AutoGenAdapter`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `provider: str = 'anthropic', api_key: str \| None = None` | — | Initializes the adapter with an LLM provider and optional API key. |
-| `is_available` | — | `bool` | Returns `True` if the AutoGen framework is installed and available. |
-| `create_agent` | `config: AgentConfig` | `AutoGenAgent` | Creates an `AutoGenAgent` from the given config. |
-| `create_workflow` | `config: WorkflowConfig, agents: list[BaseAgent]` | `AutoGenWorkflow` | Creates an `AutoGenWorkflow` from the given config and agents. |
-| `create_tool` | `name: str, description: str, func: Callable, args_schema: dict \| None = None` | `dict` | Wraps a callable as an AutoGen-compatible tool descriptor dict. |
-
-#### `AutoGenAdapter` properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `framework_name` | `str` | Returns the framework name identifier. |
-
-### `HaystackAgent`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: AgentConfig, pipeline = None, generator = None` | — | Initializes the agent with the given config and optional Haystack pipeline or generator. |
-| `invoke` | `input_data: str \| dict, context: dict \| None = None` | `dict` | Invokes the agent synchronously and returns a result dict. |
-| `stream` | `input_data: str \| dict, context: dict \| None = None` | `AsyncGenerator[dict, None]` | Streams agent responses as an async generator of result dicts. |
-
-### `HaystackWorkflow`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: WorkflowConfig, agents: list[BaseAgent], pipeline = None` | — | Initializes the workflow with config, agents, and an optional Haystack pipeline. |
-| `run` | `input_data: str \| dict, initial_state: dict \| None = None` | `dict` | Runs the workflow and returns a result dict. |
-| `stream` | `input_data: str \| dict, initial_state: dict \| None = None` | — | Streams workflow execution results. |
-
-### `HaystackAdapter`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `provider: str = 'anthropic', api_key: str \| None = None` | — | Initializes the adapter with an LLM provider and optional API key. |
-| `is_available` | — | `bool` | Returns `True` if the Haystack framework is installed and available. |
-| `create_agent` | `config: AgentConfig` | `HaystackAgent` | Creates a `HaystackAgent` from the given config. |
-| `create_workflow` | `config: WorkflowConfig, agents: list[BaseAgent]` | `HaystackWorkflow` | Creates a `HaystackWorkflow` from the given config and agents. |
-| `create_tool` | `name: str, description: str, func: Callable, args_schema: dict \| None = None` | `dict` | Wraps a callable as a Haystack-compatible tool descriptor dict. |
-| `create_document_store` | `store_type: str = 'in_memory'` | `Any` | Creates a Haystack document store of the specified type. |
-
-#### `HaystackAdapter` properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `framework_name` | `str` | Returns the framework name identifier. |
-
-### `LangChainAgent`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: AgentConfig, chain = None, agent_executor = None` | — | Initializes the agent with the given config and optional LangChain chain or executor. |
-| `invoke` | `input_data: str \| dict, context: dict \| None = None` | `dict` | Invokes the agent synchronously and returns a result dict. |
-| `stream` | `input_data: str \| dict, context: dict \| None = None` | — | Streams agent responses. |
-
-### `LangChainWorkflow`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: WorkflowConfig, agents: list[BaseAgent], chain = None` | — | Initializes the workflow with config, agents, and an optional LangChain chain. |
-| `run` | `input_data: str \| dict, initial_state: dict \| None = None` | `dict` | Runs the workflow and returns a result dict. |
-| `stream` | `input_data: str \| dict, initial_state: dict \| None = None` | — | Streams workflow execution results. |
-
-### `LangChainAdapter`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `provider: str = 'anthropic', api_key: str \| None = None` | — | Initializes the adapter with an LLM provider and optional API key. |
-| `is_available` | — | `bool` | Returns `True` if the LangChain framework is installed and available. |
-| `create_agent` | `config: AgentConfig` | `LangChainAgent` | Creates a `LangChainAgent` from the given config. |
-| `create_workflow` | `config: WorkflowConfig, agents: list[BaseAgent]` | `LangChainWorkflow` | Creates a `LangChainWorkflow` from the given config and agents. |
-| `create_tool` | `name: str, description: str, func: Callable, args_schema: dict \| None = None` | `Any` | Wraps a callable as a LangChain-compatible tool. |
-
-#### `LangChainAdapter` properties
-
-| Property | Type | Description |
-|----------|------|-------------|
-| `framework_name` | `str` | Returns the framework name identifier. |
-
-### `LangGraphAgent`
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `config: AgentConfig, runnable = None, node_func = None` | — | Initializes the agent with the given config and optional LangGraph runnable or node function. |
-| `invoke` | `input_data: str \| dict, context: dict \| None = None` | `dict` | Invokes the agent synchronously and returns a result dict. |
-| `stream` | `input_data: str \| dict, context: dict \| None = None` | — | Streams agent responses. |
+| Property | Type | Class | Description |
+|----------|------|-------|-------------|
+| `framework_name` | `str` | `AutoGenAdapter` | Framework name identifier. |
+| `framework_name` | `str` | `HaystackAdapter` | Framework name identifier. |
+| `framework_name` | `str` | `LangChainAdapter` | Framework name identifier. |
 
 ## Functions
 
-| Function | Parameters | Returns | Description | Raises |
-|----------|------------|---------|-------------|--------|
-| `get_langchain_adapter` | — | — | Returns the LangChain adapter (lazy import). | — |
-| `get_langgraph_adapter` | — | — | Returns the LangGraph adapter (lazy import). | — |
-| `get_autogen_adapter` | — | — | Returns the AutoGen adapter (lazy import). | — |
-| `get_haystack_adapter` | — | — | Returns the Haystack adapter (lazy import). | — |
-| `wrap_wizard` | `wizard, name
+| Function | Parameters | Returns | Raises | Description | File |
+|----------|------------|---------|--------|-------------|------|
+| `get_langchain_adapter` | — | — | — | Returns the LangChain adapter (lazy import). | `src/attune/agent_factory/adapters/__init__.py` |
+| `get_langgraph_adapter` | — | — | — | Returns the LangGraph adapter (lazy import). | `src/attune/agent_factory/adapters/__init__.py` |
+| `get_autogen_adapter` | — | — | — | Returns the AutoGen adapter (lazy import). | `src/attune/agent_factory/adapters/__init__.py` |
+| `get_haystack_adapter` | — | — | — | Returns the Haystack adapter (lazy import). | `src/attune/agent_factory/adapters/__init__.py` |
+| `wrap_wizard` | `wizard, name: str \| None = None, model_tier: str = 'capable'` | `WizardAgent` | — | Wraps a wizard as an agent. | `src/attune/agent_factory/adapters/wizard_adapter.py` |
+| `safe_agent_operation` | `operation_name: str` | `Callable[[F], F]` | `AgentOperationError` | Decorator for safe agent operations with logging and error handling. | `src/attune/agent_factory/decorators.py` |
+| `retry_on_failure` | `max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, exceptions: tuple = (Exception,)` | `Callable[[F], F]` | `last_exception` | Decorator to retry failed operations with exponential backoff. | `src/attune/agent_factory/decorators.py` |
+| `log_performance` | `threshold_seconds: float = 1.0` | `Callable[[F], F]` | — | Decorator to log operations that exceed `threshold_seconds`. | `src/attune/agent_factory/decorators.py` |
+| `validate_input` | `required_fields: list[str]` | — | `ValueError` — 'Input must be a dict, got {...}'<br>`ValueError` — 'Missing required fields: {...}' | Decorator to validate required fields in input data. | `src/attune/agent_factory/decorators.py` |
+| `with_cost_tracking` | `operation_type: str = 'agent_call'` | — | — | Decorator to track API costs for operations. | `src/attune/agent_factory/decorators.py` |
+| `graceful_degradation` | `fallback_value: Any = None, log_level: str = 'warning'` | — | — | Decorator for graceful degradation on failure. | `src/attune/agent_factory/decorators.py` |
+| `detect_installed_frameworks` | — | `list[Framework]` | — | Detects which agent frameworks are installed. | `src/attune/agent_factory/framework.py` |
+| `get_recommended_framework` | `use_case: str = 'general'` | `Framework` | — | Returns the recommended framework for a use case. | `src/attune/agent_factory/framework.py` |
+| `get_framework_info` | `framework: Framework` | `dict[str, object]` | — | Returns information about a framework. | `src/attune/agent_factory/framework.py` |
+
+## Source files
+
+- `src/attune/agents/**`
+- `src/attune/agent_factory/**`
+
+## Tags
+
+`agents`, `ai`, `release`

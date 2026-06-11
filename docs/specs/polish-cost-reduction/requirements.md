@@ -2,6 +2,12 @@
 
 **Status:** complete (2026-06-10) — both levers shipped same day: lever 1 in attune-ai #735, lever 2 in attune-author#53 / v0.15.0 (on PyPI), consumer cap bump #736. Open: Q1 (phantom regenerator) and the gated Project-Docs cleanup.
 
+**Lever-2 receipt at scale (2026-06-11):** first full `.help` regen
+via subscription (attune-author v0.16.0 wheel, `--auth-mode sub`,
+keyless) made 12 polish calls instead of 44 across 4 stale features
+(3 changed kinds each; 8 skipped per feature). 15m16s wall clock,
+~76 s/call, zero rate-limit events.
+
 ## Problem
 
 LLM polish of generated documentation (`.help/templates/` and

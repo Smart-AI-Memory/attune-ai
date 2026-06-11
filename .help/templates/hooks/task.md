@@ -3,109 +3,115 @@ type: task
 name: hooks-task
 feature: hooks
 depth: task
-generated_at: 2026-06-02T10:56:02.690918+00:00
-source_hash: 4690cd16c282bccaee1ffc3de0ea189b194fa0d71b87cec08e2f3675e136bbb9
+generated_at: 2026-06-11T04:49:42.140418+00:00
+source_hash: c616d1d3b693f3ea1e8811ca9fcf005cdcb50eb831d6a67ee7f5dd74236f44dd
 status: generated
+scaffold_hash: 842971e6c4af90b51b8762d9aedd9bd8e6a08156f8087b238d4c3045acb8d52c
 ---
 
 # Work with hooks
 
-Use the hook system when you want to register handlers that fire automatically at Claude Code lifecycle events, execute hook actions against a context, or inspect the execution log for a running session.
+Use hooks when you need to run custom handlers in response to Claude Code lifecycle events — intercepting activity before or after tool execution, session evaluation, or context compaction.
 
 ## Prerequisites
 
-- Access to the project source code
-- Python `Callable` objects or YAML configuration ready for the handlers you want to register
+- `attune.hooks` installed and importable in your project
+- A `HookEvent` value that corresponds to the lifecycle point you want to intercept
 
-## Steps
+## Register a hook programmatically
 
-1. **Create a `HookRegistry`.**
-   Instantiate `HookRegistry` from `hooks`. If you already have a `HookConfig` loaded from YAML, pass it to the constructor; otherwise leave the argument empty and add hooks programmatically.
+1. Import `HookEvent` and `HookRegistry` from `attune.hooks`:
 
    ```python
-   from hooks import HookRegistry, HookConfig
+   from attune.hooks import HookEvent, HookRegistry
+   ```
 
-   config = HookConfig.from_yaml("hooks.yaml")   # optional
+2. Create a `HookRegistry` instance:
+
+   ```python
+   registry = HookRegistry()
+   ```
+
+3. Write a handler function that accepts a `context` dict and returns a dict:
+
+   ```python
+   def my_handler(context: dict) -> dict:
+       # your logic here
+       return {}
+   ```
+
+4. Call `registry.register()` to bind the handler to an event. Store the returned handler ID — you need it to remove the hook later:
+
+   ```python
+   handler_id = registry.register(
+       event=HookEvent.<event>,
+       handler=my_handler,
+       description="Describe what this hook does",
+       priority=0,
+   )
+   ```
+
+   Pass a `HookMatcher` to the `matcher` parameter if you want the hook to fire only when the context meets a specific condition.
+
+5. Fire the event with a context dict. Use `fire_sync()` in synchronous code or `fire()` in async code:
+
+   ```python
+   results = registry.fire_sync(HookEvent.<event>, context={"key": "value"})
+   ```
+
+   Both methods return a list of result dicts — one per matched handler.
+
+## Verify hook execution
+
+Call `registry.get_execution_log()` after firing the event. Pass `event_filter` to narrow the results to a single event type:
+
+```python
+log = registry.get_execution_log(limit=10, event_filter=HookEvent.<event>)
+```
+
+Then call `registry.get_stats()` to check aggregate invocation counts across all events. If the count for your event increased and your handler's entry appears in `log`, the hook fired correctly.
+
+## Load hook configuration from YAML
+
+Use `HookConfig.from_yaml()` when you manage hooks as configuration files rather than registering handlers in code.
+
+1. Import `HookConfig` and `HookRegistry` from `attune.hooks`:
+
+   ```python
+   from attune.hooks import HookConfig, HookRegistry
+   ```
+
+2. Load the config file:
+
+   ```python
+   config = HookConfig.from_yaml("path/to/hooks.yaml")
+   ```
+
+3. Pass the config to the registry:
+
+   ```python
    registry = HookRegistry(config=config)
    ```
 
-2. **Register a handler for an event.**
-   Call `registry.register()` with the target `HookEvent`, your callable handler, and an optional `HookMatcher` if the hook should fire only when the context meets specific conditions. The method returns a `handler_id` string — save it if you need to remove the handler later.
+   To apply the config to an existing registry, call `registry.load_config(config)` instead.
+
+4. Fire events normally. The registry matches the rules defined in the YAML and executes them automatically.
+
+5. To persist a modified config back to disk, call:
 
    ```python
-   from hooks import HookEvent
-
-   handler_id = registry.register(
-       event=HookEvent.POST_TOOL,
-       handler=my_handler,
-       description="Log tool output",
-       priority=10,
-   )
+   config.to_yaml("path/to/hooks.yaml")
    ```
 
-3. **Fire the event.**
-   Call `registry.fire()` to dispatch the event asynchronously, or `registry.fire_sync()` when you need results in a synchronous context. Pass a `context` dict with any data your handlers require.
+## Remove a hook
 
-   ```python
-   results = registry.fire_sync(
-       HookEvent.POST_TOOL,
-       context={"tool": "bash", "output": "..."},
-   )
-   ```
-
-4. **Inspect results and the execution log.**
-   `fire` and `fire_sync` both return a list of `dict[str, Any]` — one entry per handler that ran. To review the full history of dispatched events, call `registry.get_execution_log()`. Filter by event type with the `event_filter` parameter, or limit the number of entries with `limit`.
-
-   ```python
-   log = registry.get_execution_log(limit=50, event_filter=HookEvent.POST_TOOL)
-   stats = registry.get_stats()
-   ```
-
-5. **Remove a handler when it is no longer needed.**
-   Call `registry.unregister()` with the `handler_id` returned in step 2. The method returns `True` if the handler was found and removed.
-
-   ```python
-   removed = registry.unregister(handler_id)
-   ```
-
-6. **Run the related tests.**
-   Verify your handlers behave correctly and that no existing hooks regressed.
-
-   ```
-   pytest -k "hooks"
-   ```
-
-## Load or save configuration from YAML
-
-If you prefer to manage hooks declaratively, use `HookConfig` directly:
-
-- `HookConfig.from_yaml(yaml_path)` — load a complete hook configuration from a YAML file.
-- `config.add_hook(event, hook, matcher, priority)` — add a `HookDefinition` to an existing config object.
-- `config.to_yaml(yaml_path)` — write the current configuration back to disk.
-- `config.get_hooks_for_event(event)` — retrieve all `HookRule` objects registered for a specific `HookEvent`.
-
-Once the config is ready, load it into a registry with `registry.load_config(config)`.
-
-## Execute a hook directly
-
-To run a single `HookDefinition` outside the registry, use `HookExecutor` or its synchronous counterpart `HookExecutorSync`. Supply a dict of Python callables keyed by handler name if your hook definitions reference Python handlers.
+Call `registry.unregister()` with the handler ID that `register()` returned. It returns `True` when the hook is successfully removed:
 
 ```python
-from hooks import HookExecutor
-from hooks import HookDefinition
-
-executor = HookExecutor(python_handlers={"my_handler": my_handler})
-result = executor.execute(hook_definition, context={"key": "value"})
+removed = registry.unregister(handler_id)
 ```
 
-## Verify the task succeeded
-
-The task is complete when:
-
-- `registry.fire_sync()` returns a non-empty list and each entry contains the keys your handler populates.
-- `registry.get_execution_log()` shows the expected event entries with no error fields.
-- `registry.get_stats()` reflects the correct count of registered handlers and fired events.
-- `pytest -k "hooks"` passes with no failures.
+If `removed` is `False`, the handler ID was not found in the registry — confirm you are using the ID returned by the original `register()` call.
 
 ## Unresolved references
 
@@ -114,4 +120,4 @@ The task is complete when:
 
 | Location | Severity | Issue |
 |---|---|---|
-| Line 93 (code fence) | error | `from hooks import …` — module not importable |
+| Line 18 (prose) | error | `attune.hooks` — dotted path not resolvable |

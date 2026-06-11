@@ -3,56 +3,52 @@ type: concept
 name: release-prep-concept
 feature: release-prep
 depth: concept
-generated_at: 2026-06-04T23:45:26.686528+00:00
-source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
+generated_at: 2026-06-11T04:39:32.868111+00:00
+source_hash: b484e3b8f8e27e1e37d71dd39e93de2e14c056d5969f51d404e9b11858bd81b7
 status: generated
+scaffold_hash: 358b98c551538d98776b2cdd99b8b946240628c170cf8b124e5c5918e6e3e960
 ---
 
 # Release Prep
 
-Release prep is an automated preflight system that runs a team of specialized agents across your codebase and produces a single `ReleaseReadinessReport` — an `approved` verdict plus structured `blockers`, `warnings`, and `quality_gates` — before you tag or publish.
+Release prep is a multi-agent pipeline that fans four specialist agents out across your codebase in parallel, then synthesizes their findings into a single go/no-go `ReleaseReadinessReport`.
 
-## How the agent team works
+## Agent coordination model
 
-`ReleasePrepTeam` coordinates four agents in parallel, each scanning a distinct domain. When you call `assess_readiness(codebase_path)`, every agent runs independently and returns a `ReleaseAgentResult`. The team then aggregates those results into a `ReleaseReadinessReport`.
+`ReleasePrepTeam` orchestrates the pipeline. When you call `assess_readiness(codebase_path='.')`, it dispatches four agents simultaneously:
 
-| Agent | What it checks |
-|---|---|
-| `TestCoverageAgent` | Runs `pytest --cov` and parses the coverage report |
-| `CodeQualityAgent` | Runs `ruff`, checks type hints and cyclomatic complexity |
-| `DocumentationAgent` | Verifies docstring coverage, README currency, and CHANGELOG presence |
-| `SecurityAuditorAgent` | Scans for vulnerabilities, secret leaks, and unsafe patterns |
+- **`TestCoverageAgent`** — runs `pytest --cov` and parses the coverage report.
+- **`DocumentationAgent`** — checks docstring coverage, README currency, and CHANGELOG presence.
+- **`CodeQualityAgent`** — runs `ruff`, checks type hints, and measures complexity.
+- **`SecurityAuditorAgent`** — scans for vulnerabilities, outdated dependencies, and secret leaks.
 
-Each agent extends `ReleaseAgent`, which implements a CHEAP → CAPABLE → PREMIUM tier escalation strategy. If a lower-cost model tier produces a low-confidence result (`escalated: True` in `ReleaseAgentResult`), the agent automatically retries at the next tier. This keeps routine runs fast while reserving expensive model calls for ambiguous findings.
+All four extend `ReleaseAgent`, which handles *progressive tier escalation*: each check begins at the `CHEAP` model tier. If the agent's `confidence` falls below an internal threshold, it re-runs at `CAPABLE`, then `PREMIUM` if confidence is still insufficient. The resulting `ReleaseAgentResult` records `tier_used`, `escalated`, `score`, `confidence`, and `execution_time_ms`, so you can see exactly how each agent reached its conclusion.
 
-## The readiness report
+Each agent result is then evaluated against a `QualityGate`. A gate compares a named `threshold` against the agent's measured `actual` value. Gates where `critical` is `True` become blockers if they fail; non-critical gates produce warnings instead. You configure thresholds by passing a `quality_gates` dict to `ReleasePrepTeam(quality_gates={...})`.
 
-After all agents finish, the results collapse into a `ReleaseReadinessReport`:
+## Release readiness report
 
-- **`approved`** — `True` only when every critical `QualityGate` passes.
-- **`quality_gates`** — a list of `QualityGate` entries, each comparing a measured `actual` value against a configurable `threshold`. Gates marked `critical: True` are blockers.
-- **`blockers`** and **`warnings`** — human-readable strings surfacing what failed and what is advisory.
-- **`confidence`** — an aggregate signal from the individual agent scores.
-- **`total_cost`** and **`total_duration`** — telemetry you can retrieve via `ReleasePrepTeam.get_total_cost()` or read directly from the report fields.
+`assess_readiness()` returns a `ReleaseReadinessReport` that aggregates every agent's findings:
 
-Call `format_console_output()` on the report to render a readable summary, or `to_dict()` to serialize it for CI artifacts.
+| Field | What it tells you |
+|-------|-------------------|
+| `approved` | `True` if all critical quality gates passed |
+| `confidence` | Overall confidence level string |
+| `quality_gates` | Each gate's `threshold`, `actual`, and `passed` values |
+| `blockers` | Issues that must be resolved before release |
+| `warnings` | Non-blocking issues worth addressing |
+| `total_cost` | Cumulative model spend across all agents |
 
-## Entry points
+Call `report.format_console_output()` for a human-readable summary, or `report.to_dict()` to serialize the report for CI artifacts or downstream tooling.
 
-There are two ways to drive release prep depending on your context:
+## Integration points
 
-- **`ReleasePrepTeam.assess_readiness(codebase_path)`** — direct Python API. Instantiate with optional `quality_gates` thresholds and an optional `redis_url` for shared state, then call `assess_readiness`. Returns a `ReleaseReadinessReport`.
-- **`ReleasePrepTeamWorkflow.execute(path, context)`** — workflow-registry wrapper used by the CLI. Accepts the same quality-gate configuration via the constructor and returns the same `ReleaseReadinessReport`. Internally it calls `run_stage` for each named stage at the appropriate `ModelTier`.
+Three entry points expose release prep depending on your context:
 
-`ReleasePreparationWorkflow` (from `workflows.release_prep`) is the outermost shell that routes CLI invocations to `ReleasePrepTeamWorkflow` and wraps the result in a `WorkflowResult`.
+| Entry point | When to use it |
+|-------------|----------------|
+| `ReleasePrepTeam.assess_readiness(codebase_path='.')` | Direct Python — use this when scripting release automation |
+| `ReleasePrepTeamWorkflow.execute(path='.')` | Workflow runner — integrates with the CLI registry; `run_stage` lets you control the model tier per stage |
+| `ReleasePreparationWorkflow.execute(**kwargs)` | Standalone workflow registered under `workflows.release_prep` |
 
-## When release prep matters
-
-Use release prep whenever the cost of a bad publish outweighs the time to run a check:
-
-- Before bumping the version and opening a release PR
-- After merging a large feature branch to main
-- As the final gate in CI before tagging
-- When you're unsure whether coverage, lint, or documentation has drifted since the last release
-
-A single failing critical `QualityGate` — a coverage drop, a new CVE, a missing CHANGELOG entry — sets `approved: False` and populates `blockers` with the exact issue to fix before retrying.
+After `assess_readiness()` returns, `ReleasePrepTeam.get_total_cost()` gives you the aggregate model cost independently of the report if you need it separately.
