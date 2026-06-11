@@ -2279,17 +2279,23 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   - **`ClaudeAgentOptions(tools=[{schema}], tool_choice={...})`
     is unsupported** — there's NO `tool_choice` field, and
     `tools` is `list[str] | ToolsPreset | None` (a tool-name
-    ALLOWLIST, not Anthropic tool defs). The agent SDK routes
-    through the `claude` CLI's tool loop and can't force a
-    schema-guaranteed call. For forced guaranteed-schema JSON
-    use the RAW `anthropic` SDK
+    ALLOWLIST, not Anthropic tool defs). **PARTIAL CORRECTION
+    (2026-06-11, SDK 0.1.63): the agent SDK CAN now produce
+    schema-guaranteed JSON** via
+    `ClaudeAgentOptions(output_format={"type": "json_schema",
+    "schema": {...}})` — maps to the `claude` CLI's
+    `--json-schema`; the validated payload arrives on
+    `ResultMessage.structured_output` (see the dedicated
+    output_format lesson below for the max_turns trap). So the
+    routing rule is now: a single synthesis/judge call with an
+    API key → raw `anthropic` SDK forced `tool_choice`
     (`client.messages.create(tools=[...], tool_choice={"type":
-    "tool","name":...})`, as `attune_rag`'s `FaithfulnessJudge`
-    does) — the two SDKs are easy to conflate. Rule: a single
-    synthesis/judge call (no agent loop, no subagents, no file
-    tools) → raw `anthropic` SDK; reserve
-    `claude_agent_sdk.query()` for agentic work (file tools,
-    subagent fan-out, multi-turn).
+    "tool","name":...})`); the same call on the SUBSCRIPTION
+    path → agent SDK `output_format` (this is how
+    `attune_rag.auth.query_subscription_structured` preserves
+    `FaithfulnessJudge`'s schema contract keyless, attune-rag
+    0.7.0); agentic work (file tools, subagent fan-out,
+    multi-turn) → `claude_agent_sdk.query()` as before.
   - **The agent SDK CANNOT take a client-side
     `BetaAbstractMemoryTool` (Anthropic Memory tool,
     `memory_20250818`) — that bridge is raw-`anthropic`-
@@ -7907,3 +7913,25 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   CLAUDE_CODE_ENTRYPOINT and SCRUBS CLAUDECODE" lesson — that's
   about the env INSIDE SDK subprocesses; this is about the agent's
   own Bash shell not carrying the marker INTO a sibling CLI.
+
+- **Agent-SDK structured output (`output_format` json_schema)
+  needs `max_turns=2` — with `max_turns=1` the run dies "Reached
+  maximum number of turns (1)" with NO `structured_output`**
+  (live-verified 2026-06-11, SDK 0.1.63, building attune-rag's
+  judge shim): `ClaudeAgentOptions(output_format={"type":
+  "json_schema", "schema": {...}})` maps to the `claude` CLI's
+  `--json-schema` and the validated dict arrives on
+  `ResultMessage.structured_output` — but the CLI spends an extra
+  turn synthesizing the schema-validated payload, so the
+  `max_turns=1` that works for plain-text single-turn completions
+  (attune-author's polish shim) is one short for structured ones.
+  Set `max_turns=2` and add a drift-guard test asserting it.
+  Mocked unit tests are structurally blind to this (the fake SDK
+  doesn't enforce turn budgets) — it surfaced ONLY in the live
+  keyless receipt run, the "registered ≠ working / dogfood the
+  live loop" lesson doing its job. Companion fact from the same
+  session: `gh api .../runs/<id>/pending_deployments` returning
+  empty while the BUILD job is still running means nothing — the
+  pending deployment only EXISTS once the publish job itself is
+  `waiting`; re-check then before concluding "no env gate"
+  (attune-rag's pypi env looked gate-less mid-build, then gated).
