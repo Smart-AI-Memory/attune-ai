@@ -7975,3 +7975,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   list. Pairs with the "max_turns=2 for structured output" lesson
   (same family: mocked tests are blind; only live contact surfaced
   both).
+
+- **A user-rejected Edit tool call may have PARTIALLY landed —
+  grep the target region before re-applying after any
+  interruption/rejection**: 2026-06-11, an Edit appending
+  `, score` to a return statement was interrupted ("user doesn't
+  want to proceed… new_string was NOT written"), yet the change
+  WAS on disk; re-applying the same Edit on resume then matched
+  `return findings, suggestions, summary` as a PREFIX of the
+  already-updated line and produced `..., score, score` (caught
+  by a `ValueError: too many values to unpack` test failure, not
+  by the edit itself). Two rules: (1) after ANY
+  rejected/interrupted Edit, `grep` the exact target line before
+  re-applying — the rejection message is not proof nothing was
+  written; (2) prefer old_strings that are not a strict prefix
+  of the intended new_string (include trailing context), so an
+  accidental double-apply fails loudly instead of duplicating
+  the suffix. Extends the "interrupted compound Bash command may
+  have partially executed" lesson to the Edit-tool surface.
+
+- **An absurd benchmark score (0% or ~100%) indicts the scoring
+  harness before the system under test — introspect the result
+  object's real shape first**: the lessons-corpus-rag Phase 0
+  run first reported P@1/P@3 = 0% across 25 queries while the
+  printed top-hits were VISIBLY correct — the scorer read
+  `hit.path` (absent) so compared `str(RetrievalHit(...))` reprs
+  against slugs, matching nothing. attune-rag's
+  `KeywordRetriever` returns `RetrievalHit` with the document at
+  `hit.entry.path` (plus `.score`, `.match_reason`) — there is
+  no top-level `.path`. Same family as "introspect SDK
+  signatures before coding": one `vars(hits[0])` print in the
+  harness would have caught it pre-run; build that introspection
+  into the first iteration of any scoring loop.
