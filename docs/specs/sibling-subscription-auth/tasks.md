@@ -1,6 +1,6 @@
 # Spec: Subscription-First Auth for Sibling Packages — Tasks
 
-**Status**: approved — Phase 0 shipped (see `findings.md`); Phase 1 unblocked.
+**Status**: in progress — Phase 0 shipped (see `findings.md`); Phase 1 shipped (attune-author PR #55, 2026-06-10); Phase 2 (attune-rag) unblocked.
 
 > Phase 0 is mandatory and lands before any implementation. The
 > design rests on assumptions about how `claude_agent_sdk` and
@@ -41,24 +41,29 @@ findings doc. No production code changes.
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 1.1 | Pick design option (A/B/C) from Phase 0 findings | attune-author | todo | Document in this spec's decisions.md |
-| 1.2 | Implement the chosen adapter / wrapper in attune-author | attune-author | todo | Lives under `src/attune_author/auth/` or extends `doc_gen/_anthropic.py` |
-| 1.3 | Wire the adapter into `polish._call_llm` | attune-author | todo | Drop-in replacement for the current direct `get_client()` call |
-| 1.4 | Add `--auth-mode={auto,api,sub}` to `attune-author generate` and `regenerate` | attune-author | todo | Plus `ATTUNE_AUTHOR_AUTH_MODE` env var (explicit override always wins over auto) |
-| 1.5 | Add `attune-author auth status` CLI command | attune-author | todo | Report which mode would fire right now; list available credentials |
-| 1.6 | Telemetry: annotate cost as `(subscription)` or `(API)` in the regen summary log | attune-author | todo | Matches the Phase 3 telemetry log format |
-| 1.7 | Tests: routing under each mode (auto-sub, auto-api, forced-sub, forced-api, no-creds) | attune-author | todo | Mock the SDK at the adapter boundary, not the wire |
-| 1.8 | Tests: failure modes (subscription expires mid-run, mixed auth) | attune-author | todo | |
-| 1.9 | Update CHANGELOG + README | attune-author | todo | Document zero-config subscriber UX |
+| 1.1 | Pick design option (A/B/C) from Phase 0 findings | attune-author | **done** | Option A, decided in Phase 0 (see decisions.md) |
+| 1.2 | Implement the chosen adapter / wrapper in attune-author | attune-author | **done** | `src/attune_author/auth.py` (single module). Subscription subprocess runs `setting_sources=[]` so user/project hooks/CLAUDE.md can't pollute the stream-json channel. PR #55 |
+| 1.3 | Wire the adapter into `polish._call_llm` | attune-author | **done** | `auth.call_llm` is the chokepoint; API path byte-identical incl. cache telemetry |
+| 1.4 | Add `--auth-mode={auto,api,sub}` to `attune-author generate` and `regenerate` | attune-author | **done** | Bridged via `ATTUNE_AUTHOR_AUTH_MODE` (mirrors the `--fact-check` env-bridge pattern; a pre-set env var wins over the flag) |
+| 1.5 | Add `attune-author auth status` CLI command | attune-author | **done** | Reports detection signals + resolved route; exits 1 on forced-sub-unavailable |
+| 1.6 | Telemetry: annotate cost as `(subscription)` or `(API)` in the regen summary log | attune-author | **done** | Shipped as `Polish LLM calls: N (subscription), M (API)` — the polish path has no per-call cost estimate to annotate; the `$X (subscription)` format remains for the Phase 2 judge line |
+| 1.7 | Tests: routing under each mode (auto-sub, auto-api, forced-sub, forced-api, no-creds) | attune-author | **done** | 30 tests in `tests/test_auth_routing.py`; suite conftest pins `ATTUNE_AUTHOR_AUTH_MODE=api` + clears `CLAUDECODE` so running the suite inside Claude Code can't auto-route un-mocked polish calls to real subscription calls |
+| 1.8 | Tests: failure modes (subscription expires mid-run, mixed auth) | attune-author | **done** | Auto falls back to API on sub failure; forced sub never falls back; sub errors get the `sk-ant-` redaction contract |
+| 1.9 | Update CHANGELOG + README | attune-author | **done** | New README "Authentication" section; `claude-agent-sdk>=0.1.60` added to the `[ai]` extra |
 
 ### Phase 1 exit checklist
 
-- [ ] Tasks 1.1–1.9 done
-- [ ] A subscriber can run `attune-author generate <feat>`
+- [x] Tasks 1.1–1.9 done (attune-author PR #55, 2026-06-10)
+- [x] A subscriber can run `attune-author generate <feat>`
       without `ANTHROPIC_API_KEY` and see "(subscription)"
-      cost in the log
-- [ ] An API-key-only user sees no behavior change
-- [ ] `auth status` correctly reports the active mode
+      cost in the log — live receipt: keyless `polish_template`
+      routed sub in 24.3s, telemetry `{sub_calls: 1, api_calls: 0}`,
+      real polished output
+- [x] An API-key-only user sees no behavior change (API path
+      byte-identical; full suite 1031 passed)
+- [x] `auth status` correctly reports the active mode (verified
+      live in subscription, API-no-key, and forced-sub-unavailable
+      states)
 
 ---
 
