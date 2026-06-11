@@ -82,3 +82,29 @@ meaningfully change. Cost surfaces observed 2026-06-10:
   check each server's recent activity for help-tool calls in that
   window; or temporarily `chmod -w .help/templates/plugin` and see
   what errors.
+
+  **2026-06-11 occurrence — new evidence (PR #769):** the phantom
+  struck `memory` + `plugin` (3 core depths each, same
+  stripped-frontmatter fingerprint) with `generated_at: 21:09:27Z`
+  — the exact minute a commit touching
+  `src/attune/memory/session_stash.py` + `plugin/hooks/*.py` ran
+  its pre-commit chain. Same-session investigation RULED OUT the
+  whole pre-commit chain: `scripts/regenerate_help_templates.py`
+  has zero write calls (verified — check-only despite its name),
+  `check_docs_freshness.py` only writes under
+  `ATTUNE_DOCS_AUTOREGEN=1` (unset) and targets
+  `plugin/help/generated/` anyway, and `generate_all.py --stale`
+  early-returns into a read-only `check_staleness()`. Also ruled
+  out: a `core.hooksPath` writer (it points at the standard
+  pre-commit shim; no post-commit exists — the attune-author
+  `.githooks` mechanism has no attune-ai counterpart). Note the
+  feature selection is NOT commit-coupling evidence: the commit's
+  source edits made exactly `memory`+`plugin` STALE (source-hash
+  drift), so ANY staleness-driven regenerator firing afterwards
+  would pick those two. What remains: an actor outside the commit
+  process that regenerates stale features with the in-repo 3-depth
+  generator, active within the commit minute — the MCP-server
+  suspicion (this machine runs one per live Claude session plus
+  leaked ones) survives and is now the only suspect left standing.
+  Next diagnostic unchanged: `pgrep -f attune.mcp.server` at the
+  next occurrence + the `chmod -w` tripwire.
