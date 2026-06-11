@@ -1,6 +1,6 @@
 # Lessons Corpus via RAG — Requirements
 
-**Status:** draft (2026-06-11) · **Owner:** Patrick + agent
+**Status:** approved (2026-06-11, Patrick, in-session) · **Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #2 of 6).
 
 ## Problem
