@@ -1,6 +1,6 @@
 # Usage Signals — Requirements
 
-**Status:** draft (2026-06-11) · **Owner:** Patrick + agent
+**Status:** approved (2026-06-11) · **Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #6 + #5 —
 the strategic item; Patrick: "I would love to know how my users are
 using attune-ai and other products").

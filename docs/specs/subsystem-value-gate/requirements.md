@@ -1,6 +1,6 @@
 # Subsystem Value Gate — Requirements
 
-**Status:** draft (2026-06-11) · **Owner:** Patrick + agent
+**Status:** approved (2026-06-11) · **Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #1 of 6).
 
 ## Problem
