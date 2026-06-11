@@ -1,6 +1,6 @@
 # Spec: Subscription-First Auth for Sibling Packages — Tasks
 
-**Status**: in progress — Phase 0 shipped (see `findings.md`); Phase 1 shipped (attune-author PR #55, 2026-06-10; v0.16.0 on PyPI 2026-06-11); Phase 2 core shipped (attune-rag PR #183, 2026-06-11) — 2.5 + the rag release remain.
+**Status**: complete (2026-06-11) — Phase 0 shipped (`findings.md`); Phase 1 shipped (attune-author #55, v0.16.0 on PyPI); Phase 2 shipped end-to-end (attune-rag #183 + v0.7.0 on PyPI; 2.5 in attune-author #57). Phase 3 (shared-helper extraction) intentionally not taken — two mirrored adapters, revisit at a third consumer.
 
 > Phase 0 is mandatory and lands before any implementation. The
 > design rests on assumptions about how `claude_agent_sdk` and
@@ -88,13 +88,13 @@ adapter shape; may extract to a shared helper).
 | 2.2 | Wire into `FaithfulnessJudge.__init__` so callers don't pass api_key when subscription is detected | attune-rag | **done** | `auth_mode=` param; injected client always wins (API route); sub route skips `AsyncAnthropic` construction; auto falls back to API on sub failure, forced sub never falls back |
 | 2.3 | Update `attune-rag eval` CLI commands with the same `--auth-mode` flag | attune-rag | **done** | Premise correction: no `attune-rag eval` subcommand exists — the judge's CLI surface is `attune-rag-benchmark`, which got `--auth-mode {auto,api,sub}` (judge route only; answer GENERATION via `ClaudeProvider` stays API-key-only per the Phase-0 scope note, so the `--with-faithfulness` key gate stays) |
 | 2.4 | Tests: judge routing under each mode | attune-rag | **done** | 16 tests in `tests/unit/test_auth_routing.py`; suite conftest pins `ATTUNE_RAG_AUTH_MODE=api` + clears `CLAUDECODE` (mirrors attune-author) |
-| 2.5 | Telemetry: annotate `subscription` vs `API` cost in attune-author's faithfulness summary log | attune-author | todo | Cross-package; needs Phase 2 RELEASED on PyPI (attune-rag 0.7.0) + attune-author cap/floor bump |
+| 2.5 | Telemetry: annotate `subscription` vs `API` cost in attune-author's faithfulness summary log | attune-author | **done** | attune-author #57 (2026-06-11): `Faithfulness judge auth: N call(s) subscription, M API` after the cost line; graceful skip on attune-rag <0.7; `[rag]` cap widened `<0.3`→`<0.8` |
 | 2.6 | Update CHANGELOG + README in attune-rag | attune-rag | **done** | New README "Authentication" section; `claude-agent-sdk>=0.1.63` added to `[claude]` extra |
 
 ### Phase 2 exit checklist
 
-- [ ] Tasks 2.1–2.6 done (2.1–2.4 + 2.6 shipped in attune-rag
-      PR #183; 2.5 waits on the rag release)
+- [x] Tasks 2.1–2.6 done (2.1–2.4 + 2.6 in attune-rag #183,
+      released as v0.7.0; 2.5 in attune-author #57)
 - [x] Judge runs against subscription without an API key — live
       receipt (2026-06-11): route=sub, keyless, 14.6 s, judge
       caught a planted fake-flag hallucination (score 0.5,
