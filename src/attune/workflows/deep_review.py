@@ -224,6 +224,7 @@ class DeepReviewAgentSDKWorkflow(BaseWorkflow):
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
+                report_title="Deep review",
                 result_text=run_result.result_text,
                 subagent_names=active_agents,
                 started_at=started_at,

@@ -252,6 +252,7 @@ class CodeReviewWorkflow(BaseWorkflow):
             _emit_security_recommendation_if_warranted(run_result.result_text, resolved_path)
 
             return AgentSDKResultAdapter.from_agent_output(
+                report_title="Code review",
                 result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,

@@ -27,6 +27,15 @@ from attune.ops.session_redaction import redact
 
 from .base import ModelTier
 from .data_classes import CostReport, NextAction, WorkflowResult, WorkflowStage
+from .output import (
+    Finding,
+    FindingsSection,
+    ListSection,
+    NextStepsSection,
+    Section,
+    WorkflowReport,
+)
+from .output import NextAction as ReportNextAction
 
 logger = logging.getLogger(__name__)
 
@@ -1154,6 +1163,7 @@ class AgentSDKResultAdapter:
         completed_at: datetime,
         metadata: dict[str, Any] | None = None,
         agent_run_result: AgentRunResult | None = None,
+        report_title: str | None = None,
     ) -> WorkflowResult:
         """Build a WorkflowResult from raw agent text output.
 
@@ -1166,10 +1176,20 @@ class AgentSDKResultAdapter:
             agent_run_result: Optional rich result data from the SDK
                 including cost, usage, and timing. When provided,
                 populates CostReport and WorkflowStage fields.
+            report_title: Human title for the rendered WorkflowReport
+                (e.g. ``"Code review"``). Used when findings parse and
+                ``final_output`` becomes a serialized report.
 
         Returns:
             A WorkflowResult populated with parsed findings,
-            suggestions, stages, and cost/usage data.
+            suggestions, stages, and cost/usage data. When findings
+            parse (text categories or structured output),
+            ``final_output`` carries a serialized
+            :class:`~attune.workflows.output.WorkflowReport` (design
+            D2 of workflow-result-formatting) that the voice / CLI
+            layers render with tiered disclosure and the
+            ``show_cost`` gate; otherwise the raw markdown text
+            passes through unchanged.
         """
         if not result_text:
             logger.warning("Empty result_text passed to AgentSDKResultAdapter")
@@ -1196,13 +1216,14 @@ class AgentSDKResultAdapter:
             and agent_run_result.structured_output
             and isinstance(agent_run_result.structured_output, dict)
         ):
-            findings, suggestions, summary = cls._from_structured_output(
+            findings, suggestions, summary, score = cls._from_structured_output(
                 agent_run_result.structured_output,
             )
         else:
             findings = cls._parse_findings(text)
             suggestions = cls._extract_suggestions(text)
             summary = cls._extract_summary(text)
+            score = cls._extract_score(text)
 
         result_metadata: dict[str, Any] = {
             "source": "agent_sdk",
@@ -1231,13 +1252,21 @@ class AgentSDKResultAdapter:
         if metadata:
             result_metadata.update(metadata)
 
-        # Build final_output: prefer structured findings as markdown,
-        # fall back to collected text
+        # Build final_output: when findings parsed, serialize a
+        # WorkflowReport (the voice/CLI renderers own formatting +
+        # the show_cost gate — design D2/D3); otherwise the raw SDK
+        # markdown passes through unchanged.
         final_output: str | dict[str, Any] = text
         if findings:
-            formatted = cls._format_findings_markdown(findings, summary)
-            if formatted:
-                final_output = formatted
+            final_output = cls._to_workflow_report(
+                title=report_title or "Workflow report",
+                summary=summary,
+                score=score,
+                findings=findings,
+                suggestions=suggestions,
+                total_cost=total_cost,
+                duration_ms=duration_ms,
+            ).to_dict()
 
         return WorkflowResult(
             success=True,
@@ -1463,70 +1492,114 @@ class AgentSDKResultAdapter:
         return suggestions
 
     @classmethod
-    def _format_findings_markdown(
+    def _to_workflow_report(
         cls,
+        *,
+        title: str,
+        summary: str,
+        score: int | None,
         findings: dict[str, Any],
-        summary: str = "",
-    ) -> str:
-        """Render findings dict as readable markdown.
+        suggestions: list[NextAction],
+        total_cost: float | None,
+        duration_ms: int,
+    ) -> WorkflowReport:
+        """Build the universal WorkflowReport from parsed agent output.
 
-        Args:
-            findings: Category-keyed dict of finding lists.
-            summary: Optional summary to prepend.
-
-        Returns:
-            Markdown string, or empty string if no findings.
+        The adapter is the shared converter for every SDK-native
+        workflow (workflow-result-formatting T8): per category, dict
+        items (structured output) become a :class:`FindingsSection`;
+        plain-string bullets (text parsing) become a
+        :class:`ListSection`. Suggestions become the trailing
+        NextStepsSection. Cost/duration land in ``metadata`` where the
+        renderer's ``show_cost`` gate reads them — ``cost_usd`` is
+        omitted for subscription runs (``total_cost is None``).
         """
-        parts: list[str] = []
-        if summary:
-            parts.append(summary)
-            parts.append("")
-
+        sections: list[Section] = []
         for category, items in findings.items():
             if not items:
                 continue
             heading = category.replace("_", " ").title()
-            parts.append(f"## {heading}")
-            parts.append("")
-            if isinstance(items, list):
-                for item in items:
-                    if isinstance(item, dict):
-                        desc = item.get("description", str(item))
-                        loc = item.get("file", "")
-                        if loc:
-                            line = item.get("line", "")
-                            loc_str = f"{loc}:{line}" if line else loc
-                            parts.append(f"- **{loc_str}** — {desc}")
-                        else:
-                            parts.append(f"- {desc}")
-                    else:
-                        parts.append(f"- {item}")
+            if isinstance(items, list) and all(isinstance(i, dict) for i in items):
+                sections.append(
+                    FindingsSection(
+                        title=heading,
+                        tier="essential",
+                        findings=[
+                            Finding(
+                                severity=str(i.get("severity", "info")),
+                                file=str(i.get("file") or "unknown"),
+                                line=i.get("line"),
+                                message=str(i.get("description", "")),
+                            )
+                            for i in items
+                        ],
+                    )
+                )
             else:
-                parts.append(str(items))
-            parts.append("")
+                str_items = [
+                    str(i.get("description", i)) if isinstance(i, dict) else str(i)
+                    for i in (items if isinstance(items, list) else [items])
+                ]
+                sections.append(ListSection(title=heading, tier="essential", items=str_items))
 
-        return "\n".join(parts).strip()
+        if suggestions:
+            sections.append(
+                NextStepsSection(
+                    title="Next steps",
+                    tier="essential",
+                    items=[ReportNextAction(text=s.description) for s in suggestions],
+                )
+            )
+
+        report_metadata: dict[str, object] = {"duration_s": duration_ms / 1000}
+        if total_cost is not None:
+            report_metadata["cost_usd"] = total_cost
+
+        return WorkflowReport(
+            title=title,
+            summary=summary,
+            score=score,
+            metadata=report_metadata,
+            sections=sections,
+        )
+
+    @classmethod
+    def _extract_score(cls, result_text: str) -> int | None:
+        """Pull a 0-100 score from text like ``score: 85/100``.
+
+        SDK workflows prompt for "Overall code health score (0-100)"
+        in the summary; the structured-output path carries it as
+        ``summary.score`` instead. Returns None when absent.
+        """
+        match = re.search(r"\bscore:?\s*(\d{1,3})\s*/\s*100", result_text, re.IGNORECASE)
+        if not match:
+            return None
+        value = int(match.group(1))
+        return value if 0 <= value <= 100 else None
 
     @classmethod
     def _from_structured_output(
         cls,
         data: dict[str, Any],
-    ) -> tuple[dict[str, Any], list[NextAction], str]:
-        """Extract findings, suggestions, and summary from structured JSON.
+    ) -> tuple[dict[str, Any], list[NextAction], str, int | None]:
+        """Extract findings, suggestions, summary, and score from JSON.
 
         Called when the SDK returns ``structured_output`` instead of
-        free-form markdown. Produces the same triple that the text-
+        free-form markdown. Produces the same shape that the text-
         parsing path yields so the caller can use either transparently.
 
         Args:
             data: Parsed JSON dict from ``ResultMessage.structured_output``.
 
         Returns:
-            Tuple of (findings dict, suggestions list, summary string).
+            Tuple of (findings dict, suggestions list, summary string,
+            score or None).
         """
         findings: dict[str, Any] = data.get("findings", {})
         summary_data = data.get("summary", {})
         summary = summary_data.get("text", "") if isinstance(summary_data, dict) else ""
+        score_raw = summary_data.get("score") if isinstance(summary_data, dict) else None
+        score = score_raw if isinstance(score_raw, int) else None
 
         suggestions = [
             NextAction(
@@ -1539,4 +1612,4 @@ class AgentSDKResultAdapter:
             for item in data.get("suggestions", [])
             if isinstance(item, dict) and item.get("description")
         ]
-        return findings, suggestions, summary
+        return findings, suggestions, summary, score

@@ -333,6 +333,7 @@ class RagCodeGenWorkflow(BaseWorkflow):
         }
 
         wf_result = AgentSDKResultAdapter.from_agent_output(
+            report_title="RAG code generation",
             result_text=combined_text,
             subagent_names=["rag-generator"],
             started_at=started_at,

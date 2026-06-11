@@ -477,7 +477,10 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "success": result.success,
             "approved": final_output.get("approved"),
             "health_score": final_output.get("health_score"),
-            "recommendation": final_output.get("recommendation"),
+            # Serialized WorkflowReport dicts carry no "recommendation"
+            # key — fall back to the result summary so the field stays
+            # populated now that SDK workflows emit report payloads.
+            "recommendation": final_output.get("recommendation") or result.summary,
             "cost": result.cost_report.total_cost,
         }
 
