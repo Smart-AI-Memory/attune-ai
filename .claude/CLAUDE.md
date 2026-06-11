@@ -7875,3 +7875,35 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "Promote a stdlib-only sibling package to a CORE dep, not an
   extra" lesson — same family (extras hygiene), this one is the
   consumer-facing surface (messages + docs vs the actual table).
+
+- **Subscription-routed `.help` regen from a published wheel — the
+  working invocation recipe**: agent Bash subshells do NOT inherit
+  `CLAUDECODE=1` (only `CLAUDE_CODE_ENTRYPOINT=claude-desktop`), so
+  attune-author's forced-sub mode — `--auth-mode sub`, which
+  requires `subscription_available()` = `CLAUDECODE == "1"` AND an
+  importable claude-agent-sdk — silently can't fire unless you set
+  it explicitly on the invocation. First production run
+  (2026-06-11, receipts in sibling-subscription-auth/tasks.md):
+
+  ```
+  CLAUDECODE=1 ANTHROPIC_API_KEY="" uvx \
+    --from 'attune-author[ai]==X.Y.Z' \
+    --with attune-help --with rich \
+    attune-author regenerate --help-dir .help \
+    --project-root . --auth-mode sub
+  ```
+
+  The `[ai]` extra carries claude-agent-sdk into the uvx env; the
+  EMPTY (not unset) key makes any accidental API call fail loudly
+  instead of billing (same empty-vs-unset discipline as the
+  keyless-CI lesson); `uvx` right after a publish needs full
+  `--refresh` — `--refresh-package <pkg>` alone still resolved
+  "no version of attune-author==0.16.0" while the simple index
+  already served it. Smoke-test the env first with
+  `attune-author auth status` (should print "Resolved mode:
+  subscription (Agent SDK)"). Measured: 12 polish calls / 15m16s
+  (~76 s/call), zero 429/overload — no subscription rate limiting
+  at this call rate. Distinct from the "SDK stamps
+  CLAUDE_CODE_ENTRYPOINT and SCRUBS CLAUDECODE" lesson — that's
+  about the env INSIDE SDK subprocesses; this is about the agent's
+  own Bash shell not carrying the marker INTO a sibling CLI.
