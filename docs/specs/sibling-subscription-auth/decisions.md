@@ -56,3 +56,30 @@ probe artifacts):
     filesystem probes needed).
   - **Detection default = opt-out** (auto-mode is the default).
   Spec status moves from `draft` to `approved`. Phase 1 unblocked.
+- 2026-06-10 — Phase 1 shipped (attune-author PR #55). Three
+  decisions made at implementation time:
+  - **Forced `sub` never falls back to the API key** — the
+    auto-mode fallback (sub failure → API when a key exists)
+    applies only to `auto`; an explicit `--auth-mode=sub` that
+    fails raises rather than silently billing the API. The
+    "fall through to API-key if available" failure-mode design
+    is thereby scoped to auto mode.
+  - **Subscription subprocess runs with `setting_sources=[]`** —
+    carried over from attune-ai's sdk-subprocess-isolation spec
+    (D2–D5): without it, SessionStart hooks and CLAUDE.md
+    injection from the user's settings pollute the stream-json
+    channel and break the call for subscription users.
+  - **Task 1.6 telemetry shape** — the polish path has no
+    per-call cost estimate, so the annotation shipped as a route
+    counter line (`Polish LLM calls: N (subscription), M (API)`)
+    rather than a `$X (subscription)` cost line; the cost-line
+    format in the decision matrix still applies to the Phase 2
+    faithfulness-judge line, which does estimate cost.
+  Also: `claude-agent-sdk` added to attune-author's `[ai]` extra
+  (subscribers get the routing on a plain `[ai]` install), and
+  the test-suite conftest pins `ATTUNE_AUTHOR_AUTH_MODE=api` +
+  clears `CLAUDECODE` so running tests inside Claude Code can't
+  auto-route un-mocked polish calls to real subscription calls.
+  Known unknown carried forward: subscription rate limits at
+  full-regen volume (Phase 0 caveat #1) — the first real `.help`
+  regen doubles as the measurement.
