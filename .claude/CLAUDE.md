@@ -7823,3 +7823,26 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "subscription `claude` CLI structurally broken for query()" lesson
   above — hook stdout no longer reaches the stream-json channel.
   Probe: `scripts/probe_sdk_subprocess_env.py` (re-run on SDK bumps).
+
+- **`ClaudeAgentOptions.hooks` accepts in-process Python callbacks —
+  the pattern for protections that must survive `setting_sources=[]`
+  isolation**: extends the subprocess-isolation mechanics lesson
+  above. Excluding filesystem settings strips ALL hooks from SDK
+  subprocesses, including protective ones (security_guard). The fix
+  is NOT to selectively ungate the hook script (symbolic — it never
+  loads under isolation) but to make the protection TRAVEL with the
+  adapter: `sdk_isolation_kwargs()` carries
+  `hooks={"PreToolUse": [HookMatcher(matcher="Bash",
+  hooks=[_guard_bash_tool])]}` — an async callback receiving
+  `(input_data, tool_use_id, context)` and returning `{}` to allow or
+  `{"hookSpecificOutput": {"hookEventName": "PreToolUse",
+  "permissionDecision": "deny", "permissionDecisionReason": ...}}` to
+  block (deny-with-reason so the agent adapts; verified SDK 0.1.63).
+  Reuse the hook script's own validation function
+  (`attune.hooks.scripts.security_guard.validate_bash_command`) —
+  single source for the banned patterns INCLUDING the
+  search-command allowance (scanner workflows grep FOR those
+  patterns). Because every workflow splats the helper, the change is
+  one function with zero edits to the 15 construction sites — the
+  answer to "monster refactor?" was no, by construction (spec D8,
+  #755).
