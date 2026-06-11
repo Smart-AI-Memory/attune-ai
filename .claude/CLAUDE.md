@@ -7935,3 +7935,43 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   pending deployment only EXISTS once the publish job itself is
   `waiting`; re-check then before concluding "no env gate"
   (attune-rag's pypi env looked gate-less mid-build, then gated).
+
+- **Mystery auto-writer hunting: check `git config core.hooksPath`
+  FIRST — hooks there are invisible in `.git/hooks/`, fire in
+  worktrees too, and a muted-stderr hook hides every failure**
+  (2026-06-11, root-causing attune-author's malformed keyless
+  regen): attune-author sets `core.hooksPath=.githooks` with a
+  `post-commit` hook running `attune_author.maintenance.run_hook()`
+  after EVERY commit — regenerating features whose source files
+  changed in the LAST COMMIT (hash-based + commit-scoped: a `touch`
+  or uncommitted edit does NOT trigger it; reproduction requires a
+  real committed content change). Its `2>/dev/null || true` muted
+  all errors (now unmuted, attune-author#58). A `ls .git/hooks/`
+  scan shows only pre-commit-framework hooks and misses this
+  entirely. Companion fact: attune-ai has NO hooksPath hook, so the
+  polish-cost Q1 phantom there is a DIFFERENT mechanism (MCP-server
+  suspicion stands).
+
+- **LLM-response caches replay malformed output KEYLESS — sanitize
+  before cache WRITE and again on cache READ (self-healing), and
+  validate response shape before accepting it as a body**
+  (attune-author#58, 2026-06-11): the polish LLM occasionally
+  returns the whole template wrapped in a ```` ```markdown ````
+  fence. Unstripped, the fence defeated the frontmatter-merge
+  guard's `\A---` anchor → "LLM stripped frontmatter" branch →
+  canonical frontmatter PREPENDED on top of the fenced full
+  document (double frontmatter + fenced body — the observed
+  corruption). The malformed response was then CACHED
+  (`~/.attune/polish_cache`), so later keyless runs needed no
+  credentials at all to corrupt files — cache hits bypass auth
+  entirely. Fix shape: conservative fence-strip (opening fence on
+  first line AND bare closing fence on last; interior code blocks
+  untouched) inside `_sanitize_output` before the cache write,
+  PLUS re-sanitize on cache read so pre-fix poisoned entries
+  self-heal without a purge. Scan hygiene: `grep -rl <pattern> |
+  head -5` undercounted the poisoned entries (6 wrappers, not 5)
+  and matched interior-fence false positives — classify by FIRST
+  LINE (`head -1` = fence?), never trust a head-truncated match
+  list. Pairs with the "max_turns=2 for structured output" lesson
+  (same family: mocked tests are blind; only live contact surfaced
+  both).
