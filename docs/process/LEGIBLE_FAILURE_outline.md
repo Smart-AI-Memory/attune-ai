@@ -105,11 +105,26 @@ verification beats taste.)
 - Prior-instance sources: AMS four-behaviors lesson, P2-hooks
   "registered ≠ working" lesson
 
-## Open questions for Patrick
+## Decisions (Patrick, 2026-06-11)
 
-- Audience: the Discipline article's audience (practitioners
-  working with AI agents), or broader (anyone shipping fallback
-  paths)? The story works for both; the framing differs.
-- Venue: attune-ai.dev alongside /discipline, or external first?
-- How much of the AI-collaboration angle to foreground — the
-  triage was agent-driven dogfooding, which is itself a point.
+- **Audience: broad** — anyone shipping fallback paths. Engineering
+  framing leads; the AI-collaboration angle is woven in, not the
+  premise. (This also widens the LinkedIn reach.)
+- **Venue: both** — attune-ai.dev alongside /discipline (cross-link
+  both ways) AND a LinkedIn version. NOTE for the LinkedIn cut: use
+  ASCII code-block markers, never Unicode arrows (known
+  editor-mangling lesson), and expect to trim the spine to one
+  layer of the detective story.
+- **AI-collaboration angle: foreground it, with the origin story.**
+  Patrick is proud of how the collaboration works, and the framing
+  he gave is the article's human core: the discipline (specs as the
+  key to planning, team management) came from his team-lead years
+  building enterprise web solutions. *"I don't treat you in a
+  unique way for human interaction — but usually you only find this
+  in solid companies."* The practice is ordinary good engineering
+  management, applied to an AI teammate — and it works at any
+  project size, not just enterprise. That's the closing move: the
+  reason agent-driven dogfooding caught what tests missed isn't
+  exotic AI technique; it's that the agent was managed like a
+  colleague at a well-run company — given specs, asked for
+  receipts, and trusted to walk the live loop.
