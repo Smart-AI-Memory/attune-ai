@@ -7,6 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+- **`attune.lessons` — retrieval index over the lessons corpus**
+  (lessons-corpus-rag T1). The Phase 0 harness's wrap-aware splitter
+  moves to `attune.lessons.split_lessons()` (single source of truth;
+  the benchmark imports it). New: `split_atomic()` generates child
+  docs from mega-lessons' bolded sub-bullets (design D3), and
+  `LessonsIndex` — an mtime-cached, attune-rag `CorpusProtocol`
+  corpus with parent-deduped `retrieve(query, k)` so one
+  mega-lesson's children can't crowd out other lessons. Benchmark
+  receipt on the frozen golden set: P@1 84%, P@3 96% (Phase 0: 84%),
+  high-severity 7/7 — clears the D6 cutover gate (>= 80%). No
+  behavior change anywhere else yet (T2-T5 follow).
+
 ### Fixed
 - **Cross-session recall loop actually delivers** (recall-loop triage
   2026-06-11). Three compounding gaps had kept the store empty of real

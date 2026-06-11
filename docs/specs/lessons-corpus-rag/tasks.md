@@ -1,9 +1,9 @@
 # Lessons Corpus via RAG — Tasks
 
-**Status:** draft (2026-06-11) — pending design approval. Bounded
+**Status:** in progress (2026-06-11) — T1 done; T2–T6 open. Bounded
 PRs; each task names its receipt.
 
-## T1 — `attune.lessons` module
+## T1 — `attune.lessons` module — DONE 2026-06-11
 
 - `split_lessons()` (moved from the Phase 0 harness, which then
   imports it), atomic sub-splitting of multi-bullet lessons (D3),
@@ -13,6 +13,19 @@ PRs; each task names its receipt.
   generation, mtime invalidation, retrieval smoke against 3 golden
   queries. Benchmark script re-run green via the shared splitter.
 - One PR. No behavior change anywhere else yet.
+- **Receipt:** benchmark on the frozen golden set via the real
+  `LessonsIndex`: corpus 514 docs (380 lessons + 134 children);
+  **P@1 84%, P@3 96%, high-severity 7/7** — clears the D6 gate.
+  Two design findings recorded along the way: (a) naive child docs
+  REGRESSED P@3 to 72% by displacing their parents in the top-3, so
+  children carry `metadata["parent_path"]` and the benchmark credits
+  child hits to their lesson; (b) `LessonsIndex.retrieve()` dedups
+  the candidate pool by lesson (one mega-lesson's children can't
+  occupy multiple top-k slots) — this also flipped the
+  three-children-of-the-wrong-parent crowd-out. Remaining miss:
+  `subscription-sdk-fail` (vocabulary collision with the
+  diagnosing-sdk-failures family — the known structural-ambiguity
+  class). Tests: 23, module branch coverage 100%.
 
 ## T2 — `/recall` extension
 
