@@ -3,203 +3,106 @@ type: reference
 name: hooks-reference
 feature: hooks
 depth: reference
-generated_at: 2026-06-02T10:56:02.699014+00:00
-source_hash: 4690cd16c282bccaee1ffc3de0ea189b194fa0d71b87cec08e2f3675e136bbb9
+generated_at: 2026-06-11T04:49:42.143344+00:00
+source_hash: c616d1d3b693f3ea1e8811ca9fcf005cdcb50eb831d6a67ee7f5dd74236f44dd
 status: generated
+scaffold_hash: ecf92cd0a9d28d4a09669183241ef08059389f8bc15e663ad79a0e6b7e8362fa
 ---
 
 # Hooks reference
 
-Use the hooks API to register, configure, and fire lifecycle hooks tied to Claude Code events. The public surface exported from `hooks` covers configuration models, execution, and registry management. Hook scripts under `scripts` provide ready-made handlers for common lifecycle tasks.
+Use the hooks API to attach custom behavior to Claude Code lifecycle events. You can define hooks declaratively in YAML via `HookConfig`, or register Python callable handlers programmatically through `HookRegistry`, then fire them synchronously or asynchronously against a runtime context dict. The `hooks.scripts` package ships ready-to-use scripts for security validation, context compaction, session learning, telemetry recording, and first-time project setup.
 
 ## Classes
 
-| Class | Description |
-|-------|-------------|
-| `HookEvent` | Hook event types matching Claude Code lifecycle. |
-| `HookType` | Type of hook action. |
-| `HookDefinition` | Definition of a single hook action. |
-| `HookMatcher` | Determines whether a hook fires for a given context. |
-| `HookRule` | A complete hook rule combining a matcher with one or more actions. |
-| `HookConfig` | Complete hook configuration for an Empathy session. |
-| `HookExecutor` | Runs hook actions, with support for Python handlers. |
-| `HookExecutorSync` | Synchronous wrapper for `HookExecutor`. |
-| `HookRegistry` | Central registry for hook management and dispatch. |
+| Class | Description | File |
+|-------|-------------|------|
+| `HookEvent` | Hook event types matching Claude Code lifecycle. | `src/attune/hooks/config.py` |
+| `HookType` | Type of hook action. | `src/attune/hooks/config.py` |
+| `HookDefinition` | Definition of a single hook action. | `src/attune/hooks/config.py` |
+| `HookMatcher` | Evaluates context to decide whether a hook should fire. | `src/attune/hooks/config.py` |
+| `HookRule` | A complete hook rule with a matcher and its associated actions. | `src/attune/hooks/config.py` |
+| `HookConfig` | Complete hook configuration for an Empathy session. | `src/attune/hooks/config.py` |
+| `HookExecutor` | Runs hook actions asynchronously. | `src/attune/hooks/executor.py` |
+| `HookExecutorSync` | Synchronous wrapper for `HookExecutor`. | `src/attune/hooks/executor.py` |
+| `HookRegistry` | Central registry for hook management and dispatch. | `src/attune/hooks/registry.py` |
 
----
+## Functions
 
-### `HookMatcher`
+| Function | Parameters | Returns | Description | File |
+|----------|------------|---------|-------------|------|
+| `is_sdk_subprocess` | — | `bool` | Returns `True` when running inside an SDK-spawned `claude` subprocess. | `src/attune/hooks/scripts/_sdk_gate.py` |
+| `exit_if_sdk_subprocess` | — | `None` | Exits with code 0 and produces no output when inside an SDK subprocess session. | `src/attune/hooks/scripts/_sdk_gate.py` |
+| `run_evaluate_session` | `context: dict[str, Any]` | `dict[str, Any]` | Evaluates a session for learning potential. | `src/attune/hooks/scripts/evaluate_session.py` |
+| `get_learning_summary` | `context: dict[str, Any]` | `dict[str, Any]` | Returns the learning summary for the current user. | `src/attune/hooks/scripts/evaluate_session.py` |
+| `apply_learned_patterns` | `context: dict[str, Any]` | `str` | Generates a context-injection string from learned patterns. | `src/attune/hooks/scripts/evaluate_session.py` |
+| `get_project_root` | `**context: Any` | `Path` | Returns the project root directory. | `src/attune/hooks/scripts/first_time_init.py` |
+| `is_initialized` | `project_root: Path` | `bool` | Returns `True` if Attune AI is initialized in the given project root. | `src/attune/hooks/scripts/first_time_init.py` |
+| `get_never_ask_file` | `project_root: Path` | `Path` | Returns the path to the 'never ask again' marker file. | `src/attune/hooks/scripts/first_time_init.py` |
+| `should_skip_init` | `project_root: Path` | `bool` | Returns `True` if the user previously chose 'never ask again'. | `src/attune/hooks/scripts/first_time_init.py` |
+| `mark_never_ask` | `project_root: Path` | `None` | Writes the 'never ask again' marker to suppress future init prompts. | `src/attune/hooks/scripts/first_time_init.py` |
+| `initialize_project` | `project_root: Path` | `dict[str, Any]` | Sets up the Attune AI directory structure under the project root. | `src/attune/hooks/scripts/first_time_init.py` |
+| `check_init` | `**context: Any` | `dict[str, Any]` | Returns an initialization prompt if Attune AI is not yet set up in the project. | `src/attune/hooks/scripts/first_time_init.py` |
+| `handle_init_response` | `action: str, **context: Any` | `dict[str, Any]` | Processes the user's response to the initialization prompt. | `src/attune/hooks/scripts/first_time_init.py` |
+| `main` | `**context: Any` | `dict[str, Any]` | Entry point for the first-time initialization hook. | `src/attune/hooks/scripts/first_time_init.py` |
+| `main` | — | `None` | Reads a tool result from stdin and formats Python files. | `src/attune/hooks/scripts/format_on_save.py` |
+| `main` | — | `int` | — | `src/attune/hooks/scripts/help_freshness_nudge.py` |
+| `already_reminded` | — | `bool` | Returns `True` if the lessons reminder already fired in this session. | `src/attune/hooks/scripts/lessons_reminder.py` |
+| `mark_reminded` | — | `None` | Writes the sentinel file to prevent repeat reminders in this session. | `src/attune/hooks/scripts/lessons_reminder.py` |
+| `has_session_work` | — | `bool` | Returns `True` if this session produced git commits or file edits. | `src/attune/hooks/scripts/lessons_reminder.py` |
+| `main` | — | `int` | Checks whether to print a lessons reminder and prints it. | `src/attune/hooks/scripts/lessons_reminder.py` |
+| `run_pre_compact` | `context: dict[str, Any]` | `dict[str, Any]` | Saves collaboration state before context compaction. | `src/attune/hooks/scripts/pre_compact.py` |
+| `generate_compaction_summary` | `collaboration_state: Any, include_patterns: bool = True, include_history: bool = False` | `str` | Generates a summary string for inclusion in the compacted context. | `src/attune/hooks/scripts/pre_compact.py` |
+| `validate_bash_command` | `command: str` | `tuple[bool, str]` | Checks a Bash command against security policies; returns `(valid, message)`. | `src/attune/hooks/scripts/security_guard.py` |
+| `validate_file_path` | `file_path: str` | `tuple[bool, str]` | Checks a file path against security policies; returns `(valid, message)`. | `src/attune/hooks/scripts/security_guard.py` |
+| `main` | `context: dict[str, Any]` | `dict[str, Any]` | Validates a tool call against security policies and returns a decision dict. | `src/attune/hooks/scripts/security_guard.py` |
+| `main` | — | `int` | Prints the starter-prompt notice if the file exists. | `src/attune/hooks/scripts/starter_prompt_nudge.py` |
+| `get_compaction_state_file` | — | `Path` | Returns the path to the compaction tracking state file. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `load_compaction_state` | — | `dict[str, Any]` | Loads compaction tracking state from disk. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `save_compaction_state` | `state: dict[str, Any]` | `None` | Writes compaction tracking state to disk. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `should_suggest_compaction` | `state: dict[str, Any], threshold: int = DEFAULT_COMPACT_THRESHOLD, interval: int = DEFAULT_REMINDER_INTERVAL` | `tuple[bool, str]` | Returns `(True, reason)` when compaction should be suggested, `(False, '')` otherwise. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `get_compaction_recommendations` | `context: dict[str, Any]` | `list[str]` | Returns a list of compaction recommendations based on the current context. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `main` | `**context: Any` | `dict[str, Any]` | Entry point for the suggest-compact hook. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `reset_on_compaction` | `**context: Any` | `dict[str, Any]` | Resets compaction tracking state after a compaction event. | `src/attune/hooks/scripts/suggest_compact.py` |
+| `record_telemetry` | `context: dict[str, Any]` | `None` | Records tool usage telemetry from the hook context. | `src/attune/hooks/scripts/telemetry_hook.py` |
+| `main` | `context: dict[str, Any]` | `int` | Validates the target path against the session's worktree; exits non-zero on mismatch. | `src/attune/hooks/scripts/worktree_path_guard.py` |
 
-#### Methods
+## Constants
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `matches` | `context: dict[str, Any]` | `bool` | Returns `True` when the hook should fire for the given context. |
+| Constant | Type | Members / Value | Description |
+|----------|------|-----------------|-------------|
+| `DEFAULT_CONFIG` | `str` | See below | Default YAML template written to disk during project initialization. |
+| `ENFORCEMENT_NAME` | `str` | `'worktree_path_guard'` | Name identifier used by the worktree path guard script. |
+| `EXPECTED_KINDS` | `set` | `'concept'`, `'task'`, `'reference'`, `'error'`, `'warning'`, `'troubleshooting'`, `'faq'`, `'quickstart'`, `'tip'`, `'note'`, `'comparison'` | Allowed help-content kind identifiers. |
+| `INIT_DIRECTORIES` | `list` | `'.attune'`, `'.attune/compact_states'`, `'.attune/learned_skills'`, `'.attune/sessions'`, `'.attune/patterns'` | Directories created under the project root during initialization. |
+| `SEARCH_COMMAND_PREFIXES` | `frozenset` | `'grep'`, `'rg'`, `'ack'`, `'ag'`, `'git grep'`, `'git log'`, `'git diff'` | Shell command prefixes the security guard treats as read-only searches. |
+| `SYSTEM_DIRECTORIES` | `frozenset` | `'/etc'`, `'/sys'`, `'/proc'`, `'/dev'`, `'/boot'`, `'/sbin'`, `'/usr/sbin'`, `'/private/etc'`, `'/private/var'` | System paths the security guard blocks from file writes. |
 
----
+### `DEFAULT_CONFIG`
 
-### `HookConfig`
+```yaml
+# Attune AI Configuration
+# Generated: {timestamp}
 
-#### Methods
+agent:
+  name: empathy-assistant
+  model_tier: capable
+  empathy_level: 3
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `get_hooks_for_event` | `event: HookEvent` | `list[HookRule]` | Returns all rules registered for the given event. |
-| `add_hook` | `event: HookEvent, hook: HookDefinition, matcher: HookMatcher \| None = None, priority: int = 0` | `None` | Registers a hook definition for an event, with optional matcher and priority. |
-| `from_yaml` | `yaml_path: str` | `'HookConfig'` | Loads a `HookConfig` from a YAML file at the given path. |
-| `to_yaml` | `yaml_path: str` | `None` | Writes the current configuration to a YAML file at the given path. |
+hooks:
+  enabled: true
+  log_executions: false
 
----
+learning:
+  enabled: true
+  auto_evaluate: true
+  quality_threshold: good
+  max_patterns_per_session: 10
 
-### `HookExecutor`
-
-#### Constructor
-
-| Parameters | Description |
-|------------|-------------|
-| `python_handlers: dict[str, Callable] \| None = None` | Optional mapping of handler names to callables, used when executing Python-type hooks. |
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `execute` | `hook: HookDefinition, context: dict[str, Any]` | `dict[str, Any]` | Runs the given hook action against the provided context and returns the result. |
-
----
-
-### `HookExecutorSync`
-
-#### Constructor
-
-| Parameters | Description |
-|------------|-------------|
-| `python_handlers: dict[str, Callable] \| None = None` | Optional mapping of handler names to callables. |
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `execute` | `hook: HookDefinition, context: dict[str, Any]` | `dict[str, Any]` | Synchronously runs the given hook action and returns the result. |
-
----
-
-### `HookRegistry`
-
-#### Constructor
-
-| Parameters | Description |
-|------------|-------------|
-| `config: HookConfig \| None = None` | Optional initial configuration to load into the registry. |
-
-#### Methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `load_config` | `config: HookConfig` | `None` | Loads a `HookConfig`, replacing any previously registered config-derived hooks. |
-| `register` | `event: HookEvent, handler: Callable[..., Any], description: str = '', matcher: HookMatcher \| None = None, priority: int = 0` | `str` | Registers a callable handler for an event and returns its assigned handler ID. |
-| `unregister` | `handler_id: str` | `bool` | Removes the handler with the given ID. Returns `True` if the handler was found and removed. |
-| `get_matching_hooks` | `event: HookEvent, context: dict[str, Any]` | `list[tuple[HookRule, HookDefinition]]` | Returns all rules and definitions whose matchers pass for the given event and context. |
-| `fire` | `event: HookEvent, context: dict[str, Any] \| None = None` | `list[dict[str, Any]]` | Fires all matching hooks for the event and returns their results. |
-| `fire_sync` | `event: HookEvent, context: dict[str, Any] \| None = None` | `list[dict[str, Any]]` | Synchronously fires all matching hooks for the event and returns their results. |
-| `get_execution_log` | `limit: int = 100, event_filter: HookEvent \| None = None` | `list[dict[str, Any]]` | Returns up to `limit` recent execution log entries, optionally filtered by event type. |
-| `clear_execution_log` | — | `None` | Clears all entries from the execution log. |
-| `get_stats` | — | `dict[str, Any]` | Returns execution statistics for the registry. |
-
----
-
-## Script functions
-
-These functions are the ready-made hook handlers exported from `scripts`.
-
-### Session evaluation (`scripts.evaluate_session`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `run_evaluate_session` | `context: dict[str, Any]` | `dict[str, Any]` | Evaluates a session for learning potential. |
-| `get_learning_summary` | `context: dict[str, Any]` | `dict[str, Any]` | Returns a learning summary for the session. |
-| `apply_learned_patterns` | `context: dict[str, Any]` | `str` | Generates context injection text from learned patterns. |
-
-### Project initialization (`scripts.first_time_init`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `get_project_root` | `**context: Any` | `Path` | Returns the project root directory. |
-| `is_initialized` | `project_root: Path` | `bool` | Returns `True` if Attune AI is already initialized in the project. |
-| `get_never_ask_file` | `project_root: Path` | `Path` | Returns the path to the "never ask" marker file. |
-| `should_skip_init` | `project_root: Path` | `bool` | Returns `True` if the user previously chose "never ask again". |
-| `mark_never_ask` | `project_root: Path` | `None` | Writes the "never ask" marker file for the project. |
-| `initialize_project` | `project_root: Path` | `dict[str, Any]` | Initializes Attune AI in the project directory. |
-| `check_init` | `**context: Any` | `dict[str, Any]` | Checks whether initialization is needed and returns the appropriate response. |
-| `handle_init_response` | `action: str, **context: Any` | `dict[str, Any]` | Handles the user's response to the initialization prompt. |
-| `main` | `**context: Any` | `dict[str, Any]` | Hook entry point for first-time initialization. |
-
-### Format on save (`scripts.format_on_save`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `main` | — | `None` | Reads the tool result from stdin and formats Python files. |
-
-### Help freshness nudge (`scripts.help_freshness_nudge`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `main` | — | `int` | Hook entry point for the help freshness nudge. |
-
-### Lessons reminder (`scripts.lessons_reminder`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `already_reminded` | — | `bool` | Returns `True` if the reminder has already fired within this session. |
-| `mark_reminded` | — | `None` | Writes the sentinel file to suppress repeat reminders. |
-| `has_session_work` | — | `bool` | Returns `True` if this session produced git commits or file edits. |
-| `main` | — | `int` | Checks whether a lessons reminder should be shown and prints it. |
-
-### Pre-compaction (`scripts.pre_compact`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `run_pre_compact` | `context: dict[str, Any]` | `dict[str, Any]` | Executes pre-compaction state preservation. |
-| `generate_compaction_summary` | `collaboration_state: Any, include_patterns: bool = True, include_history: bool = False` | `str` | Generates a summary suitable for inclusion in compacted context. |
-
-### Security guard (`scripts.security_guard`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `validate_bash_command` | `command: str` | `tuple[bool, str]` | Validates a Bash command against security policies. |
-| `validate_file_path` | `file_path: str` | `tuple[bool, str]` | Validates a file path against security policies. |
-| `main` | `context: dict[str, Any]` | `dict[str, Any]` | Validates a tool call against security policies. |
-
-### Starter prompt nudge (`scripts.starter_prompt_nudge`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `main` | — | `int` | Prints the starter-prompt notice if the file exists. |
-
-### Compaction suggestions (`scripts.suggest_compact`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `get_compaction_state_file` | — | `Path` | Returns the path to the compaction state file. |
-| `load_compaction_state` | — | `dict[str, Any]` | Loads compaction tracking state from disk. |
-| `save_compaction_state` | `state: dict[str, Any]` | `None` | Saves compaction tracking state to disk. |
-| `should_suggest_compaction` | `state: dict[str, Any], threshold: int = DEFAULT_COMPACT_THRESHOLD, interval: int = DEFAULT_REMINDER_INTERVAL` | `tuple[bool, str]` | Returns whether compaction should be suggested and an explanatory message. |
-| `get_compaction_recommendations` | `context: dict[str, Any]` | `list[str]` | Returns a list of recommendations for what to compact. |
-| `main` | `**context: Any` | `dict[str, Any]` | Hook entry point for compaction suggestions. |
-| `reset_on_compaction` | `**context: Any` | `dict[str, Any]` | Resets compaction tracking state after a compaction event. |
-
-### Telemetry (`scripts.telemetry_hook`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `record_telemetry` | `context: dict[str, Any]` | `None` | Records tool usage telemetry from the hook context. |
-
-### Worktree path guard (`scripts.worktree_path_guard`)
-
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `main` | `context: dict[str, Any]` | `int` | Validates that the target path matches the session's worktree. |
-
----
+context:
+  auto_compact: true
+  token_threshold: 80
+```
 
 ## Source files
 

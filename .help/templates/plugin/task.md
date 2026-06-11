@@ -3,73 +3,66 @@ type: task
 name: plugin-task
 feature: plugin
 depth: task
-generated_at: 2026-06-10T07:07:04.659028+00:00
-source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
+generated_at: 2026-06-11T04:47:10.948028+00:00
+source_hash: bb1dd6bc42134bdd5537798d5887c1172d0c43bf4a6c4c2dc064f90213e6a7b3
 status: generated
+scaffold_hash: 50c1caa20aa764e3b2db2159a2560e5480f7bfc5f82efed9516912df86eebf1d
 ---
 
-# Work with the plugin hooks
+# Work with the plugin
 
-Use the plugin hooks when you need to modify how attune handles session continuity, workspace state discovery, security validation, or any other hook-driven behavior in your Claude Code environment.
+Use the plugin when you need to change how attune-ai integrates with Claude Code — including hook behavior, session recall, spec orientation, SDK subprocess gating, or the `/handoff` slash command.
 
 ## Prerequisites
 
-- Read access to the `hooks/` directory in the plugin source
-- A working Python environment with `pytest` available
-- Familiarity with which hook fires at which point in the Claude Code lifecycle (see the module list below for entry points)
+- Access to the project source code
+- Python environment with `pytest` available
 
-## Identify the right entry point
+## Identify the right hook
 
-Each hook module exposes a `main()` function as its entry point. Match your goal to the module responsible for it:
+Each module in `hooks/` owns a single responsibility. Match your goal to the correct entry point before you edit anything:
 
-| Goal | Module | Key function |
+| Goal | Module | Entry point |
 |---|---|---|
-| Modify the `/handoff` slash command | `hooks/_handoff_cli.py` | `main() -> int` |
-| Change the resume prompt shown at session start | `hooks/_resume_prompt.py` | `build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)` |
-| Change how in-flight specs are discovered | `hooks/_state.py` | `discover_specs(roots)` |
-| Change how git state is captured | `hooks/_state.py` | `git_state(cwd)` |
-| Adjust workspace root detection | `hooks/_state.py` | `workspace_roots(cwd)` |
-| Tune compact-warning sentinel behavior | `hooks/_state.py` | `session_sentinel_path(session_id)`, `prune_stale_sentinels(now)` |
-| Change context-utilization estimation | `hooks/_transcript_size.py` | `estimate_utilization(transcript_path)` |
-| Change the compact warning message | `hooks/compact_warning.py` | `format_warning(util, threshold, resume_body)` |
-| Modify security validation for bash commands or file paths | `hooks/security_guard.py` | `validate_bash_command(command)`, `validate_file_path(file_path)` |
-| Modify spec orientation output | `hooks/spec_orient.py` | `format_orientation(specs)`, `render_spec_pin(spec, char_budget)` |
+| Customize the `/handoff` slash command | `hooks/_handoff_cli.py` | `main()` |
+| Change the resume-prompt format | `hooks/_resume_prompt.py` | `build_resume_prompt()` |
+| Gate a hook from running inside an SDK subprocess | `hooks/_sdk_gate.py` | `exit_if_sdk_subprocess()` |
+| Discover in-flight specs under workspace roots | `hooks/_state.py` | `discover_specs()` |
+| Snapshot branch, last commit, and dirty files | `hooks/_state.py` | `git_state()` |
+| Manage compact-warning sentinels | `hooks/_state.py` | `session_sentinel_path()`, `prune_stale_sentinels()` |
+| Estimate context utilization from a transcript | `hooks/_transcript_size.py` | `estimate_utilization()` |
+| Validate bash commands or file paths | `hooks/security_guard.py` | `validate_bash_command()`, `validate_file_path()` |
+| Orient the session around active specs | `hooks/spec_orient.py` | `main()` |
 
-## Modify state discovery
+## Modify the hook
 
-If your change involves how the plugin finds specs or reads workspace state, edit `hooks/_state.py`. The two primary data structures are:
+1. **Open the target module.** Read the function's signature, docstring, and return type to confirm it owns the behavior you want to change.
 
-- **`SpecInfo`** — represents one in-flight spec found under a workspace root. Key fields: `slug`, `path`, `layer`, `phase`, `status`, `mtime`, `effective_status`, `status_source`, `status_conflict`.
-- **`GitState`** — a snapshot of the worktree at hook-fire time. Fields: `branch`, `last_sha`, `last_subject`, `uncommitted`.
+2. **Edit the function.** To change how the resume prompt is structured, edit `build_resume_prompt()` in `hooks/_resume_prompt.py`:
 
-`discover_specs(roots)` walks the `specs/` and `docs/specs/` subdirectories under each root and returns a list of `SpecInfo` objects. `git_state(cwd)` returns a `GitState` for the given working directory.
+   ```python
+   build_resume_prompt(
+       spec_info: SpecInfo | None,
+       git_state: GitState,
+       *,
+       workspace_path: str = '~/attune',
+       todo_summary: str | None = None,
+   ) -> str
+   ```
 
-## Modify the resume prompt
+   `SpecInfo` provides `slug`, `path`, `layer`, `phase`, `status`, and `mtime` for each in-flight spec. `GitState` provides `branch`, `last_sha`, `last_subject`, and `uncommitted` files.
 
-The resume prompt is built entirely inside `build_resume_prompt()` in `hooks/_resume_prompt.py`. It accepts an optional `SpecInfo`, a `GitState`, an optional `workspace_path` (default `~/attune`), and an optional `todo_summary`. Edit this function to change what appears in the prompt body.
+3. **Add SDK subprocess gating if needed.** If your hook must not run inside an SDK-spawned `claude` subprocess, call `exit_if_sdk_subprocess()` at the top of `main()`. To check the condition without exiting, call `is_sdk_subprocess()` directly.
 
-## Modify security validation
+4. **Run the tests** to catch regressions:
 
-`hooks/security_guard.py` exposes two validators:
+   ```
+   pytest -k "plugin"
+   ```
 
-- `validate_bash_command(command) -> tuple[bool, str]` — returns a pass/fail boolean and a reason string.
-- `validate_file_path(file_path) -> tuple[bool, str]` — same signature.
+## Verify success
 
-The module-level `main(context)` function calls both validators and returns a result dict. Edit the validators to tighten or adjust what commands and paths the plugin allows.
+Your change is complete when both of the following are true:
 
-## Run the tests
-
-After making your change, run the hook-specific tests to catch regressions before they affect other developers:
-
-```bash
-pytest -k "plugin"
-```
-
-## Verify your change
-
-Your change is working correctly when:
-
-1. `pytest -k "plugin"` passes with no failures or errors.
-2. The hook entry point you modified (`main()` or the specific function) produces the expected output when triggered manually or through Claude Code.
-3. If you changed `discover_specs()` or `workspace_roots()`, confirm the correct `SpecInfo` objects are returned for a known workspace layout.
-4. If you changed a validator in `security_guard.py`, confirm that `validate_bash_command()` or `validate_file_path()` returns the expected `(bool, str)` tuple for both allowed and blocked inputs.
+- `pytest -k "plugin"` exits with no failures.
+- The hook produces the output you intended when triggered manually or through the normal Claude Code flow.

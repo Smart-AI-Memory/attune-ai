@@ -3,72 +3,64 @@ type: concept
 name: agents-concept
 feature: agents
 depth: concept
-generated_at: 2026-06-04T23:45:26.733581+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-11T04:43:25.146451+00:00
+source_hash: 7ddd0fc96a1f5315731bff455997f261001e41fc40732100eff70032b8dc0689
 status: generated
+scaffold_hash: eed16125044825f51edb6ed518640ee3d6695302a7e9bb31e8311c530b6ab8fe
 ---
 
 # Agents
 
-Attune's agent system is a framework-agnostic layer that lets you create, run, and recover AI agents regardless of whether the underlying runtime is AutoGen, Haystack, or LangChain.
+The agents feature is Attune AI's Universal Agent Factory — a single interface for creating, running, and orchestrating AI agents backed by AutoGen, Haystack, LangChain, or LangGraph without rewriting your code when you change the underlying framework.
 
-## Mental model
+## Three-layer architecture
 
-Three concepts compose the agent system:
+Every agent interaction flows through three layers:
 
-- **Adapters** translate between Attune's unified interface and a specific AI framework. Each adapter (for example, `AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) implements `is_available()`, `create_agent()`, `create_workflow()`, and `create_tool()`. You pick an adapter once; the rest of your code stays the same.
-- **Agents** are the runtime units of work. Each agent wraps a framework-native object — for example, `AutoGenAgent` wraps an AutoGen `AssistantAgent` or `UserProxyAgent`, while `HaystackAgent` wraps a Haystack `Pipeline` or `Component`. Every agent exposes `invoke()` for a single response and `stream()` for incremental output.
-- **Workflows** coordinate multiple agents. `AutoGenWorkflow` uses AutoGen's `GroupChat`; `HaystackWorkflow` uses a Haystack `Pipeline`; `LangChainWorkflow` uses a `SequentialChain` or custom routing. Every workflow exposes `run()` and `stream()`.
+1. **Adapter** — A framework-specific adapter (for example, `AutoGenAdapter`, `HaystackAdapter`, or `LangChainAdapter`) implements `BaseAdapter` and handles all communication with the underlying framework. Each adapter exposes `create_agent()`, `create_workflow()`, and `create_tool()`, plus an `is_available()` method that tells you whether the optional framework dependency is installed.
 
-The result is a two-level hierarchy: an adapter produces agents and workflows; agents and workflows run your logic.
+2. **Agent** — The adapter produces a framework-specific agent wrapper — `AutoGenAgent`, `HaystackAgent`, `LangChainAgent`, or `LangGraphAgent` — each implementing `BaseAgent`. Call `invoke()` for a single result or `stream()` for an async generator of incremental responses.
+
+3. **Workflow** — When multiple agents need to collaborate, the adapter produces a coordinating workflow: `AutoGenWorkflow` (backed by AutoGen's GroupChat), `HaystackWorkflow` (backed by Haystack's Pipeline), or `LangChainWorkflow` (backed by LangChain's SequentialChain or custom routing). All workflows expose the same `run()` and `stream()` interface as individual agents.
+
+You configure each layer with `AgentConfig` (for agents) and `WorkflowConfig` (for workflows). `AgentCapability`, `AgentRole`, and `Framework` express what an agent can do, what role it plays, and which framework backs it.
 
 ## Framework adapters
 
-Each adapter is obtained through a lazy-import helper so that only the frameworks you actually use are loaded:
+Because each framework is an optional dependency, adapters use lazy imports. Call the corresponding accessor function to load the adapter only when you need it:
 
-| Helper | Adapter class | Framework |
+| Accessor | Adapter class | Underlying framework |
 |---|---|---|
-| `get_autogen_adapter()` | `AutoGenAdapter` | Microsoft AutoGen |
-| `get_haystack_adapter()` | `HaystackAdapter` | deepset Haystack |
-| `get_langchain_adapter()` | `LangChainAdapter` | LangChain |
-| `get_langgraph_adapter()` | — | LangGraph |
+| `get_autogen_adapter()` | `AutoGenAdapter` | Microsoft AutoGen (GroupChat) |
+| `get_haystack_adapter()` | `HaystackAdapter` | deepset Haystack (Pipeline) |
+| `get_langchain_adapter()` | `LangChainAdapter` | LangChain (SequentialChain) |
+| `get_langgraph_adapter()` | — | LangGraph (node/runnable) |
 
-Call `adapter.is_available()` before use; it returns `False` if the optional framework dependency is not installed, letting you degrade gracefully.
+Every adapter exposes a `framework_name` property you can inspect at runtime. `HaystackAdapter` also provides `create_document_store()` for setting up a backing store — a capability the other adapters don't expose.
 
-`HaystackAdapter` also exposes `create_document_store()`, which the other adapters do not — useful when building retrieval-augmented workflows.
-
-## Release agents and built-in specializations
-
-Beyond generic agents, the system ships purpose-built agents for release engineering:
-
-- `ReleaseAgent`, `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`, and `TestCoverageAgent` are concrete agent types covering common release-readiness concerns.
-- `ReleasePrepTeam` and `ReleasePrepTeamWorkflow` coordinate those agents into a team that produces a `ReleaseReadinessReport`.
-
-You can also wrap an existing wizard object as an agent with `wrap_wizard(wizard, name, model_tier)`, which returns a `WizardAgent` without requiring a full adapter setup.
+If you want to use a wizard object as an agent without going through a full adapter setup, `wrap_wizard()` converts it into a `WizardAgent` in a single call.
 
 ## State persistence and recovery
 
-The `AgentStateStore` records `AgentStateRecord` snapshots so that agent progress survives interruptions. `AgentExecutionRecord` tracks individual execution history. When a failure occurs, `AgentRecoveryManager` reads those records and resumes or retries the affected agent.
+Long-running or fault-prone workflows need a way to checkpoint progress and resume after a failure. Three components handle this:
 
-## Resilience decorators
+- **`AgentStateStore`** — persists `AgentStateRecord` entries, one per agent, so a workflow can resume from a known-good checkpoint rather than restarting from scratch.
+- **`AgentExecutionRecord`** — captures the inputs, outputs, and metadata for each individual invocation.
+- **`AgentRecoveryManager`** — consults stored records to decide whether to retry, skip, or surface an error when an agent fails mid-workflow.
 
-Several decorators harden agent operations without changing their signatures:
+## Built-in specialized agents
 
-| Decorator | What it does |
-|---|---|
-| `safe_agent_operation(operation_name)` | Catches exceptions, logs them, and raises `AgentOperationError` |
-| `retry_on_failure(max_attempts, delay, backoff, exceptions)` | Retries with exponential backoff |
-| `log_performance(threshold_seconds)` | Logs calls that exceed the threshold |
-| `validate_input(required_fields)` | Raises `ValueError` if required dict keys are absent |
-| `with_cost_tracking(operation_type)` | Records API cost for the decorated call |
+The factory ships agents you can use without any custom adapter configuration:
 
-Apply these to any `invoke()` or `run()` implementation to get consistent error handling and observability across frameworks.
+- **Release preparation** — `ReleaseAgent`, `ReleasePrepTeam`, and `ReleasePrepTeamWorkflow` coordinate a multi-agent release pipeline and emit a `ReleaseReadinessReport`.
+- **Code and documentation quality** — `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`, and `TestCoverageAgent` analyze a codebase and report findings.
 
-## When this matters
+## Operation decorators
 
-You need the agent system when:
+Five decorators add cross-cutting behavior to any agent method:
 
-- You want to write agent logic once and switch AI frameworks without rewriting call sites.
-- You need multi-agent coordination (use a `*Workflow` class and let the adapter wire the group chat or pipeline).
-- You need agents to survive process restarts (`AgentStateStore` + `AgentRecoveryManager`).
-- You want release-readiness checks automated across code quality, documentation, security, and test coverage (`ReleasePrepTeam`).
+- `safe_agent_operation(operation_name)` — wraps a method in structured error handling and logging; raises `AgentOperationError` on failure.
+- `retry_on_failure(max_attempts, delay, backoff, exceptions)` — retries with exponential backoff and re-raises the last exception once all attempts are exhausted.
+- `log_performance(threshold_seconds)` — logs a warning when a method exceeds the specified duration.
+- `validate_input(required_fields)` — raises `ValueError` if the input is not a dict or is missing any of the listed fields.
+- `with_cost_tracking(operation_type)` — records API cost for the decorated call, tagged with the given operation type.

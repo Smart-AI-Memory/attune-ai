@@ -3,68 +3,107 @@ type: task
 name: agents-task
 feature: agents
 depth: task
-generated_at: 2026-06-04T23:45:26.739731+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-11T04:43:25.149762+00:00
+source_hash: 7ddd0fc96a1f5315731bff455997f261001e41fc40732100eff70032b8dc0689
 status: generated
+scaffold_hash: 7421c22965ec3807961fe28de1b2907cf8908cc785869e21935dddbcab0b5191
 ---
 
 # Work with agents
 
-Use agents when you need to create, configure, or extend AI agents with framework adapters, state persistence, and recovery support.
+Use the agent factory when you need to create and run agents backed by LangChain, LangGraph, AutoGen, or Haystack through a consistent interface for invocation, streaming, and tool registration.
 
 ## Prerequisites
 
-- Access to the project source code under `src/attune/agents/` and `src/attune/agent_factory/`
-- A working Python environment with your target framework (LangChain, LangGraph, AutoGen, or Haystack) installed
+- `attune-ai` installed with the extras for your target framework
+- Familiarity with `AgentConfig` and `WorkflowConfig` from `src/attune/agent_factory/`
 
-## Steps
+## Create an agent
 
-1. **Choose and retrieve the right adapter.**
-   Call the lazy-import helper for the framework you are targeting:
+1. Import the lazy-loading helper for your target framework:
 
-   - `get_langchain_adapter()` — returns a `LangChainAdapter` for LangChain chains and agent executors
-   - `get_langgraph_adapter()` — returns an adapter for LangGraph nodes and runnables
-   - `get_autogen_adapter()` — returns an `AutoGenAdapter` for Microsoft AutoGen workflows
-   - `get_haystack_adapter()` — returns a `HaystackAdapter` for Haystack pipelines
-
-   Each helper performs a lazy import, so only the dependencies for the framework you choose are loaded.
-
-2. **Create an agent or workflow.**
-   Call `create_agent(config)` on the adapter, passing an `AgentConfig` instance. To coordinate multiple agents, call `create_workflow(config, agents)` with a `WorkflowConfig` and a list of `BaseAgent` instances.
-
-   If you are working with a wizard rather than a framework agent, use `wrap_wizard(wizard, name, model_tier)` to produce a `WizardAgent` directly.
-
-3. **Apply decorators to protect your agent operations.**
-   Wrap any function that calls an agent with the appropriate decorator from `src/attune/agent_factory/decorators.py`:
-
-   - `safe_agent_operation(operation_name)` — adds structured logging and raises `AgentOperationError` on failure
-   - `retry_on_failure(max_attempts, delay, backoff, exceptions)` — retries with exponential backoff; raises the last exception when all attempts are exhausted
-   - `log_performance(threshold_seconds)` — logs a warning when the call exceeds the threshold
-   - `validate_input(required_fields)` — raises `ValueError` if the input is not a dict or is missing required fields
-   - `with_cost_tracking(operation_type)` — records API cost metadata for the call
-
-4. **Invoke the agent.**
-   Call `invoke(input_data, context)` for a single synchronous result, or `stream(input_data, context)` to consume an `AsyncGenerator` of incremental response dicts. For workflows, call `run(input_data, initial_state)` or the corresponding `stream` method.
-
-5. **Run the related tests.**
-   Verify that your changes do not introduce regressions:
-
-   ```bash
-   pytest -k "agents"
+   ```python
+   from attune.agent_factory.adapters import (
+       get_langchain_adapter,   # LangChain
+       get_langgraph_adapter,   # LangGraph
+       get_autogen_adapter,     # AutoGen
+       get_haystack_adapter,    # Haystack
+   )
    ```
 
-## Key files
+   Each helper defers the underlying framework import until you call it, so unused frameworks add no startup cost.
 
-- `src/attune/agents/` — release agents, state store, and recovery manager (`AgentStateStore`, `AgentRecoveryManager`, `ReleaseAgent`, `ReleasePrepTeam`)
-- `src/attune/agent_factory/adapters/__init__.py` — lazy-import helpers (`get_langchain_adapter`, `get_langgraph_adapter`, `get_autogen_adapter`, `get_haystack_adapter`, `wrap_wizard`)
-- `src/attune/agent_factory/adapters/wizard_adapter.py` — `WizardAgent` and `WizardAdapter`
-- `src/attune/agent_factory/decorators.py` — `safe_agent_operation`, `retry_on_failure`, `log_performance`, `validate_input`, `with_cost_tracking`
+2. Retrieve the adapter and confirm the framework is installed before proceeding:
 
-## Verify success
+   ```python
+   adapter = get_langchain_adapter()
+   if not adapter.is_available():
+       raise RuntimeError(f"{adapter.framework_name} is not installed")
+   ```
 
-After running your agent call, confirm the following:
+3. Build an `AgentConfig` with the role, capabilities, and model tier you need, then pass it to `create_agent()`:
 
-- `invoke()` or `run()` returns a `dict` without raising an `AgentOperationError`
-- `stream()` yields at least one `dict` chunk before the generator closes
-- `pytest -k "agents"` reports zero failures
-- If you used `with_cost_tracking`, cost metadata appears in the operation log for the call
+   ```python
+   agent = adapter.create_agent(config)
+   ```
+
+   The adapter returns a framework-specific instance — for example, `LangChainAgent`, `AutoGenAgent`, or `HaystackAgent` — all sharing the same `BaseAgent` interface.
+
+4. Run the agent by calling `invoke()` with a string or dict payload:
+
+   ```python
+   result = await agent.invoke("Summarize the release notes")
+   ```
+
+   To receive incremental output, call `stream()` instead — it returns an `AsyncGenerator[dict, None]`.
+
+## Wrap a wizard as an agent
+
+If you already have a wizard and want to expose it through the `BaseAgent` interface, use `wrap_wizard()` instead of building a full adapter:
+
+```python
+from attune.agent_factory.adapters import wrap_wizard
+
+agent = wrap_wizard(wizard, name="release-summarizer", model_tier="capable")
+```
+
+`wrap_wizard()` returns a `WizardAgent`. The `name` parameter is optional; `model_tier` defaults to `"capable"`.
+
+## Apply decorators
+
+Add any of the following decorators to agent methods to improve reliability and observability:
+
+| Decorator | What it does |
+|-----------|-------------|
+| `@safe_agent_operation(operation_name)` | Logs errors and re-raises them as `AgentOperationError` instead of leaking internal exceptions. |
+| `@retry_on_failure(max_attempts, delay, backoff, exceptions)` | Retries the call with exponential back-off; raises the last exception once all attempts are exhausted. |
+| `@log_performance(threshold_seconds)` | Logs a warning when the call exceeds the threshold (default `1.0` second). |
+| `@validate_input(required_fields)` | Raises `ValueError` if the input is not a dict or if any field in `required_fields` is absent. |
+| `@with_cost_tracking(operation_type)` | Records API cost for the call; `operation_type` defaults to `"agent_call"`. |
+
+## Locate key files
+
+| Path | Contents |
+|------|----------|
+| `src/attune/agent_factory/adapters/__init__.py` | Lazy adapter helpers: `get_langchain_adapter`, `get_langgraph_adapter`, `get_autogen_adapter`, `get_haystack_adapter`, `wrap_wizard` |
+| `src/attune/agent_factory/decorators.py` | `safe_agent_operation`, `retry_on_failure`, `log_performance`, `validate_input`, `with_cost_tracking` |
+| `src/attune/agents/` | Built-in agents: `ReleaseAgent`, `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`, `TestCoverageAgent` |
+
+## Run the tests
+
+Run the agent test suite to confirm your changes work correctly:
+
+```bash
+pytest -k "agents"
+```
+
+**Success criterion:** all tests pass with no new failures. If you added a new adapter method or decorated a new function, confirm that your new test cases appear in the collected output and pass.
+
+## Unresolved references
+
+> Auto-generated by attune-author fact-check. Review and either
+> fix the source code, fix this doc, or add an override.
+
+| Location | Severity | Issue |
+|---|---|---|
+| Line 64 (code fence) | error | `from attune.agent_factory.adapters import …` — module not importable |

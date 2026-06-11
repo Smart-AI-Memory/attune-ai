@@ -3,43 +3,35 @@ type: task
 name: release-prep-task
 feature: release-prep
 depth: task
-generated_at: 2026-06-04T23:45:26.692536+00:00
-source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
+generated_at: 2026-06-11T04:39:32.872298+00:00
+source_hash: b484e3b8f8e27e1e37d71dd39e93de2e14c056d5969f51d404e9b11858bd81b7
 status: generated
+scaffold_hash: 27a90574d75339f2fab8f7a1a95121920a49e38a867a7c39451f9987629e9532
 ---
 
-# Work with Release Prep
+# Work with release prep
 
-Use `ReleasePrepTeam` when you need to run a full preflight assessment — test coverage, code quality, security, and documentation — before publishing a release.
+Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in parallel and aggregates the results into a single `ReleaseReadinessReport`.
 
 ## Prerequisites
 
-- Access to the project source code
-- The following modules available in your environment:
-  - `release.release_prep_team` — `ReleasePrepTeam`, `ReleasePrepTeamWorkflow`
-  - `release.release_models` — `ReleaseReadinessReport`, `QualityGate`, `ReleaseAgentResult`
-  - `release.release_agents` — `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`, `TestCoverageAgent`
+- A local checkout of the codebase you want to assess
+- The `release` package available in your Python environment
 
-## Run a readiness assessment
+## Run a release readiness assessment
 
-1. **Import `ReleasePrepTeam` and instantiate it.**
+1. **Instantiate `ReleasePrepTeam`.**
 
    ```python
-   from release.release_prep_team import ReleasePrepTeam
+   from release import ReleasePrepTeam
 
    team = ReleasePrepTeam()
    ```
 
-   To enforce custom thresholds, pass a `quality_gates` dict. Each key is a gate name and each value is the minimum passing threshold:
+   To tighten or relax thresholds, pass a `quality_gates` dict at construction time:
 
    ```python
-   team = ReleasePrepTeam(quality_gates={"coverage": 0.90, "security": 1.0})
-   ```
-
-   To enable shared state across agents, pass a `redis_url`:
-
-   ```python
-   team = ReleasePrepTeam(redis_url="redis://localhost:6379")
+   team = ReleasePrepTeam(quality_gates={"test_coverage": 0.85, "code_quality": 0.80})
    ```
 
 2. **Call `assess_readiness` against your codebase path.**
@@ -48,132 +40,41 @@ Use `ReleasePrepTeam` when you need to run a full preflight assessment — test 
    report = team.assess_readiness(codebase_path=".")
    ```
 
-   This runs `TestCoverageAgent`, `CodeQualityAgent`, `DocumentationAgent`, and `SecurityAuditorAgent` in parallel, then aggregates their results into a `ReleaseReadinessReport`.
+   This coordinates four agents — `health-checker`, `security-scanner`, `changelog-generator`, and `release-assessor` — and returns a `ReleaseReadinessReport`. Each agent produces a `ReleaseAgentResult` containing a `score`, a `confidence` value, and a `findings` dict. Agents that need deeper analysis automatically escalate through model tiers (CHEAP → CAPABLE → PREMIUM); the tier used is recorded in the `tier_used` field of each result.
 
-3. **Print the formatted report to the console.**
+3. **Print the formatted report.**
 
    ```python
    print(report.format_console_output())
    ```
 
-4. **Check the go/no-go verdict.**
+4. **Review blockers and warnings.**
+
+   Entries in `report.blockers` must be resolved before release. Entries in `report.warnings` are non-critical but worth addressing:
 
    ```python
-   if report.approved:
-       print("GO — safe to tag and publish.")
-   else:
-       print("NO-GO — resolve the following blockers:")
-       for blocker in report.blockers:
-           print(f"  • {blocker}")
-   ```
+   for blocker in report.blockers:
+       print(f"BLOCKER: {blocker}")
 
-5. **Review warnings and per-agent results.**
-
-   Warnings do not block release but indicate issues worth addressing:
-
-   ```python
    for warning in report.warnings:
-       print(f"  ⚠ {warning}")
+       print(f"WARNING: {warning}")
    ```
 
-   Inspect individual agent results to trace findings back to a specific check:
+5. **Serialize the report for CI pipelines (optional).**
 
    ```python
-   for result in report.agent_results:
-       print(f"{result.agent_role}: score={result.score}, escalated={result.escalated}")
+   import json
+
+   with open("release-readiness.json", "w") as f:
+       json.dump(report.to_dict(), f, indent=2)
    ```
 
-6. **Retrieve total cost across all agents.**
+## Confirm success
 
-   ```python
-   cost = team.get_total_cost()
-   print(f"Assessment cost: ${cost:.4f}")
-   ```
-
-7. **Run the related tests to confirm nothing regressed.**
-
-   ```
-   pytest -k "release-prep"
-   ```
-
-## Extend the assessment with a custom quality gate
-
-1. **Instantiate a `QualityGate` with your threshold.**
-
-   ```python
-   from release.release_models import QualityGate
-
-   gate = QualityGate(
-       name="docstring_coverage",
-       threshold=0.80,
-       critical=True,
-   )
-   ```
-
-2. **Pass the gate to `ReleasePrepTeam` via `quality_gates`.**
-
-   The `quality_gates` dict maps gate names to threshold floats:
-
-   ```python
-   team = ReleasePrepTeam(quality_gates={"docstring_coverage": 0.80})
-   ```
-
-3. **Verify the gate appears in the report after assessment.**
-
-   ```python
-   report = team.assess_readiness()
-   for gate in report.quality_gates:
-       print(f"{gate.name}: threshold={gate.threshold}, actual={gate.actual}, passed={gate.passed}")
-   ```
-
-## Add a custom release agent
-
-1. **Subclass `ReleaseAgent` and implement `process`.**
-
-   `process` must return a `ReleaseAgentResult`:
-
-   ```python
-   from release.base_agent import ReleaseAgent
-   from release.release_models import ReleaseAgentResult
-
-   class MyCustomAgent(ReleaseAgent):
-       def process(self, codebase_path: str = ".") -> ReleaseAgentResult:
-           # Your check logic here
-           ...
-   ```
-
-2. **Instantiate the agent and call `process` directly to test it in isolation.**
-
-   ```python
-   agent = MyCustomAgent(agent_id="my-check", role="custom-checker")
-   result = agent.process(codebase_path=".")
-   print(result.score, result.findings)
-   ```
-
-3. **Run the test suite to confirm your agent behaves as expected.**
-
-   ```
-   pytest -k "release-prep"
-   ```
-
-## Verify success
-
-The task succeeds when:
-
-- `report.approved` is `True` and `report.blockers` is an empty list, or
-- `report.approved` is `False` and `report.blockers` lists every issue you expected — confirming the gates caught real problems before you publish.
-
-Call `report.to_dict()` to serialize the full result for logging or CI artifact storage.
+The assessment passes when `report.approved` is `True` and `report.blockers` is empty. To see the detail behind the verdict, inspect `report.quality_gates`: each `QualityGate` exposes the gate's `threshold`, the measured `actual` value, and whether it `passed`. Any gate where `critical` is `True` and `passed` is `False` sets `report.approved` to `False`.
 
 ## Key files
 
-| File | Purpose |
-|------|---------|
-| `release/release_prep_team.py` | `ReleasePrepTeam` and `ReleasePrepTeamWorkflow` — orchestrates all agents |
-| `release/release_models.py` | `ReleaseReadinessReport`, `QualityGate`, `ReleaseAgentResult`, `Tier` |
-| `release/base_agent.py` | `ReleaseAgent` — base class with CHEAP → CAPABLE → PREMIUM escalation |
-| `release/coverage_agent.py` | `TestCoverageAgent` — runs `pytest --cov` and parses the coverage report |
-| `release/quality_agent.py` | `CodeQualityAgent` — runs `ruff`, checks type hints and complexity |
-| `release/documentation_agent.py` | `DocumentationAgent` — checks docstring coverage, README currency, and CHANGELOG presence |
-| `release/security_agent.py` | `SecurityAuditorAgent` — scans for vulnerabilities and secret leaks |
-| `workflows/release_prep.py` | `ReleasePreparationWorkflow` — CLI-registry workflow wrapper |
+- `src/attune/workflows/release_prep.py` — `ReleasePrepTeamWorkflow`, `ReleasePreparationWorkflow`
+- `src/attune/agents/release/release_prep_team.py` — `ReleasePrepTeam`
+- `src/attune/agents/release/release_models.py` — `ReleaseReadinessReport`, `QualityGate`, `ReleaseAgentResult`

@@ -3,74 +3,50 @@ type: concept
 name: plugin-concept
 feature: plugin
 depth: concept
-generated_at: 2026-06-10T07:07:04.652645+00:00
-source_hash: 97a2943dbbe1f0524955dd7678a2b8b4eb09cacaf89d2950ee2705251fcd2249
+generated_at: 2026-06-11T04:47:10.944816+00:00
+source_hash: bb1dd6bc42134bdd5537798d5887c1172d0c43bf4a6c4c2dc064f90213e6a7b3
 status: generated
+scaffold_hash: 3d3395b06e9c2911139c4e55ee7c889cc29a128f3757a3f2a936cdbc08cafd68
 ---
 
 # Plugin
 
-The attune plugin is a collection of Claude Code hooks, slash commands, and MCP configuration that keeps an AI coding session oriented — tracking in-flight specs, monitoring context utilization, guarding against unsafe shell commands, and restoring session state across compactions.
+The attune-ai plugin extends Claude Code with a set of hooks, slash commands, skills, and MCP configuration that orient the AI within your workspace at key moments in a session.
 
-## What the plugin does
+## Session lifecycle and hooks
 
-Each hook fires at a specific point in a Claude Code session and has a narrow responsibility:
+The plugin is organized as a collection of hooks, each bound to a specific event in the Claude Code session lifecycle. Understanding when each hook fires gives you a clear picture of what the plugin does and why.
 
-| Hook module | When it runs | What it does |
-|---|---|---|
-| `hooks.welcome` | Session start | Renders a welcome message |
-| `hooks.session_recall` | Session start | Restores prior session context |
-| `hooks.session_stash` | Session end | Persists session state for later recall |
-| `hooks.jit_recall` | Decision points | Surfaces relevant rules from a curated decision-point map |
-| `hooks.spec_orient` | On demand | Formats in-flight specs so the model stays oriented to active work |
-| `hooks.compact_warning` | Context threshold | Warns when transcript utilization is high and embeds a resume prompt |
-| `hooks.security_guard` | Before tool use | Validates bash commands and file paths against known-unsafe patterns |
-| `hooks.format_on_save` | File save | Runs formatting on saved files |
-| `hooks.help_freshness_check` | Periodic | Flags stale help content |
-| `hooks.help_on_error` | On error | Surfaces relevant help for the error |
-| `hooks.help_post_commit` | Post-commit | Delivers commit-specific guidance |
+At session start, `welcome.main()` displays workspace orientation and `session_recall.main()` restores context from the previous session. During a session, `jit_recall.main()` injects curated decision-point → rule mappings when the AI reaches a recognized decision point, and `compact_warning.main()` calls `estimate_utilization()` to warn you before context fills. Before any bash command executes, `security_guard.main()` calls `validate_bash_command()` and `validate_file_path()`, blocking writes to system directories such as `/etc`, `/sys`, and `/proc` listed in `SYSTEM_DIRECTORIES`. Commands whose first token appears in `SEARCH_COMMAND_PREFIXES` — for example, `grep`, `rg`, or `git log` — are treated as read-only and validated under more permissive rules. When you save a file, `format_on_save.main()` applies formatting. At session end, `session_stash.main()` persists state for the next session, and `_handoff_cli.main()` backs the `/handoff` slash command.
 
-The `/handoff` slash command (`hooks._handoff_cli`) wraps the session handoff flow as a CLI entry point.
+Two hooks serve the help system: `help_on_error.main()` surfaces relevant docs when a tool fails, and `help_post_commit.main()` together with `help_freshness_check.main()` flag stale help content after commits.
 
-## Core data structures
+## Workspace state model
 
-Two dataclasses form the shared state that hooks read and write.
+Most hooks share two dataclasses that describe the current workspace.
 
-**`SpecInfo`** represents one in-flight spec discovered under a workspace root:
+`SpecInfo` represents a single in-flight spec. Call `workspace_roots(cwd)` to locate the roots to scan, then pass the result to `discover_specs(roots)`, which walks the `specs/` and `docs/specs/` subdirectories and returns one `SpecInfo` per file. Each record carries a `slug`, `path`, `layer`, `phase`, `status`, and `mtime`. The derived `effective_status` field resolves any conflict between the spec's own header status and an external override; `status_conflict` is `True` when they disagree. A spec is considered terminal when `effective_status` matches one of the `_TERMINAL_VERDICTS` values — for example, `"shipped"`, `"done"`, or `"superseded"` — and still active when it matches an `_ONGOING_VERDICTS` value such as `"living"` or `"ongoing"`.
 
-```
-slug        str     — identifier used in cross-links
-path        Path    — location on disk
-layer       str     — architectural layer
-phase       str     — lifecycle phase
-status      str     — raw status from the spec header
-mtime       float   — last-modified timestamp
-effective_status  str   — resolved status after conflict detection
-status_source     str   — 'header' or another source
-status_conflict   bool  — True when header and inferred status disagree
-```
+`GitState` is a lightweight snapshot of the worktree at hook-fire time. `git_state(cwd)` returns the current `branch`, the `last_sha` and `last_subject` of the most recent commit, and a `tuple` of `uncommitted` file paths.
 
-**`GitState`** captures the worktree at the moment a hook fires:
+`build_resume_prompt(spec_info, git_state)` combines both into the standard resume-prompt body used by session-boundary hooks. You can pass an optional `todo_summary` and set `workspace_path` (default `~/attune`) to match your layout.
 
-```
-branch          str            — current branch name
-last_sha        str            — SHA of HEAD
-last_subject    str            — subject line of HEAD commit
-uncommitted     tuple[str, …]  — paths with uncommitted changes
-```
+## SDK subprocess gating
 
-## How the pieces fit together
+When attune-ai invokes Claude Code through the Agent SDK, it spawns a `claude` subprocess. Interactive hooks must not fire in that context — the output is invisible to you and can interfere with the parent session.
 
-`hooks._state` is the shared foundation. It exposes `discover_specs()`, which walks `specs/` and `docs/specs/` directories under each workspace root and returns a list of `SpecInfo` objects. It also exposes `git_state()`, which snapshots the current branch, HEAD commit, and uncommitted files into a `GitState`. Both data structures flow into other hooks as inputs.
+`is_sdk_subprocess()` detects this condition. Any hook that should self-gate calls `exit_if_sdk_subprocess()` at startup; the call silently exits with code 0 when the subprocess condition is true, leaving the parent session undisturbed. This pattern lets every hook share a single detection path without duplicating logic.
 
-`hooks.spec_orient` consumes a list of `SpecInfo` values and calls `format_orientation()` to produce a summary the model can read. For sessions that have been compacted, `render_spec_pin()` trims the output to a character budget so it fits in a post-compact context window.
+## Public interfaces
 
-`hooks.compact_warning` uses `estimate_utilization()` from `hooks._transcript_size` to measure how full the context window is (returned as a float in `[0.0, 1.0]`). When utilization crosses a threshold, `format_warning()` composes a warning that includes a resume prompt built by `build_resume_prompt()` from `hooks._resume_prompt`. The resume prompt draws on the current `SpecInfo` and `GitState` so the model can continue work after a compaction.
+Other parts of the codebase interact with the plugin through these interfaces:
 
-`hooks.security_guard` validates every bash command against `SEARCH_COMMAND_PREFIXES` and every file path against `SYSTEM_DIRECTORIES` before tool use proceeds. `validate_bash_command()` and `validate_file_path()` each return a `(bool, str)` tuple — the boolean indicates whether the operation is allowed, and the string carries the reason when it is not.
-
-Session continuity across compactions relies on sentinel files. `session_sentinel_path()` returns the path for a per-session sentinel, and `prune_stale_sentinels()` removes sentinels older than the TTL, returning the count of files deleted.
-
-## When this matters
-
-The plugin is relevant whenever you need to understand why Claude Code behaves the way it does during a session — why a warning appeared, why a command was blocked, why the model described active specs at the start of a reply, or how context is preserved when the transcript is compacted. Each observable behavior maps to a specific hook and a specific function in `hooks._state`, `hooks._transcript_size`, or `hooks._resume_prompt`.
+| Interface | Purpose | Module |
+|-----------|---------|--------|
+| `SpecInfo` | One in-flight spec discovered under a workspace root | `hooks._state` |
+| `GitState` | Snapshot of the worktree's git state at hook-fire time | `hooks._state` |
+| `discover_specs` | Walks workspace roots and returns all in-flight `SpecInfo` records | `hooks._state` |
+| `build_resume_prompt` | Renders the standard resume-prompt body from workspace state | `hooks._resume_prompt` |
+| `validate_bash_command` | Returns `(allowed, reason)` for a proposed bash command | `hooks.security_guard` |
+| `validate_file_path` | Returns `(allowed, reason)` for a proposed file path | `hooks.security_guard` |
+| `is_sdk_subprocess` | Returns `True` when running inside an SDK-spawned subprocess | `hooks._sdk_gate` |

@@ -65,6 +65,16 @@ findings doc. No production code changes.
       live in subscription, API-no-key, and forced-sub-unavailable
       states)
 
+**Full-regen receipt at scale (2026-06-11, attune-author v0.16.0
+wheel from PyPI):** `attune-author regenerate --auth-mode sub`
+against attune-ai's `.help` (4 stale features), keyless
+(`ANTHROPIC_API_KEY=""`), `CLAUDECODE=1` — telemetry
+`Polish LLM calls: 12 (subscription), 0 (API)`, exit 0.
+Rate-limit measurement (Phase 0 caveat #1): 12 calls over 15m16s
+(~76 s/call), zero 429/overload/rate-limit events. Per-kind skip
+(polish-cost lever 2) held under subscription routing: 12 calls
+instead of 44 (3 changed kinds per feature; 8 skipped each).
+
 ---
 
 ## Phase 2: Same for attune-rag (faithfulness judge)
