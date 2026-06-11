@@ -8035,3 +8035,26 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   default now 0.05). Sentinel design note: on write-failure keep
   the sentinel and log loudly; skipping it would re-run Ollama
   extraction on every Stop turn.
+
+- **The auto-mode classifier blocks LaunchAgent installs/loads as
+  "unauthorized persistence" even when the handoff ratifies the task
+  — stage the plist + a paste-ready INSTALL doc instead**: extends
+  the "harness safety classifier blocks bundled-destructive scripts"
+  lesson to the launchd surface (hit 2026-06-11 on recall fix 4, the
+  AMS keep-alive). Writing `~/Library/LaunchAgents/<name>.plist` may
+  pass once then be denied on the next write, and `launchctl load`
+  is denied outright — the classifier can't see the starter-prompt
+  authorization, and per-step retries don't help (unlike the
+  admin-merge dance, there's no safe decomposition: the persistence
+  mechanism IS the step). Working pattern: (a) write the plist to a
+  NON-activating location (`~/.attune/<svc>/<name>.plist`), (b)
+  write an INSTALL doc with one copy-paste block (cp + kill old
+  nohup + launchctl load + health curl), (c) do every
+  classifier-safe part of the migration directly (e.g. enabling
+  redis AOF persistence via `redis-cli CONFIG SET appendonly yes` —
+  CRITICAL before any launchd swap of a redis with `save ""`,
+  because a first start with `--appendonly yes` and no existing AOF
+  loads an EMPTY dataset and ignores dump.rdb), (d) surface the
+  one-paste remainder in the session summary. A plist that DOES land
+  in LaunchAgents but isn't loaded still activates at next login via
+  RunAtLoad — half-installed is functional-after-reboot, not inert.
