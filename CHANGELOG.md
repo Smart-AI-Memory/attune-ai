@@ -7,7 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.3.0] — 2026-06-10
+
+The subscription release: SDK workflows now work for Claude
+subscription users (no API key required) — the sdk-subprocess-isolation
+spec shipped end-to-end in one day with a live keyless receipt — and
+workflow results render as structured, readable reports on the voice
+and CLI surfaces (workflow-result-formatting T3/T4/T7).
+
 ### Added
+- **The Bash security guard travels with the SDK adapter**
+  (sdk-subprocess-isolation Phase 4, D8). `sdk_isolation_kwargs()`
+  carries an in-process `PreToolUse` hook (`HookMatcher` on `Bash`)
+  reusing the hook script's own `validate_bash_command` — settings
+  exclusion strips filesystem hooks, so the eval/exec protection now
+  rides inside every workflow subprocess, denying with a reason
+  instead of crashing.
 - **release-prep emits a structured `WorkflowReport`**
   (workflow-result-formatting T7, the motivating case).
   `ReleasePrepTeamWorkflow.execute()` returns a `WorkflowResult`
@@ -61,6 +76,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   subscription users never see inapplicable cost figures; explicit
   `True`/`False` (file, env `ATTUNE_SHOW_COST_METRICS`) overrides.
   Cost data always stays in `WorkflowReport.metadata` and `--json`.
+
+### Fixed
+- **Install docs for Redis support pointed at a package that was
+  never published.** Every live `pip install attune-redis` claim —
+  docs, README, and the five runtime MCP error messages — now says
+  `pip install 'attune-ai[redis]'` (the plugin ships bundled inside
+  attune-ai's wheel; the extra pulls its runtime deps).
 
 ## [8.2.0] — 2026-06-10
 
