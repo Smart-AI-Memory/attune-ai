@@ -8058,3 +8058,22 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   one-paste remainder in the session summary. A plist that DOES land
   in LaunchAgents but isn't loaded still activates at next login via
   RunAtLoad — half-installed is functional-after-reboot, not inert.
+
+- **Atomic/child docs in a RAG corpus REGRESS retrieval unless they
+  carry parent linkage and retrieval dedups by parent — children
+  displace their own parents in the top-k**: lessons-corpus-rag T1
+  (2026-06-11). Splitting mega-lessons' bolded sub-bullets into child
+  docs (to fix split-related misses) dropped golden P@3 from 84% to
+  72% on first contact: a child outranks its parent, the fixture/
+  consumer expects the parent identity, and one mega-lesson's three
+  children can occupy ALL top-3 slots, crowding out other lessons
+  entirely. Fix shape (both halves required): (a) every child entry
+  carries `metadata["parent_path"]` and scoring/display credits a
+  child hit to its parent lesson; (b) `retrieve()` pulls a larger
+  candidate pool (k*4) then dedups by lesson identity, returning the
+  highest-scored representative per lesson. Result: P@1 60%→84%,
+  P@3 84%→96% — the children then do exactly what they were for
+  (the trap-moment query lands the SPECIFIC sub-lesson first).
+  Generalizes to any hierarchical-chunking RAG design: chunk-level
+  recall + document-level identity are different contracts; conflate
+  them and finer chunking makes retrieval WORSE.
