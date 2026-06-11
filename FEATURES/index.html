@@ -3600,10 +3600,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#full-install-all-features" class="md-nav__link">
+  <a href="#redis-install-multi-session-coordination" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full Install (All Features)
+        Redis Install (Multi-Session Coordination)
       
     </span>
   </a>
@@ -4354,10 +4354,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#full-install-all-features" class="md-nav__link">
+  <a href="#redis-install-multi-session-coordination" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Full Install (All Features)
+        Redis Install (Multi-Session Coordination)
       
     </span>
   </a>
@@ -4909,12 +4909,8 @@
 - Single-session usage
 - CI/CD pipelines
 - Simple automation scripts</p>
-<h3 id="full-install-all-features">Full Install (All Features)<a class="headerlink" href="#full-install-all-features" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="c1"># Option 1: Install with Redis support</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a><span class="c1"># Option 2: Install everything</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[all]&#39;</span>
+<h3 id="redis-install-multi-session-coordination">Redis Install (Multi-Session Coordination)<a class="headerlink" href="#redis-install-multi-session-coordination" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>pip<span class="w"> </span>install<span class="w"> </span><span class="s1">&#39;attune-ai[redis]&#39;</span>
 </code></pre></div>
 <p><strong>Additional features:</strong>
 - Redis-based short-term memory
@@ -4928,6 +4924,8 @@
 - Team collaboration</p>
 <hr />
 <h2 id="installation-extras">Installation Extras<a class="headerlink" href="#installation-extras" title="Permanent link">&para;</a></h2>
+<p>Extras combine (e.g. <code>'attune-ai[developer,ops,redis]'</code>). Keep the
+quotes — zsh and bash treat square brackets as glob characters.</p>
 <table>
 <thead>
 <tr>
@@ -4938,34 +4936,29 @@
 </thead>
 <tbody>
 <tr>
+<td><code>developer</code></td>
+<td>Claude API provider, LangChain/LangGraph agent teams, MemDocs</td>
+<td><code>pip install 'attune-ai[developer]'</code></td>
+</tr>
+<tr>
+<td><code>ops</code></td>
+<td>Web ops dashboard (<code>attune ops</code>)</td>
+<td><code>pip install 'attune-ai[ops]'</code></td>
+</tr>
+<tr>
 <td><code>redis</code></td>
 <td>Redis-based short-term memory, event streaming</td>
 <td><code>pip install 'attune-ai[redis]'</code></td>
 </tr>
 <tr>
-<td><code>socratic</code></td>
-<td>Socratic workflow discovery</td>
-<td><code>pip install 'attune-ai[socratic]'</code></td>
-</tr>
-<tr>
-<td><code>crewai</code></td>
-<td>CrewAI integration (legacy)</td>
-<td><code>pip install 'attune-ai[crewai]'</code></td>
+<td><code>author</code></td>
+<td>Help authoring (<code>.help/</code> template generation)</td>
+<td><code>pip install 'attune-ai[author]'</code></td>
 </tr>
 <tr>
 <td><code>llm</code></td>
-<td>Anthropic LLM provider</td>
+<td>Anthropic LLM provider only</td>
 <td><code>pip install 'attune-ai[llm]'</code></td>
-</tr>
-<tr>
-<td><code>agents</code></td>
-<td>Agent orchestration support</td>
-<td><code>pip install 'attune-ai[agents]'</code></td>
-</tr>
-<tr>
-<td><code>all</code></td>
-<td>Everything</td>
-<td><code>pip install 'attune-ai[all]'</code></td>
 </tr>
 </tbody>
 </table>
