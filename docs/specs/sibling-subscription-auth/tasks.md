@@ -1,6 +1,6 @@
 # Spec: Subscription-First Auth for Sibling Packages — Tasks
 
-**Status**: in progress — Phase 0 shipped (see `findings.md`); Phase 1 shipped (attune-author PR #55, 2026-06-10); Phase 2 (attune-rag) unblocked.
+**Status**: in progress — Phase 0 shipped (see `findings.md`); Phase 1 shipped (attune-author PR #55, 2026-06-10; v0.16.0 on PyPI 2026-06-11); Phase 2 core shipped (attune-rag PR #183, 2026-06-11) — 2.5 + the rag release remain.
 
 > Phase 0 is mandatory and lands before any implementation. The
 > design rests on assumptions about how `claude_agent_sdk` and
@@ -84,20 +84,28 @@ adapter shape; may extract to a shared helper).
 
 | # | Task | Layer | Status | Notes |
 |---|------|-------|--------|-------|
-| 2.1 | Mirror Phase 1's adapter inside attune-rag (or import from a shared package per Option B/C) | attune-rag | todo | Async-native — `claude_agent_sdk.query()` matches `FaithfulnessJudge.score`'s async shape |
-| 2.2 | Wire into `FaithfulnessJudge.__init__` so callers don't pass api_key when subscription is detected | attune-rag | todo | Existing `client: AsyncAnthropic | None` keyword stays for explicit injection |
-| 2.3 | Update `attune-rag eval` CLI commands with the same `--auth-mode` flag | attune-rag | todo | Parity with attune-author |
-| 2.4 | Tests: judge routing under each mode | attune-rag | todo | |
-| 2.5 | Telemetry: annotate `subscription` vs `API` cost in attune-author's faithfulness summary log | attune-author | todo | Cross-package; depends on Phase 2 being merged |
-| 2.6 | Update CHANGELOG + README in attune-rag | attune-rag | todo | |
+| 2.1 | Mirror Phase 1's adapter inside attune-rag (or import from a shared package per Option B/C) | attune-rag | **done** | `attune_rag.auth` (PR #183) — async-native, Option A (mirror, no shared package yet). Schema guarantee preserved via Agent SDK `output_format` json_schema → `ResultMessage.structured_output`; `max_turns=2` (structured output costs the CLI an extra turn — found live, drift-guarded in tests) |
+| 2.2 | Wire into `FaithfulnessJudge.__init__` so callers don't pass api_key when subscription is detected | attune-rag | **done** | `auth_mode=` param; injected client always wins (API route); sub route skips `AsyncAnthropic` construction; auto falls back to API on sub failure, forced sub never falls back |
+| 2.3 | Update `attune-rag eval` CLI commands with the same `--auth-mode` flag | attune-rag | **done** | Premise correction: no `attune-rag eval` subcommand exists — the judge's CLI surface is `attune-rag-benchmark`, which got `--auth-mode {auto,api,sub}` (judge route only; answer GENERATION via `ClaudeProvider` stays API-key-only per the Phase-0 scope note, so the `--with-faithfulness` key gate stays) |
+| 2.4 | Tests: judge routing under each mode | attune-rag | **done** | 16 tests in `tests/unit/test_auth_routing.py`; suite conftest pins `ATTUNE_RAG_AUTH_MODE=api` + clears `CLAUDECODE` (mirrors attune-author) |
+| 2.5 | Telemetry: annotate `subscription` vs `API` cost in attune-author's faithfulness summary log | attune-author | todo | Cross-package; needs Phase 2 RELEASED on PyPI (attune-rag 0.7.0) + attune-author cap/floor bump |
+| 2.6 | Update CHANGELOG + README in attune-rag | attune-rag | **done** | New README "Authentication" section; `claude-agent-sdk>=0.1.63` added to `[claude]` extra |
 
 ### Phase 2 exit checklist
 
-- [ ] Tasks 2.1–2.6 done
-- [ ] Polish-fact-check Phase 3 judge runs against subscription
-      without an API key
-- [ ] attune-rag's standalone CLI honors the same flags as
-      attune-author
+- [ ] Tasks 2.1–2.6 done (2.1–2.4 + 2.6 shipped in attune-rag
+      PR #183; 2.5 waits on the rag release)
+- [x] Judge runs against subscription without an API key — live
+      receipt (2026-06-11): route=sub, keyless, 14.6 s, judge
+      caught a planted fake-flag hallucination (score 0.5,
+      2 supported / 2 unsupported), telemetry
+      `{sub_calls: 1, api_calls: 0}`. (The polish-fact-check
+      Phase 3 wording resolves to this once attune-rag 0.7.0 is
+      released and attune-author picks it up.)
+- [x] attune-rag's standalone CLI honors the same flags as
+      attune-author (`attune-rag-benchmark --auth-mode`; the
+      spec's named `attune-rag eval` surface doesn't exist —
+      see 2.3 note)
 
 ---
 
