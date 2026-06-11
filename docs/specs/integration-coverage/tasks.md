@@ -31,6 +31,28 @@ also avoided.
 
 ---
 
+## Phase 2 — Live receipts per surface (added 2026-06-11)
+
+**Born:** discipline-review chat, 2026-06-11 (improvement #3 of
+6). Generalize the nightly-auth pattern: the most expensive
+recurring bug class is mocked-green / live-broken — AMS behaviors
+invisible to 100+ green mocked tests, the judge shim `max_turns`
+trap, and (found 2026-06-11 during wrf T8) MCP workflow handlers
+calling `.get()` on a `final_output` that had been a STRING since
+the SDK migration: crash-or-dead for months, 16k tests silent.
+The "one non-mocked round-trip per external-dep feature" lesson
+exists but is not enforced as a gate; `integration-auth.yml`
+proves the budget-capped nightly shape works.
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 7 | **2.1 Surface inventory.** Enumerate externally-wired surfaces (MCP tools, dashboard run-path, CLI render-path, memory backends, RAG pipeline, plugin hooks) and for each record whether ANY non-mocked exercise exists (nightly, integration suite, or dogfood receipt). Output: a coverage table in this dir. | docs | todo | Cheap; mostly grep + reading. The MCP tool surface is the known-worst (the handlers bug above). |
+| 8 | **2.2 One round-trip per uncovered surface.** For each gap, the smallest live exercise: e.g. an MCP smoke that calls each workflow tool against a tiny fixture and asserts response SHAPE (not content); a dashboard run-path probe; a CLI render probe on a recorded result. Budget-capped like the auth job; skip-gated locally. | tests | todo | Shape assertions, not content — these catch the str-vs-dict class, not flaky LLM variance. |
+| 9 | **2.3 Wire to the nightly.** Extend `integration-auth.yml` (or a sibling keyless job for non-LLM surfaces) so the round-trips run on schedule, with the run-triage doc pattern for failures. | ci | todo | Keyless surfaces (MCP shape, CLI render) can run per-PR cheaply; only LLM-touching probes stay nightly. |
+| 10 | **2.4 Gate the rule forward.** New external-dep feature ⇒ its PR includes one non-mocked round-trip, enforced as /spec + review guidance (advisory, per enforcement-vs-documentation), with the surface inventory as the audit trail. | docs | todo | Advisory by design — the hook can't see "external-dep feature" mechanically. |
+
+---
+
 ## Done-state
 
 This spec has two valid terminal states:
