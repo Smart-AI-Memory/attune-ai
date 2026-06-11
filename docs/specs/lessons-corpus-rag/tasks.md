@@ -1,6 +1,6 @@
 # Lessons Corpus via RAG — Tasks
 
-**Status:** in progress (2026-06-11) — T1+T2 done; T3–T6 open.
+**Status:** in progress (2026-06-11) — T1+T2+T3 done; T4–T6 open.
 Bounded PRs; each task names its receipt.
 
 ## T1 — `attune.lessons` module — DONE 2026-06-11
@@ -40,7 +40,7 @@ Bounded PRs; each task names its receipt.
   (older installs). `.agents/` mirror regenerated via
   `sync_agents_skills.py`.
 
-## T3 — UserPromptSubmit hook
+## T3 — UserPromptSubmit hook — DONE 2026-06-11
 
 - `plugin/hooks/lesson_recall.py`: score floor, top-3,
   surface-once-per-(session, lesson) sentinel, `additionalContext`
@@ -48,8 +48,19 @@ Bounded PRs; each task names its receipt.
   SDK-subprocess gate (`is_sdk_subprocess()` — the isolation rule).
 - Tests mirror `jit_recall.py`'s suite (sentinel, no-match silence,
   crash → exit 0, injected payload shape).
-- Receipt: live session shows a relevant lesson surfacing on a
-  realistic prompt, and an unrelated prompt surfacing nothing.
+- **Receipt (process-level, real corpus):** payload prompt *"I need
+  to tag the release now that the squash merge landed on main"* →
+  injected the Tag-mechanics lesson as `additionalContext`; an
+  unrelated prompt (dashboard color tweak) emitted nothing; both
+  exited 0. Extra noise gates beyond the design: min prompt length
+  (20 chars — short acks never query) and slash-command skip
+  (`/recall` IS the manual surface). Floor tunable via
+  `ATTUNE_LESSON_RECALL_FLOOR` (default 8.0) for soak calibration.
+  Children sentinel on their PARENT lesson id, so one mega-lesson
+  isn't re-surfaced via a different child. 17 tests.
+  **In-CC-session receipt is gated on the next plugin release +
+  `claude plugin update`** (same gating as the recall-loop fixes —
+  live sessions run the cached plugin).
 
 ## T4 — jit-recall `lesson_ref` integration
 

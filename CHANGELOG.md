@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- **Automatic lesson recall on user prompts** (lessons-corpus-rag
+  T3). New `UserPromptSubmit` hook (`plugin/hooks/lesson_recall.py`)
+  retrieves the top lessons scoring against each prompt and injects
+  them as `additionalContext`. Noise controls: score floor
+  (`ATTUNE_LESSON_RECALL_FLOOR`, default 8.0), minimum prompt
+  length, slash-command skip, surface-once-per-(session, lesson)
+  sentinel (children gate on their parent lesson),
+  `ATTUNE_LESSON_RECALL=0` off-switch, SDK-subprocess gate,
+  fail-safe exit 0.
 - **`attune.lessons` — retrieval index over the lessons corpus**
   (lessons-corpus-rag T1). The Phase 0 harness's wrap-aware splitter
   moves to `attune.lessons.split_lessons()` (single source of truth;
