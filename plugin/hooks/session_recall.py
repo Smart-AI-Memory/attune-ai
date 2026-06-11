@@ -95,13 +95,36 @@ def main() -> int:
         except ValueError:
             topk = _DEFAULT_TOPK
 
+        # Health line: a registered upgrade backend (e.g. Redis AMS) that is
+        # unreachable means recall is silently degraded and findings stored
+        # in that tier are dark. Surfacing this at session start is the fix
+        # for the 2026-06-11 incident where AMS was down for a week unnoticed.
+        health = ""
+        try:
+            from attune.memory.session_stash import backend_status
+
+            status = backend_status()
+            dark = status.get("unreachable_upgrade")
+            if dark:
+                health = (
+                    f"⚠ cross-session recall degraded: memory backend '{dark}' is "
+                    "unreachable — findings stored there are dark until it's back "
+                    "(e.g. restart the Agent Memory Server)."
+                )
+        except Exception:  # noqa: BLE001 — health line is best-effort
+            pass
+
         entries = recent_entries(top_k=topk, cwd=cwd)
         if not entries:
+            if health:
+                print(health)
             return 0
         block = _format(entries)
         # Only print if we actually rendered at least one finding line.
         if any(line.startswith("- [") for line in block.splitlines()):
             print(block)
+        if health:
+            print(health)
         return 0
     except Exception:  # noqa: BLE001 — SessionStart hook must never crash a session
         traceback.print_exc(file=sys.stderr)
