@@ -1,7 +1,11 @@
 # Article outline — "Too Graceful: When Your Fallbacks Lie to You"
 
-**Status:** outline seed (2026-06-11) — Patrick to shape; structure
-and case material captured same-day while receipts were fresh.
+**Status:** draft v1 written + Patrick-reviewed same day
+(LEGIBLE_FAILURE_draft_v1.md, ~1,490 words). **Publication gated**
+on the Redis/recall memory features working reliably (Patrick,
+2026-06-11) — the article ships once its own subject is proven
+fixed; the recall-loop soak (#769) is the readiness signal. Then:
+attune-ai-dev page + LinkedIn cut (~600–800 words).
 **Relationship to the Discipline article:** standalone companion
 piece, per the "article is generative — synergies tied to the
 discipline, not new sections" decision. Cross-link both ways.
