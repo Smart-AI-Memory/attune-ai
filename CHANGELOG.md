@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Install docs now match the real extras.** README and
+  getting-started docs recommended `[developer]` as the default
+  (core already covers CLI/workflows/MCP/RAG/Agent SDK) and
+  advertised `[all]` as "all features" (it also drags in the
+  contributor toolchain — pytest, black, mypy, ruff, pre-commit,
+  mkdocs). Docs now lead with the plain install and a per-surface
+  extras table (`developer`/`ops`/`redis`/`author`), drop `[all]`
+  from user guidance, remove the nonexistent `crewai` extra from
+  FEATURES.md, and quote every bracketed install command (zsh
+  glob trap).
+
 ## [8.3.0] — 2026-06-10
 
 The subscription release: SDK workflows now work for Claude

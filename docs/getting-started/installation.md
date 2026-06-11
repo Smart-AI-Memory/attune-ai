@@ -1,5 +1,5 @@
 ---
-description: Install Attune AI with pip in 2 minutes. Choose from developer, minimal, or full packages. Includes CLI tools, the Claude Code plugin, and workflow support.
+description: Install Attune AI with pip in 2 minutes. The core install covers the CLI, workflows, and MCP server; add extras per surface (API agents, ops dashboard, Redis).
 ---
 
 # Installation
@@ -10,32 +10,23 @@ Get Attune AI installed and configured in about 2 minutes.
 
 ## Step 1: Install the Package
 
-Choose your installation option:
+The core install covers most users — the CLI, all workflows, the
+MCP server, RAG, and the Agent SDK are core dependencies:
 
-=== "Recommended (Developer)"
+```bash
+pip install attune-ai
+```
 
-    ```bash
-    pip install 'attune-ai[developer]'
-    ```
+Add extras only for the surfaces you use (they combine, e.g.
+`'attune-ai[developer,ops]'` — keep the quotes; zsh and bash treat
+square brackets as glob characters):
 
-    Includes: CLI tools, the Claude Code plugin, all workflows, local telemetry.
-
-=== "Minimal"
-
-    ```bash
-    pip install attune-ai
-    ```
-
-    Core functionality only. Add extras later as needed.
-
-=== "All Features"
-
-    ```bash
-    pip install 'attune-ai[all]'
-    ```
-
-    Everything: agents, memory, semantic caching, enterprise
-    features.
+| You want | Install |
+| -------- | ------- |
+| Claude API mode + LangChain/LangGraph agent teams | `pip install 'attune-ai[developer]'` |
+| The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
+| Redis / Agent Memory Server memory backend | `pip install 'attune-ai[redis]'` |
+| Help authoring (`.help/` templates) | `pip install 'attune-ai[author]'` |
 
 ### Verify Installation
 
@@ -138,7 +129,7 @@ attune provider show
 
 ```bash
 # Reinstall
-pip install --upgrade attune-ai[developer]
+pip install --upgrade attune-ai
 
 # Or for development
 pip install -e '.[dev]'

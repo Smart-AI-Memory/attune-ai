@@ -27,7 +27,7 @@ Attune AI includes `.claude/mcp.json` configuration. Claude Code automatically d
 1. **Install Attune AI:**
 
 ```bash
-pip install attune-ai[developer]
+pip install attune-ai
 ```
 
 2. **Open project in Claude Code**
@@ -319,7 +319,7 @@ echo $ANTHROPIC_API_KEY
 
 **Check workflow dependencies:**
 ```bash
-pip install attune-ai[developer]
+pip install attune-ai
 ```
 
 **Review error logs:**
