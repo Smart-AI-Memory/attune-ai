@@ -86,10 +86,18 @@ class TestAgentSDKResultAdapterConversion:
 
         assert isinstance(result, WorkflowResult)
         assert result.success is True
-        # final_output is formatted from parsed findings
-        assert "No eval/exec usage found" in result.final_output
-        assert "Good naming conventions" in result.final_output
-        assert "Clean module boundaries" in result.final_output
+        # final_output is a serialized WorkflowReport built from the
+        # parsed findings (workflow-result-formatting T8) — every
+        # category's content must survive into the report sections.
+        from attune.workflows.output import WorkflowReport
+
+        assert WorkflowReport.is_report_dict(result.final_output)
+        report = WorkflowReport.from_dict(result.final_output)
+        section_items = [item for s in report.sections if hasattr(s, "items") for item in s.items]
+        flat = " ".join(str(i) for i in section_items)
+        assert "No eval/exec usage found" in flat
+        assert "Good naming conventions" in flat
+        assert "Clean module boundaries" in flat
         assert result.provider == "anthropic"
         assert result.error is None
 
@@ -120,7 +128,7 @@ class TestAgentSDKResultAdapterConversion:
             completed_at=_now(),
         )
 
-        # final_output WAS rewritten (formatted from parsed findings)…
+        # final_output WAS rewritten (serialized WorkflowReport)…
         assert result.final_output != _SAMPLE_REVIEW
         # …but the raw channel is byte-identical to the agent text.
         assert result.metadata["raw_result_text"] == _SAMPLE_REVIEW
@@ -1199,6 +1207,147 @@ class TestAgentSDKResultAdapterStructuredOutput:
         )
         # Empty dict is falsy, so falls back to text parsing
         assert "85/100" in result.summary
+
+
+@pytest.mark.unit
+class TestAgentSDKResultAdapterReportOutput:
+    """final_output is a serialized WorkflowReport when findings parse.
+
+    workflow-result-formatting T8: the adapter is the shared converter
+    for all SDK-native workflows. These tests pin the report contract —
+    discriminator, sections, score, next steps, cost metadata — plus
+    the passthrough guard for findings-free text.
+    """
+
+    _STRUCTURED_DATA: dict = {
+        "summary": {"score": 90, "text": "Code is solid."},
+        "findings": {
+            "security": [
+                {
+                    "description": "No eval usage",
+                    "severity": "low",
+                    "file": "src/app.py",
+                    "line": 12,
+                },
+            ],
+        },
+        "suggestions": [
+            {"description": "Add input validation", "priority": "high"},
+        ],
+    }
+
+    def _result(self, **kwargs):
+        defaults = {
+            "result_text": _SAMPLE_REVIEW,
+            "subagent_names": _SUBAGENT_NAMES,
+            "started_at": _now(),
+            "completed_at": _now(),
+        }
+        defaults.update(kwargs)
+        return AgentSDKResultAdapter.from_agent_output(**defaults)
+
+    def test_findings_produce_report_dict_with_title(self) -> None:
+        """Parsed findings → final_output is a report dict with the
+        caller's title."""
+        from attune.workflows.output import WorkflowReport
+
+        result = self._result(report_title="Code review")
+        assert WorkflowReport.is_report_dict(result.final_output)
+        report = WorkflowReport.from_dict(result.final_output)
+        assert report.title == "Code review"
+
+    def test_default_title_when_not_passed(self) -> None:
+        """No report_title → generic fallback title."""
+        from attune.workflows.output import WorkflowReport
+
+        report = WorkflowReport.from_dict(self._result().final_output)
+        assert report.title == "Workflow report"
+
+    def test_text_categories_become_list_sections(self) -> None:
+        """Text-parsed string bullets land in per-category ListSections."""
+        from attune.workflows.output import ListSection, WorkflowReport
+
+        report = WorkflowReport.from_dict(self._result().final_output)
+        list_sections = [s for s in report.sections if isinstance(s, ListSection)]
+        titles = {s.title for s in list_sections}
+        assert "Security" in titles
+        assert "Quality" in titles
+        security = next(s for s in list_sections if s.title == "Security")
+        assert "No eval/exec usage found" in security.items
+
+    def test_text_score_extracted_from_summary(self) -> None:
+        """'Code health score: 85/100' in text → report.score == 85."""
+        from attune.workflows.output import WorkflowReport
+
+        report = WorkflowReport.from_dict(self._result().final_output)
+        assert report.score == 85
+
+    def test_structured_findings_become_findings_section(self) -> None:
+        """Structured dict items → FindingsSection with typed Findings."""
+        from attune.workflows.output import FindingsSection, WorkflowReport
+
+        run = AgentRunResult(
+            result_text="fallback text",
+            structured_output=self._STRUCTURED_DATA,
+        )
+        result = self._result(result_text="fallback text", agent_run_result=run)
+        report = WorkflowReport.from_dict(result.final_output)
+        assert report.score == 90
+        findings_sections = [s for s in report.sections if isinstance(s, FindingsSection)]
+        assert len(findings_sections) == 1
+        finding = findings_sections[0].findings[0]
+        assert finding.message == "No eval usage"
+        assert finding.severity == "low"
+        assert finding.file == "src/app.py"
+        assert finding.line == 12
+
+    def test_suggestions_become_next_steps_section(self) -> None:
+        """Adapter suggestions land as the trailing NextStepsSection."""
+        from attune.workflows.output import NextStepsSection, WorkflowReport
+
+        report = WorkflowReport.from_dict(self._result().final_output)
+        next_steps = [s for s in report.sections if isinstance(s, NextStepsSection)]
+        assert len(next_steps) == 1
+        texts = [a.text for a in next_steps[0].items]
+        assert "Consider adding input validation" in texts
+
+    def test_cost_metadata_present_for_api_runs(self) -> None:
+        """total_cost_usd set → cost_usd + duration_s in report metadata."""
+        from attune.workflows.output import WorkflowReport
+
+        run = AgentRunResult(result_text=_SAMPLE_REVIEW, total_cost_usd=0.42)
+        report = WorkflowReport.from_dict(self._result(agent_run_result=run).final_output)
+        assert report.metadata["cost_usd"] == 0.42
+        assert "duration_s" in report.metadata
+
+    def test_cost_metadata_omitted_for_subscription_runs(self) -> None:
+        """total_cost None (subscription) → no cost_usd key; the
+        renderer's cost line then shows no inapplicable $0.00."""
+        from attune.workflows.output import WorkflowReport
+
+        report = WorkflowReport.from_dict(self._result().final_output)
+        assert "cost_usd" not in report.metadata
+        assert "duration_s" in report.metadata
+
+    def test_findings_free_text_passes_through_unchanged(self) -> None:
+        """No parsed findings → final_output stays the raw markdown str."""
+        plain = "Just a prose answer with no category sections."
+        result = self._result(result_text=plain)
+        assert result.final_output == plain
+
+    def test_report_renders_through_voice_renderer(self) -> None:
+        """Round-trip: serialized report renders with content intact and
+        no raw dict/repr leakage."""
+        from attune.voice import report_renderer
+        from attune.workflows.output import WorkflowReport
+
+        result = self._result(report_title="Code review")
+        report = WorkflowReport.from_dict(result.final_output)
+        rendered = report_renderer.render(report, disclosure="summary")
+        assert "# Code review" in rendered
+        assert "No eval/exec usage found" in rendered
+        assert "{'kind'" not in rendered
+        assert "WorkflowReport(" not in rendered
 
 
 @pytest.mark.unit

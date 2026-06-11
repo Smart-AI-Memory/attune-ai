@@ -1,12 +1,13 @@
 # Tasks: Workflow result formatting
 
-**Status:** partial (2026-06-10) — T1 (the `WorkflowReport` / Section
+**Status:** partial (2026-06-11) — T1 (the `WorkflowReport` / Section
 data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
-`render_safe()`, all 4 test layers, 98% branch, #741), and T3 (voice
-wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`)
-T4 (CLI terminal rendering), and T7 (release-prep
-migration — the motivating case) shipped; T5/T6/T8+ pending.
+`render_safe()`, all 4 test layers, 98% branch, #741), T3 (voice
+wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`),
+T4 (CLI terminal rendering), T7 (release-prep
+migration — the motivating case), and T8 (adapter-level migration of
+all 15 SDK-native workflows) shipped; T5/T6 pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
@@ -105,12 +106,27 @@ migration — the motivating case) shipped; T5/T6/T8+ pending.
   the SDK-native `ReleasePreparationWorkflow`, a separate surface —
   its migration rides T8+ (adapter-level findings → report).
 
-## T8+ — Migrate remaining workflows (D5 rank)
+## T8+ — Migrate remaining workflows (D5 rank) — DONE
 
-- code-review → dependency-check → bug-predict → test-gen →
+- ~~code-review → dependency-check → bug-predict → test-gen →
   document-manager → refactor-plan → perf-audit → doc-audit. One small
   PR each (converter + repr-leak drift-guard test). Safety-net banner
-  covers the not-yet-migrated tail.
+  covers the not-yet-migrated tail.~~
+- Shipped 2026-06-11 as ONE adapter-level PR, not 8 per-workflow
+  converters: every SDK-native workflow routes through
+  `AgentSDKResultAdapter.from_agent_output`, so the converter lives
+  there — when findings parse (text categories or structured output),
+  `final_output` becomes `WorkflowReport.to_dict()` (dict items →
+  `FindingsSection`, string bullets → `ListSection`, suggestions →
+  `NextStepsSection`, score from `summary.score` or a text regex,
+  cost/duration in report metadata where the renderer's `show_cost`
+  gate reads them). All 15 SDK workflows pass `report_title`;
+  findings-free prose still passes through as plain markdown. This
+  also fixes the cost-line-on-subscription nit (`report_rendered`
+  now True → the wrapper's `$0.0000` line is suppressed; design D3).
+  Out of scope: document-manager (legacy multi-stage `BaseWorkflow`,
+  not adapter-routed — covered by the T3 safety net; migrate only if
+  its output surface ever matters).
 
 ## Notes
 

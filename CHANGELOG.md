@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+- **All 15 SDK-native workflows now emit structured WorkflowReport
+  results** (workflow-result-formatting T8). The shared
+  `AgentSDKResultAdapter` serializes parsed findings into a
+  `WorkflowReport` — per-category findings/list sections, a trailing
+  Next steps section, score (from structured output or the text
+  summary), and cost/duration metadata — instead of rewriting
+  `final_output` as flat markdown. The voice and CLI layers render it
+  with tiered disclosure, and the subscription-mode `$0.0000` cost
+  line disappears (the renderer's `show_cost` gate owns cost display).
+  Findings-free prose responses still pass through unchanged;
+  `metadata["raw_result_text"]` keeps carrying the unmodified agent
+  text.
+
 ### Fixed
 - **Install docs now match the real extras.** README and
   getting-started docs recommended `[developer]` as the default

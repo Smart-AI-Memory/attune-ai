@@ -165,6 +165,7 @@ class RefactorPlanWorkflow(BaseWorkflow):
             completed_at = datetime.now()
 
             return AgentSDKResultAdapter.from_agent_output(
+                report_title="Refactor plan",
                 result_text=run_result.result_text,
                 subagent_names=_SUBAGENT_NAMES,
                 started_at=started_at,
