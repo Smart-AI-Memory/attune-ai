@@ -1,7 +1,7 @@
 # Lessons Corpus via RAG — Tasks
 
-**Status:** in progress (2026-06-11) — T1 done; T2–T6 open. Bounded
-PRs; each task names its receipt.
+**Status:** in progress (2026-06-11) — T1+T2 done; T3–T6 open.
+Bounded PRs; each task names its receipt.
 
 ## T1 — `attune.lessons` module — DONE 2026-06-11
 
@@ -27,11 +27,18 @@ PRs; each task names its receipt.
   diagnosing-sdk-failures family — the known structural-ambiguity
   class). Tests: 23, module branch coverage 100%.
 
-## T2 — `/recall` extension
+## T2 — `/recall` extension — DONE 2026-06-11
 
 - The recall skill queries `LessonsIndex` alongside the AMS findings
   store; results labeled by source ("lesson" vs "session finding").
-- Receipt: a trap-moment query answered in a live session.
+- **Receipt:** live trap-moment query `"tag a release after a squash
+  merge"` through `LessonsIndex().retrieve(k=3)` returned the exact
+  child sub-lesson first — *"Tag mechanics … — Don't tag before a
+  squash-merge"* (score 16.0), then the post-squash-local-main and
+  branch-recreation lessons. The skill degrades silently to
+  findings-only when `attune.lessons`/attune-rag is unavailable
+  (older installs). `.agents/` mirror regenerated via
+  `sync_agents_skills.py`.
 
 ## T3 — UserPromptSubmit hook
 
