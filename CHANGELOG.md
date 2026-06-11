@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+- **Cross-session recall loop actually delivers** (recall-loop triage
+  2026-06-11). Three compounding gaps had kept the store empty of real
+  findings since the feature shipped: (1) the Stop-hook utilization
+  gate was miscalibrated — the estimator counts only message-body
+  chars, so substantive tool-heavy sessions plateaued at ~0.18 against
+  the 0.30 gate and never stashed; default lowered to 0.05. (2) Silent
+  degradation: an unreachable upgrade backend (e.g. Redis AMS down)
+  was invisible — new `backend_status()` in
+  `attune.memory.session_stash`, a SessionStart health line in the
+  recall hook, and backend naming in the `/recall` skill now surface
+  it. (3) The Stop hook left no forensic trail — it now appends
+  gate/extraction/write outcomes to `stash.log` beside its sentinels,
+  flagging zero-written runs loudly. Receipts and root-cause record:
+  `docs/specs/just-in-time-recall/recall-loop-triage-2026-06-11.md`.
+
 ### Changed
 - **All 15 SDK-native workflows now emit structured WorkflowReport
   results** (workflow-result-formatting T8). The shared

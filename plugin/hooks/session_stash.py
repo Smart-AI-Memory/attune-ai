@@ -70,11 +70,40 @@ except Exception:  # noqa: BLE001 — hook must never crash a session
 _VALID_TYPES = {"decision", "pattern", "bug", "reference", "note"}
 _MAX_FINDINGS = 5
 _TAIL_CHARS = 8_000  # transcript tail handed to the extractor (smaller = faster LLM)
-_DEFAULT_MIN_UTIL = 0.30
+# Calibrated 2026-06-11: the estimator counts only user/assistant message-body
+# chars (tool results excluded), so a substantive tool-heavy session plateaus
+# far below the old 0.30 gate — a real 1.2 MB transcript measured 0.18 and
+# never stashed. 0.05 (~10k message-body tokens) separates trivial sessions
+# from substantive ones. Receipts:
+# docs/specs/just-in-time-recall/recall-loop-triage-2026-06-11.md
+_DEFAULT_MIN_UTIL = 0.05
 
 
 def _enabled() -> bool:
     return os.environ.get("ATTUNE_MEMORY_STASH", "1").strip() not in {"0", "false", "no"}
+
+
+def _diag(msg: str) -> None:
+    """Append a one-line diagnostic to ``stash.log`` in the sentinel dir.
+
+    Stop-hook stdout/stderr are discarded on exit 0, so this file is the only
+    forensic trail for "the hook ran but nothing was stored" — the failure
+    class the 2026-06-11 triage had to reconstruct from scratch. Best-effort:
+    never raises. The sentinel dir is env-overridable
+    (``ATTUNE_AI_SENTINEL_DIR``), so tests redirect automatically.
+    """
+    if _sentinel_dir is None:
+        return
+    try:
+        from datetime import datetime
+
+        d = _sentinel_dir()
+        d.mkdir(parents=True, exist_ok=True)
+        with (d / "stash.log").open("a", encoding="utf-8") as fh:
+            fh.write(f"{datetime.now().isoformat(timespec='seconds')} {msg}\n")
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: diagnostics must never break the host session.
+        pass
 
 
 def _stash_sentinel(session_id: str | None) -> Path | None:
@@ -354,7 +383,9 @@ def main() -> int:
         except ValueError:
             min_util = _DEFAULT_MIN_UTIL
         if estimate_utilization is not None and transcript_path:
-            if estimate_utilization(transcript_path) < min_util:
+            util = estimate_utilization(transcript_path)
+            if util < min_util:
+                _diag(f"skip session={session_id} util={util:.3f} < gate {min_util}")
                 return 0  # too little so far; let a later, fuller stop capture it
 
         text = _read_transcript_tail(transcript_path)
@@ -368,9 +399,14 @@ def main() -> int:
             # fall back to the heuristic rather than stash nothing.
             findings = _normalize(_extract_heuristic(text))
         if not findings:
+            _diag(f"skip session={session_id} extraction yielded no findings")
             return 0
 
         written = _stash_findings(findings, session_id=session_id, cwd=cwd)
+        _diag(
+            f"stash session={session_id} findings={len(findings)} written={written}"
+            + (" — WRITE PATH FAILED (attune import or backend write)" if written == 0 else "")
+        )
 
         # Mark done AFTER work so a crash mid-extract retries next stop.
         if sentinel is not None:

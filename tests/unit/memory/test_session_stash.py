@@ -431,6 +431,92 @@ def test_resolve_uses_fallback_when_no_upgrade(monkeypatch):
 
 
 # --------------------------------------------------------------------------
+# backend_status — health surfacing (recall-loop triage 2026-06-11):
+# an unreachable upgrade backend must be NAMED, not silently degraded past.
+# --------------------------------------------------------------------------
+
+
+def test_backend_status_healthy_upgrade_no_warning(monkeypatch):
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    upgrade = _Upgrade(connected=True)
+    fallback = _Fallback()
+    monkeypatch.setattr(
+        md,
+        "entry_points",
+        lambda group=None: [_ep("file", lambda: fallback), _ep("redis", lambda: upgrade)],
+    )
+    status = backend_status()
+    assert status["backend"] == "_Upgrade"
+    assert status["fallback"] is False
+    assert status["unreachable_upgrade"] is None
+
+
+def test_backend_status_names_disconnected_upgrade(monkeypatch):
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    upgrade = _Upgrade(connected=False)
+    fallback = _Fallback()
+    monkeypatch.setattr(
+        md,
+        "entry_points",
+        lambda group=None: [_ep("file", lambda: fallback), _ep("redis", lambda: upgrade)],
+    )
+    status = backend_status()
+    assert status["backend"] == "_Fallback"
+    assert status["fallback"] is True
+    assert status["unreachable_upgrade"] == "redis"
+
+
+def test_backend_status_names_upgrade_whose_constructor_raises(monkeypatch):
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    fallback = _Fallback()
+
+    def _boom():
+        raise RuntimeError("agent-memory-client not installed")
+
+    monkeypatch.setattr(
+        md,
+        "entry_points",
+        lambda group=None: [_ep("file", lambda: fallback), _ep("redis", _boom)],
+    )
+    status = backend_status()
+    assert status["fallback"] is True
+    assert status["unreachable_upgrade"] == "redis"
+
+
+def test_backend_status_fallback_only_is_not_degraded(monkeypatch):
+    # A plain install with only the file tier is normal, not degraded.
+    import importlib.metadata as md
+
+    from attune.memory.session_stash import backend_status
+
+    fallback = _Fallback()
+    monkeypatch.setattr(md, "entry_points", lambda group=None: [_ep("file", lambda: fallback)])
+    status = backend_status()
+    assert status["fallback"] is True
+    assert status["unreachable_upgrade"] is None
+
+
+def test_backend_status_no_backends():
+    # autouse fixture already patches entry_points to [].
+    from attune.memory.session_stash import backend_status
+
+    assert backend_status() == {
+        "backend": None,
+        "fallback": False,
+        "unreachable_upgrade": None,
+    }
+
+
+# --------------------------------------------------------------------------
 # D8 zero-infra round-trip: stash_entry -> recall_entries via the file backend
 # --------------------------------------------------------------------------
 

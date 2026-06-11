@@ -32,7 +32,7 @@ annotated by their `[type]`.
 **With a query:**
 
 ```bash
-python -c "import json, os; from attune.memory.session_stash import recall_entries; print(json.dumps(recall_entries(os.environ['Q'], top_k=8, cwd=os.getcwd()), ensure_ascii=False))"
+python -c "import json, os; from attune.memory.session_stash import recall_entries, backend_status; print(json.dumps({'status': backend_status(), 'hits': recall_entries(os.environ['Q'], top_k=8, cwd=os.getcwd())}, ensure_ascii=False))"
 ```
 
 Pass the user's topic as the `Q` environment variable (avoids quoting
@@ -41,10 +41,10 @@ issues), e.g. `Q="AMS event loop" python -c "..."`.
 **No query (recent):**
 
 ```bash
-python -c "import json, os; from attune.memory.session_stash import recent_entries; print(json.dumps(recent_entries(top_k=8, cwd=os.getcwd()), ensure_ascii=False))"
+python -c "import json, os; from attune.memory.session_stash import recent_entries, backend_status; print(json.dumps({'status': backend_status(), 'hits': recent_entries(top_k=8, cwd=os.getcwd())}, ensure_ascii=False))"
 ```
 
-Each result is a dict with `text`, `topics` (carrying `type:<kind>` and
+Each hit is a dict with `text`, `topics` (carrying `type:<kind>` and
 `cwd:<path>`), `cwd`, and `session_id`. Render them as:
 
 ```
@@ -52,12 +52,22 @@ Each result is a dict with `text`, `topics` (carrying `type:<kind>` and
 - [bug] <text>
 ```
 
+**Always name the answering backend** (from `status.backend`) in one
+short line, e.g. "(searched via AMSMemoryBackend)". If
+`status.unreachable_upgrade` is set, lead with a warning before any
+results: the named upgrade backend (e.g. Redis AMS) is down, recall is
+degraded to the local file tier, and findings stored in the upgrade
+tier are unreachable until it's restarted.
+
 ## When Nothing Comes Back
 
-An empty list means no matching findings yet (the store fills as the
-Stop hook stashes findings over sessions), or no searchable backend is
-installed. Say so plainly — do **not** invent findings. Suggest the
-user keep working; the soak fills the store over time.
+An empty `hits` list means no matching findings yet (the store fills as
+the Stop hook stashes findings over sessions), or no searchable backend
+is installed. Say so plainly — do **not** invent findings, and do name
+the backend that answered: "no hits" from the file tier while
+`status.unreachable_upgrade` is set means the real store may simply be
+dark, not empty. Suggest the user keep working; the soak fills the
+store over time.
 
 ## Promote A Keeper
 

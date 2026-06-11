@@ -203,6 +203,31 @@ def test_stash_main_skips_below_util_gate(stash_mod, monkeypatch, tmp_path):
     _stdin(monkeypatch, {"session_id": "s2", "transcript_path": str(tmp_path / "t.jsonl")})
     assert stash_mod.main() == 0
     assert calls == []
+    # The skip must leave a forensic trail (2026-06-11 triage: silent
+    # gate-skips made "why is the store empty" an hour of archaeology).
+    log = (tmp_path / "stash.log").read_text(encoding="utf-8")
+    assert "skip session=s2" in log and "util=0.010" in log
+
+
+def test_stash_main_logs_write_path_failure(stash_mod, monkeypatch, tmp_path):
+    # findings extracted but zero written (attune unimportable / backend
+    # write failed) — the sentinel is still set to avoid per-turn Ollama
+    # re-runs, so the log line is the ONLY visible signal of the loss.
+    monkeypatch.setenv("ATTUNE_AI_SENTINEL_DIR", str(tmp_path))
+    tpath = tmp_path / "t.jsonl"
+    tpath.write_text(
+        json.dumps({"message": {"role": "assistant", "content": "the bug was a race"}}) + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(stash_mod, "estimate_utilization", lambda _p: 0.9)
+    monkeypatch.setattr(
+        stash_mod, "_extract_via_ollama", lambda _t: [{"type": "bug", "content": "z"}]
+    )
+    monkeypatch.setattr(stash_mod, "_stash_findings", lambda findings, **k: 0)
+    _stdin(monkeypatch, {"session_id": "s9", "transcript_path": str(tpath), "cwd": "/proj"})
+    assert stash_mod.main() == 0
+    log = (tmp_path / "stash.log").read_text(encoding="utf-8")
+    assert "findings=1 written=0" in log and "WRITE PATH FAILED" in log
 
 
 def test_stash_main_happy_path_writes_sentinel(stash_mod, monkeypatch, tmp_path):
@@ -356,25 +381,62 @@ def test_format_respects_budget(recall_mod, monkeypatch):
     assert "should not appear" not in block
 
 
+_HEALTHY = {"backend": "FileStashBackend", "fallback": True, "unreachable_upgrade": None}
+_DEGRADED = {"backend": "FileStashBackend", "fallback": True, "unreachable_upgrade": "redis"}
+
+
 def test_recall_main_emits_block(recall_mod, monkeypatch, capsys):
     import attune.memory.session_stash as ss
 
     monkeypatch.setattr(
         ss, "recent_entries", lambda **k: [{"text": "a finding", "topics": ["type:note"]}]
     )
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_HEALTHY))
     _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
     assert recall_mod.main() == 0
     out = capsys.readouterr().out
     assert "## Recalled memories" in out and "- [note] a finding" in out
+    assert "degraded" not in out
 
 
 def test_recall_main_silent_when_empty(recall_mod, monkeypatch, capsys):
     import attune.memory.session_stash as ss
 
     monkeypatch.setattr(ss, "recent_entries", lambda **k: [])
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_HEALTHY))
     _stdin(monkeypatch, {"source": "startup"})
     assert recall_mod.main() == 0
     assert capsys.readouterr().out == ""
+
+
+def test_recall_main_warns_when_upgrade_unreachable_even_with_no_entries(
+    recall_mod, monkeypatch, capsys
+):
+    # The 2026-06-11 incident: AMS down for a week, recall silently degraded
+    # to an empty file tier. The health line must surface even when there is
+    # nothing to recall — silence is exactly what hid the outage.
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(ss, "recent_entries", lambda **k: [])
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_DEGRADED))
+    _stdin(monkeypatch, {"source": "startup"})
+    assert recall_mod.main() == 0
+    out = capsys.readouterr().out
+    assert "degraded" in out and "'redis'" in out
+
+
+def test_recall_main_appends_warning_after_block_when_degraded(recall_mod, monkeypatch, capsys):
+    import attune.memory.session_stash as ss
+
+    monkeypatch.setattr(
+        ss, "recent_entries", lambda **k: [{"text": "a finding", "topics": ["type:note"]}]
+    )
+    monkeypatch.setattr(ss, "backend_status", lambda: dict(_DEGRADED))
+    _stdin(monkeypatch, {"source": "startup", "cwd": "/proj"})
+    assert recall_mod.main() == 0
+    out = capsys.readouterr().out
+    assert "- [note] a finding" in out
+    assert "degraded" in out and "'redis'" in out
 
 
 def test_recall_main_skips_on_compact(recall_mod, monkeypatch, capsys):

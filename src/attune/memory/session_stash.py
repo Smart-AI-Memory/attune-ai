@@ -178,6 +178,57 @@ def resolve_backend(
     return None
 
 
+def backend_status() -> dict:
+    """Report which backend recall resolves to, for health surfacing.
+
+    Returns a dict with:
+
+    - ``backend``: class name of the resolved backend, or ``None``
+    - ``fallback``: True when the resolved backend marks itself as the
+      always-available local fallback (e.g. the file tier)
+    - ``unreachable_upgrade``: entry-point name of a registered upgrade
+      backend (e.g. the Redis AMS) that failed construction or its
+      connectivity check — i.e. recall is silently degraded and findings
+      stored in that tier are dark. ``None`` when no upgrade is registered
+      or the upgrade is the resolved backend.
+
+    Motivation: the 2026-06-11 triage found AMS had been down for a week
+    with 51 records unreachable and nothing surfacing it — degradation was
+    too graceful. Consumers (the ``/recall`` skill, the SessionStart recall
+    hook) print a one-line warning when ``unreachable_upgrade`` is set.
+    """
+    status: dict = {"backend": None, "fallback": False, "unreachable_upgrade": None}
+    resolved = resolve_backend(None)
+    if resolved is not None:
+        status["backend"] = type(resolved).__name__
+        status["fallback"] = bool(getattr(resolved, "is_fallback", False))
+    if resolved is not None and not status["fallback"]:
+        return status  # upgrade backend healthy — nothing to warn about
+    try:
+        from importlib.metadata import entry_points
+
+        for ep in entry_points(group=_BACKEND_GROUP):
+            try:
+                instance = ep.load()()
+            except Exception:  # noqa: BLE001
+                # INTENTIONAL: construction failure IS the signal here.
+                status["unreachable_upgrade"] = ep.name
+                continue
+            if getattr(instance, "is_fallback", False):
+                continue
+            check = getattr(instance, "is_connected", None)
+            if callable(check):
+                try:
+                    if not check():
+                        status["unreachable_upgrade"] = ep.name
+                except Exception:  # noqa: BLE001
+                    status["unreachable_upgrade"] = ep.name
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: health reporting is best-effort; never propagate.
+        logger.debug("backend status probe failed: %s", exc)
+    return status
+
+
 def _sanitize(content: str) -> str | None:
     """Run the PII/secrets gate before any write (R3). Fail closed.
 
