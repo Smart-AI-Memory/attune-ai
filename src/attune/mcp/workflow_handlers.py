@@ -586,11 +586,15 @@ class WorkflowHandlersMixin:
         try:
             from attune_rag import RagPipeline
         except ImportError as exc:
+            # attune-rag is a CORE dependency (the legacy [rag] extra
+            # is an empty back-compat placeholder — pointing users at
+            # it would install nothing).
             return {
                 "success": False,
                 "error": (
-                    "rag_knowledge_query requires the [rag] extra. "
-                    "Install with: pip install 'attune-ai[rag]'"
+                    "rag_knowledge_query needs the attune-rag package, "
+                    "a core dependency this environment is missing. "
+                    "Reinstall with: pip install attune-rag"
                 ),
                 "cause": str(exc),
             }
@@ -599,9 +603,12 @@ class WorkflowHandlersMixin:
             pipeline = RagPipeline()
             result = pipeline.run(query, k=k)
         except RuntimeError as exc:
-            # Typical cause: AttuneHelpCorpus can't find the
-            # [attune-help] extra. Return a structured error.
-            return {"success": False, "error": f"RAG setup error: {exc}"}
+            # Typical cause: AttuneHelpCorpus can't find attune-help.
+            # Name the extra that ships it so the fix is one command.
+            hint = ""
+            if "attune-help" in str(exc) or "attune_help" in str(exc):
+                hint = " (attune-help ships via: pip install 'attune-ai[author]')"
+            return {"success": False, "error": f"RAG setup error: {exc}{hint}"}
         except Exception:  # noqa: BLE001
             # INTENTIONAL: best-effort — return structured error
             logger.exception("RAG knowledge query failed")

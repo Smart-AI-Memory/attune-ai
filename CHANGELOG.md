@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from user guidance, remove the nonexistent `crewai` extra from
   FEATURES.md, and quote every bracketed install command (zsh
   glob trap).
+- **Optional-dependency errors now name an install command that
+  works.** The rag-code-gen workflow and `rag_knowledge_query` MCP
+  tool pointed users at the empty back-compat `[rag]` extra
+  (installing it does nothing — attune-rag is a core dependency);
+  both now say `pip install attune-rag`. RAG setup errors that
+  mention attune-help get an actionable hint (`pip install
+  'attune-ai[author]'` — the extra that ships it). The OTEL backend
+  docstring still referenced the pre-rename `empathy-framework[otel]`
+  package; now `'attune-ai[otel]'`.
 
 ## [8.3.0] — 2026-06-10
 

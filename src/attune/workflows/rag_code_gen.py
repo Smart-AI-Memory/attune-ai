@@ -144,9 +144,13 @@ class RagCodeGenWorkflow(BaseWorkflow):
             try:
                 from attune_rag import RagPipeline
             except ImportError as exc:
+                # attune-rag is a CORE dependency (the legacy [rag]
+                # extra is an empty back-compat placeholder — pointing
+                # users at it would install nothing).
                 raise RuntimeError(
-                    "The rag-code-gen workflow requires the [rag] extra. "
-                    "Install with: pip install 'attune-ai[rag]'"
+                    "The rag-code-gen workflow needs the attune-rag "
+                    "package, a core dependency this environment is "
+                    "missing. Reinstall with: pip install attune-rag"
                 ) from exc
             self._pipeline = RagPipeline()
         return self._pipeline
