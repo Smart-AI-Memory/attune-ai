@@ -8007,3 +8007,31 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   signatures before coding": one `vars(hits[0])` print in the
   harness would have caught it pre-run; build that introspection
   into the first iteration of any scoring loop.
+
+- **The recall-loop "never stored a real finding" triage — three
+  durable rules for any hook-consumed optional-dep feature**
+  (2026-06-11, #769; full receipts in
+  docs/specs/just-in-time-recall/recall-loop-triage-2026-06-11.md):
+  (1) **Plugin hooks run in their OWN interpreter env (pyenv
+  `python`), which has the editable attune but NOT the venv's
+  optional deps** — `agent-memory-client` was missing there, so
+  every stash silently fell to the file tier even with AMS healthy.
+  Any optional-dep feature reached from a hook must be verified IN
+  the hook's interpreter (`python -c "import <dep>"`), not the venv;
+  extends the "pyenv shim has ancient package versions" lesson with
+  the optional-dep-absent variant. (2) **Too-graceful degradation
+  is a failure class: ship the fallback's "you are degraded" signal
+  in the same PR as the fallback** — resolve_backend's connectivity
+  gate silently downgraded recall to an empty file tier for a week
+  (AMS died on reboot; nohup doesn't survive). Pattern:
+  `backend_status()` + a SessionStart health line that prints EVEN
+  when there are no results — silence is exactly what hides the
+  outage. (3) **Stop-hook stdout/stderr are discarded on exit 0 —
+  diagnostics must go to a FILE** (`stash.log` beside the
+  sentinels); also calibrate threshold gates against a real-input
+  receipt, not intuition (the utilization estimator counts only
+  message-body chars, so a substantive 1.2 MB tool-heavy transcript
+  measured 0.18 vs the 0.30 gate and sessions never stashed —
+  default now 0.05). Sentinel design note: on write-failure keep
+  the sentinel and log loudly; skipping it would re-run Ollama
+  extraction on every Stop turn.
