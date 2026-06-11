@@ -1,5 +1,5 @@
 # Tasks: Integration Coverage Program
-**Status:** in progress (2026-06-09) — Phase 0 complete (see [phase0-findings.md](phase0-findings.md)): decision **GO, reframed** — revive the existing 351-test suite, don't build new infra. Phase 1 **complete**: rot pruned (#703), green subset wired to CI (#704), 16-failure backlog cleared + job promoted to the full no-auth suite (295 passed / 0 failed — see [phase1-triage.md](phase1-triage.md)). Nightly auth job shipped: `integration-auth.yml` (schedule + workflow_dispatch) runs the auth bucket — 6 `*_with_auth` files + 6 env-gated discovery_sweep files + `test_llm_integration.py` (33 tests) — with the real `ANTHROPIC_API_KEY` secret and `ATTUNE_MAX_BUDGET_USD=10`. First auth-bucket dispatch triaged in [auth-run-triage.md](auth-run-triage.md): repo `ANTHROPIC_API_KEY` secret invalid (owner fix), all 6 `*_with_auth` files rot (rewrite-or-retire pass pending), discovery_sweep passes suspicious until a valid key. Remaining: promote the no-auth CI job to a required check after a few weeks green.
+**Status:** approved (Phase 2 added + approved 2026-06-11) — Phase 0 complete (see [phase0-findings.md](phase0-findings.md)): decision **GO, reframed** — revive the existing 351-test suite, don't build new infra. Phase 1 **complete**: rot pruned (#703), green subset wired to CI (#704), 16-failure backlog cleared + job promoted to the full no-auth suite (295 passed / 0 failed — see [phase1-triage.md](phase1-triage.md)). Nightly auth job shipped: `integration-auth.yml` (schedule + workflow_dispatch) runs the auth bucket — 6 `*_with_auth` files + 6 env-gated discovery_sweep files + `test_llm_integration.py` (33 tests) — with the real `ANTHROPIC_API_KEY` secret and `ATTUNE_MAX_BUDGET_USD=10`. First auth-bucket dispatch triaged in [auth-run-triage.md](auth-run-triage.md): repo `ANTHROPIC_API_KEY` secret invalid (owner fix), all 6 `*_with_auth` files rot (rewrite-or-retire pass pending), discovery_sweep passes suspicious until a valid key. Remaining: promote the no-auth CI job to a required check after a few weeks green.
 ---
 
 ## Phase 0 — Audit before design
@@ -28,6 +28,28 @@ keeps the spec honest to the lesson:
 Pre-committing Phase 1 design before Phase 0 data lands is
 exactly the trap the umbrella `test-quality-program` spec
 also avoided.
+
+---
+
+## Phase 2 — Live receipts per surface (added 2026-06-11)
+
+**Born:** discipline-review chat, 2026-06-11 (improvement #3 of
+6). Generalize the nightly-auth pattern: the most expensive
+recurring bug class is mocked-green / live-broken — AMS behaviors
+invisible to 100+ green mocked tests, the judge shim `max_turns`
+trap, and (found 2026-06-11 during wrf T8) MCP workflow handlers
+calling `.get()` on a `final_output` that had been a STRING since
+the SDK migration: crash-or-dead for months, 16k tests silent.
+The "one non-mocked round-trip per external-dep feature" lesson
+exists but is not enforced as a gate; `integration-auth.yml`
+proves the budget-capped nightly shape works.
+
+| # | Task | Layer | Status | Notes |
+|---|------|-------|--------|-------|
+| 7 | **2.1 Surface inventory.** Enumerate externally-wired surfaces (MCP tools, dashboard run-path, CLI render-path, memory backends, RAG pipeline, plugin hooks) and for each record whether ANY non-mocked exercise exists (nightly, integration suite, or dogfood receipt). Output: a coverage table in this dir. | docs | todo | Cheap; mostly grep + reading. The MCP tool surface is the known-worst (the handlers bug above). |
+| 8 | **2.2 One round-trip per uncovered surface.** For each gap, the smallest live exercise: e.g. an MCP smoke that calls each workflow tool against a tiny fixture and asserts response SHAPE (not content); a dashboard run-path probe; a CLI render probe on a recorded result. Budget-capped like the auth job; skip-gated locally. | tests | todo | Shape assertions, not content — these catch the str-vs-dict class, not flaky LLM variance. |
+| 9 | **2.3 Wire to the nightly.** Extend `integration-auth.yml` (or a sibling keyless job for non-LLM surfaces) so the round-trips run on schedule, with the run-triage doc pattern for failures. | ci | todo | Keyless surfaces (MCP shape, CLI render) can run per-PR cheaply; only LLM-touching probes stay nightly. |
+| 10 | **2.4 Gate the rule forward.** New external-dep feature ⇒ its PR includes one non-mocked round-trip, enforced as /spec + review guidance (advisory, per enforcement-vs-documentation), with the surface inventory as the audit trail. | docs | todo | Advisory by design — the hook can't see "external-dep feature" mechanically. |
 
 ---
 
