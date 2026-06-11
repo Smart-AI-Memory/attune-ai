@@ -12,7 +12,7 @@ Exports telemetry data to OTEL-compatible collectors (SigNoz, Datadog, New Relic
 **Setup:**
 ```bash
 export ATTUNE_OTEL_ENDPOINT=http://localhost:4317
-pip install empathy-framework[otel]
+pip install 'attune-ai[otel]'
 ```
 
 Copyright 2025 Smart-AI-Memory

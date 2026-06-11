@@ -208,14 +208,10 @@ pip install attune-ai
 - CI/CD pipelines
 - Simple automation scripts
 
-### Full Install (All Features)
+### Redis Install (Multi-Session Coordination)
 
 ```bash
-# Option 1: Install with Redis support
 pip install 'attune-ai[redis]'
-
-# Option 2: Install everything
-pip install 'attune-ai[all]'
 ```
 
 **Additional features:**
@@ -234,14 +230,16 @@ pip install 'attune-ai[all]'
 
 ## Installation Extras
 
+Extras combine (e.g. `'attune-ai[developer,ops,redis]'`). Keep the
+quotes — zsh and bash treat square brackets as glob characters.
+
 | Extra | Features | Install Command |
 |-------|----------|-----------------|
+| `developer` | Claude API provider, LangChain/LangGraph agent teams, MemDocs | `pip install 'attune-ai[developer]'` |
+| `ops` | Web ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
 | `redis` | Redis-based short-term memory, event streaming | `pip install 'attune-ai[redis]'` |
-| `socratic` | Socratic workflow discovery | `pip install 'attune-ai[socratic]'` |
-| `crewai` | CrewAI integration (legacy) | `pip install 'attune-ai[crewai]'` |
-| `llm` | Anthropic LLM provider | `pip install 'attune-ai[llm]'` |
-| `agents` | Agent orchestration support | `pip install 'attune-ai[agents]'` |
-| `all` | Everything | `pip install 'attune-ai[all]'` |
+| `author` | Help authoring (`.help/` template generation) | `pip install 'attune-ai[author]'` |
+| `llm` | Anthropic LLM provider only | `pip install 'attune-ai[llm]'` |
 
 ---
 

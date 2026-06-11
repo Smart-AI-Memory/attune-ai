@@ -7846,3 +7846,32 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   one function with zero edits to the 15 construction sites — the
   answer to "monster refactor?" was no, by construction (spec D8,
   #755).
+
+- **pip extras drift from reality in THREE ways, and two are
+  silent — audit error messages and docs against pyproject's
+  actual extras, because pip only warns on UNDEFINED extras**
+  (install-UX pass, #758): (1) **defined-but-EMPTY extras install
+  silently with no warning** — `rag = []` is a back-compat
+  placeholder, so the rag-code-gen / rag_knowledge_query error
+  "Install with: pip install 'attune-ai[rag]'" sent users into an
+  unfixable loop (command succeeds, installs nothing, error
+  persists). Error messages must point at the real package
+  (attune-rag is CORE) or a NON-empty extra. attune-ai's empty
+  placeholders: rag, memory, cache, agent-sdk, software, socratic.
+  (2) **fictional extras in docs** — FEATURES.md advertised a
+  `crewai` extra that never existed in pyproject (pip at least
+  warns on these). (3) **alias drift** — `full` and `developer`
+  are byte-identical package sets, and `[all]` is features PLUS
+  the whole contributor toolchain (~30 packages: pytest, black,
+  mypy, ruff, pre-commit, mkdocs), so docs calling `[all]` "all
+  features" steered users into polluting their envs. Verification
+  recipe: extract the extras table from pyproject
+  (`awk '/^\[project.optional-dependencies\]/...'`), then grep
+  src/ + docs/ for `attune-ai[` and check every referenced extra
+  exists AND is non-empty. Known open gap from the audit:
+  `[developer]` promises LangChain agent teams but lacks
+  `langchain-anthropic`, which the agent_factory adapters require
+  — add it to the extra or document. Pairs with the existing
+  "Promote a stdlib-only sibling package to a CORE dep, not an
+  extra" lesson — same family (extras hygiene), this one is the
+  consumer-facing surface (messages + docs vs the actual table).

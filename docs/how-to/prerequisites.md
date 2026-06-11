@@ -123,11 +123,11 @@ Get your key: [console.anthropic.com](https://console.anthropic.com/)
 # Core framework
 pip install attune-ai
 
-# With Redis support (recommended)
-pip install attune-ai[redis]
+# With Redis support
+pip install 'attune-ai[redis]'
 
-# With all optional dependencies
-pip install attune-ai[all]
+# With the ops dashboard
+pip install 'attune-ai[ops]'
 ```
 
 **Verify installation**:

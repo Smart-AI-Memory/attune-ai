@@ -4,7 +4,8 @@ These tests run regardless of whether the [rag] extra is
 installed — they use a sys.modules sentinel to force
 attune_rag imports to raise ImportError, then assert that
 the workflow and MCP handler both surface a helpful
-"install attune-ai[rag]" error rather than crashing.
+"reinstall attune-rag" error rather than crashing
+(attune-rag is a core dep; the legacy [rag] extra is empty).
 
 Complements tests/integration/rag/test_rag_workflow.py and
 tests/unit/rag/test_mcp_tool.py which exercise the happy
@@ -41,7 +42,7 @@ def _unblock_attune_rag(saved: dict[str, object]) -> None:
 
 def test_workflow_raises_helpful_error_when_attune_rag_missing() -> None:
     """RagCodeGenWorkflow._get_pipeline raises RuntimeError
-    pointing at the [rag] extra when attune_rag can't import."""
+    naming the attune-rag core dep when it can't import."""
     from attune.workflows.rag_code_gen import RagCodeGenWorkflow
 
     saved = _block_attune_rag()
@@ -50,8 +51,8 @@ def test_workflow_raises_helpful_error_when_attune_rag_missing() -> None:
         result = asyncio.run(workflow.execute(query="anything"))
         assert result.success is False
         assert result.error is not None
-        assert "[rag] extra" in result.error
-        assert "pip install" in result.error.lower()
+        assert "attune-rag" in result.error
+        assert "pip install attune-rag" in result.error
     finally:
         _unblock_attune_rag(saved)
 
@@ -74,7 +75,7 @@ def test_workflow_empty_query_rejected_without_attune_rag() -> None:
 
 def test_mcp_handler_returns_structured_error_when_attune_rag_missing() -> None:
     """_run_rag_knowledge_query returns a structured dict
-    pointing at the [rag] extra when attune_rag can't import.
+    naming the attune-rag core dep when it can't import.
     No exception escapes to the MCP dispatcher."""
     from attune.mcp.server import EmpathyMCPServer
 
@@ -84,9 +85,63 @@ def test_mcp_handler_returns_structured_error_when_attune_rag_missing() -> None:
     try:
         result = asyncio.run(server._run_rag_knowledge_query({"query": "security audit"}))
         assert result["success"] is False
-        assert "[rag] extra" in result["error"]
-        assert "pip install" in result["error"].lower()
+        assert "attune-rag" in result["error"]
+        assert "pip install attune-rag" in result["error"]
         assert "cause" in result  # original ImportError message
+    finally:
+        _unblock_attune_rag(saved)
+
+
+def _fake_attune_rag_with_failing_pipeline(message: str) -> object:
+    """A stand-in attune_rag whose RagPipeline raises at construction."""
+    import types
+
+    fake = types.ModuleType("attune_rag")
+
+    class _BoomPipeline:
+        def __init__(self) -> None:
+            raise RuntimeError(message)
+
+    fake.RagPipeline = _BoomPipeline  # type: ignore[attr-defined]
+    return fake
+
+
+def test_mcp_handler_names_author_extra_on_help_corpus_error() -> None:
+    """A RuntimeError mentioning attune-help gets the [author]-extra
+    hint appended — attune-help ships via that extra, so the fix is
+    one command."""
+    from attune.mcp.server import EmpathyMCPServer
+
+    server = EmpathyMCPServer()
+
+    saved = _block_attune_rag()
+    sys.modules["attune_rag"] = _fake_attune_rag_with_failing_pipeline(  # type: ignore[assignment]
+        "attune-help corpus unavailable"
+    )
+    try:
+        result = asyncio.run(server._run_rag_knowledge_query({"query": "q"}))
+        assert result["success"] is False
+        assert "RAG setup error" in result["error"]
+        assert "attune-ai[author]" in result["error"]
+    finally:
+        _unblock_attune_rag(saved)
+
+
+def test_mcp_handler_omits_author_hint_for_unrelated_setup_errors() -> None:
+    """RuntimeErrors that don't mention attune-help stay un-hinted."""
+    from attune.mcp.server import EmpathyMCPServer
+
+    server = EmpathyMCPServer()
+
+    saved = _block_attune_rag()
+    sys.modules["attune_rag"] = _fake_attune_rag_with_failing_pipeline(  # type: ignore[assignment]
+        "corpus directory is empty"
+    )
+    try:
+        result = asyncio.run(server._run_rag_knowledge_query({"query": "q"}))
+        assert result["success"] is False
+        assert "RAG setup error" in result["error"]
+        assert "[author]" not in result["error"]
     finally:
         _unblock_attune_rag(saved)
 

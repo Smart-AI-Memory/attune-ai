@@ -12,7 +12,7 @@ This page has moved to the **Getting Started** guide.
 
 ```bash
 # Install
-pip install attune-ai[developer]
+pip install attune-ai
 
 # Set API key
 export ANTHROPIC_API_KEY="sk-ant-..."

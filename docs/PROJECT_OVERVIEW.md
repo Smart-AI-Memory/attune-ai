@@ -21,14 +21,14 @@ beat one clever abstraction."
 ## Installation
 
 ```bash
-# Recommended (agents, memory, caching)
-pip install 'attune-ai[developer]'
-
-# Minimal (CLI + workflows only)
+# Recommended — CLI, all workflows, MCP server, RAG, Agent SDK
 pip install attune-ai
 
-# All features
-pip install 'attune-ai[all]'
+# Claude API mode + LangChain/LangGraph agent teams
+pip install 'attune-ai[developer]'
+
+# Ops dashboard / Redis memory (extras combine)
+pip install 'attune-ai[ops,redis]'
 
 # Development
 git clone https://github.com/Smart-AI-Memory/attune-ai.git

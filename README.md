@@ -122,8 +122,12 @@ Then say "what can attune do?" in Claude Code.
 ### Add Python Package (unlocks CLI + MCP)
 
 ```bash
-pip install 'attune-ai[developer]'
+pip install attune-ai
 ```
+
+The core install includes the CLI, all workflows, and the MCP
+server. See [Installation Options](#installation-options) for
+per-surface extras (API-mode agents, ops dashboard, Redis memory).
 
 ### What Each Layer Adds
 
@@ -280,20 +284,25 @@ from retrieval. Full methodology:
 
 ## Installation Options
 
+`pip install attune-ai` works out of the box — the CLI, all
+workflows, the MCP server, RAG, and the Agent SDK are core
+dependencies. Add extras only for the surfaces you use:
+
+| You want | Install |
+| -------- | ------- |
+| Everything most users need | `pip install attune-ai` |
+| Claude API mode + LangChain/LangGraph agent teams | `pip install 'attune-ai[developer]'` |
+| The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
+| Redis / Agent Memory Server memory backend | `pip install 'attune-ai[redis]'` |
+| Help authoring (generate / maintain `.help/` templates) | `pip install 'attune-ai[author]'` |
+
+Extras combine — for example
+`pip install 'attune-ai[developer,ops,redis]'`. Keep the quotes:
+zsh and bash treat square brackets as glob characters.
+
+Contributing? Clone and install the dev toolchain instead:
+
 ```bash
-# Recommended (agents, memory, RAG)
-pip install 'attune-ai[developer]'
-
-# Minimal (CLI + workflows + RAG)
-pip install attune-ai
-
-# With help authoring (generate / maintain .help/ templates)
-pip install 'attune-ai[author]'
-
-# All features
-pip install 'attune-ai[all]'
-
-# Development (contributing)
 git clone https://github.com/Smart-AI-Memory/attune-ai.git
 cd attune-ai && pip install -e '.[dev]'
 ```

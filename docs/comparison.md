@@ -114,7 +114,7 @@ Natural language routing means you describe what you need, not which tool to inv
 ## Quick Start
 
 ```bash
-pip install attune-ai[developer]
+pip install attune-ai
 attune setup
 ```
 
