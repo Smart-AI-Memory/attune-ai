@@ -1,6 +1,7 @@
 # auth_strategy behavioral-test rewrite (mutation-driven)
 
-**Status:** planned — sequenced across sessions
+**Status:** slices 1–6 complete — closing (pending a final
+clean-cache mutmut refresh)
 **Parent program:** [test-quality-program](./tasks.md)
 **Module:** `src/attune/models/auth_strategy.py`
 **Opened:** 2026-06-12 (QA #2 phase 2)
@@ -50,6 +51,47 @@ suites are coverage-padded) with a hard number.
   (defaults `500`→`501`, `True`→`False`; enum value mutate;
   `from_dict` `.get` fallback `500`→`501` and `"pro"`→`None`; `.value`
   drop). No production bug surfaced — test-only.
+
+- **Slices 2–5** (QA #2 phase 6, one test-only PR): the remaining
+  behaviorally-killable survivors, each proven by apply/revert. No
+  production bug surfaced.
+  - **Slice 2 — Cost estimation** (`TestAuthStrategyCostEstimationExactness`,
+    5 tests): exact API `monetary_cost` (the four tier constants), both
+    `fits_in_context` boundaries (`200_000` / `1_000_000` + `<` vs `<=`),
+    `int()` truncation in `estimate_tokens`, the default `mode=None`
+    param. 6 mutants killed. Equivalent: `round(,4)`→`round(,5)` (both
+    render `0.0002`).
+  - **Slice 3 — Pros/cons rendering** (`TestAuthStrategyProsConsRendering`,
+    5 tests): `auto`-section key parity, `auto.estimate` `mode` /
+    `.value`-typed `current_recommendation`, plus data-bearing
+    interpolation guards (tier value, thresholds, monetary cost). 4
+    mutants killed; a cosmetic copy mutant proven to survive (the
+    function is mostly display text — equivalent by design).
+  - **Slice 4 — Persistence I/O** (`TestAuthStrategyPersistenceDefaultPath`,
+    4 tests): `load()`'s default-path branch + `.exists()` guard against
+    a known file, `save(None)` serialized content, full save→load
+    round-trip of every field. 3 mutants killed; `json.dump` `indent`
+    proven equivalent. All `AUTH_STRATEGY_FILE`-patched (real user state
+    untouched).
+  - **Slice 5 — Interactive setup**
+    (`TestConfigureAuthInteractiveContract`, 3 tests): the net-new
+    non-display survivors — `setup_completed=True`, input `.strip()`
+    before lookup, persistence via `save()`. 2 mutants killed; the
+    `default_mode == AUTO` print branch proven equivalent. (`tier_map` /
+    `mode_map` routing was already covered by `TestConfigureAuthInteractive`.)
+
+- **Slice 6 — Utilities** (`count_lines_of_code`,
+  `get_module_size_category`): **no new tests needed.** The existing
+  `TestGetModuleSizeCategory`, `TestCountLinesOfCode`, and
+  `TestCountNonBlankLines` already kill every slice-6 mutant. Verified
+  2026-06-12 by apply/revert of 12 mutants against the existing suite —
+  both category boundaries (`< 500` / `< 2000`, the `<`→`<=` flips and
+  threshold offsets), the comment/blank-skip logic (`.strip()` drop,
+  `not startswith("#")` removal, `and`→`or`), `lines += 1`, the
+  exists-guard return value, the first-read encoding, and the
+  dual-read-failure fallback — all already `KILLED`. The plan's
+  slice-6 survivor row reflected the stale 2026-06-12 snapshot, not
+  current killability (scope-drift; the code is the contract).
 
 ---
 
@@ -115,6 +157,17 @@ entries). Summary:
 
 ## Done-state
 
-Closes when slices 1–6 ship and a clean-cache mutmut refresh shows
-only documented-equivalent survivors remaining. Until then this is an
-open, sequenced sub-plan under the living `test-quality-program`.
+Slices 1–6 are complete: slice 1 shipped in [PR #797]; slices 2–5
+shipped as one test-only PR (QA #2 phase 6); slice 6 was verified
+already-covered by the existing suite (no new tests). Every
+behaviorally-killable survivor is proven dead by apply/revert, and the
+documented-equivalent survivors (print/format strings, `round`
+precision, `json.dump` indent) are recorded inline above.
+
+One step remains before formally closing: a final clean-cache
+`mutmut==2.4.4` refresh over the whole module to confirm only the
+documented-equivalent survivors remain. Until that refresh runs, this
+stays a (near-complete) sub-plan under the living
+`test-quality-program`.
+
+[PR #797]: https://github.com/Smart-AI-Memory/attune-ai/pull/797
