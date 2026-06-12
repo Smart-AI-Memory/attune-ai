@@ -8120,3 +8120,16 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   "gh pr checks --watch exits prematurely" and "parallel sessions
   push silently" lessons — same family: the gap between your write
   and the API's read is not a vacuum.
+
+- **`claude plugin update attune-ai` fails "Plugin not found" — the
+  installed id is NAMESPACED: `attune-ai@attune-ai`**: the update
+  command wants the `<plugin>@<marketplace>` id exactly as shown by
+  `claude plugin list`, not the bare plugin name (which works for
+  some other subcommands). Recurs at every release. Full post-release
+  sequence: `claude plugin update attune-ai@attune-ai` → verify the
+  HIGHEST version dir under
+  `~/.claude/plugins/cache/attune-ai/attune-ai/` carries the new
+  hooks/skills (the stale dir persists beside it) → "Restart to
+  apply" means ALREADY-OPEN sessions (including the one that ran the
+  update) keep running the OLD cached hooks; only fresh sessions get
+  the new version.
