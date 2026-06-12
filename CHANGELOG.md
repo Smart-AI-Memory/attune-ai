@@ -7,6 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.5.0] — 2026-06-12
+
+Workflow results get a face, and the lessons brain gets sharper. The
+ops dashboard now renders structured workflow reports (scores,
+findings tables, collapsible detail, one-click next steps) instead of
+a raw log; the MCP surface returns the same report verbatim; and
+prompt-time lesson recall now resolves a live corpus excerpt so the
+nudge never drifts. Plus release-ritual tooling: a one-command
+version bumper and a reach-snapshot script.
+
 ### Fixed
 
 - **MCP workflow tools no longer return None scores / empty
@@ -35,6 +45,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Structured report panel on the ops dashboard run view**
+  (workflow-result-formatting T6 — completes the spec). When a
+  workflow emits a serialized `WorkflowReport`, the run view renders
+  it as a styled panel above the terminal stream (score, callouts,
+  findings tables, native `<details>` collapsibles) and the raw log
+  collapses into a "Process log" disclosure. The report crosses the
+  subprocess boundary over the existing `ATTUNE_RUN_META`
+  side-channel; a new `GET /runs/<id>/report` serves the dict plus
+  server-rendered summary markdown (canonical renderer, so the
+  dashboard never reimplements formatting); next-step actions whose
+  command is `attune workflow run <name>` become one-click Run chips.
+  Disk-loaded runs keep the panel after a daemon restart. (#786)
+- **Prompt-time lesson recall resolves a live corpus excerpt**
+  (lessons-corpus-rag T4). `RECALL_MAP` entries may carry a
+  `lesson_ref` slug; `jit_recall` resolves it through `LessonsIndex`
+  at fire time and appends a bounded excerpt of the *current* lesson
+  body below the inline one-liner, so the nudge never drifts from the
+  corpus. Best-effort: older installs or a dangling slug fall back to
+  the one-liner alone. (#780)
 - `docs/how-to/lessons-workflow.md` — how the append → retrieve
   lessons loop works (where lessons live, how they come back, the
   core-mirror rule).
