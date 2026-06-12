@@ -24,6 +24,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `docs/how-to/lessons-workflow.md` — how the append → retrieve
   lessons loop works (where lessons live, how they come back, the
   core-mirror rule).
+- `scripts/bump_version.py` — one command bumps the release version
+  across all 7 files / 9 sites (pyproject, plugin manifests,
+  `plugin/core/__init__.py`, CLAUDE.md and API_REFERENCE
+  headers/footers), count-validated before writing and verified
+  after. The `test_all_versions_match` drift guard stays as the
+  backstop and now names the command (drift-guards-to-generators
+  conversion 1).
+- `scripts/reach_snapshot.py` — records a dated reach snapshot
+  (pypistats for all five attune packages with rate-limit-safe
+  60s spacing, plus GitHub stars/traffic) to
+  `docs/specs/usage-signals/snapshots/`; the release ritual runs it
+  at tag time so every release gets a before/after install-count
+  pair (usage-signals R4).
 
 ## [8.4.0] — 2026-06-11
 

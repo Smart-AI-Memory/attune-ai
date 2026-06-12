@@ -1,6 +1,8 @@
 # Drift Guards → Generators — Requirements
 
-**Status:** approved (2026-06-11) · **Owner:** Patrick + agent
+**Status:** in progress (2026-06-12) — conversion 1 (version bump)
+shipped; registration-mirror conversions open.
+**Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #4 of 6).
 
 ## Problem
@@ -86,6 +88,12 @@ Candidate conversions, by observed pain frequency:
   / attune-author; different failure modes).
 - Converting guards whose value IS the judgment prompt (e.g.
   deprecation-marker past-due checks).
+
+## Conversions shipped
+
+| Guard | Generator | Backstop test |
+|-------|-----------|---------------|
+| Version-site drift (the v7.2.0 class) | `scripts/bump_version.py <version>` — writes all 7 files / 9 sites, count-validates before writing, verifies after | `test_plugin_config_validation.py::TestVersionConsistency::test_all_versions_match` (failure message names the command); plus `tests/unit/scripts/test_bump_version.py::TestRealRepo` (site list vs the actual tree) |
 
 ## Done when
 
