@@ -7,6 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.4.0] — 2026-06-11
+
+Cross-session memory grows a lessons brain: the repo's ~380-lesson
+engineering corpus becomes retrievable (`attune.lessons`), `/recall`
+searches it, and a new UserPromptSubmit hook surfaces matching
+lessons automatically. Plus the recall-loop reliability fixes —
+this release puts both into live plugin sessions.
+
 ### Added
 - **Automatic lesson recall on user prompts** (lessons-corpus-rag
   T3). New `UserPromptSubmit` hook (`plugin/hooks/lesson_recall.py`)
