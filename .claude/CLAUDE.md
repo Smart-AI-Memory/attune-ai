@@ -8077,3 +8077,46 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   Generalizes to any hierarchical-chunking RAG design: chunk-level
   recall + document-level identity are different contracts; conflate
   them and finer chunking makes retrieval WORSE.
+
+- **A test suite whose production code can auto-route to a Claude
+  SUBSCRIPTION needs a conftest pin, not just key-clearing — the
+  subscription twin of the "`ANTHROPIC_API_KEY` leaks into pytest"
+  lesson**: after attune-author gained subscription-first routing
+  (sibling-subscription-auth Phase 1, PR #55), running its suite
+  INSIDE Claude Code (`CLAUDECODE=1`) would auto-route any un-mocked
+  polish call to a REAL subscription call via `claude_agent_sdk` —
+  the existing `delenv("ANTHROPIC_API_KEY")` fixture doesn't help
+  because the subscription path needs no key. Fix in the suite-wide
+  autouse fixture: `setenv("ATTUNE_AUTHOR_AUTH_MODE", "api")` +
+  `delenv("CLAUDECODE")`; routing tests override per-test. Apply the
+  same pattern to ANY package gaining subscription routing (attune-rag
+  Phase 2 next). Companion mock-migration fact: rewiring
+  `polish._call_llm` through `auth.call_llm` broke tests that patched
+  `attune_author.polish.call_anthropic`/`get_client` (names no longer
+  exist there) — repoint such mocks at the SOURCE module
+  (`attune_author.doc_gen._anthropic.*`), which keeps working because
+  the router resolves them from there at call time. Bonus shim facts
+  (probe-verified, SDK 0.1.63): `ClaudeAgentOptions(tools=[],
+  setting_sources=[], max_turns=1, system_prompt=<plain str>)` is a
+  valid keyless pure-completion shape (~4s warm), and `tools=[]` (the
+  empty allowlist) is accepted by the CLI transport.
+
+- **Right after a push, `gh pr view --json headRefOid` can lag the
+  remote — verify against `git ls-remote`, and distrust an "all
+  checks pass" that arrives faster than the suite could run**: hit
+  on attune-author PR #55 third commit. The push succeeded (
+  `git ls-remote origin <branch>` showed the new SHA) but the PR API
+  still reported the PREVIOUS commit as head, so a checks-watcher
+  armed immediately after the push saw the OLD round's all-green and
+  reported success in ~2 min — before the new round's checks had even
+  registered. Rules: (1) key CI watchers to the pushed SHA's
+  check-runs (`gh api repos/<o>/<r>/commits/<sha>/check-runs`), not
+  to `gh pr checks`, when arming within ~a minute of a push; (2) an
+  ALL-PASS that lands implausibly fast is a stale-read smell — verify
+  the run actually started; (3) never reconstruct a full 40-char SHA
+  from a short one (the API 422 "No commit found" it produces looks
+  like a missing commit and misleads the diagnosis — `git rev-parse
+  HEAD` gives the real full SHA for free). Pairs with the existing
+  "gh pr checks --watch exits prematurely" and "parallel sessions
+  push silently" lessons — same family: the gap between your write
+  and the API's read is not a vacuum.
