@@ -8037,3 +8037,90 @@ files.
   having consumers — and expect the stragglers to self-identify at
   runtime, which is a reason to keep the old location working as a
   fallback during the transition.
+- **"This filter form is broken" needs a CONTROLLED repro before you
+  change production code — the AMS dict-vs-`Namespace` false alarm
+  (2026-06-12)**: while dogfooding an AMS example I saw
+  `search_long_term_memory(namespace={"eq": ns})` return
+  cross-namespace results, then `namespace=Namespace(eq=ns)` return
+  isolated results, and concluded the dict form was silently ignored —
+  AND that `attune_redis/memory.py`'s `search`/`recent` (which use the
+  dict form, lines 445/493) had a production isolation bug. Reading the
+  installed client source REFUTED it:
+  `agent_memory_client.client.search_long_term_memory` does
+  `if isinstance(namespace, dict): namespace = Namespace(**namespace)`
+  — the dict is coerced to the identical object, so the two forms are
+  equivalent and `memory.py` is fine. The real cause was almost
+  certainly **AMS async indexing latency** (newly-created long-term
+  memories aren't instantly searchable): the two runs differed in BOTH
+  the filter form AND elapsed-time-since-write, and I attributed the
+  difference to the variable I happened to be looking at. Rules:
+  (1) when two runs differ, change ONE variable at a time before
+  drawing a causal conclusion — immediate-search-after-write vs a later
+  search is an uncontrolled timing variable in any embed-then-index
+  store (AMS, vector DBs); (2) before claiming a client/SDK filter is
+  "ignored," read how the client serializes it (dict→model coercion is
+  common) rather than inferring from end-to-end behavior; (3) a no-op
+  "fix" (dict→object here) justified by a wrong diagnosis is worse than
+  no change — it encodes a false story in the code. Pairs with
+  "verify-first applies to infra/config diagnoses" and "research
+  subagents confabulate SDK signatures — introspect before coding."
+  Separately, the genuine gap that triggered this is real: the AMS
+  round-trip test asserts PRESENCE ("marker is findable"), not
+  ISOLATION ("other namespaces excluded") — a presence test passes even
+  if isolation is broken, so isolation needs its own assertion (stash
+  ns A + B, search A, assert B absent) with a wait-for-index.
+- **The PostToolUse autoflake/ruff formatter strips a just-added import
+  if it isn't used YET — add the import and its first use in the SAME
+  edit (or add the use first)**: 2026-06-12, editing a file in two
+  steps — first `Edit` added `from agent_memory_client.filters import
+  Namespace`, second `Edit` added the `Namespace(...)` usage. The
+  PostToolUse formatter ran after the FIRST edit, saw the import
+  unused, and removed it; the second edit added the usage but the
+  import was already gone → `NameError: name 'Namespace' is not
+  defined` at runtime. Fix: when adding an import for new code,
+  introduce the import and at least one use in a single Edit, or add
+  the usage before the import. Detection: after a two-step
+  import-then-use, `grep -n "import X"` before running. Pairs with the
+  "interrupted/partial Edit" lessons — same family (the file on disk
+  isn't what your sequence of edits implies).
+- **Mutation testing in this repo — use mutmut 2.x not 3.x, scope +
+  PYTHONPATH to the worktree, expect equivalent mutants, and ISOLATE
+  real user state (2026-06-12)**: a mutmut pass on
+  `security/path_validation.py` (17/51 survived despite 60 green tests)
+  and `models/auth_strategy.py` (129/270 survived) surfaced real gaps
+  line-coverage hid. Durable mechanics:
+  - **mutmut 3.x fights this repo's layout** — config isn't on the CLI
+    (only `--max-children`), it reads a config file whose keys are
+    non-obvious, and its `mutants/`-copy model collides with the
+    worktree editable-install (MAPPING points `attune` at MAIN's src).
+    Pin **`mutmut==2.4.4`**: CLI/`setup.cfg`-configurable, mutates
+    IN-PLACE, so `PYTHONPATH=<absolute-worktree>/src` makes the runner
+    import the mutated worktree file. Temp `setup.cfg`:
+    `[mutmut]\npaths_to_mutate=<one file>\nrunner=<MAIN venv python> -m
+    pytest <fast scoped tests> -x -o addopts= -p no:cacheprovider -q`.
+    Run via `uv run --with 'mutmut==2.4.4' mutmut run`; `mutmut
+    results` / `mutmut show <id>`; then `rm -f setup.cfg; rm -rf
+    .mutmut-cache` and verify `grep -c XX <file>` == 0 (mutmut reverts
+    in place, but confirm).
+  - **Equivalent mutants are expected — don't chase 100%.** Survivors
+    that can't be killed without changing code: blocklist entries
+    substring-subsumed by a broader entry (`\windows\system32` ⊂
+    `\windows\system`), and no-op string-arg mutations (`rstrip("\\")`
+    → `rstrip("XX\\XX")` strips the same chars). Document them, move on.
+  - **A low kill rate flags a coverage-padding suite.** auth_strategy's
+    `*_coverage_boost.py` hit lines for the coverage number but asserted
+    little → 52% survived. Mutation kill-rate is the test-QUALITY metric
+    line coverage can't be.
+  - **Mutating a module whose tests touch REAL user state can clobber
+    it.** The auth_strategy run reset `~/.attune/auth_strategy.json`
+    (Patrick's `default_mode`) even though a NORMAL run of those tests
+    is isolated — a *mutant* broke a test's `patch(AUTH_STRATEGY_FILE)`
+    and a real write leaked through, ×270. Before mutmut-ing any module
+    whose tests read/write real paths (`~/.attune/`, `~/.config`),
+    redirect `HOME`/the config path to a tmp dir for the run. Snapshot
+    the real file before and restore after.
+  - **Verify-first still applies under mutation pressure**: I twice
+    declared a "standing leak / production bug" from one observation,
+    and a 30-second repro (read the client source; run the tests
+    normally) refuted both. Reproduce before claiming, even when the
+    symptom looks damning.

@@ -177,3 +177,62 @@ def test_session_stash_round_trip():
         assert hit is not None, f"stashed finding not recalled for {marker!r}"
     finally:
         be.close()
+
+
+def test_search_is_namespace_isolated():
+    """A namespace-scoped search must EXCLUDE other namespaces' records.
+
+    The round-trip tests above prove PRESENCE ("the marker I wrote is
+    findable"). They pass even if search leaks across namespaces, because a
+    leak only *adds* results. This proves ISOLATION: write the *same* semantic
+    content under two namespaces with distinct markers, then search from one
+    and assert the other's marker is absent. If namespace scoping were ignored
+    (search returning the whole store), the shared text would rank the other
+    namespace's record highly and this would fail.
+    """
+    from attune_redis.config import RedisPluginConfig
+    from attune_redis.memory import AMSMemoryBackend
+
+    shared = "shared finding about redis namespace isolation in attune"
+    marker_a = f"itest-{uuid.uuid4().hex[:10]}"
+    marker_b = f"itest-{uuid.uuid4().hex[:10]}"
+
+    be_a = AMSMemoryBackend(
+        RedisPluginConfig(
+            ams_base_url=_AMS_BASE_URL,
+            ams_namespace=f"itest-A-{uuid.uuid4().hex[:8]}",
+        )
+    )
+    be_b = AMSMemoryBackend(
+        RedisPluginConfig(
+            ams_base_url=_AMS_BASE_URL,
+            ams_namespace=f"itest-B-{uuid.uuid4().hex[:8]}",
+        )
+    )
+    try:
+        assert (
+            be_a.remember(f"{marker_a}: {shared}", memory_id=marker_a, topics=["type:note"]) is True
+        )
+        assert (
+            be_b.remember(f"{marker_b}: {shared}", memory_id=marker_b, topics=["type:note"]) is True
+        )
+
+        # Wait until A's own record is indexed/searchable from A's namespace.
+        hit_a = None
+        for _ in range(15):
+            results_a = be_a.search(shared, limit=20)
+            hit_a = next((r for r in results_a if marker_a in (r.get("text") or "")), None)
+            if hit_a is not None:
+                break
+            time.sleep(1)
+        assert hit_a is not None, f"A's own record not searchable from A for {marker_a!r}"
+
+        # Isolation: B's marker must NOT surface in A's search, even though the
+        # shared text would rank B's record highly if namespaces leaked.
+        texts_a = " ".join(r.get("text") or "" for r in be_a.search(shared, limit=20))
+        assert (
+            marker_b not in texts_a
+        ), "namespace leak: B's record surfaced in A's namespace-scoped search"
+    finally:
+        be_a.close()
+        be_b.close()
