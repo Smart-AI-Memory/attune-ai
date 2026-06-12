@@ -47,7 +47,7 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v6.5.4</span>
+                  <span>v8.4.0</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
                   <span className="opacity-80">AI Workflow OS for Claude Code</span>
                 </div>
@@ -56,7 +56,7 @@ export default function Home() {
                   <span className="text-gradient">Claude Code</span>
                 </h1>
                 <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
-                  15 workflows, 14 auto-triggering skills, MCP server with 41 tools.
+                  17 workflows, 17 auto-triggering skills, MCP server with 41 tools.
                   Plus the documentation toolchain we built along the way &mdash;
                   now four standalone packages.
                 </p>
@@ -166,7 +166,7 @@ export default function Home() {
                     <div>
                       <div className="font-semibold text-sm"><code className="font-mono">attune-author</code></div>
                       <p className="text-xs text-[var(--text-secondary)] leading-relaxed mt-1">
-                        Generates 11 kinds of source-grounded templates with
+                        Generates 15 kinds of source-grounded templates with
                         per-type LLM polish. Runs at dev time or in CI.
                       </p>
                     </div>
@@ -227,6 +227,57 @@ export default function Home() {
         </section>
 
         {/* Four Product Cards */}
+        {/* OS layer: workflows + memory */}
+        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="The OS layer">
+          <div className="text-center mb-20">
+            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The OS Layer</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Workflows That Remember</h2>
+            <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
+              What makes it an OS, not a toolbox: orchestrated workflows
+              on top, persistent memory underneath. Your AI collaborator
+              stops starting from zero.
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-6">
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9881;&#65039;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">Orchestrated Workflows</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                17 multi-stage workflows — security audit, code review,
+                bug prediction, release prep — with cost-tiered model
+                routing and structured, readable reports. Works on a
+                Claude subscription or an API key.
+              </p>
+            </div>
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--secondary)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#129504;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">Cross-Session Memory</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                Findings from each session are stashed and recalled in
+                the next. A retrievable lessons corpus surfaces the
+                right engineering lesson at the moment a prompt needs
+                it — automatically, or on demand with /recall.
+              </p>
+            </div>
+            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
+              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
+                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128190;</span>
+              </div>
+              <h3 className="text-xl font-bold mb-3">Redis Semantic Tier</h3>
+              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
+                Local-first by default; plug in Redis Agent Memory
+                Server for semantic search over your memory — local
+                Ollama embeddings, no cloud required. Our int8 vector
+                quantization work is an open upstream PR to Redis.
+              </p>
+            </div>
+          </div>
+        </section>
+
         <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Products">
           <div className="text-center mb-20">
             <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">Core Capabilities</span>
@@ -245,7 +296,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-3">attune-ai</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Full framework. Workflows, staleness detection, MCP server, and 14 auto-triggering skills for Claude Code.
+                Full framework. Workflows, staleness detection, MCP server, and 17 auto-triggering skills for Claude Code.
               </p>
             </div>
 
@@ -267,7 +318,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold mb-3">attune-author</h3>
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                AI authoring companion. Generates 11 kinds of source-grounded templates with per-type polish prompts.
+                AI authoring companion. Generates 15 kinds of source-grounded templates with per-type polish prompts.
               </p>
             </div>
 

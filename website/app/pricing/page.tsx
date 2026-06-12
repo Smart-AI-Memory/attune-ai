@@ -15,7 +15,7 @@ const includedItems = [
   'Help content generation from source code',
   'Progressive depth templates (concept / task / reference)',
   'Staleness detection and auto-regeneration',
-  'Claude Code plugin with 14 skills',
+  'Claude Code plugin with 17 skills',
   'Standalone reader (attune-help)',
   'Full source code access',
   'Community support on GitHub',

@@ -30,7 +30,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-ai",
     name: "Attune AI",
     pypiName: "attune-ai",
-    version: "5.10.1",
+    version: "8.4.0",
     tagline: "Generate, maintain, and serve help from your code",
     installCommand: "pip install attune-ai",
     marketplaceInstall:
@@ -44,7 +44,7 @@ export const PRODUCTS: Product[] = [
       "Generate concept, task, and reference templates",
       "Staleness detection via source hashing",
       "Auto-regeneration of stale templates",
-      "14 Claude Code skills included",
+      "17 Claude Code skills included",
       "MCP server with 41 registered tools",
     ],
   },
@@ -52,7 +52,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-help",
     name: "Attune Help",
     pypiName: "attune-help",
-    version: "0.3.1",
+    version: "0.11.1",
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
     marketplaceInstall:
@@ -74,19 +74,20 @@ export const PRODUCTS: Product[] = [
     id: "attune-author",
     name: "Attune Author",
     pypiName: "attune-author",
-    version: "0.2.0",
+    version: "0.16.0",
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
       "claude plugin install attune-author@attune-docs",
     description:
-      "The AI authoring companion for attune-help. Generates 11 kinds " +
-      "of source-grounded templates — concept, task, reference, error, " +
-      "warning, troubleshooting, faq, quickstart, tip, note, and " +
-      "comparison — with per-type LLM polish prompts and typed source " +
-      "summaries so the output stays accurate.",
+      "The AI authoring companion for attune-help. Generates 15 kinds " +
+      "of source-grounded templates — concept, task, reference, " +
+      "how-to, tutorial, architecture, cli-reference, error, warning, " +
+      "troubleshooting, faq, quickstart, tip, note, and comparison — " +
+      "with per-type LLM polish prompts and typed source summaries so " +
+      "the output stays accurate.",
     features: [
-      "11 meta-template kinds (up from 3 in v0.1.0)",
+      "15 meta-template kinds (up from 3 in v0.1.0)",
       "Per-type LLM polish prompts with anti-pattern lists",
       "Signature-aware source summaries (typed args + return)",
       "Strict polish mode for CI (ATTUNE_AUTHOR_STRICT_POLISH)",
@@ -98,7 +99,7 @@ export const PRODUCTS: Product[] = [
     id: "claude-code-plugin",
     name: "Claude Code Plugin",
     pypiName: "attune-ai",
-    version: "5.10.1",
+    version: "8.4.0",
     tagline: "Progressive help right in your terminal",
     installCommand:
       "claude plugin marketplace add Smart-AI-Memory/attune-ai",
@@ -114,7 +115,7 @@ export const PRODUCTS: Product[] = [
       "/coach status — check template freshness",
       "/coach maintain — regenerate stale templates",
       "Auto-triggers on natural language (help, explain, learn)",
-      "14 auto-triggering skills (security, testing, review, etc.)",
+      "17 auto-triggering skills (security, testing, review, etc.)",
     ],
   },
 ];
@@ -245,21 +246,25 @@ export const DIFFERENTIATORS: Differentiator[] = [
 /**
  * Counts that appear in prose and stat callouts across the
  * site. Verified against the live Python code per the
- * website-content-accuracy rule:
+ * website-content-accuracy rule (last verified 2026-06-11,
+ * attune-ai 8.4.0):
  *
  *   workflows: attune.workflows.list_workflows() with stages
- *   skills: plugin/skills/ directory count
- *   mcpTools: EmpathyMCPServer().tools length
+ *   skills: plugin/skills/ directory count (test_skill_count)
+ *   mcpTools: attune.mcp.tool_schemas get_*_tools() total
  *   templateKinds: attune_author.generator._ALL_TEMPLATE_NAMES length
+ *   wizards: attune.wizards.list_wizards() length
+ *
+ * (agentTemplates / compositionPatterns were dropped 2026-06-11:
+ * the registries they referenced no longer exist in that shape
+ * and no page consumed them.)
  */
 export const CAPABILITIES = {
-  workflows: 15,
-  skills: 14,
+  workflows: 17,
+  skills: 17,
   mcpTools: 41,
-  templateKinds: 11,
+  templateKinds: 15,
   wizards: 5,
-  agentTemplates: 14,
-  compositionPatterns: 6,
 } as const;
 
 /**
