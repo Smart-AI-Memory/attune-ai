@@ -364,6 +364,100 @@ class TestAuthStrategySerialization:
 
 
 @pytest.mark.unit
+class TestAuthStrategySerializationDefaults:
+    """Pin the serialization contract that happy-path tests leave open.
+
+    The existing serialization tests always pass explicit values, so the
+    on-disk enum strings, the dataclass field defaults, and the
+    ``from_dict`` ``.get()`` fallbacks are never asserted. These are the
+    slice-1 mutation survivors (QA #2): an enum value flipped to ``None``,
+    a ``500`` default bumped to ``501``, a ``True`` default flipped to
+    ``False`` — all pass the happy-path suite. These tests close that gap.
+    """
+
+    def test_subscription_tier_enum_values_pinned(self):
+        """Every SubscriptionTier on-disk string is exact (serialization key)."""
+        assert SubscriptionTier.FREE.value == "free"
+        assert SubscriptionTier.PRO.value == "pro"
+        assert SubscriptionTier.MAX.value == "max"
+        assert SubscriptionTier.ENTERPRISE.value == "enterprise"
+        assert SubscriptionTier.API_ONLY.value == "api_only"
+
+    def test_auth_mode_enum_values_pinned(self):
+        """Every AuthMode on-disk string is exact (serialization key)."""
+        assert AuthMode.SUBSCRIPTION.value == "subscription"
+        assert AuthMode.API.value == "api"
+        assert AuthMode.AUTO.value == "auto"
+
+    def test_default_construction_pins_all_field_defaults(self):
+        """A no-arg AuthStrategy uses the documented dataclass defaults.
+
+        Kills mutants on the field defaults (e.g. ``500`` -> ``501``,
+        ``True`` -> ``False``/``None``, ``4.0`` -> other), which the
+        happy-path tests never exercise because they pass explicit values.
+        """
+        strategy = AuthStrategy()
+
+        assert strategy.subscription_tier == SubscriptionTier.PRO
+        assert strategy.default_mode == AuthMode.AUTO
+        assert strategy.small_module_threshold == 500
+        assert strategy.medium_module_threshold == 2000
+        assert strategy.loc_to_tokens_multiplier == 4.0
+        assert strategy.setup_completed is True
+        assert strategy.prefer_subscription is True
+        assert strategy.cost_optimization is True
+        assert strategy.metadata == {}
+
+    def test_default_metadata_is_fresh_per_instance(self):
+        """``metadata`` default_factory yields an independent dict per instance."""
+        first = AuthStrategy()
+        second = AuthStrategy()
+
+        first.metadata["touched"] = True
+
+        assert second.metadata == {}
+
+    def test_from_dict_empty_uses_documented_defaults(self):
+        """``from_dict({})`` falls back to every documented ``.get()`` default.
+
+        Kills mutants on the ``.get(key, DEFAULT)`` fallbacks in
+        ``from_dict`` — these are unreachable when the input dict already
+        carries every key (as the happy-path test does).
+        """
+        strategy = AuthStrategy.from_dict({})
+
+        assert strategy.subscription_tier == SubscriptionTier.PRO
+        assert strategy.default_mode == AuthMode.AUTO
+        assert strategy.small_module_threshold == 500
+        assert strategy.medium_module_threshold == 2000
+        assert strategy.loc_to_tokens_multiplier == 4.0
+        assert strategy.setup_completed is True
+        assert strategy.prefer_subscription is True
+        assert strategy.cost_optimization is True
+        assert strategy.metadata == {}
+
+    def test_to_dict_emits_json_serializable_strings_not_enums(self):
+        """``to_dict`` emits raw strings (via ``.value``) that survive JSON.
+
+        ``type(...) is str`` kills a ``.value``-removal mutant (the enum is
+        a ``str`` subclass, so ``== "..."`` alone would not catch it). The
+        JSON round-trip pins the API_ONLY / SUBSCRIPTION on-disk strings
+        through the ``to_dict`` path specifically.
+        """
+        data = AuthStrategy(
+            subscription_tier=SubscriptionTier.API_ONLY,
+            default_mode=AuthMode.SUBSCRIPTION,
+        ).to_dict()
+
+        assert type(data["subscription_tier"]) is str
+        assert type(data["default_mode"]) is str
+
+        reloaded = json.loads(json.dumps(data))
+        assert reloaded["subscription_tier"] == "api_only"
+        assert reloaded["default_mode"] == "subscription"
+
+
+@pytest.mark.unit
 class TestAuthStrategyPersistence:
     """Test save and load methods."""
 

@@ -38,6 +38,19 @@ suites are coverage-padded) with a hard number.
 
 [PR #793]: https://github.com/Smart-AI-Memory/attune-ai/pull/793
 
+- **Slice 1 — Serialization fidelity** (enum values, dataclass field
+  defaults, `to_dict`, `from_dict`): hardened in **QA #2 phase 5**.
+  Six behavioral tests in `TestAuthStrategySerializationDefaults` pin
+  the contract the happy-path suite left open — every `SubscriptionTier`
+  / `AuthMode` on-disk string, the no-arg dataclass defaults, the
+  `metadata` default_factory independence, the `from_dict({})` `.get()`
+  fallbacks, and `to_dict` emitting raw `.value` strings (a `.value`
+  removal is caught by `type(...) is str`, since the enums subclass
+  `str`). Six load-bearing mutants proven killed by apply/revert
+  (defaults `500`→`501`, `True`→`False`; enum value mutate;
+  `from_dict` `.get` fallback `500`→`501` and `"pro"`→`None`; `.value`
+  drop). No production bug surfaced — test-only.
+
 ---
 
 ## Sub-slices (each = one PR)
