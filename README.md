@@ -106,6 +106,34 @@ in sentinel tags to prevent prompt injection. The Claude provider
 automatically caches the stable RAG context prefix, eliminating
 repeated token costs across calls.
 
+### 5. Memory that compounds across sessions
+
+Most AI coding sessions start from zero. Attune ships a
+cross-session memory loop — every session ends by stashing its
+durable findings, and every new session can pull them back:
+
+- **Stash on stop** — a `Stop` hook extracts decisions, bugs, and
+  references from the session (local LLM when available, heuristic
+  fallback) and writes them to the memory store: a local file by
+  default, Redis Agent Memory Server with
+  `pip install 'attune-ai[redis]'`.
+- **Recall at the door** — a `SessionStart` hook surfaces the most
+  recent findings for your project, and warns when the memory
+  backend is unreachable instead of degrading silently.
+- **Lessons at the trap moment** — a `UserPromptSubmit` hook
+  retrieves your project's engineering lessons (from
+  `.claude/lessons.md` or `CLAUDE.md`) when a prompt hits a known
+  trap; a `PreToolUse` hook surfaces curated rules at the exact
+  tool call they govern.
+- **`/recall <topic>`** — on-demand search across both stores,
+  results labeled `[lesson]` vs session finding.
+
+Your memory, your corpus: the loop runs over *your* project's
+sessions and lessons file. We dogfood it on our own — 380+
+engineering lessons retrieved via attune-rag at **P@3 96%**
+(100% on the high-severity subset) on a frozen trap-moment
+benchmark.
+
 ---
 
 ## Get Started in 60 Seconds
@@ -375,17 +403,23 @@ reporting and full security details.
 
 ---
 
-## Session continuity
+## Session continuity & cross-session memory
 
-Three lightweight surfaces keep long Claude Code sessions
-oriented and recoverable. All are opt-in via plugin install
-and silent until they have something to say.
+Lightweight hook surfaces keep long Claude Code sessions
+oriented and recoverable — and carry what you learned into the
+next one. All are opt-in via plugin install and silent until
+they have something to say.
 
 | Surface | Event | When it fires |
 |---------|-------|---------------|
 | `spec_orient.py` | `SessionStart` | On `startup` / `resume` / `clear`, prints up to 3 in-flight spec slugs. On `compact`, prints the most-recent spec body so the model keeps the spec in fresh post-compact context. |
 | `compact_warning.py` | `Stop` | Once per session when transcript size crosses ~70% of the context window. Emits a copy-pasteable resume prompt and recommends starting a fresh session. |
 | `/handoff` | slash command | On demand. Prints the same resume prompt as the auto-warning AND appends it to `~/.attune/last-handoff.md` so you can recover it later. |
+| `session_stash.py` | `Stop` | Once per session past a utilization floor: extracts durable findings (decisions, bugs, references) and stashes them to the memory store (file by default, Redis AMS when installed). |
+| `session_recall.py` | `SessionStart` | Surfaces the most recent cross-session findings for this project; warns when the configured memory backend is unreachable rather than degrading silently. |
+| `lesson_recall.py` | `UserPromptSubmit` | Surfaces up to 3 relevant lessons from the project's lessons corpus when a prompt matches a known trap moment; silent otherwise, once per (session, lesson). |
+| `jit_recall.py` | `PreToolUse` | Surfaces the curated rule governing a tool call at the decision point (e.g. release tagging), once per session. |
+| `/recall <topic>` | slash command | On demand. Searches session findings and the lessons corpus, labels results by source, and names the answering backend. |
 
 ### Tunable defaults
 
@@ -394,6 +428,8 @@ and silent until they have something to say.
 - `ATTUNE_AI_CONTEXT_WINDOW_TOKENS` (default `200000`) — context window assumed by the estimator.
 - `ATTUNE_AI_WORKSPACE_ROOTS` (`os.pathsep`-separated paths: `:` on POSIX, `;` on Windows) — override the workspace roots scanned for `specs/`.
 - `ATTUNE_AI_SENTINEL_DIR` (default `~/.attune`) — directory for the once-per-session warning sentinel.
+- `ATTUNE_LESSON_RECALL` / `ATTUNE_JIT_RECALL` (set `0` to disable) — off-switches for the prompt-time and tool-call recall hooks.
+- `ATTUNE_LESSON_RECALL_FLOOR` (default `8.0`) — minimum retrieval score before a lesson surfaces at prompt time.
 
 The transcript-size proxy is crude but monotonic: the warning
 fires when the user's total content characters cross the
