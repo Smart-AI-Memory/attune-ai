@@ -8201,3 +8201,39 @@ files.
     non-colliding PII types (IPv4, which phone can't match). Diagnostic:
     if a fresh exact-output test fails on unmutated source, suspect
     pattern cross-matching before suspecting a real bug.
+
+- **Ops-dashboard curator "is offline (401 invalid x-api-key)" → a STALE
+  repo-root `.env` shadows the live key; and even fixed, the curator needs
+  API CREDITS the Claude subscription doesn't grant (2026-06-12)**: the
+  Briefing page's curator makes a RAW `AsyncAnthropic()` call
+  (`curator/core.py`), so it reads `ANTHROPIC_API_KEY` from the process env.
+  Two layered causes, both worth the diagnostic discipline:
+  - **Dead `.env` shadows the live key.** `/Users/.../attune-ai/.env` held a
+    rotated-out (dead) key from an earlier date; `~/.attune/anthropic.env`
+    held the current live one. `load_dotenv` (default `override=False`)
+    loads `.env`'s dead key when the shell has none exported, so the server
+    sends the dead key → 401. Diagnostic that pinned it WITHOUT leaking
+    secrets: for each candidate key file, parse the value, print only
+    `len`+`prefix` (`sk-ant-…`), and `curl -s -o /dev/null -w "%{http_code}"
+    https://api.anthropic.com/v1/models -H "x-api-key: $K" -H
+    "anthropic-version: 2023-06-01"` — 200 = live, 401 = dead. Compare file
+    mtimes to spot which is stale. Fix without touching the secret value:
+    relaunch the server with the live key sourced
+    (`set -a; source ~/.attune/anthropic.env; set +a; exec …`) — it wins
+    over `.env` because `override=False`.
+  - **"Subscription mode" ≠ free API.** With the live key the curator then
+    got **400 "credit balance is too low"** — the key authenticates but its
+    org has no pay-as-you-go API credit. The Claude Pro/Max subscription
+    powers claude.ai / Claude Code, NOT raw API calls; any dashboard feature
+    using the raw `anthropic` SDK genuinely needs API billing. A
+    subscription-only user (Patrick: "no API-key polish") simply can't run
+    the curator without funding credits — it's an account choice, not a bug
+    to code around. A 400-credit error is ORG-level, so if credits were
+    added on a DIFFERENT account than the key's org, it still 400s.
+  - **The code half (shipped):** the curator interpolated the raw exception
+    (`f"… offline ({exc})"`) — leaking `request_id`/error internals to the
+    UI. Replaced with an `_offline_summary(exc)` classifier (401→key
+    guidance, 400+"credit balance"→billing guidance, 429→rate-limit, else
+    generic) that NEVER interpolates the raw exc; the full error still goes
+    to `logger.warning`. Anti-leak is a tested property (assert the
+    `request_id` is absent from the summary).

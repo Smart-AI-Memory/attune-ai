@@ -256,6 +256,43 @@ async def _query_opus(
     )
 
 
+def _offline_summary(exc: Exception) -> str:
+    """Map an LLM/transport failure to a clean, actionable offline message.
+
+    Deliberately does NOT interpolate the raw exception into the
+    dashboard-facing summary: SDK errors carry a ``request_id`` and other
+    internals that shouldn't surface in the UI. The full exception is logged
+    separately for debugging.
+
+    Args:
+        exc: The exception raised while reaching Anthropic.
+
+    Returns:
+        A user-facing sentence beginning with "The curator is offline".
+    """
+    status = getattr(exc, "status_code", None)
+    text = str(exc).lower()
+
+    if status == 401 or "authentication" in text or "x-api-key" in text:
+        return (
+            "The curator is offline: the ANTHROPIC_API_KEY is missing or "
+            "invalid. Set a valid key (e.g. in ~/.attune/anthropic.env)."
+        )
+    if "credit balance" in text or "plans & billing" in text or "billing" in text:
+        return (
+            "The curator is offline: the Anthropic account has no API credit "
+            "balance. The curator makes a direct API call, which needs "
+            "pay-as-you-go credits — the Claude subscription does not include "
+            "raw API access. Add credits to enable AI briefings."
+        )
+    if status == 429 or "rate limit" in text:
+        return "The curator is offline: Anthropic rate limit reached. " "Try again shortly."
+    return (
+        "The curator is offline due to a temporary error reaching Anthropic. "
+        "See the server logs for details."
+    )
+
+
 async def run_curator(
     *,
     project_root: Path,
@@ -314,7 +351,7 @@ async def run_curator(
         # to an offline briefing rather than crashing the dashboard.
         logger.warning("curator: synthesis failed: %s", exc)
         return CuratorResult(
-            summary=f"The curator is offline ({exc}).",
+            summary=_offline_summary(exc),
             items=[],
             sources_consulted=sources_consulted,
             model=model,
