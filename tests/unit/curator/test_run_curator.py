@@ -211,13 +211,51 @@ def test_zero_ttl_always_misses(isolate):
     assert len(client.messages.calls) == 2
 
 
+class _StatusError(Exception):
+    """Stand-in for an anthropic SDK status error (carries ``status_code``)."""
+
+    def __init__(self, message: str, status_code: int | None = None) -> None:
+        super().__init__(message)
+        self.status_code = status_code
+
+
 def test_offline_on_sdk_failure(isolate):
     client = _FakeClient(exc=RuntimeError("api down"))
     result = asyncio.run(core.run_curator(project_root=isolate, client=client))
     assert result.items == []
     assert result.summary.startswith("The curator is offline")
-    assert "api down" in result.summary
+    # The raw exception text must NOT leak into the dashboard-facing summary.
+    assert "api down" not in result.summary
     assert set(result.sources_consulted) == {"bulletin", "specs"}
+
+
+def test_offline_auth_error_gives_key_guidance(isolate):
+    exc = _StatusError("Error code: 401 - invalid x-api-key", status_code=401)
+    result = asyncio.run(core.run_curator(project_root=isolate, client=_FakeClient(exc=exc)))
+    assert "ANTHROPIC_API_KEY" in result.summary
+    # No raw error / request_id leakage.
+    assert "401" not in result.summary
+    assert "x-api-key" not in result.summary
+
+
+def test_offline_no_credits_gives_billing_guidance(isolate):
+    exc = _StatusError(
+        "Error code: 400 - Your credit balance is too low to access the "
+        "Anthropic API. request_id: req_abc123",
+        status_code=400,
+    )
+    result = asyncio.run(core.run_curator(project_root=isolate, client=_FakeClient(exc=exc)))
+    assert "credit" in result.summary.lower()
+    assert "subscription does not include raw API access" in result.summary
+    # The request_id must never reach the UI.
+    assert "req_abc123" not in result.summary
+
+
+def test_offline_rate_limit_message(isolate):
+    exc = _StatusError("Error code: 429 - rate limit exceeded", status_code=429)
+    result = asyncio.run(core.run_curator(project_root=isolate, client=_FakeClient(exc=exc)))
+    assert "rate limit" in result.summary.lower()
+    assert "429" not in result.summary
 
 
 def test_budget_overage_logs_warning(isolate, caplog):
