@@ -34,7 +34,7 @@ from attune.mcp.tool_schemas import (
     get_utility_tools,
     get_workflow_tools,
 )
-from attune.mcp.workflow_handlers import WorkflowHandlersMixin
+from attune.mcp.workflow_handlers import WorkflowHandlersMixin, _workflow_response
 
 logger = logging.getLogger(__name__)
 
@@ -381,13 +381,12 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = SecurityAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return {
-            "success": result.success,
-            "score": result.final_output.get("health_score"),
-            "findings": result.final_output.get("findings", []),
-            "cost": result.cost_report.total_cost,
-            "provider": result.provider,
-        }
+        return _workflow_response(
+            result,
+            include_provider=True,
+            score="health_score",
+            findings=("findings", []),
+        )
 
     async def _run_bug_predict(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run bug prediction workflow."""
@@ -400,11 +399,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = BugPredictionWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return {
-            "success": result.success,
-            "predictions": result.final_output.get("predictions", []),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, predictions=("predictions", []))
 
     async def _run_code_review(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run code review workflow."""
@@ -415,12 +410,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = CodeReviewWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return {
-            "success": result.success,
-            "feedback": result.final_output.get("feedback"),
-            "score": result.final_output.get("quality_score"),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, feedback="feedback", score="quality_score")
 
     async def _run_test_generation(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run test generation workflow."""
@@ -431,12 +421,11 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = TestGenerationWorkflow()
         result = await workflow.execute(module_path=validated_path)
 
-        return {
-            "success": result.success,
-            "tests_generated": result.final_output.get("tests_generated", 0),
-            "output_path": result.final_output.get("output_path"),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(
+            result,
+            tests_generated=("tests_generated", 0),
+            output_path="output_path",
+        )
 
     async def _run_performance_audit(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run performance audit workflow."""
@@ -447,12 +436,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = PerformanceAuditWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        return {
-            "success": result.success,
-            "findings": result.final_output.get("findings", []),
-            "score": result.final_output.get("score"),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, findings=("findings", []), score="score")
 
     async def _run_release_prep(self, args: dict[str, Any]) -> dict[str, Any]:
         """Run release preparation workflow."""
@@ -465,24 +449,21 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
         workflow = ReleasePreparationWorkflow()
         result = await workflow.execute(path=validated_path)
 
-        # ``final_output`` is dict-shaped on the happy path but degrades to a
-        # plain string when the workflow short-circuits (e.g. with an error
-        # message). Coerce to a dict view so the response shape stays stable
-        # and ``.get()`` doesn't AttributeError.
-        final_output = result.final_output
-        if not isinstance(final_output, dict):
-            final_output = {"recommendation": str(final_output)}
-
-        return {
-            "success": result.success,
-            "approved": final_output.get("approved"),
-            "health_score": final_output.get("health_score"),
-            # Serialized WorkflowReport dicts carry no "recommendation"
-            # key — fall back to the result summary so the field stays
-            # populated now that SDK workflows emit report payloads.
-            "recommendation": final_output.get("recommendation") or result.summary,
-            "cost": result.cost_report.total_cost,
-        }
+        response = _workflow_response(
+            result,
+            approved="approved",
+            health_score="health_score",
+            recommendation="recommendation",
+        )
+        if not isinstance(result.final_output, dict):
+            # Short-circuited workflows degrade ``final_output`` to a
+            # plain string (e.g. an error message) — surface it.
+            response["recommendation"] = str(result.final_output)
+        elif not response["recommendation"]:
+            # Report payloads carry no "recommendation" key — fall back
+            # to the result summary so the field stays populated.
+            response["recommendation"] = result.summary
+        return response
 
     async def _get_auth_status(self) -> dict[str, Any]:
         """Get authentication strategy status."""
