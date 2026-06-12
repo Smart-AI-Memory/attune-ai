@@ -21,9 +21,21 @@
 
   var STREAM_URL = DATA.stream_url || "";
   var INITIAL_STATUS = DATA.initial_status || "";
+  var RUN_ID = DATA.run_id || "";
   var SOURCE_WORKFLOW = DATA.workflow || "";
   var SOURCE_PATH = DATA.path == null ? null : DATA.path;
   var ALLOW_RUN = DATA.allow_run === true;
+
+  // Suggestion-chip parsing patterns. Declared up top (not in the
+  // suggestion-chips section below) because the disk-loaded branch
+  // calls renderSuggestionChipsFromLog SYNCHRONOUSLY during IIFE
+  // evaluation — with the assignments further down, the hoisted vars
+  // would still be undefined at that call and the page init would
+  // die on _NEXT_STEP_RE.exec. Lines look like:
+  //   I'd run `attune workflow run security-audit` next — Your spec ...
+  // The backtick-wrapped workflow name is the parsable signal.
+  var _NEXT_STEP_RE = /attune workflow run\s+([a-z][a-z0-9-]+)/i;
+  var _VALID_WORKFLOW_NAME_RE = /^[a-z][a-z0-9-]+$/;
 
   var pre = document.querySelector("[data-log]");
   var statusEl = document.querySelector("[data-status]");
@@ -208,6 +220,9 @@
       // The marker pattern is stable across all SDK-native workflows
       // (defined in attune.voice.personality.HEADER_NEXT_STEPS).
       renderSuggestionChipsFromLog(logBuffer);
+      // T6 — when the run carried a structured WorkflowReport, fetch
+      // it and render the report panel above the (now collapsing) log.
+      if (info.has_report) fetchAndRenderReport();
       es.close();
     });
 
@@ -248,6 +263,9 @@
     if (preEl) {
       renderSuggestionChipsFromLog(preEl.textContent || "");
     }
+    // T6 — disk-loaded runs may carry a persisted structured report;
+    // a 404 from the report route just means "no panel".
+    fetchAndRenderReport();
   }
 
   // ----------------------------------------------------------------
@@ -569,12 +587,9 @@
   // Suggestion chips parsed from "What I'd Do Next" log lines
   // ------------------------------------------------------------------
 
-  // Pattern: lines look like
-  //   I'd run `attune workflow run security-audit` next — Your spec ...
-  // The backtick-wrapped workflow name is the parsable signal. Free-form
+  // Pattern vars (_NEXT_STEP_RE / _VALID_WORKFLOW_NAME_RE) are declared
+  // at the top of the IIFE — see the comment there for why. Free-form
   // explanation after the em-dash is kept as the chip's tooltip text.
-  var _NEXT_STEP_RE = /attune workflow run\s+([a-z][a-z0-9-]+)/i;
-  var _VALID_WORKFLOW_NAME_RE = /^[a-z][a-z0-9-]+$/;
 
   function parseSuggestions(logText) {
     if (!logText || typeof logText !== "string") return [];
@@ -717,6 +732,261 @@
   }
 
   // ------------------------------------------------------------------
+  // T6 (workflow-result-formatting) — structured report panel
+  // ------------------------------------------------------------------
+  //
+  // The runner stashes the workflow's serialized WorkflowReport (sent
+  // over the ATTUNE_RUN_META report_b64 side-channel) and the server
+  // renders its summary markdown via the canonical Python renderer.
+  // This module fetches /runs/<id>/report once the run is terminal,
+  // converts that CONSTRAINED markdown subset to HTML (headings,
+  // tables, lists, blockquote callouts, fenced code, inline bold/code,
+  // and the renderer's literal <details> wrappers), and renders Run
+  // chips for next-step actions whose command is a runnable
+  // `attune workflow run <name>`. The terminal log collapses into a
+  // "Process log" <details> so the report is the primary content.
+
+  function escapeHtml(text) {
+    return String(text)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  // Inline transforms applied AFTER escaping: **bold**, `code`,
+  // *emphasis*. Escaping first means the regexes only ever see
+  // entity-encoded text, so no raw HTML can sneak through.
+  function mdInline(text) {
+    var s = escapeHtml(text);
+    s = s.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/`([^`]+)`/g, "<code>$1</code>");
+    s = s.replace(/(^|[\s(])\*([^*\s][^*]*)\*/g, "$1<em>$2</em>");
+    return s;
+  }
+
+  // Convert the report renderer's markdown subset to HTML. This is NOT
+  // a general markdown parser — it handles exactly what
+  // attune.voice.report_renderer emits (see that module's docstring).
+  // Anything unrecognized renders as an escaped paragraph, so renderer
+  // drift degrades to ugly-but-safe text rather than broken markup.
+  function mdToHtml(md) {
+    var lines = String(md).split(/\r?\n/);
+    var out = [];
+    var para = [];
+    var i, line;
+
+    function flushPara() {
+      if (!para.length) return;
+      out.push("<p>" + mdInline(para.join(" ")) + "</p>");
+      para = [];
+    }
+
+    for (i = 0; i < lines.length; i++) {
+      line = lines[i];
+      var trimmed = line.trim();
+
+      if (!trimmed) { flushPara(); continue; }
+
+      // Renderer-emitted <details> wrappers pass through as real tags
+      // (title re-escaped). Everything else angle-bracketed is escaped.
+      var dm = /^<details><summary>(.*)<\/summary>$/.exec(trimmed);
+      if (dm) {
+        flushPara();
+        out.push("<details><summary>" + mdInline(dm[1]) + "</summary>");
+        continue;
+      }
+      if (trimmed === "</details>") {
+        flushPara();
+        out.push("</details>");
+        continue;
+      }
+
+      // Fenced code block — consume until the closing fence. The
+      // renderer indents command fences under their bullet; strip that
+      // shared indent so the <pre> doesn't render leading whitespace.
+      if (/^```/.test(trimmed)) {
+        flushPara();
+        var fenceIndent = line.length - line.replace(/^\s+/, "").length;
+        var code = [];
+        i++;
+        while (i < lines.length && !/^\s*```/.test(lines[i])) {
+          code.push(lines[i].slice(fenceIndent));
+          i++;
+        }
+        out.push("<pre><code>" + escapeHtml(code.join("\n")) + "</code></pre>");
+        continue;
+      }
+
+      // Headings — demoted one level (the page owns <h1>).
+      var hm = /^(#{1,3})\s+(.*)$/.exec(trimmed);
+      if (hm) {
+        flushPara();
+        var level = hm[1].length + 1;
+        out.push("<h" + level + ">" + mdInline(hm[2]) + "</h" + level + ">");
+        continue;
+      }
+
+      // Pipe table — consume contiguous | lines; row 2 is the ---
+      // separator the renderer always emits.
+      if (trimmed.charAt(0) === "|") {
+        flushPara();
+        var rows = [];
+        while (i < lines.length && lines[i].trim().charAt(0) === "|") {
+          rows.push(lines[i].trim());
+          i++;
+        }
+        i--;
+        out.push(mdTable(rows));
+        continue;
+      }
+
+      // Unordered list — consume contiguous "- " lines. Commands under
+      // a bullet arrive as indented fenced blocks and are handled by
+      // the fence branch above because the renderer separates them
+      // with blank lines.
+      if (/^- /.test(trimmed)) {
+        flushPara();
+        var items = [];
+        while (i < lines.length && /^- /.test(lines[i].trim())) {
+          items.push("<li>" + mdInline(lines[i].trim().slice(2)) + "</li>");
+          i++;
+        }
+        i--;
+        out.push("<ul>" + items.join("") + "</ul>");
+        continue;
+      }
+
+      // Blockquote callout — consume contiguous "> " lines.
+      if (trimmed.charAt(0) === ">") {
+        flushPara();
+        var quoted = [];
+        while (i < lines.length && lines[i].trim().charAt(0) === ">") {
+          quoted.push(lines[i].trim().replace(/^>\s?/, ""));
+          i++;
+        }
+        i--;
+        out.push(
+          "<blockquote>" +
+          quoted.filter(function (q) { return q !== ""; })
+            .map(function (q) { return "<p>" + mdInline(q) + "</p>"; })
+            .join("") +
+          "</blockquote>"
+        );
+        continue;
+      }
+
+      para.push(trimmed);
+    }
+    flushPara();
+    return out.join("\n");
+  }
+
+  function mdTable(rows) {
+    function cells(row) {
+      // "| a | b |" → ["a", "b"]. Manual scan (no regex lookbehind —
+      // it's a parse error on older Safari) honoring the renderer's
+      // escaped \| cells.
+      var inner = row.replace(/^\|/, "").replace(/\|$/, "");
+      var parts = [];
+      var cur = "";
+      for (var k = 0; k < inner.length; k++) {
+        var ch = inner.charAt(k);
+        if (ch === "\\" && inner.charAt(k + 1) === "|") { cur += "|"; k++; continue; }
+        if (ch === "|") { parts.push(cur.trim()); cur = ""; continue; }
+        cur += ch;
+      }
+      parts.push(cur.trim());
+      return parts;
+    }
+    var head = cells(rows[0]);
+    var html = ["<table><thead><tr>"];
+    head.forEach(function (c) { html.push("<th>" + mdInline(c) + "</th>"); });
+    html.push("</tr></thead><tbody>");
+    // rows[1] is the --- separator; body starts at 2.
+    for (var r = 2; r < rows.length; r++) {
+      html.push("<tr>");
+      cells(rows[r]).forEach(function (c) { html.push("<td>" + mdInline(c) + "</td>"); });
+      html.push("</tr>");
+    }
+    html.push("</tbody></table>");
+    return html.join("");
+  }
+
+  // Extract runnable next-step actions from the report dict: items in
+  // any kind === "next-steps" section whose command parses as
+  // `attune workflow run <name>` (same grammar the log-scrape chips
+  // use). Other commands stay as fenced code in the markdown.
+  function runnableNextActions(report) {
+    var out = [];
+    var sections = (report && report.sections) || [];
+    for (var i = 0; i < sections.length; i++) {
+      var s = sections[i];
+      if (!s || s.kind !== "next-steps" || !s.items) continue;
+      for (var j = 0; j < s.items.length; j++) {
+        var item = s.items[j];
+        if (!item || typeof item.command !== "string") continue;
+        var m = _NEXT_STEP_RE.exec(item.command);
+        if (!m || !_VALID_WORKFLOW_NAME_RE.test(m[1])) continue;
+        out.push({ name: m[1], tooltip: item.text || "" });
+      }
+    }
+    return out;
+  }
+
+  function renderReportPanel(data) {
+    var panel = document.querySelector("[data-report-panel]");
+    if (!panel || !data || typeof data.markdown !== "string") return;
+    while (panel.firstChild) panel.removeChild(panel.firstChild);
+
+    var body = document.createElement("div");
+    body.className = "run-report-body";
+    body.innerHTML = mdToHtml(data.markdown);
+    panel.appendChild(body);
+
+    // One-click Run chips for runnable next-step commands — reuses the
+    // suggestion-chip POST flow (and its busy/read-only handling).
+    var actions = runnableNextActions(data.report);
+    if (actions.length) {
+      var row = document.createElement("div");
+      row.className = "suggestion-row run-report-actions";
+      var label = document.createElement("span");
+      label.className = "suggestion-row-label";
+      label.textContent = "Run next:";
+      row.appendChild(label);
+      for (var i = 0; i < actions.length; i++) {
+        row.appendChild(buildSuggestionChip(actions[i]));
+      }
+      panel.appendChild(row);
+    }
+
+    panel.hidden = false;
+    // The report is now the page's primary content; tuck the raw
+    // terminal output away as a collapsed process log.
+    var logDetails = document.querySelector("[data-log-details]");
+    if (logDetails) logDetails.open = false;
+  }
+
+  function fetchAndRenderReport() {
+    if (!RUN_ID) return;
+    fetch("/runs/" + encodeURIComponent(RUN_ID) + "/report", {
+      headers: { Accept: "application/json" }
+    })
+      .then(function (resp) {
+        if (!resp.ok) return null; // 404 = no structured report; fine.
+        return resp.json();
+      })
+      .then(function (data) {
+        if (data) renderReportPanel(data);
+      })
+      .catch(function (err) {
+        // INTENTIONAL: the panel is progressive enhancement — a fetch
+        // failure leaves the classic log view fully usable.
+        console.warn("attune-ops: report fetch failed", err);
+      });
+  }
+
+  // ------------------------------------------------------------------
   // Copy report — clipboard handler for the [data-copy-report] button
   // ------------------------------------------------------------------
 
@@ -800,6 +1070,12 @@
       readReportText: readReportText,
       copyReportToClipboard: copyReportToClipboard,
       wireCopyReportButton: wireCopyReportButton,
+      escapeHtml: escapeHtml,
+      mdInline: mdInline,
+      mdToHtml: mdToHtml,
+      runnableNextActions: runnableNextActions,
+      renderReportPanel: renderReportPanel,
+      fetchAndRenderReport: fetchAndRenderReport,
       DATA: DATA
     };
   }

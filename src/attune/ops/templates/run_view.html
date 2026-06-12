@@ -65,12 +65,26 @@
   </section>
 {% endif %}
 
+{# T6 (workflow-result-formatting) — structured report panel. Hidden
+   until run_view.js fetches /runs/<id>/report (on page load for
+   terminal runs, on the SSE done event for live ones) and converts
+   the renderer's markdown subset to HTML. Runs without a structured
+   report never reveal this section. #}
+<section class="run-report-panel" data-report-panel hidden></section>
+
 {# When stream_url is empty, this run was loaded from disk (older than
    the runner's in-memory ring buffer). Server pre-fills the log here
    so the page renders without SSE — run_view.js detects the empty
-   stream_url and skips EventSource creation. #}
-<pre class="log-output run-view-log" data-log>{% for line in server_rendered_lines %}{{ line }}
+   stream_url and skips EventSource creation.
+   The <details> wrapper stays open while the run streams; once the
+   structured report panel renders, run_view.js collapses it so the
+   report is the page's primary content and the raw output becomes a
+   click-to-expand process log (T6). #}
+<details class="run-log-details" data-log-details open>
+  <summary>Process log</summary>
+  <pre class="log-output run-view-log" data-log>{% for line in server_rendered_lines %}{{ line }}
 {% endfor %}</pre>
+</details>
 
 {# Phase 3a — collapsible raw stderr from the underlying claude CLI
    subprocess when an SDK-backed workflow fails. Default-collapsed so
@@ -106,6 +120,7 @@
 {
   "stream_url": {{ stream_url|tojson }},
   "initial_status": {{ run.status|tojson }},
+  "run_id": {{ run.id|tojson }},
   "workflow": {{ run.workflow|tojson }},
   "path": {{ run.path|tojson }},
   "allow_run": {{ allow_run|tojson }}

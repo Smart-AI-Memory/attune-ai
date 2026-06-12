@@ -1176,6 +1176,93 @@ a.kpi:hover {
   font-size: 12px;
 }
 
+/* ---------- Structured report panel (workflow-result-formatting T6) -- */
+/* Populated by run_view.js from GET /runs/<id>/report once the run is
+   terminal. The markdown subset (headings, tables, callouts, lists,
+   native <details>) is converted to HTML client-side. */
+.run-report-panel {
+  margin: 16px 0;
+  padding: 18px 20px;
+  background: var(--bg-elev);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--accent);
+  border-radius: var(--radius);
+}
+.run-report-body h2 {
+  margin: 0 0 8px;
+  font-size: 18px;
+}
+.run-report-body h3 {
+  margin: 18px 0 6px;
+  font-size: 15px;
+}
+.run-report-body h4 {
+  margin: 14px 0 4px;
+  font-size: 13px;
+}
+.run-report-body p {
+  margin: 6px 0;
+  font-size: 13px;
+}
+.run-report-body table {
+  border-collapse: collapse;
+  margin: 8px 0;
+  font-size: 13px;
+}
+.run-report-body th,
+.run-report-body td {
+  padding: 4px 10px;
+  border: 1px solid var(--border);
+  text-align: left;
+}
+.run-report-body th {
+  background: var(--bg);
+  color: var(--fg-muted);
+  font-weight: 600;
+}
+.run-report-body ul {
+  margin: 6px 0;
+  padding-left: 22px;
+  font-size: 13px;
+}
+.run-report-body blockquote {
+  margin: 8px 0;
+  padding: 6px 12px;
+  border-left: 3px solid var(--accent);
+  background: var(--bg);
+  border-radius: var(--radius);
+}
+.run-report-body pre {
+  margin: 6px 0;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 12px;
+  overflow-x: auto;
+}
+.run-report-body details {
+  margin: 8px 0;
+}
+.run-report-body details > summary {
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: 13px;
+}
+.run-report-actions {
+  margin-top: 12px;
+}
+
+/* Terminal pane wrapper — open while streaming; run_view.js collapses
+   it when the report panel renders so the raw output becomes a
+   click-to-expand process log. */
+.run-log-details > summary {
+  cursor: pointer;
+  color: var(--fg-muted);
+  font-size: 13px;
+  margin: 8px 0 4px;
+}
+
 /* ---------- Completion candidates section ("Ready to close?") ---------- */
 /* Server-rendered shell at the top of /specs, populated by
    completion_candidates.js. Hidden when there are no candidates so

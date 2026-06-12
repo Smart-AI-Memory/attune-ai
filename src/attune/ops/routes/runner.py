@@ -141,6 +141,40 @@ async def get_run(run_id: str, request: Request) -> JSONResponse:
     return JSONResponse(content=run.to_dict())
 
 
+@router.get("/runs/{run_id}/report")
+async def get_run_report(run_id: str, request: Request) -> JSONResponse:
+    """Structured ``WorkflowReport`` for a run, plus its summary markdown.
+
+    Returns ``{"report": <dict>, "markdown": <str>}`` when the run
+    carried a serialized report over the run-meta side-channel; 404
+    when the run is unknown or produced no structured report (the run
+    view treats that as "no panel", keeping unmigrated workflows
+    working unchanged). The markdown is rendered server-side by the
+    canonical renderer so the dashboard never reimplements report
+    formatting — it only converts the constrained markdown subset to
+    HTML. Workflow-result-formatting T6; disk-loaded runs are served
+    via ``get_or_load`` so the panel survives a daemon restart.
+    """
+    svc = _service(request)
+    run = svc.get_or_load(run_id)
+    if run is None:
+        raise HTTPException(status_code=404, detail="run not found")
+    if run.report is None:
+        raise HTTPException(status_code=404, detail="run has no structured report")
+
+    from attune.config import resolve_show_cost
+    from attune.voice.report_renderer import render_safe
+    from attune.workflows.output import WorkflowReport
+
+    try:
+        report = WorkflowReport.from_dict(run.report)
+    except (TypeError, ValueError) as exc:
+        logger.warning("ops.report: malformed report for run %s: %s", run_id, exc)
+        raise HTTPException(status_code=404, detail="run report is malformed") from exc
+    markdown = render_safe(report, disclosure="summary", show_cost=resolve_show_cost())
+    return JSONResponse(content={"report": run.report, "markdown": markdown})
+
+
 @router.get("/runs/{run_id}/stream")
 async def stream_run(run_id: str, request: Request) -> StreamingResponse:
     svc = _service(request)

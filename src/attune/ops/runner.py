@@ -126,6 +126,11 @@ class Run:
     # ``auth``, ``rate_limit``, ``not_found``, ``schema_rejected``,
     # ``unknown``). ``None`` when no SDK failure was captured.
     sdk_error_kind: str | None = None
+    # Serialized ``WorkflowReport`` dict (``_type: WorkflowReport``)
+    # delivered via the ``report_b64`` run-meta side-channel when the
+    # workflow's ``final_output`` carried one. Drives the run view's
+    # structured report panel — workflow-result-formatting T6.
+    report: dict[str, object] | None = None
     lines: list[str] = field(default_factory=list)
     # Buffered recommendations replayed to late subscribers so a user
     # who opens /runs/<id>/view after the run finished still sees the
@@ -157,6 +162,7 @@ class Run:
             "command": list(self.command) if self.command else None,
             "sdk_stderr": self.sdk_stderr,
             "sdk_error_kind": self.sdk_error_kind,
+            "report": self.report,
         }
 
     def to_record(self) -> dict[str, object]:
@@ -195,6 +201,9 @@ class Run:
         sdk_stderr = str(sdk_stderr_raw) if isinstance(sdk_stderr_raw, str) else None
         sdk_kind_raw = data.get("sdk_error_kind")
         sdk_error_kind = str(sdk_kind_raw) if isinstance(sdk_kind_raw, str) else None
+        # Structured report (T6) — old records read back as None.
+        report_raw = data.get("report")
+        report = report_raw if isinstance(report_raw, dict) else None
         return cls(
             id=str(data.get("id", "")),
             workflow=str(data.get("workflow", "")),
@@ -206,6 +215,7 @@ class Run:
             command=command,
             sdk_stderr=sdk_stderr,
             sdk_error_kind=sdk_error_kind,
+            report=report,
             lines=lines,
         )
 
@@ -242,6 +252,10 @@ class Run:
                     "status": self.status,
                     "sdk_error_kind": self.sdk_error_kind,
                     "sdk_stderr": self.sdk_stderr,
+                    # Signals the run view to fetch /runs/<id>/report and
+                    # render the structured panel (T6). A boolean rather
+                    # than the report itself keeps the SSE frame small.
+                    "has_report": self.report is not None,
                 },
             )
         )
@@ -290,6 +304,7 @@ class Run:
                         "status": self.status,
                         "sdk_error_kind": self.sdk_error_kind,
                         "sdk_stderr": self.sdk_stderr,
+                        "has_report": self.report is not None,
                     },
                 )
             )
@@ -526,6 +541,10 @@ class RunnerService:
                     decoded = run_meta_stdout.decode_stderr(value)
                     if decoded:
                         run.sdk_stderr = decoded
+                elif key == "report_b64" and value:
+                    decoded_report = run_meta_stdout.decode_report(value)
+                    if decoded_report is not None:
+                        run.report = decoded_report
             return
         run.append_line(line)
 
