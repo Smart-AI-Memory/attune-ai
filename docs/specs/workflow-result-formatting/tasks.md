@@ -5,9 +5,10 @@ data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
 `render_safe()`, all 4 test layers, 98% branch, #741), T3 (voice
 wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`),
-T4 (CLI terminal rendering), T7 (release-prep
+T4 (CLI terminal rendering), T5 (MCP handlers report-aware,
+2026-06-12), T7 (release-prep
 migration — the motivating case), and T8 (adapter-level migration of
-all 15 SDK-native workflows) shipped; T5/T6 pending.
+all 15 SDK-native workflows) shipped; T6 (dashboard panel) pending.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.
@@ -78,11 +79,31 @@ all 15 SDK-native workflows) shipped; T5/T6 pending.
   resolved: the wrapper suppresses both for rendered reports (the
   report's `**Score:**` and `NextStepsSection` own them).
 
-## T5 — MCP
+## T5 — MCP — DONE
 
 - `mcp/server.py:format_mcp_response`: return the summary markdown
   verbatim as human content; `WorkflowReport.to_dict()` JSON travels
   alongside. (Surface map.)
+- Shipped 2026-06-12: the fix landed in the HANDLERS, not
+  `format_mcp_response` (which wraps generically and needed no
+  change). Post-T8, every handler that field-picked from
+  `final_output` (`.get("health_score")`, `.get("findings")`, …)
+  silently returned None scores / empty findings because the report
+  dict only carries `_type`/`sections`. One helper —
+  `workflow_handlers._workflow_response(result, **field_picks)` —
+  now backs all 15 return sites in `mcp/server.py` +
+  `mcp/workflow_handlers.py`: report-dict `final_output` →
+  `summary_markdown` (render_safe, disclosure="summary",
+  show_cost=resolve_show_cost()) verbatim + `report` JSON alongside
+  + back-compat `score`/`findings` restored from the report's
+  `.findings` property (metadata `findings` dict as fallback for
+  string-bullet/ListSection reports); legacy flat dicts keep the
+  exact pre-T5 field-picked shape. Receipt:
+  `tests/unit/mcp/handlers/test_workflow_response.py` (13 tests —
+  verbatim-markdown + report-JSON + non-empty-findings through
+  `_run_security_audit`, raw-output handlers carry the markdown,
+  legacy shape asserted unchanged); full MCP + voice suites green
+  (497 passed).
 
 ## T6 — Dashboard panel
 

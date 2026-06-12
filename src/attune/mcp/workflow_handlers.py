@@ -10,6 +10,116 @@ from typing import Any
 
 logger = logging.getLogger(__name__)
 
+#: pick names that mean "the workflow's findings" across handlers
+_FINDINGS_KEYS = frozenset({"findings", "predictions", "checks"})
+
+
+def _is_score_key(name: str) -> bool:
+    """True for pick names that mean "the workflow's score"."""
+    return name == "score" or name.endswith("_score")
+
+
+def _metadata_findings(result: Any) -> list[Any]:
+    """Findings from ``result.metadata`` when the report carries none.
+
+    The SDK adapter stores parsed findings as a category→items dict on
+    ``metadata["findings"]``; string-bullet findings become a ListSection
+    (not a FindingsSection), so the report's ``.findings`` property can
+    be empty while metadata still has the items. Flatten to one list.
+    """
+    metadata = getattr(result, "metadata", None)
+    if not isinstance(metadata, dict):
+        return []
+    raw = metadata.get("findings")
+    if isinstance(raw, dict):
+        flat: list[Any] = []
+        for items in raw.values():
+            if isinstance(items, list):
+                flat.extend(items)
+        return flat
+    if isinstance(raw, list):
+        return raw
+    return []
+
+
+def _workflow_response(
+    result: Any,
+    *,
+    include_provider: bool = False,
+    raw_output: bool = False,
+    **field_picks: Any,
+) -> dict[str, Any]:
+    """Build an MCP response dict from a WorkflowResult.
+
+    Two shapes, decided by what ``result.final_output`` carries
+    (workflow-result-formatting spec, T5):
+
+    - **Serialized WorkflowReport**: the response carries the rendered
+      summary markdown verbatim (``summary_markdown``), the report JSON
+      (``report``), and the back-compat ``score`` / ``findings`` fields
+      restored from the report (metadata findings as fallback).
+      Findings-like picks (``findings``/``predictions``/``checks``)
+      resolve to the report findings; score-like picks (``score``,
+      ``*_score`` — either side of the mapping) to the report score;
+      everything else to its default.
+    - **Legacy flat dict**: each pick is ``final_output.get(source)``,
+      exactly the field-picking the handlers did before.
+
+    Args:
+        result: WorkflowResult returned by a workflow ``execute()``.
+        include_provider: Include ``result.provider`` in the response.
+        raw_output: Include an ``output`` field — the legacy
+            ``final_output`` passthrough; on the report path it carries
+            the summary markdown instead of the raw report dict.
+        **field_picks: ``response_key=source`` mappings where ``source``
+            is a final_output key or a ``(key, default)`` tuple.
+
+    Returns:
+        JSON-safe response dict with ``success`` and ``cost`` always set.
+    """
+    from attune.workflows.output import WorkflowReport
+
+    response: dict[str, Any] = {"success": result.success}
+    fo = result.final_output
+
+    if WorkflowReport.is_report_dict(fo):
+        from attune.config import resolve_show_cost
+        from attune.voice.report_renderer import render_safe
+
+        report = WorkflowReport.from_dict(fo)
+        findings = [f.to_dict() for f in report.findings] or _metadata_findings(result)
+        response["summary_markdown"] = render_safe(
+            report,
+            disclosure="summary",
+            show_cost=resolve_show_cost(),
+        )
+        response["report"] = fo
+        response["score"] = report.score
+        response["findings"] = findings
+        if raw_output:
+            response["output"] = response["summary_markdown"]
+        for key, source in field_picks.items():
+            src_key, default = source if isinstance(source, tuple) else (source, None)
+            if key in _FINDINGS_KEYS or src_key in _FINDINGS_KEYS:
+                response[key] = findings
+            elif _is_score_key(key) or _is_score_key(src_key):
+                response[key] = report.score
+            else:
+                response[key] = default
+    else:
+        fo_dict = fo if isinstance(fo, dict) else {}
+        for key, source in field_picks.items():
+            src_key, default = source if isinstance(source, tuple) else (source, None)
+            response[key] = fo_dict.get(src_key, default)
+        if raw_output:
+            response["output"] = fo
+
+    cost_report = getattr(result, "cost_report", None)
+    response["cost"] = cost_report.total_cost if cost_report is not None else 0.0
+    if include_provider:
+        response["provider"] = result.provider
+    return response
+
 
 class WorkflowHandlersMixin:
     """Mixin providing workflow tool handlers for EmpathyMCPServer.
@@ -59,12 +169,7 @@ class WorkflowHandlersMixin:
         workflow = DocAuditWorkflow()
         result = await workflow.execute(project_root=self._validated_path(args))
 
-        return {
-            "success": result.success,
-            "score": result.final_output.get("score"),
-            "findings": result.final_output.get("checks", []),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, score="score", findings=("checks", []))
 
     # ------------------------------------------------------------------
     # Doc Generation
@@ -101,12 +206,7 @@ class WorkflowHandlersMixin:
             audience=args.get("audience", "developers"),
         )
 
-        return {
-            "success": result.success,
-            "document": result.final_output.get("document"),
-            "sections": result.final_output.get("sections"),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, document="document", sections="sections")
 
     # ------------------------------------------------------------------
     # Doc Orchestrator
@@ -159,11 +259,7 @@ class WorkflowHandlersMixin:
         workflow = TestAuditWorkflow()
         result = await workflow.execute(src_path=self._validated_path(args, default="src/"))
 
-        return {
-            "success": result.success,
-            "output": result.final_output,
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Parallel Test Generation
@@ -189,14 +285,13 @@ class WorkflowHandlersMixin:
             batch_size=args.get("batch_size", 10),
         )
 
-        return {
-            "success": result.success,
-            "total_modules": result.final_output.get("total_modules", 0),
-            "completed": result.final_output.get("completed", 0),
-            "errors": result.final_output.get("errors", 0),
-            "generated_files": result.final_output.get("generated_files", []),
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(
+            result,
+            total_modules=("total_modules", 0),
+            completed=("completed", 0),
+            errors=("errors", 0),
+            generated_files=("generated_files", []),
+        )
 
     # ------------------------------------------------------------------
     # Refactor Plan
@@ -217,11 +312,7 @@ class WorkflowHandlersMixin:
         workflow = RefactorPlanWorkflow()
         result = await workflow.execute(path=self._validated_path(args))
 
-        return {
-            "success": result.success,
-            "output": result.final_output,
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Dependency Check
@@ -242,11 +333,7 @@ class WorkflowHandlersMixin:
         workflow = DependencyCheckWorkflow()
         result = await workflow.execute(path=self._validated_path(args))
 
-        return {
-            "success": result.success,
-            "output": result.final_output,
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Deep Review
@@ -267,11 +354,7 @@ class WorkflowHandlersMixin:
         workflow = DeepReviewAgentSDKWorkflow()
         result = await workflow.execute(path=self._validated_path(args))
 
-        return {
-            "success": result.success,
-            "output": result.final_output,
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Simplify Code
@@ -292,11 +375,7 @@ class WorkflowHandlersMixin:
         workflow = SimplifyCodeWorkflow()
         result = await workflow.execute(path=self._validated_path(args))
 
-        return {
-            "success": result.success,
-            "output": result.final_output,
-            "cost": result.cost_report.total_cost,
-        }
+        return _workflow_response(result, raw_output=True)
 
     # ------------------------------------------------------------------
     # Secure Release
@@ -390,6 +469,20 @@ class WorkflowHandlersMixin:
         )
 
         final = result.final_output if hasattr(result, "final_output") else result
+
+        from attune.workflows.output import WorkflowReport
+
+        if WorkflowReport.is_report_dict(final):
+            response = _workflow_response(
+                result,
+                key_insights="key_insights",
+                confidence="confidence",
+            )
+            # "answer" is this tool's primary consumer field — the
+            # rendered summary IS the synthesized answer.
+            response["answer"] = response["summary_markdown"]
+            return response
+
         if isinstance(final, dict):
             return {
                 "success": True,

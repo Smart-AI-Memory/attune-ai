@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **MCP workflow tools no longer return None scores / empty
+  findings for report-emitting workflows** (workflow-result-
+  formatting T5). After T8 made all 15 SDK-native workflows return
+  a serialized `WorkflowReport` as `final_output`, the MCP handlers
+  still field-picked from it as if it were the legacy flat dict.
+  A shared `_workflow_response()` helper now detects the report
+  payload and returns the rendered summary markdown verbatim
+  (`summary_markdown`), the `WorkflowReport` JSON (`report`), and
+  the back-compat `score`/`findings` fields restored from the
+  report; legacy flat-dict workflows keep their exact previous
+  response shape.
+
 ### Changed
 
 - **Lessons corpus moved to `.claude/lessons.md`** (canonical, 386
