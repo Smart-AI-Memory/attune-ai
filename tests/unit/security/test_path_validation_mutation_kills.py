@@ -19,6 +19,8 @@ substring-subsumed by broader entries (e.g. ``\\windows\\system32`` by
 
 from __future__ import annotations
 
+import sys
+
 import pytest
 
 from attune.security import path_validation
@@ -60,6 +62,10 @@ def test_unresolvable_path_message(monkeypatch):
 # ---- Unix dangerous dirs that were never individually asserted ------------
 
 
+@pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="POSIX branch: these absolute paths only resolve/match on Unix",
+)
 @pytest.mark.parametrize(
     "danger",
     ["/private/etc", "/private/var/root", "/sbin", "/usr/sbin", "/usr/bin", "/bin"],
