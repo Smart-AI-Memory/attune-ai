@@ -8169,3 +8169,35 @@ files.
     test. Killing the mutant = adding the missing dimension, which also
     lit up the dead branch. Look for the un-varied parameter, not just
     a weak `assert`.
+
+- **Mutation-testing craft for transform functions — assert EXACT
+  output, accumulation mutants need ≥3 steps, and watch pattern
+  cross-matching in test inputs (2026-06-12, QA #2 phase 3 on
+  `pii_scrubber.scrub()`)**: a second mutmut slice (memory/security/
+  `pii_scrubber.py`, 173/281 survivors — even more padded than
+  auth_strategy) surfaced three reusable test-authoring rules:
+  - **For any function returning a TRANSFORMED string/structure, assert
+    the exact result, not presence/count.** `scrub()`'s survivors
+    (position-offset arithmetic `+`→`-`, accumulation `+=`→`=`/`-=`,
+    adjacency `>=`→`>`) all lived because the suite asserted "email was
+    detected" / `len(detections)==2`, never the exact sanitized string.
+    Membership/count tests pass even when the transform places the
+    replacement over the wrong span (here: raw PII fragments left in the
+    "sanitized" output — a silent data-leak). Exact-output assertions
+    kill the whole family.
+  - **Accumulation-operator mutants (`+=`→`=`) need ≥3 accumulation
+    steps to kill.** A 2-item test can't distinguish `x = d` from
+    `x += d` because both start from the same base (0), so after one
+    step they're equal. The `pii_scrubber` `+=`→`=` mutant was killed
+    ONLY by the 3-PII test, not the 2-PII one. Rule: to pin an
+    accumulator, exercise at least three iterations so the difference
+    compounds; the 2-item case is necessary-but-insufficient.
+  - **When writing exact-output tests against a SET of overlapping
+    regex patterns, verify your inputs don't cross-match — or the test
+    fails on the ORIGINAL code, not just the mutant.** A 16-digit
+    credit-card test input got partly eaten by the greedy PHONE pattern
+    (`[PHONE]111111`) because phone's "US format" arm has no `\b`
+    anchors and matches any 10 digits. The fix was picking
+    non-colliding PII types (IPv4, which phone can't match). Diagnostic:
+    if a fresh exact-output test fails on unmutated source, suspect
+    pattern cross-matching before suspecting a real bug.
