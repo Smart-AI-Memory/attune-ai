@@ -430,6 +430,67 @@ class TestSecretsDetectorIntegration:
         assert all("os.getenv" not in d.context_snippet for d in detections)
 
 
+class TestHighEntropyDetectionIntegrity:
+    """Pin the entropy detection boundary and confidence scoring for
+    `_detect_high_entropy`.
+
+    The existing suite checks that *some* high-entropy string is flagged but
+    never the boundary (a string whose entropy is exactly the threshold) nor
+    the confidence value. So ``entropy >= threshold`` could weaken to ``>``
+    (a secret sitting exactly at the threshold would be silently MISSED) and
+    the confidence formula could drift, both undetected.
+
+    These tests construct a string with an EXACT Shannon entropy (16 distinct
+    chars, each twice → entropy = log2(16) = 4.0) and set the threshold
+    relative to it, which makes the boundary observable and the confidence
+    formula `min(1.0, (entropy - threshold) / 2.0 + 0.5)` exactly computable.
+    """
+
+    # 16 distinct base64-class chars, each appearing twice: entropy is
+    # exactly 4.0, length 32 (>= the default min_entropy_length of 20).
+    EXACT_ENTROPY_SECRET = "ABCDEFGHIJKLMNOPABCDEFGHIJKLMNOP"
+
+    def _entropy(self) -> float:
+        return SecretsDetector()._calculate_entropy(self.EXACT_ENTROPY_SECRET)
+
+    def _entropy_hits(self, detector: SecretsDetector) -> list:
+        content = f'token = "{self.EXACT_ENTROPY_SECRET}"'
+        return [
+            d for d in detector.detect(content) if d.secret_type == SecretType.HIGH_ENTROPY_STRING
+        ]
+
+    def test_entropy_exactly_at_threshold_is_flagged(self):
+        """A string whose entropy equals the threshold MUST be detected —
+        the comparison is ``>=``, not ``>``. Threshold is set to the string's
+        own entropy so the boundary is exact regardless of float rounding."""
+        e = self._entropy()
+        detector = SecretsDetector(entropy_threshold=e, min_entropy_length=20)
+        hits = self._entropy_hits(detector)
+        assert len(hits) == 1
+        # confidence = min(1.0, (e - e) / 2 + 0.5) = 0.5
+        assert hits[0].confidence == 0.5
+
+    def test_confidence_below_cap_uses_exact_formula(self):
+        """With the threshold 0.5 below the string's entropy, the confidence
+        is min(1.0, 0.5/2 + 0.5) = 0.75 — pins the divisor and the additive
+        term (not capped, so the formula is fully exercised)."""
+        e = self._entropy()
+        detector = SecretsDetector(entropy_threshold=e - 0.5, min_entropy_length=20)
+        hits = self._entropy_hits(detector)
+        assert len(hits) == 1
+        assert hits[0].confidence == 0.75
+
+    def test_confidence_is_capped_at_one(self):
+        """With the threshold 2.0 below the string's entropy the raw formula
+        yields 1.5; confidence must be capped at 1.0 (``min(1.0, …)``, not a
+        looser bound)."""
+        e = self._entropy()
+        detector = SecretsDetector(entropy_threshold=e - 2.0, min_entropy_length=20)
+        hits = self._entropy_hits(detector)
+        assert len(hits) == 1
+        assert hits[0].confidence == 1.0
+
+
 # Run tests if executed directly
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])
