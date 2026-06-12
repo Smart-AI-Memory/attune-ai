@@ -206,9 +206,10 @@ export default function Home() {
                 <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-3 block">Sister Family</span>
                 <h2 className="text-3xl font-extrabold mb-6">The Documentation Toolchain</h2>
                 <p className="text-[var(--text-secondary)] mb-8 leading-relaxed">
-                  We built attune-ai to assist engineers working with
-                  Claude and Redis. The documentation toolchain came
-                  later &mdash; built with the same development
+                  attune-ai began as a tool to help people work with
+                  AI, then grew into an engineering toolkit focused on
+                  Claude &mdash; and later Redis. The documentation
+                  toolchain came after, built with the same development
                   discipline, and split off as four standalone packages
                   forming an end-to-end author &rarr; reader loop. Use
                   the full stack, or drop in just the piece you need.
