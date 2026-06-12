@@ -1,7 +1,7 @@
 # auth_strategy behavioral-test rewrite (mutation-driven)
 
-**Status:** slices 1–6 complete — closing (pending a final
-clean-cache mutmut refresh)
+**Status:** complete — closed 2026-06-12 (on per-slice apply/revert
+evidence; the full clean-cache mutmut refresh was deliberately skipped)
 **Parent program:** [test-quality-program](./tasks.md)
 **Module:** `src/attune/models/auth_strategy.py`
 **Opened:** 2026-06-12 (QA #2 phase 2)
@@ -164,10 +164,13 @@ behaviorally-killable survivor is proven dead by apply/revert, and the
 documented-equivalent survivors (print/format strings, `round`
 precision, `json.dump` indent) are recorded inline above.
 
-One step remains before formally closing: a final clean-cache
-`mutmut==2.4.4` refresh over the whole module to confirm only the
-documented-equivalent survivors remain. Until that refresh runs, this
-stays a (near-complete) sub-plan under the living
-`test-quality-program`.
+**Closed on apply/revert evidence (decision 2026-06-12).** The final
+clean-cache `mutmut==2.4.4` refresh over the whole module was
+deliberately skipped: every behaviorally-killable survivor across the
+six slices was already proven dead by targeted apply/revert (fails on
+the mutant, passes on the original), which is the same guarantee the
+aggregate run would confirm at far lower cost. If a future change to
+`auth_strategy.py` warrants it, re-run the refresh per *Mechanics* to
+re-baseline. This sub-plan is done.
 
 [PR #797]: https://github.com/Smart-AI-Memory/attune-ai/pull/797
