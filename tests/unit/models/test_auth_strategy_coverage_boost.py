@@ -465,6 +465,19 @@ class TestAuthStrategyProsConsRendering:
 
         assert str(api["estimate"]["monetary_cost"]) in api["cost"]
 
+    def test_both_estimate_subdicts_are_real_cost_dicts(self):
+        """The subscription AND api sections embed their real cost estimates.
+
+        Found by the closing mutmut refresh: ``sub_estimate = None`` in
+        ``get_pros_cons`` survived because the suite asserted the *api*
+        estimate but never the *subscription* one. Both sub-dicts must
+        carry their mode-correct cost estimate (not None).
+        """
+        result = AuthStrategy().get_pros_cons(1000)
+
+        assert result["subscription"]["estimate"]["mode"] == "subscription"
+        assert result["api"]["estimate"]["mode"] == "api"
+
 
 @pytest.mark.unit
 class TestAuthStrategySerialization:

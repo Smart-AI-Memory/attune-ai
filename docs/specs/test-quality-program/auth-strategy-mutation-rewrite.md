@@ -1,7 +1,7 @@
 # auth_strategy behavioral-test rewrite (mutation-driven)
 
-**Status:** complete — closed 2026-06-12 (on per-slice apply/revert
-evidence; the full clean-cache mutmut refresh was deliberately skipped)
+**Status:** complete — verified-closed 2026-06-12 (full clean-cache
+mutmut refresh ran: 190/270 killed, 80 survivors all accounted for)
 **Parent program:** [test-quality-program](./tasks.md)
 **Module:** `src/attune/models/auth_strategy.py`
 **Opened:** 2026-06-12 (QA #2 phase 2)
@@ -164,13 +164,46 @@ behaviorally-killable survivor is proven dead by apply/revert, and the
 documented-equivalent survivors (print/format strings, `round`
 precision, `json.dump` indent) are recorded inline above.
 
-**Closed on apply/revert evidence (decision 2026-06-12).** The final
-clean-cache `mutmut==2.4.4` refresh over the whole module was
-deliberately skipped: every behaviorally-killable survivor across the
-six slices was already proven dead by targeted apply/revert (fails on
-the mutant, passes on the original), which is the same guarantee the
-aggregate run would confirm at far lower cost. If a future change to
-`auth_strategy.py` warrants it, re-run the refresh per *Mechanics* to
-re-baseline. This sub-plan is done.
+**Verified-closed by a full clean-cache mutmut refresh (2026-06-12).**
+Initially closed on per-slice apply/revert alone; Patrick pushed to run
+the aggregate anyway, and it earned its keep — see *Refresh result*.
+
+### Refresh result
+
+`mutmut==2.4.4`, clean cache, full `test_auth_strategy_coverage_boost.py`
+as runner, worktree source via `PYTHONPATH`: **270 mutants → 190 killed,
+80 survived.** The 80 survivors break down as:
+
+- **1 genuinely killable, now fixed** — mutant `sub_estimate = None` in
+  `get_pros_cons` survived because the suite asserted the *api*
+  section's estimate but never the *subscription* one (an asymmetry).
+  Killed by `test_both_estimate_subdicts_are_real_cost_dicts` (proven by
+  apply/revert on both the sub and api `= None` mutations). This is the
+  gap the apply/revert pass missed and the aggregate run caught.
+- **79 equivalent / no-value** (do not chase):
+  - ~60 **display strings** in `configure_auth_interactive` and
+    `get_pros_cons` — `print(... "XX..XX" ...)`, `"=" * 60`→`61`, pro/con
+    copy. Output text with no asserted contract. The data-bearing
+    interpolations inside them (tier value, thresholds, monetary cost)
+    still render, so the slice-3 guards stay green.
+  - **module constant** `AUTH_STRATEGY_FILE = Path.home() / ...` (5
+    mutants) — never asserted; every test patches it. (mutmut even lists
+    the `/`→`*` variant, which raises at import, as "survived" — a tool
+    quirk on the module-level line; not worth asserting a literal path.)
+  - **rounding-masked** — `total_api_cost`'s `+ api_ref_cost`→`-`
+    (mutant 66) yields the same `0.0002` after `round(,4)`; the
+    `round(,4)`→`round(,5)` precision mutant likewise. Equivalent at the
+    contract boundary.
+  - **default-coinciding map keys** — `"5"`→`"XX5XX"` /​ `"3"`→`"XX3XX"`
+    in `tier_map`/`mode_map` are masked because the mutated key misses
+    and falls through to a default that equals the original value
+    (API_ONLY, AUTO).
+  - **logging detail** — the load-failure message string and
+    `exc_info=True`→`False`; and the `module_lines=1000` display default.
+
+Every survivor is either fixed or a documented equivalent. This
+supersedes the noisier earlier survivor counts (the 128/270 in
+*Why this is its own plan* came from a weaker runner). The sub-plan is
+done.
 
 [PR #797]: https://github.com/Smart-AI-Memory/attune-ai/pull/797
