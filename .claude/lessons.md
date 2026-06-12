@@ -8124,3 +8124,48 @@ files.
     and a 30-second repro (read the client source; run the tests
     normally) refuted both. Reproduce before claiming, even when the
     symptom looks damning.
+
+- **mutmut 2.4.4 operational gotchas — `tests_dir` is mandatory,
+  scope the RUNNER to the FULL suite (not the slice), and prove a
+  kill by apply/revert not by the aggregate count (2026-06-12, QA #2
+  phase 2 on `auth_strategy.get_recommended_mode`)**: extends the
+  mutmut lesson above with the mechanics that bit this session.
+  - **`setup.cfg` needs `tests_dir=` or mutmut crashes** — the
+    template above (`paths_to_mutate`/`runner` only) errors `TypeError:
+    'NoneType' object is not iterable` at `split_paths(tests_dir)`. Add
+    `tests_dir=<dir containing the test file>` even though `runner`
+    already names the exact tests.
+  - **Scope the RUNNER to the whole module test file, NOT a subset.**
+    Pointing `runner` at just the target class (to go fast) makes every
+    mutant OUTSIDE those tests survive → 260/270 "survived", useless.
+    Run the FULL `test_<module>.py` as the runner so unrelated mutants
+    die by their own tests; THEN read `mutmut show <id>` and filter
+    survivors to the slice's line range. With the full suite,
+    auth_strategy dropped to 21/270 (the handoff's 129 was a
+    weaker-runner number), and only ONE killable survivor (mutant 42,
+    `auth_strategy.py:108` `<`→`<=`) actually lived in
+    `get_recommended_mode`.
+  - **Driving mutmut from this harness is flaky — `nohup` + poll the
+    log for `270/270`, don't `pgrep`.** macOS has no `timeout` (use
+    `gtimeout` or none — a bare `timeout …` errors out and kills the
+    whole command). `pgrep -f "mutmut/__main__"` misses the uv-spawned
+    subprocess name, so an `until ! pgrep` wait-loop exits PREMATURELY
+    while the run is still going (looked like it "stopped at mutant
+    18/42"; it hadn't). mutmut resumes from `.mutmut-cache` on re-run,
+    so a partial run isn't lost — but the reliable wait is
+    `until grep -q "270/270" run.log; do sleep 10; done`.
+  - **Prove a specific mutant is killed by apply/revert, not by the
+    survivor delta.** Hand-apply the exact mutation to the git-tracked
+    source (`python` string-replace), run ONLY the new tests (expect
+    FAIL), `git checkout -- <src>` to revert, confirm the new tests now
+    PASS. This is more direct and cheaper than a 3-min full re-run to
+    watch 21→20, and immune to the flakiness above.
+  - **The real gap behind a boundary mutant was an untested INPUT
+    DIMENSION, not a missing assertion.** `<`→`<=` on
+    `small_module_threshold` survived because no test set
+    `prefer_subscription=False` — with the `True` default the small and
+    medium branches both return SUBSCRIPTION, so the boundary is
+    unobservable and the `else AuthMode.API` arm is dead code under
+    test. Killing the mutant = adding the missing dimension, which also
+    lit up the dead branch. Look for the un-varied parameter, not just
+    a weak `assert`.

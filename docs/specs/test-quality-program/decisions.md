@@ -575,3 +575,40 @@ Coverage 43.1% → **100.00%** line + branch (52/52 statements,
 **PR:** _(filled in after merge)_
 **Bug log entry:** `docs/COVERAGE_BUG_LOG.md` —
 "2026-05-16 — eighteenth module under test-quality-program"
+
+
+## models/auth_strategy.py
+
+**Date:** 2026-06-12
+**Rubric score at pick time:** n/a — picked via **mutation testing**,
+not the coverage rubric. The module already had high line coverage
+(the `*_coverage_boost.py` suite); mutation testing exposed that the
+coverage was padded.
+**Picked because:** QA #2 phase 2 mutation-hardened the
+`get_recommended_mode` spend-routing slice ([PR #793]), and a
+clean-cache `mutmut==2.4.4` pass over the whole module surfaced
+**128 / 270 survivors (~53%)** — a coverage-padded suite confirmed
+with a hard number, exactly the handoff hypothesis.
+**Outcome:** This module does **not** fit the one-module-one-PR loop.
+Designated as a **sequenced multi-session behavioral rewrite** with
+its own plan: [auth-strategy-mutation-rewrite.md]. `get_recommended_mode`
+is already done (mutants 38–43 all killed, verified by apply/revert);
+the remaining survivors are split into six per-function sub-slices
+(serialization, cost estimation, pros/cons, persistence I/O,
+interactive setup, utilities), each a future PR. No further code this
+session for this module — the decision is to spec, not execute.
+
+**Decision rationale (why spec, not slice-by-slice now):** carving the
+serialization sub-slice this session was on the table, but the "20
+remaining survivors" framing that motivated it was a **stale
+incremental-cache artifact** from interrupted mutmut runs. The honest
+clean-cache number (128) reframes the module as a rewrite, not a
+hardening — so sequencing it as a plan beats peeling one slice under a
+wrong premise.
+
+**PR:** _(plan only — no code PR this session)_
+**Bug log entry:** _(none yet — no production bug surfaced; mutation
+gaps are test-quality, logged in the plan not the bug log)_
+
+[PR #793]: https://github.com/Smart-AI-Memory/attune-ai/pull/793
+[auth-strategy-mutation-rewrite.md]: ./auth-strategy-mutation-rewrite.md

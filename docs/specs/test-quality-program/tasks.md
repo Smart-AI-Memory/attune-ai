@@ -53,6 +53,20 @@ healthy code but wrong for dead/skipped code. The program needs a
 Closes once tasks 10-12 ship and the next rubric refresh shows the
 flagged modules no longer in the top 20.
 
+### Phase 5 — Mutation-driven module rewrites
+
+Some modules pass the coverage rubric (high line coverage) yet fail
+**mutation** testing — the coverage is padded. These don't fit the
+one-module-one-PR loop and get their own sequenced sub-plans.
+
+| # | Module | Survival | Plan | Status |
+|---|--------|----------|------|--------|
+| 13 | `models/auth_strategy.py` | 128/270 (~53%) | [auth-strategy-mutation-rewrite.md](./auth-strategy-mutation-rewrite.md) | planned — `get_recommended_mode` done ([#793](https://github.com/Smart-AI-Memory/attune-ai/pull/793)); 6 sub-slices remain |
+
+When a future rubric/mutation cycle flags another padded module, add a
+row here and author a sibling plan rather than forcing it through the
+single-PR loop.
+
 ### Done-state for this spec
 
 This spec is a **standing program**, not a one-shot deliverable.
