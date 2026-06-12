@@ -56,6 +56,31 @@ except Exception:  # noqa: BLE001 — hook must never crash a tool call
 
 _SENTINEL_PREFIX = ".jit-recalled-"
 _SENTINEL_TTL_SECONDS = 7 * 24 * 3600  # match _state's compact-warned TTL
+_LESSON_EXCERPT_CHARS = 600  # keep the injected context bounded
+
+
+def _resolve_lesson(ref: str) -> str | None:
+    """Resolve a lessons-corpus slug to ``title: excerpt`` at fire time.
+
+    Best-effort by design: returns None when ``attune.lessons`` is
+    unavailable (older install, stale main checkout) or the slug no
+    longer exists — the caller falls back to the inline one-liner.
+    """
+    try:
+        from attune.lessons import LessonsIndex
+
+        entry = LessonsIndex().get(ref)
+        if entry is None or not entry.content:
+            return None
+        body = " ".join(entry.content.split())
+        if len(body) > _LESSON_EXCERPT_CHARS:
+            body = body[:_LESSON_EXCERPT_CHARS].rstrip() + "…"
+        title = (entry.summary or "").strip()
+        return f"{title}: {body}" if title else body
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: lesson enrichment is optional; the inline
+        # one-liner still surfaces (R4: never block the tool call).
+        return None
 
 
 def _enabled() -> bool:
@@ -131,7 +156,13 @@ def main() -> int:
             return 0
 
         lines = [f"Just-in-time recall — rule(s) governing {tool_name}:"]
-        lines.extend(f"- {rule['text']}" for rule in fresh)
+        for rule in fresh:
+            lines.append(f"- {rule['text']}")
+            ref = rule.get("lesson_ref")
+            if ref:
+                resolved = _resolve_lesson(ref)
+                if resolved:
+                    lines.append(f"  Full lesson — {resolved}")
         sys.stdout.write(
             json.dumps(
                 {

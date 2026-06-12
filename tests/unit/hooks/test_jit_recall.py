@@ -164,6 +164,107 @@ def test_non_matching_rule_writes_no_sentinel(jit_mod, monkeypatch, capsys, tmp_
 
 
 # ==========================================================================
+# lesson_ref resolution (lessons-corpus-rag T4)
+# ==========================================================================
+
+
+class _FakeEntry:
+    summary = "Tag mechanics — fake title"
+    content = "Don't tag before a squash-merge.   Extra   whitespace\ncollapses."
+
+
+def _install_fake_lessons(monkeypatch, entry):
+    """Inject a fake ``attune.lessons`` so the lazy import resolves to it."""
+    import types
+
+    fake = types.ModuleType("attune.lessons")
+
+    class LessonsIndex:
+        def get(self, ref):
+            return entry if ref else None
+
+    fake.LessonsIndex = LessonsIndex
+    monkeypatch.setitem(sys.modules, "attune.lessons", fake)
+
+
+def test_lesson_ref_appends_resolved_excerpt(jit_mod, monkeypatch, capsys):
+    _install_fake_lessons(monkeypatch, _FakeEntry())
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "40-char merge SHA" in ctx  # inline one-liner still leads
+    assert "Full lesson — Tag mechanics — fake title:" in ctx
+    assert "whitespace collapses" in ctx  # body whitespace normalized
+
+
+def test_lesson_ref_excerpt_is_bounded(jit_mod, monkeypatch, capsys):
+    entry = _FakeEntry()
+    entry.content = "word " * 1000
+    _install_fake_lessons(monkeypatch, entry)
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    lesson_line = next(line for line in ctx.splitlines() if "Full lesson" in line)
+    assert lesson_line.endswith("…")
+    assert len(lesson_line) < jit_mod._LESSON_EXCERPT_CHARS + 100
+
+
+def test_lesson_ref_import_failure_falls_back_to_inline(jit_mod, monkeypatch, capsys):
+    """Older install / stale checkout: the one-liner must still surface."""
+    monkeypatch.setitem(sys.modules, "attune.lessons", None)  # import -> ImportError
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "40-char merge SHA" in ctx
+    assert "Full lesson" not in ctx
+
+
+def test_lesson_ref_unknown_slug_falls_back_to_inline(jit_mod, monkeypatch, capsys):
+    _install_fake_lessons(monkeypatch, None)  # get() returns None for any ref
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh release create v9.9.9 --target abc123"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "40-char merge SHA" in ctx
+    assert "Full lesson" not in ctx
+
+
+def test_all_lesson_refs_resolve_against_real_corpus(jit_mod):
+    """Drift guard: slugs derive from lesson TITLES, so a title edit in
+    the corpus silently dangles any ``lesson_ref`` pointing at it."""
+    lessons = pytest.importorskip("attune.lessons")
+    repo_root = Path(__file__).resolve().parents[3]
+    idx = lessons.LessonsIndex(lessons.find_lessons_file(repo_root))
+    for tool, rules in jit_mod.RECALL_MAP.items():
+        for rule in rules:
+            ref = rule.get("lesson_ref")
+            if not ref:
+                continue
+            assert idx.get(ref) is not None, (
+                f"{tool}/{rule['rule_id']}: lesson_ref {ref!r} does not "
+                "resolve — was the lesson's title edited?"
+            )
+
+
+# ==========================================================================
 # Surface-once gate (R3, D5)
 # ==========================================================================
 
