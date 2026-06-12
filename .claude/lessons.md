@@ -8037,3 +8037,49 @@ files.
   having consumers — and expect the stragglers to self-identify at
   runtime, which is a reason to keep the old location working as a
   fallback during the transition.
+- **"This filter form is broken" needs a CONTROLLED repro before you
+  change production code — the AMS dict-vs-`Namespace` false alarm
+  (2026-06-12)**: while dogfooding an AMS example I saw
+  `search_long_term_memory(namespace={"eq": ns})` return
+  cross-namespace results, then `namespace=Namespace(eq=ns)` return
+  isolated results, and concluded the dict form was silently ignored —
+  AND that `attune_redis/memory.py`'s `search`/`recent` (which use the
+  dict form, lines 445/493) had a production isolation bug. Reading the
+  installed client source REFUTED it:
+  `agent_memory_client.client.search_long_term_memory` does
+  `if isinstance(namespace, dict): namespace = Namespace(**namespace)`
+  — the dict is coerced to the identical object, so the two forms are
+  equivalent and `memory.py` is fine. The real cause was almost
+  certainly **AMS async indexing latency** (newly-created long-term
+  memories aren't instantly searchable): the two runs differed in BOTH
+  the filter form AND elapsed-time-since-write, and I attributed the
+  difference to the variable I happened to be looking at. Rules:
+  (1) when two runs differ, change ONE variable at a time before
+  drawing a causal conclusion — immediate-search-after-write vs a later
+  search is an uncontrolled timing variable in any embed-then-index
+  store (AMS, vector DBs); (2) before claiming a client/SDK filter is
+  "ignored," read how the client serializes it (dict→model coercion is
+  common) rather than inferring from end-to-end behavior; (3) a no-op
+  "fix" (dict→object here) justified by a wrong diagnosis is worse than
+  no change — it encodes a false story in the code. Pairs with
+  "verify-first applies to infra/config diagnoses" and "research
+  subagents confabulate SDK signatures — introspect before coding."
+  Separately, the genuine gap that triggered this is real: the AMS
+  round-trip test asserts PRESENCE ("marker is findable"), not
+  ISOLATION ("other namespaces excluded") — a presence test passes even
+  if isolation is broken, so isolation needs its own assertion (stash
+  ns A + B, search A, assert B absent) with a wait-for-index.
+- **The PostToolUse autoflake/ruff formatter strips a just-added import
+  if it isn't used YET — add the import and its first use in the SAME
+  edit (or add the use first)**: 2026-06-12, editing a file in two
+  steps — first `Edit` added `from agent_memory_client.filters import
+  Namespace`, second `Edit` added the `Namespace(...)` usage. The
+  PostToolUse formatter ran after the FIRST edit, saw the import
+  unused, and removed it; the second edit added the usage but the
+  import was already gone → `NameError: name 'Namespace' is not
+  defined` at runtime. Fix: when adding an import for new code,
+  introduce the import and at least one use in a single Edit, or add
+  the usage before the import. Detection: after a two-step
+  import-then-use, `grep -n "import X"` before running. Pairs with the
+  "interrupted/partial Edit" lessons — same family (the file on disk
+  isn't what your sequence of edits implies).
