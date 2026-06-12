@@ -703,3 +703,63 @@ class TestCountNonBlankLines:
         with patch("builtins.open", side_effect=OSError("no access")):
             result = count_lines_of_code(f)
         assert result == 0
+
+
+@pytest.mark.unit
+class TestAuthStrategyPreferSubscriptionRouting:
+    """prefer_subscription routing — the spend-routing dimension the existing
+    suite never exercised (every prior test left prefer_subscription at its
+    True default).
+
+    With prefer_subscription=False the small branch (SUBSCRIPTION) and the
+    medium branch (API) diverge, which is what makes the
+    small_module_threshold boundary observable: a value exactly at the
+    threshold pins the comparison as strict ``<`` rather than ``<=``. Without
+    these tests, ``module_lines < self.small_module_threshold`` could be
+    weakened to ``<=`` undetected (mutmut survivor on auth_strategy.py:108).
+    """
+
+    @staticmethod
+    def _max_auto(*, prefer: bool) -> AuthStrategy:
+        return AuthStrategy(
+            subscription_tier=SubscriptionTier.MAX,
+            default_mode=AuthMode.AUTO,
+            small_module_threshold=500,
+            medium_module_threshold=2000,
+            prefer_subscription=prefer,
+        )
+
+    def test_small_threshold_boundary_is_strict_less_than(self):
+        """module_lines == small_threshold must fall through to the medium
+        branch, not the small branch.
+
+        499 takes the small branch (always SUBSCRIPTION); 500 is NOT < 500 and
+        falls to the medium branch, which routes to API when
+        prefer_subscription is False. If ``<`` were ``<=``, 500 would route to
+        SUBSCRIPTION instead.
+        """
+        strategy = self._max_auto(prefer=False)
+        assert strategy.get_recommended_mode(499) == AuthMode.SUBSCRIPTION
+        assert strategy.get_recommended_mode(500) == AuthMode.API
+
+    def test_medium_range_routes_to_api_when_prefer_subscription_false(self):
+        """Medium modules route to API when the user does not prefer
+        subscription (exercises the previously-dead ``else AuthMode.API``
+        branch on line 114)."""
+        strategy = self._max_auto(prefer=False)
+        assert strategy.get_recommended_mode(1000) == AuthMode.API
+        assert strategy.get_recommended_mode(1999) == AuthMode.API
+
+    def test_medium_range_routes_to_subscription_when_prefer_subscription_true(self):
+        """Medium modules route to SUBSCRIPTION when prefer_subscription is
+        True (the True arm of the same ternary)."""
+        strategy = self._max_auto(prefer=True)
+        assert strategy.get_recommended_mode(1000) == AuthMode.SUBSCRIPTION
+        assert strategy.get_recommended_mode(1999) == AuthMode.SUBSCRIPTION
+
+    def test_prefer_subscription_only_gates_the_medium_range(self):
+        """prefer_subscription must not change small (always SUBSCRIPTION) or
+        large (always API) routing — only the medium range."""
+        strategy = self._max_auto(prefer=False)
+        assert strategy.get_recommended_mode(100) == AuthMode.SUBSCRIPTION
+        assert strategy.get_recommended_mode(3000) == AuthMode.API
