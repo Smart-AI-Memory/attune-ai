@@ -432,3 +432,67 @@ class TestEdgeCases:
             assert "total_tests" in result
             assert "passed" in result
             assert "success_rate" in result
+
+
+@pytest.mark.unit
+class TestScrubMultiPIIRedactionIntegrity:
+    """scrub() must place EVERY replacement at the correct position when a
+    string contains multiple PII items.
+
+    The existing suite asserted detection *count* and *membership* but never
+    the exact sanitized string, so the position-offset accumulation
+    (`pii_scrubber.py:388` ``position_offset += len(replacement) -
+    len(matched_text)``) and the adjacency boundary
+    (``start_pos >= last_end``) were untested. A wrong offset garbles the
+    second-and-later replacements — leaking raw PII fragments or redacting
+    the wrong span — which is a silent data-leak, not a cosmetic bug.
+
+    These tests pin the EXACT output and so kill the offset / boundary
+    mutants that the count-only tests let survive.
+    """
+
+    @pytest.fixture
+    def scrubber(self):
+        return PIIScrubber()
+
+    def test_two_pii_exact_output(self, scrubber):
+        """Two PII whose replacements are shorter than the matches: the
+        offset accumulates negative, and the SSN must still land correctly
+        after the email was shortened."""
+        text = "Email john@example.com and SSN 123-45-6789 here"
+        clean, detections = scrubber.scrub(text)
+        assert clean == "Email [EMAIL] and SSN [SSN] here"
+        assert len(detections) == 2
+
+    def test_three_pii_exact_output(self, scrubber):
+        """Three PII of differing lengths: the offset must *accumulate*
+        across all prior replacements (not just the previous one), which is
+        what distinguishes `+=` from a plain `=`."""
+        text = "a john@example.com b 123-45-6789 c 192.168.1.1 d"
+        clean, detections = scrubber.scrub(text)
+        assert clean == "a [EMAIL] b [SSN] c [IP] d"
+        assert len(detections) == 3
+
+    def test_replacement_longer_than_match_positive_offset(self, scrubber):
+        """A replacement longer than its match drives the offset positive;
+        a following default match must still land correctly. Pins the sign
+        of the offset delta in both directions."""
+        scrubber.add_custom_pattern(
+            name="token",
+            pattern=r"TK\d{3}",
+            replacement="[REDACTED_SECRET_TOKEN]",
+        )
+        text = "id TK123 mail john@example.com end"
+        clean, _ = scrubber.scrub(text)
+        assert clean == "id [REDACTED_SECRET_TOKEN] mail [EMAIL] end"
+
+    def test_adjacent_pii_both_redacted(self, scrubber):
+        """Two PII that touch with no separator (second.start ==
+        first.end) must BOTH be redacted. The dedup keeps a match when
+        ``start_pos >= last_end``; weakening `>=` to `>` would silently drop
+        the adjacent second match and leak it."""
+        scrubber.add_custom_pattern(name="aaa", pattern=r"AAA", replacement="[A]")
+        scrubber.add_custom_pattern(name="bbb", pattern=r"BBB", replacement="[B]")
+        clean, detections = scrubber.scrub("AAABBB")
+        assert clean == "[A][B]"
+        assert len(detections) == 2
