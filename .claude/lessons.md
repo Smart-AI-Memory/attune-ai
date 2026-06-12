@@ -8083,3 +8083,44 @@ files.
   import-then-use, `grep -n "import X"` before running. Pairs with the
   "interrupted/partial Edit" lessons — same family (the file on disk
   isn't what your sequence of edits implies).
+- **Mutation testing in this repo — use mutmut 2.x not 3.x, scope +
+  PYTHONPATH to the worktree, expect equivalent mutants, and ISOLATE
+  real user state (2026-06-12)**: a mutmut pass on
+  `security/path_validation.py` (17/51 survived despite 60 green tests)
+  and `models/auth_strategy.py` (129/270 survived) surfaced real gaps
+  line-coverage hid. Durable mechanics:
+  - **mutmut 3.x fights this repo's layout** — config isn't on the CLI
+    (only `--max-children`), it reads a config file whose keys are
+    non-obvious, and its `mutants/`-copy model collides with the
+    worktree editable-install (MAPPING points `attune` at MAIN's src).
+    Pin **`mutmut==2.4.4`**: CLI/`setup.cfg`-configurable, mutates
+    IN-PLACE, so `PYTHONPATH=<absolute-worktree>/src` makes the runner
+    import the mutated worktree file. Temp `setup.cfg`:
+    `[mutmut]\npaths_to_mutate=<one file>\nrunner=<MAIN venv python> -m
+    pytest <fast scoped tests> -x -o addopts= -p no:cacheprovider -q`.
+    Run via `uv run --with 'mutmut==2.4.4' mutmut run`; `mutmut
+    results` / `mutmut show <id>`; then `rm -f setup.cfg; rm -rf
+    .mutmut-cache` and verify `grep -c XX <file>` == 0 (mutmut reverts
+    in place, but confirm).
+  - **Equivalent mutants are expected — don't chase 100%.** Survivors
+    that can't be killed without changing code: blocklist entries
+    substring-subsumed by a broader entry (`\windows\system32` ⊂
+    `\windows\system`), and no-op string-arg mutations (`rstrip("\\")`
+    → `rstrip("XX\\XX")` strips the same chars). Document them, move on.
+  - **A low kill rate flags a coverage-padding suite.** auth_strategy's
+    `*_coverage_boost.py` hit lines for the coverage number but asserted
+    little → 52% survived. Mutation kill-rate is the test-QUALITY metric
+    line coverage can't be.
+  - **Mutating a module whose tests touch REAL user state can clobber
+    it.** The auth_strategy run reset `~/.attune/auth_strategy.json`
+    (Patrick's `default_mode`) even though a NORMAL run of those tests
+    is isolated — a *mutant* broke a test's `patch(AUTH_STRATEGY_FILE)`
+    and a real write leaked through, ×270. Before mutmut-ing any module
+    whose tests read/write real paths (`~/.attune/`, `~/.config`),
+    redirect `HOME`/the config path to a tmp dir for the run. Snapshot
+    the real file before and restore after.
+  - **Verify-first still applies under mutation pressure**: I twice
+    declared a "standing leak / production bug" from one observation,
+    and a 30-second repro (read the client source; run the tests
+    normally) refuted both. Reproduce before claiming, even when the
+    symptom looks damning.
