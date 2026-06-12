@@ -1,14 +1,14 @@
 # Tasks: Workflow result formatting
 
-**Status:** partial (2026-06-11) — T1 (the `WorkflowReport` / Section
+**Status:** complete (2026-06-12) — T1 (the `WorkflowReport` / Section
 data model, #649), T2 (the markdown renderer
 `attune.voice.report_renderer` — `render()` + crash-visible
 `render_safe()`, all 4 test layers, 98% branch, #741), T3 (voice
 wiring + safety net + `show_cost_metrics`/`resolve_show_cost()`),
 T4 (CLI terminal rendering), T5 (MCP handlers report-aware,
-2026-06-12), T7 (release-prep
+2026-06-12), T6 (dashboard report panel, 2026-06-12), T7 (release-prep
 migration — the motivating case), and T8 (adapter-level migration of
-all 15 SDK-native workflows) shipped; T6 (dashboard panel) pending.
+all 15 SDK-native workflows) all shipped.
 
 > Bounded PRs; see [design.md](design.md) for the decisions each task
 > implements.

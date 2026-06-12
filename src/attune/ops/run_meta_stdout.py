@@ -26,6 +26,7 @@ Grammar (one event per line):
     ATTUNE_RUN_META_VERSION 1
     ATTUNE_RUN_META sdk_error_kind=<kind>
     ATTUNE_RUN_META sdk_stderr_b64=<base64>
+    ATTUNE_RUN_META report_b64=<base64-json>
 
 The ``sdk_stderr`` field is base64-encoded because raw stderr
 typically spans multiple lines and includes characters (quotes,
@@ -59,7 +60,10 @@ VERSION = 1
 # Allowed key names. Restricting to a known set keeps the grammar tight;
 # extending this requires updating both ``emit_field_line`` and
 # ``parse_line`` (and the consumer in ``RunnerService._execute``).
-_ALLOWED_KEYS = frozenset(("sdk_error_kind", "sdk_stderr_b64"))
+# ``report_b64`` carries the serialized ``WorkflowReport`` dict
+# (base64-encoded JSON) so the dashboard's run view can render a
+# structured report panel — workflow-result-formatting T6.
+_ALLOWED_KEYS = frozenset(("sdk_error_kind", "sdk_stderr_b64", "report_b64"))
 
 # Regex per line kind. Anchored at start; trailing content is the value.
 _RE_VERSION = re.compile(r"^ATTUNE_RUN_META_VERSION (\d+)$")
@@ -133,6 +137,41 @@ def decode_stderr(b64_text: str) -> str:
         return base64.b64decode(b64_text, validate=True).decode("utf-8", errors="replace")
     except (ValueError, UnicodeDecodeError):
         return ""
+
+
+def encode_report(report_dict: dict[str, Any]) -> str:
+    """Base64-encode a serialized ``WorkflowReport`` dict for wire transit.
+
+    JSON is compact-encoded (no whitespace) before base64 so the single
+    marker line stays as short as possible. Returns empty string when
+    the dict can't be JSON-encoded — the caller skips emission rather
+    than writing a malformed marker.
+    """
+    import json
+
+    try:
+        raw = json.dumps(report_dict, separators=(",", ":"))
+    except (TypeError, ValueError):
+        return ""
+    return base64.b64encode(raw.encode("utf-8")).decode("ascii")
+
+
+def decode_report(b64_text: str) -> dict[str, Any] | None:
+    """Inverse of :func:`encode_report`. ``None`` on malformed input.
+
+    The consumer (``RunnerService.handle_stdout_line``) treats ``None``
+    as "drop the marker, keep any previously-stashed report".
+    """
+    import json
+
+    if not b64_text:
+        return None
+    try:
+        raw = base64.b64decode(b64_text, validate=True).decode("utf-8")
+        parsed = json.loads(raw)
+    except (ValueError, UnicodeDecodeError):
+        return None
+    return parsed if isinstance(parsed, dict) else None
 
 
 def parse_line(line: str) -> dict[str, Any] | None:

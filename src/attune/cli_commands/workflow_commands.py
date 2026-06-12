@@ -350,9 +350,12 @@ def _emit_run_meta_for_daemon(result: object) -> None:
     Reads ``sdk_stderr`` / ``sdk_error_kind`` from
     ``result.metadata`` (set by ``BaseWorkflow._error_result()``
     during SDK subprocess failure) and writes them as base64-encoded
-    + plain-text stdout lines that the runner parses. Silent no-op
-    when the env var isn't set, when ``result`` doesn't carry
-    metadata, or when neither field is populated.
+    + plain-text stdout lines that the runner parses. When
+    ``result.final_output`` carries a serialized ``WorkflowReport``
+    (the ``_type`` discriminator), it is also emitted as a
+    ``report_b64`` line so the dashboard's run view can render a
+    structured report panel (workflow-result-formatting T6). Silent
+    no-op when the env var isn't set or when nothing is emittable.
 
     Part of the ``docs/specs/sdk-error-message-fidelity/`` Phase 3b
     flow. The side-channel design (rather than calling into runner
@@ -365,11 +368,17 @@ def _emit_run_meta_for_daemon(result: object) -> None:
     if not run_meta_stdout.is_emission_enabled():
         return
     metadata = getattr(result, "metadata", None)
-    if not isinstance(metadata, dict):
-        return
-    kind = metadata.get("sdk_error_kind")
-    stderr_text = metadata.get("sdk_stderr")
-    if not kind and not stderr_text:
+    kind = metadata.get("sdk_error_kind") if isinstance(metadata, dict) else None
+    stderr_text = metadata.get("sdk_stderr") if isinstance(metadata, dict) else None
+
+    from attune.workflows.output import WorkflowReport
+
+    final_output = getattr(result, "final_output", None)
+    report_encoded = ""
+    if WorkflowReport.is_report_dict(final_output):
+        report_encoded = run_meta_stdout.encode_report(final_output)  # type: ignore[arg-type]
+
+    if not kind and not stderr_text and not report_encoded:
         return
     # Emit version line first so the parser knows what grammar it's
     # reading. Cheap; downstream consumer ignores it after the version
@@ -381,3 +390,5 @@ def _emit_run_meta_for_daemon(result: object) -> None:
         encoded = run_meta_stdout.encode_stderr(str(stderr_text))
         if encoded:
             run_meta_stdout.emit_field_line("sdk_stderr_b64", encoded)
+    if report_encoded:
+        run_meta_stdout.emit_field_line("report_b64", report_encoded)
