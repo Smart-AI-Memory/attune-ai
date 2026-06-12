@@ -129,6 +129,11 @@ scores; session-findings store answered via AMSMemoryBackend
 (fallback: false) with recent stashed notes — none tag-specific yet
 (young soak), reported honestly as such.
 
-**Outstanding for the T5 gate:** the Stop-hook stash receipt
-(`~/.attune` stash.log + a new finding written at a real session
-end on the fixed code) — the soak is now running on current code.
+**Receipt 4 — Stop-hook stash (captured same session, mid-PR).**
+The Stop hook fired at the first turn-end after the unpark and
+stashed 4 findings (decision/bug/reference/note); `stash.log`
+recorded `findings=4 written=4`, and a recall query immediately
+returned the fresh bug finding as the #1 hit from AMS — the full
+write → searchable → retrieve loop on fixed code. Nothing
+outstanding: all four receipts are in; T5 is gated only on
+Patrick's core-list review + the post-move benchmark re-run.
