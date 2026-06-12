@@ -3,8 +3,10 @@ interface TestsBadgeProps {
   coverage?: number;
 }
 
+// Defaults verified 2026-06-11: `pytest --collect-only` = 21,386;
+// coverage floor enforced by --cov-fail-under=85 in pyproject.
 export default function TestsBadge({
-  tests = 10860,
+  tests = 21386,
   coverage = 85
 }: TestsBadgeProps) {
   return (

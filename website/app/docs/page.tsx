@@ -40,7 +40,7 @@ const faqItems = [
   {
     question: 'What Claude Code skills are included?',
     answer:
-      '14 auto-invoking skills: security audit, smart test, code review, deep review, doc generation, refactoring, bug prediction, release prep, planning, brainstorming, workflow orchestration, fix-test, spec-driven development, and the coach help system.',
+      '17 auto-invoking skills: security audit, smart test, code quality, bug prediction, doc generation, refactor planning, release prep, planning, spec-driven development, fix-test, workflow orchestration, RAG-grounded code generation, content verification, cross-session recall, memory and context, the coach help system, and the attune hub router.',
   },
   {
     question: 'Where do I install attune-help and attune-author from?',
@@ -61,11 +61,14 @@ const workflows = [
   { name: 'Release Prep', description: 'Changelog, version bump, health checks' },
 ];
 
+// The 17 plugin skills — keep in sync with plugin/skills/
+// (test_skill_count asserts the directory count).
 const skills = [
-  '/security', '/smart-test', '/code-quality', '/deep-review',
-  '/doc-gen', '/refactor', '/release', '/plan',
-  '/brainstorm', '/spec', '/fix-test', '/bulk',
-  '/coach', '/attune',
+  'security-audit', 'smart-test', 'code-quality', 'bug-predict',
+  'doc-gen', 'refactor-plan', 'release-prep', 'planning',
+  'spec', 'fix-test', 'workflow-orchestration', 'rag-code-gen',
+  'verify', 'recall', 'memory-and-context', 'coach',
+  'attune-hub',
 ];
 
 export default function DocsPage() {
@@ -165,7 +168,7 @@ export default function DocsPage() {
                   <h3 className="text-lg font-bold mb-2">attune-ai</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
                     Generate, maintain, and serve help from your codebase.
-                    15 workflows, 14 skills, MCP server.
+                    17 workflows, 17 skills, MCP server.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -182,7 +185,7 @@ export default function DocsPage() {
                   </div>
                   <h3 className="text-lg font-bold mb-2">attune-author</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Generate 11 kinds of source-grounded templates with
+                    Generate 15 kinds of source-grounded templates with
                     per-type polish prompts. Pairs with attune-help.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3 break-all">
@@ -492,7 +495,7 @@ export default function DocsPage() {
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
                 Install from the marketplace. Progressive help, project
-                bootstrapping, and 14 skills right in your terminal.
+                bootstrapping, and 17 skills right in your terminal.
               </p>
 
               <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-8 mb-8">
@@ -558,7 +561,7 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                attune-ai includes 15 multi-stage workflows, 14
+                attune-ai includes 17 multi-stage workflows, 17
                 auto-invoking Claude Code skills, and an MCP server
                 with 41 registered tools.
               </p>
@@ -585,7 +588,7 @@ export default function DocsPage() {
 
                 <div>
                   <h3 className="font-bold text-lg mb-4">
-                    14 Claude Code Skills
+                    17 Claude Code Skills
                   </h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-4">
                     Skills auto-invoke from natural language. Type the topic
