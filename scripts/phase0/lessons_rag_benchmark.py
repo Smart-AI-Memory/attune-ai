@@ -27,7 +27,7 @@ import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-LESSONS_FILE = REPO_ROOT / ".claude" / "CLAUDE.md"
+LESSONS_FILE = REPO_ROOT / ".claude" / "lessons.md"
 FIXTURE = REPO_ROOT / "docs" / "specs" / "lessons-corpus-rag" / "golden_queries.json"
 
 sys.path.insert(0, str(REPO_ROOT / "src"))

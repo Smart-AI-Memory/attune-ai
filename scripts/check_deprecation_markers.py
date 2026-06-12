@@ -41,6 +41,7 @@ SELF_REFERENTIAL: frozenset[str] = frozenset(
     {
         "scripts/check_deprecation_markers.py",
         ".claude/CLAUDE.md",
+        ".claude/lessons.md",
         "tests/unit/test_deprecation_markers.py",
     }
 )

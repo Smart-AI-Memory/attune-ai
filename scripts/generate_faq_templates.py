@@ -227,7 +227,9 @@ def main(argv: list[str] | None = None) -> int:
     check = "--check" in argv
 
     repo_root = Path(__file__).resolve().parent.parent
-    claude_md = repo_root / ".claude" / "CLAUDE.md"
+    claude_md = repo_root / ".claude" / "lessons.md"
+    if not claude_md.is_file():  # pre-cutover layouts
+        claude_md = repo_root / ".claude" / "CLAUDE.md"
     templates_dir = repo_root / "plugin" / "help" / "templates"
     output_dir = repo_root / "plugin" / "help" / "generated" / "faqs"
 
