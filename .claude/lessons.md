@@ -8017,3 +8017,23 @@ files.
   `-` in `git cherry` / contained in merged work) frees `main` for
   the parent. Plugin-release checklist addition: after `claude
   plugin update`, also confirm `~/attune-ai` is on current main.
+- **The T5 lessons cutover's grep guard missed a consumer OUTSIDE the
+  swept paths — and the splitter anchors on a literal heading**: two
+  durable facts from executing the cutover (2026-06-12). (1)
+  `split_lessons` starts at `str.find("## Lessons Learned")`; when the
+  heading is absent, `find` returns -1 and the slice yields ~nothing —
+  an empty corpus with NO error (first lessons.md draft used a `#
+  Lessons` title and every retrieval silently returned zero docs;
+  caught by the golden-smoke tests). Any file feeding `split_lessons`
+  must carry the literal canonical heading; tests parsing a SUBSET
+  (e.g. the CLAUDE.md core section) prepend it. (2) The pre-move grep
+  guard swept `scripts/`, `plugin/hooks/`, and `tests/` — but a
+  consumer lived in `src/attune/hooks/scripts/lessons_reminder.py`
+  (the repo-settings Stop hook), discovered only when it FIRED at the
+  next session stop and instructed an append to the old location.
+  When relocating any well-known file/section, grep the WHOLE repo
+  for the old path/heading (`grep -rn "Lessons Learned" --include
+  '*.py' .` from the root), not just the directories you remember
+  having consumers — and expect the stragglers to self-identify at
+  runtime, which is a reason to keep the old location working as a
+  fallback during the transition.
