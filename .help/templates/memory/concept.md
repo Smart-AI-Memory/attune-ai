@@ -3,53 +3,52 @@ type: concept
 name: memory-concept
 feature: memory
 depth: concept
-generated_at: 2026-06-10T07:07:04.767860+00:00
-source_hash: 570dd4977cd655a0cf44a47b917577fd70f4cf08eb5d256d4da2915dbea871f0
+generated_at: 2026-06-12T00:20:52.581029+00:00
+source_hash: 439162c85525d4aff627199f05d3f52d259589b86b947c5b2f62b832a0d15fae
 status: generated
+scaffold_hash: fc0d9984517f8c22ce4ac76cb18edf9fd2a3bcc4d42b5edbc949332d6846906e
 ---
 
 # Memory
 
-Attune's memory system gives agents a structured way to store, retrieve, search, and secure information across sessions — from ephemeral key-value entries held in Redis to project-scoped knowledge loaded from `CLAUDE.md` files.
+Attune AI memory is a three-layer system that gives agents short-term working storage, searchable long-term pattern recall, and static project context — all with built-in classification, PII scrubbing, and secrets detection before anything reaches persistent storage.
 
-## Two storage tiers
+## Memory layers
 
-The system separates memory into two distinct tiers that serve different lifespans and access patterns.
+Each layer serves a different retention horizon and access pattern.
 
-**Short-term memory** is governed by the `MemoryBackend` protocol. Any backend that implements this protocol exposes five core operations: `stash`, `retrieve`, `delete`, `keys`, and `close`, plus diagnostic methods (`is_connected`, `get_stats`). The `stash` method accepts an optional `ttl` and an optional `agent_id`, so entries can be scoped to a specific agent and expire automatically. Redis is the default short-term backend; `is_redis_available()` lets you check whether the Redis subsystem is reachable before attempting a connection.
+**Short-term agent memory** is a keyed store scoped per `agent_id`, backed by any class that implements the `MemoryBackend` protocol. The core operations are `stash(key, value, ttl, agent_id)`, `retrieve(key, agent_id)`, `delete(key)`, and `keys(pattern)`. An optional `ttl` argument expires entries automatically. Two capability flags determine backend fitness for your deployment: `supports_realtime()` and `supports_distributed()`. A Redis-backed store passes both; an in-process mock typically passes neither. Call `is_connected()` before use and `get_stats()` for runtime metrics.
 
-**Long-term, searchable memory** extends the base protocol through `SearchableMemoryBackend`. This layer adds semantic operations — `search`, `remember`, `recent`, `promote`, and `prune` — that let agents query by meaning rather than exact key. `promote` moves entries from a session into durable storage; `prune` removes entries older than a configurable `max_age_days`.
+**Long-term searchable memory** extends `MemoryBackend` through the `SearchableMemoryBackend` protocol. Rather than retrieving by exact key, you query by content: `search(query, limit)` returns ranked results, and `recent(limit)` surfaces the most recently stored entries. Use `remember(content, topics=[...])` to store an entry, `promote(session_id)` to graduate session-scoped memories into the durable store, and `prune(max_age_days)` to expire stale entries.
 
-## CLAUDE.md memory files
+**Static project context** comes from CLAUDE.md files resolved at enterprise, user, and project levels. `ClaudeMemoryLoader` reads these files in order — controlled by the `load_enterprise`, `load_user`, and `load_project` fields on `ClaudeMemoryConfig` — and returns a single merged string from `load_all_memory()`. Files that import other paths are followed recursively up to `max_import_depth` (default `5`). Set `validate_files=True` to reject any file that exceeds `max_file_size_bytes` (default `1000000` bytes). To bootstrap a new project, `create_default_project_memory(project_root, framework='empathy')` writes a starter `.claude/CLAUDE.md` with the expected structure.
 
-A separate mechanism handles project-scoped knowledge: `CLAUDE.md` files that live in the repository and are loaded at startup. `ClaudeMemoryLoader` reads these files according to a `ClaudeMemoryConfig`, which controls which levels are loaded (`load_enterprise`, `load_user`, `load_project`), where to look for them (`enterprise_memory_path`, `project_root`), and how deep to follow `@import` chains (`max_import_depth`, default `5`). Each file that is loaded becomes a `MemoryFile` dataclass carrying its `level`, `path`, `content`, `imports`, and `load_order`.
+## Security controls
 
-`load_all_memory` returns the combined content as a single string ready for injection into a model context. `get_loaded_files` lists the paths that contributed to that string, which is useful for debugging import chains. You can create a starter file for a new project with `create_default_project_memory(project_root, framework)`.
+Classification and scrubbing run before any pattern reaches durable storage. `ClassificationRules` assigns a `Classification` level using keyword lists (`HEALTHCARE_KEYWORDS`, `FINANCIAL_KEYWORDS`, `PROPRIETARY_KEYWORDS`) and type lists (`SENSITIVE_PATTERN_TYPES`, `INTERNAL_PATTERN_TYPES`). The `PIIScrubber` strips personally identifiable information, and `SecretsDetector` flags credential-like content. `EncryptionManager` handles at-rest encryption for patterns that require it. `AuditLogger` records every write and access as an `AuditEvent` for compliance trails.
 
-## Security and classification
+## Enterprise control surface
 
-Content stored in long-term memory is classified before it is persisted. The `Classification` system recognises healthcare (`HEALTHCARE_KEYWORDS`), financial (`FINANCIAL_KEYWORDS`), and proprietary (`PROPRIETARY_KEYWORDS`) content, and maps pattern types to sensitivity tiers via `SENSITIVE_PATTERN_TYPES` and `INTERNAL_PATTERN_TYPES`. `PIIScrubber` and `SecretsDetector` run as guards to prevent personally identifiable information and secrets from reaching storage. Access control is enforced through `check_access` and surfaces as `MemoryPermissionError` or `SecurityError` when a caller lacks the required tier.
+`MemoryControlPanel` exposes runtime operations without requiring code changes. You can check `status()` and `health_check()`, browse stored patterns with `list_patterns(classification=None, limit=100)`, remove a specific pattern with `delete_pattern(pattern_id, user_id)`, bulk-clear short-term entries with `clear_short_term(agent_id)`, and export pattern sets to disk with `export_patterns(output_path)`.
 
-## Enterprise control panel
+The panel is configured through `ControlPanelConfig`, which defaults Redis to `localhost:6379` and uses `./memdocs_storage` for pattern documents. When `auto_start_redis=True`, the panel starts Redis automatically if it isn't already running.
 
-`MemoryControlPanel` (configured via `ControlPanelConfig`) exposes operational controls for the short-term store: `start_redis`, `stop_redis`, `clear_short_term`, `list_patterns`, `delete_pattern`, `export_patterns`, and `health_check`. `get_statistics` returns a `MemoryStats` snapshot. These operations are also available over HTTP through `MemoryAPIHandler`, which applies `RateLimiter` (per-IP, sliding window) and `APIKeyAuth` before forwarding requests to the panel. Use `run_api_server` to start the HTTP interface.
+`run_api_server(panel, host, port)` wraps the panel in an HTTP server backed by `MemoryAPIHandler`, which handles `GET`, `POST`, `DELETE`, and `OPTIONS` requests. Optional arguments let you add TLS (`ssl_certfile`, `ssl_keyfile`), restrict access with `APIKeyAuth` (via `api_key`), and enforce request budgets with `RateLimiter` (`rate_limit_requests`, `rate_limit_window`). Set `allowed_origins` for CORS control.
 
-## How the pieces fit together
+For Railway deployments, `get_railway_redis()` reads `REDIS_URL` from the environment and raises `OSError` with setup instructions if the variable is absent.
 
-```
-Agent
-  │
-  ├─► MemoryBackend (stash / retrieve)          ← short-term, keyed, TTL-aware
-  │       └─► RedisShortTermMemory              ← default implementation
-  │
-  ├─► SearchableMemoryBackend (search / remember / promote)
-  │       └─► long-term semantic store          ← promoted from sessions
-  │
-  ├─► ClaudeMemoryLoader (load_all_memory)      ← project knowledge at startup
-  │       └─► MemoryFile[]                      ← one per CLAUDE.md in the tree
-  │
-  └─► MemoryControlPanel                        ← operational management
-          └─► MemoryAPIHandler (HTTP)            ← remote access with auth + rate limiting
-```
+## Integration surface
 
-Short-term entries flow up to long-term storage through `promote`. Long-term entries are kept fresh by `prune` and surfaced by `search` and `recent`. Project-level knowledge from `CLAUDE.md` files is read-only at runtime and injected directly into model context by `load_all_memory`.
+| Type | Name | Role |
+|------|------|------|
+| Protocol | `MemoryBackend` | Short-term key-value store with TTL and agent scoping |
+| Protocol | `SearchableMemoryBackend` | Extends `MemoryBackend` with semantic search, promotion, and pruning |
+| Dataclass | `ClaudeMemoryConfig` | Controls which CLAUDE.md levels load, import depth, and file-size limits |
+| Dataclass | `MemoryFile` | One resolved CLAUDE.md file: `level`, `path`, `content`, `imports`, `load_order` |
+| Class | `ClaudeMemoryLoader` | Resolves and merges CLAUDE.md files; primary entry point is `load_all_memory()` |
+| Class | `MemoryControlPanel` | Runtime management for patterns, short-term entries, and Redis lifecycle |
+| Dataclass | `ControlPanelConfig` | Redis coordinates (`redis_host`, `redis_port`) and storage paths for the control panel |
+| Function | `is_redis_available()` | Lightweight probe that checks Redis availability without importing the subsystem |
+| Function | `get_redis_memory(url, use_mock)` | Factory that reads environment config and returns a `RedisShortTermMemory` instance |
+| Function | `get_railway_redis()` | Railway-specific factory; raises `OSError` if `REDIS_URL` is absent |
+| Function | `create_default_project_memory(project_root, framework)` | Writes a starter CLAUDE.md to bootstrap a new project |
