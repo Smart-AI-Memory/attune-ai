@@ -14,7 +14,9 @@ from __future__ import annotations
 import importlib.util
 import io
 import json
+import os
 import sys
+import urllib.request
 from pathlib import Path
 
 import pytest
@@ -170,6 +172,62 @@ def test_extract_via_ollama_returns_none_on_empty_findings(stash_mod, monkeypatc
 
     monkeypatch.setattr(stash_mod.urllib.request, "urlopen", lambda *a, **k: _Resp())
     assert stash_mod._extract_via_ollama("some transcript") is None
+
+
+# ==========================================================================
+# session_stash — Ollama extraction, NON-MOCKED round-trip (real boundary)
+# ==========================================================================
+
+
+def _ollama_available() -> bool:
+    """True when Ollama answers and the configured extraction model is pulled."""
+    base = os.environ.get("ATTUNE_MEMORY_OLLAMA_URL", "http://localhost:11434").rstrip("/")
+    model = os.environ.get("ATTUNE_MEMORY_OLLAMA_MODEL", "llama3.1:8b")
+    try:
+        with urllib.request.urlopen(f"{base}/api/tags", timeout=2) as resp:
+            tags = json.loads(resp.read().decode("utf-8"))
+    except Exception:  # noqa: BLE001 — any failure means "no Ollama" -> skip
+        return False
+    names = {m.get("name", "") for m in tags.get("models", [])}
+    family = model.split(":")[0]
+    return any(n == model or n.startswith(family) for n in names)
+
+
+@pytest.mark.skipif(not _ollama_available(), reason="Ollama + extraction model not available")
+def test_extract_via_ollama_real_round_trip(stash_mod):
+    """NON-MOCKED: a real Ollama call returns parseable typed findings.
+
+    The mocked test above proves parsing of a *canned* response; this proves
+    the real ``/api/generate`` request shape + real model output parse
+    end-to-end — the boundary a mock cannot exercise. Model output is
+    non-deterministic, so assert STRUCTURE, not content.
+    """
+    transcript = (
+        "user: We kept getting double charges on Stripe webhooks.\n"
+        "assistant: Root cause was the idempotency key being omitted on retries; "
+        "adding it fixed the double charge. We also decided to standardize on "
+        "Redis AMS for cross-session memory.\n"
+    )
+    findings = stash_mod._extract_via_ollama(transcript)
+    assert findings is not None, "real Ollama returned no parseable findings for a clear transcript"
+    assert isinstance(findings, list) and findings
+    for f in findings:
+        assert isinstance(f, dict)
+        assert isinstance(f.get("content"), str) and f["content"].strip()
+    # Normalized output honors the contract: well-typed and clamped.
+    norm = stash_mod._normalize(findings)
+    assert 1 <= len(norm) <= stash_mod._MAX_FINDINGS
+    assert all(n["type"] in stash_mod._VALID_TYPES for n in norm)
+
+
+def test_extract_via_ollama_real_unreachable_returns_none(stash_mod, monkeypatch):
+    """Real refused socket (dead port) -> None, so main() falls back to the
+    heuristic. Complements the mocked-exception test with urllib's actual
+    error path against a port where nothing listens.
+    """
+    monkeypatch.setenv("ATTUNE_MEMORY_OLLAMA_URL", "http://127.0.0.1:1")
+    monkeypatch.setenv("ATTUNE_MEMORY_STASH_TIMEOUT", "2")
+    assert stash_mod._extract_via_ollama("a session where we fixed a real bug") is None
 
 
 # ==========================================================================
