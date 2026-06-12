@@ -7,6 +7,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Lessons corpus moved to `.claude/lessons.md`** (canonical, 386
+  lessons) — CLAUDE.md shrank 438,783 → 41,370 chars (**91%
+  smaller, ~99k tokens freed per session**). 22 core lessons stay
+  mirrored in CLAUDE.md, drift-guarded by
+  `tests/unit/lessons/test_core_mirror.py`. Retrieval is
+  unchanged: the prompt-time recall hook, `/recall`, and
+  `attune.lessons.LessonsIndex` all read lessons.md (benchmark on
+  the real file: P@1 84%, P@3 96%, high-severity 7/7). New
+  lessons append to lessons.md, not CLAUDE.md. (#782)
+
+### Added
+
+- `docs/how-to/lessons-workflow.md` — how the append → retrieve
+  lessons loop works (where lessons live, how they come back, the
+  core-mirror rule).
+
 ## [8.4.0] — 2026-06-11
 
 Cross-session memory grows a lessons brain: the repo's ~380-lesson

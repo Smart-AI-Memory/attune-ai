@@ -1,7 +1,7 @@
 # Lessons Corpus via RAG — Tasks
 
-**Status:** in progress (2026-06-12) — T1–T5 done; T6 (docs +
-release note) open.
+**Status:** complete (2026-06-12) — T1–T6 done; D6 fresh-session
+receipt captured post-cutover (decisions.md).
 Bounded PRs; each task names its receipt.
 
 ## T1 — `attune.lessons` module — DONE 2026-06-11
@@ -110,10 +110,20 @@ Bounded PRs; each task names its receipt.
   drift-guarded by tests/unit/lessons/test_core_mirror.py.
   Remaining for D6: the fresh-session live pair on the
   post-cutover file (next session).
+- **D6 fresh-session receipt — DONE 2026-06-12** (first
+  post-cutover session): lesson_recall hook answered from
+  lessons.md (correct top hit), SessionStart recall surfaced 5
+  AMS findings, `/recall` path live on `AMSMemoryBackend`. Full
+  record in decisions.md "D6 fresh-session receipt".
 
-## T6 — Docs + release note
+## T6 — Docs + release note — DONE 2026-06-12
 
 - CHANGELOG entry with the measured context reduction; a short
   `docs/` note on the lessons workflow (append → retrieve); the R6
   dogfood story ("attune-rag over our own engineering memory") in
   the README's RAG section if Patrick wants the marketing surface.
+- **Receipt:** CHANGELOG `[Unreleased]` entry (91% cut + benchmark
+  numbers); `docs/how-to/lessons-workflow.md` added and wired into
+  the mkdocs nav (Memory System group); README item shipped early
+  via #781 (the cross-session memory loop section IS the
+  marketing surface — R6 dogfood story covered there).

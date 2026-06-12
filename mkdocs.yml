@@ -197,6 +197,7 @@ nav:
       - Memory System:
           - Unified Memory: how-to/unified-memory-system.md
           - Memory Graph: how-to/memory-graph.md
+          - Lessons Workflow: how-to/lessons-workflow.md
       - AI Agents:
           - Agent Factory: how-to/agent-factory.md
           - Smart Router: how-to/smart-router.md
