@@ -8133,3 +8133,27 @@ attune_redis/          # attune-redis plugin (pip install attune-redis)
   apply" means ALREADY-OPEN sessions (including the one that ran the
   update) keep running the OLD cached hooks; only fresh sessions get
   the new version.
+
+- **A parked MAIN checkout silently darkens every plugin hook — the
+  plugin ships hook SCRIPTS, but their `import attune` resolves to
+  `~/attune-ai` via the pyenv shim's editable install, so updating
+  the plugin is NOT enough if main is on a stale branch**: first
+  8.4.0 session (2026-06-12) had the plugin correctly updated and
+  AMS/redis healthy, yet the SessionStart health line, lesson_recall,
+  and backend_status were all dark — the main checkout was parked on
+  a late-May branch that predates `attune.lessons` (#771) and
+  `backend_status` (#769); every hook's ImportError was swallowed by
+  the fail-safe `except`. Extends the recall-loop triage lesson's
+  rule 1 (missing optional DEPS in the hook interpreter) with the
+  stale-VERSION variant — verify BOTH in the hook's interpreter:
+  `python -c "import attune; print(attune.__file__)"` then check
+  that checkout's branch/commit. Two recovery facts: (a) hooks are
+  fresh subprocesses per fire, so unparking main fixes all later
+  hook fires in ALREADY-OPEN sessions — no restart needed (the
+  opposite of the plugin-cache rule above); (b) if `git checkout
+  main` fails "already used by worktree", a Cowork worktree may be
+  squatting on `main` directly — `git switch -C claude/<its-slug>`
+  inside it (force-move is safe when the old branch pointer is
+  `-` in `git cherry` / contained in merged work) frees `main` for
+  the parent. Plugin-release checklist addition: after `claude
+  plugin update`, also confirm `~/attune-ai` is on current main.

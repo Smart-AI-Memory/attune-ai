@@ -58,9 +58,14 @@ Bounded PRs; each task names its receipt.
   `ATTUNE_LESSON_RECALL_FLOOR` (default 8.0) for soak calibration.
   Children sentinel on their PARENT lesson id, so one mega-lesson
   isn't re-surfaced via a different child. 17 tests.
-  **In-CC-session receipt is gated on the next plugin release +
-  `claude plugin update`** (same gating as the recall-loop fixes —
-  live sessions run the cached plugin).
+- **In-CC-session receipt — CAPTURED 2026-06-12** (first 8.4.0
+  session post-restart): see decisions.md D6. Short version: hooks
+  were initially dark because the parked main checkout predated
+  `attune.lessons`; after unparking, `jit_recall` fired organically
+  on an AskUserQuestion call, the lesson_recall trap prompt injected
+  Tag-mechanics via the real plugin-cache hook, and `/recall`
+  returned labeled `[lesson]` hits with the backend named
+  (AMSMemoryBackend, fallback: false).
 
 ## T4 — jit-recall `lesson_ref` integration
 

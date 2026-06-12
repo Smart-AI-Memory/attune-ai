@@ -80,3 +80,55 @@ ingest; (2) summaries-as-titles is sufficient signal — no LLM polish
 pass needed for v1; (3) the splitter must be wrap-aware (titles span
 lines at the 72-char wrap — first naive split captured 69/375 docs;
 the harness's `split_lessons` handles it).
+
+## D6 — 8.4.0 live receipts (2026-06-12, first post-restart session)
+
+The three receipts the cutover (T5) is gated on, captured in the
+first session running the 8.4.0 plugin hooks — with one load-bearing
+root-cause find along the way.
+
+**Root cause first: ALL hooks were dark at session start.** Plugin
+hooks run under the pyenv shim, whose editable install resolves
+`attune` from the MAIN `~/attune-ai` checkout — which was still
+parked on `docs/decisions-backlog-catchup` (late May). That checkout
+predates `attune.lessons` (#771) and `backend_status` (#769), so the
+SessionStart health line swallowed an ImportError and
+`lesson_recall.py` was silent on every prompt — while AMS +
+redis-stack (launchd-managed) were healthy the whole time. Unparked
+the checkout (stale branch's unique commit verified `-` in
+`git cherry`; dirty edits snapshotted to a patch), and every hook
+went live immediately — hooks are fresh subprocesses per fire, so no
+session restart was needed.
+
+**Receipt 1 — SessionStart health line.** Silence is the HEALTHY
+state: the shipped line is warn-only (prints only when
+`unreachable_upgrade` is set). Verified directly:
+`backend_status()` → `{"backend": "AMSMemoryBackend",
+"fallback": false, "unreachable_upgrade": null}`. Caveat recorded:
+warn-only silence is ambiguous with import-failure silence (exactly
+how the parked-checkout outage hid) — an info-level one-liner naming
+the backend would disambiguate; left as a possible tweak, not a
+blocker.
+
+**Receipt 2 — recall hooks fire live in-session.** `jit_recall.py`
+(PreToolUse) fired organically on an `AskUserQuestion` call in the
+live session, injecting the question-shape rule. `lesson_recall.py`
+(UserPromptSubmit) probed via the real plugin-cache hook against the
+real corpus: the squash-merge-tag trap prompt injected the
+Tag-mechanics lesson as `additionalContext`, exit 0; "Auto run 4"
+(below the 20-char floor) correctly stayed silent. Organic
+injection on a substantive user prompt is expected from the next
+prompt onward (pre-unpark prompts were silent for the import
+reason above).
+
+**Receipt 3 — `/recall` two-store search.** Query "tagging a release
+after a squash merge": lessons store returned the exact child
+sub-lesson *"Don't tag before a squash-merge"* plus the
+post-squash-local-main and AFK-pull lessons, labeled `[lesson]` with
+scores; session-findings store answered via AMSMemoryBackend
+(fallback: false) with recent stashed notes — none tag-specific yet
+(young soak), reported honestly as such.
+
+**Outstanding for the T5 gate:** the Stop-hook stash receipt
+(`~/.attune` stash.log + a new finding written at a real session
+end on the fixed code) — the soak is now running on current code.
