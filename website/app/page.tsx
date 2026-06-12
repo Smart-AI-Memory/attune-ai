@@ -192,8 +192,10 @@ export default function Home() {
               <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
                 Local-first by default; plug in Redis Agent Memory
                 Server for semantic search over your memory — local
-                Ollama embeddings, no cloud required. Our int8 vector
-                quantization work is an open upstream PR to Redis.
+                Ollama embeddings, no cloud required. Enable it with{' '}
+                <code className="text-xs">pip install &apos;attune-ai[redis]&apos;</code>{' '}
+                plus a local AMS service. Our int8 vector quantization
+                work is an open upstream PR to Redis.
               </p>
             </div>
           </div>
