@@ -191,3 +191,41 @@ two-file edit.
 pair on the post-cutover file) is the one item left for the next
 session: confirm `/recall` + the prompt-time hook answer from
 lessons.md in a session that loaded the 41k CLAUDE.md.
+
+## D6 fresh-session receipt — captured 2026-06-12 (post-cutover)
+
+Captured in the first session after #782 merged (worktree
+`loving-sutherland-ac3a7b`, synced to merge commit `585d2aee`).
+All three recall surfaces verified live against the post-cutover
+tree:
+
+- **Prompt-time hook (`lesson_recall.py`, UserPromptSubmit)** —
+  fired from the 8.4.0 plugin cache with the prompt "git stash
+  pop silently skipped restoring my files after switching
+  branches, why?": exit 0, `additionalContext` returned with the
+  stash-pop silent-skip lesson as the TOP hit, retrieved from
+  `.claude/lessons.md` (the atomic-child match credited to its
+  parent title — the T1 parent-linkage design working as built).
+  `find_lessons_file()` in the hook interpreter resolves to the
+  post-cutover `.claude/lessons.md`.
+- **SessionStart recall (`session_recall.py`)** — fired at this
+  session's startup: 5 findings surfaced from AMS, including the
+  prior session's "All three receipts captured" note.
+- **`/recall` underlying path** — `recall_entries()` +
+  `backend_status()`: backend `AMSMemoryBackend`,
+  `fallback: False`; query returned relevant past-session
+  findings (recall-loop receipts, the parked-checkout incident,
+  the D7 searchable-write roundtrip).
+
+One honest caveat for the record: this session's worktree was
+created pre-#782, so its in-context CLAUDE.md was the pre-cutover
+copy; the worktree and the main `~/attune-ai` checkout were both
+synced to `585d2aee` at session start, and all hook receipts
+above ran against the post-cutover tree (41,370-char CLAUDE.md +
+435,257-char lessons.md on disk). Every session created from
+here on loads the 41k file — the load itself is deterministic
+file inclusion; the "registered ≠ working" risk lived in the
+retrieval surfaces, which are the parts verified live above.
+
+D6 is closed. With T6 (docs + CHANGELOG) shipped in the same PR
+as this receipt, the spec is complete.
