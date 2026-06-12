@@ -24,7 +24,7 @@ on disk for the next ``/recall``. On older Claude Code the JSON line is
 ignored (stdout was previously discarded), so this is purely additive.
 
 Tunables (env): ``ATTUNE_MEMORY_STASH`` (set ``0`` to disable),
-``ATTUNE_MEMORY_STASH_MIN_UTIL`` (gate, default 0.30),
+``ATTUNE_MEMORY_STASH_MIN_UTIL`` (gate, default 0.05),
 ``ATTUNE_MEMORY_OLLAMA_MODEL`` (default ``llama3.1:8b``),
 ``ATTUNE_MEMORY_OLLAMA_URL`` (default ``http://localhost:11434``),
 ``ATTUNE_MEMORY_STASH_TIMEOUT`` (LLM timeout secs, default 40 — a cold
