@@ -437,8 +437,9 @@ class TestVersionConsistency:
         assert len(unique) == 1, (
             f"Version mismatch across release-artifact files: {versions}. "
             "Project policy requires pyproject.toml and every plugin "
-            "manifest to carry the same version. Bump all entries to "
-            "match the new release."
+            "manifest to carry the same version. Run "
+            "`python scripts/bump_version.py <version>` to regenerate "
+            "every site from one command."
         )
 
     def test_version_is_semver(self) -> None:

@@ -176,3 +176,29 @@ Reading: attune-rag's volume is ~85% non-mirror — i.e. REAL
 downloads, dominated by attune-ai CI dependency installs (it became
 a core dep in the 7.x line). attune-ai's own raw counts are ~75%
 mirror noise; the mirror-free ~2.9k/month is the number to track.
+
+## D3 — R4 snapshot script shipped (2026-06-12)
+
+`scripts/reach_snapshot.py` automates the D1 method: pypistats
+`/recent` for all five packages with 60-s spacing (the D1
+rate-limit lesson baked in — a 429 ABORTS with a "wait 15 minutes"
+message instead of retrying), plus best-effort GitHub signals
+(stars/forks always; traffic clones/views when the token allows).
+Writes `docs/specs/usage-signals/snapshots/<date>.json` and prints
+a paste-ready markdown table.
+
+Release-ritual hook (R4 proper): the release-execute skill's tag
+step now kicks the script off in the background at tag time and
+commits the snapshot in close-out, so every release gets its
+before/after pair without manual effort.
+
+Tests: `tests/unit/scripts/test_reach_snapshot.py` — network
+boundaries mocked; spacing (n-1 sleeps, none before the first),
+429-abort short-circuit, table rendering, CLI write/exit paths.
+One bug caught at authoring time: a def-time default argument
+(`fetcher=fetch_pypistats_recent`) bound the real fetcher and the
+first CLI test silently hit the live API — defaults now resolve at
+call time.
+
+Remaining in scope: R3 (dashboard Reach panel), R5 (telemetry
+watchdog), R6 (spend alarm), and the Phase 2 opt-in ping question.
