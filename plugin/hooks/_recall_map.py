@@ -18,6 +18,15 @@ Authoring rules:
   serialized ``tool_input`` contains the substring — REQUIRED for
   broad tools like ``Bash`` so the rule fires only at the actual
   decision point, not on the session's first bash call.
+- Optional ``lesson_ref`` names a lessons-corpus slug (an
+  ``attune.lessons`` entry path like ``tag-mechanics-….md``); the
+  hook resolves it through ``LessonsIndex`` at fire time and appends
+  an excerpt of the CURRENT lesson body below the one-liner, so the
+  nudge never drifts from the corpus. Resolution is best-effort —
+  older installs without ``attune.lessons`` fall back to the
+  one-liner alone. Slugs derive from lesson titles: a title edit
+  changes the slug (the drift-guard test in
+  ``test_jit_recall.py`` catches a dangling ref).
 
 Copyright 2026 Smart-AI-Memory
 Licensed under Apache 2.0
@@ -46,6 +55,9 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
         {
             "rule_id": "release-verify-merge-sha",
             "match_substring": "gh release create",
+            "lesson_ref": (
+                "tag-mechanics-push-protection-squash-timing-" "and-the-auto-release-body.md"
+            ),
             "text": (
                 "Before `gh release create`: verify the release content "
                 "is IN the target commit (`git show <sha>:pyproject.toml "

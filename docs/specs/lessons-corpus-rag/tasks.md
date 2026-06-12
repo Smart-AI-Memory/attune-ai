@@ -67,11 +67,26 @@ Bounded PRs; each task names its receipt.
   returned labeled `[lesson]` hits with the backend named
   (AMSMemoryBackend, fallback: false).
 
-## T4 — jit-recall `lesson_ref` integration
+## T4 — jit-recall `lesson_ref` integration — DONE 2026-06-12
 
 - `_recall_map.py` entries may reference a lesson slug; resolved
   through `LessonsIndex` at fire time. Convert one existing inline
   entry as the proof.
+- Shipped: optional `lesson_ref` field (documented in the map's
+  authoring rules); `jit_recall._resolve_lesson()` resolves it via
+  `LessonsIndex().get()` lazily at fire time — whitespace-normalized
+  excerpt capped at 600 chars, appended as a "Full lesson — …" line
+  below the inline one-liner. Best-effort: import failure (older
+  install / stale main checkout) or a dangling slug falls back to
+  the one-liner alone. Proof entry: `release-verify-merge-sha` →
+  the Tag-mechanics lesson.
+- **Receipt:** live fire with the `gh release create` payload
+  appended the real Tag-mechanics lesson body from the corpus
+  (resolve cost ~0.36 s, well inside the 3 s hook timeout). Tests
+  22 (5 new): resolved-excerpt append, excerpt bound, ImportError
+  fallback, unknown-slug fallback, and a drift guard asserting
+  every `lesson_ref` in the map resolves against the REAL corpus
+  (slugs derive from titles — a title edit dangles the ref).
 
 ## T5 — The cutover (gated on T1–T3 receipts)
 
