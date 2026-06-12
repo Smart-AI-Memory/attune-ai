@@ -1,6 +1,7 @@
 # Lessons Corpus via RAG — Tasks
 
-**Status:** in progress (2026-06-11) — T1+T2+T3 done; T4–T6 open.
+**Status:** in progress (2026-06-12) — T1–T5 done; T6 (docs +
+release note) open.
 Bounded PRs; each task names its receipt.
 
 ## T1 — `attune.lessons` module — DONE 2026-06-11
@@ -88,7 +89,7 @@ Bounded PRs; each task names its receipt.
   every `lesson_ref` in the map resolves against the REAL corpus
   (slugs derive from titles — a title edit dangles the ref).
 
-## T5 — The cutover (gated on T1–T3 receipts)
+## T5 — The cutover — DONE 2026-06-12 (overnight run)
 
 - Move the Lessons section (minus the D4 core) from
   `.claude/CLAUDE.md` to `.claude/lessons.md`; core selection
@@ -101,6 +102,14 @@ Bounded PRs; each task names its receipt.
 - Receipt: fresh-session context measurement before/after (the
   ~116k-token reduction, recorded in decisions.md), plus the D6
   live-receipt pair.
+- **Receipt (recorded in decisions.md "T5 cutover"):** CLAUDE.md
+  438,783 → 41,370 chars (91%, ~99k tokens/session freed);
+  benchmark vs the REAL lessons.md held P@1 84% / P@3 96% /
+  high-severity 7/7; grep guard repointed 6 consumers before the
+  move; core = 22 verbatim mirrored blocks (20 ratified items),
+  drift-guarded by tests/unit/lessons/test_core_mirror.py.
+  Remaining for D6: the fresh-session live pair on the
+  post-cutover file (next session).
 
 ## T6 — Docs + release note
 

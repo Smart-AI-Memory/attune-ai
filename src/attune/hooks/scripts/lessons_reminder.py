@@ -1,7 +1,8 @@
 """Lessons Learned Reminder Hook
 
-Runs on Stop to prompt Claude to update the Lessons Learned
-section in .claude/CLAUDE.md before ending the session.
+Runs on Stop to prompt Claude to append new lessons to the
+canonical corpus (.claude/lessons.md post-T5-cutover; CLAUDE.md
+on pre-cutover layouts) before ending the session.
 
 Exit code 2 blocks the stop and injects the message into the
 conversation so Claude acts on it automatically. A sentinel
@@ -56,9 +57,12 @@ def main() -> int:
 
     mark_reminded()
     print(
-        "Before ending the session, review what was learned and update "
-        "the ## Lessons Learned section in .claude/CLAUDE.md with any "
-        "new patterns, fixes, or insights worth remembering across sessions. "
+        "Before ending the session, review what was learned and append "
+        "any new patterns, fixes, or insights worth remembering to the "
+        "## Lessons Learned section in .claude/lessons.md (the canonical "
+        "corpus; use .claude/CLAUDE.md only on pre-cutover layouts where "
+        "lessons.md doesn't exist). Mirror into CLAUDE.md's 'Lessons — "
+        "core' ONLY if core-worthy — then keep both copies in sync. "
         "If nothing new was learned, reply 'No new lessons' and stop.",
         file=sys.stderr,
     )

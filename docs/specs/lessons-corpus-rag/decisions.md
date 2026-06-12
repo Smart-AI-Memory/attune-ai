@@ -137,3 +137,57 @@ returned the fresh bug finding as the #1 hit from AMS — the full
 write → searchable → retrieve loop on fixed code. Nothing
 outstanding: all four receipts are in; T5 is gated only on
 Patrick's core-list review + the post-move benchmark re-run.
+
+## T5 cutover — decisions + receipts (2026-06-12, overnight run)
+
+**Core ratified by Patrick:** keep 20 items = Tier 1 (all 10
+high-severity) + Tier 2 (all 6 session-mechanics) + Tier 3 #18 (CI
+diagnosis), #19 (verify-first on infra), #21 (registered ≠ working),
+#22 (spec text is a stale hypothesis); **CUT #17 (CLAUDE.md tail
+conflicts) and #20 (squash-merge family)** — both demonstrated
+retrieval coverage in the D6 live receipts. Items 10 and 18 are
+explicitly two-facet → 22 mirrored blocks for 20 items (within the
+D4 "~20" cap; prune in review if desired).
+
+**Mirror design (ratified in-session):** `.claude/lessons.md` holds
+the COMPLETE corpus (canonical — "retained, rearranged: nothing
+deleted, everything retrievable"); the core blocks are VERBATIM
+mirrors in CLAUDE.md, enforced by
+`tests/unit/lessons/test_core_mirror.py` (title + body equality
+against the canon). Editing a core lesson is deliberately a
+two-file edit.
+
+**Receipts:**
+
+- **Context (the prize):** CLAUDE.md 438,783 → 41,370 chars — a
+  **91% reduction, ~99k tokens freed per session**. lessons.md
+  carries 433,934 chars, loaded only on retrieval.
+- **Benchmark gate (D6):** re-run against the REAL lessons.md via
+  `LessonsIndex`: corpus 520 docs (386 lessons + 134 children),
+  **P@1 84%, P@3 96%, high-severity 7/7** — identical to
+  pre-cutover; gate ≥80% holds. Sole miss remains
+  `subscription-sdk-fail` (known structural ambiguity).
+- **Grep guard (executed before the move):** repointed
+  `scripts/phase0/lessons_rag_benchmark.py`,
+  `tests/unit/lessons/test_lessons.py` (REAL_LESSONS),
+  `scripts/check_deprecation_markers.py` (lessons.md added to
+  SELF_REFERENTIAL — the corpus text contains "REMOVE IN vX"
+  prose), the three template generators
+  (`generate_{error,faq,warning}_templates.py` — lessons.md
+  preferred, CLAUDE.md fallback), and the zsh-readonly lesson
+  cross-check. `attune.memory.lessons.LessonsManager` is
+  unaffected (it owns its own HTML-comment marker block; the
+  orphan `<!-- attune-lessons-start -->` opener in CLAUDE.md was
+  dropped — no end marker existed, so the manager never matched
+  it). `find_lessons_file` already preferred lessons.md (zero
+  src changes).
+- **One splitter gotcha for the record:** `split_lessons` anchors
+  on the literal `## Lessons Learned` heading (`str.find` → -1 →
+  empty corpus when absent). lessons.md therefore carries the
+  canonical heading; the drift-guard test prepends it when
+  parsing the core section.
+
+**Fresh-session live receipt** (the D6 "registered ≠ working"
+pair on the post-cutover file) is the one item left for the next
+session: confirm `/recall` + the prompt-time hook answer from
+lessons.md in a session that loaded the 41k CLAUDE.md.

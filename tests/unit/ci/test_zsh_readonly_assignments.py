@@ -115,10 +115,13 @@ def test_no_zsh_readonly_assignments() -> None:
 
 def test_readonly_names_list_is_documented() -> None:
     """Keep the readonly-names list aligned with the lesson."""
-    claude_md = REPO_ROOT / ".claude" / "CLAUDE.md"
+    # The lesson lives in the lessons corpus (post-T5 cutover);
+    # fall back to CLAUDE.md for pre-cutover layouts.
+    lessons = REPO_ROOT / ".claude" / "lessons.md"
+    claude_md = lessons if lessons.is_file() else REPO_ROOT / ".claude" / "CLAUDE.md"
     if not claude_md.is_file():
         # Docs not required for the guard to function;
-        # skip the cross-check if CLAUDE.md doesn't exist.
+        # skip the cross-check if neither file exists.
         return
     text = claude_md.read_text(encoding="utf-8")
     # At minimum the lesson should name `status` and
