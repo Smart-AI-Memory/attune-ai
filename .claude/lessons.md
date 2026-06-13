@@ -8483,3 +8483,38 @@ files.
   "registered ≠ working / dogfood" lesson (measure the real artifact,
   not a convenient proxy). The HAS_ENCRYPTION leak itself is filed as a
   separate cleanup task to fix the polluting test's teardown.
+
+- **A PR's Windows-ONLY test failures may be a STALE-BRANCH artifact,
+  not a code bug — check how far behind main it is and whether the
+  failing test file differs from main's already-green copy BEFORE
+  debugging the test**: hit 2026-06-13 on #801 ("drop stale
+  encryption.py coverage omit"). All Ubuntu/macOS lanes + the 7
+  required checks were green; only `test (windows-latest, *)` failed,
+  on `test_encryption_coverage_boost.py::TestKeyResolution::
+  test_key_file_is_read_when_present` (manager fell back to an
+  ephemeral random key instead of reading the key file → `assert
+  mgr.master_key == b'KKK…' ` mismatch with `no_master_key_found`
+  logged). Looked like a real Windows path/file bug. It wasn't: the
+  branch was **31 commits behind main** and predated #805
+  ("make encryption key-file tests Windows-portable"), so it carried
+  the OLD broken copy of the test. main's copy was already fixed and
+  green. Diagnostic chain (cheap, do it first): (1) `gh pr checks <n>`
+  — failures Windows-only while required checks pass is the tell; (2)
+  `git rev-list --count <branch>..origin/main` — large = stale; (3)
+  `git log origin/main --oneline -- <failing_test_file>` — a recent
+  `fix(test): …windows…` commit there is the smoking gun; (4)
+  `git diff <branch> origin/main -- <failing_test_file> --stat` —
+  non-empty means the branch has a divergent (older) copy. Fix:
+  **merge `origin/main` into the branch** (NOT a hand-fix of the
+  test) — it pulls in the portability fix and the branch's own unique
+  change (here a 1-line `pyproject.toml` omit drop) is preserved.
+  Verify post-merge: the omit drop still present, `git diff origin/main
+  -- <file>` now empty (byte-identical to the green copy), the exact
+  failing test passes locally. A merge commit is fine — it vanishes on
+  the eventual squash-merge. Pairs with "Admin-merging a PR before
+  Windows lanes complete buries a REAL bug" (the opposite case: Windows
+  failures CAN be real — so always diagnose, don't assume either way)
+  and the "verify-first / diagnose before treating as a regression"
+  family. Generalizes beyond Windows: any OS/lane-specific failure on a
+  long-lived branch should first be checked against "is this branch
+  just behind a fix already on main?"
