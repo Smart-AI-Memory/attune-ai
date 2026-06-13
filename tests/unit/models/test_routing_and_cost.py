@@ -18,8 +18,8 @@ Test Categories:
    - Rate limit triggers fallback
    - Timeout triggers fallback
    - API error triggers fallback
-   - Fallback chain: cheap → capable → premium
-   - Premium tier has no fallback
+   - Fallback chain degrades to cheaper tiers (premium → capable → cheap)
+   - Cheapest tier has no cheaper fallback
    - Max retries respected
    - Exponential backoff
    - Circuit breaker integration
@@ -329,40 +329,14 @@ class TestFallbackActivation:
 
             asyncio.run(executor.run("generate_code", "Test prompt"))
 
-    @pytest.mark.xfail(
-        reason="Fallback policy chain generation needs investigation - returns empty",
-        strict=False,
-    )
-    def test_fallback_chain_cheap_to_capable_to_premium(self):
-        """Fallback should progress: cheap → capable → premium.
+    def test_fallback_chain_goes_to_cheaper_tiers(self):
+        """CHEAPER_TIER_SAME_PROVIDER degrades to strictly cheaper tiers.
 
-        Tests: Sprint 2 Day 17 - Fallback chain: cheap → capable → premium
-        """
-        policy = FallbackPolicy(
-            primary_provider="anthropic",
-            primary_tier="cheap",
-            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
-        )
-
-        # Get fallback chain
-        chain = policy.get_fallback_chain()
-
-        # Starting from cheap, next should be capable, then premium
-        # Note: CHEAPER_TIER actually goes UP in tier (to more capable models)
-        # This is the tier upgrade path on failure
-        tiers = [step.tier for step in chain]
-
-        # From cheap, we can go to capable and premium (more expensive = more capable)
-        assert "capable" in tiers or "premium" in tiers
-
-    @pytest.mark.xfail(
-        reason="Fallback policy chain generation needs investigation",
-        strict=False,
-    )
-    def test_premium_tier_has_no_fallback(self):
-        """Premium tier should have no cheaper fallback options.
-
-        Tests: Sprint 2 Day 17 - Premium tier has no fallback
+        From a premium primary the chain is premium -> capable -> cheap: each
+        step strictly cheaper than the primary, same provider, never retrying
+        the primary tier. (Previously xfailed with inverted expectations —
+        the test assumed escalation to *more* capable tiers, which this
+        strategy does not do.)
         """
         policy = FallbackPolicy(
             primary_provider="anthropic",
@@ -370,16 +344,28 @@ class TestFallbackActivation:
             strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
         )
 
-        # Get fallback chain
         chain = policy.get_fallback_chain()
+        tiers = [step.tier for step in chain]
 
-        # Premium is highest tier, no cheaper tiers to fall back to
-        # (Actually should be empty or only same-tier different providers)
-        for step in chain:
-            # Should not go to cheaper tiers from premium
-            assert step.tier in [
-                "premium",
-            ], f"Premium tier should not fallback to cheaper tier {step.tier}"
+        # Cheaper tiers below premium, in descending-cost order.
+        assert tiers == ["capable", "cheap"]
+        assert all(step.provider == "anthropic" for step in chain)
+        assert "premium" not in tiers  # never falls back to the primary tier
+
+    def test_cheapest_tier_has_no_fallback(self):
+        """The cheapest tier has nothing cheaper to fall back to.
+
+        With CHEAPER_TIER_SAME_PROVIDER a ``cheap`` primary yields an empty
+        chain. (Escalating to a more capable tier would be a different
+        strategy this policy does not implement.)
+        """
+        policy = FallbackPolicy(
+            primary_provider="anthropic",
+            primary_tier="cheap",
+            strategy=FallbackStrategy.CHEAPER_TIER_SAME_PROVIDER,
+        )
+
+        assert policy.get_fallback_chain() == []
 
     def test_max_retries_respected(self):
         """Retry policy max_retries should be respected.
