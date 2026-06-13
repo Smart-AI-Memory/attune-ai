@@ -28,6 +28,7 @@ from attune.memory.short_term import (  # noqa: E402
     RedisShortTermMemory,
     TTLStrategy,
 )
+from attune.memory.short_term.base import BaseOperations  # noqa: E402
 
 # Common patches needed to bypass auto-detection layers.
 # The facade checks MemoryFeatures.check_redis() and base.py
@@ -51,6 +52,38 @@ def _redis_running() -> bool:
         return True
     except Exception:
         return False
+
+
+def _drive_retry(ping):
+    """Exercise ``_create_client_with_retry`` in isolation and return the base.
+
+    The retry-metric assertions used to go through the full
+    ``RedisShortTermMemory`` constructor, whose ``use_mock`` gate reads the
+    module-global ``REDIS_AVAILABLE`` (``base.py``). That made them vulnerable
+    to cross-test xdist patch pollution — a sibling leaving stale module state
+    flipped ``use_mock`` to True, the retry path was skipped, and
+    ``retries_total`` stayed 0 (the long-standing flake that xfailed these
+    tests on Ubuntu/Windows lanes).
+
+    Instead, build a mock-mode ``BaseOperations`` (so construction never enters
+    the retry path) and call ``_create_client_with_retry`` directly with
+    ``redis.Redis`` patched and a zero backoff. This tests the exact retry
+    logic deterministically, with no dependency on the polluted gate.
+
+    Args:
+        ping: callable assigned to the mock client's ``ping`` (raise to retry).
+
+    Returns:
+        The ``BaseOperations`` instance — inspect ``.metrics.retries_total``.
+    """
+    base = BaseOperations(use_mock=True)
+    base._config.retry_base_delay = 0
+    base._config.retry_max_delay = 0
+    mock_client = Mock()
+    mock_client.ping = ping
+    with patch("attune.memory.short_term.base.redis.Redis", return_value=mock_client):
+        base._create_client_with_retry()
+    return base
 
 
 class TestRedisFallbackBehavior:
@@ -277,12 +310,8 @@ class TestConnectionRecovery:
         # Should have recovered and ping should work
         assert memory.ping() is True
 
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
-    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.base.redis.Redis")
-    def test_tracks_retry_metrics(self, mock_redis_cls, _mock_feat):
-        """Test that retry attempts are tracked in metrics."""
-        mock_client = Mock()
+    def test_tracks_retry_metrics(self):
+        """Retry attempts are tracked in metrics (1 failure before success)."""
         attempt = 0
 
         def ping_with_retries():
@@ -292,13 +321,9 @@ class TestConnectionRecovery:
                 raise redis.ConnectionError("Connection refused")
             return True
 
-        mock_client.ping = ping_with_retries
-        mock_redis_cls.return_value = mock_client
+        base = _drive_retry(ping_with_retries)
 
-        memory = RedisShortTermMemory(host="localhost", port=6379)
-
-        # Check metrics
-        assert memory._metrics.retries_total >= 1  # At least one retry occurred
+        assert base._metrics.retries_total >= 1  # at least one retry occurred
 
 
 class TestErrorHandlingEdgeCases:
@@ -330,30 +355,23 @@ class TestErrorHandlingEdgeCases:
         with pytest.raises(redis.ResponseError):
             memory.stash("key", {"data": "value"}, creds, ttl=TTLStrategy.WORKING_RESULTS)
 
-    @pytest.mark.xfail(
-        strict=False,
-        reason=(
-            "Same pre-existing xdist worker pollution as the "
-            "test_tracks_retries_in_metrics xfail in PR #421. Passes "
-            "locally and on macOS CI lanes, fails on Ubuntu 3.10/3.11/3.13 "
-            "since PR #478 (bulletin dashboard) added new test files that "
-            "shifted xdist worker assignments. The constructor's retry "
-            "code path is bypassed when a sibling test leaves a stale "
-            "module-level patch active. Root cause not yet identified; "
-            "xfail keeps the regression test in the suite without "
-            "blocking unrelated PRs. Tracked separately for triage."
-        ),
-    )
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
-    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.base.redis.Redis")
-    def test_handles_max_clients_exceeded(self, mock_redis_cls, _mock_feat):
-        """Test handling when Redis max clients exceeded."""
-        mock_redis_cls.side_effect = redis.ConnectionError("max number of clients reached")
+    def test_handles_max_clients_exceeded(self):
+        """Retry loop re-raises after attempts are exhausted (max clients).
 
-        # Should raise after retries exhausted
-        with pytest.raises(redis.ConnectionError):
-            _ = RedisShortTermMemory(host="localhost", port=6379)
+        Previously xfailed for cross-test xdist patch pollution; now drives
+        ``_create_client_with_retry`` directly so it's deterministic. Here
+        ``redis.Redis(...)`` itself raises every attempt, so the loop exhausts
+        and re-raises the connection error.
+        """
+        base = BaseOperations(use_mock=True)
+        base._config.retry_base_delay = 0
+        base._config.retry_max_delay = 0
+        with patch(
+            "attune.memory.short_term.base.redis.Redis",
+            side_effect=redis.ConnectionError("max number of clients reached"),
+        ):
+            with pytest.raises(redis.ConnectionError):
+                base._create_client_with_retry()
 
 
 class TestConfigurationValidation:
@@ -411,25 +429,12 @@ class TestConfigurationValidation:
 class TestMetricsTracking:
     """Test that metrics are properly tracked during fallback scenarios."""
 
-    @pytest.mark.xfail(
-        strict=False,
-        reason=(
-            "Pre-existing xdist worker pollution. Passes locally and on "
-            "macOS CI lanes, fails intermittently on Ubuntu 3.13 + Windows "
-            "3.11/3.13 since PR #415 (which added 26 unrelated tests, "
-            "shifting xdist worker assignments). The constructor's retry "
-            "code path appears to be bypassed when a sibling test leaves "
-            "a stale module-level patch active; root cause not yet "
-            "identified. Tracked separately; xfail keeps the regression "
-            "test in the suite without blocking unrelated PRs."
-        ),
-    )
-    @patch("attune.memory.features.MemoryFeatures.check_redis", return_value=True)
-    @patch("attune.memory.short_term.base.REDIS_AVAILABLE", True)
-    @patch("attune.memory.short_term.base.redis.Redis")
-    def test_tracks_retries_in_metrics(self, mock_redis_cls, _mock_feat):
-        """Test that retry attempts increment metrics counter."""
-        mock_client = Mock()
+    def test_tracks_retries_in_metrics(self):
+        """Retry attempts increment the counter (2 failures, then success).
+
+        Previously xfailed for cross-test xdist patch pollution; now exercises
+        the retry logic directly via ``_drive_retry`` so it's deterministic.
+        """
         call_count = 0
 
         def ping_with_retries():
@@ -439,13 +444,9 @@ class TestMetricsTracking:
                 raise redis.TimeoutError("Timeout")
             return True
 
-        mock_client.ping = ping_with_retries
-        mock_redis_cls.return_value = mock_client
+        base = _drive_retry(ping_with_retries)
 
-        memory = RedisShortTermMemory(host="localhost", port=6379)
-
-        # Verify retries were tracked
-        assert memory._metrics.retries_total == 2  # 2 failures before success
+        assert base._metrics.retries_total == 2  # 2 failures before success
 
     def test_mock_storage_provides_stats(self):
         """Test that mock storage provides stats."""
