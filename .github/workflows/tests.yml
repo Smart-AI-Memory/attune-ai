@@ -15,7 +15,78 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # Decide whether this change needs the full cross-platform matrix.
+  # A diff that touches no source/packaging files (tests-only, docs-only)
+  # cannot introduce a cross-platform SOURCE regression, so it runs a slim
+  # matrix instead of all 12 lanes. Fail-safe: anything other than a clean
+  # PR diff that misses every trigger path falls back to the FULL matrix
+  # (run more, never fewer required signals).
+  # See docs/specs/ci-matrix-right-sizing/.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      src: ${{ steps.filter.outputs.src }}
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+      with:
+        fetch-depth: 0
+    - id: filter
+      shell: bash
+      env:
+        EVENT: ${{ github.event_name }}
+        BASE_REF: ${{ github.base_ref }}
+      run: |
+        set -euo pipefail
+        # Non-PR events (push to main/develop, manual dispatch) always get
+        # the full matrix — the slim path is a PR-iteration optimization.
+        if [ "$EVENT" != "pull_request" ] || [ -z "${BASE_REF:-}" ]; then
+          echo "event=$EVENT -> full matrix"
+          echo "src=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        git fetch --no-tags --quiet origin "$BASE_REF" || true
+        if ! CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD"); then
+          echo "diff failed -> full matrix (fail-safe)"
+          echo "src=true" >> "$GITHUB_OUTPUT"
+          exit 0
+        fi
+        echo "changed files:"; printf '%s\n' "$CHANGED"
+        # Trigger paths (D2): any source/packaging change, or a change to
+        # THIS workflow, needs full cross-platform validation.
+        if printf '%s\n' "$CHANGED" | grep -qE '^(src/|pyproject\.toml|setup\.cfg|\.github/workflows/tests\.yml)'; then
+          echo "src=true (source/packaging touched) -> full matrix"
+          echo "src=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "src=false (tests/docs-only) -> slim matrix"
+          echo "src=false" >> "$GITHUB_OUTPUT"
+        fi
+
+  # Emit the test matrix JSON. CRITICAL: the slim matrix MUST keep the
+  # `test (ubuntu-latest, 3.12)` lane — that exact job name is a REQUIRED
+  # status check, and a required check that never runs reports as "missing"
+  # → the PR is blocked forever. Both variants are cartesian-shaped so the
+  # job name is identical (`test (<os>, <python-version>)`). If the required
+  # Python pin ever changes here, update branch protection in lockstep.
+  setup-matrix:
+    needs: changes
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+    steps:
+    - id: set
+      shell: bash
+      run: |
+        if [ "${{ needs.changes.outputs.src }}" = "true" ]; then
+          echo 'matrix={"os":["ubuntu-latest","macos-latest","windows-latest"],"python-version":["3.10","3.11","3.12","3.13"]}' >> "$GITHUB_OUTPUT"
+        else
+          # slim (D1): the required ubuntu-3.12 lane + one Windows smoke
+          echo 'matrix={"os":["ubuntu-latest","windows-latest"],"python-version":["3.12"]}' >> "$GITHUB_OUTPUT"
+        fi
+
   test:
+    needs: setup-matrix
     # TEMPORARY (2026-06-07): ubuntu matrix entries run on default
     # GitHub-hosted `ubuntu-latest` runners. The 8-core/32GB larger
     # runner (`ubuntu-8core-or-linux-32gb`) was de-provisioned, which left
@@ -28,9 +99,7 @@ jobs:
     timeout-minutes: 75
     strategy:
       fail-fast: false
-      matrix:
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: ['3.10', '3.11', '3.12', '3.13']
+      matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
 
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
