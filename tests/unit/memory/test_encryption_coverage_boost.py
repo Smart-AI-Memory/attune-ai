@@ -49,10 +49,15 @@ def isolated_key_env(monkeypatch, tmp_path):
     redirects ``Path.home()`` to an empty tmp dir (no ``master.key``),
     so ``_load_or_generate_key`` falls through to ephemeral generation
     unless a test explicitly sets one of these up.
+
+    Note: patch ``Path.home`` directly rather than ``$HOME`` — on Windows
+    ``Path.home()`` reads ``%USERPROFILE%``, not ``$HOME``, so a
+    ``setenv("HOME", ...)`` redirect is silently ignored there (it was —
+    see the key-file tests failing on the windows-3.12 lane).
     """
     monkeypatch.delenv("ATTUNE_MASTER_KEY", raising=False)
     monkeypatch.delenv("EMPATHY_MASTER_KEY", raising=False)
-    monkeypatch.setenv("HOME", str(tmp_path))
+    monkeypatch.setattr(enc_mod.Path, "home", lambda: tmp_path)
     return tmp_path
 
 
