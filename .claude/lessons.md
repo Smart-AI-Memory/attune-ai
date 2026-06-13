@@ -8727,3 +8727,51 @@ files.
   to the same PR branch silently" and "Diagnosing 'this branch cannot
   be merged'" lessons — same multi-session-contention family, this one
   is specifically the lessons.md-tail append collision.
+
+- **An xfail marked "needs investigation" / "root cause not identified"
+  is often a TEST bug, not a product bug — run the actual code FIRST
+  before assuming the product is broken**: 2026-06-13, triaging two
+  long-standing xfails during flake cleanup, BOTH turned out to be test
+  bugs with correct production code. (1) `test_redis_fallback.py::
+  test_tracks_retry_metrics` (`assert 0 >= 1`) asserted on
+  `retries_total` reached through the `RedisShortTermMemory`
+  constructor, whose `use_mock` gate reads a module-global
+  `REDIS_AVAILABLE` that's pollutable across xdist workers — so a
+  sibling's stale patch flipped `use_mock` True, the retry path was
+  skipped, and the count stayed 0. The fix sidesteps the gate: build a
+  mock-mode `BaseOperations` (construction never enters the retry path)
+  and call `_create_client_with_retry()` DIRECTLY with `redis.Redis`
+  patched — deterministic, pollution-immune. (2) `test_routing_and_cost
+  .py` fallback-chain xfails ("returns empty") had INVERTED
+  expectations: they assumed escalate-UP (cheap→capable→premium), but
+  `CHEAPER_TIER_SAME_PROVIDER` correctly degrades DOWN to cheaper tiers
+  (premium→[capable,cheap], cheap→[] because nothing is cheaper). The
+  empty chain was correct; the test misread it as a bug. Durable rules:
+  (a) for ANY xfail/skip whose reason says "needs investigation" /
+  "root cause unknown" / "returns empty", run the code in a REPL and
+  compare to the test's expectation BEFORE assuming a product bug — the
+  team that xfailed it often never did this; (b) deflake technique —
+  when a test asserts behavior reached through a constructor/factory
+  whose path-selection depends on ambient module state, exercise the
+  INNER method directly on a minimally-constructed instance; (c)
+  un-xfailing with corrected expectations restores real coverage
+  instead of leaving placeholders (4 tests un-xfailed this way this
+  session, #862 + #863). Pairs with "Bug Class 2 (dead defensive
+  code)" and the "registered ≠ working / dogfood" lessons — verify the
+  actual behavior, don't trust the test's (or the xfail reason's) claim.
+
+- **The PostToolUse ruff hook strips a just-added import when its first
+  usage doesn't exist YET — add the import and a usage in the SAME
+  Edit, or re-add it after writing usages**: recurred twice 2026-06-13
+  (adding `from pathlib import Path`, then `from attune.memory.short_term
+  .base import BaseOperations`). The pattern: you Edit-in the import,
+  the hook fires, sees it unused (the code that uses it isn't written
+  yet), and auto-removes it; your LATER Edit adds the usages but the
+  import is already gone → `NameError` at test time on the symbol you
+  thought you imported. Fixes: (a) add the import together with its
+  first usage in one Edit; or (b) re-add the import AFTER the usages
+  exist (then it sticks). Do NOT slap on `# noqa: F401` to force it —
+  once the usage exists the import is genuinely used, and the redundant
+  noqa gets flagged by RUF100. Diagnostic: a `NameError` on a name you
+  "definitely imported" right after a multi-Edit change → grep the
+  import line; it was silently stripped.
