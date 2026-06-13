@@ -97,22 +97,6 @@ class TestPlatformUtils:
                 result = get_default_data_dir()
         assert "empathy" in str(result)
 
-    def test_setup_asyncio_policy_noop_on_non_windows(self):
-        from attune.platform_utils import setup_asyncio_policy
-
-        with patch("platform.system", return_value="Darwin"):
-            setup_asyncio_policy()  # Should not raise
-
-    def test_safe_run_async_runs_coroutine(self):
-
-        from attune.platform_utils import safe_run_async
-
-        async def echo(x):
-            return x
-
-        result = safe_run_async(echo(42))
-        assert result == 42
-
     def test_open_text_file_defaults_utf8(self, tmp_path):
         from attune.platform_utils import open_text_file
 

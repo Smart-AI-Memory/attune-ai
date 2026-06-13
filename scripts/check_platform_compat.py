@@ -4,7 +4,6 @@
 Scans the codebase for common cross-platform issues:
 - Hardcoded Unix paths (/var/log, /tmp, etc.)
 - open() calls without encoding specified
-- asyncio.run() without setup_asyncio_policy()
 - os.path operations that should use pathlib
 
 Usage:
@@ -79,8 +78,6 @@ OPEN_WITHOUT_ENCODING = re.compile(
     re.MULTILINE,
 )
 
-ASYNCIO_RUN = re.compile(r"\basyncio\.run\s*\(")
-
 OS_PATH_OPERATIONS = [
     (r"\bos\.path\.join\s*\(", "Consider using pathlib.Path instead of os.path.join"),
     (r"\bos\.path\.exists\s*\(", "Consider using Path.exists() instead"),
@@ -137,24 +134,6 @@ def scan_file(filepath: Path, result: ScanResult) -> None:
                             message="open() without encoding specified",
                             severity="warning",
                             suggestion='Add encoding="utf-8" parameter',
-                        ),
-                    )
-
-        # Check for asyncio.run() usage
-        for line_num, line in enumerate(lines, 1):
-            if ASYNCIO_RUN.search(line):
-                # Check if setup_asyncio_policy is called nearby
-                start = max(0, line_num - 20)
-                context = "\n".join(lines[start:line_num])
-                if "setup_asyncio_policy" not in context:
-                    result.add_issue(
-                        Issue(
-                            file=relative_path,
-                            line=line_num,
-                            category="asyncio_policy",
-                            message="asyncio.run() without setup_asyncio_policy()",
-                            severity="info",
-                            suggestion="Call setup_asyncio_policy() before asyncio.run() for Windows compatibility",
                         ),
                     )
 

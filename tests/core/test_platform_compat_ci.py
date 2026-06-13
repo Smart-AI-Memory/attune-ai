@@ -58,7 +58,6 @@ class TestPlatformCompatibility:
                 is_linux,
                 is_macos,
                 is_windows,
-                setup_asyncio_policy,
             )
 
             # Verify functions are callable
@@ -67,7 +66,6 @@ class TestPlatformCompatibility:
             assert callable(is_linux)
             assert callable(get_default_log_dir)
             assert callable(get_default_data_dir)
-            assert callable(setup_asyncio_policy)
         except ImportError as e:
             pytest.fail(f"platform_utils module not importable: {e}")
 
@@ -94,10 +92,3 @@ class TestPlatformCompatibility:
         assert isinstance(get_default_data_dir(), Path)
         assert isinstance(get_default_config_dir(), Path)
         assert isinstance(get_default_cache_dir(), Path)
-
-    def test_asyncio_policy_runs_without_error(self):
-        """Ensure asyncio policy setup doesn't raise."""
-        from attune.platform_utils import setup_asyncio_policy
-
-        # Should not raise on any platform
-        setup_asyncio_policy()

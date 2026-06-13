@@ -11,8 +11,6 @@ import tempfile
 from pathlib import Path
 from unittest.mock import patch
 
-import pytest
-
 from attune.platform_utils import (
     PLATFORM_INFO,
     ensure_dir,
@@ -28,8 +26,6 @@ from attune.platform_utils import (
     normalize_path,
     open_text_file,
     read_text_file,
-    safe_run_async,
-    setup_asyncio_policy,
     write_text_file,
 )
 
@@ -199,37 +195,6 @@ class TestDefaultDirectoriesLinux:
         """Test cache directory on Linux uses XDG_CACHE_HOME."""
         cache_dir = get_default_cache_dir()
         assert "empathy" in str(cache_dir)
-
-
-class TestAsyncioPolicy:
-    """Tests for asyncio event loop policy functions."""
-
-    def test_setup_asyncio_policy_runs(self):
-        """Test setup_asyncio_policy executes without error."""
-        # Should not raise on any platform
-        setup_asyncio_policy()
-
-    @patch("attune.platform_utils.is_windows", return_value=True)
-    def test_setup_asyncio_policy_windows(self, mock_windows):
-        """Test setup_asyncio_policy sets policy on Windows."""
-        import asyncio
-
-        with patch.object(asyncio, "set_event_loop_policy") as mock_set_policy:
-            with patch.object(asyncio, "WindowsSelectorEventLoopPolicy", create=True):
-                setup_asyncio_policy()
-                # On Windows, set_event_loop_policy should be called
-                mock_set_policy.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_safe_run_async_executes(self):
-        """Test safe_run_async can execute a coroutine."""
-
-        async def sample_coro():
-            return 42
-
-        # We can't easily test safe_run_async from within an async test
-        # since we're already in an event loop, but we can verify import works
-        assert callable(safe_run_async)
 
 
 class TestFileUtilities:

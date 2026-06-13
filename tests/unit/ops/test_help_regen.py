@@ -26,21 +26,17 @@ from attune.ops.help_regen import (
 )
 from attune.ops.server import create_app
 
-# Tests that actually spawn the fake binary are skipped on Windows. They
-# need a ProactorEventLoop (SelectorEventLoop raises NotImplementedError on
-# create_subprocess_exec), but a sibling test in the same xdist worker can
-# flip the *global* policy to WindowsSelectorEventLoopPolicy via
-# attune.platform_utils.setup_asyncio_policy() and never restore it,
-# poisoning these tests non-deterministically. The runner's logic
-# (stream capture, exit-code handling, ANSI stripping, output cap) is
-# OS-agnostic and fully covered on the POSIX lanes; production is
-# unaffected (uvicorn runs Proactor, real attune-author is a .exe). The
-# global-policy pollution is tracked as a separate fix.
+# Tests that actually spawn the fake binary are skipped on Windows. The
+# fixture's fake binary is a .bat wrapper, and asyncio.create_subprocess_exec
+# cannot launch a .bat directly on Windows (CreateProcess only runs real
+# executables — error 193), so the launch fails. The runner's logic (stream
+# capture, exit-code handling, ANSI stripping, output cap) is OS-agnostic and
+# fully covered on the POSIX lanes; production is unaffected (uvicorn runs a
+# ProactorEventLoop, and the real attune-author is a .exe).
 _skip_subprocess_on_windows = pytest.mark.skipif(
     sys.platform == "win32",
-    reason="needs ProactorEventLoop; global asyncio-policy pollution on "
-    "Windows xdist workers makes subprocess launch non-deterministic "
-    "(covered on POSIX lanes)",
+    reason="fake .bat binary is not directly launchable via "
+    "create_subprocess_exec on Windows (covered on POSIX lanes)",
 )
 
 

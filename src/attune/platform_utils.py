@@ -10,7 +10,6 @@ Copyright 2025 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
 """
 
-import asyncio
 import os
 import platform
 from pathlib import Path
@@ -118,40 +117,6 @@ def get_default_cache_dir() -> Path:
     # Linux and other Unix
     xdg_cache = os.environ.get("XDG_CACHE_HOME", str(Path.home() / ".cache"))
     return Path(xdg_cache) / "empathy"
-
-
-def setup_asyncio_policy() -> None:
-    """Configure asyncio event loop policy for the current platform.
-
-    On Windows, this uses WindowsSelectorEventLoopPolicy to avoid issues
-    with the default ProactorEventLoop, particularly with subprocesses
-    and certain network operations.
-
-    This should be called early in the application startup, before
-    any asyncio.run() calls.
-    """
-    if is_windows():
-        # Windows requires WindowsSelectorEventLoopPolicy for compatibility
-        # with many libraries and subprocess operations
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore[attr-defined]
-
-
-def safe_run_async(coro: Any, debug: bool = False) -> Any:
-    """Run an async coroutine with platform-appropriate event loop handling.
-
-    This is a cross-platform wrapper for asyncio.run() that handles
-    Windows-specific event loop requirements.
-
-    Args:
-        coro: Coroutine to run
-        debug: Enable asyncio debug mode
-
-    Returns:
-        Result of the coroutine
-
-    """
-    setup_asyncio_policy()
-    return asyncio.run(coro, debug=debug)
 
 
 def open_text_file(path: str | Path, mode: str = "r", **kwargs: Any):
