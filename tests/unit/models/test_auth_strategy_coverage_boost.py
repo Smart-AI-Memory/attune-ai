@@ -227,6 +227,91 @@ class TestAuthStrategyCostEstimation:
 
 
 @pytest.mark.unit
+class TestAuthStrategyCostEstimationExactness:
+    """Pin the cost-estimation contract the happy-path tests leave open.
+
+    The existing cost tests assert ``> 0`` or key-membership only, so the
+    per-tier cost constants, the ``fits_in_context`` thresholds, the
+    ``int()`` truncation in ``estimate_tokens``, and the default
+    ``mode=None`` parameter are never pinned. These are slice-2 mutation
+    survivors (QA #2): a cost constant nudged, a ``200_000`` threshold
+    bumped, or a ``<`` flipped to ``<=`` all pass the existing suite.
+
+    Documented-equivalent mutant: ``round(total_api_cost, 4)`` ->
+    ``round(..., 5)`` — both render ``0.0002`` for this total, so no input
+    distinguishes them without weakening production code. Not chased.
+    """
+
+    def test_estimate_tokens_truncates_to_int(self):
+        """``estimate_tokens`` returns a truncated ``int``, not a float.
+
+        Kills an ``int()``-removal mutant: ``5 * 1.5 == 7.5`` would equal
+        neither ``7`` nor pass the ``isinstance`` check.
+        """
+        strategy = AuthStrategy(loc_to_tokens_multiplier=1.5)
+
+        tokens = strategy.estimate_tokens(5)
+
+        assert tokens == 7  # int(7.5)
+        assert isinstance(tokens, int)
+
+    def test_estimate_cost_api_monetary_cost_is_exact(self):
+        """API ``monetary_cost`` is the exact sum of the four tier constants.
+
+        Kills mutants on any of the outline/write/polish/api_ref cost
+        constants — the happy-path test only checks ``> 0``, which any
+        nudged constant still satisfies.
+        """
+        strategy = AuthStrategy()
+
+        result = strategy.estimate_cost(1000, AuthMode.API)
+
+        # 0.003*0.00025 + 0.015*0.003 + 0.010*0.015 + 0.005*0.00025
+        # = 0.000197, rounded to 4 places.
+        assert result["monetary_cost"] == 0.0002
+        assert result["quota_cost"] is None
+
+    def test_estimate_cost_subscription_fits_in_context_boundary(self):
+        """Subscription ``fits_in_context`` flips at the 200K-token boundary.
+
+        Kills the ``200_000`` threshold constant and the ``<`` (vs ``<=``)
+        boundary: at exactly 200_000 tokens (50_000 LOC * 4) it must be
+        ``False``; one line under, ``True``.
+        """
+        strategy = AuthStrategy(loc_to_tokens_multiplier=4.0)
+
+        assert strategy.estimate_cost(49_999, AuthMode.SUBSCRIPTION)["fits_in_context"] is True
+        assert strategy.estimate_cost(50_000, AuthMode.SUBSCRIPTION)["fits_in_context"] is False
+
+    def test_estimate_cost_api_fits_in_context_boundary(self):
+        """API ``fits_in_context`` flips at the 1M-token boundary.
+
+        Kills the ``1_000_000`` threshold constant and the ``<`` boundary:
+        at exactly 1_000_000 tokens (250_000 LOC * 4) it must be ``False``.
+        """
+        strategy = AuthStrategy(loc_to_tokens_multiplier=4.0)
+
+        assert strategy.estimate_cost(249_999, AuthMode.API)["fits_in_context"] is True
+        assert strategy.estimate_cost(250_000, AuthMode.API)["fits_in_context"] is False
+
+    def test_estimate_cost_default_mode_param_resolves_to_recommended(self):
+        """Omitting ``mode`` resolves via ``get_recommended_mode`` (param default None).
+
+        Pins the ``mode: AuthMode | None = None`` default and the
+        ``if mode is None`` branch — called with no mode argument at all,
+        a MAX-tier small module must route to subscription.
+        """
+        strategy = AuthStrategy(
+            subscription_tier=SubscriptionTier.MAX,
+            default_mode=AuthMode.AUTO,
+        )
+
+        result = strategy.estimate_cost(300)
+
+        assert result["mode"] == "subscription"
+
+
+@pytest.mark.unit
 class TestAuthStrategyProsCons:
     """Test get_pros_cons recommendation logic."""
 
@@ -285,6 +370,113 @@ class TestAuthStrategyProsCons:
         assert "current_recommendation" in auto["estimate"]
         # Pro tier recommends API
         assert auto["estimate"]["current_recommendation"] == "api"
+
+
+@pytest.mark.unit
+class TestAuthStrategyProsConsRendering:
+    """Pin the data-bearing renders in get_pros_cons; document cosmetic ones.
+
+    ``get_pros_cons`` is mostly descriptive copy. Per the slice-3 plan,
+    the f-string *content* mutants (pro/con prose, section names, the
+    "LOC) -> Subscription" boilerplate) are display text with no asserted
+    contract — equivalent mutants, not chased. The genuinely killable
+    survivors are:
+
+    - dict-**key** drops/renames, especially in the ``auto`` section,
+      which the happy-path ``TestAuthStrategyProsCons`` checks far less
+      thoroughly than ``subscription`` / ``api``;
+    - the ``auto.estimate`` ``mode`` key/value and a ``.value``-removal on
+      ``current_recommendation`` (the enum subclasses ``str``, so an
+      ``== "api"`` assertion alone would not catch it).
+
+    The remaining tests are regression guards on the data-bearing
+    interpolations (configured tier value, the two routing thresholds, the
+    estimated monetary cost) — they ensure the user-facing guidance keeps
+    reflecting real config even though mutmut's literal mutations cannot
+    swap an interpolated expression.
+    """
+
+    def test_auto_section_has_full_structure(self):
+        """The auto section carries the same keys as subscription/api.
+
+        Kills key-drop/rename mutants on the auto section, which the
+        happy-path suite only spot-checks for ``estimate``.
+        """
+        auto = AuthStrategy().get_pros_cons(1000)["auto"]
+
+        for key in ("name", "cost", "pros", "cons", "estimate"):
+            assert key in auto
+        assert isinstance(auto["pros"], list)
+        assert isinstance(auto["cons"], list)
+
+    def test_auto_estimate_exposes_mode_and_typed_recommendation(self):
+        """auto.estimate carries mode='auto' and a raw-string recommendation.
+
+        Kills the ``"mode"`` key/value mutants and a ``.value``-removal on
+        ``current_recommendation`` (``type(...) is str`` is required — the
+        enum is a ``str`` subclass, so ``== "api"`` would pass on the enum).
+        """
+        strategy = AuthStrategy(
+            subscription_tier=SubscriptionTier.PRO,
+            default_mode=AuthMode.AUTO,
+        )
+
+        estimate = strategy.get_pros_cons(1000)["auto"]["estimate"]
+
+        assert estimate["mode"] == "auto"
+        assert estimate["current_recommendation"] == "api"  # PRO -> API
+        assert type(estimate["current_recommendation"]) is str
+
+    def test_subscription_pros_reflect_configured_tier(self):
+        """The subscription pros echo the configured tier's on-disk value.
+
+        Regression guard: the ``f"Uses existing {tier.value} subscription"``
+        line must keep reflecting real config.
+        """
+        pros = AuthStrategy(subscription_tier=SubscriptionTier.MAX).get_pros_cons(1000)[
+            "subscription"
+        ]["pros"]
+
+        assert any("max" in pro for pro in pros)
+
+    def test_auto_pros_reflect_routing_thresholds(self):
+        """The auto guidance embeds the actual small/medium thresholds.
+
+        Regression guard: user-facing routing guidance must match the real
+        thresholds. With distinctive values, both must appear verbatim.
+        """
+        strategy = AuthStrategy(
+            small_module_threshold=321,
+            medium_module_threshold=654,
+        )
+
+        joined = " ".join(strategy.get_pros_cons(1000)["auto"]["pros"])
+
+        assert "321" in joined
+        assert "654" in joined
+
+    def test_api_cost_reflects_estimated_monetary_cost(self):
+        """The api 'cost' line echoes the estimated monetary cost.
+
+        Regression guard: the displayed ``~$<cost> per module`` string
+        stays tied to ``estimate.monetary_cost``.
+        """
+        api = AuthStrategy().get_pros_cons(1000)["api"]
+
+        assert str(api["estimate"]["monetary_cost"]) in api["cost"]
+
+    def test_both_estimate_subdicts_are_real_cost_dicts(self):
+        """The subscription AND api sections embed their real cost estimates.
+
+        Found by the closing mutmut refresh: ``sub_estimate = None`` in
+        ``get_pros_cons`` survived because the suite asserted the *api*
+        estimate but never the *subscription* one. Both sub-dicts must
+        carry their mode-correct cost estimate (not None).
+        """
+        result = AuthStrategy().get_pros_cons(1000)
+
+        assert result["subscription"]["estimate"]["mode"] == "subscription"
+        assert result["api"]["estimate"]["mode"] == "api"
 
 
 @pytest.mark.unit
@@ -544,6 +736,101 @@ class TestAuthStrategyPersistence:
 
 
 @pytest.mark.unit
+class TestAuthStrategyPersistenceDefaultPath:
+    """Pin load()'s default-path branch and full disk round-trip fidelity.
+
+    The existing persistence tests cover ``save()``'s default-path branch
+    and ``load()`` with EXPLICIT paths, but ``load(None)`` — the
+    ``if path is None: path = AUTH_STRATEGY_FILE`` branch and its
+    interaction with the ``.exists()`` guard — is never asserted against a
+    known file. That is the slice-4 survivor (QA #2). Every test patches
+    ``AUTH_STRATEGY_FILE`` so the real ``~/.attune/auth_strategy.json`` is
+    never read or written (mechanics note: a mutant can otherwise clobber
+    real user state).
+
+    Documented-equivalent (cosmetic, not chased): the ``json.dump``
+    ``indent`` value and the load-failure ``logger.warning`` message /
+    ``exc_info`` flag — none carry an asserted contract.
+    """
+
+    def test_load_default_path_reads_auth_strategy_file(self, tmp_path):
+        """``load()`` with no arg reads AUTH_STRATEGY_FILE, not a fresh default.
+
+        Kills the ``path is None`` branch and the ``.exists()`` guard: with
+        a populated file present, the loaded tier/mode must be the saved
+        MAX/API, not the PRO/AUTO default.
+        """
+        target = tmp_path / "auth_strategy.json"
+        AuthStrategy(
+            subscription_tier=SubscriptionTier.MAX,
+            default_mode=AuthMode.API,
+        ).save(target)
+
+        with patch("attune.models.auth_strategy.AUTH_STRATEGY_FILE", target):
+            loaded = AuthStrategy.load()
+
+        assert loaded.subscription_tier == SubscriptionTier.MAX
+        assert loaded.default_mode == AuthMode.API
+
+    def test_load_default_path_missing_file_returns_default(self, tmp_path):
+        """``load()`` falls back to a fresh default when the file is absent."""
+        missing = tmp_path / "absent.json"
+
+        with patch("attune.models.auth_strategy.AUTH_STRATEGY_FILE", missing):
+            loaded = AuthStrategy.load()
+
+        assert loaded.subscription_tier == SubscriptionTier.PRO  # dataclass default
+        assert loaded.default_mode == AuthMode.AUTO
+
+    def test_save_default_path_writes_serialized_content(self, tmp_path):
+        """``save(None)`` serializes through ``to_dict`` into AUTH_STRATEGY_FILE.
+
+        Kills the save ``path is None`` branch and confirms the on-disk
+        payload is the real serialization (not just that a file appears).
+        """
+        target = tmp_path / "auth_strategy.json"
+        strategy = AuthStrategy(subscription_tier=SubscriptionTier.ENTERPRISE)
+
+        with patch("attune.models.auth_strategy.AUTH_STRATEGY_FILE", target):
+            strategy.save(path=None)
+
+        assert json.loads(target.read_text())["subscription_tier"] == "enterprise"
+
+    def test_save_load_round_trip_preserves_every_field(self, tmp_path):
+        """A full save -> load disk round-trip preserves every configured field.
+
+        The existing round-trip test only checks tier/mode/setup_completed;
+        this pins the thresholds, multiplier, the three booleans, and
+        metadata through the JSON persistence path.
+        """
+        target = tmp_path / "auth_strategy.json"
+        original = AuthStrategy(
+            subscription_tier=SubscriptionTier.ENTERPRISE,
+            default_mode=AuthMode.SUBSCRIPTION,
+            small_module_threshold=123,
+            medium_module_threshold=456,
+            loc_to_tokens_multiplier=7.5,
+            setup_completed=False,
+            prefer_subscription=False,
+            cost_optimization=False,
+            metadata={"k": "v"},
+        )
+        original.save(target)
+
+        loaded = AuthStrategy.load(target)
+
+        assert loaded.subscription_tier == SubscriptionTier.ENTERPRISE
+        assert loaded.default_mode == AuthMode.SUBSCRIPTION
+        assert loaded.small_module_threshold == 123
+        assert loaded.medium_module_threshold == 456
+        assert loaded.loc_to_tokens_multiplier == 7.5
+        assert loaded.setup_completed is False
+        assert loaded.prefer_subscription is False
+        assert loaded.cost_optimization is False
+        assert loaded.metadata == {"k": "v"}
+
+
+@pytest.mark.unit
 class TestGetAuthStrategy:
     """Test get_auth_strategy function."""
 
@@ -758,6 +1045,66 @@ class TestConfigureAuthInteractive:
         from attune.models.auth_strategy import SubscriptionTier
 
         assert strategy.subscription_tier == SubscriptionTier.FREE
+
+
+@pytest.mark.unit
+class TestConfigureAuthInteractiveContract:
+    """Pin the non-print behavioral outputs of configure_auth_interactive.
+
+    The existing ``TestConfigureAuthInteractive`` covers ``tier_map`` /
+    ``mode_map`` routing thoroughly (including the invalid-choice
+    defaults). The slice-5 survivors it leaves open are the parts that are
+    NOT display copy: the returned strategy is marked
+    ``setup_completed=True``, the raw ``input()`` is ``.strip()``-ed before
+    lookup (so stray whitespace still routes), and the chosen
+    configuration is persisted via ``save()``.
+
+    Documented-equivalent (cosmetic, not chased): the banner / pros-cons /
+    recommendation ``print`` statements, the ``default_mode == AUTO``
+    threshold-print branch, and the ``module_lines=1000`` display default —
+    all output text with no asserted contract.
+    """
+
+    def _run(self, inputs, module_lines=100):
+        from attune.models.auth_strategy import configure_auth_interactive
+
+        with (
+            patch("builtins.input", side_effect=inputs),
+            patch("attune.models.auth_strategy.AuthStrategy.save") as mock_save,
+        ):
+            strategy = configure_auth_interactive(module_lines=module_lines)
+        return strategy, mock_save
+
+    def test_setup_is_marked_completed(self):
+        """Interactive setup returns a strategy with setup_completed=True.
+
+        Kills a ``setup_completed=True`` -> ``False`` mutant in the final
+        construction — the whole point of setup is to mark it done.
+        """
+        strategy, _ = self._run(["3", "3"])
+
+        assert strategy.setup_completed is True
+
+    def test_input_is_stripped_before_lookup(self):
+        """Whitespace-padded choices still route (raw input is .strip()-ed).
+
+        Kills a ``.strip()``-removal mutant: ``" 3 "`` would miss the
+        tier_map and fall back to API_ONLY instead of mapping to MAX.
+        """
+        strategy, _ = self._run([" 3 ", " 1 "])  # Max tier, Subscription mode
+
+        assert strategy.subscription_tier == SubscriptionTier.MAX
+        assert strategy.default_mode == AuthMode.SUBSCRIPTION
+
+    def test_configuration_is_persisted(self):
+        """Setup persists the chosen strategy via save().
+
+        Regression guard: interactive setup must write the choice to disk,
+        not just return it in memory.
+        """
+        _, mock_save = self._run(["2", "3"])
+
+        mock_save.assert_called_once()
 
 
 class TestCountNonBlankLines:

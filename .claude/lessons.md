@@ -8202,6 +8202,39 @@ files.
     if a fresh exact-output test fails on unmutated source, suspect
     pattern cross-matching before suspecting a real bug.
 
+- **Per-slice apply/revert is high-CONFIDENCE but not COMPLETE — the
+  aggregate clean-cache mutmut run catches asymmetric gaps a hand-picked
+  proof structurally cannot; don't let "apply/revert is cheaper" talk you
+  out of the closing refresh (2026-06-12, auth_strategy slices 2–5
+  closure)**: the existing mutmut lesson says "prove a mutant killed by
+  apply/revert, not by the survivor delta — cheaper than a 3-min re-run."
+  TRUE for proving a KNOWN mutant; FALSE as a substitute for the closing
+  aggregate run. I closed the auth_strategy sub-plan on apply/revert alone
+  and argued the full mutmut refresh would be "redundant." Patrick pushed
+  to run it anyway. It found a real killable survivor I'd missed:
+  `sub_estimate = None` in `get_pros_cons` survived because the suite
+  asserted the `api` section's estimate but never the `subscription` one —
+  an ASYMMETRY. apply/revert can only test mutants you THINK of, so it is
+  blind to exactly the gaps your mental model omits; the aggregate run
+  enumerates every mutable token mechanically and has no such blind spot.
+  The 270-mutant refresh (190 killed / 80 survived) resolved to 1
+  genuinely-killable (fixed) + 79 documented equivalents. Durable rules:
+  (1) use apply/revert to PROVE a specific kill during authoring, but run
+  the full clean-cache aggregate to CLOSE a module — they answer different
+  questions (confidence-on-what-I-checked vs completeness); (2) a "this is
+  redundant, skip the expensive check" argument about a VERIFICATION step
+  is a smell — the check's whole value is catching what you can't predict;
+  if it were predictable you wouldn't need it; (3) survivor triage is
+  cheap and worth it: of 80, the killable one stood out immediately once
+  each `mutmut show <id>` diff was read and bucketed (display string /
+  untested constant / rounding-masked / default-coinciding map key /
+  logging flag = equivalent; a real data-bearing `= None` = killable).
+  Note the spend angle: mutmut runs the UNIT suite locally with zero API
+  calls, so the only cost was ~5 min wall-clock — I'd inflated "saves
+  wall-clock" into "redundant." Pairs with the "prove by apply/revert"
+  bullet above (this is its necessary counterweight) and §7
+  verify-the-receipt discipline.
+
 - **Ops-dashboard curator "is offline (401 invalid x-api-key)" → a STALE
   repo-root `.env` shadows the live key; and even fixed, the curator needs
   API CREDITS the Claude subscription doesn't grant (2026-06-12)**: the
