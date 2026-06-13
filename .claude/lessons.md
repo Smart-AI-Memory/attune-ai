@@ -5780,6 +5780,41 @@ files.
   CANCELLED noise (separate, low-priority) is quietable with
   `cancel-in-progress: false` in the scan workflow.
 
+- **Advisory CI lanes don't gate — for test/docs-only PRs, merge on
+  the required greens; don't WAIT on Windows/macOS (and right-size the
+  matrix so they don't even spawn)**: 2026-06-13, closing the
+  auth_strategy work I sat ~30 min watching #797/#798's Windows lanes
+  before merging — they were NEVER required. `gh api
+  .../branches/main/protection/required_status_checks` showed only 7
+  required contexts (`CodeQL, code-quality, coverage, lint,
+  platform-compat, pre-commit, test (ubuntu-latest, 3.12)`); the other
+  11 of the 12-lane `tests.yml` matrix (all Windows, all macOS, ubuntu
+  3.10/3.11/3.13) are ADVISORY. The repo is PUBLIC so minutes are free —
+  the cost was self-imposed latency + the temptation to treat a
+  non-gating lane as a gate. Two durable rules: (1) **behavioral** —
+  for a tests/docs-only diff merge on the required greens; the "wait
+  for all OS lanes before admin-merging" caution (its own lesson)
+  applies only to SOURCE changes touching paths/subprocess/encoding/the
+  filesystem, where a Windows regression is plausible; a test-only diff
+  can't introduce a cross-platform SOURCE bug. (2) **structural** —
+  right-size the matrix so advisory lanes don't even run on
+  non-source diffs: a `changes` job (git-diff paths filter, fail-safe
+  to FULL matrix on any ambiguity) → a `setup-matrix` job emitting
+  full/slim matrix JSON → `test` consuming
+  `${{ fromJSON(needs.setup-matrix.outputs.matrix) }}`. **The trap**:
+  GitHub matches a required check by job name INCLUDING matrix params
+  (`test (ubuntu-latest, 3.12)`); that exact lane must be in EVERY
+  matrix variant or a non-source PR leaves the required check "missing"
+  → blocked forever (same failure shape as the stacked-PR
+  base-retarget "required check stays MISSING" lesson). Keep both
+  variants cartesian-shaped (`{os:[…],python-version:[…]}`) so naming
+  is identical; slim = `{os:[ubuntu,windows],python-version:[3.12]}`
+  (required lane + one Windows smoke for test-portability bugs like
+  `/tmp` vs `C:\`). See `docs/specs/ci-matrix-right-sizing/`. Pairs
+  with the "Verify-first applies to infra/config" lesson above (read
+  required-vs-advisory before treating a red/pending check as
+  blocking).
+
 - **The worktree-path-guard hook hard-blocks Edit/Write to a
   *sibling* repo (a different repo root entirely) from the
   session worktree — route cross-repo edits through a Python
