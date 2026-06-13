@@ -293,7 +293,21 @@ files.
     injection** — `RedisShortTermMemory._client` is a read-only
     property; inject via `memory._base._client = mock` (the plain
     `BaseOperations` attribute), not `memory._client =
-    MagicMock()`.
+    MagicMock()`. **`use_mock` is ALSO a read-only property**
+    (same `_base` delegation), so `memory.use_mock = False` raises
+    `AttributeError: can't set attribute`. To exercise the
+    non-mock (`use_mock=False`) helper branches of an index/manager
+    that takes a memory object (e.g. `ConversationSummaryIndex`),
+    the cleanest tool is a tiny `FakeMemory` exposing ONLY the
+    attributes the SUT actually reads off `self._memory` —
+    for summary_index that's `use_mock`, `_client`, `_mock_storage`,
+    `_delete` (four). This drives the real `_client is None` and
+    real-client branches with zero live Redis and without poking
+    `_base` internals; pair it with a `FakeRedisClient` stub whose
+    methods return configurable truthy/falsy values so the
+    `return X if result else <empty>` guards (e.g. `_hget`,
+    `_hgetall`, `_zrevrange`, `_smembers`) are each killed from both
+    sides. (QA #5, summary_index 82%→100%, PR #810.)
   - **Stacked `@patch` decorators inject bottom-up** —
     `@patch("A") @patch("B") def test(self, mock_b, mock_a)`: the
     innermost (bottom) decorator is the first positional arg; a
