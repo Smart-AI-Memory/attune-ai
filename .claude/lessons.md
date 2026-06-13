@@ -8544,3 +8544,57 @@ files.
   with the attune-verify `find_spec`-top-level-only lessons (same API,
   the mirror-image surprise: there it under-checks submodules, here it
   over-raises on them).
+
+- **The serial `--cov` `HAS_ENCRYPTION=False` failure is NOT a
+  polluting test — it's cryptography's PyO3 "init once per process"
+  tripped by pytest-cov's startup source import (2026-06-13,
+  corrects the note directly above)**: serial
+  `pytest --cov=attune.memory.short_term.* tests/...` intermittently
+  fails ~13–32 tests with `RuntimeError: cryptography library required
+  when master_key is provided` because
+  `attune.memory.encryption.HAS_ENCRYPTION` is False. The prior
+  hypothesis (a test mutates the global / reloads encryption / removes
+  cryptography and a `monkeypatch`/fixture restore fixes it) is WRONG:
+  it reproduces with a SINGLE test file, from the MAIN checkout, and
+  `HAS_ENCRYPTION` is already False **before any test body runs**, so
+  nothing leaks between tests and no teardown fix applies. Real cause,
+  traced with a `sys.addaudithook` import tracer: `cryptography` ships
+  its core as a Rust/PyO3 extension
+  (`cryptography.hazmat.bindings._rust`) that may be **initialized only
+  once per interpreter process**. pytest-cov imports the `--cov` source
+  module at startup, BEFORE any conftest. For a memory target that
+  import transitively eager-loads
+  `redis`→`redis.auth.token`→`PyJWT`→`cryptography` (the
+  `import redis` availability guard at `short_term/base.py:51`),
+  initializing `_rust` once. That startup import then unwinds and
+  evicts the cryptography modules from `sys.modules` (C-level, so a
+  `dict.__delitem__` override on `sys.modules` never sees it) while
+  PyO3's **process-global** once-only counter stays incremented;
+  `tests/conftest.py` re-imports the chain → second `_rust` init →
+  `ImportError: PyO3 modules … may only be initialized once`, swallowed
+  by encryption.py's `except ImportError` → `HAS_ENCRYPTION = False`
+  for the WHOLE session. The test-file-local
+  `from cryptography.fernet import Fernet; HAS_ENCRYPTION=True` reads a
+  *cached* fernet so skipifs don't skip — the tests run and error
+  instead of skipping. **Why CI is fine:** xdist (`-n auto`) isolates
+  workers; green also without `--cov` or with a non-memory `--cov`
+  target (`--cov=attune.cli_minimal` → all pass). **Fix:** import
+  cryptography exactly once, cleanly, before pytest-cov's source
+  import. Shipped as a `pytest11` plugin
+  (`src/attune/_pytest_crypto_pin.py`, registered in pyproject) whose
+  top-level import runs during setuptools-entry-point loading —
+  VERIFIED to beat pytest-cov (bare repro 32 failed+13 errors → 2612
+  passed). **Conftest pins are too late** — both `tests/conftest.py`
+  and a repo-root `conftest.py` were verified still-failing because the
+  corruption predates conftest. In a worktree the entry point isn't in
+  editable metadata yet, so the fallback is `-p attune._pytest_crypto_pin`
+  (also verified green). Diagnostic recipe for any "library X
+  unavailable only under `--cov`/some import order" puzzle where X has a
+  compiled (PyO3/maturin/C) extension: (1) `sys.addaudithook` to log
+  every import of the compiled submodule with a stack — a SECOND import
+  of a once-only extension is the tell; (2) check who pre-loads it
+  (often a transitive eager dep like PyJWT-via-redis); (3) the fix is an
+  early one-time pin, not a teardown restore. Pairs with the
+  "editable install MAPPING points attune at MAIN" lesson (the same
+  worktree double-resolution made the entry-point verification fail
+  until the module was placed in main's src too).
