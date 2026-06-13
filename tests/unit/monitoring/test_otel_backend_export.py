@@ -12,8 +12,11 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+import gc
 import sys
 from unittest.mock import MagicMock, patch
+
+import pytest
 
 from attune.monitoring.otel_backend import OTELBackend
 
@@ -192,6 +195,25 @@ class TestInitHop:
 
 
 class TestFlush:
+    @pytest.fixture(autouse=True)
+    def _freeze_finalizers(self):
+        """Stop stray ``OTELBackend.__del__`` -> ``flush()`` polluting counts.
+
+        These tests patch the process-global ``sys.modules['opentelemetry']``.
+        Other tests leave "available" backends alive in reference cycles; if the
+        cyclic collector fires *inside* the patched window it finalizes one, and
+        its ``__del__`` -> ``flush()`` reaches the SAME mock tracer provider,
+        making ``force_flush`` look "called 2 times" (the xdist-ordering-only
+        flake). Drain pending finalizers, then freeze the cyclic collector for
+        the test body so exactly one flush (ours) runs against the mock.
+        """
+        gc.collect()
+        gc.disable()
+        try:
+            yield
+        finally:
+            gc.enable()
+
     def test_unavailable_is_noop(self):
         b = _ready()
         b._available = False
