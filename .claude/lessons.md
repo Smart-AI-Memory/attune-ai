@@ -8270,6 +8270,78 @@ files.
   bullet above (this is its necessary counterweight) and §7
   verify-the-receipt discipline.
 
+- **A WHOLE-PROJECT coverage refresh must run from the MAIN checkout,
+  NOT a worktree — the worktree breaks it two independent ways
+  (2026-06-12, QA #5 rubric refresh)**: extends the per-module
+  "Coverage measurement from a worktree reports 0%" sub-bullet (whose
+  `--source=attune.<mod>` /tmp workaround only scales to ONE module).
+  For a full `tests/` coverage run scoring all ~712 modules, the
+  worktree environment fails twice: (1) **silent collection errors
+  skew the data** — under `PYTHONPATH=<wt>/src`, ~6 test files errored
+  on import and were dropped, so high-value modules showed garbage
+  coverage (`models/auth_strategy.py` 12% despite 82 passing tests;
+  `memory/long_term_types.py` 0% despite its boost suite). The scorer
+  then promotes those as false top picks. (2) **the run hangs at
+  teardown** — a leaked subprocess / unclosed asyncio loop (warning:
+  `Loop <_UnixSelectorEventLoop ...> that handles pid <N> is closed`)
+  keeps the xdist workers alive after tests finish, so the controller
+  waits forever and never writes the XML. Symptom: controller at 0%
+  CPU, `SN` state, no worker children doing work, progress frozen at
+  ~97%. **The fix: run from the MAIN checkout** (native editable
+  mapping, all extras, no `PYTHONPATH` override):
+  `cd <main> && ANTHROPIC_API_KEY="" .venv/bin/python -m pytest tests
+  --cov=src/attune --cov-report=xml:/tmp/cov.xml --cov-config=pyproject.toml
+  -m "not network and not integration" -o addopts= -p no:cacheprovider
+  -q -n auto` — finished clean in 81 s, 21,291 passed, plausible
+  numbers (auth_strategy 100%, long_term_types 100%). The scorer reads
+  the XML's `filename="models/auth_strategy.py"` form (relative to
+  `src/attune`), which matches its `rel_pkg` key regardless of which
+  checkout generated it. **Recovery if ANY xdist+coverage run hangs at
+  teardown:** the per-worker `.coverage.*pid*` shards are flushed
+  BEFORE the teardown hang, so `pkill -9 -f pytest` then
+  `python -m coverage combine /tmp/.coverage.*pid* && coverage xml`
+  reconstructs the report from whatever the workers captured (though
+  if the input was the skewed worktree run, the numbers are still
+  garbage — fix the ENV, don't just recover the hang). Note the main
+  checkout may carry another session's uncommitted WIP; a `pytest
+  --cov` run touches only gitignored artifacts (`.coverage`,
+  `.pytest_cache`), so it's non-destructive to that WIP.
+
+- **Mutation-testing target selection + two false-survivor traps
+  (2026-06-12, QA #5 on `memory/` modules)**: extends the mutmut
+  cluster with how to PICK a module and two ways a survivor lies.
+  - **The `*_coverage_boost.py` suffix marks an already-hardened
+    module — to find gaps, target modules WITHOUT one (ideally with
+    NO dedicated test at all).** Re-baselining `memory/nodes.py`
+    (133 mutants, effectively 133 killed) and `memory/edges.py`
+    (112/112) confirmed both boost suites were already mutation-tight;
+    the real gap was `memory/encryption.py` — AES-256-GCM crypto with
+    ZERO tests and a stale coverage-omit. A 28-test suite took it to
+    36/36 killable killed. Don't re-mutate boost-suffixed modules
+    hoping for gaps; spend the budget on the untested ones.
+  - **An import-breaking mutation is a FALSE survivor.** mutmut
+    reported `source_line: int | None` → `int & None` (a dataclass
+    annotation; module has no `from __future__ import annotations`)
+    as "survived," but `int & None` raises `TypeError` at class-def →
+    the whole suite ERRORS on collection → the mutant is actually
+    KILLED. mutmut's classifier mis-scored it. Always confirm a lone
+    survivor by apply/revert (the existing rule), and recognise
+    "every test errors on collection" = killed, not survived.
+  - **A module-level `skipif` can MASK a behaviorally-meaningful
+    mutant.** A `pytestmark = skipif(not HAS_ENCRYPTION)` guard made
+    the WHOLE suite skip when a mutant flipped the import-guard flag
+    (`HAS_ENCRYPTION = True` → `False`), so the "encryption silently
+    disabled" mutant survived — skipped tests don't fail, so they
+    can't kill. Since `cryptography` is a CORE dependency the skip was
+    defensive cruft; dropping it and asserting `HAS_ENCRYPTION is True`
+    directly killed both flag-flip mutants. Rule: don't guard a suite
+    with `skipif` on a flag a mutant can flip when the underlying dep
+    is actually mandatory — the skip blinds mutation testing to that
+    exact flag. (Display/log/exception-message string mutations
+    remain documented equivalents — a substring `match=` can't kill an
+    `XX`-wrapped string, and the repo policy is not to over-fit
+    assertions to message text.)
+
 - **Ops-dashboard curator "is offline (401 invalid x-api-key)" → a STALE
   repo-root `.env` shadows the live key; and even fixed, the curator needs
   API CREDITS the Claude subscription doesn't grant (2026-06-12)**: the
