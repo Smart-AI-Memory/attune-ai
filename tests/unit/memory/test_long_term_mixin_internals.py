@@ -13,6 +13,7 @@ Licensed under Apache 2.0
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any
 
 from attune.memory.long_term import Classification
@@ -207,15 +208,18 @@ class TestGetStorageDir:
 
     def test_direct_storage_dir_attr(self):
         host = _Host(long_term=_StorageDirAttr("/tmp/qa_lt"))
-        assert str(host._get_storage_dir()) == "/tmp/qa_lt"
+        # Compare Path objects, not str() — _get_storage_dir wraps in Path,
+        # whose repr uses OS separators (\tmp\qa_lt on Windows). Path
+        # equality normalizes both sides, so this stays portable.
+        assert host._get_storage_dir() == Path("/tmp/qa_lt")
 
     def test_storage_object_attr(self):
         host = _Host(long_term=_StorageObjAttr("/tmp/qa_lt2"))
-        assert str(host._get_storage_dir()) == "/tmp/qa_lt2"
+        assert host._get_storage_dir() == Path("/tmp/qa_lt2")
 
     def test_underscore_storage_attr(self):
         host = _Host(long_term=_UnderscoreStorageAttr("/tmp/qa_lt3"))
-        assert str(host._get_storage_dir()) == "/tmp/qa_lt3"
+        assert host._get_storage_dir() == Path("/tmp/qa_lt3")
 
     def test_returns_none_when_no_storage_attrs(self):
         # A bare object is truthy but exposes none of the storage attrs.
