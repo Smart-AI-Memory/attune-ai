@@ -8696,3 +8696,34 @@ files.
   locally. The tar-pit trip-wire (CLAUDE.md: "same approach failed
   twice → reconsider before attempt 3; watch for chasing infra/CI
   flakes that don't improve the product") is the governing rule here.
+
+- **On active multi-session days, a branch that appends to
+  `.claude/lessons.md` hits a rebase/merge conflict on the file's
+  TAIL every time `main` advances — resolution is always "keep both
+  blocks", and the conflict can RE-APPEAR between your rebase-push and
+  your merge click**: hit 3× in one session 2026-06-13 landing PR #840
+  while several QA-coverage sessions were merging their own lesson
+  appends. Every session appends a new bullet to the end of the
+  Lessons Learned list, so two branches that both append produce a
+  textual conflict at the last bullet (`<<<<<<< HEAD` = main's newest
+  lesson, `>>>>>>> <yoursha>` = yours). The resolution is mechanical
+  and always the same: delete the three markers, keep main's lesson
+  THEN yours, with one blank line between (they're sibling list
+  items). Two operational notes that cost real time here: (1) the
+  conflict surfaces THREE different ways depending on timing —
+  `mergeable: CONFLICTING/DIRTY` on the PR, a rebase `CONFLICT
+  (content)`, and at admin-merge time as `gh pr merge` erroring "not
+  mergeable: the merge commit cannot be cleanly created" (state still
+  OPEN) — all the same root cause; (2) because main churns fast on
+  these days, you can rebase-resolve-push to `0 behind`, then have main
+  advance AGAIN before you click merge, re-introducing the conflict —
+  so rebase/resolve IMMEDIATELY before the merge attempt, and if the
+  merge errors "cannot be cleanly created", just `git fetch && git
+  rebase origin/main`, re-resolve the tail (keep both), force-push,
+  retry. Mitigations to reduce the friction: put your lesson append in
+  a SEPARATE final commit (so a rebase only ever conflicts that one
+  commit, and `git rebase --skip`/re-apply is trivial), and keep the
+  append small. Pairs with the "Parallel Claude Code sessions can push
+  to the same PR branch silently" and "Diagnosing 'this branch cannot
+  be merged'" lessons — same multi-session-contention family, this one
+  is specifically the lessons.md-tail append collision.
