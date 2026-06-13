@@ -29,7 +29,7 @@ For each source module under `src/attune/` (and
 `src/attune_software/` if any), compute:
 
 ```text
-score = customer_weight × coverage_gap × risk_multiplier
+score = customer_weight × coverage_gap × risk_multiplier × usage_discount
 ```
 
 Where:
@@ -60,13 +60,31 @@ not in the coverage report → use `1.0` (treat as unknown).
   telemetry, writes to `~/.attune/`, mutates memory graph.
 - `1.0` — else.
 
+**usage_discount** (Phase 4): `min(1.0, inbound_imports / N)` with
+`N = 5`. `inbound_imports` is the count of distinct files **outside the
+module's own package** that import it — measured by `score_test_quality.py`
+from the `from attune.… import …` / `import attune.…` statements across
+`src/attune/` (both the direct `from pkg.mod import X` and the
+parent-package `from pkg import mod` forms are counted). A module no code
+imports is treated as under-used and its score is scaled toward zero, so
+**orphan / "Removed" modules** (which previously topped the rubric on
+weight×gap alone) sink out of the working set. `N = 5` was chosen so a
+module needs a handful of real callers to earn full weight; tune it if
+the working set skews too far toward or away from heavily-shared modules.
+
+**Exemption — entry points are not discounted.** Weight-5 modules
+(CLI / MCP / `__main__` / ops route handlers) are *invoked*, not
+imported, so a zero inbound-import count is expected for them and must
+not demote them; they always use `usage_discount = 1.0`. Without this
+guard the discount would wrongly zero the most user-facing modules.
+
 **Output of one scoring pass:** ranked CSV at
 `docs/specs/test-quality-program/rubric_cache.csv` with
 columns `module,customer_weight,coverage_gap,risk_multiplier,
-score,last_modified,test_files,covered_pct`. Refresh on demand
-(when CI coverage XML changes meaningfully) and write back to
-the same file. The top 20 rows are the working set; sessions
-pick from there.
+inbound_imports,score,covered_pct,excluded,last_modified`. Refresh on
+demand (when CI coverage XML changes meaningfully) and write back to
+the same file. The top 20 rows are the working set; sessions pick from
+there.
 
 ### Per-module loop ("the playbook")
 
@@ -89,6 +107,17 @@ Detail per step:
 to see current %. `grep -rl "import.*<module>\|from.*<module>"
 tests/` to find existing tests. Note any `@pytest.mark.skip`,
 `xfail`, or `integration` markers on the existing tests.
+
+> **Diagnostic for the rubric — silently-skipped suites.** When a
+> picked module has a *surprisingly low* `covered_pct` AND a
+> non-trivial test file already exists, grep the test file for
+> `pytest.importorskip(` BEFORE writing any new tests. If the suite
+> gates the whole module on `importorskip("X")` and `X` isn't in the
+> `[dev]` extra, every test silently skips in CI — so the module reads
+> as undertested when its tests simply never ran. The fix is then one
+> line in `pyproject.toml` (add `X` to `[dev]`), not a new test file.
+> Same family as the usage-discount: the rubric is measuring a
+> *measurement artifact*, not a real gap.
 
 **(b) Read the source.** Walk public API surface. Note each
 `raise`, each `if/elif/else` chain on enums or string switches
