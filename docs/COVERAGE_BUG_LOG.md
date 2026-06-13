@@ -1,3 +1,32 @@
+## 2026-06-13 — test isolation: worktree_path_guard `_sdk_gate` import (Opus 4.8)
+
+`tests/unit/hooks/test_worktree_path_guard.py`, **test-infra / isolation
+bug** (not a production-code class — a test-harness defect). The 3
+`TestScriptMainEntry` tests
+(`test_script_with_empty_stdin_exits_0`,
+`test_script_with_skip_context_exits_0`,
+`test_script_catches_main_exception_and_exits_0`) fail with
+`ModuleNotFoundError: No module named '_sdk_gate'` when the file is run in
+isolation, but pass in the full suite.
+
+- **Bug — order-dependent green via `sys.path` pollution.** The tests use
+  `runpy.run_path(SCRIPT_PATH, run_name="__main__")`, which executes the
+  `if __name__ == "__main__"` block of
+  `src/attune/hooks/scripts/worktree_path_guard.py:170`
+  (`from _sdk_gate import exit_if_sdk_subprocess`). `runpy.run_path` on a
+  *file path* does NOT add the script's directory to `sys.path`, so that
+  sibling-relative import only resolves when an earlier test in the run
+  already inserted `src/attune/hooks/scripts` into `sys.path`. Run alone,
+  that pollution is absent and the import fails. CI was green only by
+  accident of ordering. Latent since PR #521 (commit c1b4cf33), not
+  introduced by QA work. **Fix:** added `tests/unit/hooks/conftest.py`
+  that inserts the absolute `src/attune/hooks/scripts` dir at the front of
+  `sys.path`, so `_sdk_gate` resolves regardless of test order. Verified
+  the file passes in isolation and the full `tests/unit/hooks/` dir stays
+  green (312 passed, 1 skipped).
+
+---
+
 ## 2026-06-13 — monitoring/otel_backend.py (QA, Opus 4.8)
 
 `monitoring/otel_backend.py` (`OTELBackend`), **~import-only → 100%**.
