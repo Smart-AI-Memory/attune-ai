@@ -8598,3 +8598,31 @@ files.
   "editable install MAPPING points attune at MAIN" lesson (the same
   worktree double-resolution made the entry-point verification fail
   until the module was placed in main's src too).
+
+- **The `coverage` required job re-runs the FULL test suite, so a
+  hung redundant `test (ubuntu-latest, 3.12)` lane is safe to
+  admin-merge for a test-only PR once coverage is green** (2026-06-13,
+  Sat QA-coverage run, #843/#844/#845/#846). The runner-hang was
+  systemic that day — different required jobs froze across runs
+  (`coverage` on some PRs, `test (ubuntu 3.12)` on others), each with
+  `updatedAt` frozen seconds after `started`, ~15-31min stale while
+  status stayed `in_progress`. Recovery recipe that cleared most:
+  `gh run cancel <id>` → poll until `gh run view <id> --json status`
+  reads `completed` → `gh run rerun <id> --failed` (reruns only the
+  cancelled jobs; already-passed jobs in the same run are untouched).
+  #843/#845 cleared on the 2nd rerun. The KEY merge-decision insight:
+  the `coverage` job's "Run tests with coverage" step executes the
+  same suite as the `test (ubuntu 3.12)` job — so when coverage has
+  PASSED, the test lane is redundant verification, and admin-merging a
+  test-only PR blocked solely by a hung test lane buries no risk. This
+  is the narrow exception to the "admin-merging before Windows/test
+  lanes complete" lesson: that lesson is about REAL failures hidden by
+  slow lanes; here the lane is HUNG (infra), not failed, and the
+  identical suite already ran green via coverage. ALWAYS confirm the
+  substantive suite passed (the coverage job's test step completed)
+  before bypassing — do NOT admin-merge when coverage ITSELF is the
+  hung job. Tar-pit guard: after one cancel+rerun re-hangs the SAME
+  job, stop reruns and escalate (admin-merge or wait) rather than
+  loop — chasing infra flakes doesn't improve the product. Pairs with
+  the "Diagnosing CI from the gh CLI" and "Admin-merging a PR before
+  Windows lanes complete" lessons.
