@@ -25,6 +25,63 @@ and the endpoint detection/availability parsing — all with
 
 ---
 
+## 2026-06-13 — serial `--cov` memory-suite pollution (Opus 4.8)
+
+Classification: **test-infra / coverage-tooling interaction** (not
+crash / dead / mocked — the closest legacy bucket is "mocked" only in
+the sense that it corrupts test state, but nothing is actually mocked).
+Surfaced during QA #5 `memory/` coverage work.
+
+**Symptom.** Serial `pytest --cov=attune.memory.short_term.* tests/...`
+runs intermittently fail ~13–32 tests with
+`RuntimeError: cryptography library required when master_key is
+provided` from
+[encryption.py:54](../src/attune/memory/encryption.py) because
+`HAS_ENCRYPTION` is `False`. Green without `--cov`; green with a
+non-memory `--cov` target (e.g. `--cov=attune.cli_minimal` → 2612
+passed).
+
+**The hypothesis it disproves.** It is *not* a between-tests isolation
+leak and there is *no* polluting test. It reproduces with a single
+test file and from the main checkout, and `HAS_ENCRYPTION` is already
+`False` before any test body runs. So a `monkeypatch` / fixture
+"restore" fix does not apply.
+
+**Real root cause** (traced with a `sys.addaudithook` import tracer):
+`cryptography` ships its core as a Rust/PyO3 extension
+(`cryptography.hazmat.bindings._rust`) that may be **initialized only
+once per interpreter process**. With a `attune.memory.*` `--cov`
+target, pytest-cov imports the coverage source at startup — before any
+conftest. That import transitively eager-loads
+`redis` → `redis.auth.token` → `PyJWT` → `cryptography`
+(via [short_term/base.py:51](../src/attune/memory/short_term/base.py)),
+initializing `_rust` once. The startup import then unwinds and evicts
+the cryptography modules from `sys.modules` while PyO3's
+**process-global** once-only counter stays incremented. When
+`tests/conftest.py` re-imports the chain, `_rust` re-init raises
+`ImportError: PyO3 modules ... may only be initialized once`, which
+`encryption.py`'s `except ImportError` swallows → `HAS_ENCRYPTION =
+False` for the whole session. Tests whose `skipif(not HAS_ENCRYPTION)`
+read a *cached* `cryptography.fernet` (still `True`) don't skip — they
+run and error.
+
+CI is unaffected: coverage runs under xdist (`-n auto`), which
+isolates workers. This only bites serial `--cov` used for local QA
+coverage measurement.
+
+**Fix.** Import `cryptography` exactly once, cleanly, before
+pytest-cov's startup source import. Shipped as a `pytest11` plugin
+([_pytest_crypto_pin.py](../src/attune/_pytest_crypto_pin.py),
+registered in `pyproject.toml`) whose top-level import runs during
+setuptools-entry-point loading — verified to beat pytest-cov.
+Conftest-level pins were verified *too late* (the corruption predates
+conftest). Verification: full original repro **32 failed + 13 errors →
+2612 passed**. In a worktree (entry point not yet in editable
+metadata), use the manual fallback
+`-p attune._pytest_crypto_pin` (also verified green).
+
+---
+
 ## 2026-05-16 — eighteenth module under test-quality-program (Opus 4.7)
 
 First cycle after a two-day pause. Selected from the existing

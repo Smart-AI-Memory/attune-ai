@@ -394,6 +394,13 @@ Issues = "https://github.com/Smart-AI-Memory/attune-ai/issues"
 Discussions = "https://github.com/Smart-AI-Memory/attune-ai/discussions"
 Changelog = "https://github.com/Smart-AI-Memory/attune-ai/blob/main/CHANGELOG.md"
 
+# pytest plugin: pin the cryptography PyO3 extension once at startup so
+# serial `pytest --cov=attune.memory.*` runs don't re-init `_rust` and
+# disable encryption. See src/attune/_pytest_crypto_pin.py for the full
+# root-cause writeup.
+[project.entry-points.pytest11]
+attune_crypto_pin = "attune._pytest_crypto_pin"
+
 # Plugin entry points for auto-discovery
 [project.entry-points."attune.plugins"]
 software = "attune_software.plugin:SoftwarePlugin"
