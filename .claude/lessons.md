@@ -8655,3 +8655,44 @@ files.
   loads under its real package path, not a `spec_from_file_location`
   alias — the likely cause of the baseline's "test exists but 0%"
   artifacts like `starter_prompt_nudge`).
+
+- **Don't chase Windows-only asyncio-subprocess TEST plumbing blind
+  from macOS — each fix is a ~15-min CI round-trip and the failure
+  modes stack; when production is already correct, skip the test on
+  Windows instead of reworking the fixture**: hit 2026-06-13 on PR #840
+  fixing two Windows-only CI clusters. Cluster 2 was 6 tests in
+  `tests/unit/ops/test_help_regen.py` that launch a fake `.bat` binary
+  via `asyncio.create_subprocess_exec`. The symptom (`[regen error] `
+  with an EMPTY message + exit_code -1 → status "failed") is the tell
+  for `NotImplementedError` from a **SelectorEventLoop** on Windows —
+  Selector can't spawn subprocesses, only ProactorEventLoop can. Root
+  cause was GLOBAL state pollution: `attune.platform_utils.
+  setup_asyncio_policy()` sets `WindowsSelectorEventLoopPolicy()`
+  process-wide and never restores it, so when a policy-setting test
+  shares an xdist worker with the regen tests, the regen subprocess
+  dies. The version-split (3.12 passed, 3.11/3.13 failed in run 1) was
+  pure xdist-worker-ordering luck, NOT a real version difference —
+  a classic flake tell I should have read as "global-state pollution"
+  immediately. Two speculative fixes made it WORSE: (a) a production
+  `_launch_argv` cmd-routing change for `.bat`/`.cmd` (defensible
+  hardening, but its only real-world trigger is rare pipx/.cmd shims —
+  production normally gets a `.exe`, so it was a prod path exercised
+  only by tests); (b) pinning `WindowsProactorEventLoopPolicy` in the
+  test's `_await` — which REGRESSED 3.12 from pass to fail (all 4 red).
+  Lessons: (1) an empty-string exception message in a captured
+  `[regen error] ` line == `NotImplementedError()` == wrong event-loop
+  type on Windows — diagnose loop policy first, not the `.bat` exec;
+  (2) "passes on one Python version, fails on others, same test" under
+  xdist is almost always global-state pollution / worker-ordering, not
+  a version bug — grep for process-wide mutations (`set_event_loop_
+  policy`, `os.environ[...] =`, module singletons) before theorizing;
+  (3) when the PRODUCTION code is correct on the target OS (here:
+  uvicorn runs Proactor, real `attune-author` is a `.exe`) and only
+  the TEST fixture is non-portable, the right move is
+  `@pytest.mark.skipif(sys.platform == "win32", reason=...)` on the
+  subprocess-LAUNCHING tests (the OS-agnostic logic — streaming,
+  exit-code, ANSI-strip, truncation — is fully covered on POSIX
+  lanes), NOT a blind fixture/production rework you can't verify
+  locally. The tar-pit trip-wire (CLAUDE.md: "same approach failed
+  twice → reconsider before attempt 3; watch for chasing infra/CI
+  flakes that don't improve the product") is the governing rule here.
