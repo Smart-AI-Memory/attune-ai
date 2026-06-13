@@ -8448,3 +8448,38 @@ files.
   the "stale coverage data" and "spec-named scope drifts from code
   reality — grep the actual instances" lessons: measure against current
   reality, not a convenient proxy.
+
+- **To get a clean coverage number for a coverage PR, write a thorough
+  net-new suite and measure THAT FILE ALONE — don't measure via the
+  noisy full suite (it's polluted under `--cov`), and don't try to
+  reproduce the broad coverage**: hit repeatedly during QA #5 night-1
+  (2026-06-13) taking 8 memory modules to 100%. Two findings combine.
+  (1) **A module's coverage often comes mostly from BROAD tests, not
+  its own dedicated file** — `short_term/sessions.py` was 24% via
+  `tests/unit/memory/short_term/` but 62% full-suite; the existing
+  `test_backend_init_mixin.py` self-covered only 24% (it patched the
+  method out — mock theater) while the module sat at 75% via broad
+  unified-memory tests. So a narrow run UNDERreports and the full run
+  is needed for the *real* gap — but see (2). (2) **Serial `--cov`
+  runs of the memory subset intermittently fail ~19-32 tests** with
+  `RuntimeError: cryptography library required` because some test flips
+  `attune.memory.encryption.HAS_ENCRYPTION` to False (sys.modules /
+  module-global pollution) without restoring it; victims pass in
+  isolation, and the same family bit `attune.workflows` as
+  `KeyError: 'pydantic.root_model'` importing mcp at collection. CI is
+  UNAFFECTED because it runs coverage under xdist (`-n auto`) where
+  workers isolate — this is a serial-only artifact. **The resolution
+  that made the whole batch fast and reliable:** for each target, write
+  a behavioral net-new test file that drives the class directly via a
+  tiny injected fake (FakeBase/FakeMemory/FakeSanitizer over a dict, or
+  real value objects like `RedisStatus`), then measure coverage with
+  `--cov=attune.<mod>` over THAT ONE FILE. If your file alone reaches
+  ~100%, the module is fully covered regardless of what the broad suite
+  contributes — you've PROVEN it without needing the polluted full run.
+  Reserve the full-suite xdist baseline (`scripts/qa_coverage_baseline.sh`)
+  only for the overall package %; never trust the serial `--cov` subset
+  for per-module gaps. Pairs with the "subset baseline UNDERCOUNTS"
+  lesson directly above (this is its operational answer) and the
+  "registered ≠ working / dogfood" lesson (measure the real artifact,
+  not a convenient proxy). The HAS_ENCRYPTION leak itself is filed as a
+  separate cleanup task to fix the polluting test's teardown.
