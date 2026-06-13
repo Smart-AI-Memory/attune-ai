@@ -678,7 +678,6 @@ omit = [
     # Memory modules requiring Redis server
     "*/memory/cross_session.py",  # Requires Redis server
     "*/memory/control_panel_api.py",  # FastAPI REST server
-    "*/memory/encryption.py",  # Requires cryptography extras
     "*/memory/short_term/sessions.py",  # Requires Redis server
     "*/memory/claude_memory.py",  # Requires Claude API
     # Agent modules requiring live LLM
