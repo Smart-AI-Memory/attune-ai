@@ -164,7 +164,14 @@ class OTELBackend:
             "opentelemetry.sdk.trace.export",
         ]
 
-        return all(importlib.util.find_spec(pkg) is not None for pkg in required_packages)
+        # find_spec raises ModuleNotFoundError (not returns None) when a
+        # submodule's PARENT package is absent — it imports the parent to read
+        # its __path__. Catch that so an uninstalled [otel] extra degrades
+        # gracefully to "not available" instead of crashing __init__.
+        try:
+            return all(importlib.util.find_spec(pkg) is not None for pkg in required_packages)
+        except (ModuleNotFoundError, ValueError):
+            return False
 
     def _init_otel(self) -> None:
         """Initialize OTEL tracer and exporter."""

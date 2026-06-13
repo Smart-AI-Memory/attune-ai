@@ -8518,3 +8518,29 @@ files.
   family. Generalizes beyond Windows: any OS/lane-specific failure on a
   long-lived branch should first be checked against "is this branch
   just behind a fix already on main?"
+
+- **`importlib.util.find_spec("pkg.submodule")` RAISES
+  `ModuleNotFoundError` when the PARENT package is absent — it does
+  NOT return None**: hit 2026-06-13 fixing `OTELBackend`
+  (`src/attune/monitoring/otel_backend.py`, PR #838). A "graceful
+  optional-dependency" check swept submodules through `find_spec`
+  bare — `all(find_spec(p) is not None for p in [...])` — on the
+  assumption that a missing module yields `None`. False for
+  *submodules*: `find_spec("opentelemetry.trace")` imports the parent
+  `opentelemetry` to read its `__path__`, so when the `[otel]` extra
+  isn't installed it raises `ModuleNotFoundError` rather than
+  returning `None`, and the unguarded call propagated out of
+  `__init__` — crashing construction in exactly the no-extra
+  environment the fallback was meant to serve. (Top-LEVEL names like
+  `find_spec("opentelemetry")` *do* return `None` cleanly; only the
+  dotted submodule form raises.) Fix: wrap the sweep in `try/except
+  (ModuleNotFoundError, ValueError): return False` (ValueError covers
+  malformed names). Regression-guard placement matters: the bug only
+  manifests when the dep is ABSENT, which is precisely where an
+  otel-gated test module is `pytest.skip(allow_module_level=True)`'d —
+  so the guard must live in a SEPARATE ungated file that simulates the
+  missing dep by `patch.object(importlib.util, "find_spec",
+  side_effect=ModuleNotFoundError)`, not in the skipped module. Pairs
+  with the attune-verify `find_spec`-top-level-only lessons (same API,
+  the mirror-image surprise: there it under-checks submodules, here it
+  over-raises on them).
