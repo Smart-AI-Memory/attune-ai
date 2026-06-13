@@ -72,6 +72,25 @@ def _reset_workflow_tier_maps():
         cls.tier_map.update(original)
 
 
+@pytest.fixture(autouse=True)
+def _restore_event_loop_policy():
+    """Restore the global asyncio event loop policy after each test.
+
+    ``asyncio.set_event_loop_policy`` mutates process-wide state. Under
+    xdist that leak crosses test *files* on the same worker: a test that
+    sets (e.g.) the Selector policy would leave it set for an unrelated
+    subprocess/pipe test that lands afterward, which then fails with
+    ``NotImplementedError`` on Windows (this poisoned the help-regen
+    tests on Windows CI). Snapshot before, restore after, so policy
+    mutation can never cross a test boundary.
+    """
+    import asyncio
+
+    original = asyncio.get_event_loop_policy()
+    yield
+    asyncio.set_event_loop_policy(original)
+
+
 # =============================================================================
 # File Test Tracking - Automatic per-file test result recording
 # Supports both single-process and xdist parallel execution

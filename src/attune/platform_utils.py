@@ -121,19 +121,33 @@ def get_default_cache_dir() -> Path:
 
 
 def setup_asyncio_policy() -> None:
-    """Configure asyncio event loop policy for the current platform.
+    """Ensure a subprocess-capable asyncio event loop policy on Windows.
 
-    On Windows, this uses WindowsSelectorEventLoopPolicy to avoid issues
-    with the default ProactorEventLoop, particularly with subprocesses
-    and certain network operations.
+    On Windows, ``asyncio.create_subprocess_exec`` and
+    ``loop.connect_read_pipe`` require the ProactorEventLoop;
+    SelectorEventLoop raises ``NotImplementedError`` for both. Proactor
+    has been the Windows default since Python 3.8, so this is normally a
+    no-op -- we set it explicitly to self-heal in case an imported
+    library swapped in the Selector policy process-wide.
 
-    This should be called early in the application startup, before
-    any asyncio.run() calls.
+    attune spawns subprocesses (SDK runner, hook executor, help-regen)
+    and reads stdin over a pipe (the stdio MCP server), so Selector is
+    never correct here. (The previous code set Selector with a comment
+    claiming it helped "particularly with subprocesses" -- that is
+    backwards: Selector cannot spawn subprocesses on Windows at all.) If
+    a specific dependency ever needs Selector, the right fix is a
+    per-call loop, not a process-wide policy switch.
+
+    On non-Windows platforms this is a no-op.
+
+    This should be called early in application startup, before any
+    ``asyncio.run()`` calls.
     """
     if is_windows():
-        # Windows requires WindowsSelectorEventLoopPolicy for compatibility
-        # with many libraries and subprocess operations
-        asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())  # type: ignore[attr-defined]
+        # Proactor is the Windows default and the only loop that supports
+        # subprocesses and pipes; set it explicitly to undo any library
+        # that forced Selector process-wide.
+        asyncio.set_event_loop_policy(asyncio.WindowsProactorEventLoopPolicy())  # type: ignore[attr-defined]
 
 
 def safe_run_async(coro: Any, debug: bool = False) -> Any:
