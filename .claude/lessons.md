@@ -8420,3 +8420,31 @@ files.
     generic) that NEVER interpolates the raw exc; the full error still goes
     to `logger.warning`. Anti-leak is a tested property (assert the
     `request_id` is absent from the summary).
+
+- **A coverage baseline run against a single test subdir
+  systematically UNDERCOUNTS modules whose tests live elsewhere —
+  verify a target's true coverage before picking it**: during QA #5
+  memory-module hardening (2026-06-13) I baselined candidates by
+  running `--cov=attune.memory` over `tests/memory/` only. That made
+  `security/audit_logger.py` look like 59% and
+  `security/secrets_detector.py` 56% — both flagged as juicy gaps. Their
+  real coverage (tests live in `tests/security/`) was **94% and 92%** —
+  already done. Nearly wrote redundant suites for both. The subset
+  baseline can also undercount in the inverse case: a module exercised
+  broadly by integration/facade tests shows low against its one
+  dedicated unit file. **Rule:** the cheap subset baseline is a
+  *hypothesis*, not the number. Before committing to a module, confirm
+  its true coverage by running its ACTUAL test files (find them:
+  `find tests -name "*<module>*"`) or a full-suite run. The authoritative
+  pass for `attune.memory` was `ANTHROPIC_API_KEY="" PYTHONPATH=<repo>/src
+  <main-venv>/bin/python -m pytest tests --ignore=tests/integration
+  -o addopts="" --cov=attune.memory --cov-config=/dev/null
+  --cov-report=term-missing -n auto` (21,221 tests, 77s, run from the
+  worktree ROOT — `--cov-config=/dev/null` bypasses the rcfile
+  source-mapping that otherwise reports 0% from a worktree, and the empty
+  key keeps integration-gated SDK tests from spending). Only a module
+  whose subset number and dedicated-test number AGREE is a verified gap
+  (e.g. `cross_session/service.py` read 78% both ways → real). Pairs with
+  the "stale coverage data" and "spec-named scope drifts from code
+  reality — grep the actual instances" lessons: measure against current
+  reality, not a convenient proxy.
