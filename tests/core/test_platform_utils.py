@@ -211,11 +211,16 @@ class TestAsyncioPolicy:
 
     @patch("attune.platform_utils.is_windows", return_value=True)
     def test_setup_asyncio_policy_windows(self, mock_windows):
-        """Test setup_asyncio_policy sets policy on Windows."""
+        """Test setup_asyncio_policy sets the Proactor policy on Windows.
+
+        Proactor is the only Windows loop that supports subprocesses and
+        pipes; Selector raises NotImplementedError for both. ``set_event_loop_policy``
+        is mocked so this never mutates the real global policy.
+        """
         import asyncio
 
         with patch.object(asyncio, "set_event_loop_policy") as mock_set_policy:
-            with patch.object(asyncio, "WindowsSelectorEventLoopPolicy", create=True):
+            with patch.object(asyncio, "WindowsProactorEventLoopPolicy", create=True):
                 setup_asyncio_policy()
                 # On Windows, set_event_loop_policy should be called
                 mock_set_policy.assert_called_once()
