@@ -36,8 +36,15 @@ SCRIPT_PATH = (
 
 @pytest.fixture(autouse=True)
 def isolated_home(tmp_path, monkeypatch):
-    """Redirect HOME to a tmp dir and clear env threshold overrides."""
-    monkeypatch.setenv("HOME", str(tmp_path))
+    """Point Path.home() at a tmp dir and clear env threshold overrides.
+
+    Patching ``Path.home`` directly (rather than ``setenv("HOME", ...)``)
+    is cross-platform: on Windows ``Path.home()`` resolves via
+    ``%USERPROFILE%``, not ``$HOME``, so a HOME override there is a no-op
+    and the hook would read/write the real shared state file — leaking
+    state across tests/xdist workers.
+    """
+    monkeypatch.setattr(hook.Path, "home", lambda: tmp_path)
     monkeypatch.delenv("COMPACT_THRESHOLD", raising=False)
     monkeypatch.delenv("COMPACT_INTERVAL", raising=False)
     return tmp_path
