@@ -1,3 +1,30 @@
+## 2026-06-13 — monitoring/otel_backend.py (QA, Opus 4.8)
+
+`monitoring/otel_backend.py` (`OTELBackend`), **~import-only → 100%**.
+The existing `test_otel_backend.py` `pytest.skip(allow_module_level=True)`
+s the whole module when `opentelemetry` is absent, so its coverage was
+effectively import-time only. New mock-based suite
+(`test_otel_backend_export.py`, 23 tests) covers `log_call`,
+`log_workflow` (incl. stage child-spans + skip/error branches),
+`_init_otel` success/failure, `flush`, the `__init__`→`_init_otel` hop,
+and the endpoint detection/availability parsing — all with
+`opentelemetry` mocked, so it runs regardless of the `[otel]` extra.
+
+- **Bug (crash) — `_check_otel_installed()` raises instead of returning
+  False when `opentelemetry` is absent.** It does
+  `importlib.util.find_spec("opentelemetry.trace")`, which raises
+  `ModuleNotFoundError` (missing *parent* package) rather than returning
+  `None`. Since `__init__` calls it bare
+  (`self._otel_available = self._check_otel_installed()`),
+  **`OTELBackend()` crashes in any env without the optional `[otel]`
+  extra** — directly contradicting the module's "graceful fallback /
+  optional dependency" design. The existing test suite masks this by
+  skipping at module level. Fix: wrap the `find_spec` sweep in
+  `try/except (ModuleNotFoundError, ValueError): return False`. Filed as
+  a follow-up (not fixed in the coverage PR to keep it test-only).
+
+---
+
 ## 2026-05-16 — eighteenth module under test-quality-program (Opus 4.7)
 
 First cycle after a two-day pause. Selected from the existing
