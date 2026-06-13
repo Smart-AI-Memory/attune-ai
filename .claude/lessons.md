@@ -8342,6 +8342,35 @@ files.
     `XX`-wrapped string, and the repo policy is not to over-fit
     assertions to message text.)
 
+- **A test that redirects home via `monkeypatch.setenv("HOME", …)` is
+  Windows-broken — `Path.home()` reads `%USERPROFILE%` on Windows, not
+  `$HOME`; patch `Path.home` directly (2026-06-13, QA #5 #805 fixing
+  #799)**: the encryption suite's `isolated_key_env` fixture set
+  `$HOME` to a tmp dir so `_load_or_generate_key`'s
+  `Path.home() / ".attune" / "master.key"` would resolve there. On
+  POSIX `Path.home()` honors `$HOME`, so the required `test
+  (ubuntu-latest, 3.12)` lane was green and #799 merged — but on
+  Windows `Path.home()` reads `%USERPROFILE%`/`%HOMEDRIVE%%HOMEPATH%`
+  and ignores `$HOME`, so the redirect silently no-op'd: no `master.key`
+  under the real home, key resolution fell through to ephemeral
+  generation, and the key-FILE tests asserted a random key
+  (`AssertionError: b'\xd3…' == b'KKK…'`). The fix is OS-agnostic:
+  `monkeypatch.setattr(enc_mod.Path, "home", lambda: tmp_path)` instead
+  of touching `$HOME` (the module imports `from pathlib import Path`, so
+  patch the class attribute it resolves at call time). Two durable
+  rules: (1) any test that needs to relocate the user home for the code
+  under test must patch `Path.home` (or `pathlib.Path.home`), NEVER just
+  `setenv("HOME")` — the env var only works on POSIX; (2) the failure
+  was INVISIBLE on the required ubuntu lane and only the ADVISORY
+  windows lane caught it — a reminder that a green REQUIRED gate is not
+  proof of cross-platform correctness for anything touching
+  `Path.home`/`expanduser`/`os.environ["HOME"]`. Same family as the
+  "POSIX-shell test fixtures (`#!/bin/sh` + chmod) fail on Windows"
+  lesson — OS-coupled test scaffolding around OS-agnostic production
+  code; pairs with "Admin-merging before Windows lanes complete buries
+  a real bug on main" (#805 is exactly that bug, surfaced a few hours
+  later by an unrelated PR's windows lane).
+
 - **Ops-dashboard curator "is offline (401 invalid x-api-key)" → a STALE
   repo-root `.env` shadows the live key; and even fixed, the curator needs
   API CREDITS the Claude subscription doesn't grant (2026-06-12)**: the
