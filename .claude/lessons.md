@@ -293,7 +293,21 @@ files.
     injection** — `RedisShortTermMemory._client` is a read-only
     property; inject via `memory._base._client = mock` (the plain
     `BaseOperations` attribute), not `memory._client =
-    MagicMock()`.
+    MagicMock()`. **`use_mock` is ALSO a read-only property**
+    (same `_base` delegation), so `memory.use_mock = False` raises
+    `AttributeError: can't set attribute`. To exercise the
+    non-mock (`use_mock=False`) helper branches of an index/manager
+    that takes a memory object (e.g. `ConversationSummaryIndex`),
+    the cleanest tool is a tiny `FakeMemory` exposing ONLY the
+    attributes the SUT actually reads off `self._memory` —
+    for summary_index that's `use_mock`, `_client`, `_mock_storage`,
+    `_delete` (four). This drives the real `_client is None` and
+    real-client branches with zero live Redis and without poking
+    `_base` internals; pair it with a `FakeRedisClient` stub whose
+    methods return configurable truthy/falsy values so the
+    `return X if result else <empty>` guards (e.g. `_hget`,
+    `_hgetall`, `_zrevrange`, `_smembers`) are each killed from both
+    sides. (QA #5, summary_index 82%→100%, PR #810.)
   - **Stacked `@patch` decorators inject bottom-up** —
     `@patch("A") @patch("B") def test(self, mock_b, mock_a)`: the
     innermost (bottom) decorator is the first positional arg; a
@@ -8270,6 +8284,107 @@ files.
   bullet above (this is its necessary counterweight) and §7
   verify-the-receipt discipline.
 
+- **A WHOLE-PROJECT coverage refresh must run from the MAIN checkout,
+  NOT a worktree — the worktree breaks it two independent ways
+  (2026-06-12, QA #5 rubric refresh)**: extends the per-module
+  "Coverage measurement from a worktree reports 0%" sub-bullet (whose
+  `--source=attune.<mod>` /tmp workaround only scales to ONE module).
+  For a full `tests/` coverage run scoring all ~712 modules, the
+  worktree environment fails twice: (1) **silent collection errors
+  skew the data** — under `PYTHONPATH=<wt>/src`, ~6 test files errored
+  on import and were dropped, so high-value modules showed garbage
+  coverage (`models/auth_strategy.py` 12% despite 82 passing tests;
+  `memory/long_term_types.py` 0% despite its boost suite). The scorer
+  then promotes those as false top picks. (2) **the run hangs at
+  teardown** — a leaked subprocess / unclosed asyncio loop (warning:
+  `Loop <_UnixSelectorEventLoop ...> that handles pid <N> is closed`)
+  keeps the xdist workers alive after tests finish, so the controller
+  waits forever and never writes the XML. Symptom: controller at 0%
+  CPU, `SN` state, no worker children doing work, progress frozen at
+  ~97%. **The fix: run from the MAIN checkout** (native editable
+  mapping, all extras, no `PYTHONPATH` override):
+  `cd <main> && ANTHROPIC_API_KEY="" .venv/bin/python -m pytest tests
+  --cov=src/attune --cov-report=xml:/tmp/cov.xml --cov-config=pyproject.toml
+  -m "not network and not integration" -o addopts= -p no:cacheprovider
+  -q -n auto` — finished clean in 81 s, 21,291 passed, plausible
+  numbers (auth_strategy 100%, long_term_types 100%). The scorer reads
+  the XML's `filename="models/auth_strategy.py"` form (relative to
+  `src/attune`), which matches its `rel_pkg` key regardless of which
+  checkout generated it. **Recovery if ANY xdist+coverage run hangs at
+  teardown:** the per-worker `.coverage.*pid*` shards are flushed
+  BEFORE the teardown hang, so `pkill -9 -f pytest` then
+  `python -m coverage combine /tmp/.coverage.*pid* && coverage xml`
+  reconstructs the report from whatever the workers captured (though
+  if the input was the skewed worktree run, the numbers are still
+  garbage — fix the ENV, don't just recover the hang). Note the main
+  checkout may carry another session's uncommitted WIP; a `pytest
+  --cov` run touches only gitignored artifacts (`.coverage`,
+  `.pytest_cache`), so it's non-destructive to that WIP.
+
+- **Mutation-testing target selection + two false-survivor traps
+  (2026-06-12, QA #5 on `memory/` modules)**: extends the mutmut
+  cluster with how to PICK a module and two ways a survivor lies.
+  - **The `*_coverage_boost.py` suffix marks an already-hardened
+    module — to find gaps, target modules WITHOUT one (ideally with
+    NO dedicated test at all).** Re-baselining `memory/nodes.py`
+    (133 mutants, effectively 133 killed) and `memory/edges.py`
+    (112/112) confirmed both boost suites were already mutation-tight;
+    the real gap was `memory/encryption.py` — AES-256-GCM crypto with
+    ZERO tests and a stale coverage-omit. A 28-test suite took it to
+    36/36 killable killed. Don't re-mutate boost-suffixed modules
+    hoping for gaps; spend the budget on the untested ones.
+  - **An import-breaking mutation is a FALSE survivor.** mutmut
+    reported `source_line: int | None` → `int & None` (a dataclass
+    annotation; module has no `from __future__ import annotations`)
+    as "survived," but `int & None` raises `TypeError` at class-def →
+    the whole suite ERRORS on collection → the mutant is actually
+    KILLED. mutmut's classifier mis-scored it. Always confirm a lone
+    survivor by apply/revert (the existing rule), and recognise
+    "every test errors on collection" = killed, not survived.
+  - **A module-level `skipif` can MASK a behaviorally-meaningful
+    mutant.** A `pytestmark = skipif(not HAS_ENCRYPTION)` guard made
+    the WHOLE suite skip when a mutant flipped the import-guard flag
+    (`HAS_ENCRYPTION = True` → `False`), so the "encryption silently
+    disabled" mutant survived — skipped tests don't fail, so they
+    can't kill. Since `cryptography` is a CORE dependency the skip was
+    defensive cruft; dropping it and asserting `HAS_ENCRYPTION is True`
+    directly killed both flag-flip mutants. Rule: don't guard a suite
+    with `skipif` on a flag a mutant can flip when the underlying dep
+    is actually mandatory — the skip blinds mutation testing to that
+    exact flag. (Display/log/exception-message string mutations
+    remain documented equivalents — a substring `match=` can't kill an
+    `XX`-wrapped string, and the repo policy is not to over-fit
+    assertions to message text.)
+
+- **A test that redirects home via `monkeypatch.setenv("HOME", …)` is
+  Windows-broken — `Path.home()` reads `%USERPROFILE%` on Windows, not
+  `$HOME`; patch `Path.home` directly (2026-06-13, QA #5 #805 fixing
+  #799)**: the encryption suite's `isolated_key_env` fixture set
+  `$HOME` to a tmp dir so `_load_or_generate_key`'s
+  `Path.home() / ".attune" / "master.key"` would resolve there. On
+  POSIX `Path.home()` honors `$HOME`, so the required `test
+  (ubuntu-latest, 3.12)` lane was green and #799 merged — but on
+  Windows `Path.home()` reads `%USERPROFILE%`/`%HOMEDRIVE%%HOMEPATH%`
+  and ignores `$HOME`, so the redirect silently no-op'd: no `master.key`
+  under the real home, key resolution fell through to ephemeral
+  generation, and the key-FILE tests asserted a random key
+  (`AssertionError: b'\xd3…' == b'KKK…'`). The fix is OS-agnostic:
+  `monkeypatch.setattr(enc_mod.Path, "home", lambda: tmp_path)` instead
+  of touching `$HOME` (the module imports `from pathlib import Path`, so
+  patch the class attribute it resolves at call time). Two durable
+  rules: (1) any test that needs to relocate the user home for the code
+  under test must patch `Path.home` (or `pathlib.Path.home`), NEVER just
+  `setenv("HOME")` — the env var only works on POSIX; (2) the failure
+  was INVISIBLE on the required ubuntu lane and only the ADVISORY
+  windows lane caught it — a reminder that a green REQUIRED gate is not
+  proof of cross-platform correctness for anything touching
+  `Path.home`/`expanduser`/`os.environ["HOME"]`. Same family as the
+  "POSIX-shell test fixtures (`#!/bin/sh` + chmod) fail on Windows"
+  lesson — OS-coupled test scaffolding around OS-agnostic production
+  code; pairs with "Admin-merging before Windows lanes complete buries
+  a real bug on main" (#805 is exactly that bug, surfaced a few hours
+  later by an unrelated PR's windows lane).
+
 - **Ops-dashboard curator "is offline (401 invalid x-api-key)" → a STALE
   repo-root `.env` shadows the live key; and even fixed, the curator needs
   API CREDITS the Claude subscription doesn't grant (2026-06-12)**: the
@@ -8305,3 +8420,66 @@ files.
     generic) that NEVER interpolates the raw exc; the full error still goes
     to `logger.warning`. Anti-leak is a tested property (assert the
     `request_id` is absent from the summary).
+
+- **A coverage baseline run against a single test subdir
+  systematically UNDERCOUNTS modules whose tests live elsewhere —
+  verify a target's true coverage before picking it**: during QA #5
+  memory-module hardening (2026-06-13) I baselined candidates by
+  running `--cov=attune.memory` over `tests/memory/` only. That made
+  `security/audit_logger.py` look like 59% and
+  `security/secrets_detector.py` 56% — both flagged as juicy gaps. Their
+  real coverage (tests live in `tests/security/`) was **94% and 92%** —
+  already done. Nearly wrote redundant suites for both. The subset
+  baseline can also undercount in the inverse case: a module exercised
+  broadly by integration/facade tests shows low against its one
+  dedicated unit file. **Rule:** the cheap subset baseline is a
+  *hypothesis*, not the number. Before committing to a module, confirm
+  its true coverage by running its ACTUAL test files (find them:
+  `find tests -name "*<module>*"`) or a full-suite run. The authoritative
+  pass for `attune.memory` was `ANTHROPIC_API_KEY="" PYTHONPATH=<repo>/src
+  <main-venv>/bin/python -m pytest tests --ignore=tests/integration
+  -o addopts="" --cov=attune.memory --cov-config=/dev/null
+  --cov-report=term-missing -n auto` (21,221 tests, 77s, run from the
+  worktree ROOT — `--cov-config=/dev/null` bypasses the rcfile
+  source-mapping that otherwise reports 0% from a worktree, and the empty
+  key keeps integration-gated SDK tests from spending). Only a module
+  whose subset number and dedicated-test number AGREE is a verified gap
+  (e.g. `cross_session/service.py` read 78% both ways → real). Pairs with
+  the "stale coverage data" and "spec-named scope drifts from code
+  reality — grep the actual instances" lessons: measure against current
+  reality, not a convenient proxy.
+
+- **To get a clean coverage number for a coverage PR, write a thorough
+  net-new suite and measure THAT FILE ALONE — don't measure via the
+  noisy full suite (it's polluted under `--cov`), and don't try to
+  reproduce the broad coverage**: hit repeatedly during QA #5 night-1
+  (2026-06-13) taking 8 memory modules to 100%. Two findings combine.
+  (1) **A module's coverage often comes mostly from BROAD tests, not
+  its own dedicated file** — `short_term/sessions.py` was 24% via
+  `tests/unit/memory/short_term/` but 62% full-suite; the existing
+  `test_backend_init_mixin.py` self-covered only 24% (it patched the
+  method out — mock theater) while the module sat at 75% via broad
+  unified-memory tests. So a narrow run UNDERreports and the full run
+  is needed for the *real* gap — but see (2). (2) **Serial `--cov`
+  runs of the memory subset intermittently fail ~19-32 tests** with
+  `RuntimeError: cryptography library required` because some test flips
+  `attune.memory.encryption.HAS_ENCRYPTION` to False (sys.modules /
+  module-global pollution) without restoring it; victims pass in
+  isolation, and the same family bit `attune.workflows` as
+  `KeyError: 'pydantic.root_model'` importing mcp at collection. CI is
+  UNAFFECTED because it runs coverage under xdist (`-n auto`) where
+  workers isolate — this is a serial-only artifact. **The resolution
+  that made the whole batch fast and reliable:** for each target, write
+  a behavioral net-new test file that drives the class directly via a
+  tiny injected fake (FakeBase/FakeMemory/FakeSanitizer over a dict, or
+  real value objects like `RedisStatus`), then measure coverage with
+  `--cov=attune.<mod>` over THAT ONE FILE. If your file alone reaches
+  ~100%, the module is fully covered regardless of what the broad suite
+  contributes — you've PROVEN it without needing the polluted full run.
+  Reserve the full-suite xdist baseline (`scripts/qa_coverage_baseline.sh`)
+  only for the overall package %; never trust the serial `--cov` subset
+  for per-module gaps. Pairs with the "subset baseline UNDERCOUNTS"
+  lesson directly above (this is its operational answer) and the
+  "registered ≠ working / dogfood" lesson (measure the real artifact,
+  not a convenient proxy). The HAS_ENCRYPTION leak itself is filed as a
+  separate cleanup task to fix the polluting test's teardown.

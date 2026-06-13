@@ -47,6 +47,19 @@ REPO_ROOT = Path(__file__).resolve().parents[1]
 SRC_ROOT = REPO_ROOT / "src" / "attune"
 OUTPUT_CSV = REPO_ROOT / "docs" / "specs" / "test-quality-program" / "rubric_cache.csv"
 
+# Usage-signal discount (Phase 4). A module with fewer than this many
+# distinct inbound importers is treated as under-used and its score is
+# scaled down proportionally: discount = min(1.0, inbound_imports / N).
+# This sinks orphan / "Removed" modules (zero inbound imports) that would
+# otherwise top the rubric on weight×gap alone. Entry-point modules
+# (weight 5: CLI / MCP / __main__) are exempt — they are invoked, not
+# imported, so a zero import count is expected and must NOT demote them.
+USAGE_DISCOUNT_N = 5
+ENTRY_POINT_WEIGHT = 5
+
+_IMPORT_FROM = re.compile(r"^\s*from\s+(attune[\w.]*)\s+import\s+(.+)$", re.MULTILINE)
+_IMPORT_PLAIN = re.compile(r"^\s*import\s+(attune[\w.]*)", re.MULTILINE)
+
 
 # Customer weight rules: (pattern, weight). First match wins.
 # Patterns are POSIX paths relative to repo root. `**` matches any
@@ -236,7 +249,41 @@ def lookup_coverage(py: Path, coverage: dict[str, float]) -> float | None:
     return None
 
 
+def module_dotted(py: Path) -> str:
+    """Dotted import path for a source file (package path for __init__.py)."""
+    dotted = "attune." + py.relative_to(SRC_ROOT).with_suffix("").as_posix().replace("/", ".")
+    return dotted[: -len(".__init__")] if dotted.endswith(".__init__") else dotted
+
+
+def build_inbound_index() -> dict[str, set[Path]]:
+    """Map each dotted module path -> set of files that import it.
+
+    Each file's imports are recorded as both the base (`from pkg.mod
+    import X` -> `pkg.mod`) and the submodule forms (`pkg.mod.X`), so a
+    leaf module is counted whether it is imported directly
+    (`from pkg.mod import X`) or via its parent package
+    (`from pkg import mod`). Plain `import pkg.mod` is recorded too.
+    """
+    index: dict[str, set[Path]] = {}
+    for f in SRC_ROOT.rglob("*.py"):
+        if "__pycache__" in f.parts:
+            continue
+        text = f.read_text(encoding="utf-8", errors="ignore")
+        targets: set[str] = set()
+        for base, names in _IMPORT_FROM.findall(text):
+            targets.add(base)
+            for chunk in names.replace("(", "").replace(")", "").split(","):
+                name = chunk.strip().split(" as ")[0].strip()
+                if name.isidentifier():
+                    targets.add(f"{base}.{name}")
+        targets.update(_IMPORT_PLAIN.findall(text))
+        for t in targets:
+            index.setdefault(t, set()).add(f)
+    return index
+
+
 def collect_rows(coverage: dict[str, float]) -> list[dict[str, object]]:
+    inbound_index = build_inbound_index()
     rows: list[dict[str, object]] = []
     for py in SRC_ROOT.rglob("*.py"):
         if "__pycache__" in py.parts:
@@ -253,9 +300,18 @@ def collect_rows(coverage: dict[str, float]) -> list[dict[str, object]]:
         line_rate = lookup_coverage(py, coverage)
         gap = 1.0 - line_rate if line_rate is not None else 1.0
         covered_pct = f"{line_rate * 100:.1f}" if line_rate is not None else "?"
+
+        # Inbound imports from OTHER packages (same-directory files and
+        # the module itself don't count as external usage).
+        importers = inbound_index.get(module_dotted(py), set())
+        inbound = sum(1 for f in importers if f.parent != py.parent and f != py)
+        # Entry points (weight 5) are invoked, not imported -> never
+        # discounted; everything else is scaled by its usage signal.
+        discount = 1.0 if weight >= ENTRY_POINT_WEIGHT else min(1.0, inbound / USAGE_DISCOUNT_N)
+
         # Excluded modules score 0 so they sink to the bottom but
         # remain visible in the CSV for audit purposes.
-        score = 0.0 if excluded else weight * gap * risk
+        score = 0.0 if excluded else weight * gap * risk * discount
         last_mod = datetime.fromtimestamp(py.stat().st_mtime).strftime("%Y-%m-%d")
         rows.append(
             {
@@ -263,6 +319,7 @@ def collect_rows(coverage: dict[str, float]) -> list[dict[str, object]]:
                 "customer_weight": weight,
                 "coverage_gap": round(gap, 3),
                 "risk_multiplier": risk,
+                "inbound_imports": inbound,
                 "score": round(score, 3),
                 "covered_pct": covered_pct,
                 "excluded": "yes" if excluded else "",
@@ -290,14 +347,14 @@ def write_csv(rows: list[dict[str, object]], source_note: str) -> None:
 
 
 def print_top(rows: list[dict[str, object]], n: int = 20) -> None:
-    print(f"\nTop {n} candidates by score (customer_weight × gap × risk):\n")
-    print(f"  {'score':>6}  {'w':>2}  {'gap':>4}  {'risk':>4}  " f"{'cov%':>5}  module")
-    print("  " + "-" * 72)
+    print(f"\nTop {n} candidates by score (weight × gap × risk × usage_discount):\n")
+    print(f"  {'score':>6}  {'w':>2}  {'gap':>4}  {'risk':>4}  " f"{'in':>3}  {'cov%':>5}  module")
+    print("  " + "-" * 76)
     for r in rows[:n]:
         print(
             f"  {r['score']:>6.2f}  {r['customer_weight']:>2}  "
             f"{r['coverage_gap']:>4.2f}  {r['risk_multiplier']:>4.1f}  "
-            f"{str(r['covered_pct']):>5}  {r['module']}"
+            f"{r['inbound_imports']:>3}  {str(r['covered_pct']):>5}  {r['module']}"
         )
 
 
