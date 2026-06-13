@@ -8626,3 +8626,32 @@ files.
   loop — chasing infra flakes doesn't improve the product. Pairs with
   the "Diagnosing CI from the gh CLI" and "Admin-merging a PR before
   Windows lanes complete" lessons.
+
+- **A package `__init__` that re-binds a submodule name to a function
+  shadows the submodule — coverage tests must use
+  `importlib.import_module`, not `from pkg import <mod>` or `import
+  pkg.<mod> as x`**: hit 2026-06-13 writing the `suggest_compact`
+  coverage suite (19 of 20 tests failed with `AttributeError:
+  'function' object has no attribute 'should_suggest_compaction'`).
+  `src/attune/hooks/scripts/__init__.py` does `from
+  attune.hooks.scripts.suggest_compact import main as suggest_compact`,
+  so the package attribute `suggest_compact` is the `main` FUNCTION,
+  not the module. `from attune.hooks.scripts import suggest_compact`
+  binds the function; and crucially `import
+  attune.hooks.scripts.suggest_compact as hook` ALSO binds the function
+  (the `... as` form resolves via attribute access on the parent
+  package, which `__init__` overwrote — it does NOT return
+  `sys.modules[...]`). The fix that always works: `hook =
+  importlib.import_module("attune.hooks.scripts.suggest_compact")`
+  (returns the real module from `sys.modules`). Diagnostic: if
+  `hook.some_func` raises `AttributeError: 'function' object has no
+  attribute …`, the package shadowed the submodule — switch to
+  `import_module`. NOTE this is per-submodule: `evaluate_session` in
+  the same package was NOT re-bound, so `from attune.hooks.scripts
+  import evaluate_session as hook` worked there. When in doubt on the
+  QA coverage track, default to `importlib.import_module` for any
+  `attune.hooks.scripts.*` module under test. Importing canonically
+  also keeps `--cov=attune.<dotted.mod>` attribution correct (the file
+  loads under its real package path, not a `spec_from_file_location`
+  alias — the likely cause of the baseline's "test exists but 0%"
+  artifacts like `starter_prompt_nudge`).
