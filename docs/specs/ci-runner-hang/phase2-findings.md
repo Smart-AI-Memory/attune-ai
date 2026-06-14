@@ -1,0 +1,154 @@
+# Phase 2 Findings: CI Runner-Hang
+
+**Status:** in progress (diagnostics hardened; root fix gated on a
+captured frame)
+**Created:** 2026-06-14
+**Requirements:** [requirements.md](requirements.md) ·
+**Design:** [design.md](design.md) ·
+**Decisions:** [decisions.md](decisions.md)
+
+---
+
+## Summary
+
+Phase 1 (#874) armed a `faulthandler` watchdog but a fresh forensic
+capture on 2026-06-14 showed it had a gap: under xdist the dump fired
+inside the wedged *worker* and was lost when the job was killed, so we
+still had no frame. Phase 2 (this PR) closes that gap — the watchdog
+now writes each process's all-thread stack to a per-worker FILE that an
+`if: always()` CI step cats and uploads as an artifact, so a worker
+dump survives the `timeout-minutes` kill. The root fix (the polluting
+fixture/test) stays gated on a real captured frame per D1.
+
+---
+
+## Forensic capture — the hang's SHAPE
+
+From the `coverage` job of run `27488685349` (PR #876,
+`qa/analytics-commands`), killed at its 25-min timeout 05:14:34Z:
+
+- The full suite (`-n auto`, workers gw0–gw3, Linux) reached **99% at
+  04:54:29Z — only ~3.5 min in** — then froze for ~20 minutes (only
+  30-second `[mem-tick]` heartbeats, no test output) until the kill. A
+  real deadlock, not slowness.
+- Memory was **flat at ~3.2 GB** the entire freeze (`avail ~12.8 GB`) —
+  rules out OOM / memory leak (H4). A pure lock / uninterruptible-I/O
+  deadlock.
+- **Worker gw0 went silent FIRST**: its last output was
+  `[gw0] [ 89%] PASSED .../test_base_dataclasses.py::TestCostReport::
+  test_cost_report_default_cache_stats` at **04:53:56Z**. Workers
+  gw1/gw2/gw3 then drained their queues to 99% (last `[gw2]` at
+  04:54:29Z) and the session hung.
+
+This is a classic **xdist controller deadlock**: gw0 wedged mid-test,
+the other workers emptied their queues, and the controller waits
+forever for gw0 to report → the session never completes. Confirms
+hypothesis **H1** (design.md). The wedged test is the one gw0 picked up
+*after* its last PASSED (in/after
+`tests/unit/workflows/test_base_dataclasses.py`); the plain CI log only
+tags *completions* with `[gwN]`, never the in-flight test, so the exact
+gw0 test is not in the log — it must be reproduced.
+
+---
+
+## The Phase 1 watchdog GAP (root cause of "still no frame")
+
+Phase 1 armed
+`faulthandler.dump_traceback_later(secs, repeat=False)`, which defaults
+to `file=sys.stderr`. No dump appeared in the captured log even though
+the process was frozen 04:54→05:14 — well past the 600 s Linux trigger
+(which would fire ~05:01).
+
+**Why:** with pytest-xdist, `conftest.py` is imported in *each* worker
+subprocess, so the timer that matters fires inside the wedged worker
+(gw0). execnet does **not** forward a worker's raw fd-2 dump to the
+controller's stdout on a hang — worker output is surfaced via its own
+channel, typically flushed only at a test boundary/failure. So the
+dump was written to gw0's local stderr and discarded when the job was
+killed. The controller's own dump (had it fired) would have shown only
+the queue-wait, not the wedged frame.
+
+---
+
+## The fix (this PR) — make the worker dump survive
+
+Chose **option (a)** from the handoff (the robust one):
+
+1. **`tests/conftest.py`** — the watchdog now opens
+   `hang-dumps/hang-<worker>.txt` (keyed by `PYTEST_XDIST_WORKER`;
+   controller → `hang-controller`) and passes it as `file=` to
+   `dump_traceback_later`. The dir is workspace-relative (portable
+   across Linux/macOS/Windows lanes), the file ref is kept in a module
+   global so the fd stays alive, and the whole block is wrapped so an
+   un-writable workspace falls back to the Phase 1 stderr behavior
+   rather than breaking conftest import (which would fail *every*
+   test). faulthandler writes via the raw fd (async-signal-safe), so
+   the bytes hit the OS immediately — no buffer-flush concern; an
+   `[hang-watchdog] armed: …` line is printed at arm time for
+   correlation.
+
+2. **`.github/workflows/tests.yml`** — the `test` and `coverage` jobs
+   (the two `-n auto` lanes where the hang was observed) gained two
+   `if: always()` steps: "Surface hang-watchdog dumps" (cats every
+   non-empty dump into a `::group::`, prunes empty armed-but-never-
+   fired files) and "Upload hang-watchdog dumps" (uploads `hang-dumps/`
+   as a uniquely-named artifact, `if-no-files-found: ignore`). Because
+   the dump fires at ~10 min and the job is killed at 25/35 min, the
+   file is on disk before the kill and `if: always()` runs the capture
+   after the test step is cancelled.
+
+3. **Regression guard** — `tests/unit/ci/test_workflow_yaml.py::
+   TestHangDumpCapture` fails if either lane loses its
+   `if: always()` hang-dumps upload, so the gap can't silently reopen.
+
+4. **`.gitignore`** — `hang-dumps/` (CI artifact only; never committed).
+
+### Verification (G1, local)
+
+Injected hang reproduced the mechanism end-to-end:
+`CI=1 PYTEST_HANG_DUMP_SECONDS=3 pytest <hanging tests> -n 2`. Result:
+`hang-dumps/hang-gw0.txt` named the **exact wedged frame**
+(`test_hang.py line 3 in test_hangs`); `hang-controller.txt` showed the
+xdist `dsession.loop_once` queue-wait — the same deadlock shape as the
+forensic capture; non-hanging / respawned workers left empty files
+(pruned before upload). This is the frame Phase 1 lost.
+
+---
+
+## Follow-up (deliverable #2 — gated, NOT in this PR)
+
+Per D1 (diagnostics-first) and the tar-pit guard, the root fix waits
+for a real captured frame. Once the next ubuntu hang uploads a
+`hang-dumps-*` artifact (or `py-spy dump --pid <hung worker>` names it):
+
+1. Reproduce locally under load to re-wedge gw0:
+   `pytest tests/unit/workflows/test_base_dataclasses.py tests/workflows/
+   -n 4 -p no:cacheprovider` in a loop (or the whole suite `-n 4`),
+   watching for the 99%-freeze.
+2. Classify the frame: a worker blocked in uninterruptible I/O
+   (`socket.recv`, `subprocess.wait/communicate`, a lock `.acquire()`
+   inside a fixture) ⇒ H1/H2 — the same polluter family as
+   `windows-xdist-flakes` (real socket/subprocess I/O in a fixture,
+   hang-on-Linux vs crash-on-Windows).
+3. Fix the polluting fixture/test: make the I/O hermetic / properly
+   torn down (close sockets, terminate subprocesses, timeout on
+   `.wait()`), per the proven Windows-spec pattern.
+4. Land the P5 autouse guard (G4) that fails fast if a test opens a
+   real socket or spawns a real subprocess (OD3 says defer until H2 is
+   confirmed — now unblocked once a frame lands).
+5. Verify with a **rerun count** (≥10 clean `-n auto` reruns), not a
+   single green — the hang is nondeterministic / worker-distribution-
+   dependent (the same PR's required `test (ubuntu-latest, 3.12)` lane
+   PASSED while `coverage` wedged).
+
+### Watch-outs
+
+- `pytest-timeout`'s `--timeout=60 --timeout-method=thread` does NOT
+  fire on this GIL-blocked / uninterruptible wedge — do not expect it.
+- A clean run does not mean it's fixed; reproduce deliberately.
+- Keep the watchdog threshold (Linux 600 s) below every lane's normal
+  full-suite runtime so a slow-but-fine run never trips a false dump;
+  tune via `PYTEST_HANG_DUMP_SECONDS` if normal runtimes climb.
+- `clock-tz` also runs `-n auto` on ubuntu and could wedge; it was left
+  out of the capture steps to keep this PR scoped to the two
+  required-check lanes. Add the same two steps there if it ever hangs.

@@ -395,3 +395,45 @@ class TestPytestConfig:
             f"use an anchored pattern (/name), or add it to "
             f"TestPytestConfig._INTENTIONAL_EXCLUSIONS with a reason comment."
         )
+
+
+# ===========================================================================
+# 9. Hang-watchdog dump capture (ci-runner-hang Phase 2)
+# ===========================================================================
+
+
+class TestHangDumpCapture:
+    """The pytest lanes that wedge must upload the watchdog's hang dumps.
+
+    The conftest watchdog (Phase 1) writes each process's all-thread stack
+    to ``hang-dumps/hang-<worker>.txt``. Phase 2's whole point is that a
+    worker dump SURVIVES a ``timeout-minutes`` kill — which only works if
+    the job has an ``if: always()`` step that uploads ``hang-dumps/``.
+    Without this guard the capture step can be silently dropped in a future
+    ``tests.yml`` edit, re-opening the gap that lost the run-27488685349
+    stack. Guards the two `-n auto` lanes where the hang was observed.
+    """
+
+    LANES = ("test", "coverage")
+
+    @pytest.mark.parametrize("job_id", LANES)
+    def test_lane_uploads_hang_dumps_always(self, job_id):
+        """The test/coverage job must upload hang-dumps/ with if: always()."""
+        job = ALL_WORKFLOWS["tests.yml"]["jobs"][job_id]
+        upload = None
+        for step in job.get("steps", []):
+            uses = step.get("uses", "")
+            path = step.get("with", {}).get("path", "") or ""
+            if "upload-artifact" in uses and "hang-dumps" in path:
+                upload = step
+                break
+        assert upload is not None, (
+            f"tests.yml:{job_id} has no step uploading hang-dumps/ — a wedged "
+            f"worker's faulthandler dump would be lost on the timeout kill "
+            f"(ci-runner-hang Phase 2 regression)."
+        )
+        # `always()` is what makes the dump survive a timeout-minutes cancel.
+        assert "always()" in str(upload.get("if", "")), (
+            f"tests.yml:{job_id} hang-dumps upload must run with "
+            f"`if: always()` (else it is skipped when the job times out)."
+        )

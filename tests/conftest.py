@@ -3,6 +3,7 @@
 import faulthandler
 import json
 import os
+import sys
 from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
@@ -37,21 +38,61 @@ import pytest
 # deadlock) — invisible to a per-test thread timeout.
 #
 # Arm a process-level faulthandler watchdog so the NEXT hang dumps every
-# thread's stack to stderr (captured by CI) BEFORE the job `timeout-minutes`
-# kills it — turning an opaque stall into a named frame. Because this runs
-# at conftest import time, it arms in the xdist controller AND every worker
-# subprocess, and covers collection-time hangs too.
+# thread's stack BEFORE the job `timeout-minutes` kills it — turning an
+# opaque stall into a named frame. Because this runs at conftest import
+# time, it arms in the xdist controller AND every worker subprocess, and
+# covers collection-time hangs too.
+#
+# Phase 2 fix (the watchdog GAP): the dump MUST go to a per-process FILE,
+# not stderr. Under pytest-xdist the timer that matters fires inside the
+# wedged WORKER (e.g. gw0); execnet does NOT forward a worker's raw fd-2
+# dump to the controller's stdout on a HANG (worker output is surfaced via
+# its own channel, typically flushed only at a test boundary), so a
+# stderr dump is written to the worker's local stderr and LOST when the
+# job is killed at `timeout-minutes`. Forensic capture 2026-06-14 (run
+# 27488685349, coverage job): gw0 went silent first, the dump fired
+# ~05:01 but never reached the CI log. Writing to hang-dumps/hang-<worker>
+# .txt (workspace-relative, so a CI `if: always()` step can cat + upload
+# it as an artifact) makes the worker dump survive the kill. faulthandler
+# writes via the raw fd (async-signal-safe), so the bytes hit the OS
+# immediately — no Python-buffer flush needed; repeat=False writes once.
 #
 # Gated on the auto-set CI env var so local runs are unaffected. Threshold
 # is OS-tuned (Linux lanes are fast, ~4-8 min normal; Windows/macOS ~13-15)
 # and sits below the job timeout. Overridable via PYTEST_HANG_DUMP_SECONDS
-# for local smoke-testing.
+# for local smoke-testing (set CI=1 too, since the watchdog is CI-gated).
+_HANG_DUMP_FILE = None  # module-level ref keeps the fd alive for faulthandler
 if os.environ.get("CI"):
     _hang_default = 600.0 if os.environ.get("RUNNER_OS") == "Linux" else 1200.0
     _hang_secs = float(os.environ.get("PYTEST_HANG_DUMP_SECONDS", _hang_default))
-    # dump_traceback_later always dumps ALL threads (no all_threads kwarg —
-    # that exists only on register()/dump_traceback()).
-    faulthandler.dump_traceback_later(_hang_secs, repeat=False)
+    # Key the dump file by xdist worker (controller sees no worker env var).
+    # PYTEST_XDIST_WORKER is set in each worker subprocess's environment
+    # before its Python starts, so it is already present at conftest import.
+    _hang_worker = os.environ.get("PYTEST_XDIST_WORKER", "controller")
+    _hang_dir = Path(__file__).resolve().parent.parent / "hang-dumps"
+    try:
+        _hang_dir.mkdir(exist_ok=True)
+        # Line-buffered (buffering=1) is belt-and-suspenders; faulthandler
+        # writes via the fd directly regardless. Keep the ref in a module
+        # global so the file (and its fd) is not GC'd out from under the
+        # armed timer.
+        _HANG_DUMP_FILE = open(  # noqa: SIM115 (kept open for the watchdog's lifetime)
+            _hang_dir / f"hang-{_hang_worker}.txt", "w", buffering=1
+        )
+        # dump_traceback_later always dumps ALL threads (no all_threads
+        # kwarg — that exists only on register()/dump_traceback()).
+        faulthandler.dump_traceback_later(_hang_secs, repeat=False, file=_HANG_DUMP_FILE)
+        print(
+            f"[hang-watchdog] armed: {_hang_secs:.0f}s -> {_hang_dir.name}/"
+            f"hang-{_hang_worker}.txt",
+            file=sys.stderr,
+        )
+    except OSError:
+        # Never let an un-writable workspace break conftest import (which
+        # would fail collection on EVERY test). Fall back to the Phase 1
+        # stderr behavior — degraded (worker dumps still lost on a hang)
+        # but safe.
+        faulthandler.dump_traceback_later(_hang_secs, repeat=False)
 
 # =============================================================================
 # Import Guard - Ensure workflows package is properly initialized
