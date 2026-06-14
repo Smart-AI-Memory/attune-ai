@@ -167,6 +167,50 @@ jobs:
     - name: Run security and workflow tests
       run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
 
+  clock-tz:
+    # Hostile-clock lane: runs the unit suite under extreme NON-UTC
+    # timezones so date/TZ bugs (the #867 / #868 clock-mix class) fail in
+    # CI instead of in production. GitHub-hosted runners default to UTC, so
+    # the 12-lane `test` matrix only ever exercises the UTC path — this is
+    # the one place a "local date.today() vs UTC-keyed bucket" mix gets
+    # caught. Two TZs bracket the bug in both directions:
+    #   Pacific/Kiritimati  UTC+14  (local AHEAD of UTC — evening rolls over)
+    #   America/Anchorage   UTC-9   (local BEHIND UTC — morning lags)
+    #
+    # Runs ALWAYS (no slim/full gate): a tests-only PR adding a
+    # wall-clock-dependent test is exactly what this guards. Keyless by
+    # design. NOT a required check yet — promote in branch protection once
+    # it has a few green runs (needs the GitHub-Actions app_id; tracked
+    # separately, deliberately out of scope for this PR).
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: ["Pacific/Kiritimati", "America/Anchorage"]
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Run unit suite under ${{ matrix.tz }}
+      shell: bash
+      run: |
+        python -c "import time, datetime; print('TZ=', time.tzname, 'utcoffset=', datetime.datetime.now().astimezone().utcoffset())"
+        pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
+      env:
+        TZ: ${{ matrix.tz }}
+        ANTHROPIC_API_KEY: ""  # keyless by design — see the `test` job note
+
   coverage:
     # Dedicated coverage job — runs once on Linux 3.11 with branch
     # coverage on. Split out of the matrix to keep branch-coverage
