@@ -326,14 +326,14 @@ def pytest_sessionfinish(session, exitstatus):
             tests_modified_at = None
 
             if source_path.exists():
-                source_modified_at = (
-                    datetime.fromtimestamp(source_path.stat().st_mtime).isoformat() + "Z"
-                )
+                source_modified_at = datetime.fromtimestamp(
+                    source_path.stat().st_mtime, tz=timezone.utc
+                ).isoformat()
 
             if test_path.exists():
-                tests_modified_at = (
-                    datetime.fromtimestamp(test_path.stat().st_mtime).isoformat() + "Z"
-                )
+                tests_modified_at = datetime.fromtimestamp(
+                    test_path.stat().st_mtime, tz=timezone.utc
+                ).isoformat()
 
             # Check staleness
             is_stale = False
