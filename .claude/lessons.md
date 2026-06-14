@@ -8834,3 +8834,66 @@ files.
   job level (the fail-bucket≠failure trap), NOT a real test failure —
   always confirm conclusion via `gh run view <id> --json jobs` before
   treating a hostile-clock "fail" as a code bug.
+
+- **A pytest-xdist WORKER's `faulthandler` stderr dump is LOST on a
+  hang — write it to a per-worker FILE and upload it `if: always()`**:
+  2026-06-14, ci-runner-hang Phase 2. Phase 1 (#874) armed
+  `faulthandler.dump_traceback_later(secs, repeat=False)` (defaults to
+  `file=sys.stderr`) in `tests/conftest.py` to turn an opaque hang into
+  a named frame. But the forensic capture of run 27488685349 (coverage
+  job) showed NO dump in the CI log despite a 20-min freeze well past
+  the 600s trigger. Root cause: conftest is imported in EACH xdist
+  worker subprocess, so the timer that matters fires inside the wedged
+  WORKER (gw0); execnet does NOT forward a worker's raw fd-2 dump to the
+  controller's stdout on a hang (worker output is surfaced via its own
+  channel, flushed only at a test boundary/failure), so the dump is
+  written to the worker's local stderr and discarded when the job is
+  killed at `timeout-minutes`. The controller's own dump (if it fired)
+  shows only the `dsession.loop_once` queue-wait, not the wedged frame.
+  Fix (#879): open `hang-dumps/hang-<worker>.txt` keyed by
+  `PYTEST_XDIST_WORKER` (controller → `hang-controller`; the env var IS
+  set in each worker's environment at conftest-import time — verified)
+  and pass it as `file=` to `dump_traceback_later`; keep the file ref in
+  a module global so the fd isn't GC'd; wrap in try/except so an
+  un-writable workspace falls back to stderr instead of breaking
+  conftest import (which would fail EVERY test). Then add two
+  `if: always()` steps to each `-n auto` lane: cat non-empty dumps into
+  a `::group::` (prune empty armed-but-never-fired files so a healthy
+  run makes no artifact) and `upload-artifact` `hang-dumps/`
+  (`if-no-files-found: ignore`, unique name per matrix leg). `always()`
+  is what makes the capture run AFTER the test step is cancelled by the
+  job timeout; faulthandler writes via the raw fd (async-signal-safe) so
+  the bytes are on disk before the kill. Use a workspace-relative dir
+  (`Path(__file__).parent.parent / "hang-dumps"`), NOT `/tmp` — the
+  watchdog arms on Windows/macOS lanes too and `/tmp` doesn't exist on
+  Windows, so a hardcoded `/tmp` open would crash conftest import on
+  every Windows leg. Verify locally with an injected hang
+  (`CI=1 PYTEST_HANG_DUMP_SECONDS=3 pytest <sleeping tests> -n 2`): the
+  hung worker's file names the exact frame; non-hung/respawned workers
+  leave empty files. Pairs with the "intermittent flake vs systemic
+  fleet wedge" lesson (same CI runner-hang) and the windows-xdist-flakes
+  spec (same I/O-polluter family — hang-on-Linux vs crash-on-Windows);
+  the root fix of the polluting fixture stays gated on a captured frame
+  (diagnostics-first). UPDATE same day: #879's OWN CI run captured the
+  first real frames — `test (ubuntu-latest, 3.12)` wedged and the
+  uploaded `hang-dumps-test-ubuntu-latest-3.12` artifact proved the
+  mechanism end-to-end in production. READING the frames (and NOT
+  jumping to a culprit — a near-miss this session): the controller is in
+  `xdist/dsession.py:154 loop_once` (queue-wait); gw1/gw2/gw3 are all
+  IDLE in execnet `serve`/`integrate_as_primary_thread` (normal "waiting
+  for next command" state); **gw0's dump is ABSENT** (its hang-gw0.txt
+  was empty → pruned), which means gw0's faulthandler never fired → gw0
+  was already gone by the 10-min mark. So the shape is: gw0 died/exited
+  and the controller waits forever for a worker that will never report,
+  while the other workers sit idle. A `coordinator.py:289
+  _heartbeat_loop` thread appears in gw3's dump but is a DAEMON
+  (coordinator.py:271 `daemon=True`) doing its periodic
+  `_heartbeat_stop.wait()` — a RED HERRING, not the cause (daemons don't
+  block exit). Root cause is NOT yet proven and stays deliverable #2
+  (gated): reproduce under `-n 4` load, find why gw0 dies (py-spy the
+  worker as it goes, or read gw0's death in the raw job log), fix the
+  polluting test/fixture, land the P5 autouse guard. The durable lesson
+  here: the captured artifact tells you the SHAPE (which worker, idle vs
+  wedged, controller-wait) but naming the culprit still needs the dying
+  worker's own frame — an ABSENT worker dump is itself the signal
+  (that worker died before the watchdog could fire).
