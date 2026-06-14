@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -128,7 +128,6 @@ def test_home_renders_with_runner_recent_runs(tmp_path, monkeypatch):
     seeded = Run(id="abc123", workflow="code-review")
     seeded.status = "completed"
     seeded.exit_code = 0
-    from datetime import datetime, timezone
 
     seeded.started_at = datetime(2026, 5, 6, 12, 0, 0, tzinfo=timezone.utc)
     seeded.completed_at = datetime(2026, 5, 6, 12, 0, 5, tzinfo=timezone.utc)
@@ -169,7 +168,6 @@ def test_home_recent_runs_each_cell_links_to_run_view(tmp_path, monkeypatch):
     seeded = Run(id="abc12345", workflow="code-review")
     seeded.status = "completed"
     seeded.exit_code = 0
-    from datetime import datetime, timezone
 
     seeded.started_at = datetime(2026, 5, 6, 12, 0, 0, tzinfo=timezone.utc)
     seeded.completed_at = datetime(2026, 5, 6, 12, 0, 5, tzinfo=timezone.utc)
@@ -269,7 +267,14 @@ def test_home_renders_sparkline_svg_when_costs_present(tmp_path, monkeypatch):
     home = tmp_path / "attune-home"
     (home / "telemetry").mkdir(parents=True)
     log = home / "telemetry" / "usage.jsonl"
-    today = date.today().isoformat()
+    # UTC date, not local ``date.today()``: the event ts is UTC
+    # (``+00:00``) and the server windows the sparkline by UTC
+    # (``read_telemetry_summary``/``home_kpis`` anchor on
+    # ``datetime.now(timezone.utc).date()``). Stamping with local
+    # ``date.today()`` puts the event a UTC day in the future for any
+    # TZ ahead of UTC (e.g. UTC+14 Kiritimati), so it falls outside the
+    # 7-day window and the polyline vanishes. Same bug class as #868.
+    today = datetime.now(timezone.utc).date().isoformat()
     log.write_text(
         f'{{"workflow": "x", "total_cost": 0.42, "timestamp": "{today}T10:00:00+00:00"}}\n',
         encoding="utf-8",
@@ -298,7 +303,10 @@ def test_home_kpis_nonzero_when_telemetry_uses_ts_field(tmp_path, monkeypatch):
     home = tmp_path / "attune-home"
     (home / "telemetry").mkdir(parents=True)
     log = home / "telemetry" / "usage.jsonl"
-    today = date.today().isoformat()
+    # UTC date, not local ``date.today()`` — see the sparkline test
+    # above: local stamping puts the event a UTC day ahead under TZs
+    # east of UTC (UTC+14), dropping it from the UTC-anchored window.
+    today = datetime.now(timezone.utc).date().isoformat()
     # Write with ``ts`` (the real v1.0 schema key), NOT ``timestamp``.
     log.write_text(
         f'{{"workflow": "x", "total_cost": 0.42, "ts": "{today}T10:00:00+00:00"}}\n',
