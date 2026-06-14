@@ -340,3 +340,6 @@ __all__ = [
     "get_redis_memory",
     "load_config",
 ]
+
+# Phase 4 out-of-class auto-merge verification marker — this src/ edit
+# must NOT auto-merge. Safe to revert; PR will be closed after the test.
