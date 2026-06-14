@@ -35,23 +35,37 @@ runtimes.
 
 ---
 
-## Open decisions (need Patrick or probe data)
+## Resolved decisions (Patrick, 2026-06-14)
 
-- **OD1 — Is this its own spec or a phase of `windows-xdist-flakes`?**
-  Recommendation: **own spec** (different OS, different manifestation —
-  hang vs crash), cross-linked. If P3/P5 prove a *shared* polluter,
-  fix once and reference both. Confirm.
-- **OD2 — Acceptable normal-runtime ceiling for the timeout guard.**
-  Need a week of `coverage`/`test` durations to set `timeout-minutes`
-  without false-failing healthy slow runs. Proposed interim: 25 min.
-- **OD3 — Appetite for the P5 autouse I/O guard now vs after a
-  confirmed H2.** It is the durable G4 regression guard but touches the
-  whole unit-test tree (some legitimate loopback tests must be
-  allow-listed). Recommend deferring until P1/P3 implicate H2, to avoid
-  a large speculative change.
-- **OD4 — `--timeout-method=signal` on POSIX lanes (P4).** Only pursue
-  if P1's stack shows a C-call wedge the thread method missed; do not
-  blind-switch (xdist interaction risk).
+- **OD1 → own spec.** This stays a standalone spec, cross-linked to
+  `windows-xdist-flakes`. If P3/P5 prove a *shared* polluter, fix once
+  and reference both.
+- **OD2 → 25 min interim.** `timeout-minutes` tightened from the
+  current 75. Implementation: coverage job → 25; matrix `test` job →
+  20 on ubuntu (where the hang lives, normal ~4 min) / 40 on
+  Windows+macOS (normal ~13–15 min, must not false-fail). Re-tune after
+  a week of observed durations.
+- **OD3 → defer.** The broad P5 autouse I/O guard waits until P1/P3
+  implicate H2 — no large speculative change now.
+- **OD4 → approved, gated.** Pursue `--timeout-method=signal` on the
+  POSIX lanes *only after* Phase 1's stack shows a C-call wedge the
+  thread method missed. Not a blind switch (the existing tests.yml
+  comment notes thread-method is deliberate for Windows; signal is
+  POSIX-only and has xdist-interaction risk).
+
+## Implementation note (Phase 1)
+
+faulthandler is armed in `tests/conftest.py` gated on the auto-set `CI`
+env var (so local runs are unaffected) with an OS-tuned threshold
+(`RUNNER_OS == "Linux"` → 600s, else 1200s), via
+`faulthandler.dump_traceback_later(secs, repeat=False, all_threads=True)`
+at conftest import time so it covers the xdist controller AND every
+worker subprocess, including collection-time hangs. The threshold sits
+below the job `timeout-minutes` so the all-thread stack lands in the log
+*before* the fast-fail kills the job. Threshold overridable for local
+smoke-testing via `PYTEST_HANG_DUMP_SECONDS`. This keeps the `tests.yml`
+diff to the two `timeout-minutes` lines (no `env:` edits → no conflict
+with the open `--cov-fail-under` change in #871).
 
 ---
 
