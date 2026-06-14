@@ -58,11 +58,15 @@ runtimes.
 faulthandler is armed in `tests/conftest.py` gated on the auto-set `CI`
 env var (so local runs are unaffected) with an OS-tuned threshold
 (`RUNNER_OS == "Linux"` → 600s, else 1200s), via
-`faulthandler.dump_traceback_later(secs, repeat=False, all_threads=True)`
-at conftest import time so it covers the xdist controller AND every
-worker subprocess, including collection-time hangs. The threshold sits
-below the job `timeout-minutes` so the all-thread stack lands in the log
-*before* the fast-fail kills the job. Threshold overridable for local
+`faulthandler.dump_traceback_later(secs, repeat=False)` at conftest
+import time so it covers the xdist controller AND every worker
+subprocess, including collection-time hangs.
+(`dump_traceback_later` always dumps ALL threads — there is no
+`all_threads` kwarg on it; that exists only on `register()` /
+`dump_traceback()`. Passing it raises `TypeError` at import and breaks
+collection — caught by the Phase 1 local smoke test before ship.) The
+threshold sits below the job `timeout-minutes` so the all-thread stack
+lands in the log *before* the fast-fail kills the job. Shipped in #874. Threshold overridable for local
 smoke-testing via `PYTEST_HANG_DUMP_SECONDS`. This keeps the `tests.yml`
 diff to the two `timeout-minutes` lines (no `env:` edits → no conflict
 with the open `--cov-fail-under` change in #871).
