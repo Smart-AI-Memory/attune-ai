@@ -9007,3 +9007,41 @@ files.
   different cause (race vs auth); and with the cancel-to-bypass
   runner-hang technique (same `gh run cancel → workflow_run fires`
   mechanism, here used to RE-fire rather than first-fire).
+
+- **When the QA-batch's suggested package is already done, stop
+  baselining packages one-by-one — run ONE whole-tree `--cov=attune`
+  pass and rank every sub-80 module at once; then mocking
+  `except provider.XError` handlers needs REAL Exception subclasses on
+  the mock**: 2026-06-14, QA #6 session B. The starter's first-pick
+  `attune.cli_commands` was already 95% (nothing sub-80), and
+  `attune.help` 97% — each `scripts/qa_coverage_baseline.sh <pkg>` run
+  is a full ~1-2 min suite scoped to one package, so probing packages
+  serially to *find* a gap is wasteful. Faster discovery: run the suite
+  ONCE with `--cov=attune --cov-config=/dev/null` over all of `tests`
+  (ignore `tests/integration`), then
+  `awk '$1~/\.py$/{c=$4;gsub("%","",c);if(c+0<80)print}' | sort -rn` to
+  rank EVERY sub-80 module in the whole codebase. Because
+  `--cov-config=/dev/null` bypasses the rcfile, the `omit` list is NOT
+  applied — so cross-check each candidate against `pyproject.toml`'s
+  `omit` (a cluster of low modules in `meta_workflows/cli_commands/*`,
+  `agents/release/*`, `*/progress_server.py`, `*/config.py` are
+  omit-masked illusions). The real target is usually a SINGLE
+  non-omitted module the whole-tree view surfaces cleanly
+  (here `llm/providers/anthropic.py` 77→100%). SECOND, distinct gotcha
+  from that same module: its error handlers are `except
+  anthropic.RateLimitError` / `APIStatusError` etc. where `anthropic`
+  is mocked via `patch.dict("sys.modules", {"anthropic": mock})`. If
+  the mock's `.RateLimitError` is a plain `MagicMock` attribute, the
+  `except` clause raises `TypeError: catching classes that do not
+  inherit from BaseException` at handling time — the test fails for the
+  wrong reason. Fix: assign REAL `Exception` subclasses onto the mock
+  module (`mock.RateLimitError = class _Fake(Exception): ...`), then
+  `side_effect=_Fake(...)` and `pytest.raises(_Fake)`. For
+  `APIStatusError`, give the fake `status_code` + `response.text` since
+  the handler reads them. Same pattern for any SUT that does
+  `import <sdk>` locally and catches `<sdk>.SomeError` — the mocked sdk
+  must expose real exception classes, not MagicMock attributes. Pairs
+  with the "subset baseline UNDERCOUNTS" / "measure the real artifact"
+  lessons (per-module measurement) — this is the *discovery* half:
+  whole-tree sweep to find the gap, omit cross-check to confirm it's
+  real, then measure the one module alone.
