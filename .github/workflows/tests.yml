@@ -190,12 +190,21 @@ jobs:
       run: python scripts/check_badge_freshness.py
 
     - name: Run tests with coverage
+      # Coverage RATCHET: --cov-fail-under is a one-way valve, not a static
+      # floor. Main has measured 94.69–94.71% across recent runs (stable to
+      # ~0.02%); the gate sits at 94 (≈0.7pt headroom for normal churn). The
+      # old 85 left a ~9.7pt silent-erosion slack — coverage could fall from
+      # ~94.7 to 85 without CI noticing. RATCHET POLICY: only ever raise this
+      # number (when main climbs and holds above floor+~1), never lower it to
+      # make a red PR pass — a drop is a signal to add tests, not slacken the
+      # gate. (pyproject's fail_under stays 85 as the absolute floor for
+      # ad-hoc/partial local runs whose --cov scope differs from CI's.)
       run: |
         echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
         (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
         MEM_MONITOR_PID=$!
         trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
