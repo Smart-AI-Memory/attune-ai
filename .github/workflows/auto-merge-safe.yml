@@ -20,7 +20,15 @@ name: Auto-merge safe (tests/docs only)
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
-  check_run:
+  # NOT check_run: a check_run produced by the `Tests` workflow runs
+  # under GITHUB_TOKEN, and GitHub does NOT start a new workflow run
+  # from a GITHUB_TOKEN-triggered event (anti-recursion). So the
+  # coverage check_run completing never reached this workflow. Use
+  # workflow_run instead — it fires when `Tests` finishes regardless
+  # of conclusion (so a hung/failed redundant lane doesn't block us),
+  # and the merge job re-checks the `coverage` check independently.
+  workflow_run:
+    workflows: ["Tests"]
     types: [completed]
 
 permissions: {}
@@ -28,7 +36,7 @@ permissions: {}
 concurrency:
   group: >-
     auto-merge-safe-${{ github.event.pull_request.head.sha ||
-    github.event.check_run.head_sha }}
+    github.event.workflow_run.head_sha }}
   cancel-in-progress: false
 
 jobs:
@@ -76,15 +84,14 @@ jobs:
           fi
 
   # ---------------------------------------------------------------
-  # When the `coverage` check goes green, re-evaluate ALL gates and
-  # admin-merge. Reacts the instant coverage succeeds, regardless of
-  # a still-hung redundant sibling lane (the whole point).
+  # When the `Tests` workflow completes (any conclusion), re-evaluate
+  # ALL gates and admin-merge. The job independently re-checks that
+  # the `coverage` check is green on the PR head, so a still-hung /
+  # failed redundant sibling lane (which makes the overall Tests run
+  # non-success) does not block the merge — that is the whole point.
   # ---------------------------------------------------------------
   merge:
-    if: >-
-      github.event_name == 'check_run' &&
-      github.event.check_run.name == 'coverage' &&
-      github.event.check_run.conclusion == 'success'
+    if: github.event_name == 'workflow_run'
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
@@ -96,7 +103,7 @@ jobs:
       - name: Evaluate gates and admin-merge
         env:
           GH_TOKEN: ${{ secrets.ADMIN_MERGE_TOKEN }}
-          SHA: ${{ github.event.check_run.head_sha }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
           REPO: ${{ github.repository }}
           OWNER_LOGIN: silversurfer562
         run: |
