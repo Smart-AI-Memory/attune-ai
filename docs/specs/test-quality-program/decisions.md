@@ -684,3 +684,34 @@ guard) are unreachable when `attune.telemetry` imports cleanly, so
 found.
 **PR:** https://github.com/Smart-AI-Memory/attune-ai/pull/893
 **Bug log entry:** none
+
+---
+
+## agents/release/base_agent.py — 70%→100% (QA #6, package #2)
+
+**Date:** 2026-06-14
+**Package ratification:** After `attune.workflows` finished, baselined
+`agents` (82%), `meta_workflows` (83%), `telemetry` (93%). Telemetry is
+effectively done. **The apparent big gaps were mostly illusory** — the
+baseline runs `--cov-config=/dev/null`, so omitted modules show their
+real (low) numbers. Confirmed against `pyproject.toml` `omit`:
+- `meta_workflows/cli_commands/{template,config,memory,agent,analytics}_commands.py`
+  — all OMITTED ("Interactive…/requires live Claude agent loop"). The
+  129/87/76/51-missed "gaps" are not real.
+- `agents/release/{release_parsing,release_prep_team,release_models}.py`
+  — all OMITTED (LLM/model code).
+The one **real** sub-80% module across all three packages was
+`agents/release/base_agent.py` (70%, not omitted, 6 inbound importers,
+existing test file). Picked it; `agents` is then effectively done too.
+**Rubric note:** when the baseline shows a cluster of low-coverage
+modules, cross-check the `omit` list FIRST — omitted modules are not
+gaps, and a package's "real" gap can be a single module.
+**Outcome:** Net-new `test_base_agent_coverage.py` (10 tests) extending
+the existing 25. Covers LLM client init (key present/absent), the Redis
+exception swallows in `_register_heartbeat`/`_signal_completion`, the
+`_signal_completion` scalar-only-summary publish, and `_call_llm` with a
+live client (success+cost tracking, empty content, no-`.text` block,
+exception fallback). All externals mocked (anthropic SDK patched —
+keyless-safe). Module measured alone: **100%**. No production bug found.
+**PR:** https://github.com/Smart-AI-Memory/attune-ai/pull/896
+**Bug log entry:** none
