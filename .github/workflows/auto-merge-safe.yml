@@ -117,6 +117,17 @@ jobs:
             exit 0
           fi
 
+          # Defensive: a trailing newline / whitespace in the secret value
+          # makes the HTTP Authorization header invalid ("net/http: invalid
+          # header field value for \"Authorization\""), so EVERY gh api call
+          # fails. A PAT never contains whitespace, so strip it. This was the
+          # true root cause of the #884/#881 merge failures — the secret was
+          # stored with a trailing newline (see D6); the empty sha->PR lookup
+          # was that auth error swallowed by a process substitution, NOT
+          # eventual-consistency lag.
+          GH_TOKEN="$(printf '%s' "$GH_TOKEN" | tr -d '[:space:]')"
+          export GH_TOKEN
+
           # ---------------------------------------------------------------
           # Resolve the triggering SHA -> PR number(s).
           #
