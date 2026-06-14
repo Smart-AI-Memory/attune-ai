@@ -8941,3 +8941,33 @@ files.
   before trusting" lessons — same discipline (read the authoritative
   signal before asserting a cause), here applied to a CI auth failure
   that two layers of swallowing kept invisible.
+
+- **Mixing a UTC clock with a LOCAL clock in one comparison is a
+  silent, date-dependent bug class — `date.today()` / naive
+  `datetime.now()` / `utcnow()` compared against a UTC value flips on
+  certain days/timezones and only fails some of the time**: hit
+  2026-06-14, QA baseline caught `test_yesterdays_log_moved_to_archive`
+  failing on main. `FileBulletinBackend._maybe_rotate` read the active
+  log's mtime as a UTC date
+  (`datetime.fromtimestamp(st_mtime, tz=timezone.utc).date()`) but
+  compared it against `date.today()` (LOCAL). When the two clocks
+  straddle a day boundary, daily rotation skips or fires on the wrong
+  day — a flake that passes or fails depending on the runner's TZ and
+  the time of day, not on the code under test. Fixed (#867) by using one
+  clock authority: `datetime.now(timezone.utc).date()` (the rest of the
+  module was already UTC — `read_active` uses `datetime.now(timezone.utc)`
+  and archive filenames are the UTC `mtime.date()`). **This is a CLASS,
+  not an instance** — grep the smell across the codebase:
+  `grep -rn "date.today()\|datetime.now()" src/ | grep -v timezone.utc`,
+  plus any `fromtimestamp(` without `tz=` and any `utcnow()` (naive).
+  For each hit, decide the module's intended authority (this codebase is
+  UTC throughout) and unify. Test the fix deterministically with
+  `os.utime` / an injected epoch, NEVER the wall clock — a wall-clock
+  test reproduces the same TZ-dependence it's meant to guard against.
+  Companion smell: if your dev environment's date and CI's `date -u`
+  disagree (session clock said 06-13 while CI ran 06-14 UTC), you are
+  living in exactly the gap this bug exploits — suspect date-dependent
+  tests project-wide. Pairs with the "registered ≠ working / dogfood"
+  and "xfail-as-test-bug" lessons (verify actual behavior against a
+  controlled input) and the Windows-portability lessons (same family:
+  environment-dependent test outcomes that pass locally, fail elsewhere).
