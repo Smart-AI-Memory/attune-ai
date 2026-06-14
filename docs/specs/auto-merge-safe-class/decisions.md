@@ -107,44 +107,64 @@ delays the merge. Right-sizing the matrix is tracked separately.
 
 ---
 
-## D6 — sha→PR resolution: event payload first, REST fallback with retry
+## D6 — true root cause: malformed `ADMIN_MERGE_TOKEN` (+ resolution hardening)
 
 **Bug (found on [PR #884](https://github.com/Smart-AI-Memory/attune-ai/pull/884),
 2026-06-14):** with the D5 trigger live, #884's `Tests` completion
 DID invoke the merge job, but it logged `No open PR against main
 for <sha>` and bailed. The lookup
-`gh api repos/$REPO/commits/$SHA/pulls` returned EMPTY despite #884
-being open against `main` with exactly that head.
+`gh api repos/$REPO/commits/$SHA/pulls` appeared to return EMPTY
+despite #884 being open against `main` with exactly that head.
 
-**Root cause — verified, eventual-consistency lag (not a PAT
-quirk).** `commits/{sha}/pulls` is an asynchronously-INDEXED
-association endpoint; queried seconds-to-minutes after a push it
-can return empty, then populate later. Confirmed by a natural
-experiment: SHAs `2d9493ae` (#881) and `f904844d` (#873) each
-logged "No open PR" inside the merge run, yet the identical query
-returned those PRs as `open` hours later while the PRs were open
-the whole time. The fine-grained-PAT hypothesis is ruled out on
-mechanism — a repo-scoped PAT with Pull-requests:read has no
-per-PR visibility restriction for own-repo PRs, and the same
-empty→populated transition shows under a normal token.
+**Root cause — VERIFIED, malformed token secret (NOT
+eventual-consistency lag).** An initial hypothesis blamed
+eventual-consistency lag in the `commits/{sha}/pulls` association
+index. That was **wrong** — corrected once the merge job finally
+failed loudly. The `ADMIN_MERGE_TOKEN` secret (created
+2026-06-14 12:38:34Z, never updated) was stored with a **trailing
+newline**, which makes the HTTP `Authorization` header invalid, so
+EVERY `gh api` call in the merge job fails with:
 
-**Fix:**
+```
+net/http: invalid header field value for "Authorization"
+```
 
-- **Primary** sha→PR source is
-  `github.event.workflow_run.pull_requests[]` — delivered in the
-  event payload, so it has no indexing lag and is populated for
-  same-repo PRs. Our class already requires head repo == base repo
-  (no forks), so this is exactly the population condition.
-- **Fallback** to `commits/{sha}/pulls`, retried with backoff
-  (6 × 30 s within a 10-min job timeout), for the rare case the
-  payload is empty.
-- **Open/base re-checks moved into the per-PR loop** (`state ==
-  open`, `base.ref == main`) so correctness no longer depends on
-  which source resolved the PR — both feed the same gate set
-  (author, draft, fork, label, path-class re-check, coverage on
-  head). The merge step logs the raw payload and which source
-  resolved, so Phase 4 records empirically whether
-  `workflow_run.pull_requests[]` populates on this repo.
+The original code ran `gh api commits/$SHA/pulls` inside a
+`mapfile < <(…)` process substitution; under `set -e` the
+process-substitution exit status is not checked, so the auth error
+was **swallowed** and surfaced as an empty array → "No open PR".
+The earlier "natural experiment" (querying the same SHAs hours
+later) was flawed: it used a *different, valid* token, so it never
+exercised the broken PAT. Direct evidence — run `27500989084`'s log
+contains the `invalid header field value` line immediately above
+its "No open PR" line; the error was present the whole time and was
+missed by a too-narrow log grep.
+
+**Fix (two parts):**
+
+1. **Strip whitespace from the token (the actual fix).**
+   `GH_TOKEN="$(printf '%s' "$GH_TOKEN" | tr -d '[:space:]')"` at
+   the top of the merge step. A PAT never contains whitespace, so
+   this is safe and makes the job robust to a secret stored with a
+   stray newline. Companion hygiene action: re-enter the secret
+   cleanly (`printf %s "$PAT" | gh secret set ADMIN_MERGE_TOKEN`,
+   no trailing newline).
+2. **sha→PR resolution hardening (robustness, independent of the
+   token bug).** Prefer `github.event.workflow_run.pull_requests[]`
+   (event payload — synchronous, populated for same-repo PRs, which
+   our no-fork class guarantees); fall back to `commits/{sha}/pulls`
+   with retry/backoff. Open/base re-checks moved into the per-PR
+   loop (`state == open`, `base.ref == main`) so correctness is
+   independent of which source resolved the PR. This both reduces
+   API calls and guards against *genuine* indexing lag — confirmed
+   working: it resolved #881 from the payload instantly.
+
+**Lesson:** a hard auth failure inside a `mapfile < <(gh api …)`
+process substitution is silently swallowed under `set -e` and looks
+identical to "no data." Prefer surfacing such errors (the per-PR
+loop's bare `gh api` call, which is NOT in a process substitution,
+is what finally exposed it). And grep logs for `error`/`invalid`,
+not just the expected success/skip strings.
 
 All D1 gates are preserved unchanged.
 
