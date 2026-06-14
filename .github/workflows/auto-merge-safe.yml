@@ -237,7 +237,26 @@ jobs:
             fi
 
             echo "All gates pass -> admin squash-merge PR #$pr"
-            gh pr merge "$pr" --squash --admin --delete-branch || \
-              echo "merge call failed (possibly already merged)"
+            # Retry the admin merge to survive the concurrent-merge race:
+            # when several in-class PRs go green together, their merge jobs
+            # fire within seconds. The first squash advances main, so a
+            # sibling's merge a moment later fails with
+            #   "Base branch was modified. Review and try the merge again."
+            # That is transient — main is stable once the siblings land —
+            # so re-fetch and retry with backoff. "already merged" (a
+            # concurrent job won the race) is success, not failure.
+            merged=false
+            for attempt in 1 2 3 4 5; do
+              if out=$(gh pr merge "$pr" --squash --admin --delete-branch 2>&1); then
+                echo "merged PR #$pr on attempt $attempt"; merged=true; break
+              fi
+              echo "merge attempt $attempt/5 failed: $out"
+              if [ "$(gh api "repos/$REPO/pulls/$pr" --jq .merged 2>/dev/null)" = "true" ]; then
+                echo "PR #$pr already merged (concurrent job won)"; merged=true; break
+              fi
+              sleep 6
+            done
+            [ "$merged" = "true" ] || \
+              echo "::warning::PR #$pr unresolved after 5 merge attempts (left open)"
             echo "::endgroup::"
           done

@@ -8971,3 +8971,39 @@ files.
   and "xfail-as-test-bug" lessons (verify actual behavior against a
   controlled input) and the Windows-portability lessons (same family:
   environment-dependent test outcomes that pass locally, fail elsewhere).
+
+- **The auto-merge-safe merge job races itself when ≥2 in-class PRs
+  go green together — the first squash advances `main`, the sibling's
+  merge fails "Base branch was modified," and the old `|| echo` ate
+  it with no retry**: hit live 2026-06-14 (QA #6). Three in-class PRs
+  (#892/#893/#894) turned green within seconds; their independent
+  `workflow_run` merge jobs fired at 21:05:49 / :50 / :52. #892 and
+  #893 admin-squashed into `main` first; #894's merge job (which had
+  resolved the PR and passed EVERY gate — path-class ✓,
+  coverage=success ✓, label ✓) then hit
+  `GraphQL: Base branch was modified. Review and try the merge again.
+  (mergePullRequest)`. The line
+  `gh pr merge … --admin || echo "merge call failed (possibly already
+  merged)"` swallowed the GraphQL error and exited 0, leaving #894
+  **OPEN with all gates green and no retry**. Diagnosis: read the
+  merge job's OWN log for the failing PR's SHA
+  (`gh run view <auto-merge-safe-run> --log | grep -A2 "admin
+  squash-merge PR #<n>"`) — the gate-skip echoes (`skip: coverage=…`,
+  `skip: path-class…`) are just the script source unless followed by
+  a real "skip:" line; the actual failure was the GraphQL message
+  AFTER "All gates pass". Two durable points: (1) **fix** — wrap the
+  admin merge in a bounded retry (re-fetch + retry on "Base branch was
+  modified"; treat `.merged==true` as success; `::warning::` + leave
+  open on exhaustion) — shipped as D7 / PR #895. (2) **recover an
+  already-stalled PR via the existing system, not a manual admin
+  merge** — main is stable once the racing siblings land, so any
+  re-fire of that PR's merge job merges it: `gh run rerun <its-Tests-
+  run> --failed`, then once `coverage` is green again `gh run cancel
+  <that-run>` to force run COMPLETION → `workflow_run` fires → merge
+  job re-evaluates against now-stable main → admin-merges. Verified:
+  #894 merged on the re-fire within ~40s of the cancel. Pairs with D6
+  (token-newline auth swallowed by process substitution) — same shape
+  ("merge job resolved the PR but the merge CALL failed, silently"),
+  different cause (race vs auth); and with the cancel-to-bypass
+  runner-hang technique (same `gh run cancel → workflow_run fires`
+  mechanism, here used to RE-fire rather than first-fire).
