@@ -198,3 +198,41 @@ required checks; the whole problem is that a required check
 **Rejected: cannot work here.** The bot is not an admin and there
 is no ruleset bypass, so `--admin` fails on exactly the
 hung-check case. (See D3.)
+
+---
+
+## D7 — Retry the admin merge on the concurrent-merge race
+
+**Date:** 2026-06-14
+**Status:** adopted
+
+**Symptom.** Three in-class PRs (#892, #893, #894) went green
+together and their merge jobs fired within ~3 seconds. #892 and
+#893 squash-merged first, advancing `main`. #894's merge fired ~2s
+later and GitHub rejected it:
+
+```text
+GraphQL: Base branch was modified. Review and try the merge again.
+(mergePullRequest)
+```
+
+The old code swallowed this with `|| echo "merge call failed
+(possibly already merged)"` and exited 0 — so #894 sat OPEN with
+**every gate green** (path-class ✓, coverage=success ✓, label ✓)
+and no retry. Any batch of ≥2 simultaneously-green in-class PRs can
+hit this; it is not specific to the cancel-to-bypass flow.
+
+**Fix.** Wrap the `gh pr merge --squash --admin --delete-branch`
+call in a 5-attempt loop with a 6s backoff. "Base branch was
+modified" is transient — `main` is stable once the racing siblings
+land — so a re-fetch + retry succeeds. A concurrent job that already
+merged the PR (`pulls/$pr .merged == true`) is treated as success,
+not failure. Exhausting all attempts emits a `::warning::` and
+leaves the PR open (fail-open, visible).
+
+**Scope.** This is a `.github/workflows/` change, so the fix PR is
+**out-of-class** and merges via human review (CI files cannot
+self-merge — correct). Pairs with D6 (the token-newline auth fix):
+both are "the merge job resolved the PR but the merge call failed"
+shapes — D6 was an auth error swallowed by process substitution,
+D7 is a race swallowed by `|| echo`.
