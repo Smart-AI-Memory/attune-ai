@@ -639,3 +639,48 @@ delete dead code rather than write tests for code nothing calls** (per
 the "0% module is often dead code — grep inbound imports before
 testing" lesson). Import + full collect (2606 tests) verified green
 post-deletion.
+
+---
+
+## workflows/research_synthesis.py — 78%→100% (QA #6)
+
+**Date:** 2026-06-14
+**Rubric score at pick time:** top remaining real gap in
+`attune.workflows` after the test_maintenance deletions (78%, 13
+missed full-suite; 44% measured alone with only the attribute test).
+**Picked because:** SDK-native workflow with an uncovered `execute()`
+body and SDK query loop; clean scaffold available
+(`test_dependency_check_execute.py`).
+**Outcome:** Net-new `test_research_synthesis_execute.py` (32 tests).
+Mocks only `claude_agent_sdk.query`, yielding **real**
+`AssistantMessage`/`ResultMessage` instances so isinstance-based
+collectors in `agent_sdk_adapter` fire (duck-typed fakes fail
+silently). Covers path validation, depth→max_turns mapping, the
+query loop (assistant+result / result-only / empty-stream), and all
+three exception paths (`ImportError`, `Connection`/`Timeout`, generic
+typed-error fallback). Module measured alone: **100%**. No production
+bug found.
+**PR:** https://github.com/Smart-AI-Memory/attune-ai/pull/892
+**Bug log entry:** none
+
+---
+
+## workflows/coordination_mixin.py — 79%→97% (QA #6)
+
+**Date:** 2026-06-14
+**Rubric score at pick time:** second remaining real gap in
+`attune.workflows` (79%, 22 missed). `progress_server.py` (0%) is in
+the coverage `omit` list — not a real gap.
+**Picked because:** `_get_adaptive_router` lazy-init body and the
+three signal-method exception paths were untested by the existing
+`test_workflow_coordination.py`.
+**Outcome:** Net-new `test_coordination_mixin_coverage.py` (12 tests).
+Covers `_get_adaptive_router` (successful init, telemetry-unavailable
+disable, `ImportError` disable, cached short-circuit) plus the
+exception swallow paths of `send_signal`/`wait_for_signal`/
+`check_signal`. Lines 35-37 (module-level `ImportError` telemetry
+guard) are unreachable when `attune.telemetry` imports cleanly, so
+**97%** is the ceiling (predicted ~92%, beat it). No production bug
+found.
+**PR:** https://github.com/Smart-AI-Memory/attune-ai/pull/893
+**Bug log entry:** none
