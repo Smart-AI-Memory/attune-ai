@@ -1,5 +1,6 @@
 """Pytest configuration for Attune AI tests."""
 
+import faulthandler
 import json
 import os
 from collections import defaultdict
@@ -7,6 +8,32 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 import pytest
+
+# =============================================================================
+# CI hang watchdog (ci-runner-hang spec, Phase 1)
+# =============================================================================
+# The Ubuntu coverage/test lanes intermittently wedge *inside* the pytest
+# step; the per-test `--timeout=60 --timeout-method=thread` does NOT fire,
+# so the wedge is at the xdist worker/controller level (a thread blocked in
+# an uninterruptible C call holding the GIL, or a controller<->worker
+# deadlock) — invisible to a per-test thread timeout.
+#
+# Arm a process-level faulthandler watchdog so the NEXT hang dumps every
+# thread's stack to stderr (captured by CI) BEFORE the job `timeout-minutes`
+# kills it — turning an opaque stall into a named frame. Because this runs
+# at conftest import time, it arms in the xdist controller AND every worker
+# subprocess, and covers collection-time hangs too.
+#
+# Gated on the auto-set CI env var so local runs are unaffected. Threshold
+# is OS-tuned (Linux lanes are fast, ~4-8 min normal; Windows/macOS ~13-15)
+# and sits below the job timeout. Overridable via PYTEST_HANG_DUMP_SECONDS
+# for local smoke-testing.
+if os.environ.get("CI"):
+    _hang_default = 600.0 if os.environ.get("RUNNER_OS") == "Linux" else 1200.0
+    _hang_secs = float(os.environ.get("PYTEST_HANG_DUMP_SECONDS", _hang_default))
+    # dump_traceback_later always dumps ALL threads (no all_threads kwarg —
+    # that exists only on register()/dump_traceback()).
+    faulthandler.dump_traceback_later(_hang_secs, repeat=False)
 
 # =============================================================================
 # Import Guard - Ensure workflows package is properly initialized
