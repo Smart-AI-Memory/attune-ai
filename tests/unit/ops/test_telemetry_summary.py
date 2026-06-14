@@ -21,8 +21,9 @@ from attune.ops.config import Config
 # Frozen "today" for the by-day-window assertions below. Events in the
 # fixtures are dated 2026-05-14; this anchors the rolling window to the
 # same day so the assertions don't age out as wall-clock time advances.
-# The production code path keeps using date.today() — the parameter
-# only affects tests that pass it.
+# The production code path defaults to the UTC date
+# (``datetime.now(timezone.utc).date()``) — the ``today`` parameter only
+# affects tests that pass it.
 _FIXED_TODAY = date(2026, 5, 14)
 
 
