@@ -387,6 +387,37 @@ class TestTrackFileTests:
         record = track_file_tests(source_file=str(source), test_file=str(tf))
         assert record.is_stale is True
 
+    @patch("attune.workflows.test_runner.subprocess.run")
+    @patch("attune.workflows.test_runner._log_file_test")
+    def test_modified_at_labels_are_true_utc(self, mock_log, mock_run, tmp_path):
+        """Regression: mtime labels are TRUE UTC, not local time + 'Z'.
+
+        Previously the code did ``fromtimestamp(mtime).isoformat() + "Z"``,
+        which stamps a naive LOCAL time with a UTC ('Z') marker — off by the
+        local UTC offset (a full-day error near midnight). Deterministic via a
+        fixed epoch set with ``os.utime``; never reads the wall clock.
+        """
+        import os
+
+        source = tmp_path / "src.py"
+        source.write_text("x = 1")
+        tf = tmp_path / "test_src.py"
+        tf.write_text("def test_x(): pass")
+
+        fixed_epoch = 1_749_000_000  # 2025-06-04T01:20:00+00:00
+        os.utime(str(source), (fixed_epoch, fixed_epoch))
+        os.utime(str(tf), (fixed_epoch, fixed_epoch))
+
+        mock_run.return_value = _make_completed_process(0, _PYTEST_PASSING_OUTPUT)
+        record = track_file_tests(source_file=str(source), test_file=str(tf))
+
+        expected = datetime.fromtimestamp(fixed_epoch, tz=timezone.utc).isoformat()
+        assert record.source_modified_at == expected
+        assert record.tests_modified_at == expected
+        # Parsing back yields a UTC-aware datetime (no naked 'Z' mislabel).
+        parsed = datetime.fromisoformat(record.source_modified_at)
+        assert parsed.utcoffset() == timezone.utc.utcoffset(None)
+
 
 # ---------------------------------------------------------------------------
 # get_file_test_status() / get_files_needing_tests() — thin wrappers

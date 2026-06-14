@@ -32,6 +32,42 @@ def test_home_kpis_with_empty_summary_returns_seven_zero_days():
     assert all(d.cost == 0.0 for d in kpis.sparkline)
 
 
+def test_home_kpis_default_today_uses_utc_not_local(monkeypatch):
+    """Regression: when ``today`` is omitted, the default reference date is
+    the UTC date — matching ``by_day``'s UTC keying (``_to_day``) — not local
+    ``date.today()``.
+
+    Bug class of #867: a local "today" reads the wrong bucket in the evening
+    for non-UTC users (after ~20:00 US-Pacific, UTC is already tomorrow). We
+    freeze ``datetime`` to 2026-06-14 06:30 UTC, which is still 2026-06-13
+    local in any TZ behind UTC; the UTC bucket (06-14) must win.
+    """
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    fixed = _dt(2026, 6, 14, 6, 30, tzinfo=_tz.utc)
+
+    class _FrozenDateTime(_dt):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed.astimezone(tz) if tz else fixed.replace(tzinfo=None)
+
+    monkeypatch.setattr(data, "datetime", _FrozenDateTime)
+
+    summary = data.TelemetrySummary(
+        total_requests=3,
+        total_cost=0.30,
+        total_savings=0.0,
+        by_workflow=[],
+        by_day=[("2026-06-14", 3, 0.30)],  # UTC-keyed bucket
+        last_event_at=None,
+    )
+    kpis = data.home_kpis(summary)  # today=None -> exercises the default
+    assert kpis.today_events == 3
+    assert kpis.today_cost == 0.30
+    assert kpis.sparkline[-1].day == "2026-06-14"
+
+
 def test_home_kpis_zero_fills_missing_days():
     """Days without telemetry rows must still appear at zero."""
     summary = data.TelemetrySummary(
