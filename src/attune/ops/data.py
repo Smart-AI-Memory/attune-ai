@@ -774,7 +774,12 @@ def home_kpis(summary: TelemetrySummary, *, today: date | None = None) -> HomeKp
     Always returns a 7-entry sparkline (zero-fills missing days) so the SVG
     layout is stable even on a fresh install.
     """
-    today = today or date.today()
+    # Default to the UTC date, not local ``date.today()``: ``by_day``
+    # buckets are keyed by the UTC date of each event (see ``_to_day``),
+    # so a local "today" would read the wrong bucket in the evening for
+    # non-UTC users (e.g. US Eastern after ~20:00, UTC is already
+    # tomorrow). Mixing clocks is the same bug class as #867.
+    today = today or datetime.now(timezone.utc).date()
     by_day_lookup = {row[0]: (row[1], row[2]) for row in summary.by_day}
 
     sparkline: list[DailyCost] = []
@@ -823,7 +828,8 @@ def read_telemetry_summary(
     """Aggregate ``usage.jsonl`` into a UI-friendly summary.
 
     ``today`` is a test injection point — production callers leave it
-    ``None`` so the rolling-window cutoff uses ``date.today()``. Tests
+    ``None`` so the rolling-window cutoff uses the UTC date
+    (``datetime.now(timezone.utc).date()``). Tests
     pass an explicit date so fixed-date fixtures (e.g. events dated
     ``2026-05-14``) stay inside the recent-days window regardless of
     when the test actually runs. Mirrors the existing ``now=None``
@@ -909,7 +915,9 @@ def read_telemetry_summary(
     by_workflow = heapq.nlargest(20, filtered, key=lambda row: row[2])
 
     if today is None:
-        today = date.today()
+        # UTC, not local: ``by_day_count`` keys are UTC dates (``_to_day``),
+        # so the rolling-window cutoff must use the same clock authority.
+        today = datetime.now(timezone.utc).date()
     cutoff = today.toordinal() - recent_days
     recent_days_data = sorted(
         (

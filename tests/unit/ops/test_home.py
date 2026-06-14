@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import date
+from datetime import date, datetime, timezone
 
 import pytest
 
@@ -30,6 +30,42 @@ def test_home_kpis_with_empty_summary_returns_seven_zero_days():
     assert kpis.sparkline[0].day == "2026-04-30"
     assert kpis.sparkline[-1].day == "2026-05-06"
     assert all(d.cost == 0.0 for d in kpis.sparkline)
+
+
+def test_home_kpis_default_today_uses_utc_not_local(monkeypatch):
+    """Regression: when ``today`` is omitted, the default reference date is
+    the UTC date — matching ``by_day``'s UTC keying (``_to_day``) — not local
+    ``date.today()``.
+
+    Bug class of #867: a local "today" reads the wrong bucket in the evening
+    for non-UTC users (after ~20:00 US-Pacific, UTC is already tomorrow). We
+    freeze ``datetime`` to 2026-06-14 06:30 UTC, which is still 2026-06-13
+    local in any TZ behind UTC; the UTC bucket (06-14) must win.
+    """
+    from datetime import datetime as _dt
+    from datetime import timezone as _tz
+
+    fixed = _dt(2026, 6, 14, 6, 30, tzinfo=_tz.utc)
+
+    class _FrozenDateTime(_dt):
+        @classmethod
+        def now(cls, tz=None):
+            return fixed.astimezone(tz) if tz else fixed.replace(tzinfo=None)
+
+    monkeypatch.setattr(data, "datetime", _FrozenDateTime)
+
+    summary = data.TelemetrySummary(
+        total_requests=3,
+        total_cost=0.30,
+        total_savings=0.0,
+        by_workflow=[],
+        by_day=[("2026-06-14", 3, 0.30)],  # UTC-keyed bucket
+        last_event_at=None,
+    )
+    kpis = data.home_kpis(summary)  # today=None -> exercises the default
+    assert kpis.today_events == 3
+    assert kpis.today_cost == 0.30
+    assert kpis.sparkline[-1].day == "2026-06-14"
 
 
 def test_home_kpis_zero_fills_missing_days():
@@ -92,7 +128,6 @@ def test_home_renders_with_runner_recent_runs(tmp_path, monkeypatch):
     seeded = Run(id="abc123", workflow="code-review")
     seeded.status = "completed"
     seeded.exit_code = 0
-    from datetime import datetime, timezone
 
     seeded.started_at = datetime(2026, 5, 6, 12, 0, 0, tzinfo=timezone.utc)
     seeded.completed_at = datetime(2026, 5, 6, 12, 0, 5, tzinfo=timezone.utc)
@@ -133,7 +168,6 @@ def test_home_recent_runs_each_cell_links_to_run_view(tmp_path, monkeypatch):
     seeded = Run(id="abc12345", workflow="code-review")
     seeded.status = "completed"
     seeded.exit_code = 0
-    from datetime import datetime, timezone
 
     seeded.started_at = datetime(2026, 5, 6, 12, 0, 0, tzinfo=timezone.utc)
     seeded.completed_at = datetime(2026, 5, 6, 12, 0, 5, tzinfo=timezone.utc)
@@ -233,7 +267,14 @@ def test_home_renders_sparkline_svg_when_costs_present(tmp_path, monkeypatch):
     home = tmp_path / "attune-home"
     (home / "telemetry").mkdir(parents=True)
     log = home / "telemetry" / "usage.jsonl"
-    today = date.today().isoformat()
+    # UTC date, not local ``date.today()``: the event ts is UTC
+    # (``+00:00``) and the server windows the sparkline by UTC
+    # (``read_telemetry_summary``/``home_kpis`` anchor on
+    # ``datetime.now(timezone.utc).date()``). Stamping with local
+    # ``date.today()`` puts the event a UTC day in the future for any
+    # TZ ahead of UTC (e.g. UTC+14 Kiritimati), so it falls outside the
+    # 7-day window and the polyline vanishes. Same bug class as #868.
+    today = datetime.now(timezone.utc).date().isoformat()
     log.write_text(
         f'{{"workflow": "x", "total_cost": 0.42, "timestamp": "{today}T10:00:00+00:00"}}\n',
         encoding="utf-8",
@@ -262,7 +303,10 @@ def test_home_kpis_nonzero_when_telemetry_uses_ts_field(tmp_path, monkeypatch):
     home = tmp_path / "attune-home"
     (home / "telemetry").mkdir(parents=True)
     log = home / "telemetry" / "usage.jsonl"
-    today = date.today().isoformat()
+    # UTC date, not local ``date.today()`` — see the sparkline test
+    # above: local stamping puts the event a UTC day ahead under TZs
+    # east of UTC (UTC+14), dropping it from the UTC-anchored window.
+    today = datetime.now(timezone.utc).date().isoformat()
     # Write with ``ts`` (the real v1.0 schema key), NOT ``timestamp``.
     log.write_text(
         f'{{"workflow": "x", "total_cost": 0.42, "ts": "{today}T10:00:00+00:00"}}\n',

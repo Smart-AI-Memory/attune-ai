@@ -96,7 +96,15 @@ jobs:
     # ~2x parallelism + memory headroom (see the larger-runners spec).
     # macOS and Windows stay on default runners as before.
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 75
+    # ci-runner-hang spec: tightened from 75 so a wedged pytest step fails
+    # in bounded time (and is rerun-recoverable) instead of stalling for
+    # over an hour. A flat int (not a per-OS ${{ }} expression) keeps the
+    # `test_timeout_values_are_reasonable` guard happy AND stays generous
+    # enough for Windows/macOS (normal ~13-15 min) to avoid false-fails.
+    # The early faulthandler dump (conftest, ~10 min) is what captures the
+    # hang stack; this timeout is only the kill-backstop, so it need not be
+    # OS-tight.
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
@@ -159,6 +167,87 @@ jobs:
     - name: Run security and workflow tests
       run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
 
+    # ci-runner-hang Phase 2: the conftest watchdog writes each process's
+    # all-thread stack to hang-dumps/hang-<worker>.txt. Surface + upload it
+    # with `if: always()` so a worker dump SURVIVES a `timeout-minutes` kill
+    # (the Phase 1 gap: a worker's raw stderr dump is lost when execnet
+    # never forwards it on a hang). Empty (armed-but-never-fired) dumps are
+    # pruned so a healthy run produces no artifact.
+    - name: Surface hang-watchdog dumps
+      if: always()
+      shell: bash
+      run: |
+        shopt -s nullglob
+        found=0
+        for f in hang-dumps/*.txt; do
+          if [ -s "$f" ]; then
+            found=1
+            echo "::group::HANG DUMP — $f"
+            cat "$f"
+            echo "::endgroup::"
+          else
+            rm -f "$f"
+          fi
+        done
+        if [ "$found" -eq 0 ]; then
+          echo "hang-watchdog: no dump fired (healthy run)."
+        else
+          echo "::warning::hang-watchdog captured a stack — a worker/controller wedged. See the hang-dumps artifact."
+        fi
+
+    - name: Upload hang-watchdog dumps
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: hang-dumps-test-${{ matrix.os }}-${{ matrix.python-version }}
+        path: hang-dumps/
+        if-no-files-found: ignore
+      continue-on-error: true
+
+  clock-tz:
+    # Hostile-clock lane: runs the unit suite under extreme NON-UTC
+    # timezones so date/TZ bugs (the #867 / #868 clock-mix class) fail in
+    # CI instead of in production. GitHub-hosted runners default to UTC, so
+    # the 12-lane `test` matrix only ever exercises the UTC path — this is
+    # the one place a "local date.today() vs UTC-keyed bucket" mix gets
+    # caught. Two TZs bracket the bug in both directions:
+    #   Pacific/Kiritimati  UTC+14  (local AHEAD of UTC — evening rolls over)
+    #   America/Anchorage   UTC-9   (local BEHIND UTC — morning lags)
+    #
+    # Runs ALWAYS (no slim/full gate): a tests-only PR adding a
+    # wall-clock-dependent test is exactly what this guards. Keyless by
+    # design. NOT a required check yet — promote in branch protection once
+    # it has a few green runs (needs the GitHub-Actions app_id; tracked
+    # separately, deliberately out of scope for this PR).
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        tz: ["Pacific/Kiritimati", "America/Anchorage"]
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+    - name: Set up Python 3.12
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.12'
+        cache: 'pip'
+
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -e .[dev]
+
+    - name: Run unit suite under ${{ matrix.tz }}
+      shell: bash
+      run: |
+        python -c "import time, datetime; print('TZ=', time.tzname, 'utcoffset=', datetime.datetime.now().astimezone().utcoffset())"
+        pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
+      env:
+        TZ: ${{ matrix.tz }}
+        ANTHROPIC_API_KEY: ""  # keyless by design — see the `test` job note
+
   coverage:
     # Dedicated coverage job — runs once on Linux 3.11 with branch
     # coverage on. Split out of the matrix to keep branch-coverage
@@ -168,7 +257,9 @@ jobs:
     # and `-n auto` restored, this job runs in parallel like the
     # matrix tests.
     runs-on: ubuntu-latest
-    timeout-minutes: 75
+    # ci-runner-hang spec: tightened from 75 (normal coverage run ~8 min) so
+    # a wedged pytest step fails fast and is rerun-recoverable.
+    timeout-minutes: 25
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -190,12 +281,21 @@ jobs:
       run: python scripts/check_badge_freshness.py
 
     - name: Run tests with coverage
+      # Coverage RATCHET: --cov-fail-under is a one-way valve, not a static
+      # floor. Main has measured 94.69–94.71% across recent runs (stable to
+      # ~0.02%); the gate sits at 94 (≈0.7pt headroom for normal churn). The
+      # old 85 left a ~9.7pt silent-erosion slack — coverage could fall from
+      # ~94.7 to 85 without CI noticing. RATCHET POLICY: only ever raise this
+      # number (when main climbs and holds above floor+~1), never lower it to
+      # make a red PR pass — a drop is a signal to add tests, not slacken the
+      # gate. (pyproject's fail_under stays 85 as the absolute floor for
+      # ad-hoc/partial local runs whose --cov scope differs from CI's.)
       run: |
         echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
         (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
         MEM_MONITOR_PID=$!
         trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=85 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
@@ -220,6 +320,40 @@ jobs:
         verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    # ci-runner-hang Phase 2: surface + upload the worker/controller hang
+    # dumps so a `timeout-minutes` kill on this lane (the lane that wedged
+    # in run 27488685349) carries a named stack. See the `test` job note.
+    - name: Surface hang-watchdog dumps
+      if: always()
+      shell: bash
+      run: |
+        shopt -s nullglob
+        found=0
+        for f in hang-dumps/*.txt; do
+          if [ -s "$f" ]; then
+            found=1
+            echo "::group::HANG DUMP — $f"
+            cat "$f"
+            echo "::endgroup::"
+          else
+            rm -f "$f"
+          fi
+        done
+        if [ "$found" -eq 0 ]; then
+          echo "hang-watchdog: no dump fired (healthy run)."
+        else
+          echo "::warning::hang-watchdog captured a stack — a worker/controller wedged. See the hang-dumps artifact."
+        fi
+
+    - name: Upload hang-watchdog dumps
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: hang-dumps-coverage
+        path: hang-dumps/
+        if-no-files-found: ignore
+      continue-on-error: true
 
   lint:
     runs-on: ubuntu-latest

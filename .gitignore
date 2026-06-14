@@ -259,3 +259,6 @@ MagicMock/
 
 # Personal IDE launch configs (per-dev-machine; not portable)
 .claude/launch.json
+
+# ci-runner-hang watchdog: per-worker faulthandler dumps (CI artifact only)
+hang-dumps/

@@ -1,0 +1,243 @@
+name: Auto-merge safe (tests/docs only)
+
+# Pre-authorized auto-merge for a TIGHT class of PRs: every changed
+# file is under tests/, docs/, .help/, or is a root-level *.md, the
+# author is the repo owner, and the `coverage` required check is
+# green. The merge is performed DETERMINISTICALLY by GitHub Actions
+# (no agent, no safety classifier) and admin-bypasses only the
+# REDUNDANT hung lane (e.g. `test (ubuntu-latest, 3.12)`) — never the
+# `coverage` gate, which re-runs the full suite.
+#
+# See docs/specs/auto-merge-safe-class/ for the class definition and
+# the rejected alternatives.
+#
+# Credential: the merge job authenticates with ADMIN_MERGE_TOKEN, a
+# fine-grained PAT owned by an admin (silversurfer562), repo-scoped,
+# Contents + Pull-requests read/write only. GITHUB_TOKEN cannot
+# bypass branch protection (the bot is not an admin). Until the
+# secret exists the merge job is inert (fails closed).
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, ready_for_review]
+  # NOT check_run: a check_run produced by the `Tests` workflow runs
+  # under GITHUB_TOKEN, and GitHub does NOT start a new workflow run
+  # from a GITHUB_TOKEN-triggered event (anti-recursion). So the
+  # coverage check_run completing never reached this workflow. Use
+  # workflow_run instead — it fires when `Tests` finishes regardless
+  # of conclusion (so a hung/failed redundant lane doesn't block us),
+  # and the merge job re-checks the `coverage` check independently.
+  workflow_run:
+    workflows: ["Tests"]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: >-
+    auto-merge-safe-${{ github.event.pull_request.head.sha ||
+    github.event.workflow_run.head_sha }}
+  cancel-in-progress: false
+
+jobs:
+  # ---------------------------------------------------------------
+  # Apply/remove the `auto-merge-safe` label based on the path class.
+  # Automation owns the label so it is never hand-applied; the merge
+  # job re-verifies the path class anyway (label = necessary, not
+  # sufficient).
+  # ---------------------------------------------------------------
+  label:
+    if: >-
+      github.event_name == 'pull_request_target' &&
+      github.event.pull_request.user.login == 'silversurfer562'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      # Default ref on pull_request_target is the BASE branch (main),
+      # so we always run the trusted base copy of the guard, never
+      # the PR's version.
+      - name: Checkout base repo (trusted guard)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Compute path class and (un)label
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mapfile -t paths < <(
+            gh api --paginate "repos/$REPO/pulls/$PR/files" \
+              --jq '.[] | .filename, (.previous_filename // empty)'
+          )
+          if [ "${#paths[@]}" -gt 0 ] && \
+             printf '%s\n' "${paths[@]}" | \
+             python3 .github/scripts/auto_merge_guard.py; then
+            echo "In-class -> adding auto-merge-safe label"
+            gh pr edit "$PR" --add-label auto-merge-safe
+          else
+            echo "Out-of-class -> removing label if present"
+            gh pr edit "$PR" --remove-label auto-merge-safe || true
+          fi
+
+  # ---------------------------------------------------------------
+  # When the `Tests` workflow completes (any conclusion), re-evaluate
+  # ALL gates and admin-merge. The job independently re-checks that
+  # the `coverage` check is green on the PR head, so a still-hung /
+  # failed redundant sibling lane (which makes the overall Tests run
+  # non-success) does not block the merge — that is the whole point.
+  # ---------------------------------------------------------------
+  merge:
+    if: github.event_name == 'workflow_run'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout base repo (trusted guard)
+        uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+      - name: Evaluate gates and admin-merge
+        env:
+          GH_TOKEN: ${{ secrets.ADMIN_MERGE_TOKEN }}
+          SHA: ${{ github.event.workflow_run.head_sha }}
+          # PRIMARY sha->PR source: the workflow_run event payload's
+          # pull_requests[] (synchronous, no indexing lag, populated for
+          # same-repo PRs — and our class requires head repo == base repo).
+          WORKFLOW_RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
+          REPO: ${{ github.repository }}
+          OWNER_LOGIN: silversurfer562
+        run: |
+          set -euo pipefail
+          if [ -z "${GH_TOKEN:-}" ]; then
+            echo "ADMIN_MERGE_TOKEN not set; merge job inert (fail-closed)."
+            exit 0
+          fi
+
+          # Defensive: a trailing newline / whitespace in the secret value
+          # makes the HTTP Authorization header invalid ("net/http: invalid
+          # header field value for \"Authorization\""), so EVERY gh api call
+          # fails. A PAT never contains whitespace, so strip it. This was the
+          # true root cause of the #884/#881 merge failures — the secret was
+          # stored with a trailing newline (see D6); the empty sha->PR lookup
+          # was that auth error swallowed by a process substitution, NOT
+          # eventual-consistency lag.
+          GH_TOKEN="$(printf '%s' "$GH_TOKEN" | tr -d '[:space:]')"
+          export GH_TOKEN
+
+          # ---------------------------------------------------------------
+          # Resolve the triggering SHA -> PR number(s).
+          #
+          # PRIMARY: github.event.workflow_run.pull_requests[] — delivered
+          # in the event payload, so it has NO eventual-consistency lag and
+          # is populated for same-repo (non-fork) PRs, which is exactly our
+          # class. The diagnostic echo below records, per Phase-4 run,
+          # whether this repo actually populates the field.
+          #
+          # FALLBACK: repos/{repo}/commits/{sha}/pulls — an asynchronously
+          # INDEXED association endpoint that returns EMPTY for seconds-to-
+          # minutes after a push (root cause of the #884 bug, verified
+          # 2026-06-14: identical SHAs returned empty during the run and
+          # populated hours later while the PRs stayed open). Retried with
+          # backoff for the rare case the payload is empty too.
+          #
+          # Open/base re-checks live in the per-PR loop below, so resolution
+          # source doesn't matter to correctness — both feed the same gates.
+          # ---------------------------------------------------------------
+          echo "workflow_run.pull_requests payload: $WORKFLOW_RUN_PRS"
+          mapfile -t prs < <(
+            printf '%s' "${WORKFLOW_RUN_PRS:-[]}" | jq -r '.[].number' 2>/dev/null || true
+          )
+
+          if [ "${#prs[@]}" -gt 0 ]; then
+            echo "Resolved ${#prs[@]} PR(s) from workflow_run.pull_requests: ${prs[*]}"
+          else
+            echo "workflow_run.pull_requests empty; falling back to commits/$SHA/pulls (with retry)."
+            for attempt in 1 2 3 4 5 6; do
+              mapfile -t prs < <(
+                gh api "repos/$REPO/commits/$SHA/pulls" \
+                  --jq '.[] | select(.base.ref=="main") | .number' 2>/dev/null || true
+              )
+              if [ "${#prs[@]}" -gt 0 ]; then
+                echo "commits/$SHA/pulls returned ${#prs[@]} PR(s) on attempt $attempt: ${prs[*]}"
+                break
+              fi
+              echo "attempt $attempt/6: commits/$SHA/pulls empty; sleeping 30s (indexing lag)."
+              sleep 30
+            done
+          fi
+
+          if [ "${#prs[@]}" -eq 0 ]; then
+            echo "No PR resolved for $SHA (payload empty and commits/$SHA/pulls empty after retries)."
+            exit 0
+          fi
+
+          for pr in "${prs[@]}"; do
+            echo "::group::PR #$pr"
+            meta=$(gh api "repos/$REPO/pulls/$pr" --jq '{
+              state: .state,
+              base_ref: .base.ref,
+              author: .user.login,
+              draft: .draft,
+              head_repo: .head.repo.full_name,
+              base_repo: .base.repo.full_name,
+              head_sha: .head.sha,
+              has_label: ([.labels[].name] | index("auto-merge-safe") != null)
+            }')
+            state=$(echo "$meta" | jq -r .state)
+            base_ref=$(echo "$meta" | jq -r .base_ref)
+            author=$(echo "$meta" | jq -r .author)
+            draft=$(echo "$meta" | jq -r .draft)
+            head_repo=$(echo "$meta" | jq -r .head_repo)
+            base_repo=$(echo "$meta" | jq -r .base_repo)
+            head_sha=$(echo "$meta" | jq -r .head_sha)
+            has_label=$(echo "$meta" | jq -r .has_label)
+
+            if [ "$state" != "open" ]; then
+              echo "skip: PR state=$state (not open)"; echo "::endgroup::"; continue
+            fi
+            if [ "$base_ref" != "main" ]; then
+              echo "skip: base $base_ref != main"; echo "::endgroup::"; continue
+            fi
+            if [ "$author" != "$OWNER_LOGIN" ]; then
+              echo "skip: author $author != $OWNER_LOGIN"; echo "::endgroup::"; continue
+            fi
+            if [ "$draft" != "false" ]; then
+              echo "skip: draft PR"; echo "::endgroup::"; continue
+            fi
+            if [ "$head_repo" != "$base_repo" ]; then
+              echo "skip: fork PR ($head_repo)"; echo "::endgroup::"; continue
+            fi
+            if [ "$has_label" != "true" ]; then
+              echo "skip: no auto-merge-safe label"; echo "::endgroup::"; continue
+            fi
+
+            # Re-verify the path class INDEPENDENT of the label, so a
+            # hand-applied label on an out-of-class PR cannot merge.
+            mapfile -t paths < <(
+              gh api --paginate "repos/$REPO/pulls/$pr/files" \
+                --jq '.[] | .filename, (.previous_filename // empty)'
+            )
+            if [ "${#paths[@]}" -eq 0 ] || \
+               ! printf '%s\n' "${paths[@]}" | \
+               python3 .github/scripts/auto_merge_guard.py; then
+              echo "skip: path-class re-check failed"; echo "::endgroup::"; continue
+            fi
+
+            # Coverage must be green on the PR's CURRENT head (the
+            # workflow_run that triggered us may be for an older SHA).
+            cov=$(gh api "repos/$REPO/commits/$head_sha/check-runs" \
+              --jq '[.check_runs[] | select(.name=="coverage")] |
+                    sort_by(.started_at) | last | .conclusion // "none"')
+            if [ "$cov" != "success" ]; then
+              echo "skip: coverage=$cov on $head_sha"; echo "::endgroup::"; continue
+            fi
+
+            echo "All gates pass -> admin squash-merge PR #$pr"
+            gh pr merge "$pr" --squash --admin --delete-branch || \
+              echo "merge call failed (possibly already merged)"
+            echo "::endgroup::"
+          done

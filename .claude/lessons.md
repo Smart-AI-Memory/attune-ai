@@ -8809,6 +8809,139 @@ files.
   is real, not paranoia — escalate to (asking for) admin-merge once the
   same-suite `coverage` job is green.
 
+- **Intermittent flake vs systemic fleet wedge — one `gh run list`
+  decides whether rerunning is worth it, and freeing runners beats
+  re-running when the fleet is down**: 2026-06-14 Sat auto-run, PRs
+  #868/#869/#870 all had their ubuntu/coverage lanes hang on the
+  CI runner-hang; cancel+rerun made all three RE-HANG on the same
+  `Run tests` step (~15 min). The cheap diagnostic that distinguishes
+  "unlucky flake (rerun helps)" from "fleet is wedged right now (rerun
+  futile)": `gh run list --workflow Tests --limit 10 --json
+  headBranch,status` — if a FRESH `main` run and sibling branches are
+  ALSO `in_progress`/hung in the same window, it's a fleet-wide stall,
+  not your PR. When wedged: (1) STOP rerunning (don't burn the ~2
+  budget on a guaranteed re-hang); (2) `gh run cancel` your re-hung
+  runs — they otherwise squat runner slots for the 6h default timeout,
+  starving the very fix that would resolve this; (3) leave `--auto
+  --squash` enabled so the PRs land on the next green; (4) REPORT +
+  ask, no admin-merge. And: when sibling branches show an active fix
+  already in flight (here PR #873 `docs/spec-ci-runner-hang` +
+  `ci/runner-hang-phase1`, diagnostics-first faulthandler+timeout-
+  minutes), DON'T write a competing fix — coordinate by freeing
+  runners and waiting for it to land, then re-trigger your lanes.
+  Distinguishing detail also reconfirmed: a `clock-tz`/test lane
+  showing `fail` in `gh pr checks` was `completed/cancelled` at the
+  job level (the fail-bucket≠failure trap), NOT a real test failure —
+  always confirm conclusion via `gh run view <id> --json jobs` before
+  treating a hostile-clock "fail" as a code bug.
+
+- **A pytest-xdist WORKER's `faulthandler` stderr dump is LOST on a
+  hang — write it to a per-worker FILE and upload it `if: always()`**:
+  2026-06-14, ci-runner-hang Phase 2. Phase 1 (#874) armed
+  `faulthandler.dump_traceback_later(secs, repeat=False)` (defaults to
+  `file=sys.stderr`) in `tests/conftest.py` to turn an opaque hang into
+  a named frame. But the forensic capture of run 27488685349 (coverage
+  job) showed NO dump in the CI log despite a 20-min freeze well past
+  the 600s trigger. Root cause: conftest is imported in EACH xdist
+  worker subprocess, so the timer that matters fires inside the wedged
+  WORKER (gw0); execnet does NOT forward a worker's raw fd-2 dump to the
+  controller's stdout on a hang (worker output is surfaced via its own
+  channel, flushed only at a test boundary/failure), so the dump is
+  written to the worker's local stderr and discarded when the job is
+  killed at `timeout-minutes`. The controller's own dump (if it fired)
+  shows only the `dsession.loop_once` queue-wait, not the wedged frame.
+  Fix (#879): open `hang-dumps/hang-<worker>.txt` keyed by
+  `PYTEST_XDIST_WORKER` (controller → `hang-controller`; the env var IS
+  set in each worker's environment at conftest-import time — verified)
+  and pass it as `file=` to `dump_traceback_later`; keep the file ref in
+  a module global so the fd isn't GC'd; wrap in try/except so an
+  un-writable workspace falls back to stderr instead of breaking
+  conftest import (which would fail EVERY test). Then add two
+  `if: always()` steps to each `-n auto` lane: cat non-empty dumps into
+  a `::group::` (prune empty armed-but-never-fired files so a healthy
+  run makes no artifact) and `upload-artifact` `hang-dumps/`
+  (`if-no-files-found: ignore`, unique name per matrix leg). `always()`
+  is what makes the capture run AFTER the test step is cancelled by the
+  job timeout; faulthandler writes via the raw fd (async-signal-safe) so
+  the bytes are on disk before the kill. Use a workspace-relative dir
+  (`Path(__file__).parent.parent / "hang-dumps"`), NOT `/tmp` — the
+  watchdog arms on Windows/macOS lanes too and `/tmp` doesn't exist on
+  Windows, so a hardcoded `/tmp` open would crash conftest import on
+  every Windows leg. Verify locally with an injected hang
+  (`CI=1 PYTEST_HANG_DUMP_SECONDS=3 pytest <sleeping tests> -n 2`): the
+  hung worker's file names the exact frame; non-hung/respawned workers
+  leave empty files. Pairs with the "intermittent flake vs systemic
+  fleet wedge" lesson (same CI runner-hang) and the windows-xdist-flakes
+  spec (same I/O-polluter family — hang-on-Linux vs crash-on-Windows);
+  the root fix of the polluting fixture stays gated on a captured frame
+  (diagnostics-first). UPDATE same day: #879's OWN CI run captured the
+  first real frames — `test (ubuntu-latest, 3.12)` wedged and the
+  uploaded `hang-dumps-test-ubuntu-latest-3.12` artifact proved the
+  mechanism end-to-end in production. READING the frames (and NOT
+  jumping to a culprit — a near-miss this session): the controller is in
+  `xdist/dsession.py:154 loop_once` (queue-wait); gw1/gw2/gw3 are all
+  IDLE in execnet `serve`/`integrate_as_primary_thread` (normal "waiting
+  for next command" state); **gw0's dump is ABSENT** (its hang-gw0.txt
+  was empty → pruned), which means gw0's faulthandler never fired → gw0
+  was already gone by the 10-min mark. So the shape is: gw0 died/exited
+  and the controller waits forever for a worker that will never report,
+  while the other workers sit idle. A `coordinator.py:289
+  _heartbeat_loop` thread appears in gw3's dump but is a DAEMON
+  (coordinator.py:271 `daemon=True`) doing its periodic
+  `_heartbeat_stop.wait()` — a RED HERRING, not the cause (daemons don't
+  block exit). Root cause is NOT yet proven and stays deliverable #2
+  (gated): reproduce under `-n 4` load, find why gw0 dies (py-spy the
+  worker as it goes, or read gw0's death in the raw job log), fix the
+  polluting test/fixture, land the P5 autouse guard. The durable lesson
+  here: the captured artifact tells you the SHAPE (which worker, idle vs
+  wedged, controller-wait) but naming the culprit still needs the dying
+  worker's own frame — an ABSENT worker dump is itself the signal
+  (that worker died before the watchdog could fire).
+
+- **A trailing newline in a token SECRET makes EVERY `gh api` call
+  fail with `net/http: invalid header field value for "Authorization"`
+  — and inside `mapfile < <(gh api …)` that hard auth failure is
+  SILENTLY SWALLOWED under `set -e`, looking identical to "no data"**:
+  2026-06-14, the auto-merge-safe merge job (`auto-merge-safe.yml`)
+  logged `No open PR against main for <sha>` and bailed on every run.
+  Misdiagnosed for a full cycle as **eventual-consistency lag** in the
+  `commits/{sha}/pulls` association endpoint — even wrote a plausible
+  D6 decision blaming it, "confirmed" by a natural experiment that
+  queried the same SHAs hours later and got the PRs back. The
+  experiment was FLAWED: it used my own valid `gho_` token, never the
+  broken PAT. The real cause: `ADMIN_MERGE_TOKEN` was stored with a
+  trailing newline, so the `Authorization: Bearer <token>\n` header was
+  invalid and every `gh api` call 401'd/errored. Under `set -e`,
+  `mapfile -t prs < <(gh api … --jq …)` does NOT propagate the inner
+  command's failure (process-substitution exit status is unchecked), so
+  the error went to stderr and `prs` came back empty → "No open PR".
+  The bug only became visible when a LATER `gh api` call OUTSIDE a
+  process substitution (a bare `meta=$(gh api pulls/$pr …)`) finally
+  surfaced `invalid header field value` and exited non-zero. Durable
+  rules: (1) **a trailing newline in a secret is a top-suspect whenever
+  `gh`/curl auth "mysteriously" fails** — `gh secret set` from a file
+  or a UI paste easily includes one; defend by trimming in-workflow
+  (`TOKEN="$(printf '%s' "$TOKEN" | tr -d '[:space:]')"` — PATs never
+  contain whitespace) AND set cleanly (`printf %s 'tok' | gh secret
+  set`, never `echo`). (2) **`mapfile < <(cmd)` / `$(cmd)` in a
+  pipeline swallow failures under `set -e`** — a command whose failure
+  you must NOT ignore should run on its own line, or check `${PIPESTATUS
+  [@]}` / capture-then-test, so an auth/permission error fails LOUD
+  instead of masquerading as an empty result. (3) **when a lookup
+  returns empty, grep the run log for `error`/`invalid`/`401` BEFORE
+  theorizing about data/timing** — the `invalid header field value`
+  line was in run 27500989084's log the whole time; a too-narrow grep
+  for only the expected success/skip strings missed it, and a
+  verify-first read of the raw log would have skipped the entire
+  wrong-diagnosis detour. (4) **fine-grained PATs against an ORG repo
+  401 until the org approves them** (and expire fast); a classic PAT
+  with `repo` scope sidesteps the org fine-grained-approval dance when
+  you just need it working. Pairs with the "Verify-first applies to
+  infra/config diagnoses" and "research subagents confabulate — verify
+  before trusting" lessons — same discipline (read the authoritative
+  signal before asserting a cause), here applied to a CI auth failure
+  that two layers of swallowing kept invisible.
+
 - **Mixing a UTC clock with a LOCAL clock in one comparison is a
   silent, date-dependent bug class — `date.today()` / naive
   `datetime.now()` / `utcnow()` compared against a UTC value flips on

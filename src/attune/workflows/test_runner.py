@@ -293,12 +293,16 @@ def track_file_tests(
     tests_modified_at = None
 
     if source_path.exists():
-        source_modified_at = datetime.fromtimestamp(source_path.stat().st_mtime).isoformat() + "Z"
+        source_modified_at = datetime.fromtimestamp(
+            source_path.stat().st_mtime, tz=timezone.utc
+        ).isoformat()
 
     if test_file:
         test_path = Path(test_file)
         if test_path.exists():
-            tests_modified_at = datetime.fromtimestamp(test_path.stat().st_mtime).isoformat() + "Z"
+            tests_modified_at = datetime.fromtimestamp(
+                test_path.stat().st_mtime, tz=timezone.utc
+            ).isoformat()
 
     # Check if we have tests to run
     if test_file is None or not Path(test_file).exists():
