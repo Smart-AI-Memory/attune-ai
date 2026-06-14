@@ -214,12 +214,17 @@ class FileBulletinBackend:
         """Move yesterday's active.jsonl into archive/ if needed.
 
         Triggered lazily on append. Checks the file's mtime against
-        today's date — if mtime is on an earlier day, rotate.
+        today's date — if mtime is on an earlier day, rotate. Both
+        sides are compared in UTC: the mtime is read as a UTC date and
+        "today" is ``datetime.now(timezone.utc).date()``. Using the
+        local ``date.today()`` here would mix clocks and cause rotation
+        to skip or fire on the wrong day depending on the runner's
+        timezone and time of day.
         """
         if not self.active_path.exists():
             return
         mtime = datetime.fromtimestamp(self.active_path.stat().st_mtime, tz=timezone.utc)
-        if mtime.date() >= date.today():
+        if mtime.date() >= datetime.now(timezone.utc).date():
             return
         self.archive_dir.mkdir(parents=True, exist_ok=True)
         archive_name = f"{mtime.date().isoformat()}.jsonl"
