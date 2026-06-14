@@ -1,6 +1,6 @@
 # Auto-Merge-Safe Class — Decisions
 
-**Status:** approved (2026-06-14)
+**Status:** approved (2026-06-14, amended with D5–D6 2026-06-14)
 
 ---
 
@@ -79,6 +79,74 @@ file removes the label). The **merge job re-runs the path-class
 guard** before merging, so even a hand-applied label on an
 out-of-class PR will not merge. Label = necessary, not
 sufficient.
+
+---
+
+## D5 — Merge trigger: `workflow_run`, not `check_run`
+
+**Shipped in [PR #883](https://github.com/Smart-AI-Memory/attune-ai/pull/883)
+(`0bc16edf9`, 2026-06-14); recorded here for completeness.**
+
+The merge job was originally triggered by `check_run: completed`
+for the `coverage` check. That trigger is **dead**: GitHub does
+not start a new workflow run from an event produced by the repo's
+own `GITHUB_TOKEN` (anti-recursion). The `coverage` check_run is
+produced by the `Tests` workflow under `GITHUB_TOKEN`, so its
+completion never reached this workflow (verified empirically:
+coverage went `success`, and >4 min later zero new runs existed,
+the PR stayed open).
+
+Fix: trigger on `workflow_run: workflows: ["Tests"], types:
+[completed]`. It fires when the whole `Tests` workflow finishes
+regardless of conclusion, so a hung/failed redundant lane does not
+suppress it, and the merge job re-checks `coverage` independently.
+
+**Caveat (out of scope):** `workflow_run` fires only when the
+ENTIRE `Tests` matrix completes, so a genuinely hung lane still
+delays the merge. Right-sizing the matrix is tracked separately.
+
+---
+
+## D6 — sha→PR resolution: event payload first, REST fallback with retry
+
+**Bug (found on [PR #884](https://github.com/Smart-AI-Memory/attune-ai/pull/884),
+2026-06-14):** with the D5 trigger live, #884's `Tests` completion
+DID invoke the merge job, but it logged `No open PR against main
+for <sha>` and bailed. The lookup
+`gh api repos/$REPO/commits/$SHA/pulls` returned EMPTY despite #884
+being open against `main` with exactly that head.
+
+**Root cause — verified, eventual-consistency lag (not a PAT
+quirk).** `commits/{sha}/pulls` is an asynchronously-INDEXED
+association endpoint; queried seconds-to-minutes after a push it
+can return empty, then populate later. Confirmed by a natural
+experiment: SHAs `2d9493ae` (#881) and `f904844d` (#873) each
+logged "No open PR" inside the merge run, yet the identical query
+returned those PRs as `open` hours later while the PRs were open
+the whole time. The fine-grained-PAT hypothesis is ruled out on
+mechanism — a repo-scoped PAT with Pull-requests:read has no
+per-PR visibility restriction for own-repo PRs, and the same
+empty→populated transition shows under a normal token.
+
+**Fix:**
+
+- **Primary** sha→PR source is
+  `github.event.workflow_run.pull_requests[]` — delivered in the
+  event payload, so it has no indexing lag and is populated for
+  same-repo PRs. Our class already requires head repo == base repo
+  (no forks), so this is exactly the population condition.
+- **Fallback** to `commits/{sha}/pulls`, retried with backoff
+  (6 × 30 s within a 10-min job timeout), for the rare case the
+  payload is empty.
+- **Open/base re-checks moved into the per-PR loop** (`state ==
+  open`, `base.ref == main`) so correctness no longer depends on
+  which source resolved the PR — both feed the same gate set
+  (author, draft, fork, label, path-class re-check, coverage on
+  head). The merge step logs the raw payload and which source
+  resolved, so Phase 4 records empirically whether
+  `workflow_run.pull_requests[]` populates on this repo.
+
+All D1 gates are preserved unchanged.
 
 ---
 

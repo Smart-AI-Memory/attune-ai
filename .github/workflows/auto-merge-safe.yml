@@ -93,7 +93,7 @@ jobs:
   merge:
     if: github.event_name == 'workflow_run'
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 10
     permissions:
       contents: read
     steps:
@@ -104,6 +104,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.ADMIN_MERGE_TOKEN }}
           SHA: ${{ github.event.workflow_run.head_sha }}
+          # PRIMARY sha->PR source: the workflow_run event payload's
+          # pull_requests[] (synchronous, no indexing lag, populated for
+          # same-repo PRs — and our class requires head repo == base repo).
+          WORKFLOW_RUN_PRS: ${{ toJSON(github.event.workflow_run.pull_requests) }}
           REPO: ${{ github.repository }}
           OWNER_LOGIN: silversurfer562
         run: |
@@ -113,18 +117,58 @@ jobs:
             exit 0
           fi
 
+          # ---------------------------------------------------------------
+          # Resolve the triggering SHA -> PR number(s).
+          #
+          # PRIMARY: github.event.workflow_run.pull_requests[] — delivered
+          # in the event payload, so it has NO eventual-consistency lag and
+          # is populated for same-repo (non-fork) PRs, which is exactly our
+          # class. The diagnostic echo below records, per Phase-4 run,
+          # whether this repo actually populates the field.
+          #
+          # FALLBACK: repos/{repo}/commits/{sha}/pulls — an asynchronously
+          # INDEXED association endpoint that returns EMPTY for seconds-to-
+          # minutes after a push (root cause of the #884 bug, verified
+          # 2026-06-14: identical SHAs returned empty during the run and
+          # populated hours later while the PRs stayed open). Retried with
+          # backoff for the rare case the payload is empty too.
+          #
+          # Open/base re-checks live in the per-PR loop below, so resolution
+          # source doesn't matter to correctness — both feed the same gates.
+          # ---------------------------------------------------------------
+          echo "workflow_run.pull_requests payload: $WORKFLOW_RUN_PRS"
           mapfile -t prs < <(
-            gh api "repos/$REPO/commits/$SHA/pulls" \
-              --jq '.[] | select(.state=="open" and .base.ref=="main") | .number'
+            printf '%s' "${WORKFLOW_RUN_PRS:-[]}" | jq -r '.[].number' 2>/dev/null || true
           )
+
+          if [ "${#prs[@]}" -gt 0 ]; then
+            echo "Resolved ${#prs[@]} PR(s) from workflow_run.pull_requests: ${prs[*]}"
+          else
+            echo "workflow_run.pull_requests empty; falling back to commits/$SHA/pulls (with retry)."
+            for attempt in 1 2 3 4 5 6; do
+              mapfile -t prs < <(
+                gh api "repos/$REPO/commits/$SHA/pulls" \
+                  --jq '.[] | select(.base.ref=="main") | .number' 2>/dev/null || true
+              )
+              if [ "${#prs[@]}" -gt 0 ]; then
+                echo "commits/$SHA/pulls returned ${#prs[@]} PR(s) on attempt $attempt: ${prs[*]}"
+                break
+              fi
+              echo "attempt $attempt/6: commits/$SHA/pulls empty; sleeping 30s (indexing lag)."
+              sleep 30
+            done
+          fi
+
           if [ "${#prs[@]}" -eq 0 ]; then
-            echo "No open PR against main for $SHA."
+            echo "No PR resolved for $SHA (payload empty and commits/$SHA/pulls empty after retries)."
             exit 0
           fi
 
           for pr in "${prs[@]}"; do
             echo "::group::PR #$pr"
             meta=$(gh api "repos/$REPO/pulls/$pr" --jq '{
+              state: .state,
+              base_ref: .base.ref,
               author: .user.login,
               draft: .draft,
               head_repo: .head.repo.full_name,
@@ -132,6 +176,8 @@ jobs:
               head_sha: .head.sha,
               has_label: ([.labels[].name] | index("auto-merge-safe") != null)
             }')
+            state=$(echo "$meta" | jq -r .state)
+            base_ref=$(echo "$meta" | jq -r .base_ref)
             author=$(echo "$meta" | jq -r .author)
             draft=$(echo "$meta" | jq -r .draft)
             head_repo=$(echo "$meta" | jq -r .head_repo)
@@ -139,6 +185,12 @@ jobs:
             head_sha=$(echo "$meta" | jq -r .head_sha)
             has_label=$(echo "$meta" | jq -r .has_label)
 
+            if [ "$state" != "open" ]; then
+              echo "skip: PR state=$state (not open)"; echo "::endgroup::"; continue
+            fi
+            if [ "$base_ref" != "main" ]; then
+              echo "skip: base $base_ref != main"; echo "::endgroup::"; continue
+            fi
             if [ "$author" != "$OWNER_LOGIN" ]; then
               echo "skip: author $author != $OWNER_LOGIN"; echo "::endgroup::"; continue
             fi
@@ -165,7 +217,7 @@ jobs:
             fi
 
             # Coverage must be green on the PR's CURRENT head (the
-            # check_run that triggered us may be for an older SHA).
+            # workflow_run that triggered us may be for an older SHA).
             cov=$(gh api "repos/$REPO/commits/$head_sha/check-runs" \
               --jq '[.check_runs[] | select(.name=="coverage")] |
                     sort_by(.started_at) | last | .conclusion // "none"')
