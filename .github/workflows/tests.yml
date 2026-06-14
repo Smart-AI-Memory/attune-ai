@@ -167,6 +167,43 @@ jobs:
     - name: Run security and workflow tests
       run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
 
+    # ci-runner-hang Phase 2: the conftest watchdog writes each process's
+    # all-thread stack to hang-dumps/hang-<worker>.txt. Surface + upload it
+    # with `if: always()` so a worker dump SURVIVES a `timeout-minutes` kill
+    # (the Phase 1 gap: a worker's raw stderr dump is lost when execnet
+    # never forwards it on a hang). Empty (armed-but-never-fired) dumps are
+    # pruned so a healthy run produces no artifact.
+    - name: Surface hang-watchdog dumps
+      if: always()
+      shell: bash
+      run: |
+        shopt -s nullglob
+        found=0
+        for f in hang-dumps/*.txt; do
+          if [ -s "$f" ]; then
+            found=1
+            echo "::group::HANG DUMP — $f"
+            cat "$f"
+            echo "::endgroup::"
+          else
+            rm -f "$f"
+          fi
+        done
+        if [ "$found" -eq 0 ]; then
+          echo "hang-watchdog: no dump fired (healthy run)."
+        else
+          echo "::warning::hang-watchdog captured a stack — a worker/controller wedged. See the hang-dumps artifact."
+        fi
+
+    - name: Upload hang-watchdog dumps
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: hang-dumps-test-${{ matrix.os }}-${{ matrix.python-version }}
+        path: hang-dumps/
+        if-no-files-found: ignore
+      continue-on-error: true
+
   clock-tz:
     # Hostile-clock lane: runs the unit suite under extreme NON-UTC
     # timezones so date/TZ bugs (the #867 / #868 clock-mix class) fail in
@@ -283,6 +320,40 @@ jobs:
         verbose: true
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+
+    # ci-runner-hang Phase 2: surface + upload the worker/controller hang
+    # dumps so a `timeout-minutes` kill on this lane (the lane that wedged
+    # in run 27488685349) carries a named stack. See the `test` job note.
+    - name: Surface hang-watchdog dumps
+      if: always()
+      shell: bash
+      run: |
+        shopt -s nullglob
+        found=0
+        for f in hang-dumps/*.txt; do
+          if [ -s "$f" ]; then
+            found=1
+            echo "::group::HANG DUMP — $f"
+            cat "$f"
+            echo "::endgroup::"
+          else
+            rm -f "$f"
+          fi
+        done
+        if [ "$found" -eq 0 ]; then
+          echo "hang-watchdog: no dump fired (healthy run)."
+        else
+          echo "::warning::hang-watchdog captured a stack — a worker/controller wedged. See the hang-dumps artifact."
+        fi
+
+    - name: Upload hang-watchdog dumps
+      if: always()
+      uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+      with:
+        name: hang-dumps-coverage
+        path: hang-dumps/
+        if-no-files-found: ignore
+      continue-on-error: true
 
   lint:
     runs-on: ubuntu-latest
