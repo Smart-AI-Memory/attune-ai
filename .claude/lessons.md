@@ -8897,3 +8897,47 @@ files.
   wedged, controller-wait) but naming the culprit still needs the dying
   worker's own frame — an ABSENT worker dump is itself the signal
   (that worker died before the watchdog could fire).
+
+- **A trailing newline in a token SECRET makes EVERY `gh api` call
+  fail with `net/http: invalid header field value for "Authorization"`
+  — and inside `mapfile < <(gh api …)` that hard auth failure is
+  SILENTLY SWALLOWED under `set -e`, looking identical to "no data"**:
+  2026-06-14, the auto-merge-safe merge job (`auto-merge-safe.yml`)
+  logged `No open PR against main for <sha>` and bailed on every run.
+  Misdiagnosed for a full cycle as **eventual-consistency lag** in the
+  `commits/{sha}/pulls` association endpoint — even wrote a plausible
+  D6 decision blaming it, "confirmed" by a natural experiment that
+  queried the same SHAs hours later and got the PRs back. The
+  experiment was FLAWED: it used my own valid `gho_` token, never the
+  broken PAT. The real cause: `ADMIN_MERGE_TOKEN` was stored with a
+  trailing newline, so the `Authorization: Bearer <token>\n` header was
+  invalid and every `gh api` call 401'd/errored. Under `set -e`,
+  `mapfile -t prs < <(gh api … --jq …)` does NOT propagate the inner
+  command's failure (process-substitution exit status is unchecked), so
+  the error went to stderr and `prs` came back empty → "No open PR".
+  The bug only became visible when a LATER `gh api` call OUTSIDE a
+  process substitution (a bare `meta=$(gh api pulls/$pr …)`) finally
+  surfaced `invalid header field value` and exited non-zero. Durable
+  rules: (1) **a trailing newline in a secret is a top-suspect whenever
+  `gh`/curl auth "mysteriously" fails** — `gh secret set` from a file
+  or a UI paste easily includes one; defend by trimming in-workflow
+  (`TOKEN="$(printf '%s' "$TOKEN" | tr -d '[:space:]')"` — PATs never
+  contain whitespace) AND set cleanly (`printf %s 'tok' | gh secret
+  set`, never `echo`). (2) **`mapfile < <(cmd)` / `$(cmd)` in a
+  pipeline swallow failures under `set -e`** — a command whose failure
+  you must NOT ignore should run on its own line, or check `${PIPESTATUS
+  [@]}` / capture-then-test, so an auth/permission error fails LOUD
+  instead of masquerading as an empty result. (3) **when a lookup
+  returns empty, grep the run log for `error`/`invalid`/`401` BEFORE
+  theorizing about data/timing** — the `invalid header field value`
+  line was in run 27500989084's log the whole time; a too-narrow grep
+  for only the expected success/skip strings missed it, and a
+  verify-first read of the raw log would have skipped the entire
+  wrong-diagnosis detour. (4) **fine-grained PATs against an ORG repo
+  401 until the org approves them** (and expire fast); a classic PAT
+  with `repo` scope sidesteps the org fine-grained-approval dance when
+  you just need it working. Pairs with the "Verify-first applies to
+  infra/config diagnoses" and "research subagents confabulate — verify
+  before trusting" lessons — same discipline (read the authoritative
+  signal before asserting a cause), here applied to a CI auth failure
+  that two layers of swallowing kept invisible.
