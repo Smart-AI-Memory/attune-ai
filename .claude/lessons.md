@@ -8808,3 +8808,29 @@ files.
   the SAME PR (2 hangs here), so the "don't loop reruns past ~2" ceiling
   is real, not paranoia — escalate to (asking for) admin-merge once the
   same-suite `coverage` job is green.
+
+- **Intermittent flake vs systemic fleet wedge — one `gh run list`
+  decides whether rerunning is worth it, and freeing runners beats
+  re-running when the fleet is down**: 2026-06-14 Sat auto-run, PRs
+  #868/#869/#870 all had their ubuntu/coverage lanes hang on the
+  CI runner-hang; cancel+rerun made all three RE-HANG on the same
+  `Run tests` step (~15 min). The cheap diagnostic that distinguishes
+  "unlucky flake (rerun helps)" from "fleet is wedged right now (rerun
+  futile)": `gh run list --workflow Tests --limit 10 --json
+  headBranch,status` — if a FRESH `main` run and sibling branches are
+  ALSO `in_progress`/hung in the same window, it's a fleet-wide stall,
+  not your PR. When wedged: (1) STOP rerunning (don't burn the ~2
+  budget on a guaranteed re-hang); (2) `gh run cancel` your re-hung
+  runs — they otherwise squat runner slots for the 6h default timeout,
+  starving the very fix that would resolve this; (3) leave `--auto
+  --squash` enabled so the PRs land on the next green; (4) REPORT +
+  ask, no admin-merge. And: when sibling branches show an active fix
+  already in flight (here PR #873 `docs/spec-ci-runner-hang` +
+  `ci/runner-hang-phase1`, diagnostics-first faulthandler+timeout-
+  minutes), DON'T write a competing fix — coordinate by freeing
+  runners and waiting for it to land, then re-trigger your lanes.
+  Distinguishing detail also reconfirmed: a `clock-tz`/test lane
+  showing `fail` in `gh pr checks` was `completed/cancelled` at the
+  job level (the fail-bucket≠failure trap), NOT a real test failure —
+  always confirm conclusion via `gh run view <id> --json jobs` before
+  treating a hostile-clock "fail" as a code bug.
