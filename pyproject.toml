@@ -691,7 +691,6 @@ omit = [
     "*/agents/release/release_agents.py",  # Requires LLM API calls
     "*/agents/release/release_prep_team.py",  # Requires LLM API calls
     "*/agents/release/release_parsing.py",  # Requires LLM API calls
-    "*/agents/release/release_models.py",  # Release agent models
     # Cache requiring Redis
     "*/cache/hybrid.py",  # Requires Redis for hybrid caching
     # OpenTelemetry backend (requires otel infrastructure)
