@@ -7,6 +7,24 @@ from collections import defaultdict
 from datetime import datetime, timezone
 from pathlib import Path
 
+# =============================================================================
+# Coverage Import Guard - pre-import pydantic.root_model
+# =============================================================================
+# Under the pytest-cov plugin (``pytest --cov=...``), importing any module
+# whose chain transitively builds a pydantic ``RootModel[...]`` generic
+# (e.g. ``attune.workflows`` -> ``claude_agent_sdk`` -> ``mcp.types``) raises
+# ``KeyError: 'pydantic.root_model'`` deep in
+# ``pydantic._internal._generics.create_generic_submodel`` — it does
+# ``sys.modules[created_model.__module__]`` (the module is ``pydantic.root_model``)
+# and the submodule isn't registered yet under pytest-cov's startup ordering.
+# Plain ``pytest`` and ``coverage run -m pytest`` are unaffected; only the
+# pytest-cov plugin trips it, which walls LOCAL ``--cov`` measurement of
+# workflows / meta_workflows / orchestration (anything importing the SDK).
+# Warming ``pydantic.root_model`` into sys.modules first is the minimal,
+# deterministic fix (verified: importing ``pydantic._internal._generics``
+# alone is NOT sufficient). Harmless everywhere else — it's a core dep
+# already imported transitively.
+import pydantic.root_model  # noqa: F401  (import for side effect: sys.modules warm-up)
 import pytest
 
 # =============================================================================
