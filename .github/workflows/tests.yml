@@ -97,10 +97,14 @@ jobs:
     # macOS and Windows stay on default runners as before.
     runs-on: ${{ matrix.os }}
     # ci-runner-hang spec: tightened from 75 so a wedged pytest step fails
-    # fast (and is rerun-recoverable) instead of stalling for over an hour.
-    # Tight on ubuntu (where the hang lives, normal ~4 min); generous on
-    # Windows/macOS (normal ~13-15 min) so healthy slow runs don't false-fail.
-    timeout-minutes: ${{ matrix.os == 'ubuntu-latest' && 20 || 40 }}
+    # in bounded time (and is rerun-recoverable) instead of stalling for
+    # over an hour. A flat int (not a per-OS ${{ }} expression) keeps the
+    # `test_timeout_values_are_reasonable` guard happy AND stays generous
+    # enough for Windows/macOS (normal ~13-15 min) to avoid false-fails.
+    # The early faulthandler dump (conftest, ~10 min) is what captures the
+    # hang stack; this timeout is only the kill-backstop, so it need not be
+    # OS-tight.
+    timeout-minutes: 35
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.setup-matrix.outputs.matrix) }}
