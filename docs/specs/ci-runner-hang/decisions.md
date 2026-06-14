@@ -40,11 +40,16 @@ runtimes.
 - **OD1 → own spec.** This stays a standalone spec, cross-linked to
   `windows-xdist-flakes`. If P3/P5 prove a *shared* polluter, fix once
   and reference both.
-- **OD2 → 25 min interim.** `timeout-minutes` tightened from the
-  current 75. Implementation: coverage job → 25; matrix `test` job →
-  20 on ubuntu (where the hang lives, normal ~4 min) / 40 on
-  Windows+macOS (normal ~13–15 min, must not false-fail). Re-tune after
-  a week of observed durations.
+- **OD2 → tightened from 75.** `coverage` job → **25**; matrix `test`
+  job → **35** (flat). *Implementation correction:* the first attempt
+  used a per-OS `${{ matrix.os ... && 20 || 40 }}` expression, but that
+  broke the existing `test_timeout_values_are_reasonable` guard (it
+  expects an integer, got the expression string). A flat 35 passes the
+  guard, stays generous for Windows/macOS (~13–15 min normal) to avoid
+  false-fails, and still fails a wedged ubuntu step far faster than 75.
+  Per-OS tightness is unnecessary anyway: the **early faulthandler dump
+  (~10 min) is the diagnostic**; the job timeout is only the kill
+  backstop. Re-tune after a week of observed durations.
 - **OD3 → defer.** The broad P5 autouse I/O guard waits until P1/P3
   implicate H2 — no large speculative change now.
 - **OD4 → approved, gated.** Pursue `--timeout-method=signal` on the
@@ -84,3 +89,51 @@ with the open `--cov-fail-under` change in #871).
 
 Phase 1 is self-contained and worth shipping immediately; Phases 2–4
 are gated on Phase 1's diagnostics producing a stack.
+
+---
+
+## Phase 1 status + Phase 2 handoff (2026-06-14)
+
+**Phase 1 DONE — PR #874** (`ci/runner-hang-phase1`): faulthandler
+watchdog in `tests/conftest.py` (CI-gated, Linux 600s / else 1200s) +
+`timeout-minutes` 75→ test 35 / coverage 25. Local smoke-verified
+(watchdog dumps at threshold, test still passes; unset = not armed).
+The guard-test break was fixed in the same PR (flat int, not a per-OS
+expression). At handoff #874 is open with auto-merge — **confirm it
+merged** (`gh pr view 874 --json state,mergedAt`).
+
+### Phase 2 — start here, in a FRESH session
+
+Phase 2 is **gated on a real hang stack**. Do NOT attempt a root fix
+without one — guessing failed prior CI specs (see the "re-validate a
+spec's premise" lesson). Concretely:
+
+1. **Confirm Phase 1 merged** and the watchdog is live on `main`.
+2. **Wait for the next hang.** With #874 live, a wedged ubuntu lane now
+   (a) prints an all-thread faulthandler dump at ~10 min and (b) fails
+   the job at 25–35 min instead of stalling. When CI shows a `test`/
+   `coverage` job failing at/near its `timeout-minutes` (not a normal
+   assertion failure), pull its log:
+   `gh api repos/Smart-AI-Memory/attune-ai/actions/jobs/<job_id>/logs`
+   (works once the JOB is complete even if the RUN is in progress) and
+   find the `Timeout (0:..)!` section — it names the wedged frame(s) in
+   the controller and each worker.
+   - #874's OWN run is a full-matrix run (touches tests.yml), so it may
+     itself capture a stack — check its run first.
+3. **Classify with the stack:** a worker wedged in a C-level
+   socket/subprocess/lock call ⇒ H1/H2 (the I/O-polluter family shared
+   with `windows-xdist-flakes`); a coverage-combine frame ⇒ H3.
+4. **Fix narrowly** (per design.md "Proposed fix shape"): mock/loopback
+   the polluting I/O with an explicit socket timeout (proven Windows-
+   spec pattern), and only then consider OD4 (`--timeout-method=signal`
+   on POSIX) if the stack shows a C-call the thread method couldn't
+   break. Land the P5 autouse I/O guard (G4) once H2 is confirmed (OD3
+   says defer until then).
+5. **Verify with a rerun count**, not a single green — intermittent bug
+   ⇒ require ≥10 clean reruns under `-n auto` (design.md G3).
+
+**If no hang reproduces within a reasonable window:** that's a fine
+outcome — Phase 1's diagnostics + fast-fail already retire most of the
+intervention tax. Mark the spec `monitoring` and let the next captured
+stack reopen Phase 2. Tar-pit guard: do not chase an unreproducible
+hang past two investigation attempts.
