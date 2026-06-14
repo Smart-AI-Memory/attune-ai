@@ -612,3 +612,30 @@ gaps are test-quality, logged in the plan not the bug log)_
 
 [PR #793]: https://github.com/Smart-AI-Memory/attune-ai/pull/793
 [auth-strategy-mutation-rewrite.md]: ./auth-strategy-mutation-rewrite.md
+
+---
+
+## workflows/test_maintenance_cli.py + test_lifecycle.py — deleted (QA #6)
+
+**Date:** 2026-06-14
+
+The two orphan modules flagged in Phase 4 (tasks.md — "zero inbound
+imports; source-marked 'Removed'") and deferred at the `test_runner.py`
+pick ("ambiguous whether they should be measured at all; not
+blocking") are now **deleted**, resolving that open ambiguity.
+
+QA #6 began with a full-suite coverage baseline of `attune.workflows`
+(90%). The two largest "gaps" were these modules at 0%
+(`test_maintenance_cli.py` 590 lines / 317 missed, `test_lifecycle.py`
+535 lines / 207 missed). Liveness triage confirmed they are dead:
+zero inbound imports (`test_maintenance_cli` is imported by nothing;
+`test_lifecycle` only by the dead CLI), never wired to the `attune`
+entry point (`cli_minimal:main` only), no test files, and the only
+`python -m …test_maintenance_cli` references are in their own
+docstrings. The live `test-maintenance` *feature* runs via the
+meta-workflow template (`TestMaintenanceWorkflow` in
+`test_maintenance.py`, 67% — a genuine QA target kept). **Decision:
+delete dead code rather than write tests for code nothing calls** (per
+the "0% module is often dead code — grep inbound imports before
+testing" lesson). Import + full collect (2606 tests) verified green
+post-deletion.
