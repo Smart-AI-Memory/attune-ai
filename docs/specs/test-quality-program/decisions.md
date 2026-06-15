@@ -715,3 +715,57 @@ exception fallback). All externals mocked (anthropic SDK patched —
 keyless-safe). Module measured alone: **100%**. No production bug found.
 **PR:** https://github.com/Smart-AI-Memory/attune-ai/pull/896
 **Bug log entry:** none
+
+---
+
+## Omit-list audit + conversions (QA #6, 2026-06-14)
+
+**Audit:** `docs/specs/test-quality-program/omit-audit.md` (PR #900).
+Probed every `omit` entry whose comment claimed a testability barrier:
+nearly all import cleanly **keyless** — the LLM/Redis/server dep is
+call-time (mockable), not import-time. The `omit` comments described
+"why a naive test would hit the network," not a real barrier; several
+were mislabeled and two were stale.
+
+**Conversions shipped (each: remove `omit` line + net-new test, all
+out-of-class so human/admin-merged):**
+
+- `agents/release/release_models.py` — was "Requires LLM API calls",
+  actually Enums + dataclasses + console formatting. **77→96%**
+  (#901, merged). Remaining 4 lines = redis/anthropic import guards.
+- `agents/release/release_parsing.py` — pure multi-strategy parser.
+  **→100%** (#904, admin-merged).
+- `agents/release/release_agents.py` — re-export shim. **→100%**
+  (#904).
+- `cache/hybrid.py` — **stale** omit (src/attune/cache/ deleted);
+  pattern removed (#904).
+
+**Deferred — `cross_session.py` stale-glob:** the audit flagged
+`*/memory/cross_session.py` as mismatching the real path
+`memory/short_term/cross_session.py`. Verification was inconclusive
+(multiple cross_session test files target a different module), so the
+removal was held out of #904 — needs a full-suite coverage check
+before touching, not a blind removal.
+
+**Tier-2 backlog (mislabeled/wrongly-omitted, real mocking effort —
+ranked, each its own out-of-class PR):**
+
+1. `memory/claude_memory.py` (309) — dataclasses + Claude at call time;
+   mock the client (cf. research_synthesis scaffold).
+2. `monitoring/otel_backend.py` (268) — mock the otel SDK.
+3. `orchestration/_strategies/base.py` (203) + `execution_strategies.py`
+   (109) — inject mock agents.
+4. `core_modules/short_term_memory.py` (222) — mock redis.
+5. `meta_workflows/cli_commands/{memory,analytics,agent,template,config}_commands.py`
+   — cf. existing `tests/unit/cli_commands` patterns (mock stdin/Prompt).
+
+**Tier-3 (more harness effort):** `models/auth_cli.py`,
+`monitoring/alerts_cli.py`, `core_modules/interaction.py` (interactive
+`input()`), `memory/control_panel_api.py` (FastAPI `TestClient`),
+`memory/short_term/sessions.py`, `socratic/collaboration*.py` (verify
+not deprecated first).
+
+**Hygiene follow-up:** `omit` comments should state the *real* reason;
+consider a check that flags `omit` entries whose files import cleanly
+keyless (the mislabel that let this debt accumulate). Tracked in
+omit-audit.md §Recommendations.

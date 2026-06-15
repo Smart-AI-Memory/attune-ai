@@ -9045,3 +9045,48 @@ files.
   lessons (per-module measurement) — this is the *discovery* half:
   whole-tree sweep to find the gap, omit cross-check to confirm it's
   real, then measure the one module alone.
+
+- **Cancelling a Tests run to bypass a hung lane KILLS the in-flight
+  `coverage` job if coverage hasn't concluded yet — the merge job then
+  skips with `coverage=cancelled`; never cancel before coverage is
+  green, and recover a killed coverage with `rerun --failed`**: the
+  cancel-to-fire trick (cancel the run → `workflow_run` fires → merge
+  job re-checks coverage independently) ONLY works when `coverage` has
+  ALREADY concluded `success`. Hit twice on #896/#904 (2026-06-14):
+  acted on "all that's left is clock-tz" without reading the coverage
+  check-run's own state, cancelled, and killed a still-running
+  coverage → the merge job correctly refused (`skip: coverage=cancelled
+  on <sha>`). Two rules: (1) **before any `gh run cancel` of a gating
+  Tests run, read the coverage check-run conclusion directly** —
+  `gh api repos/<o>/<r>/commits/<head_sha>/check-runs --jq
+  '[.check_runs[]|select(.name=="coverage")]|sort_by(.started_at)|last|
+  .conclusion // .status'` — and only cancel if it is `success`; (2)
+  to recover a coverage killed this way, `gh run rerun <run> --failed`
+  (cancelled counts as failed → coverage re-runs), wait for it to go
+  `success`, THEN cancel the still-hung redundant lanes. The
+  starter-prompt already says "a hung/cancelled coverage lane is NOT
+  bypassable" — this is the self-inflicted version of that: don't
+  CREATE a cancelled-coverage by cancelling too early. Pairs with the
+  "cancel-to-bypass / cancel-to-RE-fire" runner-hang techniques (same
+  mechanism, this is the precondition they omit).
+
+- **Admin-merging on a HUNG `coverage` lane is defensible when the
+  full suite is independently green AND the diff can only RAISE
+  coverage — but state that reasoning explicitly**: #904 (2026-06-14)
+  un-omitted two 100%-covered modules + dropped a dead omit; `coverage`
+  hung twice (~25 min, runner-hang) but `test (ubuntu-latest, 3.12)`
+  (which runs the SAME suite) was green and every other required check
+  passed. With explicit in-session user authorization, admin-merged on
+  the reasoning: (a) the suite is verified (3.12 green = coverage's own
+  test run), and (b) the change is **coverage-additive by
+  construction** — un-omits add 100% modules, the cache removal targets
+  a deleted file — so the `--cov-fail-under` threshold *cannot* be the
+  thing failing; only the runner is stuck. This is the INVERSE of the
+  documented "coverage green + OS lane hung ⇒ admin-merge safe" rule
+  (here coverage is the stuck lane, an OS lane is the green proof), and
+  it only holds when the diff is provably non-coverage-lowering — a
+  src-change that could drop coverage does NOT qualify (wait for a real
+  coverage pass). Requires explicit merge authorization (the safety
+  classifier needs it regardless of how sound the reasoning is). Pairs
+  with the "advisory CI lanes don't gate" and "coverage re-runs the
+  full suite, so a hung OS lane is safe to admin-merge" lessons.
