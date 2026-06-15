@@ -55,7 +55,10 @@ class TestGracefulDegradationMemory:
         from attune.memory.types import RedisConfig
 
         memory = RedisShortTermMemory(config=RedisConfig(use_mock=True))
-        coordinator = CrossSessionCoordinator(memory)
+        # auto_announce=False: ``_degraded`` is set before the announce
+        # block, so the assertion still holds without leaking a heartbeat
+        # daemon thread (see docs/specs/ci-runner-hang/).
+        coordinator = CrossSessionCoordinator(memory, auto_announce=False)
 
         assert coordinator._degraded is True
 

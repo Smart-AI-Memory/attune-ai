@@ -245,6 +245,26 @@ class TestCrossSessionCoordinatorHeartbeat:
         coord.close()
         assert coord._heartbeat_thread is None
 
+    def test_default_construction_heartbeat_is_stopped_by_close(self):
+        """Default auto_announce spawns a heartbeat thread that close() stops.
+
+        Regression guard for the xdist end-of-session finalize deadlock
+        (docs/specs/ci-runner-hang/): the default ``auto_announce=True``
+        path starts a daemon ``heartbeat-<agent_id>`` thread, and a test
+        or caller that never closes the coordinator leaks it into the
+        worker process. This pins that close() terminates the OS thread,
+        not merely the attribute.
+        """
+        memory = RedisShortTermMemory(use_mock=True)
+        coord = CrossSessionCoordinator(memory=memory)  # auto_announce=True
+        thread_name = f"heartbeat-{coord._agent_id}"
+        try:
+            assert any(t.name == thread_name for t in threading.enumerate())
+        finally:
+            coord.close()
+        assert coord._heartbeat_thread is None
+        assert not any(t.is_alive() and t.name == thread_name for t in threading.enumerate())
+
 
 # ---------------------------------------------------------------------------
 # Event handler registration

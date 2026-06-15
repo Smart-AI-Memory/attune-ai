@@ -1,6 +1,6 @@
 # Spec: CI gating-lane isolation
 
-**Status:** draft
+**Status:** Layer A shipping (2026-06-15) — see `decisions.md`; B/C deferred
 **Opened:** 2026-06-15
 **Layer:** attune-ai (CI / `.github/workflows/`)
 **Owner:** Patrick + agent
@@ -16,9 +16,14 @@ including a non-gating one — the merge is blocked even though every
 gate that matters is green.
 
 This is the recurring tax observed across QA #6 (2026-06-13 →
-2026-06-14): the systemic runner-hang freezes a lane ~1s after it
-starts, leaving it `in_progress` for 25–47 min until the job timeout
-cancels it. Two distinct failure shapes both trace to this topology:
+2026-06-14): the systemic runner-hang lets the suite run to ~99%
+(tests passing) and then freezes at session finalize, leaving the
+lane `in_progress` for 25–47 min until the job timeout cancels it.
+(Corrected 2026-06-15 from an earlier "~1s after start" guess — the
+first captured stack disproves it; see
+[`ci-runner-hang/phase2-findings.md`](../ci-runner-hang/phase2-findings.md)
+"Phase 3", run 27541609728.) Two distinct failure shapes both trace
+to this topology:
 
 1. **Non-gating lane hangs, blocks the merge trigger.** `clock-tz
    (Pacific/Kiritimati)`, the Windows lane, etc. hang; `coverage` is
