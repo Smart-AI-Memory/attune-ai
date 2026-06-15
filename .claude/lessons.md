@@ -9124,3 +9124,38 @@ files.
   cleanly keyless. Pairs with the omit-cross-check lesson above (that
   one SKIPS omit-masked modules at pick time; this one REPAIRS the omit
   list as its own work-stream).
+
+- **GitHub Actions step-level `timeout` retry for a runner-hang —
+  retry ONLY on rc=124, and the wrapper is Linux-only (`timeout` on
+  Windows `shell: bash` is the wrong binary)**: building Layer A of
+  `ci-gating-lane-isolation` (PR #910, 2026-06-15), wrapping the
+  gating pytest in `timeout -k 30s 14m pytest … ; retry` to auto-kill
+  a wedged attempt and retry in-run. Two non-obvious, outcome-
+  independent facts worth keeping:
+  - **`timeout` returns 124 on a timeout** (coreutils, regardless of
+    the signal sent — `-s KILL`/`-k` don't change the exit code unless
+    `--preserve-status`). So retry the step ONLY when `rc -eq 124` (the
+    hang signature) and return any other non-zero immediately — that's
+    what keeps a real test failure from being masked green by the
+    retry. `nick-fields/retry` retries on ANY non-zero by default, so a
+    shell loop with an explicit `rc==124` predicate is strictly safer
+    for this use (and adds no third-party action / SHA-pin surface).
+  - **On Windows runners with `shell: bash` (Git Bash), `timeout`
+    resolves to Windows' `timeout.exe`** (an unrelated "pause N
+    seconds" command), NOT coreutils — so a `timeout`-wrapped retry
+    MUST be gated to `runner.os == 'Linux'`. macOS default runners
+    also lack coreutils `timeout` on PATH. Gate the wrapper to Linux;
+    let advisory macOS/Windows lanes keep the plain invocation.
+  - **Sizing:** the step timeout must sit ABOVE any in-suite hang-
+    watchdog (here the conftest faulthandler dump at 600s) so the
+    diagnostic stack still lands before the kill, and BELOW the job
+    `timeout-minutes` (which becomes the all-attempts-hung backstop).
+    If two attempts won't fit under the existing job timeout, RAISE
+    the job timeout — that's not a reversal of an earlier "tighten the
+    job timeout" decision, because the step timeout is now the
+    fast-kill and the job timeout only bounds the worst case.
+  - **Validate the loop offline before shipping:** simulate the exit
+    paths under `bash -eo pipefail` (clean / real-fail / hang→pass /
+    hang→hang / hang→real-fail) — `-e` interacts with `cmd; rc=$?`
+    (wrap the timed command in `set +e`/`set -e`, and use an explicit
+    `if … then break` not `[ … ] && break`, which `-e` mishandles).
