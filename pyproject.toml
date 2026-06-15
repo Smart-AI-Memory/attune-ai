@@ -688,11 +688,7 @@ omit = [
     "*/memory/short_term/sessions.py",  # Requires Redis server
     "*/memory/claude_memory.py",  # Requires Claude API
     # Agent modules requiring live LLM
-    "*/agents/release/release_agents.py",  # Requires LLM API calls
     "*/agents/release/release_prep_team.py",  # Requires LLM API calls
-    "*/agents/release/release_parsing.py",  # Requires LLM API calls
-    # Cache requiring Redis
-    "*/cache/hybrid.py",  # Requires Redis for hybrid caching
     # OpenTelemetry backend (requires otel infrastructure)
     "*/monitoring/otel_backend.py",  # Requires OpenTelemetry SDK
     # Orchestration execution (requires external services)
