@@ -1,6 +1,6 @@
 # Usage Signals — Decisions
 
-**Status:** Phase 0 complete (2026-06-11)
+**Status:** Phase 2 scoped (2026-06-15) — Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)
 
@@ -202,3 +202,57 @@ call time.
 
 Remaining in scope: R3 (dashboard Reach panel), R5 (telemetry
 watchdog), R6 (spend alarm), and the Phase 2 opt-in ping question.
+
+## D4 — Phase 2 opt-in ping: BUILD (2026-06-15)
+
+The question D2 left open is decided: **build the opt-in
+phone-home ping.** Full design in
+[phase2-design.md](phase2-design.md). Locked choices:
+
+- **Sync-layer architecture** over the existing local `usage.jsonl`
+  (not a parallel pipeline) — reuses the local buffer, offline
+  resilience free, honors the "don't replace local telemetry"
+  non-goal.
+- **Backend:** Vercel `/api/usage` function → Vercel Postgres
+  (Neon). Relational store for retention / per-workflow / per-version
+  queries; AMS Redis untouched.
+- **Identity:** rotating anonymous install-ID — a recorded,
+  deliberate softening of R2's "no identification ever" to unlock
+  retention (the highest-value signal). Anonymous, resettable, no
+  PII; see phase2-design Privacy note.
+- **Consent:** ships OFF; first-run Socratic prompt + env +
+  `attune telemetry enable/disable`; `DO_NOT_TRACK` honored.
+- **Transport:** fire-and-forget, 2 s timeout, all errors swallowed.
+
+Payload frozen at schema v1 (package, version, install_id,
+event, outcome, os, py, ts) — no paths/code/prompts/args ever; a
+regression test asserts the exact key set. ~3 days, three PRs
+(2a client / 2b endpoint / 2c dashboard Reach panel = R3).
+
+Status moves Phase 0 complete → **Phase 2 scoped** (implementation
+pending an explicit go).
+
+## D5 — Phase 2a implemented: opt-in client (2026-06-15)
+
+The client half of the opt-in ping is built (PR pending). New
+`src/attune/telemetry/usage_ping.py` (frozen payload, enablement
+precedence, install-id, cursor, fire-and-forget `sync`/`run_sync`),
+`TelemetryConfig` gains `usage_ping` / `install_id` /
+`usage_ping_consented`, and `attune telemetry status|enable|disable`
+ship. 45 unit tests, 92% module coverage; dogfooded end-to-end.
+
+Two design adjustments surfaced while building (code is the contract):
+
+- **`outcome` dropped from v1.** The local `UsageTracker` records
+  LLM-call cost/token data, not a success/error outcome — emitting it
+  would fabricate data. v1 sends only what's real (workflow + ts);
+  `outcome` deferred to a `schema:2` bump. phase2-design.md updated.
+- **Opt-in state writes the USER config, never a discovered project
+  config.** First implementation wrote `./attune.config.json` (first
+  in discovery order), which would let a user commit their install-id
+  / `usage_ping=true`. Fixed: `enable/disable/reset` target
+  `~/.attune/config.json` explicitly.
+
+Deferred to 2b (no value until the endpoint exists): wiring `run_sync`
+into an atexit/Stop trigger. `DEFAULT_ENDPOINT` is empty, so even an
+opted-in user transmits nothing yet — intentional double-safety.

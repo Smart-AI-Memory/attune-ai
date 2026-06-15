@@ -9124,3 +9124,107 @@ files.
   cleanly keyless. Pairs with the omit-cross-check lesson above (that
   one SKIPS omit-masked modules at pick time; this one REPAIRS the omit
   list as its own work-stream).
+
+- **A coverage test that exercises a "real" (non-injected) config
+  path can CLOBBER the user's live `~/.attune/config.json` —
+  `ConfigLoader.save(path=None)` ignores the `config_path` passed to
+  `__init__` and falls back to `get_default_config_path()`**: hit
+  2026-06-15 covering `telemetry/usage_ping.py::_open_user_config`'s
+  real branch (PR #912). To set up an "existing home config" fixture I
+  wrote `ConfigLoader(config_path=tmp_home).save(UnifiedConfig())` —
+  but `save()` resolves its target from `path` arg → `self._loaded_path`
+  → `get_default_config_path()`, and `config_path` only seeds
+  `_loaded_path` after a `.load()`. With no load, `save(path=None)`
+  wrote fresh defaults to the REAL `~/.attune/config.json`, wiping the
+  user's file during a `/tmp` coverage run. Proof it was a full
+  recreate, not an edit: the file's embedded `_created` became the
+  exact run timestamp; no backup existed in `~/.attune/`,
+  `~/.attune/backups/`, or Time Machine local snapshots
+  (`tmutil listlocalsnapshots /` empty). Two durable rules: (1) in
+  tests, NEVER call a production `save()`/writer whose default path
+  resolves to real user state — write the fixture file directly with
+  `path.write_text(json.dumps(UnifiedConfig().to_dict()))` into
+  `tmp_path`, and gate the test with an assertion that the real
+  config's mtime is unchanged across the run; (2) when monkeypatching
+  `get_default_config_path` to a temp path to exercise a real
+  config-open branch, remember any *writer* in the same code path still
+  needs an explicit temp `path=` — patching the *reader* default does
+  not redirect `save()`. Pairs with the "ISOLATE real user state"
+  mutation-testing lesson and the "monkeypatch.delenv SUT-write leak"
+  testing-pattern — same family (a test mutating real machine state),
+  this one is the config-writer surface. Recovery when it happens:
+  there is none without a backup — surface it to the user immediately,
+  show the current (default) content field-by-field, and ask whether
+  any non-default customizations need manual reconstruction.
+
+- **GitHub Actions step-level `timeout` retry for a runner-hang —
+  retry ONLY on rc=124, and the wrapper is Linux-only (`timeout` on
+  Windows `shell: bash` is the wrong binary)**: building Layer A of
+  `ci-gating-lane-isolation` (PR #910, 2026-06-15), wrapping the
+  gating pytest in `timeout -k 30s 14m pytest … ; retry` to auto-kill
+  a wedged attempt and retry in-run. Two non-obvious, outcome-
+  independent facts worth keeping:
+  - **`timeout` returns 124 on a timeout** (coreutils, regardless of
+    the signal sent — `-s KILL`/`-k` don't change the exit code unless
+    `--preserve-status`). So retry the step ONLY when `rc -eq 124` (the
+    hang signature) and return any other non-zero immediately — that's
+    what keeps a real test failure from being masked green by the
+    retry. `nick-fields/retry` retries on ANY non-zero by default, so a
+    shell loop with an explicit `rc==124` predicate is strictly safer
+    for this use (and adds no third-party action / SHA-pin surface).
+  - **On Windows runners with `shell: bash` (Git Bash), `timeout`
+    resolves to Windows' `timeout.exe`** (an unrelated "pause N
+    seconds" command), NOT coreutils — so a `timeout`-wrapped retry
+    MUST be gated to `runner.os == 'Linux'`. macOS default runners
+    also lack coreutils `timeout` on PATH. Gate the wrapper to Linux;
+    let advisory macOS/Windows lanes keep the plain invocation.
+  - **Sizing:** the step timeout must sit ABOVE any in-suite hang-
+    watchdog (here the conftest faulthandler dump at 600s) so the
+    diagnostic stack still lands before the kill, and BELOW the job
+    `timeout-minutes` (which becomes the all-attempts-hung backstop).
+    If two attempts won't fit under the existing job timeout, RAISE
+    the job timeout — that's not a reversal of an earlier "tighten the
+    job timeout" decision, because the step timeout is now the
+    fast-kill and the job timeout only bounds the worst case.
+  - **Validate the loop offline before shipping:** simulate the exit
+    paths under `bash -eo pipefail` (clean / real-fail / hang→pass /
+    hang→hang / hang→real-fail) — `-e` interacts with `cmd; rc=$?`
+    (wrap the timed command in `set +e`/`set -e`, and use an explicit
+    `if … then break` not `[ … ] && break`, which `-e` mishandles).
+
+- **Reading a hang-dump + its job log: per-JOB `gh api …/jobs/<id>/logs`
+  works mid-run, and the wedged worker is the one with a non-execnet
+  frame**: decoding the first captured runner-hang stack (2026-06-15,
+  run 27541609728, the live test of ci-gating-lane-isolation Layer A).
+  Durable mechanics:
+  - **`gh run view <run> --log` / `--log-failed` return nothing while
+    the OVERALL run is in_progress** (other lanes still running) — but a
+    single COMPLETED job's log is readable immediately via
+    `gh api repos/<o>/<r>/actions/jobs/<job_id>/logs` (get the job id
+    from `gh run view <run> --json jobs --jq '.jobs[]|select(.name==
+    "<job>")|.databaseId'`). This is how you read a failed lane's tail
+    before the slow advisory lanes finish. Extends the existing "gh run
+    view --log-failed returns nothing in-flight" lesson with the
+    per-job escape hatch.
+  - **`gh run download` errors `fatal: not a git repository`** when the
+    cwd isn't inside the repo checkout — pass `-R <owner/repo>` and
+    `-D <outdir>` explicitly (e.g. downloading a `hang-dumps-*`
+    artifact to /tmp).
+  - **Decoding the xdist hang stack:** the worker carrying an
+    APP-LEVEL thread frame (not just `execnet gateway_base`) is the
+    suspect. Controller wedged in `xdist/dsession.py loop_once →
+    queue.get → wait` + ALL workers cleanly idle in `execnet serve →
+    integrate_as_primary_thread → wait` = an **end-of-session finalize
+    deadlock** (tests pass to ~99%, then the session can't conclude) —
+    NOT a worker blocked in uninterruptible I/O. Distinguish the two:
+    an I/O-polluter hang shows a worker stuck in `socket.recv` /
+    `subprocess.wait` / `lock.acquire`; a finalize deadlock shows
+    everyone cleanly idle. `--timeout=60 --timeout-method=thread` does
+    NOT fire on either (GIL/uninterruptible or clean-idle).
+  - **A leaked non-daemon thread blocks worker exit; a leaked DAEMON
+    thread does not** — so before blaming a leaked app thread for a
+    finalize wedge, check `daemon=` AND whether its loop is a no-op in
+    the test env (e.g. `cross_session` coordinator's `_heartbeat_loop`
+    is `daemon=True` and no-ops when `client is None`, i.e. keyless CI).
+    A no-op daemon is a CORRELATION/suspect, not a proven cause — get
+    N>1 dumps before shipping a fix (tar-pit guard).
