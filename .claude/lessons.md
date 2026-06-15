@@ -9125,6 +9125,38 @@ files.
   one SKIPS omit-masked modules at pick time; this one REPAIRS the omit
   list as its own work-stream).
 
+- **A coverage test that exercises a "real" (non-injected) config
+  path can CLOBBER the user's live `~/.attune/config.json` —
+  `ConfigLoader.save(path=None)` ignores the `config_path` passed to
+  `__init__` and falls back to `get_default_config_path()`**: hit
+  2026-06-15 covering `telemetry/usage_ping.py::_open_user_config`'s
+  real branch (PR #912). To set up an "existing home config" fixture I
+  wrote `ConfigLoader(config_path=tmp_home).save(UnifiedConfig())` —
+  but `save()` resolves its target from `path` arg → `self._loaded_path`
+  → `get_default_config_path()`, and `config_path` only seeds
+  `_loaded_path` after a `.load()`. With no load, `save(path=None)`
+  wrote fresh defaults to the REAL `~/.attune/config.json`, wiping the
+  user's file during a `/tmp` coverage run. Proof it was a full
+  recreate, not an edit: the file's embedded `_created` became the
+  exact run timestamp; no backup existed in `~/.attune/`,
+  `~/.attune/backups/`, or Time Machine local snapshots
+  (`tmutil listlocalsnapshots /` empty). Two durable rules: (1) in
+  tests, NEVER call a production `save()`/writer whose default path
+  resolves to real user state — write the fixture file directly with
+  `path.write_text(json.dumps(UnifiedConfig().to_dict()))` into
+  `tmp_path`, and gate the test with an assertion that the real
+  config's mtime is unchanged across the run; (2) when monkeypatching
+  `get_default_config_path` to a temp path to exercise a real
+  config-open branch, remember any *writer* in the same code path still
+  needs an explicit temp `path=` — patching the *reader* default does
+  not redirect `save()`. Pairs with the "ISOLATE real user state"
+  mutation-testing lesson and the "monkeypatch.delenv SUT-write leak"
+  testing-pattern — same family (a test mutating real machine state),
+  this one is the config-writer surface. Recovery when it happens:
+  there is none without a backup — surface it to the user immediately,
+  show the current (default) content field-by-field, and ask whether
+  any non-default customizations need manual reconstruction.
+
 - **GitHub Actions step-level `timeout` retry for a runner-hang —
   retry ONLY on rc=124, and the wrapper is Linux-only (`timeout` on
   Windows `shell: bash` is the wrong binary)**: building Layer A of

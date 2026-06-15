@@ -557,3 +557,70 @@ def cmd_telemetry_signals(args: Namespace) -> int:
         logger.exception("Signals error: %s", e)
         print(f"❌ Error: {e}")
         return 1
+
+
+def cmd_telemetry_status(args: Namespace) -> int:
+    """Show opt-in usage-ping status and the exact payload that is sent."""
+    try:
+        from attune.config.loader import ConfigLoader
+        from attune.telemetry import usage_ping
+
+        config = ConfigLoader().load()
+        tele = config.telemetry
+        enabled = usage_ping.is_enabled(tele.usage_ping)
+        endpoint = usage_ping.resolve_endpoint() or "(not configured — Phase 2b)"
+
+        print("\n📡 Usage Ping (anonymous, opt-in)\n")
+        print("-" * 60)
+        print(f"  Enabled:        {'yes' if enabled else 'no'}")
+        print(f"  Config flag:    {tele.usage_ping}")
+        print(f"  Consented:      {tele.usage_ping_consented}")
+        print(f"  Install ID:     {tele.install_id or '(none — minted on opt-in)'}")
+        print(f"  Endpoint:       {endpoint}")
+        print("-" * 60)
+        print("  Exactly this is sent per workflow run (nothing else):\n")
+        print(json.dumps(usage_ping.example_payload(config), indent=2))
+        print("-" * 60)
+        print("  Enable:  attune telemetry enable")
+        print("  Disable: attune telemetry disable")
+        print("  DO_NOT_TRACK / ATTUNE_USAGE_PING env vars override this.\n")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: CLI commands should catch all errors and report gracefully
+        logger.exception("Usage-ping status error: %s", e)
+        print(f"❌ Error: {e}")
+        return 1
+
+
+def cmd_telemetry_enable(args: Namespace) -> int:
+    """Opt in to anonymous usage pinging."""
+    try:
+        from attune.telemetry import usage_ping
+
+        install_id = usage_ping.enable()
+        print("\n✅ Usage ping enabled. Thank you — this helps prioritize work.")
+        print(f"   Anonymous install ID: {install_id}")
+        print("   Only the workflow name, version, OS, and Python version are sent.")
+        print("   Never code, paths, prompts, or arguments.")
+        print("   Opt out anytime: attune telemetry disable\n")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: CLI commands should catch all errors and report gracefully
+        logger.exception("Usage-ping enable error: %s", e)
+        print(f"❌ Error: {e}")
+        return 1
+
+
+def cmd_telemetry_disable(args: Namespace) -> int:
+    """Opt out of anonymous usage pinging."""
+    try:
+        from attune.telemetry import usage_ping
+
+        usage_ping.disable()
+        print("\n✅ Usage ping disabled. Nothing will be transmitted.\n")
+        return 0
+    except Exception as e:  # noqa: BLE001
+        # INTENTIONAL: CLI commands should catch all errors and report gracefully
+        logger.exception("Usage-ping disable error: %s", e)
+        print(f"❌ Error: {e}")
+        return 1
