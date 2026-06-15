@@ -9159,3 +9159,40 @@ files.
     hang→hang / hang→real-fail) — `-e` interacts with `cmd; rc=$?`
     (wrap the timed command in `set +e`/`set -e`, and use an explicit
     `if … then break` not `[ … ] && break`, which `-e` mishandles).
+
+- **Reading a hang-dump + its job log: per-JOB `gh api …/jobs/<id>/logs`
+  works mid-run, and the wedged worker is the one with a non-execnet
+  frame**: decoding the first captured runner-hang stack (2026-06-15,
+  run 27541609728, the live test of ci-gating-lane-isolation Layer A).
+  Durable mechanics:
+  - **`gh run view <run> --log` / `--log-failed` return nothing while
+    the OVERALL run is in_progress** (other lanes still running) — but a
+    single COMPLETED job's log is readable immediately via
+    `gh api repos/<o>/<r>/actions/jobs/<job_id>/logs` (get the job id
+    from `gh run view <run> --json jobs --jq '.jobs[]|select(.name==
+    "<job>")|.databaseId'`). This is how you read a failed lane's tail
+    before the slow advisory lanes finish. Extends the existing "gh run
+    view --log-failed returns nothing in-flight" lesson with the
+    per-job escape hatch.
+  - **`gh run download` errors `fatal: not a git repository`** when the
+    cwd isn't inside the repo checkout — pass `-R <owner/repo>` and
+    `-D <outdir>` explicitly (e.g. downloading a `hang-dumps-*`
+    artifact to /tmp).
+  - **Decoding the xdist hang stack:** the worker carrying an
+    APP-LEVEL thread frame (not just `execnet gateway_base`) is the
+    suspect. Controller wedged in `xdist/dsession.py loop_once →
+    queue.get → wait` + ALL workers cleanly idle in `execnet serve →
+    integrate_as_primary_thread → wait` = an **end-of-session finalize
+    deadlock** (tests pass to ~99%, then the session can't conclude) —
+    NOT a worker blocked in uninterruptible I/O. Distinguish the two:
+    an I/O-polluter hang shows a worker stuck in `socket.recv` /
+    `subprocess.wait` / `lock.acquire`; a finalize deadlock shows
+    everyone cleanly idle. `--timeout=60 --timeout-method=thread` does
+    NOT fire on either (GIL/uninterruptible or clean-idle).
+  - **A leaked non-daemon thread blocks worker exit; a leaked DAEMON
+    thread does not** — so before blaming a leaked app thread for a
+    finalize wedge, check `daemon=` AND whether its loop is a no-op in
+    the test env (e.g. `cross_session` coordinator's `_heartbeat_loop`
+    is `daemon=True` and no-ops when `client is None`, i.e. keyless CI).
+    A no-op daemon is a CORRELATION/suspect, not a proven cause — get
+    N>1 dumps before shipping a fix (tar-pit guard).
