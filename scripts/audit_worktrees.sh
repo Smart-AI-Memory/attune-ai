@@ -32,6 +32,17 @@
 
 set -uo pipefail
 
+# Audit the repo this script ships in, not the caller's $PWD. Without
+# this anchor a bare `git worktree list` reports on whatever directory
+# the caller happens to be in (e.g. the umbrella workspace), silently
+# auditing the wrong repo — the sprawl in *this* repo stays invisible.
+# Override with AUDIT_REPO=<path> to point the audit elsewhere.
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="${AUDIT_REPO:-$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel 2>/dev/null)}"
+if [[ -n "$REPO_ROOT" ]]; then
+    cd "$REPO_ROOT" || exit 0
+fi
+
 JSON_MODE=0
 if [[ "${1:-}" == "--json" ]]; then
     JSON_MODE=1
@@ -41,24 +52,14 @@ SOFT_CAP="${AUDIT_SOFT_CAP:-10}"
 EXCLUDE_RAW="${AUDIT_EXCLUDE_WORKTREE:-}"
 IFS=',' read -ra EXCLUDE_ARR <<<"$EXCLUDE_RAW"
 
-# Locate the main checkout (the one without a separate worktree
-# branch — git worktree list --porcelain shows it as "bare" or as
-# the first entry pointing at HEAD without a branch line).
-MAIN_CHECKOUT=""
-while IFS= read -r line; do
-    if [[ "$line" =~ ^worktree[[:space:]] ]]; then
-        path="${line#worktree }"
-        # Read the next non-empty line; if it's a "branch" line
-        # naming main, treat this as the main checkout.
-        :
-    fi
-done < <(git worktree list --porcelain)
-
-# Simpler: main checkout is the one whose path is the repo root
-# without `.claude/worktrees/` in it.
+# Locate the main checkout. `git worktree list --porcelain` always
+# lists the main working tree first, regardless of which branch it is
+# on — so the first `worktree ` line is the main checkout. (The old
+# detection keyed on `branch refs/heads/main`, which miscounted the
+# main checkout as a linked worktree whenever it sat on a feature
+# branch.)
 MAIN_CHECKOUT=$(git worktree list --porcelain | awk '
-    /^worktree / { wt = substr($0, 10) }
-    /^branch refs\/heads\/main$/ { print wt; exit }
+    /^worktree / { print substr($0, 10); exit }
 ')
 
 # Collect (worktree_path, branch) tuples.
