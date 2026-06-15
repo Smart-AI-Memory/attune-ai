@@ -10,7 +10,9 @@
     "build:docs": "cd .. && mkdocs build --clean && rm -rf website/public/framework-docs && cp -r site website/public/framework-docs",
     "check:migration-banner": "tsx scripts/check-migration-banner.ts",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test": "vitest run",
+    "test:watch": "vitest"
   },
   "overrides": {
     "tar": "^7.5.7"
@@ -52,6 +54,7 @@
     "eslint-config-next": "15.5.9",
     "tailwindcss": "^4",
     "tsx": "^4.19.2",
-    "typescript": "5.9.3"
+    "typescript": "5.9.3",
+    "vitest": "^4.1.9"
   }
 }
