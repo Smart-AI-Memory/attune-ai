@@ -21,9 +21,21 @@ from __future__ import annotations
 import json
 import shutil
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
+
+# `audit_worktrees.sh` is a POSIX/bash ops helper run only on macOS/Linux
+# (the developer's machine and the daily briefing). On Windows runners a
+# bare `bash` resolves to the WSL stub (C:\Windows\System32\bash.exe),
+# which has no distro and exits 1 before the script runs — and the test's
+# `/dev/null` git-config paths are POSIX-only too. The script never runs
+# on Windows, so skipping there loses no real coverage.
+pytestmark = pytest.mark.skipif(
+    sys.platform == "win32",
+    reason="audit_worktrees.sh is a POSIX/bash ops helper; not used or tested on Windows.",
+)
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 SCRIPT = REPO_ROOT / "scripts" / "audit_worktrees.sh"
