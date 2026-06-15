@@ -212,6 +212,38 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Semantic memory — powered by Redis */}
+        <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="Semantic memory powered by Redis">
+          <div className="rounded-3xl border border-[var(--border)]/60 bg-[var(--surface-container-low)] p-10 md:p-14">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Semantic memory</span>
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">Powered by Redis when you want it</h2>
+                <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
+                  Memory is local-first by default &mdash; nothing leaves your
+                  machine. Plug in Redis Agent Memory Server for semantic search
+                  over your project memory: local Ollama embeddings, int8 vector
+                  quantization, no cloud required.
+                </p>
+                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono">pip install &apos;attune-ai[redis]&apos;</code>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[
+                  ['Local-first', 'Default backend is on-disk — no service required'],
+                  ['Redis AMS tier', 'Opt in for semantic recall across sessions'],
+                  ['Ollama embeddings', 'Runs locally — no API key, no cloud'],
+                  ['int8 quantization', 'Compact vectors, shipped in attune-ai 7.4'],
+                ].map(([title, desc]) => (
+                  <div key={title} className="bg-[var(--background)] rounded-xl p-4 border border-[var(--border)]/40">
+                    <div className="font-bold text-sm text-[var(--secondary)] mb-1">{title}</div>
+                    <p className="text-xs text-[var(--text-muted)] leading-snug">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         <section className="py-24 bg-[var(--surface-container-low)]" aria-label="Platform overview">
           <div className="max-w-7xl mx-auto px-6">
             <div className="flex flex-col md:flex-row gap-16 items-start">
