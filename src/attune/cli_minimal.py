@@ -28,6 +28,9 @@ Utility commands:
     attune telemetry models           Show model performance by provider
     attune telemetry agents           Show active agents and their status
     attune telemetry signals          Show coordination signals for an agent
+    attune telemetry status           Show opt-in usage-ping status + payload
+    attune telemetry enable           Opt in to anonymous usage pinging
+    attune telemetry disable          Opt out of anonymous usage pinging
 
     attune provider show              Show current provider config
     attune provider set <name>        Set provider (anthropic)
@@ -84,6 +87,8 @@ from attune.cli_commands.provider_commands import (
 )
 from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_agents,
+    cmd_telemetry_disable,
+    cmd_telemetry_enable,
     cmd_telemetry_export,
     cmd_telemetry_models,
     cmd_telemetry_routing_check,
@@ -91,6 +96,7 @@ from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_savings,
     cmd_telemetry_show,
     cmd_telemetry_signals,
+    cmd_telemetry_status,
 )
 from attune.cli_commands.utility_commands import (
     cmd_doctor,
@@ -213,6 +219,13 @@ def _add_telemetry_subparsers(subparsers: argparse._SubParsersAction) -> None:
         default=30,
         help="Number of days (default: 30)",
     )
+
+    telemetry_sub.add_parser(
+        "status",
+        help="Show opt-in usage-ping status and exact payload",
+    )
+    telemetry_sub.add_parser("enable", help="Opt in to anonymous usage pinging")
+    telemetry_sub.add_parser("disable", help="Opt out of anonymous usage pinging")
 
     savings_parser = telemetry_sub.add_parser("savings", help="Show cost savings")
     savings_parser.add_argument(
@@ -574,6 +587,9 @@ _SUBCOMMAND_DISPATCH: dict[str, dict[str, object]] = {
         "models": cmd_telemetry_models,
         "agents": cmd_telemetry_agents,
         "signals": cmd_telemetry_signals,
+        "status": cmd_telemetry_status,
+        "enable": cmd_telemetry_enable,
+        "disable": cmd_telemetry_disable,
     },
     "provider": {
         "_attr": "provider_command",
