@@ -107,5 +107,8 @@ class TestCrossSessionCoordinatorMockMode:
 
         # Phase 2.5: CrossSessionCoordinator no longer raises on mock mode,
         # it enters degraded mode instead with a warning.
-        coordinator = CrossSessionCoordinator(memory=memory)
+        # auto_announce=False: ``_degraded`` is set before the announce
+        # block, so the assertion still holds, and we avoid leaking a
+        # heartbeat daemon thread (see docs/specs/ci-runner-hang/).
+        coordinator = CrossSessionCoordinator(memory=memory, auto_announce=False)
         assert coordinator._degraded is True
