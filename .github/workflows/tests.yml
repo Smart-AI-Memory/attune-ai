@@ -156,10 +156,31 @@ jobs:
           (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
           MEM_MONITOR_PID=$!
           trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        fi
-        pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
-        if [ "${{ runner.os }}" = "Linux" ]; then
+          # ci-gating-lane-isolation Layer A: auto-retry the REQUIRED
+          # `test (ubuntu-latest, 3.12)` lane ONLY on a step-timeout
+          # (rc=124 = runner-hang); any other non-zero is a real failure and
+          # returned immediately (never masked). Linux only — `timeout` here
+          # is coreutils; on Windows `shell: bash` it resolves to the
+          # unrelated timeout.exe, and the macOS/Windows lanes are advisory
+          # (non-gating) so they keep the plain invocation. 14m step timeout
+          # is above the 600s hang-watchdog dump and below the 35m job
+          # timeout. 2×14m fits the 35m backstop with install overhead.
+          rc=0
+          for attempt in 1 2; do
+            set +e
+            timeout -k 30s 14m pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
+            rc=$?
+            set -e
+            if [ "$rc" -ne 124 ]; then break; fi
+            echo "::warning::test pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps artifact for the captured stack"
+          done
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
+          if [ "$rc" -eq 124 ]; then
+            echo "::error::test pytest hung on every attempt (runner-hang) — failing the job after bounded auto-retry"
+          fi
+          exit "$rc"
+        else
+          pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
         fi
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
@@ -257,9 +278,13 @@ jobs:
     # and `-n auto` restored, this job runs in parallel like the
     # matrix tests.
     runs-on: ubuntu-latest
-    # ci-runner-hang spec: tightened from 75 (normal coverage run ~8 min) so
-    # a wedged pytest step fails fast and is rerun-recoverable.
-    timeout-minutes: 25
+    # ci-gating-lane-isolation Layer A: the job timeout is now the FINAL
+    # backstop (both auto-retry attempts hung), not the first line of
+    # defence — the 14m step-level `timeout` below kills a single wedged
+    # attempt fast and retries in-run. Sized to fit 2×14m attempts plus
+    # pip-install/badge/codecov overhead (was 25, pre-retry). Stays well
+    # under the guard's 75-min ceiling.
+    timeout-minutes: 40
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
@@ -295,8 +320,27 @@ jobs:
         (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
         MEM_MONITOR_PID=$!
         trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
+        # ci-gating-lane-isolation Layer A: auto-retry ONLY on a step-timeout
+        # (rc=124 is the runner-hang signature — pytest freezes ~1s in and
+        # never progresses). A real coverage/test failure exits non-124 and
+        # is returned immediately, so a genuine red is NEVER masked green by
+        # the retry. The 14m step `timeout` sits ABOVE the 600s conftest
+        # hang-watchdog (so the wedged-stack dump still lands in hang-dumps/)
+        # and BELOW the 40m job timeout (the all-attempts-hung backstop).
+        rc=0
+        for attempt in 1 2; do
+          set +e
+          timeout -k 30s 14m pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
+          rc=$?
+          set -e
+          if [ "$rc" -ne 124 ]; then break; fi
+          echo "::warning::coverage pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps-coverage artifact for the captured stack"
+        done
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
+        if [ "$rc" -eq 124 ]; then
+          echo "::error::coverage pytest hung on every attempt (runner-hang) — failing the job after bounded auto-retry"
+        fi
+        exit "$rc"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
