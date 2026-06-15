@@ -15,9 +15,9 @@ export interface SEOConfig {
 
 const defaultMetadata = {
   siteName: 'Attune AI',
-  title: 'Living Docs, Rooted in Code — Attune AI',
+  title: 'Turn requirements into reliable software — Attune AI',
   description:
-    'Help content generated from your codebase that stays fresh automatically. Progressive depth: concept, task, reference. Open source.',
+    'Spec-driven development platform for Claude Code: AI workflows, project memory, retrieval grounding, and verification. Turn requirements into reliable software — open source.',
   url: 'https://smartaimemory.com',
   image: '/og-image.png',
   twitterHandle: '@smartaimemory',

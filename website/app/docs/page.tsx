@@ -7,15 +7,20 @@ import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metad
 export const metadata: Metadata = genMeta({
   title: 'Documentation',
   description:
-    'Getting started with attune-ai, attune-help, and the Claude Code plugin.',
+    'Get started with Attune-AI — the spec-driven development platform. Install in one command, then turn requirements into reliable software with AI workflows, project memory, retrieval grounding, and verification.',
   url: 'https://smartaimemory.com/docs',
 });
 
 const faqItems = [
   {
-    question: 'How is this different from a wiki?',
+    question: 'What is attune-ai?',
     answer:
-      'Wiki pages drift the moment code changes. Attune templates are generated from your source code and include file hashes. When the code changes, staleness detection flags the affected templates so they can be regenerated automatically.',
+      'A spec-driven development platform that turns requirements into reliable software. It combines four pillars — AI workflows, project memory, retrieval grounding, and verification — into one reliability loop: specify with /spec, ground every change in your real code, build with multi-stage workflows, remember what worked across sessions, and verify the output before it ships.',
+  },
+  {
+    question: 'How does it keep generated content from drifting?',
+    answer:
+      'Retrieval grounding (powered by attune-rag, a built-in dependency) keeps generated content anchored to your actual source — mean faithfulness is at least 0.97 and CI-gated, so drift fails the build. For docs specifically, templates carry source file hashes; when code changes, staleness detection flags the affected templates so they can be regenerated automatically.',
   },
   {
     question: 'Do I need attune-ai to read templates?',
@@ -33,9 +38,9 @@ const faqItems = [
       'Each template stores SHA-256 hashes of the source files it was generated from. The maintenance workflow re-hashes those files and compares. If the hash changed, the template is flagged stale and queued for regeneration.',
   },
   {
-    question: 'Is it free?',
+    question: 'Is it free? What do I need to run it?',
     answer:
-      'Fully open source under Apache 2.0. Free for personal, commercial, and enterprise use. No license keys, no usage limits.',
+      'Fully open source under Apache 2.0 — free for personal, commercial, and enterprise use, with no license keys and no usage limits. It works on a Claude subscription or an API key, so you can run it with whichever access you already have.',
   },
   {
     question: 'What Claude Code skills are included?',
@@ -101,8 +106,9 @@ export default function DocsPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-6">Documentation</h1>
               <p className="text-xl opacity-90 mb-8">
-                Everything you need to generate, serve, and maintain help
-                content from your codebase.
+                Everything you need to turn requirements into reliable
+                software — install in one command, then run the reliability
+                loop: specify, ground, build, remember, verify.
               </p>
               <nav className="flex flex-wrap justify-center gap-3">
                 <a href="#quickstart" className="px-5 py-2 text-sm rounded-lg font-medium !text-white border-2 border-white/60 hover:bg-white/15 transition-colors">
@@ -137,7 +143,8 @@ export default function DocsPage() {
             <div className="max-w-5xl mx-auto">
               <h2 className="text-4xl font-bold text-center mb-4">Quick Start</h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                Choose the package that fits your needs. All four are
+                Install the platform, or pick the piece that fits the job.
+                Works on a Claude subscription or an API key. Everything is
                 open source under Apache 2.0.
               </p>
 
@@ -163,12 +170,13 @@ export default function DocsPage() {
                 {/* attune-ai */}
                 <div className="bg-[var(--background)] border-2 border-[var(--border)] rounded-lg p-6 flex flex-col">
                   <div className="text-xs font-bold text-[var(--primary)] uppercase tracking-wider mb-2">
-                    Full Framework
+                    Full Platform
                   </div>
                   <h3 className="text-lg font-bold mb-2">attune-ai</h3>
                   <p className="text-sm text-[var(--text-secondary)] mb-5 flex-1">
-                    Generate, maintain, and serve help from your codebase.
-                    17 workflows, 17 skills, MCP server.
+                    The whole platform: spec engine, AI workflows, project
+                    memory, retrieval grounding, and verification.
+                    17 multi-stage workflows, 17 skills, 41 MCP tools.
                   </p>
                   <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-3">
                     <span className="text-white/50">$ </span>pip install attune-ai
@@ -241,10 +249,11 @@ export default function DocsPage() {
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <h2 className="text-4xl font-bold text-center mb-4">
-                Attune AI Framework
+                Attune AI Platform
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                The full pipeline: scan your codebase, generate help templates,
+                Beyond AI workflows and verification, the platform keeps your
+                docs grounded too: scan your codebase, generate templates,
                 detect when code drifts, and regenerate stale content.
               </p>
 
@@ -561,9 +570,10 @@ export default function DocsPage() {
                 Workflows &amp; Skills
               </h2>
               <p className="text-center text-[var(--text-secondary)] mb-12 max-w-2xl mx-auto">
-                attune-ai includes 17 multi-stage workflows, 17
-                auto-invoking Claude Code skills, and an MCP server
-                with 41 registered tools.
+                The build half of the loop: 17 multi-stage workflows
+                (20 workflows total), 17 auto-triggering Claude Code skills,
+                and an MCP server with 41 registered tools — review, tests,
+                bug prediction, refactor, and release prep.
               </p>
 
               <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -665,7 +675,8 @@ export default function DocsPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-4xl font-bold mb-6">Ready to Get Started?</h2>
               <p className="text-xl mb-8 opacity-90">
-                Generate help content from your codebase in under 5 minutes.
+                Install in one command, then run /spec on your next feature
+                and turn requirements into reliable software.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <a

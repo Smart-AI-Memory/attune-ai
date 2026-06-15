@@ -5,6 +5,7 @@ import GitHubStarsBadge from '@/components/GitHubStarsBadge';
 import TestsBadge from '@/components/TestsBadge';
 import { generateStructuredData } from '@/lib/metadata';
 import { installCommand } from '@/lib/install-command';
+import { CAPABILITIES, PILLARS, RELIABILITY_LOOP } from '@/lib/features';
 
 // Doc-toolchain code sample. attune-ai is the parent
 // framework (headlined in the hero); the four packages
@@ -27,6 +28,16 @@ print(engine.lookup("security-audit"))
 # 4. attune-gui — local dashboard tying it all together.
 #    ${installCommand()} && attune-gui --open`;
 
+// Literal Tailwind class strings per pillar color. Built as full
+// literals (not `bg-[var(--${color})]`) so the JIT scanner can see
+// and generate them — dynamically-constructed class names are not
+// emitted.
+const PILLAR_COLOR: Record<string, { bg: string; text: string }> = {
+  primary: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]' },
+  secondary: { bg: 'bg-[var(--secondary)]/10', text: 'text-[var(--secondary)]' },
+  accent: { bg: 'bg-[var(--accent)]/10', text: 'text-[var(--accent)]' },
+};
+
 export default function Home() {
   const softwareSchema = generateStructuredData('product');
 
@@ -47,18 +58,20 @@ export default function Home() {
             <div className="grid lg:grid-cols-2 gap-16 items-center">
               <div className="z-10">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--surface-container-high)] text-[var(--primary)] text-xs font-bold tracking-widest mb-6 uppercase">
-                  <span>v8.4.0</span>
+                  <span>v8.5.0</span>
                   <span className="w-1 h-1 rounded-full bg-[var(--primary)]"></span>
-                  <span className="opacity-80">AI Workflow OS for Claude Code</span>
+                  <span className="opacity-80">Spec-driven development platform</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-                  AI Workflows for{' '}
-                  <span className="text-gradient">Claude Code</span>
+                  Turn requirements into{' '}
+                  <span className="text-gradient">reliable software</span>.
                 </h1>
                 <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
-                  17 workflows, 17 auto-triggering skills, MCP server with 41 tools.
-                  Plus the documentation toolchain we built along the way &mdash;
-                  now four standalone packages.
+                  Attune-AI gives your AI coding agent a spine: write a spec,
+                  ground every change in your real code, carry what worked into
+                  the next session, and verify the output before it ships.
+                  Workflows, memory, retrieval grounding, and verification
+                  &mdash; one platform for Claude Code.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <a
@@ -94,51 +107,32 @@ export default function Home() {
                 </div>
               </div>
 
-              {/* Depth cards visual */}
+              {/* Reliability-loop spine visual */}
               <div className="relative">
                 <div className="relative z-10 rounded-2xl overflow-hidden bg-[var(--surface-container-low)] p-8 border border-[var(--border)]/40 shadow-2xl">
                   <div className="flex items-center gap-2 mb-6">
                     <div className="w-3 h-3 rounded-full bg-red-500/40"></div>
                     <div className="w-3 h-3 rounded-full bg-yellow-500/40"></div>
                     <div className="w-3 h-3 rounded-full bg-green-500/40"></div>
-                    <span className="ml-auto text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">Progressive Depth</span>
+                    <span className="ml-auto text-[10px] font-bold text-[var(--text-muted)] uppercase tracking-widest">One requirement, end to end</span>
                   </div>
 
-                  {/* Code icon connecting to depth cards */}
-                  <div className="flex items-center justify-center mb-6">
-                    <div className="w-12 h-12 rounded-lg bg-[var(--surface-container-high)] border border-[var(--border)]/30 flex items-center justify-center">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--primary)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                        <polyline points="16 18 22 12 16 6" />
-                        <polyline points="8 6 2 12 8 18" />
-                      </svg>
+                  {RELIABILITY_LOOP.map((s, i) => (
+                    <div key={s.name}>
+                      <div className="flex items-start gap-3 py-2.5">
+                        <span className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[var(--primary)]/10 text-[var(--primary)] font-bold text-xs shrink-0">
+                          {s.n}
+                        </span>
+                        <div>
+                          <div className="font-bold text-sm leading-tight">{s.name}</div>
+                          <p className="text-xs text-[var(--text-muted)] leading-snug mt-0.5">{s.description}</p>
+                        </div>
+                      </div>
+                      {i < RELIABILITY_LOOP.length - 1 && (
+                        <div className="ml-4 h-3 w-px bg-[var(--border)]"></div>
+                      )}
                     </div>
-                  </div>
-
-                  {/* Connection lines */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-px h-4 bg-[var(--border)]"></div>
-                  </div>
-                  <div className="flex justify-between px-8 mb-2">
-                    <div className="flex-1 flex justify-center">
-                      <div className="w-full h-px bg-[var(--border)]"></div>
-                    </div>
-                  </div>
-
-                  {/* Three depth cards */}
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="rounded-lg p-4 bg-[var(--primary)]/10 border border-[var(--primary)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
-                      <span className="text-xs font-bold text-[var(--primary)] tracking-wider uppercase mb-2">Concept</span>
-                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">What is it?</p>
-                    </div>
-                    <div className="rounded-lg p-4 bg-[var(--secondary)]/10 border border-[var(--secondary)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
-                      <span className="text-xs font-bold text-[var(--secondary)] tracking-wider uppercase mb-2">Task</span>
-                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">How to do it?</p>
-                    </div>
-                    <div className="rounded-lg p-4 bg-[var(--accent)]/10 border border-[var(--accent)]/20 flex flex-col items-center justify-center text-center min-h-[100px]">
-                      <span className="text-xs font-bold text-[var(--accent)] tracking-wider uppercase mb-2">Reference</span>
-                      <p className="text-[10px] text-[var(--text-secondary)] leading-tight">Full API detail</p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
                 {/* Background blur */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-to-tr from-[var(--surface-container-high)]/50 to-transparent rounded-full blur-3xl -z-10"></div>
@@ -147,56 +141,73 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Platform overview — one code sample, three packages */}
-        {/* OS layer: workflows + memory */}
-        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="The OS layer">
+        {/* Four platform pillars */}
+        <section className="py-32 px-6 max-w-7xl mx-auto" aria-label="Platform pillars">
           <div className="text-center mb-20">
-            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The OS Layer</span>
-            <h2 className="text-4xl md:text-5xl font-extrabold">Workflows That Remember</h2>
+            <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The Platform</span>
+            <h2 className="text-4xl md:text-5xl font-extrabold">Four pillars, one outcome</h2>
             <p className="text-[var(--text-secondary)] mt-4 max-w-2xl mx-auto">
-              What makes it an OS, not a toolbox: orchestrated workflows
-              on top, persistent memory underneath. Your AI collaborator
-              stops starting from zero.
+              Each pillar is a real, shipped capability &mdash; not a
+              roadmap promise. Together they keep your AI agent&apos;s work
+              grounded, remembered, and verified.
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-6">
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--primary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--primary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#9881;&#65039;</span>
+          <div className="grid md:grid-cols-2 gap-6">
+            {PILLARS.map((p) => {
+              const c = PILLAR_COLOR[p.color];
+              return (
+                <div
+                  key={p.id}
+                  className="bg-[var(--surface)] rounded-2xl p-8 border border-[var(--border)]/40 hover:bg-[var(--surface-container-low)] transition-all duration-300"
+                >
+                  <div className={`w-14 h-14 rounded-xl ${c.bg} flex items-center justify-center mb-5`}>
+                    <span className="text-3xl" aria-hidden="true">{p.icon}</span>
+                  </div>
+                  <span className={`text-xs font-bold uppercase tracking-[0.12em] ${c.text}`}>
+                    {p.tag}
+                  </span>
+                  <h3 className="text-2xl font-bold mt-1 mb-3">{p.title}</h3>
+                  <p className="text-[var(--text-secondary)] leading-relaxed text-sm mb-4">
+                    {p.description}
+                  </p>
+                  <ul className="space-y-1.5">
+                    {p.points.map((pt) => (
+                      <li key={pt} className="flex items-start gap-2 text-xs text-[var(--text-muted)]">
+                        <span className={`${c.text} mt-0.5`} aria-hidden="true">&#10003;</span>
+                        <span>{pt}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              );
+            })}
+          </div>
+        </section>
+
+        {/* Capabilities stat band */}
+        <section className="py-20 bg-[var(--surface-container-low)]" aria-label="Capabilities at a glance">
+          <div className="max-w-7xl mx-auto px-6">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-8 text-center">
+              <div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.workflows}</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">multi-stage workflows</div>
               </div>
-              <h3 className="text-xl font-bold mb-3">Orchestrated Workflows</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                17 multi-stage workflows — security audit, code review,
-                bug prediction, release prep — with cost-tiered model
-                routing and structured, readable reports. Works on a
-                Claude subscription or an API key.
-              </p>
-            </div>
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--secondary)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--secondary)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#129504;</span>
+              <div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.mcpTools}</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">MCP tools</div>
               </div>
-              <h3 className="text-xl font-bold mb-3">Cross-Session Memory</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Findings from each session are stashed and recalled in
-                the next. A retrievable lessons corpus surfaces the
-                right engineering lesson at the moment a prompt needs
-                it — automatically, or on demand with /recall.
-              </p>
-            </div>
-            <div className="group bg-[var(--surface)] rounded-2xl p-7 hover:bg-[var(--surface-container-low)] transition-all duration-300 hover:scale-[1.02]">
-              <div className="w-14 h-14 rounded-xl bg-[var(--accent)]/10 flex items-center justify-center mb-6 group-hover:bg-[var(--accent)] transition-colors">
-                <span className="text-3xl group-hover:brightness-0 group-hover:invert transition-all" aria-hidden="true">&#128190;</span>
+              <div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">{CAPABILITIES.skills}</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">auto-triggering skills</div>
               </div>
-              <h3 className="text-xl font-bold mb-3">Redis Semantic Tier</h3>
-              <p className="text-[var(--text-secondary)] leading-relaxed text-sm">
-                Local-first by default; plug in Redis Agent Memory
-                Server for semantic search over your memory — local
-                Ollama embeddings, no cloud required. Enable it with{' '}
-                <code className="text-xs">pip install &apos;attune-ai[redis]&apos;</code>{' '}
-                plus a local AMS service. Our int8 vector quantization
-                work is an open upstream PR to Redis.
-              </p>
+              <div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">&ge;0.97</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">RAG faithfulness (CI-gated)</div>
+              </div>
+              <div>
+                <div className="text-4xl font-extrabold text-[var(--primary)]">100%</div>
+                <div className="text-sm text-[var(--text-muted)] mt-1">open source &middot; Apache 2.0</div>
+              </div>
             </div>
           </div>
         </section>
@@ -367,9 +378,10 @@ export default function Home() {
           <div className="grid lg:grid-cols-5 gap-8 items-center">
             <div className="lg:col-span-3 hero-gradient rounded-3xl p-12 text-white relative overflow-hidden">
               <div className="relative z-10">
-                <h3 className="text-3xl font-extrabold mb-6">Ready to make your docs live?</h3>
+                <h3 className="text-3xl font-extrabold mb-6">Ship software you can trust your agent built</h3>
                 <p className="text-white/80 text-lg mb-8 max-w-lg">
-                  Install from PyPI. Generate templates from your code. Ship help that never goes stale.
+                  Install from PyPI, run /spec on your next feature, and let the
+                  platform keep the work grounded, remembered, and verified.
                 </p>
                 <div className="flex flex-col sm:flex-row gap-4">
                   <Link

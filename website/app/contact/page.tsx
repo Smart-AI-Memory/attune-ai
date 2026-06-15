@@ -157,7 +157,7 @@ export default function ContactPage() {
               Contact Us
             </h1>
             <p className="text-2xl mb-8 opacity-90">
-              Questions about the framework? Looking to partner? We&apos;d love to hear from you.
+              Questions about the platform? Looking to partner? We&apos;d love to hear from you.
             </p>
           </div>
         </div>
