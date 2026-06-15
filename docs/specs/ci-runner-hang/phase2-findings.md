@@ -152,3 +152,82 @@ for a real captured frame. Once the next ubuntu hang uploads a
 - `clock-tz` also runs `-n auto` on ubuntu and could wedge; it was left
   out of the capture steps to keep this PR scoped to the two
   required-check lanes. Add the same two steps there if it ever hangs.
+
+---
+
+## Phase 3 — FIRST captured production frame (2026-06-15)
+
+The Phase 2 dump-survival mechanism paid off: PR #911's `coverage`
+lane wedged at ~99% and the `if: always()` upload preserved all four
+process stacks. Raw dumps:
+[evidence/run-27541609728/](evidence/run-27541609728/) (coverage job
+`81404541787`, run `27541609728`). This is the first real frame — D1's
+gate is now satisfied.
+
+### What the stacks show
+
+| Process | Main-thread frame | Reading |
+|---------|-------------------|---------|
+| controller | `xdist/dsession.py:154 loop_once → queue.get → threading wait` | waiting for a worker event that never arrives |
+| gw1 | `execnet gateway_base serve → integrate_as_primary_thread → wait` | idle, done, awaiting shutdown |
+| gw2 | same as gw1 | idle |
+| gw3 | same as gw1 — **plus** a 3rd thread: `attune/memory/cross_session/coordinator.py:289 _heartbeat_loop → threading wait` | idle **+ a leaked heartbeat thread** |
+
+### Classification — does NOT match H1/H2
+
+Crucially, **no process is blocked in uninterruptible I/O** (no
+`socket.recv`, no `subprocess.wait`, no `lock.acquire`). Every worker is
+cleanly idle in execnet `serve`; the controller is cleanly idle in
+`queue.get`. So this frame does **not** fit H1/H2 (the real-socket /
+real-subprocess fixture-polluter family shared with
+`windows-xdist-flakes`). It looks instead like an **execnet/xdist
+end-of-session control-channel deadlock** (lost-wakeup at finalize):
+all tests passed, but the session never concludes. Call it **H4**.
+
+### The one differentiator — and why it's a LEAD, not a proven cause
+
+The only thing distinguishing the wedged-fleet's `gw3` from gw1/gw2 is
+a leaked `_heartbeat_loop` thread — a test called
+`coordinator.start_heartbeat()` and never `stop_heartbeat()`, so the
+thread persists for the worker's life. Candidates that start a
+heartbeat: `tests/unit/memory/test_cross_session_coordinator.py`,
+`tests/unit/workflows/test_execution_mixin_branches.py`,
+`tests/unit/telemetry/test_agent_tracking.py`.
+
+**But the causal chain is NOT closed.** The thread is `daemon=True`
+(coordinator.py:271) and `_send_heartbeat` no-ops when there is no
+Redis client (`client is None`) — which is exactly keyless CI. So in CI
+it is a no-op daemon, and a no-op daemon thread should not deadlock
+execnet. It is a strong **correlation / prime suspect**, not a
+demonstrated cause. Do not ship a "fix" on one dump.
+
+### Next actions (confirm-then-fix — tar-pit guarded)
+
+1. **Gather 2–3 more captured frames** before committing to a fix.
+   The key question: is the leaked-heartbeat thread present on the
+   wedged worker **every** time, or was run-27541609728 a coincidence?
+   The same PR's required `test (ubuntu-latest, 3.12)` lane PASSED
+   while `coverage` wedged — confirming the hang is intermittent /
+   worker-distribution-dependent, so N>1 dumps are needed to establish
+   the pattern.
+2. **Cheap defensive move (do regardless):** an autouse teardown
+   fixture that stops any leaked coordinator heartbeat thread after
+   each test. It removes the one variable that differs on the wedged
+   worker, so the *next* dump is cleaner — and it is good hygiene
+   even if H4 (execnet finalize race) turns out to be the real cause.
+   Low-risk; its own scoped PR.
+3. **If the leak is ruled out**, pivot to H4: investigate the
+   execnet/xdist finalize handshake directly (the controller's
+   `loop_once` waiting on `queue.get` while all workers idle in
+   `serve` is the signature to research upstream).
+4. **Verify with a rerun count** (≥10 clean `-n auto` reruns), never a
+   single green — per the existing Phase 2 watch-out.
+
+### Note for the sibling spec
+
+`ci-gating-lane-isolation/requirements.md` described the hang as
+freezing "~1s after start." This frame **disproves** that: the freeze
+is a ~99% **finalize-wedge** (all tests pass, then the session can't
+conclude). That spec's premise table is corrected in the same PR as
+this finding. (This `ci-runner-hang` spec already had the "99%-freeze"
+shape right.)
