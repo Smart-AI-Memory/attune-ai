@@ -534,6 +534,50 @@ def _disable_help_telemetry(monkeypatch):
     monkeypatch.setenv("ATTUNE_HELP_TELEMETRY", "0")
 
 
+@pytest.fixture(autouse=True, scope="function")
+def _stop_leaked_heartbeat_threads():
+    """Stop any CrossSessionCoordinator heartbeat thread a test leaks.
+
+    ``CrossSessionCoordinator(auto_announce=True)`` — the default — spawns
+    a daemon ``heartbeat-<agent_id>`` thread on construction. A test that
+    builds one without ``auto_announce=False`` and never calls ``close()``
+    /``stop_heartbeat()`` leaks that thread into the (xdist) worker
+    process, where it lingers for the rest of the session. Leaked daemon
+    threads are a confounding variable in the xdist end-of-session
+    finalize deadlock under investigation, so this teardown stops and
+    joins any survivor — keeping each worker (and any captured hang-dump)
+    clean. See docs/specs/ci-runner-hang/.
+    """
+    yield
+
+    import logging
+    import threading
+
+    leaked = [
+        thread
+        for thread in threading.enumerate()
+        if thread.is_alive() and thread.name.startswith("heartbeat-")
+    ]
+    for thread in leaked:
+        # The thread target is the coordinator's bound ``_heartbeat_loop``;
+        # signalling its stop event wakes the loop out of its interval wait
+        # so the join returns promptly.
+        coordinator = getattr(getattr(thread, "_target", None), "__self__", None)
+        stop_event = getattr(coordinator, "_heartbeat_stop", None)
+        if stop_event is not None:
+            stop_event.set()
+        thread.join(timeout=5)
+
+    if leaked:
+        logging.getLogger(__name__).warning(
+            "stopped %d leaked heartbeat thread(s): %s — a "
+            "CrossSessionCoordinator was constructed without "
+            "auto_announce=False and never closed",
+            len(leaked),
+            [thread.name for thread in leaked],
+        )
+
+
 # =============================================================================
 # Additional Shared Fixtures for Testing Improvements
 # =============================================================================
