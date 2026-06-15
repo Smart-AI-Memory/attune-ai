@@ -451,3 +451,71 @@ def test_write_cursor_swallows_oserror(monkeypatch, tmp_path):
     monkeypatch.setattr(usage_ping.Path, "write_text", boom)
     # Must not raise.
     usage_ping.write_cursor(tmp_path, "2026-06-15T00:00:00Z")
+
+
+def test_records_since_swallows_unreadable_file(monkeypatch, tmp_path):
+    """An OSError opening a matched file is skipped, not raised."""
+    (tmp_path / "usage.jsonl").write_text(
+        json.dumps({"workflow": "w", "ts": "t2"}) + "\n", encoding="utf-8"
+    )
+
+    def boom(*a, **k):
+        raise OSError("permission denied")
+
+    monkeypatch.setattr("builtins.open", boom)
+    assert usage_ping.records_since(tmp_path, "t1") == []
+
+
+# --------------------------------------------------------------------------- #
+# run_sync default-path branches (no injected telemetry_dir / version)
+# --------------------------------------------------------------------------- #
+
+
+def test_run_sync_uses_default_dir_and_version(monkeypatch):
+    """With telemetry_dir/version omitted, run_sync resolves defaults.
+
+    Real disk is isolated by stubbing the reader functions, so this
+    exercises the default-path branches without touching ~/.attune.
+    """
+    monkeypatch.setattr(usage_ping, "read_cursor", lambda d: "")
+    monkeypatch.setattr(usage_ping, "records_since", lambda d, c: [])
+    config = _FakeConfig(TelemetryConfig(usage_ping=True, install_id="id"))
+    sent = usage_ping.run_sync(
+        config,
+        env={"ATTUNE_USAGE_ENDPOINT": "https://x/api"},
+        poster=lambda url, batch, timeout: True,
+    )
+    assert sent == 0  # no records, but default dir + version were resolved
+
+
+# --------------------------------------------------------------------------- #
+# _open_user_config — the real (non-injected) USER-config path
+# --------------------------------------------------------------------------- #
+
+
+def test_open_user_config_creates_loader_for_missing_home(monkeypatch, tmp_path):
+    """No loader + no existing user config → fresh defaults at the home path."""
+    from attune.config.loader import ConfigLoader
+
+    home = tmp_path / "config.json"  # does not exist
+    monkeypatch.setattr(ConfigLoader, "get_default_config_path", staticmethod(lambda: home))
+    loader, config, save_path = usage_ping._open_user_config(None)
+    assert isinstance(loader, ConfigLoader)
+    assert config is not None
+    assert save_path == home
+
+
+def test_open_user_config_opens_existing_home(monkeypatch, tmp_path):
+    """No loader + existing user config → load from that home path."""
+    from attune.config.loader import ConfigLoader
+    from attune.config.unified import UnifiedConfig
+
+    home = tmp_path / "config.json"
+    # Write directly to the temp path — never call ConfigLoader.save(),
+    # whose path=None fallback resolves to the REAL ~/.attune/config.json.
+    home.write_text(json.dumps(UnifiedConfig().to_dict()), encoding="utf-8")
+    monkeypatch.setattr(ConfigLoader, "get_default_config_path", staticmethod(lambda: home))
+    loader, config, save_path = usage_ping._open_user_config(None)
+    assert isinstance(loader, ConfigLoader)
+    assert config is not None
+    assert save_path == home

@@ -28,6 +28,8 @@ import pytest
 
 from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_agents,
+    cmd_telemetry_disable,
+    cmd_telemetry_enable,
     cmd_telemetry_export,
     cmd_telemetry_models,
     cmd_telemetry_routing_check,
@@ -35,6 +37,7 @@ from attune.cli_commands.telemetry_commands import (
     cmd_telemetry_savings,
     cmd_telemetry_show,
     cmd_telemetry_signals,
+    cmd_telemetry_status,
 )
 
 
@@ -1586,3 +1589,118 @@ class TestCmdTelemetrySignals:
         assert result == 0
         captured = capsys.readouterr().out
         assert "Payload:" not in captured
+
+
+# ---------------------------------------------------------------------------
+# cmd_telemetry_status / enable / disable  (usage-ping, Phase 2a)
+# ---------------------------------------------------------------------------
+
+
+class TestCmdTelemetryStatus:
+    """Tests for cmd_telemetry_status (opt-in usage-ping status)."""
+
+    @staticmethod
+    def _patch_config(*, usage_ping: bool, consented: bool, install_id: object):
+        cfg = types.SimpleNamespace(
+            telemetry=types.SimpleNamespace(
+                usage_ping=usage_ping,
+                usage_ping_consented=consented,
+                install_id=install_id,
+            )
+        )
+        mock_loader = MagicMock()
+        mock_loader.load.return_value = cfg
+        return patch("attune.config.loader.ConfigLoader", return_value=mock_loader)
+
+    def test_status_enabled_shows_install_id_and_payload(
+        self, capsys: pytest.CaptureFixture
+    ) -> None:
+        """Status renders the install id and the exact audit payload."""
+        with self._patch_config(usage_ping=True, consented=True, install_id="abc-123"):
+            result = cmd_telemetry_status(_make_args())
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "Usage Ping" in out
+        assert "Install ID" in out
+        assert "abc-123" in out
+        # The audit payload is rendered as JSON with the frozen schema keys.
+        assert '"package": "attune-ai"' in out
+        assert '"event": "workflow.<example>"' in out
+
+    def test_status_no_install_id_shows_placeholder(self, capsys: pytest.CaptureFixture) -> None:
+        """With no install id minted yet, status shows the placeholder."""
+        with self._patch_config(usage_ping=False, consented=False, install_id=None):
+            result = cmd_telemetry_status(_make_args())
+
+        assert result == 0
+        out = capsys.readouterr().out
+        assert "(none" in out  # "(none — minted on opt-in)"
+
+    def test_status_generic_exception(self, capsys: pytest.CaptureFixture) -> None:
+        """Status returns 1 and reports the error gracefully."""
+        with patch(
+            "attune.config.loader.ConfigLoader",
+            side_effect=RuntimeError("load boom"),
+        ):
+            result = cmd_telemetry_status(_make_args())
+
+        assert result == 1
+        out = capsys.readouterr().out
+        assert "Error:" in out
+        assert "load boom" in out
+
+
+class TestCmdTelemetryEnable:
+    """Tests for cmd_telemetry_enable (opt in)."""
+
+    def test_enable_reports_install_id(self, capsys: pytest.CaptureFixture) -> None:
+        """Enable reports the anonymous install id returned by usage_ping."""
+        with patch("attune.telemetry.usage_ping.enable", return_value="id-xyz") as mock_enable:
+            result = cmd_telemetry_enable(_make_args())
+
+        assert result == 0
+        mock_enable.assert_called_once_with()
+        out = capsys.readouterr().out
+        assert "enabled" in out.lower()
+        assert "id-xyz" in out
+
+    def test_enable_generic_exception(self, capsys: pytest.CaptureFixture) -> None:
+        """Enable returns 1 and reports the error gracefully."""
+        with patch(
+            "attune.telemetry.usage_ping.enable",
+            side_effect=RuntimeError("write fail"),
+        ):
+            result = cmd_telemetry_enable(_make_args())
+
+        assert result == 1
+        out = capsys.readouterr().out
+        assert "Error:" in out
+        assert "write fail" in out
+
+
+class TestCmdTelemetryDisable:
+    """Tests for cmd_telemetry_disable (opt out)."""
+
+    def test_disable_reports_success(self, capsys: pytest.CaptureFixture) -> None:
+        """Disable calls usage_ping.disable and confirms nothing transmits."""
+        with patch("attune.telemetry.usage_ping.disable") as mock_disable:
+            result = cmd_telemetry_disable(_make_args())
+
+        assert result == 0
+        mock_disable.assert_called_once_with()
+        out = capsys.readouterr().out
+        assert "disabled" in out.lower()
+
+    def test_disable_generic_exception(self, capsys: pytest.CaptureFixture) -> None:
+        """Disable returns 1 and reports the error gracefully."""
+        with patch(
+            "attune.telemetry.usage_ping.disable",
+            side_effect=RuntimeError("io boom"),
+        ):
+            result = cmd_telemetry_disable(_make_args())
+
+        assert result == 1
+        out = capsys.readouterr().out
+        assert "Error:" in out
+        assert "io boom" in out
