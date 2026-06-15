@@ -9090,3 +9090,37 @@ files.
   classifier needs it regardless of how sound the reasoning is). Pairs
   with the "advisory CI lanes don't gate" and "coverage re-runs the
   full suite, so a hung OS lane is safe to admin-merge" lessons.
+
+- **The coverage `omit` list is unaudited debt — entries get
+  MISLABELED and STALE, and "untestable" usually means "untested":
+  audit it with a keyless-import probe**: (2026-06-14, QA #6
+  omit-audit) the prior lesson treats omit-masked modules as illusions
+  to SKIP when picking a target. The flip side: many of those omits are
+  WRONG and hide real, easy coverage. Audit method — for each entry
+  whose comment claims a testability blocker ("Requires LLM API
+  calls", "Interactive", "Requires Redis", "server"), run
+  `ANTHROPIC_API_KEY="" python -c "import attune.<mod>"`. **If it
+  imports keyless, the external dep is CALL-time (mockable), not an
+  import barrier** — the module is testable; the omit comment just
+  described why a *naive* test would hit the network. Findings that
+  recurred: (a) `agents/release/release_models.py` was omitted
+  "Requires LLM API calls" but is pure `Enum` + `@dataclass` + console
+  formatting — un-omitted and taken 77→96% with one supplement test
+  (#901); (b) `release_agents.py` is a re-export shim (one import test
+  ≈ 100%); (c) **stale entries**: `*/cache/hybrid.py` (file deleted)
+  and `*/memory/cross_session.py` (glob doesn't match the real path
+  `memory/short_term/cross_session.py`, so the omit is a silent no-op).
+  Root cause: a module is parked in `omit` once and the label is never
+  revisited. Mechanics: removing an `omit` line is a `pyproject.toml`
+  edit → **out-of-class** for the auto-merge-safe class (needs human
+  merge), and the removal is the point (it makes the new coverage count
+  in CI); a pure test-add without the removal does nothing for measured
+  coverage. Deliverable shape: a tiered findings doc
+  (`docs/specs/test-quality-program/omit-audit.md`) — Tier-1 stale
+  (delete), Tier-2 mislabeled/high-ROI (convert one module per PR,
+  cheapest first), Tier-3 testable-but-more-effort, Tier-4
+  genuinely-keep (live servers, multiprocessing, package `__init__`).
+  Consider a drift check that flags omit entries whose files import
+  cleanly keyless. Pairs with the omit-cross-check lesson above (that
+  one SKIPS omit-masked modules at pick time; this one REPAIRS the omit
+  list as its own work-stream).
