@@ -6,6 +6,7 @@ import { generateMetadata, generateStructuredData } from "@/lib/metadata";
 import PlausibleAnalytics from "@/components/PlausibleAnalytics";
 import WebVitals from "@/components/WebVitals";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/next";
 
 const manrope = Manrope({
   variable: "--font-manrope",
@@ -64,6 +65,7 @@ export default function RootLayout({
         <ThemeProvider>
           <WebVitals />
           <SpeedInsights />
+          <Analytics />
           {children}
         </ThemeProvider>
       </body>
