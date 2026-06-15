@@ -8,7 +8,7 @@ import { CANONICAL_INSTALL, POST_FOLD_INSTALL } from '@/lib/install-command';
 export const metadata: Metadata = generateMetadata({
   title: 'Migrating from attune-gui — Attune AI',
   description:
-    'Heads-up for current attune-gui users: the dashboard is folding back into attune-ai as an install extra. What changes, what doesn’t, and when.',
+    'Heads-up for current attune-gui users: the dashboard is folding into the attune-ai spec-driven development platform as an install extra. What changes, what doesn’t, and when.',
   url: 'https://smartaimemory.com/migrate',
   keywords: ['attune-gui migration', 'attune-ai dashboard', 'pip install attune-ai[gui]'],
 });
@@ -25,7 +25,9 @@ export default function MigratePage() {
                 Heads up: <code className="font-mono">attune-gui</code> is folding into <code className="font-mono">attune-ai</code>
               </h1>
               <p className="text-xl !text-white opacity-90">
-                Pre-fold notice. Nothing breaks today.
+                The dashboard is moving inside the platform that turns
+                requirements into reliable software. Pre-fold notice &mdash;
+                nothing breaks today.
               </p>
             </div>
           </div>
@@ -36,7 +38,11 @@ export default function MigratePage() {
             <div className="max-w-3xl mx-auto prose prose-lg">
               <h2>What&rsquo;s changing</h2>
               <p>
-                Today the dashboard ships as a standalone PyPI package:
+                Attune AI is one platform for spec-driven development &mdash;
+                AI workflows, project memory, retrieval grounding, and
+                verification, working together. The dashboard belongs with it,
+                so it&rsquo;s moving in. Today it ships as a standalone PyPI
+                package:
               </p>
               <pre><code>{CANONICAL_INSTALL}</code></pre>
               <p>

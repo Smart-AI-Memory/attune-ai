@@ -3,71 +3,22 @@ import Link from 'next/link';
 import Navigation from '@/components/Navigation';
 import Footer from '@/components/Footer';
 import { generateMetadata as genMeta, generateStructuredData } from '@/lib/metadata';
+import { RELIABILITY_LOOP, PILLARS } from '@/lib/features';
 
 export const metadata: Metadata = genMeta({
   title: 'How It Works',
   description:
-    'From source code to living documentation. Learn how Attune AI generates, serves, and maintains help content.',
+    'How Attune AI turns requirements into reliable software: specify, ground, build, remember, and verify — the loop your AI coding agent runs every time.',
   url: 'https://smartaimemory.com/how-it-works',
 });
 
-const steps = [
-  {
-    number: 1,
-    name: 'Bootstrap',
-    summary: 'Scan your codebase and discover features',
-    detail:
-      'The scanner reads your project structure, finds modules, classes, and functions, then proposes features with source-glob patterns and tags. Everything lands in .help/features.yaml as the single source of truth.',
-  },
-  {
-    number: 2,
-    name: 'Generate',
-    summary: 'AI creates templates from your source code',
-    detail:
-      'For each feature, three Jinja-based templates are generated from actual source code: concept (what is it?), task (how to use it), and reference (full API detail). Each template includes a source hash in its frontmatter for staleness tracking.',
-  },
-  {
-    number: 3,
-    name: 'Serve',
-    summary: 'Progressive help via attune-help or /coach',
-    detail:
-      'Ask about a topic and get the concept overview first. Ask again and you auto-advance to the task walkthrough. A third ask delivers the full reference. New topics always reset to concept depth.',
-  },
-  {
-    number: 4,
-    name: 'Maintain',
-    summary: 'Detect drift and regenerate stale templates',
-    detail:
-      'Source hashes in each template\'s frontmatter are compared against the current codebase. Only stale templates are regenerated. Hand-written templates marked status: manual are always preserved.',
-  },
-];
-
-const depthLevels = [
-  {
-    name: 'Concept',
-    color: 'var(--primary)',
-    bgClass: 'border-[var(--primary)]',
-    tagClass: 'bg-[var(--primary)]',
-    description: 'What is it? When to use it?',
-    detail: 'A high-level overview that orients you. Explains purpose, context, and when to reach for this feature.',
-  },
-  {
-    name: 'Task',
-    color: 'var(--secondary)',
-    bgClass: 'border-[var(--secondary)]',
-    tagClass: 'bg-[var(--secondary)]',
-    description: 'Step-by-step: how to do it',
-    detail: 'A practical walkthrough with commands, code snippets, and expected output. Gets you from zero to working.',
-  },
-  {
-    name: 'Reference',
-    color: 'var(--accent)',
-    bgClass: 'border-[var(--accent)]',
-    tagClass: 'bg-[var(--accent)]',
-    description: 'Full detail, edge cases, API',
-    detail: 'Complete API surface, configuration options, edge cases, and caveats. The exhaustive resource.',
-  },
-];
+// Literal Tailwind class strings per pillar color so the JIT
+// scanner emits them (dynamic `bg-[var(--${color})]` is not emitted).
+const PILLAR_COLOR: Record<string, { bg: string; text: string }> = {
+  primary: { bg: 'bg-[var(--primary)]/10', text: 'text-[var(--primary)]' },
+  secondary: { bg: 'bg-[var(--secondary)]/10', text: 'text-[var(--secondary)]' },
+  accent: { bg: 'bg-[var(--accent)]/10', text: 'text-[var(--accent)]' },
+};
 
 export default function HowItWorksPage() {
   const breadcrumbSchema = generateStructuredData('breadcrumb', {
@@ -92,32 +43,38 @@ export default function HowItWorksPage() {
             <div className="max-w-3xl mx-auto text-center">
               <h1 className="text-5xl font-bold mb-4">How It Works</h1>
               <p className="text-xl opacity-90">
-                From source code to living documentation in four steps.
+                From a requirement to reliable software — the loop your
+                AI coding agent runs every time.
               </p>
             </div>
           </div>
         </section>
 
-        {/* Four-Step Lifecycle */}
+        {/* The reliability loop */}
         <section className="py-20">
           <div className="container">
             <div className="max-w-5xl mx-auto">
-              <h2 className="text-3xl font-bold text-center mb-16">
-                The Lifecycle
-              </h2>
+              <div className="text-center mb-16">
+                <h2 className="text-3xl font-bold mb-4">The reliability loop</h2>
+                <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
+                  Five stages keep the work honest from idea to merge.
+                  Nothing gets generated without a spec, grounded without
+                  your code, or shipped without verification.
+                </p>
+              </div>
 
               <div className="relative">
                 {/* Vertical timeline line (desktop only) */}
                 <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-px bg-[var(--border)] -translate-x-1/2" />
 
                 <div className="space-y-12 md:space-y-20">
-                  {steps.map((step, index) => {
+                  {RELIABILITY_LOOP.map((stage, index) => {
                     const isLeft = index % 2 === 0;
                     return (
-                      <div key={step.number} className="relative">
+                      <div key={stage.name} className="relative">
                         {/* Timeline dot (desktop only) */}
-                        <div className="hidden md:flex absolute left-1/2 top-8 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[var(--primary)] text-white items-center justify-center font-bold text-lg shadow-lg">
-                          {step.number}
+                        <div className="hidden md:flex absolute left-1/2 top-8 -translate-x-1/2 -translate-y-1/2 z-10 w-12 h-12 rounded-full bg-[var(--primary)] text-white items-center justify-center font-bold text-sm shadow-lg">
+                          {stage.n}
                         </div>
 
                         {/* Card */}
@@ -127,24 +84,14 @@ export default function HowItWorksPage() {
                           }`}
                         >
                           <div className="glass-panel rounded-xl p-8">
-                            {/* Step number (mobile only) */}
-                            <div className="md:hidden flex items-center gap-3 mb-4">
-                              <div className="w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm shrink-0">
-                                {step.number}
+                            <div className="flex items-center gap-3 mb-3">
+                              <div className="md:hidden w-10 h-10 rounded-full bg-[var(--primary)] text-white flex items-center justify-center font-bold text-sm shrink-0">
+                                {stage.n}
                               </div>
-                              <h3 className="text-2xl font-bold">
-                                {step.name}
-                              </h3>
+                              <h3 className="text-2xl font-bold">{stage.name}</h3>
                             </div>
-                            {/* Step name (desktop only) */}
-                            <h3 className="hidden md:block text-2xl font-bold mb-2">
-                              {step.name}
-                            </h3>
-                            <p className="text-lg font-medium text-[var(--primary)] mb-3">
-                              {step.summary}
-                            </p>
                             <p className="text-[var(--text-secondary)] leading-relaxed">
-                              {step.detail}
+                              {stage.description}
                             </p>
                           </div>
                         </div>
@@ -157,120 +104,118 @@ export default function HowItWorksPage() {
           </div>
         </section>
 
-        {/* Progressive Depth */}
+        {/* Four pillars underneath */}
         <section className="py-20 bg-[var(--surface-container-low)]">
           <div className="container">
             <div className="max-w-5xl mx-auto">
               <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold mb-4">
-                  Progressive Depth
-                </h2>
+                <h2 className="text-3xl font-bold mb-4">What&apos;s working underneath</h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Each topic has three layers. Ask once for the overview,
-                  again for the walkthrough, a third time for the full
-                  reference.
+                  Four pillars power every stage of the loop — each a real,
+                  shipped capability.
                 </p>
               </div>
 
-              <div className="grid md:grid-cols-3 gap-8">
-                {depthLevels.map((level) => (
-                  <div
-                    key={level.name}
-                    className={`bg-[var(--background)] rounded-xl p-8 border-t-4 ${level.bgClass} border-b border-l border-r border-b-[var(--border)] border-l-[var(--border)] border-r-[var(--border)]`}
-                  >
-                    <span
-                      className={`inline-block px-3 py-1 rounded-full text-xs font-semibold text-white mb-4 ${level.tagClass}`}
+              <div className="grid md:grid-cols-2 gap-6">
+                {PILLARS.map((p) => {
+                  const c = PILLAR_COLOR[p.color];
+                  return (
+                    <div
+                      key={p.id}
+                      className="bg-[var(--background)] rounded-xl p-8 border border-[var(--border)]"
                     >
-                      {level.name}
-                    </span>
-                    <h3 className="text-xl font-bold mb-2">
-                      {level.description}
-                    </h3>
-                    <p className="text-[var(--text-secondary)] text-sm leading-relaxed">
-                      {level.detail}
-                    </p>
-                  </div>
-                ))}
+                      <div className={`w-14 h-14 rounded-xl ${c.bg} flex items-center justify-center mb-5`}>
+                        <span className="text-3xl" aria-hidden="true">{p.icon}</span>
+                      </div>
+                      <span className={`text-xs font-bold uppercase tracking-[0.12em] ${c.text}`}>
+                        {p.tag}
+                      </span>
+                      <h3 className="text-xl font-bold mt-1 mb-3">{p.title}</h3>
+                      <p className="text-[var(--text-secondary)] leading-relaxed text-sm mb-4">
+                        {p.description}
+                      </p>
+                      <ul className="space-y-1.5">
+                        {p.points.map((pt) => (
+                          <li key={pt} className="flex items-start gap-2 text-sm text-[var(--text-secondary)]">
+                            <span className={`${c.text} mt-0.5`} aria-hidden="true">&#10003;</span>
+                            <span>{pt}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  );
+                })}
               </div>
-
-              <p className="text-center text-sm text-[var(--text-secondary)] mt-8">
-                Repeat calls auto-advance. New topic resets to concept.
-              </p>
             </div>
           </div>
         </section>
 
-        {/* Human Enhancement */}
+        {/* You stay in control */}
         <section className="py-20">
           <div className="container">
             <div className="max-w-4xl mx-auto">
               <div className="text-center mb-12">
                 <h2 className="text-3xl font-bold mb-4">
-                  AI Writes the First Draft. You Make It Yours.
+                  The Agent Drafts. You Approve. The Platform Verifies.
                 </h2>
                 <p className="text-xl text-[var(--text-secondary)] max-w-2xl mx-auto">
-                  Templates are generated from your source code, but
-                  you always have the final say.
+                  Reliability isn&apos;t a vibe — it&apos;s a gate at each end of
+                  the work.
                 </p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-8">
                 <div className="glass-panel rounded-xl p-8">
-                  <div className="text-3xl mb-4">&#x1f916;</div>
-                  <h3 className="text-xl font-bold mb-3">
-                    Generated Templates
-                  </h3>
+                  <div className="text-3xl mb-4">&#x1f4dd;</div>
+                  <h3 className="text-xl font-bold mb-3">The spec gate</h3>
                   <ul className="space-y-3 text-[var(--text-secondary)]">
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Created automatically from source code using
-                        Jinja templates
+                        Requirements, design, and tasks are written and
+                        approved before a line of code
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Frontmatter tracks source hash, status, and
-                        generation timestamp
+                        Socratic discovery scopes the work with you, not
+                        around you
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--primary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Regenerated when source code changes and the
-                        hash drifts
+                        The spec is the contract the build is measured
+                        against
                       </span>
                     </li>
                   </ul>
                 </div>
 
                 <div className="glass-panel rounded-xl p-8">
-                  <div className="text-3xl mb-4">&#x270d;&#xfe0f;</div>
-                  <h3 className="text-xl font-bold mb-3">
-                    Hand-Written Content
-                  </h3>
+                  <div className="text-3xl mb-4">&#x2705;</div>
+                  <h3 className="text-xl font-bold mb-3">The verification gate</h3>
                   <ul className="space-y-3 text-[var(--text-secondary)]">
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Edit any generated template or create new ones
-                        from scratch
+                        Generated claims are fact-checked against your real
+                        source
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        Mark with{' '}
-                        <code className="text-sm">status: manual</code>{' '}
-                        to protect from regeneration
+                        Imports import, CLI flags are real, links resolve,
+                        counts match
                       </span>
                     </li>
                     <li className="flex items-start gap-2">
                       <span className="text-[var(--secondary)] mt-1 shrink-0">&#x2022;</span>
                       <span>
-                        The maintenance pass always preserves
-                        hand-written templates
+                        Hallucinations are caught before the change reaches
+                        main
                       </span>
                     </li>
                   </ul>
@@ -285,11 +230,11 @@ export default function HowItWorksPage() {
           <div className="container">
             <div className="max-w-3xl mx-auto text-center">
               <h2 className="text-3xl font-bold mb-4">
-                Ready to bootstrap your help system?
+                Ready to turn requirements into reliable software?
               </h2>
               <p className="text-xl text-[var(--text-secondary)] mb-8">
-                One command scans your codebase and generates living
-                documentation.
+                Install from PyPI and run <code className="text-base">/spec</code>{' '}
+                on your next feature.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link

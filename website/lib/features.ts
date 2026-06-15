@@ -274,6 +274,134 @@ export const CAPABILITIES = {
  */
 export const LEGACY_CAPABILITIES = CAPABILITIES;
 
+// --- Platform positioning (spec-driven dev) ---
+
+/**
+ * The five-stage reliability loop — the narrative spine of the
+ * homepage. Maps requirement → shipped without losing the thread.
+ */
+export interface LoopStage {
+  n: string;
+  name: string;
+  description: string;
+}
+
+export const RELIABILITY_LOOP: LoopStage[] = [
+  {
+    n: "01",
+    name: "Specify",
+    description:
+      "Socratic spec engine: requirements, design, and tasks with an approval gate.",
+  },
+  {
+    n: "02",
+    name: "Ground",
+    description:
+      "RAG retrieval cites your code so the agent doesn't invent APIs.",
+  },
+  {
+    n: "03",
+    name: "Build",
+    description:
+      "17 multi-stage workflows: review, tests, bug prediction, refactor.",
+  },
+  {
+    n: "04",
+    name: "Remember",
+    description:
+      "Cross-session memory and a lessons corpus surface what worked before.",
+  },
+  {
+    n: "05",
+    name: "Verify",
+    description:
+      "Fact-check generated content: imports, flags, links, counts — all real.",
+  },
+];
+
+/**
+ * The four platform pillars. Each maps to a real, shipped
+ * capability — verified against the live registry, no roadmap
+ * fiction (see website-content-accuracy rule). `color` selects a
+ * brand token: primary (action), secondary (knowledge), accent (AI).
+ */
+export interface Pillar {
+  id: string;
+  tag: string;
+  title: string;
+  description: string;
+  points: string[];
+  icon: string;
+  color: "primary" | "secondary" | "accent";
+}
+
+export const PILLARS: Pillar[] = [
+  {
+    id: "workflows",
+    tag: "AI workflows",
+    title: "Specialist teams, not one prompt",
+    description:
+      "17 multi-stage workflows run teams of 2–6 Claude subagents to " +
+      "review code, surface vulnerabilities, generate tests, and plan " +
+      "refactors — with cost-tiered model routing.",
+    points: [
+      "Security audit, code review, bug prediction, release prep",
+      "Cheap / capable / premium model routing",
+      "Structured, readable reports",
+    ],
+    icon: "⚙️",
+    color: "primary",
+  },
+  {
+    id: "memory",
+    tag: "Project memory",
+    title: "Your agent stops starting from zero",
+    description:
+      "Findings from each session are stashed and recalled in the next. " +
+      "A retrievable lessons corpus surfaces the right engineering lesson " +
+      "at the moment a prompt needs it.",
+    points: [
+      "Local-first by default — no cloud required",
+      "Optional Redis semantic tier (local Ollama embeddings)",
+      "Automatic recall, or on demand with /recall",
+    ],
+    icon: "🧠",
+    color: "secondary",
+  },
+  {
+    id: "grounding",
+    tag: "Retrieval grounding",
+    title: "Answers anchored to your code",
+    description:
+      "Keyword + semantic retrieval keeps generated content grounded in " +
+      "your actual source. Mean faithfulness ≥ 0.97, CI-gated — drift " +
+      "fails the build.",
+    points: [
+      "Powered by attune-rag — built in, no extra install",
+      "Citations back to source",
+      "Faithfulness measured, not assumed",
+    ],
+    icon: "🔎",
+    color: "secondary",
+  },
+  {
+    id: "verification",
+    tag: "Verification",
+    title: "Catch hallucinations before they ship",
+    description:
+      "Fact-check LLM output against source-of-truth: confirm imports " +
+      "import, CLI flags are real, links resolve, and counts match — " +
+      "before the change reaches main.",
+    points: [
+      "Verifies docs, code, and generated content",
+      "Closes the loop the spec opened",
+      "Built from the discipline that runs this project",
+    ],
+    icon: "✅",
+    color: "accent",
+  },
+];
+
 // --- Helpers ---
 
 export function getPricingSummary(): string {

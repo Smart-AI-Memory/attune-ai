@@ -22,19 +22,19 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What is Attune AI?',
-        answer: 'Attune AI is a production-ready framework for AI-powered developer workflows with cost optimization and multi-agent orchestration. It includes 13 agent templates, dynamic team composition, persistent agent state, 10+ integrated workflows, and a tier-based LLM routing system that saves 34-86% on API costs.',
+        answer: 'Attune AI is a spec-driven development platform that combines AI workflows, project memory, retrieval grounding, and verification tools to help teams turn requirements into reliable software. It runs on a Claude subscription or an API key, and is open source under Apache 2.0.',
       },
       {
-        question: 'What is multi-agent orchestration?',
-        answer: 'Multi-agent orchestration lets you compose teams of specialized AI agents that collaborate on complex tasks. Attune AI supports parallel, sequential, two-phase, and delegation strategies with quality gates to ensure results meet your standards. The MetaOrchestrator analyzes tasks and automatically selects optimal agent teams.',
+        question: 'What is the reliability loop?',
+        answer: 'The reliability loop is the arc Attune AI takes a requirement through on its way to shipped software: Specify, Ground, Build, Remember, Verify. You write a spec, ground every change in your real code, build with multi-stage workflows, carry what worked into the next session, and verify the output before it ships.',
       },
       {
-        question: 'What is Agent State Persistence?',
-        answer: 'Agent State Persistence stores execution history, checkpoints, and accumulated metrics for each agent across sessions. This enables recovery from interruptions, performance tracking over time, and pattern learning. State is stored locally in JSON files under .attune/agents/state/.',
+        question: 'What are the four pillars?',
+        answer: 'Attune AI is built on four pillars, each a real, shipped capability: AI workflows (17 multi-stage workflows for review, tests, bug prediction, and refactors), Project memory (cross-session findings and a retrievable lessons corpus), Retrieval grounding (citations back to your source via attune-rag), and Verification (fact-checking generated content before it reaches main).',
       },
       {
-        question: 'What is Dynamic Team Composition?',
-        answer: 'Dynamic Team Composition allows you to build agent teams at runtime from 13 pre-built templates or custom configurations. Teams can execute with different strategies (parallel, sequential, two-phase, delegation) and enforce quality gates. You can also compose entire workflows into teams using the WorkflowComposer.',
+        question: 'What can Attune AI do, in numbers?',
+        answer: 'Attune AI ships 20 workflows (17 multi-stage), 41 MCP tools, 17 auto-triggering skills, 5 wizards, and 15 template kinds. The spec engine runs via /spec, progressive help via /coach, and cross-session recall via /recall.',
       },
       {
         question: "What's the difference between attune-ai and attune-gui?",
@@ -85,28 +85,28 @@ const faqData: FAQCategory[] = [
     category: 'Technical',
     questions: [
       {
-        question: 'Which LLM providers are supported?',
-        answer: "Attune AI is built exclusively for Anthropic Claude with a Claude-native architecture. This leverages Anthropic's automatic prompt caching, extended thinking, and optimized tool use. Agent and team creation features (dynamic composition, SDK integration) work with the Anthropic Agent SDK for enhanced capabilities.",
+        question: 'How does retrieval grounding keep answers accurate?',
+        answer: 'Retrieval grounding is powered by attune-rag, a core (built-in) dependency. Keyword and semantic retrieval keep generated content anchored to your actual source, with citations back to where each claim came from. Mean faithfulness is measured at ≥ 0.97 and CI-gated — drift fails the build rather than slipping through.',
       },
       {
-        question: 'What are agent templates?',
-        answer: 'Agent templates are pre-built agent archetypes with defined roles, capabilities, tier preferences, and quality gates. Attune AI includes 13 templates: security auditor, code reviewer, test coverage analyzer, documentation writer, performance optimizer, architecture analyst, refactoring specialist, dependency checker, bug predictor, release coordinator, integration tester, API designer, and DevOps engineer.',
+        question: 'How does verification catch hallucinations?',
+        answer: 'Verification fact-checks LLM output against your source-of-truth before a change reaches main: it confirms imports actually import, CLI flags are real, links resolve, and counts match. It closes the loop the spec opened, so generated docs and code stay honest.',
       },
       {
-        question: 'How is the framework tested?',
-        answer: 'Attune AI has 14,800+ comprehensive tests covering unit tests, integration tests, and cross-platform compatibility. Core modules are rigorously tested for security, agent state persistence, dynamic team orchestration, workflow coordination, and meta-workflow functionality.',
+        question: 'Is my code sent anywhere?',
+        answer: 'Memory is local-first — nothing is sent to a cloud by default. Findings and the lessons corpus live on your machine. An optional Redis semantic tier is available for richer recall, and it uses local Ollama embeddings, so you stay in control of where your data goes.',
       },
       {
-        question: 'How does prompt caching save money?',
-        answer: 'Attune AI leverages Anthropic\'s automatic prompt caching out of the box — no configuration required. Cached input tokens cost just 10% of the standard price, delivering up to 90% cost savings and up to 85% faster responses. The framework\'s Claude-native architecture is designed around caching: system prompts, tool definitions, and conversation history are automatically cached and reused across requests.',
+        question: 'Do I need an API key?',
+        answer: 'No. Attune AI works on a Claude subscription or an API key — use whichever you have. The platform is open source under Apache 2.0 with no license keys or hidden fees.',
       },
       {
-        question: 'What is semantic caching?',
-        answer: 'On top of Anthropic\'s API-level caching, Attune AI includes an optional HybridCache powered by sentence-transformers. It detects semantically similar prompts (95%+ cosine similarity) and reuses cached responses, avoiding redundant API calls entirely. Hash-only caching achieves ~30% hit rate; with semantic matching enabled, measured hit rates reach ~57% on workflows like security audits. Install with pip install attune-ai[developer] to enable it automatically.',
+        question: 'Which LLM provider is supported?',
+        answer: "Attune AI is built for Anthropic Claude with a Claude-native architecture, so it leverages Anthropic's automatic prompt caching, extended thinking, and optimized tool use.",
       },
       {
         question: 'What platforms are supported?',
-        answer: 'The framework is cross-platform and runs on macOS, Linux, and Windows. It requires Python 3.10+ and works with all major development environments including VS Code, JetBrains IDEs, and terminal-based workflows.',
+        answer: 'The platform is cross-platform and runs on macOS, Linux, and Windows. It requires Python 3.10+ and works with all major development environments including VS Code, JetBrains IDEs, and terminal-based workflows.',
       },
     ],
   },
@@ -115,7 +115,7 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What are wizards?',
-        answer: 'Wizards are guided, multi-step AI workflows that walk you through complex tasks like debugging, security audits, refactoring, and test generation. Each wizard collects context via questions, runs AI analysis, decomposes work into tasks, and previews results before acting. Attune AI ships with 10 built-in wizards: security-audit, code-review, bug-predict, perf-audit, refactor-plan, test-gen, doc-gen, dependency-check, release-prep, and research.',
+        answer: 'Wizards are guided, multi-step AI workflows that walk you through complex tasks. Each wizard collects context via questions, runs AI analysis, decomposes work into tasks, and previews results before acting. Attune AI ships with 5 built-in wizards.',
       },
       {
         question: 'How do I run a wizard?',
@@ -132,15 +132,15 @@ const faqData: FAQCategory[] = [
     questions: [
       {
         question: 'What can I build with Attune AI?',
-        answer: 'You can build AI-powered developer workflows for software development (bug prediction, security scanning, test generation, code review), orchestrate multi-agent teams for complex analysis tasks, and compose workflows into coordinated pipelines. The framework also supports healthcare use cases with clinical decision support.',
+        answer: 'You take requirements through to reliable software: write a spec with /spec, ground changes in your real code, run multi-stage workflows for code review, security scanning, test generation, bug prediction, and refactor planning, then verify the output before it ships. The lessons corpus and cross-session memory carry what worked into the next session.',
+      },
+      {
+        question: 'How does the spec engine work?',
+        answer: 'The spec engine runs via /spec. It guides you Socratically through requirements, design, and tasks with an approval gate, so a feature starts from an agreed spec rather than an open-ended prompt — the first stage of the reliability loop.',
       },
       {
         question: 'What happened to the Fair Source License?',
-        answer: 'As of January 28, 2026, we switched from Fair Source 0.9 to Apache 2.0. We realized the licensing restrictions were limiting adoption without generating revenue. Going fully open source lets us focus on building the best framework and growing a community.',
-      },
-      {
-        question: 'Is the framework production-ready?',
-        answer: 'Yes! The framework is v3.6.x Production/Stable with comprehensive tests, extensive documentation, persistent agent state, dynamic team composition, and is being used in production software development tools and AI workflows.',
+        answer: 'As of January 28, 2026, we switched from Fair Source 0.9 to Apache 2.0. We realized the licensing restrictions were limiting adoption without generating revenue. Going fully open source lets us focus on building the best platform and growing a community.',
       },
     ],
   },
@@ -173,16 +173,17 @@ const faqData: FAQCategory[] = [
 ];
 
 export const metadata: Metadata = generateMetadata({
-  title: 'Attune AI FAQ — Open Source Agent Framework for Claude Code',
+  title: 'Attune AI FAQ — Spec-Driven Development Platform for Claude Code',
   description:
-    'Answers to common questions about Attune AI: installation, Claude Code integration, multi-agent orchestration, licensing, and cost optimization.',
+    'Answers to common questions about Attune AI: the reliability loop, AI workflows, project memory, retrieval grounding, verification, licensing, and how it turns requirements into reliable software.',
   url: 'https://smartaimemory.com/faq',
   keywords: [
     'Attune AI FAQ',
-    'Claude Code agent framework',
-    'open source AI framework',
-    'AI workflow questions',
-    'multi-agent orchestration FAQ',
+    'spec-driven development platform',
+    'Claude Code workflows',
+    'retrieval grounding',
+    'AI verification',
+    'project memory',
   ],
 });
 
@@ -224,7 +225,7 @@ export default function FAQPage() {
                 Frequently Asked Questions
               </h1>
               <p className="text-2xl mb-8 opacity-90">
-                Everything you need to know about Attune AI
+                How Attune AI turns requirements into reliable software
               </p>
             </div>
           </div>

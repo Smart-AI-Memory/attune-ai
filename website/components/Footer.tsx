@@ -19,7 +19,7 @@ export default function Footer() {
               Attune AI
             </Link>
             <p className="mt-4 text-sm text-[var(--text-secondary)]">
-              Living docs, rooted in code. Help content that stays fresh automatically.
+              Spec-driven development for Claude Code. Turn requirements into reliable software.
             </p>
             <div className="flex gap-4 mt-4">
               <a

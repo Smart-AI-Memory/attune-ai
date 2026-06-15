@@ -2,7 +2,7 @@
 
 <!-- mcp-name: io.github.Smart-AI-Memory/attune-ai -->
 
-**Multi-agent developer workflows for Claude Code.**
+**Spec-driven development for Claude Code — turn requirements into reliable software.**
 
 🌐 **Docs & guides: [attune-ai.dev](https://attune-ai.dev)**
 
@@ -23,11 +23,14 @@
 
 ---
 
-20 multi-agent workflows, 17 auto-triggering Claude Code skills, and
-41 MCP tools — specialist teams of 2–6 Claude subagents that review
-your code, surface vulnerabilities, generate tests, and plan refactors.
-The same system doubles as the authoring and assistance toolkit for
-building and maintaining knowledge bases at scale.
+A spec-driven development platform for Claude Code. Four pillars — AI
+workflows, project memory, retrieval grounding, and verification — turn
+requirements into reliable software. 20 workflows (17 multi-stage),
+17 auto-triggering skills, and 41 MCP tools run specialist teams of 2–6
+Claude subagents that review your code, surface vulnerabilities, generate
+tests, and plan refactors — grounded in your real source, with findings
+remembered across sessions. The same system doubles as the authoring and
+assistance toolkit for building and maintaining knowledge bases at scale.
 
 **Managing and creating help content and docs?**
 That's [`attune-gui`](https://github.com/Smart-AI-Memory/attune-gui)

@@ -9228,3 +9228,49 @@ files.
     is `daemon=True` and no-ops when `client is None`, i.e. keyless CI).
     A no-op daemon is a CORRELATION/suspect, not a proven cause — get
     N>1 dumps before shipping a fix (tar-pit guard).
+
+- **The marketing site lives in `website/` (Next.js 15) and the
+  `website-content-accuracy` rule's verification snippets drift too**:
+  2026-06-15 repositioning smartaimemory.com as a "spec-driven
+  development platform." (1) Canonical counts are `website/lib/
+  features.ts` `CAPABILITIES`; verify against the LIVE registry, not the
+  rule's snippet. The rule's wizards command is STALE — `from
+  attune.wizards import WizardRegistry` no longer exists; current API is
+  `from attune.wizards import list_wizards; len(list_wizards())` (=5).
+  Working introspection for all five: workflows `len([w for w in
+  list_workflows() if w.get('stages')])` (=17 multi-stage vs 20 listed
+  total — README said 20, site said 17; both right, different framing);
+  mcpTools = `sum(len(getattr(ts,n)()) for n in dir(ts) if
+  n.startswith('get_') and n.endswith('_tools'))` from
+  `attune.mcp.tool_schemas` (=41); templateKinds `len(
+  attune_author.generator._ALL_TEMPLATE_NAMES)` (=15, SEPARATE package —
+  may be absent); skills = `plugin/skills/` dir count (=17, no Python
+  needed). Landed a Vitest guard (`website/test/
+  capabilities-accuracy.test.ts`, `npm test` in website/) that asserts
+  CAPABILITIES against these — shells to Python, skips if attune
+  unimportable (force with `ATTUNE_PYTHON=<venv> npm test`). (2)
+  `attune_redis` is PART of attune-ai (the `[redis]` extra / bundled
+  plugin), NOT a separate sibling package like attune-help/author/rag/
+  gui — its README already attributes "for Attune AI." (3) `plugin/
+  README.md` carried silently-rotted facts (skills 13→17, MCP 31→41,
+  version 5.4.0→8.5.0); no CI gate catches README drift — only the new
+  Vitest guard covers features.ts, not prose READMEs.
+
+- **`worktree_path_guard.py` PreToolUse hook misfires when the Bash
+  cwd has drifted into a subdir** — it resolves its script via the
+  RELATIVE path `src/attune/hooks/scripts/worktree_path_guard.py` from
+  cwd, so after a `cd website && npm …` the NEXT Edit/Write fails with
+  `can't open file '.../website/src/attune/hooks/scripts/…'` (a hook
+  ERROR, not a deliberate block). The Bash tool's cwd persists between
+  calls; `cd <subdir> && …` leaves it there. Fix: `cd` back to the
+  worktree root before any Edit/Write. Fired ~3× in one session. Pairs
+  with the worktree-PYTHONPATH / Write-absolute-path cwd-hygiene
+  lessons.
+
+- **Tailwind JIT never emits dynamically-built class names** — `bg-[var(
+  --${p.color})]` (template-literal class) is silently absent and the
+  element renders unstyled; the scanner only sees COMPLETE literal
+  strings. Use a lookup map of full literals (`{primary:
+  'bg-[var(--primary)]/10', secondary: …, accent: …}`) keyed by the
+  dynamic value. Used in `website/app/page.tsx` (`PILLAR_COLOR`) and the
+  how-it-works rewrite.
