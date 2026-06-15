@@ -1,6 +1,6 @@
 # Spec: CI gating-lane isolation
 
-**Status:** draft
+**Status:** Layer A shipping (2026-06-15) — see `decisions.md`; B/C deferred
 **Opened:** 2026-06-15
 **Layer:** attune-ai (CI / `.github/workflows/`)
 **Owner:** Patrick + agent
