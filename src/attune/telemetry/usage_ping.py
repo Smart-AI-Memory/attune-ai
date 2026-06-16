@@ -68,9 +68,13 @@ FORBIDDEN_RECORD_FIELDS = frozenset(
 
 #: Collection endpoint (Phase 2b). The ingest function is served by the
 #: Next.js app at smartaimemory.com (``website/app/api/usage/route.ts``).
-#: Overridable via ``ATTUNE_USAGE_ENDPOINT`` (and the whole ping is
-#: default-OFF, so this URL is only ever contacted by an opted-in user).
-DEFAULT_ENDPOINT = "https://smartaimemory.com/api/usage"
+#: The TRAILING SLASH is required: the site runs ``trailingSlash: true``,
+#: so ``/api/usage`` 308-redirects to ``/api/usage/`` and a redirected
+#: POST is not reliably followed by ``urllib`` — point straight at the
+#: canonical URL. Overridable via ``ATTUNE_USAGE_ENDPOINT`` (and the
+#: whole ping is default-OFF, so this is only ever contacted by an
+#: opted-in user).
+DEFAULT_ENDPOINT = "https://smartaimemory.com/api/usage/"
 
 #: Env values treated as "true" for flag variables.
 _TRUTHY = frozenset({"1", "true", "yes", "on"})
