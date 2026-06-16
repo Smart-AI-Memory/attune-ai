@@ -117,8 +117,10 @@ def test_do_not_track_zero_is_not_optout():
 
 
 def test_resolve_endpoint_default_is_production():
-    # Phase 2b wired the production ingest endpoint as the default.
-    assert usage_ping.resolve_endpoint(env={}) == "https://smartaimemory.com/api/usage"
+    # Phase 2b wired the production ingest endpoint as the default. The
+    # trailing slash is required (site runs trailingSlash: true) so a
+    # POST lands directly instead of via a 308 redirect.
+    assert usage_ping.resolve_endpoint(env={}) == "https://smartaimemory.com/api/usage/"
 
 
 def test_resolve_endpoint_env_override():

@@ -304,6 +304,19 @@ The collection endpoint and the client's go-live wiring are built
   `ATTUNE_USAGE_ENDPOINT`. Revisit if the attune-ai.dev consolidation
   moves the Next app; add a redirect or update `DEFAULT_ENDPOINT`.
 
+## D7 — post-merge fix: endpoint trailing slash (2026-06-16)
+
+Probing the live endpoint after #920 merged surfaced a bug `DEFAULT_
+ENDPOINT` shipped with: the site runs `trailingSlash: true`, so
+`POST /api/usage` returns a 308 redirect to `/api/usage/` and `urllib`
+does not reliably re-issue a redirected POST. Verified live:
+`GET /api/usage/` → 405, malformed `POST /api/usage/` → 400 (route
+deployed + validating), but `/api/usage` (no slash) → 308. Fix:
+`DEFAULT_ENDPOINT` now points at the canonical `…/api/usage/`. Only
+local tests with arbitrary URLs ran pre-merge, so the mismatch was
+invisible until the live probe — a verify-against-the-real-surface
+catch. (Follow-up PR off main.)
+
 **Remaining before this is end-to-end live (deploy-time, owner: Patrick):**
 
 1. Apply the `usage_events` DDL to the prod DB (re-run the
