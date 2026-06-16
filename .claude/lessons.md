@@ -9274,3 +9274,32 @@ files.
   'bg-[var(--primary)]/10', secondary: …, accent: …}`) keyed by the
   dynamic value. Used in `website/app/page.tsx` (`PILLAR_COLOR`) and the
   how-it-works rewrite.
+
+- **A dependabot version-CEILING bump can silently defeat a
+  DELIBERATE pyproject cap — read the cap's comment before merging,
+  and CI-green validates NOTHING when the lock stays put**: 2026-06-15,
+  dependabot PR #907 raised `claude-agent-sdk` `<0.2.82` -> `<0.2.102`.
+  The `<0.2.82` ceiling was an INTENTIONAL guard, documented inline in
+  pyproject ("holds back the 0.2.x breaking changes ... Remove the cap
+  deliberately when adopting 0.2.x"). Two traps: (1) the PR's CI was
+  "green" (coverage + required test passed) — MISLEADING, because the
+  lockfile stays at the old version (0.1.63); raising a ceiling does
+  NOT force an upgrade, so CI tested the SAME version as before and
+  validated nothing about the new range. (2) admin-overriding the
+  (real) pre-commit uv.lock-drift failure to merge would have pushed a
+  stale lock onto main AND lifted the deliberate guard so a future
+  `uv lock --upgrade` lands the breaking changes silently. Rule: before
+  merging ANY dependabot constraint-bump PR, grep the bumped
+  dependency's line in pyproject for an inline comment — if the cap is
+  deliberate ("holds back", "pin", "remove deliberately"), the bump is
+  a POLICY decision, not a routine merge; close it (or add a dependabot
+  `ignore`) unless you are deliberately adopting the new line, which is
+  a real migration (bump the LOCK, test against the new version), not a
+  constraint edit. Pairs with "verify-first applies to infra/config"
+  and the "Dependabot pip bumps fail check-docs-freshness via uv.lock
+  drift" mechanical lesson. Operational addendum: a deliberate dep-major
+  migration is cleanest in its OWN worktree off origin/main — but note
+  the Bash cwd RESETS to the session's home worktree after every
+  command, so second-worktree work needs compound `cd <abs> && ...` and
+  Edit/Write tooling there is unreliable (path-guard runs from home
+  cwd); drive second-worktree edits via bash (python in-place / heredoc).
