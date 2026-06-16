@@ -116,8 +116,9 @@ def test_do_not_track_zero_is_not_optout():
 # --------------------------------------------------------------------------- #
 
 
-def test_resolve_endpoint_default_empty():
-    assert usage_ping.resolve_endpoint(env={}) == ""
+def test_resolve_endpoint_default_is_production():
+    # Phase 2b wired the production ingest endpoint as the default.
+    assert usage_ping.resolve_endpoint(env={}) == "https://smartaimemory.com/api/usage"
 
 
 def test_resolve_endpoint_env_override():
@@ -278,7 +279,10 @@ def test_run_sync_enabled_no_install_id_returns_zero(tmp_path):
     assert sent == 0
 
 
-def test_run_sync_no_endpoint_returns_zero(tmp_path):
+def test_run_sync_no_endpoint_returns_zero(tmp_path, monkeypatch):
+    # With the default endpoint blanked (and no env override), run_sync
+    # must short-circuit to a no-op.
+    monkeypatch.setattr(usage_ping, "DEFAULT_ENDPOINT", "")
     config = _FakeConfig(TelemetryConfig(usage_ping=True, install_id="id"))
     sent = usage_ping.run_sync(config, telemetry_dir=tmp_path, version="v", env={})
     assert sent == 0
@@ -519,3 +523,80 @@ def test_open_user_config_opens_existing_home(monkeypatch, tmp_path):
     assert isinstance(loader, ConfigLoader)
     assert config is not None
     assert save_path == home
+
+
+# --------------------------------------------------------------------------- #
+# run_sync_at_exit — the atexit/Stop entry point gating (Phase 2b)
+# --------------------------------------------------------------------------- #
+
+
+def test_run_sync_at_exit_respects_do_not_track(monkeypatch):
+    """DO_NOT_TRACK short-circuits before any config load or delegation."""
+    called = []
+    monkeypatch.setattr(usage_ping, "run_sync", lambda *a, **k: called.append(1) or 5)
+    assert usage_ping.run_sync_at_exit(env={"DO_NOT_TRACK": "1"}) == 0
+    assert called == []
+
+
+def test_run_sync_at_exit_respects_explicit_disable(monkeypatch):
+    """ATTUNE_USAGE_PING=0 short-circuits regardless of config."""
+    called = []
+    monkeypatch.setattr(usage_ping, "run_sync", lambda *a, **k: called.append(1) or 5)
+    assert usage_ping.run_sync_at_exit(env={"ATTUNE_USAGE_PING": "0"}) == 0
+    assert called == []
+
+
+def test_run_sync_at_exit_no_endpoint_is_noop(monkeypatch):
+    """With the endpoint blanked and no override, it never delegates."""
+    monkeypatch.setattr(usage_ping, "DEFAULT_ENDPOINT", "")
+    called = []
+    monkeypatch.setattr(usage_ping, "run_sync", lambda *a, **k: called.append(1) or 5)
+    assert usage_ping.run_sync_at_exit(env={}) == 0
+    assert called == []
+
+
+def test_run_sync_at_exit_no_user_config_is_noop(monkeypatch, tmp_path):
+    """A user who never created a config never opted in -> no-op."""
+    from attune.config.loader import ConfigLoader
+
+    missing = tmp_path / "nope.json"
+    monkeypatch.setattr(ConfigLoader, "get_default_config_path", staticmethod(lambda: missing))
+    called = []
+    monkeypatch.setattr(usage_ping, "run_sync", lambda *a, **k: called.append(1) or 5)
+    assert usage_ping.run_sync_at_exit(env={"ATTUNE_USAGE_ENDPOINT": "https://x/api"}) == 0
+    assert called == []
+
+
+def test_run_sync_at_exit_delegates_when_gates_pass(monkeypatch, tmp_path):
+    """Gates clear (no opt-out, endpoint set, config exists) -> run_sync."""
+    from attune.config.loader import ConfigLoader
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+    fake_config = _FakeConfig(TelemetryConfig(usage_ping=True, install_id="id"))
+    monkeypatch.setattr(ConfigLoader, "get_default_config_path", staticmethod(lambda: cfg))
+    monkeypatch.setattr(ConfigLoader, "load", lambda self: fake_config)
+    captured: dict = {}
+    monkeypatch.setattr(
+        usage_ping,
+        "run_sync",
+        lambda config, **kw: captured.update(config=config, kw=kw) or 7,
+    )
+    sent = usage_ping.run_sync_at_exit(env={"ATTUNE_USAGE_ENDPOINT": "https://x/api"})
+    assert sent == 7
+    assert captured["config"] is fake_config
+
+
+def test_run_sync_at_exit_swallows_all_errors(monkeypatch, tmp_path):
+    """Any failure in the chain returns 0, never raises into teardown."""
+    from attune.config.loader import ConfigLoader
+
+    cfg = tmp_path / "config.json"
+    cfg.write_text("{}", encoding="utf-8")
+    monkeypatch.setattr(ConfigLoader, "get_default_config_path", staticmethod(lambda: cfg))
+
+    def _boom(self):
+        raise RuntimeError("config blew up")
+
+    monkeypatch.setattr(ConfigLoader, "load", _boom)
+    assert usage_ping.run_sync_at_exit(env={"ATTUNE_USAGE_ENDPOINT": "https://x/api"}) == 0

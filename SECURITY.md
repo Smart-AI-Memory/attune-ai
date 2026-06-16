@@ -264,6 +264,57 @@ When adding new file write operations:
 4. **Test attack scenarios**: path traversal, null bytes, system dirs
 5. See [test_config_path_security.py](tests/unit/test_config_path_security.py) for examples
 
+## Telemetry & Data Collection
+
+Attune AI is local-first. Workflow telemetry (cost, tokens, timing)
+is written only to your own machine under `~/.attune/`. The single
+exception is an **opt-in, anonymous usage ping**, and it is the only
+thing the package ever transmits off your machine.
+
+### Opt-in usage ping
+
+- **Default OFF.** Nothing is transmitted unless you explicitly run
+  `attune telemetry enable` (or set `ATTUNE_USAGE_PING=1`).
+- **Frozen payload (schema v1).** A ping contains *exactly* these
+  fields and no others:
+  - `schema` — payload version integer
+  - `package` — always `attune-ai`
+  - `version` — the installed package version
+  - `install_id` — a rotating, anonymous UUID you can reset at any
+    time (`attune telemetry reset` mints a fresh one); it carries no
+    PII and no linkage to your identity
+  - `event` — the workflow name as `workflow.<name>`, sourced from
+    the registry (never free text)
+  - `os` — `darwin` / `linux` / `windows`
+  - `py` — your `major.minor` Python version
+  - `ts` — an ISO-8601 timestamp
+- **Never transmitted:** file paths, source code, prompts, command
+  arguments, filenames, project names, cost, tokens, model names, or
+  any free-text field. The allowed key set is frozen in
+  `src/attune/telemetry/usage_ping.py` (`PAYLOAD_KEYS`) and enforced
+  by a regression test, and the ingest endpoint rejects any unknown
+  field.
+- **Endpoint stores no network envelope.** The collector
+  (`POST /api/usage`) drops the client IP and all request headers
+  before insert; it persists only the frozen payload above.
+- **Fire-and-forget.** Transport has a short hard timeout and
+  swallows every error, so telemetry can never block, slow, or crash
+  the CLI.
+- **Controls:** `attune telemetry status` prints the exact payload
+  that would be sent; `attune telemetry disable` opts out;
+  `DO_NOT_TRACK=1` and `ATTUNE_USAGE_PING=0` force it off regardless
+  of saved config.
+- **Deletion:** because events are keyed by your anonymous
+  `install_id`, you can request deletion of all data for that id (or
+  simply rotate it, after which prior events are no longer
+  associated with your install).
+
+The endpoint is public and unauthenticated (a CLI cannot hold a
+secret), so the data is treated as best-effort, not adversarially
+trusted; rate limiting and strict schema validation are the
+mitigations. See `docs/specs/usage-signals/phase2-design.md` for the
+full design and privacy rationale.
+
 ## Known Security Considerations
 
 ### AI Model Risks

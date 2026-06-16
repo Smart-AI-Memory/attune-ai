@@ -1764,3 +1764,44 @@ class TestCacheStatsBranches:
         stats = tracker.get_cache_stats(days=7)
         assert stats["by_workflow"]["wf_no_hit"]["hits"] == 0
         assert stats["by_workflow"]["wf_no_hit"]["requests"] == 1
+
+
+class TestUsagePingAtExitWiring:
+    """The opt-in usage-ping sync is kicked from the atexit chain and
+    must run AFTER the local flush so it sees freshly-persisted events."""
+
+    def test_get_instance_registers_ping_before_flush(self, monkeypatch, temp_dir):
+        """atexit is LIFO, so ping (runs last) must be REGISTERED first."""
+        import atexit as _atexit
+
+        registered = []
+        monkeypatch.setattr(_atexit, "register", lambda fn, *a, **k: registered.append(fn))
+        UsageTracker._instance = None
+        try:
+            UsageTracker.get_instance(telemetry_dir=temp_dir)
+            assert UsageTracker._atexit_usage_ping in registered
+            assert UsageTracker._atexit_flush in registered
+            # ping registered first => ping runs AFTER flush at exit
+            assert registered.index(UsageTracker._atexit_usage_ping) < registered.index(
+                UsageTracker._atexit_flush
+            )
+        finally:
+            UsageTracker._instance = None
+
+    def test_atexit_usage_ping_delegates_to_run_sync_at_exit(self, monkeypatch):
+        from attune.telemetry import usage_ping
+
+        called = []
+        monkeypatch.setattr(usage_ping, "run_sync_at_exit", lambda: called.append(1) or 0)
+        UsageTracker._atexit_usage_ping()
+        assert called == [1]
+
+    def test_atexit_usage_ping_never_raises(self, monkeypatch):
+        from attune.telemetry import usage_ping
+
+        def _boom():
+            raise RuntimeError("ping blew up")
+
+        monkeypatch.setattr(usage_ping, "run_sync_at_exit", _boom)
+        # Must not propagate — telemetry can't affect process exit.
+        UsageTracker._atexit_usage_ping()
