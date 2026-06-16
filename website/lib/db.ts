@@ -122,7 +122,27 @@ export async function initializeDatabase(): Promise<void> {
       metadata JSONB
     );
 
+    -- Usage events table (Phase 2b opt-in anonymous telemetry).
+    -- Schema frozen in docs/specs/usage-signals/phase2-design.md.
+    -- Anonymous by construction: no IP, no headers, no PII. install_id
+    -- is a rotating, user-resettable UUID. NEVER paths/code/prompts/args.
+    CREATE TABLE IF NOT EXISTS usage_events (
+      id          BIGSERIAL PRIMARY KEY,
+      received_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT now(),
+      package     TEXT NOT NULL,
+      version     TEXT NOT NULL,
+      install_id  UUID NOT NULL,
+      event       TEXT NOT NULL,
+      outcome     TEXT,          -- reserved for schema:2 (see payload note)
+      os          TEXT,
+      py          TEXT,
+      client_ts   TIMESTAMP WITH TIME ZONE
+    );
+
     -- Create indexes for common queries
+    CREATE INDEX IF NOT EXISTS idx_usage_events_pkg_event ON usage_events(package, event);
+    CREATE INDEX IF NOT EXISTS idx_usage_events_install ON usage_events(install_id);
+    CREATE INDEX IF NOT EXISTS idx_usage_events_received ON usage_events(received_at);
     CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
     CREATE INDEX IF NOT EXISTS idx_customers_stripe_id ON customers(stripe_customer_id);
     CREATE INDEX IF NOT EXISTS idx_purchases_customer ON purchases(customer_id);
@@ -542,4 +562,54 @@ export async function updateContactStatus(id: number, status: string, notes?: st
     [status, notes, id]
   );
   return result.rows[0] || null;
+}
+
+// Usage events (Phase 2b opt-in anonymous telemetry)
+
+/**
+ * A single validated usage event ready for insert. Mirrors the frozen
+ * client payload (schema v1) — see docs/specs/usage-signals/phase2-design.md.
+ * No IP, no headers, no PII: the route drops the network envelope before
+ * calling this.
+ */
+export interface UsageEventInsert {
+  package: string;
+  version: string;
+  install_id: string;
+  event: string;
+  os: string | null;
+  py: string | null;
+  client_ts: string | null;
+}
+
+/**
+ * Bulk-insert validated usage events in a single statement.
+ *
+ * Uses a multi-row VALUES insert so a batched client POST is one round
+ * trip. Returns the number of rows written. The caller is responsible
+ * for validating each event against schema v1 first.
+ */
+export async function recordUsageEvents(events: UsageEventInsert[]): Promise<number> {
+  if (events.length === 0) return 0;
+
+  const cols = 7;
+  const valuesSql = events
+    .map((_, i) => {
+      const b = i * cols;
+      return `($${b + 1}, $${b + 2}, $${b + 3}, $${b + 4}, $${b + 5}, $${b + 6}, $${b + 7})`;
+    })
+    .join(', ');
+
+  const params: unknown[] = [];
+  for (const e of events) {
+    params.push(e.package, e.version, e.install_id, e.event, e.os, e.py, e.client_ts);
+  }
+
+  const result = await query(
+    `INSERT INTO usage_events
+       (package, version, install_id, event, os, py, client_ts)
+     VALUES ${valuesSql}`,
+    params
+  );
+  return result.rowCount ?? 0;
 }

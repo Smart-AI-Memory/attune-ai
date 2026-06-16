@@ -66,9 +66,11 @@ FORBIDDEN_RECORD_FIELDS = frozenset(
     }
 )
 
-#: Collection endpoint. Empty in Phase 2a (client only) — wired to the
-#: Vercel function in Phase 2b. Overridable via ``ATTUNE_USAGE_ENDPOINT``.
-DEFAULT_ENDPOINT = ""
+#: Collection endpoint (Phase 2b). The ingest function is served by the
+#: Next.js app at smartaimemory.com (``website/app/api/usage/route.ts``).
+#: Overridable via ``ATTUNE_USAGE_ENDPOINT`` (and the whole ping is
+#: default-OFF, so this URL is only ever contacted by an opted-in user).
+DEFAULT_ENDPOINT = "https://smartaimemory.com/api/usage"
 
 #: Env values treated as "true" for flag variables.
 _TRUTHY = frozenset({"1", "true", "yes", "on"})
@@ -340,6 +342,53 @@ def run_sync(
     if sent > 0:
         write_cursor(telemetry_dir, str(records[sent - 1].get("ts") or cursor))
     return sent
+
+
+def run_sync_at_exit(
+    *,
+    env: Mapping[str, str] | None = None,
+    poster: Callable[[str, list[dict[str, Any]], float], bool] = _urllib_post,
+) -> int:
+    """Best-effort sync entry point for the atexit / Stop trigger.
+
+    Self-gating and never raises. Applies the cheap short-circuits (hard
+    env opt-out, no endpoint, no user config on disk) BEFORE loading any
+    config, so an opted-out user pays nothing at process exit beyond a
+    couple of dict lookups. When it does proceed it defers entirely to
+    :func:`run_sync`, which re-checks enablement / install id / endpoint.
+
+    Opt-in state lives ONLY in the user config (``~/.attune/config.json``),
+    never a discovered project config — see :func:`_open_user_config`.
+
+    Returns:
+        Number of records transmitted (0 when disabled or nothing new).
+    """
+    try:
+        env = os.environ if env is None else env
+        # Hard opt-outs short-circuit before touching disk.
+        dnt = env.get("DO_NOT_TRACK")
+        if dnt is not None and dnt.strip().lower() not in {"", "0", "false"}:
+            return 0
+        override = env.get("ATTUNE_USAGE_PING")
+        if override is not None and not _env_truthy(override):
+            return 0
+        # No endpoint wired -> nothing to do (avoids a config load).
+        if not resolve_endpoint(env):
+            return 0
+
+        from attune.config.loader import ConfigLoader
+
+        path = ConfigLoader.get_default_config_path()
+        # A user who never created a config never opted in — don't create
+        # one (or even load defaults) at exit.
+        if not path.exists():
+            return 0
+        config = ConfigLoader(config_path=path).load()
+        return run_sync(config, env=env, poster=poster)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: telemetry must never raise into process teardown.
+        logger.debug("usage-ping: run_sync_at_exit failed", exc_info=True)
+        return 0
 
 
 def example_payload(

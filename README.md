@@ -406,6 +406,41 @@ reporting and full security details.
 
 ---
 
+## Privacy & Telemetry
+
+Attune AI keeps usage data local-first. An **opt-in, anonymous usage
+ping** is available to help the project understand which workflows
+people actually use — it is **OFF by default** and sends nothing
+unless you explicitly turn it on.
+
+When enabled, each ping carries exactly this, and nothing more:
+
+- the package (`attune-ai`) and its version
+- the workflow name you ran (e.g. `workflow.security_audit`)
+- your OS (`darwin` / `linux` / `windows`) and Python version
+  (e.g. `3.12`)
+- a rotating, anonymous install id (a random UUID you can reset)
+- a timestamp
+
+It **never** sends paths, code, prompts, arguments, filenames,
+project names, cost, tokens, or model data — the payload is frozen in
+source and guarded by a regression test. Transport is fire-and-forget
+with a short timeout, so it can never block, slow, or crash the CLI,
+and the collection endpoint stores no IP address and no request
+headers.
+
+```bash
+attune telemetry status     # show exactly what would be sent
+attune telemetry enable     # opt in (mints an anonymous install id)
+attune telemetry disable    # opt out
+```
+
+`DO_NOT_TRACK=1` and `ATTUNE_USAGE_PING=0` force it off regardless of
+config; `ATTUNE_USAGE_PING=1` forces it on. Full payload disclosure is
+in [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md).
+
+---
+
 ## Session continuity & cross-session memory
 
 Lightweight hook surfaces keep long Claude Code sessions

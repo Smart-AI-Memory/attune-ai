@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **Opt-in anonymous usage telemetry goes live (usage-signals Phase
+  2b).** A default-OFF usage ping that, once you opt in, reports only
+  which workflows you run — plus the package version, your OS, and
+  Python version — so the project can finally see what's actually
+  used. Privacy by construction: ships OFF, requires explicit
+  consent, transmits an auditable payload frozen at schema v1 (never
+  paths, code, prompts, args, filenames, cost, tokens, or model
+  data), honors `DO_NOT_TRACK`, and is fire-and-forget so it can
+  never block, slow, or crash the CLI. The collection endpoint stores
+  no IP and no request headers. Manage it with `attune telemetry
+  status|enable|disable`; override per-run with `ATTUNE_USAGE_PING=0`
+  or `=1`; rotate your anonymous install id any time. See the
+  **Privacy & Telemetry** section of the README and SECURITY.md for
+  the full payload disclosure.
+
 ## [8.5.0] — 2026-06-12
 
 Workflow results get a face, and the lessons brain gets sharper. The

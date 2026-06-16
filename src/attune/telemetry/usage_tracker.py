@@ -103,6 +103,13 @@ class UsageTracker:
         with cls._lock:
             if cls._instance is None:
                 cls._instance = cls(**kwargs)
+                # Register the opt-in usage-ping sync FIRST so it runs
+                # AFTER the local flush (atexit is LIFO). Ordering matters:
+                # the flush persists this run's buffered events to
+                # ``usage.jsonl`` and the ping must see them. The ping is
+                # default-OFF and fully self-gating — a no-op for users
+                # who haven't opted in.
+                atexit.register(cls._atexit_usage_ping)
                 # Register atexit flush so short-lived CLI runs (which
                 # typically produce 1-2 buffered entries — well below
                 # ``buffer_size``) still persist to disk before the
@@ -124,6 +131,24 @@ class UsageTracker:
             instance.flush()
         except Exception:  # noqa: BLE001
             # INTENTIONAL: best-effort flush at shutdown
+            pass
+
+    @staticmethod
+    def _atexit_usage_ping() -> None:
+        """atexit handler: best-effort opt-in usage-ping sync.
+
+        Runs after :meth:`_atexit_flush` (registered earlier; atexit is
+        LIFO) so it sees this run's freshly-flushed events. Default-OFF
+        and self-gating — does nothing unless the user opted in and an
+        endpoint is configured. Never raises; never blocks beyond the
+        ping's own short timeout.
+        """
+        try:
+            from attune.telemetry.usage_ping import run_sync_at_exit
+
+            run_sync_at_exit()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: telemetry must never affect process exit.
             pass
 
     # =========================================================================

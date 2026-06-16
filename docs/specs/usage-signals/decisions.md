@@ -1,6 +1,7 @@
 # Usage Signals — Decisions
 
-**Status:** Phase 2 scoped (2026-06-15) — Phase 0 complete (2026-06-11)
+**Status:** Phase 2b implemented (2026-06-16) — pending deploy/migration ·
+Phase 2 scoped (2026-06-15) · Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)
 
@@ -256,3 +257,59 @@ Two design adjustments surfaced while building (code is the contract):
 Deferred to 2b (no value until the endpoint exists): wiring `run_sync`
 into an atexit/Stop trigger. `DEFAULT_ENDPOINT` is empty, so even an
 opted-in user transmits nothing yet — intentional double-safety.
+
+## D6 — Phase 2b implemented: endpoint + client go-live (2026-06-16)
+
+The collection endpoint and the client's go-live wiring are built
+(branch `claude/usage-signals-phase2b`). What landed:
+
+**Endpoint (website / Next.js):**
+
+- `website/app/api/usage/route.ts` — `POST`, public/unauth, returns
+  204. Validates against frozen schema v1, **rejects unknown fields**,
+  size-caps the body (256 KB), best-effort per-IP rate-limits, and
+  **drops IP + all headers** (read only transiently for the rate-limit
+  key, never stored).
+- Validation + rate-limit extracted to testable libs
+  (`website/lib/usage/{validate,rate-limit}.ts`).
+- `usage_events` table + indexes added to `website/lib/db.ts`
+  `initializeDatabase()`, plus a `recordUsageEvents()` bulk insert.
+- 28 vitest tests green (added `website/vitest.config.ts` with a
+  scoped `@/` alias so API-route tests resolve `@/lib/*`).
+
+**Client (attune-ai):**
+
+- `DEFAULT_ENDPOINT` set to `https://smartaimemory.com/api/usage`.
+- `usage_ping.run_sync_at_exit()` added — cheap env/endpoint/no-config
+  short-circuits before any disk load, then defers to `run_sync`.
+- Registered in `UsageTracker.get_instance` BEFORE the local flush so
+  it runs AFTER it (atexit is LIFO) and sees freshly-flushed events.
+- 138 telemetry unit tests green (2 existing endpoint-default tests
+  updated for the now-non-empty default).
+
+**Two implementation decisions worth recording:**
+
+- **DB reuse, not a fresh Neon project.** D4 assumed a new Vercel
+  Postgres. In fact the website already has a provisioned Postgres
+  (`DATABASE_URL`, the Stripe/license store) behind `lib/db.ts`. 2b
+  reuses it — `usage_events` is a new, isolated, PII-free table in
+  that DB. This removed the "provision Neon" blocker entirely.
+  Trade-off to weigh at deploy: anonymous usage data co-locates in
+  the same database as customer-PII tables (separate tables, but one
+  DB). Acceptable given the data is anonymous; a separate DB is the
+  alternative if clean isolation is preferred — the route code is
+  identical either way.
+- **Domain = `smartaimemory.com`** (current canonical Next deployment;
+  `attune-ai-dev/` is static, no API routes). Overridable via
+  `ATTUNE_USAGE_ENDPOINT`. Revisit if the attune-ai.dev consolidation
+  moves the Next app; add a redirect or update `DEFAULT_ENDPOINT`.
+
+**Remaining before this is end-to-end live (deploy-time, owner: Patrick):**
+
+1. Apply the `usage_events` DDL to the prod DB (re-run the
+   admin-protected `POST /api/db/init`, or apply the table directly).
+2. Deploy the website so `/api/usage` is live, THEN ship the attune-ai
+   release carrying `DEFAULT_ENDPOINT` (client swallows errors if the
+   order slips, but endpoint-first is cleanest).
+3. Phase 2c — dashboard "Reach" panel (R3) reading `usage_events`.
+4. R5 telemetry watchdog + R6 spend alarm (separate PRs).
