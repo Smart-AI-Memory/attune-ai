@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.102). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857) against 0.2.102. See `docs/specs/claude-agent-sdk-0-2-migration/`.
+
 ### Added
 
 - **Opt-in anonymous usage telemetry goes live (usage-signals Phase
