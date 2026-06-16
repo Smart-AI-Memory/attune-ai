@@ -264,6 +264,59 @@ export default function Home() {
           </div>
         </section>
 
+        {/* attune-rag — standalone co-flagship package */}
+        <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="attune-rag standalone RAG package">
+          <div className="rounded-3xl border border-[var(--border)]/60 bg-[var(--surface-container-low)] p-10 md:p-14">
+            <div className="grid md:grid-cols-2 gap-12 items-center">
+              <div>
+                <span className="text-xs font-bold text-[var(--secondary)] tracking-[0.2em] uppercase mb-4 block">Flagship package &middot; standalone</span>
+                <h2 className="text-3xl md:text-4xl font-extrabold mb-4">
+                  attune-rag &mdash; grounding you can use anywhere
+                </h2>
+                <p className="text-[var(--text-secondary)] leading-relaxed mb-6">
+                  The retrieval engine inside attune-ai is its own package.
+                  Lightweight, LLM-agnostic RAG with pluggable corpora &mdash;
+                  works with Claude, Gemini, or any LLM. Built into attune-ai
+                  for grounding, and equally happy standing on its own in any
+                  Python project.
+                </p>
+                <code className="inline-block bg-[var(--surface-container-high)] px-4 py-2 rounded-lg text-sm font-mono mb-6">pip install attune-rag</code>
+                <div className="flex flex-col sm:flex-row gap-4">
+                  <a
+                    href="https://attune-rag.dev"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[var(--primary)] !text-white px-6 py-3 rounded-lg font-bold hover:opacity-90 transition-opacity text-center no-underline"
+                  >
+                    Visit attune-rag.dev
+                  </a>
+                  <a
+                    href="https://pypi.org/project/attune-rag/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-[var(--surface-container-highest)] text-[var(--foreground)] px-6 py-3 rounded-lg font-bold hover:bg-[var(--surface-variant)] transition-colors text-center border border-[var(--border)] no-underline"
+                  >
+                    attune-rag on PyPI
+                  </a>
+                </div>
+              </div>
+              <div className="grid sm:grid-cols-2 gap-3">
+                {[
+                  ['LLM-agnostic', 'Claude, Gemini, or any model — not locked in'],
+                  ['Faithfulness ≥ 0.97', 'CI-gated — drift fails the build'],
+                  ['Pluggable corpora', 'Point it at docs, code, or any source'],
+                  ['Standalone or built-in', 'Drop into any project, or get it free with attune-ai'],
+                ].map(([title, desc]) => (
+                  <div key={title} className="bg-[var(--background)] rounded-xl p-4 border border-[var(--border)]/40">
+                    <div className="font-bold text-sm text-[var(--secondary)] mb-1">{title}</div>
+                    <p className="text-xs text-[var(--text-muted)] leading-snug">{desc}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
         {/* Semantic memory — powered by Redis */}
         <section className="py-24 px-6 max-w-7xl mx-auto" aria-label="Semantic memory powered by Redis">
           <div className="rounded-3xl border border-[var(--border)]/60 bg-[var(--surface-container-low)] p-10 md:p-14">
