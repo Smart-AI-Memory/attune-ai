@@ -66,3 +66,32 @@ if that round-trip is clean.
 - Unit (keyless): PASS (17857). Live-loop (real SDK) validation:
   run `integration-auth` in CI's clean env (NOT a local nested-Bash
   run, which the SDK-nested-failure trap would corrupt). Budget-capped.
+
+## T4 — live-loop validation FAILED (2026-06-16)
+
+`integration-auth` on the branch (run 27591684930, budget-capped)
+**failed systemically** against 0.2.102. Every real-API workflow
+(perf-audit, bug-predict, …) raised, deep in the SDK:
+
+```
+Exception: Claude Code returned an error result: success
+  claude_agent_sdk/_internal/query.py:852  receive_messages
+```
+
+Workflows returned `source-failure` markers instead of analysis. So
+0.2.102 has a real behavioral incompatibility in the result-message
+path that the mocked unit suite (17857 green) and the static T1/T2
+audit could NOT surface — vindicating the decision to run the paid
+dogfood. **T1/T2 are reopened.**
+
+### Next (focused follow-up)
+
+- Reproduce ONE workflow with 0.2.102 + a real key in a CLEAN env
+  (not nested Bash), capture the raw `ResultMessage` envelope —
+  the SDK raises inside `receive_messages`, before attune's
+  `collect_agent_output` sees it, so the result contract changed.
+- Bisect which 0.2.x introduced the break (0.2.0 .. 0.2.102) to
+  isolate the change.
+- Decide: adapter/result-handling fix, or pin to the last good 0.2.x.
+
+**PR #917 is DRAFT — do not merge.**
