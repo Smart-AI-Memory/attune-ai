@@ -63,8 +63,8 @@ export default function Home() {
                   <span className="opacity-80">Spec-driven development platform</span>
                 </div>
                 <h1 className="text-5xl md:text-7xl font-extrabold tracking-tighter mb-8 leading-[1.1]">
-                  Turn requirements into{' '}
-                  <span className="text-gradient">reliable software</span>.
+                  Build software from{' '}
+                  <span className="text-gradient">specifications</span>, not prompts.
                 </h1>
                 <p className="text-lg md:text-xl text-[var(--text-secondary)] mb-10 max-w-xl leading-relaxed">
                   Attune-AI gives your AI coding agent a spine: write a spec,
@@ -137,6 +137,58 @@ export default function Home() {
                 {/* Background blur */}
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[140%] h-[140%] bg-gradient-to-tr from-[var(--surface-container-high)]/50 to-transparent rounded-full blur-3xl -z-10"></div>
               </div>
+            </div>
+          </div>
+        </section>
+
+        {/* Problem -> Solution narrative — first below-fold setup.
+            Left column = the problem litany; right column = the
+            same five concerns answered, product -> job, 1:1. */}
+        <section className="py-24 px-6 bg-[var(--surface-container-low)]" aria-label="The problem and the solution">
+          <div className="max-w-6xl mx-auto grid md:grid-cols-2 gap-10 lg:gap-16 items-start">
+            {/* The problem */}
+            <div>
+              <span className="text-xs font-bold text-[var(--text-muted)] tracking-[0.2em] uppercase mb-6 block">The problem</span>
+              <ul className="space-y-4">
+                {[
+                  'AI generates code.',
+                  'Projects require knowledge.',
+                  'Specifications drift.',
+                  'Documentation gets stale.',
+                  'Decisions disappear.',
+                ].map((line) => (
+                  <li key={line} className="flex items-baseline gap-3 text-xl md:text-2xl font-bold text-[var(--text-secondary)]">
+                    <span className="text-[var(--text-muted)]/50" aria-hidden="true">&mdash;</span>
+                    <span>{line}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            {/* The solution */}
+            <div className="rounded-2xl border border-[var(--border)]/50 bg-[var(--surface)] p-8 md:p-10">
+              <span className="text-xs font-bold text-[var(--primary)] tracking-[0.2em] uppercase mb-4 block">The solution</span>
+              <p className="text-[var(--text-secondary)] mb-6 leading-relaxed">
+                Attune keeps software aligned with its requirements by
+                combining five capabilities &mdash; each one a job, not a
+                buzzword:
+              </p>
+              <ul className="space-y-3.5">
+                {[
+                  ['Spec-driven development', 'keeps requirements from drifting.'],
+                  ['Project memory', 'preserves decisions across sessions.'],
+                  ['Grounded retrieval', 'anchors outputs to your real code.'],
+                  ['Synchronized docs', 'stay current as the code changes.'],
+                  ['Verification', 'reduces hallucinations before they ship.'],
+                ].map(([product, job]) => (
+                  <li key={product} className="flex items-baseline gap-2.5 text-sm md:text-base">
+                    <span className="text-[var(--primary)] font-bold" aria-hidden="true">&rarr;</span>
+                    <span>
+                      <span className="font-bold text-[var(--foreground)]">{product}</span>{' '}
+                      <span className="text-[var(--text-secondary)]">{job}</span>
+                    </span>
+                  </li>
+                ))}
+              </ul>
             </div>
           </div>
         </section>
