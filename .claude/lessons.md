@@ -9303,3 +9303,42 @@ files.
   command, so second-worktree work needs compound `cd <abs> && ...` and
   Edit/Write tooling there is unreliable (path-guard runs from home
   cwd); drive second-worktree edits via bash (python in-place / heredoc).
+
+- **`claude-agent-sdk` bundles its OWN Claude Code CLI binary at
+  `<pkg>/_bundled/claude` — a version-pin bump silently swaps that
+  binary too, and CI (no system `claude`) runs THAT, not your local
+  one.** Diagnosing the 0.2.x migration break (PR #917,
+  `integration-auth`: `Exception: Claude Code returned an error result:
+  success` at `query.py:852 receive_messages`) was ROOT-CAUSED with
+  ZERO key spend by (a) diffing the SDK result-handling between the
+  working 0.1.63 and broken 0.2.102, and (b) reading each SDK's BUNDLED
+  CLI version (`<pkg>/_bundled/claude -v`). Findings: 0.1.63 bundles CLI
+  2.1.114, 0.2.102 bundles 2.1.178; 0.2.x added is_error handling
+  (`_last_error_result_text = "; ".join(errors) or str(subtype)`) that
+  rewrites a trailing `ProcessError` into `"Claude Code returned an
+  error result: <subtype>"` — with empty `errors` + `subtype="success"`
+  that yields the literal "...result: success". 0.1.63 never inspected
+  is_error. Generalizable rules: (1) when an SDK VENDORS a runtime/
+  binary, a Python-package pin change ALSO swaps the vendored binary —
+  check the bundled binary's version, not just the package's; CI with no
+  system binary uses the bundle. (2) A "registered ≠ working" live-loop
+  break can often be root-caused KEYLESS by diffing the vendored
+  library's old-vs-new code + bundled-binary version BEFORE a paid live
+  repro — reserve the spend for confirming the single remaining unknown
+  (here: why CLI 2.1.178 sets is_error on a success subtype). (3) Red
+  herring: `--task-budget`/`--max-turns` flag rejection looked plausible
+  but the break was systemic across workflows that never set those
+  (guarded by `_cli_supports_task_budget()`), so a per-flag cause can't
+  explain a whole-suite failure — a SYSTEMIC break points at the common
+  result path, not a per-workflow option.
+
+- **Vitest `@/` path alias needs a SCOPED regex, not a bare `'@'`
+  string alias.** To let Next API-route tests resolve the `@/lib/*`
+  tsconfig path (`"@/*": ["./*"]`), add `website/vitest.config.ts` with
+  `resolve.alias: [{ find: /^@\//, replacement: `${root}/` }]` where
+  `root = path.dirname(fileURLToPath(import.meta.url))`. A bare `'@'`
+  string-alias key ALSO rewrites `@scope/pkg` package imports (e.g.
+  `@anthropic-ai/sdk`) and breaks them; the leading-`@/` regex matches
+  only the project alias. Context that hid this: no vitest config existed
+  and the lone pre-existing test used relative imports, so `@/` had never
+  been exercised under vitest until an API-route test imported `@/lib/db`.
