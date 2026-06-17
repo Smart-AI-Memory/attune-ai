@@ -167,12 +167,20 @@ jobs:
           # timeout. 2×14m fits the 35m backstop with install overhead.
           rc=0
           for attempt in 1 2; do
+            # ci-runner-hang: retry with FEWER xdist workers. The hang is an
+            # xdist shutdown-handshake deadlock (a worker goes silent at
+            # session end → controller waits forever; per-test --timeout can't
+            # catch it since no test is running). Fewer workers = simpler/faster
+            # shutdown + less per-worker memory pressure (the OOM-worker-death
+            # history), sharply cutting the odds of a second hang. -n 2 stays
+            # parallel enough to fit the 14m budget; serial -n 0 would not.
+            if [ "$attempt" -eq 1 ]; then NPROC=auto; else NPROC=2; fi
             set +e
-            timeout -k 30s 14m pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
+            timeout -k 30s 14m pytest -n "$NPROC" --timeout=60 --timeout-method=thread -m "not network and not integration"
             rc=$?
             set -e
             if [ "$rc" -ne 124 ]; then break; fi
-            echo "::warning::test pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps artifact for the captured stack"
+            echo "::warning::test pytest attempt ${attempt} (-n ${NPROC}) hit the 14m step timeout (runner-hang signature) — retrying with fewer workers; see the hang-dumps artifact for the captured stack"
           done
           echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
           if [ "$rc" -eq 124 ]; then
@@ -329,12 +337,15 @@ jobs:
         # and BELOW the 40m job timeout (the all-attempts-hung backstop).
         rc=0
         for attempt in 1 2; do
+          # ci-runner-hang: retry with FEWER xdist workers (rationale in the
+          # test lane above — xdist shutdown-handshake deadlock + OOM pressure).
+          if [ "$attempt" -eq 1 ]; then NPROC=auto; else NPROC=2; fi
           set +e
-          timeout -k 30s 14m pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
+          timeout -k 30s 14m pytest -n "$NPROC" --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
           rc=$?
           set -e
           if [ "$rc" -ne 124 ]; then break; fi
-          echo "::warning::coverage pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps-coverage artifact for the captured stack"
+          echo "::warning::coverage pytest attempt ${attempt} (-n ${NPROC}) hit the 14m step timeout (runner-hang signature) — retrying with fewer workers; see the hang-dumps-coverage artifact for the captured stack"
         done
         echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
         if [ "$rc" -eq 124 ]; then
