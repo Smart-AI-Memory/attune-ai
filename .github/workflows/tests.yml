@@ -286,31 +286,14 @@ jobs:
       # gate. (pyproject's fail_under stays 85 as the absolute floor for
       # ad-hoc/partial local runs whose --cov scope differs from CI's.)
       run: |
-        echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
-        (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
-        MEM_MONITOR_PID=$!
-        trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-        # ci-gating-lane-isolation Layer A: auto-retry ONLY on a step-timeout
-        # (rc=124 is the runner-hang signature — pytest freezes ~1s in and
-        # never progresses). A real coverage/test failure exits non-124 and
-        # is returned immediately, so a genuine red is NEVER masked green by
-        # the retry. The 14m step `timeout` sits ABOVE the 600s conftest
-        # hang-watchdog (so the wedged-stack dump still lands in hang-dumps/)
-        # and BELOW the 40m job timeout (the all-attempts-hung backstop).
-        rc=0
-        for attempt in 1 2; do
-          set +e
-          timeout -k 30s 14m pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
-          rc=$?
-          set -e
-          if [ "$rc" -ne 124 ]; then break; fi
-          echo "::warning::coverage pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps-coverage artifact for the captured stack"
-        done
-        echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
-        if [ "$rc" -eq 124 ]; then
-          echo "::error::coverage pytest hung on every attempt (runner-hang) — failing the job after bounded auto-retry"
-        fi
-        exit "$rc"
+        # The runner-hang that once required a 14m-timeout + 2× auto-retry
+        # wrapper on this lane was root-caused and fixed in #930 (a fork-based
+        # multiprocessing.Pool inside an xdist worker leaked the execnet socket
+        # FD, deadlocking the controller at ~99%; Linux-only because macOS uses
+        # `spawn`). With the cause gone, run coverage plainly — the job
+        # `timeout-minutes` plus the conftest hang-watchdog (which still
+        # uploads hang-dumps/) remain as the backstop.
+        pytest -n auto --cov=src/attune --cov-report=xml --cov-fail-under=94 --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
