@@ -61,6 +61,7 @@ Autonomous sub-agents (auto-discovered from `plugin/agents/`):
 | ----- | ----------- |
 | `setup-guide` | checking prerequisites; installing/configuring attune-ai, Redis, MCP |
 | `spec-author` | spec a new feature — runs the SDD requirements interview and writes `requirements.md` (Phase 1 only; design/tasks stay gated) |
+| `help-content-explainer` | explain an attune-help template *for your repo* — grounds the template's guidance in your actual code (read-only) |
 
 ## Hooks
 
