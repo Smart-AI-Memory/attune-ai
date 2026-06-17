@@ -345,6 +345,21 @@ def _aggregate_xdist_results() -> dict:
 
 def pytest_sessionfinish(session, exitstatus):
     """Store file test records at end of test session."""
+    # ci-runner-hang: deterministically finalize any leaked asyncio subprocess
+    # transport NOW, while the worker process is still healthy. A transport left
+    # dangling from a per-test ``asyncio.run()`` otherwise finalizes during
+    # interpreter shutdown (``BaseSubprocessTransport.__del__`` → "Event loop is
+    # closed"); on Linux/py3.12 that wedges the xdist worker, so the controller
+    # deadlocks at ~99% waiting on a worker that never exits (the recurring
+    # runner-hang). Forcing GC here moves that finalization out of the fragile
+    # interpreter-exit phase, where it can no longer block worker teardown.
+    # Two passes: the first frees the transport, the second collects any cycle
+    # it was part of. Harmless on platforms where this was already benign.
+    import gc as _gc
+
+    _gc.collect()
+    _gc.collect()
+
     # Check if this is an xdist worker
     if hasattr(session.config, "workerinput"):
         # This is a worker - write results to file for main node to collect
