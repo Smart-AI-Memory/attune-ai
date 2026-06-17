@@ -23,6 +23,17 @@ from typing import Any
 from .models import FileRecord, IndexConfig, ProjectSummary
 from .scanner import ProjectScanner
 
+# Minimum number of files before the multiprocessing path is worth it.
+# Forking a Pool of `cpu_count` processes costs more than analysing a
+# handful of files sequentially — and, crucially, forking a process pool
+# inside an already-multi-threaded process (e.g. a pytest-xdist worker)
+# is a deadlock hazard: a child can inherit a parent FD (an open socket,
+# a held lock) and never release it. On Linux (default start method
+# `fork`) that leaked FD kept the xdist *controller* from ever seeing the
+# worker exit, wedging CI at ~99% (see scanner-pool-fork-hang). Below this
+# threshold we stay sequential, which is both faster and fork-free.
+_PARALLEL_MIN_FILES = 50
+
 
 def _analyze_file_worker(
     file_path_str: str,
@@ -139,10 +150,14 @@ class ParallelProjectScanner(ProjectScanner):
         self._build_test_mapping(all_files)
 
         # Second pass: analyze each file (PARALLEL - slow)
-        if use_parallel and self.workers > 1:
+        # Only spin up a process Pool when there are enough files to amortise
+        # the fork cost. For tiny scans the Pool is pure overhead and a fork
+        # hazard inside multi-threaded hosts (see _PARALLEL_MIN_FILES).
+        if use_parallel and self.workers > 1 and len(all_files) >= _PARALLEL_MIN_FILES:
             records = self._analyze_files_parallel(all_files)
         else:
-            # Fall back to sequential for debugging or single worker
+            # Fall back to sequential for debugging, single worker, or a
+            # file count too small to be worth a process pool.
             for file_path in all_files:
                 record = self._analyze_file(file_path)
                 if record:
