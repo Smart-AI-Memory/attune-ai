@@ -103,9 +103,78 @@ def _leading_verdict(status: str) -> str:
     return m.group(0).lower() if m else ""
 
 
+# ── Deliverables block (spec-status-integrity, DECIDE-3) ──────
+#
+# A machine-readable "## Deliverables" section names the paths/globs
+# (and optional symbols) a spec ships. The staleness classifier checks
+# them for existence on disk so a spec whose work shipped but whose
+# Status line still says draft/approved can be flagged. Grammar lives
+# in the spec's design.md §"Data contract".
+_DELIVERABLES_HEADING = re.compile(
+    r"^##\s+Deliverables\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+# One deliverable: ``- <path-or-glob>`` with an optional
+# `` — symbol: <name>`` (em-dash or ``--``) suffix; the path may be
+# backtick-wrapped. The pattern is non-greedy so the symbol suffix is
+# split off rather than swallowed.
+_DELIVERABLE_ITEM = re.compile(
+    r"^\s*-\s+"
+    r"`?(?P<pattern>[^`\s][^`]*?)`?"
+    r"(?:\s+(?:—|--)\s*symbol:\s*(?P<symbol>\S+))?"
+    r"\s*$",
+)
+# A lone ``- N/A`` / ``- None`` item ⇒ docs-only sentinel. Tolerant of
+# italic/backtick wrappers (``_None_``) and a trailing period/ellipsis.
+_DELIVERABLE_NA = re.compile(
+    r"^\s*-\s+[_*`]*\s*(?:N/?A|None)\s*(?:\.{1,3})?\s*[_*`]*\s*$",
+    re.IGNORECASE,
+)
+# Opt-out line, matched anywhere in the file (mirrors the terminal-line
+# anywhere-scan): a deliberate long-lived draft suppresses the check.
+_DRIFT_OPT_OUT = re.compile(
+    r"^\s*drift-check:\s*ignore\s*$",
+    re.IGNORECASE | re.MULTILINE,
+)
+# Glob metacharacters — a deliverable pattern containing any of these is
+# resolved by splitting off the literal-prefix dir and globbing the tail
+# inside it (pathlib ``**`` does not recurse into symlinked dirs
+# reliably, so we glob from the already-symlink-followed prefix).
+_GLOB_CHARS = re.compile(r"[*?\[]")
+
+
 # Sentinel TTL: anything older than this on a SessionStart prune
 # sweep is considered orphaned from an ungraceful exit.
 _SENTINEL_TTL_SECONDS = 7 * 24 * 60 * 60
+
+
+@dataclass(frozen=True)
+class DeliverableEntry:
+    """One declared deliverable from a spec's ``## Deliverables`` block.
+
+    ``pattern`` is a repo-prefixed path or glob (e.g.
+    ``attune-ai/plugin/hooks/spec_audit.py`` or
+    ``attune-gui/tests/**/test_bar.py``). ``symbol`` is an optional
+    grep target (function / class name) that must also be present in a
+    matched file before the entry counts as resolved.
+    """
+
+    pattern: str
+    symbol: str = ""
+
+
+@dataclass(frozen=True)
+class DeliverableSpec:
+    """Parsed ``## Deliverables`` contract for one spec.
+
+    ``is_na`` marks the docs-only sentinel (a lone ``- N/A`` item);
+    ``opt_out`` marks a deliberate ``drift-check: ignore`` suppression.
+    Both keep a spec out of ``suspected-stale`` without silent magic.
+    """
+
+    entries: tuple[DeliverableEntry, ...] = ()
+    is_na: bool = False
+    opt_out: bool = False
 
 
 @dataclass(frozen=True)
@@ -153,6 +222,18 @@ class SpecInfo:
     """True when ``effective_status`` overrode a non-terminal
     ``status`` (i.e. header drifted away from completion state).
     spec_orient renders a one-line hint when True."""
+
+    # spec-status-integrity additions (2026-06-17). Optional with safe
+    # defaults so existing positional/keyword constructors don't break
+    # (same discipline as the 2026-06-02 self-truthing fields above).
+    deliverables: tuple[DeliverableEntry, ...] = ()
+    """Deliverables parsed from the chosen phase file's
+    ``## Deliverables`` block; empty when none are declared."""
+
+    staleness: str = "unknown"
+    """Staleness verdict from ``classify_staleness`` — one of
+    ``ok`` / ``suspected-stale`` / ``unknown`` / ``partial`` /
+    ``docs-only`` / ``opted-out``. See DECIDE-3..5."""
 
 
 @dataclass(frozen=True)
@@ -247,6 +328,50 @@ def _completion_signal(text: str) -> tuple[str | None, str]:
     return None, "header"
 
 
+def deliverables_for_spec(text: str) -> DeliverableSpec:
+    """Parse a spec's ``## Deliverables`` block into a contract.
+
+    Same regex-driven style as ``_completion_signal``. The section is
+    bounded by the ``## Deliverables`` heading and the next ``## `` (via
+    ``_NEXT_H2``). Each list item becomes a ``DeliverableEntry``; a lone
+    ``- N/A`` item sets ``is_na``; a ``drift-check: ignore`` line found
+    anywhere in the file sets ``opt_out``.
+
+    A malformed or empty block yields zero entries (so the classifier
+    reports ``unknown``, never a false ``suspected-stale``). The opt-out
+    scan is independent of the section, mirroring the terminal-line scan.
+    """
+    opt_out = bool(_DRIFT_OPT_OUT.search(text))
+
+    heading = _DELIVERABLES_HEADING.search(text)
+    if heading is None:
+        return DeliverableSpec(opt_out=opt_out)
+
+    section_start = heading.end()
+    next_heading = _NEXT_H2.search(text, section_start)
+    section_end = next_heading.start() if next_heading else len(text)
+    section = text[section_start:section_end]
+
+    entries: list[DeliverableEntry] = []
+    is_na = False
+    for line in section.splitlines():
+        if not line.lstrip().startswith("-"):
+            continue
+        if _DELIVERABLE_NA.match(line):
+            is_na = True
+            continue
+        match = _DELIVERABLE_ITEM.match(line)
+        if match is None:
+            continue
+        pattern = match.group("pattern").strip()
+        if not pattern:
+            continue
+        symbol = (match.group("symbol") or "").strip()
+        entries.append(DeliverableEntry(pattern=pattern, symbol=symbol))
+
+    return DeliverableSpec(entries=tuple(entries), is_na=is_na, opt_out=opt_out)
+
+
 def _reconcile_status(header_status: str, phase_text: str) -> tuple[str, str, bool]:
     """Reconcile header status against completion signals.
 
@@ -269,13 +394,140 @@ def _reconcile_status(header_status: str, phase_text: str) -> tuple[str, str, bo
     return verdict, source, not header_is_terminal
 
 
+def _split_glob(pattern: str) -> tuple[str, str]:
+    """Split a path-glob into ``(literal_prefix, glob_tail)``.
+
+    The literal prefix is the leading run of ``/``-separated segments
+    that contain no glob metacharacters; the tail is the remainder
+    (which begins at the first segment that does). A plain path with no
+    glob yields an empty tail. Splitting lets the caller resolve the
+    prefix directory (following any symlink) and then glob the tail
+    *inside* the real directory — avoiding pathlib's unreliable
+    ``**``-across-symlink recursion (D-4).
+    """
+    parts = pattern.split("/")
+    literal: list[str] = []
+    for i, part in enumerate(parts):
+        if _GLOB_CHARS.search(part):
+            return "/".join(literal), "/".join(parts[i:])
+        literal.append(part)
+    return "/".join(literal), ""
+
+
+def _symbol_present(files: list[Path], symbol: str) -> bool:
+    """True if ``symbol`` appears as a substring in any of ``files``.
+
+    v1 uses plain substring matching (decisions.md "Open" — AST-accurate
+    detection is out of scope). Unreadable files are skipped.
+    """
+    for fpath in files:
+        try:
+            content = fpath.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        if symbol in content:
+            return True
+    return False
+
+
+def _resolve_entry(entry: DeliverableEntry, roots: list[Path]) -> bool:
+    """True if a deliverable resolves to an on-disk file under any root.
+
+    Resolution semantics (D-4):
+
+    - The pattern is repo-prefixed (``attune-rag/src/...``) and every
+      layer is a symlink under the workspace root, so ``root / pattern``
+      follows the symlink without ``.resolve()`` (which would escape the
+      root — see ``reference_sibling_editable_venvs``).
+    - Globs are split into a literal prefix + tail; the prefix dir is
+      resolved first, then the tail is globbed inside it.
+    - When ``entry.symbol`` is set, at least one matched file must also
+      contain the symbol (substring grep) for the entry to resolve.
+    """
+    prefix, tail = _split_glob(entry.pattern)
+    for root in roots:
+        matched: list[Path] = []
+        if tail:
+            base = root / prefix if prefix else root
+            try:
+                if not base.is_dir():
+                    continue
+                matched = [p for p in base.glob(tail) if p.is_file()]
+            except OSError:
+                continue
+        else:
+            candidate = root / entry.pattern
+            try:
+                if not candidate.exists():
+                    continue
+                if candidate.is_file():
+                    matched = [candidate]
+                else:
+                    # Directory deliverable — existence is the signal; a
+                    # symbol grep over a directory is meaningless.
+                    if not entry.symbol:
+                        return True
+                    continue
+            except OSError:
+                continue
+        if not matched:
+            continue
+        if entry.symbol:
+            if _symbol_present(matched, entry.symbol):
+                return True
+            continue
+        return True
+    return False
+
+
+def classify_staleness(spec_text: str, header_status: str, roots: list[Path]) -> str:
+    """Classify a spec's staleness from its declared deliverables.
+
+    Returns one of (design.md §"Classifier", D-5 — require ALL):
+
+    - ``opted-out``       — a ``drift-check: ignore`` line is present.
+    - ``docs-only``       — the ``- N/A`` docs-only sentinel.
+    - ``unknown``         — no Deliverables block, zero parseable
+      entries, or entries declared but none present yet (genuinely
+      pre-implementation — no actionable signal).
+    - ``partial``         — at least one entry resolves, but not all
+      (mid-implementation; never flagged, to keep the warning quiet).
+    - ``suspected-stale`` — ALL entries resolve AND the (reconciled)
+      status is still non-terminal: work shipped, status didn't.
+    - ``ok``              — all entries resolve AND the status is
+      already terminal/ongoing.
+    """
+    spec = deliverables_for_spec(spec_text)
+    if spec.opt_out:
+        return "opted-out"
+    if spec.is_na:
+        return "docs-only"
+    if not spec.entries:
+        return "unknown"
+
+    resolved = sum(1 for entry in spec.entries if _resolve_entry(entry, roots))
+    if resolved == 0:
+        return "unknown"
+    if resolved < len(spec.entries):
+        return "partial"
+
+    # Every declared deliverable resolves. Reconcile the header against
+    # any in-body terminal signal (DECIDE-1) so a spec already marked
+    # done deeper in the file is not falsely flagged.
+    effective, _source, _conflict = _reconcile_status(header_status, spec_text)
+    lead = _leading_verdict(effective)
+    if lead in _TERMINAL_VERDICTS or lead in _ONGOING_VERDICTS:
+        return "ok"
+    return "suspected-stale"
+
+
 def _phase_for_dir(
     spec_dir: Path,
-) -> tuple[str, str, str, str, bool, float] | None:
+) -> tuple[str, str, str, str, bool, str, float] | None:
     """Pick the highest-priority phase file present in a spec dir.
 
     Returns ``(phase, raw_status, effective_status, status_source,
-    status_conflict, mtime)``:
+    status_conflict, phase_text, mtime)``:
 
     - ``phase`` — ``requirements`` / ``design`` / ``tasks``
     - ``raw_status`` — verbatim header status, lowercased
@@ -285,12 +537,15 @@ def _phase_for_dir(
       ``"terminal-line"``
     - ``status_conflict`` — True when ``effective_status`` overrode
       a non-terminal ``raw_status``
+    - ``phase_text`` — full text of the chosen phase file, so the
+      caller can parse the Deliverables block and classify staleness
+      without re-reading from disk
     - ``mtime`` — most recent across all phase files (fresh-file
       bumps the spec to the top of the list)
 
     Returns ``None`` when no phase file is readable.
     """
-    chosen: tuple[str, str, str, str, bool] | None = None
+    chosen: tuple[str, str, str, str, bool, str] | None = None
     latest_mtime = 0.0
     for phase, fname in _PHASE_FILES:
         fpath = spec_dir / fname
@@ -305,10 +560,10 @@ def _phase_for_dir(
         if chosen is None:
             raw_status, phase_text = _read_phase(fpath)
             effective, source, conflict = _reconcile_status(raw_status, phase_text)
-            chosen = (phase, raw_status, effective, source, conflict)
+            chosen = (phase, raw_status, effective, source, conflict, phase_text)
     if chosen is None:
         return None
-    return chosen[0], chosen[1], chosen[2], chosen[3], chosen[4], latest_mtime
+    return (*chosen, latest_mtime)
 
 
 def _is_in_flight(phase: str, effective_status: str) -> bool:
@@ -360,17 +615,22 @@ def _layer_for(roots: list[Path], base: Path) -> str:
 _SPEC_SUBDIRS: tuple[str, ...] = ("specs", "docs/specs")
 
 
-def discover_specs(roots: list[Path]) -> list[SpecInfo]:
+def discover_specs(roots: list[Path], include_terminal: bool = False) -> list[SpecInfo]:
     """Walk ``specs/`` directories under each root for in-flight specs.
 
     Args:
         roots: Workspace roots to scan. Each root is checked for a
             top-level ``specs/`` and for ``<root>/<layer>/specs/``
             directories (one nested level only — no recursive walk).
+        include_terminal: When False (default), terminal/ongoing specs
+            are excluded — the in-flight-only view ``spec_orient`` wants.
+            When True, every spec is returned with its staleness verdict
+            populated — the full table ``spec_audit`` prints.
 
     Returns:
         ``SpecInfo`` list, most-recently modified first. Tolerates
-        missing dirs and malformed status lines.
+        missing dirs and malformed status lines. Each result carries its
+        parsed ``deliverables`` and ``staleness`` verdict.
     """
     found: list[SpecInfo] = []
     seen: set[Path] = set()
@@ -401,9 +661,19 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
                 phase_info = _phase_for_dir(spec_dir)
                 if phase_info is None:
                     continue
-                phase, raw_status, effective, source, conflict, mtime = phase_info
-                if not _is_in_flight(phase, effective):
+                (
+                    phase,
+                    raw_status,
+                    effective,
+                    source,
+                    conflict,
+                    phase_text,
+                    mtime,
+                ) = phase_info
+                if not include_terminal and not _is_in_flight(phase, effective):
                     continue
+                deliverable_spec = deliverables_for_spec(phase_text)
+                staleness = classify_staleness(phase_text, raw_status, roots)
                 found.append(
                     SpecInfo(
                         slug=spec_dir.name,
@@ -415,6 +685,8 @@ def discover_specs(roots: list[Path]) -> list[SpecInfo]:
                         effective_status=effective,
                         status_source=source,
                         status_conflict=conflict,
+                        deliverables=deliverable_spec.entries,
+                        staleness=staleness,
                     )
                 )
     found.sort(key=lambda s: s.mtime, reverse=True)

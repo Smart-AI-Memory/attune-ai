@@ -357,6 +357,94 @@ class TestStatusReconciliation:
         rendered = mod._format_phase(spec_info)
         assert rendered == "design approved"
 
+    @staticmethod
+    def _load_spec_orient(name: str):
+        """Load spec_orient.py fresh (matches the conflict-hint tests)."""
+        import importlib.util
+        from pathlib import Path as _P
+
+        plugin_hooks = _P(__file__).resolve().parents[3] / "plugin" / "hooks"
+        spec = importlib.util.spec_from_file_location(name, plugin_hooks / "spec_orient.py")
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod
+
+    def test_format_phase_renders_suspected_stale_hint(self, state_mod) -> None:
+        """A suspected-stale spec appends the deliverables-present hint."""
+        mod = self._load_spec_orient("_test_spec_orient_stale")
+        spec_info = state_mod.SpecInfo(
+            slug="shipped",
+            path=Path("/tmp/x"),
+            layer="workspace",
+            phase="tasks",
+            status="approved",
+            mtime=0.0,
+            effective_status="approved",
+            status_source="header",
+            status_conflict=False,
+            staleness="suspected-stale",
+        )
+        rendered = mod._format_phase(spec_info)
+        assert rendered.startswith("tasks approved")
+        assert "deliverables present" in rendered
+        assert '"approved"' in rendered
+        assert "verify before building" in rendered
+
+    def test_format_phase_no_stale_hint_for_ok_or_unknown(self, state_mod) -> None:
+        """ok / unknown staleness render nothing beyond the base blurb."""
+        mod = self._load_spec_orient("_test_spec_orient_ok")
+        for verdict in ("ok", "unknown", "partial", "docs-only", "opted-out"):
+            spec_info = state_mod.SpecInfo(
+                slug="normal",
+                path=Path("/tmp/x"),
+                layer="workspace",
+                phase="design",
+                status="approved",
+                mtime=0.0,
+                effective_status="approved",
+                status_source="header",
+                status_conflict=False,
+                staleness=verdict,
+            )
+            assert mod._format_phase(spec_info) == "design approved"
+
+    def test_format_phase_conflict_wins_over_stale(self, state_mod) -> None:
+        """status_conflict takes precedence when both signals are set."""
+        mod = self._load_spec_orient("_test_spec_orient_precedence")
+        spec_info = state_mod.SpecInfo(
+            slug="both",
+            path=Path("/tmp/x"),
+            layer="workspace",
+            phase="tasks",
+            status="draft",
+            mtime=0.0,
+            effective_status="complete",
+            status_source="terminal-line",
+            status_conflict=True,
+            staleness="suspected-stale",
+        )
+        rendered = mod._format_phase(spec_info)
+        assert "worth fixing" in rendered
+        assert "deliverables present" not in rendered
+
+    def test_format_phase_suspected_stale_empty_status(self, state_mod) -> None:
+        """A suspected-stale spec with no header status never raises."""
+        mod = self._load_spec_orient("_test_spec_orient_empty")
+        spec_info = state_mod.SpecInfo(
+            slug="nostatus",
+            path=Path("/tmp/x"),
+            layer="workspace",
+            phase="tasks",
+            status="",
+            mtime=0.0,
+            effective_status="",
+            status_source="header",
+            status_conflict=False,
+            staleness="suspected-stale",
+        )
+        rendered = mod._format_phase(spec_info)
+        assert '"no status"' in rendered
+
 
 # ── git_state ────────────────────────────────────────────────
 

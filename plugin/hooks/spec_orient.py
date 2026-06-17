@@ -68,6 +68,14 @@ def _format_phase(spec: SpecInfo) -> str:
     When ``status_conflict`` is True (header drifted from the
     completion state), append a one-line hint so the source drift
     surfaces and can be fixed.
+
+    When ``staleness`` is ``"suspected-stale"`` (every declared
+    deliverable resolves on disk but the status is still non-terminal),
+    append a parallel hint so a session doesn't rebuild shipped work.
+    The two hints don't collide: an in-body terminal signal would have
+    set ``status_conflict`` and excluded the spec from the in-flight
+    list, so a still-listed spec that is ``suspected-stale`` has no
+    terminal signal — but ``status_conflict`` is checked first anyway.
     """
     phase_label = {
         "requirements": "requirements",
@@ -83,6 +91,9 @@ def _format_phase(spec: SpecInfo) -> str:
         }.get(spec.status_source, spec.status_source)
         raw = spec.status or "no header"
         return f'{base} — {source_label}; header says "{raw}", worth fixing'
+    if spec.staleness == "suspected-stale":
+        raw = spec.status or "no status"
+        return f'{base} — ⚠ deliverables present, status still "{raw}"; ' "verify before building"
     return base
 
 
