@@ -124,64 +124,34 @@ jobs:
         pip install -e .[dev]
 
     - name: Run tests
-      # --timeout=60 + --timeout-method=thread: catches a hanging test by
-      # name with a stack trace instead of letting it kill the xdist worker
-      # silently. `thread` method is required for cross-platform support
-      # (default `signal` uses SIGALRM, which is unreliable on Windows).
+      # --timeout=60 + --timeout-method=thread: names a hanging test (with a
+      # stack trace) instead of letting it silently kill the xdist worker.
+      # The `thread` method is required cross-platform (`signal`/SIGALRM is
+      # unreliable on Windows).
       #
-      # `not integration` excludes tests marked @pytest.mark.integration —
-      # they require live services (Claude API, Redis, etc.). Run them
-      # separately via `pytest -m integration` against a configured env.
+      # `not integration` excludes @pytest.mark.integration tests — they need
+      # live services (Claude API, Redis, etc.). Run them separately via
+      # `pytest -m integration` against a configured env.
       #
-      # `-n auto` (restored 2026-05-11 via probe-c Phase 4). The earlier
-      # `-n 1` cap (PR #212) was a misdiagnosis: the OOM root cause was
-      # one test's zombie thread allocating ~100k MagicMocks, not xdist
-      # worker multiplication. Once the leaked thread was fixed (patch
-      # to threading.Thread in test_subscribe_adds_to_subscriptions_dict),
-      # parallel runs are safe again and ~3x faster.
+      # `-n auto`: parallel xdist. (The old `-n 1` cap, PR #212, was a
+      # misdiagnosis — the OOM root cause was one test's zombie thread, since
+      # fixed.)
       #
-      # Coverage is intentionally NOT collected in this matrix — see the
-      # dedicated `coverage:` job below. The matrix's job is to confirm
-      # the suite passes on all platforms; coverage is a separate signal
-      # that doesn't need the full matrix and gets memory-hammered when
-      # combined with it.
+      # Coverage is collected by the dedicated `coverage:` job, not here — the
+      # matrix only confirms the suite passes on every platform.
       #
-      # PROBE B mem-tick instrumentation retained: surfaces memory
-      # regressions in CI logs without re-deriving the diagnostic.
+      # The runner-hang that once required a 14m-timeout + 2× auto-retry
+      # wrapper on this lane was root-caused and fixed in #930 (a fork-based
+      # multiprocessing.Pool inside an xdist worker leaked the execnet socket
+      # FD, deadlocking the controller at ~99%; Linux-only because macOS uses
+      # `spawn`). With the cause gone, the plain invocation runs on all
+      # platforms — the 35m job `timeout-minutes` plus the conftest
+      # hang-watchdog (which still uploads hang-dumps/) remain as the backstop.
+      #
       # shell: bash forces Git Bash on Windows runners.
       shell: bash
       run: |
-        if [ "${{ runner.os }}" = "Linux" ]; then
-          echo "[mem-baseline $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "total="$2"MB used="$3"MB avail="$7"MB"}')"
-          (while sleep 30; do echo "[mem-tick $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"; done) &
-          MEM_MONITOR_PID=$!
-          trap 'kill $MEM_MONITOR_PID 2>/dev/null || true' EXIT
-          # ci-gating-lane-isolation Layer A: auto-retry the REQUIRED
-          # `test (ubuntu-latest, 3.12)` lane ONLY on a step-timeout
-          # (rc=124 = runner-hang); any other non-zero is a real failure and
-          # returned immediately (never masked). Linux only — `timeout` here
-          # is coreutils; on Windows `shell: bash` it resolves to the
-          # unrelated timeout.exe, and the macOS/Windows lanes are advisory
-          # (non-gating) so they keep the plain invocation. 14m step timeout
-          # is above the 600s hang-watchdog dump and below the 35m job
-          # timeout. 2×14m fits the 35m backstop with install overhead.
-          rc=0
-          for attempt in 1 2; do
-            set +e
-            timeout -k 30s 14m pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
-            rc=$?
-            set -e
-            if [ "$rc" -ne 124 ]; then break; fi
-            echo "::warning::test pytest attempt ${attempt} hit the 14m step timeout (runner-hang signature) — retrying in-run; see the hang-dumps artifact for the captured stack"
-          done
-          echo "[mem-final $(date +%H:%M:%S)] $(free -m | awk '/Mem:/ {print "used="$3"MB avail="$7"MB"}')"
-          if [ "$rc" -eq 124 ]; then
-            echo "::error::test pytest hung on every attempt (runner-hang) — failing the job after bounded auto-retry"
-          fi
-          exit "$rc"
-        else
-          pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
-        fi
+        pytest -n auto --timeout=60 --timeout-method=thread -m "not network and not integration"
       env:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
