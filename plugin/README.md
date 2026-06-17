@@ -53,6 +53,15 @@ Just describe what you need in Claude Code:
 | `release-prep` | release, publish, deploy |
 | `memory-and-context` | memory, store, retrieve |
 
+## Agents
+
+Autonomous sub-agents (auto-discovered from `plugin/agents/`):
+
+| Agent | Use it when |
+| ----- | ----------- |
+| `setup-guide` | checking prerequisites; installing/configuring attune-ai, Redis, MCP |
+| `spec-author` | spec a new feature — runs the SDD requirements interview and writes `requirements.md` (Phase 1 only; design/tasks stay gated) |
+
 ## Hooks
 
 The plugin ships two security hooks:
