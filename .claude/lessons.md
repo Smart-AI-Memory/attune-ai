@@ -9303,6 +9303,18 @@ files.
   command, so second-worktree work needs compound `cd <abs> && ...` and
   Edit/Write tooling there is unreliable (path-guard runs from home
   cwd); drive second-worktree edits via bash (python in-place / heredoc).
+  - **Procedure to ADOPT a ceiling bump (cap NOT deliberate / you do
+    want the new line):** plain `uv lock` does NOT move the version
+    when the old pin still satisfies the widened range — you MUST
+    `uv lock --upgrade-package <pkg>` to actually pull the new version,
+    then `uv sync` + run the dependency's PATH-SPECIFIC tests, commit
+    the refreshed lock onto the dependabot branch (dependabot edits
+    pyproject only, never the lock), and merge on REAL green. #908
+    (2026-06-16) did this for attune-author 0.15.0->0.18.0 (252
+    [author]-path tests green); #907 was CLOSED instead because its
+    cap WAS deliberate. Decision rule: read the pyproject comment ->
+    deliberate cap = close; non-deliberate = is the new line wanted?
+    yes = adopt via --upgrade-package; no = close.
 
 - **`claude-agent-sdk` bundles its OWN Claude Code CLI binary at
   `<pkg>/_bundled/claude` — a version-pin bump silently swaps that
