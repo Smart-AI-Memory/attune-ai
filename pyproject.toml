@@ -74,7 +74,7 @@ dependencies = [
     "langsmith>=0.7.31,<2.0.0",  # GHSA-rr7j-v2q5-chgv (transitive via langchain-core)
     "jinja2>=3.1.0,<4.0.0",  # Meta template rendering for help system
     "python-frontmatter>=1.0.0,<2.0.0",  # YAML frontmatter parsing for help templates — required by attune.help.engine which backs the help_lookup MCP tool (progressive/workflow_help/precursor/search_tag modes all parse template files). Vanilla pip install attune-ai without this breaks every help_lookup mode except `preamble`.
-    "attune-rag>=0.1.5,<0.8",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap raised to <0.7 in 8.1.0 after re-validating against attune-rag 0.6.0 (purely additive: CLI flags + measure(retriever=...); all 0.5.x public symbols unchanged per its POLICY §2); next minor still requires explicit re-validation.
+    "attune-rag>=0.1.5,<0.8",  # RAG grounding for rag-code-gen workflow + rag_knowledge_query MCP tool. Core dep (not optional) — required for acceptable retrieval accuracy. Cap is <0.8: re-validated against attune-rag 0.7.0 (lock bumped 0.6.0->0.7.0; purely additive — subscription-first FaithfulnessJudge auth + new attune_rag.auth module; only removal is the internal Phase-4 freeze CI gate, "no library change"; all 0.6.x public symbols unchanged per its POLICY §2, confirmed by importing every attune-ai-consumed symbol); next minor (0.8.0) still requires explicit re-validation before lifting the cap.
     "attune-verify>=0.1.0,<0.3",  # Generation fact-checker backing the /verify skill (deterministic entity checks: imports/flags/links/counts). Core dep — stdlib-only (zero transitive deps), so promoting to core is cheap and lets /verify work out of the box without an extra. Semantic layer is opt-in (the skill acts as the ambient judge). Cap raised to <0.3 to admit 0.2.0 (full dotted-path import resolution — catches private-submodule hallucinations the 0.1.0 top-level-only checker missed; purely additive, no API break).
     "tomli>=2.0.0; python_version < '3.11'",  # tomllib fallback for Python 3.10. Used by attune.utils.coverage (loaded transitively from release-prep + orchestrated-health-check workflows). Without this, those workflows fail to load on 3.10.
     # NOTE: attune-author is a workspace-only dev dep for authoring/
@@ -766,10 +766,10 @@ exclude_lines = [
 ]
 
 # Sibling repos — all published to PyPI:
-#   attune-rag     — core dep (>=0.1.5,<0.7) — promoted from optional; required for accuracy
+#   attune-rag     — core dep (>=0.1.5,<0.8) — promoted from optional; required for accuracy
 #   attune-verify  — core dep (>=0.1.0,<0.3) — backs /verify; stdlib-only, zero transitive deps
-#   attune-author  — [author] optional extra (>=0.6.2,<0.16)
-#   attune-rag     — [rag] optional extra (>=0.1.5,<0.7) — no-op alias since rag is core
+#   attune-author  — [author] optional extra (>=0.6.2,<0.19)
+#   attune-rag     — [rag] optional extra (>=0.1.5,<0.8) — no-op alias since rag is core
 #
 # No [tool.uv.sources] overrides needed: CI resolves all three
 # from PyPI (https://pypi.org/simple). For local iteration against
