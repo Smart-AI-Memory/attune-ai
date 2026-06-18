@@ -9355,6 +9355,35 @@ files.
   and the lone pre-existing test used relative imports, so `@/` had never
   been exercised under vitest until an API-route test imported `@/lib/db`.
 
+- **`mergeStateStatus=CLEAN` + all per-PR checks green ≠ safe to
+  merge when the validating job is KEYLESS and the real validation
+  is a separate scheduled/dispatched job.** Reviewing PR #917
+  (claude-agent-sdk 0.2.x bump, 2026-06-18): the PR showed
+  `draft=false`, `merge=CLEAN`, and 35 green checks — yet its OWN
+  `decisions.md` ended "**PR #917 is DRAFT — do not merge**" because
+  live-key `integration-auth` had failed systemically (every
+  real-API workflow raised `Claude Code returned an error result:
+  success`). The green rollup was structurally blind to it: every
+  per-PR check runs `ANTHROPIC_API_KEY: ""` (keyless-by-design — the
+  $1200-burn lesson), INCLUDING `integration (no-auth)`; the
+  live-key `integration-auth` job is NOT a per-PR/required check
+  (scheduled + budget-capped) so its failure never enters the
+  `mergeStateStatus` rollup. A pure dependency bump (6 files, no
+  code/adapter fix) that flips the resolved SDK is exactly the diff
+  whose risk lives entirely in the keyless-CI blind spot. Review
+  rules before merging any dep bump that touches the live-SDK/
+  real-key path: (1) don't read green per-PR CI or `CLEAN` as
+  merge-readiness — confirm a live-key validation EXISTS and read
+  its ACTUAL result (`gh run list --workflow=integration-auth.yml
+  --branch=<b>`), since it won't appear in `gh pr checks`; (2) read
+  the PR's spec `decisions.md` resume-gate before trusting the PR's
+  draft/ready state — the doc is the contract, the green checkmarks
+  are not; (3) re-draft a parked PR (`gh pr ready --undo`) so a
+  CLEAN state can't be auto-merged while it waits. Pairs with the
+  bundled-CLI is_error root-cause lesson above (same PR — the
+  mechanism) and "registered ≠ working / dogfood the live loop"
+  (mocked/keyless green is necessary-not-sufficient).
+
 - **Path-filtering a workflow that produces a REQUIRED status check —
   gate the JOB's heavy STEPS, never skip the job**: to make
   irrelevant-path PRs (e.g. `website/`-only) cheap without blocking the
