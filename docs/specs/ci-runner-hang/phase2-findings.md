@@ -231,3 +231,44 @@ is a ~99% **finalize-wedge** (all tests pass, then the session can't
 conclude). That spec's premise table is corrected in the same PR as
 this finding. (This `ci-runner-hang` spec already had the "99%-freeze"
 shape right.)
+
+## Phase 3 — SECOND captured frame (2026-06-16, #924)
+
+The N>1 dump the first frame called for. PR #924
+(`chore(deps): adopt attune-rag 0.7.0`) wedged its
+`test (ubuntu-latest, 3.11)` lane: every test passed, then the session
+hung, the 14m step-timeout fired, the bounded auto-retry hung again, and
+the job died with **exit code 124**. The `if: always()` upload preserved
+all four stacks. Raw dumps:
+[evidence/run-27615182285/](evidence/run-27615182285/) (job
+`81649261853`, run `27615182285`).
+
+### What the stacks show
+
+| Process | Main-thread frame | Reading |
+|---------|-------------------|---------|
+| controller | `xdist/dsession.py:154 loop_once → queue.get → threading wait` | waiting for a worker event that never arrives |
+| gw1 | `execnet gateway_base serve → integrate_as_primary_thread → wait` | idle, done, awaiting shutdown |
+| gw2 | same as gw1 | idle |
+| gw3 | same as gw1 | idle |
+
+Identical **H4** controller signature to the first frame — clean idle
+on every process, no uninterruptible I/O (no `socket.recv`,
+`subprocess.wait`, or `lock.acquire`), so still **not** H1/H2.
+
+### The discriminating result — heartbeat-leak lead WEAKENED
+
+The first frame's only differentiator was a leaked
+`coordinator.py _heartbeat_loop` thread on the wedged `gw3`, which
+became the prime LEAD. **This frame reproduces the exact same
+finalize-wedge with NO leaked heartbeat thread on any worker** (each
+worker carries only its 2 execnet threads; `grep -ri heartbeat` over the
+dumps is empty). Two consecutive H4 wedges, only one of which had the
+leaked thread, argues the heartbeat thread was **incidental, not
+causal** — the deadlock is in the execnet/xdist end-of-session control
+channel itself.
+
+This satisfies "Next actions" item 3 above (*if the leak is ruled out,
+pivot to H4*): the cheap heartbeat-teardown fixture (item 2) is still
+worth doing as hygiene, but the root-cause hunt should now target the
+execnet/xdist finalize handshake directly, not the heartbeat leak.
