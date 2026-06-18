@@ -9354,3 +9354,30 @@ files.
   only the project alias. Context that hid this: no vitest config existed
   and the lone pre-existing test used relative imports, so `@/` had never
   been exercised under vitest until an API-route test imported `@/lib/db`.
+
+- **Path-filtering a workflow that produces a REQUIRED status check —
+  gate the JOB's heavy STEPS, never skip the job**: to make
+  irrelevant-path PRs (e.g. `website/`-only) cheap without blocking the
+  merge, do NOT add `paths-ignore` to the trigger and do NOT job-level
+  `if:`-skip the job — a required check that never runs reports as
+  "missing" and blocks the PR forever (and skipped-required-check
+  semantics vary by GitHub version, so don't bet the merge gate on
+  them). Instead keep the job RUNNING and put `if: <signal> != 'true'`
+  on each expensive step (pip-install, pytest), plus a cheap
+  skip-notice step — the job completes green under its exact required
+  name so branch protection stays satisfied. This is the same
+  discipline `tests.yml`'s slim-matrix already uses (it keeps the
+  required `test (ubuntu-latest, 3.12)` lane running even when it drops
+  the rest). Implemented 2026-06-18 (#935): a `website_only` output on
+  the existing `changes` gate (`! grep -qvE '^website/'` over the PR
+  diff = every file under website/), consumed by the three full-suite
+  jobs (`test`, `clock-tz`, `coverage`) via step-level `if:`. Two gotchas:
+  (1) a downstream job only sees `needs.<job>.outputs.*` if that job is
+  in its OWN `needs:` list — `test` needed `[changes, setup-matrix]`,
+  not just `setup-matrix`, to read `needs.changes.outputs.website_only`;
+  (2) a PR that edits the workflow file itself can't exercise its own
+  new path-filter (the workflow-file change flips the signal to
+  full-run) — validating the cheap path needs a follow-up
+  trivial-website-only PR. Pairs with the existing "required Tests
+  checks stay MISSING after `gh pr edit --base`" lesson (same
+  missing-required-check failure mode, different trigger).
