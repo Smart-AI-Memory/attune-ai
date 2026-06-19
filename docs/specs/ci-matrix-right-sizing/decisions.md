@@ -40,3 +40,31 @@ and validates the full path + that the required name still emits. The
 SLIM path must be proven by a follow-up **tests-only** PR: confirm
 `test (ubuntu-latest, 3.12)` reports, `test (windows-latest, 3.12)`
 runs, the PR is mergeable, and the other 10 lanes did NOT spawn.
+
+## 2026-06-19 — slim-path proof discharged (PR #937)
+
+The owed proof is done. PR #937 is a **tests-only** diff (adds a
+required-lane regression guard, see below) and so exercised the slim
+path. Observed on Actions run `27844711447`:
+
+- `setup-matrix` emitted the slim variant (2s).
+- Exactly **two** test lanes spawned: `test (ubuntu-latest, 3.12)`
+  (the required check) and `test (windows-latest, 3.12)` (the D1
+  Windows smoke).
+- The other **10** matrix lanes (all macOS, ubuntu/windows 3.10/3.11/
+  3.13) did **not** spawn — confirming the slim path.
+- The required check name emitted and the PR was mergeable on the
+  required greens.
+
+The cosmetic `Run Security Scanner` "fail" row is the known
+dependabot-only guard cancellation (not a required check) — unrelated.
+
+### Regression guard landed
+
+`tests/unit/ci/test_workflow_yaml.py::TestDynamicMatrixRequiredLane`
+parses both matrix variants out of `setup-matrix` and asserts each
+keeps `ubuntu-latest` + `3.12`. This locks the HIGH risk (a variant
+dropping the required lane → required check missing → PR blocked
+forever) so a future `tests.yml` edit can't silently reintroduce it.
+
+**Spec status: complete.**
