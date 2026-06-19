@@ -10,18 +10,21 @@
 (function () {
   "use strict";
 
-  // Canonical workflow names — kept in sync with `attune.ops.data
-  // .list_workflows()` output. When this drifts, runner.js still works
-  // (mentions of unknown names just render as text), so no hard sync
-  // dependency, but worth a periodic glance.
+  // Canonical workflow names — generated from `attune.ops.data
+  // .list_workflows()`. When this drifts, runner.js still works (mentions
+  // of unknown names just render as text), so no hard runtime dependency,
+  // but the backstop test fails so the array stays honest.
+  // >>> AUTO-GENERATED: WORKFLOW_NAMES — do not hand-edit.
+  // Source of truth: attune.ops.data.list_workflows().
+  // Regenerate: python scripts/sync_runner_workflow_names.py
   var WORKFLOW_NAMES = [
     "bug-predict", "code-review", "deep-review", "dependency-check",
     "discovery-sweep", "doc-audit", "doc-gen", "doc-orchestrator",
-    "health-check", "orchestrated-health-check", "perf-audit",
-    "rag-code-gen", "refactor-plan", "release-prep",
-    "research-synthesis", "secure-release", "security-audit",
-    "simplify-code", "test-audit", "test-gen"
+    "health-check", "orchestrated-health-check", "perf-audit", "rag-code-gen",
+    "refactor-plan", "release-prep", "research-synthesis", "secure-release",
+    "security-audit", "simplify-code", "test-audit", "test-gen"
   ];
+  // <<< AUTO-GENERATED: WORKFLOW_NAMES
 
   // Section headers (line-leader text) that get bolded/colored so users
   // can scan workflow output quickly. Matched case-insensitively against

@@ -1,7 +1,10 @@
 # Drift Guards → Generators — Requirements
 
-**Status:** in progress (2026-06-12) — conversion 1 (version bump)
-shipped; registration-mirror conversions open.
+**Status:** complete (2026-06-19) — "Done when" met: conversion 1
+(version bump) + conversion 2 (workflow-names mirror) shipped, each with
+an inverted backstop and a row in the table below. Conversions 3
+(skills table) and 4 (count assertions) remain as optional future
+candidates, not blockers.
 **Owner:** Patrick + agent
 **Born:** discipline-review chat, 2026-06-11 (improvement #4 of 6).
 
@@ -94,6 +97,7 @@ Candidate conversions, by observed pain frequency:
 | Guard | Generator | Backstop test |
 |-------|-----------|---------------|
 | Version-site drift (the v7.2.0 class) | `scripts/bump_version.py <version>` — writes all 7 files / 9 sites, count-validates before writing, verifies after | `test_plugin_config_validation.py::TestVersionConsistency::test_all_versions_match` (failure message names the command); plus `tests/unit/scripts/test_bump_version.py::TestRealRepo` (site list vs the actual tree) |
+| Dashboard `WORKFLOW_NAMES` JS-array drift | `scripts/sync_runner_workflow_names.py` — rewrites the marker-delimited array in `runner.js` from `attune.ops.data.list_workflows()`; `--check` verifies and names the command | `test_runner_js_parsing.py::test_workflow_names_array_is_generated_and_in_sync` (runs the generator in `--check`); plus `tests/unit/scripts/test_sync_runner_workflow_names.py` (generator logic) |
 
 ## Done when
 
