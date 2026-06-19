@@ -175,6 +175,7 @@ nav:
       - getting-started/index.md
       - Installation: getting-started/installation.md
       - First Steps: getting-started/first-steps.md
+      - Quickstart (Plugin): getting-started/quickstart-plugin.md
       - Choose Your Path: getting-started/choose-your-path.md
       - Redis Setup: getting-started/redis-setup.md
       - MCP Integration: getting-started/mcp-integration.md
