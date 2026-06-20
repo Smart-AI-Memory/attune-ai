@@ -184,3 +184,46 @@ echo "say hi" | "$BUNDLED" --print --output-format stream-json \
 
 **PR #917 is DRAFT — do not merge.** Resume gate: API access → run
 the validation command above → pick a fix from the ranked list.
+
+## T4 — RESOLVED via candidate fix #1 (2026-06-20)
+
+API access returned (key fixed 2026-06-20, org 7edead08). Ran the
+parked validation capture against the **newer** bundled CLIs that
+shipped after the 06-16 pin:
+
+| SDK | bundled CLI |
+|-----|-------------|
+| 0.2.102 (was pinned) | 2.1.178 — the broken build |
+| 0.2.103 | 2.1.179 |
+| 0.2.104 | 2.1.181 |
+| 0.2.105 (latest in range) | **2.1.183** |
+
+**Live probe of CLI 2.1.183** (`say hi`, `--output-format
+stream-json`, run as the native Bun binary, stdout read directly):
+
+```json
+{"type":"result","subtype":"success","is_error":false, ...}
+```
+
+`is_error:false` on a `success` result — the upstream
+`is_error:true`-on-`success` behavior that broke 2.1.178 is **fixed**
+in 2.1.183. The SDK-side `query.py` result handler is
+**byte-identical** 0.2.102 -> 0.2.105 (diffed), so the only variable
+was the bundled CLI. With 2.1.183 returning `is_error:false`, the
+SDK's rewrite-`ProcessError`-to-exception path cannot trigger.
+
+**Fix applied:** `uv lock --upgrade-package claude-agent-sdk` bumps
+the lock **0.2.102 -> 0.2.105** within the existing `>=0.2.101,<0.3.0`
+pin (d1). **No attune code change** — candidate fix #1 ("wait +
+re-pin"), the lowest-risk option, was the correct one. T1/T2 stand as
+"no code change needed."
+
+**Cost note:** the single probe cost **$0.24** (not the estimated
+<$0.02) — the bundled CLI loaded the user global `CLAUDE.md` and ran
+`claude-opus-4-8[1m]` (1M-context premium), unlike attune's workflows
+which isolate via `setting_sources=[]`.
+
+**Remaining gate to un-draft #917:** re-run the budget-capped
+`integration-auth` workflow on the branch (now resolving 0.2.105) in
+CI's clean env — the real-loop proof that the systemic break is gone.
+Then un-draft with CI green.
