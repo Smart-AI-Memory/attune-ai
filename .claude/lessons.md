@@ -9410,3 +9410,35 @@ files.
   trivial-website-only PR. Pairs with the existing "required Tests
   checks stay MISSING after `gh pr edit --base`" lesson (same
   missing-required-check failure mode, different trigger).
+
+- **The auto-merge-safe (tests/docs-only) class merges a PR on its
+  CURRENT diff within minutes — so opening a PR whose FIRST commit is
+  docs-only strands every follow-up commit you push afterward**: hit
+  2026-06-20 cutting 8.6.0. I committed a docs-only go-live receipt
+  (`decisions.md`), pushed, and opened PR #942 — then kept building on
+  the same branch (changelog, version bump, README fix, more commits).
+  The auto-merge-safe `workflow_run` job evaluated #942 at its
+  docs-only state and squash-merged it to `main` BEFORE the later
+  commits existed. Result: `main` got only the first commit; the
+  release prep was stranded on a branch whose PR was already
+  `state:MERGED` (closed). Symptom triad: (1) `gh pr view <n> --json
+  state` = `MERGED` at an early SHA while (2) `git ls-remote origin
+  <branch>` tip is AHEAD with unmerged commits, and (3) `gh pr view
+  --json headRefOid` ≠ the branch tip (the PR froze at the squashed
+  SHA; new pushes don't reattach to a closed PR). Prevention: if you
+  intend to keep adding commits — ESPECIALLY mixing a docs commit
+  first then code — either open the PR as a **draft**, or don't open
+  it until the full diff is OUT of the auto-merge class (touches
+  `src/`/packaging), or land the docs receipt as its own deliberate
+  PR. Recovery (clean, conflict-free): branch fresh off `origin/main`,
+  `git cherry-pick` only the post-merge commits — the already-merged
+  first commit's content is on `main` as the squash, so its diff drops
+  out of `origin/main..<tip>` and the cherry-picks apply with no
+  D8-style duplication; open a NEW PR (you can't reopen the merged
+  one). Verify the recovery branch's `git diff origin/main..HEAD
+  --stat` is EXACTLY the intended prep before pushing. Pairs with the
+  existing "auto-merge-safe merge job races itself when ≥2 in-class
+  PRs go green" lesson (same job, different failure mode — there it's
+  a base-modified race; here it's an early-merge-strands-followups
+  trap) and the "squash-merging a base auto-closes stacked PRs; open a
+  fresh PR" lesson.
