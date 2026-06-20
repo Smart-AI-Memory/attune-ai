@@ -227,3 +227,35 @@ which isolate via `setting_sources=[]`.
 `integration-auth` workflow on the branch (now resolving 0.2.105) in
 CI's clean env — the real-loop proof that the systemic break is gone.
 Then un-draft with CI green.
+
+## T4 — re-run blocked by STALE CI secret, NOT a migration regression (2026-06-20)
+
+Dispatched `integration-auth` on the branch at 0.2.105 (run
+27882921838, SHA e1d638abc). It **failed in 8.56s** — but on
+**`401 invalid x-api-key`**, not the migration bug:
+
+- All 19 `llm_integration` direct-provider tests raised
+  `anthropic.AuthenticationError: 401 invalid x-api-key`.
+- All 6 discovery-sweep tests failed with "wrapped workflow failed —
+  findings are failure markers" — the SAME 401 propagating through
+  the SDK workflow path, NOT the "error result: success" trap. The
+  bundled-CLI path was never reached because nothing authenticated.
+- `22 failed, 2 passed in 8.56s` → ~**$0 spend** (401s are rejected
+  before billing).
+
+**Root cause:** the **repo CI secret** `ANTHROPIC_API_KEY` was last
+updated `2026-06-10T02:52:20Z` (the "$1200 burn" key-swap night) and
+is now invalid. The local key (org 7edead08, fixed 2026-06-20) is a
+DIFFERENT value and is valid (the bundled-CLI probe got 200). So the
+migration fix remains **unvalidated end-to-end** — but unrefuted; this
+run gave zero migration signal.
+
+**Burn-safety check (done):** only `integration-auth.yml` and
+`help-freshness.yml` reference the secret, both `schedule` +
+`workflow_dispatch` only — no push/PR trigger. Re-validating the
+secret will NOT cause per-PR spend; it only re-arms those two nightly
+scheduled jobs (budget-capped).
+
+**Next gate:** update the repo secret `ANTHROPIC_API_KEY` to the valid
+key, then re-dispatch `integration-auth` (the real ~$2–$7 bundled-CLI
+validation). Until then #917 stays DRAFT.
