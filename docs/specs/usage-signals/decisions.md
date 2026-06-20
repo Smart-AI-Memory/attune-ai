@@ -396,3 +396,33 @@ keeping consent intact. Tracked as a Phase 2c follow-up, NOT bundled
 into the 8.6.0 release; the client ships default-OFF as already built.
 
 No copy changes needed — existing telemetry text remains accurate.
+
+## D11 — first-run consent prompt shipped (the D9 opt-in lever) (2026-06-20, 8.6.1)
+
+D9 kept the ping default-OFF and named a first-run consent prompt as the
+opt-in lever, deferred to a follow-up. After 8.6.0 shipped the client,
+the gap was concrete: nothing *asked*, so opt-in ≈ 0 (users won't run
+`attune telemetry enable` for a feature they were never told about).
+
+**Shipped in 8.6.1:** `usage_ping.maybe_prompt_consent()`, called from
+`cli_minimal.main()` before dispatch. It asks once, default-No. Design:
+
+- **Interactive only.** Gated on `sys.stdin.isatty() AND sys.stdout.isatty()`
+  (`_is_interactive`) — never hangs or nags CI / pipes / scripts.
+- **Asks at most once.** Gated on `TelemetryConfig.usage_ping_consented`
+  (the field already existed). "Yes" → `enable()`; anything else →
+  `disable()`. Both set `consented=True`, so it never re-appears.
+- **Respects prior signals.** Skips entirely (and does NOT record
+  consent) when `DO_NOT_TRACK` or `ATTUNE_USAGE_PING` is set — those are
+  already an explicit choice.
+- **Skips meta commands** (`telemetry`/`setup`/`version`/`doctor`/`auth`)
+  so the prompt fires on real first use, not while managing telemetry.
+- **Transient skips don't burn the one-shot.** Non-interactive runs and
+  an aborted prompt (EOF/Ctrl-C) leave `consented=False`, so a later
+  interactive run can still ask.
+- **Best-effort.** Never raises into the CLI (config-load and persist
+  failures are swallowed) — and it's pure stdlib, so it stays out of the
+  [ops]/fastapi base-CLI crash class (#945).
+
+Default stays OFF; this only adds the *ask*. Wording reviewed and
+approved by Patrick. Remaining: Phase 2c Reach dashboard, R5/R6.
