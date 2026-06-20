@@ -9442,3 +9442,38 @@ files.
   a base-modified race; here it's an early-merge-strands-followups
   trap) and the "squash-merging a base auto-closes stacked PRs; open a
   fresh PR" lesson.
+
+- **A green CI/test suite does NOT prove the DEFAULT install works — CI
+  installs the dev/ops extras, so extras-only deps (fastapi/uvicorn/
+  jinja2) are ALWAYS present and mask base-CLI import crashes that hit
+  every real `pip install <pkg>` user**: 8.5.0 shipped with `attune
+  --help` crashing `ModuleNotFoundError: No module named 'fastapi'` on
+  every default install — a base-CLI import path
+  (`cli_minimal` -> `cli_commands.curator` ->
+  `curator.sources.specs`) imported `SpecRecord` / `_list_specs_in_root`
+  from the FastAPI web-route module `attune.ops.routes.specs`. 17k+
+  tests green, CI green, zero detection, because CI's env always has
+  fastapi. Caught only by **dogfooding the SHIPPED WHEEL in a clean
+  no-extras venv** during 8.6.0 release QA (`attune --help` -> exit 1).
+  Durable rules: (1) **before every release**, build the wheel,
+  `pip install` it BARE (no extras) in a fresh venv, and run the entry
+  point (`<cli> --help` / `<cli> version`) — the shipped-artifact smoke
+  the unit suite structurally cannot do; (2) ship a **unit regression
+  guard** that imports the base CLI with the extras-only deps blocked
+  (a `sys.meta_path` finder raising on `import fastapi`, in a
+  subprocess so the block can't leak into the rest of the suite) — runs
+  in the normal suite, catches the class without a clean venv; (3) keep
+  **pure data/logic in framework-free modules** so the base layer never
+  transitively imports the web/optional stack — the fix split the pure
+  spec-listing data (`SpecRecord`, `_list_specs_in_root`, helpers) into
+  a fastapi-free `attune.ops.specs_data`, with the route module
+  re-exporting for back-compat. Corollary worth stating because it's
+  tempting to claim otherwise: **usage telemetry canNOT catch this
+  class** — a startup crash emits ZERO telemetry (the process dies
+  before the ping runs), so "silence" is indistinguishable from "no
+  users"; the usage ping is a usage-understanding tool, not an error
+  monitor. Pairs with "registered != working — dogfood the live loop"
+  (same discipline, artifact surface) and the "worktree venv lacks
+  [ops] deps (fastapi/uvicorn/jinja2)" lesson (same extras boundary,
+  different surface — there it's a dev-env ModuleNotFoundError, here
+  it's a shipped one).
