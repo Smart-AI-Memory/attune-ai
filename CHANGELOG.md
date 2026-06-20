@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.6.1] — 2026-06-20
+
+### Added
+
+- **First-run consent prompt for anonymous usage sharing.** 8.6.0
+  shipped the opt-in usage ping but never *asked*, so realistically no
+  one turned it on. The CLI now asks once, on first interactive use:
+  whether to share anonymous usage (workflow names + version + OS +
+  Python). It is **default-No** and asks **only in an interactive
+  terminal** — it silently no-ops in CI, pipes, and scripts, and never
+  prompts when `DO_NOT_TRACK` or `ATTUNE_USAGE_PING` is set, or for the
+  `telemetry`/`setup`/`version`/`doctor`/`auth` commands. Either answer
+  is remembered, so it asks at most once. You can still manage it
+  anytime with `attune telemetry enable` / `disable`.
+
 ## [8.6.0] — 2026-06-20
 
 Usage signals come online, and the agent roster grows. The headline:

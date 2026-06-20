@@ -472,3 +472,105 @@ def reset_install_id(loader: Any = None) -> str:
     config.telemetry.install_id = new_install_id()
     loader.save(config, save_path)
     return config.telemetry.install_id
+
+
+# The one-time, interactive first-run consent notice. Kept verbatim so the
+# wording is reviewable in one place; printed only in an interactive
+# terminal (see :func:`maybe_prompt_consent`).
+_CONSENT_NOTICE = (
+    "\nattune-ai can share anonymous usage to help improve it — only which\n"
+    "workflows you run, plus the version, your OS, and Python version.\n"
+    "Never code, paths, prompts, or personal data. Off by default.\n\n"
+    "Enable anonymous usage sharing? [y/N]: "
+)
+
+
+def _is_interactive() -> bool:
+    """True only when BOTH stdin and stdout are real terminals.
+
+    Guards the consent prompt so it never hangs or nags a non-interactive
+    run (CI, pipes, scripts, redirected output).
+    """
+    try:
+        return bool(sys.stdin.isatty() and sys.stdout.isatty())
+    except (OSError, ValueError):  # closed/!detached streams
+        return False
+
+
+def maybe_prompt_consent(
+    loader: Any = None,
+    env: Mapping[str, str] | None = None,
+    *,
+    input_fn: Callable[[str], str] = input,
+) -> bool | None:
+    """Ask once, interactively, whether to enable the anonymous usage ping.
+
+    The opt-in lever for usage-signals: fires at most once per user
+    (gated on :attr:`TelemetryConfig.usage_ping_consented`), and only in
+    an interactive terminal where the user has not already expressed a
+    preference via ``DO_NOT_TRACK`` or ``ATTUNE_USAGE_PING``. "Yes" opts
+    in (minting an install id); anything else records an explicit opt-out.
+    Either answer sets ``usage_ping_consented`` so the prompt never
+    re-appears.
+
+    Best-effort and silent: it never raises into the caller and never
+    blocks a non-interactive run. When it skips for a *transient* reason
+    (non-interactive, ``DO_NOT_TRACK`` set, an aborted prompt) it does
+    NOT record consent, so a later interactive run can still ask.
+
+    Args:
+        loader: Optional config loader (tests inject one); defaults to the
+            user config at ``~/.attune/config.json``.
+        env: Environment mapping (defaults to ``os.environ``).
+        input_fn: Injectable input function (tests).
+
+    Returns:
+        True if the user opted in, False if they opted out, or None if no
+        prompt was shown (skipped).
+    """
+    env = os.environ if env is None else env
+
+    # An explicit env signal already settles it — never prompt over one.
+    dnt = env.get("DO_NOT_TRACK")
+    if dnt is not None and dnt.strip().lower() not in {"", "0", "false"}:
+        return None
+    if env.get("ATTUNE_USAGE_PING") is not None:
+        return None
+
+    if not _is_interactive():
+        return None
+
+    try:
+        cfg_loader, config, _ = _open_user_config(loader)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: telemetry consent must never break the CLI. If the
+        # config can't be read, skip quietly (no consent recorded).
+        logger.debug("usage-ping: consent prompt skipped (config load failed)", exc_info=True)
+        return None
+
+    if config.telemetry.usage_ping_consented:
+        return None
+
+    try:
+        answer = input_fn(_CONSENT_NOTICE).strip().lower()
+    except (EOFError, KeyboardInterrupt):
+        # Aborted prompt = "not now": do NOT record consent so a future
+        # interactive run can ask again.
+        print()
+        return None
+
+    try:
+        if answer in {"y", "yes"}:
+            enable(cfg_loader)
+            print(
+                "Thanks! Anonymous usage sharing is on. "
+                "Disable anytime with `attune telemetry disable`.\n"
+            )
+            return True
+        disable(cfg_loader)
+        print("No problem — staying off. " "Enable anytime with `attune telemetry enable`.\n")
+        return False
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: a persist failure must not crash the CLI.
+        logger.debug("usage-ping: consent prompt persist failed", exc_info=True)
+        return None
