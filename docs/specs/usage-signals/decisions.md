@@ -358,3 +358,41 @@ convenient:
 DELETE FROM usage_events
 WHERE install_id = '00000000-0000-4000-8000-000000000000';
 ```
+
+**Second sentinel row (2026-06-20 release dogfood, D10).** Pre-release
+readiness dogfood transmitted through the *shipped 8.6.0 wheel* (built,
+installed in a clean venv) to confirm the real client network path works
+end-to-end against the live endpoint — server logged `204`. It inserted
+one more sentinel row (`install_id =
+'11111111-1111-4111-8111-111111111111'`, `event =
+'workflow.release_dogfood_860'`). Drop both together:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id IN (
+  '00000000-0000-4000-8000-000000000000',
+  '11111111-1111-4111-8111-111111111111'
+);
+```
+
+## D9 — default stays OFF; first-run consent prompt is the opt-in lever (2026-06-20)
+
+Question raised at release time: to maximize signal, should the usage
+ping default to ON (`ATTUNE_USAGE_PING=1` / config-enabled by default)?
+
+**Decision: No. The ping stays default-OFF.** Silently defaulting it ON
+would contradict the stance already shipped in the README, SECURITY.md,
+CHANGELOG, and R2 ("ships OFF, requires explicit consent, privacy by
+construction"), and developers are the audience most hostile to surprise
+telemetry — the reputational downside of default-ON dwarfs the signal
+upside, and it is a one-way door. It also wouldn't yield much: the
+privacy-conscious slice opts out immediately, leaving a noisy
+self-selected sample.
+
+**The lever instead:** a first-run consent prompt (ask once, explicitly,
+default No) — the Homebrew / .NET CLI / Next.js-notice pattern. An
+explicit friendly ask converts far better than passive opt-in (~0) while
+keeping consent intact. Tracked as a Phase 2c follow-up, NOT bundled
+into the 8.6.0 release; the client ships default-OFF as already built.
+
+No copy changes needed — existing telemetry text remains accurate.
