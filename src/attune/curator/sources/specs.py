@@ -22,7 +22,11 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from attune.ops.config import build_config
-from attune.ops.routes.specs import SpecRecord, _list_specs_in_root
+
+# Import from the framework-free data module, NOT attune.ops.routes.specs —
+# the route module imports FastAPI at load time, which is absent in a default
+# `pip install attune-ai` (no `[ops]` extra) and would crash the base CLI.
+from attune.ops.specs_data import SpecRecord, _list_specs_in_root
 
 from ..result import SourceItem, SourceSummary
 

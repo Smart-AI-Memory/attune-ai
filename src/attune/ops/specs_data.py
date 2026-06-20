@@ -1,0 +1,170 @@
+"""Spec listing — framework-free data layer.
+
+The pure spec-discovery logic (dataclasses + filesystem readers) used by
+BOTH the ops web route (``attune.ops.routes.specs``) and the base-CLI
+curator (``attune.curator.sources.specs``). It lives here, free of any
+web-framework import, so importing the spec model never drags FastAPI
+into a default ``pip install attune-ai`` (where ``[ops]`` extras —
+fastapi/uvicorn — are absent). The route module re-exports these names
+for backward compatibility.
+
+See docs/specs/ops-specs-features/ for the endpoint design; this module
+is just the data half, split out so the CLI can use it without the web
+stack.
+"""
+
+from __future__ import annotations
+
+import re
+from dataclasses import dataclass, field
+from pathlib import Path
+
+# Phase files we recognize. Match attune-gui's convention; decisions.md is
+# attune-ai's additional convention and is included for parity with current
+# specs (probe-c, ops-specs-features, etc. all use decisions.md as the
+# primary doc).
+_PHASE_FILES: tuple[str, ...] = (
+    "decisions.md",
+    "requirements.md",
+    "design.md",
+    "tasks.md",
+)
+
+# Status line pattern — accepts both Markdown bolding conventions:
+#   **Status:** value   (colon inside the bolding — attune-ai convention)
+#   **Status**: value   (colon outside — attune-gui convention)
+# Captures the value, stripping trailing whitespace.
+_STATUS_RE = re.compile(
+    r"^\s*\*\*Status(?::\*\*|\*\*:)\s*(.+?)\s*$",
+    re.MULTILINE,
+)
+
+
+@dataclass(frozen=True)
+class SpecPhase:
+    """One phase file's status snapshot."""
+
+    name: str  # "decisions" / "requirements" / "design" / "tasks"
+    file: str  # e.g. "decisions.md"
+    exists: bool
+    status: str | None  # parsed from `**Status**:` line, or None if absent
+
+
+@dataclass(frozen=True)
+class SpecRecord:
+    """One spec's summary — directory + status of each phase file present."""
+
+    slug: str  # directory name
+    root: str  # absolute path of the containing root
+    path: str  # absolute path of the spec directory
+    phases: list[SpecPhase]
+    # ISO-8601 timestamp of the most recently modified *.md file in the
+    # spec directory (any kind — `decisions.md`, `_sequencing.md`,
+    # `audit.md`, etc.). None if the directory has no .md files at all
+    # (which shouldn't happen since _list_specs_in_root requires at
+    # least one canonical phase file, but handled defensively).
+    last_modified: str | None = None
+    # Lifecycle bucket derived from `phases` + `last_modified` via
+    # `attune.ops.spec_lifecycle.derive_lifecycle`. Computed in
+    # `__post_init__` so callers don't need to coordinate. `init=False`
+    # keeps the constructor signature backward-compatible with the many
+    # `SpecRecord(slug=..., phases=..., last_modified=...)` test fixtures.
+    # One of: "paused", "complete", "stale", "draft",
+    # "approved-not-shipped", "active". See
+    # [docs/specs/ops-specs-page-refinement/decisions.md](../../../docs/specs/ops-specs-page-refinement/decisions.md).
+    lifecycle: str = field(init=False, default="")
+
+    def __post_init__(self) -> None:
+        # Lazy import to avoid any chance of an import cycle between
+        # routes/specs.py and spec_lifecycle.py (defensive; no cycle
+        # exists today since spec_lifecycle uses a structural Protocol).
+        from attune.ops.spec_lifecycle import derive_lifecycle
+
+        # Frozen dataclass — use object.__setattr__ to set the field.
+        object.__setattr__(self, "lifecycle", derive_lifecycle(self))
+
+
+def _extract_status(text: str) -> str | None:
+    """Pull the value after `**Status**:` from a markdown file."""
+    match = _STATUS_RE.search(text)
+    if not match:
+        return None
+    return match.group(1).strip()
+
+
+def _scan_spec_dir(spec_dir: Path) -> list[SpecPhase]:
+    """List the phase files in one spec directory with their statuses."""
+    phases: list[SpecPhase] = []
+    for phase_file in _PHASE_FILES:
+        file_path = spec_dir / phase_file
+        name = phase_file.removesuffix(".md")
+        if not file_path.is_file():
+            phases.append(SpecPhase(name=name, file=phase_file, exists=False, status=None))
+            continue
+        try:
+            text = file_path.read_text(encoding="utf-8")
+        except OSError:
+            # INTENTIONAL: an unreadable phase file is reported as
+            # existing-but-statusless rather than failing the whole listing.
+            phases.append(SpecPhase(name=name, file=phase_file, exists=True, status=None))
+            continue
+        phases.append(
+            SpecPhase(name=name, file=phase_file, exists=True, status=_extract_status(text))
+        )
+    return phases
+
+
+def _newest_md_mtime(spec_dir: Path) -> str | None:
+    """Return the newest mtime across all `.md` files in the spec dir,
+    formatted as a UTC ISO-8601 string. Catches edits to canonical phase
+    files AND auxiliary content (`_sequencing.md`, `audit.md`, etc.)."""
+    from datetime import datetime, timezone
+
+    newest: float | None = None
+    try:
+        for md in spec_dir.glob("*.md"):
+            try:
+                mt = md.stat().st_mtime
+            except OSError:
+                continue
+            if newest is None or mt > newest:
+                newest = mt
+    except OSError:
+        return None
+    if newest is None:
+        return None
+    return datetime.fromtimestamp(newest, tz=timezone.utc).isoformat()
+
+
+def _list_specs_in_root(root: Path) -> list[SpecRecord]:
+    """Find all spec directories under one root, with phase statuses."""
+    if not root.is_dir():
+        return []
+    records: list[SpecRecord] = []
+    for child in sorted(root.iterdir()):
+        if not child.is_dir():
+            continue
+        # A spec dir must contain at least ONE of the recognized phase files;
+        # otherwise it's just an unrelated subdirectory.
+        has_phase = any((child / phase).is_file() for phase in _PHASE_FILES)
+        if not has_phase:
+            continue
+        records.append(
+            SpecRecord(
+                slug=child.name,
+                root=str(root),
+                path=str(child),
+                phases=_scan_spec_dir(child),
+                last_modified=_newest_md_mtime(child),
+            )
+        )
+    return records
+
+
+def _resolved_roots(config) -> list[Path]:
+    """Resolve the spec roots from config, defaulting to
+    `<project-root>/docs/specs/` if none are configured."""
+    roots = getattr(config, "specs_roots", ()) or ()
+    if not roots:
+        roots = (config.project_root / "docs" / "specs",)
+    return [Path(r).expanduser().resolve() for r in roots]
