@@ -633,6 +633,13 @@ _SIMPLE_DISPATCH: dict[str, object] = {
     "memory-agent": cmd_memory_agent,
 }
 
+# Commands that should NOT trigger the first-run usage-ping consent prompt:
+# telemetry (the user is already managing it), plus meta/info/onboarding
+# commands where an unsolicited prompt would be intrusive.
+_CONSENT_SKIP_COMMANDS: frozenset[str] = frozenset(
+    {"telemetry", "setup", "version", "doctor", "auth"}
+)
+
 
 def _dispatch_subcommand(args, command: str) -> int:
     """Dispatch a command that has subcommands."""
@@ -688,6 +695,20 @@ def main(argv: list[str] | None = None) -> int:
     logging.basicConfig(level=logging.DEBUG if args.verbose else logging.WARNING)
 
     command = args.command
+
+    # First-run, interactive-only consent prompt for the anonymous usage
+    # ping — the opt-in lever for usage-signals. Asks at most once; silently
+    # no-ops in CI/pipes and for meta commands (telemetry/setup/version/etc.).
+    # Best-effort: it must NEVER block or break the CLI.
+    if command not in _CONSENT_SKIP_COMMANDS:
+        try:
+            from attune.telemetry.usage_ping import maybe_prompt_consent
+
+            maybe_prompt_consent()
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: a telemetry prompt failure can't be allowed to
+            # take down a normal command.
+            logging.getLogger(__name__).debug("usage-ping consent prompt failed", exc_info=True)
 
     # Subcommand dispatch (workflow, telemetry, provider, auth, costs)
     if command in _SUBCOMMAND_DISPATCH:

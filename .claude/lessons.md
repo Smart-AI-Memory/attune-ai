@@ -9354,3 +9354,197 @@ files.
   only the project alias. Context that hid this: no vitest config existed
   and the lone pre-existing test used relative imports, so `@/` had never
   been exercised under vitest until an API-route test imported `@/lib/db`.
+
+- **`mergeStateStatus=CLEAN` + all per-PR checks green ≠ safe to
+  merge when the validating job is KEYLESS and the real validation
+  is a separate scheduled/dispatched job.** Reviewing PR #917
+  (claude-agent-sdk 0.2.x bump, 2026-06-18): the PR showed
+  `draft=false`, `merge=CLEAN`, and 35 green checks — yet its OWN
+  `decisions.md` ended "**PR #917 is DRAFT — do not merge**" because
+  live-key `integration-auth` had failed systemically (every
+  real-API workflow raised `Claude Code returned an error result:
+  success`). The green rollup was structurally blind to it: every
+  per-PR check runs `ANTHROPIC_API_KEY: ""` (keyless-by-design — the
+  $1200-burn lesson), INCLUDING `integration (no-auth)`; the
+  live-key `integration-auth` job is NOT a per-PR/required check
+  (scheduled + budget-capped) so its failure never enters the
+  `mergeStateStatus` rollup. A pure dependency bump (6 files, no
+  code/adapter fix) that flips the resolved SDK is exactly the diff
+  whose risk lives entirely in the keyless-CI blind spot. Review
+  rules before merging any dep bump that touches the live-SDK/
+  real-key path: (1) don't read green per-PR CI or `CLEAN` as
+  merge-readiness — confirm a live-key validation EXISTS and read
+  its ACTUAL result (`gh run list --workflow=integration-auth.yml
+  --branch=<b>`), since it won't appear in `gh pr checks`; (2) read
+  the PR's spec `decisions.md` resume-gate before trusting the PR's
+  draft/ready state — the doc is the contract, the green checkmarks
+  are not; (3) re-draft a parked PR (`gh pr ready --undo`) so a
+  CLEAN state can't be auto-merged while it waits. Pairs with the
+  bundled-CLI is_error root-cause lesson above (same PR — the
+  mechanism) and "registered ≠ working / dogfood the live loop"
+  (mocked/keyless green is necessary-not-sufficient).
+
+- **Path-filtering a workflow that produces a REQUIRED status check —
+  gate the JOB's heavy STEPS, never skip the job**: to make
+  irrelevant-path PRs (e.g. `website/`-only) cheap without blocking the
+  merge, do NOT add `paths-ignore` to the trigger and do NOT job-level
+  `if:`-skip the job — a required check that never runs reports as
+  "missing" and blocks the PR forever (and skipped-required-check
+  semantics vary by GitHub version, so don't bet the merge gate on
+  them). Instead keep the job RUNNING and put `if: <signal> != 'true'`
+  on each expensive step (pip-install, pytest), plus a cheap
+  skip-notice step — the job completes green under its exact required
+  name so branch protection stays satisfied. This is the same
+  discipline `tests.yml`'s slim-matrix already uses (it keeps the
+  required `test (ubuntu-latest, 3.12)` lane running even when it drops
+  the rest). Implemented 2026-06-18 (#935): a `website_only` output on
+  the existing `changes` gate (`! grep -qvE '^website/'` over the PR
+  diff = every file under website/), consumed by the three full-suite
+  jobs (`test`, `clock-tz`, `coverage`) via step-level `if:`. Two gotchas:
+  (1) a downstream job only sees `needs.<job>.outputs.*` if that job is
+  in its OWN `needs:` list — `test` needed `[changes, setup-matrix]`,
+  not just `setup-matrix`, to read `needs.changes.outputs.website_only`;
+  (2) a PR that edits the workflow file itself can't exercise its own
+  new path-filter (the workflow-file change flips the signal to
+  full-run) — validating the cheap path needs a follow-up
+  trivial-website-only PR. Pairs with the existing "required Tests
+  checks stay MISSING after `gh pr edit --base`" lesson (same
+  missing-required-check failure mode, different trigger).
+
+- **The auto-merge-safe (tests/docs-only) class merges a PR on its
+  CURRENT diff within minutes — so opening a PR whose FIRST commit is
+  docs-only strands every follow-up commit you push afterward**: hit
+  2026-06-20 cutting 8.6.0. I committed a docs-only go-live receipt
+  (`decisions.md`), pushed, and opened PR #942 — then kept building on
+  the same branch (changelog, version bump, README fix, more commits).
+  The auto-merge-safe `workflow_run` job evaluated #942 at its
+  docs-only state and squash-merged it to `main` BEFORE the later
+  commits existed. Result: `main` got only the first commit; the
+  release prep was stranded on a branch whose PR was already
+  `state:MERGED` (closed). Symptom triad: (1) `gh pr view <n> --json
+  state` = `MERGED` at an early SHA while (2) `git ls-remote origin
+  <branch>` tip is AHEAD with unmerged commits, and (3) `gh pr view
+  --json headRefOid` ≠ the branch tip (the PR froze at the squashed
+  SHA; new pushes don't reattach to a closed PR). Prevention: if you
+  intend to keep adding commits — ESPECIALLY mixing a docs commit
+  first then code — either open the PR as a **draft**, or don't open
+  it until the full diff is OUT of the auto-merge class (touches
+  `src/`/packaging), or land the docs receipt as its own deliberate
+  PR. Recovery (clean, conflict-free): branch fresh off `origin/main`,
+  `git cherry-pick` only the post-merge commits — the already-merged
+  first commit's content is on `main` as the squash, so its diff drops
+  out of `origin/main..<tip>` and the cherry-picks apply with no
+  D8-style duplication; open a NEW PR (you can't reopen the merged
+  one). Verify the recovery branch's `git diff origin/main..HEAD
+  --stat` is EXACTLY the intended prep before pushing. Pairs with the
+  existing "auto-merge-safe merge job races itself when ≥2 in-class
+  PRs go green" lesson (same job, different failure mode — there it's
+  a base-modified race; here it's an early-merge-strands-followups
+  trap) and the "squash-merging a base auto-closes stacked PRs; open a
+  fresh PR" lesson.
+
+- **A green CI/test suite does NOT prove the DEFAULT install works — CI
+  installs the dev/ops extras, so extras-only deps (fastapi/uvicorn/
+  jinja2) are ALWAYS present and mask base-CLI import crashes that hit
+  every real `pip install <pkg>` user**: 8.5.0 shipped with `attune
+  --help` crashing `ModuleNotFoundError: No module named 'fastapi'` on
+  every default install — a base-CLI import path
+  (`cli_minimal` -> `cli_commands.curator` ->
+  `curator.sources.specs`) imported `SpecRecord` / `_list_specs_in_root`
+  from the FastAPI web-route module `attune.ops.routes.specs`. 17k+
+  tests green, CI green, zero detection, because CI's env always has
+  fastapi. Caught only by **dogfooding the SHIPPED WHEEL in a clean
+  no-extras venv** during 8.6.0 release QA (`attune --help` -> exit 1).
+  Durable rules: (1) **before every release**, build the wheel,
+  `pip install` it BARE (no extras) in a fresh venv, and run the entry
+  point (`<cli> --help` / `<cli> version`) — the shipped-artifact smoke
+  the unit suite structurally cannot do; (2) ship a **unit regression
+  guard** that imports the base CLI with the extras-only deps blocked
+  (a `sys.meta_path` finder raising on `import fastapi`, in a
+  subprocess so the block can't leak into the rest of the suite) — runs
+  in the normal suite, catches the class without a clean venv; (3) keep
+  **pure data/logic in framework-free modules** so the base layer never
+  transitively imports the web/optional stack — the fix split the pure
+  spec-listing data (`SpecRecord`, `_list_specs_in_root`, helpers) into
+  a fastapi-free `attune.ops.specs_data`, with the route module
+  re-exporting for back-compat. Corollary worth stating because it's
+  tempting to claim otherwise: **usage telemetry canNOT catch this
+  class** — a startup crash emits ZERO telemetry (the process dies
+  before the ping runs), so "silence" is indistinguishable from "no
+  users"; the usage ping is a usage-understanding tool, not an error
+  monitor. Pairs with "registered != working — dogfood the live loop"
+  (same discipline, artifact surface) and the "worktree venv lacks
+  [ops] deps (fastapi/uvicorn/jinja2)" lesson (same extras boundary,
+  different surface — there it's a dev-env ModuleNotFoundError, here
+  it's a shipped one).
+
+- **Adding a new CI job to `tests.yml` — two gotchas before it can be a
+  REQUIRED check, plus a "broad failure that's actually one meta-test"
+  diagnostic**: hit 2026-06-20 adding the `default-install-smoke` gate
+  (PR #948). (1) **Every `setup-python` step must set `cache: 'pip'`** —
+  the `tests/unit/ci/test_workflow_yaml.py::TestPipCaching::
+  test_setup_python_steps_have_pip_cache` drift guard asserts it across
+  ALL workflow files. The new job omitted it, so that ONE meta-test
+  failed — and because it runs inside the full unit suite, it fanned out
+  as a red `test` lane on EVERY OS/python combo (ubuntu 3.10-3.13, macos
+  3.12-3.13) AND both `clock-tz` lanes. It LOOKED like "8 failures" but
+  was `1 failed / 22131 passed` — the same meta-test failing everywhere.
+  **Diagnostic**: when a broad multi-lane test failure appears right
+  after a CI-ONLY change (a workflow job + a shell script, zero Python/
+  test edits), DON'T assert "can't be mine" — read the actual assertion
+  (`gh api .../actions/jobs/<id>/logs | grep -E 'FAILED|assert'`). A
+  single meta-test (YAML-lint, registration drift, version-consistency)
+  fans out identically across lanes and masquerades as a regression.
+  (2) **A job destined to be REQUIRED should be self-contained — no
+  `needs:`** — if it `needs: [build]` and build fails, the job SKIPS,
+  and a *skipped required check BLOCKS every merge* (GitHub treats a
+  required-but-skipped context as unsatisfied). `default-install-smoke`
+  builds its OWN wheel instead of reusing the `build` job's artifact for
+  exactly this reason. To make it required: confirm the check name has
+  run once, then `PATCH .../branches/main/protection/required_status_
+  checks` appending `{context, app_id}` (app_id 15368 = GitHub Actions,
+  57789 = CodeQL) to the EXISTING `checks` array (read-modify-write;
+  don't drop the other 7). Pairs with "advisory CI lanes don't gate"
+  (Windows/macOS aren't required, so merge on required-green) and the
+  verify-first-on-CI lessons (read the failure before theorizing).
+
+- **A user-facing prompt/UX wired only into `cli_minimal.main()`
+  silently misses the plugin/MCP channel — the DOMINANT audience —
+  so "shipped" ≠ "reaches users"**: 8.6.0 shipped the opt-in usage
+  ping; 8.6.1 added a first-run consent prompt — but wired ONLY into
+  `cli_minimal.main()` (gated further behind `_is_interactive()` =
+  both stdin AND stdout TTYs). Patrick asked "why wasn't I prompted?"
+  The answer: he reaches attune through the Claude Code plugin + MCP
+  tools (`mcp__attune-ai__*`), which never call `main()`; and even an
+  agent shelling out to `attune <cmd>` fails the dual-TTY check. So
+  plugin users GENERATED usage records (`usage.jsonl`) yet were never
+  offered the choice — the exact "nobody was told" gap, persisting for
+  the larger audience while looking solved. **Rule**: when adding any
+  first-run / interactive / consent / onboarding UX, enumerate ALL
+  entry channels before declaring done — attune has at least three
+  (the `attune` CLI `main()`, plugin SessionStart hooks, the MCP stdio
+  server) — and cover each. Grep the single call site
+  (`grep -rn maybe_prompt_consent src/`) to see how narrow the reach
+  is. **Corollary (the fix pattern)**: hooks run as piped subprocesses
+  with no TTY, so a hook CANNOT prompt — it emits a SessionStart
+  context block instructing Claude to ask via `AskUserQuestion`
+  (delegated ask, not a prompt), then persists the answer through the
+  existing CLI commands. Shipped as
+  `plugin/hooks/usage_consent_notice.py` in 8.6.2 (usage-signals D12,
+  PR #950). Pairs with "Registered ≠ working — dogfood the live loop"
+  (same family: wired in one place ≠ reaches the path users actually
+  take) and "Entry-point-resolved backends resolve differently per
+  env."
+
+- **`gh api .../pending_deployments` needs `-F environment_ids[]=<int>`
+  (typed), not `-f` (string) — `-f` gives HTTP 422 "not an integer"**:
+  approving a `pypi` environment deployment gate via the API,
+  `-f "environment_ids[]=11747548925"` fails with
+  `422 Invalid request … "11747548925" is not an integer` because
+  `gh api -f` always sends strings and the API wants an integer array.
+  Use capital `-F` (typed: numbers stay numbers) for the env id, keep
+  `-f` for `state=approved` / `comment=…`. Get the env id from
+  `pending_deployments --jq '.[0].environment.id'` and confirm
+  `current_user_can_approve`. One-call approval is classifier-safe
+  (a single command, not a bundled destructive script). Part of the
+  release-execute step-12 publish gate.

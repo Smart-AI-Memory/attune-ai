@@ -363,3 +363,34 @@ class TestMainAuthRouting:
         with ctx:
             assert main(["auth", "setup"]) == 0
         mock_fn.assert_called_once()
+
+
+class TestMainConsentPrompt:
+    """main() fires the first-run usage-ping consent prompt (best-effort)."""
+
+    def test_prompt_invoked_for_non_meta_command(self) -> None:
+        ctx, mock_fn = _mock_simple("validate")
+        with ctx, patch("attune.telemetry.usage_ping.maybe_prompt_consent") as prompt:
+            assert main(["validate"]) == 0
+        prompt.assert_called_once()
+        mock_fn.assert_called_once()
+
+    def test_prompt_skipped_for_meta_command(self) -> None:
+        # "version" is in _CONSENT_SKIP_COMMANDS — no prompt.
+        ctx, mock_fn = _mock_simple("version")
+        with ctx, patch("attune.telemetry.usage_ping.maybe_prompt_consent") as prompt:
+            assert main(["version"]) == 0
+        prompt.assert_not_called()
+
+    def test_prompt_failure_never_breaks_the_cli(self) -> None:
+        # A raising consent prompt must be swallowed; the command still runs.
+        ctx, mock_fn = _mock_simple("validate")
+        with (
+            ctx,
+            patch(
+                "attune.telemetry.usage_ping.maybe_prompt_consent",
+                side_effect=RuntimeError("boom"),
+            ),
+        ):
+            assert main(["validate"]) == 0
+        mock_fn.assert_called_once()

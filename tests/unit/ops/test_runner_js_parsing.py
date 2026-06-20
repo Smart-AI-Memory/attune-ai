@@ -35,23 +35,31 @@ def test_runner_js_exists():
     assert _RUNNER_JS.is_file(), f"missing {_RUNNER_JS}"
 
 
-def test_workflow_names_match_canonical_list(runner_js_text):
-    """JS WORKFLOW_NAMES array must include every workflow exposed by
-    `attune.ops.data.list_workflows()` — otherwise mentions in workflow
-    output wouldn't get the pill treatment.
-    """
-    pytest.importorskip("fastapi")  # ops imports need this
-    from attune.ops import data
+def test_workflow_names_array_is_generated_and_in_sync():
+    """runner.js WORKFLOW_NAMES must equal a fresh generation from
+    `attune.ops.data.list_workflows()`.
 
-    canonical = {w.name for w in data.list_workflows()}
-    # Extract the JS array literal
-    m = re.search(r"WORKFLOW_NAMES\s*=\s*\[(.*?)\]", runner_js_text, re.DOTALL)
-    assert m, "WORKFLOW_NAMES array not found in runner.js"
-    js_names = set(re.findall(r'"([a-z][a-z0-9-]+)"', m.group(1)))
-    missing = canonical - js_names
-    assert not missing, (
-        f"Canonical workflow names missing from runner.js WORKFLOW_NAMES: {sorted(missing)}. "
-        "Update the array in runner.js so mentions of these workflows render as pills."
+    The array is a GENERATED artifact (drift-guards-to-generators
+    Conversion 2): `scripts/sync_runner_workflow_names.py` writes it from
+    the canonical list. This inverts the old drift guard — instead of
+    asserting "no canonical name is missing" and leaving a human to
+    hand-edit, it asserts the whole artifact matches what the generator
+    would produce and the failure message names the command to run.
+    """
+    pytest.importorskip("fastapi")  # generator imports attune.ops.data
+    import importlib.util
+
+    script = Path(__file__).resolve().parents[3] / "scripts" / "sync_runner_workflow_names.py"
+    spec = importlib.util.spec_from_file_location("_sync_runner_wf", script)
+    assert spec is not None and spec.loader is not None
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+
+    rc = mod.apply(_RUNNER_JS, check=True)
+    assert rc == 0, (
+        "runner.js WORKFLOW_NAMES is out of sync with "
+        "attune.ops.data.list_workflows(). "
+        "Run: python scripts/sync_runner_workflow_names.py"
     )
 
 

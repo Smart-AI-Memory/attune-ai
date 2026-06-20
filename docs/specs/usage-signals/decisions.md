@@ -319,10 +319,146 @@ catch. (Follow-up PR off main.)
 
 **Remaining before this is end-to-end live (deploy-time, owner: Patrick):**
 
-1. Apply the `usage_events` DDL to the prod DB (re-run the
-   admin-protected `POST /api/db/init`, or apply the table directly).
-2. Deploy the website so `/api/usage` is live, THEN ship the attune-ai
-   release carrying `DEFAULT_ENDPOINT` (client swallows errors if the
-   order slips, but endpoint-first is cleanest).
+1. ~~Apply the `usage_events` DDL to the prod DB~~ — DONE (table live).
+2. ~~Deploy the website so `/api/usage` is live~~ — DONE (see D8). THEN
+   ship the attune-ai release carrying `DEFAULT_ENDPOINT` (client
+   swallows errors if the order slips, but endpoint-first is cleanest)
+   — still pending the next PyPI release.
 3. Phase 2c — dashboard "Reach" panel (R3) reading `usage_events`.
 4. R5 telemetry watchdog + R6 spend alarm (separate PRs).
+
+## D8 — Phase 2b end-to-end live, verified (2026-06-20)
+
+The deploy-time blocker (D7 item 1+2) is cleared: `DATABASE_URL` is set
+in the **website** project's Production env and a redeploy since the
+06-16 pause picked it up. Verified directly against the live surface:
+
+- `POST https://smartaimemory.com/api/usage/` with a valid schema-v1
+  batch → **HTTP 204** (a missing/broken `DATABASE_URL` would 500 in
+  the `recordUsageEvents()` catch). Confirmed in Vercel runtime logs:
+  `POST /api/usage/ 204` on production deploy
+  `dpl_AT9f3wQbdhTZSgyDRUnoPRdjaZ9s` (commit `ff9472e4`, current `main`).
+
+So the ingest chain — client → validate → rate-limit → drop envelope →
+insert → 204 — is proven live end-to-end. The ONLY thing gating real
+signal now is the next attune-ai PyPI release shipping the
+`DEFAULT_ENDPOINT` client (item 2, above).
+
+**Verification test row left in place.** The probe inserted one sentinel
+row (`install_id = '00000000-0000-4000-8000-000000000000'`,
+`version = '0.0.0-verify'`, `event = 'workflow.verification_test'`).
+Deleting it now would require pulling the full production env (Stripe
+keys, `ADMIN_SECRET`, the PII-DB connection string) to local disk to
+reach the DB for one harmless, trivially-filterable row — not worth the
+secret exposure. It is excluded by any real query
+(`WHERE version <> '0.0.0-verify'`). Drop it from the Neon console when
+convenient:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id = '00000000-0000-4000-8000-000000000000';
+```
+
+**Second sentinel row (2026-06-20 release dogfood, D10).** Pre-release
+readiness dogfood transmitted through the *shipped 8.6.0 wheel* (built,
+installed in a clean venv) to confirm the real client network path works
+end-to-end against the live endpoint — server logged `204`. It inserted
+one more sentinel row (`install_id =
+'11111111-1111-4111-8111-111111111111'`, `event =
+'workflow.release_dogfood_860'`). Drop both together:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id IN (
+  '00000000-0000-4000-8000-000000000000',
+  '11111111-1111-4111-8111-111111111111'
+);
+```
+
+## D9 — default stays OFF; first-run consent prompt is the opt-in lever (2026-06-20)
+
+Question raised at release time: to maximize signal, should the usage
+ping default to ON (`ATTUNE_USAGE_PING=1` / config-enabled by default)?
+
+**Decision: No. The ping stays default-OFF.** Silently defaulting it ON
+would contradict the stance already shipped in the README, SECURITY.md,
+CHANGELOG, and R2 ("ships OFF, requires explicit consent, privacy by
+construction"), and developers are the audience most hostile to surprise
+telemetry — the reputational downside of default-ON dwarfs the signal
+upside, and it is a one-way door. It also wouldn't yield much: the
+privacy-conscious slice opts out immediately, leaving a noisy
+self-selected sample.
+
+**The lever instead:** a first-run consent prompt (ask once, explicitly,
+default No) — the Homebrew / .NET CLI / Next.js-notice pattern. An
+explicit friendly ask converts far better than passive opt-in (~0) while
+keeping consent intact. Tracked as a Phase 2c follow-up, NOT bundled
+into the 8.6.0 release; the client ships default-OFF as already built.
+
+No copy changes needed — existing telemetry text remains accurate.
+
+## D11 — first-run consent prompt shipped (the D9 opt-in lever) (2026-06-20, 8.6.1)
+
+D9 kept the ping default-OFF and named a first-run consent prompt as the
+opt-in lever, deferred to a follow-up. After 8.6.0 shipped the client,
+the gap was concrete: nothing *asked*, so opt-in ≈ 0 (users won't run
+`attune telemetry enable` for a feature they were never told about).
+
+**Shipped in 8.6.1:** `usage_ping.maybe_prompt_consent()`, called from
+`cli_minimal.main()` before dispatch. It asks once, default-No. Design:
+
+- **Interactive only.** Gated on `sys.stdin.isatty() AND sys.stdout.isatty()`
+  (`_is_interactive`) — never hangs or nags CI / pipes / scripts.
+- **Asks at most once.** Gated on `TelemetryConfig.usage_ping_consented`
+  (the field already existed). "Yes" → `enable()`; anything else →
+  `disable()`. Both set `consented=True`, so it never re-appears.
+- **Respects prior signals.** Skips entirely (and does NOT record
+  consent) when `DO_NOT_TRACK` or `ATTUNE_USAGE_PING` is set — those are
+  already an explicit choice.
+- **Skips meta commands** (`telemetry`/`setup`/`version`/`doctor`/`auth`)
+  so the prompt fires on real first use, not while managing telemetry.
+- **Transient skips don't burn the one-shot.** Non-interactive runs and
+  an aborted prompt (EOF/Ctrl-C) leave `consented=False`, so a later
+  interactive run can still ask.
+- **Best-effort.** Never raises into the CLI (config-load and persist
+  failures are swallowed) — and it's pure stdlib, so it stays out of the
+  [ops]/fastapi base-CLI crash class (#945).
+
+Default stays OFF; this only adds the *ask*. Wording reviewed and
+approved by Patrick. Remaining: Phase 2c Reach dashboard, R5/R6.
+
+## D12 — consent ask also reaches the plugin/MCP channel (2026-06-20)
+
+D11's prompt fires only from `cli_minimal.main()` in an interactive
+terminal. But the dominant channel is the **Claude Code plugin + MCP
+tools**, which never call `main()` — yet their workflows still write
+local `usage.jsonl` records. So plugin users generate the data but were
+never offered the choice: the exact "nobody was ever told" gap D11 closed
+for the CLI persisted verbatim for the larger audience.
+
+**Constraint:** hooks run as piped subprocesses (no TTY) and the MCP
+server is a JSON-RPC stdio server, so neither can reuse D11's
+`input()`-based prompt — `_is_interactive()` would always skip.
+
+**Shipped:** a SessionStart hook `plugin/hooks/usage_consent_notice.py`
+that surfaces a short `## Anonymous usage sharing` block to context,
+asking **Claude** to put the choice to the user via `AskUserQuestion`
+(the Socratic surface D9 always intended). The user's answer is persisted
+by the existing `attune telemetry enable` / `disable` commands — no new
+persistence path. Design:
+
+- **Delegated ask, not a prompt.** The hook can't prompt; it instructs
+  Claude to ask. `AskUserQuestion` is the native conversational surface
+  and matches the project's core Socratic rule.
+- **Quiet by default.** Emits nothing once `usage_ping_consented` is set
+  (opt-in OR opt-out), when `DO_NOT_TRACK`/`ATTUNE_USAGE_PING` is set,
+  on the `compact` source, or when `ATTUNE_CONSENT_NOTICE` is falsey.
+- **Anti-nag cap.** A `~/.attune/telemetry/.consent_notice_count` marker
+  caps the notice at 3 sessions, so an ignored ask stops nagging instead
+  of reappearing forever. Consent itself still lives only in the config.
+- **Best-effort, pure stdlib.** Reads `~/.attune/config.json` directly;
+  never raises into the session; carries the `_sdk_gate` so it never
+  poisons SDK-subprocess streams.
+
+Default stays OFF; this only widens *where the ask reaches*. Remaining:
+Phase 2c Reach dashboard, R5/R6.

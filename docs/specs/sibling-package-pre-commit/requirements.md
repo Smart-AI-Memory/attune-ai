@@ -1,8 +1,10 @@
 # Spec: Sibling-Package Pre-commit Parity
 
-**Status**: approved
+**Status**: ✓ complete 2026-06-20
 **Created**: 2026-05-12
 **Approved**: 2026-05-12
+**Completed**: 2026-06-20 — all four siblings shipped (attune-rag #187,
+attune-author #74 + #75, attune-help #19, attune-gui #78)
 **Origin**: Daily briefing carryover item — attune-ai ships a
 mature `.pre-commit-config.yaml` (black, ruff, bandit, detect-
 secrets, custom freshness checks). Its four sibling packages

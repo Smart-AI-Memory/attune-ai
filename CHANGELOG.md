@@ -9,7 +9,53 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.102). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857) against 0.2.102. See `docs/specs/claude-agent-sdk-0-2-migration/`.
+- **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.105). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857). Locked at 0.2.105 rather than 0.2.102 because 0.2.102's bundled Claude Code CLI (2.1.178) emitted `is_error:true` on a `success` result and broke the auth integration loop; 0.2.105 bundles CLI 2.1.183 which returns `is_error:false`. See `docs/specs/claude-agent-sdk-0-2-migration/`.
+
+## [8.6.2] — 2026-06-20
+
+Completes the consent story 8.6.1 started. 8.6.1 added the first-run
+ask but wired it only to the interactive CLI — the channel most users
+never touch. This patch extends the ask to the Claude Code plugin / MCP
+path, so the people actually generating usage data are the ones offered
+the choice. Default stays OFF.
+
+### Added
+
+- **Consent ask now reaches the plugin/MCP channel.** The 8.6.1
+  first-run prompt fired only from the interactive `attune` CLI — but
+  most users reach attune through the Claude Code plugin and MCP tools,
+  which never hit that path while still recording local usage. A new
+  SessionStart hook (`usage_consent_notice.py`) closes that gap: it
+  surfaces a one-time notice asking Claude to put the choice to you via
+  the normal `AskUserQuestion` flow, then persists your answer with the
+  existing `attune telemetry enable` / `disable`. Still default-OFF,
+  silent once you've chosen, suppressed by `DO_NOT_TRACK` /
+  `ATTUNE_USAGE_PING`, disablable with `ATTUNE_CONSENT_NOTICE=0`, and
+  capped at 3 sessions so it never nags.
+
+## [8.6.1] — 2026-06-20
+
+### Added
+
+- **First-run consent prompt for anonymous usage sharing.** 8.6.0
+  shipped the opt-in usage ping but never *asked*, so realistically no
+  one turned it on. The CLI now asks once, on first interactive use:
+  whether to share anonymous usage (workflow names + version + OS +
+  Python). It is **default-No** and asks **only in an interactive
+  terminal** — it silently no-ops in CI, pipes, and scripts, and never
+  prompts when `DO_NOT_TRACK` or `ATTUNE_USAGE_PING` is set, or for the
+  `telemetry`/`setup`/`version`/`doctor`/`auth` commands. Either answer
+  is remembered, so it asks at most once. You can still manage it
+  anytime with `attune telemetry enable` / `disable`.
+
+## [8.6.0] — 2026-06-20
+
+Usage signals come online, and the agent roster grows. The headline:
+the opt-in anonymous usage ping is live end-to-end, so the project can
+finally see which workflows external users actually run — strictly by
+consent, default-OFF. Plus five new specialist sub-agents and a batch
+of correctness fixes (UTC consistency, Windows stability, graceful
+degradation without optional extras).
 
 ### Added
 
@@ -26,7 +72,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   status|enable|disable`; override per-run with `ATTUNE_USAGE_PING=0`
   or `=1`; rotate your anonymous install id any time. See the
   **Privacy & Telemetry** section of the README and SECURITY.md for
-  the full payload disclosure.
+  the full payload disclosure. (#912, #920, #923)
+- **Five new specialist sub-agents.** `release-prep-auditor`,
+  `security-reviewer`, and `refactor-planner` for release and review
+  workflows; `help-content-explainer` for documentation; and
+  `spec-author`, which runs the spec-driven requirements interview.
+  (#925, #926, #927)
+
+### Fixed
+
+- **The `attune` CLI no longer crashes on a default install.** Without
+  the `[ops]` extra (the common `pip install attune-ai`), the base CLI
+  imported FastAPI transitively — the curator's spec source pulled
+  `SpecRecord` / `_list_specs_in_root` from the web-route module — so
+  `attune --help` (and every command) died with
+  `ModuleNotFoundError: No module named 'fastapi'`. The pure
+  spec-listing data layer moved to a framework-free
+  `attune.ops.specs_data` module; a regression guard now imports the
+  base CLI with FastAPI blocked so this can't silently return.
+- **Consistent UTC time handling.** Two clock-mix sites and
+  bulletin-board rotation now use UTC instead of local time, fixing
+  off-by-a-day behavior across time zones. (#867, #868)
+- **Windows stability.** The asyncio event loop now uses the Proactor
+  policy on Windows, fixing subprocess and IO failures. (#847)
+- **Graceful degradation without optional extras.** OTEL monitoring no
+  longer crashes when the `[otel]` extra isn't installed, and the
+  curator shows clean offline messages instead of raw API errors.
+  (#796, #838)
+- **Encryption is no longer silently disabled** during certain serial
+  memory runs (cryptography pinned once at import). (#835)
+- **Faster small project scans.** The project index skips
+  multiprocessing overhead for tiny scans. (#930)
 
 ## [8.5.0] — 2026-06-12
 

@@ -1,7 +1,8 @@
 # CI matrix right-sizing — skip advisory lanes on test/docs-only diffs
 
-**Status:** building — D1–D3 decided 2026-06-13 (see decisions.md);
-workflow implemented, slim-path proof owed post-merge
+**Status:** complete — D1–D3 decided 2026-06-13, workflow implemented;
+slim-path proof discharged + required-lane regression guard landed
+2026-06-19 via PR #937 (see decisions.md)
 **Opened:** 2026-06-13
 **Layer:** attune-ai (CI / `.github/workflows/tests.yml`)
 **Owner:** Patrick + agent

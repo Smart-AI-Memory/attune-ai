@@ -437,3 +437,66 @@ class TestHangDumpCapture:
             f"tests.yml:{job_id} hang-dumps upload must run with "
             f"`if: always()` (else it is skipped when the job times out)."
         )
+
+
+# ===========================================================================
+# 10. Dynamic matrix required-lane invariant (ci-matrix-right-sizing)
+# ===========================================================================
+
+
+class TestDynamicMatrixRequiredLane:
+    """Every matrix variant must keep the required ``ubuntu-3.12`` lane.
+
+    The ``setup-matrix`` job emits a FULL matrix for source/packaging
+    diffs and a SLIM matrix for tests/docs-only diffs (D1/D2 in
+    docs/specs/ci-matrix-right-sizing/). GitHub matches required status
+    checks by job name *including* matrix params, so the merge gate is the
+    exact lane ``test (ubuntu-latest, 3.12)``. If ANY variant of the
+    matrix drops ``ubuntu-latest`` or ``3.12``, that variant never emits
+    the required check name → the PR is blocked forever ("required check
+    stays missing"). This guard parses both JSON variants straight out of
+    the workflow and asserts the cartesian product yields the required
+    lane in every case.
+    """
+
+    REQUIRED_OS = "ubuntu-latest"
+    REQUIRED_PY = "3.12"
+
+    @staticmethod
+    def _matrix_variants() -> list[dict]:
+        """Extract every ``matrix={...}`` JSON blob from setup-matrix."""
+        import json
+
+        job = ALL_WORKFLOWS["tests.yml"]["jobs"]["setup-matrix"]
+        blobs: list[dict] = []
+        for step in job.get("steps", []):
+            run_cmd = step.get("run", "") or ""
+            for match in re.finditer(r"matrix=(\{.*?\})", run_cmd):
+                blobs.append(json.loads(match.group(1)))
+        return blobs
+
+    def test_both_matrix_variants_are_emitted(self):
+        """setup-matrix must define exactly the full and slim variants."""
+        variants = self._matrix_variants()
+        assert len(variants) == 2, (
+            "Expected 2 matrix variants (full + slim) in setup-matrix; "
+            f"found {len(variants)}. The dynamic-matrix design "
+            "(ci-matrix-right-sizing) emits one JSON per src=true/false branch."
+        )
+
+    @pytest.mark.parametrize("variant_idx", [0, 1])
+    def test_variant_keeps_required_lane(self, variant_idx):
+        """Each matrix variant must include the required ubuntu-3.12 lane."""
+        variant = self._matrix_variants()[variant_idx]
+        oses = variant.get("os", [])
+        pys = [str(p) for p in variant.get("python-version", [])]
+        assert self.REQUIRED_OS in oses, (
+            f"matrix variant {variant} drops {self.REQUIRED_OS!r} — the "
+            f"required check `test ({self.REQUIRED_OS}, {self.REQUIRED_PY})` "
+            "would never emit and the PR would be blocked forever."
+        )
+        assert self.REQUIRED_PY in pys, (
+            f"matrix variant {variant} drops Python {self.REQUIRED_PY!r} — the "
+            f"required check `test ({self.REQUIRED_OS}, {self.REQUIRED_PY})` "
+            "would never emit and the PR would be blocked forever."
+        )

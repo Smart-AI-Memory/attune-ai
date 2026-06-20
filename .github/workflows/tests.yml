@@ -27,6 +27,7 @@ jobs:
     timeout-minutes: 5
     outputs:
       src: ${{ steps.filter.outputs.src }}
+      website_only: ${{ steps.filter.outputs.website_only }}
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
       with:
@@ -43,12 +44,14 @@ jobs:
         if [ "$EVENT" != "pull_request" ] || [ -z "${BASE_REF:-}" ]; then
           echo "event=$EVENT -> full matrix"
           echo "src=true" >> "$GITHUB_OUTPUT"
+          echo "website_only=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         git fetch --no-tags --quiet origin "$BASE_REF" || true
         if ! CHANGED=$(git diff --name-only "origin/$BASE_REF...HEAD"); then
           echo "diff failed -> full matrix (fail-safe)"
           echo "src=true" >> "$GITHUB_OUTPUT"
+          echo "website_only=false" >> "$GITHUB_OUTPUT"
           exit 0
         fi
         echo "changed files:"; printf '%s\n' "$CHANGED"
@@ -60,6 +63,18 @@ jobs:
         else
           echo "src=false (tests/docs-only) -> slim matrix"
           echo "src=false" >> "$GITHUB_OUTPUT"
+        fi
+        # website_only (D-website): if EVERY changed file is under website/,
+        # the Python suite cannot be affected — the full-suite jobs (test,
+        # clock-tz, coverage) no-op their pip-install + pytest steps. The
+        # jobs still RUN and report green, so the required checks
+        # (test (ubuntu-latest, 3.12), coverage) are never "missing" and the
+        # PR is not blocked — same discipline as the slim matrix above.
+        if [ -n "$CHANGED" ] && ! printf '%s\n' "$CHANGED" | grep -qvE '^website/'; then
+          echo "website_only=true (only website/ touched) -> skip Python suite"
+          echo "website_only=true" >> "$GITHUB_OUTPUT"
+        else
+          echo "website_only=false" >> "$GITHUB_OUTPUT"
         fi
 
   # Emit the test matrix JSON. CRITICAL: the slim matrix MUST keep the
@@ -86,7 +101,7 @@ jobs:
         fi
 
   test:
-    needs: setup-matrix
+    needs: [changes, setup-matrix]
     # TEMPORARY (2026-06-07): ubuntu matrix entries run on default
     # GitHub-hosted `ubuntu-latest` runners. The 8-core/32GB larger
     # runner (`ubuntu-8core-or-linux-32gb`) was de-provisioned, which left
@@ -118,12 +133,18 @@ jobs:
         python-version: ${{ matrix.python-version }}
         cache: 'pip'
 
+    - name: Skip notice (website-only PR)
+      if: needs.changes.outputs.website_only == 'true'
+      run: echo "website-only change — Python suite skipped; reporting green for the required check."
+
     - name: Install dependencies
+      if: needs.changes.outputs.website_only != 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
     - name: Run tests
+      if: needs.changes.outputs.website_only != 'true'
       # --timeout=60 + --timeout-method=thread: names a hanging test (with a
       # stack trace) instead of letting it silently kill the xdist worker.
       # The `thread` method is required cross-platform (`signal`/SIGALRM is
@@ -156,6 +177,7 @@ jobs:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Run security and workflow tests
+      if: needs.changes.outputs.website_only != 'true'
       run: pytest tests/unit/memory/test_long_term_security.py tests/unit/scanner/test_file_traversal.py tests/unit/workflows/test_workflow_execution.py -v --tb=short
 
     # ci-runner-hang Phase 2: the conftest watchdog writes each process's
@@ -210,6 +232,7 @@ jobs:
     # design. NOT a required check yet — promote in branch protection once
     # it has a few green runs (needs the GitHub-Actions app_id; tracked
     # separately, deliberately out of scope for this PR).
+    needs: changes
     runs-on: ubuntu-latest
     timeout-minutes: 30
     strategy:
@@ -219,18 +242,25 @@ jobs:
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+    - name: Skip notice (website-only PR)
+      if: needs.changes.outputs.website_only == 'true'
+      run: echo "website-only change — hostile-clock suite skipped."
+
     - name: Set up Python 3.12
+      if: needs.changes.outputs.website_only != 'true'
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.12'
         cache: 'pip'
 
     - name: Install dependencies
+      if: needs.changes.outputs.website_only != 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
 
     - name: Run unit suite under ${{ matrix.tz }}
+      if: needs.changes.outputs.website_only != 'true'
       shell: bash
       run: |
         python -c "import time, datetime; print('TZ=', time.tzname, 'utcoffset=', datetime.datetime.now().astimezone().utcoffset())"
@@ -255,16 +285,23 @@ jobs:
     # pip-install/badge/codecov overhead (was 25, pre-retry). Stays well
     # under the guard's 75-min ceiling.
     timeout-minutes: 40
+    needs: changes
     steps:
     - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
 
+    - name: Skip notice (website-only PR)
+      if: needs.changes.outputs.website_only == 'true'
+      run: echo "website-only change — coverage suite skipped; reporting green for the required check."
+
     - name: Set up Python 3.11
+      if: needs.changes.outputs.website_only != 'true'
       uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
       with:
         python-version: '3.11'
         cache: 'pip'
 
     - name: Install dependencies
+      if: needs.changes.outputs.website_only != 'true'
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
@@ -273,6 +310,7 @@ jobs:
     # drifts far below the real collected count, or if coverage regressed to a
     # hardcoded value instead of the dynamic Codecov badge. Cheap (collect-only).
     - name: Check README badge freshness
+      if: needs.changes.outputs.website_only != 'true'
       run: python scripts/check_badge_freshness.py
 
     - name: Run tests with coverage
@@ -285,6 +323,7 @@ jobs:
       # make a red PR pass — a drop is a signal to add tests, not slacken the
       # gate. (pyproject's fail_under stays 85 as the absolute floor for
       # ad-hoc/partial local runs whose --cov scope differs from CI's.)
+      if: needs.changes.outputs.website_only != 'true'
       run: |
         # The runner-hang that once required a 14m-timeout + 2× auto-retry
         # wrapper on this lane was root-caused and fixed in #930 (a fork-based
@@ -298,11 +337,13 @@ jobs:
         ANTHROPIC_API_KEY: ""  # keyless by design — live-key CI burned $1200+ on 2026-06-10 (mismarked tests make real API calls when keyed); the real secret is for integration-auth.yml + deliberate dispatches ONLY
 
     - name: Track per-file test results
+      if: needs.changes.outputs.website_only != 'true'
       run: |
         python scripts/track_file_tests.py --coverage coverage.xml --limit 50
       continue-on-error: true
 
     - name: Upload file test tracking data
+      if: needs.changes.outputs.website_only != 'true'
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
       with:
         name: file-test-tracking
@@ -310,6 +351,7 @@ jobs:
       continue-on-error: true
 
     - name: Upload coverage to Codecov
+      if: needs.changes.outputs.website_only != 'true'
       uses: codecov/codecov-action@fb8b3582c8e4def4969c97caa2f19720cb33a72f # v7.0.0
       with:
         files: ./coverage.xml
@@ -486,3 +528,30 @@ jobs:
       with:
         name: dist-packages
         path: dist/
+
+  default-install-smoke:
+    # REQUIRED gate. A default install (`pip install attune-ai`, no extras)
+    # must boot the base CLI. Catches the class of bug where the base CLI
+    # transitively imports an extras-only dependency (e.g. fastapi from the
+    # [ops] extra) and crashes on startup — invisible to the rest of the
+    # suite, which always installs the extras. 8.5.0 shipped exactly this
+    # (attune --help -> ModuleNotFoundError: fastapi). Self-contained (it
+    # builds its own wheel) so it never skips on an upstream failure — a
+    # skipped required check would block every merge.
+    name: default-install-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.11'
+        cache: 'pip'
+
+    - name: Install build tooling
+      run: python -m pip install --upgrade pip build
+
+    - name: Smoke the default install (no extras)
+      run: bash scripts/smoke_default_install.sh
