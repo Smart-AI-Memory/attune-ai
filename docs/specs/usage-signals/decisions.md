@@ -359,6 +359,22 @@ DELETE FROM usage_events
 WHERE install_id = '00000000-0000-4000-8000-000000000000';
 ```
 
+**Second sentinel row (2026-06-20 release dogfood, D10).** Pre-release
+readiness dogfood transmitted through the *shipped 8.6.0 wheel* (built,
+installed in a clean venv) to confirm the real client network path works
+end-to-end against the live endpoint — server logged `204`. It inserted
+one more sentinel row (`install_id =
+'11111111-1111-4111-8111-111111111111'`, `event =
+'workflow.release_dogfood_860'`). Drop both together:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id IN (
+  '00000000-0000-4000-8000-000000000000',
+  '11111111-1111-4111-8111-111111111111'
+);
+```
+
 ## D9 — default stays OFF; first-run consent prompt is the opt-in lever (2026-06-20)
 
 Question raised at release time: to maximize signal, should the usage

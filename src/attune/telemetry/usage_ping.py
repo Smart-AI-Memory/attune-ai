@@ -16,9 +16,9 @@ Privacy contract (frozen — see ``docs/specs/usage-signals/phase2-design.md``):
   telemetry must never block, slow, or crash the CLI.
 - ``DO_NOT_TRACK`` and ``ATTUNE_USAGE_PING`` env vars override config.
 
-Phase 2a ships the client only; :data:`DEFAULT_ENDPOINT` is empty, so
-even an opted-in user transmits nothing until the Vercel endpoint is
-wired in Phase 2b. That is intentional double-safety.
+As of Phase 2b, :data:`DEFAULT_ENDPOINT` points at the live collection
+endpoint, so an opted-in user transmits there by default. The default
+remains OFF — opting in is still an explicit, deliberate choice.
 
 Copyright 2026 Smart-AI-Memory
 Licensed under the Apache License, Version 2.0
