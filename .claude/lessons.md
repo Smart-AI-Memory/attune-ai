@@ -9477,3 +9477,33 @@ files.
   [ops] deps (fastapi/uvicorn/jinja2)" lesson (same extras boundary,
   different surface — there it's a dev-env ModuleNotFoundError, here
   it's a shipped one).
+
+- **Adding a new CI job to `tests.yml` — two gotchas before it can be a
+  REQUIRED check, plus a "broad failure that's actually one meta-test"
+  diagnostic**: hit 2026-06-20 adding the `default-install-smoke` gate
+  (PR #948). (1) **Every `setup-python` step must set `cache: 'pip'`** —
+  the `tests/unit/ci/test_workflow_yaml.py::TestPipCaching::
+  test_setup_python_steps_have_pip_cache` drift guard asserts it across
+  ALL workflow files. The new job omitted it, so that ONE meta-test
+  failed — and because it runs inside the full unit suite, it fanned out
+  as a red `test` lane on EVERY OS/python combo (ubuntu 3.10-3.13, macos
+  3.12-3.13) AND both `clock-tz` lanes. It LOOKED like "8 failures" but
+  was `1 failed / 22131 passed` — the same meta-test failing everywhere.
+  **Diagnostic**: when a broad multi-lane test failure appears right
+  after a CI-ONLY change (a workflow job + a shell script, zero Python/
+  test edits), DON'T assert "can't be mine" — read the actual assertion
+  (`gh api .../actions/jobs/<id>/logs | grep -E 'FAILED|assert'`). A
+  single meta-test (YAML-lint, registration drift, version-consistency)
+  fans out identically across lanes and masquerades as a regression.
+  (2) **A job destined to be REQUIRED should be self-contained — no
+  `needs:`** — if it `needs: [build]` and build fails, the job SKIPS,
+  and a *skipped required check BLOCKS every merge* (GitHub treats a
+  required-but-skipped context as unsatisfied). `default-install-smoke`
+  builds its OWN wheel instead of reusing the `build` job's artifact for
+  exactly this reason. To make it required: confirm the check name has
+  run once, then `PATCH .../branches/main/protection/required_status_
+  checks` appending `{context, app_id}` (app_id 15368 = GitHub Actions,
+  57789 = CodeQL) to the EXISTING `checks` array (read-modify-write;
+  don't drop the other 7). Pairs with "advisory CI lanes don't gate"
+  (Windows/macOS aren't required, so merge on required-green) and the
+  verify-first-on-CI lessons (read the failure before theorizing).
