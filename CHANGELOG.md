@@ -40,6 +40,15 @@ degradation without optional extras).
 
 ### Fixed
 
+- **The `attune` CLI no longer crashes on a default install.** Without
+  the `[ops]` extra (the common `pip install attune-ai`), the base CLI
+  imported FastAPI transitively — the curator's spec source pulled
+  `SpecRecord` / `_list_specs_in_root` from the web-route module — so
+  `attune --help` (and every command) died with
+  `ModuleNotFoundError: No module named 'fastapi'`. The pure
+  spec-listing data layer moved to a framework-free
+  `attune.ops.specs_data` module; a regression guard now imports the
+  base CLI with FastAPI blocked so this can't silently return.
 - **Consistent UTC time handling.** Two clock-mix sites and
   bulletin-board rotation now use UTC instead of local time, fixing
   off-by-a-day behavior across time zones. (#867, #868)
