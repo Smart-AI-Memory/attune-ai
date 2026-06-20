@@ -489,7 +489,7 @@ named why each layer addresses a distinct damage mode; human
 approved the design; agent proposed phasing (Phase 1 today,
 Phases 2–3 future sessions) and the human approved that scope;
 agent wrote the full spec at
-[`docs/specs/dashboard-pending-writes-journal/`](../specs/dashboard-pending-writes-journal/)
+[`docs/specs/archive/dashboard-pending-writes-journal/`](../specs/archive/dashboard-pending-writes-journal/)
 (requirements + design + decisions, 8 durable decisions logged);
 agent implemented Phase 1 (~1.5 hrs — journal writer + API +
 spec-status setter wire-in + 25 tests, all green); end-to-end

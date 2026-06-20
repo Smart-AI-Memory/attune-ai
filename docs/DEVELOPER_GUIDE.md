@@ -5,7 +5,7 @@ description: Developer Guide — retired and redirected. The plugin-authoring co
 # Developer Guide — retired
 
 This guide has been retired as part of the
-[`doc-fiction-cleanup`](specs/doc-fiction-cleanup/) Phase 2 sweep
+[`doc-fiction-cleanup`](specs/archive/doc-fiction-cleanup/) Phase 2 sweep
 (2026-05-30). The previous version's "Plugin Development" chapter
 documented a `BaseWizard`-centric plugin model that is fiction; the
 real plugin system is `BasePlugin`-centric.
