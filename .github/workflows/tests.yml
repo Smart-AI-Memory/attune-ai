@@ -528,3 +528,29 @@ jobs:
       with:
         name: dist-packages
         path: dist/
+
+  default-install-smoke:
+    # REQUIRED gate. A default install (`pip install attune-ai`, no extras)
+    # must boot the base CLI. Catches the class of bug where the base CLI
+    # transitively imports an extras-only dependency (e.g. fastapi from the
+    # [ops] extra) and crashes on startup — invisible to the rest of the
+    # suite, which always installs the extras. 8.5.0 shipped exactly this
+    # (attune --help -> ModuleNotFoundError: fastapi). Self-contained (it
+    # builds its own wheel) so it never skips on an upstream failure — a
+    # skipped required check would block every merge.
+    name: default-install-smoke
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+    - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6.0.3
+
+    - name: Set up Python
+      uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6.2.0
+      with:
+        python-version: '3.11'
+
+    - name: Install build tooling
+      run: python -m pip install --upgrade pip build
+
+    - name: Smoke the default install (no extras)
+      run: bash scripts/smoke_default_install.sh
