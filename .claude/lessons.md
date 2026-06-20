@@ -9410,3 +9410,44 @@ files.
   trivial-website-only PR. Pairs with the existing "required Tests
   checks stay MISSING after `gh pr edit --base`" lesson (same
   missing-required-check failure mode, different trigger).
+
+- **Archiving a spec dir (`git mv docs/specs/<x>/ docs/specs/archive/<x>/`)
+  silently breaks every inbound link that pointed at the old path — sweep
+  and repoint BEFORE committing the triage PR**: hit 2026-06-20 on the
+  spec-backlog-triage delta pass (PR #941, 22 dirs archived). The
+  archive moves are clean `git mv` (100% rename), but references elsewhere
+  go stale: the prior triage card's cross-links, `archive/README.md`'s own
+  intro (the moved dir is now a sibling, so `../<x>/` becomes `<x>/`), the
+  *new* triage matrix linking the prior one (`../<x>/` → `../archive/<x>/`),
+  and pre-existing refs in active docs. `docs/specs/` is mkdocs-excluded so
+  in-tree spec→spec links won't fail the strict build — BUT a ref from a
+  BUILT doc (e.g. `docs/DEVELOPER_GUIDE.md`, `docs/redis/*.md`,
+  `docs/process/*.md`) to an archived spec WILL surface in `build`/link
+  checks. Recipe before committing any archive batch: `grep -rnE
+  "specs/(<name1>|<name2>|…)/" docs/ --include='*.md' | grep -v '/archive/'`
+  over ALL archived dir names, then repoint each hit to the `archive/`
+  path. The `wiring-audit` CI lane passing is the receipt that the sweep
+  was complete. Also: zsh does NOT word-split unquoted vars, so a
+  space-joined `ARCHIVES="a b c"; for s in $ARCHIVES` sees ONE token and
+  every dir reads "missing" — use an array `ARCHIVES=(a b c)`.
+
+- **Spec status drift lives ACROSS files within one spec dir, not just
+  between spec-text and code — read the canonical file
+  (`requirements.md`/`tasks.md`), not whichever sorts first**: during the
+  2026-06-20 backlog triage, a single `grep … | head -1` per dir gave
+  contradictory statuses because different files in the same spec carry
+  different terminal lines (e.g. `sibling-package-pre-commit`: `decisions.md`
+  "phase 0 complete", `requirements.md` "approved", `tasks.md` "Phase 1+
+  pending"; `bulletin-curator`: `decisions.md` "in progress" but
+  `requirements.md`+`tasks.md` "complete, shipped v8.0.0"; `windows-xdist-
+  flakes`: `requirements.md` "draft" but `design.md` "complete v1"). The
+  fix when triaging: enumerate ALL status lines per dir (`for f in
+  docs/specs/<x>/*.md; do grep -i status "$f"; done`) and trust the
+  canonical `requirements.md`/`tasks.md`, treating a lone `decisions.md`
+  "in progress" as stale-from-an-earlier-phase. This means
+  `spec-status-self-truthing` (shipped #567) is NOT fully holding for
+  multi-file specs — it self-truths one file, not the dir as a whole; a
+  candidate follow-up is a per-dir status reconciler. Pairs with the
+  "spec-named work-scope drifts from code reality — grep before executing"
+  lesson (same family: spec text goes stale; the canonical artifact +
+  code are the contract).
