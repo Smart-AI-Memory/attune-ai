@@ -426,3 +426,39 @@ the gap was concrete: nothing *asked*, so opt-in ≈ 0 (users won't run
 
 Default stays OFF; this only adds the *ask*. Wording reviewed and
 approved by Patrick. Remaining: Phase 2c Reach dashboard, R5/R6.
+
+## D12 — consent ask also reaches the plugin/MCP channel (2026-06-20)
+
+D11's prompt fires only from `cli_minimal.main()` in an interactive
+terminal. But the dominant channel is the **Claude Code plugin + MCP
+tools**, which never call `main()` — yet their workflows still write
+local `usage.jsonl` records. So plugin users generate the data but were
+never offered the choice: the exact "nobody was ever told" gap D11 closed
+for the CLI persisted verbatim for the larger audience.
+
+**Constraint:** hooks run as piped subprocesses (no TTY) and the MCP
+server is a JSON-RPC stdio server, so neither can reuse D11's
+`input()`-based prompt — `_is_interactive()` would always skip.
+
+**Shipped:** a SessionStart hook `plugin/hooks/usage_consent_notice.py`
+that surfaces a short `## Anonymous usage sharing` block to context,
+asking **Claude** to put the choice to the user via `AskUserQuestion`
+(the Socratic surface D9 always intended). The user's answer is persisted
+by the existing `attune telemetry enable` / `disable` commands — no new
+persistence path. Design:
+
+- **Delegated ask, not a prompt.** The hook can't prompt; it instructs
+  Claude to ask. `AskUserQuestion` is the native conversational surface
+  and matches the project's core Socratic rule.
+- **Quiet by default.** Emits nothing once `usage_ping_consented` is set
+  (opt-in OR opt-out), when `DO_NOT_TRACK`/`ATTUNE_USAGE_PING` is set,
+  on the `compact` source, or when `ATTUNE_CONSENT_NOTICE` is falsey.
+- **Anti-nag cap.** A `~/.attune/telemetry/.consent_notice_count` marker
+  caps the notice at 3 sessions, so an ignored ask stops nagging instead
+  of reappearing forever. Consent itself still lives only in the config.
+- **Best-effort, pure stdlib.** Reads `~/.attune/config.json` directly;
+  never raises into the session; carries the `_sdk_gate` so it never
+  poisons SDK-subprocess streams.
+
+Default stays OFF; this only widens *where the ask reaches*. Remaining:
+Phase 2c Reach dashboard, R5/R6.
