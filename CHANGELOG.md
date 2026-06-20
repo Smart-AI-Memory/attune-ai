@@ -7,6 +7,28 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.6.2] — 2026-06-20
+
+Completes the consent story 8.6.1 started. 8.6.1 added the first-run
+ask but wired it only to the interactive CLI — the channel most users
+never touch. This patch extends the ask to the Claude Code plugin / MCP
+path, so the people actually generating usage data are the ones offered
+the choice. Default stays OFF.
+
+### Added
+
+- **Consent ask now reaches the plugin/MCP channel.** The 8.6.1
+  first-run prompt fired only from the interactive `attune` CLI — but
+  most users reach attune through the Claude Code plugin and MCP tools,
+  which never hit that path while still recording local usage. A new
+  SessionStart hook (`usage_consent_notice.py`) closes that gap: it
+  surfaces a one-time notice asking Claude to put the choice to you via
+  the normal `AskUserQuestion` flow, then persists your answer with the
+  existing `attune telemetry enable` / `disable`. Still default-OFF,
+  silent once you've chosen, suppressed by `DO_NOT_TRACK` /
+  `ATTUNE_USAGE_PING`, disablable with `ATTUNE_CONSENT_NOTICE=0`, and
+  capped at 3 sessions so it never nags.
+
 ## [8.6.1] — 2026-06-20
 
 ### Added
