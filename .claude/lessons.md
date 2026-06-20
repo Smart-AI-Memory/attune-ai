@@ -9451,3 +9451,70 @@ files.
   "spec-named work-scope drifts from code reality — grep before executing"
   lesson (same family: spec text goes stale; the canonical artifact +
   code are the contract).
+
+- **The auto-merge-safe (tests/docs-only) class merges a PR on its
+  CURRENT diff within minutes — so opening a PR whose FIRST commit is
+  docs-only strands every follow-up commit you push afterward**: hit
+  2026-06-20 cutting 8.6.0. I committed a docs-only go-live receipt
+  (`decisions.md`), pushed, and opened PR #942 — then kept building on
+  the same branch (changelog, version bump, README fix, more commits).
+  The auto-merge-safe `workflow_run` job evaluated #942 at its
+  docs-only state and squash-merged it to `main` BEFORE the later
+  commits existed. Result: `main` got only the first commit; the
+  release prep was stranded on a branch whose PR was already
+  `state:MERGED` (closed). Symptom triad: (1) `gh pr view <n> --json
+  state` = `MERGED` at an early SHA while (2) `git ls-remote origin
+  <branch>` tip is AHEAD with unmerged commits, and (3) `gh pr view
+  --json headRefOid` ≠ the branch tip (the PR froze at the squashed
+  SHA; new pushes don't reattach to a closed PR). Prevention: if you
+  intend to keep adding commits — ESPECIALLY mixing a docs commit
+  first then code — either open the PR as a **draft**, or don't open
+  it until the full diff is OUT of the auto-merge class (touches
+  `src/`/packaging), or land the docs receipt as its own deliberate
+  PR. Recovery (clean, conflict-free): branch fresh off `origin/main`,
+  `git cherry-pick` only the post-merge commits — the already-merged
+  first commit's content is on `main` as the squash, so its diff drops
+  out of `origin/main..<tip>` and the cherry-picks apply with no
+  D8-style duplication; open a NEW PR (you can't reopen the merged
+  one). Verify the recovery branch's `git diff origin/main..HEAD
+  --stat` is EXACTLY the intended prep before pushing. Pairs with the
+  existing "auto-merge-safe merge job races itself when ≥2 in-class
+  PRs go green" lesson (same job, different failure mode — there it's
+  a base-modified race; here it's an early-merge-strands-followups
+  trap) and the "squash-merging a base auto-closes stacked PRs; open a
+  fresh PR" lesson.
+
+- **A green CI/test suite does NOT prove the DEFAULT install works — CI
+  installs the dev/ops extras, so extras-only deps (fastapi/uvicorn/
+  jinja2) are ALWAYS present and mask base-CLI import crashes that hit
+  every real `pip install <pkg>` user**: 8.5.0 shipped with `attune
+  --help` crashing `ModuleNotFoundError: No module named 'fastapi'` on
+  every default install — a base-CLI import path
+  (`cli_minimal` -> `cli_commands.curator` ->
+  `curator.sources.specs`) imported `SpecRecord` / `_list_specs_in_root`
+  from the FastAPI web-route module `attune.ops.routes.specs`. 17k+
+  tests green, CI green, zero detection, because CI's env always has
+  fastapi. Caught only by **dogfooding the SHIPPED WHEEL in a clean
+  no-extras venv** during 8.6.0 release QA (`attune --help` -> exit 1).
+  Durable rules: (1) **before every release**, build the wheel,
+  `pip install` it BARE (no extras) in a fresh venv, and run the entry
+  point (`<cli> --help` / `<cli> version`) — the shipped-artifact smoke
+  the unit suite structurally cannot do; (2) ship a **unit regression
+  guard** that imports the base CLI with the extras-only deps blocked
+  (a `sys.meta_path` finder raising on `import fastapi`, in a
+  subprocess so the block can't leak into the rest of the suite) — runs
+  in the normal suite, catches the class without a clean venv; (3) keep
+  **pure data/logic in framework-free modules** so the base layer never
+  transitively imports the web/optional stack — the fix split the pure
+  spec-listing data (`SpecRecord`, `_list_specs_in_root`, helpers) into
+  a fastapi-free `attune.ops.specs_data`, with the route module
+  re-exporting for back-compat. Corollary worth stating because it's
+  tempting to claim otherwise: **usage telemetry canNOT catch this
+  class** — a startup crash emits ZERO telemetry (the process dies
+  before the ping runs), so "silence" is indistinguishable from "no
+  users"; the usage ping is a usage-understanding tool, not an error
+  monitor. Pairs with "registered != working — dogfood the live loop"
+  (same discipline, artifact surface) and the "worktree venv lacks
+  [ops] deps (fastapi/uvicorn/jinja2)" lesson (same extras boundary,
+  different surface — there it's a dev-env ModuleNotFoundError, here
+  it's a shipped one).

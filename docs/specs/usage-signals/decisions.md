@@ -319,10 +319,80 @@ catch. (Follow-up PR off main.)
 
 **Remaining before this is end-to-end live (deploy-time, owner: Patrick):**
 
-1. Apply the `usage_events` DDL to the prod DB (re-run the
-   admin-protected `POST /api/db/init`, or apply the table directly).
-2. Deploy the website so `/api/usage` is live, THEN ship the attune-ai
-   release carrying `DEFAULT_ENDPOINT` (client swallows errors if the
-   order slips, but endpoint-first is cleanest).
+1. ~~Apply the `usage_events` DDL to the prod DB~~ — DONE (table live).
+2. ~~Deploy the website so `/api/usage` is live~~ — DONE (see D8). THEN
+   ship the attune-ai release carrying `DEFAULT_ENDPOINT` (client
+   swallows errors if the order slips, but endpoint-first is cleanest)
+   — still pending the next PyPI release.
 3. Phase 2c — dashboard "Reach" panel (R3) reading `usage_events`.
 4. R5 telemetry watchdog + R6 spend alarm (separate PRs).
+
+## D8 — Phase 2b end-to-end live, verified (2026-06-20)
+
+The deploy-time blocker (D7 item 1+2) is cleared: `DATABASE_URL` is set
+in the **website** project's Production env and a redeploy since the
+06-16 pause picked it up. Verified directly against the live surface:
+
+- `POST https://smartaimemory.com/api/usage/` with a valid schema-v1
+  batch → **HTTP 204** (a missing/broken `DATABASE_URL` would 500 in
+  the `recordUsageEvents()` catch). Confirmed in Vercel runtime logs:
+  `POST /api/usage/ 204` on production deploy
+  `dpl_AT9f3wQbdhTZSgyDRUnoPRdjaZ9s` (commit `ff9472e4`, current `main`).
+
+So the ingest chain — client → validate → rate-limit → drop envelope →
+insert → 204 — is proven live end-to-end. The ONLY thing gating real
+signal now is the next attune-ai PyPI release shipping the
+`DEFAULT_ENDPOINT` client (item 2, above).
+
+**Verification test row left in place.** The probe inserted one sentinel
+row (`install_id = '00000000-0000-4000-8000-000000000000'`,
+`version = '0.0.0-verify'`, `event = 'workflow.verification_test'`).
+Deleting it now would require pulling the full production env (Stripe
+keys, `ADMIN_SECRET`, the PII-DB connection string) to local disk to
+reach the DB for one harmless, trivially-filterable row — not worth the
+secret exposure. It is excluded by any real query
+(`WHERE version <> '0.0.0-verify'`). Drop it from the Neon console when
+convenient:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id = '00000000-0000-4000-8000-000000000000';
+```
+
+**Second sentinel row (2026-06-20 release dogfood, D10).** Pre-release
+readiness dogfood transmitted through the *shipped 8.6.0 wheel* (built,
+installed in a clean venv) to confirm the real client network path works
+end-to-end against the live endpoint — server logged `204`. It inserted
+one more sentinel row (`install_id =
+'11111111-1111-4111-8111-111111111111'`, `event =
+'workflow.release_dogfood_860'`). Drop both together:
+
+```sql
+DELETE FROM usage_events
+WHERE install_id IN (
+  '00000000-0000-4000-8000-000000000000',
+  '11111111-1111-4111-8111-111111111111'
+);
+```
+
+## D9 — default stays OFF; first-run consent prompt is the opt-in lever (2026-06-20)
+
+Question raised at release time: to maximize signal, should the usage
+ping default to ON (`ATTUNE_USAGE_PING=1` / config-enabled by default)?
+
+**Decision: No. The ping stays default-OFF.** Silently defaulting it ON
+would contradict the stance already shipped in the README, SECURITY.md,
+CHANGELOG, and R2 ("ships OFF, requires explicit consent, privacy by
+construction"), and developers are the audience most hostile to surprise
+telemetry — the reputational downside of default-ON dwarfs the signal
+upside, and it is a one-way door. It also wouldn't yield much: the
+privacy-conscious slice opts out immediately, leaving a noisy
+self-selected sample.
+
+**The lever instead:** a first-run consent prompt (ask once, explicitly,
+default No) — the Homebrew / .NET CLI / Next.js-notice pattern. An
+explicit friendly ask converts far better than passive opt-in (~0) while
+keeping consent intact. Tracked as a Phase 2c follow-up, NOT bundled
+into the 8.6.0 release; the client ships default-OFF as already built.
+
+No copy changes needed — existing telemetry text remains accurate.

@@ -322,7 +322,7 @@ dependencies. Add extras only for the surfaces you use:
 | You want | Install |
 | -------- | ------- |
 | Everything most users need | `pip install attune-ai` |
-| Claude API mode + LangChain/LangGraph agent teams | `pip install 'attune-ai[developer]'` |
+| Claude API mode + optional LangChain/LangGraph interop adapters | `pip install 'attune-ai[developer]'` |
 | The ops dashboard (`attune ops`) | `pip install 'attune-ai[ops]'` |
 | Redis / Agent Memory Server memory backend | `pip install 'attune-ai[redis]'` |
 | Help authoring (generate / maintain `.help/` templates) | `pip install 'attune-ai[author]'` |

@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.6.0] — 2026-06-20
+
+Usage signals come online, and the agent roster grows. The headline:
+the opt-in anonymous usage ping is live end-to-end, so the project can
+finally see which workflows external users actually run — strictly by
+consent, default-OFF. Plus five new specialist sub-agents and a batch
+of correctness fixes (UTC consistency, Windows stability, graceful
+degradation without optional extras).
+
 ### Added
 
 - **Opt-in anonymous usage telemetry goes live (usage-signals Phase
@@ -22,7 +31,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   status|enable|disable`; override per-run with `ATTUNE_USAGE_PING=0`
   or `=1`; rotate your anonymous install id any time. See the
   **Privacy & Telemetry** section of the README and SECURITY.md for
-  the full payload disclosure.
+  the full payload disclosure. (#912, #920, #923)
+- **Five new specialist sub-agents.** `release-prep-auditor`,
+  `security-reviewer`, and `refactor-planner` for release and review
+  workflows; `help-content-explainer` for documentation; and
+  `spec-author`, which runs the spec-driven requirements interview.
+  (#925, #926, #927)
+
+### Fixed
+
+- **The `attune` CLI no longer crashes on a default install.** Without
+  the `[ops]` extra (the common `pip install attune-ai`), the base CLI
+  imported FastAPI transitively — the curator's spec source pulled
+  `SpecRecord` / `_list_specs_in_root` from the web-route module — so
+  `attune --help` (and every command) died with
+  `ModuleNotFoundError: No module named 'fastapi'`. The pure
+  spec-listing data layer moved to a framework-free
+  `attune.ops.specs_data` module; a regression guard now imports the
+  base CLI with FastAPI blocked so this can't silently return.
+- **Consistent UTC time handling.** Two clock-mix sites and
+  bulletin-board rotation now use UTC instead of local time, fixing
+  off-by-a-day behavior across time zones. (#867, #868)
+- **Windows stability.** The asyncio event loop now uses the Proactor
+  policy on Windows, fixing subprocess and IO failures. (#847)
+- **Graceful degradation without optional extras.** OTEL monitoring no
+  longer crashes when the `[otel]` extra isn't installed, and the
+  curator shows clean offline messages instead of raw API errors.
+  (#796, #838)
+- **Encryption is no longer silently disabled** during certain serial
+  memory runs (cryptography pinned once at import). (#835)
+- **Faster small project scans.** The project index skips
+  multiprocessing overhead for tiny scans. (#930)
 
 ## [8.5.0] — 2026-06-12
 
