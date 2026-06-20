@@ -9507,3 +9507,44 @@ files.
   don't drop the other 7). Pairs with "advisory CI lanes don't gate"
   (Windows/macOS aren't required, so merge on required-green) and the
   verify-first-on-CI lessons (read the failure before theorizing).
+
+- **A user-facing prompt/UX wired only into `cli_minimal.main()`
+  silently misses the plugin/MCP channel — the DOMINANT audience —
+  so "shipped" ≠ "reaches users"**: 8.6.0 shipped the opt-in usage
+  ping; 8.6.1 added a first-run consent prompt — but wired ONLY into
+  `cli_minimal.main()` (gated further behind `_is_interactive()` =
+  both stdin AND stdout TTYs). Patrick asked "why wasn't I prompted?"
+  The answer: he reaches attune through the Claude Code plugin + MCP
+  tools (`mcp__attune-ai__*`), which never call `main()`; and even an
+  agent shelling out to `attune <cmd>` fails the dual-TTY check. So
+  plugin users GENERATED usage records (`usage.jsonl`) yet were never
+  offered the choice — the exact "nobody was told" gap, persisting for
+  the larger audience while looking solved. **Rule**: when adding any
+  first-run / interactive / consent / onboarding UX, enumerate ALL
+  entry channels before declaring done — attune has at least three
+  (the `attune` CLI `main()`, plugin SessionStart hooks, the MCP stdio
+  server) — and cover each. Grep the single call site
+  (`grep -rn maybe_prompt_consent src/`) to see how narrow the reach
+  is. **Corollary (the fix pattern)**: hooks run as piped subprocesses
+  with no TTY, so a hook CANNOT prompt — it emits a SessionStart
+  context block instructing Claude to ask via `AskUserQuestion`
+  (delegated ask, not a prompt), then persists the answer through the
+  existing CLI commands. Shipped as
+  `plugin/hooks/usage_consent_notice.py` in 8.6.2 (usage-signals D12,
+  PR #950). Pairs with "Registered ≠ working — dogfood the live loop"
+  (same family: wired in one place ≠ reaches the path users actually
+  take) and "Entry-point-resolved backends resolve differently per
+  env."
+
+- **`gh api .../pending_deployments` needs `-F environment_ids[]=<int>`
+  (typed), not `-f` (string) — `-f` gives HTTP 422 "not an integer"**:
+  approving a `pypi` environment deployment gate via the API,
+  `-f "environment_ids[]=11747548925"` fails with
+  `422 Invalid request … "11747548925" is not an integer` because
+  `gh api -f` always sends strings and the API wants an integer array.
+  Use capital `-F` (typed: numbers stay numbers) for the env id, keep
+  `-f` for `state=approved` / `comment=…`. Get the env id from
+  `pending_deployments --jq '.[0].environment.id'` and confirm
+  `current_user_can_approve`. One-call approval is classifier-safe
+  (a single command, not a bundled destructive script). Part of the
+  release-execute step-12 publish gate.
