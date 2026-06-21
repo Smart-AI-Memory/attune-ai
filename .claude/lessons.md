@@ -9687,3 +9687,49 @@ files.
   garbage (1311 findings) — regenerate with `check_tutorial_static=False`
   for a surgical doc fix, or accept the block can't be faithfully rebuilt
   in that env.
+
+- **Single-sourcing docs can silently REGRESS a dynamic source-of-truth
+  into a static copy — before consolidating a "section," ask whether it
+  is authored-canonical or dynamically-sourced**: 2026-06-21, authoring
+  the first `help-docs-single-source` master file
+  (`content/features/spec-engine.md`, PR #960), the FAQ section was
+  built by pasting the LLM-generated `.help/<feature>/faq.md` into a
+  `## FAQ` block. Patrick caught that this *regressed* his earlier
+  doc-stack design (D3) where FAQ is a **four-channel source of truth**
+  (unmatched user queries + telemetry error-frequency + GitHub issues +
+  author-curated seeds), deduped and frequency-ranked by a FAQ
+  Generator. Pasting a static copy produced three regressions at once:
+  (1) a THIRD copy of FAQ content (`docs/reference/FAQ.md` +
+  `.help/<feature>/faq.md` + master file) — the duplication
+  single-sourcing exists to END; (2) it discards 3 of the 4 channels —
+  a frozen authored block can only ever be the author-curated channel,
+  so telemetry/issues/query signal has nothing to feed; (3) it inverts
+  the data flow — a Generator *pulls* from patterns and projects out,
+  it is not something a feature file *emits*. **Pattern**: when
+  collapsing N docs into "one canonical source," each section is one of
+  two kinds — *authored-canonical* (prose the human owns: overview,
+  concepts, tasks, design) which single-sources cleanly, OR
+  *dynamically-sourced* (content fed by live signal: FAQ from
+  telemetry/issues, possibly failure-modes from error-frequency) which
+  must stay a Generator OUTPUT and receive only the author-curated
+  *seed* channel from the master file. Mis-classifying the second kind
+  as the first re-introduces the duplication you set out to remove.
+  Fix recorded as decisions D6 (FAQ is sourced, re-cut to `## FAQ
+  seeds`) + D7 (Generator is unbuilt → FAQ projection out of pilot
+  scope); the same suspicion was logged against Failure modes (FM1).
+  Companion fact for the doc stack: the three pieces are
+  **attune-author** (produce: generator/projector + fact_check +
+  manifest + staleness), **attune-help** (serve runtime: HelpEngine +
+  serve-time transformers `render_json/claude_code/marketplace/cli` +
+  mcp), and attune-ai's **`attune.help` facade** (re-exports
+  `.generator`←attune_author, `.engine`←attune_help — what the live MCP
+  server calls). `manifest.py`/`staleness.py`/`freshness/` are
+  DUPLICATED across the two libs (consolidation debt); attune-help's
+  transformers are serve-time render, NOT projection — no overlap with
+  the build-time projector. Pairs with the "verify-first" /
+  "registered ≠ working" family — the master file also corrected four
+  pieces of fiction the LLM corpus carried (a non-existent CLI, an
+  async fn documented sync + wrong import package, properties
+  documented as method calls, a `.state.json` that is actually an HTML
+  comment) — verify every code ref before promoting LLM-generated docs
+  to canon.
