@@ -36,7 +36,7 @@ Follow these steps in order — earlier steps are cheaper and resolve most issue
    Strip the invocation to its required arguments and confirm the failure is repeatable:
 
    ```python
-   from pipeline import read_spec
+   from attune.pipeline import read_spec
    tasks = read_spec("path/to/your-plan.md")
    print(tasks)
    ```
@@ -47,7 +47,7 @@ Follow these steps in order — earlier steps are cheaper and resolve most issue
    Before running the pipeline, check what state is persisted:
 
    ```python
-   from spec import load_state
+   from attune.spec import load_state
    state = load_state("path/to/your-plan.md")
    print(state)  # None means no state exists
    if state:
@@ -60,7 +60,7 @@ Follow these steps in order — earlier steps are cheaper and resolve most issue
    If step 2 reveals stale or corrupt state, reset it:
 
    ```python
-   from spec import clear_state
+   from attune.spec import clear_state
    clear_state("path/to/your-plan.md")
    ```
 
@@ -70,7 +70,7 @@ Follow these steps in order — earlier steps are cheaper and resolve most issue
    If tasks execute but quality gates block progress unexpectedly, run with `skip_gates=True` to confirm the task logic itself works:
 
    ```python
-   from pipeline import PipelineOrchestrator
+   from attune.pipeline import PipelineOrchestrator
    orch = PipelineOrchestrator("path/to/your-plan.md", skip_gates=True)
    result = orch.run_all()
    print(result.summary())
@@ -115,7 +115,7 @@ Follow these steps in order — earlier steps are cheaper and resolve most issue
   If a plan was previously completed or interrupted mid-run, the state file records those task IDs in `SpecState.completed`. Reset with:
 
   ```python
-  from spec import clear_state
+  from attune.spec import clear_state
   clear_state("path/to/your-plan.md")
   ```
 

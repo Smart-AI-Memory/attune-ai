@@ -18,7 +18,7 @@ The spec engine exposes two distinct layers for running spec-driven workflows: a
 
 | Capability | `spec` layer (`execute_with_approval`) | `pipeline` layer (`PipelineOrchestrator`) |
 |---|---|---|
-| **Import path** | `from spec.runner import execute_with_approval` | `from pipeline import PipelineOrchestrator` |
+| **Import path** | `from attune.spec.runner import execute_with_approval` | `from attune.pipeline import PipelineOrchestrator` |
 | **Approval loop** | Per-task, interactive — pauses after each task for user sign-off | Batch — runs all tasks unless you pass `skip_task_ids` |
 | **Resume support** | Yes — `load_state` / `save_state` / `find_resumable_plans` persist `SpecState` between sessions | No built-in state persistence; caller owns resumability |
 | **Progress feedback** | `format_progress_bar`, `present_task_result`, `present_tasks` render live output | Callback only — wire `on_task_complete: TaskCallback` yourself |
