@@ -3,10 +3,12 @@ type: task
 name: spec-engine-task
 feature: spec-engine
 depth: task
-generated_at: 2026-06-21T17:12:30.161122+00:00
+generated_at: 2026-06-21T18:43:45.172614+00:00
 source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
+
+# Spec-driven development with approval loops
 
 ## Tasks
 

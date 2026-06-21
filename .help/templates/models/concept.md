@@ -3,10 +3,12 @@ type: concept
 name: models-concept
 feature: models
 depth: concept
-generated_at: 2026-06-21T17:12:30.780290+00:00
+generated_at: 2026-06-21T18:43:46.304112+00:00
 source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
 status: generated
 ---
+
+# LLM authentication, provider routing, and tier management
 
 ## Overview
 

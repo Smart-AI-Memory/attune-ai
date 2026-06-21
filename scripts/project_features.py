@@ -83,17 +83,17 @@ def main(argv: list[str] | None = None) -> int:
         example_problems = []
         print(f"warning: example check skipped: {exc}", file=sys.stderr)
 
-    # ``tutorial`` is skipped: a guided tutorial (single progressive
-    # "what you'll build" arc) resists pure section projection — the
-    # projected version is just the Tasks list verbatim, which reads
-    # thin and duplicates the how-to. Tutorials stay hand-authored per
-    # feature. See docs/specs/help-docs-single-source/decisions.md D10.
-    # ``faq`` is skipped per D7 (FAQ Generator unbuilt).
+    # ``faq`` is skipped per D7 (FAQ Generator unbuilt). ``tutorial`` no
+    # longer needs an explicit skip: attune-author >=0.20.0 drops it from
+    # DOCS_PAGE_SECTIONS by default (a guided tutorial resists pure
+    # section projection — the projected version is just the Tasks list
+    # verbatim, duplicating the how-to; tutorials stay hand-authored per
+    # decision D10).
     result = project_feature(
         master_path,
         repo_root,
         help_dir,
-        skip_kinds=("faq", "tutorial"),
+        skip_kinds=("faq",),
         dry_run=args.dry_run,
     )
 

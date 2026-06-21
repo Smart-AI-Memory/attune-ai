@@ -240,7 +240,8 @@ per-feature.
 
 ## P5 — Code examples need EXECUTION-based verification
 
-**Status:** open · **Raised:** 2026-06-21 (pilot review) · **Lands
+**Status:** check landed (2026-06-21, attune-author 0.20.0); R7 process
+rule still open · **Raised:** 2026-06-21 (pilot review) · **Lands
 in:** attune-author fact_check + R7 process
 
 The pilot review proved that neither the static fact-checker nor
@@ -271,8 +272,50 @@ Concrete follow-ups:
   as a first-class check (`check_doc_examples`) so it runs in the same
   warn/gate pass as `python_refs`/`cli_refs`, for every consumer — not
   just this repo's driver. The prototype is the spec.
+  **DONE (attune-author 0.20.0):** landed as `fact_check.check_doc_examples`,
+  wired into `check_polished_file`. The promoted version derives
+  async-ness generically from each block's own imports (no hardcoded
+  package list) to stay consumer-agnostic; the repo driver keeps the
+  prototype (`scripts/check_doc_examples.py`) as an attune-specific
+  second layer that also catches async misuse when an example omits the
+  import.
 - **R7 process rule:** the per-feature checklist's adversarial review
   step must explicitly verify, for every public callable used in an
   example, whether it is `async` (grep `async def`) and whether the
   example awaits it correctly. Treat "is this example runnable as
   written?" as a distinct check from "do these symbols exist?".
+
+---
+
+## P6 — Tutorial-as-landing / per-feature hub page
+
+**Status:** open · **Raised:** 2026-06-21 (pilot review — Patrick wants
+tutorials front-and-center) · **Lands in:** attune-ai (mkdocs nav +
+landing convention), pairs with P4
+
+Patrick wants a feature's **tutorial** to be the first thing a user of
+that feature sees — the rich, narrative `docs/tutorials/<feature>.md`
+(e.g. spec-engine's "Build a Spec Engine Pipeline Runner"), not the
+concept/reference. This is a placement/nav decision and is fully
+compatible with D10 (tutorials stay hand-authored/LLM-generated, never
+projected — see [keep-rich-tutorials feedback]).
+
+**Constraint that shapes the design — coverage.** Tutorials are the one
+channel the projector cannot generate. Today only **11 of 25** manifest
+features have a tutorial (`models`, a pilot feature, does NOT); the
+~270-feature rollout will have a tutorial for a small minority. So a
+literal "tutorial is the first/only page" rule gives most features a
+dead front door, and it taxes the frequent quick-answer lookup to serve
+the first-visit case (Diátaxis puts tutorials as a deliberate detour,
+not the hub).
+
+**Proposed design (decide at rollout, with P4):** a thin per-feature
+**landing/hub page** that **leads with a prominent "Start here →
+Tutorial" CTA when a tutorial exists**, then routes to how-to /
+reference / concept; degrades gracefully to concept/how-to-first when
+no tutorial exists. The projector/driver can emit the hub (it knows the
+feature's available kinds) and the nav fragment P4 needs. Open
+questions: in-tool surface (does the ops dashboard / `help_lookup`
+also lead with the tutorial?), and whether to invest in generating more
+tutorials (LLM channel, rich) to widen coverage before making them the
+marquee entry.
