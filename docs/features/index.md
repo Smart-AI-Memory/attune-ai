@@ -520,9 +520,9 @@ else:
 
 ## See Also
 
-- [Installation Guide](getting-started/installation.md)
-- [Configuration Guide](reference/configuration.md)
-- [Architecture Overview](ARCHITECTURE.md)
+- [Installation Guide](../getting-started/installation.md)
+- [Configuration Guide](../reference/configuration.md)
+- [Architecture Overview](../ARCHITECTURE.md)
 
 ---
 
