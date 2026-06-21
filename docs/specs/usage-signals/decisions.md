@@ -375,6 +375,18 @@ WHERE install_id IN (
 );
 ```
 
+**Cleanup status: PENDING (deferred 2026-06-20).** Attempted the
+console-only `DELETE` but the Neon SQL editor was not readily
+reachable — the store does not appear under the Vercel
+`empathy-framework` team's Storage tab, and console.neon.tech showed
+no projects (wrong Neon account). Since both rows are harmless and
+already excluded from every real query (`version <> '0.0.0-verify'`),
+chasing the right account was not worth the time. Cleanup deferred
+until console access is sorted. To finish: read the `DATABASE_URL`
+host in the website project's Vercel env (the `ep-*.neon.tech`
+endpoint identifies the project), sign into the Neon account that
+owns it, and run the two-row `DELETE` above.
+
 ## D9 — default stays OFF; first-run consent prompt is the opt-in lever (2026-06-20)
 
 Question raised at release time: to maximize signal, should the usage
