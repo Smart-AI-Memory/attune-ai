@@ -173,3 +173,58 @@ the Generator keeps the pilot focused.
   Generator replaces that path, so spec-engine's `faq` entry is **not**
   removed from the generator manifest during the pilot (only the 10
   projected kinds are).
+
+---
+
+## D8 — Projector lives in attune-author; both libraries kept; infra consolidation is separate
+
+**Decided (confirms DD1):** The deterministic projector is a new
+module in **attune-author**, not attune-help. Both libraries are
+kept — attune-author is the build-time *produce* side, attune-help
+the lightweight serve-time *runtime*. The duplicated
+`manifest.py`/`staleness.py`/`freshness/` across the two libs is
+real consolidation debt but is handled as a **separate cleanup**,
+not inside the projector PR.
+
+**Why attune-author, not attune-help (the option considered and
+rejected):**
+
+- The projector's dependencies already live in attune-author —
+  `_extract_source_info` (AST), the `fact_check` package
+  (`python_refs`, `cli_refs`, `md_links`), and `import_repair`.
+  Putting the projector in attune-help would force either
+  duplicating those or making attune-help depend on attune-author,
+  re-coupling the two libraries that `attune-author 0.15.0`
+  deliberately decoupled.
+- The projector is **build-time**; attune-help is the **serve-time**
+  runtime kept deliberately lightweight (`pip install attune-help`).
+  An AST + fact-check projector there bloats the thing whose value
+  is being minimal.
+- attune-help's apparent overlap ("it already owns templates") was
+  verified false: its `transformers.py`
+  (`render_json`/`render_claude_code`/`render_marketplace`/
+  `render_cli`) is **serve-time render of a populated template**, not
+  build-time projection. No reuse to capture by moving in.
+
+**Library roles, recorded so this doesn't get relitigated:**
+
+- **attune-author** — produce: generator (LLM, now optional-assist
+  per D3), **projector** (new, deterministic), `fact_check`,
+  `import_repair`, manifest, staleness.
+- **attune-help** — serve runtime: `HelpEngine`, progressive depth,
+  serve-time transformers, mcp adapters. Reads `.help/templates/`
+  unchanged (DD2/R4).
+- **`attune.help`** (attune-ai internal facade) — re-exports
+  `.generator`←attune_author, `.engine`←attune_help; what the live
+  MCP server calls. Its hidden cross-dep is a known footgun, tracked
+  separately.
+
+**Build-shape consequence (verified during T2 scoping):** the
+`meta_templates/*.j2` are AST-keyed jinja scaffolds feeding an LLM
+polish phase — **not** reusable for projecting hand-authored prose.
+The projector therefore does not reuse them: it parses the master
+file's named sections and routes them to outputs, wrapping with the
+generator's existing frontmatter/footer helpers. Simpler than the
+generator (no AST-render, no LLM). The Reference section is
+hand-authored in the master file; fact-check *verifies* it rather
+than AST-deriving it (aligns with D3).
