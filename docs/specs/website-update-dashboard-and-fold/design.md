@@ -1,5 +1,5 @@
 # Design — Website update: dashboard maturity + fold-back
-**Status:** approved
+**Status:** RETIRED / superseded (2026-06-20) — see `decisions.md`.
 Technical shape, mitigations, and durable fixes. See `decisions.md` for context, `requirements.md` for user stories, `tasks.md` for the phase plan.
 
 ---

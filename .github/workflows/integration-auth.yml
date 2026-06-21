@@ -1,6 +1,6 @@
 name: Integration Tests (auth)
 
-# Opt-in nightly run of the AUTH bucket of the integration suite
+# Opt-in WEEKLY run of the AUTH bucket of the integration suite
 # (docs/specs/integration-coverage/): the 6 env-gated
 # discovery_sweep files and test_llm_integration.py. (The 6 rotted
 # `*_with_auth` demo files were retired 2026-06-10 after run
@@ -10,7 +10,8 @@ name: Integration Tests (auth)
 # pull_request trigger → no fork-PR secret exposure).
 #
 # Spend controls: ATTUNE_MAX_BUDGET_USD caps each SDK workflow run;
-# per-test and job timeouts bound runaway runs. Advisory job —
+# per-test and job timeouts bound runaway runs; a post-run step reports
+# this run's total telemetry cost to the job summary. Advisory job —
 # failures are triage signal, not merge blockers.
 #
 # Known pre-existing issue this job will surface:
@@ -20,7 +21,12 @@ name: Integration Tests (auth)
 
 on:
   schedule:
-    - cron: '0 7 * * *'  # nightly 07:00 UTC (~3 AM US Eastern)
+    # Weekly Monday 07:00 UTC (~3 AM US Eastern). Was nightly; reduced
+    # to weekly 2026-06-21 — the real SDK->API loop only changes on a
+    # dep/SDK bump, so a daily paid canary was overspending. Trigger
+    # manually via workflow_dispatch right after any claude-agent-sdk
+    # or dep bump for an immediate live check.
+    - cron: '0 7 * * 1'
   workflow_dispatch:
 
 permissions:
@@ -61,3 +67,8 @@ jobs:
           pytest -m "" -o addopts="" -p no:cacheprovider \
             -n 2 --timeout=600 --timeout-method=thread \
             tests/integration -k "discovery_sweep or llm_integration"
+
+      - name: Report API cost to job summary
+        if: always()
+        continue-on-error: true
+        run: python scripts/ci_report_api_cost.py

@@ -151,14 +151,21 @@ features:
     doc_paths:
       - docs/reference/cli-reference.md
 
+  # models is single-sourced (status: manual) from
+  # content/features/models.md and rendered by attune_author.projector
+  # (scripts/project_features.py), which owns .help/templates/models/*.md.
+  # The entry is retained — WITHOUT `files:` and marked `status: manual`
+  # — so topic resolution (resolve_topic scores name/description/tags)
+  # still routes here, while staleness/maintenance never regenerates it
+  # (DD5 / D9, help-docs-single-source, 2026-06-21). The retained faq.md
+  # stays on disk frozen until the FAQ Generator (D6/D7) ships; the
+  # cross-cutting docs/how-to/smart-router.md and
+  # docs/reference/llm-toolkit.md remain hand-authored. See
+  # docs/specs/help-docs-single-source/.
   models:
     description: LLM authentication, provider routing, and tier management
-    files:
-      - src/attune/models/**
     tags: [models, auth, llm]
-    doc_paths:
-      - docs/how-to/smart-router.md
-      - docs/reference/llm-toolkit.md
+    status: manual
 
   orchestration:
     description: Dynamic teams, workflow composition, and agent models
@@ -189,12 +196,21 @@ features:
     tags: [plugin, claude-code]
     arch_path: docs/architecture/plugin-system.md
 
+  # spec-engine is single-sourced (status: manual) from
+  # content/features/spec-engine.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/spec-engine/*.md. The entry is retained — WITHOUT
+  # `files:` and marked `status: manual` — so topic resolution still
+  # routes here while staleness/maintenance never runs
+  # `attune-author generate spec-engine --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-21). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
   spec-engine:
     description: Spec-driven development with approval loops
-    files:
-      - src/attune/spec/**
-      - src/attune/pipeline/**
     tags: [spec, planning]
+    status: manual
 
   wizards:
     description: Multi-step guided interactive workflows

@@ -7,6 +7,48 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.105). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857). Locked at 0.2.105 rather than 0.2.102 because 0.2.102's bundled Claude Code CLI (2.1.178) emitted `is_error:true` on a `success` result and broke the auth integration loop; 0.2.105 bundles CLI 2.1.183 which returns `is_error:false`. See `docs/specs/claude-agent-sdk-0-2-migration/`.
+- **`[author]` extra: `attune-author>=0.6.2,<0.19` → `>=0.19.0,<0.20`.** Admits attune-author 0.19.0, which ships the deterministic help-docs projector (`attune_author.projector`). Unblocks the `scripts/project_features.py` driver for the help-docs-single-source pilot. The floor jump is safe — 0.19.0 is a strict superset (projector added, nothing removed) — and `[author]` is an optional authoring extra, so vanilla `pip install attune-ai` is unaffected.
+
+## [8.6.2] — 2026-06-20
+
+Completes the consent story 8.6.1 started. 8.6.1 added the first-run
+ask but wired it only to the interactive CLI — the channel most users
+never touch. This patch extends the ask to the Claude Code plugin / MCP
+path, so the people actually generating usage data are the ones offered
+the choice. Default stays OFF.
+
+### Added
+
+- **Consent ask now reaches the plugin/MCP channel.** The 8.6.1
+  first-run prompt fired only from the interactive `attune` CLI — but
+  most users reach attune through the Claude Code plugin and MCP tools,
+  which never hit that path while still recording local usage. A new
+  SessionStart hook (`usage_consent_notice.py`) closes that gap: it
+  surfaces a one-time notice asking Claude to put the choice to you via
+  the normal `AskUserQuestion` flow, then persists your answer with the
+  existing `attune telemetry enable` / `disable`. Still default-OFF,
+  silent once you've chosen, suppressed by `DO_NOT_TRACK` /
+  `ATTUNE_USAGE_PING`, disablable with `ATTUNE_CONSENT_NOTICE=0`, and
+  capped at 3 sessions so it never nags.
+
+## [8.6.1] — 2026-06-20
+
+### Added
+
+- **First-run consent prompt for anonymous usage sharing.** 8.6.0
+  shipped the opt-in usage ping but never *asked*, so realistically no
+  one turned it on. The CLI now asks once, on first interactive use:
+  whether to share anonymous usage (workflow names + version + OS +
+  Python). It is **default-No** and asks **only in an interactive
+  terminal** — it silently no-ops in CI, pipes, and scripts, and never
+  prompts when `DO_NOT_TRACK` or `ATTUNE_USAGE_PING` is set, or for the
+  `telemetry`/`setup`/`version`/`doctor`/`auth` commands. Either answer
+  is remembered, so it asks at most once. You can still manage it
+  anytime with `attune telemetry enable` / `disable`.
+
 ## [8.6.0] — 2026-06-20
 
 Usage signals come online, and the agent roster grows. The headline:

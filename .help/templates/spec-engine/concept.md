@@ -3,25 +3,56 @@ type: concept
 name: spec-engine-concept
 feature: spec-engine
 depth: concept
-generated_at: 2026-06-02T10:56:02.677085+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T18:43:45.172614+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Spec Engine
+# Spec-driven development with approval loops
 
-The spec engine is the runtime layer that reads a decomposed plan file, executes each task in order, runs quality gates after each one, and tracks progress so a run can be paused and resumed.
+## Overview
 
-## Mental model
+The spec engine turns a plan file — an XML task list stored in
+`.claude/plans/` — into executed, gate-checked code. It owns two
+distinct concerns: running the pipeline (`pipeline.*`) and managing
+interactive, approval-gated execution with persistent state
+(`spec.*`).
 
-A spec plan is an XML file stored under `.claude/plans/`. When you trigger execution, the engine works through four concerns in sequence:
+It is **not** responsible for authoring plan files, running the
+Socratic brainstorm / decompose / review phases, or displaying output
+in the Claude Code UI — those belong to the skill layer above it.
 
-1. **Reading** — `read_spec(plan_path)` parses the plan file and returns a list of `DecomposedTask` objects.
-2. **Orchestrating** — `PipelineOrchestrator` iterates those tasks, calls quality gates after each one via `run_gates_for_task`, and collects results into a `PipelineResult`.
-3. **Gating** — each task produces a `TaskResult` with fields like `quality_gate_passed`, `tests_passed`, `gate_score`, and `severity`. The orchestrator uses these to decide whether to continue, pause for approval, or surface an error.
-4. **State tracking** — `SpecState` records which task IDs are in `completed` and which is `current`. `save_state` writes this back into an HTML comment inside the plan file itself, so the file is the single source of truth. `get_pending_tasks` filters the full task list down to whatever hasn't finished yet, enabling resumption mid-run.
+The engine matters whenever you need to understand why a run stopped,
+how to resume it, or how quality-gate outcomes map to the `severity`
+and `gate_score` fields on a `TaskResult`. If you are writing code
+that hooks into execution — an `on_task_complete` callback or a custom
+presenter — these are the types and functions you work with directly.
 
-## Core data structures
+## Concepts
+
+A spec plan is an XML file under `.claude/plans/`. When you trigger
+execution, the engine works through four concerns in sequence:
+
+1. **Reading** — `read_spec(plan_path)` parses the plan file and
+   returns a list of `DecomposedTask` objects.
+2. **Orchestrating** — `PipelineOrchestrator` iterates those tasks,
+   calls quality gates after each via `run_gates_for_task`, and
+   collects results into a `PipelineResult`.
+3. **Gating** — each task produces a `TaskResult` with fields like
+   `quality_gate_passed`, `tests_passed`, `gate_score`, and the
+   `severity` property. The orchestrator stops the run when
+   `quality_gate_passed` is `False`; otherwise it consults the
+   `on_task_complete` callback's returned decision (continue, redo,
+   auto, or stop). `tests_passed`, `gate_score`, and `severity` are
+   recorded for you to inspect — they don't drive the loop themselves.
+4. **State tracking** — `SpecState` records which task IDs are
+   `completed` and which is `current`. `save_state` writes this back
+   into an HTML comment inside the plan file itself, so the file is
+   the single source of truth. `get_pending_tasks` filters the full
+   task list down to whatever hasn't finished, enabling resumption
+   mid-run.
+
+### Core data structures
 
 | Type | What it represents |
 |------|--------------------|
@@ -29,47 +60,24 @@ A spec plan is an XML file stored under `.claude/plans/`. When you trigger execu
 | `PipelineResult` | The rolled-up outcome across all tasks: `spec_path`, every `TaskResult` in `tasks`, `total_cost`, `duration_ms`, and `success` (true only when all tasks executed and passed gates). |
 | `SpecState` | Durable progress record: `plan_path`, the list of `completed` task IDs, the `current` task ID, and an `auto_run` flag that controls whether the engine prompts for approval between tasks. |
 
-## Execution entry points
+### How the two packages fit together
 
-**Interactive execution with per-task approval**
+The engine spans two packages, each with a distinct role:
 
-```python
-from spec import execute_with_approval
+- **`pipeline`** owns execution. `PipelineOrchestrator` reads an XML
+  plan file, runs tasks one at a time, and evaluates quality gates
+  after each. `read_spec()` parses a plan file into `DecomposedTask`
+  objects. `TaskResult` and `PipelineResult` carry the outcome data.
+- **`spec`** owns state and presentation. `SpecState` tracks progress;
+  `load_state` / `save_state` / `clear_state` manage the embedded
+  state comment; the presenter functions render engine output for
+  display; and `execute_with_approval` (in `spec.runner`) wraps the
+  orchestrator with a per-task approval loop.
 
-result = execute_with_approval(
-    spec_path,
-    on_task_complete,
-    skip_gates=False,
-    skip_tests=False,
-    skip_simplify=False,
-)
-```
+### State lifecycle
 
-`execute_with_approval` pauses after each task so you can approve, redo with new instructions, or flip `auto_run` to let the rest complete unattended.
-
-**Programmatic execution**
-
-```python
-from pipeline import PipelineOrchestrator
-
-orchestrator = PipelineOrchestrator(
-    spec_path,
-    skip_gates=False,
-    skip_tests=False,
-    skip_simplify=False,
-)
-result = orchestrator.run_all(
-    on_task_complete=callback,
-    skip_task_ids={"task-id-to-omit"},
-)
-```
-
-Pass `skip_task_ids` to re-run a subset of tasks from an existing plan without reprocessing ones that already passed.
-
-## State lifecycle
-
-```
-load_state(plan_path)        # returns SpecState | None
+```text
+load_state(plan_path)             # returns SpecState | None
     │
     ▼
 get_pending_tasks(tasks, state)   # filters out completed IDs
@@ -77,32 +85,11 @@ get_pending_tasks(tasks, state)   # filters out completed IDs
     ▼
 [execute tasks, update state.completed after each]
     │
-    ├─ save_state(state)     # persists progress into plan file
+    ├─ save_state(state)          # persists progress into the plan file
     │
-    └─ clear_state(plan_path)  # removes state when run finishes
+    └─ clear_state(plan_path)     # removes state when the run finishes
 ```
 
-`find_resumable_plans(plans_dir)` scans `.claude/plans/` for any plan file that still carries a `SpecState` comment, giving you a list of interrupted runs you can pick back up.
-
-## Presentation layer
-
-The `spec` package includes a set of formatting functions that render engine output for display:
-
-- `present_tasks(tasks, state)` — markdown table of all tasks, with completion status when `state` is provided.
-- `present_task_detail(task)` — full detail view of a single task.
-- `present_task_result(task, gate_result)` — combines the task description with its `TaskResult`, showing gate status and score.
-- `format_progress_bar(completed, total)` — visual indicator of how far through the task list execution has reached.
-
-## When the engine matters
-
-The spec engine is relevant whenever you need to understand why a run stopped, how to resume it, or how quality gate outcomes map to the `severity` and `gate_score` fields on `TaskResult`. If you're writing code that hooks into execution — for example, an `on_task_complete` callback or a custom presenter — these are the types and functions you'll work with directly.
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 36 (code fence) | error | `from spec import …` — module not importable |
-| Line 52 (code fence) | error | `from pipeline import …` — module not importable |
+`find_resumable_plans(plans_dir)` scans `.claude/plans/` (the default)
+for any plan file that still carries a `SpecState` comment, giving you
+a list of interrupted runs you can pick back up.

@@ -1,10 +1,39 @@
 # Decisions — Website update: dashboard maturity + fold-back
-**Status:** approved
+**Status:** RETIRED / superseded (2026-06-20)
 **Owner:** Patrick
 **Opened:** 2026-05-10
 **Companion specs:**
 - `~/attune-gui/specs/dashboard-quality-pass/` — engineering polish (sentence case, humanised timestamps, generic command result renderer, profile chip cleanup, sidecar reload-dir fix)
 - `~/attune-gui/specs/fold-attune-gui-into-attune-ai/` — packaging consolidation (`pip install attune-gui` → `pip install attune-ai[gui]`)
+
+---
+
+## RETIRED — 2026-06-20
+
+Retired by Patrick. The spec's framing went stale and parts already
+shipped; executing the task list would re-create existing files and
+chase a fold trigger that is now history.
+
+**Why retired:**
+
+- **Trigger is past.** Phase 2 was gated on "the day v7.0 lands."
+  attune-ai is now at **8.6.2** — that trigger is long gone, so the
+  two-phase pre-fold / post-fold structure no longer maps to reality.
+- **Foundation already exists.** `website/lib/install-command.ts`
+  (1.1.1), `website/lib/migration-banner.ts` (1.1.2), and
+  `website/app/migrate/page.tsx` (1.6.1) are already in the tree; the
+  FAQ already references `attune-gui`. The task list describes
+  creating files that are present.
+- **Web-surface ownership moved.** The spec targets
+  `smartaimemory.com`, but the web/docs surface is being consolidated
+  onto **attune-ai.dev** (see the attune-ai.dev consolidation plan).
+  Any remaining website work should be re-specced against that target,
+  not this one.
+
+**Not done, intentionally dropped:** the dedicated dashboard feature
+page (`website/app/dashboard/page.tsx`, tasks 1.2.x) was never built.
+If a dashboard marketing surface is still wanted, open a fresh, small
+spec scoped to attune-ai.dev rather than reviving this one.
 
 ---
 

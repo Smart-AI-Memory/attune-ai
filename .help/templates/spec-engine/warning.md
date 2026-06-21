@@ -3,60 +3,62 @@ type: warning
 name: spec-engine-warning
 feature: spec-engine
 depth: warning
-generated_at: 2026-06-02T10:56:02.708405+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T18:43:45.172614+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Spec Engine cautions
+# Spec-driven development with approval loops
 
-## What to watch for
+## Failure modes
 
-The spec engine manages long-running, stateful plan execution — tasks write to disk, quality gates gate forward progress, and approval loops depend on state surviving across sessions. Mistakes here tend to surface late: a corrupted state file, a silently skipped gate, or a resume that replays already-completed work.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `ValueError: plan_path must be a non-empty string` | Empty string or `None` passed to `read_spec` / `PipelineOrchestrator` | Resolve the path before passing it | high |
+| `FileNotFoundError: Plan file not found` | The plan file does not exist at the given path | Verify the path; use `os.path.abspath` to be sure | high |
+| `PipelineResult.success` is `False` | One or more tasks failed to execute or failed a gate | Iterate `result.tasks`; check each `TaskResult.error`, `quality_gate_passed`, `tests_passed` | high |
+| A task never appears in output | The XML task block is malformed or absent | Call `read_spec` directly and inspect the returned list | medium |
+| Execution resumes from the wrong task | `SpecState.completed` / `current` is stale | `load_state` to inspect, then `clear_state` to reset | medium |
+| `get_pending_tasks` returns `[]` unexpectedly | `SpecState.completed` already holds all task IDs | State is stale or the plan finished; `clear_state` to start fresh | medium |
+| Quality gate always passes | `skip_gates=True` left in from development | Remove the flag to re-enable gates | medium |
+| State comment vanished after editing the plan | An editor/formatter/VCS step stripped HTML comments | Ensure tooling preserves HTML comments in `.md`; confirm the comment is present after `save_state` | medium |
 
-## Risk areas
+### Risk areas
 
-### Resuming a plan re-runs tasks if state is out of sync
+- **Resuming re-runs tasks when state drifts.** `get_pending_tasks`
+  matches `task_id` values from `SpecState.completed` against the task
+  list from `read_spec`. If task IDs are renumbered or reordered
+  between sessions, completed tasks can look pending and run twice.
+  Treat plan files as append-only once execution starts; if you must
+  edit mid-run, `clear_state` first.
+- **Skip flags silently lower quality guarantees.** `skip_gates`,
+  `skip_tests`, and `skip_simplify` set the corresponding `TaskResult`
+  fields to `None`/`False` rather than raising. `PipelineResult.success`
+  still returns `True` if all tasks executed, even with gates skipped.
+  After any skip-flag run, inspect `quality_gate_passed`,
+  `tests_passed`, and `gate_score` explicitly.
+- **`read_spec` does not warn on empty task lists.** A valid file with
+  no parseable XML task blocks returns `[]` silently, and downstream
+  orchestration completes with nothing to do. Check for a non-empty
+  list before orchestrating.
+- **`on_task_complete` errors abort the pipeline.** An unhandled
+  exception in the callback stops the run at that task. Run via
+  `execute_with_approval` (the `spec` layer) and state is saved with
+  that task marked `current` before the callback fires, so resuming
+  re-runs it; bare `run_all` does no state-saving of its own. Wrap
+  callback logic in `try`/`except` and check `TaskResult.error` before
+  acting.
 
-`get_pending_tasks` filters completed tasks by comparing `task_id` values in `SpecState.completed` against the task list from `read_spec`. If the plan file changes between sessions — for example, task IDs are renumbered or reordered — previously completed tasks may appear pending again and execute a second time.
+### Diagnosis order
 
-**Mitigation:** Treat plan files as append-only once execution has started. If you must edit a plan mid-run, call `clear_state` to reset progress rather than letting `get_pending_tasks` infer a stale completion list.
-
-### `skip_gates`, `skip_tests`, and `skip_simplify` silently lower quality guarantees
-
-`PipelineOrchestrator.__init__` accepts `skip_gates`, `skip_tests`, and `skip_simplify` flags, and `execute_with_approval` exposes the same three. Passing any of these sets fields on `TaskResult` — `quality_gate_passed`, `tests_passed`, and `simplified` — to `None` or `False` rather than raising an error. `PipelineResult.success` still returns `True` if all tasks executed, even when gates were skipped.
-
-**Mitigation:** After any run that uses skip flags, inspect `TaskResult.quality_gate_passed`, `TaskResult.tests_passed`, and `TaskResult.gate_score` explicitly rather than relying solely on `PipelineResult.success`.
-
-### `read_spec` raises on missing or malformed plan files — not on empty task lists
-
-`read_spec` raises `FileNotFoundError` when the plan file is absent and `ValueError` when `plan_path` is empty. However, a valid file that contains no parseable XML task blocks returns an empty list without any warning. Downstream, `PipelineOrchestrator.run_all` and `get_pending_tasks` both accept an empty task list and complete silently.
-
-**Mitigation:** Check that `read_spec` returns a non-empty list before passing it to orchestration logic. If you expect tasks and receive an empty list, inspect the plan file for malformed or missing XML task blocks.
-
-### State is stored as an HTML comment inside the plan file itself
-
-`save_state` and `load_state` read and write `SpecState` as an embedded comment in the plan file at `plan_path`. If your editor, formatter, or version control workflow strips HTML comments, the state comment disappears and `load_state` returns `None`. The next call to `get_pending_tasks` then treats every task as pending.
-
-**Mitigation:** Verify that tooling in your workflow preserves HTML comments in `.md` files. After a `save_state` call, confirm the comment is present before closing the file. Use `find_resumable_plans` to check which plans have recoverable state before attempting a resume.
-
-### `on_task_complete` callback errors abort the pipeline
-
-Both `run_all` and `execute_with_approval` accept an `on_task_complete` callback. If the callback raises an unhandled exception, the pipeline stops at that task. The `SpecState` written by `save_state` at that point marks the task as `current` rather than completed, so resuming re-runs the task that triggered the failure.
-
-**Mitigation:** Wrap callback logic in a try/except and handle errors explicitly. Check `TaskResult.error` inside the callback before taking any action that could fail.
-
-## How to avoid problems
-
-1. **Validate task IDs before editing a live plan.** Before changing a plan file that has an active state, read `SpecState.completed` via `load_state` and confirm that none of the IDs you're modifying appear there.
-
-2. **Use `TaskResult` fields, not just `PipelineResult.success`, to audit gate outcomes.** Check `quality_gate_passed`, `tests_passed`, `gate_score`, and `severity` on each `TaskResult` in `PipelineResult.tasks` when correctness matters more than whether the run completed.
-
-3. **Depend only on the public API.** The public surfaces are `PipelineOrchestrator`, `PipelineResult`, `TaskResult`, and `read_spec` from `pipeline`, and `SpecState`, `clear_state`, `find_resumable_plans`, `format_progress_bar`, `get_pending_tasks`, `load_state`, `present_task_detail`, `present_task_result`, `present_tasks`, and `save_state` from `spec`. Private helpers can change without notice.
-
-## Source files
-
-- `src/attune/spec/**`
-- `src/attune/pipeline/**`
-
-**Tags:** `spec`, `planning`
+1. Reproduce with a minimal `read_spec(plan_path)` call — if it
+   raises, the problem is the path or the plan file.
+2. Inspect persisted state: `load_state(plan_path)`; check
+   `completed`, `current`, `schema_version`.
+3. Clear stale state and retry: `clear_state(plan_path)`.
+4. Re-run with `skip_gates=True` to isolate gate failures from task
+   logic. If `success` flips to `True`, the gate thresholds or scores
+   are the cause — inspect `gate_details`.
+5. Iterate `result.tasks` and print each failing `TaskResult`
+   (`error`, `gate_score`, `gate_details`, `tests_passed`).
+6. Run the related tests: `pytest -k "spec" -v`.
