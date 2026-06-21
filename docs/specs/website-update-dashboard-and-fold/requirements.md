@@ -1,5 +1,5 @@
 # Requirements — Website update: dashboard maturity + fold-back
-**Status:** approved
+**Status:** RETIRED / superseded (2026-06-20) — see `decisions.md`.
 User-facing stories and contracts. See `decisions.md` for context, `design.md` for mitigations, `tasks.md` for the phase plan.
 
 ---

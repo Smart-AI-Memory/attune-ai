@@ -1,6 +1,6 @@
 # Tasks — Website update: dashboard maturity + fold-back
 
-**Status:** approved — pre-Phase-1 audit done 2026-05-12 ([phase0-audit.md](phase0-audit.md))
+**Status:** RETIRED / superseded (2026-06-20) — see `decisions.md`. Do not execute this task list; its premises are stale.
 
 Two-phase plan. Phase 1 ships everything that doesn't depend on the fold-back; Phase 2 swaps install commands + adds redirects + automated screenshots once the fold lands. See `decisions.md`, `requirements.md`, `design.md` for context, and `phase0-audit.md` for the current-state inventory + three implementation nuances the spec didn't flag (narrow `pip install` replacement scope, dashboard-mention reuse on homepage, changelog lives in root `CHANGELOG.md`).
 
