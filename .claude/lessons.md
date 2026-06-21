@@ -9617,3 +9617,73 @@ files.
   errors). General pattern: when a vendored/bundled binary regresses,
   check whether a newer point release re-bundles a fixed binary BEFORE
   writing tolerance code around the bug.
+
+- **Cross-repo work from a worktree-rooted session: `worktree_path_guard`
+  blocks Write/Edit into sibling repos, `EnterWorktree` can't cross
+  repos, and Bash `cd /Users/.../<repo>` silently targets the MAIN
+  checkout** (2026-06-21, fixing attune-author's generated-doc imports
+  from an attune-ai session). Three linked traps when the work lives in
+  a *different* repo than the session's worktree:
+  - **The guard only covers Write/Edit.** `worktree_path_guard.py`
+    derives the session root from cwd and blocks any absolute Write/Edit
+    whose target git-toplevel differs — including a sibling repo. It
+    cannot tell an intentional cross-repo write from the accidental
+    bare-absolute-path bug. `EnterWorktree(path=…)` is NOT an escape:
+    it rejects paths that aren't worktrees of the *current* repo. The
+    working route is **Bash heredoc writes** (`cat > /abs/path <<'EOF'`)
+    — Bash isn't guarded — with verified absolute paths. Confirm with
+    the user first, since it routes around a safety hook.
+  - **`cd /Users/.../attune-ai` in a Bash step goes to the MAIN
+    checkout, not your session worktree.** I ran a multi-file surgical
+    doc-edit script with `cd /Users/patrickroebuck/attune-ai` and
+    `root = Path("/Users/patrickroebuck/attune-ai")`; every edit landed
+    in the main checkout's working tree (mixed with an unrelated stray
+    regen pile), while my branch sat in the worktree with none of the
+    edits. Same root cause as the "Write to absolute attune-ai path
+    lands on parent main" and "`$(pwd)/src` trap" lessons, Bash-cd
+    surface. Recovery: `git -C <main> diff --numstat <my files>` to
+    confirm the edits are purely mine (no stray frontmatter regen
+    mixed in), `git -C <main> checkout -- <my files>` to revert, then
+    redo in the worktree against clean origin/main copies. ALWAYS pass
+    the worktree-segment absolute path (or stay relative with the
+    shell already in the worktree) for repo-relative work.
+  - **`uv run` / project-sync breaks in a worktree with relative
+    editable deps — pre-flight lint with `uvx <tool>==<pinned>`
+    instead.** attune-author's worktree `uv run --with pre-commit
+    pre-commit run black` failed: `Distribution not found` for
+    `attune-help==… @ editable+../attune-help` (the `../` resolves to
+    `.claude/worktrees/attune-help`, which doesn't exist). `uvx
+    black==24.10.0 --check <files>` runs the PINNED tool in isolation
+    with no project sync — the reliable pre-flight when sync is wedged.
+    (Local `python -m black` may be a NEWER version than CI's pin and
+    reformat differently — match the `.pre-commit-config.yaml` rev.)
+
+- **A code-example doc generator that records a symbol's FILE but not
+  its importable MODULE makes the LLM guess the import path — and it
+  guesses the directory basename** (2026-06-21, attune-author
+  `generator._collect_function/_collect_class` stored
+  `{name, doc, file: "src/attune/spec/runner.py"}` with no dotted
+  module). The polish pass then emitted `from spec import …` /
+  `from pipeline import …` (basename of the dir) instead of
+  `from attune.spec.runner import …` / `from attune.pipeline import …`.
+  Every symbol was REAL; only the module path was fiction, and the
+  fact-checker correctly flagged it into 7 spec-engine docs. Durable
+  fix = derive the canonical module from `rel_path`
+  (`src/…/x.py` → dotted, strip `src/`, collapse `__init__`) and pick
+  the **shallowest re-exporting package** (probe the parent package via
+  importlib; fall back to the defining submodule when it doesn't
+  re-export — e.g. `execute_with_approval` lives in `attune.spec` only
+  as `attune.spec.runner`). Repair deterministically BEFORE the write
+  so the existing fact-check becomes the verifier. Two scope traps hit:
+  (1) a line-anchored `grep '^from'` UNDERCOUNTS — it misses *indented*
+  in-fence imports (nested under list items) and inline/table imports;
+  scan with `from (pipeline|spec)(\.[a-z_]+)? import` un-anchored.
+  (2) the fence-based repair can't fix inline-code/table-cell imports
+  (e.g. a `python -c "…"` verify command, a comparison-table cell) —
+  those need a hand fix and will recur on regen until the generator
+  also covers inline. (3) re-running the full fact-check to regenerate
+  a block can be env-fragile: `tutorial_static_check` shells out to
+  `mypy --strict` with a 10s timeout that times out cold and emits
+  garbage (1311 findings) — regenerate with `check_tutorial_static=False`
+  for a surgical doc fix, or accept the block can't be faithfully rebuilt
+  in that env.
