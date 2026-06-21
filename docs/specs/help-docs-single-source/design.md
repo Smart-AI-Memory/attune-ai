@@ -1,6 +1,6 @@
 # Design: Single-Source Help + Docs
 
-**Status:** design (awaiting approval)
+**Status:** design approved
 **Created:** 2026-06-21
 **Builds on:** [requirements.md](requirements.md),
 [decisions.md](decisions.md)
@@ -67,7 +67,7 @@ nav:
 ## Reference           # API (code-derived) + CLI options for cli features
 ## Comparison          # vs alternatives / layer tradeoffs
 ## Failure modes       # each: symptom / cause / fix / severity
-## FAQ                 # Q&A pairs
+## FAQ seeds           # author-curated channel-4 input only (D6)
 ## Notes & tips        # supplementary callouts
 ## Design & extension  # design decisions, extension points
 ```
@@ -89,13 +89,21 @@ outputs that depend on it," never as an error.
 | Reference | reference | reference/* (CLI), architecture#key-classes |
 | Comparison | comparison | (optional guide) |
 | Failure modes | error, troubleshooting, warning | how-to#integration callouts |
-| FAQ | faq | (optional guide) |
+| FAQ seeds | faq (via FAQ Generator, not direct) | global FAQ page (via Generator) |
 | Notes & tips | note, tip | inline callouts |
 | Design & extension | note | architecture#design-decisions, #extension-points |
 
 Each output target declares the sections it consumes; the projector
 renders only those. This table is the contract the projector
 implements.
+
+**FAQ exception (D6):** the `FAQ seeds` section is the one section the
+projector does **not** render verbatim. Its entries are author-curated
+channel-4 input to the FAQ Generator, which merges them with the three
+dynamic channels (unmatched queries, telemetry error-frequency, GitHub
+issues), deduplicates, and frequency-ranks before producing the
+`.help/faq` output and the global FAQ page. The master file feeds the
+FAQ; it does not author it.
 
 ---
 
