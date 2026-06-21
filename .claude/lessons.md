@@ -9548,3 +9548,73 @@ files.
   `current_user_can_approve`. One-call approval is classifier-safe
   (a single command, not a bundled destructive script). Part of the
   release-execute step-12 publish gate.
+
+- **Probing the `claude-agent-sdk` bundled CLI directly: it's a
+  Bun-compiled NATIVE binary (run it directly, NOT via `node`), and a
+  bare "say hi" probe is NOT pennies — it inherits the session's
+  CLAUDE.md and runs an Opus-1M model**: resolving the 0.2.x migration
+  break (PR #917, the documented bundled-CLI `is_error`-on-`success`
+  trap), candidate fix #1 ("wait + re-pin to a newer 0.2.x whose
+  bundled CLI is fixed") was validated with one live call against the
+  newest bundle. Two concrete gotchas: (1)
+  `claude_agent_sdk/_bundled/claude` is a ~216 MB Bun-compiled Mach-O
+  executable, NOT a JS entrypoint — `node <bundle>` dies with
+  `SyntaxError: Invalid or unexpected token` (it tries to parse the
+  Mach-O header); execute it DIRECTLY (`./claude --print
+  --output-format stream-json …`). `-v` appears to work via `node`
+  only because a `node X || X` fallback masks the first failure. (2) A
+  probe I estimated at "<$0.02 / pennies" actually cost **$0.24** — the
+  bundled CLI with default settings loads the user-global
+  `~/.claude/CLAUDE.md` and runs `claude-opus-4-8[1m]` (12k input + 17k
+  cache-creation at the 1M-context premium), nothing like a bare Sonnet
+  "say hi". To probe cheaply, isolate it (no project+user context) so
+  it doesn't inherit the full session context — attune's own workflows
+  avoid this via `setting_sources=[]`. **Decisive-result side**, mostly
+  free: `diff` the SDK `query.py` result handler across the version
+  range — if it's byte-identical, the ONLY variable is the bundled CLI
+  version, so one direct-binary probe of the newest bundle's
+  `{"type":"result"}` envelope (`is_error` true/false on `success`)
+  settles re-pin-vs-adapter-fix without spending on a full
+  `integration-auth` run first. Then `uv lock --upgrade-package
+  claude-agent-sdk` re-locks to the fixed version within the existing
+  range pin — no code change. Pairs with the "claude-agent-sdk bundles
+  its OWN Claude Code CLI binary" lesson (this is the fix-and-validate
+  half) and the "keyless-CI-faithful runs need EMPTY not unset" /
+  "secret becoming valid is a spend event" cost-discipline family
+  (estimate bundled-CLI probe cost assuming context-load + default
+  model tier, not a bare minimal call).
+
+- **A real-API CI job that fails FAST (seconds) and entirely on
+  `401 invalid x-api-key` is a STALE repo secret, not a code
+  regression — and a downstream workflow can disguise the 401 as its
+  own "failure marker"**: validating the SDK 0.2.x fix (PR #917), the
+  first `integration-auth` re-run died in **8.56 s** with `22 failed,
+  2 passed` — every `llm_integration` direct-provider test raised
+  `anthropic.AuthenticationError 401 invalid x-api-key`, AND every
+  discovery-sweep test failed with "wrapped workflow failed — findings
+  are failure markers" (the SAME 401 propagating through the SDK
+  workflow path, NOT the `error result: success` bug under test). The
+  speed + uniform 401 is the tell: nothing authenticated, so the code
+  path under test was never reached → zero migration signal, and ~$0
+  spend (401s are rejected before billing). Root cause: the **repo**
+  secret `ANTHROPIC_API_KEY` (a DIFFERENT value from the valid LOCAL
+  key in `~/.attune/anthropic.env`) was last set on the 2026-06-10
+  key-swap night and had since gone invalid. Diagnostic chain: (1)
+  read the pytest summary — fast + all-401 ≠ regression; (2) confirm
+  with `gh api repos/<o>/<r>/actions/secrets/ANTHROPIC_API_KEY --jq
+  .updated_at` (stale timestamp); (3) before RE-validating the secret,
+  check the burn surface — `grep -l secrets.ANTHROPIC_API_KEY
+  .github/workflows/*.yml` and verify each consumer's triggers; here
+  both (`integration-auth`, `help-freshness`) were `schedule` +
+  `workflow_dispatch` only (no push/PR), so refreshing the secret
+  can't re-trigger the "$1200 burn" — it only re-arms the nightly
+  capped jobs. Refresh WITHOUT leaking the value into the transcript:
+  `printf '%s' "$(pbpaste)" | gh secret set ANTHROPIC_API_KEY --repo
+  <o>/<r>` (the `printf '%s'`/`$(pbpaste)` pair also strips the
+  clipboard's trailing newline — same family as the ADMIN_MERGE_TOKEN
+  trailing-newline trap). Validate the clipboard key first for FREE
+  via `curl GET https://api.anthropic.com/v1/models` (200/401, no
+  token spend) before setting it. Re-dispatch → the same bucket then
+  passed `24 passed in 345 s`. Pairs with the "secret becoming valid
+  is a spend event" and "registered != working / dogfood the live
+  loop" lessons.
