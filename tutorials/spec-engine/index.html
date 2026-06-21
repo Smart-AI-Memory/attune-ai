@@ -3822,17 +3822,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unresolved references
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3872,11 +3861,11 @@
 <hr />
 <h2 id="step-1-import-the-public-api">Step 1 — Import the public API<a class="headerlink" href="#step-1-import-the-public-api" title="Permanent link">&para;</a></h2>
 <p>The spec engine exposes everything you need through two packages. Open a new file called <code>run_pipeline.py</code> and add these imports:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span><span class="p">,</span> <span class="n">TaskResult</span><span class="p">,</span> <span class="n">read_spec</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span><span class="p">,</span> <span class="n">TaskResult</span><span class="p">,</span> <span class="n">read_spec</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
 </code></pre></div>
 <p>Both <code>pipeline</code> and <code>spec</code> are top-level packages — drop the <code>src.</code> prefix that appears in the source tree. Keeping these two imports separate reflects how the packages divide responsibility: <code>pipeline</code> owns execution, <code>spec</code> owns presentation and state.</p>
-<p><strong>Verify:</strong> Run <code>python -c "from pipeline import read_spec; print('ok')"</code>. You should see <code>ok</code> with no import errors.</p>
+<p><strong>Verify:</strong> Run <code>python -c "from attune.pipeline import read_spec; print('ok')"</code>. You should see <code>ok</code> with no import errors.</p>
 <hr />
 <h2 id="step-2-read-the-plan-file">Step 2 — Read the plan file<a class="headerlink" href="#step-2-read-the-plan-file" title="Permanent link">&para;</a></h2>
 <p><code>read_spec</code> parses your plan file and returns a list of <code>DecomposedTask</code> objects — one per XML task block in the file. This is the data structure every other function in the engine consumes.</p>
@@ -3928,8 +3917,8 @@
 <p><strong>Verify:</strong> A fully passing run prints the summary and exits with code <code>0</code>. Run <code>echo $?</code> (or <code>echo %ERRORLEVEL%</code> on Windows) immediately after to confirm.</p>
 <hr />
 <h2 id="complete-script">Complete script<a class="headerlink" href="#complete-script" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span><span class="p">,</span> <span class="n">TaskResult</span><span class="p">,</span> <span class="n">read_spec</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span><span class="p">,</span> <span class="n">TaskResult</span><span class="p">,</span> <span class="n">read_spec</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
 <a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>
 <a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">PLAN_PATH</span> <span class="o">=</span> <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span>
 <a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a>
@@ -3967,123 +3956,6 @@
 <h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <p>Now that you can run a pipeline programmatically, read the <code>execute_with_approval</code> reference in <code>spec.runner</code> to see how the interactive approval loop wraps the same orchestrator — it adds per-task human confirmation on top of exactly the machinery you just built.</p>
 <!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=tutorial generated_at=2026-06-02 -->
-
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 26 (code fence)</td>
-<td>error</td>
-<td><code>from pipeline import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 26 (code fence)</td>
-<td>error</td>
-<td><code>from spec import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 9</td>
-<td>error</td>
-<td><code>[Spec-Driven Development concept](concepts/tool-spec.md)</code> — target does not exist</td>
-</tr>
-<tr>
-<td>Line 44 (python fence)</td>
-<td>error</td>
-<td>Name "read_spec" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 59 (python fence)</td>
-<td>error</td>
-<td>Name "load_state" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 59 (python fence)</td>
-<td>error</td>
-<td>Name "PLAN_PATH" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 60 (python fence)</td>
-<td>error</td>
-<td>Name "present_tasks" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 60 (python fence)</td>
-<td>error</td>
-<td>Name "tasks" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 76 (python fence)</td>
-<td>error</td>
-<td>Function is missing a type annotation for one or more arguments  [no-untyped-def]</td>
-</tr>
-<tr>
-<td>Line 76 (python fence)</td>
-<td>error</td>
-<td>Name "TaskResult" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 79 (python fence)</td>
-<td>error</td>
-<td>Name "format_progress_bar" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 79 (python fence)</td>
-<td>error</td>
-<td>Name "tasks" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 80 (python fence)</td>
-<td>error</td>
-<td>Name "present_task_result" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 94 (python fence)</td>
-<td>error</td>
-<td>Name "PipelineOrchestrator" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 94 (python fence)</td>
-<td>error</td>
-<td>Name "PLAN_PATH" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 95 (python fence)</td>
-<td>error</td>
-<td>Name "PipelineResult" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 95 (python fence)</td>
-<td>error</td>
-<td>Name "on_task_complete" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 109 (python fence)</td>
-<td>error</td>
-<td>Name "result" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 111 (python fence)</td>
-<td>error</td>
-<td>Name "result" is not defined  [name-defined]</td>
-</tr>
-<tr>
-<td>Line 137 (python fence)</td>
-<td>error</td>
-<td>Function is missing a type annotation for one or more arguments  [no-untyped-def]</td>
-</tr>
-</tbody>
-</table>
 
 
 

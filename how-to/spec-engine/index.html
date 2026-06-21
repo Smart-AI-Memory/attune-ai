@@ -3823,17 +3823,6 @@
   
 </li>
       
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Unresolved references
-      
-    </span>
-  </a>
-  
-</li>
-      
     </ul>
   
 </nav>
@@ -3857,8 +3846,8 @@
 <h1 id="how-to-use-the-spec-engine">How to use the spec engine<a class="headerlink" href="#how-to-use-the-spec-engine" title="Permanent link">&para;</a></h1>
 <p>Use this guide when you need to drive a spec plan programmatically — reading task blocks from a plan file, running tasks through quality gates, tracking state across sessions, and presenting results to users.</p>
 <h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_state</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_state</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="c1"># Run all tasks in a plan with quality gates enabled</span>
 <a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="s2">&quot;.claude/plans/my-feature.md&quot;</span><span class="p">)</span>
@@ -4035,8 +4024,8 @@
 </table>
 <h2 id="integration-patterns">Integration patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
 <h3 id="resume-an-interrupted-run">Resume an interrupted run<a class="headerlink" href="#resume-an-interrupted-run" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">read_spec</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_state</span><span class="p">,</span> <span class="n">get_pending_tasks</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">read_spec</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_state</span><span class="p">,</span> <span class="n">get_pending_tasks</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
 <a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Discover plans that didn&#39;t finish</span>
 <a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a><span class="n">resumable</span> <span class="o">=</span> <span class="n">find_resumable_plans</span><span class="p">(</span><span class="s2">&quot;.claude/plans&quot;</span><span class="p">)</span>
@@ -4055,10 +4044,10 @@
 <a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
 </code></pre></div>
 <h3 id="stream-progress-to-a-ui">Stream progress to a UI<a class="headerlink" href="#stream-progress-to-a-ui" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">TaskResult</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineResult</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_spec</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">TaskResult</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineResult</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">read_spec</span>
 <a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
 <a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">plan_path</span> <span class="o">=</span> <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span>
 <a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">read_spec</span><span class="p">(</span><span class="n">plan_path</span><span class="p">)</span>
@@ -4085,33 +4074,6 @@
 <li><code>quickstarts/skill-spec.md</code> — interactive use via <code>/spec</code> in Claude Code</li>
 </ul>
 <!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=how-to generated_at=2026-06-02 -->
-
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 7 (code fence)</td>
-<td>error</td>
-<td><code>from pipeline import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 7 (code fence)</td>
-<td>error</td>
-<td><code>from spec import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
 
 
 
