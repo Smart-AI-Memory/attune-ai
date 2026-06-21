@@ -65,5 +65,44 @@ RECALL_MAP: dict[str, list[dict[str, str]]] = {
                 "FULL 40-char merge SHA via --target, never a branch name."
             ),
         },
+        # Commit-didn't-land dance (T2.1, added 2026-06-20): pre-commit
+        # auto-fixers re-stage files and `commit -q` can exit 0 yet skip
+        # the commit — a repeated, silent slip across release sessions.
+        {
+            "rule_id": "git-commit-verify-landed",
+            "match_substring": "git commit",
+            "text": (
+                "After `git commit`, verify it LANDED (`git log --oneline "
+                "-1` / `git status --short`) — pre-commit auto-fixers can "
+                "leave files re-staged and `git commit -q` can exit 0 yet "
+                "SKIP the commit. Pre-flight the PINNED black/ruff before "
+                "`git add` so the hooks see already-clean files."
+            ),
+        },
+        # Admin-merge already-merged trap (T2.1, added 2026-06-20): the
+        # local post-merge step errors even when the remote merge
+        # succeeded; a blind retry 404s because the PR is already merged.
+        {
+            "rule_id": "admin-merge-verify-remote",
+            "match_substring": "pr merge",
+            "text": (
+                "`gh pr merge --admin` can error from the LOCAL post-merge "
+                "step even when the REMOTE merge SUCCEEDED — verify `gh pr "
+                "view <n> --json state,mergedAt,mergeCommit` before "
+                "retrying; a retry 404s because it is already merged."
+            ),
+        },
+        # Rebase drops GPG signatures (T2.1, added 2026-06-20): replayed
+        # commits come back unsigned; pushing them loses the signature.
+        {
+            "rule_id": "rebase-resigns-gpg",
+            "match_substring": "rebase",
+            "text": (
+                "Rebase (and `git pull --rebase`) REPLAYS commits "
+                "UNSIGNED — re-sign with `git commit --amend -S "
+                "--no-edit` (or re-sign the replayed range) before "
+                "pushing, or the pushed commits lose their GPG signature."
+            ),
+        },
     ],
 }

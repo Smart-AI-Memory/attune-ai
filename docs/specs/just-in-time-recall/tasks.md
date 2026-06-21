@@ -50,11 +50,14 @@ implementation past it until the injection mechanism is logged in
 
 ## Phase 2 — grow the map + tune cadence (deferred)
 
-- [ ] **T2.1** Add the next 2–3 highest-value slip-points (e.g. git push
+- [x] **T2.1** Add the next 2–3 highest-value slip-points (e.g. git push
   to a shared branch → fetch-first rule) once the proof case holds.
-  *(1 of 2-3 added 2026-06-10: `release-verify-merge-sha` on
-  `Bash`+`gh release create`, via the new `match_substring` filter —
-  broad tools MUST scope rules this way, drift-guarded in tests.)*
+  *(Done 2026-06-20: 3 corpus-backed `Bash` slip-points added —
+  `git-commit-verify-landed` (`git commit`), `admin-merge-verify-remote`
+  (`pr merge`), `rebase-resigns-gpg` (`rebase`) — each `match_substring`-
+  scoped and text-only (no dangling `lesson_ref`); +5 tests, live
+  round-trip dogfood confirmed. Earlier: `release-verify-merge-sha` on
+  `gh release create`, 2026-06-10.)*
 - [ ] **T2.2** Decide the surface-once vs decay question (D5) from proof-
   case evidence; implement decay only if once-per-session proves too
   sparse.

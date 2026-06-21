@@ -164,6 +164,50 @@ def test_non_matching_rule_writes_no_sentinel(jit_mod, monkeypatch, capsys, tmp_
 
 
 # ==========================================================================
+# T2.1 slip-points (git-commit / admin-merge / rebase)
+# ==========================================================================
+
+
+def test_git_commit_rule_fires_on_commit(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("git commit -m 'x'"))
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "LANDED" in ctx
+
+
+def test_admin_merge_rule_fires_on_pr_merge(jit_mod, monkeypatch, capsys):
+    rc, out = _run(
+        jit_mod,
+        monkeypatch,
+        capsys,
+        _bash_payload("gh pr merge 952 --admin --squash"),
+    )
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "already merged" in ctx
+
+
+def test_rebase_rule_fires_on_rebase(jit_mod, monkeypatch, capsys):
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("git rebase main"))
+    assert rc == 0
+    ctx = json.loads(out)["hookSpecificOutput"]["additionalContext"]
+    assert "UNSIGNED" in ctx
+
+
+def test_t21_rules_silent_on_unrelated_bash(jit_mod, monkeypatch, capsys):
+    """None of the T2.1 substrings appear in an ordinary `ls`, so silent."""
+    rc, out = _run(jit_mod, monkeypatch, capsys, _bash_payload("ls -la"))
+    assert rc == 0
+    assert out == ""
+
+
+def test_all_rule_ids_are_unique(jit_mod):
+    """rule_id keys the per-session sentinel — a dup would cross-silence."""
+    ids = [r["rule_id"] for rules in jit_mod.RECALL_MAP.values() for r in rules]
+    assert len(ids) == len(set(ids)), f"duplicate rule_id in RECALL_MAP: {ids}"
+
+
+# ==========================================================================
 # lesson_ref resolution (lessons-corpus-rag T4)
 # ==========================================================================
 
