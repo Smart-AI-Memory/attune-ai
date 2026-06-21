@@ -259,3 +259,25 @@ scheduled jobs (budget-capped).
 **Next gate:** update the repo secret `ANTHROPIC_API_KEY` to the valid
 key, then re-dispatch `integration-auth` (the real ~$2–$7 bundled-CLI
 validation). Until then #917 stays DRAFT.
+
+## T4 — VALIDATED end-to-end + #917 un-drafted (2026-06-20)
+
+After refreshing the stale repo CI secret `ANTHROPIC_API_KEY` (the
+local org-7edead08 key, validated 200 on `/v1/models`, set
+off-transcript via `printf '%s' "$(pbpaste)" | gh secret set`),
+re-dispatched `integration-auth` on the merged head (SHA ad6f57a5e,
+run **27887666262**):
+
+- **`24 passed in 345.38s`, 0 failed.** All 6 discovery-sweep
+  workflow tests (the SDK→bundled-CLI path that broke on 2.1.178)
+  passed, plus all 19 `llm_integration` tests — incl.
+  `test_thinking_mode`, the previously-flagged known issue.
+- **Zero** `invalid x-api-key`; **zero** `error result: success`.
+
+The 0.2.x migration is now proven on the real auth loop, not just the
+mocked unit suite. Candidate fix #1 (re-pin 0.2.102 → 0.2.105, no
+code change) is confirmed correct end-to-end.
+
+**#917 un-drafted.** Required per-PR checks (keyless) re-run green on
+the head; `integration-auth` is advisory (not a required gate) and is
+now green. Spec T0–T4 complete.
