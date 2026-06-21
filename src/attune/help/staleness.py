@@ -211,6 +211,13 @@ def check_staleness(
             logger.warning("Feature '%s' not in manifest", name)
             continue
 
+        # Single-sourced (status: manual) features are authored/projected,
+        # not LLM-generated — they carry no source globs to hash against
+        # and must never be regenerated. Exclude them from the staleness
+        # report entirely so they never count as stale.
+        if feat.is_manual:
+            continue
+
         current_hash, matched = compute_source_hash(feat, project_root)
         stored_hash = _read_stored_hash(name, help_path)
 

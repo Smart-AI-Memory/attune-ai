@@ -182,20 +182,34 @@ the skip list.
 
 ## P3 — First-class `maintenance: projected` contract (attune-author)
 
-**Status:** open · **Raised:** 2026-06-21 (D9) · **Lands in:**
-attune-author
+**Status:** partially done (feature-level `status: manual` landed,
+2026-06-21) · **Raised:** 2026-06-21 (D9) · **Lands in:** attune-ai
+(`attune.help`) + attune-author
 
-D9 defuses the regen-overwrite trap by **removing** a migrated feature
-from `.help/features.yaml` entirely, which also freezes its `faq.md`
-(no auto-regen). The cleaner long-term mechanism is a first-class
-`maintenance: projected` page contract that the generator **skips**
-(like `manual`) AND `check_staleness` **ignores**. That would let a
-projected feature keep `faq` on the LLM path per D7's original intent
-*without* the perpetual-stale wart (projected `source_hash` = master
-hash never matches the code-derived hash, so `maintenance: manual`
-alone makes the feature report stale forever). With P3, DD5 could
-revert to "keep the feature listed, mark the 10 projected kinds
-`projected`," reopening the option D9 rejected for tooling reasons.
+D9 defused the regen-overwrite trap by **removing** a migrated feature
+from `.help/features.yaml` entirely — but that also dropped the
+feature's name/description/tags from the manifest, so `resolve_topic`
+could no longer route to it and the `models`/`spec-engine` golden
+queries (`md-001`, `md-002`, `sp-001`, `sp-002`) regressed to
+`None`/wrong-feature. Removing the entry threw out the resolution index
+along with the regen trigger.
+
+**Landed (this PR):** a feature-level `status: manual` flag on the
+manifest `Feature`. `resolve_topic` still indexes the entry
+(name/description/tags), so topic resolution is restored, while
+`check_staleness` **skips** manual features entirely — sidestepping the
+perpetual-stale wart (no code-derived hash is ever compared, so a
+projected `source_hash` can't read as stale) and `maintenance`
+reports them under `skipped_manual`. The `models`/`spec-engine` entries
+are re-added with `status: manual` and **no `files:`**.
+
+**Still open:** the finer-grained *per-kind* `maintenance: projected`
+page contract that would let a projected feature keep just its `faq`
+on the LLM path per D7's original intent (feature-level `manual` freezes
+the whole feature, including `faq`, which is acceptable today only
+because `faq` is frozen until the FAQ Generator ships). With that,
+DD5 could mark the 10 projected kinds `projected` while leaving `faq`
+generated — the option D9 rejected for tooling reasons.
 
 ---
 
