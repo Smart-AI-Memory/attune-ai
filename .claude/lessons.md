@@ -9617,3 +9617,44 @@ files.
   errors). General pattern: when a vendored/bundled binary regresses,
   check whether a newer point release re-bundles a fixed binary BEFORE
   writing tolerance code around the bug.
+
+- **Launching the attune-gui / attune-ops dashboards from an
+  attune-ai WORKTREE — four gotchas the `attune-gui` skill and the
+  default launch.json don't handle** (2026-06-21): asked to "open the
+  dashboard," then "for attune ops also," from a worktree session.
+  - **attune-gui is a SEPARATE repo, not part of attune-ai.** The
+    `attune-gui` skill's step 1 only checks `.` and `./attune-gui`, so
+    from the attune-ai worktree it resolves "not found." The real
+    project lives at `/Users/patrickroebuck/attune-gui` (its
+    `pyproject.toml` has `name = "attune-gui"` + a `attune-gui =
+    "attune_gui.main:main"` script). Fix: write the launch.json
+    `attune-gui` entry with an ABSOLUTE `--directory` to that path
+    (`uv run --directory /Users/patrickroebuck/attune-gui attune-gui
+    --port <p>`) rather than making the user switch dirs.
+  - **Default ports are already taken on this machine.** Port **8000**
+    is held by the `agent-memory` (AMS) API server (`agent-memory api
+    --port 8000`) and **8765** by a (possibly stale) `attune.ops` —
+    NOT free as the skill assumes. Don't kill AMS; attune-gui supports
+    `--port` (defaults to auto-pick), so pin it to a free port (used
+    8010). Probe occupants with `ps -p <pid> -o command=` before
+    touching anything.
+  - **attune.ops from a worktree must use the MAIN venv, not `uv
+    run`.** The worktree `.venv` lacks the `[ops]` extras
+    (fastapi/uvicorn/jinja2) → `ModuleNotFoundError`, and the editable
+    MAPPING runs main's code anyway. Robust launch.json entry:
+    `runtimeExecutable` = `/Users/patrickroebuck/attune-ai/.venv/bin/
+    python`, `runtimeArgs` = `["-m","attune.ops","--project-root",
+    "/Users/patrickroebuck/attune-ai","--port","8765","--no-browser"]`
+    — mirrors the known-good invocation from the consolidated
+    editable-install lesson.
+  - **A stale attune.ops process 500s on EVERY route while `/api/info`
+    still returns 200.** A wedged old process (reported v8.5.0 while
+    main was 8.6.2) answered `/api/info` 200 but 500'd `/`,
+    `/dashboard`, `/health`, everything. `/api/info` 200 is NOT proof
+    the dashboard works — verify the actual page route. Fix: `kill
+    <pid>`, free the port, `preview_start` fresh; the new process
+    served 200 on `/` immediately.
+  - **`.claude/launch.json` is gitignored** (`.gitignore:261`), so
+    these entries are local-only and can't/shouldn't be committed —
+    they hold machine-specific absolute paths. "Commit the launch
+    config" is a no-op; don't force-add past the ignore.
