@@ -40,8 +40,19 @@ faq kind).
 
 ## FM1 — Failure-modes sourcing review (before rollout)
 
-**Status:** open · **Raised:** 2026-06-21 (D6 fallout) · **Blocks:**
-R7 rollout playbook
+**Status:** CLOSED — decided (a) fully author-owned · **Decision:** D13
+(decisions.md) · **Resolved:** 2026-06-21 · **Was blocking:** R7
+
+**Resolution:** Grounded in the doc-stack spec's own source-mapping
+table — `Lessons Learned → Error/Warning` (authored),
+`telemetry error-frequency → FAQ candidates` only — failure modes are
+**fully author-owned** and project verbatim to error/troubleshooting/
+warning. No re-cut, no Error Generator, no design.md change. None of
+D6's three FAQ regressions apply (telemetry informs *selection* of
+modes, not *content*). See **D13** for the full rationale. The original
+content below is retained as the investigation record.
+
+---
 
 **The question:** Is the master file's `## Failure modes` section the
 same "static copy vs dynamic source-of-truth" problem we just fixed
@@ -215,9 +226,31 @@ generated — the option D9 rejected for tooling reasons.
 
 ## P4 — mkdocs nav-wiring convention for projected pages
 
-**Status:** open · **Raised:** 2026-06-21 (pilot execution; design.md
-"still to prototype") · **Lands in:** attune-ai (mkdocs.yml + a
-convention)
+**Status:** DECIDED — convention locked, **implementation open** ·
+**Decision:** D12 (decisions.md) · **Decided:** 2026-06-21 · **Lands
+in:** attune-ai (a `docs/hooks/feature_nav.py` + `mkdocs.yml` `hooks:`
+entry)
+
+**Convention (D12):** projected pages enter via **one new "Features"
+nav section** alongside the type-first Diátaxis sections; each feature
+contributes **one nav line → its hub page** (`docs/features/<feature>.md`,
+D11). Per-feature how-to/architecture/reference stay built-but-out-of-nav
+(reached via hub + search). A **mkdocs `on_config` hook** generates the
+Features section and prunes feature pages from `exclude_docs` by scanning
+`docs/features/*.md` — **zero new plugin dependency**. The wholesale
+`architecture/` exclude is **dropped** (exclude only genuine non-feature
+orphans); the pilot's per-feature `!architecture/<feature>.md`
+re-includes are removed. Plugin route (`awesome-nav`/`literate-nav` +
+`.nav.yml`) is the fallback only if the hook outgrows ~30 lines.
+
+**Implementation TODO (R7):** write `docs/hooks/feature_nav.py`
+(`on_config`: append `{"Features": [...]}` nav node from
+`docs/features/`, drop feature pages from `exclude_docs`); migrate
+`docs/FEATURES.md` → `docs/features/index.md` (section landing); remove
+the `architecture/` blanket exclude + the `!spec-engine`/`!models`
+re-includes from `mkdocs.yml`.
+
+**Original framing (retained):**
 
 Projected docs pages are not auto-wired into the published site:
 
@@ -289,9 +322,32 @@ Concrete follow-ups:
 
 ## P6 — Tutorial-as-landing / per-feature hub page
 
-**Status:** open · **Raised:** 2026-06-21 (pilot review — Patrick wants
-tutorials front-and-center) · **Lands in:** attune-ai (mkdocs nav +
-landing convention), pairs with P4
+**Status:** DECIDED — Variant 1 locked, **implementation open** ·
+**Decision:** D11 (decisions.md) · **Decided:** 2026-06-21 · **Lands
+in:** attune-author (projector hub-emit) + repo driver; pairs with P4/D12
+
+**Convention (D11):** a thin **projector-emitted hub** at
+`docs/features/<feature>.md` in **Variant 1 (hero callout + card grid)**.
+Leads with a "Start here" hero → **tutorial when one exists**, degrading
+to how-to → concept (first that exists); then a card grid of the
+feature's available kinds. Tutorial is prominent by **placement**, not by
+rule — resolving the coverage gap (only ~9–11/25, a minority of ~270,
+have tutorials) without dead front doors and without taxing the
+quick-lookup reader. Fully D10-compatible (hub *links* the tutorial,
+never reproduces it).
+
+**Implementation TODO (R7):** projector/driver gains a hub-emit step —
+given a feature's available kinds + whether `docs/tutorials/<feature>.md`
+exists, write the Variant-1 hub (cards render only for kinds that exist;
+hero target precedence tutorial → how-to → concept). The mockup in the
+2026-06-21 design session is the visual spec.
+
+**Still open (carried):** in-tool surface — should the ops living-docs
+dashboard / `help_lookup` also lead with the tutorial? D11 scoped this to
+the published site only. And whether to invest in generating more
+tutorials (LLM channel) to widen the marquee-entry coverage.
+
+**Original framing (retained):**
 
 Patrick wants a feature's **tutorial** to be the first thing a user of
 that feature sees — the rich, narrative `docs/tutorials/<feature>.md`

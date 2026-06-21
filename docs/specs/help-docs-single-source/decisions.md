@@ -330,3 +330,193 @@ Projecting it loses the pedagogy and produces a how-to duplicate.
 - The projected docs set per feature is therefore **how-to,
   architecture, reference** (3 pages); `.help` is the 10 non-faq
   kinds. Tutorial + faq remain hand-authored / LLM-owned respectively.
+
+---
+
+## D11 — Per-feature hub page; tutorial-first by prominence, not by rule (P6)
+
+**Decided (2026-06-21 design session):** Every feature gets a thin,
+**projector-emitted hub page** at `docs/features/<feature>.md`. The hub
+**leads with a prominent "Start here" callout** that points to the
+**Tutorial** when one exists, then a scannable **card grid** of the
+feature's other available kinds (how-to, reference, architecture,
+concept). When no tutorial exists, the callout **degrades** to lead
+with the how-to (or, absent that, concept) — never a dead link. Layout
+**Variant 1 (hero callout + card grid)** is the locked convention.
+
+**Why this shape (the coverage constraint drove it):** Patrick wants
+the rich hand-authored tutorial front-and-center, but it is the **one
+channel the projector cannot generate** (D10) and only ~9–11 of 25
+manifest features — and a small minority of the ~270 rollout — will ever
+have one (`models`, a pilot feature, does not). A literal
+"tutorial-is-the-front-door" rule gives most features a dead entry and
+taxes the frequent quick-answer lookup to serve the first-visit case
+(Diátaxis treats the tutorial as a deliberate detour, not the hub).
+Variant 1 resolves the tension **spatially**: the hero gives the
+tutorial genuine prominence for first-visit readers, while the card
+grid below serves the lookup reader in one scan. The hero is the only
+part that varies by coverage; the grid is identical whether or not a
+tutorial exists.
+
+**Why a hub page rather than a banner on the how-to:** (1) it is the
+**single nav entry per feature** (the unit P4 wires in, instead of 3–4
+type-scattered lines × 270 features); (2) it is the **discovery
+surface** the projected pages lack today — verified that
+`docs/how-to/spec-engine.md` carries **zero cross-links** to the
+tutorial, reference, or architecture pages, so without a hub there is
+no path between a feature's pages; (3) the projector **knows each
+feature's available kinds**, so it emits the hub and its card set
+deterministically — no LLM, fully D10-compatible (the hub *links* the
+tutorial, never reproduces it).
+
+**Rejected:**
+
+- **Variant 2 (numbered learning path)** — over-narrates a Diátaxis
+  journey at the frequent quick-lookup user, the exact tax P6 warns
+  against.
+- **Variant 3 (minimal callout + bullet list)** — gives the tutorial
+  the least visual weight, working against the front-and-center goal.
+- **No hub; "Start here" admonition banner injected atop each how-to
+  page** — leaves the nav problem unsolved (still 3–4 type-scattered
+  entries per feature) and gives no home to features whose strongest
+  page is reference, not how-to.
+
+**Consequences:**
+
+- The projector/driver gains a hub-emit step: given a feature's
+  available kinds (and whether `docs/tutorials/<feature>.md` exists), it
+  writes `docs/features/<feature>.md` in the Variant-1 shape. The
+  card set renders only kinds that exist. Lands in attune-author
+  (projector) + the repo driver; tracked under P6 in follow-ups.
+- The hub's "Start here" target precedence is **tutorial → how-to →
+  concept** (first that exists).
+- In-tool surfaces (ops living-docs dashboard, `help_lookup`) are
+  **out of scope here** — this decision is the published-site hub. Open
+  P6 question of whether the in-tool surface should also lead with the
+  tutorial is deferred (carried on the P6 follow-up).
+- Pairs with **D12** (P4): the hub is the per-feature nav entry.
+
+---
+
+## D12 — mkdocs nav: one "Features" hub entry per feature (P4)
+
+**Decided (2026-06-21 design session):** Projected pages enter the
+published site through **one new top-level "Features" nav section**
+(a feature-first axis) that sits alongside the existing type-first
+Diátaxis sections (Getting Started / Tutorials / How-to / Reference).
+**Each feature contributes exactly one nav line → its hub page**
+(`docs/features/<feature>.md`, D11). The per-feature
+how-to/architecture/reference pages stay **built but out of the top
+nav**, reached via the hub and search. A **mkdocs `hooks:` Python hook**
+(`on_config`) generates the Features section and adjusts `exclude_docs`
+by scanning `docs/features/*.md` at build time. The wholesale
+`architecture/` exclusion is **dropped**; only the genuine non-feature
+orphans (e.g. `architecture/extending-composition-patterns.md`) are
+excluded explicitly.
+
+**Why a single hub entry per feature (not per-page nav entries):** the
+existing nav is **type-first** — `Tutorials`, `How-to`, `Reference` are
+flat lists, and features are scattered across them. Wiring ~270
+features × 3–4 pages into those flat lists is ~1000 hand-maintained
+nav lines that drift the moment a page is added (the
+website-content-accuracy failure mode). Routing each feature through
+**one hub line** keeps the nav legible and makes the hub — not a raw
+page — the front door. The pilot's per-feature
+`!architecture/<feature>.md` re-includes are the concrete thing that
+**does not scale**; the hook replaces them.
+
+**Why a Python hook, not a nav plugin (the mechanism fork P4 named):**
+
+- The repo runs **only `search` + `mkdocstrings`** and keeps `nav:`
+  explicit in `mkdocs.yml`. A `hooks:` entry is a **zero-dependency**
+  ~30-line function (`on_config`: read `docs/features/`, append a
+  `{"Features": [...]}` nav node, prune feature pages from
+  `exclude_docs`). The projector/driver never edits `mkdocs.yml`.
+- A nav plugin (`mkdocs-awesome-nav` / `literate-nav` + a generated
+  `.nav.yml`) is conceptually cleaner but adds a **build dependency**
+  and a per-directory file convention — a heavier commitment for a repo
+  that deliberately keeps nav in one explicit place. Recommended as the
+  fallback if the hook outgrows ~30 lines, not the default.
+
+**Rejected:**
+
+- **Hand-listed per-feature nav entries** — 270× manual, drifts
+  immediately; the exact maintenance trap single-sourcing exists to
+  end.
+- **Keep the wholesale `architecture/` exclude + per-feature `!`
+  re-includes** — the pilot's stopgap; one extra line per feature in
+  `mkdocs.yml`, does not scale.
+
+**Consequences:**
+
+- New build artifact: `docs/hooks/feature_nav.py` (or equivalent),
+  referenced from `mkdocs.yml`'s `hooks:`. It owns the "Features" nav
+  node and the feature-page `exclude_docs` handling.
+- `docs/features/<feature>.md` (D11 hub) becomes the routed page;
+  `docs/features/index.md` is the section landing (migrate the current
+  single-file `docs/FEATURES.md` content there). The blanket
+  `features/` exclusion is replaced by the hook's selective handling.
+- The "not in nav" mkdocs INFO for per-feature how-to/architecture/
+  reference pages is **accepted by design** — they are intentionally
+  reached through the hub, not the top nav. (This is already the
+  systemic status quo for every feature page, so it is not a
+  regression.)
+- Decided **once at rollout**, applied uniformly by the hook — never
+  per-feature. Unblocks the R7 rollout playbook's nav step.
+
+---
+
+## D13 — Failure modes are fully author-owned; project verbatim (FM1)
+
+**Decided (2026-06-21, grounded in the doc-stack spec — not assumed):**
+The master file's `## Failure modes` section is **canonical,
+author-owned content**, not a sourced/dynamic source-of-truth like the
+FAQ (D6). It projects **verbatim** to the `error`, `troubleshooting`,
+and `warning` `.help` kinds per the existing design.md projection map.
+**No re-cut to seeds, no Error Generator, no design.md amendment.** FM1
+is **closed as option (a)**.
+
+**Why (the evidence that settles it):** FM1 suspected failure modes had
+the FAQ's "static copy vs telemetry-sourced" problem because the
+documentation-stack spec
+(`.claude/plans/documentation-stack-spec.md`) routes telemetry
+error-frequency near error templates. Reading that spec's **own
+source-mapping table** refutes the suspicion:
+
+| Source | Produces | Template type |
+| ------ | -------- | ------------- |
+| Lessons Learned in CLAUDE.md | Error/Warning pages | Error, Warning |
+| Error frequency from telemetry | FAQ candidates | FAQ |
+
+Telemetry error-frequency feeds **FAQ candidates only** — it does **not**
+author error/warning templates. Those are sourced from **Lessons
+Learned (authored knowledge)**, and the spec's "Source of truth"
+section states plainly: *"Error templates are authored in a canonical
+format (source)."* So failure-mode prose (symptom / cause / fix) is
+author-knowledge by the doc-stack spec's own design; telemetry's only
+coupling to it is **prioritization** (which modes matter), expressed
+through the separate FAQ channel — a far weaker coupling than the FAQ's,
+where the *question phrasing itself* tracks how real users ask.
+
+**Contrast with D6 (why the FAQ was different):** the FAQ regressed
+because a frozen authored block can only ever be channel 4, starving
+the three dynamic channels and inverting the pull-based Generator flow.
+Failure modes have **no equivalent dynamic authoring channel** in the
+doc-stack design — telemetry informs *selection*, not *content* — so
+none of D6's three regressions (duplication, discarded channel,
+inverted flow) apply.
+
+**Rejected — (b) partly sourced (author seeds + Error Generator merge):**
+would manufacture a coupling the doc-stack spec does not specify, add an
+unbuilt subsystem (cf. the FAQ Generator, FG1), and re-cut
+hand-authored failure-mode prose into seeds for no sourcing benefit.
+
+**Consequences:**
+
+- `content/features/spec-engine.md`'s `## Failure modes` section is
+  **unchanged**; design.md's projection map (`Failure modes → error,
+  troubleshooting, warning`) is **confirmed correct as written**.
+- FM1 is closed; the R7 rollout playbook is unblocked on this axis.
+- **Note:** follow-ups.md FM1 instructed recording this as "decision
+  D7" — that label was already taken (FAQ projection scope) when FM1
+  was written; recorded here as **D13**.
