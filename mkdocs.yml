@@ -35,10 +35,27 @@ exclude_docs: |
   internal/
   archive/
   generated/
-  architecture/
-  !architecture/ops-dashboard.md
-  !architecture/spec-engine.md
-  !architecture/models.md
+  # architecture/ is NOT blanket-excluded (D12): projected per-feature
+  # architecture pages build and are reached via their hub. Exclude only
+  # the genuine non-feature architecture-concept orphans below; legacy
+  # pre-pilot feature pages stay excluded until their feature migrates to
+  # the projector. The feature_nav.py hook owns the Features nav section.
+  architecture/enhanced_escalation_architecture.md
+  architecture/extending-composition-patterns.md
+  architecture/resilience.md
+  architecture/cli.md
+  architecture/hooks.md
+  architecture/memory.md
+  architecture/telemetry.md
+  architecture/help-system.md
+  architecture/plugin-system.md
+  architecture/bug-predict.md
+  architecture/deep-review.md
+  architecture/refactor-plan.md
+  architecture/release-prep.md
+  architecture/security-audit.md
+  architecture/smart-test.md
+  architecture/rag-grounding.md
   development-logs/
   development/
   specs/
@@ -53,7 +70,8 @@ exclude_docs: |
   adr/
   plans/
   marketing/
-  features/
+  # features/ is NOT excluded (D12): docs/features/*.md hub pages build and
+  # are wired into the Features nav section by docs/hooks/feature_nav.py.
   blog-posts/
   quickstart/
   api-reference/
@@ -263,7 +281,6 @@ nav:
       - Architecture:
           - Overview: ARCHITECTURE.md
           - Ops Dashboard: architecture/ops-dashboard.md
-      - Features: FEATURES.md
 
   - Contributing:
       - contributing.md
@@ -320,6 +337,13 @@ theme:
   font:
     text: Roboto
     code: Roboto Mono
+
+# Build hooks
+# feature_nav.py injects the top-level "Features" nav section from
+# docs/features/*.md hub pages (D12) — one nav entry per feature, so the
+# single-source rollout never edits this file per feature.
+hooks:
+  - docs/hooks/feature_nav.py
 
 # Plugins
 plugins:
