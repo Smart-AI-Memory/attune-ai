@@ -9821,3 +9821,32 @@ files.
     confirm the example awaits it (or actually compile/run the block).
     "Symbols exist" ≠ "behavior is as described" ≠ "the example runs."
     Tracked as follow-up P5 (add example-execution to fact_check).
+
+- **A task that directs work in a worktree DIFFERENT from the
+  session's worktree is blocked by the `worktree_path_guard`
+  PreToolUse hook — switch the session in with
+  `EnterWorktree(path=...)`, don't fight the guard or fall back to
+  Bash `cd`**: 2026-06-21, executing T2–T4 of the help-docs-rollout-gate
+  spec, the prompt said "work in
+  `.claude/worktrees/kind-elgamal-9e28c4`" but the session was rooted
+  in a different worktree (`quizzical-bartik-a609fe`). The first
+  `Edit` to `kind-elgamal`'s `pyproject.toml` was BLOCKED:
+  `[worktree-path-guard] BLOCKED Write/Edit … these don't match — the
+  write would land in a different tree than the one you're working
+  in`. The fix is **not** to use the bare path or `git -C`; it is to
+  switch the session's working tree: load `EnterWorktree` via
+  ToolSearch and call `EnterWorktree(path=<abs worktree path>)` (the
+  path must already appear in `git worktree list` — this enters an
+  EXISTING worktree, distinct from the `name=` form that CREATES one).
+  After the switch, Edit/Write/Bash all target the intended worktree,
+  the guard passes, and `.venv` etc. resolve there. Two corollaries:
+  (1) Bash cwd RESETS to the session worktree between calls anyway, so
+  pre-switch you must `cd <abs>` inside every compound command — after
+  the switch you don't; (2) prefer reusing the prior session's
+  worktree (it carries the in-flight branch + commits — here a T1 spec
+  commit + a T3 hook commit) over creating a fresh one. Pairs with the
+  "create a new worktree to continue last session = reuse the existing
+  one" and "Write to a bare main path from a worktree lands on main"
+  lessons — same family (locating the right worktree), this one is the
+  session-is-in-the-WRONG-worktree surface and its `EnterWorktree`
+  remedy.
