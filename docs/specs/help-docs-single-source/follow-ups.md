@@ -226,10 +226,26 @@ generated — the option D9 rejected for tooling reasons.
 
 ## P4 — mkdocs nav-wiring convention for projected pages
 
-**Status:** DECIDED — convention locked, **implementation open** ·
-**Decision:** D12 (decisions.md) · **Decided:** 2026-06-21 · **Lands
-in:** attune-ai (a `docs/hooks/feature_nav.py` + `mkdocs.yml` `hooks:`
-entry)
+**Status:** IMPLEMENTED — hook wired, build verified · **Decision:** D12
+(decisions.md) · **Decided:** 2026-06-21 · **Implemented:** 2026-06-21
+via the help-docs-rollout-gate spec (T3) · **Landed in:** attune-ai
+(`docs/hooks/feature_nav.py` + `mkdocs.yml` `hooks:` entry)
+
+**Implementation note (what actually shipped):** `docs/hooks/feature_nav.py`
+is an `on_config` hook scoped to **nav injection only** — it builds the
+top-level `Features` section (Overview → `features/index.md`, then one
+entry per `docs/features/*.md` hub, H1-derived labels, sorted) and
+idempotently replaces any prior `Features` node. The `exclude_docs`
+cleanup is a **static `mkdocs.yml` edit**, not a runtime PathSpec
+mutation (keeps the hook side-effect-free beyond `config["nav"]`): the
+blanket `architecture/` + `features/` excludes and the per-feature
+`!architecture/{spec-engine,models,ops-dashboard}.md` re-includes are
+removed, so a newly-projected feature's hub/architecture pages build with
+**no per-feature `mkdocs.yml` edit**. Genuine non-feature
+architecture-concept orphans and legacy pre-pilot feature pages are
+excluded explicitly (a one-time enumeration that shrinks as features
+migrate). `mkdocs build --strict` is clean and the Features section lists
+both pilot hubs. `docs/FEATURES.md` migrated to `docs/features/index.md`.
 
 **Convention (D12):** projected pages enter via **one new "Features"
 nav section** alongside the type-first Diátaxis sections; each feature
@@ -322,9 +338,25 @@ Concrete follow-ups:
 
 ## P6 — Tutorial-as-landing / per-feature hub page
 
-**Status:** DECIDED — Variant 1 locked, **implementation open** ·
-**Decision:** D11 (decisions.md) · **Decided:** 2026-06-21 · **Lands
-in:** attune-author (projector hub-emit) + repo driver; pairs with P4/D12
+**Status:** IMPLEMENTED (published-site hub) — in-tool surface still open ·
+**Decision:** D11 (decisions.md) · **Decided:** 2026-06-21 ·
+**Implemented:** 2026-06-21 via the help-docs-rollout-gate spec (T1
+attune-author 0.21.0 hub-emit; T2 pilot projection; T3 nav) · **Landed
+in:** attune-author `projector._render_hub` + repo driver
+`scripts/project_features.py`
+
+**Implementation note (what actually shipped):** `project_feature` now
+emits a 14th output — the Variant-1 hub at `docs/features/<feature>.md`:
+a `!!! tip "Start here"` hero linking the first present of
+**tutorial → how-to → reference** (concept is `.help`-only, so the
+on-site precedence ends at reference, not concept), plus a Material
+`grid cards` block over the remaining present {how-to, reference,
+architecture}; the hero kind is removed from the grid so it is never
+listed twice. Verified on both pilots: `spec-engine` heroes the tutorial
+(cards: how-to/reference/architecture); `models` degrades to the how-to
+hero with no tutorial card (cards: reference/architecture). Deterministic,
+no LLM/AST. Features with no `nav.mkdocs` pages record a skip
+("hub (no docs pages)"), never an error.
 
 **Convention (D11):** a thin **projector-emitted hub** at
 `docs/features/<feature>.md` in **Variant 1 (hero callout + card grid)**.

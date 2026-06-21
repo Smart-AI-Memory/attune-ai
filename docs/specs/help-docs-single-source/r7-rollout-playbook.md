@@ -1,7 +1,10 @@
 # R7 — Rollout Playbook: Single-Source Help + Docs
 
-**Status:** drafted from the pilot (2026-06-21) · **Builds on:**
-[design.md](design.md), [decisions.md](decisions.md) (D6–D10),
+**Status:** drafted from the pilot (2026-06-21); **nav/hub gate
+implemented** (P4/P6 done via the help-docs-rollout-gate spec,
+2026-06-21) — the per-feature loop no longer requires a manual
+`mkdocs.yml` edit · **Builds on:** [design.md](design.md),
+[decisions.md](decisions.md) (D6–D13),
 [t2-projector-build.md](t2-projector-build.md),
 [follow-ups.md](follow-ups.md)
 
@@ -61,8 +64,12 @@ For each feature `<F>`:
    pilot features achieved).
 
 3. **Project (real write):** `python scripts/project_features.py <F>`.
-   Writes 13 outputs (10 `.help` + how-to/architecture/reference docs).
-   `faq` and `tutorial` are skipped by the driver's `skip_kinds`.
+   Writes 14 outputs (10 `.help` + how-to/architecture/reference docs +
+   the Variant-1 **hub** at `docs/features/<F>.md`). `faq` and `tutorial`
+   are skipped by the driver's `skip_kinds`. The hub (attune-author 0.21.0,
+   D11) heroes the first present of tutorial → how-to → reference and
+   grids the remaining present {how-to, reference, architecture} — fully
+   automatic, no per-feature authoring.
 
 4. **Diff the win:** `git diff .help/templates/<F>/`. Confirm fiction
    is replaced (no invented CLIs, no property-as-method, no
@@ -91,9 +98,14 @@ For each feature `<F>`:
    below) — all 10 projected kinds serve with non-empty bodies and the
    feature reports complete (faq retained).
 
-6. **Verify mkdocs:** `mkdocs build`. Add `!architecture/<F>.md` to
-   `mkdocs.yml`'s `exclude_docs` whitelist so the architecture page
-   publishes (see P4 — until the convention is generalized).
+6. **Verify mkdocs:** `mkdocs build --strict`. **No per-feature
+   `mkdocs.yml` edit is needed** (P4/D12 implemented): the
+   `docs/hooks/feature_nav.py` `on_config` hook wires the hub into the
+   top-level **Features** nav section automatically, and the architecture
+   page builds (the blanket `architecture/` exclude is dropped). The only
+   exception is a feature that still carries a **pre-pilot legacy**
+   `architecture/<F>.md` exclude line in `mkdocs.yml` — remove that one
+   line when you migrate it. Net-new features need nothing.
 
 7. **Apply DD5 (only after serve verified):** remove the `<F>` entry
    from `.help/features.yaml` so the weekly help-freshness regen never
@@ -148,10 +160,15 @@ otherwise points `attune` at the main checkout — see CLAUDE.md).
 - **Tutorial is not projected (D10).** It stays hand-authored.
   Restore `docs/tutorials/<F>.md` from the pre-projection version if a
   prior `--all-kinds` run clobbered it.
-- **mkdocs nav wiring is not automatic (P4).** Architecture pages are
-  excluded wholesale; how-to/tutorial/reference pages build but are
-  "not in nav." The pilot re-includes architecture per feature — this
-  does not scale. Resolve the convention (P4) before bulk rollout.
+- **mkdocs nav wiring is automatic (P4/D12 — IMPLEMENTED).** The
+  `docs/hooks/feature_nav.py` `on_config` hook builds the top-level
+  **Features** nav section from `docs/features/*.md` at build time (one
+  entry per hub). The blanket `architecture/`/`features/` excludes and the
+  per-feature `!architecture/<F>.md` re-includes are gone, so a projected
+  feature's hub + architecture page build with no per-feature `mkdocs.yml`
+  edit. how-to/reference/architecture stay "not in nav" by design (reached
+  via the hub + search). Only pre-pilot legacy `architecture/<F>.md`
+  exclude lines need a one-line removal at migration.
 - **Worktree traps.** `project_features.py` resolves the repo root from
   its own path, so it writes to the worktree correctly — but any
   verification that imports `attune` needs `PYTHONPATH=<worktree>/src`
@@ -164,8 +181,12 @@ otherwise points `attune` at the main checkout — see CLAUDE.md).
 
 Resolve these first so the per-feature loop is mechanical:
 
-1. **P4 — nav-wiring convention.** Otherwise every feature needs a
-   manual `mkdocs.yml` edit and its pages stay out of the menu.
+1. **P4 — nav-wiring convention. ✅ DONE (2026-06-21).** Implemented as
+   `docs/hooks/feature_nav.py` + the `mkdocs.yml` `hooks:`/exclude
+   cleanup (help-docs-rollout-gate T3). The per-feature loop no longer
+   needs a manual `mkdocs.yml` edit; `mkdocs build --strict` is clean and
+   lists both pilot hubs. **P6 — hub-emit ✅ DONE** alongside it
+   (attune-author 0.21.0 `projector._render_hub`, gate T1/T2).
 2. **P1 — `_wrap_help` H1.** Otherwise every feature ships a degraded
    dashboard title. (attune-author release + pin bump.)
 3. **P2 — drop tutorial from `DOCS_PAGE_SECTIONS`.** Removes reliance
