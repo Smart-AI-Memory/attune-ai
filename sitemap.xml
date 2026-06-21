@@ -45,7 +45,15 @@
          <lastmod>2026-06-21</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/architecture/models/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/architecture/ops-dashboard/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/architecture/spec-engine/</loc>
          <lastmod>2026-06-21</lastmod>
     </url>
     <url>
@@ -205,6 +213,10 @@
          <lastmod>2026-06-21</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/how-to/models/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/ops-dashboard/</loc>
          <lastmod>2026-06-21</lastmod>
     </url>
@@ -358,6 +370,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/llm-toolkit/</loc>
+         <lastmod>2026-06-21</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/reference/models/</loc>
          <lastmod>2026-06-21</lastmod>
     </url>
     <url>

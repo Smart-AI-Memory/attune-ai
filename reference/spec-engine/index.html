@@ -25,7 +25,7 @@
     
     
       
-        <title>Spec Engine CLI reference - Attune AI</title>
+        <title>Spec Engine - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#spec-engine-cli-reference" class="md-skip">
+        <a href="#spec-engine" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Spec Engine CLI reference
+              Spec Engine
             
           </span>
         </div>
@@ -3702,55 +3702,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Usage
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Options
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#subcommands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Subcommands
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Subcommands">
+    <nav class="md-nav" aria-label="Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#execute-with-approval" class="md-nav__link">
+  <a href="#pipeline-execution" class="md-nav__link">
     <span class="md-ellipsis">
       
-        execute-with-approval
+        Pipeline execution
       
     </span>
   </a>
@@ -3758,10 +3725,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#read-spec" class="md-nav__link">
+  <a href="#state-management" class="md-nav__link">
     <span class="md-ellipsis">
       
-        read-spec
+        State management
       
     </span>
   </a>
@@ -3769,10 +3736,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#present-tasks" class="md-nav__link">
+  <a href="#presentation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        present-tasks
+        Presentation
       
     </span>
   </a>
@@ -3780,10 +3747,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#present-task-detail" class="md-nav__link">
+  <a href="#result-fields" class="md-nav__link">
     <span class="md-ellipsis">
       
-        present-task-detail
+        Result fields
       
     </span>
   </a>
@@ -3791,76 +3758,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#present-task-result" class="md-nav__link">
+  <a href="#example-output" class="md-nav__link">
     <span class="md-ellipsis">
       
-        present-task-result
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#format-progress-bar" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        format-progress-bar
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#get-pending-tasks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        get-pending-tasks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#load-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        load-state
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#save-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        save-state
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#clear-state" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        clear-state
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#find-resumable-plans" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        find-resumable-plans
+        Example output
       
     </span>
   </a>
@@ -3869,39 +3770,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Output
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit codes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related commands
-      
-    </span>
-  </a>
   
 </li>
       
@@ -3925,148 +3793,200 @@
   
 
 
-<h1 id="spec-engine-cli-reference">Spec Engine CLI reference<a class="headerlink" href="#spec-engine-cli-reference" title="Permanent link">&para;</a></h1>
-<p>Spec-driven development with approval loops.</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>spec-engine</code> executes spec plan files through a quality-gated pipeline. It reads a plan file containing XML task blocks, runs each task in order through <code>PipelineOrchestrator</code>, and evaluates quality gates after each task. The command supports per-task approval loops and can resume in-progress plans using saved <code>SpecState</code>.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>spec-engine [OPTIONS] SUBCOMMAND [ARGS]
-</code></pre></div>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="spec-engine">Spec Engine<a class="headerlink" href="#spec-engine" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>The spec engine exposes its public API through two packages:
+<code>attune.pipeline</code> (execution) and <code>attune.spec</code> (state and
+presentation). <code>execute_with_approval</code> lives in <code>attune.spec.runner</code>.</p>
+<h3 id="pipeline-execution">Pipeline execution<a class="headerlink" href="#pipeline-execution" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--skip-gates</code></td>
-<td><code>false</code></td>
-<td>Skip quality gate evaluation for all tasks</td>
+<td><code>PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
+<td>Load a plan file and prepare tasks for execution with optional gate overrides.</td>
 </tr>
 <tr>
-<td><code>--skip-tests</code></td>
-<td><code>false</code></td>
-<td>Skip test execution for all tasks</td>
+<td><code>PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)</code></td>
+<td><strong>Async.</strong> Execute all tasks, awaiting an optional async callback after each; returns a <code>PipelineResult</code>. The callback receives <code>(task, result)</code> and may return <code>"redo"</code> / <code>"auto"</code> / <code>"stop"</code> (or <code>None</code>/<code>"approve"</code> to continue).</td>
 </tr>
 <tr>
-<td><code>--skip-simplify</code></td>
-<td><code>false</code></td>
-<td>Skip the simplification step for all tasks</td>
+<td><code>PipelineOrchestrator.run_gates_for_task(task)</code></td>
+<td>Run quality gates for a single <code>DecomposedTask</code> and return a <code>TaskResult</code>.</td>
 </tr>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show help and exit</td>
+<td><code>read_spec(plan_path)</code></td>
+<td>Parse a plan file and extract its XML task blocks into <code>DecomposedTask</code> objects. Raises <code>FileNotFoundError</code> (missing file) or <code>ValueError</code> (empty path).</td>
+</tr>
+<tr>
+<td><code>execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
+<td><strong>Async.</strong> Execute a spec with an interactive per-task approval loop. Import from <code>attune.spec.runner</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="subcommands">Subcommands<a class="headerlink" href="#subcommands" title="Permanent link">&para;</a></h2>
-<h3 id="execute-with-approval"><code>execute-with-approval</code><a class="headerlink" href="#execute-with-approval" title="Permanent link">&para;</a></h3>
-<p>Execute a spec plan file with per-task approval. Calls <code>execute_with_approval(spec_path, on_task_complete, ...)</code> and pauses after each task so you can approve, redo, or auto-run remaining tasks. Respects <code>--skip-gates</code>, <code>--skip-tests</code>, and <code>--skip-simplify</code>.</p>
-<p><strong>Arguments:</strong> <code>SPEC_PATH</code> — path to the plan file.</p>
-<hr />
-<h3 id="read-spec"><code>read-spec</code><a class="headerlink" href="#read-spec" title="Permanent link">&para;</a></h3>
-<p>Read a plan file and extract its XML task blocks. Calls <code>read_spec(plan_path)</code> and prints the list of <code>DecomposedTask</code> objects.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code> — path to the plan file.</p>
-<p><strong>Errors:</strong>
-- Exits non-zero with <code>ValueError</code> if <code>PLAN_PATH</code> is empty.
-- Exits non-zero with <code>FileNotFoundError</code> if the file does not exist.</p>
-<hr />
-<h3 id="present-tasks"><code>present-tasks</code><a class="headerlink" href="#present-tasks" title="Permanent link">&para;</a></h3>
-<p>Format all tasks from a plan as a markdown table. Calls <code>present_tasks(tasks, state)</code>. If a <code>SpecState</code> is available for the plan, completed tasks are marked accordingly.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code> — path to the plan file.</p>
-<hr />
-<h3 id="present-task-detail"><code>present-task-detail</code><a class="headerlink" href="#present-task-detail" title="Permanent link">&para;</a></h3>
-<p>Print full details for a single task. Calls <code>present_task_detail(task)</code>.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH TASK_ID</code></p>
-<hr />
-<h3 id="present-task-result"><code>present-task-result</code><a class="headerlink" href="#present-task-result" title="Permanent link">&para;</a></h3>
-<p>Print a task's execution result with quality gate status. Calls <code>present_task_result(task, gate_result)</code>, including <code>gate_score</code>, <code>quality_gate_passed</code>, <code>tests_passed</code>, and <code>severity</code>.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH TASK_ID</code></p>
-<hr />
-<h3 id="format-progress-bar"><code>format-progress-bar</code><a class="headerlink" href="#format-progress-bar" title="Permanent link">&para;</a></h3>
-<p>Print a visual progress indicator. Calls <code>format_progress_bar(completed, total)</code>.</p>
-<p><strong>Arguments:</strong> <code>COMPLETED TOTAL</code> — integers.</p>
-<hr />
-<h3 id="get-pending-tasks"><code>get-pending-tasks</code><a class="headerlink" href="#get-pending-tasks" title="Permanent link">&para;</a></h3>
-<p>List tasks not yet recorded in <code>SpecState.completed</code>. Calls <code>get_pending_tasks(tasks, state)</code>.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code></p>
-<hr />
-<h3 id="load-state"><code>load-state</code><a class="headerlink" href="#load-state" title="Permanent link">&para;</a></h3>
-<p>Read the <code>SpecState</code> embedded as an HTML comment in a plan file. Calls <code>load_state(plan_path)</code>. Prints nothing and exits <code>0</code> if no state is present.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code></p>
-<hr />
-<h3 id="save-state"><code>save-state</code><a class="headerlink" href="#save-state" title="Permanent link">&para;</a></h3>
-<p>Write or update the <code>SpecState</code> HTML comment in a plan file. Calls <code>save_state(state)</code>. Updates <code>last_updated</code> to the current UTC timestamp.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code></p>
-<hr />
-<h3 id="clear-state"><code>clear-state</code><a class="headerlink" href="#clear-state" title="Permanent link">&para;</a></h3>
-<p>Remove the <code>SpecState</code> HTML comment from a plan file. Calls <code>clear_state(plan_path)</code>. After clearing, the plan can be executed from the beginning.</p>
-<p><strong>Arguments:</strong> <code>PLAN_PATH</code></p>
-<hr />
-<h3 id="find-resumable-plans"><code>find-resumable-plans</code><a class="headerlink" href="#find-resumable-plans" title="Permanent link">&para;</a></h3>
-<p>List plan files under a directory that have incomplete execution state. Calls <code>find_resumable_plans(plans_dir)</code>. Defaults to <code>.claude/plans</code>.</p>
-<p><strong>Arguments:</strong> <code>[PLANS_DIR]</code> — directory to search (default: <code>.claude/plans</code>).</p>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p><code>execute-with-approval</code> prints a progress bar, per-task quality gate results, and a final pipeline summary:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>[========--] 4/5 tasks
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>✔ task-2  token-service           gate: passed  score: 87.5  cost: $0.004
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>✔ task-3  auth-middleware         gate: passed  score: 81.0  cost: $0.005
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>✔ task-4  wire-routes             gate: passed  score: 78.3  cost: $0.004
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  task-5  integration-tests       pending
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
-</code></pre></div>
-<p><code>present-tasks</code> prints a markdown table:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>| ID  | Name                 | Status    |
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>|-----|----------------------|-----------|
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>| 1   | add-jwt-config       | completed |
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>| 2   | token-service        | completed |
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>| 3   | auth-middleware      | pending   |
-</code></pre></div>
-<p><code>format-progress-bar</code> output:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>[========--] 4/5 tasks
-</code></pre></div>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<h3 id="state-management">State management<a class="headerlink" href="#state-management" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_state(plan_path)</code></td>
+<td>Read a <code>SpecState</code> from the HTML comment embedded in a plan file; returns <code>None</code> if no state exists.</td>
+</tr>
+<tr>
+<td><code>save_state(state)</code></td>
+<td>Write or update the spec-state comment in a plan file.</td>
+</tr>
+<tr>
+<td><code>clear_state(plan_path)</code></td>
+<td>Remove the spec-state comment from a plan file.</td>
+</tr>
+<tr>
+<td><code>find_resumable_plans(plans_dir='.claude/plans')</code></td>
+<td>Return all <code>SpecState</code> objects whose plans have incomplete execution.</td>
+</tr>
+<tr>
+<td><code>get_pending_tasks(tasks, state)</code></td>
+<td>Filter a task list to those whose IDs are not in <code>state.completed</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="presentation">Presentation<a class="headerlink" href="#presentation" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>present_tasks(tasks, state)</code></td>
+<td>Format a task list as a markdown table, optionally annotated with completion state.</td>
+</tr>
+<tr>
+<td><code>present_task_detail(task)</code></td>
+<td>Format a single task with its full acceptance criteria and metadata.</td>
+</tr>
+<tr>
+<td><code>present_task_result(task, gate_result)</code></td>
+<td>Format execution output including quality-gate status and score.</td>
+</tr>
+<tr>
+<td><code>format_progress_bar(completed, total)</code></td>
+<td>Render a visual progress indicator for a running pipeline.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="result-fields">Result fields<a class="headerlink" href="#result-fields" title="Permanent link">&para;</a></h3>
+<p><code>TaskResult</code> fields you'll inspect most often:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>All subcommand operations completed successfully</td>
+<td><code>quality_gate_passed</code></td>
+<td><code>bool \| None</code></td>
+<td>Gate outcome; <code>None</code> when gates were skipped.</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Pipeline failure — one or more tasks did not pass quality gates (<code>PipelineResult.success</code> is <code>false</code>), a plan file was not found, or an invalid argument was supplied</td>
+<td><code>tests_passed</code></td>
+<td><code>bool \| None</code></td>
+<td>Test outcome; <code>None</code> when tests were skipped.</td>
+</tr>
+<tr>
+<td><code>gate_score</code></td>
+<td><code>float \| None</code></td>
+<td>Numeric quality score from the gate.</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>str</code> (property)</td>
+<td>Classified severity of the gate result.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str \| None</code></td>
+<td>Error message if the task failed to execute.</td>
+</tr>
+<tr>
+<td><code>cost</code></td>
+<td><code>float</code></td>
+<td>Cost attributed to this task.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>/spec</code> — interactive skill that drives <code>spec-engine</code> through a guided brainstorm, decompose, review, approve, and execute flow</li>
-<li><code>attune help-docs ref-skill-spec</code> — full reference for spec phases, quality gate severity levels, and plan file format</li>
-</ul>
-<!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=cli-reference generated_at=2026-06-02 -->
+<p><code>PipelineResult</code> top-level members:</p>
+<table>
+<thead>
+<tr>
+<th>Member</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code> (property)</td>
+<td><code>True</code> only when all tasks executed and passed gates.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str</code> (property)</td>
+<td>Human-readable run summary.</td>
+</tr>
+<tr>
+<td><code>tasks</code></td>
+<td><code>list[TaskResult]</code></td>
+<td>Per-task outcomes.</td>
+</tr>
+<tr>
+<td><code>total_cost</code></td>
+<td><code>float</code></td>
+<td>Aggregated cost across all tasks.</td>
+</tr>
+<tr>
+<td><code>duration_ms</code></td>
+<td><code>int</code></td>
+<td>Wall-clock time for the full run.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="example-output">Example output<a class="headerlink" href="#example-output" title="Permanent link">&para;</a></h3>
+<p>An approval run prints a progress bar, per-task gate results, and a
+final summary:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>[========--] 4/5 tasks
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>✔ task-2  token-service           gate: passed  score: 87.5  cost: $0.004
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>✔ task-3  auth-middleware         gate: passed  score: 81.0  cost: $0.005
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>✔ task-4  wire-routes             gate: passed  score: 78.3  cost: $0.004
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>  task-5  integration-tests       pending
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
+</code></pre></div>
+<!-- attune-generated: source_hash=2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1 feature=spec-engine kind=reference generated_at=2026-06-21 -->
 
 
 
 
 
 
-
-  
-  
 
 
 

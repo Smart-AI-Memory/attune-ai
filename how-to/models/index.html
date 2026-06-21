@@ -12,7 +12,7 @@
         <meta name="author" content="Patrick Roebuck">
       
       
-        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/spec-engine/">
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/models/">
       
       
       
@@ -25,7 +25,7 @@
     
     
       
-        <title>Spec Engine - Attune AI</title>
+        <title>Models - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#spec-engine" class="md-skip">
+        <a href="#models" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Spec Engine
+              Models
             
           </span>
         </div>
@@ -3725,10 +3725,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#run-a-plan-programmatically-with-progress-output" class="md-nav__link">
+  <a href="#see-which-model-a-task-will-use" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run a plan programmatically with progress output
+        See which model a task will use
       
     </span>
   </a>
@@ -3736,10 +3736,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#resume-an-interrupted-run" class="md-nav__link">
+  <a href="#configure-your-authentication-strategy" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Resume an interrupted run
+        Configure your authentication strategy
       
     </span>
   </a>
@@ -3747,10 +3747,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#run-with-per-task-approval" class="md-nav__link">
+  <a href="#get-a-per-file-auth-recommendation" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Run with per-task approval
+        Get a per-file auth recommendation
       
     </span>
   </a>
@@ -3758,10 +3758,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#re-run-a-subset-of-tasks-without-restarting" class="md-nav__link">
+  <a href="#change-the-provider-configuration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Re-run a subset of tasks without restarting
+        Change the provider configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#reset-auth-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Reset auth configuration
       
     </span>
   </a>
@@ -3786,10 +3797,10 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#pipeline-execution" class="md-nav__link">
+  <a href="#cli-attune-auth" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Pipeline execution
+        CLI — attune auth
       
     </span>
   </a>
@@ -3797,10 +3808,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#state-management" class="md-nav__link">
+  <a href="#cli-attune-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        State management
+        CLI — attune provider
       
     </span>
   </a>
@@ -3808,10 +3819,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#presentation" class="md-nav__link">
+  <a href="#registry-and-tiers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Presentation
+        Registry and tiers
       
     </span>
   </a>
@@ -3819,10 +3830,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#result-fields" class="md-nav__link">
+  <a href="#task-routing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Result fields
+        Task routing
       
     </span>
   </a>
@@ -3830,10 +3841,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#example-output" class="md-nav__link">
+  <a href="#auth-and-provider" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example output
+        Auth and provider
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#execution-and-routing" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Execution and routing
       
     </span>
   </a>
@@ -3865,151 +3887,165 @@
   
 
 
-<h1 id="spec-engine">Spec Engine<a class="headerlink" href="#spec-engine" title="Permanent link">&para;</a></h1>
+<h1 id="models">Models<a class="headerlink" href="#models" title="Permanent link">&para;</a></h1>
 <h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
-<p>Run a spec plan end-to-end with quality gates from Python.
-<code>PipelineOrchestrator.run_all</code> is an async coroutine, so drive it with
-<code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<p>Inspect the active routing and pricing in a single Python call:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_tier_for_task</span><span class="p">,</span> <span class="n">get_model</span><span class="p">,</span> <span class="n">get_pricing_for_model</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">PipelineResult</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="s2">&quot;.claude/plans/my-feature.md&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">result</span><span class="p">:</span> <span class="n">PipelineResult</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">()</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>   <span class="c1"># human-readable run summary</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>   <span class="c1"># True if all tasks executed and passed gates</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">tier</span> <span class="o">=</span> <span class="n">get_tier_for_task</span><span class="p">(</span><span class="s2">&quot;generate_code&quot;</span><span class="p">)</span>     <span class="c1"># ModelTier.CAPABLE</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">model</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>    <span class="c1"># ModelInfo | None</span>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">,</span> <span class="n">model</span><span class="o">.</span><span class="n">cost_per_1k_input</span><span class="p">)</span>      <span class="c1"># cost_per_1k_input is a property</span>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">pricing</span> <span class="o">=</span> <span class="n">get_pricing_for_model</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="p">)</span>     <span class="c1"># {&quot;input&quot;: ..., &quot;output&quot;: ...} per million</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">pricing</span><span class="p">)</span>
 </code></pre></div>
-<p><code>summary</code> and <code>success</code> are properties — read them, don't call them.
-Running this produces a <code>PipelineResult</code> with per-task outcomes, total
-cost, and duration.</p>
-<p>To skip quality gates during a quick smoke test, pass
-<code>skip_gates=True</code> to the constructor.</p>
+<p><code>cost_per_1k_input</code> and <code>cost_per_1k_output</code> are <strong>properties</strong> — read
+them, don't call them. <code>get_model</code> returns <code>None</code> if no model is
+registered for that provider/tier, so guard the result before using it.</p>
+<p>From the shell, the same information and your auth posture:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>status<span class="w">          </span><span class="c1"># current auth strategy</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>attune<span class="w"> </span>provider<span class="w"> </span>show<span class="w">        </span><span class="c1"># current provider</span>
+</code></pre></div>
 <h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
-<h3 id="run-a-plan-programmatically-with-progress-output">Run a plan programmatically with progress output<a class="headerlink" href="#run-a-plan-programmatically-with-progress-output" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> read a plan, run every task through quality gates, print a
-progress bar after each task, and exit non-zero if any gate failed.</p>
+<h3 id="see-which-model-a-task-will-use">See which model a task will use<a class="headerlink" href="#see-which-model-a-task-will-use" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> resolve the tier and concrete model for a task type without
+running anything.</p>
 <p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">PipelineOrchestrator</span><span class="p">,</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">PipelineResult</span><span class="p">,</span>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>    <span class="n">TaskResult</span><span class="p">,</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>    <span class="n">read_spec</span><span class="p">,</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="p">)</span>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">present_tasks</span><span class="p">,</span> <span class="n">present_task_result</span><span class="p">,</span> <span class="n">format_progress_bar</span><span class="p">,</span> <span class="n">load_state</span>
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a><span class="n">PLAN_PATH</span> <span class="o">=</span> <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a><span class="n">tasks</span> <span class="o">=</span> <span class="n">read_spec</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a><span class="n">state</span> <span class="o">=</span> <span class="n">load_state</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>          <span class="c1"># None if no prior run exists</span>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">present_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">state</span><span class="p">))</span>     <span class="c1"># inspect the plan before running</span>
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a><span class="n">completed_count</span> <span class="o">=</span> <span class="mi">0</span>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">on_task_complete</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">task_result</span><span class="p">:</span> <span class="n">TaskResult</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>    <span class="k">global</span> <span class="n">completed_count</span>
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>    <span class="n">completed_count</span> <span class="o">+=</span> <span class="mi">1</span>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">format_progress_bar</span><span class="p">(</span><span class="n">completed_count</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">tasks</span><span class="p">)))</span>
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">present_task_result</span><span class="p">(</span><span class="n">task</span><span class="p">,</span> <span class="n">task_result</span><span class="p">))</span>
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>
-<a id="__codelineno-1-26" name="__codelineno-1-26" href="#__codelineno-1-26"></a>
-<a id="__codelineno-1-27" name="__codelineno-1-27" href="#__codelineno-1-27"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-1-28" name="__codelineno-1-28" href="#__codelineno-1-28"></a>    <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="n">PLAN_PATH</span><span class="p">)</span>
-<a id="__codelineno-1-29" name="__codelineno-1-29" href="#__codelineno-1-29"></a>    <span class="n">result</span><span class="p">:</span> <span class="n">PipelineResult</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span>
-<a id="__codelineno-1-30" name="__codelineno-1-30" href="#__codelineno-1-30"></a>        <span class="n">on_task_complete</span><span class="o">=</span><span class="n">on_task_complete</span><span class="p">,</span>
-<a id="__codelineno-1-31" name="__codelineno-1-31" href="#__codelineno-1-31"></a>    <span class="p">)</span>
-<a id="__codelineno-1-32" name="__codelineno-1-32" href="#__codelineno-1-32"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-1-33" name="__codelineno-1-33" href="#__codelineno-1-33"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
-<a id="__codelineno-1-34" name="__codelineno-1-34" href="#__codelineno-1-34"></a>        <span class="k">raise</span> <span class="ne">SystemExit</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
-<a id="__codelineno-1-35" name="__codelineno-1-35" href="#__codelineno-1-35"></a>
-<a id="__codelineno-1-36" name="__codelineno-1-36" href="#__codelineno-1-36"></a>
-<a id="__codelineno-1-37" name="__codelineno-1-37" href="#__codelineno-1-37"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">get_tier_for_task</span><span class="p">,</span>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>    <span class="n">get_tasks_for_tier</span><span class="p">,</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>    <span class="n">get_model</span><span class="p">,</span>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>    <span class="n">is_known_task</span><span class="p">,</span>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="p">)</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="n">task</span> <span class="o">=</span> <span class="s2">&quot;review_security&quot;</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a><span class="nb">print</span><span class="p">(</span><span class="n">is_known_task</span><span class="p">(</span><span class="n">task</span><span class="p">))</span>            <span class="c1"># True</span>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a><span class="n">tier</span> <span class="o">=</span> <span class="n">get_tier_for_task</span><span class="p">(</span><span class="n">task</span><span class="p">)</span>        <span class="c1"># ModelTier.CAPABLE</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a><span class="n">model</span> <span class="o">=</span> <span class="n">get_model</span><span class="p">(</span><span class="s2">&quot;anthropic&quot;</span><span class="p">,</span> <span class="n">tier</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">task</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">tier</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2"> -&gt; </span><span class="si">{</span><span class="n">model</span><span class="o">.</span><span class="n">id</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="n">model</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;unregistered&#39;</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a><span class="c1"># What else runs at this tier?</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a><span class="nb">print</span><span class="p">(</span><span class="n">get_tasks_for_tier</span><span class="p">(</span><span class="n">tier</span><span class="p">))</span>       <span class="c1"># list[str] of task names</span>
 </code></pre></div>
-<p><strong>Verify:</strong> a fully passing run prints the summary and exits <code>0</code>.
-<code>on_task_complete</code> is <strong>awaited</strong> after each task, so define it <code>async</code>
-(<code>run_all</code> awaits it). The separation between reading (<code>read_spec</code>,
-<code>present_tasks</code>) and running (<code>run_all</code>) is intentional — you can
-inspect the full plan before committing to a run.</p>
-<h3 id="resume-an-interrupted-run">Resume an interrupted run<a class="headerlink" href="#resume-an-interrupted-run" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> find plans that didn't finish and continue them from where
-they stopped.</p>
+<p><strong>Verify:</strong> <code>get_tier_for_task</code> returns a <code>ModelTier</code>. An unknown task
+string does not raise — it defaults to <code>ModelTier.CAPABLE</code>; use
+<code>is_known_task</code> first if you need to distinguish.</p>
+<h3 id="configure-your-authentication-strategy">Configure your authentication strategy<a class="headerlink" href="#configure-your-authentication-strategy" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> choose subscription vs API and persist the choice.</p>
+<p><strong>Steps:</strong> run the interactive CLI, then confirm it:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>setup<span class="w">            </span><span class="c1"># interactive: pick subscription tier + default mode</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>attune<span class="w"> </span>auth<span class="w"> </span>status<span class="w">           </span><span class="c1"># human-readable summary</span>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>attune<span class="w"> </span>auth<span class="w"> </span>status<span class="w"> </span>--json<span class="w">    </span><span class="c1"># machine-readable, for scripts/CI</span>
+</code></pre></div>
+<p>Or programmatically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_auth_strategy</span><span class="p">,</span> <span class="n">AuthMode</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="n">strategy</span> <span class="o">=</span> <span class="n">get_auth_strategy</span><span class="p">()</span>                 <span class="c1"># zero-config default if unset</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="n">mode</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">get_recommended_mode</span><span class="p">(</span><span class="mi">1800</span><span class="p">)</span>     <span class="c1"># API on a PRO account; size-based only on MAX/ENTERPRISE</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">estimate</span> <span class="o">=</span> <span class="n">strategy</span><span class="o">.</span><span class="n">estimate_cost</span><span class="p">(</span><span class="mi">1800</span><span class="p">,</span> <span class="n">mode</span><span class="p">)</span>  <span class="c1"># mode, monetary_cost, quota_cost, tokens_used, fits_in_context</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a><span class="nb">print</span><span class="p">(</span><span class="n">mode</span><span class="o">.</span><span class="n">value</span><span class="p">,</span> <span class="n">estimate</span><span class="p">)</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="n">strategy</span><span class="o">.</span><span class="n">save</span><span class="p">()</span>                                <span class="c1"># persists to AUTH_STRATEGY_FILE</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>attune auth status --json</code> reports the active mode and
+tier. <code>get_recommended_mode</code> returns an <code>AuthMode</code> member whose
+<code>.value</code> is <code>"subscription"</code> or <code>"api"</code> — never <code>"auto"</code> (<code>AUTO</code> is the
+input that triggers resolution). Note <code>setup_completed</code> defaults to
+<code>true</code>, so status reports it <code>true</code> even before you run setup.</p>
+<h3 id="get-a-per-file-auth-recommendation">Get a per-file auth recommendation<a class="headerlink" href="#get-a-per-file-auth-recommendation" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> ask which mode a specific file should use, given its size.</p>
 <p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.pipeline</span><span class="w"> </span><span class="kn">import</span> <span class="n">PipelineOrchestrator</span><span class="p">,</span> <span class="n">read_spec</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_pending_tasks</span><span class="p">,</span> <span class="n">find_resumable_plans</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">resumable</span> <span class="o">=</span> <span class="n">find_resumable_plans</span><span class="p">(</span><span class="s2">&quot;.claude/plans&quot;</span><span class="p">)</span>
-<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>    <span class="k">for</span> <span class="n">spec_state</span> <span class="ow">in</span> <span class="n">resumable</span><span class="p">:</span>
-<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>        <span class="n">tasks</span> <span class="o">=</span> <span class="n">read_spec</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">plan_path</span><span class="p">)</span>
-<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="n">pending</span> <span class="o">=</span> <span class="n">get_pending_tasks</span><span class="p">(</span><span class="n">tasks</span><span class="p">,</span> <span class="n">spec_state</span><span class="p">)</span>
-<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="k">if</span> <span class="ow">not</span> <span class="n">pending</span><span class="p">:</span>
-<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>            <span class="k">continue</span>
-<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>        <span class="n">completed_ids</span> <span class="o">=</span> <span class="nb">set</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">completed</span><span class="p">)</span>
-<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>        <span class="n">orchestrator</span> <span class="o">=</span> <span class="n">PipelineOrchestrator</span><span class="p">(</span><span class="n">spec_state</span><span class="o">.</span><span class="n">plan_path</span><span class="p">)</span>
-<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span><span class="n">skip_task_ids</span><span class="o">=</span><span class="n">completed_ids</span><span class="p">)</span>
-<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
-<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a>
-<a id="__codelineno-2-20" name="__codelineno-2-20" href="#__codelineno-2-20"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>recommend<span class="w"> </span>src/attune/models/registry.py
 </code></pre></div>
-<p><strong>Verify:</strong> <code>get_pending_tasks</code> returns only the tasks whose IDs are
-not in <code>SpecState.completed</code>. Passing those IDs as <code>skip_task_ids</code>
-prevents re-running completed work.</p>
-<h3 id="run-with-per-task-approval">Run with per-task approval<a class="headerlink" href="#run-with-per-task-approval" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> pause after each task for human sign-off instead of running
-the whole plan unattended.</p>
+<p>The command counts the file's lines of code and prints the recommended
+mode plus a cost estimate. The Python equivalent pairs
+<code>count_lines_of_code</code> with <code>get_recommended_mode</code>:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">count_lines_of_code</span><span class="p">,</span> <span class="n">get_auth_strategy</span>
+<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>
+<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a><span class="n">loc</span> <span class="o">=</span> <span class="n">count_lines_of_code</span><span class="p">(</span><span class="s2">&quot;src/attune/models/registry.py&quot;</span><span class="p">)</span>
+<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a><span class="n">mode</span> <span class="o">=</span> <span class="n">get_auth_strategy</span><span class="p">()</span><span class="o">.</span><span class="n">get_recommended_mode</span><span class="p">(</span><span class="n">loc</span><span class="p">)</span>
+<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="nb">print</span><span class="p">(</span><span class="n">loc</span><span class="p">,</span> <span class="n">mode</span><span class="o">.</span><span class="n">value</span><span class="p">)</span>
+</code></pre></div>
+<p><strong>Verify:</strong> the CLI exits <code>0</code> and names a mode. <code>count_lines_of_code</code>
+counts non-blank, non-comment lines, so its result is smaller than a
+raw <code>wc -l</code>.</p>
+<h3 id="change-the-provider-configuration">Change the provider configuration<a class="headerlink" href="#change-the-provider-configuration" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> inspect or set the active provider.</p>
 <p><strong>Steps:</strong></p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.spec.runner</span><span class="w"> </span><span class="kn">import</span> <span class="n">execute_with_approval</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">():</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">execute_with_approval</span><span class="p">(</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>        <span class="s2">&quot;.claude/plans/my-feature.md&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>        <span class="n">on_task_complete</span><span class="p">,</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">skip_gates</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>        <span class="n">skip_tests</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>        <span class="n">skip_simplify</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="p">)</span>
-<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>
-<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>
-<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a>attune<span class="w"> </span>provider<span class="w"> </span>show<span class="w">         </span><span class="c1"># print current provider + mode</span>
+<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>attune<span class="w"> </span>provider<span class="w"> </span><span class="nb">set</span><span class="w">          </span><span class="c1"># interactive provider selection</span>
 </code></pre></div>
-<p><code>execute_with_approval</code> is an async coroutine — <code>await</code> it (or drive
-it with <code>asyncio.run</code>). It accepts the same <code>skip_gates</code>,
-<code>skip_tests</code>, and <code>skip_simplify</code> flags as <code>PipelineOrchestrator</code>, and
-returns the same <code>PipelineResult</code>. Flip <code>SpecState.auto_run = True</code> to
-skip the per-task pause for the rest of the run.</p>
-<p><strong>Verify:</strong> the loop pauses after each task. An interrupted approval
-run leaves a resumable <code>SpecState</code> in the plan file.</p>
-<h3 id="re-run-a-subset-of-tasks-without-restarting">Re-run a subset of tasks without restarting<a class="headerlink" href="#re-run-a-subset-of-tasks-without-restarting" title="Permanent link">&para;</a></h3>
-<p><strong>Goal:</strong> re-run specific tasks without clearing state and reprocessing
-the whole plan.</p>
-<p><strong>Steps:</strong> pass a <code>set[str]</code> of already-completed task IDs to
-<code>run_all(skip_task_ids=...)</code> (inside an async context — <code>run_all</code> is a
-coroutine):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">orchestrator</span><span class="o">.</span><span class="n">run_all</span><span class="p">(</span><span class="n">skip_task_ids</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;task-1&quot;</span><span class="p">,</span> <span class="s2">&quot;task-2&quot;</span><span class="p">})</span>
+<p>Programmatically:</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_provider_config</span><span class="p">,</span> <span class="n">set_provider_config</span><span class="p">,</span> <span class="n">ProviderConfig</span>
+<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a>
+<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a><span class="n">cfg</span> <span class="o">=</span> <span class="n">get_provider_config</span><span class="p">()</span>                    <span class="c1"># lazy-loaded global</span>
+<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">cfg</span><span class="o">.</span><span class="n">mode</span><span class="p">,</span> <span class="n">cfg</span><span class="o">.</span><span class="n">primary_provider</span><span class="p">)</span>          <span class="c1"># ProviderMode.SINGLE anthropic</span>
+<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a>
+<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a><span class="n">cfg</span> <span class="o">=</span> <span class="n">ProviderConfig</span><span class="o">.</span><span class="n">auto_detect</span><span class="p">()</span>             <span class="c1"># detect ANTHROPIC_API_KEY</span>
+<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="n">set_provider_config</span><span class="p">(</span><span class="n">cfg</span><span class="p">)</span>                        <span class="c1"># install as the global</span>
 </code></pre></div>
-<p><strong>Verify:</strong> skipping completed tasks preserves <code>SpecState.completed</code>
-and keeps <code>total_cost</code> and <code>duration_ms</code> accurate in the final
-<code>PipelineResult</code>. You are responsible for knowing which IDs to skip —
-if a skipped task produced an artifact a later task depends on, check
-<code>TaskResult.quality_gate_passed</code> and <code>gate_score</code> on the result before
-assuming success.</p>
+<p><strong>Verify:</strong> <code>attune provider show</code> reflects the change.
+<code>ProviderConfig.auto_detect()</code> returns a config whose
+<code>available_providers</code> includes <code>"anthropic"</code> when <code>ANTHROPIC_API_KEY</code>
+is set.</p>
+<h3 id="reset-auth-configuration">Reset auth configuration<a class="headerlink" href="#reset-auth-configuration" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> clear a misconfigured auth strategy.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a>attune<span class="w"> </span>auth<span class="w"> </span>reset<span class="w"> </span>--confirm
+</code></pre></div>
+<p><strong>Verify:</strong> the configuration file is removed; a subsequent
+<code>attune auth status</code> shows the zero-config default and prompts you to
+run <code>attune auth setup</code>.</p>
 <h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
-<p>The spec engine exposes its public API through two packages:
-<code>attune.pipeline</code> (execution) and <code>attune.spec</code> (state and
-presentation). <code>execute_with_approval</code> lives in <code>attune.spec.runner</code>.</p>
-<h3 id="pipeline-execution">Pipeline execution<a class="headerlink" href="#pipeline-execution" title="Permanent link">&para;</a></h3>
+<p>The subsystem's public API lives under <code>attune.models</code>. The two CLI
+namespaces are <code>attune auth</code> (authentication) and <code>attune provider</code>
+(provider selection).</p>
+<h3 id="cli-attune-auth">CLI — <code>attune auth</code><a class="headerlink" href="#cli-attune-auth" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune auth setup</code></td>
+<td>Configure the auth strategy interactively.</td>
+</tr>
+<tr>
+<td><code>attune auth status</code></td>
+<td>Show the current strategy. <code>--json</code> emits machine-readable output.</td>
+</tr>
+<tr>
+<td><code>attune auth recommend &lt;file_path&gt;</code></td>
+<td>Print the recommended mode and cost estimate for one file.</td>
+</tr>
+<tr>
+<td><code>attune auth reset</code></td>
+<td>Clear the saved strategy. Requires <code>--confirm</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="cli-attune-provider">CLI — <code>attune provider</code><a class="headerlink" href="#cli-attune-provider" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune provider show</code></td>
+<td>Print the current provider and mode.</td>
+</tr>
+<tr>
+<td><code>attune provider set</code></td>
+<td>Select a provider interactively.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="registry-and-tiers">Registry and tiers<a class="headerlink" href="#registry-and-tiers" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4019,28 +4055,32 @@ presentation). <code>execute_with_approval</code> lives in <code>attune.spec.run
 </thead>
 <tbody>
 <tr>
-<td><code>PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
-<td>Load a plan file and prepare tasks for execution with optional gate overrides.</td>
+<td><code>MODEL_REGISTRY</code></td>
+<td><code>dict[str, dict[str, ModelInfo]]</code> keyed by provider then tier.</td>
 </tr>
 <tr>
-<td><code>PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)</code></td>
-<td><strong>Async.</strong> Execute all tasks, awaiting an optional async callback after each; returns a <code>PipelineResult</code>. The callback receives <code>(task, result)</code> and may return <code>"redo"</code> / <code>"auto"</code> / <code>"stop"</code> (or <code>None</code>/<code>"approve"</code> to continue).</td>
+<td><code>ModelTier</code></td>
+<td>Enum: <code>CHEAP</code>, <code>CAPABLE</code>, <code>PREMIUM</code> (values <code>"cheap"</code>/<code>"capable"</code>/<code>"premium"</code>).</td>
 </tr>
 <tr>
-<td><code>PipelineOrchestrator.run_gates_for_task(task)</code></td>
-<td>Run quality gates for a single <code>DecomposedTask</code> and return a <code>TaskResult</code>.</td>
+<td><code>ModelProvider</code></td>
+<td>Enum: <code>ANTHROPIC</code> (<code>"anthropic"</code>).</td>
 </tr>
 <tr>
-<td><code>read_spec(plan_path)</code></td>
-<td>Parse a plan file and extract its XML task blocks into <code>DecomposedTask</code> objects. Raises <code>FileNotFoundError</code> (missing file) or <code>ValueError</code> (empty path).</td>
+<td><code>get_model(provider, tier)</code></td>
+<td>Resolve one <code>ModelInfo</code> (or <code>None</code>). Raises <code>ValueError</code> if provider is not <code>"anthropic"</code>.</td>
 </tr>
 <tr>
-<td><code>execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
-<td><strong>Async.</strong> Execute a spec with an interactive per-task approval loop. Import from <code>attune.spec.runner</code>.</td>
+<td><code>get_all_models()</code></td>
+<td>Return the full registry.</td>
+</tr>
+<tr>
+<td><code>get_pricing_for_model(model_id)</code></td>
+<td><code>{"input": float, "output": float}</code> per million, or <code>None</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="state-management">State management<a class="headerlink" href="#state-management" title="Permanent link">&para;</a></h3>
+<h3 id="task-routing">Task routing<a class="headerlink" href="#task-routing" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4050,28 +4090,32 @@ presentation). <code>execute_with_approval</code> lives in <code>attune.spec.run
 </thead>
 <tbody>
 <tr>
-<td><code>load_state(plan_path)</code></td>
-<td>Read a <code>SpecState</code> from the HTML comment embedded in a plan file; returns <code>None</code> if no state exists.</td>
+<td><code>TaskType</code></td>
+<td>Enum of known task types (e.g. <code>GENERATE_CODE</code>, <code>SUMMARIZE</code>).</td>
 </tr>
 <tr>
-<td><code>save_state(state)</code></td>
-<td>Write or update the spec-state comment in a plan file.</td>
+<td><code>TASK_TIER_MAP</code></td>
+<td><code>dict[str, ModelTier]</code> mapping task value → tier.</td>
 </tr>
 <tr>
-<td><code>clear_state(plan_path)</code></td>
-<td>Remove the spec-state comment from a plan file.</td>
+<td><code>get_tier_for_task(task_type)</code></td>
+<td><code>ModelTier</code> for a task string or <code>TaskType</code> (defaults to <code>CAPABLE</code>).</td>
 </tr>
 <tr>
-<td><code>find_resumable_plans(plans_dir='.claude/plans')</code></td>
-<td>Return all <code>SpecState</code> objects whose plans have incomplete execution.</td>
+<td><code>get_tasks_for_tier(tier)</code></td>
+<td><code>list[str]</code> of task names in a tier. Raises <code>ValueError</code> on an unknown tier.</td>
 </tr>
 <tr>
-<td><code>get_pending_tasks(tasks, state)</code></td>
-<td>Filter a task list to those whose IDs are not in <code>state.completed</code>.</td>
+<td><code>is_known_task(task_type)</code></td>
+<td><code>True</code> if the task is defined.</td>
+</tr>
+<tr>
+<td><code>normalize_task_type(task_type)</code></td>
+<td>Lowercase/underscore-normalize a task string.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="presentation">Presentation<a class="headerlink" href="#presentation" title="Permanent link">&para;</a></h3>
+<h3 id="auth-and-provider">Auth and provider<a class="headerlink" href="#auth-and-provider" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4081,117 +4125,75 @@ presentation). <code>execute_with_approval</code> lives in <code>attune.spec.run
 </thead>
 <tbody>
 <tr>
-<td><code>present_tasks(tasks, state)</code></td>
-<td>Format a task list as a markdown table, optionally annotated with completion state.</td>
+<td><code>AuthMode</code></td>
+<td>Enum: <code>SUBSCRIPTION</code>, <code>API</code>, <code>AUTO</code>.</td>
 </tr>
 <tr>
-<td><code>present_task_detail(task)</code></td>
-<td>Format a single task with its full acceptance criteria and metadata.</td>
+<td><code>AuthStrategy</code></td>
+<td>Auth configuration dataclass; <code>setup_completed</code> is a field.</td>
 </tr>
 <tr>
-<td><code>present_task_result(task, gate_result)</code></td>
-<td>Format execution output including quality-gate status and score.</td>
+<td><code>AuthStrategy.get_recommended_mode(module_lines)</code></td>
+<td>Recommended <code>AuthMode</code>. Resolves by tier first (<code>PRO</code>/<code>API_ONLY</code> → <code>API</code>); only <code>MAX</code>/<code>ENTERPRISE</code> use <code>module_lines</code> against the thresholds. Returns <code>SUBSCRIPTION</code> or <code>API</code>, never <code>AUTO</code>.</td>
 </tr>
 <tr>
-<td><code>format_progress_bar(completed, total)</code></td>
-<td>Render a visual progress indicator for a running pipeline.</td>
+<td><code>AuthStrategy.estimate_cost(module_lines, mode=None)</code></td>
+<td><code>dict</code> with <code>mode</code>, <code>monetary_cost</code>, <code>quota_cost</code>, <code>tokens_used</code>, <code>fits_in_context</code>.</td>
+</tr>
+<tr>
+<td><code>get_auth_strategy()</code></td>
+<td>The global <code>AuthStrategy</code> (zero-config default if unset).</td>
+</tr>
+<tr>
+<td><code>count_lines_of_code(file_path)</code></td>
+<td>Non-blank, non-comment line count for a Python file.</td>
+</tr>
+<tr>
+<td><code>ProviderConfig</code></td>
+<td>Provider config dataclass; <code>mode</code> is a <code>ProviderMode</code>.</td>
+</tr>
+<tr>
+<td><code>ProviderMode</code></td>
+<td>Enum: <code>SINGLE</code>, <code>HYBRID</code> (deprecated).</td>
+</tr>
+<tr>
+<td><code>get_provider_config()</code> / <code>set_provider_config(cfg)</code> / <code>reset_provider_config()</code></td>
+<td>Read, replace, and reset the global provider config.</td>
 </tr>
 </tbody>
 </table>
-<h3 id="result-fields">Result fields<a class="headerlink" href="#result-fields" title="Permanent link">&para;</a></h3>
-<p><code>TaskResult</code> fields you'll inspect most often:</p>
+<h3 id="execution-and-routing">Execution and routing<a class="headerlink" href="#execution-and-routing" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Field</th>
-<th>Type</th>
-<th>Meaning</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>quality_gate_passed</code></td>
-<td><code>bool \| None</code></td>
-<td>Gate outcome; <code>None</code> when gates were skipped.</td>
+<td><code>LLMResponse</code></td>
+<td>Completed-call result. <code>cost</code>, <code>total_tokens</code>, <code>success</code>, <code>input_tokens</code>, <code>output_tokens</code> are read-only properties over the underlying fields.</td>
 </tr>
 <tr>
-<td><code>tests_passed</code></td>
-<td><code>bool \| None</code></td>
-<td>Test outcome; <code>None</code> when tests were skipped.</td>
+<td><code>ExecutionContext</code></td>
+<td>Per-call hints: <code>task_type</code>, <code>provider_hint</code>, <code>tier_hint</code>, <code>timeout_seconds</code>, <code>metadata</code>.</td>
 </tr>
 <tr>
-<td><code>gate_score</code></td>
-<td><code>float \| None</code></td>
-<td>Numeric quality score from the gate.</td>
+<td><code>LLMExecutor</code></td>
+<td>Executor protocol. Its <code>run(task_type, prompt, ...)</code> is <strong>async</strong> — <code>await</code> it.</td>
 </tr>
 <tr>
-<td><code>severity</code></td>
-<td><code>str</code> (property)</td>
-<td>Classified severity of the gate result.</td>
+<td><code>MockLLMExecutor</code></td>
+<td>A deterministic executor for tests; records calls in <code>call_history</code>.</td>
 </tr>
 <tr>
-<td><code>error</code></td>
-<td><code>str \| None</code></td>
-<td>Error message if the task failed to execute.</td>
-</tr>
-<tr>
-<td><code>cost</code></td>
-<td><code>float</code></td>
-<td>Cost attributed to this task.</td>
+<td><code>AdaptiveModelRouter</code></td>
+<td>Picks a model from historical telemetry. <code>get_best_model(workflow, stage, ...)</code> returns a model id; <code>recommend_tier_upgrade(workflow, stage)</code> returns <code>(bool, reason)</code>.</td>
 </tr>
 </tbody>
 </table>
-<p><code>PipelineResult</code> top-level members:</p>
-<table>
-<thead>
-<tr>
-<th>Member</th>
-<th>Type</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>success</code></td>
-<td><code>bool</code> (property)</td>
-<td><code>True</code> only when all tasks executed and passed gates.</td>
-</tr>
-<tr>
-<td><code>summary</code></td>
-<td><code>str</code> (property)</td>
-<td>Human-readable run summary.</td>
-</tr>
-<tr>
-<td><code>tasks</code></td>
-<td><code>list[TaskResult]</code></td>
-<td>Per-task outcomes.</td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-<td>Aggregated cost across all tasks.</td>
-</tr>
-<tr>
-<td><code>duration_ms</code></td>
-<td><code>int</code></td>
-<td>Wall-clock time for the full run.</td>
-</tr>
-</tbody>
-</table>
-<h3 id="example-output">Example output<a class="headerlink" href="#example-output" title="Permanent link">&para;</a></h3>
-<p>An approval run prints a progress bar, per-task gate results, and a
-final summary:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a>[========--] 4/5 tasks
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>✔ task-2  token-service           gate: passed  score: 87.5  cost: $0.004
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>✔ task-3  auth-middleware         gate: passed  score: 81.0  cost: $0.005
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>✔ task-4  wire-routes             gate: passed  score: 78.3  cost: $0.004
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>  task-5  integration-tests       pending
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
-</code></pre></div>
-<!-- attune-generated: source_hash=2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1 feature=spec-engine kind=how-to generated_at=2026-06-21 -->
+<!-- attune-generated: source_hash=234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459 feature=models kind=how-to generated_at=2026-06-21 -->
 
 
 
