@@ -3,151 +3,149 @@ type: task
 name: spec-engine-task
 feature: spec-engine
 depth: task
-generated_at: 2026-06-02T10:56:02.687619+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T17:12:30.161122+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Work with the spec engine
+## Tasks
 
-Use the spec engine when you need to execute a structured plan file through an approval loop — running tasks one at a time, applying quality gates after each, and resuming interrupted runs from saved state.
+### Run a plan programmatically with progress output
 
-## Prerequisites
+**Goal:** read a plan, run every task through quality gates, print a
+progress bar after each task, and exit non-zero if any gate failed.
 
-- Access to the project source code
-- A plan file saved under `.claude/plans/` with valid XML task blocks
-
-## Read a plan and inspect its tasks
-
-1. Import `read_spec` from `pipeline` and call it with the path to your plan file:
-
-   ```python
-   from attune.pipeline import read_spec
-
-   tasks = read_spec(".claude/plans/my-plan.md")
-   ```
-
-   `read_spec` raises `FileNotFoundError` if the path does not exist and `ValueError` if `plan_path` is an empty string.
-
-2. Pass the returned task list to `present_tasks` to see a formatted markdown table of all tasks and their current state:
-
-   ```python
-   from attune.spec import present_tasks, load_state
-
-   state = load_state(".claude/plans/my-plan.md")
-   print(present_tasks(tasks, state))
-   ```
-
-   If `load_state` returns `None`, no saved state exists yet and all tasks are treated as pending.
-
-3. To inspect a single task in full detail, call `present_task_detail` with the task object:
-
-   ```python
-   from attune.spec import present_task_detail
-
-   print(present_task_detail(tasks[0]))
-   ```
-
-## Execute a plan with per-task approval
-
-1. Call `execute_with_approval` with your plan path and a callback to handle each completed task:
-
-   ```python
-   from attune.spec.runner import execute_with_approval
-
-   result = execute_with_approval(
-       ".claude/plans/my-plan.md",
-       on_task_complete=my_callback,
-   )
-   ```
-
-   Pass `skip_gates=True`, `skip_tests=True`, or `skip_simplify=True` to bypass the corresponding quality checks during development.
-
-2. After the run completes, check whether all tasks passed:
-
-   ```python
-   print(result.success)   # True if every task executed and passed its gate
-   print(result.summary)   # Human-readable summary of the run
-   ```
-
-3. To track progress mid-run, call `format_progress_bar` with the count of completed and total tasks:
-
-   ```python
-   from attune.spec import format_progress_bar
-
-   bar = format_progress_bar(len(state.completed), len(tasks))
-   ```
-
-## Resume an interrupted run
-
-1. Call `find_resumable_plans` to list any plans that have saved state:
-
-   ```python
-   from attune.spec import find_resumable_plans
-
-   resumable = find_resumable_plans(".claude/plans")
-   ```
-
-2. Load the saved state for the plan you want to resume:
-
-   ```python
-   from attune.spec import load_state, get_pending_tasks
-
-   state = load_state(".claude/plans/my-plan.md")
-   pending = get_pending_tasks(tasks, state)
-   ```
-
-3. Pass the pending tasks to a `PipelineOrchestrator`, skipping the IDs already recorded in `state.completed`:
-
-   ```python
-   from attune.pipeline import PipelineOrchestrator
-
-   orchestrator = PipelineOrchestrator(".claude/plans/my-plan.md")
-   result = orchestrator.run_all(
-       skip_task_ids=set(state.completed),
-   )
-   ```
-
-## Run quality gates for a single task
-
-1. Instantiate `PipelineOrchestrator` with your plan path:
-
-   ```python
-   orchestrator = PipelineOrchestrator(".claude/plans/my-plan.md")
-   ```
-
-2. Call `run_gates_for_task` with the task you want to evaluate:
-
-   ```python
-   gate_result = orchestrator.run_gates_for_task(tasks[0])
-   ```
-
-3. Inspect the result fields to determine next steps:
-
-   ```python
-   print(gate_result.severity)             # e.g. "error", "warning", "ok"
-   print(gate_result.quality_gate_passed)  # True / False / None
-   print(gate_result.gate_score)           # float score if available
-   ```
-
-4. Display the outcome to the user with `present_task_result`:
-
-   ```python
-   from attune.spec import present_task_result
-
-   print(present_task_result(tasks[0], gate_result))
-   ```
-
-## Clear saved state
-
-Call `clear_state` to remove the state comment from a plan file and reset it for a fresh run:
+**Steps:**
 
 ```python
-from attune.spec import clear_state
+import asyncio
 
-clear_state(".claude/plans/my-plan.md")
+from attune.pipeline import (
+    PipelineOrchestrator,
+    PipelineResult,
+    TaskResult,
+    read_spec,
+)
+from attune.spec import present_tasks, present_task_result, format_progress_bar, load_state
+
+PLAN_PATH = ".claude/plans/my-feature.md"
+
+tasks = read_spec(PLAN_PATH)
+state = load_state(PLAN_PATH)          # None if no prior run exists
+print(present_tasks(tasks, state))     # inspect the plan before running
+
+completed_count = 0
+
+
+async def on_task_complete(task, task_result: TaskResult) -> None:
+    global completed_count
+    completed_count += 1
+    print(format_progress_bar(completed_count, len(tasks)))
+    print(present_task_result(task, task_result))
+
+
+async def main() -> None:
+    orchestrator = PipelineOrchestrator(PLAN_PATH)
+    result: PipelineResult = await orchestrator.run_all(
+        on_task_complete=on_task_complete,
+    )
+    print(result.summary)
+    if not result.success:
+        raise SystemExit(1)
+
+
+asyncio.run(main())
 ```
 
-## Verify success
+**Verify:** a fully passing run prints the summary and exits `0`.
+`on_task_complete` is **awaited** after each task, so define it `async`
+(`run_all` awaits it). The separation between reading (`read_spec`,
+`present_tasks`) and running (`run_all`) is intentional — you can
+inspect the full plan before committing to a run.
 
-A run is successful when `PipelineResult.success` returns `True`. This property is `True` only when every `TaskResult` in `PipelineResult.tasks` has `executed=True` and `quality_gate_passed=True`. Check `PipelineResult.summary` for a human-readable breakdown and inspect individual `TaskResult.error` fields for any tasks that failed.
+### Resume an interrupted run
+
+**Goal:** find plans that didn't finish and continue them from where
+they stopped.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.pipeline import PipelineOrchestrator, read_spec
+from attune.spec import get_pending_tasks, find_resumable_plans
+
+
+async def main() -> None:
+    resumable = find_resumable_plans(".claude/plans")
+    for spec_state in resumable:
+        tasks = read_spec(spec_state.plan_path)
+        pending = get_pending_tasks(tasks, spec_state)
+        if not pending:
+            continue
+        completed_ids = set(spec_state.completed)
+        orchestrator = PipelineOrchestrator(spec_state.plan_path)
+        result = await orchestrator.run_all(skip_task_ids=completed_ids)
+        print(result.summary)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `get_pending_tasks` returns only the tasks whose IDs are
+not in `SpecState.completed`. Passing those IDs as `skip_task_ids`
+prevents re-running completed work.
+
+### Run with per-task approval
+
+**Goal:** pause after each task for human sign-off instead of running
+the whole plan unattended.
+
+**Steps:**
+
+```python
+import asyncio
+from attune.spec.runner import execute_with_approval
+
+async def main():
+    result = await execute_with_approval(
+        ".claude/plans/my-feature.md",
+        on_task_complete,
+        skip_gates=False,
+        skip_tests=False,
+        skip_simplify=False,
+    )
+    print(result.summary)
+
+asyncio.run(main())
+```
+
+`execute_with_approval` is an async coroutine — `await` it (or drive
+it with `asyncio.run`). It accepts the same `skip_gates`,
+`skip_tests`, and `skip_simplify` flags as `PipelineOrchestrator`, and
+returns the same `PipelineResult`. Flip `SpecState.auto_run = True` to
+skip the per-task pause for the rest of the run.
+
+**Verify:** the loop pauses after each task. An interrupted approval
+run leaves a resumable `SpecState` in the plan file.
+
+### Re-run a subset of tasks without restarting
+
+**Goal:** re-run specific tasks without clearing state and reprocessing
+the whole plan.
+
+**Steps:** pass a `set[str]` of already-completed task IDs to
+`run_all(skip_task_ids=...)` (inside an async context — `run_all` is a
+coroutine):
+
+```python
+result = await orchestrator.run_all(skip_task_ids={"task-1", "task-2"})
+```
+
+**Verify:** skipping completed tasks preserves `SpecState.completed`
+and keeps `total_cost` and `duration_ms` accurate in the final
+`PipelineResult`. You are responsible for knowing which IDs to skip —
+if a skipped task produced an artifact a later task depends on, check
+`TaskResult.quality_gate_passed` and `gate_score` on the result before
+assuming success.

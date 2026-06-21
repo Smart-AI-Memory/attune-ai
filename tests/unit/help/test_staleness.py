@@ -164,6 +164,35 @@ class TestCheckStaleness:
         assert len(report.entries) == 1
         assert report.entries[0].feature == "auth"
 
+    def test_manual_feature_excluded_from_staleness(self, project: Path) -> None:
+        """A status: manual (single-sourced) feature is never reported.
+
+        It carries no source globs and is authored/projected, so it must
+        not appear in the staleness report — even though it has no stored
+        template hash to compare against (which would otherwise read as
+        stale). See docs/specs/help-docs-single-source/.
+        """
+        help_dir = project / ".help"
+        help_dir.mkdir(parents=True, exist_ok=True)
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "auth": Feature(name="auth", description="", files=["src/auth/**"]),
+                "spec-engine": Feature(
+                    name="spec-engine",
+                    description="Spec-driven development with approval loops",
+                    tags=["spec", "planning"],
+                    status="manual",
+                ),
+            },
+        )
+
+        report = check_staleness(manifest, help_dir, project)
+
+        names = {e.feature for e in report.entries}
+        assert "spec-engine" not in names
+        assert "auth" in names
+
 
 class TestIsExcluded:
     """Tests for _is_excluded() cache directory filtering."""

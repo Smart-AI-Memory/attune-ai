@@ -143,3 +143,136 @@ Task:
 Done when: D7 recorded; if (b), spec-engine.md and design.md amended
 to match. This unblocks the R7 rollout playbook.
 ```
+
+---
+
+## P1 — Projector `_wrap_help` should emit an H1 title (attune-author)
+
+**Status:** open · **Raised:** 2026-06-21 (pilot execution) ·
+**Lands in:** attune-author
+
+`attune_author.projector._wrap_help` writes the `.help` frontmatter +
+body but **no `# H1`**, so projected bodies open at `## `. The ops
+living-docs dashboard derives a template-card title from the first
+`# H1` (`attune.ops.help_data._title_from_content`); with no H1 it
+falls back to `"<feature> / <kind>"` (e.g. `"spec-engine / concept"`)
+instead of a clean title. The OLD LLM-generated files carried
+`# <Feature>`, so this is a visible regression on **every** projected
+kind. `_wrap_docs` already emits `# {title}` — mirror it in
+`_wrap_help` (derive from `frontmatter.summary` or the feature name).
+Low-risk one-liner; needs an attune-author release + pin bump.
+
+---
+
+## P2 — Drop `tutorial` from `DOCS_PAGE_SECTIONS` (attune-author)
+
+**Status:** open · **Raised:** 2026-06-21 (D10) · **Lands in:**
+attune-author
+
+Decision D10 keeps tutorials hand-authored — a guided "what you'll
+build" arc resists pure section projection (the projected version is
+the `Tasks` list verbatim and duplicates the how-to). The pilot guards
+this in the **driver** (`skip_kinds=("faq", "tutorial")`), but the
+canonical fix is to remove `"tutorial"` from `DOCS_PAGE_SECTIONS` in
+`attune_author.projector` so the default projection excludes it and no
+consumer has to remember the skip. Until then, every driver must pass
+the skip list.
+
+---
+
+## P3 — First-class `maintenance: projected` contract (attune-author)
+
+**Status:** partially done (feature-level `status: manual` landed,
+2026-06-21) · **Raised:** 2026-06-21 (D9) · **Lands in:** attune-ai
+(`attune.help`) + attune-author
+
+D9 defused the regen-overwrite trap by **removing** a migrated feature
+from `.help/features.yaml` entirely — but that also dropped the
+feature's name/description/tags from the manifest, so `resolve_topic`
+could no longer route to it and the `models`/`spec-engine` golden
+queries (`md-001`, `md-002`, `sp-001`, `sp-002`) regressed to
+`None`/wrong-feature. Removing the entry threw out the resolution index
+along with the regen trigger.
+
+**Landed (this PR):** a feature-level `status: manual` flag on the
+manifest `Feature`. `resolve_topic` still indexes the entry
+(name/description/tags), so topic resolution is restored, while
+`check_staleness` **skips** manual features entirely — sidestepping the
+perpetual-stale wart (no code-derived hash is ever compared, so a
+projected `source_hash` can't read as stale) and `maintenance`
+reports them under `skipped_manual`. The `models`/`spec-engine` entries
+are re-added with `status: manual` and **no `files:`**.
+
+**Still open:** the finer-grained *per-kind* `maintenance: projected`
+page contract that would let a projected feature keep just its `faq`
+on the LLM path per D7's original intent (feature-level `manual` freezes
+the whole feature, including `faq`, which is acceptable today only
+because `faq` is frozen until the FAQ Generator ships). With that,
+DD5 could mark the 10 projected kinds `projected` while leaving `faq`
+generated — the option D9 rejected for tooling reasons.
+
+---
+
+## P4 — mkdocs nav-wiring convention for projected pages
+
+**Status:** open · **Raised:** 2026-06-21 (pilot execution; design.md
+"still to prototype") · **Lands in:** attune-ai (mkdocs.yml + a
+convention)
+
+Projected docs pages are not auto-wired into the published site:
+
+- `docs/architecture/<feature>.md` is **excluded from the build** by
+  the wholesale `architecture/` rule in `mkdocs.yml`'s `exclude_docs`.
+  The pilot re-includes per-feature (`!architecture/spec-engine.md`,
+  `!architecture/models.md`) — does not scale to ~270 features.
+- `docs/how-to/<feature>.md`, `docs/tutorials/<feature>.md`,
+  `docs/reference/<feature>.md` **build but are "not in nav"** (an
+  mkdocs INFO) — the same is true for every existing feature, so this
+  is systemic, not pilot-specific.
+
+R7 must define the convention: either (a) drop the wholesale
+`architecture/` exclusion and exclude only the genuine orphans, plus a
+nav section that lists projected per-feature pages; or (b) a generated
+nav fragment the projector/driver emits. Decide during rollout, not
+per-feature.
+
+---
+
+## P5 — Code examples need EXECUTION-based verification
+
+**Status:** open · **Raised:** 2026-06-21 (pilot review) · **Lands
+in:** attune-author fact_check + R7 process
+
+The pilot review proved that neither the static fact-checker nor
+adversarial LLM review reliably catches **runtime/async correctness**
+in code examples. `fact_check` (`python_refs`/`cli_refs`) verifies that
+symbols exist and imports resolve — it does NOT run the code. Two
+independent adversarial LLM reviewers, given the source and told to
+refute, ALSO missed that `PipelineOrchestrator.run_all` is `async`
+while `spec-engine.md`'s Quickstart + three Task examples called it
+synchronously (no `await`, sync callbacks, not in an event loop) and
+the Comparison table labeled the pipeline layer "Synchronous call."
+The bug was systematic across the file; it was caught only by a human
+reading `async def run_all` and tracing the call sites.
+
+A working prototype already exists in attune-ai:
+**`scripts/check_doc_examples.py`** — it extracts fenced `python`
+blocks, compiles each (catching `await`-outside-async and syntax
+errors), and flags any coroutine function called without `await`,
+grounding "is this async?" in the real code via
+`inspect.iscoroutinefunction` over the attune packages. Verified
+against the pilot: 0 problems on the fixed masters + projected
+outputs, and it flags a deliberately sync `run_all()` (negative
+control). It would have caught the original `run_all` bug.
+
+Concrete follow-ups:
+
+- **Promote `scripts/check_doc_examples.py` into `attune_author.fact_check`**
+  as a first-class check (`check_doc_examples`) so it runs in the same
+  warn/gate pass as `python_refs`/`cli_refs`, for every consumer — not
+  just this repo's driver. The prototype is the spec.
+- **R7 process rule:** the per-feature checklist's adversarial review
+  step must explicitly verify, for every public callable used in an
+  example, whether it is `async` (grep `async def`) and whether the
+  example awaits it correctly. Treat "is this example runnable as
+  written?" as a distinct check from "do these symbols exist?".

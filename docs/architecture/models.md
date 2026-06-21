@@ -1,12 +1,4 @@
----
-type: concept
-name: models-concept
-feature: models
-depth: concept
-generated_at: 2026-06-21T17:12:30.780290+00:00
-source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
-status: generated
----
+# Models
 
 ## Overview
 
@@ -82,3 +74,45 @@ favor the API for its 1M context window. The zero-config default tier
 is `PRO`, so out of the box `AUTO` returns `API` regardless of size.
 `estimate_cost(module_lines, mode)` returns the projected cost for a
 given mode so you can compare before committing.
+
+## Design & extension
+
+### Design decisions
+
+- **Single provider, tiered models.** `ModelProvider` has one member
+  (`ANTHROPIC`) and `ProviderMode.HYBRID` is retained only for
+  backward compatibility. The abstraction is kept so adding a provider
+  later is a registry change, not an architecture change, but the
+  supported surface today is Anthropic-only — `get_model` enforces it.
+- **Tasks classify into tiers, not models.** Routing maps a task to a
+  `ModelTier` (`TASK_TIER_MAP`), and the tier maps to a concrete model
+  separately. This decouples "how hard is this task" from "which model
+  is current," so a model swap is a registry edit with no routing
+  changes.
+- **Auth strategy persists to a file, not env.** `AuthStrategy` saves
+  to `~/.attune/auth_strategy.json` so the choice survives across
+  sessions and is inspectable. `AUTO` keeps the decision adaptive
+  (size-based) rather than hard-coding a mode.
+- **Adaptive routing degrades gracefully.** `AdaptiveModelRouter`
+  requires `MIN_SAMPLE_SIZE` observations before it overrides the
+  static tier choice, so a cold system behaves identically to static
+  routing.
+
+### Extension points
+
+- **Add a task type:** add a `TaskType` member and its `.value` to the
+  appropriate tier set (`CHEAP_TASKS`, `CAPABLE_TASKS`, or
+  `PREMIUM_TASKS`). `TASK_TIER_MAP` is derived from those sets, so
+  `get_tier_for_task` and `get_tasks_for_tier` pick it up
+  automatically.
+- **Add or re-price a model:** edit `MODEL_REGISTRY`; `get_model`,
+  `get_all_models`, and `get_pricing_for_model` reflect it with no
+  other changes.
+- **Plug in a custom executor:** implement the `LLMExecutor` protocol
+  (`async run`, `get_model_for_task`, `estimate_cost`). `MockLLMExecutor`
+  is the reference implementation.
+- **Tune adaptive routing:** pass `max_cost`, `max_latency_ms`, or
+  `min_success_rate` to `AdaptiveModelRouter.get_best_model`, or read
+  `get_routing_stats` to drive your own selection logic.
+
+<!-- attune-generated: source_hash=234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459 feature=models kind=architecture generated_at=2026-06-21 -->

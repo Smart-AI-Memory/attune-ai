@@ -37,6 +37,8 @@ exclude_docs: |
   generated/
   architecture/
   !architecture/ops-dashboard.md
+  !architecture/spec-engine.md
+  !architecture/models.md
   development-logs/
   development/
   specs/

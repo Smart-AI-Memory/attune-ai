@@ -28,12 +28,26 @@ class Feature:
         description: One-line summary for topic resolution.
         files: Glob patterns matching source files.
         tags: Keywords for cross-referencing and discovery.
+        status: ``"generated"`` (default) means the LLM generator
+            owns this feature's templates and staleness/maintenance
+            may regenerate them. ``"manual"`` means the templates are
+            single-sourced (authored or projected) and must NOT be
+            regenerated — the entry stays in the manifest purely so
+            ``resolve_topic`` can still route queries to it via
+            name/description/tags. See
+            ``docs/specs/help-docs-single-source/``.
     """
 
     name: str
     description: str
     files: list[str] = field(default_factory=list)
     tags: list[str] = field(default_factory=list)
+    status: str = "generated"
+
+    @property
+    def is_manual(self) -> bool:
+        """True when this feature is single-sourced (never regenerated)."""
+        return self.status == "manual"
 
 
 @dataclass
@@ -95,6 +109,7 @@ def load_manifest(help_dir: str | Path) -> FeatureManifest:
             description=spec.get("description", ""),
             files=spec.get("files", []),
             tags=spec.get("tags", []),
+            status=spec.get("status", "generated"),
         )
 
     return FeatureManifest(
@@ -130,6 +145,8 @@ def save_manifest(manifest: FeatureManifest, help_dir: str | Path) -> Path:
             entry["files"] = feat.files
         if feat.tags:
             entry["tags"] = feat.tags
+        if feat.status != "generated":
+            entry["status"] = feat.status
         data["features"][name] = entry
 
     out.write_text(
