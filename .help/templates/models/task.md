@@ -3,55 +3,136 @@ type: task
 name: models-task
 feature: models
 depth: task
-generated_at: 2026-06-04T23:45:26.745205+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-21T17:12:30.780290+00:00
+source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
 status: generated
 ---
 
-# Work with models
+## Tasks
 
-Use the models module when you need to configure authentication strategies, route tasks to the right LLM provider, or manage model tiers based on historical telemetry.
+### See which model a task will use
 
-## Prerequisites
+**Goal:** resolve the tier and concrete model for a task type without
+running anything.
 
-- Access to the project source code under `src/attune/models/`
-- Python environment with the project dependencies installed
+**Steps:**
 
-## Steps
+```python
+from attune.models import (
+    get_tier_for_task,
+    get_tasks_for_tier,
+    get_model,
+    is_known_task,
+)
 
-1. **Choose the entry point that matches your goal.**
+task = "review_security"
+print(is_known_task(task))            # True
+tier = get_tier_for_task(task)        # ModelTier.CAPABLE
+model = get_model("anthropic", tier.value)
+print(f"{task} -> {tier.value} -> {model.id if model else 'unregistered'}")
 
-   The models module exposes distinct functions for each authentication and routing concern:
+# What else runs at this tier?
+print(get_tasks_for_tier(tier))       # list[str] of task names
+```
 
-   | Goal | Function | File |
-   |---|---|---|
-   | Run first-time auth setup interactively | `configure_auth_interactive()` | `auth_strategy.py` |
-   | Read the active auth configuration | `get_auth_strategy()` | `auth_strategy.py` |
-   | Measure a file's size before routing decisions | `count_lines_of_code()` | `auth_strategy.py` |
-   | Set up auth via CLI | `cmd_auth_setup()` | `auth_cli.py` |
-   | Inspect current CLI auth status | `cmd_auth_status()` | `auth_cli.py` |
-   | Clear the CLI auth configuration | `cmd_auth_reset()` | `auth_cli.py` |
-   | Get a routing recommendation for a specific file | `cmd_auth_recommend()` | `auth_cli.py` |
+**Verify:** `get_tier_for_task` returns a `ModelTier`. An unknown task
+string does not raise — it defaults to `ModelTier.CAPABLE`; use
+`is_known_task` first if you need to distinguish.
 
-2. **Read the function signature and its dataclass.**
+### Configure your authentication strategy
 
-   Before calling or modifying a function, check its inputs and outputs against the relevant dataclass. For example, `configure_auth_interactive()` returns an `AuthStrategy` whose fields — including `subscription_tier`, `default_mode`, `prefer_subscription`, and `cost_optimization` — control downstream routing behaviour. Confirm that the fields you need are already present before adding new ones.
+**Goal:** choose subscription vs API and persist the choice.
 
-3. **Call or modify the function.**
+**Steps:** run the interactive CLI, then confirm it:
 
-   - To run interactive setup programmatically, call `configure_auth_interactive(module_lines=<int>)`. It returns a fully populated `AuthStrategy` instance.
-   - To retrieve the current strategy without prompting, call `get_auth_strategy()`.
-   - To determine how many tokens a module will consume before committing to a mode, call `count_lines_of_code(file_path)` and pass the result to `AuthStrategy.estimate_tokens()`.
-   - To invoke the CLI directly, call `main()` from `auth_cli.py`; it returns an exit code of `1` on failure.
+```bash
+attune auth setup            # interactive: pick subscription tier + default mode
+attune auth status           # human-readable summary
+attune auth status --json    # machine-readable, for scripts/CI
+```
 
-4. **Run the related tests.**
+Or programmatically:
 
-   Run `pytest -k "models"` to catch regressions before they affect other developers.
+```python
+from attune.models import get_auth_strategy, AuthMode
 
-## Verify success
+strategy = get_auth_strategy()                 # zero-config default if unset
+mode = strategy.get_recommended_mode(1800)     # API on a PRO account; size-based only on MAX/ENTERPRISE
+estimate = strategy.estimate_cost(1800, mode)  # mode, monetary_cost, quota_cost, tokens_used, fits_in_context
+print(mode.value, estimate)
+strategy.save()                                # persists to AUTH_STRATEGY_FILE
+```
 
-Your task succeeded when:
+**Verify:** `attune auth status --json` reports the active mode and
+tier. `get_recommended_mode` returns an `AuthMode` member whose
+`.value` is `"subscription"` or `"api"` — never `"auto"` (`AUTO` is the
+input that triggers resolution). Note `setup_completed` defaults to
+`true`, so status reports it `true` even before you run setup.
 
-- `get_auth_strategy()` returns an `AuthStrategy` instance with `setup_completed` set to `True`.
-- `pytest -k "models"` passes with no failures or errors.
-- `cmd_auth_status()` prints the configuration you expect without raising an exception.
+### Get a per-file auth recommendation
+
+**Goal:** ask which mode a specific file should use, given its size.
+
+**Steps:**
+
+```bash
+attune auth recommend src/attune/models/registry.py
+```
+
+The command counts the file's lines of code and prints the recommended
+mode plus a cost estimate. The Python equivalent pairs
+`count_lines_of_code` with `get_recommended_mode`:
+
+```python
+from attune.models import count_lines_of_code, get_auth_strategy
+
+loc = count_lines_of_code("src/attune/models/registry.py")
+mode = get_auth_strategy().get_recommended_mode(loc)
+print(loc, mode.value)
+```
+
+**Verify:** the CLI exits `0` and names a mode. `count_lines_of_code`
+counts non-blank, non-comment lines, so its result is smaller than a
+raw `wc -l`.
+
+### Change the provider configuration
+
+**Goal:** inspect or set the active provider.
+
+**Steps:**
+
+```bash
+attune provider show         # print current provider + mode
+attune provider set          # interactive provider selection
+```
+
+Programmatically:
+
+```python
+from attune.models import get_provider_config, set_provider_config, ProviderConfig
+
+cfg = get_provider_config()                    # lazy-loaded global
+print(cfg.mode, cfg.primary_provider)          # ProviderMode.SINGLE anthropic
+
+cfg = ProviderConfig.auto_detect()             # detect ANTHROPIC_API_KEY
+set_provider_config(cfg)                        # install as the global
+```
+
+**Verify:** `attune provider show` reflects the change.
+`ProviderConfig.auto_detect()` returns a config whose
+`available_providers` includes `"anthropic"` when `ANTHROPIC_API_KEY`
+is set.
+
+### Reset auth configuration
+
+**Goal:** clear a misconfigured auth strategy.
+
+**Steps:**
+
+```bash
+attune auth reset --confirm
+```
+
+**Verify:** the configuration file is removed; a subsequent
+`attune auth status` shows the zero-config default and prompts you to
+run `attune auth setup`.

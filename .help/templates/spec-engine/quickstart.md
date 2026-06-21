@@ -3,81 +3,36 @@ type: quickstart
 name: spec-engine-quickstart
 feature: spec-engine
 depth: quickstart
-generated_at: 2026-06-02T10:56:02.717546+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T17:12:30.161122+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Quickstart: spec-engine
+## Quickstart
 
-Run a spec plan end-to-end with quality gates in a single Python call.
-
-```python
-from attune.pipeline import PipelineOrchestrator
-
-result = PipelineOrchestrator("my-plan.md").run_all()
-print(result.summary())
-```
-
-**Expected output:**
-
-```
-3/3 tasks completed — all quality gates passed.
-```
-
-## Step 1: Read your plan file
-
-Use `read_spec` to parse a plan file and inspect the tasks before executing anything:
+Run a spec plan end-to-end with quality gates from Python.
+`PipelineOrchestrator.run_all` is an async coroutine, so drive it with
+`asyncio.run` (or `await` it inside an existing event loop):
 
 ```python
-from attune.pipeline import read_spec
+import asyncio
 
-tasks = read_spec("my-plan.md")
-for task in tasks:
-    print(task)
+from attune.pipeline import PipelineOrchestrator, PipelineResult
+
+
+async def main() -> None:
+    orchestrator = PipelineOrchestrator(".claude/plans/my-feature.md")
+    result: PipelineResult = await orchestrator.run_all()
+    print(result.summary)   # human-readable run summary
+    print(result.success)   # True if all tasks executed and passed gates
+
+
+asyncio.run(main())
 ```
 
-This confirms the plan file is valid and shows you the `DecomposedTask` objects that the orchestrator will execute.
+`summary` and `success` are properties — read them, don't call them.
+Running this produces a `PipelineResult` with per-task outcomes, total
+cost, and duration.
 
-## Step 2: Run the pipeline
-
-Pass the same plan path to `PipelineOrchestrator` and call `run_all`:
-
-```python
-from attune.pipeline import PipelineOrchestrator
-
-orchestrator = PipelineOrchestrator("my-plan.md")
-result = orchestrator.run_all()
-```
-
-To skip quality gates during a quick smoke-test, pass `skip_gates=True` to the constructor.
-
-## Step 3: Check the result
-
-Inspect `PipelineResult` to confirm success and review per-task outcomes:
-
-```python
-print(result.success())   # True if all tasks executed and passed gates
-print(result.summary())   # Human-readable summary of the run
-
-for task_result in result.tasks:
-    print(task_result.task_name, task_result.severity())
-```
-
-A passing run prints `True` from `result.success()`. If a task failed, `task_result.quality_gate_passed` is `False` and `task_result.error` contains the failure reason.
-
-## Step 4: Resume an interrupted run
-
-If a run was interrupted, use `find_resumable_plans` to find plans with saved state, then pass the path back to `PipelineOrchestrator`:
-
-```python
-from attune.spec import find_resumable_plans, load_state, get_pending_tasks
-
-resumable = find_resumable_plans()          # searches .claude/plans by default
-state = load_state(resumable[0].plan_path)
-tasks = read_spec(resumable[0].plan_path)
-pending = get_pending_tasks(tasks, state)
-print(f"{len(pending)} tasks remaining")
-```
-
-**Next:** To run with per-task approval prompts, call `execute_with_approval` from `spec.runner` — it accepts the same `skip_gates`, `skip_tests`, and `skip_simplify` flags as `PipelineOrchestrator`.
+To skip quality gates during a quick smoke test, pass
+`skip_gates=True` to the constructor.

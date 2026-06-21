@@ -3,49 +3,60 @@ type: error
 name: spec-engine-error
 feature: spec-engine
 depth: error
-generated_at: 2026-06-02T10:56:02.699564+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T17:12:30.161122+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Spec Engine errors
+## Failure modes
 
-Spec Engine errors fall into two categories: failures that prevent a plan from loading, and failures that occur during task execution and gate evaluation. The sections below map each error to its cause and how to resolve it.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `ValueError: plan_path must be a non-empty string` | Empty string or `None` passed to `read_spec` / `PipelineOrchestrator` | Resolve the path before passing it | high |
+| `FileNotFoundError: Plan file not found` | The plan file does not exist at the given path | Verify the path; use `os.path.abspath` to be sure | high |
+| `PipelineResult.success` is `False` | One or more tasks failed to execute or failed a gate | Iterate `result.tasks`; check each `TaskResult.error`, `quality_gate_passed`, `tests_passed` | high |
+| A task never appears in output | The XML task block is malformed or absent | Call `read_spec` directly and inspect the returned list | medium |
+| Execution resumes from the wrong task | `SpecState.completed` / `current` is stale | `load_state` to inspect, then `clear_state` to reset | medium |
+| `get_pending_tasks` returns `[]` unexpectedly | `SpecState.completed` already holds all task IDs | State is stale or the plan finished; `clear_state` to start fresh | medium |
+| Quality gate always passes | `skip_gates=True` left in from development | Remove the flag to re-enable gates | medium |
+| State comment vanished after editing the plan | An editor/formatter/VCS step stripped HTML comments | Ensure tooling preserves HTML comments in `.md`; confirm the comment is present after `save_state` | medium |
 
-## Common error signatures
+### Risk areas
 
-| Exception | Message | Raised by | Cause |
-|-----------|---------|-----------|-------|
-| `ValueError` | `plan_path must be a non-empty string` | `read_spec()` | You passed an empty string or `None` as `plan_path` |
-| `FileNotFoundError` | `Plan file not found: {path}` | `read_spec()` | The `.claude/plans/` file does not exist at the given path |
-| `TaskResult.error` set | varies | `PipelineOrchestrator.run_gates_for_task()` | A quality gate failed or an exception occurred during task execution; inspect `TaskResult.error` and `TaskResult.gate_details` |
-| `PipelineResult.success` is `False` | — | `PipelineOrchestrator.run_all()` | One or more tasks did not execute or did not pass gates; check `PipelineResult.summary` for a human-readable summary |
+- **Resuming re-runs tasks when state drifts.** `get_pending_tasks`
+  matches `task_id` values from `SpecState.completed` against the task
+  list from `read_spec`. If task IDs are renumbered or reordered
+  between sessions, completed tasks can look pending and run twice.
+  Treat plan files as append-only once execution starts; if you must
+  edit mid-run, `clear_state` first.
+- **Skip flags silently lower quality guarantees.** `skip_gates`,
+  `skip_tests`, and `skip_simplify` set the corresponding `TaskResult`
+  fields to `None`/`False` rather than raising. `PipelineResult.success`
+  still returns `True` if all tasks executed, even with gates skipped.
+  After any skip-flag run, inspect `quality_gate_passed`,
+  `tests_passed`, and `gate_score` explicitly.
+- **`read_spec` does not warn on empty task lists.** A valid file with
+  no parseable XML task blocks returns `[]` silently, and downstream
+  orchestration completes with nothing to do. Check for a non-empty
+  list before orchestrating.
+- **`on_task_complete` errors abort the pipeline.** An unhandled
+  exception in the callback stops the run at that task. Run via
+  `execute_with_approval` (the `spec` layer) and state is saved with
+  that task marked `current` before the callback fires, so resuming
+  re-runs it; bare `run_all` does no state-saving of its own. Wrap
+  callback logic in `try`/`except` and check `TaskResult.error` before
+  acting.
 
-## Where errors originate
+### Diagnosis order
 
-**Plan loading** — `read_spec(plan_path)` is the first call in every pipeline run. A `ValueError` here means `plan_path` is empty; a `FileNotFoundError` means the plan file is missing. Neither can proceed until you supply a valid, existing path.
-
-**Task execution and gate evaluation** — `PipelineOrchestrator.run_gates_for_task()` evaluates quality gates for a single task and returns a `TaskResult`. When a gate fails, `TaskResult.quality_gate_passed` is `False` and `TaskResult.gate_score` holds the numeric score. When tests fail, `TaskResult.tests_passed` is `False`. When an unexpected error occurs, `TaskResult.error` contains the error string.
-
-**Pipeline-level failure** — `PipelineOrchestrator.run_all()` aggregates all `TaskResult` objects into a `PipelineResult`. If `PipelineResult.success` is `False`, at least one task did not execute or failed a gate. Call `PipelineResult.summary` to see which tasks failed and why.
-
-**State loading** — `load_state(plan_path)` reads execution state from the plan file and returns `None` if no state is found (not an error). If the returned `SpecState.schema_version` doesn't match the current version, the state may be stale or unreadable.
-
-## How to diagnose
-
-1. **Identify where in the pipeline the failure occurred.** A `ValueError` or `FileNotFoundError` from `read_spec()` means the plan never loaded. A `False` result from `PipelineResult.success` means the plan loaded but at least one task failed during execution.
-
-2. **Inspect the failing `TaskResult`.** Iterate over `PipelineResult.tasks` and check `TaskResult.executed`, `TaskResult.quality_gate_passed`, `TaskResult.tests_passed`, and `TaskResult.error` for each task. The `TaskResult.severity` property classifies the outcome so you can quickly identify the most critical failures.
-
-3. **Check gate details for score-based failures.** When `TaskResult.quality_gate_passed` is `False`, examine `TaskResult.gate_details` and `TaskResult.gate_score` to understand why the gate did not pass. Adjust the task implementation or re-run with `skip_gates=True` on `PipelineOrchestrator` to bypass gates temporarily.
-
-4. **Verify state consistency before resuming.** If you're resuming a partial run, call `load_state(plan_path)` and confirm that `SpecState.completed` lists the tasks you expect. Use `get_pending_tasks(tasks, state)` to see what remains. If state looks wrong, call `clear_state(plan_path)` to reset it and re-run from the beginning.
-
-5. **Re-run with gates or steps skipped to isolate the failure.** `PipelineOrchestrator` accepts `skip_gates=True`, `skip_tests=True`, and `skip_simplify=True`. Enabling these flags narrows which phase is producing the failure.
-
-## Source files
-
-- `src/attune/spec/**`
-- `src/attune/pipeline/**`
-
-**Tags:** `spec`, `planning`
+1. Reproduce with a minimal `read_spec(plan_path)` call — if it
+   raises, the problem is the path or the plan file.
+2. Inspect persisted state: `load_state(plan_path)`; check
+   `completed`, `current`, `schema_version`.
+3. Clear stale state and retry: `clear_state(plan_path)`.
+4. Re-run with `skip_gates=True` to isolate gate failures from task
+   logic. If `success` flips to `True`, the gate thresholds or scores
+   are the cause — inspect `gate_details`.
+5. Iterate `result.tasks` and print each failing `TaskResult`
+   (`error`, `gate_score`, `gate_details`, `tests_passed`).
+6. Run the related tests: `pytest -k "spec" -v`.

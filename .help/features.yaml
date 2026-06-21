@@ -151,14 +151,15 @@ features:
     doc_paths:
       - docs/reference/cli-reference.md
 
-  models:
-    description: LLM authentication, provider routing, and tier management
-    files:
-      - src/attune/models/**
-    tags: [models, auth, llm]
-    doc_paths:
-      - docs/how-to/smart-router.md
-      - docs/reference/llm-toolkit.md
+  # models: REMOVED from the LLM-generator manifest (DD5 / D9,
+  # help-docs-single-source, 2026-06-21). models' help is now
+  # single-sourced from content/features/models.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/models/*.md. The retained faq.md stays on disk and
+  # is served as-is, frozen until the FAQ Generator (D6/D7) ships. The
+  # cross-cutting docs/how-to/smart-router.md and
+  # docs/reference/llm-toolkit.md remain hand-authored and untouched.
+  # See docs/specs/help-docs-single-source/.
 
   orchestration:
     description: Dynamic teams, workflow composition, and agent models
@@ -189,12 +190,17 @@ features:
     tags: [plugin, claude-code]
     arch_path: docs/architecture/plugin-system.md
 
-  spec-engine:
-    description: Spec-driven development with approval loops
-    files:
-      - src/attune/spec/**
-      - src/attune/pipeline/**
-    tags: [spec, planning]
+  # spec-engine: REMOVED from the LLM-generator manifest (DD5 +
+  # help-docs-single-source decision, 2026-06-21). spec-engine's help
+  # is now single-sourced from content/features/spec-engine.md and
+  # rendered by attune_author.projector (scripts/project_features.py),
+  # which owns .help/templates/spec-engine/*.md. Listing it here would
+  # make the weekly help-freshness regen run
+  # `attune-author generate spec-engine --all-kinds`, overwriting the
+  # projected hand-authored content with LLM output. The retained
+  # faq.md stays on disk and is served as-is; it is frozen (no longer
+  # auto-regenerated) until the four-channel FAQ Generator (D6/D7)
+  # replaces that path. See docs/specs/help-docs-single-source/.
 
   wizards:
     description: Multi-step guided interactive workflows

@@ -228,3 +228,105 @@ generator's existing frontmatter/footer helpers. Simpler than the
 generator (no AST-render, no LLM). The Reference section is
 hand-authored in the master file; fact-check *verifies* it rather
 than AST-deriving it (aligns with D3).
+
+---
+
+## D9 — DD5 defuse = remove the whole feature from the manifest (faq frozen)
+
+**Decided (pilot execution, 2026-06-21):** To stop the weekly
+help-freshness regen from overwriting the projected hand-authored
+`.help` content, **remove the migrated feature entirely from
+`.help/features.yaml`** (the LLM-generator manifest). The retained
+`faq.md` stays on disk and is served as-is, but is **frozen** — no
+longer auto-regenerated — until the four-channel FAQ Generator (D6/D7)
+replaces that path.
+
+**Why this supersedes D7's literal mechanism:** D7 said "only the 10
+projected kinds are removed from the manifest; spec-engine's `faq`
+entry is **not** removed, so faq keeps coming from the LLM generator."
+Pilot execution proved that mechanism **is not expressible** with
+attune-author 0.19.0:
+
+- `.help/features.yaml` has **no per-`.help`-kind field**. Each
+  feature is `description` + `files` + `tags` (+ optional doc-side
+  `doc_kinds`/`doc_paths`/`arch_path`). There is no `help_kinds` /
+  `skip_kinds` / `source: projected` to "remove 10 kinds, keep faq."
+- The weekly regen (`​.github/workflows/help-freshness.yml`) runs
+  `attune-author generate <feat> --help-dir .help --project-root .
+  --all-kinds` per **stale feature** — **all-or-nothing per feature**.
+  You cannot regenerate only `faq` while skipping the other 10; the
+  same command produces all of them.
+
+So the only two mechanisms that exist today are: **(A)** remove the
+feature from the manifest (chosen), or **(B)** mark the 10 projected
+files `maintenance: manual` so `generate --all-kinds` (no
+`--overwrite`) skips them while `faq` (still `status: generated`)
+regenerates. (B) honors D7's letter but has two real warts: the
+feature reports **perpetually stale** (its projected `source_hash` is
+the master-file hash, which never matches the code-derived hash
+`check_staleness` expects), so the dashboard shows it stale forever
+**and** the weekly job LLM-regenerates `faq` every week regardless of
+whether anything changed — i.e. it keeps churning the very
+LLM-authored FAQ the spec exists to retire (D6 calls LLM-authored FAQ
+a regression). (A) avoids both warts and ends the churn; its only cost
+is that `faq.md` is frozen, which is acceptable because the FAQ
+Generator is its eventual owner and the file is still served.
+
+**Patrick chose (A)** during pilot execution (2026-06-21).
+
+**Consequences:**
+
+- Migrating a feature to the projector = **remove its entire entry
+  from `.help/features.yaml`** (not a per-kind edit). The projector
+  (`scripts/project_features.py`) becomes the sole owner of that
+  feature's `.help/templates/<feature>/*.md`.
+- The feature's `faq.md` is retained on disk, served unchanged, and
+  frozen until the FAQ Generator (FG1) ships. Do **not** delete it.
+- **Recommended attune-author follow-up:** add a first-class
+  `maintenance: projected` contract that (1) the generator skips like
+  `manual` and (2) `check_staleness` **ignores** (so projected
+  features don't report perpetually stale). That would let a future
+  design keep `faq` on the LLM path per D7's original intent *without*
+  the perpetual-stale wart — reopening (B) as the cleaner long-term
+  mechanism. Tracked for R7 / rollout.
+
+---
+
+## D10 — Tutorial stays hand-authored; dropped from projection
+
+**Decided (pilot execution, 2026-06-21):** The `tutorial` docs kind is
+**not projected**. Tutorials remain hand-authored per feature. The
+pilot driver (`scripts/project_features.py`) skips it via
+`skip_kinds=("faq", "tutorial")`.
+
+**Why (decided by inspecting the rendered page, per the T2 medium
+risk):** design.md flagged that a guided tutorial may resist pure
+projection, with the pilot slice `DOCS_PAGE_SECTIONS["tutorial"] =
+["Tasks"]` to be judged on the rendered output. It was judged thin:
+
+- The **projected** tutorial is the master file's `## Tasks` section
+  verbatim — 4 independent task recipes (run / resume / approval /
+  re-run-subset). It is a how-to list, and it **duplicates** the
+  how-to page (which also consumes `Tasks`).
+- The **hand-authored** tutorial is a true tutorial arc the Tasks
+  section cannot reconstruct: a "What you will build" frame,
+  Prerequisites, Step 1→6 progressively assembling **one**
+  `run_pipeline.py` with narrative connective tissue and a per-step
+  Verify, a "Complete script", and "What you learned" / "Next steps".
+
+A tutorial is a *narrative over* the tasks, not a *slice of* them.
+Projecting it loses the pedagogy and produces a how-to duplicate.
+
+**Consequences:**
+
+- `tutorial` is dropped from the pilot's projection set; the driver's
+  `skip_kinds` is the working mechanism. `docs/tutorials/<feature>.md`
+  stays hand-authored and is restored from the pre-projection version.
+- **Recommended attune-author follow-up:** remove `"tutorial"` from
+  `DOCS_PAGE_SECTIONS` in `attune_author.projector` so the *default*
+  projection excludes it (rather than relying on every consumer's
+  driver to pass `skip_kinds`). Until then the driver `skip_kinds` is
+  the guard. Tracked for R7 / rollout.
+- The projected docs set per feature is therefore **how-to,
+  architecture, reference** (3 pages); `.help` is the 10 non-faq
+  kinds. Tutorial + faq remain hand-authored / LLM-owned respectively.

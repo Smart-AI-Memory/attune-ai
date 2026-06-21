@@ -70,7 +70,32 @@ def main(argv: list[str] | None = None) -> int:
         findings = []
         print(f"warning: validation skipped: {exc}", file=sys.stderr)
 
-    result = project_feature(master_path, repo_root, help_dir, dry_run=args.dry_run)
+    # Example-execution gate on the master file (warn-only — P5). The
+    # static fact-check above proves symbols exist; this proves the
+    # `python` examples are runnable (compile + no coroutine called
+    # without await). See scripts/check_doc_examples.py.
+    try:
+        from check_doc_examples import check_file
+
+        example_problems = check_file(master_path)
+    except Exception as exc:  # noqa: BLE001
+        # INTENTIONAL: advisory like the fact-check; never block.
+        example_problems = []
+        print(f"warning: example check skipped: {exc}", file=sys.stderr)
+
+    # ``tutorial`` is skipped: a guided tutorial (single progressive
+    # "what you'll build" arc) resists pure section projection — the
+    # projected version is just the Tasks list verbatim, which reads
+    # thin and duplicates the how-to. Tutorials stay hand-authored per
+    # feature. See docs/specs/help-docs-single-source/decisions.md D10.
+    # ``faq`` is skipped per D7 (FAQ Generator unbuilt).
+    result = project_feature(
+        master_path,
+        repo_root,
+        help_dir,
+        skip_kinds=("faq", "tutorial"),
+        dry_run=args.dry_run,
+    )
 
     verb = "would write" if args.dry_run else "wrote"
     print(f"{verb} {len(result.outputs)} output(s) for {args.feature!r}:")
@@ -83,9 +108,11 @@ def main(argv: list[str] | None = None) -> int:
         for entry in result.skipped:
             print(f"  {entry}")
 
-    warnings = list(result.warnings) + [
-        f"{f.check} [{f.severity}] {f.location}: {f.message}" for f in findings
-    ]
+    warnings = (
+        list(result.warnings)
+        + [f"{f.check} [{f.severity}] {f.location}: {f.message}" for f in findings]
+        + [f"example {p}" for p in example_problems]
+    )
     if warnings:
         print(f"warnings {len(warnings)}:")
         for warning in warnings:

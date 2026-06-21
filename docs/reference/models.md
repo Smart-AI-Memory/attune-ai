@@ -1,12 +1,4 @@
----
-type: reference
-name: models-reference
-feature: models
-depth: reference
-generated_at: 2026-06-21T17:12:30.780290+00:00
-source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
-status: generated
----
+# Models
 
 ## Reference
 
@@ -75,3 +67,5 @@ namespaces are `attune auth` (authentication) and `attune provider`
 | `LLMExecutor` | Executor protocol. Its `run(task_type, prompt, ...)` is **async** — `await` it. |
 | `MockLLMExecutor` | A deterministic executor for tests; records calls in `call_history`. |
 | `AdaptiveModelRouter` | Picks a model from historical telemetry. `get_best_model(workflow, stage, ...)` returns a model id; `recommend_tier_upgrade(workflow, stage)` returns `(bool, reason)`. |
+
+<!-- attune-generated: source_hash=234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459 feature=models kind=reference generated_at=2026-06-21 -->

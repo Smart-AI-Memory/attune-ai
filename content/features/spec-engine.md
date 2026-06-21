@@ -42,8 +42,11 @@ execution, the engine works through four concerns in sequence:
    collects results into a `PipelineResult`.
 3. **Gating** — each task produces a `TaskResult` with fields like
    `quality_gate_passed`, `tests_passed`, `gate_score`, and the
-   `severity` property. The orchestrator uses these to decide whether
-   to continue, pause for approval, or surface an error.
+   `severity` property. The orchestrator stops the run when
+   `quality_gate_passed` is `False`; otherwise it consults the
+   `on_task_complete` callback's returned decision (continue, redo,
+   auto, or stop). `tests_passed`, `gate_score`, and `severity` are
+   recorded for you to inspect — they don't drive the loop themselves.
 4. **State tracking** — `SpecState` records which task IDs are
    `completed` and which is `current`. `save_state` writes this back
    into an HTML comment inside the plan file itself, so the file is
@@ -95,16 +98,24 @@ a list of interrupted runs you can pick back up.
 
 ## Quickstart
 
-Run a spec plan end-to-end with quality gates in a single Python call:
+Run a spec plan end-to-end with quality gates from Python.
+`PipelineOrchestrator.run_all` is an async coroutine, so drive it with
+`asyncio.run` (or `await` it inside an existing event loop):
 
 ```python
+import asyncio
+
 from attune.pipeline import PipelineOrchestrator, PipelineResult
 
-orchestrator = PipelineOrchestrator(".claude/plans/my-feature.md")
-result: PipelineResult = orchestrator.run_all()
 
-print(result.summary)   # human-readable run summary
-print(result.success)   # True if all tasks executed and passed gates
+async def main() -> None:
+    orchestrator = PipelineOrchestrator(".claude/plans/my-feature.md")
+    result: PipelineResult = await orchestrator.run_all()
+    print(result.summary)   # human-readable run summary
+    print(result.success)   # True if all tasks executed and passed gates
+
+
+asyncio.run(main())
 ```
 
 `summary` and `success` are properties — read them, don't call them.
@@ -124,6 +135,8 @@ progress bar after each task, and exit non-zero if any gate failed.
 **Steps:**
 
 ```python
+import asyncio
+
 from attune.pipeline import (
     PipelineOrchestrator,
     PipelineResult,
@@ -140,25 +153,32 @@ print(present_tasks(tasks, state))     # inspect the plan before running
 
 completed_count = 0
 
-def on_task_complete(task, task_result: TaskResult) -> None:
+
+async def on_task_complete(task, task_result: TaskResult) -> None:
     global completed_count
     completed_count += 1
     print(format_progress_bar(completed_count, len(tasks)))
     print(present_task_result(task, task_result))
 
-orchestrator = PipelineOrchestrator(PLAN_PATH)
-result: PipelineResult = orchestrator.run_all(on_task_complete=on_task_complete)
 
-print(result.summary)
+async def main() -> None:
+    orchestrator = PipelineOrchestrator(PLAN_PATH)
+    result: PipelineResult = await orchestrator.run_all(
+        on_task_complete=on_task_complete,
+    )
+    print(result.summary)
+    if not result.success:
+        raise SystemExit(1)
 
-if not result.success:
-    raise SystemExit(1)
+
+asyncio.run(main())
 ```
 
-**Verify:** a fully passing run prints the summary and exits `0`. The
-separation between reading (`read_spec`, `present_tasks`) and running
-(`run_all`) is intentional — you can inspect the full plan before
-committing to a run.
+**Verify:** a fully passing run prints the summary and exits `0`.
+`on_task_complete` is **awaited** after each task, so define it `async`
+(`run_all` awaits it). The separation between reading (`read_spec`,
+`present_tasks`) and running (`run_all`) is intentional — you can
+inspect the full plan before committing to a run.
 
 ### Resume an interrupted run
 
@@ -168,20 +188,26 @@ they stopped.
 **Steps:**
 
 ```python
+import asyncio
+
 from attune.pipeline import PipelineOrchestrator, read_spec
 from attune.spec import get_pending_tasks, find_resumable_plans
 
-resumable = find_resumable_plans(".claude/plans")
 
-for spec_state in resumable:
-    tasks = read_spec(spec_state.plan_path)
-    pending = get_pending_tasks(tasks, spec_state)
-    if not pending:
-        continue
-    completed_ids = set(spec_state.completed)
-    orchestrator = PipelineOrchestrator(spec_state.plan_path)
-    result = orchestrator.run_all(skip_task_ids=completed_ids)
-    print(result.summary)
+async def main() -> None:
+    resumable = find_resumable_plans(".claude/plans")
+    for spec_state in resumable:
+        tasks = read_spec(spec_state.plan_path)
+        pending = get_pending_tasks(tasks, spec_state)
+        if not pending:
+            continue
+        completed_ids = set(spec_state.completed)
+        orchestrator = PipelineOrchestrator(spec_state.plan_path)
+        result = await orchestrator.run_all(skip_task_ids=completed_ids)
+        print(result.summary)
+
+
+asyncio.run(main())
 ```
 
 **Verify:** `get_pending_tasks` returns only the tasks whose IDs are
@@ -227,10 +253,11 @@ run leaves a resumable `SpecState` in the plan file.
 the whole plan.
 
 **Steps:** pass a `set[str]` of already-completed task IDs to
-`run_all(skip_task_ids=...)`:
+`run_all(skip_task_ids=...)` (inside an async context — `run_all` is a
+coroutine):
 
 ```python
-result = orchestrator.run_all(skip_task_ids={"task-1", "task-2"})
+result = await orchestrator.run_all(skip_task_ids={"task-1", "task-2"})
 ```
 
 **Verify:** skipping completed tasks preserves `SpecState.completed`
@@ -251,7 +278,7 @@ presentation). `execute_with_approval` lives in `attune.spec.runner`.
 | Symbol | Purpose |
 |--------|---------|
 | `PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)` | Load a plan file and prepare tasks for execution with optional gate overrides. |
-| `PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)` | Execute all tasks, firing an optional callback after each; returns a `PipelineResult`. |
+| `PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)` | **Async.** Execute all tasks, awaiting an optional async callback after each; returns a `PipelineResult`. The callback receives `(task, result)` and may return `"redo"` / `"auto"` / `"stop"` (or `None`/`"approve"` to continue). |
 | `PipelineOrchestrator.run_gates_for_task(task)` | Run quality gates for a single `DecomposedTask` and return a `TaskResult`. |
 | `read_spec(plan_path)` | Parse a plan file and extract its XML task blocks into `DecomposedTask` objects. Raises `FileNotFoundError` (missing file) or `ValueError` (empty path). |
 | `execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)` | **Async.** Execute a spec with an interactive per-task approval loop. Import from `attune.spec.runner`. |
@@ -332,7 +359,7 @@ approval loop and how much state they manage for you.
 | **Skip flags** | `skip_gates`, `skip_tests`, `skip_simplify` | Same flags on `__init__` |
 | **Task filtering** | `get_pending_tasks` against persisted state | Pass `skip_task_ids: set[str]` to `run_all` |
 | **Result model** | `PipelineResult` (shared) | `PipelineResult` (shared) |
-| **Concurrency** | Async coroutine — `await` it | Synchronous call |
+| **Concurrency** | Async coroutine — `await` it | Async coroutine — `await run_all` (or `asyncio.run`) |
 | **Typical caller** | Conversational / interactive session | Automated scripts, CI pipelines |
 
 **Use the `spec` layer** when a human approves each task, you want
@@ -379,9 +406,12 @@ yourself.
   orchestration completes with nothing to do. Check for a non-empty
   list before orchestrating.
 - **`on_task_complete` errors abort the pipeline.** An unhandled
-  exception in the callback stops the run at that task; the saved
-  state marks it `current`, so resuming re-runs it. Wrap callback
-  logic in `try`/`except` and check `TaskResult.error` before acting.
+  exception in the callback stops the run at that task. Run via
+  `execute_with_approval` (the `spec` layer) and state is saved with
+  that task marked `current` before the callback fires, so resuming
+  re-runs it; bare `run_all` does no state-saving of its own. Wrap
+  callback logic in `try`/`except` and check `TaskResult.error` before
+  acting.
 
 ### Diagnosis order
 
@@ -421,7 +451,7 @@ yourself.
   decomposing, you don't need the engine yet.
 - **Q:** What's the main entry point?
   **A:** Load and parse a plan — `read_spec(plan_path)`. Run the full
-  pipeline programmatically — `PipelineOrchestrator(spec_path).run_all()`.
+  pipeline programmatically — `await PipelineOrchestrator(spec_path).run_all()`.
   Run with per-task approval — `await execute_with_approval(spec_path,
   on_task_complete)`.
 - **Q:** How do quality gates work?
@@ -488,10 +518,11 @@ yourself.
   `TaskResult`; add fields to the `TaskResult` dataclass in
   `pipeline/models.py` if the new gate produces data callers must
   inspect.
-- **Hook into task completion:** pass an `on_task_complete` callback
-  to `run_all()`. It receives a `TaskResult` after each task — the
-  intended integration point for custom reporting, logging, or
-  approval UIs, without modifying the orchestrator.
+- **Hook into task completion:** pass an async `on_task_complete`
+  callback to `run_all()`. It is awaited with `(task, result)` after
+  each task and may return a decision string (`"redo"`, `"auto"`,
+  `"stop"`) — the intended integration point for custom reporting,
+  logging, or approval UIs, without modifying the orchestrator.
 - **Resume or skip tasks selectively:** pass `skip_task_ids: set[str]`
   to `run_all()`. Task IDs come from the `DecomposedTask` objects
   returned by `read_spec()`.
