@@ -278,7 +278,7 @@
 <ul>
 <li><code>FileNotFoundError: [Errno 2] No such file or directory</code> — The specified path doesn't exist or isn't accessible</li>
 <li><code>PermissionError: [Errno 13] Permission denied</code> — Can't read the target files or directory</li>
-<li><code>WorkflowExecutionError</code> — One or more subagents (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) failed to complete</li>
+<li><code>SdkSubprocessError</code> — One or more subagent subprocesses (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) failed to complete</li>
 <li><code>ValueError: Invalid path format</code> — The path argument is malformed or points to an unsupported file type</li>
 <li><code>TimeoutError</code> — Review took longer than expected, often on large codebases</li>
 </ul>
