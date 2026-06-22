@@ -10,6 +10,7 @@ import contextlib
 import heapq
 import json
 import logging
+import statistics
 from collections import defaultdict
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -936,6 +937,273 @@ def read_telemetry_summary(
         by_day=recent_days_data,
         last_event_at=last_event_at,
     )
+
+
+# ---------------------------------------------------------------------------
+# Spend anomaly alarm — R6 of docs/specs/usage-signals/. Surfaces the
+# "$1,200-night" class of event within a day. See decisions.md D13.
+# ---------------------------------------------------------------------------
+
+# The z-score bar (3.0) is the textbook outlier threshold. The flat-history
+# multiplier (3x) is the spec's explicit fallback for the stddev == 0 case:
+# a baseline with no variance can't yield a z-score, so "today is >= 3x the
+# flat baseline" stands in. The monthly ceiling + 80% alert fraction mirror
+# the Anthropic Console spend limit Patrick set on org 7edead08 ($350/mo
+# hard cap, alert at $280) — see the user_monthly_spend_budget memory.
+SPEND_Z_THRESHOLD = 3.0
+SPEND_FLAT_MULTIPLIER = 3.0
+SPEND_MIN_BASELINE_DAYS = 3
+MONTHLY_API_CEILING_USD = 350.0
+CEILING_ALERT_FRACTION = 0.8
+
+
+@dataclass(frozen=True)
+class SpendAlarm:
+    """Daily API-spend anomaly verdict for the dashboard (R6)."""
+
+    level: str  # "ok" | "alarm" | "insufficient_data"
+    triggered_by: tuple[str, ...]  # subset of {"daily_anomaly", "ceiling"}
+    today_cost: float
+    baseline_mean: float
+    baseline_days: int
+    method: str  # "zscore" | "multiplier" | "none"
+    z_score: float | None
+    month_to_date: float
+    monthly_ceiling: float
+    ceiling_pct: float
+    source: str  # "account" | "local"
+    detail: str  # one-line human explanation
+
+
+def spend_alarm(
+    daily: dict[str, float],
+    *,
+    today: date | None = None,
+    monthly_ceiling: float = MONTHLY_API_CEILING_USD,
+    ceiling_fraction: float = CEILING_ALERT_FRACTION,
+    z_threshold: float = SPEND_Z_THRESHOLD,
+    flat_multiplier: float = SPEND_FLAT_MULTIPLIER,
+    min_baseline_days: int = SPEND_MIN_BASELINE_DAYS,
+    source: str = "local",
+    month_to_date: float | None = None,
+) -> SpendAlarm:
+    """Flag anomalous daily API spend and approach to the monthly ceiling.
+
+    ``daily`` maps ``YYYY-MM-DD`` -> total USD cost for that day. The
+    function is source-agnostic: pass account-level buckets (preferred —
+    they see CI spend) or local ``usage.jsonl`` buckets.
+
+    Two independent triggers raise ``level == "alarm"``:
+
+    1. **Daily anomaly.** Today's spend is an outlier versus the trailing
+       baseline of prior *active* (non-zero) days:
+
+       - ``stddev > 0`` -> z-score; flag when ``z >= z_threshold``.
+       - **``stddev == 0`` (flat history)** -> the spec's explicit
+         fallback: flag when ``today > baseline_mean * flat_multiplier``.
+         A variance-free baseline yields no z-score, so the multiplier
+         stands in. This is the branch the $1,200-night needs when the
+         prior days are all-equal (or there is a single repeated value).
+
+    2. **Ceiling approach.** Month-to-date spend ``>= ceiling_fraction``
+       of the monthly ceiling (default 80% of $350). Fires independently
+       of the baseline, so even a fresh install with no history alarms
+       when month-to-date is already near the cap.
+
+    The baseline excludes today and zero-cost days, so a normal active
+    day isn't flagged against a baseline diluted by quiet (zero) days.
+    Fewer than ``min_baseline_days`` active prior days -> the daily-anomaly
+    check is skipped (``level == "insufficient_data"`` unless the ceiling
+    trigger fires); the panel still shows today's number and the gauge.
+
+    Args:
+        daily: Day (``YYYY-MM-DD``) -> total USD cost.
+        today: Reference date (UTC). Defaults to the current UTC date;
+            a test injection point mirroring ``read_telemetry_summary``.
+        monthly_ceiling: Monthly API spend cap in USD.
+        ceiling_fraction: Fraction of the ceiling that trips the alarm.
+        z_threshold: Z-score at/above which today is anomalous.
+        flat_multiplier: Multiple of the flat baseline that trips the
+            stddev == 0 fallback.
+        min_baseline_days: Minimum prior active days to judge anomalies.
+        source: ``"account"`` (admin cost-report) or ``"local"``
+            (usage.jsonl). Annotates the verdict; ``"local"`` appends a
+            CI-blindness note to ``detail``.
+        month_to_date: Optional explicit month-to-date total. When given
+            (the admin cost-report computes the true full-month figure),
+            it overrides summing in-window days — the day window may not
+            reach the 1st of the month.
+
+    Returns:
+        A :class:`SpendAlarm`.
+    """
+    today = today or datetime.now(timezone.utc).date()
+    today_key = today.isoformat()
+    today_cost = round(float(daily.get(today_key, 0.0)), 4)
+
+    month_prefix = today_key[:7]
+    if month_to_date is None:
+        mtd = round(sum(c for d, c in daily.items() if d[:7] == month_prefix), 4)
+    else:
+        mtd = round(float(month_to_date), 4)
+    ceiling_pct = round(mtd / monthly_ceiling * 100, 1) if monthly_ceiling > 0 else 0.0
+    ceiling_hit = monthly_ceiling > 0 and mtd >= monthly_ceiling * ceiling_fraction
+
+    baseline = [c for d, c in daily.items() if d != today_key and c > 0]
+    baseline_days = len(baseline)
+    baseline_mean = round(statistics.fmean(baseline), 4) if baseline else 0.0
+
+    triggers: list[str] = []
+    method = "none"
+    z_score: float | None = None
+    detail_parts: list[str] = []
+
+    if baseline_days >= min_baseline_days:
+        stdev = statistics.stdev(baseline) if baseline_days >= 2 else 0.0
+        if stdev > 0:
+            method = "zscore"
+            z_score = round((today_cost - baseline_mean) / stdev, 2)
+            if z_score >= z_threshold:
+                triggers.append("daily_anomaly")
+                detail_parts.append(
+                    f"today ${today_cost:.2f} is {z_score:.1f}σ above the "
+                    f"${baseline_mean:.2f}/day baseline"
+                )
+        else:
+            # Flat history: no variance -> multiplier fallback (the
+            # explicit spec rule). baseline_mean > 0 here (non-zero days).
+            method = "multiplier"
+            if today_cost > baseline_mean * flat_multiplier:
+                triggers.append("daily_anomaly")
+                ratio = today_cost / baseline_mean if baseline_mean else float("inf")
+                detail_parts.append(
+                    f"today ${today_cost:.2f} is {ratio:.1f}x the flat "
+                    f"${baseline_mean:.2f}/day baseline (no variance)"
+                )
+
+    if ceiling_hit:
+        triggers.append("ceiling")
+        detail_parts.append(
+            f"month-to-date ${mtd:.0f} is {ceiling_pct:.0f}% of the "
+            f"${monthly_ceiling:.0f} ceiling"
+        )
+
+    if triggers:
+        level = "alarm"
+    elif baseline_days < min_baseline_days:
+        level = "insufficient_data"
+    else:
+        level = "ok"
+
+    if detail_parts:
+        detail = "; ".join(detail_parts)
+    elif level == "insufficient_data":
+        detail = (
+            f"only {baseline_days} prior active day(s) — need "
+            f"{min_baseline_days} to judge anomalies"
+        )
+    else:
+        detail = f"today ${today_cost:.2f} within normal range"
+    if source == "local":
+        detail += " (local telemetry only — CI spend not counted)"
+
+    return SpendAlarm(
+        level=level,
+        triggered_by=tuple(triggers),
+        today_cost=today_cost,
+        baseline_mean=baseline_mean,
+        baseline_days=baseline_days,
+        method=method,
+        z_score=z_score,
+        month_to_date=mtd,
+        monthly_ceiling=monthly_ceiling,
+        ceiling_pct=ceiling_pct,
+        source=source,
+        detail=detail,
+    )
+
+
+def read_daily_spend(
+    config: Config, *, days: int = 35, today: date | None = None
+) -> dict[str, float]:
+    """Daily API spend (USD) bucketed by ``ts`` from ``usage.jsonl``.
+
+    Returns ``{YYYY-MM-DD: total_cost}`` over the trailing ``days`` days
+    (UTC). The window defaults to 35 so the current calendar month is
+    always fully covered for the month-to-date gauge even at month-end.
+
+    Buckets by the ``ts`` key (v1.0 schema from
+    ``UsageTracker._format_entry``), with ``timestamp`` as a legacy
+    fallback — the same field discipline as :func:`read_telemetry_summary`.
+    Reading the wrong key is the #867 bug class that made Home read zero.
+
+    Never raises; a missing or unreadable file yields an empty dict.
+    """
+    path = config.telemetry_path
+    if not path.exists():
+        return {}
+    if today is None:
+        today = datetime.now(timezone.utc).date()
+    cutoff = today.toordinal() - days
+    out: dict[str, float] = defaultdict(float)
+    try:
+        with path.open("r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    event: dict[str, Any] = json.loads(line)
+                except json.JSONDecodeError:
+                    continue
+                ts = str(event.get("ts") or event.get("timestamp") or "")
+                day = _to_day(ts)
+                if day is None:
+                    continue
+                ordinal = _ordinal(day)
+                if ordinal is None or ordinal < cutoff:
+                    continue
+                out[day] += float(event.get("total_cost", event.get("cost", 0.0)) or 0.0)
+    except OSError:
+        return {}
+    return {d: round(c, 4) for d, c in out.items()}
+
+
+def build_spend_alarm(
+    config: Config,
+    cost_summary: Any | None = None,
+    *,
+    today: date | None = None,
+) -> SpendAlarm:
+    """Assemble the spend alarm, preferring account-level spend.
+
+    Source precedence:
+
+    1. **Account-level** (Anthropic admin cost-report ``CostSummary``):
+       captures *everything billed to the org* — including CI, the surface
+       the 2026-06-10 ~$1,200 burn actually lived on. This is the source
+       R6's "$1,200-night must be visible within a day" requires; local
+       telemetry structurally can't see CI spend.
+    2. **Local fallback** (``usage.jsonl`` via :func:`read_daily_spend`)
+       when no admin key is configured or the fetch failed. Honest about
+       the blind spot via ``SpendAlarm.source == "local"``.
+
+    ``cost_summary`` is typed ``Any`` to avoid importing the optional
+    ``anthropic_cost`` module (which needs ``httpx``) at import time; the
+    caller passes the already-fetched summary from the home route, so no
+    extra API call is made.
+    """
+    by_day = getattr(cost_summary, "by_day", None)
+    if cost_summary is not None and by_day:
+        daily = {d.isoformat(): float(c) for d, c in by_day}
+        return spend_alarm(
+            daily,
+            today=today,
+            source="account",
+            month_to_date=cost_summary.month_to_date_usd,
+        )
+    daily = read_daily_spend(config, today=today)
+    return spend_alarm(daily, today=today, source="local")
 
 
 @dataclass(frozen=True)

@@ -291,6 +291,64 @@ a.kpi:hover {
   border-left-color: var(--warn, #c87a00);
 }
 
+/* Spend alarm (R6 of usage-signals). A panel that flags anomalous daily
+   API spend + approach to the monthly ceiling. The left-edge accent
+   tracks the alarm level: ok (green) / alarm (red) / building baseline
+   (muted). */
+.spend-alarm {
+  border-left: 3px solid var(--border-strong);
+}
+.spend-alarm-ok {
+  border-left-color: var(--ok);
+}
+.spend-alarm-alarm {
+  border-left-color: var(--danger);
+  background: var(--danger-soft);
+}
+.spend-alarm-insufficient_data {
+  border-left-color: var(--fg-subtle);
+}
+.spend-alarm-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.spend-alarm-head h2 {
+  margin: 0;
+}
+.spend-alarm-detail {
+  margin: 8px 0 14px;
+  color: var(--fg-muted);
+}
+.spend-gauge-track {
+  height: 8px;
+  border-radius: 99px;
+  background: var(--bg-soft);
+  overflow: hidden;
+}
+.spend-gauge-fill {
+  height: 100%;
+  background: var(--accent);
+  border-radius: 99px;
+  transition: width 0.3s ease;
+}
+.spend-gauge-fill-hot {
+  background: var(--danger);
+}
+.spend-gauge-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--fg-muted);
+}
+.spend-alarm-source {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--fg-subtle);
+}
+
 /* ---------- Panels ---------- */
 
 .panel {
