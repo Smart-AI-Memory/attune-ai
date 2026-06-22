@@ -103,6 +103,20 @@ HELP_CSS = """
     }
     .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
     .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .start-here {
+      border: 1px solid var(--primary); border-radius: 12px;
+      background: var(--surface-low); padding: 1.1rem 1.3rem; margin: 0 0 1.75rem;
+    }
+    .start-here .sh-label {
+      display: block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--primary); margin-bottom: 0.6rem;
+    }
+    .start-here .sh-links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .start-here .sh-item { text-decoration: none; color: var(--primary); font-weight: 700; }
+    .start-here .sh-item:hover { text-decoration: underline; }
+    .start-here .sh-item .sh-sub {
+      display: block; color: var(--muted); font-size: 0.85rem; font-weight: 400;
+    }
     @media (max-width: 480px) {
       .help-home h1 { font-size: 1.9rem; }
     }
@@ -194,6 +208,58 @@ def _config():
 
 SITE_URL = "https://attune-ai.dev"
 
+# Hand-authored narrative pages (tutorials, how-tos) live in the mkdocs
+# docs site — a SEPARATE surface from this .help corpus, which projects
+# only reference-style kinds. Without a bridge, the help system hides the
+# hand-authored content entirely. Each feature page leads with a "Start
+# here" hero linking to its tutorial / how-to when one exists (matched by
+# slug against docs/{tutorials,how-to}/<feature>.md). Tutorial is listed
+# first (preferred entry point). See docs/specs/help-docs-single-source/.
+DOCS_URL = "https://smartaimemory.com/framework-docs"
+_NARRATIVE_KINDS = (
+    ("tutorials", "Tutorial", "a guided, start-to-finish walkthrough"),
+    ("how-to", "How-to guide", "task recipes for common goals"),
+)
+
+# Some help-feature slugs differ from their narrative doc's slug. This
+# curated map bridges those; each entry is hand-verified to point at the
+# same-topic page. Exact-slug matches need no entry. Features with no
+# entry and no exact match simply get no hero (no narrative authored yet).
+_NARRATIVE_ALIASES = {
+    "telemetry": {"how-to": "telemetry-and-signals"},
+    "code-quality": {"how-to": "triage-code-quality"},
+    "security-audit": {"how-to": "security-architecture"},
+    "memory": {"how-to": "unified-memory-system"},
+    "orchestration": {"how-to": "multi-agent-coordination"},
+}
+
+
+def _narrative_hero(feature: str) -> str:
+    """Return a 'Start here' hero linking to hand-authored narrative docs.
+
+    Matches ``feature`` against ``docs/tutorials/<slug>.md`` and
+    ``docs/how-to/<slug>.md`` (slug = the feature name, or the
+    ``_NARRATIVE_ALIASES`` override). Returns ``''`` when neither exists.
+    """
+    aliases = _NARRATIVE_ALIASES.get(feature, {})
+    items = []
+    for subdir, label, sub in _NARRATIVE_KINDS:
+        slug = aliases.get(subdir, feature)
+        if (REPO_ROOT / "docs" / subdir / f"{slug}.md").is_file():
+            url = f"{DOCS_URL}/{subdir}/{slug}/"
+            items.append(
+                f'<a class="sh-item" href="{url}">{html.escape(label)}'
+                f'<span class="sh-sub">{html.escape(sub)}</span></a>'
+            )
+    if not items:
+        return ""
+    return (
+        '    <div class="start-here">\n'
+        '      <span class="sh-label">Start here</span>\n'
+        f'      <div class="sh-links">{"".join(items)}</div>\n'
+        "    </div>\n"
+    )
+
 
 def _page(*, title: str, desc: str, crumbs: str, body: str, canonical: str) -> str:
     return (
@@ -280,6 +346,7 @@ def _build_feature_page(out: Path, feat, md: MarkdownIt) -> None:
     body = (
         f'  <main class="help-home">\n'
         f"    <h1>{html.escape(_title_case(feature))}</h1>\n"
+        f"{_narrative_hero(feature)}"
         f'    <p class="lede">{len(feat.kinds)} of {len(feat.kinds) + len(feat.missing_kinds)} '
         f"help kinds available.</p>\n"
         f'    <div class="kind-tabs">{tabs}</div>\n'
