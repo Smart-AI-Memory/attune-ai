@@ -5,6 +5,7 @@ Licensed under the Apache License, Version 2.0
 """
 
 import logging
+import os
 import re
 from collections.abc import AsyncGenerator
 from typing import Any
@@ -18,6 +19,27 @@ logger = logging.getLogger(__name__)
 # future opus-4-9 / opus-4-1x. Older models (Opus 4.6-, Sonnet, Haiku)
 # still accept these params, so they're left untouched.
 _OPUS_NO_SAMPLING_RE = re.compile(r"opus-4-(?:[7-9]|\d{2,})")
+
+
+def _cache_control() -> dict[str, str]:
+    """Resolve the ephemeral ``cache_control`` marker from the environment.
+
+    ``ATTUNE_CACHE_TTL=1h`` extends the prompt-cache window from the
+    5-minute default to 1 hour at the same per-token rate — useful for
+    dashboards and benchmark sweeps that issue clusters of related queries
+    within an hour. Any other value (including unset or ``5m``) yields the
+    default 5-minute ephemeral marker, byte-identical to the prior behavior.
+
+    Read per-call (not cached in a module global) so tests can flip it via
+    ``monkeypatch.setenv``; the cost is one ``os.getenv`` on an
+    already-networked path.
+
+    Mirrors ``attune_rag.providers.claude._cache_control`` (env var
+    ``ATTUNE_RAG_CACHE_TTL``); see specs/extended-cache-ttl-siblings/.
+    """
+    if os.getenv("ATTUNE_CACHE_TTL", "5m").strip().lower() == "1h":
+        return {"type": "ephemeral", "ttl": "1h"}
+    return {"type": "ephemeral"}
 
 
 def _normalize_api_kwargs_for_model(api_kwargs: dict[str, Any]) -> None:
@@ -156,7 +178,7 @@ class AnthropicProvider(BaseLLMProvider):
                 {
                     "type": "text",
                     "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},
+                    "cache_control": _cache_control(),
                 },
             ]
         elif system_prompt:
@@ -305,7 +327,7 @@ class AnthropicProvider(BaseLLMProvider):
             {
                 "type": "text",
                 "text": f"Codebase files:\n\n{file_context}",
-                "cache_control": {"type": "ephemeral"},  # Cache the codebase
+                "cache_control": _cache_control(),  # Cache the codebase
             },
         ]
 
@@ -356,7 +378,7 @@ class AnthropicProvider(BaseLLMProvider):
                 {
                     "type": "text",
                     "text": system_prompt,
-                    "cache_control": {"type": "ephemeral"},
+                    "cache_control": _cache_control(),
                 },
             ]
         elif system_prompt:
