@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TestMaintenanceWorkflow vs manual tracking functions — comparison</title>
-  <meta name="description" content="The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation." />
-  <meta property="og:title" content="TestMaintenanceWorkflow vs manual tracking functions — comparison" />
-  <meta property="og:description" content="The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation." />
+  <title>Auto-diagnose test gaps from file changes and track test outcomes — comparison</title>
+  <meta name="description" content="Fix-test gives you two ways to engage tests: let `TestMaintenanceWorkflow` *plan* the work from file changes, or call the `test_runner` functions to *measure* tests directly. They answer different que" />
+  <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — comparison" />
+  <meta property="og:description" content="Fix-test gives you two ways to engage tests: let `TestMaintenanceWorkflow` *plan* the work from file changes, or call the `test_runner` functions to *measure* tests directly. They answer different que" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/comparison" />
   <style>
@@ -272,69 +272,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>TestMaintenanceWorkflow vs manual tracking functions</h1>
-<p>The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation.</p>
-<h2>Feature comparison</h2>
+<h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
+<h2>Comparison</h2>
+<p>Fix-test gives you two ways to engage tests: let
+<code>TestMaintenanceWorkflow</code> <em>plan</em> the work from file changes, or call
+the <code>test_runner</code> functions to <em>measure</em> tests directly. They answer
+different questions and often pair.</p>
 <table>
 <thead>
 <tr>
-<th>Feature</th>
-<th>TestMaintenanceWorkflow</th>
-<th>Manual tracking functions</th>
+<th>Capability</th>
+<th><code>TestMaintenanceWorkflow</code> (planning)</th>
+<th><code>test_runner</code> functions (measurement)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Automation level</strong></td>
-<td>Workflow orchestration</td>
-<td>Manual execution</td>
+<td><strong>Question answered</strong></td>
+<td>&quot;What test work does this change imply?&quot;</td>
+<td>&quot;What did the tests actually do?&quot;</td>
 </tr>
 <tr>
-<td><strong>File change handling</strong></td>
-<td>Event handlers map a change to a <code>TestPlanItem</code></td>
-<td>No detection</td>
+<td><strong>Import</strong></td>
+<td><code>from attune.workflows import TestMaintenanceWorkflow</code></td>
+<td><code>from attune.workflows.test_runner import run_tests_with_tracking</code></td>
 </tr>
 <tr>
-<td><strong>Planning</strong></td>
-<td>Builds a <code>TestMaintenancePlan</code> you can filter and review</td>
-<td>No planning</td>
+<td><strong>Input</strong></td>
+<td>File events / project index</td>
+<td>A suite name, file list, or <code>coverage.xml</code></td>
 </tr>
 <tr>
-<td><strong>Execution model</strong></td>
-<td>On-demand <code>run()</code>; you choose which items to act on</td>
-<td>Immediate execution</td>
+<td><strong>Output</strong></td>
+<td>A <code>TestMaintenancePlan</code> of <code>TestPlanItem</code>s</td>
+<td><code>TestExecutionRecord</code> / <code>CoverageRecord</code> / <code>FileTestRecord</code></td>
 </tr>
 <tr>
-<td><strong>Configuration complexity</strong></td>
-<td>Low (project root only)</td>
-<td>Minimal (optional params)</td>
+<td><strong>Concurrency</strong></td>
+<td>Async (<code>run</code>, <code>on_file_*</code>); sync summary methods</td>
+<td>Synchronous functions</td>
+</tr>
+<tr>
+<td><strong>Runs tests?</strong></td>
+<td>Only in <code>&quot;execute&quot;</code> / <code>&quot;auto&quot;</code> mode</td>
+<td><code>run_tests_with_tracking</code> / <code>track_file_tests</code> do</td>
+</tr>
+<tr>
+<td><strong>State</strong></td>
+<td>Index-backed; refreshes on change</td>
+<td>Persists records to the telemetry store</td>
+</tr>
+<tr>
+<td><strong>Typical caller</strong></td>
+<td>File-watcher, git hook, CI maintenance step</td>
+<td>Test runner wrapper, coverage pipeline</td>
 </tr>
 </tbody>
 </table>
-<h2>Detailed tradeoffs</h2>
-<p><strong>TestMaintenanceWorkflow</strong> gives you structured control. You trigger it with <code>run()</code> (or per-file via <code>on_file_created/modified/deleted</code>), and it returns a <code>TestMaintenancePlan</code> of <code>TestPlanItem</code> entries — each with an <code>action</code>, <code>priority</code>, and <code>auto_executable</code> flag. You can review planned work before acting and run only the safe subset via <code>get_auto_executable_items()</code>. Best when you want visibility into what will happen before it does.</p>
-<p><strong>Manual tracking functions</strong> give you precise control over individual operations with zero setup cost. Each function (<code>run_tests_with_tracking</code>, <code>track_coverage</code>, <code>get_file_test_status</code>, …) executes immediately and returns specific results. Fastest for one-off debugging, but you coordinate the work yourself.</p>
-<h2>Use TestMaintenanceWorkflow when...</h2>
-<ul>
-<li>You want changes mapped to prioritized test work automatically</li>
-<li>You want to review planned actions before execution</li>
-<li>You need structured reporting via <code>TestMaintenancePlan</code> objects</li>
-<li>You want to auto-run the safe items and defer <code>REVIEW</code>/<code>MANUAL</code> ones</li>
-</ul>
-<h2>Use manual tracking functions when...</h2>
-<ul>
-<li>You're debugging specific test failures interactively</li>
-<li>You need to integrate test tracking into existing scripts or tools</li>
-<li>You want immediate results for a specific file or suite</li>
-<li>You're working with a small number of files</li>
-</ul>
-<p><strong>Rule of thumb:</strong> reach for <code>TestMaintenanceWorkflow</code> when you want a reviewable plan across many files; drop to the tracking functions for targeted, one-off operations.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_runner.py</code></li>
-<li><code>src/attune/workflows/test_maintenance.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
+<p><strong>Use the workflow</strong> when you want decisions — which files need tests,
+how urgent, what is safe to auto-run. <strong>Use the <code>test_runner</code>
+functions</strong> when you want facts — run a suite, capture coverage, look
+up a file's status. A common loop is both: run tests with tracking,
+then let the workflow plan from the recorded staleness and gaps.</p>
 
   </article>
   <footer>

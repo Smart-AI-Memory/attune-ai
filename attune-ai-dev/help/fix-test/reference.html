@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fix Test reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `TestAction` | Action to take for a test: `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, `MANUAL`. | `src/attune/workflows/test_mainten" />
-  <meta property="og:title" content="Fix Test reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `TestAction` | Action to take for a test: `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, `MANUAL`. | `src/attune/workflows/test_mainten" />
+  <title>Auto-diagnose test gaps from file changes and track test outcomes — reference</title>
+  <meta name="description" content="Fix-test&#x27;s public API spans two workflow modules. The record types (`TestExecutionRecord`, `CoverageRecord`, `FileTestRecord`) come from `attune.models`." />
+  <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — reference" />
+  <meta property="og:description" content="Fix-test&#x27;s public API spans two workflow modules. The record types (`TestExecutionRecord`, `CoverageRecord`, `FileTestRecord`) come from `attune.models`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/reference" />
   <style>
@@ -272,246 +272,157 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Fix Test reference</h1>
-<h2>Classes</h2>
+<h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
+<h2>Reference</h2>
+<p>Fix-test's public API spans two workflow modules. The record types
+(<code>TestExecutionRecord</code>, <code>CoverageRecord</code>, <code>FileTestRecord</code>) come from
+<code>attune.models</code>.</p>
+<h3>Planning — <code>attune.workflows.test_maintenance</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td><code>TestMaintenanceWorkflow(project_root, index=None)</code></td>
+<td>Coordinator. Builds (or accepts) a <code>ProjectIndex</code> and ensures it is loaded.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.run(context)</code></td>
+<td><strong>Async.</strong> Generate (and optionally execute) a plan. <code>context[&quot;mode&quot;]</code> is <code>&quot;analyze&quot;</code> / <code>&quot;execute&quot;</code> / <code>&quot;auto&quot;</code> / <code>&quot;report&quot;</code>; other keys: <code>changed_files</code>, <code>max_items</code> (default 20), <code>dry_run</code> (default <code>False</code>). Returns a result dict.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.on_file_created(file_path)</code></td>
+<td><strong>Async.</strong> Plan test work for a new file; returns a status dict.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.on_file_modified(file_path)</code></td>
+<td><strong>Async.</strong> Mark a changed file's tests as possibly stale; returns a status dict.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.on_file_deleted(file_path)</code></td>
+<td><strong>Async.</strong> Flag a deleted file's tests as possibly orphaned; returns a status dict.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.get_files_needing_tests(limit=20)</code></td>
+<td>Top-<code>limit</code> files needing tests, by impact, as dicts.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.get_stale_tests(limit=20)</code></td>
+<td>Top-<code>limit</code> files with stale tests, by staleness, as dicts.</td>
+</tr>
+<tr>
+<td><code>TestMaintenanceWorkflow.get_test_health_summary()</code></td>
+<td>Quick counts: files requiring/with/without tests, average coverage, stale count, test-to-code ratio.</td>
+</tr>
+<tr>
+<td><code>TestMaintenancePlan.get_items_by_action(action)</code></td>
+<td>Plan items filtered by a <code>TestAction</code>.</td>
+</tr>
+<tr>
+<td><code>TestMaintenancePlan.get_items_by_priority(priority)</code></td>
+<td>Plan items filtered by a <code>TestPriority</code>.</td>
+</tr>
+<tr>
+<td><code>TestMaintenancePlan.get_auto_executable_items()</code></td>
+<td>Plan items with <code>auto_executable=True</code>.</td>
+</tr>
+<tr>
 <td><code>TestAction</code></td>
-<td>Action to take for a test: <code>CREATE</code>, <code>UPDATE</code>, <code>REVIEW</code>, <code>DELETE</code>, <code>SKIP</code>, <code>MANUAL</code>.</td>
-<td><code>src/attune/workflows/test_maintenance.py</code></td>
+<td>Enum: <code>CREATE</code>, <code>UPDATE</code>, <code>REVIEW</code>, <code>DELETE</code>, <code>SKIP</code>, <code>MANUAL</code>.</td>
 </tr>
 <tr>
 <td><code>TestPriority</code></td>
-<td>Priority for a test action: <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>, <code>DEFERRED</code>.</td>
-<td><code>src/attune/workflows/test_maintenance.py</code></td>
-</tr>
-<tr>
-<td><code>TestPlanItem</code></td>
-<td>A single item in a test maintenance plan.</td>
-<td><code>src/attune/workflows/test_maintenance.py</code></td>
-</tr>
-<tr>
-<td><code>TestMaintenancePlan</code></td>
-<td>Complete test maintenance plan for a project.</td>
-<td><code>src/attune/workflows/test_maintenance.py</code></td>
-</tr>
-<tr>
-<td><code>TestMaintenanceWorkflow</code></td>
-<td>Coordinates test maintenance from source-file events.</td>
-<td><code>src/attune/workflows/test_maintenance.py</code></td>
+<td>Enum: <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>, <code>DEFERRED</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>TestPlanItem</code> fields</h3>
+<h3>Measurement — <code>attune.workflows.test_runner</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>run_tests_with_tracking(test_suite=&quot;unit&quot;, test_files=None, command=None, workflow_id=None, triggered_by=&quot;manual&quot;)</code></td>
+<td>Run a suite and persist a <code>TestExecutionRecord</code>.</td>
+</tr>
+<tr>
+<td><code>track_coverage(coverage_file=&quot;coverage.xml&quot;, workflow_id=None)</code></td>
+<td>Parse a coverage XML file into a <code>CoverageRecord</code>. Raises <code>FileNotFoundError</code> / <code>ValueError</code>.</td>
+</tr>
+<tr>
+<td><code>track_file_tests(source_file, test_file=None, workflow_id=None)</code></td>
+<td>Run a single file's tests and persist a <code>FileTestRecord</code>.</td>
+</tr>
+<tr>
+<td><code>get_file_test_status(file_path)</code></td>
+<td>Latest <code>FileTestRecord</code> for a file, or <code>None</code>.</td>
+</tr>
+<tr>
+<td><code>get_files_needing_tests(stale_only=False, failed_only=False)</code></td>
+<td><code>FileTestRecord</code> list for files needing attention (telemetry-backed; <strong>not</strong> the workflow method of the same name).</td>
+</tr>
+</tbody>
+</table>
+<h3>TestPlanItem fields</h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Role</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>file_path</code></td>
 <td><code>str</code></td>
-<td>The source file the work concerns</td>
+<td>The source file this item concerns.</td>
 </tr>
 <tr>
 <td><code>action</code></td>
 <td><code>TestAction</code></td>
-<td>What to do with the test</td>
+<td>What to do with the test.</td>
 </tr>
 <tr>
 <td><code>priority</code></td>
 <td><code>TestPriority</code></td>
-<td>How urgent the work is</td>
+<td>How urgent.</td>
 </tr>
 <tr>
 <td><code>reason</code></td>
 <td><code>str</code></td>
-<td>Why this item was generated</td>
+<td>Why this item exists.</td>
 </tr>
 <tr>
 <td><code>test_file_path</code></td>
 <td><code>str | None</code></td>
-<td>The associated test file, if known</td>
+<td>The associated test file, if known.</td>
 </tr>
 <tr>
 <td><code>estimated_effort</code></td>
 <td><code>str</code></td>
-<td>Rough effort estimate</td>
+<td>Effort hint (default <code>&quot;unknown&quot;</code>).</td>
 </tr>
 <tr>
 <td><code>auto_executable</code></td>
 <td><code>bool</code></td>
-<td>Whether the item can be run without review</td>
+<td>Whether <code>&quot;auto&quot;</code> mode may run it (default <code>True</code>).</td>
 </tr>
 <tr>
 <td><code>metadata</code></td>
 <td><code>dict</code></td>
-<td>Free-form extra context</td>
+<td>Free-form extra context.</td>
 </tr>
 </tbody>
 </table>
-<p><code>to_dict()</code> serializes the item.</p>
-<h3><code>TestMaintenancePlan</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict()</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Serialize the plan.</td>
-</tr>
-<tr>
-<td><code>get_items_by_action(action)</code></td>
-<td><code>action: TestAction</code></td>
-<td><code>list[TestPlanItem]</code></td>
-<td>Items with the given action.</td>
-</tr>
-<tr>
-<td><code>get_items_by_priority(priority)</code></td>
-<td><code>priority: TestPriority</code></td>
-<td><code>list[TestPlanItem]</code></td>
-<td>Items at the given priority.</td>
-</tr>
-<tr>
-<td><code>get_auto_executable_items()</code></td>
-<td>—</td>
-<td><code>list[TestPlanItem]</code></td>
-<td>Items safe to run automatically.</td>
-</tr>
-</tbody>
-</table>
-<p>Fields: <code>generated_at</code>, <code>items</code>, <code>summary</code>, <code>options</code>.</p>
-<h3><code>TestMaintenanceWorkflow</code> methods</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run(context)</code></td>
-<td><code>context: dict</code></td>
-<td><code>TestMaintenancePlan</code></td>
-<td>Build a maintenance plan for the project.</td>
-</tr>
-<tr>
-<td><code>on_file_created(file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td><code>TestPlanItem | None</code></td>
-<td>Test work implied by a new file.</td>
-</tr>
-<tr>
-<td><code>on_file_modified(file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td><code>TestPlanItem | None</code></td>
-<td>Test work implied by a changed file.</td>
-</tr>
-<tr>
-<td><code>on_file_deleted(file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td><code>TestPlanItem | None</code></td>
-<td>Test work implied by a deleted file.</td>
-</tr>
-<tr>
-<td><code>get_files_needing_tests(limit)</code></td>
-<td><code>limit: int</code></td>
-<td><code>list</code></td>
-<td>Files needing tests, prioritized by impact.</td>
-</tr>
-<tr>
-<td><code>get_stale_tests(limit)</code></td>
-<td><code>limit: int</code></td>
-<td><code>list</code></td>
-<td>Files with stale tests.</td>
-</tr>
-<tr>
-<td><code>get_test_health_summary()</code></td>
-<td>—</td>
-<td><code>dict</code></td>
-<td>Quick test-health summary.</td>
-</tr>
-</tbody>
-</table>
-<h2>Functions</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-<th>File</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run_tests_with_tracking()</code></td>
-<td><code>test_suite, test_files, command, workflow_id, triggered_by</code></td>
-<td><code>dict</code></td>
-<td>Run tests with explicit tracking (opt-in Tier 1 monitoring).</td>
-<td><code>test_runner.py</code></td>
-</tr>
-<tr>
-<td><code>track_coverage()</code></td>
-<td><code>coverage_file, workflow_id</code></td>
-<td><code>dict</code></td>
-<td>Track coverage from a <code>coverage.xml</code> file.</td>
-<td><code>test_runner.py</code></td>
-</tr>
-<tr>
-<td><code>track_file_tests()</code></td>
-<td><code>source_file, test_file, workflow_id</code></td>
-<td><code>dict</code></td>
-<td>Track test execution for a specific source file.</td>
-<td><code>test_runner.py</code></td>
-</tr>
-<tr>
-<td><code>get_file_test_status()</code></td>
-<td><code>file_path</code></td>
-<td><code>FileTestRecord | None</code></td>
-<td>Latest test status for a file.</td>
-<td><code>test_runner.py</code></td>
-</tr>
-<tr>
-<td><code>get_files_needing_tests()</code></td>
-<td><code>stale_only, failed_only</code></td>
-<td><code>list</code></td>
-<td>Files that need test attention.</td>
-<td><code>test_runner.py</code></td>
-</tr>
-</tbody>
-</table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_runner.py</code></li>
-<li><code>src/attune/workflows/test_maintenance.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 
   </article>
   <footer>

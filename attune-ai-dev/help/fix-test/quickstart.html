@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: fix-test — quickstart</title>
-  <meta name="description" content="Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan." />
-  <meta property="og:title" content="Quickstart: fix-test — quickstart" />
-  <meta property="og:description" content="Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan." />
+  <title>Auto-diagnose test gaps from file changes and track test outcomes — quickstart</title>
+  <meta name="description" content="Generate a maintenance plan for the whole project. `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — quickstart" />
+  <meta property="og:description" content="Generate a maintenance plan for the whole project. `TestMaintenanceWorkflow.run` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/quickstart" />
   <style>
@@ -272,50 +272,31 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: fix-test</h1>
-<p>Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan.</p>
-<pre><code class="language-python">from attune.workflows.test_runner import get_files_needing_tests
+<h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
+<h2>Quickstart</h2>
+<p>Generate a maintenance plan for the whole project.
+<code>TestMaintenanceWorkflow.run</code> is an async coroutine, so drive it with
+<code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
+<pre><code class="language-python">import asyncio
 
-# Find files that need test fixes
-files_needing_attention = get_files_needing_tests(failed_only=True)
-for record in files_needing_attention:
-    print(f&quot;File: {record.source_file}&quot;)
-    print(f&quot;Status: {record.status}&quot;)
-</code></pre>
-<p>Expected output:</p>
-<pre><code>File: src/my_module.py
-Status: test_failed
-File: src/another_module.py
-Status: no_tests
-</code></pre>
-<h2>Build a test maintenance plan</h2>
-<ol>
-<li>
-<p><strong>Create the workflow</strong></p>
-<pre><code class="language-python">from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+from attune.workflows import TestMaintenanceWorkflow
 
-workflow = TestMaintenanceWorkflow()
-</code></pre>
-</li>
-<li>
-<p><strong>React to a change, or build a full plan</strong></p>
-<pre><code class="language-python"># Per-file: returns a TestPlanItem | None
-item = workflow.on_file_modified(&quot;src/updated_file.py&quot;)
 
-# Or a full plan for the project
-plan = workflow.run({})
-print(f&quot;Planned {len(plan.items)} test maintenance items&quot;)
+async def main() -&gt; None:
+    workflow = TestMaintenanceWorkflow(project_root=&quot;.&quot;)
+    result = await workflow.run({&quot;mode&quot;: &quot;analyze&quot;})
+    print(result[&quot;status&quot;])               # &quot;plan_generated&quot;
+    print(result[&quot;message&quot;])              # &quot;Generated plan with N items&quot;
+    for item in result[&quot;plan&quot;][&quot;items&quot;]:
+        print(item[&quot;priority&quot;], item[&quot;action&quot;], item[&quot;file_path&quot;])
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Act on the safe subset</strong></p>
-<pre><code class="language-python">safe = plan.get_auto_executable_items()
-print(f&quot;{len(safe)} items can run automatically&quot;)
-</code></pre>
-</li>
-</ol>
-<h2>Next steps</h2>
-<p>Run <code>workflow.get_test_health_summary()</code> to see an overview of your project's test coverage and identify the highest-priority areas for improvement.</p>
+<p><code>run</code> returns a plain dict (the plan is <code>result[&quot;plan&quot;]</code>, already
+serialized via <code>TestMaintenancePlan.to_dict</code>). The <code>&quot;analyze&quot;</code> mode
+only <em>plans</em> — it never writes tests. Use <code>&quot;auto&quot;</code> to execute the
+items flagged <code>auto_executable</code>, or <code>&quot;report&quot;</code> for a health summary.</p>
 
   </article>
   <footer>

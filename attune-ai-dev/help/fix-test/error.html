@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Fix Test errors — error</title>
-  <meta name="description" content="Failures in test maintenance planning, test execution tracking, and source-file event handling." />
-  <meta property="og:title" content="Fix Test errors — error" />
-  <meta property="og:description" content="Failures in test maintenance planning, test execution tracking, and source-file event handling." />
+  <title>Auto-diagnose test gaps from file changes and track test outcomes — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeError: coroutine ... was never awaited` | `run` / `on_file_*` called without `await` | These are coroutines — `await` them or use `asyn" />
+  <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeError: coroutine ... was never awaited` | `run` / `on_file_*` called without `await` | These are coroutines — `await` them or use `asyn" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/error" />
   <style>
@@ -272,49 +272,92 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Fix Test errors</h1>
-<p>Failures in test maintenance planning, test execution tracking, and source-file event handling.</p>
-<h2>Common error signatures</h2>
+<h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeError: coroutine ... was never awaited</code></td>
+<td><code>run</code> / <code>on_file_*</code> called without <code>await</code></td>
+<td>These are coroutines — <code>await</code> them or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError: Coverage file not found</code></td>
+<td><code>track_coverage</code> given a missing path</td>
+<td>Generate <code>coverage.xml</code> first (e.g. <code>pytest --cov --cov-report=xml</code>)</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>ValueError: Invalid coverage.xml format</code></td>
+<td><code>track_coverage</code> given a malformed/empty XML</td>
+<td>Regenerate the report; confirm the run finished</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Plan comes back with zero items</td>
+<td>No tracked changes / index reports nothing needing work</td>
+<td>Pass <code>changed_files</code>, or confirm the <code>ProjectIndex</code> is populated</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>&quot;auto&quot;</code> mode executes nothing</td>
+<td>No plan item has <code>auto_executable=True</code></td>
+<td>Inspect <code>get_auto_executable_items()</code>; <code>REVIEW</code>/<code>MANUAL</code> items never auto-run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Calling the wrong <code>get_files_needing_tests</code></td>
+<td>Two functions share the name (module fn vs workflow method)</td>
+<td>Import the module function or call the method explicitly; their signatures differ</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_file_test_status</code> returns <code>None</code></td>
+<td>No <code>FileTestRecord</code> was ever recorded for that file</td>
+<td>Run <code>track_file_tests</code> or <code>run_tests_with_tracking</code> first</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>FileNotFoundError: Coverage file not found: {path}</code> — The coverage.xml file specified in <code>track_coverage()</code> doesn't exist</li>
-<li><code>ValueError: Invalid coverage.xml format: {details}</code> — Coverage file exists but contains malformed XML or missing required elements</li>
-<li>Unexpected <code>TestPlanItem</code> entries when an event maps a file to the wrong <code>TestAction</code></li>
-<li>File path resolution errors when mapping source files to their corresponding test files</li>
-<li>Priority filtering returning nothing from <code>TestMaintenancePlan.get_items_by_priority()</code> when an invalid <code>TestPriority</code> is passed</li>
+<li><strong>The async/sync split is easy to get wrong.</strong> Only <code>run</code> and the
+three <code>on_file_*</code> handlers are coroutines; the summary methods and
+every <code>test_runner</code> function are plain calls. Awaiting a sync
+function (or forgetting to await a coroutine) is the most common
+fix-test bug.</li>
+<li><strong><code>auto_executable</code> defaults to <code>True</code>.</strong> A <code>TestPlanItem</code> is
+auto-runnable unless something sets the flag to <code>False</code>. Before
+trusting <code>&quot;auto&quot;</code> mode in CI, inspect the plan and confirm the
+auto-executable subset is what you expect.</li>
+<li><strong>Planning is only as current as the index.</strong> The workflow refreshes
+its <code>ProjectIndex</code> when you pass <code>changed_files</code>, but a stale index
+yields stale priorities. Pass the files that changed, or refresh
+before planning.</li>
 </ul>
-<h2>Where errors originate</h2>
-<p>Most failures occur during:</p>
-<ul>
-<li><strong>Test execution tracking</strong> — <code>run_tests_with_tracking()</code> fails when test commands exit with non-zero codes or produce unparseable output</li>
-<li><strong>Coverage analysis</strong> — <code>track_coverage()</code> raises exceptions when coverage files are missing, corrupted, or in unexpected formats</li>
-<li><strong>File event handling</strong> — the handlers (<code>on_file_created()</code>, <code>on_file_modified()</code>, <code>on_file_deleted()</code>) fail when file paths are invalid or inaccessible</li>
-<li><strong>Plan generation</strong> — <code>TestMaintenanceWorkflow.run()</code> fails when project structure analysis produces inconsistent results</li>
-<li><strong>Plan filtering</strong> — <code>get_items_by_action()</code> / <code>get_items_by_priority()</code> return empty results when passed a value that isn't a <code>TestAction</code> / <code>TestPriority</code></li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Check file paths first.</strong> Many errors stem from missing test files, moved source files, or incorrect project root configuration. Verify that the project root used by <code>TestMaintenanceWorkflow</code> points to the correct directory.</p>
-</li>
-<li>
-<p><strong>Examine the plan.</strong> If <code>TestMaintenanceWorkflow.run()</code> produces unexpected results, inspect <code>plan.items</code> and each item's <code>file_path</code>, <code>action</code>, and <code>metadata</code> for invalid or corrupted values.</p>
-</li>
-<li>
-<p><strong>Validate coverage files.</strong> When <code>track_coverage()</code> fails, check that the coverage.xml file exists and contains valid XML. The file must include <code>&lt;coverage&gt;</code> root elements with measurable line and branch data.</p>
-</li>
-<li>
-<p><strong>Test file mapping issues.</strong> If event handlers fail, verify that the <code>ProjectIndex</code> can correctly map source files to test files. Missing or outdated index data causes most file-based operations to fail.</p>
-</li>
-<li>
-<p><strong>Check priority and action values.</strong> <code>TestPlanItem</code> objects require valid <code>TestAction</code> and <code>TestPriority</code> enum values. Invalid enums cause filtering methods to return nothing or raise <code>AttributeError</code>.</p>
-</li>
+<li>Reproduce with a minimal <code>await workflow.run({&quot;mode&quot;: &quot;analyze&quot;})</code>
+— inspect <code>result[&quot;status&quot;]</code> and <code>result[&quot;plan&quot;][&quot;items&quot;]</code>.</li>
+<li>If a handler misbehaves, call it directly
+(<code>await workflow.on_file_modified(path)</code>) and read the returned
+<code>status</code>.</li>
+<li>For measurement issues, call the <code>test_runner</code> function in
+isolation and inspect the returned record (or the raised
+<code>FileNotFoundError</code> / <code>ValueError</code>).</li>
+<li>Confirm the index: <code>workflow.get_test_health_summary()</code> should
+report sane counts.</li>
+<li>Run the related tests: <code>pytest -k &quot;test_maintenance or test_runner&quot; -v</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/test_runner.py</code></li>
-<li><code>src/attune/workflows/test_maintenance.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 
   </article>
   <footer>

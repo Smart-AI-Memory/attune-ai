@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with fix test — task</title>
-  <meta name="description" content="Use fix test when you want to extend how source-file changes are turned into prioritized test work, or change how test outcomes are tracked." />
-  <meta property="og:title" content="Work with fix test — task" />
-  <meta property="og:description" content="Use fix test when you want to extend how source-file changes are turned into prioritized test work, or change how test outcomes are tracked." />
+  <title>Auto-diagnose test gaps from file changes and track test outcomes — task</title>
+  <meta name="description" content="**Goal:** translate one file event into the test work it implies — the hook into a file-watcher or git hook." />
+  <meta property="og:title" content="Auto-diagnose test gaps from file changes and track test outcomes — task" />
+  <meta property="og:description" content="**Goal:** translate one file event into the test work it implies — the hook into a file-watcher or git hook." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/task" />
   <style>
@@ -272,93 +272,97 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with fix test</h1>
-<p>Use fix test when you want to extend how source-file changes are
-turned into prioritized test work, or change how test outcomes are
-tracked.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>Familiarity with <code>src/attune/workflows/test_maintenance.py</code> (the
-workflow and plan model) and <code>src/attune/workflows/test_runner.py</code>
-(outcome tracking)</li>
-</ul>
-<h2>Understand the two modules</h2>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Owns</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>test_maintenance.py</code></td>
-<td><code>TestMaintenanceWorkflow</code> and the plan model — <code>TestPlanItem</code>, <code>TestMaintenancePlan</code>, <code>TestAction</code>, <code>TestPriority</code></td>
-</tr>
-<tr>
-<td><code>test_runner.py</code></td>
-<td>Outcome tracking — <code>run_tests_with_tracking()</code>, <code>track_coverage()</code>, <code>track_file_tests()</code>, and the status queries</td>
-</tr>
-</tbody>
-</table>
-<h2>Generate a maintenance plan</h2>
-<ol>
-<li>
-<p><strong>Instantiate the workflow</strong> and call <code>run()</code> with a context dict:</p>
-<pre><code class="language-python">from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+<h1>Auto-diagnose test gaps from file changes and track test outcomes</h1>
+<h2>Tasks</h2>
+<h3>React to a single file change</h3>
+<p><strong>Goal:</strong> translate one file event into the test work it implies —
+the hook into a file-watcher or git hook.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
 
-workflow = TestMaintenanceWorkflow()
-plan = workflow.run({})
-</code></pre>
-</li>
-<li>
-<p><strong>Filter the plan</strong> by what you need:</p>
-<pre><code class="language-python">from attune.workflows.test_maintenance import TestAction, TestPriority
+from attune.workflows import TestMaintenanceWorkflow
 
-to_create = plan.get_items_by_action(TestAction.CREATE)
-urgent = plan.get_items_by_priority(TestPriority.CRITICAL)
-safe = plan.get_auto_executable_items()
+
+async def main() -&gt; None:
+    workflow = TestMaintenanceWorkflow(project_root=&quot;.&quot;)
+
+    created = await workflow.on_file_created(&quot;src/attune/new_module.py&quot;)
+    print(created[&quot;status&quot;])      # e.g. &quot;needs_tests&quot; or &quot;no_tests_required&quot;
+
+    modified = await workflow.on_file_modified(&quot;src/attune/config.py&quot;)
+    print(modified[&quot;status&quot;])     # e.g. &quot;tests_may_need_update&quot;
+
+    deleted = await workflow.on_file_deleted(&quot;src/attune/old_module.py&quot;)
+    print(deleted[&quot;status&quot;])      # e.g. &quot;orphaned_tests&quot; or &quot;file_removed&quot;
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Inspect a <code>TestPlanItem</code></strong> — each carries <code>file_path</code>, <code>action</code>,
-<code>priority</code>, <code>reason</code>, <code>test_file_path</code>, <code>estimated_effort</code>, and
-<code>auto_executable</code>.</p>
-</li>
-</ol>
-<h2>React to a single file change</h2>
-<p>Use the event handlers when you want per-file behavior rather than a
-full plan:</p>
-<pre><code class="language-python">item = workflow.on_file_modified(&quot;src/attune/foo.py&quot;)
-if item and item.auto_executable:
-    ...
+<p><strong>Verify:</strong> each handler is a coroutine — <code>await</code> it. Each returns a
+dict whose <code>status</code> names the outcome and (when relevant) carries a
+<code>plan_item</code> built from a <code>TestPlanItem</code>. A created file that requires
+tests reports <code>&quot;needs_tests&quot;</code>; a deleted file whose test file still
+exists reports <code>&quot;orphaned_tests&quot;</code>.</p>
+<h3>Auto-execute only the safe items</h3>
+<p><strong>Goal:</strong> run the test work that is safe to run unattended, and leave
+higher-touch items for a human.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import TestMaintenanceWorkflow
+
+
+async def main() -&gt; None:
+    workflow = TestMaintenanceWorkflow(project_root=&quot;.&quot;)
+
+    # Preview first — dry_run plans without executing.
+    preview = await workflow.run({&quot;mode&quot;: &quot;auto&quot;, &quot;dry_run&quot;: True})
+    print(preview[&quot;message&quot;])     # &quot;Would auto-execute N items&quot;
+
+    # Then execute the auto_executable subset.
+    result = await workflow.run({&quot;mode&quot;: &quot;auto&quot;})
+    print(result[&quot;status&quot;])       # &quot;auto_executed&quot;
+    print(result[&quot;execution&quot;])    # per-item execution outcomes
+
+
+asyncio.run(main())
 </code></pre>
-<p><code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code>
-each return a <code>TestPlanItem | None</code>.</p>
-<h2>Track test outcomes</h2>
-<p>Use <code>test_runner.py</code> to persist what actually ran:</p>
-<ol>
-<li><code>run_tests_with_tracking(test_suite, test_files, command, workflow_id, triggered_by)</code> runs a suite and records the result.</li>
-<li><code>track_coverage(coverage_file, workflow_id)</code> ingests a <code>coverage.xml</code>.</li>
-<li><code>get_file_test_status(file_path)</code> and <code>get_files_needing_tests(stale_only, failed_only)</code> answer coverage questions for a file or the whole project.</li>
-</ol>
-<h2>Modify behavior</h2>
-<ul>
-<li><strong>Plan generation / prioritization</strong> — edit <code>TestMaintenanceWorkflow</code>
-methods in <code>test_maintenance.py</code>. Adjust how an event maps to a
-<code>TestAction</code>, or how <code>TestPriority</code> is assigned.</li>
-<li><strong>New plan-item field</strong> — add it to the <code>TestPlanItem</code> dataclass and
-update <code>to_dict()</code>.</li>
-<li><strong>Outcome tracking</strong> — edit the tracking functions in
-<code>test_runner.py</code>.</li>
-</ul>
-<h2>Verify your changes</h2>
-<p>Run the related tests:</p>
-<pre><code>pytest -k &quot;maintenance or test_runner&quot; tests/
+<p><strong>Verify:</strong> <code>&quot;auto&quot;</code> mode executes only the items
+<code>TestMaintenancePlan.get_auto_executable_items</code> returns (those with
+<code>auto_executable=True</code>). <code>dry_run=True</code> reports the count without
+executing. Items needing <code>REVIEW</code> or <code>MANUAL</code> are never auto-run.</p>
+<h3>Track a test run and read coverage back</h3>
+<p><strong>Goal:</strong> record a suite execution and its coverage so the workflow
+can reason about gaps later.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">from attune.workflows.test_runner import (
+    run_tests_with_tracking,
+    track_coverage,
+    get_file_test_status,
+)
+
+# Run a suite and persist a TestExecutionRecord.
+execution = run_tests_with_tracking(
+    test_suite=&quot;unit&quot;,
+    test_files=[&quot;tests/unit/test_config.py&quot;],
+    triggered_by=&quot;manual&quot;,
+)
+print(execution.success, execution.passed, execution.failed)
+
+# Parse an existing coverage.xml into a CoverageRecord.
+coverage = track_coverage(&quot;coverage.xml&quot;)
+print(f&quot;{coverage.overall_percentage:.1f}%&quot;)
+
+# Read the latest status for one file.
+status = get_file_test_status(&quot;src/attune/config.py&quot;)
+print(status)                     # FileTestRecord | None
 </code></pre>
-<p>A passing suite with no new failures confirms the plan model and
-outcome tracking still behave correctly.</p>
+<p><strong>Verify:</strong> these are plain (synchronous) functions — no <code>await</code>.
+<code>run_tests_with_tracking</code> returns a <code>TestExecutionRecord</code> (<code>success</code>,
+<code>passed</code>, <code>failed</code>); <code>track_coverage</code> returns a <code>CoverageRecord</code> and
+raises <code>FileNotFoundError</code> if <code>coverage.xml</code> is missing or <code>ValueError</code>
+if it is malformed; <code>get_file_test_status</code> returns the latest
+<code>FileTestRecord</code> for a file, or <code>None</code> if nothing was recorded.</p>
 
   </article>
   <footer>
