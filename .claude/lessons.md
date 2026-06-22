@@ -10371,3 +10371,58 @@ files.
   "'Is the published version current?' is upload-time vs merge-time"
   lesson — both are about not trusting a convenient-but-stale version
   signal.
+
+- **A test that flakes ONLY under xdist with `KeyError: <big-int>`
+  (an object id) is the signature of `patch.dict("sys.modules", {...})`
+  — its teardown clears+rebuilds ALL of `sys.modules`, which races a
+  concurrent toucher**: hit 2026-06-22 on
+  `test_real_tools.py::...::test_init_with_api_key_enables_llm` — failed
+  on ONE CI lane (`test (ubuntu-latest, 3.11)`) with
+  `KeyError: 139878600014720`, while passing on every other OS/Python
+  lane, the full-suite `coverage` job, and local isolation. Diagnostic
+  chain: (1) the failing assertion would have been `AssertionError`, but
+  it was `KeyError` → the error escapes the SUT's own try/except, i.e.
+  it's in test setup/teardown, not the code under test; (2) the key is
+  `id()`-shaped (≈1.4e14) → a dict keyed by object identity mutated
+  concurrently; (3) in-file xdist repro PASSES → the leak is CROSS-FILE
+  (a co-tenant test in the same worker, not concurrency within the
+  file). Root cause confirmed by reading CPython
+  `unittest.mock._patch_dict._unpatch_dict`: it does `sys.modules.clear()`
+  then `update(snapshot)` — a non-atomic global clear+rebuild. Any
+  background thread or GC finalizer touching `sys.modules` during that
+  window (e.g. a leaked heartbeat thread) hits a half-cleared dict →
+  transient KeyError, blamed on whichever test was running. **Fix —
+  never swap the whole `sys.modules`; touch one key:** for an installed
+  package needing one symbol stubbed, `patch("anthropic.Anthropic", m)`
+  (restores one attribute). For a fake/absent whole module,
+  `monkeypatch.setitem(sys.modules, name, mock_or_None)` — surgical,
+  restores only that key (verified: `len(sys.modules)` unchanged after
+  teardown), and `=None` makes `import name` raise ImportError. A
+  `fake_module` conftest fixture wraps the setitem form. Also 3.13-safe
+  (no `__import__` mock → no ExceptionGroup). Pairs with the
+  windows-xdist-flakes crash inventory — same family (a test's teardown
+  racing the harness), different surface.
+
+- **Freeze a latent test-debt pattern with a per-file RATCHET GUARD
+  instead of a blanket rewrite — when fixing every instance is
+  negative-ROI**: 2026-06-22, after the patch.dict-sys.modules flake, a
+  blanket conversion of all 219 sites / 42 files measured at ~25h of
+  work to save ~minutes per 100 PRs (the flake fires on a low-single-%
+  of runs; most sites never race). The durable cheap move: a structural
+  test (`tests/unit/ci/test_no_new_*.py`, modeled on
+  `test_zsh_readonly_assignments.py`) that regex-counts the bad pattern
+  per file against a FROZEN baseline dict and fails if any file
+  INTRODUCES it or GROWS its count. Existing debt is frozen, not forced;
+  entries ratchet DOWN as files convert opportunistically ("guard now,
+  fix-on-flake later"). Gotchas baked in from doing it: (a) the guard
+  file and any doc that NAMES the pattern in prose/regex must
+  self-exclude, or word it so the matcher can't flag its own
+  documentation (write ```patch.dict``` on ```sys.modules``` rather than
+  the literal); (b) generate the baseline from the SAME regex the guard
+  runs — don't eyeball-count (a loose line-grep over-counted 267 vs the
+  precise 219); (c) base the guard PR on the state where any
+  already-fixed file is at its post-fix count (merge the fix PR first,
+  then regenerate the baseline / rebase), else the guard flags the
+  not-yet-merged file as "new". Higher-leverage alternative if the
+  pattern keeps biting: fix the single CONCURRENT TOUCHER (the leaked
+  thread) rather than the N sites — one fix neutralizes them all.
