@@ -10249,3 +10249,44 @@ files.
   "17 skills" count through features.ts/marketplace/docs — a reason to
   keep environment-specific launchers (attune-gui needs the Cowork
   preview pane) as separate opt-in plugins rather than bundling.
+
+- **A docs-only README change is a legitimate PyPI patch-release driver
+  — README IS the long_description (the PyPI project page), so stale
+  install/marketing copy there is ONLY fixable by publishing**: hit
+  2026-06-22 cutting attune-ai 8.7.1. The marketplace-consolidation work
+  (#988/#989) changed `plugins/`, `.claude-plugin/`, website, README —
+  NONE of which is in the wheel (`plugins/` isn't packaged;
+  `git diff v8.7.0..main -- src/` was empty). My first instinct was
+  "nothing to ship, don't release." That was WRONG on one axis:
+  `pyproject.toml` sets `readme = {file = "README.md", ...}`, so the
+  README renders as the PyPI project page, and the v8.7.0 README still
+  told new users *"add Smart-AI-Memory/attune-docs directly"* — a
+  marketplace we'd just archived. The ONLY way to refresh that page is
+  to publish. So a `src`-identical patch release is justified PURELY to
+  correct the PyPI front page. Frame it honestly in the changelog
+  ("docs/distribution patch — no runtime changes") so nobody hunts for
+  the code delta. Diagnostic before deciding "nothing to release":
+  `git diff <last-tag>..main -- src/ pyproject.toml` for the wheel
+  delta, AND separately ask "did README/long_description go stale?" —
+  the second can warrant a release even when the first is empty.
+
+- **Approving a `pypi`-environment publish gate via `gh api
+  pending_deployments` REQUIRES `-F environment_ids[]=<id>` (typed),
+  NOT `-f` — `-f` sends a string, the API silently no-ops, and the job
+  stays `waiting`**: hit 2026-06-22 on the 8.7.1 publish. The build job
+  finished, `publish` sat `waiting/`, `pending_deployments` showed
+  `current_user_can_approve=true`. First attempt
+  `gh api .../pending_deployments -f "environment_ids[]=$ENV_ID" -f
+  state=approved` returned a malformed/short response and — critically
+  — `pending_deployments` STILL showed `length==1` (not approved). The
+  field is an array of integers; `-f` coerces to string and the
+  approval is dropped without a clear error. Correct invocation:
+  `gh api --method POST repos/<o>/<r>/actions/runs/<run>/pending_deployments
+  -F "environment_ids[]=<env_id>" -f state=approved -f comment="…"`
+  (`-F` = typed/raw so the number stays a number; `state`/`comment` stay
+  `-f` strings). Always re-verify with
+  `gh api .../pending_deployments --jq 'length'` == 0 after — a
+  no-op approval looks like success if you only read the (garbled)
+  response body. Recurs at every gated release; pairs with the existing
+  "publish job awaits env approval, self-approve via gh api" lesson —
+  this is the exact-flag correction.
