@@ -7,6 +7,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.8.0] — 2026-06-22
+
+Two opt-in features — an extended prompt-cache window for the
+Anthropic provider, and project-local session-handoff starters.
+
+### Added
+
+- **Extended prompt-cache TTL (opt-in).** Setting
+  `ATTUNE_CACHE_TTL=1h` extends the Anthropic prompt-cache window from
+  the 5-minute default to 1 hour at the same per-token rate — useful
+  for dashboards and benchmark sweeps that issue clusters of related
+  queries within an hour. A new module-level `_cache_control()` helper
+  in `attune.llm.providers.anthropic` resolves the marker from the
+  environment (read per call) and is routed through all three
+  `cache_control` emit sites (`generate`, `analyze_large_codebase`,
+  `generate_stream`). Unset / `5m` / any other value is byte-identical
+  to prior behavior. Sibling of attune-author's
+  `ATTUNE_AUTHOR_CACHE_TTL` and attune-rag's `ATTUNE_RAG_CACHE_TTL`.
+  (#998)
+- **Project-local session-handoff starters.** The `SessionStart`
+  starter-prompt hook now also surfaces a repo-local
+  `.attune/next_session_starter.md`, so a session handing off to a
+  different repo can leave a repo-specific starter without clobbering
+  the global `~/.attune/next_session_starter.md`. (#994)
+
 ## [8.7.1] — 2026-06-22
 
 Docs/distribution patch — **no runtime changes** (`src/attune` is
