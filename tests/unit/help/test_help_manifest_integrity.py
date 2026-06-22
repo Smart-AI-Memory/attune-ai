@@ -79,16 +79,13 @@ _IGNORED_SYMBOLS: frozenset[str] = frozenset(
 )
 
 # Pre-existing dead-symbol drift that is OUT OF SCOPE for this guard's
-# originating fix (#980, fix-test only). Each entry is real drift to be
-# cleaned up separately — the guard stays strict for everything else so
-# NEW drift in any feature fails immediately. Remove entries here as the
-# corresponding templates are fixed.
-_KNOWN_DEAD_SYMBOL_DRIFT: dict[str, frozenset[str]] = {
-    # `WorkflowExecutionError` is not defined anywhere in the codebase;
-    # code-quality/error.md hallucinated it. Tracked for a follow-up
-    # template rewrite.
-    "code-quality": frozenset({"WorkflowExecutionError"}),
-}
+# originating fix. Each entry is real drift to be cleaned up separately
+# — the guard stays strict for everything else so NEW drift in any
+# feature fails immediately. Remove entries here as the corresponding
+# templates are fixed. (Currently empty: the one known case,
+# `WorkflowExecutionError` in code-quality/error.md, was corrected to the
+# real `SdkSubprocessError` in this change.)
+_KNOWN_DEAD_SYMBOL_DRIFT: dict[str, frozenset[str]] = {}
 
 
 def _is_glob(pattern: str) -> bool:

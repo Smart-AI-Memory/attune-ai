@@ -15,7 +15,7 @@ Code quality failures occur when the review workflow can't analyze your code or 
 
 - `FileNotFoundError: [Errno 2] No such file or directory` — The specified path doesn't exist or isn't accessible
 - `PermissionError: [Errno 13] Permission denied` — Can't read the target files or directory
-- `WorkflowExecutionError` — One or more subagents (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) failed to complete
+- `SdkSubprocessError` — One or more subagent subprocesses (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) failed to complete
 - `ValueError: Invalid path format` — The path argument is malformed or points to an unsupported file type
 - `TimeoutError` — Review took longer than expected, often on large codebases
 
