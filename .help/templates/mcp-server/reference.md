@@ -2,8 +2,8 @@
 type: reference
 feature: mcp-server
 depth: reference
-generated_at: 2026-05-04T02:30:02.079856+00:00
-source_hash: f7f2360f6ad84733ba187b2e644d9b01ac30e15d2ae8fe8567af6dfb064ee44b
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: 9e36c58165bf28d2d017a183ce57a5f54f8bf32c3d68cd05d5d762a3eb741ae4
 status: generated
 ---
 
@@ -31,7 +31,7 @@ Build MCP-compatible servers that expose Attune AI workflows, help system, memor
 
 | Method | Parameters | Returns | Description |
 |--------|------------|---------|-------------|
-| `__init__` | `workspace_root: str \| None = None, user_id: str \| None = None` | - | Initialize MCP server with workspace and user context |
+| `__init__` | `workspace_root: str \| None = None, user_id: str \| None = None` | - | Initialize MCP server with workspace and user context. Workspace root resolves in order: explicit argument → `ATTUNE_MCP_WORKSPACE_ROOT` → `CLAUDE_PROJECT_DIR` → cwd |
 | `get_prompt_list` | - | `list[dict[str, Any]]` | Get list of available prompts |
 | `get_prompt_messages` | `prompt_name: str, arguments: dict[str, str]` | `list[dict[str, Any]]` | Get messages for a specific prompt |
 | `call_tool` | `tool_name: str, arguments: dict[str, Any]` | `dict[str, Any]` | Execute a tool with provided arguments |

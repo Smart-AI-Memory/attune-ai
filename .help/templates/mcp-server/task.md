@@ -2,8 +2,8 @@
 type: task
 feature: mcp-server
 depth: task
-generated_at: 2026-05-04T02:29:51.286450+00:00
-source_hash: f7f2360f6ad84733ba187b2e644d9b01ac30e15d2ae8fe8567af6dfb064ee44b
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: 9e36c58165bf28d2d017a183ce57a5f54f8bf32c3d68cd05d5d762a3eb741ae4
 status: generated
 ---
 

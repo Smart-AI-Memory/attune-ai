@@ -3,8 +3,8 @@ type: task
 name: telemetry-task
 feature: telemetry
 depth: task
-generated_at: 2026-05-16T06:19:45.827036+00:00
-source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dba935dbb81bdeff572ce1339760a554a2afb6a7b99583b95b2a4ce078fd6abc
 status: generated
 ---
 
@@ -32,6 +32,9 @@ Use the telemetry module when you need to query usage data, review cost savings,
    | View Tier 1 automation status | `cmd_tier1_status()` | `cli_automation.py` |
    | View task routing report | `cmd_task_routing_report()` | `cli_automation.py` |
    | View agent performance metrics | `cmd_agent_performance()` | `cli_automation.py` |
+   | Check usage-ping opt-in status and payload | `cmd_telemetry_status()` | `cli_commands/telemetry_commands.py` |
+   | Opt in to anonymous usage pinging | `cmd_telemetry_enable()` | `cli_commands/telemetry_commands.py` |
+   | Opt out of anonymous usage pinging | `cmd_telemetry_disable()` | `cli_commands/telemetry_commands.py` |
 
 2. **Read the function's docstring, parameters, and return type.**
    Confirm that the function owns the exact behavior you need before proceeding. All CLI command functions return `int` (exit code `0` on success).
@@ -46,7 +49,7 @@ Use the telemetry module when you need to query usage data, review cost savings,
    Apply your change — new logic, additional output fields, or updated filtering. Match the naming conventions, error-handling style, and logging patterns already present in that file.
 
 5. **Register any new subcommand in the CLI entry point.**
-   If you added a new `cmd_*` function, wire it up in `src/attune/telemetry/__main__.py` via `main()` so the CLI can dispatch to it.
+   If you added a new `cmd_*` function for the telemetry module, wire it up in `src/attune/telemetry/__main__.py` via `main()`. For user-facing commands like the usage-ping opt-in controls, add them to `src/attune/cli_commands/telemetry_commands.py` instead (registered through `cli_minimal.py`).
 
 6. **Run the tests again.**
    ```
@@ -61,6 +64,8 @@ Use the telemetry module when you need to query usage data, review cost savings,
 | `src/attune/telemetry/cli_core.py` | Core telemetry display and savings commands |
 | `src/attune/telemetry/cli_analysis.py` | Cost and test-status analysis commands |
 | `src/attune/telemetry/cli_automation.py` | Tier 1, task routing, and agent performance commands |
+| `src/attune/telemetry/usage_ping.py` | Opt-in anonymous usage sync — enable/disable, payload building, endpoint resolution |
+| `src/attune/cli_commands/telemetry_commands.py` | User-facing usage-ping commands: `cmd_telemetry_enable`, `cmd_telemetry_disable`, `cmd_telemetry_status` |
 
 ## Verify your changes
 

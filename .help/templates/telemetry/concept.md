@@ -3,8 +3,8 @@ type: concept
 name: telemetry-concept
 feature: telemetry
 depth: concept
-generated_at: 2026-05-16T06:19:45.821122+00:00
-source_hash: ed8485991002cc1c218f67b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dba935dbb81bdeff572ce1339760a554a2afb6a7b99583b95b2a4ce078fd6abc
 status: generated
 ---
 
@@ -14,16 +14,17 @@ Attune's telemetry layer is an observability system that tracks agent activity, 
 
 ## What telemetry covers
 
-Telemetry spans four distinct concerns that work together to keep multi-agent workflows visible and controllable:
+Telemetry spans five distinct concerns that work together to keep multi-agent workflows visible and controllable:
 
 | Concern | What it does | Key types |
 |---|---|---|
 | **Usage tracking** | Records help queries and calculates cost savings from prompt caching and model-tier routing | `UsageTracker`, `FeedbackLoop` |
+| **Anonymous usage ping** | Opt-in (default OFF) phone-home of a frozen, anonymized payload to help prioritize development | `usage_ping` |
 | **Agent heartbeats** | Publishes liveness signals to Redis TTL keys so you can detect stale or crashed agents | `HeartbeatCoordinator`, `AgentHeartbeat` |
 | **Inter-agent coordination** | Routes typed signals between agents with configurable TTLs; expired signals are discarded automatically | `CoordinationSignals`, `CoordinationSignal` |
 | **Human approval gates** | Pauses a workflow until a human responds to an `ApprovalRequest`; times out if no response arrives within `timeout_seconds` | `ApprovalGate`, `ApprovalRequest`, `ApprovalResponse` |
 
-A fifth concern — real-time event streaming — cuts across all four: `EventStreamer` publishes `StreamEvent` records to Redis Streams so external consumers can observe what is happening without polling.
+A sixth concern — real-time event streaming — cuts across the others: `EventStreamer` publishes `StreamEvent` records to Redis Streams so external consumers can observe what is happening without polling.
 
 ## How the pieces fit together
 
@@ -36,6 +37,8 @@ Think of telemetry as three concentric layers:
 3. **Control.** `ApprovalGate.request_approval()` blocks until a human calls `respond_to_approval()` or the request times out. The `ApprovalResponse` carries `approved: bool` and an optional `reason`, giving the workflow a typed branch point rather than an ambiguous string.
 
 Usage data recorded by `UsageTracker` and quality scores from `FeedbackLoop` sit alongside these runtime signals. The CLI commands (`cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_cache_stats`, `cmd_agent_performance`) surface that data without requiring direct access to the underlying storage.
+
+Separately, an **opt-in usage ping** lets you share an anonymized signal with the maintainers. It is **OFF by default**; `cmd_telemetry_enable`, `cmd_telemetry_disable`, and `cmd_telemetry_status` (under `attune telemetry`) turn it on or off and show the exact payload that would be sent. The payload is frozen — workflow name, an anonymous install ID, package version, OS, and Python version only. No paths, prompts, costs, tokens, or free text are ever included, and `DO_NOT_TRACK` overrides everything.
 
 ## When telemetry matters
 

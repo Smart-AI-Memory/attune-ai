@@ -3,8 +3,8 @@ type: reference
 name: ops-dashboard-reference
 feature: ops-dashboard
 depth: reference
-generated_at: 2026-06-10T07:07:04.653081+00:00
-source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dd650b4658efc1f6876bf6f2701d846e9091228187573660cdcfc10ab83fa6c2
 status: generated
 ---
 
@@ -28,6 +28,7 @@ Run and monitor the attune workflow OS from a local web dashboard. The dashboard
 | `FamilyVersion` | Package name, version, and resolution source for one attune family member. |
 | `DailyCost` | One day's cost for the home-page sparkline. |
 | `HomeKpis` | Summary numbers shown above the fold on the home page. |
+| `SpendAlarm` | Daily API-spend anomaly verdict with ceiling-approach gauge for the dashboard (R6). |
 | `SweepChipCounts` | Per-bucket counts loaded from a persisted discovery-sweep result. |
 | `DismissEntry` | One dismissed candidate's persisted state. |
 | `TemplateRecord` | One template file in the help corpus. |
@@ -183,6 +184,25 @@ Run and monitor the attune workflow OS from a local web dashboard. The dashboard
 | `version` | `str | None` |
 | `source` | `str` |
 
+---
+
+### `SpendAlarm` fields
+
+| Field | Type |
+|-------|------|
+| `level` | `str` — `"ok"` \| `"alarm"` \| `"insufficient_data"` |
+| `triggered_by` | `tuple[str, ...]` — subset of `{"daily_anomaly", "ceiling"}` |
+| `today_cost` | `float` |
+| `baseline_mean` | `float` |
+| `baseline_days` | `int` |
+| `method` | `str` — `"zscore"` \| `"multiplier"` \| `"none"` |
+| `z_score` | `float \| None` |
+| `month_to_date` | `float` |
+| `monthly_ceiling` | `float` |
+| `ceiling_pct` | `float` |
+| `source` | `str` — `"account"` \| `"local"` |
+| `detail` | `str` — one-line human explanation |
+
 ## Functions
 
 The tables below are organized by source module.
@@ -250,6 +270,9 @@ The tables below are organized by source module.
 | `sparkline_points` | `values: list[float], *, width: int = 240, height: int = 40` | `str` | Render values as an SVG `polyline` `points` string. |
 | `read_telemetry_summary` | `config: Config, *, recent_days: int = 7, today: date | None = None` | `TelemetrySummary` | Aggregate `usage.jsonl` into a UI-friendly summary. |
 | `read_sweep_chip_counts` | `scope_path: str, config: Config` | `SweepChipCounts` | Read the latest persisted sweep result for `scope_path` and tally chips. |
+| `read_daily_spend` | `config: Config, *, days: int = 35, today: date \| None = None` | `dict[str, float]` | Daily API spend (USD) bucketed by timestamp from `usage.jsonl`. |
+| `spend_alarm` | `daily: dict[str, float], *, today: date \| None = None, monthly_ceiling: float = 350.0, ceiling_fraction: float = 0.8, z_threshold: float = 3.0, flat_multiplier: float = 3.0, min_baseline_days: int = 3, ...` | `SpendAlarm` | Flag anomalous daily API spend and approach to the monthly ceiling. |
+| `build_spend_alarm` | `config: Config, cost_summary: Any \| None = None, *, today: date \| None = None` | `SpendAlarm` | Assemble the spend alarm, preferring account-level spend from the cost summary. |
 | `list_workflows` | — | `list[WorkflowEntry]` | Return the registered workflow catalog. Empty if the registry is unavailable. |
 | `family_versions` | — | `list[FamilyVersion]` | Resolve installed versions for every related attune package. |
 | `env_health` | `config: Config` | `dict[str, Any]` | Lightweight environment snapshot for the Health page. |

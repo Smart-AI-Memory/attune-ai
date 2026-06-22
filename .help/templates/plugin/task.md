@@ -3,8 +3,8 @@ type: task
 name: plugin-task
 feature: plugin
 depth: task
-generated_at: 2026-06-12T00:37:02.521196+00:00
-source_hash: e7e856d3cca09a12fdc753f3691d81dfaa025bb8ad4c1459e92ca254b38a9438
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: 843f895eed3fa2d3d0b8021830c8c31e3c292c176a967396a76c27deb5a60deb
 status: generated
 scaffold_hash: 50c1caa20aa764e3b2db2159a2560e5480f7bfc5f82efed9516912df86eebf1d
 ---
@@ -32,6 +32,7 @@ Each module in `hooks/` owns a single responsibility. Match your goal to the cor
 | Manage compact-warning sentinels | `hooks/_state.py` | `session_sentinel_path()`, `prune_stale_sentinels()` |
 | Estimate context utilization from a transcript | `hooks/_transcript_size.py` | `estimate_utilization()` |
 | Validate bash commands or file paths | `hooks/security_guard.py` | `validate_bash_command()`, `validate_file_path()` |
+| Show the usage-consent notice to MCP users (SessionStart) | `hooks/usage_consent_notice.py` | `main()` |
 | Orient the session around active specs | `hooks/spec_orient.py` | `main()` |
 
 ## Modify the hook
