@@ -74,6 +74,17 @@ async def home(request: Request) -> HTMLResponse:
         # never block the home page render on a billing-fetch surprise.
         logger.debug("anthropic_cost.fetch_summary raised", exc_info=True)
         cost_summary, cost_error = None, None
+    # Spend anomaly alarm (R6 of usage-signals). Prefers the account-level
+    # cost summary already fetched above (it sees CI spend, the surface the
+    # $1,200-night lived on); falls back to local usage.jsonl when no admin
+    # key is configured. Never raises — degrade to no panel on a surprise.
+    try:
+        spend = data.build_spend_alarm(cfg, cost_summary)
+    except Exception:  # noqa: BLE001
+        # INTENTIONAL: the alarm is a best-effort signal; never block the
+        # home render on an aggregation surprise.
+        logger.debug("data.build_spend_alarm raised", exc_info=True)
+        spend = None
     return _render(
         request,
         "home.html",
@@ -87,6 +98,7 @@ async def home(request: Request) -> HTMLResponse:
         attune_ai=attune_ai,
         cost_summary=cost_summary,
         cost_error=cost_error,
+        spend=spend,
     )
 
 

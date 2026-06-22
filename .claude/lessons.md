@@ -9411,6 +9411,47 @@ files.
   checks stay MISSING after `gh pr edit --base`" lesson (same
   missing-required-check failure mode, different trigger).
 
+- **Archiving a spec dir (`git mv docs/specs/<x>/ docs/specs/archive/<x>/`)
+  silently breaks every inbound link that pointed at the old path — sweep
+  and repoint BEFORE committing the triage PR**: hit 2026-06-20 on the
+  spec-backlog-triage delta pass (PR #941, 22 dirs archived). The
+  archive moves are clean `git mv` (100% rename), but references elsewhere
+  go stale: the prior triage card's cross-links, `archive/README.md`'s own
+  intro (the moved dir is now a sibling, so `../<x>/` becomes `<x>/`), the
+  *new* triage matrix linking the prior one (`../<x>/` → `../archive/<x>/`),
+  and pre-existing refs in active docs. `docs/specs/` is mkdocs-excluded so
+  in-tree spec→spec links won't fail the strict build — BUT a ref from a
+  BUILT doc (e.g. `docs/DEVELOPER_GUIDE.md`, `docs/redis/*.md`,
+  `docs/process/*.md`) to an archived spec WILL surface in `build`/link
+  checks. Recipe before committing any archive batch: `grep -rnE
+  "specs/(<name1>|<name2>|…)/" docs/ --include='*.md' | grep -v '/archive/'`
+  over ALL archived dir names, then repoint each hit to the `archive/`
+  path. The `wiring-audit` CI lane passing is the receipt that the sweep
+  was complete. Also: zsh does NOT word-split unquoted vars, so a
+  space-joined `ARCHIVES="a b c"; for s in $ARCHIVES` sees ONE token and
+  every dir reads "missing" — use an array `ARCHIVES=(a b c)`.
+
+- **Spec status drift lives ACROSS files within one spec dir, not just
+  between spec-text and code — read the canonical file
+  (`requirements.md`/`tasks.md`), not whichever sorts first**: during the
+  2026-06-20 backlog triage, a single `grep … | head -1` per dir gave
+  contradictory statuses because different files in the same spec carry
+  different terminal lines (e.g. `sibling-package-pre-commit`: `decisions.md`
+  "phase 0 complete", `requirements.md` "approved", `tasks.md` "Phase 1+
+  pending"; `bulletin-curator`: `decisions.md` "in progress" but
+  `requirements.md`+`tasks.md` "complete, shipped v8.0.0"; `windows-xdist-
+  flakes`: `requirements.md` "draft" but `design.md` "complete v1"). The
+  fix when triaging: enumerate ALL status lines per dir (`for f in
+  docs/specs/<x>/*.md; do grep -i status "$f"; done`) and trust the
+  canonical `requirements.md`/`tasks.md`, treating a lone `decisions.md`
+  "in progress" as stale-from-an-earlier-phase. This means
+  `spec-status-self-truthing` (shipped #567) is NOT fully holding for
+  multi-file specs — it self-truths one file, not the dir as a whole; a
+  candidate follow-up is a per-dir status reconciler. Pairs with the
+  "spec-named work-scope drifts from code reality — grep before executing"
+  lesson (same family: spec text goes stale; the canonical artifact +
+  code are the contract).
+
 - **The auto-merge-safe (tests/docs-only) class merges a PR on its
   CURRENT diff within minutes — so opening a PR whose FIRST commit is
   docs-only strands every follow-up commit you push afterward**: hit
@@ -9658,3 +9699,236 @@ files.
     these entries are local-only and can't/shouldn't be committed —
     they hold machine-specific absolute paths. "Commit the launch
     config" is a no-op; don't force-add past the ignore.
+
+- **Cross-repo work from a worktree-rooted session: `worktree_path_guard`
+  blocks Write/Edit into sibling repos, `EnterWorktree` can't cross
+  repos, and Bash `cd /Users/.../<repo>` silently targets the MAIN
+  checkout** (2026-06-21, fixing attune-author's generated-doc imports
+  from an attune-ai session). Three linked traps when the work lives in
+  a *different* repo than the session's worktree:
+  - **The guard only covers Write/Edit.** `worktree_path_guard.py`
+    derives the session root from cwd and blocks any absolute Write/Edit
+    whose target git-toplevel differs — including a sibling repo. It
+    cannot tell an intentional cross-repo write from the accidental
+    bare-absolute-path bug. `EnterWorktree(path=…)` is NOT an escape:
+    it rejects paths that aren't worktrees of the *current* repo. The
+    working route is **Bash heredoc writes** (`cat > /abs/path <<'EOF'`)
+    — Bash isn't guarded — with verified absolute paths. Confirm with
+    the user first, since it routes around a safety hook.
+  - **`cd /Users/.../attune-ai` in a Bash step goes to the MAIN
+    checkout, not your session worktree.** I ran a multi-file surgical
+    doc-edit script with `cd /Users/patrickroebuck/attune-ai` and
+    `root = Path("/Users/patrickroebuck/attune-ai")`; every edit landed
+    in the main checkout's working tree (mixed with an unrelated stray
+    regen pile), while my branch sat in the worktree with none of the
+    edits. Same root cause as the "Write to absolute attune-ai path
+    lands on parent main" and "`$(pwd)/src` trap" lessons, Bash-cd
+    surface. Recovery: `git -C <main> diff --numstat <my files>` to
+    confirm the edits are purely mine (no stray frontmatter regen
+    mixed in), `git -C <main> checkout -- <my files>` to revert, then
+    redo in the worktree against clean origin/main copies. ALWAYS pass
+    the worktree-segment absolute path (or stay relative with the
+    shell already in the worktree) for repo-relative work.
+  - **`uv run` / project-sync breaks in a worktree with relative
+    editable deps — pre-flight lint with `uvx <tool>==<pinned>`
+    instead.** attune-author's worktree `uv run --with pre-commit
+    pre-commit run black` failed: `Distribution not found` for
+    `attune-help==… @ editable+../attune-help` (the `../` resolves to
+    `.claude/worktrees/attune-help`, which doesn't exist). `uvx
+    black==24.10.0 --check <files>` runs the PINNED tool in isolation
+    with no project sync — the reliable pre-flight when sync is wedged.
+    (Local `python -m black` may be a NEWER version than CI's pin and
+    reformat differently — match the `.pre-commit-config.yaml` rev.)
+
+- **A code-example doc generator that records a symbol's FILE but not
+  its importable MODULE makes the LLM guess the import path — and it
+  guesses the directory basename** (2026-06-21, attune-author
+  `generator._collect_function/_collect_class` stored
+  `{name, doc, file: "src/attune/spec/runner.py"}` with no dotted
+  module). The polish pass then emitted `from spec import …` /
+  `from pipeline import …` (basename of the dir) instead of
+  `from attune.spec.runner import …` / `from attune.pipeline import …`.
+  Every symbol was REAL; only the module path was fiction, and the
+  fact-checker correctly flagged it into 7 spec-engine docs. Durable
+  fix = derive the canonical module from `rel_path`
+  (`src/…/x.py` → dotted, strip `src/`, collapse `__init__`) and pick
+  the **shallowest re-exporting package** (probe the parent package via
+  importlib; fall back to the defining submodule when it doesn't
+  re-export — e.g. `execute_with_approval` lives in `attune.spec` only
+  as `attune.spec.runner`). Repair deterministically BEFORE the write
+  so the existing fact-check becomes the verifier. Two scope traps hit:
+  (1) a line-anchored `grep '^from'` UNDERCOUNTS — it misses *indented*
+  in-fence imports (nested under list items) and inline/table imports;
+  scan with `from (pipeline|spec)(\.[a-z_]+)? import` un-anchored.
+  (2) the fence-based repair can't fix inline-code/table-cell imports
+  (e.g. a `python -c "…"` verify command, a comparison-table cell) —
+  those need a hand fix and will recur on regen until the generator
+  also covers inline. (3) re-running the full fact-check to regenerate
+  a block can be env-fragile: `tutorial_static_check` shells out to
+  `mypy --strict` with a 10s timeout that times out cold and emits
+  garbage (1311 findings) — regenerate with `check_tutorial_static=False`
+  for a surgical doc fix, or accept the block can't be faithfully rebuilt
+  in that env.
+
+- **Single-sourcing docs can silently REGRESS a dynamic source-of-truth
+  into a static copy — before consolidating a "section," ask whether it
+  is authored-canonical or dynamically-sourced**: 2026-06-21, authoring
+  the first `help-docs-single-source` master file
+  (`content/features/spec-engine.md`, PR #960), the FAQ section was
+  built by pasting the LLM-generated `.help/<feature>/faq.md` into a
+  `## FAQ` block. Patrick caught that this *regressed* his earlier
+  doc-stack design (D3) where FAQ is a **four-channel source of truth**
+  (unmatched user queries + telemetry error-frequency + GitHub issues +
+  author-curated seeds), deduped and frequency-ranked by a FAQ
+  Generator. Pasting a static copy produced three regressions at once:
+  (1) a THIRD copy of FAQ content (`docs/reference/FAQ.md` +
+  `.help/<feature>/faq.md` + master file) — the duplication
+  single-sourcing exists to END; (2) it discards 3 of the 4 channels —
+  a frozen authored block can only ever be the author-curated channel,
+  so telemetry/issues/query signal has nothing to feed; (3) it inverts
+  the data flow — a Generator *pulls* from patterns and projects out,
+  it is not something a feature file *emits*. **Pattern**: when
+  collapsing N docs into "one canonical source," each section is one of
+  two kinds — *authored-canonical* (prose the human owns: overview,
+  concepts, tasks, design) which single-sources cleanly, OR
+  *dynamically-sourced* (content fed by live signal: FAQ from
+  telemetry/issues, possibly failure-modes from error-frequency) which
+  must stay a Generator OUTPUT and receive only the author-curated
+  *seed* channel from the master file. Mis-classifying the second kind
+  as the first re-introduces the duplication you set out to remove.
+  Fix recorded as decisions D6 (FAQ is sourced, re-cut to `## FAQ
+  seeds`) + D7 (Generator is unbuilt → FAQ projection out of pilot
+  scope); the same suspicion was logged against Failure modes (FM1).
+  Companion fact for the doc stack: the three pieces are
+  **attune-author** (produce: generator/projector + fact_check +
+  manifest + staleness), **attune-help** (serve runtime: HelpEngine +
+  serve-time transformers `render_json/claude_code/marketplace/cli` +
+  mcp), and attune-ai's **`attune.help` facade** (re-exports
+  `.generator`←attune_author, `.engine`←attune_help — what the live MCP
+  server calls). `manifest.py`/`staleness.py`/`freshness/` are
+  DUPLICATED across the two libs (consolidation debt); attune-help's
+  transformers are serve-time render, NOT projection — no overlap with
+  the build-time projector. Pairs with the "verify-first" /
+  "registered ≠ working" family — the master file also corrected four
+  pieces of fiction the LLM corpus carried (a non-existent CLI, an
+  async fn documented sync + wrong import package, properties
+  documented as method calls, a `.state.json` that is actually an HTML
+  comment) — verify every code ref before promoting LLM-generated docs
+  to canon.
+
+- **help-docs projector pilot (T2 execution, 2026-06-21) — four
+  execution-side realities the spec text didn't predict; verify the
+  LIVE consumer + the ACTUAL regen tooling, not the doc's named API**:
+  executing the `help-docs-single-source` pilot (project `spec-engine`
+  + `models` from `content/features/<F>.md` via
+  `scripts/project_features.py`) surfaced four durable gotchas. They
+  pair with the "spec-named work-scope drifts from code reality" and
+  "verify-first applies to infra/config" lessons — same discipline,
+  applied to the help/docs build chain.
+  - **The serve check named the WRONG consumer.** The T2 doc's
+    acceptance check was
+    `attune_help.HelpEngine(template_dir=".help/templates").lookup("spec-engine")`.
+    That silently returns `None`: `HelpEngine.generated_dir` only uses
+    the override dir when it contains `cross_links.json`, and the
+    bundled/HelpEngine layout is **kind-pluralized**
+    (`concepts/<F>.md`, `references/<F>.md`) — NOT the
+    **feature-dir** layout (`.help/templates/<F>/<kind>.md`) that
+    attune-author writes. The REAL consumer of the feature-dir layout
+    is `attune.ops.help_data` (the ops living-docs dashboard:
+    `corpus_root = project_root/.help/templates`, `get_template(cfg,
+    F, kind)`), plus `attune.help.preamble`. Verify serve through
+    `help_data.get_template`/`list_features` (with
+    `PYTHONPATH=<worktree>/src` + the main venv for `[ops]` extras),
+    not the doc-named HelpEngine. Separately, the FRAMEWORK's own help
+    (`attune help <cat>`) reads `plugin/help/generated/` (kind-
+    pluralized, has `cross_links.json`) — a THIRD corpus, distinct
+    from the per-project `.help/templates/`.
+  - **DD5 (stop regen clobbering projected content) is all-or-nothing
+    per feature — there is no per-kind knob.** `.help/features.yaml`
+    entries are only `description`/`files`/`tags` (+ doc-side
+    `doc_kinds`/`doc_paths`/`arch_path`); no `help_kinds`/`skip_kinds`.
+    The weekly `help-freshness.yml` runs `attune-author generate <F>
+    --help-dir .help --project-root . --all-kinds` per **stale**
+    feature (stale = `source_hash` mismatch). So "regenerate only faq,
+    skip the other 10" is NOT expressible. Two mechanisms exist:
+    (A) remove the whole feature from `features.yaml` (chosen — D9;
+    faq freezes but stays on disk + served), or (B) mark the 10
+    projected files `maintenance: manual` / legacy `status: manual`
+    (generator skips them when run WITHOUT `--overwrite`; faq keeps
+    regenerating). (B)'s wart: a projected file's `source_hash` is the
+    MASTER-file hash, which never matches the code-derived hash
+    `check_staleness` expects → the feature reports **perpetually
+    stale** and the weekly job churns faq every run. Clean long-term
+    fix is an attune-author `maintenance: projected` contract that
+    BOTH the generator skips AND `check_staleness` ignores.
+  - **The projector's `_wrap_help` emits NO `# H1`** (only `_wrap_docs`
+    does). The ops dashboard derives a card title from the first H1
+    (`help_data._title_from_content`); projected `.help` bodies open at
+    `## `, so titles degrade to `"<F> / <kind>"`. Graceful, not a
+    break — fix is a one-liner in attune-author `_wrap_help` mirroring
+    `_wrap_docs`.
+  - **Tutorial resists pure projection.** `DOCS_PAGE_SECTIONS
+    ["tutorial"] = ["Tasks"]` renders the Tasks section verbatim — a
+    how-to duplicate with none of a tutorial's "what you'll build" arc.
+    Keep tutorials hand-authored; drive it via `skip_kinds=("faq",
+    "tutorial")` in the driver (canonical fix: drop `tutorial` from
+    `DOCS_PAGE_SECTIONS`). Also: mkdocs `exclude_docs` wholesale-
+    excludes `architecture/`, so projected `docs/architecture/<F>.md`
+    needs a per-feature `!architecture/<F>.md` re-include to publish.
+  - **CLI grounding is enforced by a LIVE check.** `cli_refs`
+    fact-check runs the real `attune <sub> --help` for every backtick
+    `` `attune <sub> --flag` `` in the master file and flags unknown
+    flags — proven by injecting a fake `--bogus-flag` (one finding) vs
+    0 findings on real flags. Author CLI content from real `--help`,
+    never from memory.
+  - **Verification has LAYERS, and each catches a different class —
+    static fact-check < adversarial LLM review < executing the code.**
+    Reviewing the two master files (2026-06-21) the static
+    `fact_check` (symbols/imports/CLI-flags exist) passed clean, then
+    an adversarial LLM reviewer found behavioral fiction the
+    fact-checker is blind to: `models.md` documented `AuthMode.AUTO` as
+    purely size-based when `get_recommended_mode` branches on
+    `subscription_tier` FIRST (default PRO → always API, size never
+    consulted), `estimate_cost` keys named `cost`/`tokens` that are
+    actually `monetary_cost`/`tokens_used`, and `setup_completed`
+    framed as a setup signal when it defaults `True`. But the LLM
+    review STILL missed a runtime bug only a human (or executing the
+    code) catches: `PipelineOrchestrator.run_all` is `async def`, yet
+    `spec-engine.md`'s Quickstart + 3 task examples called it
+    synchronously and the Comparison table said the pipeline layer was
+    a "Synchronous call" — a systematic async error TWO adversarial
+    reviewers and the fact-checker all passed. Rule: for any doc whose
+    bar is fiction-free, run all three layers — and for code examples
+    specifically, grep `async def` for every public callable used and
+    confirm the example awaits it (or actually compile/run the block).
+    "Symbols exist" ≠ "behavior is as described" ≠ "the example runs."
+    Tracked as follow-up P5 (add example-execution to fact_check).
+
+- **A task that directs work in a worktree DIFFERENT from the
+  session's worktree is blocked by the `worktree_path_guard`
+  PreToolUse hook — switch the session in with
+  `EnterWorktree(path=...)`, don't fight the guard or fall back to
+  Bash `cd`**: 2026-06-21, executing T2–T4 of the help-docs-rollout-gate
+  spec, the prompt said "work in
+  `.claude/worktrees/kind-elgamal-9e28c4`" but the session was rooted
+  in a different worktree (`quizzical-bartik-a609fe`). The first
+  `Edit` to `kind-elgamal`'s `pyproject.toml` was BLOCKED:
+  `[worktree-path-guard] BLOCKED Write/Edit … these don't match — the
+  write would land in a different tree than the one you're working
+  in`. The fix is **not** to use the bare path or `git -C`; it is to
+  switch the session's working tree: load `EnterWorktree` via
+  ToolSearch and call `EnterWorktree(path=<abs worktree path>)` (the
+  path must already appear in `git worktree list` — this enters an
+  EXISTING worktree, distinct from the `name=` form that CREATES one).
+  After the switch, Edit/Write/Bash all target the intended worktree,
+  the guard passes, and `.venv` etc. resolve there. Two corollaries:
+  (1) Bash cwd RESETS to the session worktree between calls anyway, so
+  pre-switch you must `cd <abs>` inside every compound command — after
+  the switch you don't; (2) prefer reusing the prior session's
+  worktree (it carries the in-flight branch + commits — here a T1 spec
+  commit + a T3 hook commit) over creating a fresh one. Pairs with the
+  "create a new worktree to continue last session = reuse the existing
+  one" and "Write to a bare main path from a worktree lands on main"
+  lessons — same family (locating the right worktree), this one is the
+  session-is-in-the-WRONG-worktree surface and its `EnterWorktree`
+  remedy.

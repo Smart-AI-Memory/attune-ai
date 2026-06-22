@@ -76,6 +76,16 @@ def run_maintenance(
 
     result = MaintenanceResult(staleness=report)
 
+    # Single-sourced (status: manual) features are excluded from the
+    # staleness report by check_staleness; surface them here so a run
+    # reports what it deliberately left alone instead of silently.
+    candidates = features if features else list(manifest.features.keys())
+    result.skipped_manual = [
+        name
+        for name in candidates
+        if (feat := manifest.features.get(name)) is not None and feat.is_manual
+    ]
+
     if dry_run or report.stale_count == 0:
         return result
 

@@ -99,7 +99,7 @@ Redis coordination mixins better than "user demand" did:
   capability — the opposite of "align with best practice."
 - **PatternStaging** (stage → review → promote/reject) → **capture.**
   No vendor-native equivalent; it's an attune-domain workflow.
-  Spec: [`pattern-review-queue`](../specs/pattern-review-queue/requirements.md).
+  Spec: [`pattern-review-queue`](../specs/archive/pattern-review-queue/requirements.md).
 - **AMS/Redis memory path** → **invest.** Strongest alignment, most
   claimable; add the Memory-tool bridge.
 

@@ -1,6 +1,6 @@
 # Usage Signals — Decisions
 
-**Status:** Phase 2b implemented (2026-06-16) — pending deploy/migration ·
+**Status:** R6 spend alarm shipped (2026-06-20) · Phase 2b live (D8) ·
 Phase 2 scoped (2026-06-15) · Phase 0 complete (2026-06-11)
 
 ## D1 — Phase 0 baseline snapshot (2026-06-11)
@@ -474,3 +474,48 @@ persistence path. Design:
 
 Default stays OFF; this only widens *where the ask reaches*. Remaining:
 Phase 2c Reach dashboard, R5/R6.
+
+## D13 — R6 spend alarm shipped (2026-06-20)
+
+R6 ("the $1,200-night class of event must be visible within a day") is
+implemented and surfacing on the ops dashboard home page. New code in
+`src/attune/ops/data.py`: a pure `spend_alarm()` verdict, a
+`read_daily_spend()` local reader, and a `build_spend_alarm()` source
+selector; an "API spend watch" panel in `home.html` (CSS in `main.css`);
+wired into the home route. Tests: `tests/unit/ops/test_spend_alarm.py`
+(18 tests, full ops suite green).
+
+**Two triggers, either raises the alarm:**
+
+1. **Daily anomaly** vs a trailing baseline of prior *active* (non-zero)
+   days — comparing today against a typical *active* day, not against
+   quiet days whose zeros would make any normal day look anomalous.
+   - `stddev > 0` → z-score; flag at `z >= 3.0`.
+   - **`stddev == 0` (flat history) → the spec's explicit multiplier
+     fallback:** flag when `today > baseline_mean * 3`. A variance-free
+     baseline yields no z-score, so the multiplier stands in. Below
+     3 active prior days → `insufficient_data` (anomaly judgment skipped;
+     the panel still shows today + the ceiling gauge).
+2. **Ceiling approach** — month-to-date `>= 80%` of the `$350` monthly
+   API ceiling (org 7edead08; see the `user_monthly_spend_budget`
+   memory). Fires independently of baseline history, so it makes
+   "approach to the cap" visible even on a fresh install.
+
+**Source precedence — a deliberate refinement of the task's named
+source.** The session brief pointed at local `usage.jsonl` (the
+`scripts/ci_report_api_cost.py` cost field, bucketed by `ts`). But the
+$1,200 burn lived on **CI**, whose spend never reaches Patrick's local
+`usage.jsonl` (confirmed: local telemetry showed only ~$126/mo that
+month). Building R6 *only* on local telemetry would be structurally blind
+to the exact event class R6 exists to catch. So `build_spend_alarm()`
+**prefers the account-level admin cost-report** (`anthropic_cost.py`'s
+`by_day` + `month_to_date_usd`, already fetched on the home route — no
+extra API call), which captures everything billed to the org including
+CI, and falls back to local `usage.jsonl` (the named source) when no
+admin key is configured. The verdict carries `source` ("account" /
+"local") and the panel says so; the local path appends a "CI spend not
+counted" note so the blind spot is explicit, not silent.
+
+The `ts`-not-`timestamp` field discipline (the #867 bug that made Home
+read zero) is honored in `read_daily_spend()` with a `timestamp` legacy
+fallback. Remaining: Phase 2c Reach dashboard, R5 telemetry watchdog.

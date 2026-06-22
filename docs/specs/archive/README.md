@@ -6,9 +6,14 @@ nothing is deleted. The whole `docs/specs/` tree — including this
 `archive/` subdir — is excluded from the mkdocs build, so archived
 specs never affect the strict docs build.
 
-Archived 2026-06-04 by the spec-backlog triage pass. See the full
-rationale and evidence in
-[`../spec-backlog-triage-2026-06-04/matrix.md`](../spec-backlog-triage-2026-06-04/matrix.md).
+Archived in two passes:
+
+- **2026-06-04** — original triage (69 → 41). See
+  [`spec-backlog-triage-2026-06-04/matrix.md`](spec-backlog-triage-2026-06-04/matrix.md).
+- **2026-06-20** — delta pass (48 → 27), closing the gap where prior
+  KEEP-items shipped but were never moved here. See
+  [`../spec-backlog-triage-2026-06-20/matrix.md`](../spec-backlog-triage-2026-06-20/matrix.md)
+  and the dated section at the bottom of this file.
 
 ---
 
@@ -74,12 +79,61 @@ than moved here, since telemetry stays the active home for that work.
 ## Collaboration-loop arc note
 
 `multi-actor-bulletin → bulletin-curator → pipeline-learner` is an
-intentionally sequenced arc. Only the **completed base**
-(multi-actor-bulletin — capability shipped and live in code) is
-archived. The two active members stay in the live backlog:
+intentionally sequenced arc. As of the 2026-06-20 pass, **two of three
+members are complete and archived**:
 
-- `bulletin-curator` — Phase 1 sources shipped; orchestrator remains.
-- `pipeline-learner` — draft; curator wiring to be clarified.
+- `multi-actor-bulletin` — base capability shipped and live in code
+  (archived 2026-06-04).
+- `bulletin-curator` — complete; Phases 2–3 shipped in v8.0.0 (#657),
+  Task 4.1 was optional manual verify (archived 2026-06-20).
+- `pipeline-learner` — **still active** (draft); curator wiring to be
+  clarified before building. Stays in the live backlog.
 
-Archiving the base spec record does not remove the capability or break
-the arc.
+Archiving the completed members does not remove the capability or
+break the arc; `pipeline-learner` remains the open downstream member.
+
+---
+
+## 2026-06-20 delta-pass additions
+
+Archived this pass — prior-KEEP items that shipped since 2026-06-04,
+three VERIFY items reconciled to complete, the prior triage card, and
+one deferred fold. Full evidence:
+[`../spec-backlog-triage-2026-06-20/matrix.md`](../spec-backlog-triage-2026-06-20/matrix.md).
+
+### Complete — shipped since the prior pass
+
+| Spec | Why archived |
+|---|---|
+| agent-surface-parallelism-evaluation | RETIRED 2026-05-29 — orchestrator ships in `deep_review`. |
+| anthropic-cost-integration | Complete 2026-06-09 — `ops/anthropic_cost*` shipped. |
+| attune-verify | Complete 2026-06-09 — all build tasks done. |
+| ci-matrix-right-sizing | Complete — slim matrix implemented (#937). |
+| consolidate-claude-md-lessons | Complete 2026-06-06 (#646 + #647). |
+| doc-fiction-cleanup | Complete — cleanup executed. |
+| docs-completeness-audit | Complete 2026-06-09 (#714–#717). |
+| drift-guards-to-generators | Complete 2026-06-19 — conversions 1 + 2 (#938). |
+| ops-help-page | Complete — `ops/routes/help.py` + `ops/help_data.py` shipped. |
+| ops-session-discovery-cli | Complete — conclusion reached (recommendation: DEFER). |
+| pattern-review-queue | Complete 2026-06-09 — R1–R5 + R8 shipped (#689). |
+| polish-cost-reduction | Complete 2026-06-10 — both levers shipped. |
+| public-help-site | Complete 2026-06-09 — `attune-ai-dev/build_help.py` shipped. |
+| sdk-subprocess-isolation | Complete 2026-06-10 — all four phases shipped. |
+| spec-status-self-truthing | Complete — shipped in #567. |
+| workflow-path-arg-unification | Complete — all 5 target workflows accept `path`. |
+| workflow-result-formatting | Complete 2026-06-12 — `WorkflowReport` shipped. |
+
+### VERIFY items reconciled to complete
+
+| Spec | Why archived |
+|---|---|
+| bulletin-curator | requirements + tasks "complete, shipped v8.0.0 (#657)"; only optional Task 4.1 remained. (Arc member — see arc note.) |
+| dashboard-pending-writes-journal | requirements + design "complete — Phase 1 shipped (`pending_writes.py` + routes + tests, #469, #492)". |
+| windows-xdist-flakes | design "complete (v1, 2026-06-10)"; reopen only if flakes resurface. |
+
+### Prior triage card + deferred fold
+
+| Spec | Why archived |
+|---|---|
+| spec-backlog-triage-2026-06-04 | The prior triage card; its decisions were executed. |
+| ops-dashboard-qa-2026-05-14 | Folded into `ops-dashboard-polish` — the 2026-06-04 pass recommended this MERGE; executed now. |

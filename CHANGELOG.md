@@ -10,6 +10,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.105). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857). Locked at 0.2.105 rather than 0.2.102 because 0.2.102's bundled Claude Code CLI (2.1.178) emitted `is_error:true` on a `success` result and broke the auth integration loop; 0.2.105 bundles CLI 2.1.183 which returns `is_error:false`. See `docs/specs/claude-agent-sdk-0-2-migration/`.
+- **`[author]` extra: `attune-author>=0.6.2,<0.19` → `>=0.19.0,<0.20`.** Admits attune-author 0.19.0, which ships the deterministic help-docs projector (`attune_author.projector`). Unblocks the `scripts/project_features.py` driver for the help-docs-single-source pilot. The floor jump is safe — 0.19.0 is a strict superset (projector added, nothing removed) — and `[author]` is an optional authoring extra, so vanilla `pip install attune-ai` is unaffected.
 
 ## [8.6.2] — 2026-06-20
 

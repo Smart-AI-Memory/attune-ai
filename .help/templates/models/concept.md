@@ -3,65 +3,84 @@ type: concept
 name: models-concept
 feature: models
 depth: concept
-generated_at: 2026-06-04T23:45:26.739351+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-21T18:43:46.304112+00:00
+source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
 status: generated
 ---
 
-# Models
+# LLM authentication, provider routing, and tier management
 
-The `models` subsystem is attune's unified layer for selecting which LLM runs a given task, how it authenticates, and what happens when a provider fails.
+## Overview
 
-## Core responsibilities
+The models subsystem decides **which** model runs a task, **how** it
+authenticates, and **what** it costs. It is the cost-optimization core:
+every task is classified into a tier (`CHEAP`, `CAPABLE`, `PREMIUM`),
+each tier maps to a concrete model in a registry, and an auth strategy
+chooses between your Claude subscription and the Anthropic API per call.
 
-Three concerns work together here:
+It owns three concerns: the **registry** (models, tiers, pricing), the
+**router** (task → tier → model selection, including adaptive routing
+from telemetry), and **auth/provider configuration** (subscription vs
+API, persisted to `~/.attune/`).
 
-1. **Model registry and tier mapping.** `MODEL_REGISTRY` catalogs available models grouped by tier (`CHEAP_TASKS`, `CAPABLE_TASKS`, `PREMIUM_TASKS`). When a workflow stage runs, the registry answers "which model is appropriate for this task type at this cost ceiling?"
+It is **not** responsible for executing workflows, tracking
+cross-session telemetry beyond routing stats, or managing memory —
+those live in their own subsystems. You touch the models layer when you
+need to know why a task picked a given model, change provider/auth, or
+read pricing for a cost estimate.
 
-2. **Adaptive routing.** `AdaptiveModelRouter` consults historical telemetry — not static configuration — to pick the best model for a given workflow and stage. It tracks per-model outcomes in `ModelPerformance`, which records `success_rate`, `avg_latency_ms`, `avg_cost`, and `recent_failures` for each task. The derived `quality_score` property combines these signals into a single ranking value. You can also call `recommend_tier_upgrade` to find out whether moving to a higher tier would improve outcomes on a specific workflow stage.
+Two CLI namespaces front this subsystem: `attune auth` (authentication
+strategy) and `attune provider` (provider selection). The Python API
+under `attune.models` is the programmatic equivalent.
 
-3. **Authentication strategy.** `AuthStrategy` decides whether a request should use a Claude subscription or the API directly (`AuthMode`), based on `SubscriptionTier` and module size thresholds. For a file with 800 lines of code, `get_recommended_mode` checks it against `small_module_threshold` (default 500) and `medium_module_threshold` (default 2000) to return the appropriate `AuthMode`. Cost estimates, pros/cons comparisons, and token projections are available through `estimate_cost`, `get_pros_cons`, and `estimate_tokens`.
+## Concepts
 
-## How the pieces fit together
+Three ideas compose the whole subsystem:
 
-A request flows through the subsystem in this order:
+1. **Tiers** — `ModelTier` is a three-value enum (`CHEAP`, `CAPABLE`,
+   `PREMIUM`). Every task type maps to exactly one tier via
+   `TASK_TIER_MAP`; unknown tasks default to `CAPABLE`.
+2. **Registry** — `MODEL_REGISTRY` is a nested
+   `dict[str, dict[str, ModelInfo]]` keyed by provider then tier. Each
+   `ModelInfo` carries the model `id`, per-million input/output cost,
+   and capability flags. `get_model(provider, tier)` resolves one.
+3. **Auth strategy** — `AuthStrategy` decides, per module, whether to
+   run on your subscription or the API. `AuthMode` is `SUBSCRIPTION`,
+   `API`, or `AUTO` (size-based). The strategy is persisted at
+   `~/.attune/auth_strategy.json` (`AUTH_STRATEGY_FILE`).
 
-```
-task type + workflow stage
-        │
-        ▼
-AdaptiveModelRouter.get_best_model()   ← reads ModelPerformance from telemetry
-        │
-        ▼
-EmpathyLLMExecutor.run()               ← wraps the selected model with routing
-        │
-        ▼
-LLMResponse                            ← standardized result with model_id,
-                                          tier, cost_estimate, latency_ms
-```
+### The three tiers
 
-`ExecutionContext` carries per-call metadata — `workflow_name`, `step_name`, `provider_hint`, `tier_hint` — that `EmpathyLLMExecutor` can use to override the default routing decision.
+| Tier | Enum value | Use for |
+|------|-----------|---------|
+| `CHEAP` | `"cheap"` | summarize, classify, triage, lint, format, simple Q&A |
+| `CAPABLE` | `"capable"` | generate code, fix bugs, review security, write tests, refactor |
+| `PREMIUM` | `"premium"` | coordinate, synthesize, architectural decisions, final review |
 
-## Resilience
+`get_tier_for_task(task_type)` returns the `ModelTier` for a task
+string or `TaskType`; `get_tasks_for_tier(tier)` lists the task strings
+in a tier.
 
-`CircuitBreaker` sits between the executor and each provider. It tracks `failure_count` and `last_failure` in a `CircuitBreakerState` record and opens the circuit after a configurable `failure_threshold` (default 5). Once open, the breaker blocks calls to that provider until `recovery_timeout_seconds` (default 60) elapses. `ResilientExecutor` builds on this with `RetryPolicy` and `FallbackPolicy` so that a failed primary provider falls back to an alternative automatically.
+### Core data structures
 
-## Authentication configuration
+| Type | What it represents |
+|------|--------------------|
+| `ModelInfo` | One model: `id`, `provider`, `tier`, `input_cost_per_million`, `output_cost_per_million`, `max_tokens`, `supports_vision`, `supports_tools`. Convenience properties `cost_per_1k_input` / `cost_per_1k_output` / `model_id` / `name` are read-only. |
+| `AuthStrategy` | Auth configuration: `subscription_tier`, `default_mode`, the small/medium LOC thresholds, and `setup_completed`. Note `setup_completed` is a plain field, not a method. |
+| `LLMResponse` | A completed call: `content`, `model_id`, `provider`, `tier`, `tokens_input`, `tokens_output`, `cost_estimate`, `latency_ms`. Aliased properties `cost`, `total_tokens`, `success`, `input_tokens`, `output_tokens` are read-only. |
+| `ProviderConfig` | Provider selection: `mode` (`ProviderMode.SINGLE`), `primary_provider`, `available_providers`, `cost_optimization`. |
 
-`AuthStrategy` is serializable — `to_dict` / `from_dict` and `save` / `load` persist configuration to `AUTH_STRATEGY_FILE`. The CLI surfaces this through four commands:
+### How auth resolves a mode
 
-- `cmd_auth_setup` — interactive first-time configuration
-- `cmd_auth_status` — show the current strategy
-- `cmd_auth_recommend` — get a recommendation for a specific file
-- `cmd_auth_reset` — clear the saved configuration
-
-`configure_auth_interactive` drives the setup flow programmatically when you need to embed it outside the CLI.
-
-## When this matters
-
-You interact with this subsystem whenever you need to:
-
-- Control which model tier handles a specific workflow stage, using `get_best_model` with `max_cost` or `max_latency_ms` constraints
-- Understand why routing chose a particular model, using `get_routing_stats` over a rolling window (default 7 days)
-- Switch between subscription and API authentication without changing call sites, by updating `AuthStrategy.default_mode`
-- Inspect provider health, using `CircuitBreaker.get_status`
+`AuthStrategy.get_recommended_mode(module_lines)` resolves by
+**subscription tier first, not by size**. If `default_mode` is not
+`AUTO`, it returns that. In `AUTO`, the `PRO` and `API_ONLY` tiers
+always return `AuthMode.API` (pay-per-token is more economical there)
+and module size is never consulted. Only `MAX` / `ENTERPRISE` tiers use
+the size thresholds: modules under `small_module_threshold` (500) — and
+medium modules under `medium_module_threshold` (2000) when
+`prefer_subscription` is set — favor the subscription; larger ones
+favor the API for its 1M context window. The zero-config default tier
+is `PRO`, so out of the box `AUTO` returns `API` regardless of size.
+`estimate_cost(module_lines, mode)` returns the projected cost for a
+given mode so you can compare before committing.

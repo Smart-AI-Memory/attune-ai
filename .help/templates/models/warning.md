@@ -3,55 +3,52 @@ type: warning
 name: models-warning
 feature: models
 depth: warning
-generated_at: 2026-06-04T23:45:26.760258+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-21T18:43:46.304112+00:00
+source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
 status: generated
 ---
 
-# Models cautions
+# LLM authentication, provider routing, and tier management
 
-## What to watch for
+## Failure modes
 
-The `models` feature spans LLM authentication strategy management, adaptive provider routing, and circuit-breaker resilience. The risks below apply whether you are calling the Python API directly or using the CLI commands in `src/attune/models/auth_cli.py`.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `ValueError` from `get_model` | Provider other than `"anthropic"` passed | Pass `"anthropic"`; this provider set is single today | high |
+| `get_model(...)` returns `None` | No model registered for that provider/tier | Check the tier value (`ModelTier.CHEAP.value`, not the enum) and guard the result | high |
+| `ValueError` from `get_tasks_for_tier` | Unknown tier argument | Pass a real `ModelTier`, not a raw string | medium |
+| A task routes to `CAPABLE` unexpectedly | The task string is unknown, so it defaulted | Call `is_known_task` first; add the task to the tier map if it should be classified | medium |
+| `AUTO` returns `API` on a PRO account regardless of module size | `get_recommended_mode` resolves by tier first; `PRO`/`API_ONLY` always return `API` | Expected — only `MAX`/`ENTERPRISE` tiers use size-based selection | medium |
+| Auth always picks the mode you set, ignoring `AUTO` logic | `default_mode` is `SUBSCRIPTION` or `API`, not `AUTO` | Set `default_mode = AuthMode.AUTO` so it defers to `get_recommended_mode` | medium |
+| `await` error calling an executor's `run` | `LLMExecutor.run` is async and was called without `await` | `await executor.run(...)` or drive it with `asyncio.run` | medium |
+| `AdaptiveModelRouter` returns the same model regardless of cost | Fewer than `MIN_SAMPLE_SIZE` calls recorded | Accumulate telemetry; until then it falls back to static defaults | low |
 
-## Risk areas
+### Risk areas
 
-### `cmd_auth_reset()` permanently clears your stored strategy
+- **Tier value vs enum.** Registry lookups take the tier **value**
+  (`tier.value`), while routing functions accept either a `ModelTier`
+  or its string. Mixing the two silently returns `None` from
+  `get_model`. Pass `tier.value` to `get_model`.
+- **Unknown tasks default silently.** `get_tier_for_task` never raises;
+  an unrecognized task quietly becomes `CAPABLE`. Validate with
+  `is_known_task` when the task source is untrusted.
+- **Cost fields are per-million on `ModelInfo`, per-1k on the
+  properties.** `input_cost_per_million` is the stored field;
+  `cost_per_1k_input` is the derived property. Don't mix the units when
+  computing an estimate.
+- **`get_provider_config` is a lazy global.** It loads once and caches;
+  call `reset_provider_config()` after writing a new config file if you
+  need the change to take effect in a long-lived process.
 
-`cmd_auth_reset()` deletes the file at `AUTH_STRATEGY_FILE`. There is no confirmation prompt. Running it in a shared or CI environment removes the strategy for every process that calls `get_auth_strategy()`, causing them to fall back to defaults (`AuthMode.AUTO`, `SubscriptionTier.PRO`, `prefer_subscription=True`). Run `cmd_auth_status()` first to record the current configuration if you may need to restore it.
+### Diagnosis order
 
-### `AdaptiveModelRouter.get_best_model()` silently falls back when filters are too strict
-
-`get_best_model()` accepts `max_cost`, `max_latency_ms`, and `min_success_rate` filters. If no model in telemetry satisfies all three constraints, the router returns a fallback rather than raising an error. A `min_success_rate` of `0.8` (the default) combined with a tight `max_cost` can silently route tasks to a lower-quality model. Call `get_routing_stats(workflow, stage)` after tightening constraints to verify the model being selected is the one you expect.
-
-### `CircuitBreaker` state is not persisted across process restarts
-
-`CircuitBreakerState` holds `failure_count`, `last_failure`, `is_open`, and `opened_at` in memory only. When a process restarts — including test runners that spawn subprocesses — the circuit breaker resets to closed regardless of recent provider failures. A provider that was open at shutdown will receive requests immediately on restart. If you need persistent open/closed state, serialize it yourself via `CircuitBreaker.get_status()` and restore it before traffic resumes.
-
-### `AuthStrategy.loc_to_tokens_multiplier` drives cost estimates; the default may not fit your codebase
-
-`estimate_cost()` and `estimate_tokens()` both multiply lines of code by `loc_to_tokens_multiplier` (default `4.0`). Codebases with dense imports, long strings, or generated code can have actual token-to-line ratios well above 4.0, causing cost estimates returned to callers to be understated. Calibrate this field against a representative sample before relying on `estimate_cost()` for budget decisions.
-
-### `LLMResponse` compatibility aliases mask field renames
-
-`LLMResponse` exposes `input_tokens`, `output_tokens`, `model_used`, and `cost` as read-only properties that alias `tokens_input`, `tokens_output`, `model_id`, and `cost_estimate` respectively. Code that writes to the alias names (e.g., `response.cost = 0`) will not update the underlying field. Always read and write using the canonical field names (`tokens_input`, `tokens_output`, `model_id`, `cost_estimate`) to avoid silent no-ops.
-
-### `cmd_auth_recommend()` result depends on the file's line count at call time
-
-`cmd_auth_recommend()` calls `count_lines_of_code()` on the target file and passes the result to `AuthStrategy.get_recommended_mode()`, which applies the `small_module_threshold` (default 500 lines) and `medium_module_threshold` (default 2000 lines) breakpoints. If the file is mid-edit when you run the recommendation, the line count — and therefore the recommendation — reflects the unsaved state. Save the file before calling `cmd_auth_recommend()` for a stable result.
-
-## How to avoid problems
-
-1. **Verify routing decisions with `get_routing_stats()`** before deploying constraint changes to `get_best_model()`. The method accepts `workflow`, an optional `stage`, and a `days` lookback window, and returns the full distribution of model selections.
-
-2. **Snapshot `CircuitBreaker.get_status()` in integration tests** that exercise failure paths. Compare the snapshot before and after to confirm the breaker opens and closes as expected, rather than relying on in-memory state that resets between test sessions.
-
-3. **Use the canonical `AuthStrategy` fields** (`small_module_threshold`, `medium_module_threshold`, `loc_to_tokens_multiplier`) when serializing and deserializing via `to_dict()` / `from_dict()`. The compatibility properties on `LLMResponse` are read aliases, not writeable fields.
-
-4. **Treat `AUTH_STRATEGY_FILE` as shared state** in multi-process setups. `AuthStrategy.save()` and `AuthStrategy.load()` both operate on the same path; concurrent writes are not coordinated.
-
-## Source files
-
-- `src/attune/models/**`
-
-**Tags:** `models`, `auth`, `llm`
+1. Print the resolved tier: `get_tier_for_task(task)` — confirms the
+   classification before any model lookup.
+2. Print the model: `get_model("anthropic", tier.value)` — `None` means
+   a registry gap or a tier passed as an enum instead of `.value`.
+3. Inspect auth: `attune auth status --json` — confirms
+   `setup_completed` and the active mode.
+4. Inspect provider: `attune provider show` — confirms the provider and
+   mode the lookups will use.
+5. For routing surprises, read `AdaptiveModelRouter.get_routing_stats(
+   workflow, stage)` to see sample size and per-model performance.

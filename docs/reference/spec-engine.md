@@ -1,129 +1,69 @@
----
-type: cli-reference
-name: spec-engine
-tags: [spec, pipeline, claude-code]
----
+# Spec Engine
 
-# Spec Engine CLI reference
+## Reference
 
-Spec-driven development with approval loops.
+The spec engine exposes its public API through two packages:
+`attune.pipeline` (execution) and `attune.spec` (state and
+presentation). `execute_with_approval` lives in `attune.spec.runner`.
 
-## Description
+### Pipeline execution
 
-`spec-engine` executes spec plan files through a quality-gated pipeline. It reads a plan file containing XML task blocks, runs each task in order through `PipelineOrchestrator`, and evaluates quality gates after each task. The command supports per-task approval loops and can resume in-progress plans using saved `SpecState`.
+| Symbol | Purpose |
+|--------|---------|
+| `PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)` | Load a plan file and prepare tasks for execution with optional gate overrides. |
+| `PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)` | **Async.** Execute all tasks, awaiting an optional async callback after each; returns a `PipelineResult`. The callback receives `(task, result)` and may return `"redo"` / `"auto"` / `"stop"` (or `None`/`"approve"` to continue). |
+| `PipelineOrchestrator.run_gates_for_task(task)` | Run quality gates for a single `DecomposedTask` and return a `TaskResult`. |
+| `read_spec(plan_path)` | Parse a plan file and extract its XML task blocks into `DecomposedTask` objects. Raises `FileNotFoundError` (missing file) or `ValueError` (empty path). |
+| `execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)` | **Async.** Execute a spec with an interactive per-task approval loop. Import from `attune.spec.runner`. |
 
-## Usage
+### State management
 
-```
-spec-engine [OPTIONS] SUBCOMMAND [ARGS]
-```
+| Symbol | Purpose |
+|--------|---------|
+| `load_state(plan_path)` | Read a `SpecState` from the HTML comment embedded in a plan file; returns `None` if no state exists. |
+| `save_state(state)` | Write or update the spec-state comment in a plan file. |
+| `clear_state(plan_path)` | Remove the spec-state comment from a plan file. |
+| `find_resumable_plans(plans_dir='.claude/plans')` | Return all `SpecState` objects whose plans have incomplete execution. |
+| `get_pending_tasks(tasks, state)` | Filter a task list to those whose IDs are not in `state.completed`. |
 
-## Options
+### Presentation
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--skip-gates` | `false` | Skip quality gate evaluation for all tasks |
-| `--skip-tests` | `false` | Skip test execution for all tasks |
-| `--skip-simplify` | `false` | Skip the simplification step for all tasks |
-| `--help` | — | Show help and exit |
+| Symbol | Purpose |
+|--------|---------|
+| `present_tasks(tasks, state)` | Format a task list as a markdown table, optionally annotated with completion state. |
+| `present_task_detail(task)` | Format a single task with its full acceptance criteria and metadata. |
+| `present_task_result(task, gate_result)` | Format execution output including quality-gate status and score. |
+| `format_progress_bar(completed, total)` | Render a visual progress indicator for a running pipeline. |
 
-## Subcommands
+### Result fields
 
-### `execute-with-approval`
+`TaskResult` fields you'll inspect most often:
 
-Execute a spec plan file with per-task approval. Calls `execute_with_approval(spec_path, on_task_complete, ...)` and pauses after each task so you can approve, redo, or auto-run remaining tasks. Respects `--skip-gates`, `--skip-tests`, and `--skip-simplify`.
+| Field | Type | Meaning |
+|-------|------|---------|
+| `quality_gate_passed` | `bool \| None` | Gate outcome; `None` when gates were skipped. |
+| `tests_passed` | `bool \| None` | Test outcome; `None` when tests were skipped. |
+| `gate_score` | `float \| None` | Numeric quality score from the gate. |
+| `severity` | `str` (property) | Classified severity of the gate result. |
+| `error` | `str \| None` | Error message if the task failed to execute. |
+| `cost` | `float` | Cost attributed to this task. |
 
-**Arguments:** `SPEC_PATH` — path to the plan file.
+`PipelineResult` top-level members:
 
----
+| Member | Type | Meaning |
+|--------|------|---------|
+| `success` | `bool` (property) | `True` only when all tasks executed and passed gates. |
+| `summary` | `str` (property) | Human-readable run summary. |
+| `tasks` | `list[TaskResult]` | Per-task outcomes. |
+| `total_cost` | `float` | Aggregated cost across all tasks. |
+| `duration_ms` | `int` | Wall-clock time for the full run. |
 
-### `read-spec`
+### Example output
 
-Read a plan file and extract its XML task blocks. Calls `read_spec(plan_path)` and prints the list of `DecomposedTask` objects.
+An approval run prints a progress bar, per-task gate results, and a
+final summary:
 
-**Arguments:** `PLAN_PATH` — path to the plan file.
-
-**Errors:**
-- Exits non-zero with `ValueError` if `PLAN_PATH` is empty.
-- Exits non-zero with `FileNotFoundError` if the file does not exist.
-
----
-
-### `present-tasks`
-
-Format all tasks from a plan as a markdown table. Calls `present_tasks(tasks, state)`. If a `SpecState` is available for the plan, completed tasks are marked accordingly.
-
-**Arguments:** `PLAN_PATH` — path to the plan file.
-
----
-
-### `present-task-detail`
-
-Print full details for a single task. Calls `present_task_detail(task)`.
-
-**Arguments:** `PLAN_PATH TASK_ID`
-
----
-
-### `present-task-result`
-
-Print a task's execution result with quality gate status. Calls `present_task_result(task, gate_result)`, including `gate_score`, `quality_gate_passed`, `tests_passed`, and `severity`.
-
-**Arguments:** `PLAN_PATH TASK_ID`
-
----
-
-### `format-progress-bar`
-
-Print a visual progress indicator. Calls `format_progress_bar(completed, total)`.
-
-**Arguments:** `COMPLETED TOTAL` — integers.
-
----
-
-### `get-pending-tasks`
-
-List tasks not yet recorded in `SpecState.completed`. Calls `get_pending_tasks(tasks, state)`.
-
-**Arguments:** `PLAN_PATH`
-
----
-
-### `load-state`
-
-Read the `SpecState` embedded as an HTML comment in a plan file. Calls `load_state(plan_path)`. Prints nothing and exits `0` if no state is present.
-
-**Arguments:** `PLAN_PATH`
-
----
-
-### `save-state`
-
-Write or update the `SpecState` HTML comment in a plan file. Calls `save_state(state)`. Updates `last_updated` to the current UTC timestamp.
-
-**Arguments:** `PLAN_PATH`
-
----
-
-### `clear-state`
-
-Remove the `SpecState` HTML comment from a plan file. Calls `clear_state(plan_path)`. After clearing, the plan can be executed from the beginning.
-
-**Arguments:** `PLAN_PATH`
-
----
-
-### `find-resumable-plans`
-
-List plan files under a directory that have incomplete execution state. Calls `find_resumable_plans(plans_dir)`. Defaults to `.claude/plans`.
-
-**Arguments:** `[PLANS_DIR]` — directory to search (default: `.claude/plans`).
-
-## Output
-
-`execute-with-approval` prints a progress bar, per-task quality gate results, and a final pipeline summary:
-
-```
+```text
 [========--] 4/5 tasks
 
 ✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
@@ -135,32 +75,4 @@ List plan files under a directory that have incomplete execution state. Calls `f
 Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
 ```
 
-`present-tasks` prints a markdown table:
-
-```markdown
-| ID  | Name                 | Status    |
-|-----|----------------------|-----------|
-| 1   | add-jwt-config       | completed |
-| 2   | token-service        | completed |
-| 3   | auth-middleware      | pending   |
-```
-
-`format-progress-bar` output:
-
-```
-[========--] 4/5 tasks
-```
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | All subcommand operations completed successfully |
-| `1` | Pipeline failure — one or more tasks did not pass quality gates (`PipelineResult.success` is `false`), a plan file was not found, or an invalid argument was supplied |
-
-## Related commands
-
-- `/spec` — interactive skill that drives `spec-engine` through a guided brainstorm, decompose, review, approve, and execute flow
-- `attune help-docs ref-skill-spec` — full reference for spec phases, quality gate severity levels, and plan file format
-
-<!-- attune-generated: source_hash=f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337 feature=spec-engine kind=cli-reference generated_at=2026-06-02 -->
+<!-- attune-generated: source_hash=2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1 feature=spec-engine kind=reference generated_at=2026-06-21 -->

@@ -3,52 +3,52 @@ type: error
 name: models-error
 feature: models
 depth: error
-generated_at: 2026-06-04T23:45:26.754109+00:00
-source_hash: 5adb390f8bab40245661da7d744647a071fca96494807648005429a8766e4254
+generated_at: 2026-06-21T18:43:46.304112+00:00
+source_hash: 234b0cd90506b69d0850593ea98bea4fd5db520bc09a02ed86d749c76b692459
 status: generated
 ---
 
-# Models errors
+# LLM authentication, provider routing, and tier management
 
-## Common error signatures
+## Failure modes
 
-Failures in the `models` feature fall into three categories: authentication strategy errors, provider routing failures, and circuit breaker trips.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `ValueError` from `get_model` | Provider other than `"anthropic"` passed | Pass `"anthropic"`; this provider set is single today | high |
+| `get_model(...)` returns `None` | No model registered for that provider/tier | Check the tier value (`ModelTier.CHEAP.value`, not the enum) and guard the result | high |
+| `ValueError` from `get_tasks_for_tier` | Unknown tier argument | Pass a real `ModelTier`, not a raw string | medium |
+| A task routes to `CAPABLE` unexpectedly | The task string is unknown, so it defaulted | Call `is_known_task` first; add the task to the tier map if it should be classified | medium |
+| `AUTO` returns `API` on a PRO account regardless of module size | `get_recommended_mode` resolves by tier first; `PRO`/`API_ONLY` always return `API` | Expected — only `MAX`/`ENTERPRISE` tiers use size-based selection | medium |
+| Auth always picks the mode you set, ignoring `AUTO` logic | `default_mode` is `SUBSCRIPTION` or `API`, not `AUTO` | Set `default_mode = AuthMode.AUTO` so it defers to `get_recommended_mode` | medium |
+| `await` error calling an executor's `run` | `LLMExecutor.run` is async and was called without `await` | `await executor.run(...)` or drive it with `asyncio.run` | medium |
+| `AdaptiveModelRouter` returns the same model regardless of cost | Fewer than `MIN_SAMPLE_SIZE` calls recorded | Accumulate telemetry; until then it falls back to static defaults | low |
 
-**Authentication errors** occur when `AuthStrategy` cannot be loaded or saved, or when `configure_auth_interactive()` receives invalid input. Look for:
+### Risk areas
 
-- `FileNotFoundError` — `AuthStrategy.load()` cannot find the file at the path defined by `AUTH_STRATEGY_FILE`.
-- `ValueError` — `AuthStrategy.from_dict()` receives a malformed or incomplete configuration dict, or `get_recommended_mode()` receives a `module_lines` value it cannot classify.
+- **Tier value vs enum.** Registry lookups take the tier **value**
+  (`tier.value`), while routing functions accept either a `ModelTier`
+  or its string. Mixing the two silently returns `None` from
+  `get_model`. Pass `tier.value` to `get_model`.
+- **Unknown tasks default silently.** `get_tier_for_task` never raises;
+  an unrecognized task quietly becomes `CAPABLE`. Validate with
+  `is_known_task` when the task source is untrusted.
+- **Cost fields are per-million on `ModelInfo`, per-1k on the
+  properties.** `input_cost_per_million` is the stored field;
+  `cost_per_1k_input` is the derived property. Don't mix the units when
+  computing an estimate.
+- **`get_provider_config` is a lazy global.** It loads once and caches;
+  call `reset_provider_config()` after writing a new config file if you
+  need the change to take effect in a long-lived process.
 
-**Provider routing errors** occur when `AdaptiveModelRouter.get_best_model()` cannot find a model that satisfies the given constraints (`max_cost`, `max_latency_ms`, `min_success_rate`). This typically means no `ModelPerformance` entry in the telemetry store meets all three thresholds simultaneously.
+### Diagnosis order
 
-**Circuit breaker trips** are raised by `CircuitBreaker` when `CircuitBreakerState.is_open` is `True` for a provider. `AllProvidersFailedError` indicates that every configured provider's circuit breaker is open and no fallback remains in the `FallbackStrategy`.
-
-## Where errors originate
-
-The following CLI entry points are the most common places where upstream callers first observe a failure:
-
-- `cmd_auth_setup()` — interactive setup; fails if the target path is not writable or if the user provides input that cannot be parsed into a valid `AuthStrategy`.
-- `cmd_auth_status()` — reads the saved strategy; fails with `FileNotFoundError` if setup has not been completed (`AuthStrategy.setup_completed` is `False` or the file is absent).
-- `cmd_auth_reset()` — deletes the saved strategy; fails if the file cannot be removed.
-- `cmd_auth_recommend()` — calls `count_lines_of_code()` then `get_recommended_mode()`; fails if the target file path does not exist or is not a valid Python file.
-- `main()` — the top-level CLI entry point; returns exit code `1` on any unhandled error from the above commands.
-
-Errors that originate deeper in routing or circuit-breaker logic (for example, inside `EmpathyLLMExecutor.run()`) propagate up through these commands, so the CLI exit code and stderr output are usually the first visible symptom.
-
-## How to diagnose
-
-1. **Read the exit code and stderr together.** `main()` returns `1` on failure. The stderr output names the exception type and message, which tells you which category — auth, routing, or circuit breaker — you are dealing with.
-
-2. **Check `CircuitBreaker.get_status()`.** If you see `AllProvidersFailedError`, call `get_status()` to inspect each provider's `CircuitBreakerState`. A state with `is_open: True` and a recent `opened_at` timestamp means the provider hit `failure_threshold` consecutive failures. Use `CircuitBreaker.reset()` to manually clear a specific provider while you investigate.
-
-3. **Inspect `ModelPerformance` fields for routing failures.** When `get_best_model()` fails to return a model, check the `success_rate`, `avg_latency_ms`, and `avg_cost` fields on the relevant `ModelPerformance` records. Compare them against the constraints you passed. A high `recent_failures` count alongside a low `success_rate` means the model has degraded and no longer clears the default `min_success_rate` of `0.8`.
-
-4. **Verify the auth strategy file.** Run `cmd_auth_status()` to confirm `setup_completed` is `True` and the strategy loaded from `AUTH_STRATEGY_FILE` is valid. If it is missing or corrupt, run `cmd_auth_setup()` to regenerate it, or call `AuthStrategy.load()` directly and inspect the returned object's fields.
-
-5. **Check `recommend_tier_upgrade()` output.** If routing consistently fails for a `(workflow, stage)` pair, call `AdaptiveModelRouter.recommend_tier_upgrade()`. A `True` return value means historical telemetry shows the current `SubscriptionTier` is insufficient for the workload.
-
-## Source files
-
-- `src/attune/models/**`
-
-**Tags:** `models`, `auth`, `llm`
+1. Print the resolved tier: `get_tier_for_task(task)` — confirms the
+   classification before any model lookup.
+2. Print the model: `get_model("anthropic", tier.value)` — `None` means
+   a registry gap or a tier passed as an enum instead of `.value`.
+3. Inspect auth: `attune auth status --json` — confirms
+   `setup_completed` and the active mode.
+4. Inspect provider: `attune provider show` — confirms the provider and
+   mode the lookups will use.
+5. For routing surprises, read `AdaptiveModelRouter.get_routing_stats(
+   workflow, stage)` to see sample size and per-model performance.

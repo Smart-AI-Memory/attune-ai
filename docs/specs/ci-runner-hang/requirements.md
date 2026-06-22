@@ -14,11 +14,11 @@
 **Owner:** Patrick + agent
 **Related:**
 
-- `docs/specs/windows-xdist-flakes/` — Windows xdist *worker-crash*
+- `docs/specs/archive/windows-xdist-flakes/` — Windows xdist *worker-crash*
   family (opaque "worker 'gwN' crashed", passes on rerun). Same
   suspected polluter class (real socket/subprocess I/O in fixtures) but
   a different manifestation (crash on Windows vs hang on Ubuntu).
-- `docs/specs/ci-matrix-right-sizing/` — which lanes run (matrix
+- `docs/specs/archive/ci-matrix-right-sizing/` — which lanes run (matrix
   sizing). Orthogonal: the hang is about a lane freezing, not about how
   many lanes spawn.
 - `.claude/lessons.md` — "CI runner-hang recipe" (cancel→rerun, don't

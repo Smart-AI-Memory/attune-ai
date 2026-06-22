@@ -3,22 +3,27 @@ type: tip
 name: spec-engine-tip
 feature: spec-engine
 depth: tip
-generated_at: 2026-06-02T10:56:02.721300+00:00
-source_hash: f8ced22b02899aa25ff709636e659830c6ba856d70de6ddd1a9bf1cbe37a1337
+generated_at: 2026-06-21T18:43:45.172614+00:00
+source_hash: 2dfc8acb0ee448c292e20dbc3f8299d64331d1f378bbf85cced4377b5dc2b5d1
 status: generated
 ---
 
-# Tip: Use `skip_task_ids` to re-run a single task without restarting the pipeline
+# Spec-driven development with approval loops
 
-Pass a `set[str]` of already-completed task IDs to `run_all(skip_task_ids=...)` instead of clearing state and running the whole plan from scratch.
+## Notes & tips
 
-**Why it sticks:** `clear_state` is irreversible mid-run — skipping completed tasks preserves your `SpecState.completed` list and keeps `total_cost` and `duration_ms` accurate in the final `PipelineResult`.
-
-**Tradeoff:** You are responsible for knowing which task IDs to skip. If a completed task produced an artifact that a later task depends on, skipping it without re-validating that artifact may cause the downstream task to fail its quality gate silently — check `TaskResult.quality_gate_passed` and `TaskResult.gate_score` on the returned result before assuming success.
-
-## Source files
-
-- `src/attune/pipeline/**`
-- `src/attune/spec/**`
-
-**Tags:** `spec`, `planning`
+- **Depend only on the public API.** `pipeline` exports
+  `PipelineOrchestrator`, `PipelineResult`, `TaskResult`, and
+  `read_spec`. `spec` exports `SpecState`, `clear_state`,
+  `find_resumable_plans`, `format_progress_bar`, `get_pending_tasks`,
+  `load_state`, `present_task_detail`, `present_task_result`,
+  `present_tasks`, and `save_state`. `execute_with_approval` lives in
+  `attune.spec.runner`. Private helpers can change without notice.
+- **Presenter functions are pure.** `present_tasks`,
+  `present_task_detail`, `present_task_result`, and
+  `format_progress_bar` accept `pipeline` data types, hold no state,
+  and have no coupling to the pipeline layer — safe to call anywhere.
+- **Prefer `skip_task_ids` over `clear_state` for re-runs.** Clearing
+  state is irreversible mid-run; skipping completed tasks preserves
+  your `completed` list and keeps `total_cost` / `duration_ms`
+  accurate.

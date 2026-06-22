@@ -132,6 +132,34 @@ class TestSaveManifest:
         path = save_manifest(manifest, d)
         assert path.exists()
 
+    def test_status_roundtrips(self, tmp_path: Path) -> None:
+        """A status: manual feature survives save -> load; default omitted."""
+        d = tmp_path / ".help"
+        manifest = FeatureManifest(
+            version=1,
+            features={
+                "gen": Feature(name="gen", description="generated"),
+                "manual": Feature(
+                    name="manual",
+                    description="single-sourced",
+                    tags=["spec"],
+                    status="manual",
+                ),
+            },
+        )
+        out = save_manifest(manifest, d)
+        # The default "generated" status is not serialised (keeps the file
+        # terse); "manual" is.
+        text = out.read_text(encoding="utf-8")
+        assert "status: manual" in text
+        assert text.count("status:") == 1
+
+        loaded = load_manifest(d)
+        assert loaded.features["manual"].status == "manual"
+        assert loaded.features["manual"].is_manual is True
+        assert loaded.features["gen"].status == "generated"
+        assert loaded.features["gen"].is_manual is False
+
 
 class TestMatchFilesToFeatures:
     """Tests for match_files_to_features()."""
