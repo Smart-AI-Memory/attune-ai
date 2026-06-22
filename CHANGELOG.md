@@ -9,15 +9,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Consolidated the help/author Claude Code plugins into the
+- **Consolidated the help/author/gui Claude Code plugins into the
   `Smart-AI-Memory/attune-ai` marketplace.** `attune-help` (pinned
-  0.11.1) and `attune-author` (pinned 0.21.0) now ship as plugins from
-  this repo's marketplace alongside `attune-ai`, retiring the separate
-  frozen `Smart-AI-Memory/attune-docs` marketplace (which lagged ~15
-  minor versions behind PyPI). Install becomes
+  0.11.1), `attune-author` (pinned 0.21.0), and `attune-gui` (pinned
+  plugin 1.1.1) now ship as plugins from this repo's marketplace
+  alongside `attune-ai`, retiring the separate frozen
+  `Smart-AI-Memory/attune-docs` marketplace (which lagged ~15 minor
+  versions behind PyPI) and the already-deprecated
+  `attune-gui-plugin` repo. Install becomes
   `claude plugin install attune-help@attune-ai` /
-  `attune-author@attune-ai`. No effect on `pip install attune-ai`. See
-  `docs/specs/attune-docs-marketplace/`.
+  `attune-author@attune-ai` / `attune-gui@attune-ai`. No effect on
+  `pip install attune-ai`. See `docs/specs/attune-docs-marketplace/`.
 
 ## [8.7.0] — 2026-06-22
 
