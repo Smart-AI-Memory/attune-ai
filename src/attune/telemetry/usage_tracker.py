@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import threading
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -67,7 +68,14 @@ class UsageTracker:
                         on unexpected process termination.
 
         """
-        self.telemetry_dir = telemetry_dir or Path.home() / ".attune" / "telemetry"
+        # Resolve the default under ATTUNE_HOME (env override -> ~/.attune),
+        # matching attune.ops.config.attune_home(). Read inline rather than
+        # importing that module to keep this base-telemetry module free of any
+        # attune.ops dependency. Lets ops/tests relocate telemetry off real
+        # ~/.attune (tests isolate it per-test; see tests/conftest.py).
+        _home = os.environ.get("ATTUNE_HOME")
+        _attune_dir = Path(_home).expanduser() if _home else Path.home() / ".attune"
+        self.telemetry_dir = telemetry_dir or _attune_dir / "telemetry"
         self.retention_days = retention_days
         self.max_file_size_mb = max_file_size_mb
         self.buffer_size = buffer_size
