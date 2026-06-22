@@ -68,6 +68,20 @@ class TestNoOpCases:
         captured = capsys.readouterr()
         assert captured.out == ""
 
+    def test_emit_notice_stat_oserror_is_no_op(self, hook_module, capsys):
+        """If the file vanishes between is_file() and stat(), _emit_notice
+        swallows the OSError and no-ops (returns False, prints nothing)."""
+
+        class _StatRaises:
+            def is_file(self):
+                return True
+
+            def stat(self):
+                raise OSError("file vanished")
+
+        assert hook_module._emit_notice(_StatRaises(), "global") is False
+        assert capsys.readouterr().out == ""
+
 
 class TestSurfacing:
     def test_file_with_content_prints_notice(self, hook_module, isolated_starter, capsys):
@@ -113,6 +127,14 @@ class TestProjectLocalStarter:
     def test_none_when_repo_but_no_starter(self, hook_module, tmp_path):
         repo = self._make_repo(tmp_path, None)
         assert hook_module._find_project_starter(start=repo) is None
+
+    def test_default_start_uses_cwd(self, hook_module, tmp_path, monkeypatch):
+        """start=None falls back to Path.cwd(). chdir into a repo with a
+        starter so the default-cwd branch is exercised and returns it."""
+        repo = self._make_repo(tmp_path, "# cwd handoff\n")
+        monkeypatch.chdir(repo)
+        found = hook_module._find_project_starter()  # no start= → cwd
+        assert found == repo / ".attune" / "next_session_starter.md"
 
     def test_project_notice_emitted(self, hook_module, tmp_path, monkeypatch, capsys):
         repo = self._make_repo(tmp_path, "# repo handoff\n")
