@@ -10179,3 +10179,30 @@ files.
   `--dry-run` (0 findings) is the bar before the real projection. Quick
   diagnostic for "which import does it want": the only symbol that
   triggers a rewrite is one that appears in a parent package's `__all__`.
+
+- **The `worktree_path_guard.py` PreToolUse hook BLOCKS Edit/Write
+  whose path is in a DIFFERENT worktree than the session's — so temp
+  worktrees are fine for git ops but NOT for file edits; switch the
+  session worktree's branch instead**: hit 2026-06-22. Pattern that
+  works for one job and fails the next: to fix a different branch, I
+  created a throwaway worktree (`git worktree add -b X /tmp/wt …`),
+  which is the RIGHT tool for pure git operations — the #983 rebase
+  (`git -C /tmp/wt rebase`, conflict resolve, `git push`) ran fine
+  there. But the moment I tried to `Edit` a file under `/tmp/wt/…`,
+  the hook blocked it: `BLOCKED Write/Edit to /tmp/wt/… — Session
+  worktree: …/nervous-bhabha-… / Target worktree: /private/tmp/wt —
+  these don't match`. The guard compares the edit path's worktree
+  against the session's worktree and refuses cross-tree writes (by
+  design — prevents the "edit lands in the wrong tree" class). **Rule:
+  when you need to EDIT files on another branch, `git switch -c <branch>
+  origin/main` IN the session worktree (clean tree first) and edit
+  there — don't spin up a temp worktree to edit in.** Reserve temp
+  worktrees for operations that never touch the Edit/Write tools
+  (rebase, cherry-pick, push of already-committed work). Pairs with the
+  worktree-PYTHONPATH / Write-absolute-path consolidated lesson — same
+  family (locate the right tree for the work), this one is the
+  Edit-tool-enforcement surface. Corollary observed same session: the
+  harness safety classifier separately blocks force-pushing ANOTHER
+  session's branch (`claude/lessons-…`) on a terse "y" — it wants
+  explicit per-branch authorization to rewrite history that isn't the
+  session's working branch; re-ask with the branch named.
