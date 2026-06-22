@@ -93,10 +93,8 @@ features:
 
   fix-test:
     description: Auto-diagnose and fix failing tests — identifies root causes and applies fixes
-    files:
-      - src/attune/workflows/test_runner.py
-      - src/attune/workflows/test_maintenance.py
     tags: [tests, debugging, fixes]
+    status: manual
 
   mcp-server:
     description: Model Context Protocol server and tool handlers

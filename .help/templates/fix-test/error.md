@@ -1,49 +1,53 @@
 ---
 type: error
+name: fix-test-error
 feature: fix-test
 depth: error
-generated_at: 2026-06-22T10:21:37.523920+00:00
-source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
+generated_at: 2026-06-22T11:30:53.046085+00:00
+source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
 status: generated
 ---
 
-# Fix Test errors
+# Auto-diagnose test gaps from file changes and track test outcomes
 
-Failures in test maintenance planning, test execution tracking, and source-file event handling.
+## Failure modes
 
-## Common error signatures
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeError: coroutine ... was never awaited` | `run` / `on_file_*` called without `await` | These are coroutines — `await` them or use `asyncio.run` | high |
+| `FileNotFoundError: Coverage file not found` | `track_coverage` given a missing path | Generate `coverage.xml` first (e.g. `pytest --cov --cov-report=xml`) | high |
+| `ValueError: Invalid coverage.xml format` | `track_coverage` given a malformed/empty XML | Regenerate the report; confirm the run finished | medium |
+| Plan comes back with zero items | No tracked changes / index reports nothing needing work | Pass `changed_files`, or confirm the `ProjectIndex` is populated | medium |
+| `"auto"` mode executes nothing | No plan item has `auto_executable=True` | Inspect `get_auto_executable_items()`; `REVIEW`/`MANUAL` items never auto-run | medium |
+| Calling the wrong `get_files_needing_tests` | Two functions share the name (module fn vs workflow method) | Import the module function or call the method explicitly; their signatures differ | medium |
+| `get_file_test_status` returns `None` | No `FileTestRecord` was ever recorded for that file | Run `track_file_tests` or `run_tests_with_tracking` first | low |
 
-- `FileNotFoundError: Coverage file not found: {path}` — The coverage.xml file specified in `track_coverage()` doesn't exist
-- `ValueError: Invalid coverage.xml format: {details}` — Coverage file exists but contains malformed XML or missing required elements
-- Unexpected `TestPlanItem` entries when an event maps a file to the wrong `TestAction`
-- File path resolution errors when mapping source files to their corresponding test files
-- Priority filtering returning nothing from `TestMaintenancePlan.get_items_by_priority()` when an invalid `TestPriority` is passed
+### Risk areas
 
-## Where errors originate
+- **The async/sync split is easy to get wrong.** Only `run` and the
+  three `on_file_*` handlers are coroutines; the summary methods and
+  every `test_runner` function are plain calls. Awaiting a sync
+  function (or forgetting to await a coroutine) is the most common
+  fix-test bug.
+- **`auto_executable` defaults to `True`.** A `TestPlanItem` is
+  auto-runnable unless something sets the flag to `False`. Before
+  trusting `"auto"` mode in CI, inspect the plan and confirm the
+  auto-executable subset is what you expect.
+- **Planning is only as current as the index.** The workflow refreshes
+  its `ProjectIndex` when you pass `changed_files`, but a stale index
+  yields stale priorities. Pass the files that changed, or refresh
+  before planning.
 
-Most failures occur during:
+### Diagnosis order
 
-- **Test execution tracking** — `run_tests_with_tracking()` fails when test commands exit with non-zero codes or produce unparseable output
-- **Coverage analysis** — `track_coverage()` raises exceptions when coverage files are missing, corrupted, or in unexpected formats
-- **File event handling** — the handlers (`on_file_created()`, `on_file_modified()`, `on_file_deleted()`) fail when file paths are invalid or inaccessible
-- **Plan generation** — `TestMaintenanceWorkflow.run()` fails when project structure analysis produces inconsistent results
-- **Plan filtering** — `get_items_by_action()` / `get_items_by_priority()` return empty results when passed a value that isn't a `TestAction` / `TestPriority`
-
-## How to diagnose
-
-1. **Check file paths first.** Many errors stem from missing test files, moved source files, or incorrect project root configuration. Verify that the project root used by `TestMaintenanceWorkflow` points to the correct directory.
-
-2. **Examine the plan.** If `TestMaintenanceWorkflow.run()` produces unexpected results, inspect `plan.items` and each item's `file_path`, `action`, and `metadata` for invalid or corrupted values.
-
-3. **Validate coverage files.** When `track_coverage()` fails, check that the coverage.xml file exists and contains valid XML. The file must include `<coverage>` root elements with measurable line and branch data.
-
-4. **Test file mapping issues.** If event handlers fail, verify that the `ProjectIndex` can correctly map source files to test files. Missing or outdated index data causes most file-based operations to fail.
-
-5. **Check priority and action values.** `TestPlanItem` objects require valid `TestAction` and `TestPriority` enum values. Invalid enums cause filtering methods to return nothing or raise `AttributeError`.
-
-## Source files
-
-- `src/attune/workflows/test_runner.py`
-- `src/attune/workflows/test_maintenance.py`
-
-**Tags:** `tests`, `debugging`, `fixes`
+1. Reproduce with a minimal `await workflow.run({"mode": "analyze"})`
+   — inspect `result["status"]` and `result["plan"]["items"]`.
+2. If a handler misbehaves, call it directly
+   (`await workflow.on_file_modified(path)`) and read the returned
+   `status`.
+3. For measurement issues, call the `test_runner` function in
+   isolation and inspect the returned record (or the raised
+   `FileNotFoundError` / `ValueError`).
+4. Confirm the index: `workflow.get_test_health_summary()` should
+   report sane counts.
+5. Run the related tests: `pytest -k "test_maintenance or test_runner" -v`.

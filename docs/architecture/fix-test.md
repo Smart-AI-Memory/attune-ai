@@ -1,14 +1,4 @@
----
-type: concept
-name: fix-test-concept
-feature: fix-test
-depth: concept
-generated_at: 2026-06-22T11:30:53.046085+00:00
-source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
-status: generated
----
-
-# Auto-diagnose test gaps from file changes and track test outcomes
+# Fix Test
 
 ## Overview
 
@@ -92,3 +82,40 @@ failed_only=False)` that reads telemetry records, **and** a
 `TestMaintenanceWorkflow.get_files_needing_tests(limit=20)` method that
 reads the project index. They are different functions with different
 signatures and return types — import or call the one you mean.
+
+## Design & extension
+
+### Design decisions
+
+- **Planning is separated from measurement.** `test_maintenance`
+  decides what test work is needed; `test_runner` records what tests
+  did. Keeping them apart lets a hook plan without running tests, and
+  lets a CI step record results without planning — each side is useful
+  alone, and they compose when you want the full loop.
+- **Plans are data, results are records.** A `TestMaintenancePlan`
+  serializes via `to_dict`, and the `test_runner` functions return
+  dataclass records (`TestExecutionRecord`, `CoverageRecord`,
+  `FileTestRecord`) persisted to the telemetry store. Both sides hand
+  back inspectable values rather than printing — callers own
+  presentation.
+- **`auto_executable` is a per-item flag, not a global mode.** Whether
+  an item may run unattended is decided when the `TestPlanItem` is
+  built, so a single plan can mix auto-runnable work with items that
+  require human `REVIEW` or `MANUAL` attention. `"auto"` mode simply
+  filters on the flag.
+
+### Extension points
+
+- **Wire fix-test into a file-watcher or git hook:** call the
+  `on_file_created` / `on_file_modified` / `on_file_deleted`
+  coroutines with the changed path and act on the returned status
+  dict.
+- **Add a maintenance step to CI:** `await workflow.run({"mode":
+  "auto"})` to execute the safe subset, or `{"mode": "report"}` for a
+  health summary you can gate on.
+- **Feed measurement back into planning:** record runs with
+  `run_tests_with_tracking` / `track_coverage`, then let the workflow's
+  `get_stale_tests` and `get_test_health_summary` surface the gaps the
+  recorded telemetry exposes.
+
+<!-- attune-generated: source_hash=2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b feature=fix-test kind=architecture generated_at=2026-06-22 -->

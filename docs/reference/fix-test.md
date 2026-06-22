@@ -1,14 +1,4 @@
----
-type: reference
-name: fix-test-reference
-feature: fix-test
-depth: reference
-generated_at: 2026-06-22T11:30:53.046085+00:00
-source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
-status: generated
----
-
-# Auto-diagnose test gaps from file changes and track test outcomes
+# Fix Test
 
 ## Reference
 
@@ -56,3 +46,5 @@ Fix-test's public API spans two workflow modules. The record types
 | `estimated_effort` | `str` | Effort hint (default `"unknown"`). |
 | `auto_executable` | `bool` | Whether `"auto"` mode may run it (default `True`). |
 | `metadata` | `dict` | Free-form extra context. |
+
+<!-- attune-generated: source_hash=2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b feature=fix-test kind=reference generated_at=2026-06-22 -->
