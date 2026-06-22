@@ -272,3 +272,31 @@ This satisfies "Next actions" item 3 above (*if the leak is ruled out,
 pivot to H4*): the cheap heartbeat-teardown fixture (item 2) is still
 worth doing as hygiene, but the root-cause hunt should now target the
 execnet/xdist finalize handshake directly, not the heartbeat leak.
+
+## Phase 4 — heartbeat thread ruled out for the SEPARATE sys.modules flake (2026-06-22)
+
+A different xdist symptom surfaced this session and could be mistaken
+for this hang: `test_real_tools.py` flaked on one lane with
+`KeyError: <object-id>` (fixed in #1003, guarded in #1004). It is
+tempting to re-blame the leaked heartbeat thread as a "concurrent
+`sys.modules` toucher" — **don't.** Evidence gathered while fixing it:
+
+- `threading.enumerate()` in a clean keyless worker returns `[]` (no
+  non-main threads) — verified in both xdist and single-process.
+- The heartbeat loop **no-ops keyless** and is killed per-test by the
+  autouse `_stop_leaked_heartbeat_threads` fixture, so it is not alive
+  during an unrelated test's body.
+- A concurrent importing thread does **not** reproduce the KeyError
+  (20k `patch.dict("sys.modules")` teardowns, GIL-serialized, clean).
+- Decisive: the failing key is an **int** (`id()`-shaped), but
+  `sys.modules` keys are **strings** — so the KeyError is **not** from
+  `sys.modules` at all. It is a re-entrant GC/finalizer touch of some
+  `id()`-keyed cache triggered when `patch.dict`'s teardown runs
+  `sys.modules.clear()`. Single-threaded re-entrancy, **no toucher to
+  kill.**
+
+Bottom line: killing the heartbeat thread would not have fixed the
+sys.modules flake (the right fix was removing the `clear()`). The
+heartbeat thread remains only a (weakened) suspect for the H4
+finalize-wedge above, still gated on N>1 dumps — do not let the
+sys.modules symptom revive it.
