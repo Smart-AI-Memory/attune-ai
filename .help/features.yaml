@@ -42,7 +42,6 @@ features:
     description: Review code for style issues, likely bugs, and structural problems
     files:
       - src/attune/workflows/code_review.py
-      - src/attune/workflows/code_review_*.py
     tags: [review, quality, bugs, lint]
 
   smart-test:
@@ -109,7 +108,6 @@ features:
     description: Progressive-depth help engine and template management
     files:
       - src/attune/help/**
-      - packages/attune-help/src/attune_help/**
     tags: [help, templates, docs]
     doc_paths:
       - docs/how-to/help-system-maintenance.md
@@ -170,7 +168,6 @@ features:
     description: Dynamic teams, workflow composition, and agent models
     files:
       - src/attune/orchestration/**
-      - src/attune/coordination/**
     tags: [orchestration, teams]
     doc_paths:
       - docs/how-to/multi-agent-coordination.md
