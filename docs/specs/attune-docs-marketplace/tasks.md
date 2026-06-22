@@ -1,7 +1,10 @@
 # attune-docs Marketplace — Tasks (Option A: retire + consolidate)
 
-**Status:** planned — D1 ratified; execution awaiting go-ahead on the
-multi-repo / destructive steps (T4, T5).
+**Status:** complete — all tasks shipped 2026-06-22. T1-T3 +
+attune-gui: attune-ai #988 / #989 (+ lessons #990). T4: attune-docs #6
+(migration README + moved-signal). T5: attune-docs archived read-only;
+attune-gui-plugin was already archived (redirect chains via attune-docs
+→ attune-ai), left as-is.
 
 D2 proposed home: `Smart-AI-Memory/attune-ai` marketplace.
 D3: archive attune-docs read-only with a migration README (do not
