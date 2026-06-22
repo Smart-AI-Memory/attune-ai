@@ -80,13 +80,18 @@ A 5-level maturity model that progresses AI from reactive responses to predictin
 
 ### Business Model
 
-| Tier | Price | Target |
-|------|-------|--------|
-| **Free** | $0 | Students, educators, teams ≤5 |
-| **Commercial** | Contact us | Teams 6+ employees |
-| **Enterprise** | Custom | Volume licensing, SLA, on-prem |
+Attune AI is **free and open source (Apache 2.0)** — no seat or
+team-size licensing. Revenue comes from services layered on the open
+core:
 
-**Apache License 2.0 0.9:** Sustainable model balancing adoption with revenue.
+| Offering | Target |
+|----------|--------|
+| **Open source** | Everyone — free, including commercial use |
+| **Commercial support** | Teams wanting priority support and SLAs |
+| **Enterprise services** | On-prem deployment, integration, training |
+
+Open distribution drives adoption; support and services monetize the
+teams that come to depend on it.
 
 ---
 

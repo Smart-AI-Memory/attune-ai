@@ -46,10 +46,9 @@ export default function TermsPage() {
                 Attune AI is licensed under the Apache 2.0 License. Key terms:
               </p>
               <ul>
-                <li><strong>Free Tier:</strong> Free for students, educators, and organizations with ≤5 employees</li>
-                <li><strong>Commercial Tier:</strong> Contact us for pricing (organizations with 6+ employees)</li>
-                <li><strong>Source Available:</strong> You may read and modify the source code</li>
-                <li><strong>Redistribution:</strong> Subject to license terms</li>
+                <li><strong>Free &amp; open source:</strong> Free for everyone, including commercial use, with no team-size, seat, or revenue restrictions</li>
+                <li><strong>Modify &amp; distribute:</strong> You may use, modify, and redistribute the source code under the Apache 2.0 terms</li>
+                <li><strong>Patent grant:</strong> Apache 2.0 includes an express grant of patent rights from contributors</li>
               </ul>
               <p>
                 Full license terms available at: <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE">LICENSE</a>

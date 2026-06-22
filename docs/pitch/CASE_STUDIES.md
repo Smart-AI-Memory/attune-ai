@@ -89,7 +89,7 @@ A freelance developer handling multiple client projects needs:
 - Minimal AI costs on tight budgets
 
 ### Implementation
-Deployed Attune AI (Free tier) with:
+Deployed Attune AI with:
 - Smart model routing (Haiku for simple tasks)
 - SecurityWizard for pre-delivery scans
 - DocGenWizard for README and API docs
@@ -105,7 +105,7 @@ Deployed Attune AI (Free tier) with:
 | Client satisfaction | Good | Excellent | Faster delivery |
 
 ### Value for Small Teams
-- Free tier covers full functionality
+- Free and open source — full functionality at no cost
 - Professional-grade security scanning
 - Consistent quality without enterprise overhead
 
@@ -225,7 +225,7 @@ Built-in audit trails and security scanning reduce compliance burden.
 
 ## Getting Started
 
-### Free Tier (Teams ≤5)
+### Quick Start
 ```bash
 pip install attune-ai
 attune init

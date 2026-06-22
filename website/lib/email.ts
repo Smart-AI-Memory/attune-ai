@@ -177,7 +177,6 @@ export async function sendBookEmail(data: {
       <h3>What's Included</h3>
       <ul>
         <li>Complete book in PDF, ePub, and Mobi formats</li>
-        <li>1-year commercial developer license ($49.99 value)</li>
         <li>Access to Software Development Plugin</li>
         <li>Access to Healthcare Plugin</li>
         <li>All future updates to this edition</li>

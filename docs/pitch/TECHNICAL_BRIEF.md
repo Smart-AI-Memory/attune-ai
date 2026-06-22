@@ -302,10 +302,10 @@ print(tracker.summary())
 
 **Repository:** [github.com/Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
 
-**License:** Apache License 2.0 0.9
-- Free for teams ≤5 employees
-- Commercial license required for 6+
-- Full source access for modification
+**License:** Apache License 2.0
+- Free and open source for any use, including commercial
+- No team-size, seat, or revenue restrictions
+- Full source access to use, modify, and redistribute
 
 ---
 
