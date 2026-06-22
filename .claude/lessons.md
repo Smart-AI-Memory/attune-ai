@@ -10206,3 +10206,46 @@ files.
   session's branch (`claude/lessons-…`) on a terse "y" — it wants
   explicit per-branch authorization to rewrite history that isn't the
   session's working branch; re-ask with the branch named.
+
+- **Verify a marketplace plugin install END-TO-END before merging
+  via a throwaway local marketplace — `claude plugin marketplace add
+  <path>` + a uniquely-named temp manifest, then clean up**: hit
+  2026-06-22 consolidating attune-help/author/gui into the attune-ai
+  marketplace (#988, #989). The receipt-beats-the-promise discipline
+  (§7 / "registered ≠ working") applies to marketplace changes too:
+  manifest-parses + sources-resolve is necessary-not-sufficient — the
+  real proof is `claude plugin install <name>@<marketplace>` actually
+  installing at the pinned version with skills/commands/agents
+  surfacing. But you can't test `@attune-ai` against the unmerged PR
+  (`marketplace add Smart-AI-Memory/attune-ai` fetches REMOTE main,
+  not your branch), and you can't add the local worktree under its
+  real name because **`marketplace add` keys by the manifest's `name`
+  field and an `attune-ai` marketplace is already registered from
+  GitHub** (name collision). Technique that works: build a
+  `/tmp/mp-test/` dir with copies of just the plugin dirs under test +
+  a minimal `.claude-plugin/marketplace.json` whose `name` is unique
+  (e.g. `attune-consol-test`) listing them with `./`-relative
+  sources; `claude plugin marketplace add /tmp/mp-test`; `claude
+  plugin install <plugin>@<unique-name>`; confirm via `claude plugin
+  list` (shows version) and `find ~/.claude/plugins/cache/<unique-
+  name>/<plugin>/<version>/` for the SKILL.md/commands/agents; then
+  ALWAYS clean up (`claude plugin uninstall <plugin>@<unique-name>`,
+  `claude plugin marketplace remove <unique-name>`, `rm -rf
+  /tmp/mp-test`). The only thing this doesn't exercise is the literal
+  `@attune-ai` name (cosmetic). Two structural facts that made the
+  copy safe to ship: (a) the help/author plugins are thin MCP
+  wrappers — `.mcp.json` runs `uvx --from <pkg>[plugin]` which always
+  resolves the LATEST PyPI, so the plugin.json/marketplace `version`
+  fields are cosmetic labels, not a runtime pin (the "regenerate vs
+  copy" question was moot — there's no generator, the dirs exist only
+  in attune-docs, so a verified copy + metadata refresh is correct);
+  (b) the attune-ai plugin-validation tests
+  (`tests/unit/plugins/test_plugin_config_validation.py`) are scoped
+  to `PLUGIN_ROOT = repo/"plugin"` (singular), so NEW `plugins/`
+  (plural) dirs aren't scanned — but note `test_skill_count == 17` and
+  the commands allowlist `{"handoff.md"}` are HARD-CODED, so folding a
+  plugin's skill/command INTO the core attune-ai plugin (vs shipping
+  it as a separate marketplace entry) would break both and ripple the
+  "17 skills" count through features.ts/marketplace/docs — a reason to
+  keep environment-specific launchers (attune-gui needs the Cowork
+  preview pane) as separate opt-in plugins rather than bundling.
