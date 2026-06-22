@@ -1,33 +1,110 @@
 ---
 type: note
+name: fix-test-note
 feature: fix-test
 depth: note
-generated_at: 2026-06-22T10:21:37.523920+00:00
-source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
+generated_at: 2026-06-22T11:30:53.046085+00:00
+source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
 status: generated
 ---
 
-# Note: fix test
+# Auto-diagnose test gaps from file changes and track test outcomes
 
-## Context
+## Overview
 
-The fix-test feature provides test maintenance through event-driven planning. It tracks test coverage, identifies files needing test attention, and turns source-file changes into prioritized maintenance plans.
+Fix-test keeps a project's tests in step with its source. It turns
+file-system events into a prioritized, partly auto-executable
+maintenance plan, and it records what actually ran so the next plan
+can reason about staleness and coverage gaps.
 
-## Architecture
+Two modules cooperate:
 
-The feature combines two complementary modules:
+- **`test_maintenance`** owns planning. `TestMaintenanceWorkflow`
+  inspects file events and produces a `TestMaintenancePlan` — an
+  ordered set of `TestPlanItem` entries, each describing one piece of
+  test work (which file, what `TestAction`, at what `TestPriority`).
+- **`test_runner`** owns measurement. Standalone functions
+  (`run_tests_with_tracking`, `track_coverage`, `track_file_tests`)
+  execute tests and persist the results as telemetry records, and
+  query functions (`get_file_test_status`, `get_files_needing_tests`)
+  read those records back.
 
-**Test execution tracking** (`test_runner.py`) provides opt-in monitoring functions that record test results and coverage data for Tier 1 automation. Key functions include `run_tests_with_tracking()` for explicit test execution tracking and `track_coverage()` for parsing coverage.xml files.
+Fix-test is **not** a test *generator* — it decides *what* test work a
+change implies and *whether* it can run unattended. It is reached as
+the `/fix-test` skill; there is no dedicated `attune` CLI subcommand.
+This page documents the Python API you call directly when wiring test
+maintenance into a hook, a CI step, or a custom tool.
 
-**Test maintenance planning and event handling** (`test_maintenance.py`) defines both the plan model and the coordinator. `TestMaintenancePlan` contains prioritized `TestPlanItem` instances that specify actions like creating or updating tests, each with metadata like estimated effort and an auto-executable flag. `TestMaintenanceWorkflow` responds to file-system changes through its `on_file_created()`, `on_file_modified()`, and `on_file_deleted()` handlers and assembles the plan via `run()`.
+## Concepts
 
-## Integration pattern
+### From a file event to a plan
 
-The modules work together through shared data types. Test execution functions accept workflow IDs that link results to specific maintenance plans. The event handlers produce `TestPlanItem` entries that reference the same `TestAction` and `TestPriority` enums used throughout the plan. This lets the system map a file change to prioritized test work and surface the auto-executable subset for execution.
+`TestMaintenanceWorkflow` is the coordinator. Construct it with a
+project root, then drive it one of two ways:
 
-## Source files
+1. **Event handlers** — `on_file_created`, `on_file_modified`, and
+   `on_file_deleted` each take a single `file_path` and return a dict
+   describing the test work that change implies. These are the
+   integration point for a file-watcher or a git hook.
+2. **`run(context)`** — generates a whole-project `TestMaintenancePlan`
+   in one of four modes (`analyze`, `execute`, `auto`, `report`).
 
-- `src/attune/workflows/test_runner.py`
-- `src/attune/workflows/test_maintenance.py`
+Both paths lean on the same building blocks:
 
-**Tags:** `tests`, `debugging`, `fixes`
+| Type | What it represents |
+|------|--------------------|
+| `TestPlanItem` | One unit of test work: `file_path`, the `action` (`TestAction`), the `priority` (`TestPriority`), a `reason`, an optional `test_file_path`, an `estimated_effort` string, an `auto_executable` flag, and a free-form `metadata` dict. |
+| `TestMaintenancePlan` | The assembled plan: `generated_at`, the list of `items`, a `summary` dict, and `options`. Filter it with `get_items_by_action`, `get_items_by_priority`, or `get_auto_executable_items`. |
+| `TestAction` | What to do with a test — one of `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, `MANUAL`. |
+| `TestPriority` | How urgent — one of `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, `DEFERRED`. |
+
+### The two modules fit together
+
+- **Planning (`test_maintenance`)** answers *"given this change, what
+  test work is needed and how urgent is it?"* It is index-backed: the
+  workflow holds a `ProjectIndex` and refreshes it when files change,
+  so impact and staleness drive the priorities it assigns.
+- **Measurement (`test_runner`)** answers *"what did the tests actually
+  do?"* Its functions run pytest (or a custom command), parse the
+  results, and write `TestExecutionRecord`, `CoverageRecord`, and
+  `FileTestRecord` entries into the telemetry store. The query
+  functions then surface "is this file covered?" and "what still needs
+  tests?" — the same signals the workflow's `get_stale_tests` and
+  `get_test_health_summary` summarize.
+
+### Async vs sync — the one thing to get right
+
+The workflow's *event and run* surface is asynchronous; everything
+else is a plain function call:
+
+- **`async`** — `run`, `on_file_created`, `on_file_modified`,
+  `on_file_deleted`. `await` them (or drive with `asyncio.run`).
+- **sync** — the plan-filter methods (`get_items_by_action`, …), the
+  workflow's summary methods (`get_files_needing_tests`,
+  `get_stale_tests`, `get_test_health_summary`), and **every**
+  `test_runner` function.
+
+### Two functions named `get_files_needing_tests`
+
+Mind the namespace: there is a module-level
+`test_runner.get_files_needing_tests(stale_only=False,
+failed_only=False)` that reads telemetry records, **and** a
+`TestMaintenanceWorkflow.get_files_needing_tests(limit=20)` method that
+reads the project index. They are different functions with different
+signatures and return types — import or call the one you mean.
+
+## Notes & tips
+
+- **Depend on the documented public surface.**
+  `test_maintenance` gives you `TestMaintenanceWorkflow`,
+  `TestMaintenancePlan`, `TestPlanItem`, `TestAction`, and
+  `TestPriority`. `test_runner` gives you `run_tests_with_tracking`,
+  `track_coverage`, `track_file_tests`, `get_file_test_status`, and
+  `get_files_needing_tests`. Names with a leading underscore are
+  internal and may change.
+- **Preview with `dry_run` before executing.** Both `"execute"` and
+  `"auto"` modes accept `dry_run=True`, which reports what *would* run
+  without touching anything — the cheapest way to sanity-check a plan.
+- **Pass `changed_files` for event-driven runs.** Supplying the files
+  that changed refreshes the index and focuses the plan, instead of
+  re-evaluating the whole project.

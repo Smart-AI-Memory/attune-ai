@@ -1,51 +1,35 @@
 ---
 type: comparison
+name: fix-test-comparison
 feature: fix-test
 depth: comparison
-generated_at: 2026-06-22T10:21:37.523920+00:00
-source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
+generated_at: 2026-06-22T11:30:53.046085+00:00
+source_hash: 2a68f682c715ddba2510a8395022ba9b502452e2fce1c7a1d13419ce2a2f0f1b
 status: generated
 ---
 
-# TestMaintenanceWorkflow vs manual tracking functions
+# Auto-diagnose test gaps from file changes and track test outcomes
 
-The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation.
+## Comparison
 
-## Feature comparison
+Fix-test gives you two ways to engage tests: let
+`TestMaintenanceWorkflow` *plan* the work from file changes, or call
+the `test_runner` functions to *measure* tests directly. They answer
+different questions and often pair.
 
-| Feature | TestMaintenanceWorkflow | Manual tracking functions |
-|---------|------------------------|---------------------------|
-| **Automation level** | Workflow orchestration | Manual execution |
-| **File change handling** | Event handlers map a change to a `TestPlanItem` | No detection |
-| **Planning** | Builds a `TestMaintenancePlan` you can filter and review | No planning |
-| **Execution model** | On-demand `run()`; you choose which items to act on | Immediate execution |
-| **Configuration complexity** | Low (project root only) | Minimal (optional params) |
+| Capability | `TestMaintenanceWorkflow` (planning) | `test_runner` functions (measurement) |
+|---|---|---|
+| **Question answered** | "What test work does this change imply?" | "What did the tests actually do?" |
+| **Import** | `from attune.workflows import TestMaintenanceWorkflow` | `from attune.workflows.test_runner import run_tests_with_tracking` |
+| **Input** | File events / project index | A suite name, file list, or `coverage.xml` |
+| **Output** | A `TestMaintenancePlan` of `TestPlanItem`s | `TestExecutionRecord` / `CoverageRecord` / `FileTestRecord` |
+| **Concurrency** | Async (`run`, `on_file_*`); sync summary methods | Synchronous functions |
+| **Runs tests?** | Only in `"execute"` / `"auto"` mode | `run_tests_with_tracking` / `track_file_tests` do |
+| **State** | Index-backed; refreshes on change | Persists records to the telemetry store |
+| **Typical caller** | File-watcher, git hook, CI maintenance step | Test runner wrapper, coverage pipeline |
 
-## Detailed tradeoffs
-
-**TestMaintenanceWorkflow** gives you structured control. You trigger it with `run()` (or per-file via `on_file_created/modified/deleted`), and it returns a `TestMaintenancePlan` of `TestPlanItem` entries — each with an `action`, `priority`, and `auto_executable` flag. You can review planned work before acting and run only the safe subset via `get_auto_executable_items()`. Best when you want visibility into what will happen before it does.
-
-**Manual tracking functions** give you precise control over individual operations with zero setup cost. Each function (`run_tests_with_tracking`, `track_coverage`, `get_file_test_status`, …) executes immediately and returns specific results. Fastest for one-off debugging, but you coordinate the work yourself.
-
-## Use TestMaintenanceWorkflow when...
-
-- You want changes mapped to prioritized test work automatically
-- You want to review planned actions before execution
-- You need structured reporting via `TestMaintenancePlan` objects
-- You want to auto-run the safe items and defer `REVIEW`/`MANUAL` ones
-
-## Use manual tracking functions when...
-
-- You're debugging specific test failures interactively
-- You need to integrate test tracking into existing scripts or tools
-- You want immediate results for a specific file or suite
-- You're working with a small number of files
-
-**Rule of thumb:** reach for `TestMaintenanceWorkflow` when you want a reviewable plan across many files; drop to the tracking functions for targeted, one-off operations.
-
-## Source files
-
-- `src/attune/workflows/test_runner.py`
-- `src/attune/workflows/test_maintenance.py`
-
-**Tags:** `tests`, `debugging`, `fixes`
+**Use the workflow** when you want decisions — which files need tests,
+how urgent, what is safe to auto-run. **Use the `test_runner`
+functions** when you want facts — run a suite, capture coverage, look
+up a file's status. A common loop is both: run tests with tracking,
+then let the workflow plan from the recorded staleness and gaps.
