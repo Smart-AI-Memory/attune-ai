@@ -243,6 +243,20 @@
     }
     .kind-tabs a:hover { border-color: var(--primary); color: var(--primary); }
     .kind-tabs a.current { background: var(--primary); color: #fff; border-color: var(--primary); }
+    .start-here {
+      border: 1px solid var(--primary); border-radius: 12px;
+      background: var(--surface-low); padding: 1.1rem 1.3rem; margin: 0 0 1.75rem;
+    }
+    .start-here .sh-label {
+      display: block; font-size: 0.78rem; font-weight: 700; letter-spacing: 0.08em;
+      text-transform: uppercase; color: var(--primary); margin-bottom: 0.6rem;
+    }
+    .start-here .sh-links { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .start-here .sh-item { text-decoration: none; color: var(--primary); font-weight: 700; }
+    .start-here .sh-item:hover { text-decoration: underline; }
+    .start-here .sh-item .sh-sub {
+      display: block; color: var(--muted); font-size: 0.85rem; font-weight: 400;
+    }
     @media (max-width: 480px) {
       .help-home h1 { font-size: 1.9rem; }
     }
