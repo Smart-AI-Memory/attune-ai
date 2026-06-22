@@ -565,7 +565,7 @@ PRs welcome! Things I'd love help with:
 
 ## License
 
-Apache License 2.0 0.9 (free for up to 3 users, paid beyond that)
+Apache License 2.0 — free and open source, no user or seat limits.
 
 ---
 

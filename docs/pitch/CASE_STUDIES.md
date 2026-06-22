@@ -41,7 +41,7 @@ Deployed Attune AI with:
 - API cost savings: $50,400/year = **$50,400**
 - **Total: $320,400/year**
 
-**Investment:** Commercial license + setup
+**Investment:** Setup and integration time (the software is free, Apache 2.0)
 **Payback period:** < 2 months
 
 ---
@@ -89,7 +89,7 @@ A freelance developer handling multiple client projects needs:
 - Minimal AI costs on tight budgets
 
 ### Implementation
-Deployed Attune AI (Free tier) with:
+Deployed Attune AI with:
 - Smart model routing (Haiku for simple tasks)
 - SecurityWizard for pre-delivery scans
 - DocGenWizard for README and API docs
@@ -105,7 +105,7 @@ Deployed Attune AI (Free tier) with:
 | Client satisfaction | Good | Excellent | Faster delivery |
 
 ### Value for Small Teams
-- Free tier covers full functionality
+- Free and open source — full functionality at no cost
 - Professional-grade security scanning
 - Consistent quality without enterprise overhead
 
@@ -165,18 +165,18 @@ Bug prevention: (bugs × 0.67) × fix_hours × hourly_rate × 12 months
 
 **Total Annual ROI:**
 ```
-Time savings + AI savings - License cost
+Time savings + AI savings
 ```
 
 ### Quick Estimates by Team Size
 
-| Team Size | Est. Annual Savings | License Cost | Net ROI |
-|-----------|---------------------|--------------|---------|
-| 1-5 devs | $15,000-$40,000 | $0 (Free) | $15,000-$40,000 |
-| 10 devs | $80,000-$120,000 | Contact us | High |
-| 25 devs | $180,000-$250,000 | Contact us | High |
-| 50 devs | $300,000-$450,000 | Contact us | High |
-| 100 devs | $600,000-$900,000 | Contact us | High |
+| Team Size | Est. Annual Savings | Net ROI |
+|-----------|---------------------|---------|
+| 1-5 devs | $15,000-$40,000 | $15,000-$40,000 |
+| 10 devs | $80,000-$120,000 | High |
+| 25 devs | $180,000-$250,000 | High |
+| 50 devs | $300,000-$450,000 | High |
+| 100 devs | $600,000-$900,000 | High |
 
 ---
 
@@ -225,14 +225,14 @@ Built-in audit trails and security scanning reduce compliance burden.
 
 ## Getting Started
 
-### Free Tier (Teams ≤5)
+### Quick Start
 ```bash
 pip install attune-ai
 attune init
 attune workflow run security-scan
 ```
 
-### Commercial Evaluation
+### Rollout Support
 Contact us for:
 - Proof of concept support
 - ROI assessment for your team
