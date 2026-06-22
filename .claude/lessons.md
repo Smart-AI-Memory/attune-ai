@@ -9659,6 +9659,47 @@ files.
   check whether a newer point release re-bundles a fixed binary BEFORE
   writing tolerance code around the bug.
 
+- **Launching the attune-gui / attune-ops dashboards from an
+  attune-ai WORKTREE — four gotchas the `attune-gui` skill and the
+  default launch.json don't handle** (2026-06-21): asked to "open the
+  dashboard," then "for attune ops also," from a worktree session.
+  - **attune-gui is a SEPARATE repo, not part of attune-ai.** The
+    `attune-gui` skill's step 1 only checks `.` and `./attune-gui`, so
+    from the attune-ai worktree it resolves "not found." The real
+    project lives at `/Users/patrickroebuck/attune-gui` (its
+    `pyproject.toml` has `name = "attune-gui"` + a `attune-gui =
+    "attune_gui.main:main"` script). Fix: write the launch.json
+    `attune-gui` entry with an ABSOLUTE `--directory` to that path
+    (`uv run --directory /Users/patrickroebuck/attune-gui attune-gui
+    --port <p>`) rather than making the user switch dirs.
+  - **Default ports are already taken on this machine.** Port **8000**
+    is held by the `agent-memory` (AMS) API server (`agent-memory api
+    --port 8000`) and **8765** by a (possibly stale) `attune.ops` —
+    NOT free as the skill assumes. Don't kill AMS; attune-gui supports
+    `--port` (defaults to auto-pick), so pin it to a free port (used
+    8010). Probe occupants with `ps -p <pid> -o command=` before
+    touching anything.
+  - **attune.ops from a worktree must use the MAIN venv, not `uv
+    run`.** The worktree `.venv` lacks the `[ops]` extras
+    (fastapi/uvicorn/jinja2) → `ModuleNotFoundError`, and the editable
+    MAPPING runs main's code anyway. Robust launch.json entry:
+    `runtimeExecutable` = `/Users/patrickroebuck/attune-ai/.venv/bin/
+    python`, `runtimeArgs` = `["-m","attune.ops","--project-root",
+    "/Users/patrickroebuck/attune-ai","--port","8765","--no-browser"]`
+    — mirrors the known-good invocation from the consolidated
+    editable-install lesson.
+  - **A stale attune.ops process 500s on EVERY route while `/api/info`
+    still returns 200.** A wedged old process (reported v8.5.0 while
+    main was 8.6.2) answered `/api/info` 200 but 500'd `/`,
+    `/dashboard`, `/health`, everything. `/api/info` 200 is NOT proof
+    the dashboard works — verify the actual page route. Fix: `kill
+    <pid>`, free the port, `preview_start` fresh; the new process
+    served 200 on `/` immediately.
+  - **`.claude/launch.json` is gitignored** (`.gitignore:261`), so
+    these entries are local-only and can't/shouldn't be committed —
+    they hold machine-specific absolute paths. "Commit the launch
+    config" is a no-op; don't force-add past the ignore.
+
 - **Cross-repo work from a worktree-rooted session: `worktree_path_guard`
   blocks Write/Edit into sibling repos, `EnterWorktree` can't cross
   repos, and Bash `cd /Users/.../<repo>` silently targets the MAIN
@@ -9891,3 +9932,27 @@ files.
   lessons — same family (locating the right worktree), this one is the
   session-is-in-the-WRONG-worktree surface and its `EnterWorktree`
   remedy.
+
+- **A stale PR's "files changed" list overstates what it still
+  contributes — after updating the branch with main, read the two-dot
+  `git diff origin/main HEAD --stat` for the REAL remaining scope before
+  reviewing**: 2026-06-21, asked to review + fix conflicts on PR #955
+  (`docs/lessons-worktree-dashboards`), 14 commits behind main. Its
+  files-changed list showed 9 files — `.claude/lessons.md`, four
+  `docs/specs/*` files, `plugin/hooks/_recall_map.py`,
+  `tests/unit/hooks/test_jit_recall.py`. After `git merge origin/main`
+  (only `.claude/lessons.md` conflicted — an append-collision resolved
+  as a union), `git diff origin/main HEAD --stat` showed the NET
+  contribution was **just 41 lines in `.claude/lessons.md`** (one
+  lesson). The spec/hook/test edits had ALL already landed on main via
+  other merged PRs (#953 + the jit-recall work) — so the three-dot
+  `git diff origin/main...HEAD -- <those files>` was EMPTY. Reviewing
+  the stated file list at face value would have wasted effort
+  "reviewing" a `_recall_map.py` change byte-identical to main. Rule:
+  the GitHub files-changed list reflects the branch's DIVERGENCE POINT,
+  not what it still adds; for any long-lived/stale PR, merge main first
+  then `git diff origin/main HEAD --stat` to see the true remaining
+  delta. Pairs with the append-collision union-resolution pattern and
+  the "spec-named scope drifts from code reality" lesson (same family:
+  the stated scope is a stale hypothesis; the diff-vs-current-main is
+  the contract).
