@@ -7,10 +7,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.7.0] — 2026-06-22
+
+Ships two strands of work that landed after 8.6.2: the
+single-source help/docs pilot (one authored master file per feature,
+deterministically projected to both the in-tool `.help` corpus and
+the published docs site) and the `claude-agent-sdk` 0.2.x adoption.
+Plus the ops spend-alarm dashboard widget. No breaking changes for
+`pip install attune-ai`.
+
+### Added
+
+- **Single-source help + docs (pilot).** A feature's documentation is
+  now authored once in `content/features/<feature>.md` and projected
+  deterministically (no LLM in the canonical path) to both the in-tool
+  `.help` corpus and the mkdocs `docs/` pages — including a per-feature
+  "Start here" hub and an auto-wired top-level **Features** nav.
+  Pilot covers `spec-engine` and `models` via the new
+  `scripts/project_features.py` driver (backed by attune-author's
+  `projector`). See `docs/specs/help-docs-single-source/`.
+- **Ops spend alarm.** The ops dashboard gains a daily spend-anomaly
+  detector and a budget-ceiling gauge (usage-signals R6).
+
 ### Changed
 
 - **Adopted `claude-agent-sdk` 0.2.x** (pin `>=0.2.101,<0.3.0`, lock at 0.2.105). Lifts the deliberate `<0.2.82` cap to a new `<0.3.0` guard. The 0.1->0.2 behavioral breaks (MCP background-connection default, TodoWrite->Task tools, system-prompt default) do not affect attune: workflows pass no `mcp_servers`, never use `TodoWrite`, and isolate with `setting_sources=[]`. Full keyless unit suite green (17857). Locked at 0.2.105 rather than 0.2.102 because 0.2.102's bundled Claude Code CLI (2.1.178) emitted `is_error:true` on a `success` result and broke the auth integration loop; 0.2.105 bundles CLI 2.1.183 which returns `is_error:false`. See `docs/specs/claude-agent-sdk-0-2-migration/`.
-- **`[author]` extra: `attune-author>=0.6.2,<0.19` → `>=0.19.0,<0.20`.** Admits attune-author 0.19.0, which ships the deterministic help-docs projector (`attune_author.projector`). Unblocks the `scripts/project_features.py` driver for the help-docs-single-source pilot. The floor jump is safe — 0.19.0 is a strict superset (projector added, nothing removed) — and `[author]` is an optional authoring extra, so vanilla `pip install attune-ai` is unaffected.
+- **`[author]` extra: `attune-author>=0.6.2,<0.19` → `>=0.21.0,<0.22`.** Admits attune-author 0.21.0, which ships the deterministic help-docs projector (`attune_author.projector`) plus the Variant-1 per-feature hub emitter that powers the single-source pilot above. The floor jump is safe — each release is a strict superset (projector + hub added, nothing removed) — and `[author]` is an optional authoring extra, so vanilla `pip install attune-ai` is unaffected.
 
 ## [8.6.2] — 2026-06-20
 
