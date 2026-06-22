@@ -75,6 +75,13 @@ _IGNORED_SYMBOLS: frozenset[str] = frozenset(
         "doc_orchestrator",
         # cross-feature: project index (src/attune/project_index/*)
         "ProjectIndex",
+        # cross-module: the `attune telemetry` CLI commands the telemetry
+        # templates document live in src/attune/cli_commands/
+        # telemetry_commands.py, outside the telemetry feature's own
+        # src/attune/telemetry/** glob.
+        "cmd_telemetry_status",
+        "cmd_telemetry_enable",
+        "cmd_telemetry_disable",
     }
 )
 
