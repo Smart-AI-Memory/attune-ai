@@ -209,9 +209,7 @@ As the community grows, we may add:
 
 ### Code License
 
-All contributions to the Attune AI are licensed under **Apache License 2.0**:
-- **Free**: For individuals, students, educators, and organizations with ≤5 employees
-- **Commercial**: $99/developer/year for organizations with 6+ employees
+All contributions to Attune AI are licensed under the **Apache License 2.0** — free and open source for any use, including commercial, with no team-size, seat, or revenue restrictions.
 
 ### Documentation License
 

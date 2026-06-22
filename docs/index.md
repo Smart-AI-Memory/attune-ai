@@ -199,12 +199,13 @@ Organized using the [Diátaxis framework](https://diataxis.fr/) for better disco
 
 ## License
 
-**Apache License 2.0 0.9**
-- ✅ Free for students, educators, teams ≤5 employees
-- 💰 contact us for pricing for teams 6+ employees
-- 🔄 Auto-converts to Apache 2.0 on January 1, 2029
+**Apache License 2.0** — free and open source.
 
-[Read full license](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
+- ✅ Free for everyone, including commercial use
+- ✅ No team-size, seat, or revenue restrictions
+- ✅ Modify, distribute, and build on it freely
+
+[Read the full license](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
 
 ---
 
