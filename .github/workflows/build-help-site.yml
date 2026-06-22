@@ -60,5 +60,21 @@ jobs:
             echo "help pages already up to date"
           else
             git commit -m "chore(help-site): rebuild help pages [skip ci]"
-            git push
+            # Another commit (e.g. a release PR merge) can land on main
+            # while this run is mid-rebuild, making a plain push lose a
+            # non-fast-forward race (! [rejected] main -> main). Rebase
+            # onto the latest main and retry so the auto-commit survives
+            # a concurrent merge.
+            for attempt in 1 2 3; do
+              git pull --rebase --autostash origin main
+              if git push; then
+                echo "pushed on attempt $attempt"
+                break
+              fi
+              echo "push attempt $attempt failed (main moved); retrying"
+              if [ "$attempt" -eq 3 ]; then
+                echo "push failed after 3 attempts" >&2
+                exit 1
+              fi
+            done
           fi
