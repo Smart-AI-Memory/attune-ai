@@ -1,6 +1,7 @@
 # attune-docs Marketplace — Keep, Automate, or Retire
 
-**Status:** D1 ratified 2026-06-22 — Option A (retire + consolidate)
+**Status:** complete 2026-06-22 — Option A (retire + consolidate)
+shipped end-to-end; see `tasks.md` for the PR trail.
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
 

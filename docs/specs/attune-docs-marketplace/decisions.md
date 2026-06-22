@@ -1,6 +1,7 @@
 # attune-docs Marketplace — Decisions
 
-**Status:** D1 ratified 2026-06-22 — Option A (retire + consolidate)
+**Status:** complete 2026-06-22 — Option A (retire + consolidate)
+ratified and shipped; see `tasks.md` for the PR trail.
 
 ---
 
