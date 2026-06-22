@@ -1,0 +1,5297 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
+      
+      
+        <meta name="author" content="Patrick Roebuck">
+      
+      
+        <link rel="canonical" href="https://smartaimemory.com/framework-docs/testing-audit-2026-04-23/">
+      
+      
+      
+      
+        
+      
+      
+      <link rel="icon" href="../assets/images/empathy-brain-logo.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
+    
+    
+      
+        <title>Testing Audit — attune-ai - Attune AI</title>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/stylesheets/main.484c7ddc.min.css">
+      
+        
+        <link rel="stylesheet" href="../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../assets/_mkdocstrings.css">
+    
+    <script>__md_scope=new URL("..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  <!-- Plausible Analytics - Privacy-respecting, no cookies -->
+  <script defer data-domain="smartaimemory.com" src="https://plausible.io/js/script.js"></script>
+
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#testing-audit-attune-ai" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href=".." title="Attune AI" class="md-header__button md-logo" aria-label="Attune AI" data-md-component="logo">
+      
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            Attune AI
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Testing Audit — attune-ai
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a4 4 0 0 0-4 4 4 4 0 0 0 4 4 4 4 0 0 0 4-4 4 4 0 0 0-4-4m0 10a6 6 0 0 1-6-6 6 6 0 0 1 6-6 6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="indigo" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 18c-.89 0-1.74-.2-2.5-.55C11.56 16.5 13 14.42 13 12s-1.44-4.5-3.5-5.45C10.26 6.2 11.11 6 12 6a6 6 0 0 1 6 6 6 6 0 0 1-6 6m8-9.31V4h-4.69L12 .69 8.69 4H4v4.69L.69 12 4 15.31V20h4.69L12 23.31 15.31 20H20v-4.69L23.31 12z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/Smart-AI-Memory/attune-ai" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Smart-AI-Memory/attune-ai
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+            
+<nav class="md-tabs" aria-label="Tabs" data-md-component="tabs">
+  <div class="md-grid">
+    <ul class="md-tabs__list">
+      
+        
+  
+  
+  
+  
+    <li class="md-tabs__item">
+      <a href=".." class="md-tabs__link">
+        
+  
+  
+    
+  
+  Home
+
+      </a>
+    </li>
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../getting-started/" class="md-tabs__link">
+          
+  
+  
+  Getting Started
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../tutorials/" class="md-tabs__link">
+          
+  
+  
+  Tutorials
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../how-to/" class="md-tabs__link">
+          
+  
+  
+  How-to
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../rag/" class="md-tabs__link">
+          
+  
+  
+  RAG Grounding
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../SECURITY_REVIEW/" class="md-tabs__link">
+          
+  
+  
+  Security
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../reference/" class="md-tabs__link">
+          
+  
+  
+  Reference
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../contributing/" class="md-tabs__link">
+          
+  
+  
+  Contributing
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../book-cover/" class="md-tabs__link">
+          
+  
+  
+  Book
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../features/" class="md-tabs__link">
+          
+  
+  
+  Features
+
+        </a>
+      </li>
+    
+  
+
+      
+    </ul>
+  </div>
+</nav>
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+  
+
+
+<nav class="md-nav md-nav--primary md-nav--lifted" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href=".." title="Attune AI" class="md-nav__button md-logo" aria-label="Attune AI" data-md-component="logo">
+      
+  <img src="../assets/images/empathy-brain-logo.png" alt="logo">
+
+    </a>
+    Attune AI
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/Smart-AI-Memory/attune-ai" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    Smart-AI-Memory/attune-ai
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href=".." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_2" id="__nav_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Getting Started
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/installation/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Installation
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/first-steps/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    First Steps
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/quickstart-plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart (Plugin)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/choose-your-path/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Choose Your Path
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/redis-setup/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Redis Setup
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../getting-started/mcp-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP Integration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Tutorials
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Tutorials
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/build-a-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Build a Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/META_ORCHESTRATION_TUTORIAL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meta-Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/examples/simple-chatbot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Review Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/examples/sbar-clinical-handoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SBAR Clinical Handoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../tutorials/examples/adaptive-learning-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    How-to
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    How-to
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_2" id="__nav_4_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Memory System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/unified-memory-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Unified Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/memory-graph/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory Graph
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/lessons-workflow/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Lessons Workflow
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_3" id="__nav_4_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    AI Agents
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    AI Agents
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/agent-factory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agent Factory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/smart-router/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Smart Router
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/auto-chaining/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Auto-Chaining
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_4" id="__nav_4_4_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Integration
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Integration
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../integration/claude-code-integration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Claude Code
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../hooks/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Hooks
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/security-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_5" id="__nav_4_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Patterns
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Patterns
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/practical-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Practical Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/resilience-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Resilience Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codebase Intelligence
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Codebase Intelligence
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/project-analysis-and-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/context-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/learning-and-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning and Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/triage-code-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Code-Quality Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Observability
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/telemetry-and-signals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry and Signals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/help-system-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../how-to/prerequisites/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Prerequisites
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    RAG Grounding
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    RAG Grounding
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rag/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embeddings Decision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Faithfulness Decision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../SECURITY_REVIEW/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Standards
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Standards
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../CODING_STANDARDS/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Coding Standards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../EXCEPTION_HANDLING_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Exception Handling
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_7" id="__nav_7_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Index
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_2" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_2" id="__nav_7_2_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    API
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_2">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    API
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/API_REFERENCE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/empathy-os/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    EmpathyOS
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/configuration/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/core/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Core
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/config/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Config
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/pattern-library/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Pattern Library
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/multi-agent/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/persistence/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Persistence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/llm-toolkit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    LLM Toolkit
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_3" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wizards
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Wizards
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/wizards-getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/wizard-architecture/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/cli-reference/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI Reference
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_5" id="__nav_7_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/FAQ/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    FAQ
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/TROUBLESHOOTING/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Troubleshooting
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../reference/glossary/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Glossary
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_6" id="__nav_7_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ARCHITECTURE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../architecture/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to Attune AI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_9" id="__nav_9_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Book
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Book
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../book-cover/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Cover
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/preface/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Preface
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../guides/foreword/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Foreword by Claude
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../features/spec-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spec Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#executive-summary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Executive Summary
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#1-per-module-coverage-heat-map" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1. Per-Module Coverage Heat Map
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="1. Per-Module Coverage Heat Map">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#red-70" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Red ( &lt; 70% )
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#amber-7084" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Amber ( 70–84% )
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#green-85" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Green ( ≥ 85% )
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#1a-workflows-sub-files-at-0-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        1a. Workflows Sub-Files at 0% Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-coverage-exclusion-audit" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Coverage Exclusion Audit
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="2. Coverage Exclusion Audit">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#legitimate-keep" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Legitimate (keep)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#questionable-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Questionable (review)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#outdated-delete-the-entry" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Outdated (delete the entry)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#threshold-discrepancy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Threshold Discrepancy
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-skip-xfail-disposition-table" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Skip / Xfail Disposition Table
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="3. Skip / Xfail Disposition Table">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#category-a-correct-architectural-keep-as-is" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category A: Correct — Architectural (keep as-is)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-b-tech-debt-needs-refactoring" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category B: Tech Debt — Needs Refactoring
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-c-obsolete-should-be-deleted" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category C: Obsolete — Should Be Deleted
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#category-d-entire-files-permanently-skipped" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Category D: Entire Files Permanently Skipped
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-integration-test-adequacy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Integration Test Adequacy
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="4. Integration Test Adequacy">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#covered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Covered
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#not-covered-gaps" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Not Covered (gaps)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#5-test-quality-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5. Test Quality Assessment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="5. Test Quality Assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#5a-assert-free-tests" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5a. Assert-Free Tests
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5b-coverage-batch-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5b. Coverage Batch Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#5c-telemetry-tests-reading-real-files" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        5c. Telemetry Tests Reading Real Files
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#6-mcp-server-testing-completeness" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        6. MCP Server Testing Completeness
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="6. MCP Server Testing Completeness">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#handler-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Handler Coverage
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#hardcoded-count" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Hardcoded Count
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#7-hardcoded-registry-count-assertions" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        7. Hardcoded Registry / Count Assertions
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#8-branch-coverage" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        8. Branch Coverage
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#9-ci-health-assessment" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        9. CI Health Assessment
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="9. CI Health Assessment">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#issues-found" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Issues Found
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#whats-working-well" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What's Working Well
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#10-conftest-and-fixture-health" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        10. Conftest and Fixture Health
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="10. Conftest and Fixture Health">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#root-conftestpy-18-kb" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Root conftest.py (18 KB)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#relative-attune-path-risk" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Relative .attune/ Path Risk
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#testsunitmeta_workflowstest_pattern_learnerpy" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        tests/unit/meta_workflows/test_pattern_learner.py
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#priority-recommendations" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Priority Recommendations
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Priority Recommendations">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#p1-quick-wins-14-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P1 — Quick wins (1–4 hours)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p2-coverage-gaps-in-active-code-12-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P2 — Coverage gaps in active code (1–2 days)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p3-test-hygiene-24-hours" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P3 — Test hygiene (2–4 hours)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p4-branch-coverage-1-day" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P4 — Branch coverage (1 day)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#p5-integration-test-gaps-23-days" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        P5 — Integration test gaps (2–3 days)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#appendix-modules-with-0-test-file-references-socratic" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Appendix: Modules with 0 Test File References (Socratic)
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="testing-audit-attune-ai">Testing Audit — attune-ai<a class="headerlink" href="#testing-audit-attune-ai" title="Permanent link">&para;</a></h1>
+<p><strong>Date:</strong> 2026-04-23
+<strong>Branch:</strong> feat/help-aggregator-tests
+<strong>Coverage data source:</strong> <code>coverage.json</code> from 2026-03-19 (5 weeks old; shapes are stable)
+<strong>Analysis method:</strong> Static grep analysis + existing coverage.json parsing</p>
+<hr />
+<h2 id="executive-summary">Executive Summary<a class="headerlink" href="#executive-summary" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Metric</th>
+<th>Value</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Test files</td>
+<td>589</td>
+</tr>
+<tr>
+<td>Test count</td>
+<td>1,382+</td>
+</tr>
+<tr>
+<td>Overall line coverage</td>
+<td>83.75%</td>
+</tr>
+<tr>
+<td>pyproject.toml threshold</td>
+<td>85%</td>
+</tr>
+<tr>
+<td>CI threshold</td>
+<td>83%</td>
+</tr>
+<tr>
+<td>Skip/xfail tests</td>
+<td>~155 total</td>
+</tr>
+<tr>
+<td>Entire test files skipped</td>
+<td>3 (107 tests permanently hidden)</td>
+</tr>
+<tr>
+<td>Redis mocking refactor backlog</td>
+<td>12 tests</td>
+</tr>
+<tr>
+<td>Unimplemented API tests</td>
+<td>13 tests</td>
+</tr>
+<tr>
+<td>Assert-free tests (approx)</td>
+<td>255 (many false positives; real count ~80-100)</td>
+</tr>
+<tr>
+<td>Coverage batch files</td>
+<td>9 (934 tests, mixed quality)</td>
+</tr>
+<tr>
+<td>MCP server.py coverage measured</td>
+<td><strong>0%</strong> (explicitly omitted)</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="1-per-module-coverage-heat-map">1. Per-Module Coverage Heat Map<a class="headerlink" href="#1-per-module-coverage-heat-map" title="Permanent link">&para;</a></h2>
+<p>Coverage from <code>coverage.json</code> (2026-03-19), grouped by top-level package.
+Lines = measured statements; excludes omitted files.</p>
+<h3 id="red-70">Red ( &lt; 70% )<a class="headerlink" href="#red-70" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Lines</th>
+<th>Coverage</th>
+<th>Key files at 0%</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>wizards</code></td>
+<td>898</td>
+<td><strong>34.0%</strong></td>
+<td><code>base.py</code>, <code>registry.py</code>, <code>config_driven.py</code>, all <code>builtin/</code> wizards</td>
+</tr>
+<tr>
+<td><code>config.py</code> (root)</td>
+<td>166</td>
+<td><strong>0.0%</strong></td>
+<td>entire file</td>
+</tr>
+</tbody>
+</table>
+<h3 id="amber-7084">Amber ( 70–84% )<a class="headerlink" href="#amber-7084" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Lines</th>
+<th>Coverage</th>
+<th>Notable sub-files</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflows</code></td>
+<td>13,176</td>
+<td><strong>78.9%</strong></td>
+<td>8 workflow sub-files at 0% (see §1a)</td>
+</tr>
+<tr>
+<td><code>patterns</code></td>
+<td>835</td>
+<td>81.1%</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>cache_monitor.py</code></td>
+<td>132</td>
+<td>80.3%</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>redis_config.py</code></td>
+<td>92</td>
+<td>75.0%</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>monitoring</code></td>
+<td>458</td>
+<td>84.1%</td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>memory</code></td>
+<td>5,572</td>
+<td><strong>85.0%</strong></td>
+<td><code>short_term/conflicts.py</code> 18%, <code>short_term/security.py</code> 32%</td>
+</tr>
+</tbody>
+</table>
+<h3 id="green-85">Green ( ≥ 85% )<a class="headerlink" href="#green-85" title="Permanent link">&para;</a></h3>
+<p>Most modules are green. Notably:
+- <code>socratic</code>: 88.8% on 3,826 measured lines — <strong>but</strong> 25 source files have zero
+  test references (they are simply missing from coverage.json because they
+  are never imported by tests).
+- <code>mcp</code>: 90.2% — <strong>misleading</strong>: <code>server.py</code> (885 lines) is explicitly omitted.
+- <code>orchestration</code>: 88.9% on 2,279 lines.</p>
+<h3 id="1a-workflows-sub-files-at-0-coverage">1a. Workflows Sub-Files at 0% Coverage<a class="headerlink" href="#1a-workflows-sub-files-at-0-coverage" title="Permanent link">&para;</a></h3>
+<p>These are production code paths with no test coverage whatsoever:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Stmts</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>workflows/release_prep_stages.py</code></td>
+<td>164</td>
+<td>Release workflow stages</td>
+</tr>
+<tr>
+<td><code>workflows/security_audit_triage.py</code></td>
+<td>103</td>
+<td>Security triage logic</td>
+</tr>
+<tr>
+<td><code>workflows/perf_audit_stages_mixin.py</code></td>
+<td>110</td>
+<td>Perf audit stages</td>
+</tr>
+<tr>
+<td><code>workflows/code_review_architect.py</code></td>
+<td>93</td>
+<td>Architect review step</td>
+</tr>
+<tr>
+<td><code>workflows/code_review_classify.py</code></td>
+<td>59</td>
+<td>Classifier mixin</td>
+</tr>
+<tr>
+<td><code>workflows/code_review_crew_mixin.py</code></td>
+<td>41</td>
+<td>Crew mixin</td>
+</tr>
+<tr>
+<td><code>workflows/perf_audit_optimize_mixin.py</code></td>
+<td>50</td>
+<td>Optimization mixin</td>
+</tr>
+<tr>
+<td><code>workflows/document_gen/chunked_generation.py</code></td>
+<td>153</td>
+<td>Doc generation</td>
+</tr>
+<tr>
+<td><code>workflows/dependency_check_report.py</code></td>
+<td>118</td>
+<td>2.1% coverage</td>
+</tr>
+<tr>
+<td><code>workflows/bug_predict_report.py</code></td>
+<td>98</td>
+<td>2.5% coverage</td>
+</tr>
+<tr>
+<td><code>workflows/security_audit_stages.py</code></td>
+<td>163</td>
+<td>7.2% coverage</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Total unmeasured workflow code:</strong> ~1,156 statements at 0–7%.</p>
+<hr />
+<h2 id="2-coverage-exclusion-audit">2. Coverage Exclusion Audit<a class="headerlink" href="#2-coverage-exclusion-audit" title="Permanent link">&para;</a></h2>
+<p><strong>Total exclusion rules:</strong> 72 <code>omit</code> patterns + 8 <code>exclude_lines</code> = 80 total.</p>
+<h3 id="legitimate-keep">Legitimate (keep)<a class="headerlink" href="#legitimate-keep" title="Permanent link">&para;</a></h3>
+<p>~60 patterns. Correctly exclude:
+- Interactive CLIs (<code>auth_cli.py</code>, <code>socratic/cli.py</code>, <code>monitoring/alerts_cli.py</code>)
+- Infrastructure servers (FastAPI <code>control_panel_api.py</code>, <code>mcp/server.py</code>)
+- Redis-dependent modules (<code>memory/cross_session.py</code>,
+  <code>memory/short_term/sessions.py</code>)
+- LLM-dependent release agents (<code>agents/release/*.py</code>)
+- Hook scripts (run as standalone processes)
+- Wizard examples (<code>technology_wizard.py</code>, <code>customer_support_wizard.py</code>)</p>
+<h3 id="questionable-review">Questionable (review)<a class="headerlink" href="#questionable-review" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Pattern</th>
+<th>Concern</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>*/mcp/server.py</code></td>
+<td>885 lines of core MCP dispatch logic. Could be unit-tested at handler level — <code>tests/unit/mcp/</code> already does this but the file itself is excluded, hiding total exposure</td>
+</tr>
+<tr>
+<td><code>*/project_index/index.py</code></td>
+<td>500 lines; comment says "integration-tested" but no integration test exists for it</td>
+</tr>
+<tr>
+<td><code>*/project_index/scanner_parallel.py</code></td>
+<td>205 lines; parallel scanner has no tests at all</td>
+</tr>
+<tr>
+<td><code>*/cache/hybrid.py</code></td>
+<td>Hybrid cache — user-visible feature with no coverage</td>
+</tr>
+<tr>
+<td><code>*/monitoring/otel_backend.py</code></td>
+<td>265 lines — could at least be smoke-tested</td>
+</tr>
+</tbody>
+</table>
+<h3 id="outdated-delete-the-entry">Outdated (delete the entry)<a class="headerlink" href="#outdated-delete-the-entry" title="Permanent link">&para;</a></h3>
+<p>Comment in <code>pyproject.toml</code> mentions: "Deleted in v2.9.0: cli/, cli_unified.py,
+security/, pattern modules." Those omit entries are dead. Keeping them is
+harmless but misleading — they make the exclusion list look larger than it is.</p>
+<h3 id="threshold-discrepancy">Threshold Discrepancy<a class="headerlink" href="#threshold-discrepancy" title="Permanent link">&para;</a></h3>
+<p><code>pyproject.toml</code> sets <code>fail_under = 85</code> but CI runs
+<code>--cov-fail-under=83</code>. The CI gate is softer than the local gate.
+Choose one value and use it in both places.</p>
+<hr />
+<h2 id="3-skip-xfail-disposition-table">3. Skip / Xfail Disposition Table<a class="headerlink" href="#3-skip-xfail-disposition-table" title="Permanent link">&para;</a></h2>
+<p>Total skip/xfail instances: ~155 across ~110 test functions.</p>
+<h3 id="category-a-correct-architectural-keep-as-is">Category A: Correct — Architectural (keep as-is)<a class="headerlink" href="#category-a-correct-architectural-keep-as-is" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Count</th>
+<th>Pattern</th>
+<th>Example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12</td>
+<td>Requires live Anthropic API key</td>
+<td><code>agent_factory/test_*.py</code></td>
+</tr>
+<tr>
+<td>8</td>
+<td>Platform guards (Windows symlinks, <code>/proc</code>, <code>chmod</code>)</td>
+<td><code>scanner_security.py</code>, <code>config_core.py</code></td>
+</tr>
+<tr>
+<td>~20</td>
+<td>Optional dep guards (redis, cryptography, tiktoken, yaml)</td>
+<td>throughout</td>
+</tr>
+<tr>
+<td>1</td>
+<td>mypy removed from CI</td>
+<td><code>test_workflow_yaml.py:307</code></td>
+</tr>
+<tr>
+<td>1</td>
+<td>Requires Linux <code>/proc</code></td>
+<td><code>test_config_store.py:854</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="category-b-tech-debt-needs-refactoring">Category B: Tech Debt — Needs Refactoring<a class="headerlink" href="#category-b-tech-debt-needs-refactoring" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Count</th>
+<th>Reason</th>
+<th>File</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>12</td>
+<td>"Redis mocking API changed"</td>
+<td><code>tests/unit/memory/test_cross_session.py</code></td>
+<td>Rewrite mocks to use <code>memory._base._client</code> pattern (see Lessons)</td>
+</tr>
+<tr>
+<td>7</td>
+<td>"Classification not yet implemented" / "Learning loop not implemented"</td>
+<td><code>test_memory_architecture.py</code></td>
+<td>Decide: implement or delete</td>
+</tr>
+<tr>
+<td>4</td>
+<td>"WorkflowHistoryStore methods not yet implemented"</td>
+<td><code>test_security_remediation.py</code></td>
+<td><code>save_run</code>/<code>get_run</code> don't exist — decide: implement or delete</td>
+</tr>
+<tr>
+<td>4</td>
+<td>Private method mocking too hard</td>
+<td><code>test_meta_orchestration_architecture.py</code></td>
+<td>Tests for <code>_choose_composition_pattern</code> — test via public API instead</td>
+</tr>
+</tbody>
+</table>
+<h3 id="category-c-obsolete-should-be-deleted">Category C: Obsolete — Should Be Deleted<a class="headerlink" href="#category-c-obsolete-should-be-deleted" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Count</th>
+<th>Reason</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>40</td>
+<td><code>wizard_factory_cli</code> module removed</td>
+<td><code>tests/integration/test_api_endpoints.py</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Tests legacy JSON storage (now SQLite)</td>
+<td><code>tests/workflows/test_workflow_base.py</code></td>
+</tr>
+<tr>
+<td>5</td>
+<td>Multi-provider removed in v5.0.0 (Ollama, OpenAI, HYBRID)</td>
+<td><code>tests/unit/models/test_provider_config_extended.py</code></td>
+</tr>
+<tr>
+<td>2</td>
+<td><code>test_fallback.py</code>: "Anthropic-only architecture"</td>
+<td><code>tests/models/test_fallback.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="category-d-entire-files-permanently-skipped">Category D: Entire Files Permanently Skipped<a class="headerlink" href="#category-d-entire-files-permanently-skipped" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests Hidden</th>
+<th>Reason</th>
+<th>Action</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>tests/integration/test_api_endpoints.py</code></td>
+<td>40</td>
+<td>Module removed</td>
+<td><strong>Delete the file</strong></td>
+</tr>
+<tr>
+<td><code>tests/unit/memory/test_short_term_failures.py</code></td>
+<td>24</td>
+<td>Requires live Redis</td>
+<td>Correct — add <code>@pytest.mark.redis</code> and exclude in CI</td>
+</tr>
+<tr>
+<td><code>tests/unit/memory/test_cross_session.py</code></td>
+<td>12 of 43</td>
+<td>Redis mocking API changed</td>
+<td>Refactor the 12 skipped tests</td>
+</tr>
+</tbody>
+</table>
+<p><strong>CI issue:</strong> <code>tests/integration/test_api_endpoints.py</code> is still explicitly
+listed in CI's "Run new Phase 1 tests" step even though the file is entirely
+skipped at module level. The step runs but silently produces 40 skips.</p>
+<hr />
+<h2 id="4-integration-test-adequacy">4. Integration Test Adequacy<a class="headerlink" href="#4-integration-test-adequacy" title="Permanent link">&para;</a></h2>
+<h3 id="covered">Covered<a class="headerlink" href="#covered" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Interface</th>
+<th>Test location</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI → LLM providers</td>
+<td><code>tests/integration/test_llm_integration.py</code></td>
+</tr>
+<tr>
+<td>Hooks execution</td>
+<td><code>tests/integration/test_hooks_integration.py</code></td>
+</tr>
+<tr>
+<td>Context store</td>
+<td><code>tests/integration/test_context_integration.py</code></td>
+</tr>
+<tr>
+<td>Telemetry</td>
+<td><code>tests/integration/test_telemetry_integration.py</code></td>
+</tr>
+<tr>
+<td>Meta-workflow E2E</td>
+<td><code>tests/integration/test_meta_workflow_e2e.py</code></td>
+</tr>
+<tr>
+<td>Full workflow smoke</td>
+<td><code>tests/integration/test_critical_workflows_smoke.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3 id="not-covered-gaps">Not Covered (gaps)<a class="headerlink" href="#not-covered-gaps" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Interface</th>
+<th>Gap</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>MCP server ↔ workflow dispatch</strong></td>
+<td>No integration test for <code>call_tool</code> → <code>_dispatch_tool</code> → workflow path</td>
+</tr>
+<tr>
+<td><strong>Memory ↔ Redis</strong></td>
+<td>No test in <code>tests/integration/</code> — only in <code>tests/memory/</code> (Redis tests skip in CI)</td>
+</tr>
+<tr>
+<td><strong>Plugin components ↔ MCP tools</strong></td>
+<td>No end-to-end test that installs plugin and verifies MCP tool names resolve</td>
+</tr>
+<tr>
+<td><strong>project_index/index.py</strong></td>
+<td>Claimed "integration-tested" in omit comment; no such test exists</td>
+</tr>
+<tr>
+<td><strong>Agent SDK adapter ↔ workflows</strong></td>
+<td>SDK-native workflows are unit-mocked only; no real agent invocation test</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h2 id="5-test-quality-assessment">5. Test Quality Assessment<a class="headerlink" href="#5-test-quality-assessment" title="Permanent link">&para;</a></h2>
+<h3 id="5a-assert-free-tests">5a. Assert-Free Tests<a class="headerlink" href="#5a-assert-free-tests" title="Permanent link">&para;</a></h3>
+<p>Automated scan found ~255 tests with no <code>assert</code> statement in their body
+(detecting false positives: tests that only use <code>capsys.readouterr()</code>,
+<code>pytest.raises</code>, or side-effect checks).</p>
+<p>Confirmed true cases (sample of real assert-free tests):
+- <code>test_mcp_memory_tools.py</code>: several tests that only verify a return code == 0
+- <code>test_coverage_batch7.py</code>: 3 tests that call CLI handlers but never check output
+- <code>test_meta_orchestrator_interactive.py</code>: 3 tests calling methods with no
+  assertion (pure smoke tests that ensure no exception)</p>
+<p><strong>Verdict:</strong> Pure smoke tests are acceptable when the goal is "does it not
+crash", but they should be marked <code>@pytest.mark.smoke</code> so they're
+distinguishable from behavioral tests.</p>
+<h3 id="5b-coverage-batch-files">5b. Coverage Batch Files<a class="headerlink" href="#5b-coverage-batch-files" title="Permanent link">&para;</a></h3>
+<p>9 files (<code>test_coverage_batch1–10.py</code>) containing 934 tests generated to
+boost coverage metrics. Quality is mixed:</p>
+<table>
+<thead>
+<tr>
+<th>File</th>
+<th>Tests</th>
+<th>Assert ratio</th>
+<th>Mock lines</th>
+<th>Quality</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>batch3.py</code></td>
+<td>73</td>
+<td>3.0</td>
+<td>183</td>
+<td>Good — real behavioral assertions</td>
+</tr>
+<tr>
+<td><code>batch5.py</code></td>
+<td>128</td>
+<td>2.2</td>
+<td>31</td>
+<td>OK</td>
+</tr>
+<tr>
+<td><code>batch1.py</code></td>
+<td>160</td>
+<td>2.4</td>
+<td>85</td>
+<td>OK</td>
+</tr>
+<tr>
+<td><code>batch9.py</code></td>
+<td>173</td>
+<td>1.6</td>
+<td>135</td>
+<td>Mixed — some assert-free</td>
+</tr>
+<tr>
+<td><code>batch10.py</code></td>
+<td>81</td>
+<td>2.2</td>
+<td>295</td>
+<td>Mostly CLI output checks via mock</td>
+</tr>
+<tr>
+<td><code>batch7.py</code></td>
+<td>165</td>
+<td>1.6</td>
+<td>106</td>
+<td>Mixed</td>
+</tr>
+<tr>
+<td><code>batch4.py</code></td>
+<td>9</td>
+<td>1.1</td>
+<td>0</td>
+<td>Thin</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Concern:</strong> <code>batch10</code> tests CLI output via heavy mocking (295 mock uses).
+These measure that code runs without testing what it does behaviorally.</p>
+<h3 id="5c-telemetry-tests-reading-real-files">5c. Telemetry Tests Reading Real Files<a class="headerlink" href="#5c-telemetry-tests-reading-real-files" title="Permanent link">&para;</a></h3>
+<p><code>tests/unit/test_telemetry.py</code> reads from relative <code>.attune/costs.json</code>,
+<code>.attune/health.json</code>, <code>.attune/workflow_runs.json</code> — real files in the
+repo root. All tests <code>pytest.skip</code> if the file doesn't exist, so in CI
+these effectively never run. They provide <strong>zero CI coverage</strong> of the
+telemetry module.</p>
+<hr />
+<h2 id="6-mcp-server-testing-completeness">6. MCP Server Testing Completeness<a class="headerlink" href="#6-mcp-server-testing-completeness" title="Permanent link">&para;</a></h2>
+<h3 id="handler-coverage">Handler Coverage<a class="headerlink" href="#handler-coverage" title="Permanent link">&para;</a></h3>
+<p>23 handlers across <code>server.py</code> and mixin files. Tests exist for:</p>
+<table>
+<thead>
+<tr>
+<th>Handler group</th>
+<th>Test file</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Memory handlers (store/retrieve/search/forget)</td>
+<td><code>tests/unit/mcp/handlers/test_memory_handlers.py</code></td>
+</tr>
+<tr>
+<td>Context handlers (get/set)</td>
+<td><code>tests/unit/mcp/handlers/test_context_handlers.py</code></td>
+</tr>
+<tr>
+<td>Help handlers (lookup/init/status/update/maintain)</td>
+<td><code>tests/unit/mcp/test_help_handlers.py</code></td>
+</tr>
+<tr>
+<td>Personal memory (capture/recall/topics/forget)</td>
+<td><code>tests/unit/mcp/test_server.py</code></td>
+</tr>
+<tr>
+<td>Attune level (get/set)</td>
+<td><code>tests/unit/test_mcp_memory_tools.py</code></td>
+</tr>
+</tbody>
+</table>
+<p><strong>Handlers with no dedicated test:</strong>
+- <code>_handle_help_lookup_impl</code> (internal, called by <code>_handle_help_lookup</code>)
+- <code>_handle_list_tools</code>, <code>_handle_list_resources</code>, <code>_handle_list_prompts</code>,
+  <code>_handle_get_prompt</code> (MCP protocol plumbing)</p>
+<p>These are lower risk but worth a basic smoke test.</p>
+<h3 id="hardcoded-count">Hardcoded Count<a class="headerlink" href="#hardcoded-count" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>tests/unit/test_mcp_memory_tools.py:32: assert len(tools) == 46
+</code></pre></div>
+<p>Schema functions return <strong>41 tools</strong> (21 workflow + 7 utility + 5 help
++ 4 personal_memory + 4 memory). The test expects 46 = 41 core + 5 from
+the <code>attune-redis</code> plugin. The test only passes when <code>attune-redis</code> is
+installed. This should be made conditional or split into two assertions:
+one for core (41) and one for the with-redis case (46).</p>
+<hr />
+<h2 id="7-hardcoded-registry-count-assertions">7. Hardcoded Registry / Count Assertions<a class="headerlink" href="#7-hardcoded-registry-count-assertions" title="Permanent link">&para;</a></h2>
+<table>
+<thead>
+<tr>
+<th>Test</th>
+<th>Asserts</th>
+<th>Actual</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_mcp_memory_tools.py:32</code></td>
+<td><code>len(tools) == 46</code></td>
+<td>41 core + 5 redis</td>
+<td>Conditional on attune-redis install</td>
+</tr>
+<tr>
+<td><code>agent_factory/test_base.py:91</code></td>
+<td><code>len(AgentRole) == 15</code></td>
+<td>15 base roles</td>
+<td><strong>CORRECT</strong></td>
+</tr>
+<tr>
+<td>Various <code>len(results) == 10/20/50</code></td>
+<td>Page size checks</td>
+<td>N/A</td>
+<td><strong>Correct</strong> (testing pagination limits)</td>
+</tr>
+</tbody>
+</table>
+<p>No widespread count drift found. The MCP count is the only structural issue.</p>
+<hr />
+<h2 id="8-branch-coverage">8. Branch Coverage<a class="headerlink" href="#8-branch-coverage" title="Permanent link">&para;</a></h2>
+<p><code>coverage.json</code> was generated <strong>without</strong> <code>--cov-branch</code> (CI also omits it).
+Branch coverage is not currently measured. This is a gap, particularly for:</p>
+<ul>
+<li><code>src/attune/security/path_validation.py</code> — many conditional branches for
+  OS paths, null bytes, symlinks</li>
+<li><code>src/attune/mcp/server.py</code> — omitted entirely</li>
+<li><code>src/attune/models/</code> — auth fallback logic has complex branching</li>
+</ul>
+<p><strong>Recommendation:</strong> Add <code>--cov-branch</code> to the CI pytest invocation.
+Expected: branch coverage ~5–10 pts below line coverage (i.e., ~73–78%),
+which may drop CI below the 83% gate until branches in Red/Amber modules
+are covered.</p>
+<hr />
+<h2 id="9-ci-health-assessment">9. CI Health Assessment<a class="headerlink" href="#9-ci-health-assessment" title="Permanent link">&para;</a></h2>
+<h3 id="issues-found">Issues Found<a class="headerlink" href="#issues-found" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Issue</th>
+<th>Severity</th>
+<th>Detail</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skipped file explicitly invoked in CI</td>
+<td>Low</td>
+<td><code>test_api_endpoints.py</code> in "Phase 1 tests" CI step produces 40 silent skips</td>
+</tr>
+<tr>
+<td>Threshold mismatch</td>
+<td>Low</td>
+<td><code>pyproject.toml fail_under=85</code> vs CI <code>--cov-fail-under=83</code></td>
+</tr>
+<tr>
+<td>No branch coverage tracking</td>
+<td>Medium</td>
+<td>Branch gaps in security-critical code are invisible</td>
+</tr>
+<tr>
+<td><code>ANTHROPIC_API_KEY</code> in CI env</td>
+<td>Info</td>
+<td><code>test_sonnet_opus_fallback.py</code> now correctly uses <code>pytestmark = pytest.mark.network</code>; this is fixed</td>
+</tr>
+<tr>
+<td><code>hot_reload</code> dead code with 94% coverage</td>
+<td>Info</td>
+<td>Module has no inbound imports but 94% test coverage (confirming the "dead code looks alive" lesson)</td>
+</tr>
+</tbody>
+</table>
+<h3 id="whats-working-well">What's Working Well<a class="headerlink" href="#whats-working-well" title="Permanent link">&para;</a></h3>
+<ul>
+<li>12-platform matrix (3 OS × 4 Python) with <code>fail-fast: false</code></li>
+<li><code>conftest.py</code> has autouse <code>_disable_help_telemetry</code> fixture (prevents
+  real file writes during tests)</li>
+<li><code>conftest.py</code> has autouse <code>_setup_test_env</code> fixture patching empathy dir
+  to a temp path</li>
+<li><code>tests/unit/ci/test_zsh_readonly_assignments.py</code> guards against
+  <code>status=</code> assignments in shell scripts</li>
+</ul>
+<hr />
+<h2 id="10-conftest-and-fixture-health">10. Conftest and Fixture Health<a class="headerlink" href="#10-conftest-and-fixture-health" title="Permanent link">&para;</a></h2>
+<h3 id="root-conftestpy-18-kb">Root conftest.py (18 KB)<a class="headerlink" href="#root-conftestpy-18-kb" title="Permanent link">&para;</a></h3>
+<p>Three autouse fixtures confirmed:
+1. Line 67: <code>autouse=True</code> — test env setup
+2. Line 376: <code>autouse=True, scope="function"</code> — disables telemetry writes
+3. Line 420: <code>autouse=True, scope="function"</code> — disables help telemetry via env var</p>
+<p><strong>This is good.</strong> Telemetry pollution is guarded.</p>
+<h3 id="relative-attune-path-risk">Relative <code>.attune/</code> Path Risk<a class="headerlink" href="#relative-attune-path-risk" title="Permanent link">&para;</a></h3>
+<p><code>tests/unit/test_telemetry.py</code> reads <code>Path(".attune/costs.json")</code> without
+<code>tmp_path</code>. All three tests skip if the file doesn't exist — so no CI
+writes occur — but these tests only run on developer machines with
+pre-existing telemetry data. They should be rewritten to use <code>tmp_path</code>
+and create fixture data.</p>
+<h3 id="testsunitmeta_workflowstest_pattern_learnerpy"><code>tests/unit/meta_workflows/test_pattern_learner.py</code><a class="headerlink" href="#testsunitmeta_workflowstest_pattern_learnerpy" title="Permanent link">&para;</a></h3>
+<p>Uses <code>TemplateRegistry(storage_dir=".attune/meta_workflows/templates")</code> in
+multiple tests. These write to a relative path during test execution. If
+the tests don't clean up, they leave artifacts in the repo root. Should
+use <code>tmp_path</code>.</p>
+<hr />
+<h2 id="priority-recommendations">Priority Recommendations<a class="headerlink" href="#priority-recommendations" title="Permanent link">&para;</a></h2>
+<p>Ordered by risk × effort (high risk, low effort first):</p>
+<h3 id="p1-quick-wins-14-hours">P1 — Quick wins (1–4 hours)<a class="headerlink" href="#p1-quick-wins-14-hours" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Delete <code>tests/integration/test_api_endpoints.py</code></strong> (40 dead tests,
+   breaks CI narrative, no fix needed — wizard_factory_cli is gone)</p>
+</li>
+<li>
+<p><strong>Remove <code>test_api_endpoints.py</code> from CI "Phase 1 tests" step</strong> in
+   <code>.github/workflows/tests.yml</code></p>
+</li>
+<li>
+<p><strong>Delete 5 v5.0.0 removal tests</strong> in <code>test_provider_config_extended.py</code>
+   and <code>test_fallback.py</code> (multi-provider, Ollama, OpenAI)</p>
+</li>
+<li>
+<p><strong>Delete 5 legacy JSON storage tests</strong> in <code>test_workflow_base.py</code></p>
+</li>
+<li>
+<p><strong>Fix threshold mismatch</strong> — align CI <code>--cov-fail-under</code> with
+   <code>pyproject.toml fail_under</code> (pick 85)</p>
+</li>
+</ol>
+<h3 id="p2-coverage-gaps-in-active-code-12-days">P2 — Coverage gaps in active code (1–2 days)<a class="headerlink" href="#p2-coverage-gaps-in-active-code-12-days" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Wizard module coverage</strong> — 34% on 898 lines is the worst measured
+   module. <code>wizards/base.py</code> (13%), <code>wizards/registry.py</code> (14%), and
+   <code>wizards/config_driven.py</code> (17%) are the highest-value targets. These
+   are user-facing code paths.</p>
+</li>
+<li>
+<p><strong>Workflows sub-file 0% cluster</strong> — <code>release_prep_stages.py</code>,
+   <code>security_audit_stages.py</code>, <code>security_audit_triage.py</code> together
+   represent ~430 statements at 0–7%. Security audit and release prep
+   are high-trust code paths.</p>
+</li>
+<li>
+<p><strong><code>attune/config.py</code> at 0%</strong> — 166 statements. Root config module
+   with zero coverage.</p>
+</li>
+</ol>
+<h3 id="p3-test-hygiene-24-hours">P3 — Test hygiene (2–4 hours)<a class="headerlink" href="#p3-test-hygiene-24-hours" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>Refactor 12 Redis mocking tests</strong> in <code>test_cross_session.py</code> — use
+   <code>memory._base._client</code> injection pattern (documented in Lessons Learned).</p>
+</li>
+<li>
+<p><strong>Fix MCP tool count assertion</strong> — split <code>assert len(tools) == 46</code>
+    into <code>assert len(core_tools) == 41</code> + conditional check for redis
+    plugin. This will stop breaking for contributors without <code>attune-redis</code>.</p>
+</li>
+<li>
+<p><strong>Fix <code>test_telemetry.py</code></strong> — replace relative <code>.attune/</code> reads with
+    <code>tmp_path</code> fixtures and actual fixture data.</p>
+</li>
+<li>
+<p><strong>Fix <code>test_pattern_learner.py</code></strong> — replace <code>.attune/meta_workflows/</code>
+    with <code>tmp_path</code>.</p>
+</li>
+</ol>
+<h3 id="p4-branch-coverage-1-day">P4 — Branch coverage (1 day)<a class="headerlink" href="#p4-branch-coverage-1-day" title="Permanent link">&para;</a></h3>
+<ol>
+<li><strong>Add <code>--cov-branch</code></strong> to CI pytest invocation. Baseline the new
+    metric and set a branch threshold. Focus first on
+    <code>security/path_validation.py</code> and <code>models/</code> auth paths.</li>
+</ol>
+<h3 id="p5-integration-test-gaps-23-days">P5 — Integration test gaps (2–3 days)<a class="headerlink" href="#p5-integration-test-gaps-23-days" title="Permanent link">&para;</a></h3>
+<ol>
+<li>
+<p><strong>MCP server ↔ workflow dispatch integration test</strong> — the
+    <code>call_tool → _dispatch_tool → workflow.execute()</code> path is the core
+    value chain and has no integration test.</p>
+</li>
+<li>
+<p><strong>project_index/index.py</strong> — either add an integration test or remove
+    the "integration-tested" claim from the omit comment.</p>
+</li>
+</ol>
+<hr />
+<h2 id="appendix-modules-with-0-test-file-references-socratic">Appendix: Modules with 0 Test File References (Socratic)<a class="headerlink" href="#appendix-modules-with-0-test-file-references-socratic" title="Permanent link">&para;</a></h2>
+<p>25 socratic source files are never imported by any test:</p>
+<p><code>generated_workflow</code>, <code>domain_models</code>, <code>collaboration_invitations</code>,
+<code>collaboration_sync</code>, <code>html_renderer</code>, <code>llm_analyzer_types</code>,
+<code>collaboration_models</code>, <code>react_editor</code>, <code>success_models</code>, <code>explainer_types</code>,
+<code>feedback_models</code>, <code>editor_models</code>, <code>form_builders</code>, <code>workflow_visualizer</code>,
+<code>success_templates</code>, <code>react_schemas</code>, <code>generator_registry</code>,
+<code>workflow_templates</code>, <code>api_helpers</code>, <code>llm_analyzer_prompts</code>,
+<code>domain_registry</code>, <code>ab_testing/models</code>, <code>ab_testing/workflow_tester</code>,
+<code>ab_testing/statistics</code>, <code>ab_testing/manager</code>, <code>ab_testing/allocator</code></p>
+<p>Several of these (<code>collaboration_*</code>, <code>mcp_server</code>) are excluded from
+coverage via omit patterns. The rest appear in the 88.8% <code>socratic</code>
+module aggregate only because the tested files pull them in indirectly.
+True per-file coverage for the untested socratic files is likely 0–20%.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+    <div class="md-copyright__highlight">
+      Copyright &copy; 2025 Smart-AI-Memory
+    </div>
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+        
+<div class="md-social">
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://github.com/Smart-AI-Memory/attune-ai" target="_blank" rel="noopener" title="github.com" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M173.9 397.4c0 2-2.3 3.6-5.2 3.6-3.3.3-5.6-1.3-5.6-3.6 0-2 2.3-3.6 5.2-3.6 3-.3 5.6 1.3 5.6 3.6m-31.1-4.5c-.7 2 1.3 4.3 4.3 4.9 2.6 1 5.6 0 6.2-2s-1.3-4.3-4.3-5.2c-2.6-.7-5.5.3-6.2 2.3m44.2-1.7c-2.9.7-4.9 2.6-4.6 4.9.3 2 2.9 3.3 5.9 2.6 2.9-.7 4.9-2.6 4.6-4.6-.3-1.9-3-3.2-5.9-2.9M252.8 8C114.1 8 8 113.3 8 252c0 110.9 69.8 205.8 169.5 239.2 12.8 2.3 17.3-5.6 17.3-12.1 0-6.2-.3-40.4-.3-61.4 0 0-70 15-84.7-29.8 0 0-11.4-29.1-27.8-36.6 0 0-22.9-15.7 1.6-15.4 0 0 24.9 2 38.6 25.8 21.9 38.6 58.6 27.5 72.9 20.9 2.3-16 8.8-27.1 16-33.7-55.9-6.2-112.3-14.3-112.3-110.5 0-27.5 7.6-41.3 23.6-58.9-2.6-6.5-11.1-33.3 2.6-67.9 20.9-6.5 69 27 69 27 20-5.6 41.5-8.5 62.8-8.5s42.8 2.9 62.8 8.5c0 0 48.1-33.6 69-27 13.7 34.7 5.2 61.4 2.6 67.9 16 17.7 25.8 31.5 25.8 58.9 0 96.5-58.9 104.2-114.8 110.5 9.2 7.9 17 22.9 17 46.4 0 33.7-.3 75.4-.3 83.6 0 6.5 4.6 14.4 17.3 12.1C436.2 457.8 504 362.9 504 252 504 113.3 391.5 8 252.8 8M105.2 352.9c-1.3 1-1 3.3.7 5.2 1.6 1.6 3.9 2.3 5.2 1 1.3-1 1-3.3-.7-5.2-1.6-1.6-3.9-2.3-5.2-1m-10.8-8.1c-.7 1.3.3 2.9 2.3 3.9 1.6 1 3.6.7 4.3-.7.7-1.3-.3-2.9-2.3-3.9-2-.6-3.6-.3-4.3.7m32.4 35.6c-1.6 1.3-1 4.3 1.3 6.2 2.3 2.3 5.2 2.6 6.5 1 1.3-1.3.7-4.3-1.3-6.2-2.2-2.3-5.2-2.6-6.5-1m-11.4-14.7c-1.6 1-1.6 3.6 0 5.9s4.3 3.3 5.6 2.3c1.6-1.3 1.6-3.9 0-6.2-1.4-2.3-4-3.3-5.6-2"/></svg>
+    </a>
+  
+    
+    
+    
+    
+      
+      
+    
+    <a href="https://pypi.org/project/attune-ai/" target="_blank" rel="noopener" title="pypi.org" class="md-social__link">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.8 200.5c-7.7-30.9-22.3-54.2-53.4-54.2h-40.1v47.4c0 36.8-31.2 67.8-66.8 67.8H172.7c-29.2 0-53.4 25-53.4 54.3v101.8c0 29 25.2 46 53.4 54.3 33.8 9.9 66.3 11.7 106.8 0 26.9-7.8 53.4-23.5 53.4-54.3v-40.7H226.2v-13.6h160.2c31.1 0 42.6-21.7 53.4-54.2 11.2-33.5 10.7-65.7 0-108.6M286.2 444.7a20.4 20.4 0 1 1 0-40.7 20.4 20.4 0 1 1 0 40.7M167.8 248.1h106.8c29.7 0 53.4-24.5 53.4-54.3V91.9c0-29-24.4-50.7-53.4-55.6-35.8-5.9-74.7-5.6-106.8.1-45.2 8-53.4 24.7-53.4 55.6v40.7h106.9v13.6h-147c-31.1 0-58.3 18.7-66.8 54.2-9.8 40.7-10.2 66.1 0 108.6 7.6 31.6 25.7 54.2 56.8 54.2H101v-48.8c0-35.3 30.5-66.4 66.8-66.4m-6.6-183.4a20.4 20.4 0 1 1 0 40.8 20.4 20.4 0 1 1 0-40.8"/></svg>
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../assets/javascripts/bundle.79ae519e.min.js"></script>
+      
+    
+  </body>
+</html>

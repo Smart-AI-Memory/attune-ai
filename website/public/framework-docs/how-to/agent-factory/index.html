@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
+        <meta name="description" content="How to create agents and workflows across multiple frameworks (LangChain, LangGraph, AutoGen, Haystack, or native) through a single unified factory.">
       
       
         <meta name="author" content="Patrick Roebuck">
@@ -15,7 +15,7 @@
         <link rel="canonical" href="https://smartaimemory.com/framework-docs/how-to/agent-factory/">
       
       
-        <link rel="prev" href="../memory-graph/">
+        <link rel="prev" href="../lessons-workflow/">
       
       
         <link rel="next" href="../smart-router/">
@@ -25,7 +25,7 @@
       
       
       <link rel="icon" href="../../assets/images/empathy-brain-logo.png">
-      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.0">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.6">
     
     
       
@@ -33,7 +33,7 @@
       
     
     
-      <link rel="stylesheet" href="../../assets/stylesheets/main.618322db.min.css">
+      <link rel="stylesheet" href="../../assets/stylesheets/main.484c7ddc.min.css">
       
         
         <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
@@ -85,7 +85,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#description-agent-factory-the-universal-agent-factory-allows-you-to-create-ai-agents-and-workflows-using-your-preferred-framework-while-retaining-empathys-core-features" class="md-skip">
+        <a href="#agent-factory" class="md-skip">
           Skip to content
         </a>
       
@@ -314,11 +314,11 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../SECURITY/" class="md-tabs__link">
+        <a href="../../rag/" class="md-tabs__link">
           
   
   
-  Security
+  RAG Grounding
 
         </a>
       </li>
@@ -334,11 +334,11 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../explanation/" class="md-tabs__link">
+        <a href="../../SECURITY_REVIEW/" class="md-tabs__link">
           
   
   
-  Explanation
+  Security
 
         </a>
       </li>
@@ -371,17 +371,18 @@
   
   
   
-    <li class="md-tabs__item">
-      <a href="../../contributing/" class="md-tabs__link">
-        
-  
-  
     
+    
+      <li class="md-tabs__item">
+        <a href="../../contributing/" class="md-tabs__link">
+          
+  
   
   Contributing
 
-      </a>
-    </li>
+        </a>
+      </li>
+    
   
 
       
@@ -393,11 +394,31 @@
     
     
       <li class="md-tabs__item">
-        <a href="../../get-the-book/" class="md-tabs__link">
+        <a href="../../book-cover/" class="md-tabs__link">
           
   
   
   Book
+
+        </a>
+      </li>
+    
+  
+
+      
+        
+  
+  
+  
+  
+    
+    
+      <li class="md-tabs__item">
+        <a href="../../features/" class="md-tabs__link">
+          
+  
+  
+  Features
 
         </a>
       </li>
@@ -621,6 +642,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../getting-started/quickstart-plugin/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Quickstart (Plugin)
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../getting-started/choose-your-path/" class="md-nav__link">
         
   
@@ -815,6 +864,236 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/META_ORCHESTRATION_TUTORIAL/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Meta-Orchestration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_3_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_3_5" id="__nav_3_5_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Examples
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_3_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_3_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Examples
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/examples/simple-chatbot/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Code Review Assistant
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/examples/multi-agent-team-coordination/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Multi-Agent Teams
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/examples/sbar-clinical-handoff/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    SBAR Clinical Handoff
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../tutorials/examples/adaptive-learning-system/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Adaptive Learning
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -999,14 +1278,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../short-term-memory-implementation/" class="md-nav__link">
+      <a href="../memory-graph/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Short-Term Memory
+    Memory Graph
   
 
     
@@ -1027,14 +1306,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../memory-graph/" class="md-nav__link">
+      <a href="../lessons-workflow/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Memory Graph
+    Lessons Workflow
   
 
     
@@ -1126,6 +1405,8 @@
       <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
       
       
+        
+      
       
         <label class="md-nav__link md-nav__link--active" for="__toc">
           
@@ -1168,6 +1449,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -1176,10 +1459,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description-agent-factory-the-universal-agent-factory-allows-you-to-create-ai-agents-and-workflows-using-your-preferred-framework-while-retaining-empathys-core-features" class="md-nav__link">
+  <a href="#supported-frameworks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        description: Agent Factory: The Universal Agent Factory allows you to create AI agents and workflows using your preferred framework while retaining Empathy's core features:
+        Supported frameworks
       
     </span>
   </a>
@@ -1187,56 +1470,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-factory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Factory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Agent Factory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-frameworks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Frameworks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Quick start
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#framework-selection" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#the-agentfactory-class" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Framework Selection
+        The AgentFactory class
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Framework Selection">
+    <nav class="md-nav" aria-label="The AgentFactory class">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
+  <a href="#constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI
+        Constructor
       
     </span>
   </a>
@@ -1244,10 +1504,98 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#programmatic" class="md-nav__link">
+  <a href="#create_agent-baseagent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Programmatic
+        create_agent(...) -&gt; BaseAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create_workflowname-agents-modesequential-baseworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_workflow(name, agents, mode="sequential", ...) -&gt; BaseWorkflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create_toolname-description-func-args_schemanone-any" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_tool(name, description, func, args_schema=None) -&gt; Any
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_agentname-baseagent-none-list_agents-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_agent(name) -&gt; BaseAgent | None / list_agents() -&gt; list[str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switch_frameworkframework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        switch_framework(framework)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list_frameworksinstalled_onlytrue-classmethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_frameworks(installed_only=True) (classmethod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommend_frameworkuse_casegeneral-classmethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recommend_framework(use_case="general") (classmethod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convenience-constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convenience constructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline helpers
       
     </span>
   </a>
@@ -1258,24 +1606,24 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-agents" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#enums" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating Agents
+        Enums
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Creating Agents">
+    <nav class="md-nav" aria-label="Enums">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-agent" class="md-nav__link">
+  <a href="#agentrole" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Agent
+        AgentRole
       
     </span>
   </a>
@@ -1283,49 +1631,49 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#agent-with-tools" class="md-nav__link">
+  <a href="#agentcapability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent with Tools
+        AgentCapability
       
     </span>
   </a>
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#model-tiers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Tiers
+        Model tiers
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-workflows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#optional-wrappers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating Workflows
+        Optional wrappers
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Creating Workflows">
+    <nav class="md-nav" aria-label="Optional wrappers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sequential-pipeline" class="md-nav__link">
+  <a href="#memoryawareagent-memory-graph-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sequential Pipeline
+        MemoryAwareAgent — Memory Graph integration
       
     </span>
   </a>
@@ -1333,21 +1681,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#parallel-execution" class="md-nav__link">
+  <a href="#resilientagent-circuit-breaker-retry-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parallel Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convenience-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convenience Methods
+        ResilientAgent — Circuit breaker / retry / timeout
       
     </span>
   </a>
@@ -1358,164 +1695,37 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#agent-roles" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#public-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent Roles
+        Public exports
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#framework-specific-features" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        Framework-Specific Features
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Framework-Specific Features">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#langchain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangChain
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#langgraph" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangGraph
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#autogen" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AutoGen
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#haystack" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Haystack
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#empathy-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Empathy Integration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Empathy Integration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cost-tracking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Tracking
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-learning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern Learning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#empathy-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Empathy Levels
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
+        <li class="md-nav__item">
   <a href="#example-code-review-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example: Code Review Pipeline
+        Example: code review pipeline
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-reference" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        CLI Reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        Next steps
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -1684,14 +1894,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../webhook-integration/" class="md-nav__link">
+      <a href="../../hooks/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Webhooks
+    Hooks
   
 
     
@@ -1720,34 +1930,6 @@
     
   
     Security
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../hipaa-compliance/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    HIPAA Compliance
   
 
     
@@ -1896,6 +2078,462 @@
   
   
   
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_6" id="__nav_4_6_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Codebase Intelligence
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Codebase Intelligence
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../project-analysis-and-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Project Analysis
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../context-management/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Context Management
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../learning-and-patterns/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Learning and Patterns
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../triage-code-quality/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Triage Code-Quality Report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_7" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_7" id="__nav_4_7_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Observability
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_7_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_7">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Observability
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../telemetry-and-signals/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Telemetry and Signals
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_8" id="__nav_4_8_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Operations
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Operations
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+          
+          
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_4_9" >
+        
+          
+          <label class="md-nav__link" for="__nav_4_9" id="__nav_4_9_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Help System
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_4_9_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4_9">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Help System
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../help-system-maintenance/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintenance
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
     <li class="md-nav__item">
       <a href="../prerequisites/" class="md-nav__link">
         
@@ -1957,7 +2595,7 @@
   <span class="md-ellipsis">
     
   
-    Security
+    RAG Grounding
   
 
     
@@ -1973,7 +2611,7 @@
             <span class="md-nav__icon md-icon"></span>
             
   
-    Security
+    RAG Grounding
   
 
           </label>
@@ -1986,7 +2624,7 @@
   
   
     <li class="md-nav__item">
-      <a href="../../SECURITY/" class="md-nav__link">
+      <a href="../../rag/" class="md-nav__link">
         
   
   
@@ -2006,6 +2644,123 @@
   
 
               
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rag/embeddings-decision-2026-04-17/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Embeddings Decision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../rag/faithfulness-decision-2026-04-19/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Faithfulness Decision
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Security
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
             
               
                 
@@ -2057,10 +2812,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_5_3" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
         
           
-          <label class="md-nav__link" for="__nav_5_3" id="__nav_5_3_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
             
   
   
@@ -2078,8 +2833,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_5_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_5_3">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_6_2">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -2148,533 +2903,6 @@
           </ul>
         </nav>
       
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-    
-      
-      
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6" >
-        
-          
-          <label class="md-nav__link" for="__nav_6" id="__nav_6_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Explanation
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_6_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Explanation
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Index
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_2" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_2" id="__nav_6_2_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Philosophy
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_2_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Philosophy
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/ATTUNE_PHILOSOPHY/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    The Attune Philosophy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/multi-agent-philosophy/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Multi-Agent Philosophy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/HOW_CLAUDE_LEARNS/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    How Claude Learns
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_3" id="__nav_6_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Concepts
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_3">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Concepts
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/TEACHING_AI_YOUR_PHILOSOPHY/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Teaching AI Your Philosophy
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/adaptive-learning/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Adaptive Learning
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/COMPARISON/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Comparison
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_6_4" >
-        
-          
-          <label class="md-nav__link" for="__nav_6_4" id="__nav_6_4_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Integration
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_6_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_6_4">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    Integration
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/USING_ATTUNE_WITH_LLMS/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Using with LLMs
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/MEMDOCS_ATTUNE_INTEGRATION/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    MemDocs Integration
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../explanation/ATTUNE_AI_NON_TECHNICAL_GUIDE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Non-Technical Guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
     </li>
   
 
@@ -2801,7 +3029,7 @@
   <span class="md-ellipsis">
     
   
-    CLI
+    API
   
 
     
@@ -2814,124 +3042,6 @@
         
         <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_2_label" aria-expanded="false">
           <label class="md-nav__title" for="__nav_7_2">
-            <span class="md-nav__icon md-icon"></span>
-            
-  
-    CLI
-  
-
-          </label>
-          <ul class="md-nav__list" data-md-scrollfix>
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/CLI_GUIDE/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CLI Guide
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../reference/CLI_CHEATSHEET/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    CLI Cheatsheet
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    
-    
-    
-    
-      
-      
-        
-      
-    
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-        
-        
-          
-        
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_3" >
-        
-          
-          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
-            
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    API
-  
-
-    
-  </span>
-  
-  
-
-            <span class="md-nav__icon md-icon"></span>
-          </label>
-        
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3193,6 +3303,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reference/ops-dashboard/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Ops Dashboard
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -3223,10 +3361,10 @@
         
           
         
-        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_4" >
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_3" >
         
           
-          <label class="md-nav__link" for="__nav_7_4" id="__nav_7_4_label" tabindex="0">
+          <label class="md-nav__link" for="__nav_7_3" id="__nav_7_3_label" tabindex="0">
             
   
   
@@ -3244,8 +3382,8 @@
             <span class="md-nav__icon md-icon"></span>
           </label>
         
-        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_4_label" aria-expanded="false">
-          <label class="md-nav__title" for="__nav_7_4">
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_3_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_3">
             <span class="md-nav__icon md-icon"></span>
             
   
@@ -3311,6 +3449,14 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
               
                 
   
@@ -3318,14 +3464,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../guides/wizard-custom-development/" class="md-nav__link">
+      <a href="../../reference/cli-reference/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Custom Development
+    CLI Reference
   
 
     
@@ -3334,14 +3480,6 @@
   
 
       </a>
-    </li>
-  
-
-              
-            
-          </ul>
-        </nav>
-      
     </li>
   
 
@@ -3485,6 +3623,68 @@
 
               
             
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_7_6" >
+        
+          
+          <label class="md-nav__link" for="__nav_7_6" id="__nav_7_6_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Architecture
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="2" aria-labelledby="__nav_7_6_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_7_6">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Architecture
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
               
                 
   
@@ -3492,14 +3692,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/USER_GUIDE/" class="md-nav__link">
+      <a href="../../ARCHITECTURE/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    User Guide
+    Overview
   
 
     
@@ -3520,14 +3720,14 @@
   
   
     <li class="md-nav__item">
-      <a href="../../reference/SHORT_TERM_MEMORY/" class="md-nav__link">
+      <a href="../../architecture/ops-dashboard/" class="md-nav__link">
         
   
   
   <span class="md-ellipsis">
     
   
-    Short-Term Memory
+    Ops Dashboard
   
 
     
@@ -3562,9 +3762,27 @@
   
   
   
-    <li class="md-nav__item">
-      <a href="../../contributing/" class="md-nav__link">
+    
+    
+    
+    
+      
+      
         
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_8" >
+        
+          
+          <label class="md-nav__link" for="__nav_8" id="__nav_8_label" tabindex="0">
+            
   
   
   <span class="md-ellipsis">
@@ -3578,7 +3796,79 @@
   
   
 
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_8_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_8">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing to Attune AI
+  
+
+    
+  </span>
+  
+  
+
       </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../DEVELOPER_GUIDE/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Developer Guide
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
     </li>
   
 
@@ -3644,34 +3934,6 @@
   
   
     <li class="md-nav__item">
-      <a href="../../get-the-book/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Get the Book
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
       <a href="../../book-cover/" class="md-nav__link">
         
   
@@ -3680,34 +3942,6 @@
     
   
     Cover
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../guides/how-to-read-this-book/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    How to Read
   
 
     
@@ -3784,6 +4018,151 @@
   
 
     
+      
+      
+  
+  
+  
+  
+    
+    
+    
+    
+      
+      
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--nested">
+      
+        
+        
+          
+        
+        <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_10" >
+        
+          
+          <label class="md-nav__link" for="__nav_10" id="__nav_10_label" tabindex="0">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Features
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_10_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_10">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Features
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/models/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/spec-engine/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Spec Engine
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
   </ul>
 </nav>
                   </div>
@@ -3801,6 +4180,8 @@
   
   
   
+    
+  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -3809,10 +4190,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description-agent-factory-the-universal-agent-factory-allows-you-to-create-ai-agents-and-workflows-using-your-preferred-framework-while-retaining-empathys-core-features" class="md-nav__link">
+  <a href="#supported-frameworks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        description: Agent Factory: The Universal Agent Factory allows you to create AI agents and workflows using your preferred framework while retaining Empathy's core features:
+        Supported frameworks
       
     </span>
   </a>
@@ -3820,56 +4201,33 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#agent-factory" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Agent Factory
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Agent Factory">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#supported-frameworks" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Supported Frameworks
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
   <a href="#quick-start" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick Start
+        Quick start
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#framework-selection" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#the-agentfactory-class" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Framework Selection
+        The AgentFactory class
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Framework Selection">
+    <nav class="md-nav" aria-label="The AgentFactory class">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#cli" class="md-nav__link">
+  <a href="#constructor" class="md-nav__link">
     <span class="md-ellipsis">
       
-        CLI
+        Constructor
       
     </span>
   </a>
@@ -3877,10 +4235,98 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#programmatic" class="md-nav__link">
+  <a href="#create_agent-baseagent" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Programmatic
+        create_agent(...) -&gt; BaseAgent
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create_workflowname-agents-modesequential-baseworkflow" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_workflow(name, agents, mode="sequential", ...) -&gt; BaseWorkflow
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#create_toolname-description-func-args_schemanone-any" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        create_tool(name, description, func, args_schema=None) -&gt; Any
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#get_agentname-baseagent-none-list_agents-liststr" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        get_agent(name) -&gt; BaseAgent | None / list_agents() -&gt; list[str]
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#switch_frameworkframework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        switch_framework(framework)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#list_frameworksinstalled_onlytrue-classmethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        list_frameworks(installed_only=True) (classmethod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#recommend_frameworkuse_casegeneral-classmethod" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        recommend_framework(use_case="general") (classmethod)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#convenience-constructors" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Convenience constructors
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#pipeline-helpers" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Pipeline helpers
       
     </span>
   </a>
@@ -3891,24 +4337,24 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-agents" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#enums" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating Agents
+        Enums
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Creating Agents">
+    <nav class="md-nav" aria-label="Enums">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#basic-agent" class="md-nav__link">
+  <a href="#agentrole" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Basic Agent
+        AgentRole
       
     </span>
   </a>
@@ -3916,49 +4362,49 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#agent-with-tools" class="md-nav__link">
+  <a href="#agentcapability" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent with Tools
+        AgentCapability
       
     </span>
   </a>
   
 </li>
         
-          <li class="md-nav__item">
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#model-tiers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Model Tiers
+        Model tiers
       
     </span>
   </a>
   
 </li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#creating-workflows" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#optional-wrappers" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Creating Workflows
+        Optional wrappers
       
     </span>
   </a>
   
-    <nav class="md-nav" aria-label="Creating Workflows">
+    <nav class="md-nav" aria-label="Optional wrappers">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#sequential-pipeline" class="md-nav__link">
+  <a href="#memoryawareagent-memory-graph-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Sequential Pipeline
+        MemoryAwareAgent — Memory Graph integration
       
     </span>
   </a>
@@ -3966,21 +4412,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#parallel-execution" class="md-nav__link">
+  <a href="#resilientagent-circuit-breaker-retry-timeout" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Parallel Execution
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#convenience-methods" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Convenience Methods
+        ResilientAgent — Circuit breaker / retry / timeout
       
     </span>
   </a>
@@ -3991,164 +4426,37 @@
     </nav>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#agent-roles" class="md-nav__link">
+      
+        <li class="md-nav__item">
+  <a href="#public-exports" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Agent Roles
+        Public exports
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#framework-specific-features" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        Framework-Specific Features
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Framework-Specific Features">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#langchain" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangChain
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#langgraph" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        LangGraph
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#autogen" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        AutoGen
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#haystack" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Haystack
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#empathy-integration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Empathy Integration
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Empathy Integration">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#cost-tracking" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Cost Tracking
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#pattern-learning" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pattern Learning
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#empathy-levels" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Empathy Levels
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-        
-          <li class="md-nav__item">
+        <li class="md-nav__item">
   <a href="#example-code-review-pipeline" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Example: Code Review Pipeline
+        Example: code review pipeline
       
     </span>
   </a>
   
 </li>
-        
-          <li class="md-nav__item">
-  <a href="#cli-reference" class="md-nav__link">
-    <span class="md-ellipsis">
       
-        CLI Reference
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
+        <li class="md-nav__item">
   <a href="#next-steps" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Next Steps
+        Next steps
       
     </span>
   </a>
-  
-</li>
-        
-      </ul>
-    </nav>
   
 </li>
       
@@ -4172,49 +4480,60 @@
   
 
 
-<hr />
-<h2 id="description-agent-factory-the-universal-agent-factory-allows-you-to-create-ai-agents-and-workflows-using-your-preferred-framework-while-retaining-empathys-core-features">description: Agent Factory: The Universal Agent Factory allows you to create AI agents and workflows using your preferred framework while retaining Empathy's core features:<a class="headerlink" href="#description-agent-factory-the-universal-agent-factory-allows-you-to-create-ai-agents-and-workflows-using-your-preferred-framework-while-retaining-empathys-core-features" title="Permanent link">&para;</a></h2>
 <h1 id="agent-factory">Agent Factory<a class="headerlink" href="#agent-factory" title="Permanent link">&para;</a></h1>
-<p>The Universal Agent Factory allows you to create AI agents and workflows using your preferred framework while retaining Empathy's core features: cost optimization, pattern learning, and memory.</p>
-<h2 id="supported-frameworks">Supported Frameworks<a class="headerlink" href="#supported-frameworks" title="Permanent link">&para;</a></h2>
+<p><code>attune.agent_factory</code> provides a <strong>universal factory</strong> for creating agents
+and workflows across multiple frameworks through one common interface.
+Pick your framework once, and the same <code>create_agent</code> / <code>create_workflow</code>
+calls work whether the underlying agents are LangChain chains, LangGraph
+state machines, AutoGen conversational agents, Haystack pipelines, or
+Attune's native adapter.</p>
+<p>The factory layers Attune-side features — model-tier routing,
+cost-tracking flags, optional Memory Graph integration, optional
+resilience wrapping — on top of the chosen framework.</p>
+<h2 id="supported-frameworks">Supported frameworks<a class="headerlink" href="#supported-frameworks" title="Permanent link">&para;</a></h2>
 <table>
 <thead>
 <tr>
-<th>Framework</th>
-<th>Best For</th>
-<th>Install Command</th>
+<th>Framework value</th>
+<th>Adapter</th>
+<th>Install</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Native</strong></td>
-<td>Simple agents, cost optimization</td>
-<td>Included</td>
+<td><code>Framework.NATIVE</code></td>
+<td><code>NativeAdapter</code> (built-in)</td>
+<td>included</td>
 </tr>
 <tr>
-<td><strong>LangChain</strong></td>
-<td>Chains, tools, RAG</td>
+<td><code>Framework.LANGCHAIN</code></td>
+<td><code>LangChainAdapter</code> (lazy)</td>
 <td><code>pip install langchain langchain-anthropic</code></td>
 </tr>
 <tr>
-<td><strong>LangGraph</strong></td>
-<td>Stateful workflows, multi-step</td>
-<td><code>pip install langgraph</code></td>
+<td><code>Framework.LANGGRAPH</code></td>
+<td><code>LangGraphAdapter</code> (lazy)</td>
+<td><code>pip install langgraph langchain-anthropic</code></td>
 </tr>
 <tr>
-<td><strong>AutoGen</strong></td>
-<td>Multi-agent conversations</td>
+<td><code>Framework.AUTOGEN</code></td>
+<td><code>AutoGenAdapter</code> (lazy)</td>
 <td><code>pip install pyautogen</code></td>
 </tr>
 <tr>
-<td><strong>Haystack</strong></td>
-<td>Document QA, RAG pipelines</td>
+<td><code>Framework.HAYSTACK</code></td>
+<td><code>HaystackAdapter</code> (lazy)</td>
 <td><code>pip install haystack-ai</code></td>
 </tr>
 </tbody>
 </table>
-<h2 id="quick-start">Quick Start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">Framework</span>
+<p>Framework adapters are imported lazily — you only pay the import cost for
+the one you use. <code>Framework.NATIVE</code> is always available.</p>
+<p>If a framework isn't selected explicitly, <code>AgentFactory</code> picks one based
+on what's installed and the <code>use_case</code> argument, falling back to
+<code>Framework.NATIVE</code>.</p>
+<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">Framework</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
 <a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="c1"># Create factory with your preferred framework</span>
 <a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="n">Framework</span><span class="o">.</span><span class="n">LANGGRAPH</span><span class="p">)</span>
@@ -4223,294 +4542,354 @@
 <a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">researcher</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
 <a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span>  <span class="c1"># Uses Sonnet</span>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a><span class="p">)</span>
 <a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>
 <a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a><span class="n">writer</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
 <a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;writer&quot;</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span>  <span class="c1"># Uses Opus</span>
+<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-17" name="__codelineno-0-17" href="#__codelineno-0-17"></a><span class="p">)</span>
 <a id="__codelineno-0-18" name="__codelineno-0-18" href="#__codelineno-0-18"></a>
 <a id="__codelineno-0-19" name="__codelineno-0-19" href="#__codelineno-0-19"></a><span class="c1"># Create workflow</span>
 <a id="__codelineno-0-20" name="__codelineno-0-20" href="#__codelineno-0-20"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
 <a id="__codelineno-0-21" name="__codelineno-0-21" href="#__codelineno-0-21"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;research_pipeline&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-22" name="__codelineno-0-22" href="#__codelineno-0-22"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">researcher</span><span class="p">,</span> <span class="n">writer</span><span class="p">],</span>
-<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span>
+<a id="__codelineno-0-23" name="__codelineno-0-23" href="#__codelineno-0-23"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span><span class="p">,</span>
 <a id="__codelineno-0-24" name="__codelineno-0-24" href="#__codelineno-0-24"></a><span class="p">)</span>
 <a id="__codelineno-0-25" name="__codelineno-0-25" href="#__codelineno-0-25"></a>
-<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1"># Run</span>
+<a id="__codelineno-0-26" name="__codelineno-0-26" href="#__codelineno-0-26"></a><span class="c1"># Run (workflows are async)</span>
 <a id="__codelineno-0-27" name="__codelineno-0-27" href="#__codelineno-0-27"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Research AI trends in 2025&quot;</span><span class="p">)</span>
 <a id="__codelineno-0-28" name="__codelineno-0-28" href="#__codelineno-0-28"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
 </code></pre></div>
-<h2 id="framework-selection">Framework Selection<a class="headerlink" href="#framework-selection" title="Permanent link">&para;</a></h2>
-<h3 id="cli">CLI<a class="headerlink" href="#cli" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># List installed frameworks</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Attune<span class="w"> </span>AIs
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Show all frameworks (including uninstalled)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--all
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Get recommendation for a use case</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>rag
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>multi_agent
+<p><code>framework=</code> can be a <code>Framework</code> enum value or a string like
+<code>"langgraph"</code> / <code>"langchain"</code> / <code>"autogen"</code> / <code>"haystack"</code> / <code>"native"</code>.</p>
+<h2 id="the-agentfactory-class">The <code>AgentFactory</code> class<a class="headerlink" href="#the-agentfactory-class" title="Permanent link">&para;</a></h2>
+<h3 id="constructor">Constructor<a class="headerlink" href="#constructor" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="n">AgentFactory</span><span class="p">(</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>    <span class="n">framework</span><span class="p">:</span> <span class="n">Framework</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>    <span class="n">provider</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;anthropic&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="n">api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>    <span class="n">use_case</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;general&quot;</span><span class="p">,</span>
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="p">)</span>
 </code></pre></div>
-<h3 id="programmatic">Programmatic<a class="headerlink" href="#programmatic" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="c1"># Auto-select based on use case</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">use_case</span><span class="o">=</span><span class="s2">&quot;rag&quot;</span><span class="p">)</span>  <span class="c1"># Will use Haystack if installed</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="c1"># Or specify explicitly</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;langgraph&quot;</span><span class="p">)</span>
+<ul>
+<li><code>framework</code> — explicit framework choice. If <code>None</code>, auto-selected from
+  installed packages and <code>use_case</code> (falls back to <code>Framework.NATIVE</code>).</li>
+<li><code>provider</code> — LLM provider name. Defaults to <code>"anthropic"</code>.</li>
+<li><code>api_key</code> — API key string. If not provided, falls back to the
+  <code>ANTHROPIC_API_KEY</code> env var (or <code>OPENAI_API_KEY</code> when <code>provider="openai"</code>).</li>
+<li><code>use_case</code> — recommendation hint when <code>framework</code> is <code>None</code>. Valid values:
+  <code>"general"</code>, <code>"rag"</code>, <code>"multi_agent"</code>, <code>"code_analysis"</code>, <code>"workflow"</code>,
+  <code>"conversational"</code>.</li>
+</ul>
+<h3 id="create_agent-baseagent"><code>create_agent(...) -&gt; BaseAgent</code><a class="headerlink" href="#create_agent-baseagent" title="Permanent link">&para;</a></h3>
+<p>Creates an agent through the active adapter. Frequently used arguments:</p>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Type</th>
+<th>Default</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>required</td>
+<td>Unique agent name (tracked for <code>get_agent</code> / <code>list_agents</code>)</td>
+</tr>
+<tr>
+<td><code>role</code></td>
+<td><code>AgentRole</code> or <code>str</code></td>
+<td><code>AgentRole.CUSTOM</code></td>
+<td>One of the values in <code>AgentRole</code> (see below)</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+<td><code>""</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>model_tier</code></td>
+<td><code>str</code></td>
+<td><code>"capable"</code></td>
+<td><code>"cheap"</code>, <code>"capable"</code>, <code>"premium"</code></td>
+</tr>
+<tr>
+<td><code>model_override</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+<td>Specific model ID, bypassing tier routing</td>
+</tr>
+<tr>
+<td><code>capabilities</code></td>
+<td><code>list[AgentCapability] | None</code></td>
+<td><code>None</code></td>
+<td>See <code>AgentCapability</code> below</td>
+</tr>
+<tr>
+<td><code>tools</code></td>
+<td><code>list[Any] | None</code></td>
+<td><code>None</code></td>
+<td>Framework-native tool objects (or what <code>create_tool</code> returns)</td>
+</tr>
+<tr>
+<td><code>system_prompt</code></td>
+<td><code>str | None</code></td>
+<td><code>None</code></td>
+<td>Custom system prompt</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>float</code></td>
+<td><code>0.7</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>int</code></td>
+<td><code>4096</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>empathy_level</code></td>
+<td><code>int</code></td>
+<td><code>4</code></td>
+<td>1–5; used by Attune-side features</td>
+</tr>
+<tr>
+<td><code>use_patterns</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Load learned patterns (config flag)</td>
+</tr>
+<tr>
+<td><code>track_costs</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Track API costs (config flag)</td>
+</tr>
+<tr>
+<td><code>memory_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>True</code></td>
+<td>Conversation memory</td>
+</tr>
+<tr>
+<td><code>memory_type</code></td>
+<td><code>str</code></td>
+<td><code>"conversation"</code></td>
+<td><code>"conversation"</code>, <code>"summary"</code>, <code>"vector"</code></td>
+</tr>
+<tr>
+<td><code>resilience_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Wraps result in a <code>ResilientAgent</code> (see below)</td>
+</tr>
+<tr>
+<td><code>memory_graph_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+<td>Wraps result in a <code>MemoryAwareAgent</code> (see below)</td>
+</tr>
+</tbody>
+</table>
+<p>Returns an object that implements <code>BaseAgent</code> — i.e. has
+<code>async def invoke(input_data, context=None) -&gt; dict</code> and
+<code>async def stream(input_data, context=None)</code>.</p>
+<h3 id="create_workflowname-agents-modesequential-baseworkflow"><code>create_workflow(name, agents, mode="sequential", ...) -&gt; BaseWorkflow</code><a class="headerlink" href="#create_workflowname-agents-modesequential-baseworkflow" title="Permanent link">&para;</a></h3>
+<p>Creates a workflow from a list of agents.</p>
+<ul>
+<li><code>mode</code> — <code>"sequential"</code>, <code>"parallel"</code>, <code>"graph"</code>, or <code>"conversation"</code>.
+  Which modes are actually supported depends on the active adapter
+  (e.g. <code>"conversation"</code> is most natural in AutoGen, <code>"graph"</code> in
+  LangGraph).</li>
+<li>Other arguments: <code>max_iterations=10</code>, <code>timeout_seconds=300</code>,
+  <code>state_schema=None</code>, <code>checkpointing=True</code>, <code>retry_on_error=True</code>,
+  <code>max_retries=3</code>, <code>framework_options=None</code>.</li>
+</ul>
+<p>Returns an object implementing <code>BaseWorkflow</code> —
+<code>async def run(input_data, initial_state=None) -&gt; dict</code> and
+<code>async def stream(input_data, initial_state=None)</code>.</p>
+<h3 id="create_toolname-description-func-args_schemanone-any"><code>create_tool(name, description, func, args_schema=None) -&gt; Any</code><a class="headerlink" href="#create_toolname-description-func-args_schemanone-any" title="Permanent link">&para;</a></h3>
+<p>Creates a tool in the active adapter's native format. The exact return
+type is adapter-specific; the default <code>BaseAdapter</code> implementation
+returns a <code>dict</code> and individual adapters may override.</p>
+<h3 id="get_agentname-baseagent-none-list_agents-liststr"><code>get_agent(name) -&gt; BaseAgent | None</code> / <code>list_agents() -&gt; list[str]</code><a class="headerlink" href="#get_agentname-baseagent-none-list_agents-liststr" title="Permanent link">&para;</a></h3>
+<p>Look up an agent (or list names of agents) previously created on this
+factory instance. Agents are tracked by name inside the factory.</p>
+<h3 id="switch_frameworkframework"><code>switch_framework(framework)</code><a class="headerlink" href="#switch_frameworkframework" title="Permanent link">&para;</a></h3>
+<p>Switches the factory to a new framework. <strong>Clears the agent registry</strong> —
+existing agents created under the previous framework are not migrated.</p>
+<h3 id="list_frameworksinstalled_onlytrue-classmethod"><code>list_frameworks(installed_only=True)</code> (classmethod)<a class="headerlink" href="#list_frameworksinstalled_onlytrue-classmethod" title="Permanent link">&para;</a></h3>
+<p>Returns a list of dicts describing frameworks. Each dict has
+<code>framework</code>, <code>installed</code>, plus the fields from
+<code>framework.get_framework_info</code> (<code>name</code>, <code>description</code>, <code>best_for</code>,
+<code>install_command</code>, <code>docs_url</code>). When <code>installed_only=False</code>, all five
+supported frameworks are returned regardless of installation status.</p>
+<h3 id="recommend_frameworkuse_casegeneral-classmethod"><code>recommend_framework(use_case="general")</code> (classmethod)<a class="headerlink" href="#recommend_frameworkuse_casegeneral-classmethod" title="Permanent link">&para;</a></h3>
+<p>Returns a <code>Framework</code> enum value: the best-installed framework for the
+given use case, or <code>Framework.NATIVE</code> if no preferred option is
+installed.</p>
+<h3 id="convenience-constructors">Convenience constructors<a class="headerlink" href="#convenience-constructors" title="Permanent link">&para;</a></h3>
+<p>Thin wrappers around <code>create_agent</code> with role + sensible tier defaults:</p>
+<ul>
+<li><code>create_researcher(name="researcher", model_tier="capable", **kwargs)</code></li>
+<li><code>create_writer(name="writer", model_tier="premium", **kwargs)</code></li>
+<li><code>create_reviewer(name="reviewer", model_tier="capable", **kwargs)</code></li>
+<li><code>create_debugger(name="debugger", model_tier="capable", **kwargs)</code> —
+  also enables <code>AgentCapability.CODE_EXECUTION</code></li>
+<li><code>create_coordinator(name="coordinator", model_tier="premium", **kwargs)</code></li>
+</ul>
+<h3 id="pipeline-helpers">Pipeline helpers<a class="headerlink" href="#pipeline-helpers" title="Permanent link">&para;</a></h3>
+<ul>
+<li><code>create_research_pipeline(topic="", include_reviewer=True)</code> —
+  research → write → (review) sequential pipeline.</li>
+<li><code>create_code_review_pipeline()</code> — security → debug → review sequential
+  pipeline.</li>
+</ul>
+<h2 id="enums">Enums<a class="headerlink" href="#enums" title="Permanent link">&para;</a></h2>
+<h3 id="agentrole"><code>AgentRole</code><a class="headerlink" href="#agentrole" title="Permanent link">&para;</a></h3>
+<p>Built-in roles (string values shown):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a>COORDINATOR    &quot;coordinator&quot;
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>RESEARCHER     &quot;researcher&quot;
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>WRITER         &quot;writer&quot;
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>REVIEWER       &quot;reviewer&quot;
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>EDITOR         &quot;editor&quot;
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a>EXECUTOR       &quot;executor&quot;
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>DEBUGGER       &quot;debugger&quot;
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>SECURITY       &quot;security&quot;
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>ARCHITECT      &quot;architect&quot;
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>TESTER         &quot;tester&quot;
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>DOCUMENTER     &quot;documenter&quot;
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>RETRIEVER      &quot;retriever&quot;
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>SUMMARIZER     &quot;summarizer&quot;
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>ANSWERER       &quot;answerer&quot;
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>CUSTOM         &quot;custom&quot;
 </code></pre></div>
-<h2 id="creating-agents">Creating Agents<a class="headerlink" href="#creating-agents" title="Permanent link">&para;</a></h2>
-<h3 id="basic-agent">Basic Agent<a class="headerlink" href="#basic-agent" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;helper&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="p">)</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">agent</span><span class="o">.</span><span class="n">invoke</span><span class="p">(</span><span class="s2">&quot;What is quantum computing?&quot;</span><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
+<p>You can pass either the enum value (<code>role=AgentRole.RESEARCHER</code>) or the
+lowercase string (<code>role="researcher"</code>).</p>
+<h3 id="agentcapability"><code>AgentCapability</code><a class="headerlink" href="#agentcapability" title="Permanent link">&para;</a></h3>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>CODE_EXECUTION     &quot;code_execution&quot;
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>TOOL_USE           &quot;tool_use&quot;
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>WEB_SEARCH         &quot;web_search&quot;
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>FILE_ACCESS        &quot;file_access&quot;
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>MEMORY             &quot;memory&quot;
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>RETRIEVAL          &quot;retrieval&quot;
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>VISION             &quot;vision&quot;
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>FUNCTION_CALLING   &quot;function_calling&quot;
 </code></pre></div>
-<h3 id="agent-with-tools">Agent with Tools<a class="headerlink" href="#agent-with-tools" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="k">def</span><span class="w"> </span><span class="nf">search_web</span><span class="p">(</span><span class="n">query</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="w">    </span><span class="sd">&quot;&quot;&quot;Search the web for information.&quot;&quot;&quot;</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Results for: </span><span class="si">{</span><span class="n">query</span><span class="si">}</span><span class="s2">&quot;</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a><span class="n">search_tool</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_tool</span><span class="p">(</span>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;search&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Search the web&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">func</span><span class="o">=</span><span class="n">search_web</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a><span class="p">)</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;researcher&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">search_tool</span><span class="p">],</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>    <span class="n">capabilities</span><span class="o">=</span><span class="p">[</span><span class="n">AgentCapability</span><span class="o">.</span><span class="n">TOOL_USE</span><span class="p">]</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="model-tiers">Model Tiers<a class="headerlink" href="#model-tiers" title="Permanent link">&para;</a></h3>
+<h2 id="model-tiers">Model tiers<a class="headerlink" href="#model-tiers" title="Permanent link">&para;</a></h2>
+<p><code>model_tier</code> is resolved by the adapter's <code>get_model_for_tier</code>, which
+delegates to <code>attune.routing.ModelRouter</code> when available. The hard-coded
+fallback for <code>provider="anthropic"</code> (used when the router is not
+importable) maps:</p>
 <table>
 <thead>
 <tr>
 <th>Tier</th>
-<th>Model (Anthropic)</th>
-<th>Cost</th>
-<th>Best For</th>
+<th>Fallback model (Anthropic)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>cheap</code></td>
-<td>Haiku</td>
-<td>$0.25/M</td>
-<td>Summarization, classification</td>
+<td><code>claude-haiku-4-5-20251001</code></td>
 </tr>
 <tr>
 <td><code>capable</code></td>
-<td>Sonnet</td>
-<td>$3/M</td>
-<td>Code generation, analysis</td>
+<td><code>claude-sonnet-4-6</code></td>
 </tr>
 <tr>
 <td><code>premium</code></td>
-<td>Opus</td>
-<td>$15/M</td>
-<td>Architecture, synthesis</td>
+<td><code>claude-opus-4-8</code></td>
 </tr>
 </tbody>
 </table>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="c1"># Cost-optimized agent</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="n">summarizer</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;summarizer&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;summarizer&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;cheap&quot;</span>  <span class="c1"># Uses Haiku - 60x cheaper</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a><span class="p">)</span>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="c1"># High-quality agent</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="n">architect</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;architect&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>    <span class="n">role</span><span class="o">=</span><span class="s2">&quot;architect&quot;</span><span class="p">,</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span>  <span class="c1"># Uses Opus</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="p">)</span>
+<p>These IDs are fallback constants — the live mapping is whatever
+<code>ModelRouter</code> resolves at runtime.</p>
+<h2 id="optional-wrappers">Optional wrappers<a class="headerlink" href="#optional-wrappers" title="Permanent link">&para;</a></h2>
+<p>When you set the right flags on <code>create_agent</code>, the returned agent is
+wrapped with one or both of:</p>
+<h3 id="memoryawareagent-memory-graph-integration"><code>MemoryAwareAgent</code> — Memory Graph integration<a class="headerlink" href="#memoryawareagent-memory-graph-integration" title="Permanent link">&para;</a></h3>
+<p>Enabled by <code>memory_graph_enabled=True</code>. Queries similar past findings
+before invocation and stores new findings after. Imported lazily from
+<code>attune.agent_factory.memory_integration</code>; if the import fails, the flag
+is logged and ignored (the underlying agent is returned unwrapped).</p>
+<p>Tuning args on <code>create_agent</code>: <code>memory_graph_path</code> (default
+<code>"patterns/memory_graph.json"</code>), <code>store_findings</code> (default <code>True</code>),
+<code>query_similar</code> (default <code>True</code>).</p>
+<h3 id="resilientagent-circuit-breaker-retry-timeout"><code>ResilientAgent</code> — Circuit breaker / retry / timeout<a class="headerlink" href="#resilientagent-circuit-breaker-retry-timeout" title="Permanent link">&para;</a></h3>
+<p>Enabled by <code>resilience_enabled=True</code>. Imported lazily from
+<code>attune.agent_factory.resilient</code>; same fail-soft behavior on import
+error. Tuning args: <code>circuit_breaker_threshold</code> (default <code>3</code>),
+<code>retry_max_attempts</code> (default <code>2</code>), <code>timeout_seconds</code> (default <code>30.0</code>).</p>
+<p>When both flags are set, <code>ResilientAgent</code> is applied as the <em>outer</em>
+wrapper around <code>MemoryAwareAgent</code>.</p>
+<h2 id="public-exports">Public exports<a class="headerlink" href="#public-exports" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a>    <span class="n">AgentCapability</span><span class="p">,</span>
+<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a>    <span class="n">AgentConfig</span><span class="p">,</span>
+<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a>    <span class="n">AgentFactory</span><span class="p">,</span>
+<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>    <span class="n">AgentRole</span><span class="p">,</span>
+<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>    <span class="n">BaseAdapter</span><span class="p">,</span>
+<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a>    <span class="n">BaseAgent</span><span class="p">,</span>
+<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">Framework</span><span class="p">,</span>
+<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>    <span class="n">WorkflowConfig</span><span class="p">,</span>
+<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a><span class="p">)</span>
 </code></pre></div>
-<h2 id="creating-workflows">Creating Workflows<a class="headerlink" href="#creating-workflows" title="Permanent link">&para;</a></h2>
-<h3 id="sequential-pipeline">Sequential Pipeline<a class="headerlink" href="#sequential-pipeline" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-6-1" name="__codelineno-6-1" href="#__codelineno-6-1"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-6-2" name="__codelineno-6-2" href="#__codelineno-6-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;review_pipeline&quot;</span><span class="p">,</span>
-<a id="__codelineno-6-3" name="__codelineno-6-3" href="#__codelineno-6-3"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">analyzer</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">,</span> <span class="n">editor</span><span class="p">],</span>
-<a id="__codelineno-6-4" name="__codelineno-6-4" href="#__codelineno-6-4"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span>
-<a id="__codelineno-6-5" name="__codelineno-6-5" href="#__codelineno-6-5"></a><span class="p">)</span>
-<a id="__codelineno-6-6" name="__codelineno-6-6" href="#__codelineno-6-6"></a>
-<a id="__codelineno-6-7" name="__codelineno-6-7" href="#__codelineno-6-7"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Review this code...&quot;</span><span class="p">)</span>
+<p>That list is the <code>__all__</code> of <code>attune.agent_factory</code>. <code>MemoryAwareAgent</code>,
+<code>ResilientAgent</code>, <code>ResilienceConfig</code>, and the framework-specific
+adapters are importable from their submodules but not re-exported at the
+top level.</p>
+<h2 id="example-code-review-pipeline">Example: code review pipeline<a class="headerlink" href="#example-code-review-pipeline" title="Permanent link">&para;</a></h2>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">AgentRole</span>
+<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a>
+<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;langgraph&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a>
+<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="n">security</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
+<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">SECURITY</span><span class="p">,</span>
+<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Analyze code for security vulnerabilities.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="p">)</span>
+<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a>
+<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="n">quality</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
+<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;quality&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">REVIEWER</span><span class="p">,</span>
+<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Review code quality and suggest improvements.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="p">)</span>
+<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a>
+<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="n">coordinator</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
+<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coordinator&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-21" name="__codelineno-5-21" href="#__codelineno-5-21"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">COORDINATOR</span><span class="p">,</span>
+<a id="__codelineno-5-22" name="__codelineno-5-22" href="#__codelineno-5-22"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-23" name="__codelineno-5-23" href="#__codelineno-5-23"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Synthesize reviews into actionable feedback.&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-24" name="__codelineno-5-24" href="#__codelineno-5-24"></a><span class="p">)</span>
+<a id="__codelineno-5-25" name="__codelineno-5-25" href="#__codelineno-5-25"></a>
+<a id="__codelineno-5-26" name="__codelineno-5-26" href="#__codelineno-5-26"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
+<a id="__codelineno-5-27" name="__codelineno-5-27" href="#__codelineno-5-27"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;code_review&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-28" name="__codelineno-5-28" href="#__codelineno-5-28"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">security</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span> <span class="n">coordinator</span><span class="p">],</span>
+<a id="__codelineno-5-29" name="__codelineno-5-29" href="#__codelineno-5-29"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span><span class="p">,</span>
+<a id="__codelineno-5-30" name="__codelineno-5-30" href="#__codelineno-5-30"></a><span class="p">)</span>
+<a id="__codelineno-5-31" name="__codelineno-5-31" href="#__codelineno-5-31"></a>
+<a id="__codelineno-5-32" name="__codelineno-5-32" href="#__codelineno-5-32"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="s2">&quot;Review this code:</span><span class="se">\n</span><span class="s2">&lt;paste code here&gt;&quot;</span><span class="p">)</span>
+<a id="__codelineno-5-33" name="__codelineno-5-33" href="#__codelineno-5-33"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
 </code></pre></div>
-<h3 id="parallel-execution">Parallel Execution<a class="headerlink" href="#parallel-execution" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-7-1" name="__codelineno-7-1" href="#__codelineno-7-1"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-7-2" name="__codelineno-7-2" href="#__codelineno-7-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;parallel_analysis&quot;</span><span class="p">,</span>
-<a id="__codelineno-7-3" name="__codelineno-7-3" href="#__codelineno-7-3"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">security_agent</span><span class="p">,</span> <span class="n">quality_agent</span><span class="p">,</span> <span class="n">perf_agent</span><span class="p">],</span>
-<a id="__codelineno-7-4" name="__codelineno-7-4" href="#__codelineno-7-4"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;parallel&quot;</span>
-<a id="__codelineno-7-5" name="__codelineno-7-5" href="#__codelineno-7-5"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="convenience-methods">Convenience Methods<a class="headerlink" href="#convenience-methods" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-8-1" name="__codelineno-8-1" href="#__codelineno-8-1"></a><span class="c1"># Pre-built research pipeline</span>
-<a id="__codelineno-8-2" name="__codelineno-8-2" href="#__codelineno-8-2"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_research_pipeline</span><span class="p">(</span>
-<a id="__codelineno-8-3" name="__codelineno-8-3" href="#__codelineno-8-3"></a>    <span class="n">topic</span><span class="o">=</span><span class="s2">&quot;AI in healthcare&quot;</span><span class="p">,</span>
-<a id="__codelineno-8-4" name="__codelineno-8-4" href="#__codelineno-8-4"></a>    <span class="n">include_reviewer</span><span class="o">=</span><span class="kc">True</span>
-<a id="__codelineno-8-5" name="__codelineno-8-5" href="#__codelineno-8-5"></a><span class="p">)</span>
-<a id="__codelineno-8-6" name="__codelineno-8-6" href="#__codelineno-8-6"></a>
-<a id="__codelineno-8-7" name="__codelineno-8-7" href="#__codelineno-8-7"></a><span class="c1"># Pre-built code review pipeline</span>
-<a id="__codelineno-8-8" name="__codelineno-8-8" href="#__codelineno-8-8"></a><span class="n">review</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_code_review_pipeline</span><span class="p">()</span>
-</code></pre></div>
-<h2 id="agent-roles">Agent Roles<a class="headerlink" href="#agent-roles" title="Permanent link">&para;</a></h2>
-<p>Built-in roles with optimized prompts:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-9-1" name="__codelineno-9-1" href="#__codelineno-9-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentRole</span>
-<a id="__codelineno-9-2" name="__codelineno-9-2" href="#__codelineno-9-2"></a>
-<a id="__codelineno-9-3" name="__codelineno-9-3" href="#__codelineno-9-3"></a><span class="c1"># Standard roles</span>
-<a id="__codelineno-9-4" name="__codelineno-9-4" href="#__codelineno-9-4"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">RESEARCHER</span>    <span class="c1"># Gathers information</span>
-<a id="__codelineno-9-5" name="__codelineno-9-5" href="#__codelineno-9-5"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">WRITER</span>        <span class="c1"># Produces content</span>
-<a id="__codelineno-9-6" name="__codelineno-9-6" href="#__codelineno-9-6"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">REVIEWER</span>      <span class="c1"># Reviews/critiques</span>
-<a id="__codelineno-9-7" name="__codelineno-9-7" href="#__codelineno-9-7"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">EDITOR</span>        <span class="c1"># Refines content</span>
-<a id="__codelineno-9-8" name="__codelineno-9-8" href="#__codelineno-9-8"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">DEBUGGER</span>      <span class="c1"># Finds bugs</span>
-<a id="__codelineno-9-9" name="__codelineno-9-9" href="#__codelineno-9-9"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">SECURITY</span>      <span class="c1"># Security analysis</span>
-<a id="__codelineno-9-10" name="__codelineno-9-10" href="#__codelineno-9-10"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">COORDINATOR</span>   <span class="c1"># Orchestrates agents</span>
-<a id="__codelineno-9-11" name="__codelineno-9-11" href="#__codelineno-9-11"></a>
-<a id="__codelineno-9-12" name="__codelineno-9-12" href="#__codelineno-9-12"></a><span class="c1"># RAG roles</span>
-<a id="__codelineno-9-13" name="__codelineno-9-13" href="#__codelineno-9-13"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">RETRIEVER</span>     <span class="c1"># Document retrieval</span>
-<a id="__codelineno-9-14" name="__codelineno-9-14" href="#__codelineno-9-14"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">SUMMARIZER</span>    <span class="c1"># Summarization</span>
-<a id="__codelineno-9-15" name="__codelineno-9-15" href="#__codelineno-9-15"></a><span class="n">AgentRole</span><span class="o">.</span><span class="n">ANSWERER</span>      <span class="c1"># Question answering</span>
-</code></pre></div>
-<h2 id="framework-specific-features">Framework-Specific Features<a class="headerlink" href="#framework-specific-features" title="Permanent link">&para;</a></h2>
-<h3 id="langchain">LangChain<a class="headerlink" href="#langchain" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-10-1" name="__codelineno-10-1" href="#__codelineno-10-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="n">Framework</span><span class="o">.</span><span class="n">LANGCHAIN</span><span class="p">)</span>
-<a id="__codelineno-10-2" name="__codelineno-10-2" href="#__codelineno-10-2"></a>
-<a id="__codelineno-10-3" name="__codelineno-10-3" href="#__codelineno-10-3"></a><span class="c1"># Full LangChain tool support</span>
-<a id="__codelineno-10-4" name="__codelineno-10-4" href="#__codelineno-10-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">langchain_core.tools</span><span class="w"> </span><span class="kn">import</span> <span class="n">StructuredTool</span>
-<a id="__codelineno-10-5" name="__codelineno-10-5" href="#__codelineno-10-5"></a>
-<a id="__codelineno-10-6" name="__codelineno-10-6" href="#__codelineno-10-6"></a><span class="n">lc_tool</span> <span class="o">=</span> <span class="n">StructuredTool</span><span class="o">.</span><span class="n">from_function</span><span class="p">(</span><span class="n">my_func</span><span class="p">)</span>
-<a id="__codelineno-10-7" name="__codelineno-10-7" href="#__codelineno-10-7"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-10-8" name="__codelineno-10-8" href="#__codelineno-10-8"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-10-9" name="__codelineno-10-9" href="#__codelineno-10-9"></a>    <span class="n">tools</span><span class="o">=</span><span class="p">[</span><span class="n">lc_tool</span><span class="p">]</span>
-<a id="__codelineno-10-10" name="__codelineno-10-10" href="#__codelineno-10-10"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="langgraph">LangGraph<a class="headerlink" href="#langgraph" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-11-1" name="__codelineno-11-1" href="#__codelineno-11-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="n">Framework</span><span class="o">.</span><span class="n">LANGGRAPH</span><span class="p">)</span>
-<a id="__codelineno-11-2" name="__codelineno-11-2" href="#__codelineno-11-2"></a>
-<a id="__codelineno-11-3" name="__codelineno-11-3" href="#__codelineno-11-3"></a><span class="c1"># Stateful workflows with cycles</span>
-<a id="__codelineno-11-4" name="__codelineno-11-4" href="#__codelineno-11-4"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-11-5" name="__codelineno-11-5" href="#__codelineno-11-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;iterative&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-6" name="__codelineno-11-6" href="#__codelineno-11-6"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">planner</span><span class="p">,</span> <span class="n">executor</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">],</span>
-<a id="__codelineno-11-7" name="__codelineno-11-7" href="#__codelineno-11-7"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;graph&quot;</span><span class="p">,</span>
-<a id="__codelineno-11-8" name="__codelineno-11-8" href="#__codelineno-11-8"></a>    <span class="n">max_iterations</span><span class="o">=</span><span class="mi">5</span>
-<a id="__codelineno-11-9" name="__codelineno-11-9" href="#__codelineno-11-9"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="autogen">AutoGen<a class="headerlink" href="#autogen" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-12-1" name="__codelineno-12-1" href="#__codelineno-12-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="n">Framework</span><span class="o">.</span><span class="n">AUTOGEN</span><span class="p">)</span>
-<a id="__codelineno-12-2" name="__codelineno-12-2" href="#__codelineno-12-2"></a>
-<a id="__codelineno-12-3" name="__codelineno-12-3" href="#__codelineno-12-3"></a><span class="c1"># Multi-agent conversation</span>
-<a id="__codelineno-12-4" name="__codelineno-12-4" href="#__codelineno-12-4"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-12-5" name="__codelineno-12-5" href="#__codelineno-12-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;team_chat&quot;</span><span class="p">,</span>
-<a id="__codelineno-12-6" name="__codelineno-12-6" href="#__codelineno-12-6"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">coder</span><span class="p">,</span> <span class="n">reviewer</span><span class="p">,</span> <span class="n">tester</span><span class="p">],</span>
-<a id="__codelineno-12-7" name="__codelineno-12-7" href="#__codelineno-12-7"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;conversation&quot;</span>
-<a id="__codelineno-12-8" name="__codelineno-12-8" href="#__codelineno-12-8"></a><span class="p">)</span>
-</code></pre></div>
-<h3 id="haystack">Haystack<a class="headerlink" href="#haystack" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-13-1" name="__codelineno-13-1" href="#__codelineno-13-1"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="n">Framework</span><span class="o">.</span><span class="n">HAYSTACK</span><span class="p">)</span>
-<a id="__codelineno-13-2" name="__codelineno-13-2" href="#__codelineno-13-2"></a>
-<a id="__codelineno-13-3" name="__codelineno-13-3" href="#__codelineno-13-3"></a><span class="c1"># RAG pipeline</span>
-<a id="__codelineno-13-4" name="__codelineno-13-4" href="#__codelineno-13-4"></a><span class="n">retriever</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-13-5" name="__codelineno-13-5" href="#__codelineno-13-5"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;retriever&quot;</span><span class="p">,</span>
-<a id="__codelineno-13-6" name="__codelineno-13-6" href="#__codelineno-13-6"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">RETRIEVER</span><span class="p">,</span>
-<a id="__codelineno-13-7" name="__codelineno-13-7" href="#__codelineno-13-7"></a>    <span class="n">capabilities</span><span class="o">=</span><span class="p">[</span><span class="n">AgentCapability</span><span class="o">.</span><span class="n">RETRIEVAL</span><span class="p">]</span>
-<a id="__codelineno-13-8" name="__codelineno-13-8" href="#__codelineno-13-8"></a><span class="p">)</span>
-</code></pre></div>
-<h2 id="empathy-integration">Empathy Integration<a class="headerlink" href="#empathy-integration" title="Permanent link">&para;</a></h2>
-<h3 id="cost-tracking">Cost Tracking<a class="headerlink" href="#cost-tracking" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-14-1" name="__codelineno-14-1" href="#__codelineno-14-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-14-2" name="__codelineno-14-2" href="#__codelineno-14-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;agent&quot;</span><span class="p">,</span>
-<a id="__codelineno-14-3" name="__codelineno-14-3" href="#__codelineno-14-3"></a>    <span class="n">track_costs</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Default</span>
-<a id="__codelineno-14-4" name="__codelineno-14-4" href="#__codelineno-14-4"></a><span class="p">)</span>
-<a id="__codelineno-14-5" name="__codelineno-14-5" href="#__codelineno-14-5"></a>
-<a id="__codelineno-14-6" name="__codelineno-14-6" href="#__codelineno-14-6"></a><span class="c1"># Costs are tracked in .empathy/costs.json</span>
-<a id="__codelineno-14-7" name="__codelineno-14-7" href="#__codelineno-14-7"></a><span class="c1"># View with: attune costs</span>
-</code></pre></div>
-<h3 id="pattern-learning">Pattern Learning<a class="headerlink" href="#pattern-learning" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-15-1" name="__codelineno-15-1" href="#__codelineno-15-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-15-2" name="__codelineno-15-2" href="#__codelineno-15-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;debugger&quot;</span><span class="p">,</span>
-<a id="__codelineno-15-3" name="__codelineno-15-3" href="#__codelineno-15-3"></a>    <span class="n">use_patterns</span><span class="o">=</span><span class="kc">True</span>  <span class="c1"># Load learned patterns</span>
-<a id="__codelineno-15-4" name="__codelineno-15-4" href="#__codelineno-15-4"></a><span class="p">)</span>
-<a id="__codelineno-15-5" name="__codelineno-15-5" href="#__codelineno-15-5"></a>
-<a id="__codelineno-15-6" name="__codelineno-15-6" href="#__codelineno-15-6"></a><span class="c1"># Patterns from patterns/debugging.json are available</span>
-</code></pre></div>
-<h3 id="empathy-levels">Empathy Levels<a class="headerlink" href="#empathy-levels" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-16-1" name="__codelineno-16-1" href="#__codelineno-16-1"></a><span class="n">agent</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-16-2" name="__codelineno-16-2" href="#__codelineno-16-2"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;advisor&quot;</span><span class="p">,</span>
-<a id="__codelineno-16-3" name="__codelineno-16-3" href="#__codelineno-16-3"></a>    <span class="n">empathy_level</span><span class="o">=</span><span class="mi">4</span>  <span class="c1"># Anticipatory (predicts problems)</span>
-<a id="__codelineno-16-4" name="__codelineno-16-4" href="#__codelineno-16-4"></a><span class="p">)</span>
-</code></pre></div>
-<h2 id="example-code-review-pipeline">Example: Code Review Pipeline<a class="headerlink" href="#example-code-review-pipeline" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-17-1" name="__codelineno-17-1" href="#__codelineno-17-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune_llm.agent_factory</span><span class="w"> </span><span class="kn">import</span> <span class="n">AgentFactory</span><span class="p">,</span> <span class="n">AgentRole</span>
-<a id="__codelineno-17-2" name="__codelineno-17-2" href="#__codelineno-17-2"></a>
-<a id="__codelineno-17-3" name="__codelineno-17-3" href="#__codelineno-17-3"></a><span class="n">factory</span> <span class="o">=</span> <span class="n">AgentFactory</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;langgraph&quot;</span><span class="p">)</span>
-<a id="__codelineno-17-4" name="__codelineno-17-4" href="#__codelineno-17-4"></a>
-<a id="__codelineno-17-5" name="__codelineno-17-5" href="#__codelineno-17-5"></a><span class="c1"># Create specialized agents</span>
-<a id="__codelineno-17-6" name="__codelineno-17-6" href="#__codelineno-17-6"></a><span class="n">security</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-17-7" name="__codelineno-17-7" href="#__codelineno-17-7"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;security&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-8" name="__codelineno-17-8" href="#__codelineno-17-8"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">SECURITY</span><span class="p">,</span>
-<a id="__codelineno-17-9" name="__codelineno-17-9" href="#__codelineno-17-9"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-10" name="__codelineno-17-10" href="#__codelineno-17-10"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Analyze code for security vulnerabilities.&quot;</span>
-<a id="__codelineno-17-11" name="__codelineno-17-11" href="#__codelineno-17-11"></a><span class="p">)</span>
-<a id="__codelineno-17-12" name="__codelineno-17-12" href="#__codelineno-17-12"></a>
-<a id="__codelineno-17-13" name="__codelineno-17-13" href="#__codelineno-17-13"></a><span class="n">quality</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-17-14" name="__codelineno-17-14" href="#__codelineno-17-14"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;quality&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-15" name="__codelineno-17-15" href="#__codelineno-17-15"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">REVIEWER</span><span class="p">,</span>
-<a id="__codelineno-17-16" name="__codelineno-17-16" href="#__codelineno-17-16"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;capable&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-17" name="__codelineno-17-17" href="#__codelineno-17-17"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Review code quality and suggest improvements.&quot;</span>
-<a id="__codelineno-17-18" name="__codelineno-17-18" href="#__codelineno-17-18"></a><span class="p">)</span>
-<a id="__codelineno-17-19" name="__codelineno-17-19" href="#__codelineno-17-19"></a>
-<a id="__codelineno-17-20" name="__codelineno-17-20" href="#__codelineno-17-20"></a><span class="n">coordinator</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_agent</span><span class="p">(</span>
-<a id="__codelineno-17-21" name="__codelineno-17-21" href="#__codelineno-17-21"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;coordinator&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-22" name="__codelineno-17-22" href="#__codelineno-17-22"></a>    <span class="n">role</span><span class="o">=</span><span class="n">AgentRole</span><span class="o">.</span><span class="n">COORDINATOR</span><span class="p">,</span>
-<a id="__codelineno-17-23" name="__codelineno-17-23" href="#__codelineno-17-23"></a>    <span class="n">model_tier</span><span class="o">=</span><span class="s2">&quot;premium&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-24" name="__codelineno-17-24" href="#__codelineno-17-24"></a>    <span class="n">system_prompt</span><span class="o">=</span><span class="s2">&quot;Synthesize reviews into actionable feedback.&quot;</span>
-<a id="__codelineno-17-25" name="__codelineno-17-25" href="#__codelineno-17-25"></a><span class="p">)</span>
-<a id="__codelineno-17-26" name="__codelineno-17-26" href="#__codelineno-17-26"></a>
-<a id="__codelineno-17-27" name="__codelineno-17-27" href="#__codelineno-17-27"></a><span class="c1"># Create workflow</span>
-<a id="__codelineno-17-28" name="__codelineno-17-28" href="#__codelineno-17-28"></a><span class="n">pipeline</span> <span class="o">=</span> <span class="n">factory</span><span class="o">.</span><span class="n">create_workflow</span><span class="p">(</span>
-<a id="__codelineno-17-29" name="__codelineno-17-29" href="#__codelineno-17-29"></a>    <span class="n">name</span><span class="o">=</span><span class="s2">&quot;code_review&quot;</span><span class="p">,</span>
-<a id="__codelineno-17-30" name="__codelineno-17-30" href="#__codelineno-17-30"></a>    <span class="n">agents</span><span class="o">=</span><span class="p">[</span><span class="n">security</span><span class="p">,</span> <span class="n">quality</span><span class="p">,</span> <span class="n">coordinator</span><span class="p">],</span>
-<a id="__codelineno-17-31" name="__codelineno-17-31" href="#__codelineno-17-31"></a>    <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;sequential&quot;</span>
-<a id="__codelineno-17-32" name="__codelineno-17-32" href="#__codelineno-17-32"></a><span class="p">)</span>
-<a id="__codelineno-17-33" name="__codelineno-17-33" href="#__codelineno-17-33"></a>
-<a id="__codelineno-17-34" name="__codelineno-17-34" href="#__codelineno-17-34"></a><span class="c1"># Run review</span>
-<a id="__codelineno-17-35" name="__codelineno-17-35" href="#__codelineno-17-35"></a><span class="n">code</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-17-36" name="__codelineno-17-36" href="#__codelineno-17-36"></a><span class="s2">def login(username, password):</span>
-<a id="__codelineno-17-37" name="__codelineno-17-37" href="#__codelineno-17-37"></a><span class="s2">    query = f&quot;SELECT * FROM users WHERE name=&#39;</span><span class="si">{username}</span><span class="s2">&#39;&quot;</span>
-<a id="__codelineno-17-38" name="__codelineno-17-38" href="#__codelineno-17-38"></a><span class="s2">    ...</span>
-<a id="__codelineno-17-39" name="__codelineno-17-39" href="#__codelineno-17-39"></a><span class="s2">&quot;&quot;&quot;</span>
-<a id="__codelineno-17-40" name="__codelineno-17-40" href="#__codelineno-17-40"></a>
-<a id="__codelineno-17-41" name="__codelineno-17-41" href="#__codelineno-17-41"></a><span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">pipeline</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Review this code:</span><span class="se">\n</span><span class="si">{</span><span class="n">code</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
-<a id="__codelineno-17-42" name="__codelineno-17-42" href="#__codelineno-17-42"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s2">&quot;output&quot;</span><span class="p">])</span>
-</code></pre></div>
-<h2 id="cli-reference">CLI Reference<a class="headerlink" href="#cli-reference" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-18-1" name="__codelineno-18-1" href="#__codelineno-18-1"></a><span class="c1"># List frameworks</span>
-<a id="__codelineno-18-2" name="__codelineno-18-2" href="#__codelineno-18-2"></a>Attune<span class="w"> </span>AIs
-<a id="__codelineno-18-3" name="__codelineno-18-3" href="#__codelineno-18-3"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--all
-<a id="__codelineno-18-4" name="__codelineno-18-4" href="#__codelineno-18-4"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--json
-<a id="__codelineno-18-5" name="__codelineno-18-5" href="#__codelineno-18-5"></a>
-<a id="__codelineno-18-6" name="__codelineno-18-6" href="#__codelineno-18-6"></a><span class="c1"># Get recommendation</span>
-<a id="__codelineno-18-7" name="__codelineno-18-7" href="#__codelineno-18-7"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>general
-<a id="__codelineno-18-8" name="__codelineno-18-8" href="#__codelineno-18-8"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>rag
-<a id="__codelineno-18-9" name="__codelineno-18-9" href="#__codelineno-18-9"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>multi_agent
-<a id="__codelineno-18-10" name="__codelineno-18-10" href="#__codelineno-18-10"></a>Attune<span class="w"> </span>AIs<span class="w"> </span>--recommend<span class="w"> </span>code_analysis
-</code></pre></div>
-<h2 id="next-steps">Next Steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
+<p>The same code works with <code>framework="langchain"</code>, <code>"autogen"</code>,
+<code>"haystack"</code>, or <code>"native"</code> — the adapter handles the framework-specific
+mechanics, and the call sites are identical.</p>
+<h2 id="next-steps">Next steps<a class="headerlink" href="#next-steps" title="Permanent link">&para;</a></h2>
 <ul>
-<li><a href="../../reference/CLI_CHEATSHEET/">CLI Cheatsheet</a> - Quick reference</li>
-<li><a href="../../reference/">Reference</a> - Full API documentation</li>
+<li><a href="../resilience-patterns/">Resilience patterns</a> — deeper detail on
+  <code>ResilientAgent</code> configuration.</li>
+<li><a href="../../reference/">Reference index</a></li>
 </ul>
 
 
@@ -4518,6 +4897,9 @@
 
 
 
+
+  
+  
 
 
 
@@ -4598,10 +4980,10 @@
     
       
       
-      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.7a47a382.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.instant", "navigation.tracking", "navigation.tabs", "navigation.sections", "navigation.expand", "navigation.top", "search.suggest", "search.highlight", "content.code.copy"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
     
     
-      <script src="../../assets/javascripts/bundle.e71a0d61.min.js"></script>
+      <script src="../../assets/javascripts/bundle.79ae519e.min.js"></script>
       
     
   </body>
