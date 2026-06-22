@@ -1,199 +1,76 @@
 ---
-description: Production-ready AI framework with Level 4 Anticipatory Intelligence. Multi-agent orchestration, cost optimization, and pattern learning.
+description: AI-powered developer workflows for Claude Code — spec-driven development, cost optimization, and multi-agent orchestration.
 ---
 
 # Attune AI
 
-**Production-ready Level 4 Anticipatory Intelligence for AI-human collaboration**
+**AI-powered developer workflows for Claude Code — spec-driven
+development, cost optimization, and multi-agent orchestration.**
 
 [![PyPI version](https://badge.fury.io/py/attune-ai.svg)](https://pypi.org/project/attune-ai/)
-[![License: Apache License 2.0](https://img.shields.io/badge/License-Fair%20Source%200.9-blue.svg)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE)
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
+
+---
+
+!!! tip "Start here"
+
+    New to Attune AI? Begin with a guided, hands-on walkthrough:
+
+    - **[Tutorials](tutorials/index.md)** — learn by building, start to
+      finish (try [Build a Workflow](tutorials/build-a-workflow.md))
+    - **[Getting Started](getting-started/index.md)** — install and run
+      your first workflow in a few minutes
+    - **[How-to guides](how-to/index.md)** — task recipes for specific
+      goals once you know your way around
 
 ---
 
 ## What is Attune AI?
 
-The Attune AI is a **5-level maturity model** for AI-human collaboration that progresses from reactive responses (Level 1) to **Level 4 Anticipatory Intelligence** that predicts problems before they happen.
+Attune AI is a developer-workflow toolkit for
+[Claude Code](https://claude.com/claude-code). It turns requirements
+into reliable software through spec-driven development, routes each
+step to the most cost-effective model tier, and coordinates
+multi-agent teams — with a living help system generated from the code
+itself.
 
-### The 5 Levels
+It ships two ways, which work together:
 
-| Level | Name | Description | Example |
-|-------|------|-------------|---------|
-| **1** | Reactive | Responds only when asked | Basic Q&A chatbot |
-| **2** | Guided | Asks clarifying questions | Assistant that seeks context |
-| **3** | Proactive | Notices patterns, offers improvements | Suggests optimizations |
-| **4** | Anticipatory | **Predicts problems before they happen** | Warns about deployment risks |
-| **5** | Transformative | Reshapes workflows to prevent entire classes of problems | Creates new protocols |
+- a **Claude Code plugin** (commands, skills, hooks, and MCP tools), and
+- the **`attune` CLI** plus a Python API for scripting and CI.
 
 ---
 
-## Quick Start
-
-### Installation
+## Install
 
 ```bash
 pip install attune-ai
 ```
 
-### 5-Minute Example
+Or add the plugin to Claude Code:
 
-```python
-from attune import EmpathyOS
-
-# Create Level 4 (Anticipatory) chatbot
-empathy = EmpathyOS(
-    user_id="user_123",
-    target_level=4,
-    confidence_threshold=0.75
-)
-
-# Interact
-response = empathy.interact(
-    user_id="user_123",
-    user_input="I'm about to deploy this API change to production",
-    context={"deployment": "production", "changes": ["auth_refactor"]}
-)
-
-print(response.response)
-# Output: "🔮 Prediction: This authentication refactor may break mobile
-#          app compatibility (uses old auth flow). Recommend deploying
-#          behind feature flag first. Confidence: 87%"
+```bash
+claude plugin marketplace add Smart-AI-Memory/attune-ai
 ```
 
----
-
-## Key Features
-
-### 🧠 Anticipatory Intelligence
-Predict problems 30-90 days in advance with Level 4 capabilities.
-
-### 🏥 Healthcare Ready
-HIPAA-compliant with clinical protocols (SBAR, TIME, ABCDE). **$2M+ annual value** for 100-bed hospitals.
-
-### 🤝 Multi-Agent Coordination
-Specialized agents work together through shared pattern libraries. **80% faster feature delivery**.
-
-### 📈 Adaptive Learning
-System learns YOUR preferences over time. **+28% acceptance rate improvement**.
-
-### 🔗 Full Ecosystem Integration
-Webhooks for Slack, GitHub, JIRA, Datadog, and custom services.
-
----
-
-## Security Hardening (v3.9.0)
-
-**Production-ready security with comprehensive file path validation.**
-
-The Attune AI underwent extensive security hardening in v3.9.0:
-
-- ✅ **6 modules secured** with Pattern 6 (File Path Validation)
-- ✅ **13 file write operations** validated to prevent path traversal (CWE-22)
-- ✅ **174 security tests** (100% passing)
-- ✅ **Zero blind exception handlers** - all errors properly typed and logged
-
-**Attack vectors blocked:**
-- Path traversal: `../../../etc/passwd` → `ValueError`
-- Null byte injection: `config\x00.json` → `ValueError`
-- System directory writes: `/etc`, `/sys`, `/proc`, `/dev` → All blocked
-
-See [SECURITY.md](https://github.com/Smart-AI-Memory/attune-ai/blob/main/SECURITY.md) for complete documentation.
-
----
-
-## Use Cases
-
-=== "Software Development"
-
-    **Code Review**: Level 4 predictions for merge conflicts
-
-    ```python
-    response = empathy.interact(
-        user_id="developer",
-        user_input="Reviewing PR #123",
-        context={"pr": 123, "files_changed": ["auth.py", "api.py"]}
-    )
-    # Predicts: "This change will conflict with PR #118 currently in staging"
-    ```
-
-    **Benefits**:
-    - 80% faster feature delivery (8 days → 4 days)
-    - 68% pattern reuse across team members
-    - Predict merge conflicts before they happen
-
-=== "Healthcare"
-
-    **Patient Handoffs**: Automated SBAR reports (60% time savings)
-
-    **Live demo coming soon** - See the [SBAR Example](tutorials/examples/sbar-clinical-handoff.md) for complete code
-
-    ```python
-    from attune import EmpathyOS
-
-    empathy = EmpathyOS(
-        user_id="hospital_001",
-        target_level=4,
-        healthcare_mode=True
-    )
-
-    response = empathy.interact(
-        user_id="nurse_station_3",
-        user_input="Patient handoff for bed 312",
-        context={"patient_id": "PT123456"}
-    )
-    # Generates complete SBAR report with safety alerts
-    ```
-
-    **Benefits**:
-    - **$2M+ annual value** for 100-bed hospital
-    - 60% reduction in documentation time
-    - Zero false negatives in critical alerts
-
-=== "Finance"
-
-    **Risk Management**: Predict compliance issues
-
-    ```python
-    response = empathy.interact(
-        user_id="compliance_officer",
-        user_input="Review Q4 transactions",
-        context={"quarter": "Q4", "transaction_count": 15000}
-    )
-    # Predicts: "14 transactions may trigger AML review based on pattern analysis"
-    ```
-
-    **Benefits**:
-    - Early detection of compliance issues
-    - Pattern recognition across markets
-    - Automated anomaly detection
+Then explore the command hubs — `/spec`, `/attune`, `/security`,
+`/smart-test`, `/release`, `/help` — or run `attune --help`. The
+[Getting Started](getting-started/index.md) guide walks through a first
+end-to-end workflow.
 
 ---
 
 ## Documentation
 
-Organized using the [Diátaxis framework](https://diataxis.fr/) for better discoverability:
+Organized with the [Diátaxis framework](https://diataxis.fr/) so each
+need has an obvious home:
 
-| Section | Purpose | Start Here |
+| Section | Purpose | Start here |
 |---------|---------|------------|
-| **[Tutorials](tutorials/index.md)** | Learn by doing | [Getting Started](getting-started/index.md) |
-| **[How-to](how-to/index.md)** | Solve specific tasks | [Agent Factory](how-to/agent-factory.md) |
-| **Explanation** | Understand concepts | Philosophy |
+| **[Tutorials](tutorials/index.md)** | Learn by doing | [Build a Workflow](tutorials/build-a-workflow.md) |
+| **[How-to](how-to/index.md)** | Solve a specific task | [Agent Factory](how-to/agent-factory.md) |
 | **[Reference](reference/index.md)** | Look up details | [API Reference](reference/API_REFERENCE.md) |
-
----
-
-## Performance Metrics
-
-### Healthcare Impact
-- **Time savings**: 60% reduction in documentation time
-- **Annual value**: $2M+ for 100-bed hospital
-- **Safety**: Zero false negatives in critical alerts
-
-### Software Development
-- **Feature delivery**: 80% faster (8 days → 4 days)
-- **Acceptance rate**: +28% improvement with adaptive learning
-- **Pattern reuse**: 68% across team members
 
 ---
 
@@ -213,29 +90,29 @@ Organized using the [Diátaxis framework](https://diataxis.fr/) for better disco
 
 <div class="grid cards" markdown>
 
--   :material-clock-fast:{ .lg .middle } **5-Minute Start**
+-   :material-clock-fast:{ .lg .middle } **Get Started**
 
     ---
 
-    Get up and running in 5 minutes
+    Install and run your first workflow in a few minutes
 
     [:octicons-arrow-right-24: Getting Started](getting-started/index.md)
 
--   :fontawesome-solid-robot:{ .lg .middle } **Examples**
+-   :material-school:{ .lg .middle } **Tutorials**
 
     ---
 
-    5 comprehensive tutorials with working code
+    Guided, start-to-finish walkthroughs
 
-    [:octicons-arrow-right-24: See Examples](tutorials/examples/simple-chatbot.md)
+    [:octicons-arrow-right-24: Browse tutorials](tutorials/index.md)
 
--   :fontawesome-solid-hospital:{ .lg .middle } **Healthcare**
+-   :material-wrench:{ .lg .middle } **How-to Guides**
 
     ---
 
-    HIPAA-compliant, $2M+ ROI
+    Task recipes for specific goals
 
-    [:octicons-arrow-right-24: SBAR Example](tutorials/examples/sbar-clinical-handoff.md)
+    [:octicons-arrow-right-24: Browse how-tos](how-to/index.md)
 
 -   :material-book-open-variant:{ .lg .middle } **API Reference**
 
