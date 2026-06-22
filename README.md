@@ -479,26 +479,30 @@ or raise it to `0.75`.
 
 ## Migration
 
-`attune-help` and `attune-author` have moved to their own
-marketplace at
-[Smart-AI-Memory/attune-docs](https://github.com/Smart-AI-Memory/attune-docs).
-If you previously installed either from the `attune-ai` marketplace:
+`attune-help` and `attune-author` now ship from the
+`Smart-AI-Memory/attune-ai` marketplace alongside `attune-ai` itself.
+The separate `Smart-AI-Memory/attune-docs` marketplace is retired.
+
+New users:
+
+```text
+/plugin marketplace add Smart-AI-Memory/attune-ai
+/plugin install attune-help@attune-ai
+/plugin install attune-author@attune-ai
+```
+
+If you previously installed either from `attune-docs`:
 
 1. ```text
-   /plugin marketplace add Smart-AI-Memory/attune-docs
+   /plugin uninstall attune-help@attune-docs
+   /plugin uninstall attune-author@attune-docs
    ```
 
 2. ```text
-   /plugin uninstall attune-help@attune-ai
-   /plugin uninstall attune-author@attune-ai
+   /plugin marketplace add Smart-AI-Memory/attune-ai
+   /plugin install attune-help@attune-ai
+   /plugin install attune-author@attune-ai
    ```
-
-3. ```text
-   /plugin install attune-help@attune-docs
-   /plugin install attune-author@attune-docs
-   ```
-
-New users: add `Smart-AI-Memory/attune-docs` directly.
 
 ---
 

@@ -4,7 +4,9 @@ The `attune-author` Python package has its own dedicated repo now:
 
 - **GitHub:** https://github.com/Smart-AI-Memory/attune-author
 - **PyPI:** https://pypi.org/project/attune-author/
-- **Claude Code plugin wrapper:** https://github.com/Smart-AI-Memory/attune-docs
+- **Claude Code plugin:** `claude plugin install attune-author@attune-ai`
+  (from the [Smart-AI-Memory/attune-ai](https://github.com/Smart-AI-Memory/attune-ai)
+  marketplace)
 
 Install from PyPI:
 

@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "attune-help": {
+      "command": "uvx",
+      "args": [
+        "--from",
+        "attune-help[plugin]",
+        "python",
+        "-m",
+        "attune_help.mcp.server"
+      ]
+    }
+  }
+}
