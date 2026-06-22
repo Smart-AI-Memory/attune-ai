@@ -2,35 +2,38 @@
 type: tip
 feature: fix-test
 depth: tip
-generated_at: 2026-04-14T14:58:00.827179+00:00
-source_hash: add950818a88e621df7bd12cd03ded18fe60e40bac9a1bae6eb24fe1ff69abc8
+generated_at: 2026-06-22T10:21:37.523920+00:00
+source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
 status: generated
 ---
 
-# Use TestLifecycleManager for event-driven test maintenance
+# Use TestMaintenanceWorkflow for event-driven test maintenance
 
-Start with `TestLifecycleManager` when files change in your project—it automatically queues appropriate test actions based on what happened to each file.
+Reach for `TestMaintenanceWorkflow` when files change in your project — its event handlers turn each change into a `TestPlanItem` describing the test action that change implies.
 
 ## Why this matters
 
-Setting up event handlers once is faster than manually tracking which tests need updates every time you modify source code.
+Letting the workflow map changes to test actions is faster than manually tracking which tests need updates every time you modify source code.
 
 ## How to use it
 
-Initialize the manager with your project root and call the appropriate handler:
+Call the handler that matches the change, then act on the returned item:
 
 ```python
-manager = TestLifecycleManager(project_root="/path/to/project")
+from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+
+workflow = TestMaintenanceWorkflow()
 
 # When a file is created, modified, or deleted
-task = manager.on_file_created("src/new_module.py")
-task = manager.on_file_modified("src/existing_module.py")
-task = manager.on_file_deleted("src/old_module.py")
+item = workflow.on_file_created("src/new_module.py")
+item = workflow.on_file_modified("src/existing_module.py")
+item = workflow.on_file_deleted("src/old_module.py")
 
-# Process queued tasks
-result = manager.process_queue(max_tasks=5)
+# Or build a full plan and run only the safe items
+plan = workflow.run({})
+safe = plan.get_auto_executable_items()
 ```
 
 ## The tradeoff
 
-The manager queues tasks instead of running them immediately—you get control over when test maintenance happens, but you must remember to process the queue.
+`run()` produces a plan rather than executing everything — you get control over what runs, but you decide which items to act on. Use `get_auto_executable_items()` for the safe subset and leave `REVIEW`/`MANUAL` items for a human.

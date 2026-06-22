@@ -1,82 +1,95 @@
 ---
-type: task
 feature: fix-test
 depth: task
-generated_at: 2026-05-04T02:28:54.250565+00:00
-source_hash: bff04fe2ad91cb5eb72a0a1c91eccca5bb1b81eba3549bb3ac7e694b3e7a98b8
+generated_at: 2026-06-22T10:21:37.523920+00:00
+source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
 status: generated
 ---
 
 # Work with fix test
 
-Use the fix-test system when you need to implement or modify automatic test diagnosis and repair capabilities in your project.
+Use fix test when you want to extend how source-file changes are
+turned into prioritized test work, or change how test outcomes are
+tracked.
 
 ## Prerequisites
 
 - Access to the project source code
-- Understanding of test execution workflows
-- Familiarity with the test lifecycle management system
+- Familiarity with `src/attune/workflows/test_maintenance.py` (the
+  workflow and plan model) and `src/attune/workflows/test_runner.py`
+  (outcome tracking)
 
-## Understand the test lifecycle architecture
+## Understand the two modules
 
-Start by examining how the test lifecycle system works:
+| Module | Owns |
+|--------|------|
+| `test_maintenance.py` | `TestMaintenanceWorkflow` and the plan model — `TestPlanItem`, `TestMaintenancePlan`, `TestAction`, `TestPriority` |
+| `test_runner.py` | Outcome tracking — `run_tests_with_tracking()`, `track_coverage()`, `track_file_tests()`, and the status queries |
 
-1. Open `src/attune/workflows/test_lifecycle.py` to see the `TestLifecycleManager` class
-2. Review the `TestTask` and `TestAction` dataclasses to understand the task queue structure
-3. Check `src/attune/workflows/test_maintenance.py` for the `TestMaintenanceWorkflow` that handles automatic test management
+## Generate a maintenance plan
 
-The system uses event-driven test management where file changes trigger test tasks that get queued and processed automatically.
+1. **Instantiate the workflow** and call `run()` with a context dict:
 
-## Identify the target component
+   ```python
+   from attune.workflows.test_maintenance import TestMaintenanceWorkflow
 
-Determine which component needs modification based on your goal:
+   workflow = TestMaintenanceWorkflow()
+   plan = workflow.run({})
+   ```
 
-- **Test execution tracking**: Modify functions in `src/attune/workflows/test_runner.py`
-- **Test lifecycle events**: Update `TestLifecycleManager` methods in `test_lifecycle.py`
-- **Maintenance workflows**: Change `TestMaintenanceWorkflow` in `test_maintenance.py`
+2. **Filter the plan** by what you need:
 
-## Modify test execution functions
+   ```python
+   from attune.workflows.test_maintenance import TestAction, TestPriority
 
-For changes to test running and tracking:
+   to_create = plan.get_items_by_action(TestAction.CREATE)
+   urgent = plan.get_items_by_priority(TestPriority.CRITICAL)
+   safe = plan.get_auto_executable_items()
+   ```
 
-1. Locate the specific function in `test_runner.py`:
-   - `run_tests_with_tracking()` for test execution with monitoring
-   - `track_coverage()` for coverage analysis
-   - `track_file_tests()` for file-specific test tracking
-   - `get_file_test_status()` for retrieving test status
-   - `get_files_needing_tests()` for identifying test gaps
+3. **Inspect a `TestPlanItem`** — each carries `file_path`, `action`,
+   `priority`, `reason`, `test_file_path`, `estimated_effort`, and
+   `auto_executable`.
 
-2. Read the function's docstring and examine its parameters and return type
-3. Study the existing error handling patterns and logging style
-4. Implement your changes following the established conventions
+## React to a single file change
 
-## Update lifecycle management
+Use the event handlers when you want per-file behavior rather than a
+full plan:
 
-For changes to the test lifecycle system:
-
-1. Modify the appropriate method in `TestLifecycleManager`:
-   - `on_file_created()`, `on_file_modified()`, or `on_file_deleted()` for file event handling
-   - `process_queue()` for task execution
-   - `schedule_maintenance()` or `run_maintenance()` for automated maintenance
-
-2. Update the corresponding `TestTask` or `TestPlanItem` properties if needed
-3. Ensure the task priority and action enums are used correctly
-
-## Test your changes
-
-Run the test suite to verify your modifications work correctly:
-
-```bash
-pytest -k "test_lifecycle" tests/
-pytest -k "test_runner" tests/
+```python
+item = workflow.on_file_modified("src/attune/foo.py")
+if item and item.auto_executable:
+    ...
 ```
 
-Your changes should pass all existing tests without breaking the test lifecycle workflow.
+`on_file_created()`, `on_file_modified()`, and `on_file_deleted()`
+each return a `TestPlanItem | None`.
 
-## Success criteria
+## Track test outcomes
 
-Your fix-test modifications are complete when:
-- All targeted tests pass
-- The test lifecycle manager processes tasks correctly
-- Test execution tracking records data as expected
-- No regressions appear in the existing test suite
+Use `test_runner.py` to persist what actually ran:
+
+1. `run_tests_with_tracking(test_suite, test_files, command, workflow_id, triggered_by)` runs a suite and records the result.
+2. `track_coverage(coverage_file, workflow_id)` ingests a `coverage.xml`.
+3. `get_file_test_status(file_path)` and `get_files_needing_tests(stale_only, failed_only)` answer coverage questions for a file or the whole project.
+
+## Modify behavior
+
+- **Plan generation / prioritization** — edit `TestMaintenanceWorkflow`
+  methods in `test_maintenance.py`. Adjust how an event maps to a
+  `TestAction`, or how `TestPriority` is assigned.
+- **New plan-item field** — add it to the `TestPlanItem` dataclass and
+  update `to_dict()`.
+- **Outcome tracking** — edit the tracking functions in
+  `test_runner.py`.
+
+## Verify your changes
+
+Run the related tests:
+
+```
+pytest -k "maintenance or test_runner" tests/
+```
+
+A passing suite with no new failures confirms the plan model and
+outcome tracking still behave correctly.

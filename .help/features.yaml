@@ -97,7 +97,6 @@ features:
     files:
       - src/attune/workflows/test_runner.py
       - src/attune/workflows/test_maintenance.py
-      - src/attune/workflows/test_lifecycle.py
     tags: [tests, debugging, fixes]
 
   mcp-server:
