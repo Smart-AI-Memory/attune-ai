@@ -54,13 +54,6 @@ export default function TermsPage() {
                 Full license terms available at: <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE">LICENSE</a>
               </p>
 
-              <h3>2.2 Commercial License</h3>
-              <p>
-                Commercial licenses are required for organizations with 6 or more employees.
-                One license covers all developer environments (workstation, staging, production, CI/CD).
-                See <a href="https://github.com/Smart-AI-Memory/attune-ai/blob/main/LICENSE-COMMERCIAL.md">LICENSE-COMMERCIAL.md</a> for full terms.
-              </p>
-
               <h2>3. Acceptable Use</h2>
               <p>You agree NOT to use our Services to:</p>
               <ul>
@@ -177,7 +170,6 @@ export default function TermsPage() {
               <ul>
                 <li>Violation of these Terms</li>
                 <li>Fraudulent or illegal activity</li>
-                <li>Non-payment of commercial license fees</li>
                 <li>At our sole discretion for any reason</li>
               </ul>
               <p>Upon termination, your right to use our Services ceases immediately.</p>
