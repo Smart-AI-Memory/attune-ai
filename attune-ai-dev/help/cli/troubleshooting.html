@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Troubleshoot cli — troubleshooting</title>
-  <meta name="description" content="This page covers the `attune` CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behaviora" />
+  <meta name="description" content="This page covers the `attune` CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is `main()` in `attune.cli_minimal`. Routing goes thro" />
   <meta property="og:title" content="Troubleshoot cli — troubleshooting" />
-  <meta property="og:description" content="This page covers the `attune` CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behaviora" />
+  <meta property="og:description" content="This page covers the `attune` CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is `main()` in `attune.cli_minimal`. Routing goes thro" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/troubleshooting" />
   <style>
@@ -260,119 +260,115 @@
   <article class="markdown-body">
 <h1>Troubleshoot cli</h1>
 <h2>Before you start</h2>
-<p>This page covers the <code>attune</code> CLI — command dispatch, argument parsing, routing user input to skills, and cost/memory/telemetry subcommands. If you hit a specific error message rather than a behavioral symptom, check the <code>errors/</code> templates first.</p>
+<p>This page covers the <code>attune</code> CLI — command dispatch, workflow execution, routing, memory, cost tracking, and telemetry commands. The entry point is <code>main()</code> in <code>attune.cli_minimal</code>. Routing goes through <code>attune.cli_router</code>.</p>
 <h2>Symptom table</h2>
 <table>
 <thead>
 <tr>
-<th>Symptom</th>
-<th>Concrete check</th>
+<th>If you observe</th>
+<th>Check</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>attune &lt;subcommand&gt;</code> exits with a non-zero code but prints nothing</td>
-<td>Run <code>attune doctor</code> — it checks your environment and configuration and reports what is wrong</td>
+<td><code>attune &lt;command&gt;</code> exits with a non-zero code</td>
+<td>Run <code>attune doctor</code> — it reports environment and configuration problems directly</td>
 </tr>
 <tr>
-<td>A cost subcommand (<code>costs</code>, <code>costs-today</code>, <code>costs-export</code>) shows no data or wrong totals</td>
-<td>Run <code>attune costs</code> to see the full report, then <code>attune costs today</code> to narrow to today; if both show nothing, run <code>attune costs reset</code> <strong>only if</strong> you want to clear all data — this is irreversible</td>
+<td>A workflow command returns unexpectedly</td>
+<td>Confirm the exit contract: <code>run_workflow_with_exit_code()</code> returns an <code>int</code>; check whether your caller is comparing against the correct value</td>
 </tr>
 <tr>
-<td><code>attune help</code> returns no results or the wrong template</td>
-<td>Confirm the template files exist under the expected <code>_CATEGORIES</code> (<code>errors</code>, <code>warnings</code>, <code>tips</code>, <code>references</code>)</td>
+<td><code>attune help</code> produces no output or errors</td>
+<td>Verify <code>cmd_help()</code> can resolve the requested template category — valid categories are <code>errors</code>, <code>warnings</code>, <code>tips</code>, <code>references</code></td>
 </tr>
 <tr>
 <td>Routing sends input to the wrong skill</td>
-<td>Run <code>attune telemetry routing-stats</code> to see historical routing decisions, then <code>attune telemetry routing-check</code> to test a specific input against the current routing logic</td>
+<td>Check learned preferences with <code>HybridRouter.get_suggestions(partial)</code> and inspect the stored <code>RoutingPreference</code> fields (<code>keyword</code>, <code>skill</code>, <code>confidence</code>)</td>
 </tr>
 <tr>
-<td>A memory command (<code>remember</code>, <code>forget</code>, <code>lessons</code>) acts on the wrong entry</td>
-<td>Run <code>attune lessons</code> to list all current lessons with line numbers, then use the line number with <code>attune forget</code> to target the exact entry</td>
+<td>A slash command is not recognised</td>
+<td>Call <code>is_slash_command(text)</code> on the raw input to confirm the text is being identified as a slash command before routing</td>
 </tr>
 <tr>
-<td><code>route_user_input</code> returns an unexpected skill</td>
-<td>Check the <code>RoutingPreference</code> records — specifically the <code>keyword</code>, <code>skill</code>, and <code>confidence</code> fields — by calling <code>HybridRouter.get_suggestions(partial)</code> with your input prefix</td>
+<td>Memory commands silently do nothing</td>
+<td>Confirm the Redis-backed memory beta header <code>context-management-2025-06-27</code> is available in your environment; <code>cmd_memory_recall()</code> will return nothing if the store is unreachable</td>
 </tr>
 <tr>
-<td>The CLI version does not match what you installed</td>
-<td>Run <code>attune version</code> and compare against <code>get_version()</code> output; a mismatch points to a stale <code>.egg-info</code> or editable-install cache</td>
+<td>Cost data is missing or stale</td>
+<td>Run <code>attune costs</code> (<code>cmd_costs</code>) then <code>attune costs today</code> (<code>cmd_costs_today</code>) to narrow the scope; if both are empty, run <code>attune costs reset</code> only as a last resort — it calls <code>cmd_costs_reset()</code>, which always returns <code>0</code> and clears all tracking data</td>
+</tr>
+<tr>
+<td><code>attune validate</code> fails after a config change</td>
+<td>Run <code>cmd_validate()</code> directly and read the full output before assuming a code bug</td>
 </tr>
 </tbody>
 </table>
 <h2>Diagnosis steps</h2>
-<p>Work through these in order — each step is cheaper than the next.</p>
-<h3>1. Reproduce the failure with a minimal command</h3>
-<p>Strip the invocation to its bare required arguments and run it directly in your terminal. Confirm the failure occurs outside any wrapper script or IDE integration. For example:</p>
-<pre><code class="language-bash">attune costs
-attune telemetry routing-check
-attune memory recall &lt;keyword&gt;
+<p>Work through these in order — each step is cheaper than the one that follows.</p>
+<h3>1. Run <code>attune doctor</code></h3>
+<p><code>cmd_doctor()</code> is the fastest first check. It inspects the environment and prints actionable output without modifying state:</p>
+<pre><code>attune doctor
 </code></pre>
-<p>If the failure disappears with a minimal invocation, the problem is in the calling context (environment variables, shell aliases, argument escaping), not in the CLI itself.</p>
-<h3>2. Run <code>attune doctor</code></h3>
-<p><code>cmd_doctor</code> performs built-in environment checks. Run it before inspecting any code:</p>
-<pre><code class="language-bash">attune doctor
+<p>Fix anything it reports before continuing.</p>
+<h3>2. Reproduce with a minimal invocation</h3>
+<p>Strip the call to its required arguments. If you are running a workflow, pass only the mandatory <code>input_data</code> keys to <code>run_workflow_with_exit_code()</code> and confirm the failure still occurs without additional context.</p>
+<h3>3. Check the version and feature flags</h3>
+<pre><code>attune version
+attune features
 </code></pre>
-<p>Review every item it flags. Many setup and configuration issues are caught here without any further debugging.</p>
-<h3>3. Run <code>attune validate</code></h3>
-<p>If <code>attune doctor</code> passes but behavior is still wrong, run:</p>
-<pre><code class="language-bash">attune validate
+<p><code>cmd_version()</code> prints the value returned by <code>get_version()</code>. <code>cmd_features()</code> lists which features are active. A silent failure after an upgrade is often a disabled feature or a changed default model (<code>claude-sonnet-4-6</code>).</p>
+<h3>4. Inspect routing behaviour</h3>
+<p>If the wrong command is being dispatched, use <code>route_user_input()</code> directly to see what <code>HybridRouter.route()</code> resolves:</p>
+<pre><code class="language-python">from attune.cli_router import route_user_input
+result = route_user_input(&quot;your input here&quot;)
+print(result)
 </code></pre>
-<p><code>cmd_validate</code> checks that the CLI's internal configuration and data files are consistent.</p>
-<h3>4. Check telemetry and routing state</h3>
-<p>For routing or skill-dispatch problems, use the telemetry subcommands to inspect live state before touching any code:</p>
-<pre><code class="language-bash">attune telemetry show
-attune telemetry routing-stats
-attune telemetry routing-check
+<p>If a keyword is being routed incorrectly, check the <code>RoutingPreference</code> for that keyword — pay attention to the <code>confidence</code> and <code>usage_count</code> fields. You can correct a bad preference with:</p>
+<pre><code class="language-python">from attune.cli_router import HybridRouter
+router = HybridRouter()
+router.learn_preference(keyword=&quot;your-keyword&quot;, skill=&quot;correct-skill&quot;, args=&quot;&quot;)
 </code></pre>
-<p>For model or agent-level dispatch issues, also run:</p>
-<pre><code class="language-bash">attune telemetry models
-attune telemetry agents
+<h3>5. Run the related tests</h3>
+<pre><code>pytest -k &quot;cli&quot; -v
 </code></pre>
-<h3>5. Inspect the relevant entry point</h3>
-<p>Once you have a minimal reproduction, identify which command function is failing and look at its return value. All command functions return <code>int</code> — a non-zero return signals failure. The entry points grouped by area are:</p>
-<p><strong>Cost tracking:</strong> <code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code> in <code>cli_commands/cost_commands.py</code></p>
-<p><strong>Memory:</strong> <code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code> in <code>cli_commands/memory_commands.py</code></p>
-<p><strong>Telemetry:</strong> <code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code> in <code>cli_commands/telemetry_commands.py</code></p>
-<p><strong>Routing:</strong> <code>route_user_input</code>, <code>HybridRouter.route</code> in <code>attune/cli_router.py</code></p>
-<p><strong>Dispatch and setup:</strong> <code>main</code>, <code>create_parser</code> in <code>attune/cli_minimal.py</code>; <code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_doctor</code>, <code>cmd_features</code> in <code>cli_commands/utility_commands.py</code></p>
-<h3>6. Run the CLI test suite</h3>
-<pre><code class="language-bash">pytest -k &quot;cli&quot; -v
-</code></pre>
-<p>A failing test that covers your scenario gives you a reproducible fixture and confirms the regression boundary. If all tests pass but you still see the failure, the issue is likely environment- or state-specific — see &quot;Common fixes&quot; below.</p>
+<p>If a test covers the failing path, its fixtures show you the expected inputs and outputs. A failing test here points directly at a regression.</p>
+<h3>6. Enable debug logging</h3>
+<p>If the steps above haven't located the problem, bump Python's log level to <code>DEBUG</code> and re-run the failing command. Look for the first log line that deviates from the expected flow — that line identifies the offending module in <code>attune.cli_commands</code>.</p>
 <h2>Common fixes</h2>
-<p><strong>Stale routing preferences</strong>
-If <code>HybridRouter</code> routes to the wrong skill, a learned <code>RoutingPreference</code> with a high <code>usage_count</code> may be overriding the default. Call <code>HybridRouter.learn_preference(keyword, skill, args)</code> to correct the mapping, which resets the association for that keyword.</p>
-<p><strong>Cost data is empty after a reset</strong>
-<code>cmd_costs_reset</code> clears all cost tracking data and returns <code>0</code> on success. If you ran it unintentionally, the data cannot be recovered — cost tracking restarts from the next recorded event.</p>
-<p><strong>Wrong provider active</strong>
-If commands behave unexpectedly due to model selection, check the active provider:</p>
-<pre><code class="language-bash">attune provider show
+<p><strong>Wrong exit code handling</strong>
+<code>run_workflow_with_exit_code()</code> always returns an <code>int</code>. If your script treats a non-zero return as a crash rather than a workflow-defined outcome, wrap the call and check the value explicitly:</p>
+<pre><code class="language-python">exit_code = run_workflow_with_exit_code(MyWorkflow, data, name=&quot;my-workflow&quot;, json_mode=False, print_result=print)
+if exit_code != 0:
+    # handle non-zero outcome
 </code></pre>
-<p>To change it:</p>
-<pre><code class="language-bash">attune provider set &lt;provider-name&gt;
+<p><strong>Bad routing preference overriding the correct skill</strong>
+A <code>RoutingPreference</code> with high <code>usage_count</code> but low <code>confidence</code> can silently win. Reset it:</p>
+<pre><code class="language-python">router = HybridRouter()
+router.learn_preference(keyword=&quot;bad-keyword&quot;, skill=&quot;correct-skill&quot;, args=&quot;&quot;)
 </code></pre>
-<p>This change affects all subsequent CLI invocations and is outside the CLI code itself — it modifies persisted provider configuration.</p>
-<p><strong>Dependency version mismatch</strong>
-A dependency upgrade can silently change routing or parsing behavior. Confirm installed versions match your lockfile:</p>
-<pre><code class="language-bash">pip show attune
+<p><strong>Provider not set</strong>
+If commands that call a model fail immediately, run:</p>
+<pre><code>attune provider show   # calls cmd_provider_show()
+attune provider set    # calls cmd_provider_set()
 </code></pre>
-<p>For editable installs, a stale build cache can cause <code>get_version()</code> and <code>attune version</code> to disagree. Reinstall with:</p>
-<pre><code class="language-bash">pip install -e . --no-build-isolation
+<p><strong>Stale cost data after a reset</strong>
+<code>cmd_costs_reset()</code> always returns <code>0</code> and cannot be undone. Export first:</p>
+<pre><code>attune costs export    # cmd_costs_export() writes data to a file
+attune costs reset     # cmd_costs_reset() then clears all data
 </code></pre>
-<p><strong><code>is_slash_command</code> returning unexpected results</strong>
-If input that starts with <code>/</code> is not being routed as a slash command, confirm you are passing the raw user string — not a pre-processed or stripped version — to <code>is_slash_command(text)</code> or <code>route_user_input(user_input, context)</code>.</p>
+<p><strong>Memory commands require the beta header</strong>
+<code>cmd_memory_agent()</code>, <code>cmd_memory_capture()</code>, <code>cmd_memory_recall()</code>, and related commands depend on the Redis-backed memory tool gated behind the <code>context-management-2025-06-27</code> beta. If these commands silently do nothing, the beta is not enabled in your environment — this requires a configuration change outside the CLI itself.</p>
+<p><strong>Dependency version drift</strong>
+A dependency upgrade can change behaviour without a code change. Confirm installed versions:</p>
+<pre><code>pip show anthropic
+</code></pre>
+<p>Then compare against the version the project expects.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/cli_minimal.py</code></li>
 <li><code>src/attune/cli_router.py</code></li>
-<li><code>src/attune/cli_commands/cost_commands.py</code></li>
-<li><code>src/attune/cli_commands/help_commands.py</code></li>
-<li><code>src/attune/cli_commands/memory_commands.py</code></li>
-<li><code>src/attune/cli_commands/provider_commands.py</code></li>
-<li><code>src/attune/cli_commands/telemetry_commands.py</code></li>
-<li><code>src/attune/cli_commands/utility_commands.py</code></li>
-<li><code>src/attune/cli_commands/workflow_commands.py</code></li>
+<li><code>src/attune/cli_commands/**</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>cli</code>, <code>commands</code></p>
 

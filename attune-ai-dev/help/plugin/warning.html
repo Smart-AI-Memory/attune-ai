@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Plugin Cautions — warning</title>
-  <meta name="description" content="`session_sentinel_path(session_id)` writes a file that gates the once-per-session compact warning. If `prune_stale_sentinels()` is never called — or is called with a stale `now` value — old sentinel f" />
-  <meta property="og:title" content="Plugin Cautions — warning" />
-  <meta property="og:description" content="`session_sentinel_path(session_id)` writes a file that gates the once-per-session compact warning. If `prune_stale_sentinels()` is never called — or is called with a stale `now` value — old sentinel f" />
+  <title>Plugin cautions — warning</title>
+  <meta name="description" content="`session_sentinel_path()` writes a file prefixed with `.jit-recalled-` to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you cal" />
+  <meta property="og:title" content="Plugin cautions — warning" />
+  <meta property="og:description" content="`session_sentinel_path()` writes a file prefixed with `.jit-recalled-` to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you cal" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/warning" />
   <style>
@@ -258,21 +258,25 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Plugin Cautions</h1>
-<h2>Stale sentinels accumulate silently</h2>
-<p><code>session_sentinel_path(session_id)</code> writes a file that gates the once-per-session compact warning. If <code>prune_stale_sentinels()</code> is never called — or is called with a stale <code>now</code> value — old sentinel files persist and suppress warnings that should fire. Call <code>prune_stale_sentinels()</code> without arguments so it uses the real wall-clock time, and confirm the return value (number of deleted files) matches your expectations after any test that creates sentinels.</p>
-<h2>Context utilization threshold is a float comparison</h2>
-<p><code>estimate_utilization(transcript_path)</code> returns a value in <code>[0.0, 1.0]</code>. <code>format_warning(util, threshold, resume_body)</code> compares these two floats directly. If you pass <code>threshold</code> as an integer (e.g. <code>1</code> instead of <code>1.0</code>) or derive it from an environment variable without casting, the comparison silently misbehaves. Always pass <code>threshold</code> as a <code>float</code>.</p>
-<h2><code>build_resume_prompt</code> silently degrades when <code>spec_info</code> is <code>None</code></h2>
-<p><code>build_resume_prompt(spec_info, git_state, ...)</code> accepts <code>spec_info: SpecInfo | None</code>. When <code>spec_info</code> is <code>None</code>, the resume prompt omits spec context — the output is valid but incomplete. This happens whenever <code>discover_specs(roots)</code> finds no in-flight specs under the given roots. Before calling <code>build_resume_prompt</code>, check whether <code>discover_specs</code> returned an empty list and decide whether that is expected for your workspace layout.</p>
-<h2><code>workspace_roots</code> may return an empty list</h2>
-<p><code>workspace_roots(cwd)</code> makes a best-effort guess at roots to scan. If <code>cwd</code> is outside a recognized workspace layout, it returns <code>[]</code>. Passing an empty list to <code>discover_specs(roots)</code> produces no <code>SpecInfo</code> results without raising an error, so the absence of specs looks identical to a workspace with no active work. If <code>discover_specs</code> returns <code>[]</code> unexpectedly, verify that <code>workspace_roots</code> is resolving the correct directory.</p>
-<h2><code>GitState.uncommitted</code> reflects the worktree at hook-fire time</h2>
-<p><code>git_state(cwd)</code> captures <code>uncommitted: tuple[str, ...]</code> at the moment it is called. If files are staged or modified after <code>git_state</code> runs, <code>GitState.uncommitted</code> does not update — it is a snapshot, not a live view. Hooks that branch on uncommitted files should call <code>git_state</code> as late as possible, immediately before the check.</p>
-<h2><code>validate_bash_command</code> and <code>validate_file_path</code> return reasons, not exceptions</h2>
-<p><code>validate_bash_command(command)</code> and <code>validate_file_path(file_path)</code> both return <code>tuple[bool, str]</code>. A rejected command or path returns <code>(False, reason)</code> — no exception is raised. Code that ignores the boolean and only uses the string will silently pass through commands that should have been blocked. Always check the first element of the tuple before proceeding.</p>
+<h1>Plugin cautions</h1>
+<h2>Stale sentinels accumulate if you skip pruning</h2>
+<p><code>session_sentinel_path()</code> writes a file prefixed with <code>.jit-recalled-</code> to mark that a session has already received a compact warning. These sentinel files are not cleaned up automatically — if you call <code>session_sentinel_path()</code> without periodically calling <code>prune_stale_sentinels()</code>, old sentinels accumulate and can suppress warnings in sessions that should receive them.</p>
+<p><strong>Mitigation:</strong> Call <code>prune_stale_sentinels()</code> at a predictable point in your hook lifecycle (for example, at startup or after a session ends). Its return value tells you how many files were removed, which is useful for debugging runaway accumulation.</p>
+<h2><code>status_conflict</code> in <code>SpecInfo</code> silently overrides <code>effective_status</code></h2>
+<p><code>discover_specs()</code> populates <code>SpecInfo</code> fields including <code>effective_status</code> and <code>status_conflict</code>. When <code>status_conflict</code> is <code>True</code>, the <code>effective_status</code> field does not simply reflect the <code>status</code> header — there is a disagreement between sources. Code that reads <code>effective_status</code> without checking <code>status_conflict</code> first can act on a resolved value that masks an underlying inconsistency.</p>
+<p><strong>Mitigation:</strong> Always check <code>spec.status_conflict</code> before trusting <code>spec.effective_status</code> in any logic that gates on spec state (for example, filtering out terminal statuses from <code>_TERMINAL_VERDICTS</code>).</p>
+<h2><code>build_resume_prompt()</code> silently uses a default workspace path</h2>
+<p><code>build_resume_prompt()</code> accepts <code>workspace_path</code> with a default of <code>~/attune</code>. If the actual workspace is elsewhere and you omit this argument, the rendered resume prompt will reference the wrong path — and the error will not surface as an exception; the output will simply be wrong.</p>
+<p><strong>Mitigation:</strong> Always pass <code>workspace_path</code> explicitly. Derive it from <code>workspace_roots()</code> rather than relying on the default.</p>
+<h2><code>estimate_utilization()</code> returns a float in <code>[0.0, 1.0]</code>, not a percentage</h2>
+<p><code>estimate_utilization()</code> returns a value between <code>0.0</code> and <code>1.0</code>. Passing this directly to <code>format_warning()</code> as the <code>threshold</code> argument without converting to the same scale as your threshold constant will produce incorrect warning behavior — for example, a threshold of <code>80</code> will never be reached by a utilization of <code>0.95</code>.</p>
+<p><strong>Mitigation:</strong> Keep your threshold and the return value of <code>estimate_utilization()</code> on the same scale. If your threshold is a fraction, express it as a value in <code>[0.0, 1.0]</code> as well.</p>
+<h2><code>git_state()</code> reflects the working directory at call time</h2>
+<p><code>git_state()</code> returns a <code>GitState</code> snapshot — <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> files — captured at the moment of the call. If you call it once and cache the result across multiple hook operations, the snapshot can go stale: a commit, stash, or branch switch between calls will not be reflected.</p>
+<p><strong>Mitigation:</strong> Call <code>git_state()</code> as late as possible in your hook, immediately before you need the data, rather than capturing it at startup.</p>
 <h2>Private helpers in <code>hooks._state</code> can change without notice</h2>
-<p><code>hooks._state</code> is the shared foundation for session-continuity hooks. Its public surface — <code>discover_specs</code>, <code>git_state</code>, <code>session_sentinel_path</code>, <code>prune_stale_sentinels</code>, <code>workspace_roots</code> — is stable. Any names prefixed with <code>_</code> are implementation details that can change between versions without deprecation warnings. Depend only on the documented public functions.</p>
+<p><code>discover_specs()</code>, <code>workspace_roots()</code>, and <code>session_sentinel_path()</code> are public, but several internal behaviors they depend on — including <code>_SPEC_SUBDIRS</code>, <code>_SENTINEL_PREFIX</code>, and <code>_TERMINAL_VERDICTS</code> — are private module-level constants. Code that reaches past the public functions and reads these constants directly will break silently during refactors.</p>
+<p><strong>Mitigation:</strong> Use only the public functions listed in the API. If you need the list of terminal statuses for comparison, derive it from <code>SpecInfo.effective_status</code> values returned by <code>discover_specs()</code> rather than importing <code>_TERMINAL_VERDICTS</code> directly.</p>
 
   </article>
   <footer>

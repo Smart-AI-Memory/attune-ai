@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `CostFetchError` | Categorized failure for cost-report fetch. | `src/attune/ops/anthropic_cost.py` | | `CostSummary` | Account-level cos" />
+  <meta name="description" content="Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Sta" />
   <meta property="og:title" content="Ops Dashboard reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `CostFetchError` | Categorized failure for cost-report fetch. | `src/attune/ops/anthropic_cost.py` | | `CostSummary` | Account-level cos" />
+  <meta property="og:description" content="Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Sta" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/reference" />
   <style>
@@ -259,806 +259,886 @@
   </nav>
   <article class="markdown-body">
 <h1>Ops Dashboard reference</h1>
+<p>Run and monitor the attune workflow OS from a local web dashboard. The dashboard exposes a per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming. Start it with <code>attune ops</code> or <code>python -m attune.ops</code>.</p>
 <h2>Classes</h2>
 <table>
 <thead>
 <tr>
 <th>Class</th>
 <th>Description</th>
-<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>CostFetchError</code></td>
-<td>Categorized failure for cost-report fetch.</td>
-<td><code>src/attune/ops/anthropic_cost.py</code></td>
+<td>Categorized failure for a cost-report fetch.</td>
 </tr>
 <tr>
 <td><code>CostSummary</code></td>
 <td>Account-level cost data from the Anthropic admin cost-report.</td>
-<td><code>src/attune/ops/anthropic_cost.py</code></td>
 </tr>
 <tr>
 <td><code>Candidate</code></td>
 <td>One completion-candidate spec returned by the detector.</td>
-<td><code>src/attune/ops/completion_candidates.py</code></td>
 </tr>
 <tr>
 <td><code>Config</code></td>
-<td>Where attune ops reads project + attune state from.</td>
-<td><code>src/attune/ops/config.py</code></td>
+<td>Project and attune-state configuration that <code>attune ops</code> reads at startup.</td>
 </tr>
 <tr>
 <td><code>TelemetrySummary</code></td>
-<td>—</td>
-<td><code>src/attune/ops/data.py</code></td>
+<td>Aggregated telemetry — request counts, costs, savings, and per-workflow breakdowns.</td>
 </tr>
 <tr>
 <td><code>WorkflowEntry</code></td>
-<td>—</td>
-<td><code>src/attune/ops/data.py</code></td>
+<td>One entry in the registered workflow catalog.</td>
 </tr>
 <tr>
 <td><code>PathArgSpec</code></td>
 <td>How a workflow accepts a scope path on the CLI.</td>
-<td><code>src/attune/ops/data.py</code></td>
 </tr>
 <tr>
 <td><code>Feature</code></td>
 <td>One feature from <code>.help/features.yaml</code> for the scope picker.</td>
-<td><code>src/attune/ops/data.py</code></td>
 </tr>
 <tr>
 <td><code>Session</code></td>
-<td>One Claude Code session — what surfaces on the dashboard's /sessions page.</td>
-<td><code>src/attune/ops/data.py</code></td>
+<td>One Claude Code session surfaced on the dashboard's <code>/sessions</code> page.</td>
 </tr>
 <tr>
 <td><code>FamilyVersion</code></td>
-<td>—</td>
-<td><code>src/attune/ops/data.py</code></td>
+<td>Package name, version, and resolution source for one attune family member.</td>
 </tr>
 <tr>
 <td><code>DailyCost</code></td>
 <td>One day's cost for the home-page sparkline.</td>
-<td><code>src/attune/ops/data.py</code></td>
 </tr>
 <tr>
 <td><code>HomeKpis</code></td>
 <td>Summary numbers shown above the fold on the home page.</td>
-<td><code>src/attune/ops/data.py</code></td>
 </tr>
 <tr>
 <td><code>SweepChipCounts</code></td>
 <td>Per-bucket counts loaded from a persisted discovery-sweep result.</td>
-<td><code>src/attune/ops/data.py</code></td>
 </tr>
 <tr>
 <td><code>DismissEntry</code></td>
 <td>One dismissed candidate's persisted state.</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
 </tr>
 <tr>
 <td><code>TemplateRecord</code></td>
-<td>One template file.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
+<td>One template file in the help corpus.</td>
 </tr>
 <tr>
 <td><code>FeatureSummary</code></td>
-<td>One feature — name + which kinds exist.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
+<td>One feature — name plus which template kinds exist for it.</td>
 </tr>
 <tr>
 <td><code>SearchHit</code></td>
-<td>One ranked hit from a search query.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
+<td>One ranked hit from a help-corpus search query.</td>
 </tr>
 <tr>
 <td><code>GapsReport</code></td>
-<td>Coverage-gap signals — incomplete sets + stale templates.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
+<td>Coverage-gap signals — incomplete sets and stale templates.</td>
 </tr>
 <tr>
 <td><code>HelpRegenJob</code></td>
-<td>One regen invocation — status, captured stdout, exit code.</td>
-<td><code>src/attune/ops/help_regen.py</code></td>
+<td>One regen invocation — status, captured stdout, and exit code.</td>
 </tr>
 <tr>
 <td><code>HelpRegenRunner</code></td>
-<td>Owns the regen-job history + active subprocess.</td>
-<td><code>src/attune/ops/help_regen.py</code></td>
+<td>Owns the regen-job history and active subprocess.</td>
 </tr>
 <tr>
 <td><code>HelpRegenBusyError</code></td>
 <td>Raised when a regen job is requested while one is already running.</td>
-<td><code>src/attune/ops/help_regen.py</code></td>
 </tr>
 <tr>
 <td><code>InteractionCounters</code></td>
 <td>Process-lifetime counters for dashboard UI interactions.</td>
-<td><code>src/attune/ops/interaction_counters.py</code></td>
 </tr>
 <tr>
 <td><code>TrustedHostMiddleware</code></td>
-<td>Reject requests whose <code>Host</code> header isn't on the allowlist.</td>
-<td><code>src/attune/ops/middleware.py</code></td>
+<td>Rejects requests whose <code>Host</code> header is not on the allowlist.</td>
 </tr>
 <tr>
 <td><code>JournalEntry</code></td>
 <td>One pending-writes journal entry.</td>
-<td><code>src/attune/ops/pending_writes.py</code></td>
 </tr>
 <tr>
 <td><code>InteractionEvent</code></td>
 <td>Request body for <code>POST /api/telemetry/interaction</code>.</td>
-<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
 </tr>
 <tr>
 <td><code>SpecPhase</code></td>
 <td>One phase file's status snapshot.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
 </tr>
 <tr>
 <td><code>SpecRecord</code></td>
-<td>One spec's summary — directory + status of each phase file present.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
+<td>One spec's summary — directory plus the status of each phase file present.</td>
 </tr>
 <tr>
 <td><code>RunnerBusyError</code></td>
-<td>Raised when a run is already pending/running.</td>
-<td><code>src/attune/ops/runner.py</code></td>
+<td>Raised when a run is already pending or running.</td>
 </tr>
 <tr>
 <td><code>Run</code></td>
-<td>Single workflow execution + its broadcast state.</td>
-<td><code>src/attune/ops/runner.py</code></td>
+<td>Single workflow execution and its broadcast state.</td>
 </tr>
 <tr>
 <td><code>RunnerService</code></td>
-<td>Owns the run history + concurrency lock.</td>
-<td><code>src/attune/ops/runner.py</code></td>
+<td>Owns the run history and concurrency lock.</td>
 </tr>
 <tr>
 <td><code>RedactionResult</code></td>
 <td>Outcome of a redaction pass.</td>
-<td><code>src/attune/ops/session_redaction.py</code></td>
 </tr>
 <tr>
 <td><code>SummaryResult</code></td>
-<td>One Haiku-or-cache result, ready to slot into a :class:<code>Session</code>.</td>
-<td><code>src/attune/ops/session_summarizer.py</code></td>
+<td>One Haiku-or-cache result, ready to slot into a <code>Session</code>.</td>
 </tr>
 <tr>
 <td><code>Budget</code></td>
 <td>Mutable spend ledger for one page-load summarization loop.</td>
-<td><code>src/attune/ops/session_summarizer.py</code></td>
 </tr>
 <tr>
 <td><code>CacheKey</code></td>
 <td>Stable key that invalidates a cached summary when the source moves.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
 </tr>
 <tr>
 <td><code>CachedSummary</code></td>
-<td>One persisted session summary plus the metadata to validate it.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
+<td>One persisted session summary plus the metadata needed to validate it.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<hr />
+<h3><code>CostFetchError</code> fields</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Description</th>
-<th>File</th>
+<th>Field</th>
+<th>Type</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>create_app()</code></td>
-<td>Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.</td>
-<td><code>src/attune/ops/__init__.py</code></td>
+<td><code>kind</code></td>
+<td><code>CostFetchErrorKind</code></td>
 </tr>
 <tr>
-<td><code>build_config()</code></td>
-<td>Lazy import of the config builder.</td>
-<td><code>src/attune/ops/__init__.py</code></td>
-</tr>
-<tr>
-<td><code>clear_cache()</code></td>
-<td>Empty the in-memory cache. Test-only convenience.</td>
-<td><code>src/attune/ops/anthropic_cost.py</code></td>
-</tr>
-<tr>
-<td><code>load_admin_key()</code></td>
-<td>Return the admin API key, or <code>None</code> if unavailable.</td>
-<td><code>src/attune/ops/anthropic_cost.py</code></td>
-</tr>
-<tr>
-<td><code>fetch_summary()</code></td>
-<td>Return the current cost summary or a categorized error.</td>
-<td><code>src/attune/ops/anthropic_cost.py</code></td>
-</tr>
-<tr>
-<td><code>add_subparser()</code></td>
-<td>Register the <code>ops</code> subparser on the main attune CLI parser.</td>
-<td><code>src/attune/ops/cli.py</code></td>
-</tr>
-<tr>
-<td><code>cmd_ops()</code></td>
-<td>Run the dashboard server (blocking).</td>
-<td><code>src/attune/ops/cli.py</code></td>
-</tr>
-<tr>
-<td><code>main()</code></td>
-<td>Standalone entry: <code>python -m attune.ops</code>.</td>
-<td><code>src/attune/ops/cli.py</code></td>
-</tr>
-<tr>
-<td><code>clear_cache()</code></td>
-<td>Reset the in-memory caches. Test helper.</td>
-<td><code>src/attune/ops/completion_candidates.py</code></td>
-</tr>
-<tr>
-<td><code>detect_candidates()</code></td>
-<td>Return all completion candidates across the configured spec roots.</td>
-<td><code>src/attune/ops/completion_candidates.py</code></td>
-</tr>
-<tr>
-<td><code>attune_home()</code></td>
-<td>Resolve the user's attune home dir (env override -&gt; ~/.attune).</td>
-<td><code>src/attune/ops/config.py</code></td>
-</tr>
-<tr>
-<td><code>build_config()</code></td>
-<td>Build a Config from inputs and environment defaults.</td>
-<td><code>src/attune/ops/config.py</code></td>
-</tr>
-<tr>
-<td><code>list_features()</code></td>
-<td>Return features parsed from <code>&lt;project_root&gt;/.help/features.yaml</code>.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>first_feature()</code></td>
-<td>Return the alphabetically-first feature with a renderable scope.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>workflow_default_scope()</code></td>
-<td>Return the default scope for one workflow on first paint.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>derive_project_name()</code></td>
-<td>Return a human-readable project name for the dashboard header.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>claude_sessions_dir()</code></td>
-<td>Return the canonical directory Claude Code stores sessions for this project in.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>enumerate_project_encoded_keys()</code></td>
-<td>Return all <code>~/.claude/projects/</code> dirs belonging to this logical project.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>list_recent_sessions_with_paths()</code></td>
-<td>Same as :func:<code>list_recent_sessions</code> but also returns each</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>list_recent_sessions()</code></td>
-<td>Return Session records for this project's last <code>days</code> of activity.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>home_kpis()</code></td>
-<td>Derive home-page KPIs from a telemetry summary.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>sparkline_points()</code></td>
-<td>Render values as an SVG <code>polyline</code> <code>points</code> string.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>read_telemetry_summary()</code></td>
-<td>Aggregate <code>usage.jsonl</code> into a UI-friendly summary.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>read_sweep_chip_counts()</code></td>
-<td>Read the latest persisted sweep result for <code>scope_path</code> and tally chips.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>list_workflows()</code></td>
-<td>Return the registered workflow catalog. Empty if the registry is unavailable.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>family_versions()</code></td>
-<td>Resolve installed versions for every related attune package.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>env_health()</code></td>
-<td>Lightweight environment snapshot for the Health page.</td>
-<td><code>src/attune/ops/data.py</code></td>
-</tr>
-<tr>
-<td><code>store_path()</code></td>
-<td>Return the absolute path to the dismiss-store JSON file.</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
-</tr>
-<tr>
-<td><code>load()</code></td>
-<td>Read the dismiss store. Missing or corrupt file → <code>{}</code>.</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
-</tr>
-<tr>
-<td><code>save()</code></td>
-<td>Persist a dismiss entry for <code>slug</code> (overwrites prior entry).</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
-</tr>
-<tr>
-<td><code>clear()</code></td>
-<td>Remove the entry for <code>slug</code>. No-op if absent.</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
-</tr>
-<tr>
-<td><code>is_active()</code></td>
-<td>True iff a dismiss for <code>slug</code> is currently suppressing it.</td>
-<td><code>src/attune/ops/dismiss_store.py</code></td>
-</tr>
-<tr>
-<td><code>corpus_root()</code></td>
-<td>Return the <code>.help/templates/</code> directory for this project.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>list_features()</code></td>
-<td>All features in the corpus, alphabetical.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>get_template()</code></td>
-<td>Load one template by feature + kind. None if missing.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>search()</code></td>
-<td>Run a keyword search against the corpus.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>coverage_gaps()</code></td>
-<td>Compute incomplete sets + stale templates across the corpus.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>recently_regenerated()</code></td>
-<td>N most-recently-generated templates across the corpus.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>featured_topics()</code></td>
-<td>Curated list of high-leverage features for the home page.</td>
-<td><code>src/attune/ops/help_data.py</code></td>
-</tr>
-<tr>
-<td><code>compute_allowlist()</code></td>
-<td>Compute the default + user-supplied Host allowlist.</td>
-<td><code>src/attune/ops/middleware.py</code></td>
-</tr>
-<tr>
-<td><code>settings_path()</code></td>
-<td>Return the absolute path to the ops settings file.</td>
-<td><code>src/attune/ops/ops_config_store.py</code></td>
-</tr>
-<tr>
-<td><code>load_settings()</code></td>
-<td>Read persisted ops settings. Missing or corrupt file → <code>{}</code>.</td>
-<td><code>src/attune/ops/ops_config_store.py</code></td>
-</tr>
-<tr>
-<td><code>save_setting()</code></td>
-<td>Persist a single setting; returns True on success, False on failure.</td>
-<td><code>src/attune/ops/ops_config_store.py</code></td>
-</tr>
-<tr>
-<td><code>resolve_specs_candidates_enabled()</code></td>
-<td>Resolve the <code>specs_candidates_enabled</code> setting.</td>
-<td><code>src/attune/ops/ops_config_store.py</code></td>
-</tr>
-<tr>
-<td><code>compute_file_sha256()</code></td>
-<td>Compute sha256 of a file's contents.</td>
-<td><code>src/attune/ops/pending_writes.py</code></td>
-</tr>
-<tr>
-<td><code>make_entry()</code></td>
-<td>Construct a JournalEntry, filling in defaults from runtime context.</td>
-<td><code>src/attune/ops/pending_writes.py</code></td>
-</tr>
-<tr>
-<td><code>append_entry()</code></td>
-<td>Append a journal entry to the JSONL journal.</td>
-<td><code>src/attune/ops/pending_writes.py</code></td>
-</tr>
-<tr>
-<td><code>list_active()</code></td>
-<td>Return active bulletin entries across all actors.</td>
-<td><code>src/attune/ops/routes/bulletin.py</code></td>
-</tr>
-<tr>
-<td><code>home()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>workflows_page()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>telemetry_page()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>health_page()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_home_page()</code></td>
-<td>Help home — user-first browse + search entry point.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_search_page()</code></td>
-<td>Help search results page.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_admin_page()</code></td>
-<td>Admin tools — coverage gaps + stale templates.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_template_page()</code></td>
-<td>One template — markdown-rendered.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_feature_page()</code></td>
-<td>Feature index — list of available kinds, click to read.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>sessions_page()</code></td>
-<td>Sessions page — recent Claude Code sessions for this project.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>run_view_page()</code></td>
-<td>Full-page view for one workflow run.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>specs_page()</code></td>
-<td>Specs tab — federated listing of all specs across configured roots.</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>spec_detail_page()</code></td>
-<td>Drill-in for a single spec: show every phase file's content (read-only).</td>
-<td><code>src/attune/ops/routes/dashboard.py</code></td>
-</tr>
-<tr>
-<td><code>help_index()</code></td>
-<td>Top-level summary — features list + corpus stats.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_search()</code></td>
-<td>Ranked search hits.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_feature()</code></td>
-<td>All kinds available for a single feature.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_template()</code></td>
-<td>One template — metadata + full markdown body.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_gaps()</code></td>
-<td>Coverage gaps + stale templates — admin-tools surface.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_featured()</code></td>
-<td>Curated featured-topics list for the home page.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_recent()</code></td>
-<td>Recently-regenerated templates.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_regen_start()</code></td>
-<td>Start an attune-author regen job.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_regen_status()</code></td>
-<td>Poll a regen job's status + captured output.</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>help_regen_recent()</code></td>
-<td>Recent regen jobs — used by the Admin tools UI to surface</td>
-<td><code>src/attune/ops/routes/help.py</code></td>
-</tr>
-<tr>
-<td><code>record_interaction()</code></td>
-<td>Increment a UI interaction counter.</td>
-<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
-</tr>
-<tr>
-<td><code>read_interactions()</code></td>
-<td>Return the full counter snapshot + per-event totals.</td>
-<td><code>src/attune/ops/routes/interaction_counters.py</code></td>
-</tr>
-<tr>
-<td><code>list_pending_writes()</code></td>
-<td>Return all journal entries enriched with computed status fields.</td>
-<td><code>src/attune/ops/routes/pending_writes.py</code></td>
-</tr>
-<tr>
-<td><code>start_run()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/runner.py</code></td>
-</tr>
-<tr>
-<td><code>get_run()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/runner.py</code></td>
-</tr>
-<tr>
-<td><code>stream_run()</code></td>
-<td>—</td>
-<td><code>src/attune/ops/routes/runner.py</code></td>
-</tr>
-<tr>
-<td><code>list_runs()</code></td>
-<td>Return up to 20 newest runs for <code>workflow</code>, newest first.</td>
-<td><code>src/attune/ops/routes/runs_history.py</code></td>
-</tr>
-<tr>
-<td><code>get_run_record()</code></td>
-<td>Return one persisted run record (metadata + log).</td>
-<td><code>src/attune/ops/routes/runs_history.py</code></td>
-</tr>
-<tr>
-<td><code>enrich_with_summaries()</code></td>
-<td>Public helper used by both the JSON route and the HTML page.</td>
-<td><code>src/attune/ops/routes/sessions.py</code></td>
-</tr>
-<tr>
-<td><code>list_sessions()</code></td>
-<td><code>GET /api/sessions</code> — JSON listing of recent sessions.</td>
-<td><code>src/attune/ops/routes/sessions.py</code></td>
-</tr>
-<tr>
-<td><code>list_specs()</code></td>
-<td>Federated listing across all configured spec roots.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
-</tr>
-<tr>
-<td><code>list_completion_candidates()</code></td>
-<td>Return &quot;Ready to close?&quot; candidates for the Specs page.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
-</tr>
-<tr>
-<td><code>get_spec()</code></td>
-<td>Return phase-file contents for one spec.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
-</tr>
-<tr>
-<td><code>update_phase_status()</code></td>
-<td>Rewrite the <code>**Status**</code> line in the named phase file.</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
-</tr>
-<tr>
-<td><code>dismiss_completion_candidate()</code></td>
-<td>Suppress a completion candidate for the default TTL (14 days).</td>
-<td><code>src/attune/ops/routes/specs.py</code></td>
-</tr>
-<tr>
-<td><code>get_sweep_result()</code></td>
-<td>Return the latest sweep result for a scope-hash, or 404.</td>
-<td><code>src/attune/ops/routes/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>get_sweep_chips()</code></td>
-<td>Return chip counts for an arbitrary scope path.</td>
-<td><code>src/attune/ops/routes/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>sweep_detail_page()</code></td>
-<td>Scope-keyed detail page for the latest discovery-sweep result.</td>
-<td><code>src/attune/ops/routes/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>is_emission_enabled()</code></td>
-<td>True when <code>ATTUNE_RUN_META_EMIT</code> is set to any non-empty value.</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>emit_version_line()</code></td>
-<td>Write the schema-version line. Parsers refuse unknown versions.</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>emit_field_line()</code></td>
-<td>Write one <code>ATTUNE_RUN_META</code> line for a named field.</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>encode_stderr()</code></td>
-<td>Base64-encode a multi-line stderr string for wire-safe transit.</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>decode_stderr()</code></td>
-<td>Inverse of :func:<code>encode_stderr</code>. Returns empty string on</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>parse_line()</code></td>
-<td>Parse one ATTUNE_RUN_META line back into a dict. None on no match.</td>
-<td><code>src/attune/ops/run_meta_stdout.py</code></td>
-</tr>
-<tr>
-<td><code>echo_command_builder()</code></td>
-<td>Test helper: produce a portable subprocess that prints two lines + exits 0.</td>
-<td><code>src/attune/ops/runner.py</code></td>
-</tr>
-<tr>
-<td><code>prune_old_runs()</code></td>
-<td>Delete persisted run files older than <code>days</code>. Returns the deletion count.</td>
-<td><code>src/attune/ops/runner.py</code></td>
-</tr>
-<tr>
-<td><code>create_app()</code></td>
-<td>Build the FastAPI app, wiring config + templates into request state.</td>
-<td><code>src/attune/ops/server.py</code></td>
-</tr>
-<tr>
-<td><code>redact()</code></td>
-<td>Run all redaction passes over <code>text</code> and return the result.</td>
-<td><code>src/attune/ops/session_redaction.py</code></td>
-</tr>
-<tr>
-<td><code>redact_json_line()</code></td>
-<td>Redact one JSON-serialized line in-place, preserving structure.</td>
-<td><code>src/attune/ops/session_redaction.py</code></td>
-</tr>
-<tr>
-<td><code>new_budget()</code></td>
-<td>Build a :class:<code>Budget</code> from the env override or default.</td>
-<td><code>src/attune/ops/session_summarizer.py</code></td>
-</tr>
-<tr>
-<td><code>llm_enabled()</code></td>
-<td>Return True iff the Haiku path is enabled this run.</td>
-<td><code>src/attune/ops/session_summarizer.py</code></td>
-</tr>
-<tr>
-<td><code>summarize_session()</code></td>
-<td>Return a Haiku-or-cached summary for one session JSONL.</td>
-<td><code>src/attune/ops/session_summarizer.py</code></td>
-</tr>
-<tr>
-<td><code>compute_cache_key()</code></td>
-<td>Build a :class:<code>CacheKey</code> for one JSONL file. <code>None</code> on I/O failure.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
-</tr>
-<tr>
-<td><code>cache_path_for()</code></td>
-<td>Return the on-disk cache path for one session id.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
-</tr>
-<tr>
-<td><code>load()</code></td>
-<td>Return the cached summary iff the on-disk record matches <code>expected</code>.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
-</tr>
-<tr>
-<td><code>save()</code></td>
-<td>Write a summary to the on-disk cache, atomically.</td>
-<td><code>src/attune/ops/session_summary_cache.py</code></td>
-</tr>
-<tr>
-<td><code>derive_lifecycle()</code></td>
-<td>Return the lifecycle bucket label for one spec.</td>
-<td><code>src/attune/ops/spec_lifecycle.py</code></td>
-</tr>
-<tr>
-<td><code>is_persistence_enabled()</code></td>
-<td>True when <code>ATTUNE_OPS_SWEEP_RESULTS</code> is set to a non-empty value.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>results_dir()</code></td>
-<td>Return <code>&lt;attune_home&gt;/ops/sweep-results/</code> (created if missing).</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>scope_hash()</code></td>
-<td>Hash a scope path to a fixed-length hex identifier.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>parse_lines()</code></td>
-<td>Parse a captured stdout buffer into the final SweepResult JSON.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>persist_result()</code></td>
-<td>Atomically write <code>sweep_result</code> to <code>&lt;results_dir&gt;/&lt;hash&gt;.json</code>.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>read_result()</code></td>
-<td>Read a previously-persisted result by its scope-hash digest.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>persist_from_lines()</code></td>
-<td>Parse captured stdout lines and persist the result for <code>scope_path</code>.</td>
-<td><code>src/attune/ops/sweep_results.py</code></td>
-</tr>
-<tr>
-<td><code>watch_and_persist()</code></td>
-<td>Subscribe to a discovery-sweep run; persist its result on success.</td>
-<td><code>src/attune/ops/sweep_results_watcher.py</code></td>
-</tr>
-<tr>
-<td><code>derive_concern()</code></td>
-<td>Return the concern bucket for one workflow.</td>
-<td><code>src/attune/ops/workflow_concern.py</code></td>
-</tr>
-<tr>
-<td><code>group_by_concern()</code></td>
-<td>Group a list of workflow names by their concern bucket.</td>
-<td><code>src/attune/ops/workflow_concern.py</code></td>
-</tr>
-<tr>
-<td><code>concern_counts()</code></td>
-<td>Return per-concern counts for a list of workflow names.</td>
-<td><code>src/attune/ops/workflow_concern.py</code></td>
+<td><code>message</code></td>
+<td><code>str</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/ops/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
+<hr />
+<h3><code>CostSummary</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>today_usd</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>seven_day_usd</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>month_to_date_usd</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>thirty_day_usd</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>by_day</code></td>
+<td><code>list[tuple[date, float]]</code></td>
+</tr>
+<tr>
+<td><code>by_model</code></td>
+<td><code>list[tuple[str, float]]</code></td>
+</tr>
+<tr>
+<td><code>by_cost_type</code></td>
+<td><code>list[tuple[str, float]]</code></td>
+</tr>
+<tr>
+<td><code>fetched_at</code></td>
+<td><code>datetime</code></td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>Literal['live', 'cached']</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>Candidate</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>slug</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>current_status</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>evidence</code></td>
+<td><code>list[str]</code></td>
+</tr>
+<tr>
+<td><code>snapshot_hash</code></td>
+<td><code>str</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>Config</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_root</code></td>
+<td><code>Path</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>attune_home</code></td>
+<td><code>Path</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>host</code></td>
+<td><code>str</code></td>
+<td><code>'127.0.0.1'</code></td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td><code>int</code></td>
+<td><code>8765</code></td>
+</tr>
+<tr>
+<td><code>allow_run</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+<tr>
+<td><code>specs_roots</code></td>
+<td><code>tuple[Path, ...]</code></td>
+<td><code>()</code></td>
+</tr>
+<tr>
+<td><code>trusted_hosts</code></td>
+<td><code>tuple[str, ...]</code></td>
+<td><code>()</code></td>
+</tr>
+<tr>
+<td><code>runs_retention_days</code></td>
+<td><code>int</code></td>
+<td><code>30</code></td>
+</tr>
+<tr>
+<td><code>specs_candidates_enabled</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<h3><code>Config</code> properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>telemetry_path</code></td>
+<td><code>Path</code></td>
+<td>Path to the telemetry data file.</td>
+</tr>
+<tr>
+<td><code>runs_dir</code></td>
+<td><code>Path</code></td>
+<td>Disk root for persisted ops runs. May not exist until first write.</td>
+</tr>
+<tr>
+<td><code>memory_dir</code></td>
+<td><code>Path</code></td>
+<td>Path to the memory directory.</td>
+</tr>
+<tr>
+<td><code>sessions_dir</code></td>
+<td><code>Path</code></td>
+<td>Path to the sessions directory.</td>
+</tr>
+<tr>
+<td><code>bulletin_dir</code></td>
+<td><code>Path</code></td>
+<td>Directory for the multi-actor bulletin's active log and archive.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>TelemetrySummary</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>total_requests</code></td>
+<td><code>int</code></td>
+</tr>
+<tr>
+<td><code>total_cost</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>total_savings</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>by_workflow</code></td>
+<td><code>list[tuple[str, int, float]]</code></td>
+</tr>
+<tr>
+<td><code>by_day</code></td>
+<td><code>list[tuple[str, int, float]]</code></td>
+</tr>
+<tr>
+<td><code>last_event_at</code></td>
+<td>`str</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>WorkflowEntry</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>stages</code></td>
+<td><code>int</code></td>
+</tr>
+<tr>
+<td><code>tier_map</code></td>
+<td><code>dict[str, str]</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>PathArgSpec</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>kwarg</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>required</code></td>
+<td><code>bool</code></td>
+<td><code>False</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>Feature</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>name</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>description</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>path</code></td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>tags</code></td>
+<td><code>tuple[str, ...]</code></td>
+<td><code>()</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>Session</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Default</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>id</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>started_at</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>last_activity</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>duration_seconds</code></td>
+<td><code>float</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>message_count</code></td>
+<td><code>int</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>starter_prompt</code></td>
+<td><code>str</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code></td>
+<td><code>'heuristic'</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>FamilyVersion</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>package</code></td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>version</code></td>
+<td>`str</td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<p>The tables below are organized by source module.</p>
+<h3><code>src/attune/ops/__init__.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>create_app</code></td>
+<td><code>*args, **kwargs</code></td>
+<td>—</td>
+<td>Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.</td>
+</tr>
+<tr>
+<td><code>build_config</code></td>
+<td><code>*args, **kwargs</code></td>
+<td>—</td>
+<td>Lazy import of the config builder.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/anthropic_cost.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>clear_cache</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Empty the in-memory cache. Test-only convenience.</td>
+</tr>
+<tr>
+<td><code>load_admin_key</code></td>
+<td>—</td>
+<td>`str</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>fetch_summary</code></td>
+<td><code>*, refresh: bool = False</code></td>
+<td>`tuple[CostSummary</td>
+<td>None, CostFetchError</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/cli.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>add_subparser</code></td>
+<td><code>subparsers: argparse._SubParsersAction</code></td>
+<td><code>None</code></td>
+<td>Register the <code>ops</code> subparser on the main attune CLI parser.</td>
+</tr>
+<tr>
+<td><code>cmd_ops</code></td>
+<td><code>args: argparse.Namespace</code></td>
+<td><code>int</code></td>
+<td>Run the dashboard server (blocking). Returns <code>0</code>.</td>
+</tr>
+<tr>
+<td><code>main</code></td>
+<td>—</td>
+<td><code>int</code></td>
+<td>Standalone entry point: <code>python -m attune.ops</code>.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/completion_candidates.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>clear_cache</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Reset the in-memory caches. Test helper.</td>
+</tr>
+<tr>
+<td><code>detect_candidates</code></td>
+<td>`config: Config, *, now: float</td>
+<td>None = None`</td>
+<td><code>list[Candidate]</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/config.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune_home</code></td>
+<td>—</td>
+<td><code>Path</code></td>
+<td>Resolve the user's attune home directory (env override → <code>~/.attune</code>).</td>
+</tr>
+<tr>
+<td><code>build_config</code></td>
+<td>`project_root: Path</td>
+<td>None = None, *, host: str = '127.0.0.1', port: int = 8765, allow_run: bool = False, specs_roots: tuple[Path, ...]</td>
+<td>None = None, trusted_hosts: tuple[str, ...]</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/data.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>list_features</code></td>
+<td>`project_root: Path</td>
+<td>str`</td>
+<td><code>list[Feature]</code></td>
+</tr>
+<tr>
+<td><code>first_feature</code></td>
+<td>`project_root: Path</td>
+<td>str`</td>
+<td>`Feature</td>
+</tr>
+<tr>
+<td><code>workflow_default_scope</code></td>
+<td>`workflow_name: str, project_root: Path</td>
+<td>str`</td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>derive_project_name</code></td>
+<td>`project_root: Path</td>
+<td>str`</td>
+<td><code>str</code></td>
+</tr>
+<tr>
+<td><code>claude_sessions_dir</code></td>
+<td>`project_root: Path</td>
+<td>str`</td>
+<td><code>Path</code></td>
+</tr>
+<tr>
+<td><code>enumerate_project_encoded_keys</code></td>
+<td>`project_root: Path</td>
+<td>str`</td>
+<td><code>list[Path]</code></td>
+</tr>
+<tr>
+<td><code>list_recent_sessions_with_paths</code></td>
+<td>`project_root: Path</td>
+<td>str, *, days: int = 3, limit: int</td>
+<td>None = DEFAULT_SESSION_LIST_CAP, now: datetime</td>
+</tr>
+<tr>
+<td><code>list_recent_sessions</code></td>
+<td>`project_root: Path</td>
+<td>str, *, days: int = 3, limit: int</td>
+<td>None = DEFAULT_SESSION_LIST_CAP, now: datetime</td>
+</tr>
+<tr>
+<td><code>home_kpis</code></td>
+<td>`summary: TelemetrySummary, *, today: date</td>
+<td>None = None`</td>
+<td><code>HomeKpis</code></td>
+</tr>
+<tr>
+<td><code>sparkline_points</code></td>
+<td><code>values: list[float], *, width: int = 240, height: int = 40</code></td>
+<td><code>str</code></td>
+<td>Render values as an SVG <code>polyline</code> <code>points</code> string.</td>
+</tr>
+<tr>
+<td><code>read_telemetry_summary</code></td>
+<td>`config: Config, *, recent_days: int = 7, today: date</td>
+<td>None = None`</td>
+<td><code>TelemetrySummary</code></td>
+</tr>
+<tr>
+<td><code>read_sweep_chip_counts</code></td>
+<td><code>scope_path: str, config: Config</code></td>
+<td><code>SweepChipCounts</code></td>
+<td>Read the latest persisted sweep result for <code>scope_path</code> and tally chips.</td>
+</tr>
+<tr>
+<td><code>list_workflows</code></td>
+<td>—</td>
+<td><code>list[WorkflowEntry]</code></td>
+<td>Return the registered workflow catalog. Empty if the registry is unavailable.</td>
+</tr>
+<tr>
+<td><code>family_versions</code></td>
+<td>—</td>
+<td><code>list[FamilyVersion]</code></td>
+<td>Resolve installed versions for every related attune package.</td>
+</tr>
+<tr>
+<td><code>env_health</code></td>
+<td><code>config: Config</code></td>
+<td><code>dict[str, Any]</code></td>
+<td>Lightweight environment snapshot for the Health page.</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/dismiss_store.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>store_path</code></td>
+<td><code>config: Config</code></td>
+<td><code>Path</code></td>
+<td>Return the absolute path to the dismiss-store JSON file.</td>
+</tr>
+<tr>
+<td><code>load</code></td>
+<td><code>config: Config</code></td>
+<td><code>dict[str, DismissEntry]</code></td>
+<td>Read the dismiss store. Missing or corrupt file returns <code>{}</code>.</td>
+</tr>
+<tr>
+<td><code>save</code></td>
+<td>`slug: str, snapshot_hash: str, config: Config, *, ttl_days: int = DEFAULT_TTL_DAYS, now: datetime</td>
+<td>None = None`</td>
+<td><code>None</code></td>
+</tr>
+<tr>
+<td><code>clear</code></td>
+<td><code>slug: str, config: Config</code></td>
+<td><code>None</code></td>
+<td>Remove the entry for <code>slug</code>. No-op if absent.</td>
+</tr>
+<tr>
+<td><code>is_active</code></td>
+<td>`slug: str, current_hash: str, config: Config, *, now: datetime</td>
+<td>None = None`</td>
+<td><code>bool</code></td>
+</tr>
+</tbody>
+</table>
+<hr />
+<h3><code>src/attune/ops/help_data.py</code></h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>corpus_root</code></td>
+<td><code>config: Config</code></td>
+<td><code>Path</code></td>
+<td>Return the <code>.help/templates/</code> directory for this project.</td>
+</tr>
+<tr>
+<td><code>list_features</code></td>
+<td><code>config: Config</code></td>
+<td><code>list[FeatureSummary]</code></td>
+<td>All features in the corpus, alphabetical.</td>
+</tr>
+<tr>
+<td><code>get_template</code></td>
+<td><code>config: Config, feature: str, kind: str</code></td>
+<td>`TemplateRecord</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>search</code></td>
+<td><code>config: Config, query: str, *, limit: int = 20</code></td>
+<td><code>list[SearchHit]</code></td>
+<td>Run a keyword search against the help corpus.</td>
+</tr>
+<tr>
+<td><code>coverage_gaps</code></td>
+<td><code>config: Config</code></td>
+<td><code>GapsReport</code></td>
+<td>Compute incomplete sets and stale templates across the corpus.</td>
+</tr>
+<tr>
+<td>`recently_regenerated</td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Plugin FAQ — faq</title>
-  <meta name="description" content="The plugin is the Claude Code integration layer: it bundles hooks, slash commands, MCP configuration, and skills that run alongside your Claude Code sessions." />
+  <meta name="description" content="The plugin is attune&#x27;s Claude Code integration — it bundles skills, hooks, slash commands, and MCP configuration that Claude Code needs to work with attune workspaces." />
   <meta property="og:title" content="Plugin FAQ — faq" />
-  <meta property="og:description" content="The plugin is the Claude Code integration layer: it bundles hooks, slash commands, MCP configuration, and skills that run alongside your Claude Code sessions." />
+  <meta property="og:description" content="The plugin is attune&#x27;s Claude Code integration — it bundles skills, hooks, slash commands, and MCP configuration that Claude Code needs to work with attune workspaces." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/faq" />
   <style>
@@ -260,33 +260,83 @@
   <article class="markdown-body">
 <h1>Plugin FAQ</h1>
 <h2>What is the plugin?</h2>
-<p>The plugin is the Claude Code integration layer: it bundles hooks, slash commands, MCP configuration, and skills that run alongside your Claude Code sessions.</p>
+<p>The plugin is attune's Claude Code integration — it bundles skills, hooks, slash commands, and MCP configuration that Claude Code needs to work with attune workspaces.</p>
 <h2>What hooks does the plugin provide?</h2>
-<p>The plugin includes hooks for several lifecycle events:</p>
-<ul>
-<li><strong><code>hooks.format_on_save</code></strong> — formats files when you save</li>
-<li><strong><code>hooks.help_freshness_check</code></strong> — checks whether help content is current</li>
-<li><strong><code>hooks.help_on_error</code></strong> — surfaces help when an error occurs</li>
-<li><strong><code>hooks.help_post_commit</code></strong> — runs help checks after a commit</li>
-<li><strong><code>hooks.compact_warning</code></strong> — warns you when context utilization is high</li>
-<li><strong><code>hooks.security_guard</code></strong> — validates bash commands and file paths before execution</li>
-<li><strong><code>hooks.spec_orient</code></strong> — orients you to in-flight specs in your workspace</li>
-<li><strong><code>hooks.welcome</code></strong> — runs on session start</li>
-</ul>
+<p>Each hook is an independent entry point with its own <code>main()</code> function:</p>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>hooks.compact_warning</code></td>
+<td>Warns when context utilization (via <code>estimate_utilization</code>) exceeds a threshold and injects a resume prompt</td>
+</tr>
+<tr>
+<td><code>hooks.format_on_save</code></td>
+<td>Runs formatting when a file is saved</td>
+</tr>
+<tr>
+<td><code>hooks.help_freshness_check</code></td>
+<td>Checks whether help content is stale</td>
+</tr>
+<tr>
+<td><code>hooks.help_on_error</code></td>
+<td>Surfaces help content when an error occurs</td>
+</tr>
+<tr>
+<td><code>hooks.help_post_commit</code></td>
+<td>Surfaces help content after a commit</td>
+</tr>
+<tr>
+<td><code>hooks.jit_recall</code></td>
+<td>Just-in-time recall of relevant rules at decision points</td>
+</tr>
+<tr>
+<td><code>hooks.security_guard</code></td>
+<td>Validates bash commands and file paths before execution</td>
+</tr>
+<tr>
+<td><code>hooks.session_recall</code></td>
+<td>Restores session context at the start of a session</td>
+</tr>
+<tr>
+<td><code>hooks.session_stash</code></td>
+<td>Saves session context when a session ends</td>
+</tr>
+<tr>
+<td><code>hooks.spec_orient</code></td>
+<td>Summarizes in-flight specs to orient Claude at session start</td>
+</tr>
+<tr>
+<td><code>hooks.welcome</code></td>
+<td>Runs on first connection to greet and orient Claude</td>
+</tr>
+<tr>
+<td><code>hooks._handoff_cli</code></td>
+<td>CLI wrapper for the <code>/handoff</code> slash command</td>
+</tr>
+</tbody>
+</table>
+<h2>How does the plugin know which specs are in flight?</h2>
+<p><code>discover_specs(roots)</code> in <code>hooks._state</code> walks <code>specs/</code> and <code>docs/specs/</code> directories under each workspace root and returns a list of <code>SpecInfo</code> objects. Each <code>SpecInfo</code> carries the spec's <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, <code>mtime</code>, <code>effective_status</code>, <code>status_source</code>, and <code>status_conflict</code> fields. Call <code>workspace_roots()</code> first if you don't already have a list of roots.</p>
+<h2>How does the plugin decide a spec is &quot;done&quot;?</h2>
+<p>It compares <code>effective_status</code> against the terminal verdicts <code>{'closed', 'complete', 'completed', 'retired', 'superseded', 'shipped', 'done'}</code>. Any spec whose status matches one of those values is treated as finished and excluded from active orientation output.</p>
 <h2>What does <code>security_guard</code> actually check?</h2>
-<p>It validates two things: the bash command you're about to run (<code>validate_bash_command</code>) and the file path you're about to access (<code>validate_file_path</code>). Both return a <code>(bool, str)</code> tuple — <code>True</code> if the input is allowed, along with a message explaining the decision.</p>
-<p>File path validation blocks access to system directories including <code>/etc</code>, <code>/sys</code>, <code>/proc</code>, <code>/dev</code>, <code>/boot</code>, <code>/sbin</code>, <code>/usr/sbin</code>, <code>/private/etc</code>, and <code>/private/var</code>.</p>
-<h2>How does the compact warning work?</h2>
-<p><code>estimate_utilization</code> in <code>hooks._transcript_size</code> reads your transcript and returns a float in <code>[0.0, 1.0]</code> representing how full your context window is. When that value crosses a threshold, <code>format_warning</code> in <code>hooks.compact_warning</code> composes a warning that includes a resume prompt so you can continue work in a fresh session.</p>
-<p>The resume prompt itself is built by <code>build_resume_prompt</code> in <code>hooks._resume_prompt</code>, which pulls in the current <code>SpecInfo</code> (if any), the <code>GitState</code> snapshot, your workspace path, and an optional to-do summary.</p>
-<h2>How does the plugin find my in-flight specs?</h2>
-<p><code>discover_specs</code> in <code>hooks._state</code> walks the <code>specs/</code> directories under each workspace root and returns a list of <code>SpecInfo</code> objects. Each <code>SpecInfo</code> carries the spec's <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, and <code>mtime</code>. Workspace roots are resolved by <code>workspace_roots</code>, which defaults to <code>~/attune</code> if it can't determine them from your current directory.</p>
-<h2>What git information does the plugin use?</h2>
-<p><code>git_state</code> in <code>hooks._state</code> returns a <code>GitState</code> snapshot containing your current <code>branch</code>, the <code>last_sha</code> and <code>last_subject</code> of your most recent commit, and a tuple of <code>uncommitted</code> file paths. Hooks that build resume prompts and orientation output use this snapshot.</p>
-<h2>How do I run the handoff command?</h2>
-<p>Call <code>main()</code> in <code>hooks._handoff_cli</code> — it's the entry point for the <code>/handoff</code> slash command and returns <code>0</code> on success.</p>
+<p><code>validate_bash_command(command)</code> blocks commands that touch system directories such as <code>/etc</code>, <code>/sys</code>, <code>/proc</code>, and <code>/dev</code>. <code>validate_file_path(file_path)</code> checks the target path against the same set of protected locations. Both functions return a <code>(bool, str)</code> tuple — <code>True</code> with an empty message means the input is allowed; <code>False</code> means it was blocked, and the string explains why.</p>
+<h2>How does compact warning decide when to fire?</h2>
+<p><code>estimate_utilization(transcript_path)</code> returns a float in <code>[0.0, 1.0]</code> representing how full the context window is. <code>format_warning(util, threshold, resume_body)</code> composes the warning message only when <code>util</code> exceeds <code>threshold</code>. The resume body is built by <code>build_resume_prompt()</code> in <code>hooks._resume_prompt</code>.</p>
+<h2>How do I build the resume prompt myself?</h2>
+<p>Call <code>build_resume_prompt(spec_info, git_state, workspace_path=..., todo_summary=...)</code> from <code>hooks._resume_prompt</code>. Pass a <code>SpecInfo</code> (or <code>None</code> if there is no active spec) and a <code>GitState</code> snapshot from <code>hooks._state.git_state(cwd)</code>. The function returns a formatted string ready to inject into a prompt.</p>
+<h2>What git information does the plugin capture?</h2>
+<p><code>git_state(cwd)</code> returns a <code>GitState</code> with four fields: <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> (a tuple of changed file paths). The plugin uses this snapshot in resume prompts and handoff output.</p>
+<h2>What are session sentinels, and why do they exist?</h2>
+<p>A session sentinel is a file whose presence tells <code>jit_recall</code> that it has already fired once in the current session, preventing duplicate recalls. <code>session_sentinel_path(session_id)</code> returns the path for a given session. <code>prune_stale_sentinels()</code> deletes sentinel files older than the TTL and returns the count of files removed.</p>
 <h2>Where are the source files?</h2>
-<p>All plugin source files live under <code>plugin/**</code>.</p>
+<p>All hook modules live under <code>plugin/**</code>. The shared state helpers (<code>SpecInfo</code>, <code>GitState</code>, <code>discover_specs</code>, <code>git_state</code>, <code>workspace_roots</code>, and the sentinel functions) are in <code>hooks._state</code>.</p>
 <p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
 
   </article>

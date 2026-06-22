@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with ops dashboard — task</title>
-  <meta name="description" content="Use ops dashboard when you need to local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live sse log streaming." />
-  <meta property="og:title" content="Work with ops dashboard — task" />
-  <meta property="og:description" content="Use ops dashboard when you need to local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live sse log streaming." />
+  <title>Work with the ops dashboard — task</title>
+  <meta name="description" content="Use the ops dashboard when you need to run workflows, browse per-feature scopes, inspect persisted run history, or monitor live cost data for your Anthropic account." />
+  <meta property="og:title" content="Work with the ops dashboard — task" />
+  <meta property="og:description" content="Use the ops dashboard when you need to run workflows, browse per-feature scopes, inspect persisted run history, or monitor live cost data for your Anthropic account." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/task" />
   <style>
@@ -258,61 +258,128 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with ops dashboard</h1>
-<p>Use ops dashboard when you need to local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live sse log streaming.</p>
+<h1>Work with the ops dashboard</h1>
+<p>Use the ops dashboard when you need to run workflows, browse per-feature scopes, inspect persisted run history, or monitor live cost data for your Anthropic account.</p>
 <h2>Prerequisites</h2>
 <ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under src/attune/ops/**</li>
+<li>Access to the project source code under <code>src/attune/ops/</code></li>
+<li>An Anthropic admin API key if you intend to use cost reporting (returned by <code>load_admin_key()</code>)</li>
 </ul>
-<h2>Steps</h2>
+<h2>Start the dashboard server</h2>
 <ol>
 <li>
-<p><strong>Understand the current behavior.</strong>
-Read the entry points to see what ops dashboard
-does today before making changes.
-The primary functions are:</p>
-<ul>
-<li><code>create_app()</code> in <code>src/attune/ops/__init__.py</code> — Lazy-import the FastAPI factory so importing attune doesn't pull FastAPI.</li>
-<li><code>build_config()</code> in <code>src/attune/ops/__init__.py</code> — Lazy import of the config builder.</li>
-<li><code>clear_cache()</code> in <code>src/attune/ops/anthropic_cost.py</code> — Empty the in-memory cache. Test-only convenience.</li>
-<li><code>load_admin_key()</code> in <code>src/attune/ops/anthropic_cost.py</code> — Return the admin API key, or <code>None</code> if unavailable.</li>
-<li><code>fetch_summary()</code> in <code>src/attune/ops/anthropic_cost.py</code> — Return the current cost summary or a categorized error.</li>
-</ul>
+<p><strong>Launch the server from the CLI.</strong>
+Run the following command to start the dashboard in blocking mode:</p>
+<pre><code>python -m attune.ops
+</code></pre>
+<p>This calls <code>main()</code>, which delegates to <code>cmd_ops()</code>. The server binds to <code>127.0.0.1:8765</code> by default (set by <code>Config.host</code> and <code>Config.port</code>).</p>
 </li>
 <li>
-<p><strong>Locate the right function to change.</strong>
-Each function has a single responsibility. Read its
-docstring, parameters, and return type to confirm it
-owns the behavior you need to modify.</p>
-</li>
-<li>
-<p><strong>Make your change.</strong>
-Follow existing patterns in the file — naming
-conventions, error handling style, and logging.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong>
-This catches regressions before they reach other
-developers. Target with <code>pytest -k &quot;ops-dashboard&quot;</code>.</p>
+<p><strong>Verify the server is running.</strong>
+<code>cmd_ops()</code> returns <code>0</code> on success. If the process is blocking and no error is printed, the dashboard is live at <code>http://127.0.0.1:8765</code>.</p>
 </li>
 </ol>
-<h2>Key files</h2>
+<h2>Configure the dashboard</h2>
+<ol>
+<li>
+<p><strong>Locate the <code>Config</code> dataclass</strong> in <code>src/attune/ops/__init__.py</code>. It controls all runtime paths and feature flags.</p>
+</li>
+<li>
+<p><strong>Set the fields relevant to your environment:</strong></p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Default</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>host</code></td>
+<td><code>'127.0.0.1'</code></td>
+<td>Address the server binds to</td>
+</tr>
+<tr>
+<td><code>port</code></td>
+<td><code>8765</code></td>
+<td>Port the server listens on</td>
+</tr>
+<tr>
+<td><code>allow_run</code></td>
+<td><code>False</code></td>
+<td>Permit workflow execution</td>
+</tr>
+<tr>
+<td><code>specs_roots</code></td>
+<td><code>()</code></td>
+<td>Paths scanned for spec files</td>
+</tr>
+<tr>
+<td><code>trusted_hosts</code></td>
+<td><code>()</code></td>
+<td>Hosts allowed to make requests</td>
+</tr>
+<tr>
+<td><code>runs_retention_days</code></td>
+<td><code>30</code></td>
+<td>How long persisted run history is kept</td>
+</tr>
+<tr>
+<td><code>specs_candidates_enabled</code></td>
+<td><code>False</code></td>
+<td>Enable spec completion candidate detection</td>
+</tr>
+</tbody>
+</table>
+</li>
+<li>
+<p><strong>Use <code>build_config()</code></strong> (exported from <code>src/attune/ops/__init__.py</code>) to construct a <code>Config</code> instance rather than instantiating it directly. This ensures all derived properties (<code>telemetry_path</code>, <code>runs_dir</code>, <code>memory_dir</code>, <code>sessions_dir</code>, <code>bulletin_dir</code>) resolve correctly.</p>
+</li>
+</ol>
+<h2>Fetch Anthropic cost data</h2>
+<ol>
+<li>
+<p><strong>Check that an admin key is available.</strong>
+Call <code>load_admin_key()</code> from <code>src/attune/ops/anthropic_cost.py</code>. It returns the key string or <code>None</code> if unavailable. The dashboard cannot retrieve cost data without a valid key.</p>
+</li>
+<li>
+<p><strong>Call <code>fetch_summary()</code></strong> to retrieve account-level cost data:</p>
+<pre><code class="language-python">summary, error = fetch_summary()
+</code></pre>
 <ul>
-<li><code>src/attune/ops/**</code></li>
+<li>On success, <code>summary</code> is a <code>CostSummary</code> with fields <code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>, <code>by_day</code>, <code>by_model</code>, <code>by_cost_type</code>, <code>fetched_at</code>, and <code>source</code>.</li>
+<li>On failure, <code>error</code> is a <code>CostFetchError</code> with a <code>kind</code> (<code>CostFetchErrorKind</code>) and a <code>message</code> string.</li>
 </ul>
-<h2>Common modifications</h2>
-<p>Functions you are most likely to modify:</p>
-<ul>
-<li><code>create_app()</code> in <code>src/attune/ops/__init__.py</code></li>
-<li><code>build_config()</code> in <code>src/attune/ops/__init__.py</code></li>
-<li><code>clear_cache()</code> in <code>src/attune/ops/anthropic_cost.py</code></li>
-<li><code>load_admin_key()</code> in <code>src/attune/ops/anthropic_cost.py</code></li>
-<li><code>fetch_summary()</code> in <code>src/attune/ops/anthropic_cost.py</code></li>
-<li><code>add_subparser()</code> in <code>src/attune/ops/cli.py</code></li>
-<li><code>cmd_ops()</code> in <code>src/attune/ops/cli.py</code></li>
-<li><code>main()</code> in <code>src/attune/ops/cli.py</code></li>
-</ul>
+</li>
+<li>
+<p><strong>Force a cache refresh</strong> by passing <code>refresh=True</code>:</p>
+<pre><code class="language-python">summary, error = fetch_summary(refresh=True)
+</code></pre>
+</li>
+<li>
+<p><strong>Clear the in-memory cache</strong> during testing by calling <code>clear_cache()</code> from <code>src/attune/ops/anthropic_cost.py</code>.</p>
+</li>
+</ol>
+<h2>Detect spec completion candidates</h2>
+<ol>
+<li>
+<p><strong>Enable candidate detection</strong> by setting <code>specs_candidates_enabled = True</code> in your <code>Config</code> and populating <code>specs_roots</code> with the paths to scan.</p>
+</li>
+<li>
+<p><strong>Call <code>detect_candidates()</code></strong> from <code>src/attune/ops/spec_candidates.py</code>:</p>
+<pre><code class="language-python">candidates = detect_candidates(config)
+</code></pre>
+<p>Each returned <code>Candidate</code> has a <code>slug</code>, <code>path</code>, <code>current_status</code>, <code>evidence</code> list, and <code>snapshot_hash</code>.</p>
+</li>
+</ol>
+<h2>Register the CLI subcommand</h2>
+<p>If you need to extend or re-register the <code>ops</code> subcommand on the main <code>attune</code> CLI parser, call <code>add_subparser()</code> from <code>src/attune/ops/cli.py</code> and pass the parent <code>subparsers</code> action. This wires <code>cmd_ops()</code> as the handler for <code>attune ops</code>.</p>
+<h2>Verify your changes</h2>
+<p>Run the ops-related tests to confirm nothing is broken:</p>
+<pre><code>pytest -k &quot;ops&quot;
+</code></pre>
+<p>A passing test suite with no new failures confirms that the dashboard server, cost-reporting, and candidate detection behave correctly. If you modified <code>Config</code>, also check that <code>build_config()</code> still returns a valid instance with all path properties resolving to accessible locations.</p>
 
   </article>
   <footer>

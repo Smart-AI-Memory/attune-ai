@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with configuration — task</title>
-  <meta name="description" content="Use configuration when you need to project configuration and settings management." />
+  <meta name="description" content="Use Attune&#x27;s configuration system when you need to load, validate, override, or persist settings across environments without changing your source code." />
   <meta property="og:title" content="Work with configuration — task" />
-  <meta property="og:description" content="Use configuration when you need to project configuration and settings management." />
+  <meta property="og:description" content="Use Attune&#x27;s configuration system when you need to load, validate, override, or persist settings across environments without changing your source code." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/task" />
   <style>
@@ -259,60 +259,120 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with configuration</h1>
-<p>Use configuration when you need to project configuration and settings management.</p>
+<p>Use Attune's configuration system when you need to load, validate, override, or persist settings across environments without changing your source code.</p>
 <h2>Prerequisites</h2>
 <ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under src/attune/config/**</li>
+<li>Access to the project source code under <code>src/attune/config/</code></li>
+<li>Python environment with the Attune package installed</li>
 </ul>
-<h2>Steps</h2>
+<h2>Load configuration</h2>
 <ol>
 <li>
-<p><strong>Understand the current behavior.</strong>
-Read the entry points to see what configuration
-does today before making changes.
-The primary functions are:</p>
-<ul>
-<li><code>get_attune_env()</code> in <code>src/attune/config/env_compat.py</code> — Get an environment variable, checking ATTUNE_ first then EMPATHY_ fallback.</li>
-<li><code>iter_attune_env_prefix()</code> in <code>src/attune/config/env_compat.py</code> — Yield (middle_part, value) for env vars matching ATTUNE_{prefix}*{suffix}.</li>
-<li><code>get_loader()</code> in <code>src/attune/config/loader.py</code> — Get the global ConfigLoader instance.</li>
-<li><code>load_unified_config()</code> in <code>src/attune/config/loader.py</code> — Convenience function to load unified configuration.</li>
-<li><code>save_unified_config()</code> in <code>src/attune/config/loader.py</code> — Convenience function to save unified configuration.</li>
-</ul>
+<p><strong>Load the unified config from disk.</strong> Call <code>load_unified_config()</code> with an optional path. If you omit the path, the loader searches <code>./attune.config.json</code>, <code>~/.attune/config.json</code>, and <code>~/.config/attune/config.json</code> in order.</p>
+<pre><code class="language-python">from attune.config.loader import load_unified_config
+
+config = load_unified_config()          # auto-discover
+config = load_unified_config(&quot;my.json&quot;) # explicit path
+</code></pre>
 </li>
 <li>
-<p><strong>Locate the right function to change.</strong>
-Each function has a single responsibility. Read its
-docstring, parameters, and return type to confirm it
-owns the behavior you need to modify.</p>
+<p><strong>Apply environment variable overrides.</strong> Call <code>ConfigLoader.apply_env_overrides()</code> to layer <code>ATTUNE_</code>-prefixed environment variables on top of the loaded config. This happens automatically when you use <code>load_unified_config()</code>, but you can call it explicitly after manual edits.</p>
+<pre><code class="language-python">from attune.config.loader import get_loader
+
+loader = get_loader()
+config = loader.get_config()  # loads and applies env overrides
+</code></pre>
 </li>
 <li>
-<p><strong>Make your change.</strong>
-Follow existing patterns in the file — naming
-conventions, error handling style, and logging.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong>
-This catches regressions before they reach other
-developers. Target with <code>pytest -k &quot;configuration&quot;</code>.</p>
+<p><strong>Read individual environment variables.</strong> Use <code>get_attune_env()</code> when you need a single value. It checks <code>ATTUNE_&lt;NAME&gt;</code> first, then falls back to <code>EMPATHY_&lt;NAME&gt;</code>.</p>
+<pre><code class="language-python">from attune.config.env_compat import get_attune_env
+
+api_url = get_attune_env(&quot;API_URL&quot;, default=&quot;http://localhost&quot;)
+</code></pre>
 </li>
 </ol>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/config/**</code></li>
-</ul>
-<h2>Common modifications</h2>
-<p>Functions you are most likely to modify:</p>
-<ul>
-<li><code>get_attune_env()</code> in <code>src/attune/config/env_compat.py</code></li>
-<li><code>iter_attune_env_prefix()</code> in <code>src/attune/config/env_compat.py</code></li>
-<li><code>get_loader()</code> in <code>src/attune/config/loader.py</code></li>
-<li><code>load_unified_config()</code> in <code>src/attune/config/loader.py</code></li>
-<li><code>save_unified_config()</code> in <code>src/attune/config/loader.py</code></li>
-<li><code>validate_config()</code> in <code>src/attune/config/validation.py</code></li>
-<li><code>get_config()</code> in <code>src/attune/config/xml_config.py</code></li>
-<li><code>set_config()</code> in <code>src/attune/config/xml_config.py</code></li>
-</ul>
+<h2>Read and write config values</h2>
+<ol>
+<li>
+<p><strong>Get a value by key.</strong> Call <code>UnifiedConfig.get_value()</code> with the dot-separated key you want to inspect.</p>
+<pre><code class="language-python">value = config.get_value(&quot;auth.token&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>List all available keys.</strong> Call <code>config.get_all_keys()</code> to see every key the loaded config exposes.</p>
+</li>
+<li>
+<p><strong>Set a value.</strong> Call <code>config.set_value()</code> to update a key in memory, then save the result.</p>
+<pre><code class="language-python">config.set_value(&quot;telemetry.enabled&quot;, False)
+</code></pre>
+</li>
+<li>
+<p><strong>Save the updated config to disk.</strong> Call <code>save_unified_config()</code>. The function returns the <code>Path</code> it wrote to.</p>
+<pre><code class="language-python">from attune.config.loader import save_unified_config
+
+written_path = save_unified_config(config)
+print(f&quot;Saved to {written_path}&quot;)
+</code></pre>
+</li>
+</ol>
+<h2>Validate configuration</h2>
+<ol>
+<li>
+<p><strong>Run validation against the loaded config.</strong> Call <code>validate_config()</code> and inspect the returned list. An empty list means validation passed.</p>
+<pre><code class="language-python">from attune.config.validation import validate_config
+
+errors = validate_config(config)
+if errors:
+    for err in errors:
+        print(err)
+</code></pre>
+</li>
+<li>
+<p><strong>Fix any reported errors</strong> before saving or passing the config to other components. Each <code>ValidationError</code> describes the field and constraint that failed.</p>
+</li>
+</ol>
+<h2>Configure agents and book production</h2>
+<ol>
+<li>
+<p><strong>Build a <code>UnifiedAgentConfig</code>.</strong> Set the <code>role</code>, <code>provider</code> (<code>Provider</code>), and <code>model_tier</code> (<code>ModelTier</code>) fields. Call <code>normalize_role()</code> to canonicalize the role string before use.</p>
+</li>
+<li>
+<p><strong>Derive a <code>BookProductionConfig</code>.</strong> Call <code>UnifiedAgentConfig.for_book_production()</code> to get a pre-populated config with <code>model</code>, <code>max_tokens</code>, <code>temperature</code>, <code>timeout</code>, <code>retry_attempts</code>, and <code>retry_delay</code> properties ready for agent use.</p>
+<pre><code class="language-python">from attune.config.agent_config import UnifiedAgentConfig, Provider, ModelTier
+
+agent_cfg = UnifiedAgentConfig(role=&quot;editor&quot;, provider=Provider.OPENAI, model_tier=ModelTier.STANDARD)
+book_cfg = agent_cfg.for_book_production()
+print(book_cfg.model, book_cfg.max_tokens)
+</code></pre>
+</li>
+</ol>
+<h2>Manage the global EmpathyXMLConfig</h2>
+<ol>
+<li>
+<p><strong>Load from a JSON file.</strong> Call <code>EmpathyXMLConfig.load_from_file()</code>. The default path is <code>.attune/config.json</code>.</p>
+<pre><code class="language-python">from attune.config.xml_config import EmpathyXMLConfig
+
+cfg = EmpathyXMLConfig.load_from_file()
+</code></pre>
+</li>
+<li>
+<p><strong>Load from environment variables.</strong> Call <code>EmpathyXMLConfig.from_env()</code> when no config file is present.</p>
+</li>
+<li>
+<p><strong>Set the global instance.</strong> Call <code>set_config()</code> so that other components that call <code>get_config()</code> receive your updated config.</p>
+<pre><code class="language-python">from attune.config import set_config
+set_config(cfg)
+</code></pre>
+</li>
+<li>
+<p><strong>Save changes back to disk.</strong> Call <code>cfg.save_to_file()</code> with an optional path.</p>
+</li>
+</ol>
+<h2>Verify the task succeeded</h2>
+<p>Run the configuration-related tests to confirm your changes load, validate, and save correctly:</p>
+<pre><code class="language-bash">pytest -k &quot;configuration&quot;
+</code></pre>
+<p>A passing test run with no <code>ValidationError</code> objects returned by <code>validate_config()</code> confirms the configuration is well-formed. If you called <code>save_unified_config()</code>, check that the returned <code>Path</code> exists on disk and contains your updated values.</p>
 
   </article>
   <footer>

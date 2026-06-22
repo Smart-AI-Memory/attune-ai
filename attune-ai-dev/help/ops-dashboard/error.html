@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard errors — error</title>
-  <meta name="description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch failures and configuration or startup failures." />
+  <meta name="description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors." />
   <meta property="og:title" content="Ops Dashboard errors — error" />
-  <meta property="og:description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch failures and configuration or startup failures." />
+  <meta property="og:description" content="Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/error" />
   <style>
@@ -260,35 +260,37 @@
   <article class="markdown-body">
 <h1>Ops Dashboard errors</h1>
 <h2>Common error signatures</h2>
-<p>Most failures in the ops dashboard fall into one of two categories: cost-report fetch failures and configuration or startup failures.</p>
-<p><strong>Cost-report fetch failures</strong> are represented by <code>CostFetchError</code>, a categorized error dataclass returned (never raised) by <code>fetch_summary()</code>. Its <code>kind</code> field contains a <code>CostFetchErrorKind</code> value and its <code>message</code> field contains a human-readable description. Common causes include:</p>
+<p>Most failures in the ops dashboard fall into one of two categories: cost-report fetch errors and configuration errors.</p>
+<p><strong>Cost-report fetch errors</strong> are represented by <code>CostFetchError</code>, a dataclass with two fields:</p>
 <ul>
-<li>No admin API key available — <code>load_admin_key()</code> returns <code>None</code>, so <code>fetch_summary()</code> cannot authenticate against <code>https://api.anthropic.com/v1/organizations/cost_report</code>.</li>
-<li>A non-success HTTP response or network-level failure reaching the cost-report endpoint.</li>
-<li>A stale or unparseable cached response when <code>refresh=False</code>.</li>
+<li><code>kind: CostFetchErrorKind</code> — a categorized enum value identifying what went wrong (for example, a missing admin key, a network failure, or an unexpected API response)</li>
+<li><code>message: str</code> — a human-readable description of the failure</li>
 </ul>
-<p><strong>Configuration and startup failures</strong> occur before the dashboard server is running:</p>
+<p><code>fetch_summary()</code> always returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. When the second element is not <code>None</code>, the fetch failed and the first element is <code>None</code>. A <code>CostSummary</code> with <code>source='cached'</code> means the live fetch failed silently and an older result was served instead — check the <code>fetched_at</code> field to assess staleness.</p>
+<p><strong>Configuration errors</strong> surface when <code>build_config()</code> cannot construct a valid <code>Config</code>. Missing or inaccessible paths for <code>project_root</code> or <code>attune_home</code> are the most common cause.</p>
+<h2>Where errors originate</h2>
 <ul>
-<li><code>build_config()</code> fails when required paths (<code>project_root</code>, <code>attune_home</code>) cannot be resolved.</li>
-<li><code>create_app()</code> raises an <code>ImportError</code>-family exception if FastAPI is not installed; the lazy-import design means this only surfaces at call time, not at <code>import attune</code>.</li>
-<li><code>cmd_ops()</code> exits non-zero (returns a value other than <code>0</code>) when the server cannot bind to <code>Config.host</code>/<code>Config.port</code> (default <code>127.0.0.1:8765</code>).</li>
+<li><code>fetch_summary(*, refresh: bool = False)</code> — Returns <code>(None, CostFetchError)</code> when the Anthropic admin cost-report endpoint at <code>https://api.anthropic.com/v1/organizations/cost_report</code> is unreachable, returns a non-success status, or when <code>load_admin_key()</code> returns <code>None</code>.</li>
+<li><code>load_admin_key()</code> — Returns <code>None</code> rather than raising when the admin API key is absent. A <code>None</code> result here is the most common upstream cause of a failed <code>fetch_summary()</code> call.</li>
+<li><code>build_config()</code> — Raises during startup if the resolved <code>Config</code> fields (such as <code>project_root</code> or <code>attune_home</code>) refer to paths the process cannot access.</li>
+<li><code>create_app()</code> — Defers the FastAPI import until call time; an <code>ImportError</code> here means FastAPI is not installed in the current environment.</li>
 </ul>
 <h2>How to diagnose</h2>
 <ol>
 <li>
-<p><strong>Check whether <code>fetch_summary()</code> returned an error.</strong> The function signature is <code>fetch_summary(*, refresh: bool = False) -&gt; tuple[CostSummary | None, CostFetchError | None]</code>. If the second element of the tuple is not <code>None</code>, inspect <code>CostFetchError.kind</code> for the error category and <code>CostFetchError.message</code> for the detail. A non-<code>None</code> error with a <code>None</code> summary means no cost data is available.</p>
+<p><strong>Check whether <code>fetch_summary()</code> returned a <code>CostFetchError</code>.</strong> Inspect the <code>kind</code> and <code>message</code> fields directly — they identify the failure category without requiring a stack trace.</p>
 </li>
 <li>
-<p><strong>Verify the admin API key is present.</strong> Call <code>load_admin_key()</code> directly. If it returns <code>None</code>, the dashboard cannot reach the Anthropic cost-report API and every <code>fetch_summary()</code> call will produce a <code>CostFetchError</code>.</p>
+<p><strong>Verify the admin key is available.</strong> Call <code>load_admin_key()</code> in isolation. If it returns <code>None</code>, the dashboard cannot reach the cost-report API regardless of network state. Ensure the key is present in the expected environment variable or credentials file before investigating further.</p>
 </li>
 <li>
-<p><strong>Confirm FastAPI is installed before calling <code>create_app()</code>.</strong> Because the import is deferred, an <code>ImportError</code> will not appear until <code>create_app()</code> is called. If you see an <code>ImportError</code> or <code>ModuleNotFoundError</code> mentioning FastAPI at that point, install the ops extras.</p>
+<p><strong>Confirm <code>CostSummary.source</code>.</strong> If the dashboard is displaying cost data but the figures look stale, check whether <code>source == 'cached'</code>. Compare <code>fetched_at</code> against the current time to determine how old the cached result is, then investigate why the live fetch failed.</p>
 </li>
 <li>
-<p><strong>Check the configured host and port.</strong> If <code>cmd_ops()</code> returns a non-zero exit code immediately, the server likely failed to bind. Inspect the <code>Config</code> values for <code>host</code> (default <code>127.0.0.1</code>) and <code>port</code> (default <code>8765</code>) and confirm nothing else is listening on that address.</p>
+<p><strong>Reproduce the <code>build_config()</code> failure path.</strong> If the dashboard fails to start, run <code>python -m attune.ops</code> directly. A startup error will print the exception and the <code>Config</code> field that could not be resolved, making it straightforward to identify which path is missing or inaccessible.</p>
 </li>
 <li>
-<p><strong>Review <code>Config.specs_roots</code> when <code>detect_candidates()</code> returns nothing.</strong> The <code>specs_candidates_enabled</code> field must be <code>True</code> and <code>specs_roots</code> must contain at least one valid <code>Path</code> for candidate detection to run. An empty tuple for <code>specs_roots</code> is a silent no-op, not an exception.</p>
+<p><strong>Check for a missing FastAPI installation.</strong> If <code>create_app()</code> raises <code>ImportError</code>, FastAPI is not installed. The lazy-import design means this error only appears at server startup, not at import time.</p>
 </li>
 </ol>
 <h2>Source files</h2>

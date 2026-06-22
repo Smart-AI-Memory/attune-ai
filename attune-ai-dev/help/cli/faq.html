@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CLI FAQ — faq</title>
-  <meta name="description" content="It provides the command-line interface and input routing for attune. This includes commands for cost tracking, memory, telemetry, workflows, and provider configuration, plus the `HybridRouter` that di" />
+  <meta name="description" content="It covers two things: the command-line interface (all `attune` subcommands) and the routing layer that maps user input to the right skill or workflow." />
   <meta property="og:title" content="CLI FAQ — faq" />
-  <meta property="og:description" content="It provides the command-line interface and input routing for attune. This includes commands for cost tracking, memory, telemetry, workflows, and provider configuration, plus the `HybridRouter` that di" />
+  <meta property="og:description" content="It covers two things: the command-line interface (all `attune` subcommands) and the routing layer that maps user input to the right skill or workflow." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/faq" />
   <style>
@@ -259,34 +259,60 @@
   </nav>
   <article class="markdown-body">
 <h1>CLI FAQ</h1>
-<h2>What does the CLI feature do?</h2>
-<p>It provides the command-line interface and input routing for attune. This includes commands for cost tracking, memory, telemetry, workflows, and provider configuration, plus the <code>HybridRouter</code> that dispatches user input to the right skill.</p>
-<h2>How do I start the CLI?</h2>
-<p>Call <code>main()</code> from <code>attune.cli_minimal</code>. You can also call <code>create_parser()</code> directly if you need to build on top of the argument parser without invoking the full entry point.</p>
+<h2>What does the CLI feature cover?</h2>
+<p>It covers two things: the command-line interface (all <code>attune</code> subcommands) and the routing layer that maps user input to the right skill or workflow.</p>
+<h2>How do I run the CLI?</h2>
+<p>Call <code>main()</code> from <code>attune.cli_minimal</code>. It accepts an optional <code>argv</code> list; when omitted it reads from <code>sys.argv</code>. Every command returns an integer exit code.</p>
 <h2>How does routing work?</h2>
-<p><code>route_user_input()</code> in <code>attune.cli_router</code> takes a string of user input and an optional context dict, then returns a routing result dict. Under the hood it uses <code>HybridRouter</code>, which you can instantiate directly if you want to manage routing preferences yourself or call <code>get_suggestions()</code> for partial-input completion.</p>
-<h2>What is a RoutingPreference?</h2>
-<p>A <code>RoutingPreference</code> is a dataclass in <code>attune.cli_router</code> that records a learned mapping from a keyword to a skill. Its fields are <code>keyword</code>, <code>skill</code>, <code>args</code> (default <code>''</code>), <code>usage_count</code> (default <code>0</code>), and <code>confidence</code> (default <code>1.0</code>). You add one by calling <code>HybridRouter.learn_preference(keyword, skill, args)</code>.</p>
-<h2>How do I check whether a string is a slash command?</h2>
-<p>Call <code>is_slash_command(text)</code> from <code>attune.cli_router</code>. It returns a bool.</p>
-<h2>Which commands track costs?</h2>
-<p>Four commands live in <code>cli_commands.cost_commands</code>:</p>
-<ul>
-<li><code>cmd_costs</code> — show a cost report for a recent period</li>
-<li><code>cmd_costs_today</code> — show today's cost summary</li>
-<li><code>cmd_costs_export</code> — export cost data to a file</li>
-<li><code>cmd_costs_reset</code> — clear all cost tracking data</li>
-</ul>
-<h2>How do I work with memory and lessons?</h2>
-<p><code>cli_commands.memory_commands</code> exposes seven commands: <code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, and <code>cmd_memory_forget_topic</code>. Use <code>cmd_lessons</code> to list current lessons with line numbers, <code>cmd_remember</code> to add one, and <code>cmd_forget</code> to remove one by line number or keyword.</p>
-<h2>What telemetry commands are available?</h2>
-<p><code>cli_commands.telemetry_commands</code> provides <code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, and <code>cmd_telemetry_signals</code>.</p>
-<h2>How do I run workflows from the CLI?</h2>
-<p>Use the three commands in <code>cli_commands.workflow_commands</code>: <code>cmd_workflow_list</code> to see available workflows, <code>cmd_workflow_info</code> to inspect one, and <code>cmd_workflow_run</code> to execute it.</p>
-<h2>How do I check that my setup is valid?</h2>
-<p>Run <code>cmd_doctor</code> or <code>cmd_validate</code> from <code>cli_commands.utility_commands</code>. Use <code>cmd_setup</code> for initial configuration and <code>cmd_features</code> to see which features are active.</p>
-<h2>How do I debug a failing CLI command?</h2>
-<p>Run <code>pytest -k &quot;cli&quot; -v</code> first. If the tests pass but your code still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. For symptom-based issues, see the troubleshooting page for this feature.</p>
+<p><code>route_user_input()</code> in <code>attune.cli_router</code> takes a string of user input and an optional context dict, then returns a routing decision as a dict. For more control, instantiate <code>HybridRouter</code> directly — it lets you call <code>route()</code>, teach it new preferences with <code>learn_preference()</code>, and get tab-completion candidates with <code>get_suggestions()</code>.</p>
+<h2>What is a <code>RoutingPreference</code>?</h2>
+<p>A <code>RoutingPreference</code> is a dataclass that records one learned routing rule. Its fields are <code>keyword</code>, <code>skill</code>, <code>args</code> (default <code>''</code>), <code>usage_count</code> (default <code>0</code>), and <code>confidence</code> (default <code>1.0</code>). The router accumulates these over time to improve its suggestions.</p>
+<h2>How do I tell whether a string is a slash command?</h2>
+<p>Call <code>is_slash_command(text)</code> from <code>attune.cli_router</code>. It returns a boolean.</p>
+<h2>Which subcommands are available?</h2>
+<p>The CLI is organized into groups:</p>
+<table>
+<thead>
+<tr>
+<th>Group</th>
+<th>Subcommands</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Costs</strong></td>
+<td><code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
+</tr>
+<tr>
+<td><strong>Memory</strong></td>
+<td><code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code></td>
+</tr>
+<tr>
+<td><strong>Telemetry</strong></td>
+<td><code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code></td>
+</tr>
+<tr>
+<td><strong>Workflows</strong></td>
+<td><code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, <code>cmd_workflow_run</code></td>
+</tr>
+<tr>
+<td><strong>Patterns</strong></td>
+<td><code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
+</tr>
+<tr>
+<td><strong>Providers</strong></td>
+<td><code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
+</tr>
+<tr>
+<td><strong>Utility</strong></td>
+<td><code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_features</code>, <code>cmd_doctor</code></td>
+</tr>
+</tbody>
+</table>
+<h2>What exit codes does <code>attune workflow run</code> return?</h2>
+<p><code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code> instantiates and executes a workflow, then returns the contract exit code as an integer. The specific values depend on the workflow result; check <code>cli_commands._exit_codes</code> for the full contract.</p>
+<h2>How do I debug a failing command?</h2>
+<p>Run the related tests first with <code>pytest -k &quot;cli&quot; -v</code>. If the tests pass but your code still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. For symptom-based issues, see the troubleshooting page for this feature.</p>
 <h2>Where are the source files?</h2>
 <ul>
 <li><code>src/attune/cli_minimal.py</code></li>

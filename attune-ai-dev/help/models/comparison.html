@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Models feature — authentication modes and routing strategies — comparison</title>
-  <meta name="description" content="The `models` feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetr" />
-  <meta property="og:title" content="Comparison: Models feature — authentication modes and routing strategies — comparison" />
-  <meta property="og:description" content="The `models` feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetr" />
+  <title>LLM authentication, provider routing, and tier management — comparison</title>
+  <meta name="description" content="Two layers select a model, and they differ in whether the choice is static (tier-mapped) or learned (telemetry-driven)." />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — comparison" />
+  <meta property="og:description" content="Two layers select a model, and they differ in whether the choice is static (tier-mapped) or learned (telemetry-driven)." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/comparison" />
   <style>
@@ -258,192 +258,60 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Models feature — authentication modes and routing strategies</h1>
-<h2>Context</h2>
-<p>The <code>models</code> feature covers three distinct but related responsibilities: authenticating against LLM providers (Claude subscription vs. API key), routing tasks to the right model tier based on telemetry, and managing circuit breakers when providers fail. Understanding the tradeoffs within this feature helps you configure it correctly for your workload.</p>
-<h2>Authentication mode comparison</h2>
-<p><code>AuthStrategy</code> supports two authentication modes, selected via <code>AuthMode</code>. The system defaults to <code>AuthMode.AUTO</code>, which picks a mode based on module size.</p>
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Comparison</h2>
+<p>Two layers select a model, and they differ in whether the choice is
+static (tier-mapped) or learned (telemetry-driven).</p>
 <table>
 <thead>
 <tr>
-<th>Factor</th>
-<th>Subscription mode (<code>prefer_subscription=True</code>)</th>
-<th>API key mode (<code>prefer_subscription=False</code>)</th>
+<th>Capability</th>
+<th>Static routing (<code>get_tier_for_task</code> + <code>get_model</code>)</th>
+<th>Adaptive routing (<code>AdaptiveModelRouter</code>)</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Cost model</strong></td>
-<td>Flat subscription fee; no per-token charge</td>
-<td>Pay-per-token; cost scales with usage</td>
+<td><strong>Input</strong></td>
+<td>Task type string</td>
+<td>Workflow + stage history</td>
 </tr>
 <tr>
-<td><strong>Best for</strong></td>
-<td>High-volume, continuous workflows</td>
-<td>Sporadic or exploratory use</td>
+<td><strong>Decision basis</strong></td>
+<td><code>TASK_TIER_MAP</code> (fixed)</td>
+<td>Observed success rate, latency, cost</td>
 </tr>
 <tr>
-<td><strong>Token estimation</strong></td>
-<td><code>estimate_tokens()</code> uses <code>loc_to_tokens_multiplier=4.0</code></td>
-<td>Same estimation; cost calculated differently via <code>estimate_cost()</code></td>
+<td><strong>Determinism</strong></td>
+<td>Fully deterministic</td>
+<td>Depends on telemetry sample size</td>
 </tr>
 <tr>
-<td><strong>Small modules (&lt;500 LOC)</strong></td>
-<td>May be cost-inefficient</td>
-<td>Generally cheaper</td>
+<td><strong>Cold start</strong></td>
+<td>Works immediately</td>
+<td>Needs <code>MIN_SAMPLE_SIZE</code> (10) calls first</td>
 </tr>
 <tr>
-<td><strong>Large modules (&gt;2000 LOC)</strong></td>
-<td>Cost advantage grows with volume</td>
-<td>Costs accumulate quickly</td>
+<td><strong>Cost control</strong></td>
+<td>Tier choice only</td>
+<td><code>max_cost</code> / <code>max_latency_ms</code> / <code>min_success_rate</code> filters</td>
 </tr>
 <tr>
-<td><strong>Setup</strong></td>
-<td><code>cmd_auth_setup()</code> interactive wizard</td>
-<td><code>cmd_auth_setup()</code> interactive wizard</td>
-</tr>
-<tr>
-<td><strong>Switching</strong></td>
-<td><code>cmd_auth_reset()</code> then re-run setup</td>
-<td><code>cmd_auth_reset()</code> then re-run setup</td>
+<td><strong>Typical caller</strong></td>
+<td>Any workflow, default path</td>
+<td>Long-running workflows that accumulate stats</td>
 </tr>
 </tbody>
 </table>
-<p><code>AuthStrategy.get_recommended_mode()</code> encodes this logic: pass your module's line count and it returns the optimal <code>AuthMode</code> for that size category (<code>get_module_size_category()</code> returns <code>'small'</code>, <code>'medium'</code>, or <code>'large'</code>).</p>
-<h2>Model tier comparison</h2>
-<p>The registry maps tasks to three tiers. <code>TASK_TIER_MAP</code> and <code>AdaptiveModelRouter</code> use these distinctions to select models at runtime.</p>
-<table>
-<thead>
-<tr>
-<th>Tier</th>
-<th>Task examples</th>
-<th>Latency expectation</th>
-<th>Cost expectation</th>
-<th>When the router selects it</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Cheap</strong> (<code>CHEAP_TASKS</code>)</td>
-<td>Background analysis, batch summarization</td>
-<td>Higher acceptable</td>
-<td>Lowest</td>
-<td><code>max_cost</code> constraint set, <code>success_rate ≥ 0.8</code> on telemetry</td>
-</tr>
-<tr>
-<td><strong>Capable</strong> (<code>CAPABLE_TASKS</code>)</td>
-<td>Code generation, test writing</td>
-<td>Moderate</td>
-<td>Moderate</td>
-<td>Default for most workflow stages</td>
-</tr>
-<tr>
-<td><strong>Premium</strong> (<code>PREMIUM_TASKS</code>)</td>
-<td>Complex reasoning, architecture review</td>
-<td>Lowest acceptable</td>
-<td>Highest</td>
-<td><code>recommend_tier_upgrade()</code> returns <code>True</code> based on historical failure rates</td>
-</tr>
-<tr>
-<td><strong>Realtime</strong> (<code>REALTIME_REQUIRED_TASKS</code>)</td>
-<td><code>chat</code>, <code>live_coding</code>, <code>security_incident</code>, <code>emergency_response</code></td>
-<td>Must be minimal</td>
-<td>Varies</td>
-<td>Task type is in the frozenset; cannot be overridden by cost constraints</td>
-</tr>
-</tbody>
-</table>
-<p>The router scores candidates using <code>ModelPerformance.quality_score</code>, which combines <code>success_rate</code>, <code>avg_latency_ms</code>, and <code>avg_cost</code>. You can constrain selection with <code>max_cost</code>, <code>max_latency_ms</code>, and <code>min_success_rate</code> parameters on <code>get_best_model()</code>.</p>
-<h2>Routing strategy comparison</h2>
-<p><code>AdaptiveModelRouter</code> and direct model selection via the registry represent two different approaches.</p>
-<table>
-<thead>
-<tr>
-<th>Aspect</th>
-<th><code>AdaptiveModelRouter</code></th>
-<th>Direct registry lookup (<code>get_model()</code>, <code>get_tier_for_task()</code>)</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><strong>Selection basis</strong></td>
-<td>Live telemetry over a configurable window (default 7 days)</td>
-<td>Static registry configuration</td>
-</tr>
-<tr>
-<td><strong>Adapts to failures</strong></td>
-<td>Yes — <code>recent_failures</code> and <code>sample_size</code> factor into <code>quality_score</code></td>
-<td>No — returns the registered model regardless of runtime behavior</td>
-</tr>
-<tr>
-<td><strong>Circuit breaker integration</strong></td>
-<td>Works alongside <code>CircuitBreaker</code>; failing providers are excluded</td>
-<td>Not integrated; caller is responsible</td>
-</tr>
-<tr>
-<td><strong>Best for</strong></td>
-<td>Production workflows where model reliability varies</td>
-<td>Testing, scripting, or when you need deterministic model selection</td>
-</tr>
-<tr>
-<td><strong>Upgrade recommendations</strong></td>
-<td><code>recommend_tier_upgrade()</code> signals when a higher tier would improve outcomes</td>
-<td>Not available</td>
-</tr>
-<tr>
-<td><strong>Observability</strong></td>
-<td><code>get_routing_stats(workflow, stage, days=7)</code> returns structured performance data</td>
-<td>None built in</td>
-</tr>
-</tbody>
-</table>
-<h2>Circuit breaker behavior</h2>
-<p><code>CircuitBreaker</code> sits between <code>EmpathyLLMExecutor</code> and the provider. It opens after <code>failure_threshold</code> failures (default: 5) and stays open for <code>recovery_timeout_seconds</code> (default: 60). During the half-open state, <code>half_open_calls</code> (default: 1) probe call is allowed before fully re-enabling the provider.</p>
-<p>If you call providers directly without going through <code>EmpathyLLMExecutor</code>, the circuit breaker does not apply — you are responsible for handling provider failures.</p>
-<h2>CLI entry points</h2>
-<table>
-<thead>
-<tr>
-<th>Command function</th>
-<th>Purpose</th>
-<th>Use when</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cmd_auth_setup()</code></td>
-<td>Interactive first-time configuration</td>
-<td>Setting up a new environment</td>
-</tr>
-<tr>
-<td><code>cmd_auth_status()</code></td>
-<td>Display current <code>AuthStrategy</code> fields</td>
-<td>Debugging unexpected auth behavior</td>
-</tr>
-<tr>
-<td><code>cmd_auth_reset()</code></td>
-<td>Clear saved strategy from disk</td>
-<td>Switching providers or subscription tiers</td>
-</tr>
-<tr>
-<td><code>cmd_auth_recommend(args)</code></td>
-<td>Score a specific file and return the recommended <code>AuthMode</code></td>
-<td>Deciding auth mode for a single large module</td>
-</tr>
-</tbody>
-</table>
-<h2>Use X when...</h2>
-<p><strong>Use <code>AuthMode.AUTO</code> with <code>prefer_subscription=True</code></strong> when you run continuous workflows against large codebases (&gt;2000 LOC per module). The subscription tier amortizes cost across high token volumes, and <code>get_recommended_mode()</code> will select it automatically.</p>
-<p><strong>Use API key mode</strong> when your usage is infrequent or you are running one-off scripts. Token costs stay low when volume is low, and you avoid paying for subscription capacity you do not use.</p>
-<p><strong>Use <code>AdaptiveModelRouter</code></strong> in any production workflow. It is the better default: it reacts to real failure rates, avoids degraded providers automatically, and surfaces upgrade recommendations before failures compound.</p>
-<p><strong>Use direct registry lookup</strong> only in tests or throwaway scripts where you need a fixed, predictable model and do not want telemetry to influence selection.</p>
-<p><strong>Use the <code>REALTIME_REQUIRED_TASKS</code> path</strong> for anything user-facing or time-critical (<code>chat</code>, <code>live_coding</code>, <code>security_incident</code>, <code>emergency_response</code>). Cost constraints passed to <code>get_best_model()</code> are not applied to these tasks — latency takes priority unconditionally.</p>
-<p><strong>Do not use this feature directly</strong> if your workflow spans multiple providers and you need coordinated fallback logic. The <code>ResilientExecutor</code> and <code>FallbackStrategy</code> layer above <code>models</code> handles multi-provider orchestration; wiring <code>AdaptiveModelRouter</code> and <code>CircuitBreaker</code> together manually duplicates logic that already exists there.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/models/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
+<p><strong>Use static routing</strong> by default — it is predictable and needs no
+history. <strong>Use adaptive routing</strong> when a workflow runs often enough to
+accumulate telemetry and you want the router to escalate or downgrade
+tiers based on real outcomes. Adaptive routing falls back to static
+behavior until it has enough samples.</p>
+<p>For auth, the analogous fork is <code>AuthMode</code>: <code>SUBSCRIPTION</code> and <code>API</code>
+are explicit; <code>AUTO</code> defers to <code>get_recommended_mode</code>, which resolves
+by subscription tier (and, only for <code>MAX</code>/<code>ENTERPRISE</code>, module size).
+Prefer <code>AUTO</code> unless you have a reason to pin one mode.</p>
 
   </article>
   <footer>

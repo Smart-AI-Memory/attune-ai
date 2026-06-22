@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quickstart: Attune Memory — quickstart</title>
-  <meta name="description" content="Store and retrieve persistent memory in your project using Redis or file-backed sessions." />
+  <meta name="description" content="Store and retrieve persistent memory across agent sessions in under five minutes." />
   <meta property="og:title" content="Quickstart: Attune Memory — quickstart" />
-  <meta property="og:description" content="Store and retrieve persistent memory in your project using Redis or file-backed sessions." />
+  <meta property="og:description" content="Store and retrieve persistent memory across agent sessions in under five minutes." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/quickstart" />
   <style>
@@ -259,46 +259,64 @@
   </nav>
   <article class="markdown-body">
 <h1>Quickstart: Attune Memory</h1>
-<p>Store and retrieve persistent memory in your project using Redis or file-backed sessions.</p>
+<p>Store and retrieve persistent memory across agent sessions in under five minutes.</p>
 <pre><code class="language-python">from attune.memory import is_redis_available, get_redis_memory
 
 if is_redis_available():
     mem = get_redis_memory()
-    mem.stash(&quot;my_key&quot;, {&quot;result&quot;: 42})
-    print(mem.retrieve(&quot;my_key&quot;))  # → {'result': 42}
+    mem.stash(&quot;greeting&quot;, &quot;hello world&quot;)
+    print(mem.retrieve(&quot;greeting&quot;))
 </code></pre>
-<p><strong>Result:</strong> <code>{'result': 42}</code> printed to your console confirms the memory backend is connected and writing correctly.</p>
+<p><strong>Expected output:</strong></p>
+<pre><code>hello world
+</code></pre>
 <h2>Prerequisites</h2>
 <ul>
-<li>Project cloned and installed locally (<code>src/attune/memory/</code> present)</li>
-<li>Redis running locally, or <code>USE_MOCK=true</code> set in your environment to use a mock backend</li>
+<li>Attune installed locally (<code>pip install attune</code>)</li>
+<li>Redis running, or <code>use_mock=True</code> passed to <code>get_redis_memory()</code> for local testing</li>
 </ul>
 <h2>Step 1: Check your backend</h2>
+<p>Before writing anything, confirm the memory subsystem is reachable:</p>
 <pre><code class="language-python">from attune.memory import is_redis_available, check_redis_connection
 
-print(check_redis_connection())
+print(is_redis_available())       # True if Redis is importable
+print(check_redis_connection())   # Returns a status dict
 </code></pre>
-<p>You should see a dict with <code>&quot;connected&quot;: true</code>. If Redis is unavailable, pass <code>use_mock=True</code> to <code>get_redis_memory()</code> to continue without it.</p>
+<p>If <code>is_redis_available()</code> returns <code>False</code>, pass <code>use_mock=True</code> to <code>get_redis_memory()</code> to use the in-memory mock backend instead.</p>
 <h2>Step 2: Stash and retrieve a value</h2>
 <pre><code class="language-python">from attune.memory import get_redis_memory
 
-mem = get_redis_memory()
-mem.stash(&quot;session_note&quot;, &quot;first run complete&quot;, ttl=3600)
-value = mem.retrieve(&quot;session_note&quot;)
-print(value)  # → 'first run complete'
+mem = get_redis_memory()          # reads REDIS_URL from environment
+mem.stash(&quot;user_pref&quot;, &quot;dark_mode&quot;, ttl=3600)
+value = mem.retrieve(&quot;user_pref&quot;)
+print(value)                      # dark_mode
 </code></pre>
-<p><code>ttl=3600</code> expires the key after one hour. Omit it to keep the value indefinitely.</p>
-<h2>Step 3: Set up project memory files</h2>
-<p>To load persistent <code>CLAUDE.md</code> memory files into your project:</p>
-<pre><code class="language-python">from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
+<p><code>stash</code> accepts an optional <code>ttl</code> (seconds) and an optional <code>agent_id</code> to scope the key to a specific agent.</p>
+<h2>Step 3: Set up project-level memory</h2>
+<p>To give Claude Code a project-level <code>CLAUDE.md</code> memory file, run:</p>
+<pre><code class="language-python">from attune.memory.claude_memory import create_default_project_memory
+
+create_default_project_memory(&quot;.&quot;, framework=&quot;empathy&quot;)
+# Creates .claude/CLAUDE.md in the current directory
+</code></pre>
+<p>Then load it back with <code>ClaudeMemoryLoader</code>:</p>
+<pre><code class="language-python">from attune.memory import ClaudeMemoryLoader, ClaudeMemoryConfig
 
 config = ClaudeMemoryConfig(enabled=True, load_project=True)
 loader = ClaudeMemoryLoader(config)
-combined = loader.load_all_memory(project_root=&quot;.&quot;)
-print(combined[:200])
+context = loader.load_all_memory(project_root=&quot;.&quot;)
+print(context[:200])
 </code></pre>
-<p><strong>Result:</strong> The combined content of all discovered <code>CLAUDE.md</code> files, printed to confirm they loaded correctly. Use <code>loader.get_loaded_files()</code> to see which paths were included.</p>
-<p><strong>Next:</strong> Explore the <code>MemoryControlPanel</code> to inspect backend statistics, manage stored patterns, and run health checks — see <code>attune help-docs ref-memory</code>.</p>
+<p><strong>Expected output:</strong> The contents of <code>.claude/CLAUDE.md</code>, ready to inject into a Claude Code session.</p>
+<h2>Step 4: Verify connectivity and stats</h2>
+<pre><code class="language-python">from attune.memory import MemoryControlPanel
+
+panel = MemoryControlPanel()
+print(panel.health_check())
+print(panel.get_statistics())
+</code></pre>
+<p>A healthy system returns a dict with no error keys from <code>health_check()</code>.</p>
+<p><strong>Next:</strong> Explore semantic search and long-term pattern storage with <code>SearchableMemoryBackend.search()</code> and <code>SearchableMemoryBackend.remember()</code>. Run <code>/memory-and-context search</code> in Claude Code to try it interactively.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use `is_redis_available()` before constructing a memory backend — tip</title>
-  <meta name="description" content="Call `is_redis_available()` before you call `get_redis_memory()` or `get_railway_redis()`. It checks whether the Redis subsystem is importable and reachable without triggering a heavy import chain — s" />
-  <meta property="og:title" content="Tip: Use `is_redis_available()` before constructing a memory backend — tip" />
-  <meta property="og:description" content="Call `is_redis_available()` before you call `get_redis_memory()` or `get_railway_redis()`. It checks whether the Redis subsystem is importable and reachable without triggering a heavy import chain — s" />
+  <title>Tip: working effectively with memory — tip</title>
+  <meta name="description" content="Call `is_redis_available()` before you instantiate any Redis-backed component." />
+  <meta property="og:title" content="Tip: working effectively with memory — tip" />
+  <meta property="og:description" content="Call `is_redis_available()` before you instantiate any Redis-backed component." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/tip" />
   <style>
@@ -258,10 +258,11 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use <code>is_redis_available()</code> before constructing a memory backend</h1>
-<p>Call <code>is_redis_available()</code> before you call <code>get_redis_memory()</code> or <code>get_railway_redis()</code>. It checks whether the Redis subsystem is importable and reachable without triggering a heavy import chain — so a missing or unreachable Redis instance fails fast and clearly instead of raising deep inside a constructor.</p>
-<p><strong>Why it sticks:</strong> a one-line guard at startup is cheaper than debugging a <code>ConnectionRefusedError</code> mid-session.</p>
-<p><strong>Tradeoff:</strong> <code>is_redis_available()</code> is a lightweight probe, not a guaranteed health check. A Redis instance that passes the probe can still become unavailable between the check and your first <code>stash()</code> call. For production reliability, also wire up <code>MemoryControlPanel.health_check()</code> and handle <code>MemoryBackend.is_connected()</code> returning <code>False</code> at runtime.</p>
+<h1>Tip: working effectively with memory</h1>
+<p>Call <code>is_redis_available()</code> before you instantiate any Redis-backed component.</p>
+<p>This single guard prevents import-time failures in environments where Redis is not installed — the function checks availability without importing the Redis subsystem at all. Skipping it means a missing dependency surfaces as a confusing runtime error instead of a clear unavailability signal.</p>
+<p><strong>Why it works:</strong> <code>is_redis_available()</code> is specifically designed for this pre-flight check, so you pay no import cost regardless of the result.</p>
+<p><strong>Tradeoff:</strong> You still need to handle the <code>False</code> case explicitly — the function tells you Redis is unavailable but does not fall back to a mock automatically. Use <code>get_redis_memory(use_mock=True)</code> if you want an automatic fallback.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/memory/**</code></li>

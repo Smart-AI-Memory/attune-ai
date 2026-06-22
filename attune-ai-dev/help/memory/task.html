@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with memory — task</title>
-  <meta name="description" content="Use memory when you need to memory subsystem — storage, lookup, and security." />
+  <meta name="description" content="Use the memory module when you need agents to stash and retrieve short-term data across sessions, load project-level `CLAUDE.md` context files, or run an HTTP control panel for enterprise memory manag" />
   <meta property="og:title" content="Work with memory — task" />
-  <meta property="og:description" content="Use memory when you need to memory subsystem — storage, lookup, and security." />
+  <meta property="og:description" content="Use the memory module when you need agents to stash and retrieve short-term data across sessions, load project-level `CLAUDE.md` context files, or run an HTTP control panel for enterprise memory manag" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/task" />
   <style>
@@ -259,59 +259,134 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with memory</h1>
-<p>Use memory when you need to memory subsystem — storage, lookup, and security.</p>
+<p>Use the memory module when you need agents to stash and retrieve short-term data across sessions, load project-level <code>CLAUDE.md</code> context files, or run an HTTP control panel for enterprise memory management.</p>
 <h2>Prerequisites</h2>
 <ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under src/attune/memory/**</li>
+<li>Redis running and reachable—locally at <code>localhost:6379</code> or remotely via <code>REDIS_URL</code>—for Redis-backed workflows</li>
+<li><code>attune-ai</code> installed in your Python environment</li>
+<li>(Railway only) Redis service added to your Railway project and <code>REDIS_URL</code> exported</li>
 </ul>
-<h2>Steps</h2>
+<h2>Connect to Redis memory</h2>
 <ol>
 <li>
-<p><strong>Understand the current behavior.</strong>
-Read the entry points to see what memory
-does today before making changes.
-The primary functions are:</p>
-<ul>
-<li><code>is_redis_available()</code> in <code>src/attune/memory/__init__.py</code> — Check if Redis subsystem is available without importing it.</li>
-<li><code>create_default_project_memory()</code> in <code>src/attune/memory/claude_memory.py</code> — Create a default .claude/CLAUDE.md file for a project.</li>
-<li><code>parse_redis_url()</code> in <code>src/attune/memory/config.py</code> — Parse Redis URL into connection parameters.</li>
-<li><code>get_redis_config()</code> in <code>src/attune/memory/config.py</code> — Get Redis configuration from environment variables (legacy dict API).</li>
-<li><code>get_redis_memory()</code> in <code>src/attune/memory/config.py</code> — Create a RedisShortTermMemory instance with environment-based config.</li>
-</ul>
+<p><strong>Check Redis availability.</strong>
+Call <code>is_redis_available()</code> before attempting a connection. A return value of <code>False</code> means the Redis subsystem is not installed; subsequent calls to <code>get_redis_memory()</code> will fail.</p>
+<pre><code class="language-python">from attune.memory import is_redis_available
+
+if not is_redis_available():
+    raise RuntimeError(&quot;Redis subsystem not available&quot;)
+</code></pre>
 </li>
 <li>
-<p><strong>Locate the right function to change.</strong>
-Each function has a single responsibility. Read its
-docstring, parameters, and return type to confirm it
-owns the behavior you need to modify.</p>
+<p><strong>Create a memory instance.</strong>
+Call <code>get_redis_memory()</code> to build a <code>RedisShortTermMemory</code> configured from your environment. Pass <code>url</code> to override the default endpoint, or set <code>use_mock=True</code> to substitute a test double.</p>
+<pre><code class="language-python">from attune.memory import get_redis_memory
+
+memory = get_redis_memory()
+</code></pre>
+<p>For Railway deployments, call <code>get_railway_redis()</code> instead. It reads <code>REDIS_URL</code> from the Railway environment and raises <code>OSError</code> with remediation instructions if the variable is absent.</p>
 </li>
 <li>
-<p><strong>Make your change.</strong>
-Follow existing patterns in the file — naming
-conventions, error handling style, and logging.</p>
+<p><strong>Verify the connection.</strong>
+Call <code>check_redis_connection()</code> and inspect the returned dict for error keys before starting any agent workloads.</p>
+<pre><code class="language-python">from attune.memory import check_redis_connection
+
+status = check_redis_connection()
+</code></pre>
 </li>
 <li>
-<p><strong>Run the related tests.</strong>
-This catches regressions before they reach other
-developers. Target with <code>pytest -k &quot;memory&quot;</code>.</p>
+<p><strong>Stash and retrieve values.</strong>
+Use <code>stash(key, value, ttl, agent_id)</code> to write and <code>retrieve(key, agent_id)</code> to read. Supply <code>agent_id</code> to scope entries to a specific agent.</p>
+<pre><code class="language-python">memory.stash(&quot;last_query&quot;, &quot;What is attune?&quot;, ttl=300, agent_id=&quot;agent-1&quot;)
+result = memory.retrieve(&quot;last_query&quot;, agent_id=&quot;agent-1&quot;)
+</code></pre>
 </li>
 </ol>
+<p><strong>You have succeeded when</strong> <code>check_redis_connection()</code> returns without an <code>error</code> key and <code>memory.is_connected()</code> returns <code>True</code>.</p>
+<h2>Load Claude Code memory files</h2>
+<ol>
+<li>
+<p><strong>Configure the loader.</strong>
+Build a <code>ClaudeMemoryConfig</code> with <code>enabled=True</code>. Toggle <code>load_enterprise</code>, <code>load_user</code>, and <code>load_project</code> to control which hierarchy levels are included. Set <code>project_root</code> to pin the search location.</p>
+<pre><code class="language-python">from attune.memory import ClaudeMemoryConfig, ClaudeMemoryLoader
+
+config = ClaudeMemoryConfig(
+    enabled=True,
+    load_project=True,
+    load_user=True,
+    project_root=&quot;/path/to/your/project&quot;,
+)
+loader = ClaudeMemoryLoader(config)
+</code></pre>
+</li>
+<li>
+<p><strong>Load the files.</strong>
+Call <code>load_all_memory()</code> to discover, read, and merge all applicable <code>CLAUDE.md</code> files. The return value is combined text ready to inject into a system prompt.</p>
+<pre><code class="language-python">context = loader.load_all_memory()
+</code></pre>
+</li>
+<li>
+<p><strong>Inspect and refresh.</strong>
+Call <code>get_loaded_files()</code> to see which files were resolved and in what order. If the files on disk have changed, call <code>clear_cache()</code> before the next <code>load_all_memory()</code> call.</p>
+<pre><code class="language-python">print(loader.get_loaded_files())
+loader.clear_cache()
+</code></pre>
+</li>
+<li>
+<p><strong>Bootstrap a project with no <code>CLAUDE.md</code>.</strong>
+Call <code>create_default_project_memory(project_root, framework)</code> to write a starter file at <code>.claude/CLAUDE.md</code>. The <code>framework</code> argument defaults to <code>'empathy'</code>.</p>
+<pre><code class="language-python">from attune.memory import create_default_project_memory
+
+create_default_project_memory(&quot;/path/to/your/project&quot;)
+</code></pre>
+</li>
+</ol>
+<p><strong>You have succeeded when</strong> <code>loader.get_loaded_files()</code> returns a non-empty list and <code>load_all_memory()</code> returns non-empty text.</p>
+<h2>Run the memory control panel</h2>
+<ol>
+<li>
+<p><strong>Configure the panel.</strong>
+Create a <code>ControlPanelConfig</code> pointing at your Redis instance and storage directories, then pass it to <code>MemoryControlPanel</code>.</p>
+<pre><code class="language-python">from attune.memory import ControlPanelConfig, MemoryControlPanel
+
+config = ControlPanelConfig(
+    redis_host=&quot;localhost&quot;,
+    redis_port=6379,
+    storage_dir=&quot;./memdocs_storage&quot;,
+    audit_dir=&quot;./logs&quot;,
+)
+panel = MemoryControlPanel(config)
+</code></pre>
+</li>
+<li>
+<p><strong>Start the API server.</strong>
+Call <code>run_api_server()</code> with the panel. Set <code>api_key</code> to require authentication on every request, and supply <code>ssl_certfile</code> and <code>ssl_keyfile</code> for TLS. Tune request limits with <code>rate_limit_requests</code> and <code>rate_limit_window</code>.</p>
+<pre><code class="language-python">from attune.memory import run_api_server
+
+run_api_server(
+    panel,
+    host=&quot;localhost&quot;,
+    port=8765,
+    api_key=&quot;your-secret-key&quot;,
+    enable_rate_limit=True,
+)
+</code></pre>
+</li>
+<li>
+<p><strong>Confirm the server is healthy.</strong>
+Call <code>panel.health_check()</code> before routing production traffic. Use <code>panel.get_statistics()</code> to review memory usage and pattern counts, and <code>print_stats(panel)</code> for a formatted summary.</p>
+<pre><code class="language-python">print(panel.health_check())
+print(panel.get_statistics())
+</code></pre>
+</li>
+</ol>
+<p><strong>You have succeeded when</strong> <code>panel.health_check()</code> returns without error and the server responds on the configured host and port.</p>
 <h2>Key files</h2>
 <ul>
-<li><code>src/attune/memory/**</code></li>
-</ul>
-<h2>Common modifications</h2>
-<p>Functions you are most likely to modify:</p>
-<ul>
-<li><code>is_redis_available()</code> in <code>src/attune/memory/__init__.py</code></li>
-<li><code>create_default_project_memory()</code> in <code>src/attune/memory/claude_memory.py</code></li>
-<li><code>parse_redis_url()</code> in <code>src/attune/memory/config.py</code></li>
-<li><code>get_redis_config()</code> in <code>src/attune/memory/config.py</code></li>
-<li><code>get_redis_memory()</code> in <code>src/attune/memory/config.py</code></li>
-<li><code>check_redis_connection()</code> in <code>src/attune/memory/config.py</code></li>
-<li><code>get_railway_redis()</code> in <code>src/attune/memory/config.py</code></li>
-<li><code>run_api_server()</code> in <code>src/attune/memory/control_panel_api.py</code></li>
+<li><code>src/attune/memory/__init__.py</code> — top-level exports and <code>is_redis_available()</code></li>
+<li><code>src/attune/memory/config.py</code> — <code>get_redis_memory()</code>, <code>parse_redis_url()</code>, <code>get_redis_config()</code>, <code>check_redis_connection()</code>, <code>get_railway_redis()</code></li>
+<li><code>src/attune/memory/claude_memory.py</code> — <code>ClaudeMemoryConfig</code>, <code>ClaudeMemoryLoader</code>, <code>create_default_project_memory()</code></li>
+<li><code>src/attune/memory/control_panel_api.py</code> — <code>MemoryControlPanel</code>, <code>ControlPanelConfig</code>, <code>run_api_server()</code></li>
 </ul>
 
   </article>

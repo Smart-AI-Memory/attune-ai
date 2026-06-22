@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Spec Engine cautions — warning</title>
-  <meta name="description" content="The spec engine manages long-running, stateful plan execution — tasks write to disk, quality gates gate forward progress, and approval loops depend on state surviving across sessions. Mistakes here te" />
-  <meta property="og:title" content="Spec Engine cautions — warning" />
-  <meta property="og:description" content="The spec engine manages long-running, stateful plan execution — tasks write to disk, quality gates gate forward progress, and approval loops depend on state surviving across sessions. Mistakes here te" />
+  <title>Spec-driven development with approval loops — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError: plan_path must be a non-empty string` | Empty string or `None` passed to `read_spec` / `PipelineOrchestrator` | Resolve the path b" />
+  <meta property="og:title" content="Spec-driven development with approval loops — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError: plan_path must be a non-empty string` | Empty string or `None` passed to `read_spec` / `PipelineOrchestrator` | Resolve the path b" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/warning" />
   <style>
@@ -258,43 +258,108 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Spec Engine cautions</h1>
-<h2>What to watch for</h2>
-<p>The spec engine manages long-running, stateful plan execution — tasks write to disk, quality gates gate forward progress, and approval loops depend on state surviving across sessions. Mistakes here tend to surface late: a corrupted state file, a silently skipped gate, or a resume that replays already-completed work.</p>
-<h2>Risk areas</h2>
-<h3>Resuming a plan re-runs tasks if state is out of sync</h3>
-<p><code>get_pending_tasks</code> filters completed tasks by comparing <code>task_id</code> values in <code>SpecState.completed</code> against the task list from <code>read_spec</code>. If the plan file changes between sessions — for example, task IDs are renumbered or reordered — previously completed tasks may appear pending again and execute a second time.</p>
-<p><strong>Mitigation:</strong> Treat plan files as append-only once execution has started. If you must edit a plan mid-run, call <code>clear_state</code> to reset progress rather than letting <code>get_pending_tasks</code> infer a stale completion list.</p>
-<h3><code>skip_gates</code>, <code>skip_tests</code>, and <code>skip_simplify</code> silently lower quality guarantees</h3>
-<p><code>PipelineOrchestrator.__init__</code> accepts <code>skip_gates</code>, <code>skip_tests</code>, and <code>skip_simplify</code> flags, and <code>execute_with_approval</code> exposes the same three. Passing any of these sets fields on <code>TaskResult</code> — <code>quality_gate_passed</code>, <code>tests_passed</code>, and <code>simplified</code> — to <code>None</code> or <code>False</code> rather than raising an error. <code>PipelineResult.success</code> still returns <code>True</code> if all tasks executed, even when gates were skipped.</p>
-<p><strong>Mitigation:</strong> After any run that uses skip flags, inspect <code>TaskResult.quality_gate_passed</code>, <code>TaskResult.tests_passed</code>, and <code>TaskResult.gate_score</code> explicitly rather than relying solely on <code>PipelineResult.success</code>.</p>
-<h3><code>read_spec</code> raises on missing or malformed plan files — not on empty task lists</h3>
-<p><code>read_spec</code> raises <code>FileNotFoundError</code> when the plan file is absent and <code>ValueError</code> when <code>plan_path</code> is empty. However, a valid file that contains no parseable XML task blocks returns an empty list without any warning. Downstream, <code>PipelineOrchestrator.run_all</code> and <code>get_pending_tasks</code> both accept an empty task list and complete silently.</p>
-<p><strong>Mitigation:</strong> Check that <code>read_spec</code> returns a non-empty list before passing it to orchestration logic. If you expect tasks and receive an empty list, inspect the plan file for malformed or missing XML task blocks.</p>
-<h3>State is stored as an HTML comment inside the plan file itself</h3>
-<p><code>save_state</code> and <code>load_state</code> read and write <code>SpecState</code> as an embedded comment in the plan file at <code>plan_path</code>. If your editor, formatter, or version control workflow strips HTML comments, the state comment disappears and <code>load_state</code> returns <code>None</code>. The next call to <code>get_pending_tasks</code> then treats every task as pending.</p>
-<p><strong>Mitigation:</strong> Verify that tooling in your workflow preserves HTML comments in <code>.md</code> files. After a <code>save_state</code> call, confirm the comment is present before closing the file. Use <code>find_resumable_plans</code> to check which plans have recoverable state before attempting a resume.</p>
-<h3><code>on_task_complete</code> callback errors abort the pipeline</h3>
-<p>Both <code>run_all</code> and <code>execute_with_approval</code> accept an <code>on_task_complete</code> callback. If the callback raises an unhandled exception, the pipeline stops at that task. The <code>SpecState</code> written by <code>save_state</code> at that point marks the task as <code>current</code> rather than completed, so resuming re-runs the task that triggered the failure.</p>
-<p><strong>Mitigation:</strong> Wrap callback logic in a try/except and handle errors explicitly. Check <code>TaskResult.error</code> inside the callback before taking any action that could fail.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Validate task IDs before editing a live plan.</strong> Before changing a plan file that has an active state, read <code>SpecState.completed</code> via <code>load_state</code> and confirm that none of the IDs you're modifying appear there.</p>
-</li>
-<li>
-<p><strong>Use <code>TaskResult</code> fields, not just <code>PipelineResult.success</code>, to audit gate outcomes.</strong> Check <code>quality_gate_passed</code>, <code>tests_passed</code>, <code>gate_score</code>, and <code>severity</code> on each <code>TaskResult</code> in <code>PipelineResult.tasks</code> when correctness matters more than whether the run completed.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> The public surfaces are <code>PipelineOrchestrator</code>, <code>PipelineResult</code>, <code>TaskResult</code>, and <code>read_spec</code> from <code>pipeline</code>, and <code>SpecState</code>, <code>clear_state</code>, <code>find_resumable_plans</code>, <code>format_progress_bar</code>, <code>get_pending_tasks</code>, <code>load_state</code>, <code>present_task_detail</code>, <code>present_task_result</code>, <code>present_tasks</code>, and <code>save_state</code> from <code>spec</code>. Private helpers can change without notice.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Spec-driven development with approval loops</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError: plan_path must be a non-empty string</code></td>
+<td>Empty string or <code>None</code> passed to <code>read_spec</code> / <code>PipelineOrchestrator</code></td>
+<td>Resolve the path before passing it</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>FileNotFoundError: Plan file not found</code></td>
+<td>The plan file does not exist at the given path</td>
+<td>Verify the path; use <code>os.path.abspath</code> to be sure</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>PipelineResult.success</code> is <code>False</code></td>
+<td>One or more tasks failed to execute or failed a gate</td>
+<td>Iterate <code>result.tasks</code>; check each <code>TaskResult.error</code>, <code>quality_gate_passed</code>, <code>tests_passed</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td>A task never appears in output</td>
+<td>The XML task block is malformed or absent</td>
+<td>Call <code>read_spec</code> directly and inspect the returned list</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Execution resumes from the wrong task</td>
+<td><code>SpecState.completed</code> / <code>current</code> is stale</td>
+<td><code>load_state</code> to inspect, then <code>clear_state</code> to reset</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>get_pending_tasks</code> returns <code>[]</code> unexpectedly</td>
+<td><code>SpecState.completed</code> already holds all task IDs</td>
+<td>State is stale or the plan finished; <code>clear_state</code> to start fresh</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Quality gate always passes</td>
+<td><code>skip_gates=True</code> left in from development</td>
+<td>Remove the flag to re-enable gates</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>State comment vanished after editing the plan</td>
+<td>An editor/formatter/VCS step stripped HTML comments</td>
+<td>Ensure tooling preserves HTML comments in <code>.md</code>; confirm the comment is present after <code>save_state</code></td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/spec/**</code></li>
-<li><code>src/attune/pipeline/**</code></li>
+<li><strong>Resuming re-runs tasks when state drifts.</strong> <code>get_pending_tasks</code>
+matches <code>task_id</code> values from <code>SpecState.completed</code> against the task
+list from <code>read_spec</code>. If task IDs are renumbered or reordered
+between sessions, completed tasks can look pending and run twice.
+Treat plan files as append-only once execution starts; if you must
+edit mid-run, <code>clear_state</code> first.</li>
+<li><strong>Skip flags silently lower quality guarantees.</strong> <code>skip_gates</code>,
+<code>skip_tests</code>, and <code>skip_simplify</code> set the corresponding <code>TaskResult</code>
+fields to <code>None</code>/<code>False</code> rather than raising. <code>PipelineResult.success</code>
+still returns <code>True</code> if all tasks executed, even with gates skipped.
+After any skip-flag run, inspect <code>quality_gate_passed</code>,
+<code>tests_passed</code>, and <code>gate_score</code> explicitly.</li>
+<li><strong><code>read_spec</code> does not warn on empty task lists.</strong> A valid file with
+no parseable XML task blocks returns <code>[]</code> silently, and downstream
+orchestration completes with nothing to do. Check for a non-empty
+list before orchestrating.</li>
+<li><strong><code>on_task_complete</code> errors abort the pipeline.</strong> An unhandled
+exception in the callback stops the run at that task. Run via
+<code>execute_with_approval</code> (the <code>spec</code> layer) and state is saved with
+that task marked <code>current</code> before the callback fires, so resuming
+re-runs it; bare <code>run_all</code> does no state-saving of its own. Wrap
+callback logic in <code>try</code>/<code>except</code> and check <code>TaskResult.error</code> before
+acting.</li>
 </ul>
-<p><strong>Tags:</strong> <code>spec</code>, <code>planning</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Reproduce with a minimal <code>read_spec(plan_path)</code> call — if it
+raises, the problem is the path or the plan file.</li>
+<li>Inspect persisted state: <code>load_state(plan_path)</code>; check
+<code>completed</code>, <code>current</code>, <code>schema_version</code>.</li>
+<li>Clear stale state and retry: <code>clear_state(plan_path)</code>.</li>
+<li>Re-run with <code>skip_gates=True</code> to isolate gate failures from task
+logic. If <code>success</code> flips to <code>True</code>, the gate thresholds or scores
+are the cause — inspect <code>gate_details</code>.</li>
+<li>Iterate <code>result.tasks</code> and print each failing <code>TaskResult</code>
+(<code>error</code>, <code>gate_score</code>, <code>gate_details</code>, <code>tests_passed</code>).</li>
+<li>Run the related tests: <code>pytest -k &quot;spec&quot; -v</code>.</li>
+</ol>
 
   </article>
   <footer>

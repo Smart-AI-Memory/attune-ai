@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Troubleshoot agents — troubleshooting</title>
-  <meta name="description" content="The agents module provides AI-powered release preparation through parallel execution of specialized agents (test coverage, documentation, code quality) with progressive tier escalation from CHEAP to C" />
+  <meta name="description" content="This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (`AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) and the agent lifecycle classes" />
   <meta property="og:title" content="Troubleshoot agents — troubleshooting" />
-  <meta property="og:description" content="The agents module provides AI-powered release preparation through parallel execution of specialized agents (test coverage, documentation, code quality) with progressive tier escalation from CHEAP to C" />
+  <meta property="og:description" content="This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (`AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) and the agent lifecycle classes" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/troubleshooting" />
   <style>
@@ -260,7 +260,7 @@
   <article class="markdown-body">
 <h1>Troubleshoot agents</h1>
 <h2>Before you start</h2>
-<p>The agents module provides AI-powered release preparation through parallel execution of specialized agents (test coverage, documentation, code quality) with progressive tier escalation from CHEAP to CAPABLE to PREMIUM models.</p>
+<p>This guide covers issues with release agents, state persistence, and recovery. It applies to the adapter layer (<code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, <code>LangChainAdapter</code>) and the agent lifecycle classes (<code>BaseAgent</code>, <code>AgentFactory</code>, <code>AgentStateStore</code>, <code>AgentRecoveryManager</code>).</p>
 <h2>Symptom table</h2>
 <table>
 <thead>
@@ -271,136 +271,102 @@
 </thead>
 <tbody>
 <tr>
-<td><code>ReleasePrepTeam.assess_readiness()</code> fails</td>
-<td>Redis connection status and agent initialization parameters</td>
+<td><code>AgentOperationError</code> raised</td>
+<td>The operation wrapped by <code>@safe_agent_operation</code> — the decorator logs the failure before re-raising; check <code>DEBUG</code>-level logs for the operation name</td>
 </tr>
 <tr>
-<td>Quality gates always fail</td>
-<td>Threshold values in <code>QualityGate</code> configuration vs actual scores</td>
+<td><code>ValueError: Missing required fields</code></td>
+<td>The fields your <code>invoke()</code> or <code>run()</code> call passes against the list in <code>@validate_input</code> — the error message names the missing keys</td>
 </tr>
 <tr>
-<td>Agent tier escalation not working</td>
-<td><code>ReleaseAgent.process()</code> escalation logic and model availability</td>
+<td><code>ValueError: Input must be a dict</code></td>
+<td>The type of <code>input_data</code> passed to <code>invoke()</code> or <code>run()</code> — these methods expect <code>str | dict</code>, not a list or other type</td>
 </tr>
 <tr>
-<td>Coverage reports incomplete</td>
-<td><code>TestCoverageAgent</code> pytest execution and coverage file parsing</td>
+<td>Adapter returns <code>None</code> or raises <code>ImportError</code></td>
+<td>Whether the framework is installed — call <code>adapter.is_available()</code> before <code>create_agent()</code> or <code>create_workflow()</code></td>
 </tr>
 <tr>
-<td>Documentation checks missing</td>
-<td><code>DocumentationAgent</code> file access permissions for README/CHANGELOG</td>
+<td>Operation retried unexpectedly or silently swallowed</td>
+<td>The <code>max_attempts</code>, <code>delay</code>, and <code>backoff</code> values on <code>@retry_on_failure</code> — defaults are 3 attempts, 1.0 s delay, 2.0 backoff</td>
+</tr>
+<tr>
+<td>Slow agent call with no apparent error</td>
+<td>The <code>threshold_seconds</code> on <code>@log_performance</code> — at <code>DEBUG</code> level, the decorator logs calls that exceed the threshold</td>
+</tr>
+<tr>
+<td>Intermittent failure across runs</td>
+<td>State held in <code>AgentStateStore</code> from a previous run — inspect or clear stored <code>AgentStateRecord</code> entries</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
-<ol>
-<li>
-<p><strong>Reproduce with minimal configuration.</strong>
-Create a simple test case using <code>ReleasePrepTeam</code> with default quality gates:</p>
-<pre><code class="language-python">from attune.agents import ReleasePrepTeam
-team = ReleasePrepTeam()
-result = team.assess_readiness(&quot;.&quot;)
-print(result.format_console_output())
+<h2>Diagnosis steps</h2>
+<p>Work through these in order — each step is cheaper than the one that follows.</p>
+<h3>1. Reproduce in isolation</h3>
+<p>Reduce your call to the minimum required arguments. For example, to isolate an adapter issue:</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import get_langchain_adapter
+
+adapter = get_langchain_adapter()
+print(adapter.is_available())          # False means the framework is not installed
+print(adapter.framework_name)          # confirms which adapter you actually got
 </code></pre>
-</li>
-<li>
-<p><strong>Check Redis connectivity.</strong>
-If you're using Redis for state persistence, verify the connection:</p>
-<pre><code class="language-bash">redis-cli ping  # Should return PONG
-</code></pre>
-<p>Check Redis URL configuration in <code>ReleasePrepTeam.__init__()</code></p>
-</li>
-<li>
-<p><strong>Enable agent-level debugging.</strong>
-Set debug logging and examine individual agent results:</p>
+<p>Replace <code>get_langchain_adapter</code> with <code>get_autogen_adapter</code>, <code>get_haystack_adapter</code>, or <code>get_langgraph_adapter</code> as appropriate. If <code>is_available()</code> returns <code>False</code>, install the missing framework before continuing.</p>
+<h3>2. Enable DEBUG logging</h3>
+<p>Set your log level to <code>DEBUG</code> and re-run. The <code>@safe_agent_operation</code> decorator logs each operation name and any caught exception before re-raising as <code>AgentOperationError</code>. The <code>@log_performance</code> decorator logs calls that exceed <code>threshold_seconds</code>. Both write at <code>DEBUG</code> level and are silent otherwise.</p>
 <pre><code class="language-python">import logging
 logging.basicConfig(level=logging.DEBUG)
-
-# Check individual agent execution
-result = team.assess_readiness(&quot;.&quot;)
-for agent_result in result.agent_results:
-    print(f&quot;Agent: {agent_result.agent_role}&quot;)
-    print(f&quot;Success: {agent_result.success}&quot;)
-    print(f&quot;Tier used: {agent_result.tier_used}&quot;)
 </code></pre>
-</li>
-<li>
-<p><strong>Verify tool dependencies.</strong>
-Agents rely on external tools that may be missing:</p>
-<pre><code class="language-bash"># For TestCoverageAgent
-pytest --version &amp;&amp; pip show coverage
-
-# For CodeQualityAgent
-ruff --version
-
-# For DocumentationAgent
-ls -la README* CHANGELOG*
-</code></pre>
-</li>
-<li>
-<p><strong>Test agent decorators.</strong>
-Check if operation decorators are causing issues:</p>
+<h3>3. Validate inputs explicitly</h3>
+<p>Call the entry point with a known-good <code>dict</code> that satisfies <code>@validate_input</code>. If you are getting <code>ValueError: Input must be a dict</code> or <code>ValueError: Missing required fields</code>, the problem is upstream of the agent, not inside it:</p>
 <ul>
-<li><code>@safe_agent_operation</code> for error handling</li>
-<li><code>@retry_on_failure</code> for retry logic</li>
-<li><code>@with_cost_tracking</code> for API cost monitoring</li>
+<li><code>invoke(input_data, context)</code> on <code>AutoGenAgent</code>, <code>HaystackAgent</code>, or <code>LangChainAgent</code> — <code>input_data</code> must be <code>str | dict</code></li>
+<li><code>run(input_data, initial_state)</code> on <code>AutoGenWorkflow</code>, <code>HaystackWorkflow</code>, or <code>LangChainWorkflow</code> — same constraint</li>
 </ul>
-</li>
-</ol>
+<h3>4. Check adapter and framework availability</h3>
+<p>Each adapter exposes <code>is_available()</code>. Call it explicitly if you are seeing <code>ImportError</code> or unexpected <code>None</code> returns:</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import (
+    get_autogen_adapter,
+    get_haystack_adapter,
+    get_langchain_adapter,
+)
+
+for getter in [get_autogen_adapter, get_haystack_adapter, get_langchain_adapter]:
+    a = getter()
+    print(a.framework_name, a.is_available())
+</code></pre>
+<h3>5. Inspect agent state and recovery records</h3>
+<p>If failures are intermittent and tied to a specific agent identity, check <code>AgentStateStore</code> for stale <code>AgentStateRecord</code> entries and <code>AgentRecoveryManager</code> for unresolved <code>AgentExecutionRecord</code> entries from prior runs. Stale state from a previous failed run can cause an otherwise-healthy agent to behave incorrectly.</p>
+<h3>6. Run the test suite</h3>
+<pre><code class="language-bash">pytest -k &quot;agents&quot; -v
+</code></pre>
+<p>If a test exercises the failing path, use its fixtures as a baseline for your own reproduction. A failing test here confirms the bug is in the library; a passing test suite with a failing integration points to environment or configuration drift.</p>
 <h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Fix Redis connection issues.</strong></p>
-<pre><code class="language-bash"># Start Redis if not running
-redis-server
-
-# Or disable Redis persistence
-team = ReleasePrepTeam(redis_url=None)
+<p><strong>Framework not installed</strong>
+<code>is_available()</code> returns <code>False</code> when the underlying framework package is absent. Install the framework your adapter requires:</p>
+<pre><code class="language-bash">pip install langchain          # for LangChainAdapter / LangChainAgent
+pip install pyautogen          # for AutoGenAdapter / AutoGenAgent
+pip install haystack-ai        # for HaystackAdapter / HaystackAgent
 </code></pre>
-</li>
-<li>
-<p><strong>Adjust quality gate thresholds.</strong></p>
-<pre><code class="language-python"># Lower thresholds for stricter projects
-quality_gates = {
-    &quot;test_coverage&quot;: 0.8,  # 80% instead of default
-    &quot;documentation_score&quot;: 0.7
-}
-team = ReleasePrepTeam(quality_gates=quality_gates)
+<p>This change is outside the <code>attune</code> library itself — the adapter will not work until the dependency is present.</p>
+<p><strong>Missing required fields in <code>input_data</code></strong>
+<code>@validate_input</code> raises <code>ValueError: Missing required fields: {...}</code> and names the missing keys. Add those keys to the <code>dict</code> you pass to <code>invoke()</code> or <code>run()</code>.</p>
+<p><strong>Stale state across runs</strong>
+If the agent worked in a previous session and now behaves incorrectly without a code change, clear or reset the <code>AgentStateStore</code> entries for that agent. Cached <code>AgentStateRecord</code> values from a failed run can cause downstream methods to branch incorrectly.</p>
+<p><strong>Retry loop exhausted</strong>
+<code>@retry_on_failure</code> re-raises the last exception after <code>max_attempts</code> retries (default: 3). If you are hitting this, the root cause is in the exception itself — check <code>DEBUG</code> logs for the full traceback from the first attempt. You can increase <code>max_attempts</code> or narrow the <code>exceptions</code> tuple to avoid masking unrelated errors.</p>
+<p><strong>Version mismatch in a framework dependency</strong>
+A framework upgrade can silently change <code>invoke()</code> or <code>run()</code> call signatures. Confirm the installed version:</p>
+<pre><code class="language-bash">pip show langchain
+pip show pyautogen
+pip show haystack-ai
 </code></pre>
-</li>
-<li>
-<p><strong>Install missing development tools.</strong></p>
-<pre><code class="language-bash">pip install pytest coverage ruff
-# Ensure tools are in PATH
-which pytest ruff
-</code></pre>
-</li>
-<li>
-<p><strong>Handle file permission issues.</strong></p>
-<pre><code class="language-bash"># For documentation checks
-chmod +r README.md CHANGELOG.md
-# Ensure codebase_path is accessible
-ls -la /path/to/codebase
-</code></pre>
-</li>
-<li>
-<p><strong>Force specific model tier.</strong></p>
-<pre><code class="language-python"># Skip escalation for testing
-agent = ReleaseAgent(&quot;test&quot;, &quot;tester&quot;)
-# Or check model availability
-from attune.agents import Tier
-# Verify CHEAP/CAPABLE/PREMIUM models are configured
-</code></pre>
-</li>
-</ul>
+<p>Pin the version in your requirements file if the adapter was tested against a specific release.</p>
+<p><strong><code>wrap_wizard()</code> producing unexpected behavior</strong>
+<code>wrap_wizard(wizard, name, model_tier)</code> defaults to <code>model_tier='capable'</code>. If the wrapped <code>WizardAgent</code> is behaving differently than the underlying wizard, check that <code>model_tier</code> matches what the wizard expects and that <code>name</code> is set explicitly when you need a stable identifier.</p>
 <h2>Source files</h2>
 <ul>
-<li><code>src/attune/agents/release_agent.py</code> - Base agent with tier escalation</li>
-<li><code>src/attune/agents/test_coverage_agent.py</code> - Coverage analysis</li>
-<li><code>src/attune/agents/documentation_agent.py</code> - Documentation checks</li>
-<li><code>src/attune/agents/code_quality_agent.py</code> - Code quality analysis</li>
-<li><code>src/attune/agents/release_prep_team.py</code> - Parallel agent coordination</li>
-<li><code>src/attune/agent_factory/adapters/</code> - Framework integrations</li>
+<li><code>src/attune/agents/**</code></li>
+<li><code>src/attune/agent_factory/**</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 

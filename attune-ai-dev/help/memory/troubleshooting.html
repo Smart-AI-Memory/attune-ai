@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Troubleshoot memory — troubleshooting</title>
-  <meta name="description" content="The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis conn" />
+  <meta name="description" content="The memory subsystem covers three concerns: short-term storage via `MemoryBackend` and `SearchableMemoryBackend`, Claude Code memory file loading via `ClaudeMemoryLoader`, and enterprise control panel" />
   <meta property="og:title" content="Troubleshoot memory — troubleshooting" />
-  <meta property="og:description" content="The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis conn" />
+  <meta property="og:description" content="The memory subsystem covers three concerns: short-term storage via `MemoryBackend` and `SearchableMemoryBackend`, Claude Code memory file loading via `ClaudeMemoryLoader`, and enterprise control panel" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/troubleshooting" />
   <style>
@@ -260,7 +260,7 @@
   <article class="markdown-body">
 <h1>Troubleshoot memory</h1>
 <h2>Before you start</h2>
-<p>The memory subsystem handles short-term storage (Redis-backed), long-term pattern storage (MemDocs), and Claude memory file loading (CLAUDE.md). Symptoms often fall into one of three areas: Redis connectivity, memory file loading, or classification and security access.</p>
+<p>The memory subsystem covers three concerns: short-term storage via <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>, Claude Code memory file loading via <code>ClaudeMemoryLoader</code>, and enterprise control panel operations via <code>MemoryControlPanel</code>. Identify which layer is failing before you dig in — Redis connectivity issues look different from CLAUDE.md import failures or pattern classification errors.</p>
 <h2>Symptom table</h2>
 <table>
 <thead>
@@ -271,126 +271,103 @@
 </thead>
 <tbody>
 <tr>
-<td><code>OSError: REDIS_URL not found</code></td>
-<td>Run <code>is_redis_available()</code> before calling <code>get_railway_redis()</code>. Confirm <code>REDIS_URL</code> is set in your environment, or add Redis to your Railway project with <code>railway add --database redis</code>.</td>
+<td><code>stash()</code> or <code>retrieve()</code> returns <code>None</code> or <code>False</code> unexpectedly</td>
+<td>Call <code>is_connected()</code> on your backend instance; if it returns <code>False</code>, Redis is not reachable</td>
 </tr>
 <tr>
-<td><code>stash()</code> or <code>retrieve()</code> returns <code>None</code> unexpectedly</td>
-<td>Call <code>backend.is_connected()</code> to confirm the backend is live. Then call <code>backend.get_stats()</code> to check key counts and TTL state.</td>
+<td><code>get_railway_redis()</code> raises <code>OSError: REDIS_URL not found</code></td>
+<td>Confirm the <code>REDIS_URL</code> environment variable is set; on Railway, run <code>railway add --database redis</code></td>
 </tr>
 <tr>
-<td>CLAUDE.md memory files are not loaded</td>
-<td>Check <code>ClaudeMemoryConfig.enabled</code> — it defaults to <code>False</code>. Confirm <code>project_root</code> resolves to the directory containing <code>.claude/CLAUDE.md</code>. Call <code>loader.get_loaded_files()</code> to see what was actually imported.</td>
+<td><code>ClaudeMemoryLoader.load_all_memory()</code> returns empty or partial content</td>
+<td>Call <code>get_loaded_files()</code> to see which CLAUDE.md files were found; check <code>ClaudeMemoryConfig.max_import_depth</code> (default <code>5</code>) and <code>max_file_size_bytes</code> (default <code>1000000</code>)</td>
 </tr>
 <tr>
-<td>Memory files load but content is missing or truncated</td>
-<td>Check <code>ClaudeMemoryConfig.max_file_size_bytes</code> (default: 1,000,000 bytes) and <code>max_import_depth</code> (default: 5). Files exceeding the size limit or beyond the import depth are silently skipped when <code>validate_files=True</code>.</td>
+<td><code>MemoryControlPanel.health_check()</code> reports unhealthy</td>
+<td>Check <code>status()</code> first — it shows Redis connectivity and storage directory state separately</td>
 </tr>
 <tr>
-<td><code>MemoryPermissionError</code> or <code>SecurityError</code> on pattern access</td>
-<td>Call <code>check_access()</code> with the pattern's classification. Confirm the agent's credentials cover the required <code>Classification</code> level (e.g., <code>HEALTHCARE</code>, <code>FINANCIAL</code>, <code>PROPRIETARY</code>).</td>
+<td><code>search()</code> or <code>remember()</code> fails on a backend</td>
+<td>Confirm your backend implements <code>SearchableMemoryBackend</code>, not just <code>MemoryBackend</code>; the base protocol does not expose those methods</td>
 </tr>
 <tr>
-<td>Redis starts but the control panel reports unhealthy</td>
-<td>Call <code>panel.health_check()</code> and inspect the returned dict. Then call <code>panel.status()</code> to see whether <code>auto_start_redis</code> succeeded.</td>
+<td>Intermittent <code>stash()</code>/<code>retrieve()</code> failures under load</td>
+<td>Check <code>RateLimiter.get_remaining()</code> for the client IP; the default window is 100 requests per 60 seconds</td>
 </tr>
 <tr>
-<td>Intermittent failures across agents or sessions</td>
-<td>Check for stale state under the <code>empathy:active_agents</code> and <code>empathy:service_lock</code> Redis keys. Call <code>panel.clear_short_term(agent_id=...)</code> to flush a specific agent's short-term memory.</td>
+<td>Pattern classification returns unexpected results</td>
+<td>Verify content does not contain keywords from <code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, or <code>PROPRIETARY_KEYWORDS</code> — matches elevate the classification automatically</td>
 </tr>
 </tbody>
 </table>
 <h2>Diagnosis steps</h2>
-<p>Work through these in order — each step is cheaper than the one that follows it.</p>
+<p>Work through these in order — each step is cheaper than the one that follows.</p>
 <ol>
 <li>
-<p><strong>Confirm Redis availability.</strong>
-Before investigating application logic, verify the Redis subsystem is reachable:</p>
+<p><strong>Check Redis availability without importing it.</strong>
+Call <code>is_redis_available()</code> first. If it returns <code>False</code>, no backend that depends on Redis will work, and you can skip deeper investigation until connectivity is restored.</p>
 <pre><code class="language-python">from attune.memory import is_redis_available
 print(is_redis_available())
 </code></pre>
-<p>If this returns <code>False</code>, fix connectivity before continuing. For Railway deployments, ensure <code>REDIS_URL</code> is set; for local deployments, confirm Redis is running on <code>localhost:6379</code> (the default <code>ControlPanelConfig</code> values).</p>
 </li>
 <li>
-<p><strong>Check the connection status explicitly.</strong>
-If Redis appears available but behavior is wrong, get a detailed status report:</p>
+<p><strong>Inspect the Redis connection details.</strong>
+Call <code>check_redis_connection()</code> for a structured status dict that includes the host, port, and any error message. If you are parsing a <code>REDIS_URL</code>, call <code>parse_redis_url(url)</code> to confirm it resolves to the expected host and port before passing it to <code>get_redis_memory()</code>.</p>
 <pre><code class="language-python">from attune.memory import check_redis_connection
 print(check_redis_connection())
 </code></pre>
-<p>This returns a dict with connection state you can inspect without modifying any code.</p>
 </li>
 <li>
-<p><strong>Inspect what memory files were loaded.</strong>
-If CLAUDE.md content is missing, call <code>get_loaded_files()</code> after <code>load_all_memory()</code> to see the exact file list:</p>
-<pre><code class="language-python">from attune.memory.claude_memory import ClaudeMemoryLoader, ClaudeMemoryConfig
-
-config = ClaudeMemoryConfig(enabled=True, project_root=&quot;/your/project&quot;)
-loader = ClaudeMemoryLoader(config)
-content = loader.load_all_memory()
+<p><strong>Verify backend connectivity and stats.</strong>
+On a live backend instance, call <code>is_connected()</code> and <code>get_stats()</code>. A backend can pass <code>is_redis_available()</code> but still fail <code>is_connected()</code> if credentials or the specific DB index are wrong.</p>
+</li>
+<li>
+<p><strong>Check which memory files were loaded.</strong>
+If the issue is in Claude memory loading, call <code>get_loaded_files()</code> on your <code>ClaudeMemoryLoader</code> instance. Cross-check the returned paths against the <code>project_root</code> in <code>ClaudeMemoryConfig</code>. If <code>validate_files</code> is <code>True</code> (the default), files that fail validation are silently skipped.</p>
+<pre><code class="language-python">loader = ClaudeMemoryLoader()
+loader.load_all_memory(project_root=&quot;/your/project&quot;)
 print(loader.get_loaded_files())
 </code></pre>
-<p>Cross-reference the output against your <code>max_import_depth</code> and <code>max_file_size_bytes</code> settings.</p>
 </li>
 <li>
-<p><strong>Run the memory test suite.</strong>
-Before modifying any code, confirm which paths are already covered:</p>
+<p><strong>Run the control panel health check.</strong>
+For enterprise control panel issues, call <code>MemoryControlPanel.health_check()</code>, then <code>status()</code> for a breakdown. If Redis isn't running and <code>ControlPanelConfig.auto_start_redis</code> is <code>True</code>, call <code>start_redis(verbose=True)</code> and check the returned <code>RedisStatus</code>.</p>
+</li>
+<li>
+<p><strong>Run targeted tests.</strong></p>
 <pre><code>pytest -k &quot;memory&quot; -v
 </code></pre>
-<p>A failing test that exercises your symptom gives you a reproducible baseline and a fixture you can reuse.</p>
-</li>
-<li>
-<p><strong>Enable DEBUG logging.</strong>
-If the above steps don't isolate the problem, increase log verbosity and re-run:</p>
-<pre><code class="language-python">import logging
-logging.getLogger(&quot;attune.memory&quot;).setLevel(logging.DEBUG)
-</code></pre>
-<p>Look for unexpected early returns, TTL expirations, or classification rejections in the output.</p>
-</li>
-<li>
-<p><strong>Pull a full health and statistics report.</strong>
-For control-panel issues, call both <code>health_check()</code> and <code>get_statistics()</code> together:</p>
-<pre><code class="language-python">panel = MemoryControlPanel()
-print(panel.health_check())
-print(panel.get_statistics())
-</code></pre>
-<p>The statistics report exposes pattern counts, storage usage, and audit log state that are not visible in the basic status output.</p>
+<p>If a test covers your failing path, its fixtures give you a minimal reproduction environment.</p>
 </li>
 </ol>
 <h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Redis not found on Railway.</strong> Set the <code>REDIS_URL</code> environment variable or run <code>railway add --database redis</code>. For external access use <code>REDIS_PUBLIC_URL</code>. This is a deployment environment change, not a code change.</p>
-</li>
-<li>
-<p><strong>Claude memory loading is silently disabled.</strong> <code>ClaudeMemoryConfig.enabled</code> defaults to <code>False</code>. Explicitly set it to <code>True</code> when constructing the config, or pass a config with <code>enabled=True</code> to <code>ClaudeMemoryLoader</code>.</p>
-</li>
-<li>
-<p><strong>Files skipped due to size or depth limits.</strong> Increase <code>max_file_size_bytes</code> or <code>max_import_depth</code> in <code>ClaudeMemoryConfig</code>. Alternatively, restructure deep import chains so critical content appears within the first five levels.</p>
-</li>
-<li>
-<p><strong>Missing default CLAUDE.md.</strong> If no memory file exists for a project, create one with:</p>
+<p><strong>Redis not reachable</strong>
+Set <code>REDIS_URL</code> in your environment, or confirm the host and port in <code>ControlPanelConfig</code> (defaults: <code>redis_host='localhost'</code>, <code>redis_port=6379</code>). For Railway deployments, the variable must be <code>REDIS_URL</code>; <code>REDIS_PUBLIC_URL</code> is for external access only.</p>
+<pre><code class="language-bash">export REDIS_URL=redis://localhost:6379
+</code></pre>
+<p><strong><code>load_all_memory()</code> returns less content than expected</strong>
+Increase <code>max_import_depth</code> in <code>ClaudeMemoryConfig</code> if your project has deeply nested CLAUDE.md imports. Increase <code>max_file_size_bytes</code> if large files are being skipped. Set <code>validate_files=False</code> temporarily to confirm that validation is the cause — then fix the offending files rather than leaving validation off.</p>
+<pre><code class="language-python">config = ClaudeMemoryConfig(max_import_depth=10, max_file_size_bytes=5_000_000)
+loader = ClaudeMemoryLoader(config)
+</code></pre>
+<p><strong>No CLAUDE.md exists for a new project</strong>
+Call <code>create_default_project_memory()</code> to generate a <code>.claude/CLAUDE.md</code> scaffold:</p>
 <pre><code class="language-python">from attune.memory.claude_memory import create_default_project_memory
 create_default_project_memory(project_root=&quot;/your/project&quot;, framework=&quot;empathy&quot;)
 </code></pre>
-</li>
-<li>
-<p><strong>Stale short-term memory causing incorrect agent behavior.</strong> Clear a specific agent's short-term store:</p>
+<p><strong><code>search()</code> or <code>remember()</code> raises <code>AttributeError</code></strong>
+Your backend only implements <code>MemoryBackend</code>. To use semantic search, promote it to <code>SearchableMemoryBackend</code>. This is a protocol change — you need a backend class that implements <code>search()</code>, <code>remember()</code>, <code>promote()</code>, <code>prune()</code>, and <code>recent()</code>.</p>
+<p><strong>Stale short-term memory causing wrong results</strong>
+Clear short-term memory for the affected agent:</p>
 <pre><code class="language-python">panel = MemoryControlPanel()
 cleared = panel.clear_short_term(agent_id=&quot;your-agent-id&quot;)
 print(f&quot;Cleared {cleared} entries&quot;)
 </code></pre>
-</li>
-<li>
-<p><strong>Classification access denied.</strong> Pattern access is gated by <code>Classification</code> level. If you see <code>MemoryPermissionError</code>, confirm the agent's credentials include the required tier before calling <code>retrieve()</code> or <code>search()</code>. This may require changes to how agent credentials are provisioned, outside the memory module itself.</p>
-</li>
-<li>
-<p><strong>Redis URL parse failure.</strong> If <code>get_redis_memory()</code> raises on an unexpected URL format, test the URL directly:</p>
-<pre><code class="language-python">from attune.memory.config import parse_redis_url
-print(parse_redis_url(&quot;redis://your-host:6379&quot;))
+<p>To reset the loader's file cache between runs:</p>
+<pre><code class="language-python">loader.clear_cache()
 </code></pre>
-<p>This isolates whether the problem is in the URL string or in the broader connection setup.</p>
-</li>
-</ul>
+<p><strong>Version mismatch after a dependency upgrade</strong>
+Run <code>pip show attune</code> to confirm the installed version. The module exposes <code>__version__ = '2.2.0'</code> — check that your code's expectations match this version before filing a bug.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/memory/**</code></li>

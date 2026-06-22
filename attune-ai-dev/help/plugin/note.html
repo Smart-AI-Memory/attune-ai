@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Note: plugin — note</title>
-  <meta name="description" content="The plugin integrates attune with Claude Code by wiring together hooks, slash commands, and MCP configuration. All hook logic lives under `hooks/` and is partitioned into focused modules: lifecycle ho" />
+  <meta name="description" content="The plugin is a Claude Code extension that wires together skills, hooks, slash commands, and MCP configuration. All hook entry points live under `hooks/` and follow a consistent shape: a public `main(" />
   <meta property="og:title" content="Note: plugin — note" />
-  <meta property="og:description" content="The plugin integrates attune with Claude Code by wiring together hooks, slash commands, and MCP configuration. All hook logic lives under `hooks/` and is partitioned into focused modules: lifecycle ho" />
+  <meta property="og:description" content="The plugin is a Claude Code extension that wires together skills, hooks, slash commands, and MCP configuration. All hook entry points live under `hooks/` and follow a consistent shape: a public `main(" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/note" />
   <style>
@@ -260,96 +260,30 @@
   <article class="markdown-body">
 <h1>Note: plugin</h1>
 <h2>Context</h2>
-<p>The plugin integrates attune with Claude Code by wiring together hooks, slash commands, and MCP configuration. All hook logic lives under <code>hooks/</code> and is partitioned into focused modules: lifecycle hooks (<code>format_on_save</code>, <code>help_freshness_check</code>, <code>help_on_error</code>, <code>help_post_commit</code>, <code>welcome</code>), session-continuity utilities (<code>_handoff_cli</code>, <code>_resume_prompt</code>, <code>_state</code>), context-utilization monitoring (<code>_transcript_size</code>, <code>compact_warning</code>), orientation (<code>spec_orient</code>), and a security layer (<code>security_guard</code>).</p>
-<h2>Shared state model</h2>
-<p>Two dataclasses in <code>hooks._state</code> are the common currency passed between modules:</p>
-<p><strong><code>SpecInfo</code></strong> represents one in-flight spec discovered under a workspace root:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>slug</code></td>
-<td><code>str</code></td>
-<td>Short identifier for the spec</td>
-</tr>
-<tr>
-<td><code>path</code></td>
-<td><code>Path</code></td>
-<td>Absolute path to the spec file</td>
-</tr>
-<tr>
-<td><code>layer</code></td>
-<td><code>str</code></td>
-<td>Architectural layer the spec targets</td>
-</tr>
-<tr>
-<td><code>phase</code></td>
-<td><code>str</code></td>
-<td>Current lifecycle phase</td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td><code>str</code></td>
-<td>Progress status</td>
-</tr>
-<tr>
-<td><code>mtime</code></td>
-<td><code>float</code></td>
-<td>Last-modified timestamp</td>
-</tr>
-</tbody>
-</table>
-<p><strong><code>GitState</code></strong> is a snapshot of the worktree at hook-fire time:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>branch</code></td>
-<td><code>str</code></td>
-<td>Current branch name</td>
-</tr>
-<tr>
-<td><code>last_sha</code></td>
-<td><code>str</code></td>
-<td>SHA of the most recent commit</td>
-</tr>
-<tr>
-<td><code>last_subject</code></td>
-<td><code>str</code></td>
-<td>Subject line of the most recent commit</td>
-</tr>
-<tr>
-<td><code>uncommitted</code></td>
-<td><code>tuple[str, ...]</code></td>
-<td>Paths with uncommitted changes</td>
-</tr>
-</tbody>
-</table>
-<p><code>discover_specs(roots)</code> and <code>git_state(cwd)</code> in <code>hooks._state</code> are the canonical way to populate these dataclasses. Other modules import and consume them rather than querying git or the filesystem directly.</p>
-<h2>Session-continuity flow</h2>
-<p>When a session ends or context runs long, three functions collaborate to produce a resume prompt:</p>
-<ol>
-<li><code>workspace_roots(cwd)</code> — resolves the workspace roots to scan.</li>
-<li><code>discover_specs(roots)</code> — walks <code>specs/</code> directories under each root and returns <code>list[SpecInfo]</code>.</li>
-<li><code>build_resume_prompt(spec_info, git_state, *, workspace_path, todo_summary)</code> in <code>hooks._resume_prompt</code> — renders the user-facing resume prompt body from a <code>SpecInfo | None</code> and a <code>GitState</code>.</li>
-</ol>
-<p>The <code>hooks._handoff_cli</code> module exposes this flow as the <code>/handoff</code> slash command via its <code>main()</code> entry point.</p>
-<h2>Context utilization and compact warning</h2>
-<p><code>estimate_utilization(transcript_path)</code> in <code>hooks._transcript_size</code> returns a float in <code>[0.0, 1.0]</code> representing how full the current context window is. When utilization crosses a threshold, <code>format_warning(util, threshold, resume_body)</code> in <code>hooks.compact_warning</code> composes the visible warning together with the resume prompt. <code>session_sentinel_path(session_id)</code> and <code>prune_stale_sentinels(now)</code> in <code>hooks._state</code> ensure the warning fires at most once per session.</p>
-<h2>Security layer</h2>
-<p><code>hooks.security_guard</code> validates tool calls before execution. <code>validate_bash_command(command)</code> blocks commands that target paths in <code>SYSTEM_DIRECTORIES</code> (<code>{'/etc', '/sys', '/proc', '/dev', '/boot', '/sbin', '/usr/sbin', '/private/etc', '/private/var'}</code>) or that use prefixes listed in <code>SEARCH_COMMAND_PREFIXES</code>. <code>validate_file_path(file_path)</code> applies the same directory check to file operations. Both return <code>(bool, str)</code> — a pass/fail flag and an explanation string. The module's <code>main(context)</code> entry point wraps these validators for MCP dispatch.</p>
+<p>The plugin is a Claude Code extension that wires together skills, hooks, slash commands, and MCP configuration. All hook entry points live under <code>hooks/</code> and follow a consistent shape: a public <code>main()</code> function that the Claude Code runtime calls directly.</p>
+<h2>Public surface</h2>
+<p>The plugin's shared state layer (<code>hooks/_state.py</code>) defines two dataclasses that flow through most of the hook pipeline:</p>
+<ul>
+<li><strong><code>SpecInfo</code></strong> — represents one in-flight spec discovered under a workspace root. Fields: <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, <code>mtime</code>, <code>effective_status</code>, <code>status_source</code>, and <code>status_conflict</code>.</li>
+<li><strong><code>GitState</code></strong> — a snapshot of the worktree at hook-fire time. Fields: <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code>.</li>
+</ul>
+<p>Functions in the same module populate these types:</p>
+<ul>
+<li><code>discover_specs(roots)</code> — walks <code>specs/</code> directories under each root and returns a list of <code>SpecInfo</code> instances.</li>
+<li><code>git_state(cwd)</code> — returns a <code>GitState</code> for the given working directory.</li>
+<li><code>workspace_roots(cwd)</code> — makes a best-effort guess at which roots to scan.</li>
+<li><code>session_sentinel_path(session_id)</code> — returns the path to a per-session compact-warning sentinel file.</li>
+<li><code>prune_stale_sentinels(now)</code> — removes sentinel files older than the TTL.</li>
+</ul>
+<p>Other hooks consume these types directly:</p>
+<ul>
+<li><code>hooks._resume_prompt.build_resume_prompt(spec_info, git_state, ...)</code> — renders the user-facing resume prompt from a <code>SpecInfo</code> and a <code>GitState</code>.</li>
+<li><code>hooks.spec_orient.format_orientation(specs)</code> and <code>render_spec_pin(spec, char_budget)</code> — format spec orientation output for display.</li>
+<li><code>hooks.compact_warning.format_warning(util, threshold, resume_body)</code> — composes the compact-warning message from a utilization float produced by <code>hooks._transcript_size.estimate_utilization(transcript_path)</code>.</li>
+<li><code>hooks.security_guard.validate_bash_command(command)</code> and <code>validate_file_path(file_path)</code> — each return a <code>(bool, str)</code> verdict tuple checked before shell operations run.</li>
+</ul>
+<h2>Design note</h2>
+<p>The dataclasses in <code>hooks/_state.py</code> act as the shared vocabulary of the hook pipeline. Functions that discover or snapshot state return these types; functions that present or validate state accept them. This keeps discovery logic in one place and lets individual hooks stay focused on a single responsibility.</p>
 
   </article>
   <footer>

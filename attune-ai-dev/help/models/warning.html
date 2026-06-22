@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Models cautions — warning</title>
-  <meta name="description" content="The `models` feature spans LLM authentication, adaptive model routing, circuit breaking, and telemetry. The risks below reflect the areas where misconfiguration or missed edge cases produce failures t" />
-  <meta property="og:title" content="Models cautions — warning" />
-  <meta property="og:description" content="The `models` feature spans LLM authentication, adaptive model routing, circuit breaking, and telemetry. The risks below reflect the areas where misconfiguration or missed edge cases produce failures t" />
+  <title>LLM authentication, provider routing, and tier management — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError` from `get_model` | Provider other than `&quot;anthropic&quot;` passed | Pass `&quot;anthropic&quot;`; this provider set is single today | high | | `ge" />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError` from `get_model` | Provider other than `&quot;anthropic&quot;` passed | Pass `&quot;anthropic&quot;`; this provider set is single today | high | | `ge" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/warning" />
   <style>
@@ -258,43 +258,97 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Models cautions</h1>
-<h2>What to watch for</h2>
-<p>The <code>models</code> feature spans LLM authentication, adaptive model routing, circuit breaking, and telemetry. The risks below reflect the areas where misconfiguration or missed edge cases produce failures that are hard to trace after the fact.</p>
-<h2>Risk areas</h2>
-<h3><code>cmd_auth_reset()</code> silently discards your <code>AuthStrategy</code></h3>
-<p><code>cmd_auth_reset()</code> clears the saved authentication strategy file at <code>AUTH_STRATEGY_FILE</code>. If you call it programmatically — or a user runs it from the CLI — all customized fields (<code>subscription_tier</code>, <code>small_module_threshold</code>, <code>loc_to_tokens_multiplier</code>, and so on) are lost without a confirmation prompt in non-interactive contexts. Back up or serialize the current strategy via <code>AuthStrategy.to_dict()</code> before invoking a reset.</p>
-<h3><code>AdaptiveModelRouter.get_best_model()</code> falls back silently when no model meets your constraints</h3>
-<p>When you pass <code>max_cost</code>, <code>max_latency_ms</code>, or <code>min_success_rate</code> to <code>get_best_model()</code>, the router filters against <code>ModelPerformance</code> telemetry. If no recorded model meets all constraints, the method still returns a model — it does not raise. Low <code>sample_size</code> values on a <code>ModelPerformance</code> record mean the <code>quality_score</code> and <code>success_rate</code> fields are statistically weak, so routing decisions made early in a workflow's lifetime may not reflect real performance. Check <code>get_routing_stats()</code> before tightening constraint values in production.</p>
-<h3>Circuit breaker state is per-process and resets on restart</h3>
-<p><code>CircuitBreaker</code> tracks <code>CircuitBreakerState</code> (failure count, <code>is_open</code>, <code>opened_at</code>) in memory. A provider that tripped the breaker in one process appears healthy to any new process or worker. In multi-process or containerized deployments, a provider can be simultaneously open in one worker and closed in another. If you need consistent circuit state across workers, you must persist and share it externally — the current implementation has no built-in backend for this.</p>
-<h3><code>AuthStrategy.get_recommended_mode()</code> uses line-count thresholds that may not match your modules</h3>
-<p><code>get_recommended_mode()</code> categorizes a module as small, medium, or large based on <code>small_module_threshold</code> (default 500 lines) and <code>medium_module_threshold</code> (default 2000 lines), then recommends an <code>AuthMode</code>. Generated files, data files checked in as <code>.py</code>, or auto-formatted files can have artificially high line counts. Run <code>count_lines_of_code()</code> on the specific file before accepting the recommendation at face value, and adjust the thresholds in your saved <code>AuthStrategy</code> if the defaults misclassify your modules.</p>
-<h3><code>EmpathyLLMExecutor</code> telemetry is only recorded if a <code>TelemetryBackend</code> is provided at construction</h3>
-<p><code>EmpathyLLMExecutor.__init__()</code> accepts an optional <code>telemetry_store</code>. If you construct the executor without one, calls still succeed, but no <code>LLMCallRecord</code> is written. <code>AdaptiveModelRouter</code> depends on telemetry to rank models; an executor running without a store silently starves the router of signal. Always pass a <code>telemetry_store</code> in production configurations, and verify with <code>get_routing_stats()</code> that records are accumulating.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Serialize <code>AuthStrategy</code> before any reset.</strong> Call <code>AuthStrategy.to_dict()</code> and store the result before running <code>cmd_auth_reset()</code> or any code path that may call it transitively.</p>
-</li>
-<li>
-<p><strong>Warm up telemetry before tightening routing constraints.</strong> Use <code>get_routing_stats(workflow, stage, days=7)</code> to confirm you have a meaningful <code>sample_size</code> before setting strict <code>max_cost</code> or <code>min_success_rate</code> values in <code>get_best_model()</code>.</p>
-</li>
-<li>
-<p><strong>Always construct <code>EmpathyLLMExecutor</code> with a <code>telemetry_store</code> in production.</strong> Without it, the adaptive router receives no feedback and defaults to static tier assignments.</p>
-</li>
-<li>
-<p><strong>Do not share <code>CircuitBreaker</code> instances across process boundaries.</strong> Treat each instance as local to its process and design your deployment to tolerate divergent breaker states between workers.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> Names listed in <code>__all__</code> are stable. Private helpers (names starting with <code>_</code>) can change without notice across refactors.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ValueError</code> from <code>get_model</code></td>
+<td>Provider other than <code>&quot;anthropic&quot;</code> passed</td>
+<td>Pass <code>&quot;anthropic&quot;</code>; this provider set is single today</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>get_model(...)</code> returns <code>None</code></td>
+<td>No model registered for that provider/tier</td>
+<td>Check the tier value (<code>ModelTier.CHEAP.value</code>, not the enum) and guard the result</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>ValueError</code> from <code>get_tasks_for_tier</code></td>
+<td>Unknown tier argument</td>
+<td>Pass a real <code>ModelTier</code>, not a raw string</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A task routes to <code>CAPABLE</code> unexpectedly</td>
+<td>The task string is unknown, so it defaulted</td>
+<td>Call <code>is_known_task</code> first; add the task to the tier map if it should be classified</td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>AUTO</code> returns <code>API</code> on a PRO account regardless of module size</td>
+<td><code>get_recommended_mode</code> resolves by tier first; <code>PRO</code>/<code>API_ONLY</code> always return <code>API</code></td>
+<td>Expected — only <code>MAX</code>/<code>ENTERPRISE</code> tiers use size-based selection</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Auth always picks the mode you set, ignoring <code>AUTO</code> logic</td>
+<td><code>default_mode</code> is <code>SUBSCRIPTION</code> or <code>API</code>, not <code>AUTO</code></td>
+<td>Set <code>default_mode = AuthMode.AUTO</code> so it defers to <code>get_recommended_mode</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>await</code> error calling an executor's <code>run</code></td>
+<td><code>LLMExecutor.run</code> is async and was called without <code>await</code></td>
+<td><code>await executor.run(...)</code> or drive it with <code>asyncio.run</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>AdaptiveModelRouter</code> returns the same model regardless of cost</td>
+<td>Fewer than <code>MIN_SAMPLE_SIZE</code> calls recorded</td>
+<td>Accumulate telemetry; until then it falls back to static defaults</td>
+<td>low</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/models/**</code></li>
+<li><strong>Tier value vs enum.</strong> Registry lookups take the tier <strong>value</strong>
+(<code>tier.value</code>), while routing functions accept either a <code>ModelTier</code>
+or its string. Mixing the two silently returns <code>None</code> from
+<code>get_model</code>. Pass <code>tier.value</code> to <code>get_model</code>.</li>
+<li><strong>Unknown tasks default silently.</strong> <code>get_tier_for_task</code> never raises;
+an unrecognized task quietly becomes <code>CAPABLE</code>. Validate with
+<code>is_known_task</code> when the task source is untrusted.</li>
+<li><strong>Cost fields are per-million on <code>ModelInfo</code>, per-1k on the
+properties.</strong> <code>input_cost_per_million</code> is the stored field;
+<code>cost_per_1k_input</code> is the derived property. Don't mix the units when
+computing an estimate.</li>
+<li><strong><code>get_provider_config</code> is a lazy global.</strong> It loads once and caches;
+call <code>reset_provider_config()</code> after writing a new config file if you
+need the change to take effect in a long-lived process.</li>
 </ul>
-<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Print the resolved tier: <code>get_tier_for_task(task)</code> — confirms the
+classification before any model lookup.</li>
+<li>Print the model: <code>get_model(&quot;anthropic&quot;, tier.value)</code> — <code>None</code> means
+a registry gap or a tier passed as an enum instead of <code>.value</code>.</li>
+<li>Inspect auth: <code>attune auth status --json</code> — confirms
+<code>setup_completed</code> and the active mode.</li>
+<li>Inspect provider: <code>attune provider show</code> — confirms the provider and
+mode the lookups will use.</li>
+<li>For routing surprises, read <code>AdaptiveModelRouter.get_routing_stats( workflow, stage)</code> to see sample size and per-model performance.</li>
+</ol>
 
   </article>
   <footer>

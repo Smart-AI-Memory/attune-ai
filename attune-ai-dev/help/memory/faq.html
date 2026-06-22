@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory FAQ — faq</title>
-  <meta name="description" content="It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (`MemoryBackend`, `SearchableMemoryBackend`), loads `CLAUDE.md` memory files v" />
+  <meta name="description" content="It provides storage, lookup, and security for agent memory. The module covers short-term backends (via `MemoryBackend` and `SearchableMemoryBackend`), Claude Code memory file loading (`ClaudeMemoryLoa" />
   <meta property="og:title" content="Memory FAQ — faq" />
-  <meta property="og:description" content="It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (`MemoryBackend`, `SearchableMemoryBackend`), loads `CLAUDE.md` memory files v" />
+  <meta property="og:description" content="It provides storage, lookup, and security for agent memory. The module covers short-term backends (via `MemoryBackend` and `SearchableMemoryBackend`), Claude Code memory file loading (`ClaudeMemoryLoa" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/faq" />
   <style>
@@ -259,77 +259,33 @@
   </nav>
   <article class="markdown-body">
 <h1>Memory FAQ</h1>
-<h2>What does the memory module do?</h2>
-<p>It provides storage, lookup, and security for short-term and long-term agent memory. The module defines backend protocols (<code>MemoryBackend</code>, <code>SearchableMemoryBackend</code>), loads <code>CLAUDE.md</code> memory files via <code>ClaudeMemoryLoader</code>, and exposes an enterprise control panel (<code>MemoryControlPanel</code>) for managing patterns, statistics, and Redis lifecycle.</p>
-<h2>When should I use this module?</h2>
-<p>Use it when your code needs to stash or retrieve keyed values across agent sessions, load project-level memory from <code>CLAUDE.md</code> files, or manage memory patterns with access classification and audit logging. If you only need simple in-process state, you don't need this module.</p>
-<h2>What are the key entry points?</h2>
-<table>
-<thead>
-<tr>
-<th>Function or class</th>
-<th>Where it lives</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>is_redis_available()</code></td>
-<td><code>memory/__init__.py</code></td>
-<td>Checks whether Redis is available without importing it — safe to call at startup</td>
-</tr>
-<tr>
-<td><code>get_redis_memory()</code></td>
-<td><code>memory/__init__.py</code></td>
-<td>Creates a <code>RedisShortTermMemory</code> instance using environment-based config</td>
-</tr>
-<tr>
-<td><code>get_railway_redis()</code></td>
-<td><code>memory/__init__.py</code></td>
-<td>Creates a Redis instance pre-configured for Railway deployments</td>
-</tr>
-<tr>
-<td><code>ClaudeMemoryLoader.load_all_memory()</code></td>
-<td><code>memory/claude_memory.py</code></td>
-<td>Loads and merges all <code>CLAUDE.md</code> files for a project</td>
-</tr>
-<tr>
-<td><code>create_default_project_memory()</code></td>
-<td><code>memory/claude_memory.py</code></td>
-<td>Scaffolds a default <code>.claude/CLAUDE.md</code> for a new project</td>
-</tr>
-<tr>
-<td><code>MemoryControlPanel</code></td>
-<td><code>memory/control_panel.py</code></td>
-<td>Enterprise panel for status, stats, pattern management, and Redis control</td>
-</tr>
-</tbody>
-</table>
-<p>Start with <code>is_redis_available()</code> if you're not sure whether your environment has Redis — it's safe to call without side effects.</p>
-<h2>What's the difference between <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>?</h2>
-<p><code>MemoryBackend</code> is the base protocol: stash, retrieve, delete, list keys, check connection, and get stats. <code>SearchableMemoryBackend</code> extends it with <code>search()</code> for semantic queries and <code>promote()</code> to move session memory into longer-term storage. Use <code>SearchableMemoryBackend</code> when your backend needs to answer fuzzy or semantic queries, not just exact key lookups.</p>
-<h2>How do I check whether Redis is running?</h2>
-<p>Call <code>check_redis_connection()</code> — it returns a status dict without raising an exception. You can also call <code>is_redis_available()</code> for a simple boolean check that avoids importing the Redis subsystem entirely.</p>
-<h2>What happens if Redis isn't available?</h2>
-<p><code>get_redis_memory()</code> accepts a <code>use_mock</code> parameter. When you set it to <code>True</code>, you get a mock backend instead of a live Redis connection, which is useful for testing. <code>get_railway_redis()</code> raises <code>OSError</code> with a message telling you to add Redis to your Railway project if <code>REDIS_URL</code> is not set.</p>
-<h2>How do I configure Claude memory file loading?</h2>
-<p>Pass a <code>ClaudeMemoryConfig</code> to <code>ClaudeMemoryLoader</code>. The key fields are:</p>
-<ul>
-<li><code>enabled</code> — must be <code>True</code> to load any files (defaults to <code>False</code>)</li>
-<li><code>load_enterprise</code>, <code>load_user</code>, <code>load_project</code> — control which memory levels are loaded</li>
-<li><code>max_import_depth</code> — limits recursive <code>CLAUDE.md</code> imports (default <code>5</code>)</li>
-<li><code>max_file_size_bytes</code> — skips files larger than this (default <code>1 000 000</code> bytes)</li>
-<li><code>validate_files</code> — toggles file validation before loading</li>
-</ul>
-<h2>How do I debug memory issues?</h2>
+<h2>What does the memory feature do?</h2>
+<p>It provides storage, lookup, and security for agent memory. The module covers short-term backends (via <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>), Claude Code memory file loading (<code>ClaudeMemoryLoader</code>), and an enterprise control panel (<code>MemoryControlPanel</code>) for managing patterns, Redis, and audit logs.</p>
+<h2>When do I need to use the memory feature?</h2>
+<p>Use it when your agent needs to store or retrieve state across steps, load project-level <code>CLAUDE.md</code> memory files, or manage long-term patterns with classification and security controls. If you only need simple key-value caching with no agent context, a plain dict or file may be sufficient.</p>
+<h2>How do I check whether Redis is available before using it?</h2>
+<p>Call <code>is_redis_available()</code>. It checks the Redis subsystem without importing it, so it's safe to call at startup or in a conditional import path.</p>
+<h2>How do I get a Redis-backed memory instance?</h2>
+<p>Call <code>get_redis_memory(url=..., use_mock=...)</code>. It reads environment variables for configuration, so you can omit both arguments in most deployments. On Railway, use <code>get_railway_redis()</code> instead — it raises <code>OSError</code> with remediation instructions if <code>REDIS_URL</code> is not set.</p>
+<h2>What is the difference between <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>?</h2>
+<p><code>MemoryBackend</code> is the base protocol: it covers <code>stash</code>, <code>retrieve</code>, <code>delete</code>, <code>keys</code>, <code>is_connected</code>, <code>get_stats</code>, <code>close</code>, <code>supports_realtime</code>, and <code>supports_distributed</code>. <code>SearchableMemoryBackend</code> extends it with semantic search (<code>search</code>), long-term memory methods (<code>remember</code>, <code>promote</code>, <code>prune</code>), and <code>recent</code>. Use <code>SearchableMemoryBackend</code> when your backend needs semantic search or cross-session promotion.</p>
+<h2>How do I load CLAUDE.md memory files into a project?</h2>
+<p>Instantiate <code>ClaudeMemoryLoader</code> with a <code>ClaudeMemoryConfig</code> and call <code>load_all_memory(project_root=...)</code>. The config controls which levels are loaded (<code>load_enterprise</code>, <code>load_user</code>, <code>load_project</code>), the search depth (<code>max_import_depth</code>, default <code>5</code>), and file-size limits (<code>max_file_size_bytes</code>, default <code>1000000</code>).</p>
+<p>If you need a default memory file for a new project, call <code>create_default_project_memory(project_root, framework='empathy')</code> — it creates <code>.claude/CLAUDE.md</code> for you.</p>
+<h2>How do I check the health of the memory control panel?</h2>
+<p>Call <code>MemoryControlPanel.health_check()</code>. For a formatted overview of status and statistics, use <code>print_status(panel)</code> and <code>print_stats(panel)</code>.</p>
+<h2>How do I clear short-term memory for an agent?</h2>
+<p>Call <code>MemoryControlPanel.clear_short_term(agent_id=...)</code>. The default <code>agent_id</code> is <code>'admin'</code>.</p>
+<h2>How do I debug a memory problem?</h2>
+<p>Start with <code>pytest -k &quot;memory&quot; -v</code> to confirm the tests pass. If they pass but your code still fails:</p>
 <ol>
-<li>Call <code>is_redis_available()</code> or <code>check_redis_connection()</code> to confirm the backend is reachable.</li>
-<li>Run <code>pytest -k &quot;memory&quot; -v</code> to check whether the problem is in your code or the module itself.</li>
-<li>Call <code>MemoryControlPanel.health_check()</code> for a structured report of subsystem status.</li>
-<li>If a specific key is missing, use <code>MemoryBackend.keys(pattern)</code> to inspect what's actually stored.</li>
-<li>Add <code>logger.debug</code> at the point where <code>stash()</code> or <code>retrieve()</code> is called and re-run with logging enabled.</li>
+<li>Call <code>is_redis_available()</code> to rule out a missing Redis connection.</li>
+<li>Call <code>check_redis_connection()</code> for a detailed status dict.</li>
+<li>Call <code>MemoryControlPanel.health_check()</code> for control-panel-level diagnostics.</li>
+<li>Add <code>logger.debug</code> at the suspected failure point and re-run with logging enabled.</li>
 </ol>
-<h2>Where is the source code?</h2>
+<p>For symptom-based issues, see the troubleshooting page for this feature.</p>
+<h2>Where are the source files?</h2>
 <p>All memory source files are under <code>src/attune/memory/</code>.</p>
 <p><strong>Tags:</strong> <code>memory</code>, <code>storage</code></p>
 

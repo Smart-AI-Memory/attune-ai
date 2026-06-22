@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CLI errors — error</title>
-  <meta name="description" content="CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where `route_user_input()` or `HybridRouter.route()` cannot match input to a skill, and argume" />
+  <meta name="description" content="These are the most likely failure categories you&#x27;ll encounter when running `attune` commands or invoking the CLI programmatically via `main()`." />
   <meta property="og:title" content="CLI errors — error" />
-  <meta property="og:description" content="CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where `route_user_input()` or `HybridRouter.route()` cannot match input to a skill, and argume" />
+  <meta property="og:description" content="These are the most likely failure categories you&#x27;ll encounter when running `attune` commands or invoking the CLI programmatically via `main()`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/error" />
   <style>
@@ -260,100 +260,84 @@
   <article class="markdown-body">
 <h1>CLI errors</h1>
 <h2>Common error signatures</h2>
-<p>CLI failures fall into three categories: commands that exit with a non-zero return code, routing failures where <code>route_user_input()</code> or <code>HybridRouter.route()</code> cannot match input to a skill, and argument errors where a required field on the <code>Namespace</code> object is missing or has an unexpected type.</p>
-<p>Specific situations to watch for:</p>
-<ul>
-<li><strong><code>cmd_costs_export</code> fails silently</strong> — the export target path may be unwritable or the cost data store may be empty. Check file permissions and run <code>cmd_costs</code> first to confirm data exists.</li>
-<li><strong><code>cmd_forget</code> removes the wrong lesson</strong> — <code>cmd_forget</code> operates by line number or keyword. If the lessons file has changed since you last ran <code>cmd_lessons</code>, the line numbers may no longer match. Run <code>cmd_lessons</code> immediately before <code>cmd_forget</code> to get current line numbers.</li>
-<li><strong><code>HybridRouter.route()</code> returns an unexpected result</strong> — a <code>RoutingPreference</code> with a low <code>confidence</code> value (below <code>1.0</code>) or a <code>usage_count</code> of <code>0</code> may cause the router to select an unintended skill. Inspect the returned dict and check stored preferences with <code>HybridRouter.get_suggestions()</code>.</li>
-<li><strong><code>cmd_memory_recall</code> returns nothing</strong> — the search term may not match any stored content, or the memory file targeted by <code>cmd_memory_capture</code> may be in a different location than expected.</li>
-</ul>
+<p>These are the most likely failure categories you'll encounter when running <code>attune</code> commands or invoking the CLI programmatically via <code>main()</code>.</p>
+<p><strong>Non-zero exit codes from workflow execution</strong>
+<code>run_workflow_with_exit_code()</code> returns an integer exit code. Any value other than <code>0</code> means the workflow failed. The specific code distinguishes a validation failure from a runtime error — check the returned <code>int</code> before inspecting logs.</p>
+<p><strong>Unrecognised or malformed arguments</strong>
+<code>create_parser()</code> raises <code>SystemExit(2)</code> when an argument cannot be parsed. This most often happens when a subcommand receives unexpected flags or when a required positional argument is missing.</p>
+<p><strong>Routing failures in <code>HybridRouter.route()</code></strong>
+If <code>route_user_input()</code> or <code>HybridRouter.route()</code> cannot match input to a skill, the returned <code>dict</code> may indicate no match rather than raising. A <code>RoutingPreference</code> with <code>confidence: float</code> below a useful threshold produces low-quality routing silently — check the <code>confidence</code> field in the returned dict before acting on it.</p>
+<p><strong>Cost command failures</strong>
+<code>cmd_costs_export()</code> writes cost data to a file; an <code>OSError</code> or <code>PermissionError</code> here means the destination path is not writable. <code>cmd_costs_reset()</code> always returns <code>0</code> on success — a non-zero return signals that the reset did not complete.</p>
+<p><strong>Memory command failures</strong>
+<code>cmd_remember()</code> and <code>cmd_forget()</code> operate on a lessons file. A <code>FileNotFoundError</code> or <code>PermissionError</code> means the file path is missing or not writable. <code>cmd_forget()</code> requires a valid line number or keyword — passing neither produces an argument error.</p>
+<hr />
 <h2>Where errors originate</h2>
-<p>The following command functions each return an <code>int</code> exit code. A return value other than <code>0</code> indicates failure — trace the non-zero code back to the specific command to narrow the cause.</p>
+<p>The following functions are the primary failure points. When an <code>attune</code> command misbehaves, the root cause is almost always in one of these:</p>
 <table>
 <thead>
 <tr>
 <th>Function</th>
 <th>Module</th>
-<th>Purpose</th>
+<th>What can go wrong</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>cmd_costs()</code></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Show cost report for recent period</td>
-</tr>
-<tr>
-<td><code>cmd_costs_today()</code></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Show today's cost summary</td>
+<td><code>run_workflow_with_exit_code()</code></td>
+<td><code>cli_commands._exit_codes</code></td>
+<td>Workflow raises an unhandled exception; exit code is non-zero</td>
 </tr>
 <tr>
 <td><code>cmd_costs_export()</code></td>
 <td><code>cli_commands.cost_commands</code></td>
-<td>Export cost data to file</td>
+<td>Destination file not writable (<code>OSError</code>, <code>PermissionError</code>)</td>
 </tr>
 <tr>
 <td><code>cmd_costs_reset()</code></td>
 <td><code>cli_commands.cost_commands</code></td>
-<td>Clear all cost tracking data</td>
+<td>Returns non-zero if reset did not complete</td>
 </tr>
 <tr>
-<td><code>cmd_help()</code></td>
-<td><code>cli_commands.help_commands</code></td>
-<td>Handle the <code>attune help</code> command</td>
-</tr>
-<tr>
-<td><code>cmd_remember()</code></td>
+<td><code>cmd_remember()</code> / <code>cmd_forget()</code></td>
 <td><code>cli_commands.memory_commands</code></td>
-<td>Add a lesson to the lessons file</td>
+<td>Lessons file missing or not writable; bad line number or keyword</td>
 </tr>
 <tr>
-<td><code>cmd_forget()</code></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Remove a lesson by line number or keyword</td>
-</tr>
-<tr>
-<td><code>cmd_lessons()</code></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>List current lessons with line numbers</td>
-</tr>
-<tr>
-<td><code>cmd_memory_capture()</code></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Save content to personal cross-session memory</td>
-</tr>
-<tr>
-<td><code>cmd_memory_recall()</code></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Search personal cross-session memory</td>
-</tr>
-<tr>
-<td><code>route_user_input()</code></td>
+<td><code>HybridRouter.route()</code></td>
 <td><code>attune.cli_router</code></td>
-<td>Route user input to a skill invocation</td>
+<td>Low <code>confidence</code> match; no skill matched for the given input</td>
+</tr>
+<tr>
+<td><code>main()</code></td>
+<td><code>attune.cli_minimal</code></td>
+<td><code>SystemExit</code> on bad arguments; propagates exit code to the shell</td>
 </tr>
 </tbody>
 </table>
+<hr />
 <h2>How to diagnose</h2>
 <ol>
 <li>
-<p><strong>Check the integer return code.</strong> Every command function returns an <code>int</code>. If you called a command through <code>main()</code>, its return value is the exit code. A non-zero value tells you which command failed before you look at any output.</p>
+<p><strong>Check the exit code first.</strong> Every command function returns an <code>int</code>. A non-zero value is the primary signal that something failed. For <code>run_workflow_with_exit_code()</code>, the exit code encodes the failure category — don't skip past it to the logs.</p>
 </li>
 <li>
-<p><strong>Identify whether the failure is in argument parsing or command execution.</strong> <code>create_parser()</code> in <code>attune.cli_minimal</code> handles argument parsing. If the error occurs before your command function is called, the <code>Namespace</code> object passed to it may be incomplete — print <code>args</code> at the top of the failing command function to confirm all expected fields are present.</p>
+<p><strong>Identify which command failed.</strong> The subcommand name tells you which module to investigate. Cost commands live in <code>cli_commands.cost_commands</code>; memory commands in <code>cli_commands.memory_commands</code>; routing in <code>attune.cli_router</code>.</p>
 </li>
 <li>
-<p><strong>For routing failures, inspect the <code>RoutingPreference</code> fields.</strong> If <code>HybridRouter.route()</code> produces an unexpected skill match, retrieve stored preferences and check the <code>keyword</code>, <code>skill</code>, <code>confidence</code>, and <code>usage_count</code> fields on the relevant <code>RoutingPreference</code>. A preference with <code>confidence &lt; 1.0</code> was learned implicitly and may not match your intent. Use <code>HybridRouter.learn_preference()</code> to set an explicit mapping.</p>
+<p><strong>Inspect the <code>RoutingPreference</code> fields when routing misbehaves.</strong> If <code>HybridRouter.route()</code> sends input to the wrong skill, check the stored <code>RoutingPreference</code> for that keyword: low <code>confidence</code>, wrong <code>skill</code>, or a stale <code>args</code> value are the most common causes. Use <code>HybridRouter.get_suggestions()</code> to see what the router currently matches for a partial input.</p>
 </li>
 <li>
-<p><strong>For memory command failures, confirm the target file path.</strong> <code>cmd_memory_capture()</code> and <code>cmd_memory_recall()</code> operate on a cross-session memory file. If recall returns no results, verify that capture was directed at the same location by checking the <code>args</code> passed to each command.</p>
+<p><strong>Run <code>attune doctor</code> (<code>cmd_doctor</code>).</strong> This command runs environment checks and surfaces configuration problems that cause multiple CLI commands to fail in non-obvious ways.</p>
 </li>
 <li>
-<p><strong>For cost command failures, verify that data exists before exporting or resetting.</strong> Run <code>cmd_costs_today()</code> to confirm the cost store is populated before calling <code>cmd_costs_export()</code>. <code>cmd_costs_reset()</code> returns <code>0</code> even when the store is already empty, so a successful reset does not confirm prior data existed.</p>
+<p><strong>Run <code>attune validate</code> (<code>cmd_validate</code>).</strong> Use this to confirm that your configuration is well-formed before re-running the failing command.</p>
+</li>
+<li>
+<p><strong>Re-run with a full traceback.</strong> If a command raises rather than returning a non-zero code, the traceback names the exact file and line. The most actionable line is usually the innermost frame inside <code>cli_commands/</code> or <code>cli_router.py</code>.</p>
 </li>
 </ol>
+<hr />
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/cli_minimal.py</code></li>

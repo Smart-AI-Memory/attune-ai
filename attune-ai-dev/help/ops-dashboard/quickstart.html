@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quickstart: ops dashboard — quickstart</title>
-  <meta name="description" content="Launch the local operations dashboard in your terminal with one command:" />
+  <meta name="description" content="Launch the local operations dashboard — a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming." />
   <meta property="og:title" content="Quickstart: ops dashboard — quickstart" />
-  <meta property="og:description" content="Launch the local operations dashboard in your terminal with one command:" />
+  <meta property="og:description" content="Launch the local operations dashboard — a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/quickstart" />
   <style>
@@ -259,48 +259,45 @@
   </nav>
   <article class="markdown-body">
 <h1>Quickstart: ops dashboard</h1>
-<p>Launch the local operations dashboard in your terminal with one command:</p>
+<p>Launch the local operations dashboard — a workflow runner with a per-feature scope picker, persisted run history, and live SSE log streaming.</p>
 <pre><code class="language-bash">python -m attune.ops
 </code></pre>
-<p>The server starts on <code>127.0.0.1:8765</code> by default and blocks until you stop it.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>The project is cloned and installed locally</li>
-<li>Your shell is in the project root</li>
-</ul>
+<p>The server starts on <code>127.0.0.1:8765</code> by default. Open that address in your browser to see the dashboard.</p>
 <h2>Step 1: Build a config</h2>
-<p>Use <code>build_config()</code> to point the dashboard at your project:</p>
+<p>Use <code>build_config()</code> to wire up the project root and attune home before starting the server:</p>
 <pre><code class="language-python">from attune.ops import build_config
 
 config = build_config()
-print(config.host, config.port)  # 127.0.0.1 8765
+print(config.host, config.port)  # 127.0.0.1  8765
 </code></pre>
 <p>Expected output:</p>
 <pre><code>127.0.0.1 8765
 </code></pre>
 <h2>Step 2: Create the app</h2>
-<p>Pass the config to <code>create_app()</code> to get the FastAPI application without pulling the framework into your import path until you need it:</p>
+<p>Pass the config to <code>create_app()</code> to get a FastAPI application instance without pulling FastAPI into the import chain until you need it:</p>
 <pre><code class="language-python">from attune.ops import create_app
 
 app = create_app()
 </code></pre>
-<p>No output means success — the factory returned without error.</p>
-<h2>Step 3: Start the server</h2>
-<p>Run the dashboard as a module. The process blocks and streams logs to your terminal:</p>
+<h2>Step 3: Run the server from the CLI</h2>
+<p>Start the dashboard with the <code>ops</code> subcommand. <code>cmd_ops</code> returns <code>0</code> on clean exit:</p>
 <pre><code class="language-bash">python -m attune.ops
 </code></pre>
-<p>Expected output:</p>
-<pre><code>INFO:     Uvicorn running on http://127.0.0.1:8765 (Press CTRL+C to quit)
+<p>Navigate to <code>http://127.0.0.1:8765</code> in your browser. You should see the workflow list, scope picker, and run history panels.</p>
+<h2>Step 4: Verify cost data loads</h2>
+<p>If you have an Anthropic admin key available, confirm the cost summary fetches correctly:</p>
+<pre><code class="language-python">from attune.ops.anthropic_cost import fetch_summary
+
+summary, error = fetch_summary()
+if summary:
+    print(summary.today_usd, summary.source)
+else:
+    print(error.kind, error.message)
 </code></pre>
-<p>Open <code>http://127.0.0.1:8765</code> in your browser to see the workflow runner, scope picker, and run history.</p>
-<h2>What you just did</h2>
-<ul>
-<li>Built a <code>Config</code> that locates your project root and attune state directories</li>
-<li>Created the FastAPI app via the lazy <code>create_app()</code> factory</li>
-<li>Started the dashboard server on <code>127.0.0.1:8765</code></li>
-</ul>
-<h2>Next:</h2>
-<p>Read the <code>Config</code> dataclass fields — particularly <code>specs_roots</code>, <code>allow_run</code>, and <code>runs_retention_days</code> — to customize how the dashboard discovers specs and retains run history.</p>
+<p>Expected output when the key is present and the fetch succeeds:</p>
+<pre><code>0.42 live
+</code></pre>
+<p><strong>Next:</strong> Add <code>specs_roots</code> to your <code>Config</code> to enable the spec-completion candidate detector — set <code>specs_candidates_enabled=True</code> and call <code>detect_candidates(config)</code> to see which specs are ready to close out.</p>
 
   </article>
   <footer>

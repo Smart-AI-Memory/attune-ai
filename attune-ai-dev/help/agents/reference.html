@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `ReleaseAgent` | Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation. | `src/attune/agents/release/base_agent.py` | | `TestCoverageAg" />
+  <meta name="description" content="Create and run framework-agnostic agents and workflows across AutoGen, Haystack, LangChain, LangGraph, and native runtimes. The feature also covers release-preparation agents, persistent agent state, " />
   <meta property="og:title" content="Agents reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `ReleaseAgent` | Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation. | `src/attune/agents/release/base_agent.py` | | `TestCoverageAg" />
+  <meta property="og:description" content="Create and run framework-agnostic agents and workflows across AutoGen, Haystack, LangChain, LangGraph, and native runtimes. The feature also covers release-preparation agents, persistent agent state, " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/reference" />
   <style>
@@ -259,7 +259,9 @@
   </nav>
   <article class="markdown-body">
 <h1>Agents reference</h1>
+<p>Create and run framework-agnostic agents and workflows across AutoGen, Haystack, LangChain, LangGraph, and native runtimes. The feature also covers release-preparation agents, persistent agent state, and recovery management.</p>
 <h2>Classes</h2>
+<h3>Agent factory — base types</h3>
 <table>
 <thead>
 <tr>
@@ -270,80 +272,62 @@
 </thead>
 <tbody>
 <tr>
-<td><code>ReleaseAgent</code></td>
-<td>Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation.</td>
-<td><code>src/attune/agents/release/base_agent.py</code></td>
+<td><code>AgentRole</code></td>
+<td>Standard roles for multi-agent systems.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>TestCoverageAgent</code></td>
-<td>Runs pytest --cov and parses coverage report.</td>
-<td><code>src/attune/agents/release/coverage_agent.py</code></td>
+<td><code>AgentCapability</code></td>
+<td>Capabilities an agent can advertise.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>DocumentationAgent</code></td>
-<td>Checks docstring coverage, README currency, and CHANGELOG presence.</td>
-<td><code>src/attune/agents/release/documentation_agent.py</code></td>
+<td><code>AgentConfig</code></td>
+<td>Configuration for creating an agent.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>CodeQualityAgent</code></td>
-<td>Runs ruff, checks type hints and complexity.</td>
-<td><code>src/attune/agents/release/quality_agent.py</code></td>
+<td><code>WorkflowConfig</code></td>
+<td>Configuration for creating a workflow or graph.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>Tier</code></td>
-<td>Model tier for progressive escalation.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
+<td><code>BaseAgent</code></td>
+<td>Abstract base for framework-agnostic agents.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>ReleaseAgentResult</code></td>
-<td>Result from an individual release agent.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
+<td><code>BaseWorkflow</code></td>
+<td>Abstract base for framework-agnostic workflows.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>QualityGate</code></td>
-<td>Quality gate threshold for release readiness.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
+<td><code>BaseAdapter</code></td>
+<td>Abstract base for framework adapters.</td>
+<td><code>src/attune/agent_factory/base.py</code></td>
 </tr>
 <tr>
-<td><code>ReleaseReadinessReport</code></td>
-<td>Aggregated release readiness assessment.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
+<td><code>AgentFactory</code></td>
+<td>Universal factory for creating agents and workflows.</td>
+<td><code>src/attune/agent_factory/factory.py</code></td>
 </tr>
 <tr>
-<td><code>ReleasePrepTeam</code></td>
-<td>Coordinates parallel execution of release preparation agents.</td>
-<td><code>src/attune/agents/release/release_prep_team.py</code></td>
+<td><code>Framework</code></td>
+<td>Supported agent frameworks.</td>
+<td><code>src/attune/agent_factory/framework.py</code></td>
 </tr>
+</tbody>
+</table>
+<h3>Framework adapters</h3>
+<table>
+<thead>
 <tr>
-<td><code>ReleasePrepTeamWorkflow</code></td>
-<td>Workflow wrapper that integrates ReleasePrepTeam with the CLI registry.</td>
-<td><code>src/attune/agents/release/release_prep_team.py</code></td>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
 </tr>
-<tr>
-<td><code>SecurityAuditorAgent</code></td>
-<td>Analyzes bandit output and classifies vulnerabilities by severity.</td>
-<td><code>src/attune/agents/release/security_agent.py</code></td>
-</tr>
-<tr>
-<td><code>AgentExecutionRecord</code></td>
-<td>Single execution record for an agent.</td>
-<td><code>src/attune/agents/state/models.py</code></td>
-</tr>
-<tr>
-<td><code>AgentStateRecord</code></td>
-<td>Persistent state for a single agent identity.</td>
-<td><code>src/attune/agents/state/models.py</code></td>
-</tr>
-<tr>
-<td><code>AgentRecoveryManager</code></td>
-<td>Handles agent restart recovery from persistent state.</td>
-<td><code>src/attune/agents/state/recovery.py</code></td>
-</tr>
-<tr>
-<td><code>AgentStateStore</code></td>
-<td>Persistent storage for agent state and execution history.</td>
-<td><code>src/attune/agents/state/store.py</code></td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>AutoGenAgent</code></td>
 <td>Agent wrapping an AutoGen AssistantAgent or UserProxyAgent.</td>
@@ -391,7 +375,7 @@
 </tr>
 <tr>
 <td><code>LangGraphAgent</code></td>
-<td>Agent wrapping a LangGraph node/runnable.</td>
+<td>Agent wrapping a LangGraph node or runnable.</td>
 <td><code>src/attune/agent_factory/adapters/langgraph_adapter.py</code></td>
 </tr>
 <tr>
@@ -411,7 +395,7 @@
 </tr>
 <tr>
 <td><code>NativeWorkflow</code></td>
-<td>Workflow using sequential/parallel agent execution.</td>
+<td>Workflow using sequential or parallel agent execution.</td>
 <td><code>src/attune/agent_factory/adapters/native.py</code></td>
 </tr>
 <tr>
@@ -434,51 +418,18 @@
 <td>Adapter for integrating wizards with Agent Factory.</td>
 <td><code>src/attune/agent_factory/adapters/wizard_adapter.py</code></td>
 </tr>
+</tbody>
+</table>
+<h3>Resilience and memory</h3>
+<table>
+<thead>
 <tr>
-<td><code>AgentRole</code></td>
-<td>Standard agent roles for multi-agent systems.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
 </tr>
-<tr>
-<td><code>AgentCapability</code></td>
-<td>Capabilities an agent can have.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>AgentConfig</code></td>
-<td>Configuration for creating an agent.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>WorkflowConfig</code></td>
-<td>Configuration for creating a workflow/graph.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>BaseAgent</code></td>
-<td>Abstract base class for framework-agnostic agents.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>BaseWorkflow</code></td>
-<td>Abstract base class for framework-agnostic workflows.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>BaseAdapter</code></td>
-<td>Abstract base class for framework adapters.</td>
-<td><code>src/attune/agent_factory/base.py</code></td>
-</tr>
-<tr>
-<td><code>AgentFactory</code></td>
-<td>Universal factory for creating agents and workflows.</td>
-<td><code>src/attune/agent_factory/factory.py</code></td>
-</tr>
-<tr>
-<td><code>Framework</code></td>
-<td>Supported agent frameworks.</td>
-<td><code>src/attune/agent_factory/framework.py</code></td>
-</tr>
+</thead>
+<tbody>
 <tr>
 <td><code>MemoryAwareAgent</code></td>
 <td>Agent wrapper that integrates with Memory Graph.</td>
@@ -496,84 +447,260 @@
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>Release agents</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
+<th>Class</th>
 <th>Description</th>
 <th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>get_langchain_adapter()</code></td>
-<td>Get LangChain adapter (lazy import).</td>
+<td><code>ReleaseAgent</code></td>
+<td>Base agent with CHEAP → CAPABLE → PREMIUM escalation.</td>
+<td><code>src/attune/agents/release/base_agent.py</code></td>
+</tr>
+<tr>
+<td><code>TestCoverageAgent</code></td>
+<td>Runs pytest --cov and parses the coverage report.</td>
+<td><code>src/attune/agents/release/coverage_agent.py</code></td>
+</tr>
+<tr>
+<td><code>DocumentationAgent</code></td>
+<td>Checks docstring coverage, README currency, and CHANGELOG presence.</td>
+<td><code>src/attune/agents/release/documentation_agent.py</code></td>
+</tr>
+<tr>
+<td><code>CodeQualityAgent</code></td>
+<td>Runs ruff, checks type hints and complexity.</td>
+<td><code>src/attune/agents/release/quality_agent.py</code></td>
+</tr>
+<tr>
+<td><code>SecurityAuditorAgent</code></td>
+<td>Analyzes bandit output and classifies vulnerabilities by severity.</td>
+<td><code>src/attune/agents/release/security_agent.py</code></td>
+</tr>
+<tr>
+<td><code>Tier</code></td>
+<td>Model tier for progressive escalation.</td>
+<td><code>src/attune/agents/release/release_models.py</code></td>
+</tr>
+<tr>
+<td><code>ReleaseAgentResult</code></td>
+<td>Result from an individual release agent.</td>
+<td><code>src/attune/agents/release/release_models.py</code></td>
+</tr>
+<tr>
+<td><code>QualityGate</code></td>
+<td>Quality gate threshold for release readiness.</td>
+<td><code>src/attune/agents/release/release_models.py</code></td>
+</tr>
+<tr>
+<td><code>ReleaseReadinessReport</code></td>
+<td>Aggregated release readiness assessment.</td>
+<td><code>src/attune/agents/release/release_models.py</code></td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam</code></td>
+<td>Coordinates parallel execution of release preparation agents.</td>
+<td><code>src/attune/agents/release/release_prep_team.py</code></td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow</code></td>
+<td>Workflow wrapper that integrates <code>ReleasePrepTeam</code> with the CLI registry.</td>
+<td><code>src/attune/agents/release/release_prep_team.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3>State management</h3>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AgentExecutionRecord</code></td>
+<td>Single execution record for an agent.</td>
+<td><code>src/attune/agents/state/models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentStateRecord</code></td>
+<td>Persistent state for a single agent identity.</td>
+<td><code>src/attune/agents/state/models.py</code></td>
+</tr>
+<tr>
+<td><code>AgentStateStore</code></td>
+<td>Persistent storage for agent state and execution history.</td>
+<td><code>src/attune/agents/state/store.py</code></td>
+</tr>
+<tr>
+<td><code>AgentRecoveryManager</code></td>
+<td>Handles agent restart recovery from persistent state.</td>
+<td><code>src/attune/agents/state/recovery.py</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Properties</h2>
+<p>Each framework adapter exposes a read-only <code>framework_name</code> property.</p>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Class</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>framework_name</code></td>
+<td><code>str</code></td>
+<td><code>AutoGenAdapter</code></td>
+<td>Framework name identifier.</td>
+</tr>
+<tr>
+<td><code>framework_name</code></td>
+<td><code>str</code></td>
+<td><code>HaystackAdapter</code></td>
+<td>Framework name identifier.</td>
+</tr>
+<tr>
+<td><code>framework_name</code></td>
+<td><code>str</code></td>
+<td><code>LangChainAdapter</code></td>
+<td>Framework name identifier.</td>
+</tr>
+</tbody>
+</table>
+<h2>Functions</h2>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Raises</th>
+<th>Description</th>
+<th>File</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>get_langchain_adapter</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Returns the LangChain adapter (lazy import).</td>
 <td><code>src/attune/agent_factory/adapters/__init__.py</code></td>
 </tr>
 <tr>
-<td><code>get_langgraph_adapter()</code></td>
-<td>Get LangGraph adapter (lazy import).</td>
+<td><code>get_langgraph_adapter</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Returns the LangGraph adapter (lazy import).</td>
 <td><code>src/attune/agent_factory/adapters/__init__.py</code></td>
 </tr>
 <tr>
-<td><code>get_autogen_adapter()</code></td>
-<td>Get AutoGen adapter (lazy import).</td>
+<td><code>get_autogen_adapter</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Returns the AutoGen adapter (lazy import).</td>
 <td><code>src/attune/agent_factory/adapters/__init__.py</code></td>
 </tr>
 <tr>
-<td><code>get_haystack_adapter()</code></td>
-<td>Get Haystack adapter (lazy import).</td>
+<td><code>get_haystack_adapter</code></td>
+<td>—</td>
+<td>—</td>
+<td>—</td>
+<td>Returns the Haystack adapter (lazy import).</td>
 <td><code>src/attune/agent_factory/adapters/__init__.py</code></td>
 </tr>
 <tr>
-<td><code>wrap_wizard()</code></td>
-<td>Quick helper to wrap a wizard as an agent.</td>
+<td><code>wrap_wizard</code></td>
+<td><code>wizard, name: str | None = None, model_tier: str = 'capable'</code></td>
+<td><code>WizardAgent</code></td>
+<td>—</td>
+<td>Wraps a wizard as an agent.</td>
 <td><code>src/attune/agent_factory/adapters/wizard_adapter.py</code></td>
 </tr>
 <tr>
-<td><code>safe_agent_operation()</code></td>
+<td><code>safe_agent_operation</code></td>
+<td><code>operation_name: str</code></td>
+<td><code>Callable[[F], F]</code></td>
+<td><code>AgentOperationError</code></td>
 <td>Decorator for safe agent operations with logging and error handling.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>retry_on_failure()</code></td>
+<td><code>retry_on_failure</code></td>
+<td><code>max_attempts: int = 3, delay: float = 1.0, backoff: float = 2.0, exceptions: tuple = (Exception,)</code></td>
+<td><code>Callable[[F], F]</code></td>
+<td><code>last_exception</code></td>
 <td>Decorator to retry failed operations with exponential backoff.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>log_performance()</code></td>
-<td>Decorator to log slow operations.</td>
+<td><code>log_performance</code></td>
+<td><code>threshold_seconds: float = 1.0</code></td>
+<td><code>Callable[[F], F]</code></td>
+<td>—</td>
+<td>Decorator to log operations that exceed <code>threshold_seconds</code>.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>validate_input()</code></td>
+<td><code>validate_input</code></td>
+<td><code>required_fields: list[str]</code></td>
+<td>—</td>
+<td><code>ValueError</code> — 'Input must be a dict, got {...}'&lt;br&gt;<code>ValueError</code> — 'Missing required fields: {...}'</td>
 <td>Decorator to validate required fields in input data.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>with_cost_tracking()</code></td>
+<td><code>with_cost_tracking</code></td>
+<td><code>operation_type: str = 'agent_call'</code></td>
+<td>—</td>
+<td>—</td>
 <td>Decorator to track API costs for operations.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>graceful_degradation()</code></td>
+<td><code>graceful_degradation</code></td>
+<td><code>fallback_value: Any = None, log_level: str = 'warning'</code></td>
+<td>—</td>
+<td>—</td>
 <td>Decorator for graceful degradation on failure.</td>
 <td><code>src/attune/agent_factory/decorators.py</code></td>
 </tr>
 <tr>
-<td><code>detect_installed_frameworks()</code></td>
-<td>Detect which agent frameworks are installed.</td>
+<td><code>detect_installed_frameworks</code></td>
+<td>—</td>
+<td><code>list[Framework]</code></td>
+<td>—</td>
+<td>Detects which agent frameworks are installed.</td>
 <td><code>src/attune/agent_factory/framework.py</code></td>
 </tr>
 <tr>
-<td><code>get_recommended_framework()</code></td>
-<td>Get recommended framework for a use case.</td>
+<td><code>get_recommended_framework</code></td>
+<td><code>use_case: str = 'general'</code></td>
+<td><code>Framework</code></td>
+<td>—</td>
+<td>Returns the recommended framework for a use case.</td>
 <td><code>src/attune/agent_factory/framework.py</code></td>
 </tr>
 <tr>
-<td><code>get_framework_info()</code></td>
-<td>Get information about a framework.</td>
+<td><code>get_framework_info</code></td>
+<td><code>framework: Framework</code></td>
+<td><code>dict[str, object]</code></td>
+<td>—</td>
+<td>Returns information about a framework.</td>
 <td><code>src/attune/agent_factory/framework.py</code></td>
 </tr>
 </tbody>

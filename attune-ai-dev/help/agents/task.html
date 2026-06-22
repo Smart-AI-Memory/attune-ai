@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with agents — task</title>
-  <meta name="description" content="Use agents when you need to release agents, state persistence, and recovery." />
+  <meta name="description" content="Use the agent factory when you need to create and run agents backed by LangChain, LangGraph, AutoGen, or Haystack through a consistent interface for invocation, streaming, and tool registration." />
   <meta property="og:title" content="Work with agents — task" />
-  <meta property="og:description" content="Use agents when you need to release agents, state persistence, and recovery." />
+  <meta property="og:description" content="Use the agent factory when you need to create and run agents backed by LangChain, LangGraph, AutoGen, or Haystack through a consistent interface for invocation, streaming, and tool registration." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/task" />
   <style>
@@ -259,61 +259,133 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with agents</h1>
-<p>Use agents when you need to release agents, state persistence, and recovery.</p>
+<p>Use the agent factory when you need to create and run agents backed by LangChain, LangGraph, AutoGen, or Haystack through a consistent interface for invocation, streaming, and tool registration.</p>
 <h2>Prerequisites</h2>
 <ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under src/attune/agents/**</li>
+<li><code>attune-ai</code> installed with the extras for your target framework</li>
+<li>Familiarity with <code>AgentConfig</code> and <code>WorkflowConfig</code> from <code>src/attune/agent_factory/</code></li>
 </ul>
-<h2>Steps</h2>
+<h2>Create an agent</h2>
 <ol>
 <li>
-<p><strong>Understand the current behavior.</strong>
-Read the entry points to see what agents
-does today before making changes.
-The primary functions are:</p>
-<ul>
-<li><code>get_langchain_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code> — Get LangChain adapter (lazy import).</li>
-<li><code>get_langgraph_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code> — Get LangGraph adapter (lazy import).</li>
-<li><code>get_autogen_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code> — Get AutoGen adapter (lazy import).</li>
-<li><code>get_haystack_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code> — Get Haystack adapter (lazy import).</li>
-<li><code>wrap_wizard()</code> in <code>src/attune/agent_factory/adapters/wizard_adapter.py</code> — Quick helper to wrap a wizard as an agent.</li>
-</ul>
+<p>Import the lazy-loading helper for your target framework:</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import (
+    get_langchain_adapter,   # LangChain
+    get_langgraph_adapter,   # LangGraph
+    get_autogen_adapter,     # AutoGen
+    get_haystack_adapter,    # Haystack
+)
+</code></pre>
+<p>Each helper defers the underlying framework import until you call it, so unused frameworks add no startup cost.</p>
 </li>
 <li>
-<p><strong>Locate the right function to change.</strong>
-Each function has a single responsibility. Read its
-docstring, parameters, and return type to confirm it
-owns the behavior you need to modify.</p>
+<p>Retrieve the adapter and confirm the framework is installed before proceeding:</p>
+<pre><code class="language-python">adapter = get_langchain_adapter()
+if not adapter.is_available():
+    raise RuntimeError(f&quot;{adapter.framework_name} is not installed&quot;)
+</code></pre>
 </li>
 <li>
-<p><strong>Make your change.</strong>
-Follow existing patterns in the file — naming
-conventions, error handling style, and logging.</p>
+<p>Build an <code>AgentConfig</code> with the role, capabilities, and model tier you need, then pass it to <code>create_agent()</code>:</p>
+<pre><code class="language-python">agent = adapter.create_agent(config)
+</code></pre>
+<p>The adapter returns a framework-specific instance — for example, <code>LangChainAgent</code>, <code>AutoGenAgent</code>, or <code>HaystackAgent</code> — all sharing the same <code>BaseAgent</code> interface.</p>
 </li>
 <li>
-<p><strong>Run the related tests.</strong>
-This catches regressions before they reach other
-developers. Target with <code>pytest -k &quot;agents&quot;</code>.</p>
+<p>Run the agent by calling <code>invoke()</code> with a string or dict payload:</p>
+<pre><code class="language-python">result = await agent.invoke(&quot;Summarize the release notes&quot;)
+</code></pre>
+<p>To receive incremental output, call <code>stream()</code> instead — it returns an <code>AsyncGenerator[dict, None]</code>.</p>
 </li>
 </ol>
-<h2>Key files</h2>
-<ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
-</ul>
-<h2>Common modifications</h2>
-<p>Functions you are most likely to modify:</p>
-<ul>
-<li><code>get_langchain_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code></li>
-<li><code>get_langgraph_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code></li>
-<li><code>get_autogen_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code></li>
-<li><code>get_haystack_adapter()</code> in <code>src/attune/agent_factory/adapters/__init__.py</code></li>
-<li><code>wrap_wizard()</code> in <code>src/attune/agent_factory/adapters/wizard_adapter.py</code></li>
-<li><code>safe_agent_operation()</code> in <code>src/attune/agent_factory/decorators.py</code></li>
-<li><code>retry_on_failure()</code> in <code>src/attune/agent_factory/decorators.py</code></li>
-<li><code>log_performance()</code> in <code>src/attune/agent_factory/decorators.py</code></li>
-</ul>
+<h2>Wrap a wizard as an agent</h2>
+<p>If you already have a wizard and want to expose it through the <code>BaseAgent</code> interface, use <code>wrap_wizard()</code> instead of building a full adapter:</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import wrap_wizard
+
+agent = wrap_wizard(wizard, name=&quot;release-summarizer&quot;, model_tier=&quot;capable&quot;)
+</code></pre>
+<p><code>wrap_wizard()</code> returns a <code>WizardAgent</code>. The <code>name</code> parameter is optional; <code>model_tier</code> defaults to <code>&quot;capable&quot;</code>.</p>
+<h2>Apply decorators</h2>
+<p>Add any of the following decorators to agent methods to improve reliability and observability:</p>
+<table>
+<thead>
+<tr>
+<th>Decorator</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>@safe_agent_operation(operation_name)</code></td>
+<td>Logs errors and re-raises them as <code>AgentOperationError</code> instead of leaking internal exceptions.</td>
+</tr>
+<tr>
+<td><code>@retry_on_failure(max_attempts, delay, backoff, exceptions)</code></td>
+<td>Retries the call with exponential back-off; raises the last exception once all attempts are exhausted.</td>
+</tr>
+<tr>
+<td><code>@log_performance(threshold_seconds)</code></td>
+<td>Logs a warning when the call exceeds the threshold (default <code>1.0</code> second).</td>
+</tr>
+<tr>
+<td><code>@validate_input(required_fields)</code></td>
+<td>Raises <code>ValueError</code> if the input is not a dict or if any field in <code>required_fields</code> is absent.</td>
+</tr>
+<tr>
+<td><code>@with_cost_tracking(operation_type)</code></td>
+<td>Records API cost for the call; <code>operation_type</code> defaults to <code>&quot;agent_call&quot;</code>.</td>
+</tr>
+</tbody>
+</table>
+<h2>Locate key files</h2>
+<table>
+<thead>
+<tr>
+<th>Path</th>
+<th>Contents</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>src/attune/agent_factory/adapters/__init__.py</code></td>
+<td>Lazy adapter helpers: <code>get_langchain_adapter</code>, <code>get_langgraph_adapter</code>, <code>get_autogen_adapter</code>, <code>get_haystack_adapter</code>, <code>wrap_wizard</code></td>
+</tr>
+<tr>
+<td><code>src/attune/agent_factory/decorators.py</code></td>
+<td><code>safe_agent_operation</code>, <code>retry_on_failure</code>, <code>log_performance</code>, <code>validate_input</code>, <code>with_cost_tracking</code></td>
+</tr>
+<tr>
+<td><code>src/attune/agents/</code></td>
+<td>Built-in agents: <code>ReleaseAgent</code>, <code>CodeQualityAgent</code>, <code>DocumentationAgent</code>, <code>SecurityAuditorAgent</code>, <code>TestCoverageAgent</code></td>
+</tr>
+</tbody>
+</table>
+<h2>Run the tests</h2>
+<p>Run the agent test suite to confirm your changes work correctly:</p>
+<pre><code class="language-bash">pytest -k &quot;agents&quot;
+</code></pre>
+<p><strong>Success criterion:</strong> all tests pass with no new failures. If you added a new adapter method or decorated a new function, confirm that your new test cases appear in the collected output and pass.</p>
+<h2>Unresolved references</h2>
+<blockquote>
+<p>Auto-generated by attune-author fact-check. Review and either
+fix the source code, fix this doc, or add an override.</p>
+</blockquote>
+<table>
+<thead>
+<tr>
+<th>Location</th>
+<th>Severity</th>
+<th>Issue</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Line 64 (code fence)</td>
+<td>error</td>
+<td><code>from attune.agent_factory.adapters import …</code> — module not importable</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

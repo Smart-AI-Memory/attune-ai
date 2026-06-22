@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Plugin errors — error</title>
-  <meta name="description" content="Failures in the plugin&#x27;s hooks fall into three categories:" />
+  <meta name="description" content="Errors in the plugin&#x27;s hook modules typically fall into three categories:" />
   <meta property="og:title" content="Plugin errors — error" />
-  <meta property="og:description" content="Failures in the plugin&#x27;s hooks fall into three categories:" />
+  <meta property="og:description" content="Errors in the plugin&#x27;s hook modules typically fall into three categories:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/error" />
   <style>
@@ -260,93 +260,64 @@
   <article class="markdown-body">
 <h1>Plugin errors</h1>
 <h2>Common error signatures</h2>
-<p>Failures in the plugin's hooks fall into three categories:</p>
+<p>Errors in the plugin's hook modules typically fall into three categories:</p>
 <ul>
-<li><strong>State discovery failures</strong> — <code>discover_specs()</code> raises when it cannot walk a <code>specs/</code> directory under a workspace root (for example, a <code>PermissionError</code> or a root that no longer exists). <code>workspace_roots()</code> returning an empty list silently produces an empty spec scan, which causes <code>format_orientation()</code> in <code>hooks.spec_orient</code> to render nothing.</li>
-<li><strong>Git state failures</strong> — <code>git_state()</code> raises when <code>cwd</code> is not inside a git repository or the <code>git</code> binary is not on <code>PATH</code>. The resulting <code>GitState</code> fields (<code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, <code>uncommitted</code>) are never populated, so any downstream call to <code>build_resume_prompt()</code> that depends on them will receive incomplete data.</li>
-<li><strong>Security guard rejections</strong> — <code>validate_bash_command()</code> and <code>validate_file_path()</code> in <code>hooks.security_guard</code> return <code>(False, &lt;reason&gt;)</code> when a command matches a blocked prefix or a path falls under a <code>SYSTEM_DIRECTORIES</code> entry such as <code>/etc</code>, <code>/sys</code>, or <code>/proc</code>. These are not exceptions — they are structured rejections that <code>main()</code> in <code>hooks.security_guard</code> converts into a blocked response.</li>
-<li><strong>Utilization estimation failures</strong> — <code>estimate_utilization()</code> in <code>hooks._transcript_size</code> raises when the transcript path does not exist or is unreadable. When this happens, <code>format_warning()</code> in <code>hooks.compact_warning</code> never receives a valid <code>util</code> float, so no compact warning is emitted.</li>
-<li><strong>Sentinel path errors</strong> — <code>session_sentinel_path()</code> raises if the session ID resolves to an unwritable location. <code>prune_stale_sentinels()</code> silently returns <code>0</code> if no sentinels are found, which is expected, but an <code>OSError</code> here indicates a filesystem permission problem.</li>
+<li>
+<p><strong>Filesystem errors</strong> (<code>OSError</code>, <code>FileNotFoundError</code>) — <code>discover_specs()</code> walks <code>specs/</code> and <code>docs/specs/</code> directories under each workspace root. If a root is inaccessible or the path doesn't exist, it raises before returning any <code>SpecInfo</code> list. Similarly, <code>session_sentinel_path()</code> and <code>prune_stale_sentinels()</code> read and delete files under the workspace; permission problems surface here.</p>
+</li>
+<li>
+<p><strong>Git errors</strong> (<code>subprocess</code> exceptions, <code>ValueError</code>) — <code>git_state()</code> shells out to git in the given <code>cwd</code>. If <code>cwd</code> is not inside a git repository, or git is not on <code>PATH</code>, the call fails before populating <code>GitState.branch</code>, <code>GitState.last_sha</code>, or <code>GitState.uncommitted</code>.</p>
+</li>
+<li>
+<p><strong>Validation rejections</strong> (returns <code>tuple[bool, str]</code> with <code>False</code>) — <code>validate_bash_command()</code> and <code>validate_file_path()</code> in <code>hooks.security_guard</code> do not raise; they return <code>(False, reason)</code>. If downstream code treats a falsy result as success, the command or path is silently permitted. Check that callers inspect the first element of the returned tuple.</p>
+</li>
+<li>
+<p><strong>Utilization out-of-range</strong> — <code>estimate_utilization()</code> returns a <code>float</code> in <code>[0.0, 1.0]</code>. A value at or above the threshold passed to <code>format_warning()</code> triggers the compact warning prompt. If the transcript path is missing or unreadable, the estimate cannot be computed.</p>
+</li>
+<li>
+<p><strong>Malformed spec metadata</strong> — <code>SpecInfo.status_conflict</code> is set to <code>True</code> when the <code>status</code> field in the spec header disagrees with a derived status. Code that reads <code>effective_status</code> without checking <code>status_conflict</code> may act on a stale or ambiguous value.</p>
+</li>
 </ul>
 <h2>Where errors originate</h2>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Module</th>
-<th>What goes wrong</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>main()</code></td>
-<td><code>hooks._handoff_cli</code></td>
-<td>Entry point for <code>/handoff</code>; any unhandled exception from the call chain surfaces here as a non-zero exit</td>
-</tr>
-<tr>
-<td><code>build_resume_prompt()</code></td>
-<td><code>hooks._resume_prompt</code></td>
-<td>Receives <code>None</code> for <code>spec_info</code> when discovery found nothing; downstream templates render without spec context</td>
-</tr>
-<tr>
-<td><code>discover_specs()</code></td>
-<td><code>hooks._state</code></td>
-<td>Raises on unreadable <code>specs/</code> directories; returns an empty list when roots are empty</td>
-</tr>
-<tr>
-<td><code>git_state()</code></td>
-<td><code>hooks._state</code></td>
-<td>Raises when <code>cwd</code> is not a git repo or <code>git</code> is unavailable</td>
-</tr>
-<tr>
-<td><code>session_sentinel_path()</code></td>
-<td><code>hooks._state</code></td>
-<td>Raises when the resolved path is unwritable</td>
-</tr>
-<tr>
-<td><code>estimate_utilization()</code></td>
-<td><code>hooks._transcript_size</code></td>
-<td>Raises on a missing or unreadable transcript file</td>
-</tr>
-<tr>
-<td><code>validate_bash_command()</code> / <code>validate_file_path()</code></td>
-<td><code>hooks.security_guard</code></td>
-<td>Returns <code>(False, reason)</code> — not an exception, but the <code>main()</code> caller must check the boolean</td>
-</tr>
-</tbody>
-</table>
+<p>Each hook module exposes a <code>main()</code> entry point. Failures inside the helpers they call will appear in the traceback under that entry point:</p>
+<ul>
+<li><code>hooks._handoff_cli.main()</code> — orchestrates handoff; depends on <code>git_state()</code> and <code>discover_specs()</code>.</li>
+<li><code>hooks._resume_prompt.build_resume_prompt()</code> — requires a valid <code>GitState</code> and optionally a <code>SpecInfo</code>; fails if either is malformed.</li>
+<li><code>hooks._state.discover_specs()</code> — requires readable <code>specs/</code> or <code>docs/specs/</code> directories under each root returned by <code>workspace_roots()</code>.</li>
+<li><code>hooks._state.git_state()</code> — requires a valid git repository at <code>cwd</code>.</li>
+<li><code>hooks._state.session_sentinel_path()</code> — constructs the path for a <code>.jit-recalled-</code> sentinel file; fails if the session ID produces an invalid path.</li>
+<li><code>hooks.security_guard.main()</code> — returns a result dict; errors inside <code>validate_bash_command()</code> or <code>validate_file_path()</code> are reflected in that dict rather than raised.</li>
+<li><code>hooks.compact_warning.main()</code> — calls <code>estimate_utilization()</code> and <code>format_warning()</code>; a missing or unreadable transcript path causes the utilization estimate to fail before the warning is composed.</li>
+</ul>
 <h2>How to diagnose</h2>
 <ol>
 <li>
-<p><strong>Identify the hook entry point that failed.</strong> Each hook module exposes a <code>main()</code> function. The hook name in the error output (<code>handoff</code>, <code>compact_warning</code>, <code>spec_orient</code>, <code>security_guard</code>, and so on) tells you which <code>main()</code> was active when the failure occurred.</p>
+<p><strong>Identify the failing hook.</strong> The traceback's outermost frame will name one of the <code>main()</code> entry points above. That tells you which hook fired and which helpers it called.</p>
 </li>
 <li>
-<p><strong>Check whether <code>discover_specs()</code> returned an empty list.</strong> If <code>workspace_roots()</code> found no roots, <code>discover_specs()</code> receives an empty <code>roots</code> list and returns <code>[]</code>. This produces no exception — the symptom is a silent no-op in <code>format_orientation()</code> or a <code>build_resume_prompt()</code> call where <code>spec_info</code> is <code>None</code>.</p>
+<p><strong>Check <code>SpecInfo</code> fields for conflicts.</strong> If <code>status_conflict</code> is <code>True</code> on a returned <code>SpecInfo</code>, the <code>status</code> header disagrees with the derived value. Inspect both <code>status</code> and <code>effective_status</code> to understand which value the failing code used. Valid terminal statuses are: <code>closed</code>, <code>complete</code>, <code>completed</code>, <code>retired</code>, <code>superseded</code>, <code>shipped</code>, <code>done</code>.</p>
 </li>
 <li>
-<p><strong>Verify git availability for <code>git_state()</code> failures.</strong> Run <code>git rev-parse --show-toplevel</code> in the working directory. If that fails, <code>git_state()</code> will fail for the same reason, and <code>GitState.branch</code>, <code>GitState.last_sha</code>, and <code>GitState.last_subject</code> will be unpopulated.</p>
+<p><strong>Verify workspace roots.</strong> <code>workspace_roots()</code> makes a best-effort guess at roots to scan. If <code>discover_specs()</code> returns an empty list unexpectedly, confirm that the expected root contains a <code>specs/</code> or <code>docs/specs/</code> subdirectory and is readable.</p>
 </li>
 <li>
-<p><strong>For security guard rejections, check the return value, not the exception.</strong> <code>validate_bash_command()</code> and <code>validate_file_path()</code> signal rejection via <code>(False, reason_string)</code> — they do not raise. If a command or path is being silently blocked, print the second element of the return tuple to read the rejection reason. Blocked path prefixes include everything under <code>SYSTEM_DIRECTORIES</code>: <code>/etc</code>, <code>/sys</code>, <code>/proc</code>, <code>/dev</code>, <code>/boot</code>, <code>/sbin</code>, <code>/usr/sbin</code>, <code>/private/etc</code>, and <code>/private/var</code>.</p>
+<p><strong>Confirm git repository state.</strong> <code>git_state()</code> needs a git repo at <code>cwd</code>. Run <code>git status</code> in that directory to confirm it is a valid worktree. A detached HEAD or a missing repo produces an unusable <code>GitState</code>.</p>
 </li>
 <li>
-<p><strong>For utilization warnings that never appear,</strong> confirm that the transcript file passed to <code>estimate_utilization()</code> exists and is readable. A missing transcript causes an exception that prevents <code>format_warning()</code> from composing the warning and resume prompt.</p>
+<p><strong>Inspect the security guard return value.</strong> Because <code>validate_bash_command()</code> and <code>validate_file_path()</code> return <code>(bool, str)</code> rather than raising, a failure won't produce a traceback. Log or print the full return value of <code>hooks.security_guard.main()</code> to see the rejection reason.</p>
+</li>
+<li>
+<p><strong>Check sentinel files.</strong> Stale <code>.jit-recalled-</code> sentinel files can cause <code>session_recall</code> or <code>jit_recall</code> behavior to appear skipped. Run <code>prune_stale_sentinels()</code> manually and confirm it returns a count greater than zero if files were accumulating.</p>
 </li>
 </ol>
 <h2>Source files</h2>
 <ul>
-<li><code>hooks._handoff_cli</code></li>
-<li><code>hooks._resume_prompt</code></li>
-<li><code>hooks._state</code></li>
-<li><code>hooks._transcript_size</code></li>
-<li><code>hooks.compact_warning</code></li>
-<li><code>hooks.format_on_save</code></li>
-<li><code>hooks.help_freshness_check</code></li>
-<li><code>hooks.help_on_error</code></li>
-<li><code>hooks.help_post_commit</code></li>
-<li><code>hooks.security_guard</code></li>
-<li><code>hooks.spec_orient</code></li>
-<li><code>hooks.welcome</code></li>
+<li><code>hooks/_handoff_cli.py</code></li>
+<li><code>hooks/_resume_prompt.py</code></li>
+<li><code>hooks/_state.py</code></li>
+<li><code>hooks/_transcript_size.py</code></li>
+<li><code>hooks/compact_warning.py</code></li>
+<li><code>hooks/security_guard.py</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
 

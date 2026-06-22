@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents cautions — warning</title>
-  <meta name="description" content="The agents module provides AI-powered release preparation with progressive tier escalation and parallel execution. Key risks involve cost escalation, state inconsistency, and adapter initialization fa" />
+  <meta name="description" content="The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts." />
   <meta property="og:title" content="Agents cautions — warning" />
-  <meta property="og:description" content="The agents module provides AI-powered release preparation with progressive tier escalation and parallel execution. Key risks involve cost escalation, state inconsistency, and adapter initialization fa" />
+  <meta property="og:description" content="The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/warning" />
   <style>
@@ -260,25 +260,38 @@
   <article class="markdown-body">
 <h1>Agents cautions</h1>
 <h2>What to watch for</h2>
-<p>The agents module provides AI-powered release preparation with progressive tier escalation and parallel execution. Key risks involve cost escalation, state inconsistency, and adapter initialization failures.</p>
+<p>The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts.</p>
 <h2>Risk areas</h2>
-<p><strong>Unexpected cost escalation in ReleaseAgent</strong>
-The <code>ReleaseAgent</code> automatically escalates from CHEAP to CAPABLE to PREMIUM tiers when confidence thresholds aren't met. Without monitoring, a single agent run can consume significantly more API credits than expected if the cheaper models struggle with your codebase's complexity.</p>
-<p><strong>Redis state corruption during parallel execution</strong>
-<code>ReleasePrepTeam</code> runs multiple agents concurrently, all potentially writing to the same Redis state store. If two agents update state simultaneously, you may get incomplete results, duplicated work, or corrupted execution records that break recovery attempts.</p>
-<p><strong>Lazy adapter imports masking dependency issues</strong>
-The framework adapters (<code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>, etc.) use lazy imports that only fail when first called. Your code may pass all static checks but crash at runtime when an agent tries to load a missing optional dependency like LangChain or AutoGen.</p>
-<p><strong>Quality gate failures blocking releases incorrectly</strong>
-<code>ReleasePrepTeam</code> uses quality gates with default thresholds that may not fit your project. A critical gate can block an otherwise ready release if the threshold is misconfigured, while non-critical gates may pass releases that shouldn't ship.</p>
+<h3>Lazy adapter imports can silently return <code>None</code></h3>
+<p><code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>, <code>get_autogen_adapter()</code>, and <code>get_haystack_adapter()</code> all use lazy imports. If the underlying framework package is not installed, <code>is_available()</code> returns <code>False</code> and the adapter may not be usable. Call <code>is_available()</code> on the adapter before invoking <code>create_agent()</code> or <code>create_workflow()</code>, otherwise you will get a runtime failure at the point of first use rather than at startup.</p>
+<h3><code>wrap_wizard()</code> silently applies a default model tier</h3>
+<p><code>wrap_wizard(wizard, name, model_tier='capable')</code> defaults <code>model_tier</code> to <code>'capable'</code>. If you intend to run the wrapped agent under a cost-constrained tier, you must pass <code>model_tier</code> explicitly. Omitting it will not raise an error, so cost overruns from unintended tier selection can go unnoticed until billing review.</p>
+<h3><code>safe_agent_operation</code> swallows errors as <code>AgentOperationError</code></h3>
+<p>The <code>@safe_agent_operation</code> decorator catches exceptions and re-raises them as <code>AgentOperationError</code>. If you nest decorated operations, the original exception type is lost at each layer. Preserve the original error in your exception handling and log the full chain before it is wrapped.</p>
+<h3><code>retry_on_failure</code> can multiply API costs</h3>
+<p><code>retry_on_failure(max_attempts=3, delay=1.0, backoff=2.0)</code> retries on any exception in the <code>exceptions</code> tuple. If you include broad exception types such as <code>Exception</code>, transient network errors and genuine model errors both trigger retries — up to three billable API calls per invocation. Scope the <code>exceptions</code> tuple to the specific retriable error types your framework raises.</p>
+<h3><code>validate_input</code> rejects non-dict inputs without a framework-specific message</h3>
+<p><code>@validate_input(required_fields)</code> raises <code>ValueError</code> with the message <code>'Input must be a dict, got {...}'</code> when <code>input_data</code> is a string. The <code>invoke()</code> methods on <code>AutoGenAgent</code>, <code>HaystackAgent</code>, and <code>LangChainAgent</code> accept <code>str | dict</code>, but the decorator does not. If you apply <code>validate_input</code> to a method that advertises string input, callers will hit an undocumented <code>ValueError</code>.</p>
+<h3>Agent state records are not automatically recovered</h3>
+<p><code>AgentStateStore</code> and <code>AgentRecoveryManager</code> persist execution state, but recovery is not triggered automatically on agent restart. If a release workflow exits mid-run, you must explicitly invoke recovery through <code>AgentRecoveryManager</code> before re-running. Skipping this step can cause <code>ReleasePrepTeamWorkflow</code> to reprocess completed stages or miss state that was recorded before the failure.</p>
 <h2>How to avoid problems</h2>
-<p><strong>Set cost limits before escalation</strong>
-Monitor the <code>total_cost</code> field in <code>ReleaseReadinessReport</code> and configure your AI provider's usage limits. Test with CHEAP tier agents first to understand baseline costs before enabling automatic escalation.</p>
-<p><strong>Use separate Redis namespaces for parallel runs</strong>
-Initialize each agent with a unique <code>agent_id</code> and consider using Redis key prefixes to isolate state between concurrent executions. The <code>AgentStateStore</code> supports this pattern.</p>
-<p><strong>Validate adapter dependencies early</strong>
-Call adapter functions during application startup rather than waiting for runtime. Add dependency checks to your CI pipeline to catch missing packages before deployment.</p>
-<p><strong>Customize quality gates for your project</strong>
-Review default thresholds in <code>ReleasePrepTeam.__init__()</code> and adjust based on your project's maturity. Mark gates as non-critical (<code>critical: bool = False</code>) if they should warn but not block releases.</p>
+<ol>
+<li>
+<p><strong>Check adapter availability at startup.</strong> Call <code>is_available()</code> immediately after obtaining an adapter from any of the <code>get_*_adapter()</code> functions. Fail fast with a clear message rather than letting the error surface during a workflow run.</p>
+</li>
+<li>
+<p><strong>Be explicit with <code>wrap_wizard()</code> model tier.</strong> Always pass <code>model_tier</code> by name — for example, <code>wrap_wizard(wizard, name=&quot;my-agent&quot;, model_tier=&quot;efficient&quot;)</code> — so the tier is visible at the call site and not hidden in a default.</p>
+</li>
+<li>
+<p><strong>Narrow the <code>exceptions</code> tuple in <code>retry_on_failure</code>.</strong> Restrict retries to the specific exception classes that represent transient failures in your framework, rather than catching <code>Exception</code> broadly.</p>
+</li>
+<li>
+<p><strong>Run recovery before re-executing interrupted workflows.</strong> After any unclean shutdown, use <code>AgentRecoveryManager</code> to inspect and restore state from <code>AgentStateStore</code> before calling <code>ReleasePrepTeamWorkflow.run()</code> again.</p>
+</li>
+<li>
+<p><strong>Avoid depending on private helpers.</strong> Functions and methods prefixed with <code>_</code> (such as <code>_run_command</code>) are not part of the public API and can change without notice. Use only the names exported in <code>__all__</code>.</p>
+</li>
+</ol>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/agents/**</code></li>

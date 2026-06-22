@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory — concept</title>
-  <meta name="description" content="Memory subsystem — storage, lookup, and security." />
+  <meta name="description" content="Attune AI memory is a three-layer system that gives agents short-term working storage, searchable long-term pattern recall, and static project context — all with built-in classification, PII scrubbing" />
   <meta property="og:title" content="Memory — concept" />
-  <meta property="og:description" content="Memory subsystem — storage, lookup, and security." />
+  <meta property="og:description" content="Attune AI memory is a three-layer system that gives agents short-term working storage, searchable long-term pattern recall, and static project context — all with built-in classification, PII scrubbing" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/concept" />
   <style>
@@ -259,60 +259,83 @@
   </nav>
   <article class="markdown-body">
 <h1>Memory</h1>
-<h2>How it works</h2>
-<p>Memory subsystem — storage, lookup, and security.</p>
-<p>The main building blocks are:</p>
-<ul>
-<li><strong><code>MemoryBackend</code></strong> — Protocol for short-term memory backends.</li>
-<li><strong><code>SearchableMemoryBackend</code></strong> — Extended protocol for backends with semantic search.</li>
-<li><strong><code>ClaudeMemoryConfig</code></strong> — Configuration for Claude memory integration</li>
-<li><strong><code>MemoryFile</code></strong> — Represents a loaded CLAUDE.md memory file</li>
-<li><strong><code>ClaudeMemoryLoader</code></strong> — Loads and manages Claude Code memory files (CLAUDE.md).</li>
-</ul>
-<p>Under the hood, this feature spans 75 source
-files covering:</p>
-<ul>
-<li>Memory backend protocol for Attune AI.</li>
-<li>Claude Memory Integration Module</li>
-<li>Redis Configuration for Attune AI (deprecated).</li>
-</ul>
-<h2>What connects to it</h2>
-<p>This feature relates to: memory, storage.</p>
-<p>Other parts of the codebase interact with
-memory through these interfaces:</p>
+<p>Attune AI memory is a three-layer system that gives agents short-term working storage, searchable long-term pattern recall, and static project context — all with built-in classification, PII scrubbing, and secrets detection before anything reaches persistent storage.</p>
+<h2>Memory layers</h2>
+<p>Each layer serves a different retention horizon and access pattern.</p>
+<p><strong>Short-term agent memory</strong> is a keyed store scoped per <code>agent_id</code>, backed by any class that implements the <code>MemoryBackend</code> protocol. The core operations are <code>stash(key, value, ttl, agent_id)</code>, <code>retrieve(key, agent_id)</code>, <code>delete(key)</code>, and <code>keys(pattern)</code>. An optional <code>ttl</code> argument expires entries automatically. Two capability flags determine backend fitness for your deployment: <code>supports_realtime()</code> and <code>supports_distributed()</code>. A Redis-backed store passes both; an in-process mock typically passes neither. Call <code>is_connected()</code> before use and <code>get_stats()</code> for runtime metrics.</p>
+<p><strong>Long-term searchable memory</strong> extends <code>MemoryBackend</code> through the <code>SearchableMemoryBackend</code> protocol. Rather than retrieving by exact key, you query by content: <code>search(query, limit)</code> returns ranked results, and <code>recent(limit)</code> surfaces the most recently stored entries. Use <code>remember(content, topics=[...])</code> to store an entry, <code>promote(session_id)</code> to graduate session-scoped memories into the durable store, and <code>prune(max_age_days)</code> to expire stale entries.</p>
+<p><strong>Static project context</strong> comes from CLAUDE.md files resolved at enterprise, user, and project levels. <code>ClaudeMemoryLoader</code> reads these files in order — controlled by the <code>load_enterprise</code>, <code>load_user</code>, and <code>load_project</code> fields on <code>ClaudeMemoryConfig</code> — and returns a single merged string from <code>load_all_memory()</code>. Files that import other paths are followed recursively up to <code>max_import_depth</code> (default <code>5</code>). Set <code>validate_files=True</code> to reject any file that exceeds <code>max_file_size_bytes</code> (default <code>1000000</code> bytes). To bootstrap a new project, <code>create_default_project_memory(project_root, framework='empathy')</code> writes a starter <code>.claude/CLAUDE.md</code> with the expected structure.</p>
+<h2>Security controls</h2>
+<p>Classification and scrubbing run before any pattern reaches durable storage. <code>ClassificationRules</code> assigns a <code>Classification</code> level using keyword lists (<code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, <code>PROPRIETARY_KEYWORDS</code>) and type lists (<code>SENSITIVE_PATTERN_TYPES</code>, <code>INTERNAL_PATTERN_TYPES</code>). The <code>PIIScrubber</code> strips personally identifiable information, and <code>SecretsDetector</code> flags credential-like content. <code>EncryptionManager</code> handles at-rest encryption for patterns that require it. <code>AuditLogger</code> records every write and access as an <code>AuditEvent</code> for compliance trails.</p>
+<h2>Enterprise control surface</h2>
+<p><code>MemoryControlPanel</code> exposes runtime operations without requiring code changes. You can check <code>status()</code> and <code>health_check()</code>, browse stored patterns with <code>list_patterns(classification=None, limit=100)</code>, remove a specific pattern with <code>delete_pattern(pattern_id, user_id)</code>, bulk-clear short-term entries with <code>clear_short_term(agent_id)</code>, and export pattern sets to disk with <code>export_patterns(output_path)</code>.</p>
+<p>The panel is configured through <code>ControlPanelConfig</code>, which defaults Redis to <code>localhost:6379</code> and uses <code>./memdocs_storage</code> for pattern documents. When <code>auto_start_redis=True</code>, the panel starts Redis automatically if it isn't already running.</p>
+<p><code>run_api_server(panel, host, port)</code> wraps the panel in an HTTP server backed by <code>MemoryAPIHandler</code>, which handles <code>GET</code>, <code>POST</code>, <code>DELETE</code>, and <code>OPTIONS</code> requests. Optional arguments let you add TLS (<code>ssl_certfile</code>, <code>ssl_keyfile</code>), restrict access with <code>APIKeyAuth</code> (via <code>api_key</code>), and enforce request budgets with <code>RateLimiter</code> (<code>rate_limit_requests</code>, <code>rate_limit_window</code>). Set <code>allowed_origins</code> for CORS control.</p>
+<p>For Railway deployments, <code>get_railway_redis()</code> reads <code>REDIS_URL</code> from the environment and raises <code>OSError</code> with setup instructions if the variable is absent.</p>
+<h2>Integration surface</h2>
 <table>
 <thead>
 <tr>
-<th>Interface</th>
-<th>Purpose</th>
-<th>File</th>
+<th>Type</th>
+<th>Name</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
+<td>Protocol</td>
 <td><code>MemoryBackend</code></td>
-<td>Protocol for short-term memory backends.</td>
-<td><code>src/attune/memory/backend.py</code></td>
+<td>Short-term key-value store with TTL and agent scoping</td>
 </tr>
 <tr>
+<td>Protocol</td>
 <td><code>SearchableMemoryBackend</code></td>
-<td>Extended protocol for backends with semantic search.</td>
-<td><code>src/attune/memory/backend.py</code></td>
+<td>Extends <code>MemoryBackend</code> with semantic search, promotion, and pruning</td>
 </tr>
 <tr>
+<td>Dataclass</td>
 <td><code>ClaudeMemoryConfig</code></td>
-<td>Configuration for Claude memory integration</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
+<td>Controls which CLAUDE.md levels load, import depth, and file-size limits</td>
 </tr>
 <tr>
+<td>Dataclass</td>
 <td><code>MemoryFile</code></td>
-<td>Represents a loaded CLAUDE.md memory file</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
+<td>One resolved CLAUDE.md file: <code>level</code>, <code>path</code>, <code>content</code>, <code>imports</code>, <code>load_order</code></td>
 </tr>
 <tr>
+<td>Class</td>
 <td><code>ClaudeMemoryLoader</code></td>
-<td>Loads and manages Claude Code memory files (CLAUDE.md).</td>
-<td><code>src/attune/memory/claude_memory.py</code></td>
+<td>Resolves and merges CLAUDE.md files; primary entry point is <code>load_all_memory()</code></td>
+</tr>
+<tr>
+<td>Class</td>
+<td><code>MemoryControlPanel</code></td>
+<td>Runtime management for patterns, short-term entries, and Redis lifecycle</td>
+</tr>
+<tr>
+<td>Dataclass</td>
+<td><code>ControlPanelConfig</code></td>
+<td>Redis coordinates (<code>redis_host</code>, <code>redis_port</code>) and storage paths for the control panel</td>
+</tr>
+<tr>
+<td>Function</td>
+<td><code>is_redis_available()</code></td>
+<td>Lightweight probe that checks Redis availability without importing the subsystem</td>
+</tr>
+<tr>
+<td>Function</td>
+<td><code>get_redis_memory(url, use_mock)</code></td>
+<td>Factory that reads environment config and returns a <code>RedisShortTermMemory</code> instance</td>
+</tr>
+<tr>
+<td>Function</td>
+<td><code>get_railway_redis()</code></td>
+<td>Railway-specific factory; raises <code>OSError</code> if <code>REDIS_URL</code> is absent</td>
+</tr>
+<tr>
+<td>Function</td>
+<td><code>create_default_project_memory(project_root, framework)</code></td>
+<td>Writes a starter CLAUDE.md to bootstrap a new project</td>
 </tr>
 </tbody>
 </table>

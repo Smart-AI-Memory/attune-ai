@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with models — tip</title>
-  <meta name="description" content="Use `AdaptiveModelRouter.get_best_model()` to select a model rather than hardcoding model IDs — it ranks candidates by `quality_score` (derived from `success_rate`, `avg_latency_ms`, and `avg_cost`) a" />
-  <meta property="og:title" content="Tip: working effectively with models — tip" />
-  <meta property="og:description" content="Use `AdaptiveModelRouter.get_best_model()` to select a model rather than hardcoding model IDs — it ranks candidates by `quality_score` (derived from `success_rate`, `avg_latency_ms`, and `avg_cost`) a" />
+  <title>LLM authentication, provider routing, and tier management — tip</title>
+  <meta name="description" content="- **Depend only on the public API.** `attune.models` re-exports the registry (`MODEL_REGISTRY`, `ModelInfo`, `ModelTier`, `get_model`, `get_all_models`, `get_pricing_for_model`), task routing (`TaskTy" />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — tip" />
+  <meta property="og:description" content="- **Depend only on the public API.** `attune.models` re-exports the registry (`MODEL_REGISTRY`, `ModelInfo`, `ModelTier`, `get_model`, `get_all_models`, `get_pricing_for_model`), task routing (`TaskTy" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/tip" />
   <style>
@@ -258,11 +258,28 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with models</h1>
-<p>Use <code>AdaptiveModelRouter.get_best_model()</code> to select a model rather than hardcoding model IDs — it ranks candidates by <code>quality_score</code> (derived from <code>success_rate</code>, <code>avg_latency_ms</code>, and <code>avg_cost</code>) against your actual telemetry, so routing improves automatically as your workflows accumulate history.</p>
-<p><strong>Why:</strong> Hardcoded model IDs bypass the circuit breaker and fallback chain, meaning a single provider outage can halt a workflow that <code>AdaptiveModelRouter</code> would have recovered from silently.</p>
-<p><strong>Tradeoff:</strong> <code>get_best_model()</code> requires a <code>min_success_rate</code> threshold (default <code>0.8</code>) and a populated telemetry store. If your <code>sample_size</code> is too low, the router falls back to registry defaults anyway — so the benefit only compounds after enough runs to produce reliable <code>ModelPerformance</code> data.</p>
-<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend only on the public API.</strong> <code>attune.models</code> re-exports the
+registry (<code>MODEL_REGISTRY</code>, <code>ModelInfo</code>, <code>ModelTier</code>, <code>get_model</code>,
+<code>get_all_models</code>, <code>get_pricing_for_model</code>), task routing
+(<code>TaskType</code>, <code>get_tier_for_task</code>, <code>get_tasks_for_tier</code>,
+<code>is_known_task</code>), auth (<code>AuthStrategy</code>, <code>AuthMode</code>,
+<code>get_auth_strategy</code>), provider config (<code>ProviderConfig</code>,
+<code>ProviderMode</code>, <code>get_provider_config</code>), and execution (<code>LLMExecutor</code>,
+<code>LLMResponse</code>, <code>ExecutionContext</code>, <code>MockLLMExecutor</code>,
+<code>AdaptiveModelRouter</code>). Treat anything not exported as private.</li>
+<li><strong>Pass <code>tier.value</code> to the registry.</strong> <code>get_model</code> and the registry
+key on the string value; the routing functions accept the enum. When
+in doubt, <code>.value</code>.</li>
+<li><strong><code>get_recommended_mode</code> is pure.</strong> It reads the strategy's
+<code>subscription_tier</code>, <code>default_mode</code>, thresholds, and the LOC argument
+— no I/O — so it is safe to call in tight loops or tests.</li>
+<li><strong>Use <code>MockLLMExecutor</code> in tests.</strong> It satisfies the <code>LLMExecutor</code>
+protocol, returns a deterministic <code>LLMResponse</code>, and records calls in
+<code>call_history</code> for assertions — no network, no spend.</li>
+</ul>
 
   </article>
   <footer>

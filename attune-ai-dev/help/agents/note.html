@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Note: agents — note</title>
-  <meta name="description" content="The agents module implements an AI-powered release preparation system that automates code quality assessment and release readiness validation." />
+  <meta name="description" content="The `agents` feature covers three concerns: release agents, state persistence, and recovery. It spans two source trees — `src/attune/agents/` and `src/attune/agent_factory/` — with framework adapters " />
   <meta property="og:title" content="Note: agents — note" />
-  <meta property="og:description" content="The agents module implements an AI-powered release preparation system that automates code quality assessment and release readiness validation." />
+  <meta property="og:description" content="The `agents` feature covers three concerns: release agents, state persistence, and recovery. It spans two source trees — `src/attune/agents/` and `src/attune/agent_factory/` — with framework adapters " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/note" />
   <style>
@@ -260,35 +260,53 @@
   <article class="markdown-body">
 <h1>Note: agents</h1>
 <h2>Context</h2>
-<p>The agents module implements an AI-powered release preparation system that automates code quality assessment and release readiness validation.</p>
-<h2>Agent architecture</h2>
-<p>The system uses a progressive tier escalation strategy where agents start with cheaper models (CHEAP tier) and escalate to more expensive, capable models (CAPABLE -&gt; PREMIUM) when needed. This approach balances cost efficiency with accuracy for complex analysis tasks.</p>
-<h3>Release preparation agents</h3>
-<p>The <code>ReleasePrepTeam</code> coordinates specialized agents that run in parallel:</p>
-<ul>
-<li><strong>TestCoverageAgent</strong> — Executes <code>pytest --cov</code> and parses coverage reports</li>
-<li><strong>DocumentationAgent</strong> — Validates docstring coverage, README currency, and CHANGELOG presence</li>
-<li><strong>CodeQualityAgent</strong> — Runs <code>ruff</code> linting and checks type hints and complexity metrics</li>
-</ul>
-<p>Each agent inherits from <code>ReleaseAgent</code> and returns structured results through <code>ReleaseAgentResult</code>, including success status, tier used, findings, and cost tracking.</p>
-<h3>State management</h3>
-<p>Agents support Redis-based state persistence through <code>AgentStateStore</code>, enabling recovery from failures and maintaining execution history via <code>AgentExecutionRecord</code>. The <code>AgentRecoveryManager</code> handles automatic retry logic with exponential backoff.</p>
+<p>The <code>agents</code> feature covers three concerns: release agents, state persistence, and recovery. It spans two source trees — <code>src/attune/agents/</code> and <code>src/attune/agent_factory/</code> — with framework adapters living under <code>src/attune/agent_factory/adapters/</code>.</p>
 <h2>Framework adapters</h2>
-<p>The system provides adapters for popular AI frameworks through lazy-loaded functions:</p>
+<p>Each supported framework has a matching adapter, agent, and workflow class:</p>
+<table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Adapter</th>
+<th>Agent class</th>
+<th>Workflow class</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Microsoft AutoGen</td>
+<td><code>AutoGenAdapter</code></td>
+<td><code>AutoGenAgent</code></td>
+<td><code>AutoGenWorkflow</code></td>
+</tr>
+<tr>
+<td>deepset Haystack</td>
+<td><code>HaystackAdapter</code></td>
+<td><code>HaystackAgent</code></td>
+<td><code>HaystackWorkflow</code></td>
+</tr>
+<tr>
+<td>LangChain</td>
+<td><code>LangChainAdapter</code></td>
+<td><code>LangChainAgent</code></td>
+<td><code>LangChainWorkflow</code></td>
+</tr>
+</tbody>
+</table>
+<p>Every adapter exposes <code>is_available()</code> to check whether the underlying framework is installed, and <code>create_agent()</code>, <code>create_workflow()</code>, and <code>create_tool()</code> to construct the framework-specific objects from shared <code>AgentConfig</code> and <code>WorkflowConfig</code> values.</p>
+<h2>Lazy loading</h2>
+<p>Adapters are not imported at package load time. The top-level functions <code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code>, <code>get_langchain_adapter()</code>, and <code>get_langgraph_adapter()</code> each perform a lazy import, so only the frameworks you actually use contribute to import cost.</p>
+<h2>Adapter and class composition</h2>
+<p>The adapter functions and the agent/workflow classes are designed to work together. Adapters produce agent and workflow instances; those instances expose <code>invoke()</code>, <code>stream()</code>, and <code>run()</code> methods that match the signatures expected by higher-level orchestration code. <code>wrap_wizard()</code> provides a shortcut when you want to treat an existing wizard as a <code>WizardAgent</code> without going through a full adapter.</p>
+<h2>Resilience utilities</h2>
+<p>Several decorators in the feature support safe operation at runtime:</p>
 <ul>
-<li><code>get_langchain_adapter()</code> — LangChain integration</li>
-<li><code>get_langgraph_adapter()</code> — LangGraph workflows</li>
-<li><code>get_autogen_adapter()</code> — AutoGen multi-agent systems</li>
-<li><code>get_haystack_adapter()</code> — Haystack NLP pipelines</li>
+<li><code>safe_agent_operation</code> wraps a method with logging and raises <code>AgentOperationError</code> on failure.</li>
+<li><code>retry_on_failure</code> retries a failing operation up to <code>max_attempts</code> times with exponential backoff controlled by <code>delay</code> and <code>backoff</code>.</li>
+<li><code>log_performance</code> logs any call that exceeds <code>threshold_seconds</code>.</li>
+<li><code>validate_input</code> checks that required fields are present in dict input before the wrapped function runs.</li>
 </ul>
-<p>The <code>wrap_wizard()</code> helper quickly converts wizard instances into agents, while the <code>WizardAdapter</code> provides native integration.</p>
-<h2>Quality gates and reporting</h2>
-<p>Release readiness is determined by configurable quality gates defined in <code>QualityGate</code> objects. The <code>ReleaseReadinessReport</code> aggregates all agent results into an approval decision with confidence metrics, blockers, warnings, and cost summaries.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/agents/**</code></li>
-<li><code>src/attune/agent_factory/**</code></li>
-</ul>
+<p>State persistence and recovery are handled by <code>AgentStateStore</code>, <code>AgentStateRecord</code>, <code>AgentExecutionRecord</code>, and <code>AgentRecoveryManager</code>.</p>
 <p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 
   </article>

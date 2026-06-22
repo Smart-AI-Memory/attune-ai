@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: cli — note</title>
-  <meta name="description" content="The `cli` feature spans two layers: a set of command handler functions organized by domain, and a routing layer that maps free-form user input to those commands." />
-  <meta property="og:title" content="Note: cli — note" />
-  <meta property="og:description" content="The `cli` feature spans two layers: a set of command handler functions organized by domain, and a routing layer that maps free-form user input to those commands." />
+  <title>Note: CLI architecture — note</title>
+  <meta name="description" content="The `attune` CLI is implemented across two top-level modules and a `cli_commands` package." />
+  <meta property="og:title" content="Note: CLI architecture — note" />
+  <meta property="og:description" content="The `attune` CLI is implemented across two top-level modules and a `cli_commands` package." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/note" />
   <style>
@@ -258,98 +258,14 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: cli</h1>
-<p>The <code>cli</code> feature spans two layers: a set of command handler functions organized by domain, and a routing layer that maps free-form user input to those commands.</p>
-<h2>Command handlers</h2>
-<p>Command handlers live in <code>cli_commands/</code> and are grouped by domain. Each function accepts an <code>argparse.Namespace</code> and returns an integer exit code.</p>
-<table>
-<thead>
-<tr>
-<th>Module</th>
-<th>Functions</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>cost_commands</code></td>
-<td><code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
-</tr>
-<tr>
-<td><code>memory_commands</code></td>
-<td><code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code></td>
-</tr>
-<tr>
-<td><code>telemetry_commands</code></td>
-<td><code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_export</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_routing_check</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code></td>
-</tr>
-<tr>
-<td><code>utility_commands</code></td>
-<td><code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_features</code>, <code>cmd_doctor</code></td>
-</tr>
-<tr>
-<td><code>workflow_commands</code></td>
-<td><code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, <code>cmd_workflow_run</code></td>
-</tr>
-<tr>
-<td><code>provider_commands</code></td>
-<td><code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
-</tr>
-<tr>
-<td><code>help_commands</code></td>
-<td><code>cmd_help</code></td>
-</tr>
-</tbody>
-</table>
-<p>The entry point is <code>attune.cli_minimal.main</code>, which calls <code>create_parser</code> to build the argument parser and then dispatches to the appropriate handler.</p>
-<h2>Routing layer</h2>
-<p><code>attune.cli_router</code> sits above the command handlers and routes free-form text input — including slash commands detected by <code>is_slash_command</code> — to the correct skill invocation.</p>
-<p><code>HybridRouter</code> is the primary routing class. It accepts an optional <code>preferences_path</code> pointing to a file where learned preferences are persisted. Its <code>route</code> method returns a <code>dict</code> describing the resolved skill and arguments. <code>get_suggestions</code> accepts a partial string and returns a ranked list of completions.</p>
-<p>Learned preferences are stored as <code>RoutingPreference</code> instances:</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Meaning</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>keyword</code></td>
-<td><code>str</code></td>
-<td>—</td>
-<td>Trigger word matched against user input</td>
-</tr>
-<tr>
-<td><code>skill</code></td>
-<td><code>str</code></td>
-<td>—</td>
-<td>Skill name to invoke</td>
-</tr>
-<tr>
-<td><code>args</code></td>
-<td><code>str</code></td>
-<td><code>''</code></td>
-<td>Arguments passed to the skill</td>
-</tr>
-<tr>
-<td><code>usage_count</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-<td>Times this preference has been applied</td>
-</tr>
-<tr>
-<td><code>confidence</code></td>
-<td><code>float</code></td>
-<td><code>1.0</code></td>
-<td>Routing confidence score</td>
-</tr>
-</tbody>
-</table>
-<p><code>learn_preference(keyword, skill, args)</code> adds or updates a <code>RoutingPreference</code> entry, incrementing <code>usage_count</code> over time.</p>
-<h2>Relationship between layers</h2>
-<p>The command handlers and the routing layer are independent at the import level. <code>cli_router</code> resolves <em>which</em> skill to invoke; <code>cli_minimal.main</code> and the <code>cli_commands</code> modules handle <em>how</em> to execute it once the parser has matched a subcommand. The <code>route_user_input</code> convenience function in <code>attune.cli_router</code> wraps <code>HybridRouter.route</code> for callers that don't need to manage a router instance directly.</p>
+<h1>Note: CLI architecture</h1>
+<p>The <code>attune</code> CLI is implemented across two top-level modules and a <code>cli_commands</code> package.</p>
+<ul>
+<li><strong><code>attune.cli_minimal</code></strong> owns the entry point. <code>create_parser()</code> builds the argument parser, and <code>main()</code> dispatches to a command handler based on the parsed subcommand. <code>get_version()</code> surfaces the installed package version.</li>
+<li><strong><code>attune.cli_router</code></strong> handles natural-language and slash-command input. <code>route_user_input()</code> and <code>is_slash_command()</code> are the primary dispatch functions. <code>HybridRouter</code> backs them with a learned-preference layer: it calls <code>learn_preference()</code> to associate a keyword with a skill invocation, and <code>get_suggestions()</code> to complete partial input. Preferences are stored as <code>RoutingPreference</code> records with fields <code>keyword</code>, <code>skill</code>, <code>args</code>, <code>usage_count</code>, and <code>confidence</code>.</li>
+<li><strong><code>attune.cli_commands</code></strong> groups handlers by domain. Each handler receives an <code>argparse.Namespace</code> and returns an <code>int</code> exit code. The exit-code contract is enforced through <code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code>, which instantiates and executes a workflow class and returns the agreed-upon integer. Command groups include cost tracking (<code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code>), memory (<code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code>), telemetry, provider configuration, workflow management, and utility commands such as <code>cmd_setup</code>, <code>cmd_validate</code>, and <code>cmd_doctor</code>.</li>
+</ul>
+<p><code>HybridRouter</code> and the command handlers are independent of each other. The router resolves natural-language input to a skill invocation before any <code>argparse</code> parsing occurs; the command handlers run only after <code>main()</code> has dispatched a recognized subcommand.</p>
 
   </article>
   <footer>

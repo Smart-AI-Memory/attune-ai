@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Working effectively with the plugin hooks — tip</title>
-  <meta name="description" content="Call the public entry points — `main()` in `hooks.spec_orient`, `hooks.compact_warning`, and `hooks.format_on_save` — rather than reaching into underscore-prefixed modules directly. Those internal mod" />
-  <meta property="og:title" content="Tip: Working effectively with the plugin hooks — tip" />
-  <meta property="og:description" content="Call the public entry points — `main()` in `hooks.spec_orient`, `hooks.compact_warning`, and `hooks.format_on_save` — rather than reaching into underscore-prefixed modules directly. Those internal mod" />
+  <title>Tip: working effectively with plugin — tip</title>
+  <meta name="description" content="Call `estimate_utilization()` before you call `build_resume_prompt()` — passing a bloated transcript into the resume builder wastes context budget that the prompt itself needs." />
+  <meta property="og:title" content="Tip: working effectively with plugin — tip" />
+  <meta property="og:description" content="Call `estimate_utilization()` before you call `build_resume_prompt()` — passing a bloated transcript into the resume builder wastes context budget that the prompt itself needs." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/tip" />
   <style>
@@ -258,11 +258,10 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Working effectively with the plugin hooks</h1>
-<p>Call the public entry points — <code>main()</code> in <code>hooks.spec_orient</code>, <code>hooks.compact_warning</code>, and <code>hooks.format_on_save</code> — rather than reaching into underscore-prefixed modules directly. Those internal modules (<code>_state</code>, <code>_resume_prompt</code>, <code>_transcript_size</code>, <code>_handoff_cli</code>) can change between versions; the public <code>main()</code> functions are the stable interface.</p>
-<p><strong>Why:</strong> Underscore-prefixed modules in this package are explicitly internal — <code>_state</code>, <code>_resume_prompt</code>, and <code>_transcript_size</code> are shared helpers that multiple hooks import, so their signatures change whenever any of those hooks evolves.</p>
-<p><strong>Tradeoff:</strong> Staying at the public surface means you get less direct access to intermediate values — for example, you can't cheaply reuse a <code>GitState</code> object across two calls without going through <code>hooks._state.git_state()</code>. That is an acceptable cost; if you genuinely need the intermediate data, import the specific helper by name and treat it as an internal dependency you own.</p>
-<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
+<h1>Tip: working effectively with plugin</h1>
+<p>Call <code>estimate_utilization()</code> before you call <code>build_resume_prompt()</code> — passing a bloated transcript into the resume builder wastes context budget that the prompt itself needs.</p>
+<p><strong>Why it sticks:</strong> <code>estimate_utilization</code> returns a <code>float</code> in <code>[0.0, 1.0]</code>; if it's already high, <code>format_warning</code> in <code>hooks.compact_warning</code> can surface that to the user before you spend tokens on the full resume prompt.</p>
+<p><strong>Tradeoff:</strong> Adding the utilization check is an extra call to <code>hooks._transcript_size.estimate_utilization</code>. In fast-path hooks where transcript I/O is expensive, you may choose to skip it and call <code>build_resume_prompt</code> unconditionally — just know you're trading responsiveness for accuracy.</p>
 
   </article>
   <footer>

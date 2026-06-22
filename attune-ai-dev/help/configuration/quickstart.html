@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: configuration — quickstart</title>
-  <meta name="description" content="Load and manage your Attune AI configuration with a single function call." />
-  <meta property="og:title" content="Quickstart: configuration — quickstart" />
-  <meta property="og:description" content="Load and manage your Attune AI configuration with a single function call." />
+  <title>Quickstart: Attune Configuration — quickstart</title>
+  <meta name="description" content="Load your first `UnifiedConfig` object and confirm it reads correctly:" />
+  <meta property="og:title" content="Quickstart: Attune Configuration — quickstart" />
+  <meta property="og:description" content="Load your first `UnifiedConfig` object and confirm it reads correctly:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/quickstart" />
   <style>
@@ -258,49 +258,68 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: configuration</h1>
-<p>Load and manage your Attune AI configuration with a single function call.</p>
+<h1>Quickstart: Attune Configuration</h1>
+<p>Load your first <code>UnifiedConfig</code> object and confirm it reads correctly:</p>
 <pre><code class="language-python">from attune.config.loader import load_unified_config
 
 config = load_unified_config()
-print(f&quot;Model: {config.model_id}&quot;)
-print(f&quot;Provider: {config.provider}&quot;)
+print(config.to_dict())
 </code></pre>
-<h2>Set up your configuration</h2>
-<ol>
-<li>
-<p><strong>Create a configuration file</strong> in one of these locations:</p>
+<p>If a config file exists at one of the default search paths (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, or <code>~/.config/attune/config.json</code>), you'll see its contents printed as a dictionary. If no file is found, you'll see the defaults.</p>
+<h2>Prerequisites</h2>
 <ul>
-<li><code>./attune.config.json</code> (project directory)</li>
-<li><code>~/.attune/config.json</code> (user directory)</li>
-<li><code>~/.config/attune/config.json</code> (XDG config directory)</li>
+<li>The package is installed in your local environment</li>
+<li>Optionally, a config file exists at one of the <code>CONFIG_SEARCH_PATHS</code> locations</li>
 </ul>
-</li>
-<li>
-<p><strong>Add basic settings</strong> to your JSON file:</p>
-<pre><code class="language-json">{
-  &quot;provider&quot;: &quot;openai&quot;,
-  &quot;model&quot;: &quot;gpt-4&quot;,
-  &quot;temperature&quot;: 0.7,
-  &quot;max_tokens&quot;: 2000
-}
+<h2>Step 1: Validate the loaded config</h2>
+<p>Pass the config object to <code>validate_config</code> to catch any missing or malformed values before they cause runtime errors:</p>
+<pre><code class="language-python">from attune.config.loader import load_unified_config
+from attune.config.validation import validate_config
+
+config = load_unified_config()
+errors = validate_config(config)
+
+if errors:
+    for e in errors:
+        print(e)
+else:
+    print(&quot;Config is valid.&quot;)
 </code></pre>
-</li>
-<li>
-<p><strong>Load and verify</strong> your configuration:</p>
+<p>Expected output when config is valid:</p>
+<pre><code>Config is valid.
+</code></pre>
+<h2>Step 2: Override a value and save</h2>
+<p>Use <code>set_value</code> to change a config value in memory, then write it back to disk with <code>save_unified_config</code>:</p>
+<pre><code class="language-python">from attune.config.loader import load_unified_config, save_unified_config
+
+config = load_unified_config()
+config.set_value(&quot;telemetry.enabled&quot;, False)
+
+saved_path = save_unified_config(config)
+print(f&quot;Saved to: {saved_path}&quot;)
+</code></pre>
+<p>Expected output:</p>
+<pre><code>Saved to: /home/you/.attune/config.json
+</code></pre>
+<h2>Step 3: Apply environment variable overrides</h2>
+<p><code>ATTUNE_</code> environment variables override file-based config at load time. To apply them explicitly to an existing config object, call <code>apply_env_overrides</code>:</p>
+<pre><code class="language-python">from attune.config.loader import load_unified_config, ConfigLoader
+
+config = load_unified_config()
+config = ConfigLoader.apply_env_overrides(config)
+print(config.get_value(&quot;telemetry.enabled&quot;))
+</code></pre>
+<p>Set <code>ATTUNE_TELEMETRY_ENABLED=false</code> in your shell before running to see the override take effect.</p>
+<h2>Step 4: Read a value and check all available keys</h2>
 <pre><code class="language-python">from attune.config.loader import load_unified_config
 
 config = load_unified_config()
-print(f&quot;Using {config.provider} with model {config.model_id}&quot;)
+print(config.get_all_keys())
+print(config.get_value(&quot;telemetry.enabled&quot;))
 </code></pre>
-</li>
-</ol>
-<p>Expected output:</p>
-<pre><code>Using openai with model gpt-4
-</code></pre>
-<p>You can also override any setting using environment variables with the <code>ATTUNE_</code> prefix, like <code>ATTUNE_MODEL=gpt-3.5-turbo</code>.</p>
-<h2>Next steps</h2>
-<p>Configure Redis integration for state management by adding a <code>redis</code> section to your config file.</p>
+<p>This prints every key the config object knows about, then the current value of one of them — confirming the config is fully loaded and accessible.</p>
+<hr />
+<p><strong>Next:</strong> Read the <code>UnifiedAgentConfig</code> reference to learn how agent-specific settings — including <code>ModelTier</code>, <code>Provider</code>, and <code>WorkflowMode</code> — layer on top of <code>UnifiedConfig</code>.</p>
 
   </article>
   <footer>

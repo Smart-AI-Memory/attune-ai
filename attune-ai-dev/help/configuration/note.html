@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: configuration — note</title>
-  <meta name="description" content="Attune AI&#x27;s configuration system provides unified settings management across all agents and workflows, with support for multiple file formats and environment variable overrides." />
-  <meta property="og:title" content="Note: configuration — note" />
-  <meta property="og:description" content="Attune AI&#x27;s configuration system provides unified settings management across all agents and workflows, with support for multiple file formats and environment variable overrides." />
+  <title>Note: Configuration — note</title>
+  <meta name="description" content="The `config` package exposes two kinds of public symbols: **section dataclasses** that hold typed values, and **top-level functions** that load, save, and validate those values." />
+  <meta property="og:title" content="Note: Configuration — note" />
+  <meta property="og:description" content="The `config` package exposes two kinds of public symbols: **section dataclasses** that hold typed values, and **top-level functions** that load, save, and validate those values." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/note" />
   <style>
@@ -258,26 +258,99 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: configuration</h1>
-<h2>Context</h2>
-<p>Attune AI's configuration system provides unified settings management across all agents and workflows, with support for multiple file formats and environment variable overrides.</p>
-<h2>Configuration architecture</h2>
-<p>The configuration system centers on the <code>UnifiedAgentConfig</code> class, which normalizes settings for all agent types. The <code>ConfigLoader</code> class handles file discovery, loading, and saving, while maintaining backward compatibility with legacy configuration formats.</p>
-<p>Configuration files are discovered automatically using a search path hierarchy:</p>
-<ol>
-<li><code>./attune.config.json</code> (project-local)</li>
-<li><code>~/.attune/config.json</code> (user-specific)</li>
-<li><code>~/.config/attune/config.json</code> (XDG standard)</li>
-</ol>
-<h2>Environment variable compatibility</h2>
-<p>The system maintains compatibility with legacy <code>EMPATHY_</code> environment variables while transitioning to the <code>ATTUNE_</code> prefix. The <code>get_attune_env()</code> function checks for <code>ATTUNE_</code> variables first, then falls back to <code>EMPATHY_</code> equivalents.</p>
-<h2>Agent specialization</h2>
-<p>While <code>UnifiedAgentConfig</code> provides the base configuration model, specialized configurations like <code>BookProductionConfig</code> extend it with agent-specific settings. The <code>for_book_production()</code> method creates these specialized configurations while preserving the unified structure.</p>
-<h2>Workflow integration</h2>
-<p>The <code>WorkflowConfig</code> class manages agent workflow execution, supporting different modes through the <code>WorkflowMode</code> enum. This allows workflows to run in development, production, or testing configurations without code changes.</p>
-<h2>Source files</h2>
-<p>Configuration management spans multiple modules in <code>src/attune/config/</code>, including agent configurations, environment compatibility layers, and the core configuration loader.</p>
-<p><strong>Tags:</strong> <code>config</code>, <code>settings</code></p>
+<h1>Note: Configuration</h1>
+<h2>How the configuration surface is organized</h2>
+<p>The <code>config</code> package exposes two kinds of public symbols: <strong>section dataclasses</strong> that hold typed values, and <strong>top-level functions</strong> that load, save, and validate those values.</p>
+<p>The section dataclasses cover distinct concerns:</p>
+<table>
+<thead>
+<tr>
+<th>Class</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>UnifiedAgentConfig</code></td>
+<td>Unified configuration model for all agents</td>
+</tr>
+<tr>
+<td><code>BookProductionConfig</code></td>
+<td>Runtime parameters for book production agents (model, token limits, timeouts, retry behavior)</td>
+</tr>
+<tr>
+<td><code>MemDocsConfig</code></td>
+<td>MemDocs pattern storage integration settings</td>
+</tr>
+<tr>
+<td><code>RedisConfig</code></td>
+<td>Redis state management settings</td>
+</tr>
+<tr>
+<td><code>ModelTier</code></td>
+<td>Model tier selection for cost optimization</td>
+</tr>
+<tr>
+<td><code>Provider</code></td>
+<td>LLM provider options</td>
+</tr>
+<tr>
+<td><code>WorkflowMode</code></td>
+<td>Workflow execution modes</td>
+</tr>
+</tbody>
+</table>
+<p>Section dataclasses in <code>config.sections</code> (<code>AnalysisConfig</code>, <code>AuthConfig</code>, <code>EnvironmentConfig</code>, <code>PersistenceConfig</code>, <code>RoutingConfig</code>, <code>TelemetryConfig</code>, <code>WorkflowConfig</code>) each expose <code>to_dict()</code> and <code>from_dict()</code> for serialization. <code>UnifiedConfig</code> composes these sections and adds <code>get_value()</code>, <code>set_value()</code>, and <code>get_all_keys()</code> for key-based access.</p>
+<p>The top-level functions wrap <code>ConfigLoader</code> for convenience:</p>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_unified_config()</code></td>
+<td>Loads a <code>UnifiedConfig</code> from a path or from a discovered location</td>
+</tr>
+<tr>
+<td><code>save_unified_config()</code></td>
+<td>Saves a <code>UnifiedConfig</code> and returns the path written</td>
+</tr>
+<tr>
+<td><code>get_loader()</code></td>
+<td>Returns the global <code>ConfigLoader</code> instance</td>
+</tr>
+<tr>
+<td><code>validate_config()</code></td>
+<td>Returns a list of <code>ValidationError</code> objects for a given <code>UnifiedConfig</code></td>
+</tr>
+<tr>
+<td><code>get_config()</code> / <code>set_config()</code></td>
+<td>Get or replace the global <code>EmpathyXMLConfig</code> instance</td>
+</tr>
+</tbody>
+</table>
+<h2>Environment variable behavior</h2>
+<p><code>get_attune_env(name)</code> checks the <code>ATTUNE_</code> prefix first, then falls back to the legacy <code>EMPATHY_</code> prefix. This means existing <code>EMPATHY_*</code> variables continue to work without changes.</p>
+<p><code>iter_attune_env_prefix(prefix, suffix)</code> yields <code>(middle_part, value)</code> tuples for all variables matching <code>ATTUNE_{prefix}*{suffix}</code>, which lets the loader enumerate families of related variables (for example, all provider API keys) without hardcoding each name.</p>
+<p><code>ConfigLoader.apply_env_overrides()</code> applies these environment values on top of whatever was read from disk, so environment variables always win over file-based settings.</p>
+<h2>Config file discovery</h2>
+<p><code>ConfigLoader</code> searches for a configuration file in the following locations, in order:</p>
+<ul>
+<li><code>./attune.config.json</code></li>
+<li><code>~/.attune/config.json</code></li>
+<li><code>~/.config/attune/config.json</code></li>
+</ul>
+<p><code>ConfigLoader.discover_config_path()</code> returns the first path that exists, or <code>None</code> if none do. <code>ConfigLoader.get_default_config_path()</code> returns the default write location regardless of whether the file exists. <code>EmpathyXMLConfig.load_from_file()</code> and <code>save_to_file()</code> use <code>.attune/config.json</code> by default.</p>
+<h2>Two config subsystems</h2>
+<p>The package contains two distinct configuration subsystems that coexist:</p>
+<ul>
+<li><strong><code>UnifiedConfig</code> + <code>ConfigLoader</code></strong> — the primary system for agent and workflow configuration, loaded via <code>load_unified_config()</code>.</li>
+<li><strong><code>EmpathyXMLConfig</code></strong> — an older global-singleton system accessed via <code>get_config()</code> and <code>set_config()</code>, with XML-oriented sub-configs (<code>XMLConfig</code>, <code>OptimizationConfig</code>, <code>AdaptiveConfig</code>, <code>I18nConfig</code>, <code>MetricsConfig</code>). It can also be populated from environment variables via <code>EmpathyXMLConfig.from_env()</code>.</li>
+</ul>
+<p>Code that reads agent settings should use <code>UnifiedAgentConfig</code> and <code>load_unified_config()</code>. The <code>EmpathyXMLConfig</code> path exists for compatibility with earlier tooling.</p>
 
   </article>
   <footer>

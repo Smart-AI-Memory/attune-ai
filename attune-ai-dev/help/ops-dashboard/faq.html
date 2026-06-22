@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard FAQ — faq</title>
-  <meta name="description" content="A local operations dashboard that lets you run workflows, pick a feature scope, stream live logs over SSE, and browse persisted run history. Run it with `python -m attune.ops` or via the `attune ops` " />
+  <meta name="description" content="A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it " />
   <meta property="og:title" content="Ops Dashboard FAQ — faq" />
-  <meta property="og:description" content="A local operations dashboard that lets you run workflows, pick a feature scope, stream live logs over SSE, and browse persisted run history. Run it with `python -m attune.ops` or via the `attune ops` " />
+  <meta property="og:description" content="A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/faq" />
   <style>
@@ -260,37 +260,60 @@
   <article class="markdown-body">
 <h1>Ops Dashboard FAQ</h1>
 <h2>What is the ops dashboard?</h2>
-<p>A local operations dashboard that lets you run workflows, pick a feature scope, stream live logs over SSE, and browse persisted run history. Run it with <code>python -m attune.ops</code> or via the <code>attune ops</code> CLI subcommand.</p>
+<p>A local operations dashboard that lets you run workflows against a specific feature scope, view persisted run history, chain workflows with a single click, and stream live logs over SSE. You start it with <code>python -m attune.ops</code> or via <code>attune ops</code> on the CLI.</p>
 <h2>How do I start the dashboard?</h2>
-<p>Call <code>cmd_ops(args)</code> or run <code>python -m attune.ops</code>. The server binds to <code>127.0.0.1:8765</code> by default. You can change the host and port through the <code>host</code> and <code>port</code> fields on <code>Config</code>.</p>
+<p>Run <code>python -m attune.ops</code> (calls <code>main()</code>) or use the <code>attune ops</code> subcommand (registered by <code>add_subparser()</code>). Both block until you stop the server. By default the server listens on <code>127.0.0.1:8765</code>; you can change the host and port in <code>Config</code>.</p>
 <h2>What does <code>Config</code> control?</h2>
-<p><code>Config</code> is the central configuration dataclass. Its key fields include:</p>
-<ul>
-<li><code>project_root</code> and <code>attune_home</code> — where the dashboard reads project and attune state from</li>
-<li><code>host</code> / <code>port</code> — server bind address (defaults: <code>127.0.0.1</code> / <code>8765</code>)</li>
-<li><code>allow_run</code> — whether workflow execution is permitted</li>
-<li><code>specs_roots</code> — paths the candidate detector searches</li>
-<li><code>runs_retention_days</code> — how long persisted run history is kept (default: <code>30</code>)</li>
-<li><code>specs_candidates_enabled</code> — whether the spec-completion candidate detector is active</li>
-</ul>
-<h2>How do I get the Anthropic cost data?</h2>
-<p>Call <code>fetch_summary(refresh=False)</code>. It returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. If the request fails, inspect the <code>CostFetchError</code> fields — <code>kind</code> (a <code>CostFetchErrorKind</code>) and <code>message</code> — to understand why. Pass <code>refresh=True</code> to bypass the in-memory cache and fetch a fresh result.</p>
-<h2>What does <code>CostSummary</code> contain?</h2>
-<p><code>CostSummary</code> holds account-level cost data fetched from the Anthropic admin cost report:</p>
-<ul>
-<li><code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code> — pre-aggregated totals</li>
-<li><code>by_day</code>, <code>by_model</code>, <code>by_cost_type</code> — breakdowns as lists of tuples</li>
-<li><code>fetched_at</code> — when the data was retrieved</li>
-<li><code>source</code> — either <code>'live'</code> or <code>'cached'</code></li>
-</ul>
-<h2>What are spec completion candidates?</h2>
-<p>Candidates are specs that the detector identifies as potentially complete. <code>detect_candidates(config)</code> returns a list of <code>Candidate</code> objects, each with a <code>slug</code>, <code>path</code>, <code>current_status</code>, <code>evidence</code> list, and <code>snapshot_hash</code>. The detector only runs when <code>specs_candidates_enabled</code> is <code>True</code> on your <code>Config</code>.</p>
-<h2>How do I reset the cost cache in tests?</h2>
-<p>Call <code>clear_cache()</code>. This empties the in-memory cache and is intended for test use only.</p>
-<h2>Do I need to import FastAPI directly?</h2>
-<p>No. <code>create_app()</code> uses a lazy import so that importing <code>attune</code> does not pull in FastAPI. Similarly, <code>build_config()</code> lazy-imports the config builder. Only the symbols in <code>__all__</code> — <code>create_app</code>, <code>build_config</code>, and <code>Config</code> — are part of the public API.</p>
+<p><code>Config</code> is the central settings dataclass for the dashboard. Its key fields are:</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>What it controls</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>project_root</code></td>
+<td>Root of your project tree</td>
+</tr>
+<tr>
+<td><code>attune_home</code></td>
+<td>Where attune reads and writes state</td>
+</tr>
+<tr>
+<td><code>host</code> / <code>port</code></td>
+<td>Server bind address (default <code>127.0.0.1:8765</code>)</td>
+</tr>
+<tr>
+<td><code>allow_run</code></td>
+<td>Whether workflow execution is permitted</td>
+</tr>
+<tr>
+<td><code>specs_roots</code></td>
+<td>Directories the candidate detector scans</td>
+</tr>
+<tr>
+<td><code>runs_retention_days</code></td>
+<td>How long persisted run history is kept (default 30)</td>
+</tr>
+<tr>
+<td><code>specs_candidates_enabled</code></td>
+<td>Whether spec-completion candidate detection is active</td>
+</tr>
+</tbody>
+</table>
+<p>Use <code>build_config()</code> to construct a <code>Config</code> rather than instantiating it directly.</p>
+<h2>How does cost reporting work?</h2>
+<p>Call <code>fetch_summary()</code> to get account-level Anthropic API cost data. It returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. Pass <code>refresh=True</code> to bypass the in-memory cache. The <code>CostSummary</code> fields cover today, the last 7 days, month-to-date, and the last 30 days, plus breakdowns by day, model, and cost type. If the fetch fails, the <code>CostFetchError</code> tells you the <code>kind</code> and a human-readable <code>message</code>. The dashboard fetches from <code>https://api.anthropic.com/v1/organizations/cost_report</code> and requires an admin API key, which <code>load_admin_key()</code> resolves.</p>
+<h2>How do I tell whether cost data is live or cached?</h2>
+<p>Check the <code>source</code> field on the returned <code>CostSummary</code>. It is either <code>'live'</code> or <code>'cached'</code>. The <code>fetched_at</code> field tells you when the data was last retrieved.</p>
+<h2>What are spec-completion candidates?</h2>
+<p>When <code>specs_candidates_enabled</code> is <code>True</code> in your <code>Config</code>, <code>detect_candidates()</code> scans your <code>specs_roots</code> and returns a list of <code>Candidate</code> objects — specs that appear ready to move to the next phase based on file evidence. Each <code>Candidate</code> includes a <code>slug</code>, <code>path</code>, <code>current_status</code>, supporting <code>evidence</code>, and a <code>snapshot_hash</code>.</p>
+<h2>How do I run the dashboard in tests?</h2>
+<p>Use <code>clear_cache()</code> (available in both <code>attune.ops.anthropic_cost</code> and the candidate-detector module) to reset in-memory caches between test cases. This is a test-only helper and is not part of the public API (<code>__all__</code> exports only <code>create_app</code>, <code>build_config</code>, and <code>Config</code>).</p>
 <h2>Where are the source files?</h2>
-<p>All ops dashboard code lives under <code>src/attune/ops/</code>.</p>
+<p>All dashboard source lives under <code>src/attune/ops/</code>.</p>
 <p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
 
   </article>

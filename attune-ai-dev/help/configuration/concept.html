@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Configuration — concept</title>
-  <meta name="description" content="Project configuration and settings management." />
+  <meta name="description" content="Attune&#x27;s configuration system is a layered set of typed dataclasses, a file loader, and an environment-variable compatibility layer that together resolve a single `UnifiedConfig` object at runtime." />
   <meta property="og:title" content="Configuration — concept" />
-  <meta property="og:description" content="Project configuration and settings management." />
+  <meta property="og:description" content="Attune&#x27;s configuration system is a layered set of typed dataclasses, a file loader, and an environment-variable compatibility layer that together resolve a single `UnifiedConfig` object at runtime." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/concept" />
   <style>
@@ -259,60 +259,58 @@
   </nav>
   <article class="markdown-body">
 <h1>Configuration</h1>
-<h2>How it works</h2>
-<p>Project configuration and settings management.</p>
-<p>The main building blocks are:</p>
-<ul>
-<li><strong><code>ModelTier</code></strong> — Model tier for cost optimization.</li>
-<li><strong><code>Provider</code></strong> — LLM provider options.</li>
-<li><strong><code>WorkflowMode</code></strong> — Workflow execution modes.</li>
-<li><strong><code>AgentOperationError</code></strong> — Error during agent operation with context.</li>
-<li><strong><code>UnifiedAgentConfig</code></strong> — Unified configuration model for all agents.</li>
-</ul>
-<p>Under the hood, this feature spans 15 source
-files covering:</p>
-<ul>
-<li>Unified Agent Configuration</li>
-<li>Environment variable compatibility layer.</li>
-<li>Configuration loader for Attune AI.</li>
-</ul>
-<h2>What connects to it</h2>
-<p>This feature relates to: config, settings.</p>
-<p>Other parts of the codebase interact with
-configuration through these interfaces:</p>
+<p>Attune's configuration system is a layered set of typed dataclasses, a file loader, and an environment-variable compatibility layer that together resolve a single <code>UnifiedConfig</code> object at runtime.</p>
+<h2>The two config trees</h2>
+<p>The system has two distinct trees that serve different purposes:</p>
+<p><strong>Agent configuration</strong> (<code>config.agent_config</code>) models the runtime behavior of LLM-backed agents. <code>UnifiedAgentConfig</code> is the central class: it normalizes agent roles via <code>normalize_role</code>, resolves a model identifier via <code>get_model_id</code>, and produces a <code>BookProductionConfig</code> view via <code>for_book_production</code>. <code>BookProductionConfig</code> exposes backward-compatible properties — <code>model</code>, <code>max_tokens</code>, <code>temperature</code>, <code>timeout</code>, <code>retry_attempts</code>, and <code>retry_delay</code> — so older call sites continue to work while the underlying config evolves. Supporting enumerations <code>ModelTier</code>, <code>Provider</code>, and <code>WorkflowMode</code> constrain the values callers can supply, catching bad input before it reaches an API call.</p>
+<p><strong>Unified application configuration</strong> (<code>config.unified</code>, <code>config.sections</code>) organizes everything else into named sections: <code>AnalysisConfig</code>, <code>AuthConfig</code>, <code>EnvironmentConfig</code>, <code>PersistenceConfig</code>, <code>RoutingConfig</code>, <code>TelemetryConfig</code>, and <code>WorkflowConfig</code>. Each section implements <code>to_dict</code> and <code>from_dict</code>, so it can round-trip through YAML or JSON without losing type information. <code>UnifiedConfig</code> wraps all sections and adds <code>get_value</code>, <code>set_value</code>, and <code>get_all_keys</code> for key-path access when you need to read or write a deeply nested field by name.</p>
+<h2>How values are resolved</h2>
+<p><code>ConfigLoader</code> orchestrates loading and saving. When you call <code>load_unified_config()</code>, the loader:</p>
+<ol>
+<li>Searches <code>CONFIG_SEARCH_PATHS</code> (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code>) via <code>discover_config_path</code>.</li>
+<li>Deserializes the file into a <code>UnifiedConfig</code> using each section's <code>from_dict</code>.</li>
+<li>Applies environment-variable overrides through <code>apply_env_overrides</code>.</li>
+</ol>
+<p>Environment variables take precedence over file values. <code>get_attune_env</code> checks <code>ATTUNE_</code>-prefixed variables first, then falls back to the legacy <code>EMPATHY_</code> prefix, so projects migrating from an older prefix do not need to update their environment immediately. <code>iter_attune_env_prefix</code> lets you scan all variables that match a given <code>ATTUNE_{prefix}*{suffix}</code> pattern, which is how bulk overrides (for example, overriding every routing key at once) are applied.</p>
+<p>After loading, pass the result to <code>validate_config</code> to get a list of <code>ValidationError</code> objects before any agent work begins. <code>ConfigValidator.validate_section</code> lets you target a single section if you only need to check part of the config.</p>
+<h2>The XML/empathy config layer</h2>
+<p><code>EmpathyXMLConfig</code> is a separate global config object used by the empathy subsystem. You load it with <code>EmpathyXMLConfig.load_from_file</code> (defaulting to <code>.attune/config.json</code>) or build it from the environment with <code>EmpathyXMLConfig.from_env</code>. The module-level <code>get_config</code> and <code>set_config</code> functions let any part of the codebase read or replace the active instance without holding a direct reference to it. Its sub-objects — <code>XMLConfig</code>, <code>OptimizationConfig</code>, <code>AdaptiveConfig</code>, <code>I18nConfig</code>, and <code>MetricsConfig</code> — cover rendering, optimization hints, internationalization, and metrics collection respectively.</p>
+<h2>When each part matters</h2>
 <table>
 <thead>
 <tr>
-<th>Interface</th>
-<th>Purpose</th>
-<th>File</th>
+<th>Situation</th>
+<th>What to reach for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ModelTier</code></td>
-<td>Model tier for cost optimization.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
+<td>Configuring an agent's model, tokens, or retry behavior</td>
+<td><code>UnifiedAgentConfig</code> → <code>BookProductionConfig</code></td>
 </tr>
 <tr>
-<td><code>Provider</code></td>
-<td>LLM provider options.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
+<td>Reading or writing a named config value at runtime</td>
+<td><code>UnifiedConfig.get_value</code> / <code>set_value</code></td>
 </tr>
 <tr>
-<td><code>WorkflowMode</code></td>
-<td>Workflow execution modes.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
+<td>Loading config from disk in one call</td>
+<td><code>load_unified_config()</code></td>
 </tr>
 <tr>
-<td><code>AgentOperationError</code></td>
-<td>Error during agent operation with context.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
+<td>Persisting changes back to disk</td>
+<td><code>save_unified_config()</code></td>
 </tr>
 <tr>
-<td><code>UnifiedAgentConfig</code></td>
-<td>Unified configuration model for all agents.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
+<td>Checking config before starting a workflow</td>
+<td><code>validate_config()</code></td>
+</tr>
+<tr>
+<td>Reading an env var with legacy-prefix fallback</td>
+<td><code>get_attune_env()</code></td>
+</tr>
+<tr>
+<td>Accessing the empathy subsystem's global config</td>
+<td><code>get_config()</code> / <code>set_config()</code></td>
 </tr>
 </tbody>
 </table>

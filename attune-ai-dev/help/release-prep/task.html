@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with release prep — task</title>
-  <meta name="description" content="Use release prep when you need to pre-release quality gate — health checks, security audit, changelog, version bumps." />
+  <meta name="description" content="Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in para" />
   <meta property="og:title" content="Work with release prep — task" />
-  <meta property="og:description" content="Use release prep when you need to pre-release quality gate — health checks, security audit, changelog, version bumps." />
+  <meta property="og:description" content="Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in para" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/release-prep/task" />
   <style>
@@ -259,59 +259,61 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with release prep</h1>
-<p>Use release prep when you need to pre-release quality gate — health checks, security audit, changelog, version bumps.</p>
+<p>Use <code>ReleasePrepTeam</code> when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in parallel and aggregates the results into a single <code>ReleaseReadinessReport</code>.</p>
 <h2>Prerequisites</h2>
 <ul>
-<li>Access to the project source code</li>
-<li>Familiarity with the files under src/attune/workflows/release_prep.py</li>
+<li>A local checkout of the codebase you want to assess</li>
+<li>The <code>release</code> package available in your Python environment</li>
 </ul>
-<h2>Steps</h2>
+<h2>Run a release readiness assessment</h2>
 <ol>
 <li>
-<p><strong>Understand the class hierarchy.</strong>
-Read the interfaces to see how release prep
-is structured before extending or modifying.
-The key classes are:</p>
-<ul>
-<li><code>ReleasePreparationWorkflow</code> in <code>src/attune/workflows/release_prep.py</code> — Pre-release quality gate workflow powered by Agent SDK subagents.</li>
-<li><code>ReleaseAgent</code> in <code>src/attune/agents/release/base_agent.py</code> — Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation.</li>
-<li><code>TestCoverageAgent</code> in <code>src/attune/agents/release/coverage_agent.py</code> — Runs pytest --cov and parses coverage report.</li>
-<li><code>DocumentationAgent</code> in <code>src/attune/agents/release/documentation_agent.py</code> — Checks docstring coverage, README currency, and CHANGELOG presence.</li>
-<li><code>CodeQualityAgent</code> in <code>src/attune/agents/release/quality_agent.py</code> — Runs ruff, checks type hints and complexity.</li>
-</ul>
+<p><strong>Instantiate <code>ReleasePrepTeam</code>.</strong></p>
+<pre><code class="language-python">from release import ReleasePrepTeam
+
+team = ReleasePrepTeam()
+</code></pre>
+<p>To tighten or relax thresholds, pass a <code>quality_gates</code> dict at construction time:</p>
+<pre><code class="language-python">team = ReleasePrepTeam(quality_gates={&quot;test_coverage&quot;: 0.85, &quot;code_quality&quot;: 0.80})
+</code></pre>
 </li>
 <li>
-<p><strong>Decide whether to extend or modify.</strong>
-If the class has subclasses, extend with a new one
-rather than changing the base. If it stands alone,
-modify directly.</p>
+<p><strong>Call <code>assess_readiness</code> against your codebase path.</strong></p>
+<pre><code class="language-python">report = team.assess_readiness(codebase_path=&quot;.&quot;)
+</code></pre>
+<p>This coordinates four agents — <code>health-checker</code>, <code>security-scanner</code>, <code>changelog-generator</code>, and <code>release-assessor</code> — and returns a <code>ReleaseReadinessReport</code>. Each agent produces a <code>ReleaseAgentResult</code> containing a <code>score</code>, a <code>confidence</code> value, and a <code>findings</code> dict. Agents that need deeper analysis automatically escalate through model tiers (CHEAP → CAPABLE → PREMIUM); the tier used is recorded in the <code>tier_used</code> field of each result.</p>
 </li>
 <li>
-<p><strong>Make your change.</strong>
-Follow existing patterns — naming, error handling,
-and logging style.</p>
+<p><strong>Print the formatted report.</strong></p>
+<pre><code class="language-python">print(report.format_console_output())
+</code></pre>
 </li>
 <li>
-<p><strong>Run the related tests.</strong>
-Target with <code>pytest -k &quot;release-prep&quot;</code>.</p>
+<p><strong>Review blockers and warnings.</strong></p>
+<p>Entries in <code>report.blockers</code> must be resolved before release. Entries in <code>report.warnings</code> are non-critical but worth addressing:</p>
+<pre><code class="language-python">for blocker in report.blockers:
+    print(f&quot;BLOCKER: {blocker}&quot;)
+
+for warning in report.warnings:
+    print(f&quot;WARNING: {warning}&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Serialize the report for CI pipelines (optional).</strong></p>
+<pre><code class="language-python">import json
+
+with open(&quot;release-readiness.json&quot;, &quot;w&quot;) as f:
+    json.dump(report.to_dict(), f, indent=2)
+</code></pre>
 </li>
 </ol>
+<h2>Confirm success</h2>
+<p>The assessment passes when <code>report.approved</code> is <code>True</code> and <code>report.blockers</code> is empty. To see the detail behind the verdict, inspect <code>report.quality_gates</code>: each <code>QualityGate</code> exposes the gate's <code>threshold</code>, the measured <code>actual</code> value, and whether it <code>passed</code>. Any gate where <code>critical</code> is <code>True</code> and <code>passed</code> is <code>False</code> sets <code>report.approved</code> to <code>False</code>.</p>
 <h2>Key files</h2>
 <ul>
-<li><code>src/attune/workflows/release_prep.py</code></li>
-<li><code>src/attune/agents/release/**</code></li>
-</ul>
-<h2>Common modifications</h2>
-<p>Classes you are most likely to extend:</p>
-<ul>
-<li><code>ReleasePreparationWorkflow</code> in <code>src/attune/workflows/release_prep.py</code></li>
-<li><code>ReleaseAgent</code> in <code>src/attune/agents/release/base_agent.py</code></li>
-<li><code>TestCoverageAgent</code> in <code>src/attune/agents/release/coverage_agent.py</code></li>
-<li><code>DocumentationAgent</code> in <code>src/attune/agents/release/documentation_agent.py</code></li>
-<li><code>CodeQualityAgent</code> in <code>src/attune/agents/release/quality_agent.py</code></li>
-<li><code>Tier</code> in <code>src/attune/agents/release/release_models.py</code></li>
-<li><code>ReleaseAgentResult</code> in <code>src/attune/agents/release/release_models.py</code></li>
-<li><code>QualityGate</code> in <code>src/attune/agents/release/release_models.py</code></li>
+<li><code>src/attune/workflows/release_prep.py</code> — <code>ReleasePrepTeamWorkflow</code>, <code>ReleasePreparationWorkflow</code></li>
+<li><code>src/attune/agents/release/release_prep_team.py</code> — <code>ReleasePrepTeam</code></li>
+<li><code>src/attune/agents/release/release_models.py</code> — <code>ReleaseReadinessReport</code>, <code>QualityGate</code>, <code>ReleaseAgentResult</code></li>
 </ul>
 
   </article>

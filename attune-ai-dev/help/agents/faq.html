@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents FAQ — faq</title>
-  <meta name="description" content="Agents are AI-powered components that automate release preparation tasks. The main agents handle test coverage analysis, documentation checks, code quality assessment, and security auditing to determi" />
+  <meta name="description" content="It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for track" />
   <meta property="og:title" content="Agents FAQ — faq" />
-  <meta property="og:description" content="Agents are AI-powered components that automate release preparation tasks. The main agents handle test coverage analysis, documentation checks, code quality assessment, and security auditing to determi" />
+  <meta property="og:description" content="It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for track" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/faq" />
   <style>
@@ -259,30 +259,32 @@
   </nav>
   <article class="markdown-body">
 <h1>Agents FAQ</h1>
-<h2>What are agents?</h2>
-<p>Agents are AI-powered components that automate release preparation tasks. The main agents handle test coverage analysis, documentation checks, code quality assessment, and security auditing to determine if your codebase is ready for release.</p>
-<h2>When should I use agents?</h2>
-<p>Use agents when you need to assess release readiness across multiple quality dimensions. The <code>ReleasePrepTeam</code> coordinates all agents in parallel and produces a <code>ReleaseReadinessReport</code> with pass/fail gates and actionable feedback.</p>
-<h2>How do I run a release readiness check?</h2>
-<p>Create a <code>ReleasePrepTeam</code> and call <code>assess_readiness()</code>:</p>
-<pre><code class="language-python">from attune.agents import ReleasePrepTeam
-
-team = ReleasePrepTeam()
-report = team.assess_readiness(&quot;path/to/your/project&quot;)
-print(report.format_console_output())
-</code></pre>
-<h2>What quality gates do agents check?</h2>
-<p>Agents evaluate test coverage, documentation completeness, code quality (via ruff), type hints, complexity metrics, and security vulnerabilities. You can customize the thresholds when creating a <code>ReleasePrepTeam</code>.</p>
-<h2>How does tier escalation work?</h2>
-<p>The <code>ReleaseAgent</code> base class uses progressive escalation: CHEAP → CAPABLE → PREMIUM. If a cheaper model can't complete the task confidently, the agent automatically escalates to a more capable (and expensive) model.</p>
-<h2>Can I use agents with other AI frameworks?</h2>
-<p>Yes. The system provides adapters for LangChain, LangGraph, AutoGen, and Haystack. Call <code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>, <code>get_autogen_adapter()</code>, or <code>get_haystack_adapter()</code> to integrate with your existing AI workflow.</p>
-<h2>How do I debug agent failures?</h2>
-<p>Run <code>pytest -k &quot;agents&quot; -v</code> to check if the core functionality works. For runtime issues, enable debug logging and check the <code>ReleaseAgentResult.findings</code> field for detailed error information. Each agent result includes execution time, cost, and confidence metrics.</p>
-<h2>Where are the source files?</h2>
+<h2>What does the agents feature do?</h2>
+<p>It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for tracking agent execution and recovering from failures.</p>
+<h2>Which frameworks does agents support?</h2>
+<p>AutoGen, Haystack, LangChain, and LangGraph. Each has a dedicated adapter class (<code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, <code>LangChainAdapter</code>) and a corresponding lazy-import helper (<code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code>, <code>get_langchain_adapter()</code>, <code>get_langgraph_adapter()</code>).</p>
+<h2>How do I get an adapter for my framework?</h2>
+<p>Call the lazy-import helper for your framework. For example, call <code>get_langchain_adapter()</code> to get a <code>LangChainAdapter</code>, then use <code>create_agent(config)</code> or <code>create_workflow(config, agents)</code> on it. All adapters accept a <code>provider</code> and an optional <code>api_key</code> in their constructors.</p>
+<h2>How do I create an agent?</h2>
+<p>Call <code>create_agent(config)</code> on an adapter instance, passing an <code>AgentConfig</code>. The method returns a framework-specific agent — for example, <code>LangChainAgent</code> or <code>AutoGenAgent</code> — that exposes <code>invoke()</code> and <code>stream()</code> methods.</p>
+<h2>How do I run a multi-agent workflow?</h2>
+<p>Call <code>create_workflow(config, agents)</code> on an adapter, passing a <code>WorkflowConfig</code> and a list of <code>BaseAgent</code> instances. Then call <code>run()</code> or <code>stream()</code> on the returned workflow object.</p>
+<h2>Can I wrap an existing wizard as an agent?</h2>
+<p>Yes. Call <code>wrap_wizard(wizard, name, model_tier)</code> to get back a <code>WizardAgent</code>. The <code>model_tier</code> parameter defaults to <code>'capable'</code>.</p>
+<h2>How do I add retry logic to an agent operation?</h2>
+<p>Decorate your function with <code>retry_on_failure(max_attempts, delay, backoff, exceptions)</code>. It retries with exponential backoff and re-raises the last exception if all attempts fail.</p>
+<h2>How do I guard against unexpected errors in an agent operation?</h2>
+<p>Apply the <code>safe_agent_operation(operation_name)</code> decorator. It adds logging and error handling and raises <code>AgentOperationError</code> on failure.</p>
+<h2>How do I track which inputs are required before calling an agent?</h2>
+<p>Use the <code>validate_input(required_fields)</code> decorator. It raises <code>ValueError</code> if the input is not a dict or if any field in <code>required_fields</code> is missing.</p>
+<h2>How do I track API costs?</h2>
+<p>Decorate your function with <code>with_cost_tracking(operation_type)</code>. The <code>operation_type</code> parameter defaults to <code>'agent_call'</code>.</p>
+<h2>How do I debug a failing agent call?</h2>
+<p>Run <code>pytest -k &quot;agents&quot; -v</code> first. If the tests pass but your code still fails, add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.</p>
+<h2>Where does the agents source code live?</h2>
 <ul>
-<li><code>src/attune/agents/**</code> - Core agent implementations</li>
-<li><code>src/attune/agent_factory/**</code> - Framework adapters and utilities</li>
+<li><code>src/attune/agents/**</code> — release agents, state persistence, and recovery</li>
+<li><code>src/attune/agent_factory/**</code> — universal agent factory and framework adapters</li>
 </ul>
 <p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 

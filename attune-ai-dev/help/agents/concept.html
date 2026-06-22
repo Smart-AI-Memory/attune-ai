@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Agents — concept</title>
-  <meta name="description" content="Release agents, state persistence, and recovery." />
+  <meta name="description" content="The agents feature is Attune AI&#x27;s Universal Agent Factory — a single interface for creating, running, and orchestrating AI agents backed by AutoGen, Haystack, LangChain, or LangGraph without rewriting" />
   <meta property="og:title" content="Agents — concept" />
-  <meta property="og:description" content="Release agents, state persistence, and recovery." />
+  <meta property="og:description" content="The agents feature is Attune AI&#x27;s Universal Agent Factory — a single interface for creating, running, and orchestrating AI agents backed by AutoGen, Haystack, LangChain, or LangGraph without rewriting" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/concept" />
   <style>
@@ -259,63 +259,78 @@
   </nav>
   <article class="markdown-body">
 <h1>Agents</h1>
-<h2>How it works</h2>
-<p>Release agents, state persistence, and recovery.</p>
-<p>The main building blocks are:</p>
-<ul>
-<li><strong><code>ReleaseAgent</code></strong> — Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation.</li>
-<li><strong><code>TestCoverageAgent</code></strong> — Runs pytest --cov and parses coverage report.</li>
-<li><strong><code>DocumentationAgent</code></strong> — Checks docstring coverage, README currency, and CHANGELOG presence.</li>
-<li><strong><code>CodeQualityAgent</code></strong> — Runs ruff, checks type hints and complexity.</li>
-<li><strong><code>Tier</code></strong> — Model tier for progressive escalation.</li>
-</ul>
-<p>Under the hood, this feature spans 29 source
-files covering:</p>
-<ul>
-<li>Release Preparation Agent Team.</li>
-<li>Base release agent with progressive tier escalation.</li>
-<li>Test coverage agent for Release Preparation Agent Team.</li>
-</ul>
-<h2>What connects to it</h2>
-<p>This feature relates to: agents, ai, release.</p>
-<p>Other parts of the codebase interact with
-agents through these interfaces:</p>
+<p>The agents feature is Attune AI's Universal Agent Factory — a single interface for creating, running, and orchestrating AI agents backed by AutoGen, Haystack, LangChain, or LangGraph without rewriting your code when you change the underlying framework.</p>
+<h2>Three-layer architecture</h2>
+<p>Every agent interaction flows through three layers:</p>
+<ol>
+<li>
+<p><strong>Adapter</strong> — A framework-specific adapter (for example, <code>AutoGenAdapter</code>, <code>HaystackAdapter</code>, or <code>LangChainAdapter</code>) implements <code>BaseAdapter</code> and handles all communication with the underlying framework. Each adapter exposes <code>create_agent()</code>, <code>create_workflow()</code>, and <code>create_tool()</code>, plus an <code>is_available()</code> method that tells you whether the optional framework dependency is installed.</p>
+</li>
+<li>
+<p><strong>Agent</strong> — The adapter produces a framework-specific agent wrapper — <code>AutoGenAgent</code>, <code>HaystackAgent</code>, <code>LangChainAgent</code>, or <code>LangGraphAgent</code> — each implementing <code>BaseAgent</code>. Call <code>invoke()</code> for a single result or <code>stream()</code> for an async generator of incremental responses.</p>
+</li>
+<li>
+<p><strong>Workflow</strong> — When multiple agents need to collaborate, the adapter produces a coordinating workflow: <code>AutoGenWorkflow</code> (backed by AutoGen's GroupChat), <code>HaystackWorkflow</code> (backed by Haystack's Pipeline), or <code>LangChainWorkflow</code> (backed by LangChain's SequentialChain or custom routing). All workflows expose the same <code>run()</code> and <code>stream()</code> interface as individual agents.</p>
+</li>
+</ol>
+<p>You configure each layer with <code>AgentConfig</code> (for agents) and <code>WorkflowConfig</code> (for workflows). <code>AgentCapability</code>, <code>AgentRole</code>, and <code>Framework</code> express what an agent can do, what role it plays, and which framework backs it.</p>
+<h2>Framework adapters</h2>
+<p>Because each framework is an optional dependency, adapters use lazy imports. Call the corresponding accessor function to load the adapter only when you need it:</p>
 <table>
 <thead>
 <tr>
-<th>Interface</th>
-<th>Purpose</th>
-<th>File</th>
+<th>Accessor</th>
+<th>Adapter class</th>
+<th>Underlying framework</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ReleaseAgent</code></td>
-<td>Base agent with CHEAP -&gt; CAPABLE -&gt; PREMIUM escalation.</td>
-<td><code>src/attune/agents/release/base_agent.py</code></td>
+<td><code>get_autogen_adapter()</code></td>
+<td><code>AutoGenAdapter</code></td>
+<td>Microsoft AutoGen (GroupChat)</td>
 </tr>
 <tr>
-<td><code>TestCoverageAgent</code></td>
-<td>Runs pytest --cov and parses coverage report.</td>
-<td><code>src/attune/agents/release/coverage_agent.py</code></td>
+<td><code>get_haystack_adapter()</code></td>
+<td><code>HaystackAdapter</code></td>
+<td>deepset Haystack (Pipeline)</td>
 </tr>
 <tr>
-<td><code>DocumentationAgent</code></td>
-<td>Checks docstring coverage, README currency, and CHANGELOG presence.</td>
-<td><code>src/attune/agents/release/documentation_agent.py</code></td>
+<td><code>get_langchain_adapter()</code></td>
+<td><code>LangChainAdapter</code></td>
+<td>LangChain (SequentialChain)</td>
 </tr>
 <tr>
-<td><code>CodeQualityAgent</code></td>
-<td>Runs ruff, checks type hints and complexity.</td>
-<td><code>src/attune/agents/release/quality_agent.py</code></td>
-</tr>
-<tr>
-<td><code>Tier</code></td>
-<td>Model tier for progressive escalation.</td>
-<td><code>src/attune/agents/release/release_models.py</code></td>
+<td><code>get_langgraph_adapter()</code></td>
+<td>—</td>
+<td>LangGraph (node/runnable)</td>
 </tr>
 </tbody>
 </table>
+<p>Every adapter exposes a <code>framework_name</code> property you can inspect at runtime. <code>HaystackAdapter</code> also provides <code>create_document_store()</code> for setting up a backing store — a capability the other adapters don't expose.</p>
+<p>If you want to use a wizard object as an agent without going through a full adapter setup, <code>wrap_wizard()</code> converts it into a <code>WizardAgent</code> in a single call.</p>
+<h2>State persistence and recovery</h2>
+<p>Long-running or fault-prone workflows need a way to checkpoint progress and resume after a failure. Three components handle this:</p>
+<ul>
+<li><strong><code>AgentStateStore</code></strong> — persists <code>AgentStateRecord</code> entries, one per agent, so a workflow can resume from a known-good checkpoint rather than restarting from scratch.</li>
+<li><strong><code>AgentExecutionRecord</code></strong> — captures the inputs, outputs, and metadata for each individual invocation.</li>
+<li><strong><code>AgentRecoveryManager</code></strong> — consults stored records to decide whether to retry, skip, or surface an error when an agent fails mid-workflow.</li>
+</ul>
+<h2>Built-in specialized agents</h2>
+<p>The factory ships agents you can use without any custom adapter configuration:</p>
+<ul>
+<li><strong>Release preparation</strong> — <code>ReleaseAgent</code>, <code>ReleasePrepTeam</code>, and <code>ReleasePrepTeamWorkflow</code> coordinate a multi-agent release pipeline and emit a <code>ReleaseReadinessReport</code>.</li>
+<li><strong>Code and documentation quality</strong> — <code>CodeQualityAgent</code>, <code>DocumentationAgent</code>, <code>SecurityAuditorAgent</code>, and <code>TestCoverageAgent</code> analyze a codebase and report findings.</li>
+</ul>
+<h2>Operation decorators</h2>
+<p>Five decorators add cross-cutting behavior to any agent method:</p>
+<ul>
+<li><code>safe_agent_operation(operation_name)</code> — wraps a method in structured error handling and logging; raises <code>AgentOperationError</code> on failure.</li>
+<li><code>retry_on_failure(max_attempts, delay, backoff, exceptions)</code> — retries with exponential backoff and re-raises the last exception once all attempts are exhausted.</li>
+<li><code>log_performance(threshold_seconds)</code> — logs a warning when a method exceeds the specified duration.</li>
+<li><code>validate_input(required_fields)</code> — raises <code>ValueError</code> if the input is not a dict or is missing any of the listed fields.</li>
+<li><code>with_cost_tracking(operation_type)</code> — records API cost for the decorated call, tagged with the given operation type.</li>
+</ul>
 
   </article>
   <footer>

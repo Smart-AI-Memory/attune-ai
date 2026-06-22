@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Ops Dashboard Cautions — warning</title>
-  <meta name="description" content="The ops dashboard runs as a blocking server process (`cmd_ops` returns `0` only after the server exits). The areas below describe the pitfalls most likely to cost you debugging time before you hit the" />
+  <meta name="description" content="The ops dashboard runs a local FastAPI server (`python -m attune.ops`) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises co" />
   <meta property="og:title" content="Ops Dashboard Cautions — warning" />
-  <meta property="og:description" content="The ops dashboard runs as a blocking server process (`cmd_ops` returns `0` only after the server exits). The areas below describe the pitfalls most likely to cost you debugging time before you hit the" />
+  <meta property="og:description" content="The ops dashboard runs a local FastAPI server (`python -m attune.ops`) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises co" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/warning" />
   <style>
@@ -259,33 +259,36 @@
   </nav>
   <article class="markdown-body">
 <h1>Ops Dashboard Cautions</h1>
-<p>The ops dashboard runs as a blocking server process (<code>cmd_ops</code> returns <code>0</code> only after the server exits). The areas below describe the pitfalls most likely to cost you debugging time before you hit them.</p>
+<p>The ops dashboard runs a local FastAPI server (<code>python -m attune.ops</code>) that combines a workflow runner, a per-feature scope picker, persisted run history, and live SSE log streaming. Most surprises come from three areas: the in-memory cost cache, the admin API key lookup, and configuration fields that silently restrict what the server allows.</p>
 <h2>Risk areas</h2>
-<h3>Stale cost data served as live data</h3>
-<p><code>fetch_summary()</code> returns a <code>CostSummary</code> whose <code>source</code> field is either <code>'live'</code> or <code>'cached'</code>. If you call it without <code>refresh=True</code>, you may display cached figures without realizing it. Always check <code>CostSummary.source</code> before presenting numbers as current, and use <code>clear_cache()</code> only in tests — its docstring marks it as a test-only convenience.</p>
-<h3>Missing admin key silently disables cost reporting</h3>
-<p><code>load_admin_key()</code> returns <code>None</code> when the admin API key is unavailable. <code>fetch_summary()</code> wraps failures in a <code>CostFetchError</code> (fields: <code>kind</code>, <code>message</code>) rather than raising, so a missing key produces no exception — just a <code>None</code> summary alongside a categorized error. If your code unpacks the tuple without inspecting the error half, cost data will silently disappear from the dashboard.</p>
-<h3>FastAPI pulled in at import time if <code>create_app()</code> is called early</h3>
-<p><code>create_app()</code> uses a lazy import specifically to avoid pulling FastAPI into the <code>attune</code> namespace on import. If you call it at module level — or in a place that runs during <code>import attune</code> — you defeat that isolation and add FastAPI to the startup cost of every process that imports the package.</p>
-<h3><code>Config.allow_run</code> defaults to <code>False</code> and blocks workflow execution</h3>
-<p><code>Config.allow_run</code> is <code>False</code> by default. Workflows will not execute until this is explicitly set to <code>True</code>. This is intentional as a safety default, but it is easy to misconfigure when building a <code>Config</code> programmatically and then wonder why the runner does nothing.</p>
-<h3><code>Config.specs_candidates_enabled</code> gates the candidate detector</h3>
-<p><code>detect_candidates()</code> scans spec roots only when <code>Config.specs_candidates_enabled</code> is <code>True</code>. With the default <code>False</code>, <code>detect_candidates()</code> returns an empty list with no warning. If you expect completion candidates to surface and they do not, check this flag before investigating the detector logic.</p>
-<h3><code>runs_dir</code> may not exist until the first write</h3>
-<p><code>Config.runs_dir</code> documents that the directory &quot;may not exist until first write.&quot; Code that reads from <code>runs_dir</code> before any run has completed will encounter a missing directory. Guard any read path with an existence check rather than assuming the directory is present after <code>Config</code> is constructed.</p>
+<h3><code>fetch_summary()</code> returns stale data by default</h3>
+<p><code>fetch_summary(*, refresh: bool = False)</code> returns a cached <code>CostSummary</code> when <code>refresh</code> is <code>False</code>. If you call it without setting <code>refresh=True</code>, the <code>source</code> field on the returned <code>CostSummary</code> will be <code>'cached'</code>, and the cost figures (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>) will reflect whenever the cache was last populated — not the current moment. Always check <code>CostSummary.source</code> before presenting figures as live, and pass <code>refresh=True</code> when you need a current snapshot.</p>
+<h3><code>load_admin_key()</code> returns <code>None</code> silently</h3>
+<p><code>load_admin_key()</code> returns <code>None</code> if the admin API key is unavailable rather than raising an exception. Code that passes the result directly to an HTTP client will fail later with a confusing auth error instead of a clear &quot;key not configured&quot; message. Check for <code>None</code> before use and surface a clear error to the user at that point.</p>
+<h3><code>clear_cache()</code> is a test helper, not a lifecycle hook</h3>
+<p><code>clear_cache()</code> in <code>attune.ops.anthropic_cost</code> is documented as a test-only convenience. Calling it in production code to force a refresh will work, but it bypasses the <code>refresh</code> parameter contract of <code>fetch_summary()</code> and can cause cache stampedes if multiple requests arrive simultaneously. Use <code>fetch_summary(refresh=True)</code> instead.</p>
+<h3><code>Config.allow_run</code> gates workflow execution</h3>
+<p><code>Config.allow_run</code> defaults to <code>False</code>. With that default, the dashboard will load and display workflows but silently refuse to execute them. If you deploy the dashboard and find that run buttons have no effect, check this field first. Set it to <code>True</code> only in environments where you intend to allow workflow execution.</p>
+<h3><code>Config.trusted_hosts</code> controls which origins the server accepts</h3>
+<p><code>Config.trusted_hosts</code> defaults to an empty tuple. Requests from hosts not in this tuple will be rejected. When running the dashboard behind a proxy or in a non-localhost environment, add the proxy's hostname to <code>trusted_hosts</code> before starting the server — otherwise every request will fail and the error will appear to come from the network layer, not from configuration.</p>
+<h3><code>create_app()</code> and <code>build_config()</code> defer their imports</h3>
+<p>Both functions use lazy imports to avoid pulling FastAPI into the <code>attune</code> namespace at import time. If FastAPI is missing from the environment, the failure surfaces only when you first call one of these functions, not at <code>import attune</code>. If the server fails to start unexpectedly, verify FastAPI is installed before looking elsewhere.</p>
 <h2>How to avoid problems</h2>
 <ol>
 <li>
-<p><strong>Always inspect both sides of <code>fetch_summary()</code>'s return tuple.</strong> The signature is <code>tuple[CostSummary | None, CostFetchError | None]</code>. Treat a non-<code>None</code> error as a display-worthy event, not a silent no-op.</p>
+<p><strong>Check <code>CostSummary.source</code> after every <code>fetch_summary()</code> call.</strong> A value of <code>'cached'</code> means the figures may be hours old. Pass <code>refresh=True</code> when you need current data.</p>
 </li>
 <li>
-<p><strong>Never call <code>clear_cache()</code> in production code.</strong> Both the cost module and the candidate detector expose a <code>clear_cache()</code> function marked as a test helper. Calling either in production will cause the next request to make a live API call regardless of cache state.</p>
+<p><strong>Guard against <code>None</code> from <code>load_admin_key()</code>.</strong> Treat a <code>None</code> return as a configuration error and fail fast with a descriptive message rather than propagating <code>None</code> into downstream calls.</p>
 </li>
 <li>
-<p><strong>Build <code>Config</code> explicitly for non-default behavior.</strong> The safe defaults (<code>allow_run=False</code>, <code>specs_candidates_enabled=False</code>, <code>trusted_hosts=()</code>) mean a programmatically constructed <code>Config</code> will silently restrict dashboard capabilities. Pass each field you intend to use rather than relying on defaults.</p>
+<p><strong>Set <code>allow_run</code> and <code>trusted_hosts</code> explicitly in production configs.</strong> Both fields have defaults that are safe for local development but will cause silent failures in other environments.</p>
 </li>
 <li>
-<p><strong>Depend only on the public API.</strong> The module's <code>__all__</code> exports <code>create_app</code>, <code>build_config</code>, and <code>Config</code>. Private helpers (names starting with <code>_</code>, such as <code>_COST_REPORT_URL</code> and <code>_API_VERSION</code>) can change without notice.</p>
+<p><strong>Use <code>fetch_summary(refresh=True)</code> instead of <code>clear_cache()</code>.</strong> Reserve <code>clear_cache()</code> for test setup and teardown only.</p>
+</li>
+<li>
+<p><strong>Depend only on the public API.</strong> <code>__all__</code> exports <code>create_app</code>, <code>build_config</code>, and <code>Config</code>. Functions and constants prefixed with <code>_</code> (such as <code>_COST_REPORT_URL</code> and <code>_API_VERSION</code>) can change without notice.</p>
 </li>
 </ol>
 <h2>Source files</h2>

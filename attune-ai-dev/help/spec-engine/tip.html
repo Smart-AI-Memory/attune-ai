@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use `skip_task_ids` to re-run a single task without restarting the pipeline — tip</title>
-  <meta name="description" content="Pass a `set[str]` of already-completed task IDs to `run_all(skip_task_ids=...)` instead of clearing state and running the whole plan from scratch." />
-  <meta property="og:title" content="Tip: Use `skip_task_ids` to re-run a single task without restarting the pipeline — tip" />
-  <meta property="og:description" content="Pass a `set[str]` of already-completed task IDs to `run_all(skip_task_ids=...)` instead of clearing state and running the whole plan from scratch." />
+  <title>Spec-driven development with approval loops — tip</title>
+  <meta name="description" content="- **Depend only on the public API.** `pipeline` exports `PipelineOrchestrator`, `PipelineResult`, `TaskResult`, and `read_spec`. `spec` exports `SpecState`, `clear_state`, `find_resumable_plans`, `for" />
+  <meta property="og:title" content="Spec-driven development with approval loops — tip" />
+  <meta property="og:description" content="- **Depend only on the public API.** `pipeline` exports `PipelineOrchestrator`, `PipelineResult`, `TaskResult`, and `read_spec`. `spec` exports `SpecState`, `clear_state`, `find_resumable_plans`, `for" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/tip" />
   <style>
@@ -258,16 +258,25 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use <code>skip_task_ids</code> to re-run a single task without restarting the pipeline</h1>
-<p>Pass a <code>set[str]</code> of already-completed task IDs to <code>run_all(skip_task_ids=...)</code> instead of clearing state and running the whole plan from scratch.</p>
-<p><strong>Why it sticks:</strong> <code>clear_state</code> is irreversible mid-run — skipping completed tasks preserves your <code>SpecState.completed</code> list and keeps <code>total_cost</code> and <code>duration_ms</code> accurate in the final <code>PipelineResult</code>.</p>
-<p><strong>Tradeoff:</strong> You are responsible for knowing which task IDs to skip. If a completed task produced an artifact that a later task depends on, skipping it without re-validating that artifact may cause the downstream task to fail its quality gate silently — check <code>TaskResult.quality_gate_passed</code> and <code>TaskResult.gate_score</code> on the returned result before assuming success.</p>
-<h2>Source files</h2>
+<h1>Spec-driven development with approval loops</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/pipeline/**</code></li>
-<li><code>src/attune/spec/**</code></li>
+<li><strong>Depend only on the public API.</strong> <code>pipeline</code> exports
+<code>PipelineOrchestrator</code>, <code>PipelineResult</code>, <code>TaskResult</code>, and
+<code>read_spec</code>. <code>spec</code> exports <code>SpecState</code>, <code>clear_state</code>,
+<code>find_resumable_plans</code>, <code>format_progress_bar</code>, <code>get_pending_tasks</code>,
+<code>load_state</code>, <code>present_task_detail</code>, <code>present_task_result</code>,
+<code>present_tasks</code>, and <code>save_state</code>. <code>execute_with_approval</code> lives in
+<code>attune.spec.runner</code>. Private helpers can change without notice.</li>
+<li><strong>Presenter functions are pure.</strong> <code>present_tasks</code>,
+<code>present_task_detail</code>, <code>present_task_result</code>, and
+<code>format_progress_bar</code> accept <code>pipeline</code> data types, hold no state,
+and have no coupling to the pipeline layer — safe to call anywhere.</li>
+<li><strong>Prefer <code>skip_task_ids</code> over <code>clear_state</code> for re-runs.</strong> Clearing
+state is irreversible mid-run; skipping completed tasks preserves
+your <code>completed</code> list and keeps <code>total_cost</code> / <code>duration_ms</code>
+accurate.</li>
 </ul>
-<p><strong>Tags:</strong> <code>spec</code>, <code>planning</code></p>
 
   </article>
   <footer>

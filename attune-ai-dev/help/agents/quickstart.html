@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: agents — quickstart</title>
-  <meta name="description" content="Run a release readiness assessment on your codebase using AI agents that check test coverage, documentation, and code quality." />
-  <meta property="og:title" content="Quickstart: agents — quickstart" />
-  <meta property="og:description" content="Run a release readiness assessment on your codebase using AI agents that check test coverage, documentation, and code quality." />
+  <title>Quickstart: Agents — quickstart</title>
+  <meta name="description" content="Run your first agent using Attune&#x27;s Universal Agent Factory." />
+  <meta property="og:title" content="Quickstart: Agents — quickstart" />
+  <meta property="og:description" content="Run your first agent using Attune&#x27;s Universal Agent Factory." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/quickstart" />
   <style>
@@ -258,44 +258,83 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: agents</h1>
-<p>Run a release readiness assessment on your codebase using AI agents that check test coverage, documentation, and code quality.</p>
-<pre><code class="language-python">from attune.agents import ReleasePrepTeam
+<h1>Quickstart: Agents</h1>
+<p>Run your first agent using Attune's Universal Agent Factory.</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import get_langchain_adapter
 
-team = ReleasePrepTeam()
-report = team.assess_readiness('.')
-print(report.format_console_output())
+adapter = get_langchain_adapter()
+agent = adapter.create_agent(config)
+result = agent.invoke(&quot;Summarize the release status.&quot;)
+print(result)
 </code></pre>
-<h2>Check your codebase</h2>
-<ol>
-<li>
-<p><strong>Run the assessment</strong> on your current directory:</p>
-<pre><code class="language-python">from attune.agents import ReleasePrepTeam
+<p>Expected output:</p>
+<pre><code>{'output': 'All checks passed. No blockers found.', 'metadata': {...}}
+</code></pre>
+<h2>Prerequisites</h2>
+<ul>
+<li>The project is cloned and installed locally</li>
+<li>At least one supported framework is installed (LangChain, AutoGen, or Haystack)</li>
+<li>A valid <code>AgentConfig</code> object is available</li>
+</ul>
+<h2>Step 1: Choose and load an adapter</h2>
+<p>Pick the framework adapter that matches your environment. Each function performs a lazy import, so only the framework you use is loaded:</p>
+<table>
+<thead>
+<tr>
+<th>Framework</th>
+<th>Loader function</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>LangChain</td>
+<td><code>get_langchain_adapter()</code></td>
+</tr>
+<tr>
+<td>LangGraph</td>
+<td><code>get_langgraph_adapter()</code></td>
+</tr>
+<tr>
+<td>AutoGen</td>
+<td><code>get_autogen_adapter()</code></td>
+</tr>
+<tr>
+<td>Haystack</td>
+<td><code>get_haystack_adapter()</code></td>
+</tr>
+</tbody>
+</table>
+<pre><code class="language-python">from attune.agent_factory.adapters import get_langchain_adapter
 
-team = ReleasePrepTeam()
-report = team.assess_readiness()
+adapter = get_langchain_adapter()
+print(adapter.framework_name)   # → 'langchain'
+print(adapter.is_available())   # → True
 </code></pre>
-</li>
-<li>
-<p><strong>Review the results</strong>. The report shows pass/fail status for each quality gate:</p>
-<pre><code class="language-python">print(f&quot;Release approved: {report.approved}&quot;)
-print(f&quot;Confidence: {report.confidence}&quot;)
-for gate in report.quality_gates:
-    print(f&quot;{gate.name}: {'PASS' if gate.passed else 'FAIL'}&quot;)
+<h2>Step 2: Create an agent</h2>
+<p>Pass an <code>AgentConfig</code> to <code>create_agent()</code>. The adapter returns a <code>LangChainAgent</code> (or the equivalent for your chosen framework) that you can invoke immediately:</p>
+<pre><code class="language-python">from attune.agent_factory import AgentConfig
+
+config = AgentConfig(name=&quot;my-agent&quot;, model_tier=&quot;capable&quot;)
+agent = adapter.create_agent(config)
 </code></pre>
-</li>
-<li>
-<p><strong>Check the details</strong> to see what needs fixing:</p>
-<pre><code class="language-python">if report.blockers:
-    print(&quot;Blockers:&quot;)
-    for blocker in report.blockers:
-        print(f&quot;  - {blocker}&quot;)
+<h2>Step 3: Invoke the agent and inspect the result</h2>
+<p>Call <code>invoke()</code> with a string or dict. Print the result to confirm the shape:</p>
+<pre><code class="language-python">result = agent.invoke(&quot;List any open blockers for the current release.&quot;)
+print(result)
+# {'output': '...', 'metadata': {'tokens_used': 312, ...}}
 </code></pre>
-</li>
-</ol>
-<p>Expected output shows quality gates like test coverage, documentation coverage, and code quality checks with pass/fail status and specific recommendations.</p>
+<p>A dict with an <code>output</code> key confirms the agent ran successfully.</p>
+<h2>Step 4: Wrap an existing wizard (optional shortcut)</h2>
+<p>If you already have a wizard object, use <code>wrap_wizard()</code> to convert it to an agent without writing a full <code>AgentConfig</code>:</p>
+<pre><code class="language-python">from attune.agent_factory.adapters import wrap_wizard
+
+agent = wrap_wizard(my_wizard, name=&quot;release-checker&quot;, model_tier=&quot;capable&quot;)
+result = agent.invoke(&quot;Check test coverage.&quot;)
+print(result)
+</code></pre>
+<hr />
 <h2>Next:</h2>
-<p>Configure custom quality gate thresholds using the <code>quality_gates</code> parameter in <code>ReleasePrepTeam.__init__()</code> to match your project's standards.</p>
+<p>Read the <strong>Concept: Agents</strong> page — say <strong>&quot;what are Attune agents?&quot;</strong> — to understand <code>AgentConfig</code>, <code>WorkflowConfig</code>, and how <code>ReleasePrepTeam</code> orchestrates multiple agents together.</p>
 
   </article>
   <footer>

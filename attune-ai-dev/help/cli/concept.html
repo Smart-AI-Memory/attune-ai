@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>CLI and routing — concept</title>
-  <meta name="description" content="The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keywo" />
-  <meta property="og:title" content="CLI and routing — concept" />
-  <meta property="og:description" content="The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keywo" />
+  <title>The attune CLI — concept</title>
+  <meta name="description" content="The attune CLI is the single entry point — `attune.cli_minimal.main` — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on." />
+  <meta property="og:title" content="The attune CLI — concept" />
+  <meta property="og:description" content="The attune CLI is the single entry point — `attune.cli_minimal.main` — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/concept" />
   <style>
@@ -258,73 +258,90 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>CLI and routing</h1>
-<p>The attune CLI is the entry point that parses user input, dispatches it to the right command handler, and — through its routing layer — learns which Claude Code skills a user prefers for a given keyword.</p>
+<h1>The attune CLI</h1>
+<p>The attune CLI is the single entry point — <code>attune.cli_minimal.main</code> — that parses your arguments, dispatches them to the right command handler, and returns a numeric exit code your shell can act on.</p>
+<h2>Structural overview</h2>
+<p>The CLI splits into two distinct layers that work together:</p>
+<p><strong>Command dispatch</strong> — <code>create_parser()</code> builds the argument parser and maps subcommands to handler functions. Every handler follows the same contract: it receives an <code>argparse.Namespace</code> and returns an <code>int</code> exit code. Workflow-backed commands go through <code>run_workflow_with_exit_code</code>, which instantiates a workflow class, runs it, and converts the result into the documented exit code contract for <code>attune workflow run</code>.</p>
+<p><strong>Input routing</strong> — <code>HybridRouter</code> sits alongside the dispatch layer to handle natural-language or shorthand input. When a user types something that isn't a slash command (detected by <code>is_slash_command()</code>), <code>route_user_input()</code> translates it into a Claude Code skill invocation. The router learns your habits: each time you invoke <code>learn_preference(keyword, skill)</code>, it stores a <code>RoutingPreference</code> entry that raises the confidence score for that keyword-to-skill mapping on future calls. <code>get_suggestions(partial)</code> uses those stored preferences to offer completions as you type.</p>
 <h2>Command groups</h2>
-<p><code>create_parser()</code> in <code>attune.cli_minimal</code> assembles the top-level argument parser. Commands are organized into five groups, each in its own module:</p>
+<p>The handler functions are organized into focused modules:</p>
 <table>
 <thead>
 <tr>
 <th>Group</th>
-<th>Module</th>
-<th>What it does</th>
+<th>Example commands</th>
+<th>What they do</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Cost tracking</strong></td>
-<td><code>cli_commands.cost_commands</code></td>
-<td>Show, export, and reset API cost data (<code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code>)</td>
+<td><strong>Workflows</strong></td>
+<td><code>cmd_workflow_run</code>, <code>cmd_workflow_list</code>, <code>cmd_workflow_info</code></td>
+<td>Run and inspect registered workflows</td>
 </tr>
 <tr>
 <td><strong>Memory</strong></td>
-<td><code>cli_commands.memory_commands</code></td>
-<td>Store and retrieve cross-session notes (<code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code>)</td>
+<td><code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_forget_topic</code>, <code>cmd_lessons</code></td>
+<td>Read and write the Redis-backed lesson store</td>
+</tr>
+<tr>
+<td><strong>Costs</strong></td>
+<td><code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
+<td>Report, export, and clear cost-tracking data</td>
 </tr>
 <tr>
 <td><strong>Telemetry</strong></td>
-<td><code>cli_commands.telemetry_commands</code></td>
-<td>Inspect routing stats, savings, model usage, and agent signals</td>
+<td><code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_routing_stats</code>, <code>cmd_telemetry_models</code>, <code>cmd_telemetry_agents</code>, <code>cmd_telemetry_signals</code></td>
+<td>Inspect routing and model-usage telemetry</td>
 </tr>
 <tr>
-<td><strong>Provider</strong></td>
-<td><code>cli_commands.provider_commands</code></td>
-<td>Show or change the active model provider (<code>cmd_provider_show</code>, <code>cmd_provider_set</code>)</td>
+<td><strong>Providers</strong></td>
+<td><code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
+<td>View and change the active model provider</td>
+</tr>
+<tr>
+<td><strong>Patterns</strong></td>
+<td><code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
+<td>Curate promoted code patterns</td>
 </tr>
 <tr>
 <td><strong>Utility</strong></td>
-<td><code>cli_commands.utility_commands</code></td>
-<td>One-off operations: <code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_features</code>, <code>cmd_doctor</code></td>
+<td><code>cmd_setup</code>, <code>cmd_validate</code>, <code>cmd_version</code>, <code>cmd_doctor</code>, <code>cmd_features</code></td>
+<td>Diagnose, configure, and inspect the installation</td>
+</tr>
+<tr>
+<td><strong>Help</strong></td>
+<td><code>cmd_help</code></td>
+<td>Browse attune-help documentation templates</td>
+</tr>
+<tr>
+<td><strong>Curator</strong></td>
+<td><code>cmd_curator</code></td>
+<td>Render the project briefing in the terminal</td>
 </tr>
 </tbody>
 </table>
-<p><code>main()</code> in <code>attune.cli_minimal</code> ties these together: it calls <code>create_parser()</code>, runs the matched command function, and returns an integer exit code.</p>
-<h2>Routing layer</h2>
-<p>Not every user input is a structured CLI subcommand. <code>route_user_input()</code> in <code>attune.cli_router</code> handles free-form text by mapping it to a Claude Code skill invocation. <code>is_slash_command()</code> lets callers quickly test whether a string starts with a slash before routing it.</p>
-<p>The router that does this work is <code>HybridRouter</code>. It holds a list of <code>RoutingPreference</code> records and uses them to decide which skill to invoke:</p>
-<pre><code>user input → HybridRouter.route() → { skill, args, … }
-</code></pre>
-<p><code>HybridRouter.learn_preference(keyword, skill, args)</code> writes a new <code>RoutingPreference</code> for a keyword. <code>HybridRouter.get_suggestions(partial)</code> returns completions for partial input.</p>
-<h2>RoutingPreference record</h2>
-<p>Each learned mapping is a <code>RoutingPreference</code> dataclass:</p>
+<h2>Routing preferences</h2>
+<p><code>RoutingPreference</code> is the unit of learned behavior inside <code>HybridRouter</code>. Each preference has five fields:</p>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Meaning</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>keyword</code></td>
 <td><code>str</code></td>
-<td>Trigger word or phrase</td>
+<td>The input fragment that triggers this preference</td>
 </tr>
 <tr>
 <td><code>skill</code></td>
 <td><code>str</code></td>
-<td>Claude Code skill to invoke</td>
+<td>The Claude Code skill to invoke</td>
 </tr>
 <tr>
 <td><code>args</code></td>
@@ -334,26 +351,23 @@
 <tr>
 <td><code>usage_count</code></td>
 <td><code>int</code></td>
-<td>How many times this preference has fired</td>
+<td>How many times this mapping has fired</td>
 </tr>
 <tr>
 <td><code>confidence</code></td>
 <td><code>float</code></td>
-<td>Router's confidence in the mapping (default <code>1.0</code>)</td>
+<td>Routing weight (starts at <code>1.0</code>, adjusted by usage)</td>
 </tr>
 </tbody>
 </table>
-<p>Over time, <code>usage_count</code> and <code>confidence</code> give the router a signal about which preferences are reliable and which might need updating.</p>
-<h2>How the pieces fit together</h2>
-<pre><code>attune.cli_minimal.main()
-  └─ create_parser()          # builds subcommand tree
-  └─ dispatch to cmd_*()      # structured subcommands
-
-attune.cli_router.route_user_input()
-  └─ HybridRouter.route()     # free-form text → skill
-       └─ RoutingPreference   # per-keyword learned mapping
-</code></pre>
-<p>Structured subcommands (everything under <code>cmd_*</code>) and the routing layer are independent paths through the same CLI surface. A slash command detected by <code>is_slash_command()</code> can bypass the argument parser entirely and go straight to <code>HybridRouter</code>.</p>
+<p>As <code>usage_count</code> grows, the router can weigh this preference more heavily when multiple skills match the same keyword. You can inspect accumulated preferences through <code>cmd_telemetry_routing_stats</code> and <code>cmd_telemetry_routing_check</code>.</p>
+<h2>When the CLI layer matters</h2>
+<p>You interact with this layer every time you run an <code>attune</code> command, but it also matters when you are:</p>
+<ul>
+<li><strong>Scripting</strong> — all handlers return integer exit codes, so <code>run_workflow_with_exit_code</code> gives pipelines a reliable signal to branch on.</li>
+<li><strong>Extending attune</strong> — adding a new subcommand means writing a handler that accepts <code>Namespace</code> and returns <code>int</code>, then registering it with <code>create_parser()</code>.</li>
+<li><strong>Debugging routing</strong> — if <code>HybridRouter</code> sends input to the wrong skill, <code>cmd_telemetry_routing_stats</code> and <code>cmd_telemetry_routing_check</code> show you which <code>RoutingPreference</code> entries are winning and why.</li>
+</ul>
 
   </article>
   <footer>

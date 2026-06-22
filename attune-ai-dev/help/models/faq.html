@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Models FAQ — faq</title>
-  <meta name="description" content="It provides a unified registry and routing layer for LLM providers. Specifically, it handles authentication strategy configuration, adaptive model routing based on historical telemetry, circuit breaki" />
+  <meta name="description" content="It provides a unified registry for LLM providers, adaptive routing based on historical telemetry, and authentication strategy management — including support for Claude subscription tiers versus direct" />
   <meta property="og:title" content="Models FAQ — faq" />
-  <meta property="og:description" content="It provides a unified registry and routing layer for LLM providers. Specifically, it handles authentication strategy configuration, adaptive model routing based on historical telemetry, circuit breaki" />
+  <meta property="og:description" content="It provides a unified registry for LLM providers, adaptive routing based on historical telemetry, and authentication strategy management — including support for Claude subscription tiers versus direct" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/faq" />
   <style>
@@ -260,36 +260,48 @@
   <article class="markdown-body">
 <h1>Models FAQ</h1>
 <h2>What does the models feature do?</h2>
-<p>It provides a unified registry and routing layer for LLM providers. Specifically, it handles authentication strategy configuration, adaptive model routing based on historical telemetry, circuit breaking for failing providers, and cost estimation across subscription tiers.</p>
-<h2>When do I need models versus something else?</h2>
-<p>Use models when your code needs to select a model, authenticate with a provider, estimate costs, or recover from provider failures. If you only need to call an LLM directly without any routing or auth logic, check <code>.help/features.yaml</code> to see whether a simpler feature covers your use case.</p>
-<h2>What are the main entry points?</h2>
-<p>For CLI use, start with the <code>cmd_auth_*</code> functions in <code>src/attune/models/auth_cli.py</code>:</p>
+<p>It provides a unified registry for LLM providers, adaptive routing based on historical telemetry, and authentication strategy management — including support for Claude subscription tiers versus direct API access.</p>
+<h2>When do I need the models feature?</h2>
+<p>Use it when your code needs to select or call an LLM. Specifically, it covers:</p>
 <ul>
-<li><code>cmd_auth_setup()</code> — runs interactive first-time authentication setup</li>
-<li><code>cmd_auth_status()</code> — shows the current authentication strategy configuration</li>
-<li><code>cmd_auth_reset()</code> — clears the saved authentication strategy</li>
-<li><code>cmd_auth_recommend(args)</code> — recommends an auth mode for a specific file based on its line count</li>
+<li>Routing a task to the best-performing model with <code>AdaptiveModelRouter.get_best_model()</code></li>
+<li>Configuring how the system authenticates with a provider via <code>AuthStrategy</code></li>
+<li>Running LLM tasks through a standardized executor with <code>EmpathyLLMExecutor</code></li>
+<li>Inspecting the model registry with <code>print_registry()</code></li>
 </ul>
-<p>For programmatic use, <code>get_auth_strategy()</code> returns the global <code>AuthStrategy</code> instance, and <code>EmpathyLLMExecutor</code> is the default executor that wraps routing and provider calls together.</p>
-<h2>How does adaptive routing work?</h2>
-<p><code>AdaptiveModelRouter</code> reads historical telemetry to pick the best model for a given workflow and stage. You can pass <code>max_cost</code>, <code>max_latency_ms</code>, and <code>min_success_rate</code> constraints to <code>get_best_model()</code> to narrow the selection. Routing stats are available via <code>get_routing_stats()</code>.</p>
-<h2>What happens when a provider fails?</h2>
-<p><code>CircuitBreaker</code> tracks failures per provider and tier. After <code>failure_threshold</code> failures (default: 5), it marks the provider unavailable for <code>recovery_timeout_seconds</code> (default: 60). Call <code>is_available()</code> before routing to a provider, and use <code>record_success()</code> / <code>record_failure()</code> to keep the state current. You can inspect all provider states with <code>get_status()</code> or reset a specific provider with <code>reset()</code>.</p>
-<h2>How does the auth strategy decide which mode to use?</h2>
-<p><code>AuthStrategy.get_recommended_mode()</code> takes a module's line count and compares it against <code>small_module_threshold</code> (default: 500 lines) and <code>medium_module_threshold</code> (default: 2000 lines) to return an <code>AuthMode</code>. Use <code>estimate_cost()</code> and <code>get_pros_cons()</code> on the same instance to evaluate the tradeoff before committing to a mode.</p>
-<h2>How do I debug a routing or auth failure?</h2>
+<p>If you only need telemetry records, look at <code>TelemetryStore</code> and <code>log_llm_call()</code> instead — those live in the telemetry module.</p>
+<h2>What are the main entry points?</h2>
+<p>For interactive or CLI-driven work:</p>
+<ul>
+<li><code>cmd_auth_setup(args)</code> — runs the interactive authentication setup wizard</li>
+<li><code>cmd_auth_status(args)</code> — prints the current authentication strategy configuration</li>
+<li><code>cmd_auth_reset(args)</code> — clears a saved authentication strategy</li>
+<li><code>cmd_auth_recommend(args)</code> — recommends an auth mode for a specific file</li>
+<li><code>configure_auth_interactive(module_lines)</code> — programmatic first-time setup</li>
+</ul>
+<p>For routing and execution:</p>
+<ul>
+<li><code>AdaptiveModelRouter.get_best_model(workflow, stage)</code> — returns the best model ID for a workflow/stage pair, with optional <code>max_cost</code>, <code>max_latency_ms</code>, and <code>min_success_rate</code> filters</li>
+<li><code>EmpathyLLMExecutor.run(task_type, prompt)</code> — executes a prompt and returns an <code>LLMResponse</code></li>
+</ul>
+<h2>How does adaptive routing decide which model to use?</h2>
+<p><code>AdaptiveModelRouter</code> queries historical telemetry — stored as <code>ModelPerformance</code> records — and ranks candidates by their <code>quality_score</code> property. You can constrain the result with <code>max_cost</code>, <code>max_latency_ms</code>, and <code>min_success_rate</code> (default <code>0.8</code>). Call <code>get_routing_stats(workflow, stage)</code> to see what telemetry the router is working from.</p>
+<h2>What is a circuit breaker, and when does it activate?</h2>
+<p><code>CircuitBreaker</code> temporarily marks a provider unavailable after it reaches <code>failure_threshold</code> consecutive failures (default <code>5</code>). It reopens for a probe call after <code>recovery_timeout_seconds</code> (default <code>60</code>). You can check provider status with <code>CircuitBreaker.get_status()</code> or manually reset it with <code>CircuitBreaker.reset()</code>.</p>
+<h2>How do I check whether a response succeeded?</h2>
+<p>Inspect the <code>success</code> property on <code>LLMResponse</code> — it returns <code>True</code> when the response has non-empty content. You can also check <code>total_tokens</code> (the sum of <code>tokens_input</code> and <code>tokens_output</code>) and <code>cost_estimate</code> for cost accounting.</p>
+<h2>How does authentication strategy pick a mode for my file?</h2>
+<p>Call <code>AuthStrategy.get_recommended_mode(module_lines)</code>. It uses <code>small_module_threshold</code> (default <code>500</code> lines) and <code>medium_module_threshold</code> (default <code>2000</code> lines) to categorize the file, then factors in <code>prefer_subscription</code> and <code>cost_optimization</code> settings to return an <code>AuthMode</code>. Use <code>estimate_cost(module_lines)</code> to see the projected cost before committing.</p>
+<h2>How do I debug a routing or execution failure?</h2>
 <p>Run <code>pytest -k &quot;models&quot; -v</code> first. If the tests pass but your code still fails:</p>
 <ol>
-<li>Call <code>cmd_auth_status()</code> (or <code>get_auth_strategy()</code>) to confirm the active configuration.</li>
+<li>Call <code>AdaptiveModelRouter.get_routing_stats(workflow, stage)</code> to confirm the router has sufficient telemetry (check <code>sample_size</code> on the relevant <code>ModelPerformance</code> record).</li>
 <li>Call <code>CircuitBreaker.get_status()</code> to check whether a provider is currently open.</li>
-<li>Add a <code>logger.debug</code> statement at the suspected failure point and re-run with logging enabled.</li>
+<li>Call <code>cmd_auth_status(args)</code> to verify the active authentication strategy.</li>
+<li>Add a <code>logger.debug</code> call around your <code>EmpathyLLMExecutor.run()</code> invocation and re-run with logging enabled.</li>
 </ol>
-<p>For symptom-based diagnosis, see the troubleshooting page for this feature.</p>
 <h2>Where are the source files?</h2>
-<ul>
-<li><code>src/attune/models/**</code></li>
-</ul>
+<p>All source files live under <code>src/attune/models/</code>.</p>
 <p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
 
   </article>

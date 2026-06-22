@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with the attune CLI — task</title>
-  <meta name="description" content="Use the attune CLI when you need to run cost reports, manage memory, inspect telemetry, or control routing behavior from the command line." />
+  <meta name="description" content="Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal." />
   <meta property="og:title" content="Work with the attune CLI — task" />
-  <meta property="og:description" content="Use the attune CLI when you need to run cost reports, manage memory, inspect telemetry, or control routing behavior from the command line." />
+  <meta property="og:description" content="Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/task" />
   <style>
@@ -259,208 +259,131 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with the attune CLI</h1>
-<p>Use the attune CLI when you need to run cost reports, manage memory, inspect telemetry, or control routing behavior from the command line.</p>
+<p>Use the attune CLI when you need to run workflows, manage memory and costs, or extend command behavior from the terminal.</p>
 <h2>Prerequisites</h2>
 <ul>
 <li>Access to the project source code</li>
-<li><code>attune</code> installed and available on your PATH (run <code>attune --version</code> to confirm)</li>
-<li>Familiarity with <code>src/attune/cli_minimal.py</code> as the main entry point</li>
+<li>Python environment with attune installed</li>
+<li>Familiarity with <code>src/attune/cli_minimal.py</code> as the CLI entry point</li>
 </ul>
-<h2>Run built-in CLI commands</h2>
-<p>The CLI is organized into command groups. Each command is a standalone function that accepts an <code>argparse.Namespace</code> and returns an integer exit code.</p>
-<p><strong>Cost commands</strong> — track and export API spending:</p>
+<h2>Identify the right command module</h2>
+<p>The CLI is organized into focused modules. Before writing or modifying any code, confirm which module owns the behavior you need:</p>
 <table>
 <thead>
 <tr>
-<th>Command</th>
-<th>Function</th>
-<th>What it does</th>
+<th>Module</th>
+<th>Responsibility</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>attune costs</code></td>
-<td><code>cmd_costs()</code></td>
-<td>Show a cost report for the recent period</td>
+<td><code>cli_commands/_exit_codes.py</code></td>
+<td>Executes a workflow class and returns a contract exit code via <code>run_workflow_with_exit_code()</code></td>
 </tr>
 <tr>
-<td><code>attune costs today</code></td>
-<td><code>cmd_costs_today()</code></td>
-<td>Show today's cost summary</td>
+<td><code>cli_commands/cost_commands.py</code></td>
+<td>Cost reporting and reset: <code>cmd_costs</code>, <code>cmd_costs_today</code>, <code>cmd_costs_export</code>, <code>cmd_costs_reset</code></td>
 </tr>
 <tr>
-<td><code>attune costs export</code></td>
-<td><code>cmd_costs_export()</code></td>
-<td>Export cost data to a file</td>
+<td><code>cli_commands/curator.py</code></td>
+<td>Renders the project briefing via <code>cmd_curator()</code></td>
 </tr>
 <tr>
-<td><code>attune costs reset</code></td>
-<td><code>cmd_costs_reset()</code></td>
-<td>Clear all cost tracking data</td>
+<td><code>cli_commands/help_commands.py</code></td>
+<td>Handles <code>attune help</code> via <code>cmd_help()</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/memory_agent.py</code></td>
+<td>Runs a single-shot agent with Redis-backed memory via <code>cmd_memory_agent()</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/memory_commands.py</code></td>
+<td>Lesson and memory management: <code>cmd_remember</code>, <code>cmd_forget</code>, <code>cmd_lessons</code>, <code>cmd_memory_capture</code>, <code>cmd_memory_recall</code>, <code>cmd_memory_topics</code>, <code>cmd_memory_forget_topic</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/pattern_review.py</code></td>
+<td>Pattern lifecycle: <code>cmd_patterns_review</code>, <code>cmd_patterns_promote</code>, <code>cmd_patterns_reject</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/provider_commands.py</code></td>
+<td>Provider inspection and switching: <code>cmd_provider_show</code>, <code>cmd_provider_set</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/telemetry_commands.py</code></td>
+<td>Telemetry, savings, routing stats, and model/agent signals</td>
+</tr>
+<tr>
+<td><code>cli_commands/utility_commands.py</code></td>
+<td>Setup, validation, version, features, and diagnostics via <code>cmd_doctor()</code></td>
+</tr>
+<tr>
+<td><code>cli_commands/workflow_commands.py</code></td>
+<td>Workflow listing, inspection, and execution: <code>cmd_workflow_list</code>, <code>cmd_workflow_info</code>, <code>cmd_workflow_run</code></td>
+</tr>
+<tr>
+<td><code>cli_router.py</code></td>
+<td>Routes free-text input to skill invocations via <code>HybridRouter</code></td>
 </tr>
 </tbody>
 </table>
-<p><strong>Memory commands</strong> — persist and retrieve lessons across sessions:</p>
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>Function</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>attune remember</code></td>
-<td><code>cmd_remember()</code></td>
-<td>Add a lesson to the lessons file</td>
-</tr>
-<tr>
-<td><code>attune forget</code></td>
-<td><code>cmd_forget()</code></td>
-<td>Remove a lesson by line number or keyword</td>
-</tr>
-<tr>
-<td><code>attune lessons</code></td>
-<td><code>cmd_lessons()</code></td>
-<td>List current lessons with line numbers</td>
-</tr>
-<tr>
-<td><code>attune memory capture</code></td>
-<td><code>cmd_memory_capture()</code></td>
-<td>Save content to personal cross-session memory</td>
-</tr>
-<tr>
-<td><code>attune memory recall</code></td>
-<td><code>cmd_memory_recall()</code></td>
-<td>Search personal cross-session memory</td>
-</tr>
-<tr>
-<td><code>attune memory topics</code></td>
-<td><code>cmd_memory_topics()</code></td>
-<td>List available memory topics</td>
-</tr>
-<tr>
-<td><code>attune memory forget-topic</code></td>
-<td><code>cmd_memory_forget_topic()</code></td>
-<td>Remove an entire memory topic</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Utility commands</strong> — inspect and configure attune itself:</p>
-<table>
-<thead>
-<tr>
-<th>Command</th>
-<th>Function</th>
-<th>What it does</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>attune setup</code></td>
-<td><code>cmd_setup()</code></td>
-<td>Run interactive first-time setup</td>
-</tr>
-<tr>
-<td><code>attune validate</code></td>
-<td><code>cmd_validate()</code></td>
-<td>Validate the current configuration</td>
-</tr>
-<tr>
-<td><code>attune doctor</code></td>
-<td><code>cmd_doctor()</code></td>
-<td>Diagnose common environment problems</td>
-</tr>
-<tr>
-<td><code>attune features</code></td>
-<td><code>cmd_features()</code></td>
-<td>List available features</td>
-</tr>
-<tr>
-<td><code>attune version</code></td>
-<td><code>cmd_version()</code></td>
-<td>Print the installed version</td>
-</tr>
-</tbody>
-</table>
-<h2>Extend or modify a CLI command</h2>
+<h2>Add or modify a CLI command</h2>
 <ol>
 <li>
-<p><strong>Identify the responsible function.</strong> Each command maps to a single function in one of the modules under <code>src/attune/cli_commands/</code>. For example, <code>cmd_costs_export()</code> lives in <code>src/attune/cli_commands/cost_commands.py</code>. Read its signature, docstring, and return type to confirm it owns the behavior you need.</p>
+<p><strong>Open the module</strong> that owns the relevant command (see table above). Read the function signature, docstring, and return type to confirm the function handles what you need.</p>
 </li>
 <li>
-<p><strong>Open the correct module.</strong> The modules and their responsibilities are:</p>
-<ul>
-<li><code>cost_commands.py</code> — cost reporting and export</li>
-<li><code>memory_commands.py</code> — lessons and cross-session memory</li>
-<li><code>help_commands.py</code> — the <code>attune help</code> command</li>
-<li><code>provider_commands.py</code> — provider selection and display</li>
-<li><code>telemetry_commands.py</code> — telemetry, routing stats, and model signals</li>
-<li><code>utility_commands.py</code> — setup, validation, and diagnostics</li>
-<li><code>workflow_commands.py</code> — workflow listing and execution</li>
-</ul>
+<p><strong>Edit the command function.</strong> Each command function accepts an <code>argparse.Namespace</code> argument and returns an <code>int</code> exit code. Add your logic inside the matching <code>cmd_*</code> function.</p>
 </li>
 <li>
-<p><strong>Edit the function body.</strong> Keep the function signature (<code>args: Namespace</code>) and return type (<code>int</code>) unchanged. Return <code>0</code> on success and a non-zero integer on failure, consistent with the rest of the module.</p>
+<p><strong>Register new commands in the parser.</strong> If you are adding a new subcommand, open <code>src/attune/cli_minimal.py</code> and call <code>create_parser()</code> to locate where subparsers are registered. Add your subcommand there, pointing its <code>set_defaults(func=...)</code> to your new <code>cmd_*</code> function.</p>
 </li>
 <li>
-<p><strong>Update the parser if you add a new flag.</strong> New arguments must be registered in <code>src/attune/cli_minimal.py</code> via <code>create_parser()</code>. Run <code>attune help</code> afterward to confirm the flag appears in the help output.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong> Target CLI tests with:</p>
+<p><strong>Run the related tests</strong> to catch regressions before they reach other developers:</p>
 <pre><code>pytest -k &quot;cli&quot;
 </code></pre>
 </li>
 </ol>
-<h2>Configure routing behavior</h2>
-<p>The <code>HybridRouter</code> in <code>src/attune/cli_router.py</code> maps user input to skill invocations. You can teach it a new keyword-to-skill mapping at runtime:</p>
+<h2>Teach the router a new preference</h2>
+<p>Use <code>HybridRouter</code> from <code>attune.cli_router</code> when you want the router to map a keyword to a specific skill automatically.</p>
+<ol>
+<li>
+<p><strong>Instantiate the router:</strong></p>
 <pre><code class="language-python">from attune.cli_router import HybridRouter
 
 router = HybridRouter()
-router.learn_preference(keyword=&quot;deploy&quot;, skill=&quot;deploy_skill&quot;, args=&quot;--env prod&quot;)
 </code></pre>
-<p>Each learned preference is stored as a <code>RoutingPreference</code> with the fields <code>keyword</code>, <code>skill</code>, <code>args</code>, <code>usage_count</code>, and <code>confidence</code>. To retrieve completions for a partial input, call <code>router.get_suggestions(partial)</code>.</p>
-<p>To route a single input string directly without constructing a router instance, use the module-level helper:</p>
-<pre><code class="language-python">from attune.cli_router import route_user_input
-
-result = route_user_input(&quot;show costs&quot;, context={&quot;user&quot;: &quot;alice&quot;})
+</li>
+<li>
+<p><strong>Register a keyword preference</strong> with <code>learn_preference()</code>:</p>
+<pre><code class="language-python">router.learn_preference(keyword=&quot;costs&quot;, skill=&quot;cost_report&quot;, args=&quot;--today&quot;)
 </code></pre>
-<h2>Verify the task worked</h2>
-<p>After running or modifying a command, confirm success by checking:</p>
-<ul>
-<li>The command exits with code <code>0</code> (all <code>cmd_*</code> functions return <code>0</code> on success).</li>
-<li><code>attune costs</code> or <code>attune lessons</code> produces updated output that reflects your change.</li>
-<li><code>pytest -k &quot;cli&quot;</code> passes with no failures or errors.</li>
-<li><code>attune doctor</code> reports no new issues introduced by your change.</li>
-</ul>
+<p>This creates a <code>RoutingPreference</code> with the fields <code>keyword</code>, <code>skill</code>, <code>args</code>, <code>usage_count</code>, and <code>confidence</code>.</p>
+</li>
+<li>
+<p><strong>Check autocomplete suggestions</strong> for a partial string:</p>
+<pre><code class="language-python">suggestions = router.get_suggestions(&quot;cos&quot;)
+</code></pre>
+</li>
+<li>
+<p><strong>Route a free-text input</strong> and inspect the result:</p>
+<pre><code class="language-python">result = router.route(&quot;show me today's costs&quot;)
+</code></pre>
+</li>
+</ol>
+<h2>Verify your changes</h2>
+<p>After editing a command or registering a routing preference, confirm the change works end-to-end:</p>
+<ol>
+<li>Run <code>attune --help</code> and verify your subcommand appears in the output.</li>
+<li>Run the subcommand directly — for example, <code>attune costs</code> — and confirm it exits with code <code>0</code> on success.</li>
+<li>For routing changes, call <code>router.get_suggestions()</code> with a partial keyword and confirm your new keyword appears in the returned list.</li>
+<li>Run <code>pytest -k &quot;cli&quot;</code> and confirm all tests pass with no new failures.</li>
+</ol>
 <h2>Key files</h2>
 <ul>
-<li><code>src/attune/cli_minimal.py</code> — entry point and parser (<code>main()</code>, <code>create_parser()</code>)</li>
-<li><code>src/attune/cli_router.py</code> — routing logic (<code>HybridRouter</code>, <code>route_user_input()</code>)</li>
+<li><code>src/attune/cli_minimal.py</code> — entry point; defines <code>main()</code> and <code>create_parser()</code></li>
+<li><code>src/attune/cli_router.py</code> — <code>HybridRouter</code>, <code>route_user_input()</code>, <code>RoutingPreference</code></li>
 <li><code>src/attune/cli_commands/</code> — one module per command group</li>
 </ul>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 18</td>
-<td>error</td>
-<td><code>attune --version</code> — flag not found in <code>attune --help</code>  Detected against attune 5.10.0 (installed in active venv). If you are regenerating against a different version, verify the flag exists in that version's <code>attune --help</code>. To override:   - One-off:  attune-author generate FEATURE --skip-check check_cli_refs   - Per file: [tool.attune-author.fact-check.skip]               &quot;.help/templates/cli/task.md&quot; = [&quot;check_cli_refs&quot;]</td>
-</tr>
-</tbody>
-</table>
 
   </article>
   <footer>

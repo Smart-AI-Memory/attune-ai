@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Comparison: Ops Dashboard vs alternatives — comparison</title>
-  <meta name="description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local FastAPI server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and l" />
+  <meta name="description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE " />
   <meta property="og:title" content="Comparison: Ops Dashboard vs alternatives — comparison" />
-  <meta property="og:description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local FastAPI server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and l" />
+  <meta property="og:description" content="The ops dashboard (`attune ops` / `python -m attune.ops`) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/comparison" />
   <style>
@@ -260,95 +260,101 @@
   <article class="markdown-body">
 <h1>Comparison: Ops Dashboard vs alternatives</h1>
 <h2>Context</h2>
-<p>The ops dashboard (<code>attune ops</code> / <code>python -m attune.ops</code>) is a local FastAPI server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming into a single interface. It is the primary way to operate the attune workflow OS interactively.</p>
+<p>The ops dashboard (<code>attune ops</code> / <code>python -m attune.ops</code>) is a local server that combines a workflow runner, per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming into a single interface. It exposes a FastAPI application via <code>create_app()</code> and reads project and attune state through a <code>Config</code> dataclass.</p>
 <h2>Feature comparison</h2>
 <table>
 <thead>
 <tr>
 <th>Capability</th>
 <th>Ops dashboard</th>
-<th>Direct API / scripts</th>
+<th>Ad-hoc script</th>
+<th>Direct CLI invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><strong>Workflow execution</strong></td>
-<td>Browser UI with scope picker (<code>Feature.path</code>, <code>Feature.tags</code>) and clickable chaining between workflow stages</td>
-<td>Must wire <code>WorkflowEntry</code> stage map and <code>PathArgSpec</code> arguments by hand</td>
-</tr>
-<tr>
-<td><strong>Cost visibility</strong></td>
-<td>Live Anthropic spend via <code>fetch_summary()</code> — today, 7-day, MTD, 30-day, and per-model breakdowns from <code>CostSummary</code></td>
-<td>Call <code>fetch_summary()</code> yourself and format <code>CostSummary</code> fields manually</td>
+<td>Full — scope picker, <code>WorkflowEntry</code> stage map, workflow chaining</td>
+<td>Manual — you wire the calls yourself</td>
+<td>Single workflow only, no chaining</td>
 </tr>
 <tr>
 <td><strong>Run history</strong></td>
-<td>Runs persisted under <code>Config.runs_dir</code>; retained for <code>Config.runs_retention_days</code> days (default 30)</td>
-<td>No persistence; output is ephemeral unless you add it</td>
+<td>Persisted to <code>Config.runs_dir</code>; retained for <code>runs_retention_days</code> days (default 30)</td>
+<td>None unless you add it yourself</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Cost visibility</strong></td>
+<td>Live Anthropic cost report via <code>fetch_summary()</code> with <code>CostSummary</code> fields (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>, <code>by_model</code>)</td>
+<td>None</td>
+<td>None</td>
 </tr>
 <tr>
 <td><strong>Session tracking</strong></td>
-<td><code>/sessions</code> page surfaces <code>Session</code> records (id, duration, message count, starter prompt)</td>
-<td>Not available outside the dashboard server</td>
+<td><code>Session</code> records surfaced on <code>/sessions</code> page (message count, duration, starter prompt)</td>
+<td>None</td>
+<td>None</td>
 </tr>
 <tr>
 <td><strong>Spec completion candidates</strong></td>
-<td>Detector runs automatically when <code>Config.specs_candidates_enabled = True</code>; surfaces <code>Candidate</code> slugs with evidence</td>
-<td>Call <code>detect_candidates(config)</code> manually and parse results yourself</td>
+<td>Detected via <code>detect_candidates()</code> when <code>specs_candidates_enabled = True</code></td>
+<td>None</td>
+<td>None</td>
+</tr>
+<tr>
+<td><strong>Scope targeting</strong></td>
+<td>Feature-level via <code>.help/features.yaml</code> <code>Feature</code> entries and <code>PathArgSpec</code></td>
+<td>Hardcoded paths</td>
+<td>Single <code>--path</code> argument at most</td>
 </tr>
 <tr>
 <td><strong>Telemetry</strong></td>
-<td><code>TelemetrySummary</code> aggregated by workflow and by day; written to <code>Config.telemetry_path</code></td>
-<td>Read the raw telemetry file and aggregate yourself</td>
+<td><code>TelemetrySummary</code> tracks requests, cost, savings, and per-workflow breakdowns</td>
+<td>None</td>
+<td>None</td>
 </tr>
 <tr>
-<td><strong>Bulletin / multi-actor log</strong></td>
-<td>Streamed from <code>Config.bulletin_dir</code>; visible in the UI without extra tooling</td>
-<td>Tail the files in <code>bulletin_dir</code> manually</td>
+<td><strong>Startup overhead</strong></td>
+<td>FastAPI server + SSE — not suitable for quick one-off commands</td>
+<td>Near-zero</td>
+<td>Near-zero</td>
 </tr>
 <tr>
-<td><strong>Configuration surface</strong></td>
-<td>Single <code>Config</code> dataclass controls host, port, retention, trusted hosts, and spec roots</td>
-<td>Must construct <code>Config</code> explicitly and pass it through every call</td>
+<td><strong>Remote access</strong></td>
+<td>Configurable <code>host</code>/<code>port</code>; <code>trusted_hosts</code> whitelist</td>
+<td>N/A</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><strong>Startup</strong></td>
-<td><code>cmd_ops(args)</code> — blocking; returns <code>0</code> on clean exit</td>
-<td><code>create_app()</code> returns the FastAPI app for embedding in your own server</td>
+<td><strong>Admin API key required</strong></td>
+<td>Yes, for <code>fetch_summary()</code> — <code>load_admin_key()</code> returns <code>None</code> if unavailable; cost panel is skipped gracefully</td>
+<td>N/A</td>
+<td>N/A</td>
 </tr>
 </tbody>
 </table>
 <h2>Tradeoffs</h2>
-<p><strong>Ops dashboard strengths</strong></p>
+<p><strong>Ops dashboard wins when</strong> you need any combination of: cross-workflow visibility, cost tracking, session history, or scope-targeted execution. All of that infrastructure is built in and requires no extra code on your part.</p>
+<p><strong>Ops dashboard loses when</strong> you need a fast, stateless command. The server starts on <code>host:port</code> (default <code>127.0.0.1:8765</code>) and blocks (<code>cmd_ops()</code> returns <code>0</code> only on clean shutdown). For a single workflow run with no need for history or cost data, launching the full server is unnecessary overhead.</p>
+<p><strong>Cost data is optional, not required.</strong> <code>fetch_summary(refresh=False)</code> returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple. If <code>load_admin_key()</code> returns <code>None</code>, the dashboard still runs — cost panels are simply absent. You do not need Anthropic admin credentials to use the workflow runner.</p>
+<p><strong><code>allow_run</code></strong> defaults to <code>False</code> in <code>Config</code>. The dashboard can display workflow metadata without being allowed to execute runs. This is the safe default for read-only inspection.</p>
+<h2>When to use the ops dashboard</h2>
+<p>Use the ops dashboard when at least one of these is true:</p>
 <ul>
-<li>Zero boilerplate for the common case: <code>attune ops</code> starts the server; <code>build_config()</code> resolves all paths from <code>Config.project_root</code> and <code>Config.attune_home</code>.</li>
-<li><code>fetch_summary(refresh=False)</code> caches results in memory; subsequent calls in the same process are instant. Pass <code>refresh=True</code> to force a live fetch from <code>_COST_REPORT_URL</code>.</li>
-<li>Run history and session data survive process restarts because they are written to disk (<code>Config.runs_dir</code>, <code>Config.sessions_dir</code>).</li>
-<li><code>Config.allow_run</code> acts as a safety gate — workflow execution is disabled by default until you opt in.</li>
+<li>You are running multiple workflows against different features and want a scope picker rather than manually specifying paths on every invocation.</li>
+<li>You need to inspect run history across sessions — <code>Config.runs_dir</code> and <code>runs_retention_days</code> give you durable records without any extra tooling.</li>
+<li>You want live Anthropic cost data (<code>CostSummary.today_usd</code>, <code>by_model</code>, etc.) visible alongside your workflow activity.</li>
+<li>You are working on a project with spec completion tracking and want <code>detect_candidates()</code> surfaced automatically (<code>specs_candidates_enabled = True</code>).</li>
+<li>You want clickable workflow chaining — advancing from one <code>WorkflowEntry</code> stage to the next without returning to the terminal.</li>
 </ul>
-<p><strong>Direct API / script strengths</strong></p>
+<h2>When to use an alternative instead</h2>
 <ul>
-<li><code>create_app()</code> lazy-imports FastAPI, so importing <code>attune</code> in a script does not pay the FastAPI startup cost unless you actually call it.</li>
-<li><code>detect_candidates(config)</code> can be called standalone (with an optional <code>now</code> float for time-travel in tests) without starting the HTTP server.</li>
-<li><code>load_admin_key()</code> and <code>fetch_summary()</code> are independently usable if you only need cost data.</li>
-<li><code>clear_cache()</code> is available for test isolation without touching the server.</li>
+<li><strong>Single, quick command with no history needed:</strong> invoke the workflow directly via the <code>attune</code> CLI. The ops dashboard's server startup and SSE infrastructure add latency that a one-shot command does not justify.</li>
+<li><strong>Automated or CI context:</strong> a blocking server (<code>cmd_ops</code>) is the wrong shape for a pipeline step. Call the relevant function directly or use the CLI subcommand in a non-interactive script.</li>
+<li><strong>Exploratory or throwaway work:</strong> a small script that calls the relevant functions directly is simpler than standing up a dashboard you will discard.</li>
+<li><strong>You need behavior not exposed in <code>__all__</code></strong> (<code>create_app</code>, <code>build_config</code>, <code>Config</code>): do not reach into private internals — the surface is intentionally narrow. File an issue or propose an extension point instead.</li>
 </ul>
-<h2>Use ops dashboard when…</h2>
-<ul>
-<li>You want an interactive view of workflow status, cost, sessions, and spec candidates without writing glue code.</li>
-<li>You need persisted run history across multiple working sessions (<code>Config.runs_retention_days</code> controls how far back you can look).</li>
-<li>You are operating on a specific feature and want the scope picker to filter workflows to the right <code>Feature.path</code>.</li>
-<li>You need <code>Config.specs_candidates_enabled = True</code> to surface spec completion candidates automatically as you work.</li>
-<li>You are sharing a dashboard across a team and need <code>Config.trusted_hosts</code> to control access.</li>
-</ul>
-<h2>Use the API directly when…</h2>
-<ul>
-<li>You are writing a test and need <code>detect_candidates(config)</code> or <code>fetch_summary()</code> in isolation — the server is unnecessary overhead.</li>
-<li>You are embedding ops capabilities into an existing FastAPI application and want <code>create_app()</code> on your own terms.</li>
-<li>You only need Anthropic cost data; <code>fetch_summary()</code> plus the <code>CostSummary</code> fields (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>, <code>by_model</code>) give you everything without starting a server.</li>
-<li>You need a one-off candidate scan; call <code>detect_candidates(config)</code> and inspect the <code>Candidate</code> fields (<code>slug</code>, <code>current_status</code>, <code>evidence</code>) directly.</li>
-</ul>
-<p><strong>Bottom line:</strong> the ops dashboard is the right default for interactive, day-to-day operation of the workflow OS. The direct API surface is the right choice when you need a single capability in a script or test, or when you are embedding attune into a larger application.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/ops/**</code></li>

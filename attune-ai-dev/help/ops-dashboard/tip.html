@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Tip: working effectively with ops dashboard — tip</title>
-  <meta name="description" content="Use `fetch_summary(refresh=True)` when you need a live cost reading instead of relying on the cached result — the `source` field on `CostSummary` tells you whether you got `&#x27;live&#x27;` or `&#x27;cached&#x27;` data," />
+  <meta name="description" content="Use `fetch_summary(refresh=False)` as your entry point for cost data — it handles caching and returns a typed `(CostSummary | None, CostFetchError | None)` tuple so you never have to catch raw HTTP er" />
   <meta property="og:title" content="Tip: working effectively with ops dashboard — tip" />
-  <meta property="og:description" content="Use `fetch_summary(refresh=True)` when you need a live cost reading instead of relying on the cached result — the `source` field on `CostSummary` tells you whether you got `&#x27;live&#x27;` or `&#x27;cached&#x27;` data," />
+  <meta property="og:description" content="Use `fetch_summary(refresh=False)` as your entry point for cost data — it handles caching and returns a typed `(CostSummary | None, CostFetchError | None)` tuple so you never have to catch raw HTTP er" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/ops-dashboard/tip" />
   <style>
@@ -259,9 +259,10 @@
   </nav>
   <article class="markdown-body">
 <h1>Tip: working effectively with ops dashboard</h1>
-<p>Use <code>fetch_summary(refresh=True)</code> when you need a live cost reading instead of relying on the cached result — the <code>source</code> field on <code>CostSummary</code> tells you whether you got <code>'live'</code> or <code>'cached'</code> data, so you can always verify what you received.</p>
-<p><strong>Why:</strong> <code>fetch_summary</code> returns a <code>(CostSummary | None, CostFetchError | None)</code> tuple, and silent cache hits are the most common reason cost figures look stale.</p>
-<p><strong>Tradeoff:</strong> Passing <code>refresh=True</code> on every call adds a network round-trip to <code>https://api.anthropic.com/v1/organizations/cost_report</code> and requires a valid key from <code>load_admin_key()</code>. If the key is unavailable, <code>fetch_summary</code> returns <code>None</code> for the summary and a populated <code>CostFetchError</code> — check <code>CostFetchError.kind</code> and <code>CostFetchError.message</code> before assuming the data is valid.</p>
+<p>Use <code>fetch_summary(refresh=False)</code> as your entry point for cost data — it handles caching and returns a typed <code>(CostSummary | None, CostFetchError | None)</code> tuple so you never have to catch raw HTTP errors yourself.</p>
+<p><strong>Why it sticks:</strong> the cache layer means repeated calls inside a single dashboard render are free; setting <code>refresh=True</code> only when you genuinely need live data keeps the Anthropic admin API from rate-limiting you.</p>
+<p><strong>Tradeoff:</strong> the cached value reflects the moment it was last populated, not wall-clock now. Check <code>CostSummary.fetched_at</code> and <code>CostSummary.source</code> (either <code>'live'</code> or <code>'cached'</code>) before presenting figures to a user who needs precision.</p>
+<p>The three other stable entry points are <code>create_app()</code> (the FastAPI factory), <code>build_config()</code> (the config builder), and <code>clear_cache()</code> — all exported via <code>__all__</code> in <code>src/attune/ops/__init__.py</code>. Everything else, including anything prefixed with an underscore such as <code>_COST_REPORT_URL</code> or <code>_API_VERSION</code>, is internal and may change without notice.</p>
 <p><strong>Tags:</strong> <code>ops</code>, <code>dashboard</code>, <code>runner</code>, <code>workflows</code>, <code>scope-picker</code>, <code>persistence</code>, <code>sse</code></p>
 
   </article>

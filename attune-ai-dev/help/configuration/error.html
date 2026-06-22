@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Configuration errors — error</title>
-  <meta name="description" content="Failures during configuration loading, validation, and environment variable resolution in Attune AI." />
+  <meta name="description" content="Configuration errors in Attune fall into three categories: missing or unresolvable config files, invalid or unrecognized field values, and environment variable mismatches." />
   <meta property="og:title" content="Configuration errors — error" />
-  <meta property="og:description" content="Failures during configuration loading, validation, and environment variable resolution in Attune AI." />
+  <meta property="og:description" content="Configuration errors in Attune fall into three categories: missing or unresolvable config files, invalid or unrecognized field values, and environment variable mismatches." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/error" />
   <style>
@@ -259,42 +259,66 @@
   </nav>
   <article class="markdown-body">
 <h1>Configuration errors</h1>
-<p>Failures during configuration loading, validation, and environment variable resolution in Attune AI.</p>
+<p>Configuration errors in Attune fall into three categories: missing or unresolvable config files, invalid or unrecognized field values, and environment variable mismatches.</p>
 <h2>Common error signatures</h2>
-<ul>
-<li><code>AgentOperationError</code> — Error during agent operation with context, wrapping the original cause</li>
-<li><code>ValidationError</code> — Configuration validation failures from malformed or missing required fields</li>
-<li><code>FileNotFoundError</code> — Config file not found at expected paths (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code>)</li>
-<li><code>JSONDecodeError</code> — Malformed JSON in configuration files</li>
-<li><code>AttributeError</code> — Missing configuration properties when accessing <code>model</code>, <code>max_tokens</code>, <code>temperature</code>, or other required fields</li>
-<li><code>KeyError</code> — Missing environment variables or configuration sections</li>
-</ul>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Likely cause</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>FileNotFoundError</code> from <code>ConfigLoader.load()</code></td>
+<td>None of the search paths (<code>./attune.config.json</code>, <code>~/.attune/config.json</code>, <code>~/.config/attune/config.json</code>) contain a readable file and no path was passed explicitly.</td>
+</tr>
+<tr>
+<td><code>ValidationError</code> returned by <code>validate_config()</code></td>
+<td>A <code>UnifiedConfig</code> field contains a value that fails <code>ConfigValidator.validate_section()</code> — for example, an unrecognized <code>WorkflowMode</code> or an empty required field in <code>AuthConfig</code>.</td>
+</tr>
+<tr>
+<td><code>AgentOperationError</code> wrapping another exception</td>
+<td><code>UnifiedAgentConfig</code> caught an exception during an agent operation and re-raised it with operation context. Inspect <code>cause</code> for the original error.</td>
+</tr>
+<tr>
+<td><code>KeyError</code> or <code>AttributeError</code> from <code>UnifiedConfig.get_value()</code></td>
+<td>The key passed does not appear in <code>get_all_keys()</code> — often a typo or a key from an older config schema.</td>
+</tr>
+<tr>
+<td><code>EmpathyXMLConfig.load_from_file()</code> raises <code>FileNotFoundError</code> or <code>JSONDecodeError</code></td>
+<td><code>.attune/config.json</code> is absent, empty, or not valid JSON.</td>
+</tr>
+<tr>
+<td>Environment variable silently ignored</td>
+<td>The variable was set with the legacy <code>EMPATHY_</code> prefix but the code now reads <code>ATTUNE_</code> first via <code>get_attune_env()</code>. The <code>EMPATHY_</code> value is used only as a fallback.</td>
+</tr>
+</tbody>
+</table>
 <h2>Where errors originate</h2>
-<p>Configuration errors typically start in these key functions:</p>
 <ul>
-<li><code>ConfigLoader.load()</code> — Configuration file loading and parsing failures</li>
-<li><code>ConfigLoader.save()</code> — File write permission or path creation issues</li>
-<li><code>validate_config()</code> — Schema validation errors for configuration objects</li>
-<li><code>get_attune_env()</code> — Environment variable resolution when neither <code>ATTUNE_</code> nor <code>EMPATHY_</code> variants exist</li>
-<li><code>UnifiedAgentConfig.get_model_id()</code> — Model configuration resolution failures</li>
-<li><code>BookProductionConfig</code> property accessors — Missing or invalid model configuration values</li>
+<li><strong><code>ConfigLoader.load()</code></strong> — Attempts to read from the discovered or default config path. Fails with a filesystem error if the file is missing or unreadable. Call <code>ConfigLoader.discover_config_path()</code> beforehand to confirm which path the loader resolves to.</li>
+<li><strong><code>load_unified_config(path)</code></strong> — Wraps <code>ConfigLoader.load()</code>; passing <code>None</code> triggers automatic path discovery against <code>CONFIG_SEARCH_PATHS</code>. If discovery returns nothing, the loader falls back to <code>ConfigLoader.get_default_config_path()</code>.</li>
+<li><strong><code>validate_config(config)</code></strong> — Returns a list of <code>ValidationError</code> objects rather than raising. An empty return value means the config is valid. A non-empty list means one or more sections failed <code>ConfigValidator.validate_section()</code>.</li>
+<li><strong><code>get_attune_env(name)</code></strong> — Checks <code>ATTUNE_{name}</code> first, then <code>EMPATHY_{name}</code>. Returns <code>None</code> (not an exception) when neither is set, so callers that do not check the return value may propagate <code>None</code> silently.</li>
+<li><strong><code>EmpathyXMLConfig.load_from_file()</code></strong> — Reads <code>.attune/config.json</code> by default. Any parse failure raises immediately and is not caught internally.</li>
 </ul>
 <h2>How to diagnose</h2>
 <ol>
 <li>
-<p><strong>Check configuration file paths.</strong> Run <code>ConfigLoader.discover_config_path()</code> to see if your config file exists at the expected locations. If <code>None</code> is returned, the loader can't find a configuration file.</p>
+<p><strong>Check which config file was loaded.</strong> Call <code>ConfigLoader.discover_config_path()</code> to see which path the loader resolved, or <code>ConfigLoader.get_default_config_path()</code> to see the fallback. If <code>discover_config_path()</code> returns <code>None</code>, no file matched any of the <code>CONFIG_SEARCH_PATHS</code> entries.</p>
 </li>
 <li>
-<p><strong>Validate environment variables.</strong> Use <code>get_attune_env()</code> with your variable name to confirm environment variable resolution. The function checks <code>ATTUNE_</code> prefixed variables first, then falls back to <code>EMPATHY_</code> prefixed ones.</p>
+<p><strong>Run <code>validate_config()</code> explicitly and inspect the list.</strong> <code>validate_config()</code> returns <code>list[ValidationError]</code>, not an exception — iterate the result and print each <code>ValidationError</code> to identify which section and field failed. A return value of <code>[]</code> means validation passed.</p>
 </li>
 <li>
-<p><strong>Test configuration loading directly.</strong> Call <code>load_unified_config()</code> in isolation to separate file loading issues from configuration usage problems. JSON parsing errors will surface immediately.</p>
+<p><strong>Check the <code>AgentOperationError.cause</code> attribute.</strong> When you catch an <code>AgentOperationError</code>, the wrapped <code>cause</code> exception holds the original traceback. Log or print <code>cause</code> before handling the outer error to avoid losing the root cause.</p>
 </li>
 <li>
-<p><strong>Run configuration validation.</strong> Use <code>validate_config()</code> on your loaded configuration object to catch schema violations before they cause runtime failures in agent operations.</p>
+<p><strong>Audit environment variable names.</strong> Use <code>iter_attune_env_prefix(prefix)</code> to list all <code>ATTUNE_{prefix}*</code> variables currently set. If you expect a value and <code>get_attune_env(name)</code> returns <code>None</code>, confirm the variable is spelled with the <code>ATTUNE_</code> prefix, not only <code>EMPATHY_</code>.</p>
 </li>
 <li>
-<p><strong>Check agent configuration properties.</strong> If using <code>BookProductionConfig</code>, verify that accessing <code>model</code>, <code>max_tokens</code>, and other properties doesn't raise <code>AttributeError</code> — this indicates missing required configuration sections.</p>
+<p><strong>Validate the JSON config file independently.</strong> If <code>EmpathyXMLConfig.load_from_file()</code> fails, open <code>.attune/config.json</code> in a JSON linter before re-running. An empty file or a trailing comma produces a <code>JSONDecodeError</code> that is otherwise reported without the offending line number.</p>
 </li>
 </ol>
 <h2>Source files</h2>

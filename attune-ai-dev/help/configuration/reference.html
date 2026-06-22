@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Configuration reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `ModelTier` | Model tier for cost optimization. | `src/attune/config/agent_config.py` | | `Provider` | LLM provider options. | `src/attu" />
+  <meta name="description" content="Load, validate, and manage Attune AI configuration across agents, workflows, and environments." />
   <meta property="og:title" content="Configuration reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `ModelTier` | Model tier for cost optimization. | `src/attune/config/agent_config.py` | | `Provider` | LLM provider options. | `src/attu" />
+  <meta property="og:description" content="Load, validate, and manage Attune AI configuration across agents, workflows, and environments." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/configuration/reference" />
   <style>
@@ -259,145 +259,384 @@
   </nav>
   <article class="markdown-body">
 <h1>Configuration reference</h1>
+<p>Load, validate, and manage Attune AI configuration across agents, workflows, and environments.</p>
 <h2>Classes</h2>
 <table>
 <thead>
 <tr>
 <th>Class</th>
 <th>Description</th>
-<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>ModelTier</code></td>
 <td>Model tier for cost optimization.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>Provider</code></td>
 <td>LLM provider options.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>WorkflowMode</code></td>
 <td>Workflow execution modes.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>AgentOperationError</code></td>
 <td>Error during agent operation with context.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>UnifiedAgentConfig</code></td>
 <td>Unified configuration model for all agents.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>MemDocsConfig</code></td>
 <td>Configuration for MemDocs pattern storage integration.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>RedisConfig</code></td>
 <td>Configuration for Redis state management.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>BookProductionConfig</code></td>
 <td>Unified configuration for book production agents.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>WorkflowConfig</code></td>
 <td>Configuration for agent workflows.</td>
-<td><code>src/attune/config/agent_config.py</code></td>
 </tr>
 <tr>
 <td><code>ConfigLoader</code></td>
 <td>Load, save, and manage Attune AI configuration.</td>
-<td><code>src/attune/config/loader.py</code></td>
 </tr>
 <tr>
 <td><code>AnalysisConfig</code></td>
 <td>Code analysis and scanning configuration.</td>
-<td><code>src/attune/config/sections/analysis.py</code></td>
 </tr>
 <tr>
 <td><code>AuthConfig</code></td>
 <td>Authentication and API key configuration.</td>
-<td><code>src/attune/config/sections/auth.py</code></td>
 </tr>
 <tr>
 <td><code>EnvironmentConfig</code></td>
 <td>Environment and display configuration.</td>
-<td><code>src/attune/config/sections/environment.py</code></td>
 </tr>
 <tr>
 <td><code>PersistenceConfig</code></td>
 <td>Data persistence and memory configuration.</td>
-<td><code>src/attune/config/sections/persistence.py</code></td>
 </tr>
 <tr>
 <td><code>RoutingConfig</code></td>
 <td>Model routing and tier selection configuration.</td>
-<td><code>src/attune/config/sections/routing.py</code></td>
 </tr>
 <tr>
 <td><code>TelemetryConfig</code></td>
 <td>Telemetry and usage tracking configuration.</td>
-<td><code>src/attune/config/sections/telemetry.py</code></td>
 </tr>
 <tr>
 <td><code>WorkflowConfig</code></td>
 <td>Workflow execution configuration.</td>
-<td><code>src/attune/config/sections/workflows.py</code></td>
 </tr>
 <tr>
 <td><code>UnifiedConfig</code></td>
 <td>Unified configuration for Attune AI.</td>
-<td><code>src/attune/config/unified.py</code></td>
 </tr>
 <tr>
 <td><code>ValidationError</code></td>
 <td>Represents a configuration validation error.</td>
-<td><code>src/attune/config/validation.py</code></td>
 </tr>
 <tr>
 <td><code>ConfigValidator</code></td>
 <td>Validate Attune AI configuration.</td>
-<td><code>src/attune/config/validation.py</code></td>
 </tr>
 <tr>
 <td><code>XMLConfig</code></td>
 <td>XML prompting configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
 </tr>
 <tr>
 <td><code>OptimizationConfig</code></td>
 <td>Context window optimization configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
 </tr>
 <tr>
 <td><code>AdaptiveConfig</code></td>
 <td>Adaptive prompting configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
 </tr>
 <tr>
 <td><code>I18nConfig</code></td>
 <td>Internationalization configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
 </tr>
 <tr>
 <td><code>MetricsConfig</code></td>
 <td>Metrics tracking configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
 </tr>
 <tr>
 <td><code>EmpathyXMLConfig</code></td>
 <td>Main Empathy XML enhancement configuration.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
+</tr>
+</tbody>
+</table>
+<h3><code>BookProductionConfig</code> properties</h3>
+<table>
+<thead>
+<tr>
+<th>Property</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>model</code></td>
+<td><code>str</code></td>
+<td>Get model ID for backward compatibility.</td>
+</tr>
+<tr>
+<td><code>max_tokens</code></td>
+<td><code>int</code></td>
+<td>Get max tokens for backward compatibility.</td>
+</tr>
+<tr>
+<td><code>temperature</code></td>
+<td><code>float</code></td>
+<td>Get temperature for backward compatibility.</td>
+</tr>
+<tr>
+<td><code>timeout</code></td>
+<td><code>int</code></td>
+<td>Get timeout for backward compatibility.</td>
+</tr>
+<tr>
+<td><code>retry_attempts</code></td>
+<td><code>int</code></td>
+<td>Get retry attempts for backward compatibility.</td>
+</tr>
+<tr>
+<td><code>retry_delay</code></td>
+<td><code>float</code></td>
+<td>Get retry delay for backward compatibility.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>ConfigLoader</code> methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>__init__</code></td>
+<td>`config_path: str</td>
+<td>Path</td>
+<td>None = None`</td>
+</tr>
+<tr>
+<td><code>discover_config_path</code></td>
+<td>—</td>
+<td>`Path</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>get_default_config_path</code></td>
+<td>—</td>
+<td><code>Path</code></td>
+<td>Return the default config file path.</td>
+</tr>
+<tr>
+<td><code>get_config_path</code></td>
+<td>—</td>
+<td>`Path</td>
+<td>None`</td>
+</tr>
+<tr>
+<td><code>load</code></td>
+<td>—</td>
+<td><code>UnifiedConfig</code></td>
+<td>Load configuration from disk.</td>
+</tr>
+<tr>
+<td><code>save</code></td>
+<td>`config: UnifiedConfig, path: Path</td>
+<td>None = None`</td>
+<td><code>Path</code></td>
+</tr>
+<tr>
+<td><code>apply_env_overrides</code></td>
+<td><code>config: UnifiedConfig</code></td>
+<td><code>UnifiedConfig</code></td>
+<td>Apply environment variable overrides to a config object.</td>
+</tr>
+<tr>
+<td><code>get_config</code></td>
+<td>—</td>
+<td><code>UnifiedConfig</code></td>
+<td>Return the loaded configuration, loading it if necessary.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>UnifiedAgentConfig</code> methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>normalize_role</code></td>
+<td><code>v: str</code></td>
+<td><code>str</code></td>
+<td>Normalize a role string value.</td>
+</tr>
+<tr>
+<td><code>get_model_id</code></td>
+<td>—</td>
+<td><code>str</code></td>
+<td>Return the model ID for this agent configuration.</td>
+</tr>
+<tr>
+<td><code>for_book_production</code></td>
+<td>—</td>
+<td><code>BookProductionConfig</code></td>
+<td>Return a <code>BookProductionConfig</code> derived from this config.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>UnifiedConfig</code> methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>touch</code></td>
+<td>—</td>
+<td><code>None</code></td>
+<td>Mark the config as modified.</td>
+</tr>
+<tr>
+<td><code>to_dict</code></td>
+<td>—</td>
+<td><code>dict</code></td>
+<td>Serialize the config to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>data: dict</code></td>
+<td><code>UnifiedConfig</code></td>
+<td>Deserialize a config from a dictionary.</td>
+</tr>
+<tr>
+<td><code>get_value</code></td>
+<td><code>key: str</code></td>
+<td><code>object</code></td>
+<td>Return the value for the given key.</td>
+</tr>
+<tr>
+<td><code>set_value</code></td>
+<td><code>key: str, value: object</code></td>
+<td><code>None</code></td>
+<td>Set the value for the given key.</td>
+</tr>
+<tr>
+<td><code>get_all_keys</code></td>
+<td>—</td>
+<td><code>list[str]</code></td>
+<td>Return all keys present in the config.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>EmpathyXMLConfig</code> methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_from_file</code></td>
+<td><code>config_file: str = '.attune/config.json'</code></td>
+<td><code>EmpathyXMLConfig</code></td>
+<td>Load configuration from a JSON file.</td>
+</tr>
+<tr>
+<td><code>save_to_file</code></td>
+<td><code>config_file: str = '.attune/config.json'</code></td>
+<td><code>None</code></td>
+<td>Save configuration to a JSON file.</td>
+</tr>
+<tr>
+<td><code>from_env</code></td>
+<td>—</td>
+<td><code>EmpathyXMLConfig</code></td>
+<td>Build configuration from environment variables.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>ConfigValidator</code> methods</h3>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>validate</code></td>
+<td><code>config: UnifiedConfig</code></td>
+<td><code>list[ValidationError]</code></td>
+<td>Validate a <code>UnifiedConfig</code> and return any errors found.</td>
+</tr>
+<tr>
+<td><code>validate_section</code></td>
+<td><code>section: Any, section_name: str</code></td>
+<td><code>list[ValidationError]</code></td>
+<td>Validate a single config section and return any errors found.</td>
+</tr>
+</tbody>
+</table>
+<h3>Section config methods</h3>
+<p>Each of <code>AnalysisConfig</code>, <code>AuthConfig</code>, <code>EnvironmentConfig</code>, <code>PersistenceConfig</code>, <code>RoutingConfig</code>, <code>TelemetryConfig</code>, and <code>WorkflowConfig</code> exposes the following methods:</p>
+<table>
+<thead>
+<tr>
+<th>Method</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>to_dict</code></td>
+<td>—</td>
+<td><code>dict</code></td>
+<td>Serialize the section to a dictionary.</td>
+</tr>
+<tr>
+<td><code>from_dict</code></td>
+<td><code>data: dict</code></td>
+<td><em>(section class)</em></td>
+<td>Deserialize the section from a dictionary.</td>
 </tr>
 </tbody>
 </table>
@@ -406,50 +645,81 @@
 <thead>
 <tr>
 <th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
 <th>Description</th>
-<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>get_attune_env()</code></td>
-<td>Get an environment variable, checking ATTUNE_ first then EMPATHY_ fallback.</td>
-<td><code>src/attune/config/env_compat.py</code></td>
+<td><code>get_attune_env</code></td>
+<td><code>name: str, default: str | None = None</code></td>
+<td><code>str | None</code></td>
+<td>Get an environment variable, checking <code>ATTUNE_</code> first then <code>EMPATHY_</code> fallback.</td>
 </tr>
 <tr>
-<td><code>iter_attune_env_prefix()</code></td>
-<td>Yield (middle_part, value) for env vars matching ATTUNE_{prefix}*{suffix}.</td>
-<td><code>src/attune/config/env_compat.py</code></td>
+<td><code>iter_attune_env_prefix</code></td>
+<td><code>prefix: str, suffix: str = ''</code></td>
+<td><code>Iterator[tuple[str, str]]</code></td>
+<td>Yield <code>(middle_part, value)</code> for env vars matching <code>ATTUNE_{prefix}*{suffix}</code>.</td>
 </tr>
 <tr>
-<td><code>get_loader()</code></td>
-<td>Get the global ConfigLoader instance.</td>
-<td><code>src/attune/config/loader.py</code></td>
+<td><code>get_loader</code></td>
+<td>—</td>
+<td><code>ConfigLoader</code></td>
+<td>Return the global <code>ConfigLoader</code> instance.</td>
 </tr>
 <tr>
-<td><code>load_unified_config()</code></td>
-<td>Convenience function to load unified configuration.</td>
-<td><code>src/attune/config/loader.py</code></td>
+<td><code>load_unified_config</code></td>
+<td><code>path: str | Path | None = None</code></td>
+<td><code>UnifiedConfig</code></td>
+<td>Load unified configuration from the given path, or discover it automatically.</td>
 </tr>
 <tr>
-<td><code>save_unified_config()</code></td>
-<td>Convenience function to save unified configuration.</td>
-<td><code>src/attune/config/loader.py</code></td>
+<td><code>save_unified_config</code></td>
+<td><code>config: UnifiedConfig, path: str | Path | None = None</code></td>
+<td><code>Path</code></td>
+<td>Save unified configuration to the given path and return the written path.</td>
 </tr>
 <tr>
-<td><code>validate_config()</code></td>
-<td>Convenience function to validate configuration.</td>
-<td><code>src/attune/config/validation.py</code></td>
+<td><code>validate_config</code></td>
+<td><code>config: UnifiedConfig</code></td>
+<td><code>list[ValidationError]</code></td>
+<td>Validate a <code>UnifiedConfig</code> and return all validation errors.</td>
 </tr>
 <tr>
-<td><code>get_config()</code></td>
-<td>Get global configuration instance.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
+<td><code>get_config</code></td>
+<td>—</td>
+<td><code>EmpathyXMLConfig</code></td>
+<td>Return the global <code>EmpathyXMLConfig</code> instance.</td>
 </tr>
 <tr>
-<td><code>set_config()</code></td>
-<td>Set global configuration instance.</td>
-<td><code>src/attune/config/xml_config.py</code></td>
+<td><code>set_config</code></td>
+<td><code>config: EmpathyXMLConfig</code></td>
+<td><code>None</code></td>
+<td>Replace the global <code>EmpathyXMLConfig</code> instance.</td>
+</tr>
+</tbody>
+</table>
+<h2>Constants</h2>
+<table>
+<thead>
+<tr>
+<th>Constant</th>
+<th>Type</th>
+<th>Values</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ENV_PREFIX</code></td>
+<td><code>str</code></td>
+<td><code>'ATTUNE_'</code></td>
+</tr>
+<tr>
+<td><code>CONFIG_SEARCH_PATHS</code></td>
+<td><code>list</code></td>
+<td><code>'./attune.config.json'</code>, <code>'~/.attune/config.json'</code>, <code>'~/.config/attune/config.json'</code></td>
 </tr>
 </tbody>
 </table>

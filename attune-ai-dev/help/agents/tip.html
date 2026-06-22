@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Use ReleasePrepTeam for comprehensive release quality checks — tip</title>
-  <meta name="description" content="Start with `ReleasePrepTeam.assess_readiness()` to run all release agents in parallel and get a unified quality report. This gives you test coverage, documentation gaps, code quality issues, and secur" />
-  <meta property="og:title" content="Use ReleasePrepTeam for comprehensive release quality checks — tip" />
-  <meta property="og:description" content="Start with `ReleasePrepTeam.assess_readiness()` to run all release agents in parallel and get a unified quality report. This gives you test coverage, documentation gaps, code quality issues, and secur" />
+  <title>Tip: Working effectively with agents — tip</title>
+  <meta name="description" content="Use the lazy-import getter functions — `get_langchain_adapter()`, `get_autogen_adapter()`, `get_haystack_adapter()`, and `get_langgraph_adapter()` — instead of importing adapter classes directly. Thes" />
+  <meta property="og:title" content="Tip: Working effectively with agents — tip" />
+  <meta property="og:description" content="Use the lazy-import getter functions — `get_langchain_adapter()`, `get_autogen_adapter()`, `get_haystack_adapter()`, and `get_langgraph_adapter()` — instead of importing adapter classes directly. Thes" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/agents/tip" />
   <style>
@@ -258,10 +258,17 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Use ReleasePrepTeam for comprehensive release quality checks</h1>
-<p>Start with <code>ReleasePrepTeam.assess_readiness()</code> to run all release agents in parallel and get a unified quality report. This gives you test coverage, documentation gaps, code quality issues, and security concerns in one call with automatic tier escalation when needed.</p>
-<p>The team approach catches more issues than running individual agents because it applies consistent quality gates across all dimensions and provides a single approved/blocked decision for your release pipeline.</p>
-<p><strong>Tradeoff:</strong> Higher API costs upfront, but prevents expensive rollbacks from missing critical quality issues.</p>
+<h1>Tip: Working effectively with agents</h1>
+<p>Use the lazy-import getter functions — <code>get_langchain_adapter()</code>, <code>get_autogen_adapter()</code>, <code>get_haystack_adapter()</code>, and <code>get_langgraph_adapter()</code> — instead of importing adapter classes directly. These functions defer the underlying framework import until the moment you need it, so frameworks you don't use don't slow down startup or pollute your environment.</p>
+<p><strong>Why it's worth it:</strong> Each adapter's framework dependency (LangChain, AutoGen, Haystack, LangGraph) is heavy. Importing them eagerly at module load couples your code to every framework at once, even when you're only using one.</p>
+<p><strong>Tradeoff:</strong> The getter functions return a framework-specific adapter instance, not a raw class, so you can't subclass the result directly. If you need a custom adapter subclass, instantiate the class (for example, <code>LangChainAdapter</code>) explicitly — but accept that you then own the import.</p>
+<p>If you need to wrap an existing wizard quickly without building a full adapter, <code>wrap_wizard()</code> is the fastest path: it returns a <code>WizardAgent</code> ready for <code>invoke()</code> or <code>stream()</code> calls without any framework configuration.</p>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/agent_factory/adapters/__init__.py</code></li>
+<li><code>src/attune/agent_factory/adapters/wizard_adapter.py</code></li>
+</ul>
+<p><strong>Tags:</strong> <code>agents</code>, <code>ai</code>, <code>release</code></p>
 
   </article>
   <footer>

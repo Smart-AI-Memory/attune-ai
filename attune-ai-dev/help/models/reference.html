@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Models reference — reference</title>
-  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `ModelPerformance` | Performance metrics for a model on a specific task. | `src/attune/models/adaptive_routing.py` | | `AdaptiveModelRou" />
-  <meta property="og:title" content="Models reference — reference" />
-  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `ModelPerformance` | Performance metrics for a model on a specific task. | `src/attune/models/adaptive_routing.py` | | `AdaptiveModelRou" />
+  <title>LLM authentication, provider routing, and tier management — reference</title>
+  <meta name="description" content="The subsystem&#x27;s public API lives under `attune.models`. The two CLI namespaces are `attune auth` (authentication) and `attune provider` (provider selection)." />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — reference" />
+  <meta property="og:description" content="The subsystem&#x27;s public API lives under `attune.models`. The two CLI namespaces are `attune auth` (authentication) and `attune provider` (provider selection)." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/reference" />
   <style>
@@ -258,432 +258,205 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Models reference</h1>
-<h2>Classes</h2>
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Reference</h2>
+<p>The subsystem's public API lives under <code>attune.models</code>. The two CLI
+namespaces are <code>attune auth</code> (authentication) and <code>attune provider</code>
+(provider selection).</p>
+<h3>CLI — <code>attune auth</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
-<th>File</th>
+<th>Command</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>ModelPerformance</code></td>
-<td>Performance metrics for a model on a specific task.</td>
-<td><code>src/attune/models/adaptive_routing.py</code></td>
+<td><code>attune auth setup</code></td>
+<td>Configure the auth strategy interactively.</td>
 </tr>
 <tr>
-<td><code>AdaptiveModelRouter</code></td>
-<td>Route tasks to models based on historical telemetry performance.</td>
-<td><code>src/attune/models/adaptive_routing.py</code></td>
+<td><code>attune auth status</code></td>
+<td>Show the current strategy. <code>--json</code> emits machine-readable output.</td>
 </tr>
 <tr>
-<td><code>SubscriptionTier</code></td>
-<td>Claude subscription tiers.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
+<td><code>attune auth recommend &lt;file_path&gt;</code></td>
+<td>Print the recommended mode and cost estimate for one file.</td>
 </tr>
 <tr>
-<td><code>AuthMode</code></td>
-<td>Authentication mode selection.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
+<td><code>attune auth reset</code></td>
+<td>Clear the saved strategy. Requires <code>--confirm</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>CLI — <code>attune provider</code></h3>
+<table>
+<thead>
+<tr>
+<th>Command</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>attune provider show</code></td>
+<td>Print the current provider and mode.</td>
 </tr>
 <tr>
-<td><code>AuthStrategy</code></td>
-<td>Authentication strategy configuration.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
+<td><code>attune provider set</code></td>
+<td>Select a provider interactively.</td>
 </tr>
+</tbody>
+</table>
+<h3>Registry and tiers</h3>
+<table>
+<thead>
 <tr>
-<td><code>CircuitBreakerState</code></td>
-<td>State of a circuit breaker for a provider.</td>
-<td><code>src/attune/models/circuit_breaker.py</code></td>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
+</thead>
+<tbody>
 <tr>
-<td><code>CircuitBreaker</code></td>
-<td>Circuit breaker to temporarily disable failing providers.</td>
-<td><code>src/attune/models/circuit_breaker.py</code></td>
-</tr>
-<tr>
-<td><code>EmpathyLLMExecutor</code></td>
-<td>Default executor wrapping EmpathyLLM with routing.</td>
-<td><code>src/attune/models/empathy_executor.py</code></td>
-</tr>
-<tr>
-<td><code>LLMResponse</code></td>
-<td>Standardized response from an LLM execution.</td>
-<td><code>src/attune/models/executor.py</code></td>
-</tr>
-<tr>
-<td><code>ExecutionContext</code></td>
-<td>Context for an LLM execution.</td>
-<td><code>src/attune/models/executor.py</code></td>
-</tr>
-<tr>
-<td><code>LLMExecutor</code></td>
-<td>Protocol for unified LLM execution across routing and workflows.</td>
-<td><code>src/attune/models/executor.py</code></td>
-</tr>
-<tr>
-<td><code>MockLLMExecutor</code></td>
-<td>Mock executor for testing.</td>
-<td><code>src/attune/models/executor.py</code></td>
-</tr>
-<tr>
-<td><code>FallbackStrategy</code></td>
-<td>Strategies for selecting fallback models.</td>
-<td><code>src/attune/models/fallback_policy.py</code></td>
-</tr>
-<tr>
-<td><code>FallbackStep</code></td>
-<td>A single step in a fallback chain.</td>
-<td><code>src/attune/models/fallback_policy.py</code></td>
-</tr>
-<tr>
-<td><code>FallbackPolicy</code></td>
-<td>Policy for handling LLM failures with fallback chains.</td>
-<td><code>src/attune/models/fallback_policy.py</code></td>
-</tr>
-<tr>
-<td><code>ProviderMode</code></td>
-<td>Provider selection mode (Anthropic-only as of v5.0.0).</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>ProviderConfig</code></td>
-<td>User's provider configuration.</td>
-<td><code>src/attune/models/provider_config.py</code></td>
+<td><code>MODEL_REGISTRY</code></td>
+<td><code>dict[str, dict[str, ModelInfo]]</code> keyed by provider then tier.</td>
 </tr>
 <tr>
 <td><code>ModelTier</code></td>
-<td>Model tier classification for routing.</td>
-<td><code>src/attune/models/registry.py</code></td>
+<td>Enum: <code>CHEAP</code>, <code>CAPABLE</code>, <code>PREMIUM</code> (values <code>&quot;cheap&quot;</code>/<code>&quot;capable&quot;</code>/<code>&quot;premium&quot;</code>).</td>
 </tr>
 <tr>
 <td><code>ModelProvider</code></td>
-<td>Supported model provider (Claude-native architecture as of v3.0.0).</td>
-<td><code>src/attune/models/registry.py</code></td>
+<td>Enum: <code>ANTHROPIC</code> (<code>&quot;anthropic&quot;</code>).</td>
 </tr>
 <tr>
-<td><code>ModelInfo</code></td>
-<td>Unified model information - single source of truth.</td>
-<td><code>src/attune/models/registry.py</code></td>
+<td><code>get_model(provider, tier)</code></td>
+<td>Resolve one <code>ModelInfo</code> (or <code>None</code>). Raises <code>ValueError</code> if provider is not <code>&quot;anthropic&quot;</code>.</td>
 </tr>
 <tr>
-<td><code>ModelRegistry</code></td>
-<td>Object-oriented interface to the model registry.</td>
-<td><code>src/attune/models/registry.py</code></td>
+<td><code>get_all_models()</code></td>
+<td>Return the full registry.</td>
 </tr>
 <tr>
-<td><code>AllProvidersFailedError</code></td>
-<td>Raised when all fallback providers have failed.</td>
-<td><code>src/attune/models/resilient_executor.py</code></td>
-</tr>
-<tr>
-<td><code>ResilientExecutor</code></td>
-<td>Wrapper that adds resilience to LLM execution.</td>
-<td><code>src/attune/models/resilient_executor.py</code></td>
-</tr>
-<tr>
-<td><code>RetryPolicy</code></td>
-<td>Policy for retrying failed LLM calls.</td>
-<td><code>src/attune/models/retry.py</code></td>
-</tr>
-<tr>
-<td><code>TaskType</code></td>
-<td>Canonical task types for model routing.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>TaskInfo</code></td>
-<td>Information about a task type.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>TelemetryAnalytics</code></td>
-<td>Analytics helpers for telemetry data.</td>
-<td><code>src/attune/models/telemetry/analytics.py</code></td>
-</tr>
-<tr>
-<td><code>TelemetryBackend</code></td>
-<td>Protocol for telemetry storage backends.</td>
-<td><code>src/attune/models/telemetry/backend.py</code></td>
-</tr>
-<tr>
-<td><code>LLMCallRecord</code></td>
-<td>Record of a single LLM API call.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>WorkflowStageRecord</code></td>
-<td>Record of a single workflow stage execution.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>WorkflowRunRecord</code></td>
-<td>Record of a complete workflow execution.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>TaskRoutingRecord</code></td>
-<td>Record of task routing decision for Tier 1 automation.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>TestExecutionRecord</code></td>
-<td>Record of test execution for Tier 1 QA automation.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>CoverageRecord</code></td>
-<td>Record of test coverage metrics for Tier 1 QA monitoring.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>AgentAssignmentRecord</code></td>
-<td>Record of agent assignment for simple tasks (Tier 1).</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>FileTestRecord</code></td>
-<td>Record of test execution for a specific source file.</td>
-<td><code>src/attune/models/telemetry/data_models.py</code></td>
-</tr>
-<tr>
-<td><code>TelemetryStore</code></td>
-<td>JSONL file-based telemetry backend (default implementation).</td>
-<td><code>src/attune/models/telemetry/storage.py</code></td>
+<td><code>get_pricing_for_model(model_id)</code></td>
+<td><code>{&quot;input&quot;: float, &quot;output&quot;: float}</code> per million, or <code>None</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>Task routing</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Description</th>
-<th>File</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>cmd_auth_setup()</code></td>
-<td>Run interactive authentication strategy setup.</td>
-<td><code>src/attune/models/auth_cli.py</code></td>
+<td><code>TaskType</code></td>
+<td>Enum of known task types (e.g. <code>GENERATE_CODE</code>, <code>SUMMARIZE</code>).</td>
 </tr>
 <tr>
-<td><code>cmd_auth_status()</code></td>
-<td>Show current authentication strategy configuration.</td>
-<td><code>src/attune/models/auth_cli.py</code></td>
+<td><code>TASK_TIER_MAP</code></td>
+<td><code>dict[str, ModelTier]</code> mapping task value → tier.</td>
 </tr>
 <tr>
-<td><code>cmd_auth_reset()</code></td>
-<td>Reset/clear authentication strategy configuration.</td>
-<td><code>src/attune/models/auth_cli.py</code></td>
+<td><code>get_tier_for_task(task_type)</code></td>
+<td><code>ModelTier</code> for a task string or <code>TaskType</code> (defaults to <code>CAPABLE</code>).</td>
 </tr>
 <tr>
-<td><code>cmd_auth_recommend()</code></td>
-<td>Get authentication recommendation for a specific file.</td>
-<td><code>src/attune/models/auth_cli.py</code></td>
+<td><code>get_tasks_for_tier(tier)</code></td>
+<td><code>list[str]</code> of task names in a tier. Raises <code>ValueError</code> on an unknown tier.</td>
 </tr>
 <tr>
-<td><code>main()</code></td>
-<td>Main CLI entry point.</td>
-<td><code>src/attune/models/auth_cli.py</code></td>
+<td><code>is_known_task(task_type)</code></td>
+<td><code>True</code> if the task is defined.</td>
 </tr>
 <tr>
-<td><code>configure_auth_interactive()</code></td>
-<td>Interactive authentication configuration (first-time setup).</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
-</tr>
-<tr>
-<td><code>get_auth_strategy()</code></td>
-<td>Get the global authentication strategy.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
-</tr>
-<tr>
-<td><code>count_lines_of_code()</code></td>
-<td>Count lines of code in a Python file.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
-</tr>
-<tr>
-<td><code>get_module_size_category()</code></td>
-<td>Categorize module size.</td>
-<td><code>src/attune/models/auth_strategy.py</code></td>
-</tr>
-<tr>
-<td><code>print_registry()</code></td>
-<td>Print the model registry.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_tasks()</code></td>
-<td>Print task-to-tier mappings.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_costs()</code></td>
-<td>Print cost estimates for all tiers.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_effective_config()</code></td>
-<td>Print the effective configuration for a provider.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_telemetry_summary()</code></td>
-<td>Print telemetry summary.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_telemetry_costs()</code></td>
-<td>Print cost savings report.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_telemetry_providers()</code></td>
-<td>Print provider usage summary.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_telemetry_fallbacks()</code></td>
-<td>Print fallback statistics.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>print_provider_config()</code></td>
-<td>Print current provider configuration.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>configure_provider()</code></td>
-<td>Configure provider settings.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>main()</code></td>
-<td>Main CLI entry point.</td>
-<td><code>src/attune/models/cli.py</code></td>
-</tr>
-<tr>
-<td><code>configure_provider_interactive()</code></td>
-<td>Interactive provider configuration for install/update (Anthropic-only as of v5.0.0).</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>configure_provider_cli()</code></td>
-<td>CLI-based provider configuration (Anthropic-only as of v5.0.0).</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>get_provider_config()</code></td>
-<td>Get the global provider configuration.</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>set_provider_config()</code></td>
-<td>Set the global provider configuration.</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>reset_provider_config()</code></td>
-<td>Reset the global provider configuration (forces reload).</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>configure_hybrid_interactive()</code></td>
-<td>Interactive hybrid provider configuration (DEPRECATED in v5.0.0).</td>
-<td><code>src/attune/models/provider_config.py</code></td>
-</tr>
-<tr>
-<td><code>get_model()</code></td>
-<td>Get model info for a provider/tier combination.</td>
-<td><code>src/attune/models/registry.py</code></td>
-</tr>
-<tr>
-<td><code>get_all_models()</code></td>
-<td>Get the complete model registry.</td>
-<td><code>src/attune/models/registry.py</code></td>
-</tr>
-<tr>
-<td><code>get_pricing_for_model()</code></td>
-<td>Get pricing for a model by its ID.</td>
-<td><code>src/attune/models/registry.py</code></td>
-</tr>
-<tr>
-<td><code>get_supported_providers()</code></td>
-<td>Get list of supported provider names.</td>
-<td><code>src/attune/models/registry.py</code></td>
-</tr>
-<tr>
-<td><code>get_tiers()</code></td>
-<td>Get list of available tiers.</td>
-<td><code>src/attune/models/registry.py</code></td>
-</tr>
-<tr>
-<td><code>normalize_task_type()</code></td>
-<td>Normalize a task type string for lookup.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>get_tier_for_task()</code></td>
-<td>Get the appropriate tier for a task type.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>get_tasks_for_tier()</code></td>
-<td>Get all task types for a given tier.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>get_all_tasks()</code></td>
-<td>Get all known task types organized by tier.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>is_known_task()</code></td>
-<td>Check if a task type is known/defined.</td>
-<td><code>src/attune/models/tasks.py</code></td>
-</tr>
-<tr>
-<td><code>get_telemetry_store()</code></td>
-<td>Get singleton telemetry store instance.</td>
-<td><code>src/attune/models/telemetry/__init__.py</code></td>
-</tr>
-<tr>
-<td><code>log_llm_call()</code></td>
-<td>Log an LLM API call.</td>
-<td><code>src/attune/models/telemetry/__init__.py</code></td>
-</tr>
-<tr>
-<td><code>log_workflow_run()</code></td>
-<td>Log a workflow run.</td>
-<td><code>src/attune/models/telemetry/__init__.py</code></td>
-</tr>
-<tr>
-<td><code>estimate_tokens()</code></td>
-<td>Estimate token count for text using accurate token counting.</td>
-<td><code>src/attune/models/token_estimator.py</code></td>
-</tr>
-<tr>
-<td><code>estimate_workflow_cost()</code></td>
-<td>Estimate total workflow cost before execution.</td>
-<td><code>src/attune/models/token_estimator.py</code></td>
-</tr>
-<tr>
-<td><code>estimate_single_call_cost()</code></td>
-<td>Estimate cost for a single LLM call.</td>
-<td><code>src/attune/models/token_estimator.py</code></td>
+<td><code>normalize_task_type(task_type)</code></td>
+<td>Lowercase/underscore-normalize a task string.</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/models/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>models</code>, <code>auth</code>, <code>llm</code></p>
+<h3>Auth and provider</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>AuthMode</code></td>
+<td>Enum: <code>SUBSCRIPTION</code>, <code>API</code>, <code>AUTO</code>.</td>
+</tr>
+<tr>
+<td><code>AuthStrategy</code></td>
+<td>Auth configuration dataclass; <code>setup_completed</code> is a field.</td>
+</tr>
+<tr>
+<td><code>AuthStrategy.get_recommended_mode(module_lines)</code></td>
+<td>Recommended <code>AuthMode</code>. Resolves by tier first (<code>PRO</code>/<code>API_ONLY</code> → <code>API</code>); only <code>MAX</code>/<code>ENTERPRISE</code> use <code>module_lines</code> against the thresholds. Returns <code>SUBSCRIPTION</code> or <code>API</code>, never <code>AUTO</code>.</td>
+</tr>
+<tr>
+<td><code>AuthStrategy.estimate_cost(module_lines, mode=None)</code></td>
+<td><code>dict</code> with <code>mode</code>, <code>monetary_cost</code>, <code>quota_cost</code>, <code>tokens_used</code>, <code>fits_in_context</code>.</td>
+</tr>
+<tr>
+<td><code>get_auth_strategy()</code></td>
+<td>The global <code>AuthStrategy</code> (zero-config default if unset).</td>
+</tr>
+<tr>
+<td><code>count_lines_of_code(file_path)</code></td>
+<td>Non-blank, non-comment line count for a Python file.</td>
+</tr>
+<tr>
+<td><code>ProviderConfig</code></td>
+<td>Provider config dataclass; <code>mode</code> is a <code>ProviderMode</code>.</td>
+</tr>
+<tr>
+<td><code>ProviderMode</code></td>
+<td>Enum: <code>SINGLE</code>, <code>HYBRID</code> (deprecated).</td>
+</tr>
+<tr>
+<td><code>get_provider_config()</code> / <code>set_provider_config(cfg)</code> / <code>reset_provider_config()</code></td>
+<td>Read, replace, and reset the global provider config.</td>
+</tr>
+</tbody>
+</table>
+<h3>Execution and routing</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>LLMResponse</code></td>
+<td>Completed-call result. <code>cost</code>, <code>total_tokens</code>, <code>success</code>, <code>input_tokens</code>, <code>output_tokens</code> are read-only properties over the underlying fields.</td>
+</tr>
+<tr>
+<td><code>ExecutionContext</code></td>
+<td>Per-call hints: <code>task_type</code>, <code>provider_hint</code>, <code>tier_hint</code>, <code>timeout_seconds</code>, <code>metadata</code>.</td>
+</tr>
+<tr>
+<td><code>LLMExecutor</code></td>
+<td>Executor protocol. Its <code>run(task_type, prompt, ...)</code> is <strong>async</strong> — <code>await</code> it.</td>
+</tr>
+<tr>
+<td><code>MockLLMExecutor</code></td>
+<td>A deterministic executor for tests; records calls in <code>call_history</code>.</td>
+</tr>
+<tr>
+<td><code>AdaptiveModelRouter</code></td>
+<td>Picks a model from historical telemetry. <code>get_best_model(workflow, stage, ...)</code> returns a model id; <code>recommend_tier_upgrade(workflow, stage)</code> returns <code>(bool, reason)</code>.</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

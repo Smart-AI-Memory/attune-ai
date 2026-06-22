@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>CLI Cautions — warning</title>
-  <meta name="description" content="The CLI layer connects user input to skills and cost tracking through routing logic that learns from use. Two areas deserve attention before you start: destructive commands that cannot be undone, and " />
+  <meta name="description" content="`run_workflow_with_exit_code()` in `cli_commands._exit_codes` returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the proce" />
   <meta property="og:title" content="CLI Cautions — warning" />
-  <meta property="og:description" content="The CLI layer connects user input to skills and cost tracking through routing logic that learns from use. Two areas deserve attention before you start: destructive commands that cannot be undone, and " />
+  <meta property="og:description" content="`run_workflow_with_exit_code()` in `cli_commands._exit_codes` returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the proce" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/warning" />
   <style>
@@ -259,31 +259,31 @@
   </nav>
   <article class="markdown-body">
 <h1>CLI Cautions</h1>
-<h2>What to watch for</h2>
-<p>The CLI layer connects user input to skills and cost tracking through routing logic that learns from use. Two areas deserve attention before you start: destructive commands that cannot be undone, and a routing preference system whose learned state can produce surprising results.</p>
-<h2>Risk areas</h2>
-<h3><code>cmd_costs_reset</code> permanently discards all cost data</h3>
-<p><code>cmd_costs_reset</code> clears every cost record. There is no confirmation prompt and no undo. If you are scripting cost workflows, call <code>cmd_costs_export</code> first to preserve the data before any reset.</p>
-<h3><code>HybridRouter</code> learns preferences that silently override routing</h3>
-<p><code>HybridRouter.learn_preference(keyword, skill, args)</code> writes a <code>RoutingPreference</code> to disk (at the path passed to <code>__init__</code>). Once written, that preference — including its <code>confidence</code> and <code>usage_count</code> fields — influences every subsequent call to <code>HybridRouter.route()</code>. If you call <code>learn_preference</code> in a test or experiment and do not clean up the preferences file, those learned entries will affect routing in other contexts, including production sessions.</p>
-<p>To inspect what has been learned, call <code>HybridRouter.get_suggestions(partial)</code> with an empty string to see all stored keywords before routing runs.</p>
-<h3><code>route_user_input</code> and slash-command detection are order-sensitive</h3>
-<p><code>is_slash_command(text)</code> determines whether input is dispatched as a slash command or passed through the hybrid router. If your input starts with <code>/</code> but is not a registered command, it may be silently dropped or misrouted rather than falling back gracefully. Validate the text with <code>is_slash_command</code> before passing it to <code>route_user_input</code> when the input source is untrusted or user-supplied.</p>
-<h3>Memory commands modify persistent state without a dry-run option</h3>
-<p><code>cmd_memory_capture</code>, <code>cmd_remember</code>, <code>cmd_forget</code>, and <code>cmd_memory_forget_topic</code> all write to or delete from cross-session memory immediately. <code>cmd_forget</code> removes a lesson by line number or keyword — if the lessons file has shifted since you last called <code>cmd_lessons</code>, you may delete the wrong entry. Always call <code>cmd_lessons</code> immediately before <code>cmd_forget</code> to confirm line numbers are current.</p>
-<h2>How to avoid problems</h2>
+<h2>Exit codes carry a contract</h2>
+<p><code>run_workflow_with_exit_code()</code> in <code>cli_commands._exit_codes</code> returns an integer that callers treat as a shell exit code. If you wrap or re-invoke this function and swallow its return value, the process exits <code>0</code> even when the workflow failed. Always propagate the return value up to <code>main()</code>.</p>
+<p>The <code>on_result</code> parameter is optional (<code>None</code> by default). If you pass a callback, it fires before the exit code is returned — a side effect that is easy to miss when reading the call site.</p>
+<h2><code>cmd_costs_reset</code> permanently clears all cost data</h2>
+<p><code>cmd_costs_reset()</code> returns <code>0</code> on success and provides no confirmation prompt. Running it by mistake discards every tracked cost record with no built-in undo. Before automating any script that calls this command, verify that cost data has been exported first with <code>cmd_costs_export()</code>.</p>
+<h2>Learned routing preferences persist across sessions</h2>
+<p><code>HybridRouter.learn_preference()</code> writes a <code>RoutingPreference</code> entry to disk (at the path supplied to <code>__init__</code>). Fields like <code>usage_count</code> and <code>confidence</code> accumulate over time. If you call <code>learn_preference()</code> in a test or a one-off script without pointing <code>preferences_path</code> to a throwaway location, you silently mutate the user's live routing preferences.</p>
+<p>The <code>RoutingPreference</code> dataclass has a <code>confidence</code> field (default <code>1.0</code>) that <code>HybridRouter.route()</code> reads when selecting a skill. Injecting preferences with arbitrary confidence values can cause <code>route()</code> to override user intent in ways that are hard to trace.</p>
+<h2>Slash-command detection happens before routing</h2>
+<p><code>is_slash_command()</code> in <code>attune.cli_router</code> runs before <code>route_user_input()</code> dispatches input. If you pre-process or strip leading characters from user input before passing it to <code>route_user_input()</code>, a <code>/command</code> string may not be recognized as a slash command, and the router silently falls back to keyword matching instead of raising an error.</p>
+<h2><code>cmd_costs_export</code> and <code>cmd_telemetry_export</code> write files silently</h2>
+<p>Both export commands return <code>0</code> on success without printing the output path unless the caller's <code>print_result</code> callback does so. In automated pipelines, check the destination explicitly after the call — a missing file indicates a failure that the exit code alone may not surface.</p>
+<h2>How to reduce risk</h2>
 <ol>
 <li>
-<p><strong>Export before reset.</strong> Always run <code>cmd_costs_export</code> before <code>cmd_costs_reset</code> in any automated script. Treat cost data as append-only until you have a confirmed export.</p>
+<p><strong>Always capture and propagate return values.</strong> Every command function in <code>cli_commands</code> returns an <code>int</code>. Discard it and you lose the only signal that something went wrong.</p>
 </li>
 <li>
-<p><strong>Isolate learned routing preferences in tests.</strong> Pass a temporary file path to <code>HybridRouter.__init__</code> during testing so learned <code>RoutingPreference</code> entries do not persist to your real preferences file. Delete the temp file in teardown.</p>
+<p><strong>Isolate <code>HybridRouter</code> in tests.</strong> Pass a temporary file path to <code>HybridRouter.__init__</code> in test code so learned preferences don't bleed into the user's real preferences store.</p>
 </li>
 <li>
-<p><strong>Confirm memory line numbers are fresh.</strong> When scripting <code>cmd_forget</code> or <code>cmd_memory_forget_topic</code>, call <code>cmd_lessons</code> or <code>cmd_memory_topics</code> in the same session immediately before the delete call to ensure indices have not shifted.</p>
+<p><strong>Export before resetting.</strong> Any workflow that calls <code>cmd_costs_reset()</code> should call <code>cmd_costs_export()</code> first and verify the export succeeded.</p>
 </li>
 <li>
-<p><strong>Check slash-command validity before routing.</strong> Use <code>is_slash_command(text)</code> to gate input before passing it to <code>route_user_input</code>. This prevents ambiguous input from reaching the router in an unexpected state.</p>
+<p><strong>Rely on the public API.</strong> Names prefixed with <code>_</code> — including <code>_CATEGORIES</code> and <code>_DEFAULT_MODEL</code> — can change without notice. Depend on the functions listed in <code>__all__</code> for <code>cost_commands</code> and <code>memory_commands</code>.</p>
 </li>
 </ol>
 <h2>Source files</h2>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Spec Engine reference — reference</title>
-  <meta name="description" content="Run spec-driven development pipelines with per-task approval loops and quality gates." />
-  <meta property="og:title" content="Spec Engine reference — reference" />
-  <meta property="og:description" content="Run spec-driven development pipelines with per-task approval loops and quality gates." />
+  <title>Spec-driven development with approval loops — reference</title>
+  <meta name="description" content="The spec engine exposes its public API through two packages: `attune.pipeline` (execution) and `attune.spec` (state and presentation). `execute_with_approval` lives in `attune.spec.runner`." />
+  <meta property="og:title" content="Spec-driven development with approval loops — reference" />
+  <meta property="og:description" content="The spec engine exposes its public API through two packages: `attune.pipeline` (execution) and `attune.spec` (state and presentation). `execute_with_approval` lives in `attune.spec.runner`." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/reference" />
   <style>
@@ -258,448 +258,193 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Spec Engine reference</h1>
-<p>Run spec-driven development pipelines with per-task approval loops and quality gates.</p>
-<h2>Classes</h2>
+<h1>Spec-driven development with approval loops</h1>
+<h2>Reference</h2>
+<p>The spec engine exposes its public API through two packages:
+<code>attune.pipeline</code> (execution) and <code>attune.spec</code> (state and
+presentation). <code>execute_with_approval</code> lives in <code>attune.spec.runner</code>.</p>
+<h3>Pipeline execution</h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TaskResult</code></td>
-<td>Result of executing a single pipeline task.</td>
+<td><code>PipelineOrchestrator(spec_path, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
+<td>Load a plan file and prepare tasks for execution with optional gate overrides.</td>
 </tr>
 <tr>
-<td><code>PipelineResult</code></td>
-<td>Aggregated result from a full pipeline run.</td>
+<td><code>PipelineOrchestrator.run_all(*, on_task_complete=None, skip_task_ids=None)</code></td>
+<td><strong>Async.</strong> Execute all tasks, awaiting an optional async callback after each; returns a <code>PipelineResult</code>. The callback receives <code>(task, result)</code> and may return <code>&quot;redo&quot;</code> / <code>&quot;auto&quot;</code> / <code>&quot;stop&quot;</code> (or <code>None</code>/<code>&quot;approve&quot;</code> to continue).</td>
 </tr>
 <tr>
-<td><code>PipelineOrchestrator</code></td>
-<td>Executes tasks from an XML spec with quality gates.</td>
+<td><code>PipelineOrchestrator.run_gates_for_task(task)</code></td>
+<td>Run quality gates for a single <code>DecomposedTask</code> and return a <code>TaskResult</code>.</td>
 </tr>
 <tr>
-<td><code>SpecState</code></td>
-<td>Execution state for a spec plan.</td>
+<td><code>read_spec(plan_path)</code></td>
+<td>Parse a plan file and extract its XML task blocks into <code>DecomposedTask</code> objects. Raises <code>FileNotFoundError</code> (missing file) or <code>ValueError</code> (empty path).</td>
+</tr>
+<tr>
+<td><code>execute_with_approval(spec_path, on_task_complete, *, skip_gates=False, skip_tests=False, skip_simplify=False)</code></td>
+<td><strong>Async.</strong> Execute a spec with an interactive per-task approval loop. Import from <code>attune.spec.runner</code>.</td>
 </tr>
 </tbody>
 </table>
-<h3>TaskResult</h3>
-<p><code>pipeline.models</code> · [dataclass]</p>
-<p>Holds the outcome of a single task after execution and gate evaluation.</p>
+<h3>State management</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>load_state(plan_path)</code></td>
+<td>Read a <code>SpecState</code> from the HTML comment embedded in a plan file; returns <code>None</code> if no state exists.</td>
+</tr>
+<tr>
+<td><code>save_state(state)</code></td>
+<td>Write or update the spec-state comment in a plan file.</td>
+</tr>
+<tr>
+<td><code>clear_state(plan_path)</code></td>
+<td>Remove the spec-state comment from a plan file.</td>
+</tr>
+<tr>
+<td><code>find_resumable_plans(plans_dir='.claude/plans')</code></td>
+<td>Return all <code>SpecState</code> objects whose plans have incomplete execution.</td>
+</tr>
+<tr>
+<td><code>get_pending_tasks(tasks, state)</code></td>
+<td>Filter a task list to those whose IDs are not in <code>state.completed</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3>Presentation</h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>present_tasks(tasks, state)</code></td>
+<td>Format a task list as a markdown table, optionally annotated with completion state.</td>
+</tr>
+<tr>
+<td><code>present_task_detail(task)</code></td>
+<td>Format a single task with its full acceptance criteria and metadata.</td>
+</tr>
+<tr>
+<td><code>present_task_result(task, gate_result)</code></td>
+<td>Format execution output including quality-gate status and score.</td>
+</tr>
+<tr>
+<td><code>format_progress_bar(completed, total)</code></td>
+<td>Render a visual progress indicator for a running pipeline.</td>
+</tr>
+</tbody>
+</table>
+<h3>Result fields</h3>
+<p><code>TaskResult</code> fields you'll inspect most often:</p>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Default</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>task_id</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>task_name</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>executed</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
 <td><code>quality_gate_passed</code></td>
-<td>`bool</td>
-<td>None`</td>
+<td><code>bool | None</code></td>
+<td>Gate outcome; <code>None</code> when gates were skipped.</td>
 </tr>
 <tr>
 <td><code>tests_passed</code></td>
-<td>`bool</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>simplified</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>gate_details</code></td>
-<td>`dict</td>
-<td>None`</td>
+<td><code>bool | None</code></td>
+<td>Test outcome; <code>None</code> when tests were skipped.</td>
 </tr>
 <tr>
 <td><code>gate_score</code></td>
-<td>`float</td>
-<td>None`</td>
+<td><code>float | None</code></td>
+<td>Numeric quality score from the gate.</td>
+</tr>
+<tr>
+<td><code>severity</code></td>
+<td><code>str</code> (property)</td>
+<td>Classified severity of the gate result.</td>
 </tr>
 <tr>
 <td><code>error</code></td>
-<td>`str</td>
-<td>None`</td>
+<td><code>str | None</code></td>
+<td>Error message if the task failed to execute.</td>
 </tr>
 <tr>
 <td><code>cost</code></td>
 <td><code>float</code></td>
-<td><code>0.0</code></td>
+<td>Cost attributed to this task.</td>
 </tr>
 </tbody>
 </table>
-<h4>Properties</h4>
+<p><code>PipelineResult</code> top-level members:</p>
 <table>
 <thead>
 <tr>
-<th>Property</th>
+<th>Member</th>
 <th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>severity</code></td>
-<td><code>str</code></td>
-<td>Classify gate result severity.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>PipelineResult</h3>
-<p><code>pipeline.models</code> · [dataclass]</p>
-<p>Aggregates task results, cost, and duration after a full pipeline run.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>spec_path</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>tasks</code></td>
-<td><code>list[TaskResult]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>total_cost</code></td>
-<td><code>float</code></td>
-<td><code>0.0</code></td>
-</tr>
-<tr>
-<td><code>duration_ms</code></td>
-<td><code>int</code></td>
-<td><code>0</code></td>
-</tr>
-</tbody>
-</table>
-<h4>Properties</h4>
-<table>
-<thead>
-<tr>
-<th>Property</th>
-<th>Type</th>
-<th>Description</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>success</code></td>
-<td><code>bool</code></td>
-<td>Whether all tasks executed and passed gates.</td>
+<td><code>bool</code> (property)</td>
+<td><code>True</code> only when all tasks executed and passed gates.</td>
 </tr>
 <tr>
 <td><code>summary</code></td>
-<td><code>str</code></td>
-<td>Human-readable summary of the pipeline run.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>PipelineOrchestrator</h3>
-<p><code>pipeline.orchestrator</code></p>
-<p>Loads a spec file and runs its tasks in order, enforcing quality gates between steps.</p>
-<h4>Constructor</h4>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>spec_path</code></td>
-<td><code>str</code></td>
-<td>—</td>
+<td><code>str</code> (property)</td>
+<td>Human-readable run summary.</td>
 </tr>
 <tr>
-<td><code>skip_gates</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
+<td><code>tasks</code></td>
+<td><code>list[TaskResult]</code></td>
+<td>Per-task outcomes.</td>
 </tr>
 <tr>
-<td><code>skip_tests</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
+<td><code>total_cost</code></td>
+<td><code>float</code></td>
+<td>Aggregated cost across all tasks.</td>
 </tr>
 <tr>
-<td><code>skip_simplify</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-</tbody>
-</table>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>run_all</code></td>
-<td>`on_task_complete: TaskCallback</td>
-<td>None = None, skip_task_ids: set[str]</td>
-<td>None = None`</td>
-</tr>
-<tr>
-<td><code>run_gates_for_task</code></td>
-<td><code>task: DecomposedTask</code></td>
-<td><code>TaskResult</code></td>
-<td>Run quality gates for a single task and return the result.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>SpecState</h3>
-<p><code>spec.state</code> · [dataclass]</p>
-<p>Tracks which tasks have completed, which is active, and whether auto-run is enabled for a plan.</p>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>plan_path</code></td>
-<td><code>str</code></td>
-<td>—</td>
-</tr>
-<tr>
-<td><code>completed</code></td>
-<td><code>list[str]</code></td>
-<td><code>field(default_factory=list)</code></td>
-</tr>
-<tr>
-<td><code>current</code></td>
-<td>`str</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>auto_run</code></td>
-<td><code>bool</code></td>
-<td><code>False</code></td>
-</tr>
-<tr>
-<td><code>last_updated</code></td>
-<td><code>str</code></td>
-<td><code>field(default_factory=lambda: datetime.now(timezone.utc).isoformat())</code></td>
-</tr>
-<tr>
-<td><code>schema_version</code></td>
+<td><code>duration_ms</code></td>
 <td><code>int</code></td>
-<td><code>_CURRENT_SCHEMA_VERSION</code></td>
+<td>Wall-clock time for the full run.</td>
 </tr>
 </tbody>
 </table>
-<h4>Methods</h4>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict</code></td>
-<td>—</td>
-<td><code>dict[str, object]</code></td>
-<td>Serialize the state to a plain dictionary.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2>Functions</h2>
-<h3>pipeline.spec_reader</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>read_spec</code></td>
-<td><code>plan_path: str</code></td>
-<td><code>list[DecomposedTask]</code></td>
-<td>Read a plan file and extract XML task blocks.</td>
-</tr>
-</tbody>
-</table>
-<h4>Raises — <code>read_spec</code></h4>
-<table>
-<thead>
-<tr>
-<th>Exception</th>
-<th>Message</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>ValueError</code></td>
-<td><code>'plan_path must be a non-empty string'</code></td>
-</tr>
-<tr>
-<td><code>FileNotFoundError</code></td>
-<td><code>'Plan file not found: {...}'</code></td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>spec.presenter</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>present_tasks</code></td>
-<td>`tasks: list[DecomposedTask], state: SpecState</td>
-<td>None = None`</td>
-<td><code>str</code></td>
-</tr>
-<tr>
-<td><code>present_task_detail</code></td>
-<td><code>task: DecomposedTask</code></td>
-<td><code>str</code></td>
-<td>Format a single task with full details.</td>
-</tr>
-<tr>
-<td><code>present_task_result</code></td>
-<td><code>task: DecomposedTask, gate_result: TaskResult</code></td>
-<td><code>str</code></td>
-<td>Format a task's execution result with quality gate status.</td>
-</tr>
-<tr>
-<td><code>format_progress_bar</code></td>
-<td><code>completed: int, total: int</code></td>
-<td><code>str</code></td>
-<td>Visual progress indicator for task execution.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>spec.runner</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>get_pending_tasks</code></td>
-<td><code>tasks: list[DecomposedTask], state: SpecState</code></td>
-<td><code>list[DecomposedTask]</code></td>
-<td>Filter tasks to only those not yet completed.</td>
-</tr>
-<tr>
-<td><code>execute_with_approval</code></td>
-<td><code>spec_path: str, on_task_complete: object, *, skip_gates: bool = False, skip_tests: bool = False, skip_simplify: bool = False</code></td>
-<td><code>PipelineResult</code></td>
-<td>Execute a spec with per-task approval.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h3>spec.state</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>load_state</code></td>
-<td><code>plan_path: str</code></td>
-<td>`SpecState</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>save_state</code></td>
-<td><code>state: SpecState</code></td>
-<td><code>None</code></td>
-<td>Write or update the spec-state comment in a plan file.</td>
-</tr>
-<tr>
-<td><code>clear_state</code></td>
-<td><code>plan_path: str</code></td>
-<td><code>None</code></td>
-<td>Remove the spec-state comment from a plan file.</td>
-</tr>
-<tr>
-<td><code>find_resumable_plans</code></td>
-<td><code>plans_dir: str = '.claude/plans'</code></td>
-<td><code>list[SpecState]</code></td>
-<td>Find plan files with incomplete execution state.</td>
-</tr>
-</tbody>
-</table>
-<hr />
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/spec/**</code></li>
-<li><code>src/attune/pipeline/**</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>spec</code>, <code>planning</code></p>
+<h3>Example output</h3>
+<p>An approval run prints a progress bar, per-task gate results, and a
+final summary:</p>
+<pre><code class="language-text">[========--] 4/5 tasks
+
+✔ task-1  add-jwt-config          gate: passed  score: 92.0  cost: $0.003
+✔ task-2  token-service           gate: passed  score: 87.5  cost: $0.004
+✔ task-3  auth-middleware         gate: passed  score: 81.0  cost: $0.005
+✔ task-4  wire-routes             gate: passed  score: 78.3  cost: $0.004
+  task-5  integration-tests       pending
+
+Pipeline complete: 4/5 tasks executed  total_cost: $0.016  duration: 18402ms
+</code></pre>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: Model Routing and Authentication — quickstart</title>
-  <meta name="description" content="Route your first LLM call through Attune&#x27;s model registry and confirm the authentication strategy is configured correctly." />
-  <meta property="og:title" content="Quickstart: Model Routing and Authentication — quickstart" />
-  <meta property="og:description" content="Route your first LLM call through Attune&#x27;s model registry and confirm the authentication strategy is configured correctly." />
+  <title>LLM authentication, provider routing, and tier management — quickstart</title>
+  <meta name="description" content="Inspect the active routing and pricing in a single Python call:" />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — quickstart" />
+  <meta property="og:description" content="Inspect the active routing and pricing in a single Python call:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/quickstart" />
   <style>
@@ -258,69 +258,25 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: Model Routing and Authentication</h1>
-<p>Route your first LLM call through Attune's model registry and confirm the authentication strategy is configured correctly.</p>
-<pre><code class="language-python">from attune.models import get_auth_strategy, EmpathyLLMExecutor
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Quickstart</h2>
+<p>Inspect the active routing and pricing in a single Python call:</p>
+<pre><code class="language-python">from attune.models import get_tier_for_task, get_model, get_pricing_for_model
 
-strategy = get_auth_strategy()
-print(strategy.to_dict())
-</code></pre>
-<p>Expected output (values reflect your local config):</p>
-<pre><code>{
-  &quot;subscription_tier&quot;: &quot;pro&quot;,
-  &quot;default_mode&quot;: &quot;auto&quot;,
-  &quot;prefer_subscription&quot;: true,
-  &quot;cost_optimization&quot;: true,
-  &quot;setup_completed&quot;: true,
-  ...
-}
-</code></pre>
-<p>If <code>setup_completed</code> is <code>false</code>, complete step 1 before continuing.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>The project is cloned and installed locally</li>
-<li>An Anthropic API key or Claude subscription</li>
-</ul>
-<h2>Step 1: Set up your authentication strategy</h2>
-<p>Run the interactive setup to configure your subscription tier and cost preferences:</p>
-<pre><code class="language-python">from attune.models import configure_auth_interactive
+tier = get_tier_for_task(&quot;generate_code&quot;)     # ModelTier.CAPABLE
+model = get_model(&quot;anthropic&quot;, tier.value)    # ModelInfo | None
+print(model.id, model.cost_per_1k_input)      # cost_per_1k_input is a property
 
-strategy = configure_auth_interactive(module_lines=1000)
-strategy.save()
+pricing = get_pricing_for_model(model.id)     # {&quot;input&quot;: ..., &quot;output&quot;: ...} per million
+print(pricing)
 </code></pre>
-<p>The CLI equivalent is:</p>
-<pre><code>python -m attune.models auth setup
+<p><code>cost_per_1k_input</code> and <code>cost_per_1k_output</code> are <strong>properties</strong> — read
+them, don't call them. <code>get_model</code> returns <code>None</code> if no model is
+registered for that provider/tier, so guard the result before using it.</p>
+<p>From the shell, the same information and your auth posture:</p>
+<pre><code class="language-bash">attune auth status          # current auth strategy
+attune provider show        # current provider
 </code></pre>
-<h2>Step 2: Run a task through the executor</h2>
-<p>Create an <code>EmpathyLLMExecutor</code> and run a task. The executor automatically selects the best model for the task type:</p>
-<pre><code class="language-python">from attune.models import EmpathyLLMExecutor
-
-executor = EmpathyLLMExecutor(provider=&quot;anthropic&quot;)
-response = executor.run(
-    task_type=&quot;user_query&quot;,
-    prompt=&quot;Summarize the purpose of adaptive model routing.&quot;,
-)
-
-print(response.model_id)       # which model was selected
-print(response.cost_estimate)  # estimated cost in USD
-print(response.content)        # the response text
-</code></pre>
-<h2>Step 3: Inspect routing statistics</h2>
-<p>Check how the <code>AdaptiveModelRouter</code> scored models for your workflow:</p>
-<pre><code class="language-python">from attune.models import AdaptiveModelRouter, get_telemetry_store
-
-router = AdaptiveModelRouter(telemetry=get_telemetry_store())
-stats = router.get_routing_stats(workflow=&quot;my_workflow&quot;, days=7)
-print(stats)
-</code></pre>
-<h2>What you just did</h2>
-<ul>
-<li>Loaded your <code>AuthStrategy</code> and confirmed it is configured</li>
-<li>Ran a prompt through <code>EmpathyLLMExecutor</code>, which selected a model from the registry based on task type</li>
-<li>Queried <code>AdaptiveModelRouter</code> for routing statistics drawn from historical telemetry</li>
-</ul>
-<h2>Next:</h2>
-<p>Say <strong>&quot;how does adaptive model routing work?&quot;</strong> to understand how <code>ModelPerformance.quality_score</code>, success rates, and latency constraints combine to pick the best model for each task.</p>
 
   </article>
   <footer>

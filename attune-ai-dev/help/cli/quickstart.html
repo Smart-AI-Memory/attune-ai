@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: attune CLI — quickstart</title>
-  <meta name="description" content="Run your first attune command and route user input to a skill in under a minute." />
-  <meta property="og:title" content="Quickstart: attune CLI — quickstart" />
-  <meta property="og:description" content="Run your first attune command and route user input to a skill in under a minute." />
+  <title>Quickstart: CLI and Routing — quickstart</title>
+  <meta name="description" content="Run your first attune command and confirm the CLI is working." />
+  <meta property="og:title" content="Quickstart: CLI and Routing — quickstart" />
+  <meta property="og:description" content="Run your first attune command and confirm the CLI is working." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/cli/quickstart" />
   <style>
@@ -258,52 +258,48 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: attune CLI</h1>
-<p>Run your first attune command and route user input to a skill in under a minute.</p>
+<h1>Quickstart: CLI and Routing</h1>
+<p>Run your first attune command and confirm the CLI is working.</p>
+<pre><code class="language-bash">attune --help
+</code></pre>
+<p>You should see the top-level command listing. If you do, the CLI is installed and ready.</p>
+<h2>Step 1: Confirm your version</h2>
 <pre><code class="language-bash">attune version
 </code></pre>
 <p>Expected output:</p>
-<pre><code>attune x.y.z
+<pre><code>attune &lt;version string&gt;
 </code></pre>
-<h2>Prerequisites</h2>
-<ul>
-<li>attune is installed and available on your <code>PATH</code></li>
-<li>You have a terminal open in your project directory</li>
-</ul>
-<h2>Step 1: Verify your setup</h2>
-<p>Run the doctor command to confirm everything is configured correctly:</p>
-<pre><code class="language-bash">attune doctor
+<p>This calls <code>cmd_version</code> and verifies the entry point resolves correctly.</p>
+<h2>Step 2: Run setup</h2>
+<pre><code class="language-bash">attune setup
 </code></pre>
-<p>If the output shows no errors, you're ready to proceed.</p>
-<h2>Step 2: Check today's costs</h2>
+<p><code>cmd_setup</code> walks you through the minimum configuration needed before running workflows or using memory commands.</p>
+<h2>Step 3: List available workflows</h2>
+<pre><code class="language-bash">attune workflow list
+</code></pre>
+<p><code>cmd_workflow_list</code> prints every registered workflow by name. Pick one from the output to use in the next step.</p>
+<h2>Step 4: Run a workflow</h2>
+<pre><code class="language-bash">attune workflow run &lt;workflow-name&gt;
+</code></pre>
+<p><code>cmd_workflow_run</code> executes the workflow and exits with a contract exit code from <code>run_workflow_with_exit_code</code>. Exit code <code>0</code> means success.</p>
+<p>Expected output:</p>
+<pre><code>Running &lt;workflow-name&gt;...
+Result: { ... }
+Exit code: 0
+</code></pre>
+<h2>Step 5: Check today's costs</h2>
 <pre><code class="language-bash">attune costs today
 </code></pre>
-<p>This calls <code>cmd_costs_today</code> and prints a summary of your AI usage costs for the current day.</p>
-<h2>Step 3: Route user input programmatically</h2>
-<p>Use <code>route_user_input</code> to send a plain-language string to the appropriate skill:</p>
-<pre><code class="language-python">from attune.cli_router import route_user_input
-
-result = route_user_input(&quot;show me my lessons&quot;)
-print(result)
-</code></pre>
-<p>Expected output is a dict describing the routed skill and any arguments resolved from your input.</p>
-<h2>Step 4: Teach the router a custom shortcut</h2>
-<pre><code class="language-python">from attune.cli_router import HybridRouter
-
-router = HybridRouter()
-router.learn_preference(keyword=&quot;costs&quot;, skill=&quot;cmd_costs_today&quot;)
-result = router.route(&quot;costs&quot;)
-print(result)
-</code></pre>
-<p><code>learn_preference</code> stores a <code>RoutingPreference</code> entry (with fields <code>keyword</code>, <code>skill</code>, <code>args</code>, <code>usage_count</code>, and <code>confidence</code>) so the router recognises your shorthand on every future call.</p>
+<p><code>cmd_costs_today</code> prints a cost summary for the current session, confirming that telemetry is recording correctly.</p>
 <h2>What you just did</h2>
 <ul>
-<li>Confirmed your installation with <code>cmd_doctor</code></li>
-<li>Viewed a cost summary with <code>cmd_costs_today</code></li>
-<li>Routed plain-language input with <code>route_user_input</code></li>
-<li>Registered a custom routing shortcut with <code>HybridRouter.learn_preference</code></li>
+<li>Verified the CLI entry point with <code>attune --help</code></li>
+<li>Confirmed your installed version with <code>cmd_version</code></li>
+<li>Configured attune with <code>cmd_setup</code></li>
+<li>Listed and ran a workflow via <code>cmd_workflow_list</code> and <code>cmd_workflow_run</code></li>
+<li>Checked cost tracking with <code>cmd_costs_today</code></li>
 </ul>
-<p>Next: say <strong>&quot;how do I configure routing preferences?&quot;</strong> for a full walkthrough of <code>HybridRouter</code>, <code>RoutingPreference</code> fields, and persistent preference storage.</p>
+<p><strong>Next:</strong> Run <code>attune doctor</code> (<code>cmd_doctor</code>) to validate your full environment and surface any configuration issues before going further.</p>
 
   </article>
   <footer>

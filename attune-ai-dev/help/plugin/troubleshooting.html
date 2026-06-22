@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Troubleshoot plugin — troubleshooting</title>
-  <meta name="description" content="The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothin" />
+  <meta name="description" content="These steps cover the attune plugin&#x27;s hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring." />
   <meta property="og:title" content="Troubleshoot plugin — troubleshooting" />
-  <meta property="og:description" content="The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothin" />
+  <meta property="og:description" content="These steps cover the attune plugin&#x27;s hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/plugin/troubleshooting" />
   <style>
@@ -259,7 +259,8 @@
   </nav>
   <article class="markdown-body">
 <h1>Troubleshoot plugin</h1>
-<p>The attune plugin bundles skills, hooks, commands, and MCP config for Claude Code. Use this guide when a hook misbehaves, a slash command produces unexpected output, or the plugin silently does nothing.</p>
+<h2>Before you start</h2>
+<p>These steps cover the attune plugin's hooks, slash commands, and MCP configuration — including session continuity hooks, security guards, spec discovery, and transcript monitoring.</p>
 <h2>Symptom table</h2>
 <table>
 <thead>
@@ -271,84 +272,107 @@
 <tbody>
 <tr>
 <td><code>/attune</code> or other skill commands show no matches</td>
-<td>Run <code>claude plugin list</code> and confirm <code>attune-ai</code> appears. If not, see <strong>Fix: plugin not installed</strong> below.</td>
+<td>Run <code>claude plugin list</code> and confirm <code>attune-ai</code> appears</td>
 </tr>
 <tr>
-<td>Hook fires but produces wrong output</td>
-<td>Confirm the correct entry point ran — each hook module exposes its own <code>main()</code>. Check that <code>SpecInfo</code> fields (<code>slug</code>, <code>phase</code>, <code>status</code>) match what the hook expects.</td>
+<td>Skills appear but produce no output</td>
+<td>Run <code>claude plugin marketplace list</code> and verify the marketplace was added</td>
 </tr>
 <tr>
-<td>Hook fires but produces no output</td>
-<td>Check whether an early return is swallowing the result. For <code>spec_orient</code>, verify that <code>discover_specs()</code> found at least one <code>SpecInfo</code> under your workspace roots.</td>
+<td>Two conflicting skill triggers fire</td>
+<td>Run <code>claude plugin list</code> and check for both <code>attune-lite</code> and <code>attune-ai</code> — only one should be installed</td>
 </tr>
 <tr>
-<td>Compact warning never appears</td>
-<td>Run <code>estimate_utilization()</code> against your transcript path and confirm the returned float exceeds the configured threshold. Also check whether a sentinel file from a previous session is suppressing the warning — call <code>prune_stale_sentinels()</code> to clear stale ones.</td>
+<td><code>session_recall</code> or <code>session_stash</code> produces unexpected results</td>
+<td>Check for stale sentinel files: call <code>prune_stale_sentinels()</code> and inspect the path returned by <code>session_sentinel_path(session_id)</code></td>
 </tr>
 <tr>
-<td>Resume prompt is empty or malformed</td>
-<td>Confirm <code>build_resume_prompt()</code> receives a valid <code>GitState</code> (non-empty <code>branch</code>, <code>last_sha</code>). If <code>spec_info</code> is <code>None</code>, the prompt renders without spec context — check that <code>discover_specs()</code> returns results for your workspace roots.</td>
+<td><code>spec_orient</code> shows no specs or wrong specs</td>
+<td>Confirm <code>workspace_roots()</code> returns the expected paths, then verify <code>discover_specs(roots)</code> finds <code>.yaml</code> files under <code>specs/</code> or <code>docs/specs/</code> subdirectories</td>
 </tr>
 <tr>
-<td>Security guard blocks a legitimate command</td>
-<td>Call <code>validate_bash_command()</code> or <code>validate_file_path()</code> directly against the string being rejected and inspect the returned reason string. Check whether the command prefix is in <code>SEARCH_COMMAND_PREFIXES</code> or the path is under <code>SYSTEM_DIRECTORIES</code>.</td>
+<td>Compact warning fires every session instead of once</td>
+<td>A sentinel file under the prefix <code>.jit-recalled-</code> may be missing or stale — call <code>prune_stale_sentinels()</code> to clean up</td>
 </tr>
 <tr>
-<td>Two attune plugins installed simultaneously</td>
-<td>Run <code>claude plugin list</code> and confirm only one of <code>attune-lite</code> or <code>attune-ai</code> is present. Duplicate installs cause conflicting skill triggers.</td>
+<td><code>security_guard</code> blocks a command you expect to allow</td>
+<td>Pass the command string to <code>validate_bash_command(command)</code> and inspect the returned <code>(bool, str)</code> reason</td>
+</tr>
+<tr>
+<td>Context utilization reading seems wrong</td>
+<td>Call <code>estimate_utilization(transcript_path)</code> directly and confirm the returned float is in <code>[0.0, 1.0]</code></td>
+</tr>
+<tr>
+<td><code>spec_orient</code> reports a status conflict</td>
+<td>Check the <code>SpecInfo</code> fields <code>status_conflict</code> and <code>status_source</code> on the affected spec</td>
 </tr>
 </tbody>
 </table>
-<h2>Diagnosis steps</h2>
+<h2>Step-by-step diagnosis</h2>
 <ol>
 <li>
-<p><strong>Reproduce with the minimal call.</strong>
-Before enabling any logging, confirm you can reproduce the failure by calling the relevant entry point directly. Each hook module exposes a <code>main()</code> function — run it in isolation and note whether the failure persists without the surrounding Claude Code context.</p>
+<p><strong>Reproduce the failure in isolation.</strong>
+Confirm the failure occurs outside its normal trigger context. For hook entry points, call <code>main()</code> directly from a shell or a one-line Python script with the minimal required environment.</p>
 </li>
 <li>
-<p><strong>Check workspace discovery.</strong>
-Many hooks depend on <code>workspace_roots()</code> returning the correct paths. Call it from your working directory and verify the output. If it returns an empty list, <code>discover_specs()</code> will find no specs and hooks that depend on <code>SpecInfo</code> will silently short-circuit.</p>
-</li>
-<li>
-<p><strong>Inspect git state.</strong>
-If the resume prompt or handoff output looks wrong, call <code>git_state(cwd)</code> against your repo and print the resulting <code>GitState</code>. Confirm <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> all reflect the current worktree.</p>
-</li>
-<li>
-<p><strong>Check transcript utilization.</strong>
-If the compact warning is misfiring or never appears, call <code>estimate_utilization(transcript_path)</code> and compare the returned float (range <code>0.0</code>–<code>1.0</code>) against your configured threshold.</p>
-</li>
-<li>
-<p><strong>Check sentinel state.</strong>
-If a hook that should fire once per session is not firing, a stale sentinel file may be suppressing it. Call <code>prune_stale_sentinels()</code> — it returns the number of files it deleted. If it deletes one, the sentinel was the cause.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong>
-<code>pytest -k &quot;plugin&quot; -v</code> shows which paths have coverage. A failing test that exercises your symptom confirms the regression and gives you a fixture to work from.</p>
-</li>
-</ol>
-<h2>Common fixes</h2>
-<p><strong>Plugin not installed or not found</strong></p>
+<p><strong>Check plugin installation.</strong>
+Run <code>claude plugin list</code> to confirm <code>attune-ai</code> is installed and no conflicting plugin (such as <code>attune-lite</code>) is also present. If the plugin is missing, reinstall it:</p>
 <pre><code>claude plugin marketplace add Smart-AI-Memory/attune-ai
 claude plugin install attune-ai@attune-ai
 </code></pre>
-<p>If skills still don't appear, remove any conflicting plugin first: <code>claude plugin list</code> → remove the duplicate → reinstall.</p>
-<p><strong>Conflicting duplicate plugins</strong>
-Only one of <code>attune-lite</code> or <code>attune-ai</code> should be installed. Remove the other:</p>
-<pre><code>claude plugin remove attune-lite
+</li>
+<li>
+<p><strong>Inspect workspace and spec discovery.</strong>
+Call <code>workspace_roots()</code> to confirm it returns your expected project root, then pass those roots to <code>discover_specs(roots)</code> to verify it returns the <code>SpecInfo</code> objects you expect. Check the <code>slug</code>, <code>path</code>, <code>layer</code>, <code>phase</code>, <code>status</code>, and <code>effective_status</code> fields on each result.</p>
+</li>
+<li>
+<p><strong>Check git state.</strong>
+Call <code>git_state(cwd)</code> with your working directory. Confirm that <code>branch</code>, <code>last_sha</code>, <code>last_subject</code>, and <code>uncommitted</code> reflect the actual repository state. A wrong <code>cwd</code> is a common cause of stale or empty <code>GitState</code> values.</p>
+</li>
+<li>
+<p><strong>Audit sentinel files.</strong>
+Call <code>session_sentinel_path(session_id)</code> to find the expected sentinel path, then call <code>prune_stale_sentinels()</code> to remove any files older than the TTL. Re-run the failing hook after pruning.</p>
+</li>
+<li>
+<p><strong>Check the security guard.</strong>
+If <code>security_guard</code> is blocking or allowing something unexpectedly, call <code>validate_bash_command(command)</code> or <code>validate_file_path(file_path)</code> directly. Each returns a <code>(bool, str)</code> tuple — the string explains the verdict. Paths under <code>SYSTEM_DIRECTORIES</code> (<code>/etc</code>, <code>/sys</code>, <code>/proc</code>, and others) are always blocked.</p>
+</li>
+<li>
+<p><strong>Check transcript utilization.</strong>
+If <code>compact_warning</code> behaves unexpectedly, call <code>estimate_utilization(transcript_path)</code> and compare the result against the threshold passed to <code>format_warning(util, threshold, resume_body)</code>. Confirm the transcript path is correct and the file is not empty.</p>
+</li>
+<li>
+<p><strong>Run the related tests.</strong>
+Run <code>pytest -k &quot;plugin&quot; -v</code> to confirm which paths are covered. A failing test that exercises your symptom narrows the search immediately.</p>
+</li>
+</ol>
+<h2>Common fixes</h2>
+<ul>
+<li>
+<p><strong>Conflicting plugins.</strong> Remove the duplicate before reinstalling:</p>
+<pre><code>claude plugin uninstall attune-lite
+claude plugin install attune-ai@attune-ai
 </code></pre>
-<p><strong><code>discover_specs()</code> returns an empty list</strong>
-Verify your <code>specs/</code> directory exists under at least one of the paths returned by <code>workspace_roots()</code>. The function walks <code>specs/</code> subdirectories under each root — if the directory is missing or misnamed, it returns nothing.</p>
-<p><strong>Stale sentinel suppressing a hook</strong></p>
-<pre><code class="language-python">from hooks._state import prune_stale_sentinels
-removed = prune_stale_sentinels()
-print(f&quot;Removed {removed} stale sentinel(s)&quot;)
+</li>
+<li>
+<p><strong>Missing marketplace source.</strong> If <code>claude plugin list</code> shows nothing, add the marketplace first:</p>
+<pre><code>claude plugin marketplace add Smart-AI-Memory/attune-ai
+claude plugin install attune-ai@attune-ai
 </code></pre>
-<p><strong>Security guard false positive</strong>
-<code>validate_bash_command()</code> blocks any command whose prefix does not appear in <code>SEARCH_COMMAND_PREFIXES</code> and whose behavior looks destructive. If a legitimate command is blocked, inspect the second element of the returned tuple for the rejection reason, then adjust the command string to match an allowed prefix or raise the issue for a policy update — changing <code>SEARCH_COMMAND_PREFIXES</code> or <code>SYSTEM_DIRECTORIES</code> requires a change to <code>hooks.security_guard</code>.</p>
-<p><strong>Version mismatch after a dependency upgrade</strong></p>
-<pre><code>pip show attune-ai
-</code></pre>
-<p>Confirm the installed version matches what your workspace expects. A version mismatch in the plugin bundle can change hook behavior without any local code change.</p>
+</li>
+<li>
+<p><strong>Stale sentinels causing repeated compact warnings.</strong> Call <code>prune_stale_sentinels()</code> from Python or add a one-time invocation to your session setup. The function returns the count of deleted files.</p>
+</li>
+<li>
+<p><strong>Wrong workspace root.</strong> If <code>discover_specs()</code> returns an empty list, <code>workspace_roots()</code> may be resolving to the wrong directory. Pass an explicit <code>cwd</code> argument to override the default (<code>~/attune</code>).</p>
+</li>
+<li>
+<p><strong><code>SpecInfo</code> status conflict.</strong> When <code>status_conflict</code> is <code>True</code>, the spec's <code>status_source</code> field indicates whether the status came from its header or another source. Resolve the conflict by editing the spec file directly so the header status matches the intended <code>effective_status</code>.</p>
+</li>
+<li>
+<p><strong>Dependency or environment drift.</strong> If a hook worked previously without a code change, confirm your Python environment is clean. Run <code>pip show</code> on any recently updated packages and verify the installed versions match what the plugin was last tested against.</p>
+</li>
+</ul>
 <h2>Source files</h2>
 <ul>
 <li><code>hooks/_handoff_cli.py</code></li>
@@ -356,32 +380,12 @@ print(f&quot;Removed {removed} stale sentinel(s)&quot;)
 <li><code>hooks/_state.py</code></li>
 <li><code>hooks/_transcript_size.py</code></li>
 <li><code>hooks/compact_warning.py</code></li>
-<li><code>hooks/format_on_save.py</code></li>
 <li><code>hooks/security_guard.py</code></li>
+<li><code>hooks/session_recall.py</code></li>
+<li><code>hooks/session_stash.py</code></li>
 <li><code>hooks/spec_orient.py</code></li>
 </ul>
-<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code>, <code>setup</code></p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 66 (code fence)</td>
-<td>error</td>
-<td><code>from hooks._state import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
+<p><strong>Tags:</strong> <code>plugin</code>, <code>claude-code</code></p>
 
   </article>
   <footer>

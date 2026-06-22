@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: spec-engine — quickstart</title>
-  <meta name="description" content="Run a spec plan end-to-end with quality gates in a single Python call." />
-  <meta property="og:title" content="Quickstart: spec-engine — quickstart" />
-  <meta property="og:description" content="Run a spec plan end-to-end with quality gates in a single Python call." />
+  <title>Spec-driven development with approval loops — quickstart</title>
+  <meta name="description" content="Run a spec plan end-to-end with quality gates from Python. `PipelineOrchestrator.run_all` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Spec-driven development with approval loops — quickstart" />
+  <meta property="og:description" content="Run a spec plan end-to-end with quality gates from Python. `PipelineOrchestrator.run_all` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/quickstart" />
   <style>
@@ -258,79 +258,30 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: spec-engine</h1>
-<p>Run a spec plan end-to-end with quality gates in a single Python call.</p>
-<pre><code class="language-python">from pipeline import PipelineOrchestrator
+<h1>Spec-driven development with approval loops</h1>
+<h2>Quickstart</h2>
+<p>Run a spec plan end-to-end with quality gates from Python.
+<code>PipelineOrchestrator.run_all</code> is an async coroutine, so drive it with
+<code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
+<pre><code class="language-python">import asyncio
 
-result = PipelineOrchestrator(&quot;my-plan.md&quot;).run_all()
-print(result.summary())
-</code></pre>
-<p><strong>Expected output:</strong></p>
-<pre><code>3/3 tasks completed — all quality gates passed.
-</code></pre>
-<h2>Step 1: Read your plan file</h2>
-<p>Use <code>read_spec</code> to parse a plan file and inspect the tasks before executing anything:</p>
-<pre><code class="language-python">from pipeline import read_spec
+from attune.pipeline import PipelineOrchestrator, PipelineResult
 
-tasks = read_spec(&quot;my-plan.md&quot;)
-for task in tasks:
-    print(task)
-</code></pre>
-<p>This confirms the plan file is valid and shows you the <code>DecomposedTask</code> objects that the orchestrator will execute.</p>
-<h2>Step 2: Run the pipeline</h2>
-<p>Pass the same plan path to <code>PipelineOrchestrator</code> and call <code>run_all</code>:</p>
-<pre><code class="language-python">from pipeline import PipelineOrchestrator
 
-orchestrator = PipelineOrchestrator(&quot;my-plan.md&quot;)
-result = orchestrator.run_all()
-</code></pre>
-<p>To skip quality gates during a quick smoke-test, pass <code>skip_gates=True</code> to the constructor.</p>
-<h2>Step 3: Check the result</h2>
-<p>Inspect <code>PipelineResult</code> to confirm success and review per-task outcomes:</p>
-<pre><code class="language-python">print(result.success())   # True if all tasks executed and passed gates
-print(result.summary())   # Human-readable summary of the run
+async def main() -&gt; None:
+    orchestrator = PipelineOrchestrator(&quot;.claude/plans/my-feature.md&quot;)
+    result: PipelineResult = await orchestrator.run_all()
+    print(result.summary)   # human-readable run summary
+    print(result.success)   # True if all tasks executed and passed gates
 
-for task_result in result.tasks:
-    print(task_result.task_name, task_result.severity())
-</code></pre>
-<p>A passing run prints <code>True</code> from <code>result.success()</code>. If a task failed, <code>task_result.quality_gate_passed</code> is <code>False</code> and <code>task_result.error</code> contains the failure reason.</p>
-<h2>Step 4: Resume an interrupted run</h2>
-<p>If a run was interrupted, use <code>find_resumable_plans</code> to find plans with saved state, then pass the path back to <code>PipelineOrchestrator</code>:</p>
-<pre><code class="language-python">from spec import find_resumable_plans, load_state, get_pending_tasks
 
-resumable = find_resumable_plans()          # searches .claude/plans by default
-state = load_state(resumable[0].plan_path)
-tasks = read_spec(resumable[0].plan_path)
-pending = get_pending_tasks(tasks, state)
-print(f&quot;{len(pending)} tasks remaining&quot;)
+asyncio.run(main())
 </code></pre>
-<p><strong>Next:</strong> To run with per-task approval prompts, call <code>execute_with_approval</code> from <code>spec.runner</code> — it accepts the same <code>skip_gates</code>, <code>skip_tests</code>, and <code>skip_simplify</code> flags as <code>PipelineOrchestrator</code>.</p>
-<h2>Unresolved references</h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
-<table>
-<thead>
-<tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Line 15 (code fence)</td>
-<td>error</td>
-<td><code>from pipeline import …</code> — module not importable</td>
-</tr>
-<tr>
-<td>Line 73 (code fence)</td>
-<td>error</td>
-<td><code>from spec import …</code> — module not importable</td>
-</tr>
-</tbody>
-</table>
+<p><code>summary</code> and <code>success</code> are properties — read them, don't call them.
+Running this produces a <code>PipelineResult</code> with per-task outcomes, total
+cost, and duration.</p>
+<p>To skip quality gates during a quick smoke test, pass
+<code>skip_gates=True</code> to the constructor.</p>
 
   </article>
   <footer>

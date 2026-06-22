@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Spec Engine vs alternatives — comparison</title>
-  <meta name="description" content="The spec engine exposes two distinct layers for running spec-driven workflows: a **high-level interactive layer** (`spec.*`) and a **low-level pipeline layer** (`pipeline.*`). Both execute the same un" />
-  <meta property="og:title" content="Comparison: Spec Engine vs alternatives — comparison" />
-  <meta property="og:description" content="The spec engine exposes two distinct layers for running spec-driven workflows: a **high-level interactive layer** (`spec.*`) and a **low-level pipeline layer** (`pipeline.*`). Both execute the same un" />
+  <title>Spec-driven development with approval loops — comparison</title>
+  <meta name="description" content="The engine exposes two layers for running spec-driven workflows: a high-level interactive layer (`spec.runner.execute_with_approval`) and a low-level pipeline layer (`PipelineOrchestrator`). Both exec" />
+  <meta property="og:title" content="Spec-driven development with approval loops — comparison" />
+  <meta property="og:description" content="The engine exposes two layers for running spec-driven workflows: a high-level interactive layer (`spec.runner.execute_with_approval`) and a low-level pipeline layer (`PipelineOrchestrator`). Both exec" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/spec-engine/comparison" />
   <style>
@@ -258,10 +258,13 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Spec Engine vs alternatives</h1>
-<h2>Context</h2>
-<p>The spec engine exposes two distinct layers for running spec-driven workflows: a <strong>high-level interactive layer</strong> (<code>spec.*</code>) and a <strong>low-level pipeline layer</strong> (<code>pipeline.*</code>). Both execute the same underlying tasks with quality gates, but they differ significantly in who controls the approval loop, what state they manage, and how much flexibility you get over execution.</p>
-<h2>Feature comparison</h2>
+<h1>Spec-driven development with approval loops</h1>
+<h2>Comparison</h2>
+<p>The engine exposes two layers for running spec-driven workflows: a
+high-level interactive layer (<code>spec.runner.execute_with_approval</code>) and
+a low-level pipeline layer (<code>PipelineOrchestrator</code>). Both execute the
+same tasks with the same quality gates, but differ in who controls the
+approval loop and how much state they manage for you.</p>
 <table>
 <thead>
 <tr>
@@ -273,85 +276,61 @@
 <tbody>
 <tr>
 <td><strong>Import path</strong></td>
-<td><code>from spec.runner import execute_with_approval</code></td>
-<td><code>from pipeline import PipelineOrchestrator</code></td>
+<td><code>from attune.spec.runner import execute_with_approval</code></td>
+<td><code>from attune.pipeline import PipelineOrchestrator</code></td>
 </tr>
 <tr>
 <td><strong>Approval loop</strong></td>
-<td>Per-task, interactive — pauses after each task for user sign-off</td>
+<td>Per-task, interactive — pauses after each task</td>
 <td>Batch — runs all tasks unless you pass <code>skip_task_ids</code></td>
 </tr>
 <tr>
 <td><strong>Resume support</strong></td>
-<td>Yes — <code>load_state</code> / <code>save_state</code> / <code>find_resumable_plans</code> persist <code>SpecState</code> between sessions</td>
-<td>No built-in state persistence; caller owns resumability</td>
+<td>Yes — <code>load_state</code> / <code>save_state</code> / <code>find_resumable_plans</code> persist <code>SpecState</code></td>
+<td>No built-in persistence; caller owns resumability</td>
 </tr>
 <tr>
 <td><strong>Progress feedback</strong></td>
-<td><code>format_progress_bar</code>, <code>present_task_result</code>, <code>present_tasks</code> render live output</td>
-<td>Callback only — wire <code>on_task_complete: TaskCallback</code> yourself</td>
+<td>Presenter functions render live output</td>
+<td>Callback only — wire <code>on_task_complete</code> yourself</td>
 </tr>
 <tr>
-<td><strong>Skip gates / tests / simplify</strong></td>
-<td><code>skip_gates</code>, <code>skip_tests</code>, <code>skip_simplify</code> keyword args</td>
-<td>Same flags on <code>PipelineOrchestrator.__init__</code></td>
+<td><strong>Skip flags</strong></td>
+<td><code>skip_gates</code>, <code>skip_tests</code>, <code>skip_simplify</code></td>
+<td>Same flags on <code>__init__</code></td>
 </tr>
 <tr>
 <td><strong>Task filtering</strong></td>
-<td><code>get_pending_tasks</code> filters against persisted <code>SpecState.completed</code></td>
-<td>Pass <code>skip_task_ids: set[str]</code> to <code>run_all</code> directly</td>
+<td><code>get_pending_tasks</code> against persisted state</td>
+<td>Pass <code>skip_task_ids: set[str]</code> to <code>run_all</code></td>
 </tr>
 <tr>
 <td><strong>Result model</strong></td>
-<td><code>PipelineResult</code> (shared) — <code>success</code>, <code>summary</code>, <code>total_cost</code>, <code>duration_ms</code></td>
+<td><code>PipelineResult</code> (shared)</td>
 <td><code>PipelineResult</code> (shared)</td>
 </tr>
 <tr>
-<td><strong>Per-task result</strong></td>
-<td><code>present_task_result(task, gate_result)</code> formats for display</td>
-<td><code>run_gates_for_task(task)</code> returns raw <code>TaskResult</code></td>
-</tr>
-<tr>
-<td><strong>State file format</strong></td>
-<td>HTML comment embedded in the plan file, managed by <code>save_state</code> / <code>clear_state</code></td>
-<td>Not managed</td>
+<td><strong>Concurrency</strong></td>
+<td>Async coroutine — <code>await</code> it</td>
+<td>Async coroutine — <code>await run_all</code> (or <code>asyncio.run</code>)</td>
 </tr>
 <tr>
 <td><strong>Typical caller</strong></td>
-<td>Conversational CLI / interactive session</td>
+<td>Conversational / interactive session</td>
 <td>Automated scripts, CI pipelines</td>
 </tr>
 </tbody>
 </table>
-<h2>Key tradeoffs</h2>
-<h3><code>spec</code> layer: structured interaction, built-in state</h3>
-<p><code>execute_with_approval</code> is the right entry point when you want the engine to handle the approval ceremony for you. It persists a <code>SpecState</code> (tracking <code>completed</code>, <code>current</code>, and <code>auto_run</code> fields) directly in the plan file, so an interrupted run is always resumable via <code>find_resumable_plans</code>. The presenter functions — <code>present_tasks</code>, <code>present_task_detail</code>, <code>present_task_result</code>, and <code>format_progress_bar</code> — are wired in automatically, so you get human-readable output without extra plumbing.</p>
-<p>The tradeoff: the approval loop is opinionated. You accept the per-task pause-and-confirm pattern or you set <code>SpecState.auto_run = True</code> to skip it. If you need finer-grained control over which tasks run or in what order, you are working against the layer, not with it.</p>
-<h3><code>pipeline</code> layer: explicit control, no ceremony</h3>
-<p><code>PipelineOrchestrator</code> gives you the same quality-gate execution but none of the interactive scaffolding. You call <code>run_all</code> with an optional <code>skip_task_ids</code> set and an <code>on_task_complete</code> callback, and you receive a <code>PipelineResult</code>. State, display, and approval are entirely your responsibility. <code>run_gates_for_task</code> lets you evaluate a single <code>DecomposedTask</code> in isolation, which is useful for testing gate logic without running the full plan.</p>
-<p>The tradeoff: you write more glue code. If you need to resume a run, you must track completed task IDs yourself.</p>
-<h2>Decision guide</h2>
-<p><strong>Use <code>execute_with_approval</code> (<code>spec</code> layer) when:</strong></p>
-<ul>
-<li>You are building a conversational or CLI workflow where a human approves each task before the next one runs.</li>
-<li>You want automatic resume support — <code>find_resumable_plans</code> scanning <code>.claude/plans/</code> and <code>load_state</code> / <code>save_state</code> handling persistence.</li>
-<li>You want formatted output without writing your own presenter logic.</li>
-<li>You are running a multi-session workflow where <code>SpecState.last_updated</code> and <code>SpecState.completed</code> need to survive process restarts.</li>
-</ul>
-<p><strong>Use <code>PipelineOrchestrator</code> (<code>pipeline</code> layer) when:</strong></p>
-<ul>
-<li>You are running in CI or an automated context with no interactive approval step.</li>
-<li>You need to skip specific tasks by ID at call time via <code>skip_task_ids</code>.</li>
-<li>You want to evaluate gate results programmatically — inspecting <code>TaskResult.gate_score</code>, <code>TaskResult.quality_gate_passed</code>, or <code>TaskResult.tests_passed</code> — without any display logic in the way.</li>
-<li>You are testing gate behavior for a single task with <code>run_gates_for_task</code>.</li>
-</ul>
-<p>When in doubt, start with the <code>spec</code> layer. The <code>pipeline</code> layer is the better fit only when you are certain you do not need state persistence or interactive approval — and are prepared to manage both yourself.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/spec/**</code></li>
-<li><code>src/attune/pipeline/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>spec</code>, <code>planning</code></p>
+<p><strong>Use the <code>spec</code> layer</strong> when a human approves each task, you want
+automatic resume support, and you want formatted output without
+writing presenter logic. <strong>Use the <code>pipeline</code> layer</strong> when running in
+CI with no interactive step, when you need to skip tasks by ID at call
+time, or when you want to inspect gate results programmatically with
+no display logic in the way.</p>
+<p>When in doubt, start with the <code>spec</code> layer. The <code>pipeline</code> layer is
+the better fit only when you are certain you do not need state
+persistence or interactive approval — and are prepared to manage both
+yourself.</p>
 
   </article>
   <footer>

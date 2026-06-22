@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Memory cautions — warning</title>
-  <meta name="description" content="The memory subsystem handles storage, lookup, and security across Redis-backed short-term memory, file-based Claude memory (CLAUDE.md), and long-term pattern storage. Mistakes here can silently drop d" />
+  <meta name="description" content="The memory subsystem spans short-term Redis storage, long-term `MemDocsStorage`, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the poi" />
   <meta property="og:title" content="Memory cautions — warning" />
-  <meta property="og:description" content="The memory subsystem handles storage, lookup, and security across Redis-backed short-term memory, file-based Claude memory (CLAUDE.md), and long-term pattern storage. Mistakes here can silently drop d" />
+  <meta property="og:description" content="The memory subsystem spans short-term Redis storage, long-term `MemDocsStorage`, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the poi" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/warning" />
   <style>
@@ -260,43 +260,44 @@
   <article class="markdown-body">
 <h1>Memory cautions</h1>
 <h2>What to watch for</h2>
-<p>The memory subsystem handles storage, lookup, and security across Redis-backed short-term memory, file-based Claude memory (CLAUDE.md), and long-term pattern storage. Mistakes here can silently drop data, expose secrets, or produce different behavior between local development and production.</p>
+<p>The memory subsystem spans short-term Redis storage, long-term <code>MemDocsStorage</code>, Claude memory file loading, and a security layer that classifies and encrypts patterns. The risks below reflect the points where these layers interact in ways that are easy to overlook.</p>
 <h2>Risk areas</h2>
-<h3>Redis availability check swallows import errors silently</h3>
-<p><code>is_redis_available()</code> returns <code>False</code> for both &quot;Redis is not installed&quot; and &quot;Redis is installed but unreachable.&quot; If your code branches on this return value and Redis is actually misconfigured, you will silently fall back to a mock or no-op backend with no error logged. Always follow a <code>False</code> result by checking <code>check_redis_connection()</code> to distinguish missing dependencies from connection failures.</p>
-<h3><code>get_redis_config()</code> is a legacy API with environment coupling</h3>
-<p><code>get_redis_config()</code> reads connection parameters directly from environment variables and returns a plain dict. It does not validate the values it reads. If <code>REDIS_URL</code> is malformed or missing, downstream callers like <code>get_redis_memory()</code> will fail at connection time rather than at configuration time — often with a misleading error. Prefer constructing a <code>RedisConfig</code> object explicitly, or validate the URL with <code>parse_redis_url()</code> before passing it on.</p>
-<h3><code>parse_redis_url()</code> does not raise on invalid input</h3>
-<p><code>parse_redis_url()</code> returns a dict of connection parameters parsed from a URL string. It does not raise an exception if the URL is structurally invalid — it may return partial or empty values. Code that calls this function and then passes results directly to a Redis client can fail with an obscure connection error rather than a clear parse error. Check the returned dict for required keys (<code>host</code>, <code>port</code>) before using it.</p>
-<h3><code>get_railway_redis()</code> raises <code>OSError</code> when <code>REDIS_URL</code> is absent</h3>
-<p>Unlike the other config helpers, <code>get_railway_redis()</code> raises <code>OSError</code> if <code>REDIS_URL</code> is not set in the environment. If you call this function outside a Railway deployment, you will get an <code>OSError</code> with instructions to run <code>railway add --database redis</code>. Wrap calls to this function in an environment check or a <code>try/except OSError</code> block when using it in code that may run locally.</p>
-<h3><code>ClaudeMemoryConfig.max_import_depth</code> caps recursive CLAUDE.md loading</h3>
-<p><code>ClaudeMemoryLoader</code> follows <code>@import</code> directives in CLAUDE.md files up to <code>max_import_depth</code> (default: <code>5</code>). Import chains deeper than this limit are silently truncated — no warning is raised and <code>load_all_memory()</code> returns whatever it loaded before hitting the limit. If your project uses nested imports and memory content appears incomplete, lower <code>max_import_depth</code> incrementally and call <code>get_loaded_files()</code> to confirm which files were actually loaded.</p>
+<h3>Secrets and PII stored without classification</h3>
+<p><code>MemDocsStorage</code> and <code>SecureMemDocsIntegration</code> apply classification rules automatically, but only when the content passes through their security layer. If you write directly to a <code>MemoryBackend</code> via <code>stash()</code>, the <code>SecretsDetector</code> and <code>PIIScrubber</code> are bypassed entirely. Content containing values that match <code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, or <code>SENSITIVE_PATTERN_TYPES</code> will be stored in plaintext with no access controls.</p>
+<p><strong>Mitigation:</strong> Route writes that may contain sensitive content through <code>SecureMemDocsIntegration</code> rather than calling <code>stash()</code> directly on a backend.</p>
+<h3><code>get_redis_memory()</code> silently falls back to a mock backend</h3>
+<p><code>get_redis_memory()</code> accepts a <code>use_mock</code> parameter. When <code>use_mock</code> is <code>None</code> (the default), the function reads an environment variable to decide. In environments where that variable is unset or Redis is unreachable, it may silently return a mock backend. Code that assumes a real Redis connection — for example, anything relying on TTL expiry or pub/sub via <code>CHANNEL_SESSIONS</code> — will appear to work but will not persist data or coordinate across agents.</p>
+<p><strong>Mitigation:</strong> Call <code>is_redis_available()</code> before <code>get_redis_memory()</code> to confirm the Redis subsystem is reachable, or check <code>is_connected()</code> on the returned backend before proceeding.</p>
+<h3><code>get_railway_redis()</code> raises <code>OSError</code> when <code>REDIS_URL</code> is missing</h3>
+<p><code>get_railway_redis()</code> has no fallback. If <code>REDIS_URL</code> is not set in the environment, it raises <code>OSError</code> immediately with instructions to run <code>railway add --database redis</code>. This is intentional, but it means any startup path that calls this function without a guard will crash the process rather than degrading gracefully.</p>
+<p><strong>Mitigation:</strong> Check for <code>REDIS_URL</code> in the environment before calling <code>get_railway_redis()</code>, or wrap the call and handle <code>OSError</code> explicitly.</p>
+<h3><code>ClaudeMemoryLoader</code> follows imports up to <code>max_import_depth</code></h3>
+<p><code>ClaudeMemoryConfig</code> defaults to <code>max_import_depth: int = 5</code>. <code>ClaudeMemoryLoader.load_all_memory()</code> follows <code>@import</code> directives in CLAUDE.md files recursively to that depth. A deeply nested or circular import chain will not raise an error at depth 5 — it will silently truncate. If your project memory relies on files at depth 6 or beyond, those files will not be loaded and <code>get_loaded_files()</code> will not list them.</p>
+<p><strong>Mitigation:</strong> Keep import chains shallow. Call <code>get_loaded_files()</code> after <code>load_all_memory()</code> to verify the expected files were included.</p>
 <h3><code>max_file_size_bytes</code> silently skips large memory files</h3>
-<p><code>ClaudeMemoryConfig</code> sets a default <code>max_file_size_bytes</code> of 1,000,000 bytes (1 MB). Files exceeding this limit are skipped without raising an error. If a CLAUDE.md file is not being loaded and <code>validate_files</code> is <code>True</code>, check whether the file size exceeds this threshold before investigating other causes.</p>
-<h3>Security classification keywords drive access control</h3>
-<p>The <code>classify_pattern()</code> function uses hardcoded keyword lists (<code>HEALTHCARE_KEYWORDS</code>, <code>FINANCIAL_KEYWORDS</code>, <code>PROPRIETARY_KEYWORDS</code>) to assign classification levels that gate access via <code>check_access()</code>. Patterns containing words like <code>patient</code>, <code>credit card</code>, or <code>confidential</code> will be classified automatically. If a pattern is unexpectedly restricted, inspect its content against these keyword lists rather than assuming a bug in the access control logic.</p>
+<p><code>ClaudeMemoryConfig</code> defaults to <code>max_file_size_bytes: int = 1000000</code> (1 MB). Files that exceed this limit are skipped without raising an exception. A CLAUDE.md that grows past 1 MB through accumulated lessons or imports will be excluded from the loaded context with no visible indication.</p>
+<p><strong>Mitigation:</strong> Set <code>validate_files: bool = True</code> in your <code>ClaudeMemoryConfig</code> (the default) and monitor the size of memory files in long-running projects.</p>
+<h3><code>promote()</code> on <code>SearchableMemoryBackend</code> moves all session data</h3>
+<p><code>SearchableMemoryBackend.promote()</code> transfers memory from a session to long-term storage. The <code>session_id</code> parameter is optional; if omitted, the method uses a default session. Calling <code>promote()</code> without an explicit <code>session_id</code> in a multi-agent setup — where multiple agents share a Redis instance via <code>KEY_ACTIVE_AGENTS</code> — can promote the wrong session's data.</p>
+<p><strong>Mitigation:</strong> Always pass an explicit <code>session_id</code> to <code>promote()</code> when running more than one agent against the same backend.</p>
+<h3><code>clear_short_term()</code> on <code>MemoryControlPanel</code> is not scoped by default</h3>
+<p><code>MemoryControlPanel.clear_short_term()</code> accepts an <code>agent_id</code> parameter that defaults to <code>'admin'</code>. Passing the wrong <code>agent_id</code>, or relying on the default in a multi-agent deployment, will clear memory belonging to a different agent rather than the intended one.</p>
+<p><strong>Mitigation:</strong> Pass the specific <code>agent_id</code> whose short-term memory you intend to clear, and confirm with <code>get_statistics()</code> before and after.</p>
 <h2>How to avoid problems</h2>
-<ul>
+<ol>
 <li>
-<p><strong>Distinguish unavailability from misconfiguration.</strong> When <code>is_redis_available()</code> returns <code>False</code>, call <code>check_redis_connection()</code> to get a status dict that separates import failures from connection failures.</p>
+<p><strong>Verify backend identity before writing.</strong> Call <code>is_connected()</code> on any <code>MemoryBackend</code> instance before writing session-critical data. For Railway deployments, confirm <code>REDIS_URL</code> is set before calling <code>get_railway_redis()</code>.</p>
 </li>
 <li>
-<p><strong>Validate Redis URLs before use.</strong> Call <code>parse_redis_url()</code> and confirm the returned dict contains <code>host</code> and <code>port</code> before passing parameters to a Redis client.</p>
+<p><strong>Route sensitive content through the security layer.</strong> Direct <code>stash()</code> calls bypass <code>SecretsDetector</code>, <code>PIIScrubber</code>, and <code>EncryptionManager</code>. Use <code>SecureMemDocsIntegration</code> for any content that might contain values matching the HEALTHCARE, FINANCIAL, or PROPRIETARY keyword sets.</p>
 </li>
 <li>
-<p><strong>Audit loaded memory files explicitly.</strong> After calling <code>load_all_memory()</code>, call <code>get_loaded_files()</code> to verify the full set of files was loaded. Gaps indicate truncated import chains or files exceeding <code>max_file_size_bytes</code>.</p>
+<p><strong>Audit loaded memory files explicitly.</strong> After <code>load_all_memory()</code>, call <code>get_loaded_files()</code> to confirm your expected CLAUDE.md files are present. Missing files are almost always caused by <code>max_import_depth</code> or <code>max_file_size_bytes</code> limits.</p>
 </li>
 <li>
-<p><strong>Guard <code>get_railway_redis()</code> with an environment check.</strong> Check for <code>REDIS_URL</code> in <code>os.environ</code> before calling this function in code that runs outside Railway, or catch <code>OSError</code> and surface a clear message.</p>
+<p><strong>Scope destructive operations to a specific agent.</strong> Pass explicit <code>agent_id</code> and <code>session_id</code> arguments to <code>clear_short_term()</code> and <code>promote()</code> to avoid operating on the wrong agent's data in shared-Redis deployments.</p>
 </li>
-<li>
-<p><strong>Treat <code>_</code>-prefixed helpers as unstable.</strong> Private functions in this module can change without notice. Depend only on the public API surface documented in <code>MemoryBackend</code> and <code>SearchableMemoryBackend</code>.</p>
-</li>
-<li>
-<p><strong>Run <code>pytest -k &quot;memory&quot;</code> before merging changes.</strong> Environment variables and module-level cached values can cause memory behavior to differ between local runs and CI. If a test passes locally but fails in CI, check for implicit state from <code>get_redis_config()</code> or cached <code>ClaudeMemoryLoader</code> instances — call <code>clear_cache()</code> between tests.</p>
-</li>
-</ul>
+</ol>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/memory/**</code></li>

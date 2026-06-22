@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Troubleshoot models — troubleshooting</title>
-  <meta name="description" content="The `models` feature covers three interconnected concerns: LLM authentication strategy (`AuthStrategy`), adaptive model routing (`AdaptiveModelRouter`), and provider circuit-breaking (`CircuitBreaker`" />
-  <meta property="og:title" content="Troubleshoot models — troubleshooting" />
-  <meta property="og:description" content="The `models` feature covers three interconnected concerns: LLM authentication strategy (`AuthStrategy`), adaptive model routing (`AdaptiveModelRouter`), and provider circuit-breaking (`CircuitBreaker`" />
+  <title>LLM authentication, provider routing, and tier management — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError` from `get_model` | Provider other than `&quot;anthropic&quot;` passed | Pass `&quot;anthropic&quot;`; this provider set is single today | high | | `ge" />
+  <meta property="og:title" content="LLM authentication, provider routing, and tier management — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `ValueError` from `get_model` | Provider other than `&quot;anthropic&quot;` passed | Pass `&quot;anthropic&quot;`; this provider set is single today | high | | `ge" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/models/troubleshooting" />
   <style>
@@ -258,134 +258,97 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Troubleshoot models</h1>
-<h2>Before you start</h2>
-<p>The <code>models</code> feature covers three interconnected concerns: LLM authentication strategy (<code>AuthStrategy</code>), adaptive model routing (<code>AdaptiveModelRouter</code>), and provider circuit-breaking (<code>CircuitBreaker</code>). A failure in any one of these can surface as a misrouted task, an unexpected provider error, or a silent wrong result.</p>
-<h2>Symptom table</h2>
+<h1>LLM authentication, provider routing, and tier management</h1>
+<h2>Failure modes</h2>
 <table>
 <thead>
 <tr>
-<th>If you observe</th>
-<th>Check</th>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Wrong model selected for a task</td>
-<td><code>AdaptiveModelRouter.get_best_model()</code> — inspect the <code>workflow</code>, <code>stage</code>, and <code>max_cost</code>/<code>max_latency_ms</code> constraints you are passing</td>
+<td><code>ValueError</code> from <code>get_model</code></td>
+<td>Provider other than <code>&quot;anthropic&quot;</code> passed</td>
+<td>Pass <code>&quot;anthropic&quot;</code>; this provider set is single today</td>
+<td>high</td>
 </tr>
 <tr>
-<td>All requests routed to a single provider</td>
-<td><code>CircuitBreaker.get_status()</code> — one or more providers may have an open circuit (<code>is_open: true</code>)</td>
+<td><code>get_model(...)</code> returns <code>None</code></td>
+<td>No model registered for that provider/tier</td>
+<td>Check the tier value (<code>ModelTier.CHEAP.value</code>, not the enum) and guard the result</td>
+<td>high</td>
 </tr>
 <tr>
-<td><code>LLMResponse.success</code> is <code>False</code> or <code>content</code> is empty</td>
-<td>Check <code>LLMResponse.model_id</code>, <code>provider</code>, and <code>latency_ms</code> — the executor may have hit a timeout or received an empty payload</td>
+<td><code>ValueError</code> from <code>get_tasks_for_tier</code></td>
+<td>Unknown tier argument</td>
+<td>Pass a real <code>ModelTier</code>, not a raw string</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Cost or token estimates look wrong</td>
-<td><code>AuthStrategy.estimate_cost()</code> and <code>estimate_tokens()</code> — verify <code>loc_to_tokens_multiplier</code> (default <code>4.0</code>) and that <code>subscription_tier</code> matches your actual plan</td>
+<td>A task routes to <code>CAPABLE</code> unexpectedly</td>
+<td>The task string is unknown, so it defaulted</td>
+<td>Call <code>is_known_task</code> first; add the task to the tier map if it should be classified</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Auth setup appears complete but routing uses wrong mode</td>
-<td><code>cmd_auth_status</code> — confirm <code>setup_completed: true</code> and <code>default_mode</code> in the saved strategy file (<code>AUTH_STRATEGY_FILE</code>)</td>
+<td><code>AUTO</code> returns <code>API</code> on a PRO account regardless of module size</td>
+<td><code>get_recommended_mode</code> resolves by tier first; <code>PRO</code>/<code>API_ONLY</code> always return <code>API</code></td>
+<td>Expected — only <code>MAX</code>/<code>ENTERPRISE</code> tiers use size-based selection</td>
+<td>medium</td>
 </tr>
 <tr>
-<td>Intermittent failures on one provider</td>
-<td><code>CircuitBreaker</code> state — check <code>failure_count</code> and <code>last_failure</code>; the breaker opens after 5 failures and stays open for 60 seconds by default</td>
+<td>Auth always picks the mode you set, ignoring <code>AUTO</code> logic</td>
+<td><code>default_mode</code> is <code>SUBSCRIPTION</code> or <code>API</code>, not <code>AUTO</code></td>
+<td>Set <code>default_mode = AuthMode.AUTO</code> so it defers to <code>get_recommended_mode</code></td>
+<td>medium</td>
 </tr>
 <tr>
-<td><code>get_best_model()</code> raises or returns unexpected fallback</td>
-<td>Telemetry store may lack sufficient samples — <code>ModelPerformance.sample_size</code> below threshold causes the router to fall back to defaults</td>
+<td><code>await</code> error calling an executor's <code>run</code></td>
+<td><code>LLMExecutor.run</code> is async and was called without <code>await</code></td>
+<td><code>await executor.run(...)</code> or drive it with <code>asyncio.run</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td><code>AdaptiveModelRouter</code> returns the same model regardless of cost</td>
+<td>Fewer than <code>MIN_SAMPLE_SIZE</code> calls recorded</td>
+<td>Accumulate telemetry; until then it falls back to static defaults</td>
+<td>low</td>
 </tr>
 </tbody>
 </table>
-<h2>Step-by-step diagnosis</h2>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>Tier value vs enum.</strong> Registry lookups take the tier <strong>value</strong>
+(<code>tier.value</code>), while routing functions accept either a <code>ModelTier</code>
+or its string. Mixing the two silently returns <code>None</code> from
+<code>get_model</code>. Pass <code>tier.value</code> to <code>get_model</code>.</li>
+<li><strong>Unknown tasks default silently.</strong> <code>get_tier_for_task</code> never raises;
+an unrecognized task quietly becomes <code>CAPABLE</code>. Validate with
+<code>is_known_task</code> when the task source is untrusted.</li>
+<li><strong>Cost fields are per-million on <code>ModelInfo</code>, per-1k on the
+properties.</strong> <code>input_cost_per_million</code> is the stored field;
+<code>cost_per_1k_input</code> is the derived property. Don't mix the units when
+computing an estimate.</li>
+<li><strong><code>get_provider_config</code> is a lazy global.</strong> It loads once and caches;
+call <code>reset_provider_config()</code> after writing a new config file if you
+need the change to take effect in a long-lived process.</li>
+</ul>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Reproduce the failure in isolation.</strong>
-Strip the call to its required arguments. For routing issues, call <code>AdaptiveModelRouter.get_best_model(workflow, stage)</code> directly. For auth issues, call <code>get_auth_strategy()</code> and print the result. Confirm the failure occurs outside the surrounding workflow before going deeper.</p>
-</li>
-<li>
-<p><strong>Check circuit-breaker state.</strong>
-Call <code>CircuitBreaker.get_status()</code> and look for any provider where <code>is_open</code> is <code>True</code>. An open circuit silently redirects all traffic away from that provider:</p>
-<pre><code class="language-python">from attune.models import CircuitBreaker
-cb = CircuitBreaker()
-print(cb.get_status())
-</code></pre>
-<p>To reset a tripped breaker manually:</p>
-<pre><code class="language-python">cb.reset(provider=&quot;anthropic&quot;)   # reset one provider
-cb.reset()                        # reset all providers
-</code></pre>
-</li>
-<li>
-<p><strong>Inspect the auth strategy on disk.</strong>
-Run the CLI to see exactly what the saved strategy contains:</p>
-<pre><code>attune auth status
-</code></pre>
-<p>Or call <code>cmd_auth_status</code> directly. If <code>setup_completed</code> is <code>False</code> or the file is missing, re-run interactive setup:</p>
-<pre><code>attune auth setup
-</code></pre>
-</li>
-<li>
-<p><strong>Check routing telemetry.</strong>
-Call <code>AdaptiveModelRouter.get_routing_stats(workflow, stage, days=7)</code> to see what the router knows about recent performance. If <code>sample_size</code> is 0 or very low, the router has no signal and falls back to tier defaults — this is expected behavior, not a bug.</p>
-</li>
-<li>
-<p><strong>Enable DEBUG logging and re-run.</strong>
-Set the log level before executing the failing call:</p>
-<pre><code class="language-python">import logging
-logging.basicConfig(level=logging.DEBUG)
-</code></pre>
-<p>The executor logs model selection, latency, and cost estimates at DEBUG level. This often reveals which routing constraint (<code>max_cost</code>, <code>max_latency_ms</code>, or <code>min_success_rate</code>) is eliminating candidates.</p>
-</li>
-<li>
-<p><strong>Run the related tests.</strong></p>
-<pre><code>pytest -k &quot;models&quot; -v
-</code></pre>
-<p>If a test covers the failing path, run it in isolation first. Passing tests confirm that the core logic is intact and the issue is likely in configuration or environment.</p>
-</li>
+<li>Print the resolved tier: <code>get_tier_for_task(task)</code> — confirms the
+classification before any model lookup.</li>
+<li>Print the model: <code>get_model(&quot;anthropic&quot;, tier.value)</code> — <code>None</code> means
+a registry gap or a tier passed as an enum instead of <code>.value</code>.</li>
+<li>Inspect auth: <code>attune auth status --json</code> — confirms
+<code>setup_completed</code> and the active mode.</li>
+<li>Inspect provider: <code>attune provider show</code> — confirms the provider and
+mode the lookups will use.</li>
+<li>For routing surprises, read <code>AdaptiveModelRouter.get_routing_stats( workflow, stage)</code> to see sample size and per-model performance.</li>
 </ol>
-<h2>Common fixes</h2>
-<ul>
-<li>
-<p><strong>Open circuit breaker blocking a provider.</strong>
-Call <code>CircuitBreaker.reset(provider=&quot;&lt;name&gt;&quot;)</code> to re-enable the provider immediately. If it trips again quickly, the underlying provider is genuinely unhealthy — check API status or rotate credentials.</p>
-</li>
-<li>
-<p><strong>Auth strategy file missing or corrupt.</strong>
-Delete the file at <code>AUTH_STRATEGY_FILE</code> and re-run setup:</p>
-<pre><code>attune auth reset
-attune auth setup
-</code></pre>
-</li>
-<li>
-<p><strong>Wrong subscription tier configured.</strong>
-If <code>AuthStrategy.subscription_tier</code> does not match your actual Claude plan, cost estimates and mode recommendations will be wrong. Update via <code>attune auth setup</code> or edit the strategy file and reload with <code>AuthStrategy.load()</code>.</p>
-</li>
-<li>
-<p><strong><code>get_best_model()</code> ignores a preferred model due to cost constraint.</strong>
-Lower or remove the <code>max_cost</code> argument to confirm the constraint is the cause. If the constraint is intentional, call <code>AdaptiveModelRouter.recommend_tier_upgrade(workflow, stage)</code> to see whether a tier upgrade would unblock routing.</p>
-</li>
-<li>
-<p><strong><code>min_success_rate</code> too high for available telemetry.</strong>
-The default is <code>0.8</code>. If your telemetry store is new or sparse, no model may meet this threshold. Pass a lower value explicitly until enough samples accumulate:</p>
-<pre><code class="language-python">router.get_best_model(workflow, stage, min_success_rate=0.5)
-</code></pre>
-</li>
-<li>
-<p><strong>Dependency version mismatch.</strong>
-A <code>pip</code> upgrade can change provider client behavior. Confirm installed versions with:</p>
-<pre><code>pip show anthropic
-</code></pre>
-<p>This change is outside the <code>models</code> feature itself — pin the version in your requirements file if the mismatch caused a regression.</p>
-</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/models/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>models</code>, <code>auth</code>, <code>llm</code></p>
 
   </article>
   <footer>

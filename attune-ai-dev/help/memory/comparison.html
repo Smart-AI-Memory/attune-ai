@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Memory backends and storage strategies — comparison</title>
-  <meta name="description" content="The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (`RedisSh" />
-  <meta property="og:title" content="Comparison: Memory backends and storage strategies — comparison" />
-  <meta property="og:description" content="The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (`RedisSh" />
+  <title>Comparison: Memory backends — comparison</title>
+  <meta name="description" content="The memory subsystem offers two backend tiers — a base protocol (`MemoryBackend`) and an extended protocol (`SearchableMemoryBackend`) — plus two complementary integration paths: Redis-backed short-te" />
+  <meta property="og:title" content="Comparison: Memory backends — comparison" />
+  <meta property="og:description" content="The memory subsystem offers two backend tiers — a base protocol (`MemoryBackend`) and an extended protocol (`SearchableMemoryBackend`) — plus two complementary integration paths: Redis-backed short-te" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/memory/comparison" />
   <style>
@@ -258,119 +258,198 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Memory backends and storage strategies</h1>
-<h2>Context</h2>
-<p>The memory subsystem provides short-term storage, semantic lookup, and security controls for Attune AI agents. Three distinct storage strategies are available: Redis-backed short-term memory (<code>RedisShortTermMemory</code>), file-based session memory (<code>FileSessionMemory</code>), and Claude Code memory files (<code>ClaudeMemoryLoader</code>). Each targets a different combination of persistence, distribution, and search capability.</p>
-<h2>Feature comparison</h2>
+<h1>Comparison: Memory backends</h1>
+<h2>Overview</h2>
+<p>The memory subsystem offers two backend tiers — a base protocol (<code>MemoryBackend</code>) and an extended protocol (<code>SearchableMemoryBackend</code>) — plus two complementary integration paths: Redis-backed short-term memory and Claude Code file-based memory (<code>ClaudeMemoryLoader</code>). Choosing the right combination depends on whether you need distributed state, semantic search, or static project context loaded at startup.</p>
+<h2>Backend protocol comparison</h2>
 <table>
 <thead>
 <tr>
 <th>Capability</th>
-<th>Redis (<code>RedisShortTermMemory</code>)</th>
-<th>File session (<code>FileSessionMemory</code>)</th>
-<th>Claude memory (<code>ClaudeMemoryLoader</code>)</th>
+<th><code>MemoryBackend</code></th>
+<th><code>SearchableMemoryBackend</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Primary purpose</strong></td>
-<td>Fast short-term storage for live agents</td>
-<td>Durable per-session storage without a running server</td>
-<td>Load static project and user context from <code>CLAUDE.md</code> files</td>
+<td>Basic store / retrieve / delete</td>
+<td>✅ <code>stash</code>, <code>retrieve</code>, <code>delete</code></td>
+<td>✅ inherits all base methods</td>
 </tr>
 <tr>
-<td><strong>Persistence across restarts</strong></td>
-<td>No — data lives until TTL expires or <code>clear_short_term()</code> is called</td>
-<td>Yes — written to <code>storage_dir</code> on disk</td>
-<td>Yes — reads from committed files</td>
+<td>Key-pattern listing</td>
+<td>✅ <code>keys(pattern)</code></td>
+<td>✅</td>
 </tr>
 <tr>
-<td><strong>Distributed / multi-agent</strong></td>
-<td>Yes — <code>supports_distributed()</code> returns <code>True</code>; sessions coordinated via <code>CrossSessionCoordinator</code></td>
-<td>No</td>
-<td>No</td>
+<td>Connection health check</td>
+<td>✅ <code>is_connected()</code>, <code>get_stats()</code></td>
+<td>✅</td>
 </tr>
 <tr>
-<td><strong>Semantic search</strong></td>
-<td>Yes — <code>SearchableMemoryBackend.search()</code> with filters and <code>promote()</code></td>
-<td>No</td>
-<td>No</td>
+<td>Distributed support</td>
+<td>runtime flag via <code>supports_distributed()</code></td>
+<td>runtime flag via <code>supports_distributed()</code></td>
 </tr>
 <tr>
-<td><strong>Real-time pub/sub</strong></td>
-<td>Yes — <code>supports_realtime()</code> returns <code>True</code>; uses <code>CHANNEL_SESSIONS</code></td>
-<td>No</td>
-<td>No</td>
+<td>Real-time pub/sub support</td>
+<td>runtime flag via <code>supports_realtime()</code></td>
+<td>runtime flag via <code>supports_realtime()</code></td>
 </tr>
 <tr>
-<td><strong>TTL-based expiry</strong></td>
-<td>Yes — per-key TTL via <code>stash(key, value, ttl=…)</code></td>
-<td>No built-in TTL</td>
-<td>N/A — read-only</td>
+<td>Semantic search</td>
+<td>❌</td>
+<td>✅ <code>search(query, limit, **filters)</code></td>
 </tr>
 <tr>
-<td><strong>External dependency</strong></td>
-<td>Redis server required; check with <code>is_redis_available()</code></td>
-<td>None</td>
-<td>None</td>
+<td>Long-term memory promotion</td>
+<td>❌</td>
+<td>✅ <code>promote(session_id)</code></td>
 </tr>
 <tr>
-<td><strong>Security / PII controls</strong></td>
-<td><code>PIIScrubber</code>, <code>SecretsDetector</code>, <code>EncryptionManager</code>, <code>AuditLogger</code></td>
-<td>Inherits audit dir via <code>ControlPanelConfig</code></td>
-<td><code>validate_files</code>, <code>max_file_size_bytes</code>, <code>max_import_depth</code></td>
+<td>Content-addressed storage</td>
+<td>❌</td>
+<td>✅ <code>remember(content, memory_id, session_id, topics)</code></td>
 </tr>
 <tr>
-<td><strong>Railway / cloud setup</strong></td>
-<td><code>get_railway_redis()</code> — raises <code>OSError</code> if <code>REDIS_URL</code> is absent</td>
-<td>Not cloud-specific</td>
-<td>Not cloud-specific</td>
+<td>Pruning by age</td>
+<td>❌</td>
+<td>✅ <code>prune(max_age_days)</code></td>
 </tr>
 <tr>
-<td><strong>Read-only?</strong></td>
-<td>No</td>
-<td>No</td>
-<td>Yes — <code>load_all_memory()</code> only</td>
-</tr>
-<tr>
-<td><strong>Deprecated?</strong></td>
-<td>No</td>
-<td>No</td>
-<td>Redis config module (<code>config.py</code>) is deprecated; use <code>get_redis_memory()</code> or <code>get_railway_redis()</code></td>
+<td>Recent-item retrieval</td>
+<td>❌</td>
+<td>✅ <code>recent(limit, **filters)</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs in detail</h2>
-<h3>Redis short-term memory</h3>
-<p>Redis is the right backend when multiple agents share state in the same session or across sessions. <code>CrossSessionCoordinator</code> uses <code>KEY_ACTIVE_AGENTS</code> and a service lock (<code>KEY_SERVICE_LOCK</code>) to prevent conflicts. <code>stash()</code> accepts a per-key TTL, so entries expire automatically without manual cleanup. The cost is an external dependency: if Redis is unavailable, <code>is_redis_available()</code> returns <code>False</code> and you must fall back to a mock or file backend.</p>
-<h3>File session memory</h3>
-<p><code>FileSessionMemory</code> writes to a local <code>storage_dir</code> and requires no running server, making it suitable for single-agent workflows, CI environments, or offline development. It does not implement <code>supports_realtime()</code> or <code>supports_distributed()</code>, and it has no TTL mechanism — callers are responsible for pruning stale entries.</p>
-<h3>Claude memory files</h3>
-<p><code>ClaudeMemoryLoader</code> reads <code>CLAUDE.md</code> files at up to <code>max_import_depth</code> levels (default 5) and merges them into a single string via <code>load_all_memory()</code>. It is read-only: there is no <code>stash()</code> or <code>delete()</code> equivalent. Use it to inject stable project conventions, enterprise policies, or user preferences into an agent's context, not to store runtime state.</p>
-<h2>Use Redis when…</h2>
+<p><code>SearchableMemoryBackend</code> is a strict superset of <code>MemoryBackend</code>. There is no scenario where the base protocol is preferable on features alone; the base protocol exists so that lightweight backends can satisfy the contract without implementing search infrastructure.</p>
+<h2>Storage path comparison</h2>
+<table>
+<thead>
+<tr>
+<th>Dimension</th>
+<th>Redis short-term memory</th>
+<th>Claude file memory (<code>ClaudeMemoryLoader</code>)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backing store</strong></td>
+<td>Redis instance (local or remote)</td>
+<td>Filesystem (<code>CLAUDE.md</code> files)</td>
+</tr>
+<tr>
+<td><strong>Persistence</strong></td>
+<td>TTL-controlled; evicted when TTL expires or Redis restarts</td>
+<td>Persists as long as the file exists; survives process restarts</td>
+</tr>
+<tr>
+<td><strong>Scope</strong></td>
+<td>Per-agent or shared across agents via <code>agent_id</code> param</td>
+<td>Per-project; scoped by <code>project_root</code> in <code>ClaudeMemoryConfig</code></td>
+</tr>
+<tr>
+<td><strong>Distributed</strong></td>
+<td>Yes — multiple agents share one Redis</td>
+<td>No — file reads are local to the process</td>
+</tr>
+<tr>
+<td><strong>Import depth</strong></td>
+<td>N/A</td>
+<td>Configurable via <code>max_import_depth</code> (default 5 levels)</td>
+</tr>
+<tr>
+<td><strong>File size guard</strong></td>
+<td>N/A</td>
+<td>Enforced via <code>max_file_size_bytes</code> (default 1 MB)</td>
+</tr>
+<tr>
+<td><strong>Entry point</strong></td>
+<td><code>get_redis_memory(url, use_mock)</code></td>
+<td><code>ClaudeMemoryLoader(config).load_all_memory(project_root)</code></td>
+</tr>
+<tr>
+<td><strong>Railway support</strong></td>
+<td><code>get_railway_redis()</code> — raises <code>OSError</code> if <code>REDIS_URL</code> is absent</td>
+<td>Not applicable</td>
+</tr>
+<tr>
+<td><strong>Availability check</strong></td>
+<td><code>is_redis_available()</code> — safe to call without importing Redis</td>
+<td>No equivalent; file presence is the availability signal</td>
+</tr>
+<tr>
+<td><strong>Typical data</strong></td>
+<td>Ephemeral agent state, session keys, short-lived values</td>
+<td>Project conventions, framework guidelines, reusable instructions</td>
+</tr>
+</tbody>
+</table>
+<h2>Feature matrix: enterprise control plane</h2>
+<p><code>MemoryControlPanel</code> adds an operational layer on top of Redis short-term memory. It has no equivalent for file-based memory.</p>
+<table>
+<thead>
+<tr>
+<th>Operation</th>
+<th>API method</th>
+<th>Notes</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Redis lifecycle</td>
+<td><code>start_redis(verbose)</code>, <code>stop_redis()</code></td>
+<td>Only relevant when <code>ControlPanelConfig.auto_start_redis</code> is <code>True</code></td>
+</tr>
+<tr>
+<td>Health and stats</td>
+<td><code>health_check()</code>, <code>get_statistics()</code>, <code>status()</code></td>
+<td>Returns <code>MemoryStats</code> / <code>dict</code></td>
+</tr>
+<tr>
+<td>Pattern management</td>
+<td><code>list_patterns(classification, limit)</code>, <code>delete_pattern(pattern_id, user_id)</code></td>
+<td>Supports classification filtering</td>
+</tr>
+<tr>
+<td>Bulk operations</td>
+<td><code>clear_short_term(agent_id)</code>, <code>export_patterns(output_path, classification)</code></td>
+<td>Export writes to a file path</td>
+</tr>
+<tr>
+<td>HTTP API surface</td>
+<td><code>run_api_server(panel, host, port, api_key, ...)</code></td>
+<td>Includes rate limiting, SSL, and CORS via <code>RateLimiter</code> and <code>APIKeyAuth</code></td>
+</tr>
+</tbody>
+</table>
+<p>There is no <code>MemoryControlPanel</code> equivalent for <code>ClaudeMemoryLoader</code>. If you need audit logging, PII scrubbing (<code>PIIScrubber</code>), secrets detection (<code>SecretsDetector</code>), or access classification (<code>ClassificationRules</code>), those are Redis-path concerns.</p>
+<h2>Decision guide</h2>
+<p><strong>Use Redis short-term memory (<code>get_redis_memory</code>) when:</strong></p>
 <ul>
-<li>You run more than one agent concurrently and need shared, consistent state.</li>
-<li>You need key expiry without manual cleanup (<code>ttl</code> parameter in <code>stash()</code>).</li>
-<li>You need semantic search over stored patterns (<code>SearchableMemoryBackend.search()</code>).</li>
-<li>You are deploying to Railway or another cloud platform — use <code>get_railway_redis()</code> and ensure <code>REDIS_URL</code> is set.</li>
+<li>Multiple agents need to share state within or across sessions — <code>supports_distributed()</code> must return <code>True</code>.</li>
+<li>You need TTL-controlled eviction: stale values should disappear automatically.</li>
+<li>You are deploying to Railway and have a Redis add-on; use <code>get_railway_redis()</code>.</li>
+<li>You need the enterprise control plane: audit logging, pattern export, PII scrubbing, or the HTTP API.</li>
+<li>You want real-time coordination between agents (pub/sub via <code>supports_realtime()</code>).</li>
 </ul>
-<h2>Use file session memory when…</h2>
+<p><strong>Use <code>ClaudeMemoryLoader</code> when:</strong></p>
 <ul>
-<li>You are running a single agent in a CI job or offline environment where Redis is unavailable.</li>
-<li>You need persistence across process restarts but have no infrastructure budget for a Redis instance.</li>
-<li>You do not need semantic search or cross-agent coordination.</li>
+<li>You need to inject static project context — coding conventions, framework rules, project-specific instructions — into an agent at startup.</li>
+<li>The content lives in <code>CLAUDE.md</code> files and is edited by humans, not written programmatically.</li>
+<li>You want zero infrastructure: no Redis, no network, no TTLs.</li>
+<li>Memory must survive process restarts without any explicit persistence code.</li>
 </ul>
-<h2>Use Claude memory files when…</h2>
+<p><strong>Use <code>SearchableMemoryBackend</code> (over <code>MemoryBackend</code>) when:</strong></p>
 <ul>
-<li>You want to load static project conventions (<code>CLAUDE.md</code>) or enterprise-level guidelines (<code>load_enterprise=True</code>) into an agent at startup.</li>
-<li>Your memory content changes infrequently — it is committed to the repository and versioned there.</li>
-<li>You need to impose file-size and depth limits on what an agent can read (<code>max_file_size_bytes</code>, <code>max_import_depth</code>, <code>validate_files</code>).</li>
+<li>Your backend implementation supports semantic search and you want to expose <code>search</code>, <code>remember</code>, <code>promote</code>, and <code>prune</code> to callers.</li>
+<li>You are writing a backend adapter and the underlying store (e.g., a vector database) can satisfy the full contract.</li>
 </ul>
-<h2>What to avoid</h2>
+<p><strong>Stick with the base <code>MemoryBackend</code> when:</strong></p>
 <ul>
-<li>Do not call <code>get_redis_config()</code> in new code — the Redis config module is marked deprecated. Use <code>get_redis_memory()</code> or <code>get_railway_redis()</code> instead.</li>
-<li>Do not patch the internal <code>MemoryBackend</code> protocol methods directly. If the public API (<code>stash</code>, <code>retrieve</code>, <code>delete</code>, <code>keys</code>) does not meet your needs, propose an extension via <code>SearchableMemoryBackend</code> or file an issue.</li>
-<li>Do not wire up <code>RedisShortTermMemory</code> for a single throwaway script. If you only need to pass data between two functions in the same process, a plain dict is faster and has no external dependency.</li>
+<li>You are implementing a lightweight backend (mock, in-memory, or test fixture) that does not need search.</li>
+<li>You want to enforce at the type level that a component only uses simple key-value operations.</li>
 </ul>
 <h2>Source files</h2>
 <ul>
