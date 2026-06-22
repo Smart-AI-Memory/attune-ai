@@ -1,6 +1,6 @@
 # attune-docs Marketplace — Keep, Automate, or Retire
 
-**Status:** draft — awaiting ratification
+**Status:** D1 ratified 2026-06-22 — Option A (retire + consolidate)
 **Owner:** Patrick + agent
 **Created:** 2026-06-22
 
