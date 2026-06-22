@@ -4,10 +4,12 @@
  * All pages should import from here to ensure consistency.
  * Update counts and descriptions here when features change.
  *
- * Marketplace mapping after the 2026-04-10 attune-docs split:
+ * Marketplace mapping (consolidated 2026-06-22, retiring the
+ * 2026-04-10 attune-docs split): all three plugins now live in the
+ * single Smart-AI-Memory/attune-ai marketplace.
  *   attune-ai     → Smart-AI-Memory/attune-ai marketplace
- *   attune-help   → Smart-AI-Memory/attune-docs marketplace
- *   attune-author → Smart-AI-Memory/attune-docs marketplace
+ *   attune-help   → Smart-AI-Memory/attune-ai marketplace
+ *   attune-author → Smart-AI-Memory/attune-ai marketplace
  */
 
 // --- Products ---
@@ -56,7 +58,7 @@ export const PRODUCTS: Product[] = [
     tagline: "Lightweight reader for help templates",
     installCommand: "pip install attune-help",
     marketplaceInstall:
-      "claude plugin install attune-help@attune-docs",
+      "claude plugin install attune-help@attune-ai",
     description:
       "Standalone reader with just 1 dependency. Loads templates, " +
       "provides progressive depth (concept → task → reference), " +
@@ -78,7 +80,7 @@ export const PRODUCTS: Product[] = [
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
-      "claude plugin install attune-author@attune-docs",
+      "claude plugin install attune-author@attune-ai",
     description:
       "The AI authoring companion for attune-help. Generates 15 kinds " +
       "of source-grounded templates — concept, task, reference, " +

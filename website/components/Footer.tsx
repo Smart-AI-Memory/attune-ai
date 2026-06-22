@@ -148,12 +148,12 @@ export default function Footer() {
               </li>
               <li>
                 <a
-                  href="https://github.com/Smart-AI-Memory/attune-docs"
+                  href="https://github.com/Smart-AI-Memory/attune-ai"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm text-[var(--text-secondary)] hover:text-[var(--primary)] transition-colors"
                 >
-                  attune-docs marketplace
+                  Claude Code marketplace
                 </a>
               </li>
               <li>

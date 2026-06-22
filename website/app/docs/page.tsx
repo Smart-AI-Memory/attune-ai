@@ -50,7 +50,7 @@ const faqItems = [
   {
     question: 'Where do I install attune-help and attune-author from?',
     answer:
-      'Both ship on PyPI, which is the current and recommended source: `pip install attune-help` (the reader, no API key required) and `pip install \'attune-author[plugin]\'` (the AI authoring companion). The Claude Code plugin versions live in the separate Smart-AI-Memory/attune-docs marketplace (`claude plugin marketplace add Smart-AI-Memory/attune-docs`, then `attune-help@attune-docs` / `attune-author@attune-docs`), but that marketplace can lag the latest PyPI release.',
+      'Both ship on PyPI: `pip install attune-help` (the reader, no API key required) and `pip install \'attune-author[plugin]\'` (the AI authoring companion). Their Claude Code plugin versions now live in the same Smart-AI-Memory/attune-ai marketplace as attune-ai itself: `claude plugin marketplace add Smart-AI-Memory/attune-ai`, then `claude plugin install attune-help@attune-ai` / `attune-author@attune-ai`. (The old Smart-AI-Memory/attune-docs marketplace is retired.)',
   },
 ];
 
@@ -223,23 +223,22 @@ export default function DocsPage() {
                   Installing attune-help and attune-author
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  Both ship as Python packages on PyPI — the current,
-                  recommended way to install them. The Claude Code
-                  plugin versions live in the separate{" "}
+                  Both ship as Python packages on PyPI, and their Claude
+                  Code plugin versions now live in the same{" "}
                   <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
-                    Smart-AI-Memory/attune-docs
+                    Smart-AI-Memory/attune-ai
                   </code>{" "}
-                  marketplace, which can lag the latest PyPI release.
+                  marketplace as attune-ai itself.
                 </p>
                 <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
-                  <div className="text-white/50"># Recommended: install from PyPI (always current)</div>
+                  <div className="text-white/50"># Install from PyPI</div>
                   <div>pip install attune-help</div>
                   <div>pip install &apos;attune-author[plugin]&apos;</div>
                   <br />
-                  <div className="text-white/50"># Claude Code plugins (may lag the PyPI release)</div>
-                  <div>claude plugin marketplace add Smart-AI-Memory/attune-docs</div>
-                  <div>claude plugin install attune-help@attune-docs</div>
-                  <div>claude plugin install attune-author@attune-docs</div>
+                  <div className="text-white/50"># Or as Claude Code plugins from the attune-ai marketplace</div>
+                  <div>claude plugin marketplace add Smart-AI-Memory/attune-ai</div>
+                  <div>claude plugin install attune-help@attune-ai</div>
+                  <div>claude plugin install attune-author@attune-ai</div>
                 </div>
               </div>
             </div>
@@ -482,8 +481,8 @@ export default function DocsPage() {
                   <div className="text-white/50"># PyPI install (includes the polish runtime)</div>
                   <div>pip install &apos;attune-author[plugin]&apos;</div>
                   <br />
-                  <div className="text-white/50"># Or the Claude Code plugin (may lag the PyPI release)</div>
-                  <div>claude plugin install attune-author@attune-docs</div>
+                  <div className="text-white/50"># Or the Claude Code plugin from the attune-ai marketplace</div>
+                  <div>claude plugin install attune-author@attune-ai</div>
                 </div>
                 <p className="text-sm text-[var(--text-secondary)]">
                   Requires <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">ANTHROPIC_API_KEY</code> for
