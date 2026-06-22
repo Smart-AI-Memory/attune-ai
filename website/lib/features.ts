@@ -74,7 +74,7 @@ export const PRODUCTS: Product[] = [
     id: "attune-author",
     name: "Attune Author",
     pypiName: "attune-author",
-    version: "0.16.0",
+    version: "0.21.0",
     tagline: "Author and polish help content with AI",
     installCommand: "pip install 'attune-author[plugin]'",
     marketplaceInstall:
