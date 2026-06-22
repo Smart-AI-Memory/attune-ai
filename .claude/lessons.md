@@ -9932,3 +9932,27 @@ files.
   lessons — same family (locating the right worktree), this one is the
   session-is-in-the-WRONG-worktree surface and its `EnterWorktree`
   remedy.
+
+- **A stale PR's "files changed" list overstates what it still
+  contributes — after updating the branch with main, read the two-dot
+  `git diff origin/main HEAD --stat` for the REAL remaining scope before
+  reviewing**: 2026-06-21, asked to review + fix conflicts on PR #955
+  (`docs/lessons-worktree-dashboards`), 14 commits behind main. Its
+  files-changed list showed 9 files — `.claude/lessons.md`, four
+  `docs/specs/*` files, `plugin/hooks/_recall_map.py`,
+  `tests/unit/hooks/test_jit_recall.py`. After `git merge origin/main`
+  (only `.claude/lessons.md` conflicted — an append-collision resolved
+  as a union), `git diff origin/main HEAD --stat` showed the NET
+  contribution was **just 41 lines in `.claude/lessons.md`** (one
+  lesson). The spec/hook/test edits had ALL already landed on main via
+  other merged PRs (#953 + the jit-recall work) — so the three-dot
+  `git diff origin/main...HEAD -- <those files>` was EMPTY. Reviewing
+  the stated file list at face value would have wasted effort
+  "reviewing" a `_recall_map.py` change byte-identical to main. Rule:
+  the GitHub files-changed list reflects the branch's DIVERGENCE POINT,
+  not what it still adds; for any long-lived/stale PR, merge main first
+  then `git diff origin/main HEAD --stat` to see the true remaining
+  delta. Pairs with the append-collision union-resolution pattern and
+  the "spec-named scope drifts from code reality" lesson (same family:
+  the stated scope is a stale hypothesis; the diff-vs-current-main is
+  the contract).
