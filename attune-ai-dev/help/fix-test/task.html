@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Work with fix test — task</title>
-  <meta name="description" content="Use the fix-test system when you need to implement or modify automatic test diagnosis and repair capabilities in your project." />
+  <meta name="description" content="Use fix test when you want to extend how source-file changes are turned into prioritized test work, or change how test outcomes are tracked." />
   <meta property="og:title" content="Work with fix test — task" />
-  <meta property="og:description" content="Use the fix-test system when you need to implement or modify automatic test diagnosis and repair capabilities in your project." />
+  <meta property="og:description" content="Use fix test when you want to extend how source-file changes are turned into prioritized test work, or change how test outcomes are tracked." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/task" />
   <style>
@@ -273,83 +273,92 @@
   </nav>
   <article class="markdown-body">
 <h1>Work with fix test</h1>
-<p>Use the fix-test system when you need to implement or modify automatic test diagnosis and repair capabilities in your project.</p>
+<p>Use fix test when you want to extend how source-file changes are
+turned into prioritized test work, or change how test outcomes are
+tracked.</p>
 <h2>Prerequisites</h2>
 <ul>
 <li>Access to the project source code</li>
-<li>Understanding of test execution workflows</li>
-<li>Familiarity with the test lifecycle management system</li>
+<li>Familiarity with <code>src/attune/workflows/test_maintenance.py</code> (the
+workflow and plan model) and <code>src/attune/workflows/test_runner.py</code>
+(outcome tracking)</li>
 </ul>
-<h2>Understand the test lifecycle architecture</h2>
-<p>Start by examining how the test lifecycle system works:</p>
-<ol>
-<li>Open <code>src/attune/workflows/test_lifecycle.py</code> to see the <code>TestLifecycleManager</code> class</li>
-<li>Review the <code>TestTask</code> and <code>TestAction</code> dataclasses to understand the task queue structure</li>
-<li>Check <code>src/attune/workflows/test_maintenance.py</code> for the <code>TestMaintenanceWorkflow</code> that handles automatic test management</li>
-</ol>
-<p>The system uses event-driven test management where file changes trigger test tasks that get queued and processed automatically.</p>
-<h2>Identify the target component</h2>
-<p>Determine which component needs modification based on your goal:</p>
-<ul>
-<li><strong>Test execution tracking</strong>: Modify functions in <code>src/attune/workflows/test_runner.py</code></li>
-<li><strong>Test lifecycle events</strong>: Update <code>TestLifecycleManager</code> methods in <code>test_lifecycle.py</code></li>
-<li><strong>Maintenance workflows</strong>: Change <code>TestMaintenanceWorkflow</code> in <code>test_maintenance.py</code></li>
-</ul>
-<h2>Modify test execution functions</h2>
-<p>For changes to test running and tracking:</p>
-<ol>
-<li>
-<p>Locate the specific function in <code>test_runner.py</code>:</p>
-<ul>
-<li><code>run_tests_with_tracking()</code> for test execution with monitoring</li>
-<li><code>track_coverage()</code> for coverage analysis</li>
-<li><code>track_file_tests()</code> for file-specific test tracking</li>
-<li><code>get_file_test_status()</code> for retrieving test status</li>
-<li><code>get_files_needing_tests()</code> for identifying test gaps</li>
-</ul>
-</li>
-<li>
-<p>Read the function's docstring and examine its parameters and return type</p>
-</li>
-<li>
-<p>Study the existing error handling patterns and logging style</p>
-</li>
-<li>
-<p>Implement your changes following the established conventions</p>
-</li>
-</ol>
-<h2>Update lifecycle management</h2>
-<p>For changes to the test lifecycle system:</p>
+<h2>Understand the two modules</h2>
+<table>
+<thead>
+<tr>
+<th>Module</th>
+<th>Owns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>test_maintenance.py</code></td>
+<td><code>TestMaintenanceWorkflow</code> and the plan model — <code>TestPlanItem</code>, <code>TestMaintenancePlan</code>, <code>TestAction</code>, <code>TestPriority</code></td>
+</tr>
+<tr>
+<td><code>test_runner.py</code></td>
+<td>Outcome tracking — <code>run_tests_with_tracking()</code>, <code>track_coverage()</code>, <code>track_file_tests()</code>, and the status queries</td>
+</tr>
+</tbody>
+</table>
+<h2>Generate a maintenance plan</h2>
 <ol>
 <li>
-<p>Modify the appropriate method in <code>TestLifecycleManager</code>:</p>
-<ul>
-<li><code>on_file_created()</code>, <code>on_file_modified()</code>, or <code>on_file_deleted()</code> for file event handling</li>
-<li><code>process_queue()</code> for task execution</li>
-<li><code>schedule_maintenance()</code> or <code>run_maintenance()</code> for automated maintenance</li>
-</ul>
-</li>
-<li>
-<p>Update the corresponding <code>TestTask</code> or <code>TestPlanItem</code> properties if needed</p>
-</li>
-<li>
-<p>Ensure the task priority and action enums are used correctly</p>
-</li>
-</ol>
-<h2>Test your changes</h2>
-<p>Run the test suite to verify your modifications work correctly:</p>
-<pre><code class="language-bash">pytest -k &quot;test_lifecycle&quot; tests/
-pytest -k &quot;test_runner&quot; tests/
+<p><strong>Instantiate the workflow</strong> and call <code>run()</code> with a context dict:</p>
+<pre><code class="language-python">from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+
+workflow = TestMaintenanceWorkflow()
+plan = workflow.run({})
 </code></pre>
-<p>Your changes should pass all existing tests without breaking the test lifecycle workflow.</p>
-<h2>Success criteria</h2>
-<p>Your fix-test modifications are complete when:</p>
+</li>
+<li>
+<p><strong>Filter the plan</strong> by what you need:</p>
+<pre><code class="language-python">from attune.workflows.test_maintenance import TestAction, TestPriority
+
+to_create = plan.get_items_by_action(TestAction.CREATE)
+urgent = plan.get_items_by_priority(TestPriority.CRITICAL)
+safe = plan.get_auto_executable_items()
+</code></pre>
+</li>
+<li>
+<p><strong>Inspect a <code>TestPlanItem</code></strong> — each carries <code>file_path</code>, <code>action</code>,
+<code>priority</code>, <code>reason</code>, <code>test_file_path</code>, <code>estimated_effort</code>, and
+<code>auto_executable</code>.</p>
+</li>
+</ol>
+<h2>React to a single file change</h2>
+<p>Use the event handlers when you want per-file behavior rather than a
+full plan:</p>
+<pre><code class="language-python">item = workflow.on_file_modified(&quot;src/attune/foo.py&quot;)
+if item and item.auto_executable:
+    ...
+</code></pre>
+<p><code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code>
+each return a <code>TestPlanItem | None</code>.</p>
+<h2>Track test outcomes</h2>
+<p>Use <code>test_runner.py</code> to persist what actually ran:</p>
+<ol>
+<li><code>run_tests_with_tracking(test_suite, test_files, command, workflow_id, triggered_by)</code> runs a suite and records the result.</li>
+<li><code>track_coverage(coverage_file, workflow_id)</code> ingests a <code>coverage.xml</code>.</li>
+<li><code>get_file_test_status(file_path)</code> and <code>get_files_needing_tests(stale_only, failed_only)</code> answer coverage questions for a file or the whole project.</li>
+</ol>
+<h2>Modify behavior</h2>
 <ul>
-<li>All targeted tests pass</li>
-<li>The test lifecycle manager processes tasks correctly</li>
-<li>Test execution tracking records data as expected</li>
-<li>No regressions appear in the existing test suite</li>
+<li><strong>Plan generation / prioritization</strong> — edit <code>TestMaintenanceWorkflow</code>
+methods in <code>test_maintenance.py</code>. Adjust how an event maps to a
+<code>TestAction</code>, or how <code>TestPriority</code> is assigned.</li>
+<li><strong>New plan-item field</strong> — add it to the <code>TestPlanItem</code> dataclass and
+update <code>to_dict()</code>.</li>
+<li><strong>Outcome tracking</strong> — edit the tracking functions in
+<code>test_runner.py</code>.</li>
 </ul>
+<h2>Verify your changes</h2>
+<p>Run the related tests:</p>
+<pre><code>pytest -k &quot;maintenance or test_runner&quot; tests/
+</code></pre>
+<p>A passing suite with no new failures confirms the plan model and
+outcome tracking still behave correctly.</p>
 
   </article>
   <footer>

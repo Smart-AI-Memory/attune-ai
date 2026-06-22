@@ -375,6 +375,38 @@ Call <code>load_admin_key()</code> from <code>src/attune/ops/anthropic_cost.py</
 <p><strong>Clear the in-memory cache</strong> during testing by calling <code>clear_cache()</code> from <code>src/attune/ops/anthropic_cost.py</code>.</p>
 </li>
 </ol>
+<h2>Monitor spend anomalies and ceiling approach</h2>
+<ol>
+<li>
+<p><strong>Assemble the alarm</strong> with <code>build_spend_alarm()</code> from <code>src/attune/ops/data.py</code>:</p>
+<pre><code class="language-python">from attune.ops import data, anthropic_cost
+
+cost_summary, _ = anthropic_cost.fetch_summary()
+alarm = data.build_spend_alarm(config, cost_summary)
+</code></pre>
+<ul>
+<li><code>alarm.level</code> is <code>&quot;ok&quot;</code>, <code>&quot;alarm&quot;</code>, or <code>&quot;insufficient_data&quot;</code>.</li>
+<li><code>alarm.triggered_by</code> lists which condition(s) fired: <code>&quot;daily_anomaly&quot;</code> and/or <code>&quot;ceiling&quot;</code>.</li>
+<li><code>alarm.source</code> is <code>&quot;account&quot;</code> (admin cost-report) or <code>&quot;local&quot;</code> (<code>usage.jsonl</code>).</li>
+</ul>
+</li>
+<li>
+<p><strong>Daily-anomaly trigger:</strong> today's spend is flagged when it exceeds the
+z-score threshold (default <code>3.0</code>) versus the trailing baseline, or — when
+the baseline has zero variance — when it exceeds <code>baseline_mean * 3.0</code>.
+Fewer than 3 prior active (non-zero) days skips the check.</p>
+</li>
+<li>
+<p><strong>Ceiling trigger:</strong> month-to-date spend is flagged once it reaches
+<code>ceiling_fraction</code> (default <code>0.8</code>) of <code>monthly_ceiling</code> (default <code>$350</code>).
+Pass <code>monthly_ceiling=</code> to override for your org.</p>
+</li>
+<li>
+<p><strong>Access raw data</strong> with <code>read_daily_spend()</code> (local only) for a
+<code>{YYYY-MM-DD: total_cost}</code> dict, then pass it to <code>spend_alarm()</code> with
+custom thresholds when you need fine-grained control.</p>
+</li>
+</ol>
 <h2>Detect spec completion candidates</h2>
 <ol>
 <li>

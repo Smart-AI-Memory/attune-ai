@@ -341,7 +341,7 @@
 <td><code>__init__</code></td>
 <td><code>workspace_root: str | None = None, user_id: str | None = None</code></td>
 <td>-</td>
-<td>Initialize MCP server with workspace and user context</td>
+<td>Initialize MCP server with workspace and user context. Workspace root resolves in order: explicit argument → <code>ATTUNE_MCP_WORKSPACE_ROOT</code> → <code>CLAUDE_PROJECT_DIR</code> → cwd</td>
 </tr>
 <tr>
 <td><code>get_prompt_list</code></td>

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Fix Test errors — error</title>
-  <meta name="description" content="Failures in automated test lifecycle management, test execution tracking, and test maintenance workflows." />
+  <meta name="description" content="Failures in test maintenance planning, test execution tracking, and source-file event handling." />
   <meta property="og:title" content="Fix Test errors — error" />
-  <meta property="og:description" content="Failures in automated test lifecycle management, test execution tracking, and test maintenance workflows." />
+  <meta property="og:description" content="Failures in test maintenance planning, test execution tracking, and source-file event handling." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/error" />
   <style>
@@ -273,47 +273,46 @@
   </nav>
   <article class="markdown-body">
 <h1>Fix Test errors</h1>
-<p>Failures in automated test lifecycle management, test execution tracking, and test maintenance workflows.</p>
+<p>Failures in test maintenance planning, test execution tracking, and source-file event handling.</p>
 <h2>Common error signatures</h2>
 <ul>
 <li><code>FileNotFoundError: Coverage file not found: {path}</code> — The coverage.xml file specified in <code>track_coverage()</code> doesn't exist</li>
 <li><code>ValueError: Invalid coverage.xml format: {details}</code> — Coverage file exists but contains malformed XML or missing required elements</li>
-<li>Test task queue corruption causing <code>TestTask</code> processing failures</li>
+<li>Unexpected <code>TestPlanItem</code> entries when an event maps a file to the wrong <code>TestAction</code></li>
 <li>File path resolution errors when mapping source files to their corresponding test files</li>
-<li>Priority filtering failures in <code>TestLifecycleManager.process_queue()</code></li>
+<li>Priority filtering returning nothing from <code>TestMaintenancePlan.get_items_by_priority()</code> when an invalid <code>TestPriority</code> is passed</li>
 </ul>
 <h2>Where errors originate</h2>
 <p>Most failures occur during:</p>
 <ul>
 <li><strong>Test execution tracking</strong> — <code>run_tests_with_tracking()</code> fails when test commands exit with non-zero codes or produce unparseable output</li>
 <li><strong>Coverage analysis</strong> — <code>track_coverage()</code> raises exceptions when coverage files are missing, corrupted, or in unexpected formats</li>
-<li><strong>File monitoring</strong> — Event handlers (<code>on_file_created()</code>, <code>on_file_modified()</code>, <code>on_file_deleted()</code>) fail when file paths are invalid or inaccessible</li>
-<li><strong>Queue processing</strong> — <code>TestLifecycleManager.process_queue()</code> encounters errors when tasks reference deleted files or have malformed metadata</li>
-<li><strong>Test maintenance planning</strong> — <code>TestMaintenanceWorkflow.run()</code> fails when project structure analysis produces inconsistent results</li>
+<li><strong>File event handling</strong> — the handlers (<code>on_file_created()</code>, <code>on_file_modified()</code>, <code>on_file_deleted()</code>) fail when file paths are invalid or inaccessible</li>
+<li><strong>Plan generation</strong> — <code>TestMaintenanceWorkflow.run()</code> fails when project structure analysis produces inconsistent results</li>
+<li><strong>Plan filtering</strong> — <code>get_items_by_action()</code> / <code>get_items_by_priority()</code> return empty results when passed a value that isn't a <code>TestAction</code> / <code>TestPriority</code></li>
 </ul>
 <h2>How to diagnose</h2>
 <ol>
 <li>
-<p><strong>Check file paths first.</strong> Many errors stem from missing test files, moved source files, or incorrect project root configuration. Verify that <code>project_root</code> in <code>TestMaintenanceWorkflow</code> and <code>TestLifecycleManager</code> points to the correct directory.</p>
+<p><strong>Check file paths first.</strong> Many errors stem from missing test files, moved source files, or incorrect project root configuration. Verify that the project root used by <code>TestMaintenanceWorkflow</code> points to the correct directory.</p>
 </li>
 <li>
-<p><strong>Examine the task queue.</strong> If <code>TestLifecycleManager</code> operations fail, call <code>get_queue()</code> to inspect pending tasks. Look for tasks with invalid <code>file_path</code> values or corrupted <code>metadata</code> fields.</p>
+<p><strong>Examine the plan.</strong> If <code>TestMaintenanceWorkflow.run()</code> produces unexpected results, inspect <code>plan.items</code> and each item's <code>file_path</code>, <code>action</code>, and <code>metadata</code> for invalid or corrupted values.</p>
 </li>
 <li>
 <p><strong>Validate coverage files.</strong> When <code>track_coverage()</code> fails, check that the coverage.xml file exists and contains valid XML. The file must include <code>&lt;coverage&gt;</code> root elements with measurable line and branch data.</p>
 </li>
 <li>
-<p><strong>Test file mapping issues.</strong> If test lifecycle events fail, verify that the <code>ProjectIndex</code> can correctly map source files to test files. Missing or outdated index data causes most file-based operations to fail.</p>
+<p><strong>Test file mapping issues.</strong> If event handlers fail, verify that the <code>ProjectIndex</code> can correctly map source files to test files. Missing or outdated index data causes most file-based operations to fail.</p>
 </li>
 <li>
-<p><strong>Check priority and action values.</strong> <code>TestPlanItem</code> and <code>TestTask</code> objects require valid <code>TestAction</code> and <code>TestPriority</code> enum values. Invalid enums cause filtering and processing methods to raise <code>AttributeError</code> or <code>KeyError</code>.</p>
+<p><strong>Check priority and action values.</strong> <code>TestPlanItem</code> objects require valid <code>TestAction</code> and <code>TestPriority</code> enum values. Invalid enums cause filtering methods to return nothing or raise <code>AttributeError</code>.</p>
 </li>
 </ol>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/workflows/test_runner.py</code></li>
 <li><code>src/attune/workflows/test_maintenance.py</code></li>
-<li><code>src/attune/workflows/test_lifecycle.py</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 

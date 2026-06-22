@@ -379,6 +379,11 @@
 <td>Privacy-first local telemetry tracker.</td>
 <td><code>src/attune/telemetry/usage_tracker.py</code></td>
 </tr>
+<tr>
+<td><code>usage_ping</code></td>
+<td>Opt-in anonymous usage sync (frozen payload, default OFF).</td>
+<td><code>src/attune/telemetry/usage_ping.py</code></td>
+</tr>
 </tbody>
 </table>
 <h3>CoordinationSignal</h3>
@@ -1112,11 +1117,98 @@
 <td><code>cmd_telemetry_export</code></td>
 <td><code>args: Any</code></td>
 <td><code>int</code></td>
-<td>Export</td>
-<td></td>
+<td>Export telemetry data to a file.</td>
+<td><code>src/attune/telemetry/cli_core.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_status</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Show opt-in usage-ping status and the exact payload that would be sent.</td>
+<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_enable</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Opt in to anonymous usage pinging (returns the anonymous install ID).</td>
+<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
+</tr>
+<tr>
+<td><code>cmd_telemetry_disable</code></td>
+<td><code>args: Namespace</code></td>
+<td><code>int</code></td>
+<td>Opt out of anonymous usage pinging.</td>
+<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
 </tr>
 </tbody>
 </table>
+<h2><code>usage_ping</code> module</h2>
+<p>Opt-in, anonymous usage sync (<code>src/attune/telemetry/usage_ping.py</code>). <strong>Default OFF</strong> — nothing is transmitted unless the user opts in via <code>attune telemetry enable</code>.</p>
+<h3>Functions</h3>
+<table>
+<thead>
+<tr>
+<th>Function</th>
+<th>Parameters</th>
+<th>Returns</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>is_enabled</code></td>
+<td><code>usage_ping_flag: bool, env: Mapping[str, str] | None = None</code></td>
+<td><code>bool</code></td>
+<td>Whether pinging is on, honoring <code>DO_NOT_TRACK</code> and <code>ATTUNE_USAGE_PING</code>.</td>
+</tr>
+<tr>
+<td><code>resolve_endpoint</code></td>
+<td><code>env: Mapping[str, str] | None = None</code></td>
+<td><code>str</code></td>
+<td>The collection endpoint from env or the default.</td>
+</tr>
+<tr>
+<td><code>enable</code></td>
+<td><code>loader: Any = None</code></td>
+<td><code>str</code></td>
+<td>Opt in; returns the anonymous install ID.</td>
+</tr>
+<tr>
+<td><code>disable</code></td>
+<td><code>loader: Any = None</code></td>
+<td><code>None</code></td>
+<td>Opt out.</td>
+</tr>
+<tr>
+<td><code>build_payload</code></td>
+<td><code>record, *, install_id, version, os_name=None, py_version=None</code></td>
+<td><code>dict</code></td>
+<td>Map a local record to the frozen payload (schema v1).</td>
+</tr>
+<tr>
+<td><code>example_payload</code></td>
+<td><code>config, *, version=None, os_name=None, py_version=None</code></td>
+<td><code>dict</code></td>
+<td>The exact payload shape that would be sent (for user audit).</td>
+</tr>
+<tr>
+<td><code>sync</code></td>
+<td><code>records, *, endpoint, install_id, version, timeout=2.0, batch_size=100, ...</code></td>
+<td><code>int</code></td>
+<td>Fire-and-forget transmit; returns count confirmed sent.</td>
+</tr>
+<tr>
+<td><code>run_sync</code></td>
+<td><code>config, *, telemetry_dir=None, version=None, env=None, ...</code></td>
+<td><code>int</code></td>
+<td>Orchestrate one sync pass (gate → read → transmit → advance cursor).</td>
+</tr>
+</tbody>
+</table>
+<h3>Frozen payload (schema v1)</h3>
+<p>Exactly these keys, nothing else: <code>schema</code>, <code>package</code> (<code>&quot;attune-ai&quot;</code>), <code>version</code>, <code>install_id</code> (rotating anonymous UUID), <code>event</code> (<code>&quot;workflow.&lt;name&gt;&quot;</code>), <code>os</code>, <code>py</code>, <code>ts</code>. <strong>Never</strong> included: <code>user_id</code>, cost, tokens, model, provider, tier, stage, duration, paths, prompts, or any free text.</p>
+<p><strong>Opt-in precedence:</strong> <code>DO_NOT_TRACK</code> (set → always off) → <code>ATTUNE_USAGE_PING</code> env override → persisted <code>config.telemetry.usage_ping</code>. Default is OFF.</p>
 
   </article>
   <footer>

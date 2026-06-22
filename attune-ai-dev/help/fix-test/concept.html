@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Fix Test — concept</title>
-  <meta name="description" content="Fix-test automatically manages test lifecycles by responding to code changes and scheduling test maintenance tasks based on file events throughout your project." />
+  <meta name="description" content="The fix-test feature keeps a project&#x27;s tests healthy by reacting to source-file changes, diagnosing what test work each change implies, and producing a prioritized, partly auto-executable maintenance " />
   <meta property="og:title" content="Fix Test — concept" />
-  <meta property="og:description" content="Fix-test automatically manages test lifecycles by responding to code changes and scheduling test maintenance tasks based on file events throughout your project." />
+  <meta property="og:description" content="The fix-test feature keeps a project&#x27;s tests healthy by reacting to source-file changes, diagnosing what test work each change implies, and producing a prioritized, partly auto-executable maintenance " />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/concept" />
   <style>
@@ -273,33 +273,32 @@
   </nav>
   <article class="markdown-body">
 <h1>Fix Test</h1>
-<p>Fix-test automatically manages test lifecycles by responding to code changes and scheduling test maintenance tasks based on file events throughout your project.</p>
-<h2>Event-driven test management</h2>
-<p>When you modify source files, fix-test watches for these changes and queues appropriate test actions:</p>
+<p>The fix-test feature keeps a project's tests healthy by reacting to source-file changes, diagnosing what test work each change implies, and producing a prioritized, partly auto-executable maintenance plan.</p>
+<h2>How it works</h2>
+<p><code>TestMaintenanceWorkflow</code> is the central coordinator. It turns file-system events into a <code>TestMaintenancePlan</code> — an ordered set of <code>TestPlanItem</code> entries, each describing one piece of test work: which file it concerns, what <code>TestAction</code> to take, and at what <code>TestPriority</code>.</p>
+<p>The building blocks:</p>
 <ul>
-<li><strong>File creation</strong> — Schedules test generation for new modules through <code>on_file_created()</code></li>
-<li><strong>File modification</strong> — Queues test updates when existing code changes via <code>on_file_modified()</code></li>
-<li><strong>File deletion</strong> — Removes orphaned tests when source files are deleted using <code>on_file_deleted()</code></li>
+<li><strong><code>TestMaintenanceWorkflow</code></strong> — coordinates everything. <code>run(context)</code> produces a maintenance plan; the event handlers <code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code> translate a single file change into the test work it implies.</li>
+<li><strong><code>TestPlanItem</code></strong> — one unit of test work. Carries <code>file_path</code>, <code>action</code>, <code>priority</code>, <code>reason</code>, <code>test_file_path</code>, <code>estimated_effort</code>, and <code>auto_executable</code>.</li>
+<li><strong><code>TestMaintenancePlan</code></strong> — the assembled plan. Filter it with <code>get_items_by_action()</code>, <code>get_items_by_priority()</code>, or <code>get_auto_executable_items()</code>.</li>
+<li><strong><code>TestAction</code></strong> — what to do with a test: <code>CREATE</code>, <code>UPDATE</code>, <code>REVIEW</code>, <code>DELETE</code>, <code>SKIP</code>, or <code>MANUAL</code>.</li>
+<li><strong><code>TestPriority</code></strong> — how urgent: <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>, or <code>DEFERRED</code>.</li>
 </ul>
-<p>The <code>TestLifecycleManager</code> acts as the central coordinator, transforming file system events into prioritized <code>TestTask</code> items that specify what test action to take and when.</p>
-<h2>Task prioritization and execution</h2>
-<p>Each test task gets assigned a priority level through <code>TestPriority</code> (high, medium, low) and an action type via <code>TestAction</code> (create, update, delete, validate). The system maintains a persistent queue where you can:</p>
+<h2>How a change becomes a plan</h2>
+<ol>
+<li>A source file changes. The matching handler — <code>on_file_created()</code>, <code>on_file_modified()</code>, or <code>on_file_deleted()</code> — inspects it and decides which <code>TestAction</code> applies (a new module needs a <code>CREATE</code>; a deleted one may imply a <code>DELETE</code> or <code>REVIEW</code>).</li>
+<li>The workflow assigns a <code>TestPriority</code> based on impact and rolls the resulting <code>TestPlanItem</code> entries into a <code>TestMaintenancePlan</code>.</li>
+<li>Callers act on the plan: <code>get_auto_executable_items()</code> returns the items safe to run automatically, while higher-touch items (<code>REVIEW</code>, <code>MANUAL</code>) are surfaced for a human.</li>
+</ol>
+<h2>Tracking what actually ran</h2>
+<p>The companion module <code>test_runner.py</code> records outcomes so the workflow can reason about staleness and gaps:</p>
 <ul>
-<li>Process tasks by priority using <code>get_queue_by_priority()</code></li>
-<li>Execute batches of work with <code>process_queue()</code> up to a specified limit</li>
-<li>Schedule recurring maintenance through <code>schedule_maintenance()</code></li>
+<li><code>run_tests_with_tracking()</code> runs a suite and records the result for Tier 1 monitoring.</li>
+<li><code>track_coverage()</code> and <code>track_file_tests()</code> persist coverage and per-file test status.</li>
+<li><code>get_file_test_status()</code> and <code>get_files_needing_tests()</code> answer &quot;is this file covered?&quot; and &quot;what still needs tests?&quot; — the same signals <code>TestMaintenanceWorkflow.get_stale_tests()</code> and <code>get_test_health_summary()</code> build on.</li>
 </ul>
-<p>For example, a critical bug fix that breaks existing tests gets high priority, while adding tests for edge cases in stable code gets low priority.</p>
-<h2>Git workflow integration</h2>
-<p>Fix-test hooks into your Git workflow at two key points:</p>
-<ul>
-<li><strong>Pre-commit</strong> — Validates that staged files have corresponding tests via <code>process_git_pre_commit()</code></li>
-<li><strong>Post-commit</strong> — Schedules test updates for all changed files through <code>process_git_post_commit()</code></li>
-</ul>
-<p>This ensures your test suite stays synchronized with code changes without manual intervention.</p>
-<h2>Test maintenance planning</h2>
-<p>The <code>TestMaintenanceWorkflow</code> analyzes your entire project to create comprehensive maintenance plans. It identifies files that need tests through <code>get_files_needing_tests()</code>, finds outdated tests via <code>get_stale_tests()</code>, and generates a <code>TestMaintenancePlan</code> with concrete action items.</p>
-<p>Each <code>TestPlanItem</code> includes the target file, required action, priority level, effort estimate, and whether the task can be automated — giving you a clear roadmap for improving test coverage and keeping tests current.</p>
+<h2>When this matters</h2>
+<p>You work with fix-test when you want to keep test coverage in step with source changes automatically — surfacing the tests a change demands, prioritizing them by impact, and auto-running the safe ones — rather than discovering gaps after a regression lands.</p>
 
   </article>
   <footer>

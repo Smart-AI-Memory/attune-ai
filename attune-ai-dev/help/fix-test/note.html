@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Note: fix test — note</title>
-  <meta name="description" content="The fix-test feature provides automated test lifecycle management through event-driven workflows. It tracks test coverage, identifies files needing test attention, and manages test maintenance plans w" />
+  <meta name="description" content="The fix-test feature provides test maintenance through event-driven planning. It tracks test coverage, identifies files needing test attention, and turns source-file changes into prioritized maintenan" />
   <meta property="og:title" content="Note: fix test — note" />
-  <meta property="og:description" content="The fix-test feature provides automated test lifecycle management through event-driven workflows. It tracks test coverage, identifies files needing test attention, and manages test maintenance plans w" />
+  <meta property="og:description" content="The fix-test feature provides test maintenance through event-driven planning. It tracks test coverage, identifies files needing test attention, and turns source-file changes into prioritized maintenan" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/note" />
   <style>
@@ -274,19 +274,17 @@
   <article class="markdown-body">
 <h1>Note: fix test</h1>
 <h2>Context</h2>
-<p>The fix-test feature provides automated test lifecycle management through event-driven workflows. It tracks test coverage, identifies files needing test attention, and manages test maintenance plans with priority-based execution.</p>
+<p>The fix-test feature provides test maintenance through event-driven planning. It tracks test coverage, identifies files needing test attention, and turns source-file changes into prioritized maintenance plans.</p>
 <h2>Architecture</h2>
-<p>The feature combines three complementary modules:</p>
+<p>The feature combines two complementary modules:</p>
 <p><strong>Test execution tracking</strong> (<code>test_runner.py</code>) provides opt-in monitoring functions that record test results and coverage data for Tier 1 automation. Key functions include <code>run_tests_with_tracking()</code> for explicit test execution tracking and <code>track_coverage()</code> for parsing coverage.xml files.</p>
-<p><strong>Test maintenance planning</strong> (<code>test_maintenance.py</code>) defines the data structures for organizing test work. <code>TestMaintenancePlan</code> contains prioritized <code>TestPlanItem</code> instances that specify actions like creating new tests or updating existing ones. Each item includes metadata like estimated effort and auto-execution flags.</p>
-<p><strong>Event-driven lifecycle management</strong> (<code>test_lifecycle.py</code>) responds to file system changes through <code>TestLifecycleManager</code>. When source files are created, modified, or deleted, the manager queues appropriate <code>TestTask</code> instances. The workflow supports Git hooks for pre-commit and post-commit processing.</p>
+<p><strong>Test maintenance planning and event handling</strong> (<code>test_maintenance.py</code>) defines both the plan model and the coordinator. <code>TestMaintenancePlan</code> contains prioritized <code>TestPlanItem</code> instances that specify actions like creating or updating tests, each with metadata like estimated effort and an auto-executable flag. <code>TestMaintenanceWorkflow</code> responds to file-system changes through its <code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code> handlers and assembles the plan via <code>run()</code>.</p>
 <h2>Integration pattern</h2>
-<p>The modules work together through shared data types. Test execution functions accept workflow IDs that link results to specific maintenance plans. The lifecycle manager generates tasks that reference the same action and priority enums used in maintenance plans. This allows the system to automatically queue test work when files change and execute it according to configured priorities.</p>
+<p>The modules work together through shared data types. Test execution functions accept workflow IDs that link results to specific maintenance plans. The event handlers produce <code>TestPlanItem</code> entries that reference the same <code>TestAction</code> and <code>TestPriority</code> enums used throughout the plan. This lets the system map a file change to prioritized test work and surface the auto-executable subset for execution.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/workflows/test_runner.py</code></li>
 <li><code>src/attune/workflows/test_maintenance.py</code></li>
-<li><code>src/attune/workflows/test_lifecycle.py</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 

@@ -332,6 +332,10 @@
 <td>Summary numbers shown above the fold on the home page.</td>
 </tr>
 <tr>
+<td><code>SpendAlarm</code></td>
+<td>Daily API-spend anomaly verdict with ceiling-approach gauge for the dashboard (R6).</td>
+</tr>
+<tr>
 <td><code>SweepChipCounts</code></td>
 <td>Per-bucket counts loaded from a persisted discovery-sweep result.</td>
 </tr>
@@ -812,6 +816,66 @@
 </tr>
 </tbody>
 </table>
+<hr />
+<h3><code>SpendAlarm</code> fields</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>level</code></td>
+<td><code>str</code> — <code>&quot;ok&quot;</code> | <code>&quot;alarm&quot;</code> | <code>&quot;insufficient_data&quot;</code></td>
+</tr>
+<tr>
+<td><code>triggered_by</code></td>
+<td><code>tuple[str, ...]</code> — subset of <code>{&quot;daily_anomaly&quot;, &quot;ceiling&quot;}</code></td>
+</tr>
+<tr>
+<td><code>today_cost</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>baseline_mean</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>baseline_days</code></td>
+<td><code>int</code></td>
+</tr>
+<tr>
+<td><code>method</code></td>
+<td><code>str</code> — <code>&quot;zscore&quot;</code> | <code>&quot;multiplier&quot;</code> | <code>&quot;none&quot;</code></td>
+</tr>
+<tr>
+<td><code>z_score</code></td>
+<td><code>float | None</code></td>
+</tr>
+<tr>
+<td><code>month_to_date</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>monthly_ceiling</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>ceiling_pct</code></td>
+<td><code>float</code></td>
+</tr>
+<tr>
+<td><code>source</code></td>
+<td><code>str</code> — <code>&quot;account&quot;</code> | <code>&quot;local&quot;</code></td>
+</tr>
+<tr>
+<td><code>detail</code></td>
+<td><code>str</code> — one-line human explanation</td>
+</tr>
+</tbody>
+</table>
 <h2>Functions</h2>
 <p>The tables below are organized by source module.</p>
 <h3><code>src/attune/ops/__init__.py</code></h3>
@@ -1038,6 +1102,24 @@
 <td><code>scope_path: str, config: Config</code></td>
 <td><code>SweepChipCounts</code></td>
 <td>Read the latest persisted sweep result for <code>scope_path</code> and tally chips.</td>
+</tr>
+<tr>
+<td><code>read_daily_spend</code></td>
+<td><code>config: Config, *, days: int = 35, today: date | None = None</code></td>
+<td><code>dict[str, float]</code></td>
+<td>Daily API spend (USD) bucketed by timestamp from <code>usage.jsonl</code>.</td>
+</tr>
+<tr>
+<td><code>spend_alarm</code></td>
+<td><code>daily: dict[str, float], *, today: date | None = None, monthly_ceiling: float = 350.0, ceiling_fraction: float = 0.8, z_threshold: float = 3.0, flat_multiplier: float = 3.0, min_baseline_days: int = 3, ...</code></td>
+<td><code>SpendAlarm</code></td>
+<td>Flag anomalous daily API spend and approach to the monthly ceiling.</td>
+</tr>
+<tr>
+<td><code>build_spend_alarm</code></td>
+<td><code>config: Config, cost_summary: Any | None = None, *, today: date | None = None</code></td>
+<td><code>SpendAlarm</code></td>
+<td>Assemble the spend alarm, preferring account-level spend from the cost summary.</td>
 </tr>
 <tr>
 <td><code>list_workflows</code></td>

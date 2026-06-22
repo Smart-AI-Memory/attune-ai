@@ -275,7 +275,7 @@
 <h1>Telemetry</h1>
 <p>Attune's telemetry layer is an observability system that tracks agent activity, routes signals between agents, gates high-stakes actions on human approval, and records usage data to drive cost and quality feedback loops.</p>
 <h2>What telemetry covers</h2>
-<p>Telemetry spans four distinct concerns that work together to keep multi-agent workflows visible and controllable:</p>
+<p>Telemetry spans five distinct concerns that work together to keep multi-agent workflows visible and controllable:</p>
 <table>
 <thead>
 <tr>
@@ -289,6 +289,11 @@
 <td><strong>Usage tracking</strong></td>
 <td>Records help queries and calculates cost savings from prompt caching and model-tier routing</td>
 <td><code>UsageTracker</code>, <code>FeedbackLoop</code></td>
+</tr>
+<tr>
+<td><strong>Anonymous usage ping</strong></td>
+<td>Opt-in (default OFF) phone-home of a frozen, anonymized payload to help prioritize development</td>
+<td><code>usage_ping</code></td>
 </tr>
 <tr>
 <td><strong>Agent heartbeats</strong></td>
@@ -307,7 +312,7 @@
 </tr>
 </tbody>
 </table>
-<p>A fifth concern — real-time event streaming — cuts across all four: <code>EventStreamer</code> publishes <code>StreamEvent</code> records to Redis Streams so external consumers can observe what is happening without polling.</p>
+<p>A sixth concern — real-time event streaming — cuts across the others: <code>EventStreamer</code> publishes <code>StreamEvent</code> records to Redis Streams so external consumers can observe what is happening without polling.</p>
 <h2>How the pieces fit together</h2>
 <p>Think of telemetry as three concentric layers:</p>
 <ol>
@@ -322,6 +327,7 @@
 </li>
 </ol>
 <p>Usage data recorded by <code>UsageTracker</code> and quality scores from <code>FeedbackLoop</code> sit alongside these runtime signals. The CLI commands (<code>cmd_telemetry_show</code>, <code>cmd_telemetry_savings</code>, <code>cmd_telemetry_cache_stats</code>, <code>cmd_agent_performance</code>) surface that data without requiring direct access to the underlying storage.</p>
+<p>Separately, an <strong>opt-in usage ping</strong> lets you share an anonymized signal with the maintainers. It is <strong>OFF by default</strong>; <code>cmd_telemetry_enable</code>, <code>cmd_telemetry_disable</code>, and <code>cmd_telemetry_status</code> (under <code>attune telemetry</code>) turn it on or off and show the exact payload that would be sent. The payload is frozen — workflow name, an anonymous install ID, package version, OS, and Python version only. No paths, prompts, costs, tokens, or free text are ever included, and <code>DO_NOT_TRACK</code> overrides everything.</p>
 <h2>When telemetry matters</h2>
 <p>Telemetry becomes important in three scenarios:</p>
 <ul>

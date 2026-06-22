@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>TestLifecycleManager vs TestMaintenanceWorkflow vs manual test tracking — comparison</title>
-  <meta name="description" content="The test automation system provides three approaches for managing test lifecycle and maintenance. Each targets different automation levels and integration patterns." />
-  <meta property="og:title" content="TestLifecycleManager vs TestMaintenanceWorkflow vs manual test tracking — comparison" />
-  <meta property="og:description" content="The test automation system provides three approaches for managing test lifecycle and maintenance. Each targets different automation levels and integration patterns." />
+  <title>TestMaintenanceWorkflow vs manual tracking functions — comparison</title>
+  <meta name="description" content="The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation." />
+  <meta property="og:title" content="TestMaintenanceWorkflow vs manual tracking functions — comparison" />
+  <meta property="og:description" content="The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/comparison" />
   <style>
@@ -272,14 +272,13 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>TestLifecycleManager vs TestMaintenanceWorkflow vs manual test tracking</h1>
-<p>The test automation system provides three approaches for managing test lifecycle and maintenance. Each targets different automation levels and integration patterns.</p>
+<h1>TestMaintenanceWorkflow vs manual tracking functions</h1>
+<p>The fix-test feature offers two approaches for keeping tests in step with source changes. Each targets a different level of automation.</p>
 <h2>Feature comparison</h2>
 <table>
 <thead>
 <tr>
 <th>Feature</th>
-<th>TestLifecycleManager</th>
 <th>TestMaintenanceWorkflow</th>
 <th>Manual tracking functions</th>
 </tr>
@@ -287,79 +286,53 @@
 <tbody>
 <tr>
 <td><strong>Automation level</strong></td>
-<td>Full event-driven automation</td>
 <td>Workflow orchestration</td>
 <td>Manual execution</td>
 </tr>
 <tr>
-<td><strong>File change detection</strong></td>
-<td>Automatic via file events</td>
-<td>Manual trigger</td>
+<td><strong>File change handling</strong></td>
+<td>Event handlers map a change to a <code>TestPlanItem</code></td>
 <td>No detection</td>
 </tr>
 <tr>
-<td><strong>Queue management</strong></td>
-<td>Built-in task queue with priorities</td>
-<td>Plan-based execution</td>
-<td>No queuing</td>
+<td><strong>Planning</strong></td>
+<td>Builds a <code>TestMaintenancePlan</code> you can filter and review</td>
+<td>No planning</td>
 </tr>
 <tr>
 <td><strong>Execution model</strong></td>
-<td>Real-time or batch processing</td>
-<td>On-demand workflow runs</td>
+<td>On-demand <code>run()</code>; you choose which items to act on</td>
 <td>Immediate execution</td>
 </tr>
 <tr>
-<td><strong>Git integration</strong></td>
-<td>Pre/post-commit hooks</td>
-<td>No git integration</td>
-<td>No git integration</td>
-</tr>
-<tr>
-<td><strong>Scheduling</strong></td>
-<td>Configurable maintenance intervals</td>
-<td>Manual scheduling</td>
-<td>No scheduling</td>
-</tr>
-<tr>
 <td><strong>Configuration complexity</strong></td>
-<td>Medium (auto_execute, queue settings)</td>
 <td>Low (project root only)</td>
 <td>Minimal (optional params)</td>
 </tr>
 </tbody>
 </table>
 <h2>Detailed tradeoffs</h2>
-<p><strong>TestLifecycleManager</strong> provides the most comprehensive automation but requires setup overhead. It monitors file changes in real-time and can automatically execute test actions, making it ~10x faster for continuous integration scenarios. However, the event-driven nature means debugging issues requires understanding the queue state and callback system.</p>
-<p><strong>TestMaintenanceWorkflow</strong> offers a middle ground with explicit control flow. You trigger workflows manually but get structured planning via TestMaintenancePlan objects. This approach is ~3x slower than lifecycle automation for frequent changes but provides better visibility into what actions will be taken before execution.</p>
-<p><strong>Manual tracking functions</strong> give you precise control over individual operations with zero setup cost. Each function (<code>run_tests_with_tracking</code>, <code>track_coverage</code>, etc.) executes immediately and returns specific results. This is fastest for one-off debugging but becomes inefficient when managing more than a handful of test files.</p>
-<h2>Use TestLifecycleManager when...</h2>
-<ul>
-<li>You need continuous test maintenance during active development</li>
-<li>Your project has frequent file changes that affect test validity</li>
-<li>You want automated responses to git operations (pre-commit, post-commit)</li>
-<li>You can tolerate some debugging complexity for maximum automation</li>
-</ul>
+<p><strong>TestMaintenanceWorkflow</strong> gives you structured control. You trigger it with <code>run()</code> (or per-file via <code>on_file_created/modified/deleted</code>), and it returns a <code>TestMaintenancePlan</code> of <code>TestPlanItem</code> entries — each with an <code>action</code>, <code>priority</code>, and <code>auto_executable</code> flag. You can review planned work before acting and run only the safe subset via <code>get_auto_executable_items()</code>. Best when you want visibility into what will happen before it does.</p>
+<p><strong>Manual tracking functions</strong> give you precise control over individual operations with zero setup cost. Each function (<code>run_tests_with_tracking</code>, <code>track_coverage</code>, <code>get_file_test_status</code>, …) executes immediately and returns specific results. Fastest for one-off debugging, but you coordinate the work yourself.</p>
 <h2>Use TestMaintenanceWorkflow when...</h2>
 <ul>
-<li>You prefer explicit control over when test maintenance runs</li>
+<li>You want changes mapped to prioritized test work automatically</li>
 <li>You want to review planned actions before execution</li>
-<li>Your test maintenance happens in scheduled batches rather than continuously</li>
-<li>You need structured reporting via TestMaintenancePlan objects</li>
+<li>You need structured reporting via <code>TestMaintenancePlan</code> objects</li>
+<li>You want to auto-run the safe items and defer <code>REVIEW</code>/<code>MANUAL</code> ones</li>
 </ul>
 <h2>Use manual tracking functions when...</h2>
 <ul>
 <li>You're debugging specific test failures interactively</li>
 <li>You need to integrate test tracking into existing scripts or tools</li>
-<li>You want immediate results without queue delays</li>
-<li>You're working with a small number of files that don't change frequently</li>
+<li>You want immediate results for a specific file or suite</li>
+<li>You're working with a small number of files</li>
 </ul>
-<p><strong>Winner:</strong> TestLifecycleManager for active development environments where test maintenance overhead is a bottleneck. The automation benefits outweigh the complexity cost once you have more than 10-15 test files to manage.</p>
+<p><strong>Rule of thumb:</strong> reach for <code>TestMaintenanceWorkflow</code> when you want a reviewable plan across many files; drop to the tracking functions for targeted, one-off operations.</p>
 <h2>Source files</h2>
 <ul>
 <li><code>src/attune/workflows/test_runner.py</code></li>
 <li><code>src/attune/workflows/test_maintenance.py</code></li>
-<li><code>src/attune/workflows/test_lifecycle.py</code></li>
 </ul>
 <p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 

@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Fix Test reference — reference</title>
-  <meta name="description" content="Event-driven test management with automatic lifecycle control, maintenance workflows, and execution tracking for automated test repair and monitoring." />
+  <meta name="description" content="| Class | Description | File | |-------|-------------|------| | `TestAction` | Action to take for a test: `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, `MANUAL`. | `src/attune/workflows/test_mainten" />
   <meta property="og:title" content="Fix Test reference — reference" />
-  <meta property="og:description" content="Event-driven test management with automatic lifecycle control, maintenance workflows, and execution tracking for automated test repair and monitoring." />
+  <meta property="og:description" content="| Class | Description | File | |-------|-------------|------| | `TestAction` | Action to take for a test: `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, `MANUAL`. | `src/attune/workflows/test_mainten" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/reference" />
   <style>
@@ -273,352 +273,97 @@
   </nav>
   <article class="markdown-body">
 <h1>Fix Test reference</h1>
-<p>Event-driven test management with automatic lifecycle control, maintenance workflows, and execution tracking for automated test repair and monitoring.</p>
 <h2>Classes</h2>
 <table>
 <thead>
 <tr>
 <th>Class</th>
 <th>Description</th>
+<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>TestTask</code></td>
-<td>A queued test management task</td>
-</tr>
-<tr>
-<td><code>TestLifecycleManager</code></td>
-<td>Manages test lifecycle based on source file events</td>
-</tr>
-<tr>
 <td><code>TestAction</code></td>
-<td>Actions available for test management</td>
+<td>Action to take for a test: <code>CREATE</code>, <code>UPDATE</code>, <code>REVIEW</code>, <code>DELETE</code>, <code>SKIP</code>, <code>MANUAL</code>.</td>
+<td><code>src/attune/workflows/test_maintenance.py</code></td>
 </tr>
 <tr>
 <td><code>TestPriority</code></td>
-<td>Priority levels for test actions</td>
+<td>Priority for a test action: <code>CRITICAL</code>, <code>HIGH</code>, <code>MEDIUM</code>, <code>LOW</code>, <code>DEFERRED</code>.</td>
+<td><code>src/attune/workflows/test_maintenance.py</code></td>
 </tr>
 <tr>
 <td><code>TestPlanItem</code></td>
-<td>Single item in a test maintenance plan</td>
+<td>A single item in a test maintenance plan.</td>
+<td><code>src/attune/workflows/test_maintenance.py</code></td>
 </tr>
 <tr>
 <td><code>TestMaintenancePlan</code></td>
-<td>Complete test maintenance plan for a project</td>
+<td>Complete test maintenance plan for a project.</td>
+<td><code>src/attune/workflows/test_maintenance.py</code></td>
 </tr>
 <tr>
 <td><code>TestMaintenanceWorkflow</code></td>
-<td>Workflow for automatic test lifecycle management</td>
+<td>Coordinates test maintenance from source-file events.</td>
+<td><code>src/attune/workflows/test_maintenance.py</code></td>
 </tr>
 </tbody>
 </table>
-<h3>TestTask</h3>
+<h3><code>TestPlanItem</code> fields</h3>
 <table>
 <thead>
 <tr>
 <th>Field</th>
 <th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>id</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Task identifier</td>
-</tr>
-<tr>
-<td><code>file_path</code></td>
-<td><code>str</code></td>
-<td></td>
-<td>Path to the file being tested</td>
-</tr>
-<tr>
-<td><code>action</code></td>
-<td><code>TestAction</code></td>
-<td></td>
-<td>Action to perform</td>
-</tr>
-<tr>
-<td><code>priority</code></td>
-<td><code>TestPriority</code></td>
-<td></td>
-<td>Task priority level</td>
-</tr>
-<tr>
-<td><code>created_at</code></td>
-<td><code>datetime</code></td>
-<td><code>field(default_factory=datetime.now)</code></td>
-<td>Task creation timestamp</td>
-</tr>
-<tr>
-<td><code>scheduled_for</code></td>
-<td>`datetime</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-<tr>
-<td><code>status</code></td>
-<td><code>str</code></td>
-<td><code>'pending'</code></td>
-<td>Current task status</td>
-</tr>
-<tr>
-<td><code>result</code></td>
-<td>`dict[str, Any]</td>
-<td>None`</td>
-<td><code>None</code></td>
-</tr>
-</tbody>
-</table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict(self)</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Convert task to dictionary format</td>
-</tr>
-</tbody>
-</table>
-<h3>TestLifecycleManager</h3>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>__init__(self, project_root, index, auto_execute, queue_file)</code></td>
-<td>`project_root: str, index: ProjectIndex</td>
-<td>None = None, auto_execute: bool = False, queue_file: str</td>
-<td>None = None`</td>
-</tr>
-<tr>
-<td><code>on_file_created(self, file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td>`TestTask</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>on_file_modified(self, file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td>`TestTask</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>on_file_deleted(self, file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td>`TestTask</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>on_files_changed(self, changed_files)</code></td>
-<td><code>changed_files: list[str]</code></td>
-<td><code>list[TestTask]</code></td>
-<td>Handle multiple file changes</td>
-</tr>
-<tr>
-<td><code>get_queue(self)</code></td>
-<td></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>Get current task queue</td>
-</tr>
-<tr>
-<td><code>get_pending_count(self)</code></td>
-<td></td>
-<td><code>int</code></td>
-<td>Get count of pending tasks</td>
-</tr>
-<tr>
-<td><code>get_queue_by_priority(self, priority)</code></td>
-<td><code>priority: TestPriority</code></td>
-<td><code>list[TestTask]</code></td>
-<td>Get tasks filtered by priority</td>
-</tr>
-<tr>
-<td><code>clear_queue(self)</code></td>
-<td></td>
-<td><code>int</code></td>
-<td>Clear all queued tasks</td>
-</tr>
-<tr>
-<td><code>process_queue(self, max_tasks, priority_filter)</code></td>
-<td>`max_tasks: int = 10, priority_filter: TestPriority</td>
-<td>None = None`</td>
-<td><code>dict[str, Any]</code></td>
-</tr>
-<tr>
-<td><code>schedule_maintenance(self, interval_hours, auto_execute)</code></td>
-<td><code>interval_hours: int = 24, auto_execute: bool = False</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Schedule maintenance tasks</td>
-</tr>
-<tr>
-<td><code>run_maintenance(self, auto_execute)</code></td>
-<td><code>auto_execute: bool = False</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Run maintenance workflow</td>
-</tr>
-<tr>
-<td><code>process_git_pre_commit(self, staged_files)</code></td>
-<td><code>staged_files: list[str]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Process pre-commit file changes</td>
-</tr>
-<tr>
-<td><code>process_git_post_commit(self, changed_files)</code></td>
-<td><code>changed_files: list[str]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Process post-commit file changes</td>
-</tr>
-<tr>
-<td><code>on_task_queued(self, callback)</code></td>
-<td><code>callback: Callable[[TestTask], None]</code></td>
-<td><code>None</code></td>
-<td>Register task queued callback</td>
-</tr>
-<tr>
-<td><code>on_task_completed(self, callback)</code></td>
-<td><code>callback: Callable[[TestTask], None]</code></td>
-<td><code>None</code></td>
-<td>Register task completed callback</td>
-</tr>
-<tr>
-<td><code>get_status(self)</code></td>
-<td></td>
-<td><code>dict[str, Any]</code></td>
-<td>Get manager status</td>
-</tr>
-</tbody>
-</table>
-<h3>TestPlanItem</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td><code>file_path</code></td>
 <td><code>str</code></td>
-<td></td>
-<td>Path to source file</td>
+<td>The source file the work concerns</td>
 </tr>
 <tr>
 <td><code>action</code></td>
 <td><code>TestAction</code></td>
-<td></td>
-<td>Required action</td>
+<td>What to do with the test</td>
 </tr>
 <tr>
 <td><code>priority</code></td>
 <td><code>TestPriority</code></td>
-<td></td>
-<td>Action priority</td>
+<td>How urgent the work is</td>
 </tr>
 <tr>
 <td><code>reason</code></td>
 <td><code>str</code></td>
-<td></td>
-<td>Reason for action</td>
+<td>Why this item was generated</td>
 </tr>
 <tr>
 <td><code>test_file_path</code></td>
-<td>`str</td>
-<td>None`</td>
-<td><code>None</code></td>
+<td><code>str | None</code></td>
+<td>The associated test file, if known</td>
 </tr>
 <tr>
 <td><code>estimated_effort</code></td>
 <td><code>str</code></td>
-<td><code>'unknown'</code></td>
-<td>Effort estimate</td>
+<td>Rough effort estimate</td>
 </tr>
 <tr>
 <td><code>auto_executable</code></td>
 <td><code>bool</code></td>
-<td><code>True</code></td>
-<td>Whether action can be automated</td>
+<td>Whether the item can be run without review</td>
 </tr>
 <tr>
 <td><code>metadata</code></td>
-<td><code>dict[str, Any]</code></td>
-<td><code>field(default_factory=dict)</code></td>
-<td>Additional metadata</td>
+<td><code>dict</code></td>
+<td>Free-form extra context</td>
 </tr>
 </tbody>
 </table>
-<table>
-<thead>
-<tr>
-<th>Method</th>
-<th>Returns</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>to_dict(self)</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Convert item to dictionary format</td>
-</tr>
-</tbody>
-</table>
-<h3>TestMaintenancePlan</h3>
-<table>
-<thead>
-<tr>
-<th>Field</th>
-<th>Type</th>
-<th>Default</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>generated_at</code></td>
-<td><code>datetime</code></td>
-<td><code>field(default_factory=datetime.now)</code></td>
-<td>Plan generation timestamp</td>
-</tr>
-<tr>
-<td><code>items</code></td>
-<td><code>list[TestPlanItem]</code></td>
-<td><code>field(default_factory=list)</code></td>
-<td>Plan items</td>
-</tr>
-<tr>
-<td><code>summary</code></td>
-<td><code>dict[str, Any]</code></td>
-<td><code>field(default_factory=dict)</code></td>
-<td>Plan summary</td>
-</tr>
-<tr>
-<td><code>options</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td><code>field(default_factory=list)</code></td>
-<td>Available options</td>
-</tr>
-</tbody>
-</table>
+<p><code>to_dict()</code> serializes the item.</p>
+<h3><code>TestMaintenancePlan</code> methods</h3>
 <table>
 <thead>
 <tr>
@@ -630,32 +375,33 @@
 </thead>
 <tbody>
 <tr>
-<td><code>to_dict(self)</code></td>
-<td></td>
-<td><code>dict[str, Any]</code></td>
-<td>Convert plan to dictionary format</td>
+<td><code>to_dict()</code></td>
+<td>—</td>
+<td><code>dict</code></td>
+<td>Serialize the plan.</td>
 </tr>
 <tr>
-<td><code>get_items_by_action(self, action)</code></td>
+<td><code>get_items_by_action(action)</code></td>
 <td><code>action: TestAction</code></td>
 <td><code>list[TestPlanItem]</code></td>
-<td>Filter items by action type</td>
+<td>Items with the given action.</td>
 </tr>
 <tr>
-<td><code>get_items_by_priority(self, priority)</code></td>
+<td><code>get_items_by_priority(priority)</code></td>
 <td><code>priority: TestPriority</code></td>
 <td><code>list[TestPlanItem]</code></td>
-<td>Filter items by priority</td>
+<td>Items at the given priority.</td>
 </tr>
 <tr>
-<td><code>get_auto_executable_items(self)</code></td>
-<td></td>
+<td><code>get_auto_executable_items()</code></td>
+<td>—</td>
 <td><code>list[TestPlanItem]</code></td>
-<td>Get items that can be automated</td>
+<td>Items safe to run automatically.</td>
 </tr>
 </tbody>
 </table>
-<h3>TestMaintenanceWorkflow</h3>
+<p>Fields: <code>generated_at</code>, <code>items</code>, <code>summary</code>, <code>options</code>.</p>
+<h3><code>TestMaintenanceWorkflow</code> methods</h3>
 <table>
 <thead>
 <tr>
@@ -667,52 +413,46 @@
 </thead>
 <tbody>
 <tr>
-<td><code>__init__(self, project_root, index)</code></td>
-<td>`project_root: str, index: ProjectIndex</td>
-<td>None = None`</td>
-<td></td>
+<td><code>run(context)</code></td>
+<td><code>context: dict</code></td>
+<td><code>TestMaintenancePlan</code></td>
+<td>Build a maintenance plan for the project.</td>
 </tr>
 <tr>
-<td><code>run(self, context)</code></td>
-<td><code>context: dict[str, Any]</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Run maintenance workflow</td>
-</tr>
-<tr>
-<td><code>on_file_created(self, file_path)</code></td>
+<td><code>on_file_created(file_path)</code></td>
 <td><code>file_path: str</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Handle file creation</td>
+<td><code>TestPlanItem | None</code></td>
+<td>Test work implied by a new file.</td>
 </tr>
 <tr>
-<td><code>on_file_modified(self, file_path)</code></td>
+<td><code>on_file_modified(file_path)</code></td>
 <td><code>file_path: str</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Handle file modification</td>
+<td><code>TestPlanItem | None</code></td>
+<td>Test work implied by a changed file.</td>
 </tr>
 <tr>
-<td><code>on_file_deleted(self, file_path)</code></td>
+<td><code>on_file_deleted(file_path)</code></td>
 <td><code>file_path: str</code></td>
-<td><code>dict[str, Any]</code></td>
-<td>Handle file deletion</td>
+<td><code>TestPlanItem | None</code></td>
+<td>Test work implied by a deleted file.</td>
 </tr>
 <tr>
-<td><code>get_files_needing_tests(self, limit)</code></td>
-<td><code>limit: int = 20</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>Get files requiring test coverage</td>
+<td><code>get_files_needing_tests(limit)</code></td>
+<td><code>limit: int</code></td>
+<td><code>list</code></td>
+<td>Files needing tests, prioritized by impact.</td>
 </tr>
 <tr>
-<td><code>get_stale_tests(self, limit)</code></td>
-<td><code>limit: int = 20</code></td>
-<td><code>list[dict[str, Any]]</code></td>
-<td>Get outdated test files</td>
+<td><code>get_stale_tests(limit)</code></td>
+<td><code>limit: int</code></td>
+<td><code>list</code></td>
+<td>Files with stale tests.</td>
 </tr>
 <tr>
-<td><code>get_test_health_summary(self)</code></td>
-<td></td>
-<td><code>dict[str, Any]</code></td>
-<td>Get overall test health status</td>
+<td><code>get_test_health_summary()</code></td>
+<td>—</td>
+<td><code>dict</code></td>
+<td>Quick test-health summary.</td>
 </tr>
 </tbody>
 </table>
@@ -724,63 +464,54 @@
 <th>Parameters</th>
 <th>Returns</th>
 <th>Description</th>
+<th>File</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>run_tests_with_tracking(test_suite, test_files, command, workflow_id, triggered_by)</code></td>
-<td>`test_suite: str = 'unit', test_files: list[str]</td>
-<td>None = None, command: str</td>
-<td>None = None, workflow_id: str</td>
-</tr>
-<tr>
-<td><code>track_coverage(coverage_file, workflow_id)</code></td>
-<td>`coverage_file: str = 'coverage.xml', workflow_id: str</td>
-<td>None = None`</td>
-<td><code>CoverageRecord</code></td>
-</tr>
-<tr>
-<td><code>track_file_tests(source_file, test_file, workflow_id)</code></td>
-<td>`source_file: str, test_file: str</td>
-<td>None = None, workflow_id: str</td>
-<td>None = None`</td>
-</tr>
-<tr>
-<td><code>get_file_test_status(file_path)</code></td>
-<td><code>file_path: str</code></td>
-<td>`FileTestRecord</td>
-<td>None`</td>
-</tr>
-<tr>
-<td><code>get_files_needing_tests(stale_only, failed_only)</code></td>
-<td><code>stale_only: bool = False, failed_only: bool = False</code></td>
-<td><code>list[FileTestRecord]</code></td>
-<td>Get files that need test attention</td>
-</tr>
-</tbody>
-</table>
-<h3>Raises</h3>
-<table>
-<thead>
-<tr>
-<th>Function</th>
-<th>Exception</th>
-<th>Message</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>track_coverage()</code></td>
-<td><code>FileNotFoundError</code></td>
-<td><code>'Coverage file not found: {...}'</code></td>
+<td><code>run_tests_with_tracking()</code></td>
+<td><code>test_suite, test_files, command, workflow_id, triggered_by</code></td>
+<td><code>dict</code></td>
+<td>Run tests with explicit tracking (opt-in Tier 1 monitoring).</td>
+<td><code>test_runner.py</code></td>
 </tr>
 <tr>
 <td><code>track_coverage()</code></td>
-<td><code>ValueError</code></td>
-<td><code>'Invalid coverage.xml format: {...}'</code></td>
+<td><code>coverage_file, workflow_id</code></td>
+<td><code>dict</code></td>
+<td>Track coverage from a <code>coverage.xml</code> file.</td>
+<td><code>test_runner.py</code></td>
+</tr>
+<tr>
+<td><code>track_file_tests()</code></td>
+<td><code>source_file, test_file, workflow_id</code></td>
+<td><code>dict</code></td>
+<td>Track test execution for a specific source file.</td>
+<td><code>test_runner.py</code></td>
+</tr>
+<tr>
+<td><code>get_file_test_status()</code></td>
+<td><code>file_path</code></td>
+<td><code>FileTestRecord | None</code></td>
+<td>Latest test status for a file.</td>
+<td><code>test_runner.py</code></td>
+</tr>
+<tr>
+<td><code>get_files_needing_tests()</code></td>
+<td><code>stale_only, failed_only</code></td>
+<td><code>list</code></td>
+<td>Files that need test attention.</td>
+<td><code>test_runner.py</code></td>
 </tr>
 </tbody>
 </table>
+<h2>Source files</h2>
+<ul>
+<li><code>src/attune/workflows/test_runner.py</code></li>
+<li><code>src/attune/workflows/test_maintenance.py</code></li>
+</ul>
+<h2>Tags</h2>
+<p><code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 
   </article>
   <footer>

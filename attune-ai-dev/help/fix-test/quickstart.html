@@ -4,9 +4,9 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Quickstart: fix-test — quickstart</title>
-  <meta name="description" content="Track and manage failing tests across your project. The fix-test feature automatically identifies files that need test attention and queues maintenance tasks." />
+  <meta name="description" content="Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan." />
   <meta property="og:title" content="Quickstart: fix-test — quickstart" />
-  <meta property="og:description" content="Track and manage failing tests across your project. The fix-test feature automatically identifies files that need test attention and queues maintenance tasks." />
+  <meta property="og:description" content="Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/quickstart" />
   <style>
@@ -273,7 +273,7 @@
   </nav>
   <article class="markdown-body">
 <h1>Quickstart: fix-test</h1>
-<p>Track and manage failing tests across your project. The fix-test feature automatically identifies files that need test attention and queues maintenance tasks.</p>
+<p>Track and manage failing tests across your project. The fix-test feature identifies files that need test attention and turns changes into a prioritized maintenance plan.</p>
 <pre><code class="language-python">from attune.workflows.test_runner import get_files_needing_tests
 
 # Find files that need test fixes
@@ -288,33 +288,34 @@ Status: test_failed
 File: src/another_module.py
 Status: no_tests
 </code></pre>
-<h2>Set up automated test lifecycle management</h2>
+<h2>Build a test maintenance plan</h2>
 <ol>
 <li>
-<p><strong>Initialize the test lifecycle manager</strong></p>
-<pre><code class="language-python">from attune.workflows.test_lifecycle import TestLifecycleManager
+<p><strong>Create the workflow</strong></p>
+<pre><code class="language-python">from attune.workflows.test_maintenance import TestMaintenanceWorkflow
 
-manager = TestLifecycleManager(project_root=&quot;.&quot;, auto_execute=True)
+workflow = TestMaintenanceWorkflow()
 </code></pre>
 </li>
 <li>
-<p><strong>Process file changes to queue test tasks</strong></p>
-<pre><code class="language-python"># When files change, automatically queue maintenance tasks
-tasks = manager.on_files_changed([&quot;src/updated_file.py&quot;, &quot;src/new_file.py&quot;])
-print(f&quot;Queued {len(tasks)} test maintenance tasks&quot;)
+<p><strong>React to a change, or build a full plan</strong></p>
+<pre><code class="language-python"># Per-file: returns a TestPlanItem | None
+item = workflow.on_file_modified(&quot;src/updated_file.py&quot;)
+
+# Or a full plan for the project
+plan = workflow.run({})
+print(f&quot;Planned {len(plan.items)} test maintenance items&quot;)
 </code></pre>
 </li>
 <li>
-<p><strong>Execute queued maintenance</strong></p>
-<pre><code class="language-python"># Process pending test maintenance tasks
-results = manager.process_queue(max_tasks=5)
-print(f&quot;Completed: {results['completed_count']}&quot;)
-print(f&quot;Failed: {results['failed_count']}&quot;)
+<p><strong>Act on the safe subset</strong></p>
+<pre><code class="language-python">safe = plan.get_auto_executable_items()
+print(f&quot;{len(safe)} items can run automatically&quot;)
 </code></pre>
 </li>
 </ol>
 <h2>Next steps</h2>
-<p>Run <code>manager.get_test_health_summary()</code> to see an overview of your project's test coverage and identify the highest-priority areas for improvement.</p>
+<p>Run <code>workflow.get_test_health_summary()</code> to see an overview of your project's test coverage and identify the highest-priority areas for improvement.</p>
 
   </article>
   <footer>

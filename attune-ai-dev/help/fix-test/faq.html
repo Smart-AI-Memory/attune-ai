@@ -282,7 +282,7 @@
 <li>Monitor test coverage and execution</li>
 <li>Get maintenance plans for stale or missing tests</li>
 <li>Respond to file changes with appropriate test actions</li>
-<li>Schedule regular test health checks</li>
+<li>Get a quick test-health summary for your project</li>
 </ul>
 <h2>What are the main functions I should know about?</h2>
 <p>Start with these functions based on what you want to do:</p>
@@ -295,17 +295,16 @@
 <h2>How do I create a test maintenance plan?</h2>
 <p>Use the <code>TestMaintenanceWorkflow</code> class. It analyzes your project and generates a <code>TestMaintenancePlan</code> with specific actions, priorities, and effort estimates for each file that needs attention.</p>
 <h2>How do I respond to file changes automatically?</h2>
-<p>The <code>TestLifecycleManager</code> handles file events for you. It creates <code>TestTask</code> objects when files are created, modified, or deleted, then queues them for processing based on priority.</p>
+<p><code>TestMaintenanceWorkflow</code> handles file events for you. Its <code>on_file_created()</code>, <code>on_file_modified()</code>, and <code>on_file_deleted()</code> handlers each return a <code>TestPlanItem</code> describing the test action that change implies, with an assigned <code>TestAction</code> and <code>TestPriority</code>.</p>
 <h2>What happens when I run <code>track_coverage()</code>?</h2>
 <p>The function reads your coverage.xml file and creates a <code>CoverageRecord</code>. If the file doesn't exist, you'll get a <code>FileNotFoundError</code>. If the XML format is invalid, you'll get a <code>ValueError</code> with details about what went wrong.</p>
 <h2>How do I debug test tracking issues?</h2>
 <p>First, run <code>pytest -k &quot;fix-test&quot; -v</code> to check if the feature's own tests pass. If they do but you're still having problems, add debug logging at the point where things go wrong and re-run with logging enabled.</p>
 <h2>Where are the source files?</h2>
-<p>The fix-test feature spans three files:</p>
+<p>The fix-test feature spans two files:</p>
 <ul>
 <li><code>src/attune/workflows/test_runner.py</code> — Test execution and coverage tracking</li>
-<li><code>src/attune/workflows/test_maintenance.py</code> — Maintenance workflow and planning</li>
-<li><code>src/attune/workflows/test_lifecycle.py</code> — Event-driven test lifecycle management</li>
+<li><code>src/attune/workflows/test_maintenance.py</code> — Maintenance workflow, planning, and source-file event handlers</li>
 </ul>
 <p><strong>Tags:</strong> <code>tests</code>, <code>debugging</code>, <code>fixes</code></p>
 

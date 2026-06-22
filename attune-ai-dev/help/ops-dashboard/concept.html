@@ -277,7 +277,7 @@
 <p>The ops dashboard is a locally running web server — the operations layer of the attune workflow OS — that lets you run workflows against a specific feature scope, browse persisted run history, chain workflows with a single click, and stream live logs over SSE.</p>
 <p>You start it with <code>attune ops</code> (or <code>python -m attune.ops</code>). It binds to <code>127.0.0.1:8765</code> by default and serves a browser UI backed by a FastAPI application created by <code>create_app</code>.</p>
 <h2>How the pieces fit together</h2>
-<p>The dashboard is built from four cooperating concerns: configuration, cost reporting, telemetry, and spec-completion detection.</p>
+<p>The dashboard is built from five cooperating concerns: configuration, cost reporting, telemetry, spend-anomaly detection, and spec-completion detection.</p>
 <p><strong>Configuration</strong> is the root. <code>Config</code> tells every other part of the dashboard where to look for project state and attune state:</p>
 <ul>
 <li><code>project_root</code> and <code>attune_home</code> anchor all relative paths.</li>
@@ -288,6 +288,7 @@
 <li><code>runs_retention_days</code> (default <code>30</code>) controls how long run history is kept on disk.</li>
 </ul>
 <p><strong>Cost reporting</strong> calls the Anthropic admin cost-report endpoint at <code>https://api.anthropic.com/v1/organizations/cost_report</code>. <code>fetch_summary(refresh=False)</code> returns either a <code>CostSummary</code> or a <code>CostFetchError</code>. <code>CostSummary</code> breaks spending down along three axes — <code>by_day</code>, <code>by_model</code>, and <code>by_cost_type</code> — plus rolled-up totals (<code>today_usd</code>, <code>seven_day_usd</code>, <code>month_to_date_usd</code>, <code>thirty_day_usd</code>). The <code>source</code> field tells you whether the data came from a live API call or an in-memory cache. When the fetch fails, <code>CostFetchError</code> carries a <code>kind</code> (a <code>CostFetchErrorKind</code> enum) and a human-readable <code>message</code> so the UI can display a precise error rather than a generic one.</p>
+<p><strong>Spend-anomaly detection</strong> (R6) raises alerts when daily API spend becomes anomalous or approaches the monthly ceiling. <code>SpendAlarm</code> independently flags two triggers: (1) today's spend is a statistical outlier versus the trailing baseline (z-score, with a flat-multiplier fallback when variance is zero), and (2) month-to-date spend reaches 80% of the monthly cap (default $350). The alarm prefers account-level spend (the admin cost-report, which also sees CI spend) and falls back to local <code>usage.jsonl</code> when no admin key is configured. Its <code>detail</code> field carries a one-line explanation for display.</p>
 <p><strong>Telemetry</strong> is recorded locally. <code>TelemetrySummary</code> aggregates the requests the dashboard has processed: <code>total_requests</code>, <code>total_cost</code>, <code>total_savings</code>, and breakdowns <code>by_workflow</code> and <code>by_day</code>. The UI uses this data to show you which workflows you run most and what they cost.</p>
 <p><strong>Spec-completion detection</strong> is opt-in (<code>specs_candidates_enabled</code> in <code>Config</code>). When enabled, <code>detect_candidates</code> scans the configured <code>specs_roots</code> and returns a list of <code>Candidate</code> objects — one per spec that looks ready to close out. Each <code>Candidate</code> carries the spec's <code>slug</code>, <code>path</code>, <code>current_status</code>, supporting <code>evidence</code>, and a <code>snapshot_hash</code> so the detector can avoid re-surfacing a candidate you have already dismissed.</p>
 <h2>Scope picker and session tracking</h2>
@@ -296,6 +297,7 @@
 <h2>When this matters</h2>
 <p>You need the ops dashboard when you want to:</p>
 <ul>
+<li>Monitor daily API-spend anomalies and month-to-date spending against an automated ceiling gauge.</li>
 <li>Track Anthropic API spend across models and days without leaving your project.</li>
 <li>Run attune workflows from a browser UI rather than typing CLI commands, especially when you want to chain multiple workflows in sequence.</li>
 <li>Review persisted run history beyond the <code>runs_retention_days</code> window to audit what ran and when.</li>

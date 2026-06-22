@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Use TestLifecycleManager for event-driven test maintenance — tip</title>
-  <meta name="description" content="Start with `TestLifecycleManager` when files change in your project—it automatically queues appropriate test actions based on what happened to each file." />
-  <meta property="og:title" content="Use TestLifecycleManager for event-driven test maintenance — tip" />
-  <meta property="og:description" content="Start with `TestLifecycleManager` when files change in your project—it automatically queues appropriate test actions based on what happened to each file." />
+  <title>Use TestMaintenanceWorkflow for event-driven test maintenance — tip</title>
+  <meta name="description" content="Reach for `TestMaintenanceWorkflow` when files change in your project — its event handlers turn each change into a `TestPlanItem` describing the test action that change implies." />
+  <meta property="og:title" content="Use TestMaintenanceWorkflow for event-driven test maintenance — tip" />
+  <meta property="og:description" content="Reach for `TestMaintenanceWorkflow` when files change in your project — its event handlers turn each change into a `TestPlanItem` describing the test action that change implies." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/fix-test/tip" />
   <style>
@@ -272,24 +272,27 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Use TestLifecycleManager for event-driven test maintenance</h1>
-<p>Start with <code>TestLifecycleManager</code> when files change in your project—it automatically queues appropriate test actions based on what happened to each file.</p>
+<h1>Use TestMaintenanceWorkflow for event-driven test maintenance</h1>
+<p>Reach for <code>TestMaintenanceWorkflow</code> when files change in your project — its event handlers turn each change into a <code>TestPlanItem</code> describing the test action that change implies.</p>
 <h2>Why this matters</h2>
-<p>Setting up event handlers once is faster than manually tracking which tests need updates every time you modify source code.</p>
+<p>Letting the workflow map changes to test actions is faster than manually tracking which tests need updates every time you modify source code.</p>
 <h2>How to use it</h2>
-<p>Initialize the manager with your project root and call the appropriate handler:</p>
-<pre><code class="language-python">manager = TestLifecycleManager(project_root=&quot;/path/to/project&quot;)
+<p>Call the handler that matches the change, then act on the returned item:</p>
+<pre><code class="language-python">from attune.workflows.test_maintenance import TestMaintenanceWorkflow
+
+workflow = TestMaintenanceWorkflow()
 
 # When a file is created, modified, or deleted
-task = manager.on_file_created(&quot;src/new_module.py&quot;)
-task = manager.on_file_modified(&quot;src/existing_module.py&quot;)
-task = manager.on_file_deleted(&quot;src/old_module.py&quot;)
+item = workflow.on_file_created(&quot;src/new_module.py&quot;)
+item = workflow.on_file_modified(&quot;src/existing_module.py&quot;)
+item = workflow.on_file_deleted(&quot;src/old_module.py&quot;)
 
-# Process queued tasks
-result = manager.process_queue(max_tasks=5)
+# Or build a full plan and run only the safe items
+plan = workflow.run({})
+safe = plan.get_auto_executable_items()
 </code></pre>
 <h2>The tradeoff</h2>
-<p>The manager queues tasks instead of running them immediately—you get control over when test maintenance happens, but you must remember to process the queue.</p>
+<p><code>run()</code> produces a plan rather than executing everything — you get control over what runs, but you decide which items to act on. Use <code>get_auto_executable_items()</code> for the safe subset and leave <code>REVIEW</code>/<code>MANUAL</code> items for a human.</p>
 
   </article>
   <footer>

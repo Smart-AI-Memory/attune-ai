@@ -333,6 +333,21 @@ Each subcommand has a single responsibility. Match your goal to the function tha
 <td><code>cmd_agent_performance()</code></td>
 <td><code>cli_automation.py</code></td>
 </tr>
+<tr>
+<td>Check usage-ping opt-in status and payload</td>
+<td><code>cmd_telemetry_status()</code></td>
+<td><code>cli_commands/telemetry_commands.py</code></td>
+</tr>
+<tr>
+<td>Opt in to anonymous usage pinging</td>
+<td><code>cmd_telemetry_enable()</code></td>
+<td><code>cli_commands/telemetry_commands.py</code></td>
+</tr>
+<tr>
+<td>Opt out of anonymous usage pinging</td>
+<td><code>cmd_telemetry_disable()</code></td>
+<td><code>cli_commands/telemetry_commands.py</code></td>
+</tr>
 </tbody>
 </table>
 </li>
@@ -352,7 +367,7 @@ Apply your change — new logic, additional output fields, or updated filtering.
 </li>
 <li>
 <p><strong>Register any new subcommand in the CLI entry point.</strong>
-If you added a new <code>cmd_*</code> function, wire it up in <code>src/attune/telemetry/__main__.py</code> via <code>main()</code> so the CLI can dispatch to it.</p>
+If you added a new <code>cmd_*</code> function for the telemetry module, wire it up in <code>src/attune/telemetry/__main__.py</code> via <code>main()</code>. For user-facing commands like the usage-ping opt-in controls, add them to <code>src/attune/cli_commands/telemetry_commands.py</code> instead (registered through <code>cli_minimal.py</code>).</p>
 </li>
 <li>
 <p><strong>Run the tests again.</strong></p>
@@ -384,6 +399,14 @@ If you added a new <code>cmd_*</code> function, wire it up in <code>src/attune/t
 <tr>
 <td><code>src/attune/telemetry/cli_automation.py</code></td>
 <td>Tier 1, task routing, and agent performance commands</td>
+</tr>
+<tr>
+<td><code>src/attune/telemetry/usage_ping.py</code></td>
+<td>Opt-in anonymous usage sync — enable/disable, payload building, endpoint resolution</td>
+</tr>
+<tr>
+<td><code>src/attune/cli_commands/telemetry_commands.py</code></td>
+<td>User-facing usage-ping commands: <code>cmd_telemetry_enable</code>, <code>cmd_telemetry_disable</code>, <code>cmd_telemetry_status</code></td>
 </tr>
 </tbody>
 </table>
