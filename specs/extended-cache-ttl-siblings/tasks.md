@@ -1,7 +1,7 @@
 # Tasks: Extended Cache TTL — Sibling Packages
 
 **Status**: in progress (2026-06-22) — Task A (attune-ai) done;
-Task B (attune-author) deferred to a separate session + PR.
+Task B (attune-author) in progress, PR open.
 
 ---
 
@@ -26,10 +26,12 @@ provider.
 
 PR: [attune-ai#998](https://github.com/Smart-AI-Memory/attune-ai/pull/998)
 
-## Task B — attune-author ⬜ pending
+## Task B — attune-author 🔄 in progress
 
 Same mirror in attune-author's Claude provider path. **Separate
-repo, separate PR — not started in the attune-ai session.** Pick
-the package-local env var name (`ATTUNE_AUTHOR_CACHE_TTL` or reuse
-`ATTUNE_CACHE_TTL` — decide at task time) and route its emit
-site(s) through a local `_cache_control()` copy.
+repo, separate PR.** Implemented as a local `cache_control()` in
+`src/attune_author/doc_gen/_cache.py`, reading the package-local
+`ATTUNE_AUTHOR_CACHE_TTL` (behavior byte-identical when unset).
+
+PR: [attune-author#81](https://github.com/Smart-AI-Memory/attune-author/pull/81)
+— open, mergeable (awaiting review).
