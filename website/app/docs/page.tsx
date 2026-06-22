@@ -50,7 +50,7 @@ const faqItems = [
   {
     question: 'Where do I install attune-help and attune-author from?',
     answer:
-      'They live in the Smart-AI-Memory/attune-docs marketplace, not the main attune-ai marketplace. Add the marketplace with `claude plugin marketplace add Smart-AI-Memory/attune-docs`, then install the plugin(s) you want: `attune-help@attune-docs` for the reader and/or `attune-author@attune-docs` for the AI authoring companion. For PyPI direct installs, `pip install attune-help` and `pip install \'attune-author[plugin]\'` also work.',
+      'Both ship on PyPI, which is the current and recommended source: `pip install attune-help` (the reader, no API key required) and `pip install \'attune-author[plugin]\'` (the AI authoring companion). The Claude Code plugin versions live in the separate Smart-AI-Memory/attune-docs marketplace (`claude plugin marketplace add Smart-AI-Memory/attune-docs`, then `attune-help@attune-docs` / `attune-author@attune-docs`), but that marketplace can lag the latest PyPI release.',
   },
 ];
 
@@ -217,26 +217,28 @@ export default function DocsPage() {
                 </div>
               </div>
 
-              {/* attune-docs marketplace callout */}
+              {/* attune-help / attune-author install */}
               <div className="mt-10 bg-[var(--surface-container-low)] border border-[var(--border)] rounded-lg p-6">
                 <h3 className="font-bold text-lg mb-2">
-                  attune-help and attune-author plugins live in the attune-docs marketplace
+                  Installing attune-help and attune-author
                 </h3>
                 <p className="text-sm text-[var(--text-secondary)] mb-4">
-                  After the 2026-04-10 split, the Claude Code plugin
-                  versions of attune-help and attune-author live in a
-                  separate marketplace from the main attune-ai
-                  plugin. Add that marketplace first, then install
-                  whichever plugin(s) you want.
+                  Both ship as Python packages on PyPI — the current,
+                  recommended way to install them. The Claude Code
+                  plugin versions live in the separate{" "}
+                  <code className="text-xs bg-[var(--surface-container-high)] px-1 rounded">
+                    Smart-AI-Memory/attune-docs
+                  </code>{" "}
+                  marketplace, which can lag the latest PyPI release.
                 </p>
                 <div className="bg-[#213145] text-white/90 rounded-xl font-mono text-xs p-4 leading-relaxed">
-                  <div className="text-white/50"># Add the attune-docs marketplace</div>
+                  <div className="text-white/50"># Recommended: install from PyPI (always current)</div>
+                  <div>pip install attune-help</div>
+                  <div>pip install &apos;attune-author[plugin]&apos;</div>
+                  <br />
+                  <div className="text-white/50"># Claude Code plugins (may lag the PyPI release)</div>
                   <div>claude plugin marketplace add Smart-AI-Memory/attune-docs</div>
-                  <br />
-                  <div className="text-white/50"># Install the reader (no API key required)</div>
                   <div>claude plugin install attune-help@attune-docs</div>
-                  <br />
-                  <div className="text-white/50"># Install the AI authoring companion</div>
                   <div>claude plugin install attune-author@attune-docs</div>
                 </div>
               </div>
@@ -480,7 +482,7 @@ export default function DocsPage() {
                   <div className="text-white/50"># PyPI install (includes the polish runtime)</div>
                   <div>pip install &apos;attune-author[plugin]&apos;</div>
                   <br />
-                  <div className="text-white/50"># Or via the attune-docs marketplace for Claude Code</div>
+                  <div className="text-white/50"># Or the Claude Code plugin (may lag the PyPI release)</div>
                   <div>claude plugin install attune-author@attune-docs</div>
                 </div>
                 <p className="text-sm text-[var(--text-secondary)]">
