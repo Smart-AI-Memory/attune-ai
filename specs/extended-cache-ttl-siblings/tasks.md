@@ -24,7 +24,7 @@ provider.
 4. ✓ **Suite green** — `tests/llm/` 283 passed; full `-m "not
    live"` run clean.
 
-PR: _(linked on open)_
+PR: [attune-ai#998](https://github.com/Smart-AI-Memory/attune-ai/pull/998)
 
 ## Task B — attune-author ⬜ pending
 
