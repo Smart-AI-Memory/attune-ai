@@ -3,8 +3,8 @@ type: comparison
 name: smart-test-comparison
 feature: smart-test
 depth: comparison
-generated_at: 2026-05-16T06:19:45.819669+00:00
-source_hash: 2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: b1325f36412cbd67b36481e0f150de834b91392f8fa17c843f8aecd357d18b07
 status: generated
 ---
 

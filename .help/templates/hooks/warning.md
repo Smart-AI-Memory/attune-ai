@@ -3,8 +3,8 @@ type: warning
 name: hooks-warning
 feature: hooks
 depth: warning
-generated_at: 2026-06-02T10:56:02.710836+00:00
-source_hash: 4690cd16c282bccaee1ffc3de0ea189b194fa0d71b87cec08e2f3675e136bbb9
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 92f76c4d4d77b21e59b9a6aed8e65dd221371f5ce10f2941171a5c0310c232c1
 status: generated
 ---
 

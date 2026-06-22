@@ -3,8 +3,8 @@ type: reference
 name: agents-reference
 feature: agents
 depth: reference
-generated_at: 2026-06-11T04:43:25.152927+00:00
-source_hash: 7ddd0fc96a1f5315731bff455997f261001e41fc40732100eff70032b8dc0689
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
 status: generated
 scaffold_hash: 4784cd713b49011cc685b0c641b8519c53bcfa436aa96ec99e0886eef0ff9158
 ---

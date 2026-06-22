@@ -3,8 +3,8 @@ type: tip
 name: refactor-plan-tip
 feature: refactor-plan
 depth: tip
-generated_at: 2026-06-02T10:56:02.705686+00:00
-source_hash: 048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38
+generated_at: 2026-06-22T10:13:38.223145+00:00
+source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
 status: generated
 ---
 

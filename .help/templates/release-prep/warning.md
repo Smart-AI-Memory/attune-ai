@@ -3,8 +3,8 @@ type: warning
 name: release-prep-warning
 feature: release-prep
 depth: warning
-generated_at: 2026-06-04T23:45:26.707118+00:00
-source_hash: 154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2
+generated_at: 2026-06-22T10:13:38.223145+00:00
+source_hash: 2e9628fb196173f4048d6aab29c024a2318abaeea4420bd4865253bdc1d46702
 status: generated
 ---
 

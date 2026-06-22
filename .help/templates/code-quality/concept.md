@@ -2,8 +2,8 @@
 type: concept
 feature: code-quality
 depth: concept
-generated_at: 2026-05-04T02:24:10.692732+00:00
-source_hash: 0d2aa6913a2dae27ec39d314c14f1f9a65365582fb2ba40d7060f571d73ca77e
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
 status: generated
 ---
 

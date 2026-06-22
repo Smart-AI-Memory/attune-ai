@@ -3,8 +3,8 @@ type: comparison
 name: security-audit-comparison
 feature: security-audit
 depth: comparison
-generated_at: 2026-06-02T10:56:02.715269+00:00
-source_hash: b5ac92e21712579189bcbb6c5f4ee162ee999a19b070da3f645661ffa7e81668
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131
 status: generated
 ---
 

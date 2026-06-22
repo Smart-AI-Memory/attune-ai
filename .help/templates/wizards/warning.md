@@ -2,8 +2,8 @@
 type: warning
 feature: wizards
 depth: warning
-generated_at: 2026-04-14T15:27:57.892257+00:00
-source_hash: 655cede9671032e7ccc7f39a9f47afbc96ce8855aa0b1bbe2c6567c1a091bf8b
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
 status: generated
 ---
 

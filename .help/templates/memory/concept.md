@@ -3,8 +3,8 @@ type: concept
 name: memory-concept
 feature: memory
 depth: concept
-generated_at: 2026-06-12T00:20:52.581029+00:00
-source_hash: 439162c85525d4aff627199f05d3f52d259589b86b947c5b2f62b832a0d15fae
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 7d6a88f7e825fe56e3b06e3bce6dd904fe6a75cd1c13a3a134e4b44138df245e
 status: generated
 scaffold_hash: fc0d9984517f8c22ce4ac76cb18edf9fd2a3bcc4d42b5edbc949332d6846906e
 ---
