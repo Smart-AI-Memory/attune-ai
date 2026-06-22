@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [8.7.1] — 2026-06-22
+
+Docs/distribution patch — **no runtime changes** (`src/attune` is
+identical to 8.7.0). Released to refresh the PyPI project page, whose
+README still pointed new users at the now-retired `attune-docs`
+marketplace.
+
 ### Changed
 
 - **Consolidated the help/author/gui Claude Code plugins into the
