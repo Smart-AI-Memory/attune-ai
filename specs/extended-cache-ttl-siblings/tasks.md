@@ -1,7 +1,7 @@
 # Tasks: Extended Cache TTL — Sibling Packages
 
-**Status**: in progress (2026-06-22) — Task A (attune-ai) done;
-Task B (attune-author) in progress, PR open.
+**Status**: ✓ complete (2026-06-22) — both tasks shipped.
+Task A (attune-ai) and Task B (attune-author) merged.
 
 ---
 
@@ -26,7 +26,7 @@ provider.
 
 PR: [attune-ai#998](https://github.com/Smart-AI-Memory/attune-ai/pull/998)
 
-## Task B — attune-author 🔄 in progress
+## Task B — attune-author ✓ complete 2026-06-22
 
 Same mirror in attune-author's Claude provider path. **Separate
 repo, separate PR.** Implemented as a local `cache_control()` in
@@ -34,4 +34,4 @@ repo, separate PR.** Implemented as a local `cache_control()` in
 `ATTUNE_AUTHOR_CACHE_TTL` (behavior byte-identical when unset).
 
 PR: [attune-author#81](https://github.com/Smart-AI-Memory/attune-author/pull/81)
-— open, mergeable (awaiting review).
+— merged 2026-06-22 (`5fdbe9fd`).
