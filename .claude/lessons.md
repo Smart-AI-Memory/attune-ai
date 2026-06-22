@@ -10132,3 +10132,50 @@ files.
   read-only subagents produced per-feature surgical edit plans (exact
   old→new strings); the driver verified every proposed signature/class
   against source before applying (zero confabulation found).
+
+- **A drift-detecting guard test merged in one PR won't catch drift
+  introduced by a SIBLING content-PR that merges around the same time —
+  main can go red the moment both land, even though each PR's own CI was
+  green.** Hit 2026-06-22: PR #981 added
+  `tests/unit/help/test_help_manifest_integrity.py` (symbol-existence
+  guard for `.help` templates); PR #980 was a "full help-freshness
+  sweep" that regenerated the telemetry templates to reference real but
+  out-of-glob CLI symbols (`cmd_telemetry_*` in
+  `src/attune/cli_commands/telemetry_commands.py`, outside the telemetry
+  feature's `src/attune/telemetry/**` glob). #981's CI ran its merge
+  against a base that did NOT yet include #980, so the guard never saw
+  the regenerated templates and passed. Both were admin-merged green
+  within minutes; the instant both were on main, the guard was RED on
+  `main` (caught only on the NEXT branch cut from updated main). Root
+  cause is the same family as "admin-merging before re-running against
+  updated main buries a bug," but the trigger is subtler: it is the
+  INTERACTION of a new *checker* with new *checkable content* arriving in
+  a different PR — neither PR alone is wrong, and neither PR's CI can see
+  the other. Mitigations: (1) when merging a new drift-guard test while
+  ANY content PR that the guard would inspect is in flight, re-run the
+  guard PR's CI against post-content `main` before merging (or merge the
+  guard LAST and re-trigger); (2) after landing a guard + a sibling
+  content sweep, cut a throwaway branch from updated `main` and run the
+  guard once to confirm green; (3) treat "guard passed in its own PR" as
+  necessary-not-sufficient — the authoritative check is the guard against
+  the MERGED state. The fix when it fires: triage the flagged symbols —
+  if real-but-cross-module (verify with `grep -rn "def <sym>" src/`), add
+  to the guard's documented ignore-list; if hallucinated, fix the
+  template.
+
+- **R7 single-source authoring: `import_repair` canonicalizes a symbol
+  to its PACKAGE-LEVEL re-export, so import lines in the master must use
+  the package, not the submodule, or fact-check flags a rewrite.** Hit
+  2026-06-22 authoring `content/features/fix-test.md`:
+  `TestMaintenanceWorkflow` is in `attune.workflows.__all__` (re-exported
+  at the package), so `project_features.py --dry-run` warned that
+  `import_repair` would rewrite `from attune.workflows.test_maintenance
+  import TestMaintenanceWorkflow` → `from attune.workflows import
+  TestMaintenanceWorkflow`. The other referenced symbols (the
+  `test_runner` functions, `TestAction`/`TestPlanItem`/etc.) are NOT
+  re-exported at the package, so they correctly stay at the submodule.
+  Rule for authoring masters: for each imported symbol, prefer the
+  shortest module that re-exports it (check `<pkg>.__all__`); a clean
+  `--dry-run` (0 findings) is the bar before the real projection. Quick
+  diagnostic for "which import does it want": the only symbol that
+  triggers a rewrite is one that appears in a parent package's `__all__`.
