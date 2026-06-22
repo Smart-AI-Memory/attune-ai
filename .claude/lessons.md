@@ -10062,3 +10062,73 @@ files.
   pitch decks (the owner's call) and *paid-support* offerings (Apache-
   2.0-compatible, keep). When in doubt on commerce code, check for an
   existing `@deprecated` marker before ripping it out.
+
+- **`.help` content-hash staleness flags THAT source changed, not
+  WHETHER templates reference DELETED symbols — add a symbol-existence +
+  manifest-glob-existence pass to catch the dead-doc / broken-glob class
+  the hash is blind to**: 2026-06-22 help-freshness sweep.
+  `attune.help.staleness.compute_source_hash` / `check_staleness` only
+  compare a SHA of concatenated source against a stored hash (read from
+  `concept.md` frontmatter only), so a feature reads "stale" the moment
+  any byte under its glob changes — but the checker CANNOT see (a)
+  templates documenting symbols that were deleted, or (b)
+  `features.yaml` globs pointing at files that no longer exist. The
+  `fix-test` feature exposed both: `src/attune/workflows/test_lifecycle.py`
+  was deleted in #887 (TestLifecycleManager, TestTask, the task queue,
+  git-hook processing), yet all 11 fix-test templates still documented
+  those symbols AND the manifest still globbed the deleted file. Caught
+  only by a deliberate check: extract backticked `ClassName` / `func()`
+  refs from each feature's templates and assert each appears in that
+  feature's *resolved* source text (ignore-list builtins/stdlib like
+  `compile`, `ValueError`, `FileNotFoundError`). Durable rule: the
+  staleness flag is necessary-not-sufficient — to find docs that are
+  WRONG (reference removed code) vs merely STALE (accurate but old), run
+  a symbol/glob-existence pass. Regression-guard test queued (manifest
+  globs must resolve to real files; template symbols must exist in
+  source). Pairs with "research subagents confabulate SDK signatures —
+  introspect before coding" (verify against source, don't trust text).
+
+- **Most "stale" `.help` features are false positives from cross-cutting
+  refactors — rank by per-feature source-diff since each feature's OWN
+  gen date, and treat verified-accurate features with a hash-refresh,
+  not a regen**: same sweep. 23/23 features showed "stale," but ranking
+  by `git log --numstat --since=<that feature's generated_at>` over its
+  resolved globs showed wildly uneven drift: ~3,500 of ~4,100 changed
+  lines lived in 5 features; ~12 had ≤34 lines (lessons/formatting churn
+  or repo-wide refactors like "WorkflowReport output for all SDK
+  workflows" / "SDK subprocess isolation" that touched function bodies
+  without changing documented behavior); memory + agents had ZERO
+  content drift (stale only because a file was added/removed under the
+  glob). For the false-positive tier the correct action is a *verified*
+  hash-refresh — confirm every documented symbol still exists (above
+  lesson), then rewrite ONLY `generated_at` + `source_hash` frontmatter,
+  NOT a regen. `check_staleness` reads the stored hash from `concept.md`
+  only, so a concept-hash refresh clears the flag; refresh sibling
+  templates for consistency (harmless, not checked).
+
+- **The keyless `.help` regen is a content-STRIPPING regression and
+  "polish without the key" is a no-op — the driving Claude session is a
+  SUPERIOR polish layer to the API polish pass, and the only one that
+  catches correctness bugs; "best results" ≠ "wire up the API"**:
+  extends the "whole-feature re-polish" lesson with the quality
+  hierarchy. `run_maintenance` / `generate_feature_templates` WITHOUT
+  `ANTHROPIC_API_KEY` emit bare AST-scaffold (saw −582 lines across 5
+  features: lost hand-organized command/field tables, code examples,
+  polished prose; garbled preambles like "Use plugin when you need to
+  claude code plugin"). `_maybe_polish` just returns the bare content
+  when no key is set — there is NO keyless-polish mode. The polish pass
+  that exists (`attune.help.polish.polish_template`, raw
+  `anthropic.Anthropic`, `claude-sonnet-4-6`) (a) needs real API credits
+  the Claude subscription does NOT grant (400 "credit balance too low"),
+  and (b) only rewrites PROSE from a source *summary* — it trusts the
+  generator's structure and will NOT catch deleted-symbol / broken-glob
+  drift. The highest-quality, $0 path proven this session: keyless
+  generator for current structure → the driving Claude session
+  hand-polishes (verifying every fact against live source) →
+  symbol-existence check for correctness. So a curated agent session
+  beats automated API polish on BOTH prose and correctness; the API
+  path is the right tool ONLY for the unattended weekly CI regen (no
+  human in the loop), where it beats keyless-bare. Process win: parallel
+  read-only subagents produced per-feature surgical edit plans (exact
+  old→new strings); the driver verified every proposed signature/class
+  against source before applying (zero confabulation found).

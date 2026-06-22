@@ -3,8 +3,8 @@ type: faq
 name: bug-predict-faq
 feature: bug-predict
 depth: faq
-generated_at: 2026-06-02T10:56:02.690028+00:00
-source_hash: c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde
+generated_at: 2026-06-22T10:13:38.223145+00:00
+source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
 status: generated
 ---
 

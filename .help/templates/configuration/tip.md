@@ -3,8 +3,8 @@ type: tip
 name: configuration-tip
 feature: configuration
 depth: tip
-generated_at: 2026-06-04T23:45:26.721393+00:00
-source_hash: b67c4428689dde6c18aca17808e3037eded03448162cc3406741340bbe33b804
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 5e48805be1a999be45deb9a9c24e4965ca3ad0e741320a5c68a4675f40612ac8
 status: generated
 ---
 

@@ -3,8 +3,8 @@ type: reference
 name: telemetry-reference
 feature: telemetry
 depth: reference
-generated_at: 2026-05-16T06:19:45.831550+00:00
-source_hash: ed8485991002cc1c218f69b4f33f230bcbdc4325599a2e03f2bbe584d94a5e90
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dba935dbb81bdeff572ce1339760a554a2afb6a7b99583b95b2a4ce078fd6abc
 status: generated
 ---
 
@@ -35,6 +35,7 @@ Track usage, coordinate agents, manage approval gates, and collect quality feedb
 | `TierRecommendation` | Tier recommendation based on quality feedback. | `src/attune/telemetry/feedback_models.py` |
 | `HelpTracker` | Append-only JSONL tracker for help-system queries. | `src/attune/telemetry/help_tracker.py` |
 | `UsageTracker` | Privacy-first local telemetry tracker. | `src/attune/telemetry/usage_tracker.py` |
+| `usage_ping` | Opt-in anonymous usage sync (frozen payload, default OFF). | `src/attune/telemetry/usage_ping.py` |
 
 ### CoordinationSignal
 
@@ -240,4 +241,30 @@ Real-time event streaming using Redis Streams.
 | `cmd_telemetry_cache_stats` | `args: Any` | `int` | Show prompt caching performance statistics. | `src/attune/telemetry/cli_core.py` |
 | `cmd_telemetry_compare` | `args: Any` | `int` | Compare telemetry across two time periods. | `src/attune/telemetry/cli_core.py` |
 | `cmd_telemetry_reset` | `args: Any` | `int` | Reset/clear all telemetry data. | `src/attune/telemetry/cli_core.py` |
-| `cmd_telemetry_export` | `args: Any` | `int` | Export
+| `cmd_telemetry_export` | `args: Any` | `int` | Export telemetry data to a file. | `src/attune/telemetry/cli_core.py` |
+| `cmd_telemetry_status` | `args: Namespace` | `int` | Show opt-in usage-ping status and the exact payload that would be sent. | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_enable` | `args: Namespace` | `int` | Opt in to anonymous usage pinging (returns the anonymous install ID). | `src/attune/cli_commands/telemetry_commands.py` |
+| `cmd_telemetry_disable` | `args: Namespace` | `int` | Opt out of anonymous usage pinging. | `src/attune/cli_commands/telemetry_commands.py` |
+
+## `usage_ping` module
+
+Opt-in, anonymous usage sync (`src/attune/telemetry/usage_ping.py`). **Default OFF** — nothing is transmitted unless the user opts in via `attune telemetry enable`.
+
+### Functions
+
+| Function | Parameters | Returns | Description |
+|----------|------------|---------|-------------|
+| `is_enabled` | `usage_ping_flag: bool, env: Mapping[str, str] \| None = None` | `bool` | Whether pinging is on, honoring `DO_NOT_TRACK` and `ATTUNE_USAGE_PING`. |
+| `resolve_endpoint` | `env: Mapping[str, str] \| None = None` | `str` | The collection endpoint from env or the default. |
+| `enable` | `loader: Any = None` | `str` | Opt in; returns the anonymous install ID. |
+| `disable` | `loader: Any = None` | `None` | Opt out. |
+| `build_payload` | `record, *, install_id, version, os_name=None, py_version=None` | `dict` | Map a local record to the frozen payload (schema v1). |
+| `example_payload` | `config, *, version=None, os_name=None, py_version=None` | `dict` | The exact payload shape that would be sent (for user audit). |
+| `sync` | `records, *, endpoint, install_id, version, timeout=2.0, batch_size=100, ...` | `int` | Fire-and-forget transmit; returns count confirmed sent. |
+| `run_sync` | `config, *, telemetry_dir=None, version=None, env=None, ...` | `int` | Orchestrate one sync pass (gate → read → transmit → advance cursor). |
+
+### Frozen payload (schema v1)
+
+Exactly these keys, nothing else: `schema`, `package` (`"attune-ai"`), `version`, `install_id` (rotating anonymous UUID), `event` (`"workflow.<name>"`), `os`, `py`, `ts`. **Never** included: `user_id`, cost, tokens, model, provider, tier, stage, duration, paths, prompts, or any free text.
+
+**Opt-in precedence:** `DO_NOT_TRACK` (set → always off) → `ATTUNE_USAGE_PING` env override → persisted `config.telemetry.usage_ping`. Default is OFF.

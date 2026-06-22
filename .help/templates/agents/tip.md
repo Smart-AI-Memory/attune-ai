@@ -3,8 +3,8 @@ type: tip
 name: agents-tip
 feature: agents
 depth: tip
-generated_at: 2026-06-04T23:45:26.764952+00:00
-source_hash: 1e0485a1d4d99146ba7b61c353f12a4e84f199551b1b95660a8148e047f01d2f
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
 status: generated
 ---
 

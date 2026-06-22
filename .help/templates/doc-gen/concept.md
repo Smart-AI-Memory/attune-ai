@@ -2,8 +2,8 @@
 type: concept
 feature: doc-gen
 depth: concept
-generated_at: 2026-05-04T02:25:44.871332+00:00
-source_hash: 40c128b66a197e8117c6093f1f637e47e612fceae7fd2f94851a5a1d91120296
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122
 status: generated
 ---
 

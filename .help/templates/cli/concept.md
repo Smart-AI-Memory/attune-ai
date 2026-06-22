@@ -3,8 +3,8 @@ type: concept
 name: cli-concept
 feature: cli
 depth: concept
-generated_at: 2026-06-10T07:07:04.638186+00:00
-source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
+generated_at: 2026-06-22T09:48:39.757537+00:00
+source_hash: 164b677043cfbe05cdc85850c811ec14af92dabac3c48dced21fedf0c3c58146
 status: generated
 ---
 
@@ -29,7 +29,7 @@ The handler functions are organized into focused modules:
 | **Workflows** | `cmd_workflow_run`, `cmd_workflow_list`, `cmd_workflow_info` | Run and inspect registered workflows |
 | **Memory** | `cmd_remember`, `cmd_forget`, `cmd_memory_recall`, `cmd_memory_topics`, `cmd_memory_capture`, `cmd_memory_forget_topic`, `cmd_lessons` | Read and write the Redis-backed lesson store |
 | **Costs** | `cmd_costs`, `cmd_costs_today`, `cmd_costs_export`, `cmd_costs_reset` | Report, export, and clear cost-tracking data |
-| **Telemetry** | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_routing_stats`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals` | Inspect routing and model-usage telemetry |
+| **Telemetry** | `cmd_telemetry_show`, `cmd_telemetry_savings`, `cmd_telemetry_routing_stats`, `cmd_telemetry_models`, `cmd_telemetry_agents`, `cmd_telemetry_signals`, `cmd_telemetry_status`, `cmd_telemetry_enable`, `cmd_telemetry_disable` | Inspect routing and model-usage telemetry, and control the opt-in usage ping |
 | **Providers** | `cmd_provider_show`, `cmd_provider_set` | View and change the active model provider |
 | **Patterns** | `cmd_patterns_review`, `cmd_patterns_promote`, `cmd_patterns_reject` | Curate promoted code patterns |
 | **Utility** | `cmd_setup`, `cmd_validate`, `cmd_version`, `cmd_doctor`, `cmd_features` | Diagnose, configure, and inspect the installation |

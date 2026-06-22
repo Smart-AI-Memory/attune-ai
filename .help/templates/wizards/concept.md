@@ -2,8 +2,8 @@
 type: concept
 feature: wizards
 depth: concept
-generated_at: 2026-05-04T02:39:47.054190+00:00
-source_hash: 76c270cd6e9ba25a7ffd711122874b94ee586d10897f8210e8c4844f8ecd9f81
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
 status: generated
 ---
 

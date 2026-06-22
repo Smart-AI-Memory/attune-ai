@@ -3,8 +3,8 @@ type: task
 name: hooks-task
 feature: hooks
 depth: task
-generated_at: 2026-06-11T04:49:42.140418+00:00
-source_hash: c616d1d3b693f3ea1e8811ca9fcf005cdcb50eb831d6a67ee7f5dd74236f44dd
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 92f76c4d4d77b21e59b9a6aed8e65dd221371f5ce10f2941171a5c0310c232c1
 status: generated
 scaffold_hash: 842971e6c4af90b51b8762d9aedd9bd8e6a08156f8087b238d4c3045acb8d52c
 ---

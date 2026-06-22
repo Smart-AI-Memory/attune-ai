@@ -3,8 +3,8 @@ type: task
 name: ops-dashboard-task
 feature: ops-dashboard
 depth: task
-generated_at: 2026-06-10T07:07:04.648249+00:00
-source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dd650b4658efc1f6876bf6f2701d846e9091228187573660cdcfc10ab83fa6c2
 status: generated
 ---
 
@@ -70,6 +70,34 @@ Use the ops dashboard when you need to run workflows, browse per-feature scopes,
    ```
 
 4. **Clear the in-memory cache** during testing by calling `clear_cache()` from `src/attune/ops/anthropic_cost.py`.
+
+## Monitor spend anomalies and ceiling approach
+
+1. **Assemble the alarm** with `build_spend_alarm()` from `src/attune/ops/data.py`:
+
+   ```python
+   from attune.ops import data, anthropic_cost
+
+   cost_summary, _ = anthropic_cost.fetch_summary()
+   alarm = data.build_spend_alarm(config, cost_summary)
+   ```
+
+   - `alarm.level` is `"ok"`, `"alarm"`, or `"insufficient_data"`.
+   - `alarm.triggered_by` lists which condition(s) fired: `"daily_anomaly"` and/or `"ceiling"`.
+   - `alarm.source` is `"account"` (admin cost-report) or `"local"` (`usage.jsonl`).
+
+2. **Daily-anomaly trigger:** today's spend is flagged when it exceeds the
+   z-score threshold (default `3.0`) versus the trailing baseline, or — when
+   the baseline has zero variance — when it exceeds `baseline_mean * 3.0`.
+   Fewer than 3 prior active (non-zero) days skips the check.
+
+3. **Ceiling trigger:** month-to-date spend is flagged once it reaches
+   `ceiling_fraction` (default `0.8`) of `monthly_ceiling` (default `$350`).
+   Pass `monthly_ceiling=` to override for your org.
+
+4. **Access raw data** with `read_daily_spend()` (local only) for a
+   `{YYYY-MM-DD: total_cost}` dict, then pass it to `spend_alarm()` with
+   custom thresholds when you need fine-grained control.
 
 ## Detect spec completion candidates
 

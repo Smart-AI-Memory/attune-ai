@@ -3,8 +3,8 @@ type: reference
 name: help-system-reference
 feature: help-system
 depth: reference
-generated_at: 2026-06-02T10:56:02.681968+00:00
-source_hash: f28fa9280df8c251aa5a61ebcded32895a7b6d42c1aefca8dc7171d220e0ebc4
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 15713124af0cd76c022a741b771c19b44c22f9a2907b20d728e874c8b91b68f5
 status: generated
 ---
 

@@ -3,8 +3,8 @@ type: concept
 name: plugin-concept
 feature: plugin
 depth: concept
-generated_at: 2026-06-12T00:37:02.517564+00:00
-source_hash: e7e856d3cca09a12fdc753f3691d81dfaa025bb8ad4c1459e92ca254b38a9438
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: 843f895eed3fa2d3d0b8021830c8c31e3c292c176a967396a76c27deb5a60deb
 status: generated
 scaffold_hash: 41c8ef7e7320fa5ba02ff6bb2c51cab36592879c3e7ac3505bbb510d6b91be64
 ---
@@ -25,7 +25,7 @@ The plugin's hooks fire at specific Claude Code lifecycle moments. They fall int
 
 **Safety** — `security_guard` validates bash commands against `SEARCH_COMMAND_PREFIXES` and file paths against `SYSTEM_DIRECTORIES` before Claude executes them.
 
-**Help and formatting** — `help_on_error`, `help_post_commit`, and `help_freshness_check` surface relevant help at key moments. `format_on_save` formats files when Claude writes them.
+**Help and formatting** — `help_on_error`, `help_post_commit`, and `help_freshness_check` surface relevant help at key moments. `usage_consent_notice` asks once per workspace about anonymous usage sharing when running under MCP / Claude Code. `format_on_save` formats files when Claude writes them.
 
 Every hook that must not run inside an SDK-spawned subprocess calls `exit_if_sdk_subprocess()` at startup. You can inspect the gate condition directly with `is_sdk_subprocess()`.
 

@@ -3,8 +3,8 @@ type: tip
 name: rag-grounding-tip
 feature: rag-grounding
 depth: tip
-generated_at: 2026-06-02T10:56:02.717692+00:00
-source_hash: 0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550
+generated_at: 2026-06-22T10:13:38.223145+00:00
+source_hash: 88333793edaf078345820f76455b27a1c759145c2e48dd64da93abf6f2d61450
 status: generated
 ---
 

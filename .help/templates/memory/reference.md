@@ -3,8 +3,8 @@ type: reference
 name: memory-reference
 feature: memory
 depth: reference
-generated_at: 2026-06-12T00:20:52.589323+00:00
-source_hash: 439162c85525d4aff627199f05d3f52d259589b86b947c5b2f62b832a0d15fae
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 7d6a88f7e825fe56e3b06e3bce6dd904fe6a75cd1c13a3a134e4b44138df245e
 status: generated
 scaffold_hash: 8c6258d4a61cd8f4917baaa8a00c3f4054394b40ba97c4386f7c2f7279eb584f
 ---

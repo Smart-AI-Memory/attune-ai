@@ -3,8 +3,8 @@ type: concept
 name: ops-dashboard-concept
 feature: ops-dashboard
 depth: concept
-generated_at: 2026-06-10T07:07:04.642397+00:00
-source_hash: 5a9cf489e3626794b14e2ce54ec4ec47a2ac21cb2d5f13fcb3e0dd6147f0d24f
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: dd650b4658efc1f6876bf6f2701d846e9091228187573660cdcfc10ab83fa6c2
 status: generated
 ---
 
@@ -18,7 +18,7 @@ You start it with `attune ops` (or `python -m attune.ops`). It binds to `127.0.0
 
 ## How the pieces fit together
 
-The dashboard is built from four cooperating concerns: configuration, cost reporting, telemetry, and spec-completion detection.
+The dashboard is built from five cooperating concerns: configuration, cost reporting, telemetry, spend-anomaly detection, and spec-completion detection.
 
 **Configuration** is the root. `Config` tells every other part of the dashboard where to look for project state and attune state:
 
@@ -30,6 +30,8 @@ The dashboard is built from four cooperating concerns: configuration, cost repor
 - `runs_retention_days` (default `30`) controls how long run history is kept on disk.
 
 **Cost reporting** calls the Anthropic admin cost-report endpoint at `https://api.anthropic.com/v1/organizations/cost_report`. `fetch_summary(refresh=False)` returns either a `CostSummary` or a `CostFetchError`. `CostSummary` breaks spending down along three axes — `by_day`, `by_model`, and `by_cost_type` — plus rolled-up totals (`today_usd`, `seven_day_usd`, `month_to_date_usd`, `thirty_day_usd`). The `source` field tells you whether the data came from a live API call or an in-memory cache. When the fetch fails, `CostFetchError` carries a `kind` (a `CostFetchErrorKind` enum) and a human-readable `message` so the UI can display a precise error rather than a generic one.
+
+**Spend-anomaly detection** (R6) raises alerts when daily API spend becomes anomalous or approaches the monthly ceiling. `SpendAlarm` independently flags two triggers: (1) today's spend is a statistical outlier versus the trailing baseline (z-score, with a flat-multiplier fallback when variance is zero), and (2) month-to-date spend reaches 80% of the monthly cap (default $350). The alarm prefers account-level spend (the admin cost-report, which also sees CI spend) and falls back to local `usage.jsonl` when no admin key is configured. Its `detail` field carries a one-line explanation for display.
 
 **Telemetry** is recorded locally. `TelemetrySummary` aggregates the requests the dashboard has processed: `total_requests`, `total_cost`, `total_savings`, and breakdowns `by_workflow` and `by_day`. The UI uses this data to show you which workflows you run most and what they cost.
 
@@ -45,6 +47,7 @@ Sessions — individual Claude Code conversations — surface on the `/sessions`
 
 You need the ops dashboard when you want to:
 
+- Monitor daily API-spend anomalies and month-to-date spending against an automated ceiling gauge.
 - Track Anthropic API spend across models and days without leaving your project.
 - Run attune workflows from a browser UI rather than typing CLI commands, especially when you want to chain multiple workflows in sequence.
 - Review persisted run history beyond the `runs_retention_days` window to audit what ran and when.

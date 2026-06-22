@@ -3,8 +3,8 @@ type: task
 name: cli-task
 feature: cli
 depth: task
-generated_at: 2026-06-10T07:07:04.644047+00:00
-source_hash: 5b5c949846a62732ae6954c6682e1c7a924430b6ac1efcd58027d681df89d386
+generated_at: 2026-06-22T09:48:39.757537+00:00
+source_hash: 164b677043cfbe05cdc85850c811ec14af92dabac3c48dced21fedf0c3c58146
 status: generated
 ---
 

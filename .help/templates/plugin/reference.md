@@ -3,8 +3,8 @@ type: reference
 name: plugin-reference
 feature: plugin
 depth: reference
-generated_at: 2026-06-12T00:37:02.524584+00:00
-source_hash: e7e856d3cca09a12fdc753f3691d81dfaa025bb8ad4c1459e92ca254b38a9438
+generated_at: 2026-06-22T10:00:48.764701+00:00
+source_hash: 843f895eed3fa2d3d0b8021830c8c31e3c292c176a967396a76c27deb5a60deb
 status: generated
 scaffold_hash: 6f4dd2b63d52d539274f6852ceaf44e9ec2a4b35ec27f4d69ffcdcd7d8193d4f
 ---
@@ -69,6 +69,7 @@ Both are dataclasses defined in `plugin/hooks/_state.py`.
 | `main` | — | `None` | Check for stale help after git commit. | `plugin/hooks/help_post_commit.py` |
 | `main` | — | `int` | Surface matching rules once per session; never raises. | `plugin/hooks/jit_recall.py` |
 | `main` | — | `int` | Surface top-scoring lessons for this prompt, once per session each. | `plugin/hooks/lesson_recall.py` |
+| `main` | — | `int` | Surface the anonymous-usage consent ask once per workspace (MCP / Claude Code). | `plugin/hooks/usage_consent_notice.py` |
 | `validate_bash_command` | `command: str` | `tuple[bool, str]` | Validate a Bash command against security policies. | `plugin/hooks/security_guard.py` |
 | `validate_file_path` | `file_path: str` | `tuple[bool, str]` | Validate a file path against security policies. | `plugin/hooks/security_guard.py` |
 | `main` | `context: dict[str, Any]` | `dict[str, Any]` | Validate a tool call against security policies. | `plugin/hooks/security_guard.py` |

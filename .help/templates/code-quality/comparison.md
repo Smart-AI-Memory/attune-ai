@@ -2,8 +2,8 @@
 type: comparison
 feature: code-quality
 depth: comparison
-generated_at: 2026-04-19T18:47:17.035116+00:00
-source_hash: 44a3613be3cabe60572ba20a4d4a482a2b2727856106c44e43c6eafd7e2cc42e
+generated_at: 2026-06-22T10:11:35.814147+00:00
+source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
 status: generated
 ---
 
