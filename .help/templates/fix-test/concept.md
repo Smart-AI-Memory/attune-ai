@@ -1,47 +1,41 @@
 ---
-type: concept
 feature: fix-test
 depth: concept
-generated_at: 2026-05-04T02:28:39.831715+00:00
-source_hash: bff04fe2ad91cb5eb72a0a1c91eccca5bb1b81eba3549bb3ac7e694b3e7a98b8
+generated_at: 2026-06-22T10:21:37.523920+00:00
+source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
 status: generated
 ---
 
 # Fix Test
 
-Fix-test automatically manages test lifecycles by responding to code changes and scheduling test maintenance tasks based on file events throughout your project.
+The fix-test feature keeps a project's tests healthy by reacting to source-file changes, diagnosing what test work each change implies, and producing a prioritized, partly auto-executable maintenance plan.
 
-## Event-driven test management
+## How it works
 
-When you modify source files, fix-test watches for these changes and queues appropriate test actions:
+`TestMaintenanceWorkflow` is the central coordinator. It turns file-system events into a `TestMaintenancePlan` — an ordered set of `TestPlanItem` entries, each describing one piece of test work: which file it concerns, what `TestAction` to take, and at what `TestPriority`.
 
-- **File creation** — Schedules test generation for new modules through `on_file_created()`
-- **File modification** — Queues test updates when existing code changes via `on_file_modified()`
-- **File deletion** — Removes orphaned tests when source files are deleted using `on_file_deleted()`
+The building blocks:
 
-The `TestLifecycleManager` acts as the central coordinator, transforming file system events into prioritized `TestTask` items that specify what test action to take and when.
+- **`TestMaintenanceWorkflow`** — coordinates everything. `run(context)` produces a maintenance plan; the event handlers `on_file_created()`, `on_file_modified()`, and `on_file_deleted()` translate a single file change into the test work it implies.
+- **`TestPlanItem`** — one unit of test work. Carries `file_path`, `action`, `priority`, `reason`, `test_file_path`, `estimated_effort`, and `auto_executable`.
+- **`TestMaintenancePlan`** — the assembled plan. Filter it with `get_items_by_action()`, `get_items_by_priority()`, or `get_auto_executable_items()`.
+- **`TestAction`** — what to do with a test: `CREATE`, `UPDATE`, `REVIEW`, `DELETE`, `SKIP`, or `MANUAL`.
+- **`TestPriority`** — how urgent: `CRITICAL`, `HIGH`, `MEDIUM`, `LOW`, or `DEFERRED`.
 
-## Task prioritization and execution
+## How a change becomes a plan
 
-Each test task gets assigned a priority level through `TestPriority` (high, medium, low) and an action type via `TestAction` (create, update, delete, validate). The system maintains a persistent queue where you can:
+1. A source file changes. The matching handler — `on_file_created()`, `on_file_modified()`, or `on_file_deleted()` — inspects it and decides which `TestAction` applies (a new module needs a `CREATE`; a deleted one may imply a `DELETE` or `REVIEW`).
+2. The workflow assigns a `TestPriority` based on impact and rolls the resulting `TestPlanItem` entries into a `TestMaintenancePlan`.
+3. Callers act on the plan: `get_auto_executable_items()` returns the items safe to run automatically, while higher-touch items (`REVIEW`, `MANUAL`) are surfaced for a human.
 
-- Process tasks by priority using `get_queue_by_priority()`
-- Execute batches of work with `process_queue()` up to a specified limit
-- Schedule recurring maintenance through `schedule_maintenance()`
+## Tracking what actually ran
 
-For example, a critical bug fix that breaks existing tests gets high priority, while adding tests for edge cases in stable code gets low priority.
+The companion module `test_runner.py` records outcomes so the workflow can reason about staleness and gaps:
 
-## Git workflow integration
+- `run_tests_with_tracking()` runs a suite and records the result for Tier 1 monitoring.
+- `track_coverage()` and `track_file_tests()` persist coverage and per-file test status.
+- `get_file_test_status()` and `get_files_needing_tests()` answer "is this file covered?" and "what still needs tests?" — the same signals `TestMaintenanceWorkflow.get_stale_tests()` and `get_test_health_summary()` build on.
 
-Fix-test hooks into your Git workflow at two key points:
+## When this matters
 
-- **Pre-commit** — Validates that staged files have corresponding tests via `process_git_pre_commit()`
-- **Post-commit** — Schedules test updates for all changed files through `process_git_post_commit()`
-
-This ensures your test suite stays synchronized with code changes without manual intervention.
-
-## Test maintenance planning
-
-The `TestMaintenanceWorkflow` analyzes your entire project to create comprehensive maintenance plans. It identifies files that need tests through `get_files_needing_tests()`, finds outdated tests via `get_stale_tests()`, and generates a `TestMaintenancePlan` with concrete action items.
-
-Each `TestPlanItem` includes the target file, required action, priority level, effort estimate, and whether the task can be automated — giving you a clear roadmap for improving test coverage and keeping tests current.
+You work with fix-test when you want to keep test coverage in step with source changes automatically — surfacing the tests a change demands, prioritizing them by impact, and auto-running the safe ones — rather than discovering gaps after a regression lands.

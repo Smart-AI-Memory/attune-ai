@@ -2,8 +2,8 @@
 type: faq
 feature: fix-test
 depth: faq
-generated_at: 2026-04-14T14:57:37.506391+00:00
-source_hash: add950818a88e621df7bd12cd03ded18fe60e40bac9a1bae6eb24fe1ff69abc8
+generated_at: 2026-06-22T10:21:37.523920+00:00
+source_hash: 26d8af3fe4cef200ee3e0528559c0e39b2bd3756956371d1e78427e02cb6385b
 status: generated
 ---
 
@@ -20,7 +20,7 @@ Use fix-test when you need to:
 - Monitor test coverage and execution
 - Get maintenance plans for stale or missing tests
 - Respond to file changes with appropriate test actions
-- Schedule regular test health checks
+- Get a quick test-health summary for your project
 
 ## What are the main functions I should know about?
 
@@ -37,7 +37,7 @@ Use the `TestMaintenanceWorkflow` class. It analyzes your project and generates 
 
 ## How do I respond to file changes automatically?
 
-The `TestLifecycleManager` handles file events for you. It creates `TestTask` objects when files are created, modified, or deleted, then queues them for processing based on priority.
+`TestMaintenanceWorkflow` handles file events for you. Its `on_file_created()`, `on_file_modified()`, and `on_file_deleted()` handlers each return a `TestPlanItem` describing the test action that change implies, with an assigned `TestAction` and `TestPriority`.
 
 ## What happens when I run `track_coverage()`?
 
@@ -49,9 +49,8 @@ First, run `pytest -k "fix-test" -v` to check if the feature's own tests pass. I
 
 ## Where are the source files?
 
-The fix-test feature spans three files:
+The fix-test feature spans two files:
 - `src/attune/workflows/test_runner.py` — Test execution and coverage tracking
-- `src/attune/workflows/test_maintenance.py` — Maintenance workflow and planning
-- `src/attune/workflows/test_lifecycle.py` — Event-driven test lifecycle management
+- `src/attune/workflows/test_maintenance.py` — Maintenance workflow, planning, and source-file event handlers
 
 **Tags:** `tests`, `debugging`, `fixes`
