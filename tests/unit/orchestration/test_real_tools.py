@@ -507,17 +507,13 @@ class TestRealTestGenerator:
         """Test that missing API key disables LLM mode."""
         monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
 
-        # Mock anthropic module and prevent load_dotenv from restoring
-        # the key from .env files. Use sys.modules patch to avoid
-        # __import__ mock issues with Python 3.13 ExceptionGroup.
-        with (
-            patch.dict("sys.modules", {"anthropic": Mock()}),
-            patch(
-                "os.environ.get",
-                side_effect=lambda k, *a: (
-                    None if k == "ANTHROPIC_API_KEY" else os.environ.get(k, *a)
-                ),
-            ),
+        # With no key, _initialize_llm bails before constructing the client,
+        # so the real anthropic import is harmless and left intact. Patch
+        # os.environ.get so load_dotenv can't restore a key from a .env file.
+        # (No global sys.modules swap — that races under xdist.)
+        with patch(
+            "os.environ.get",
+            side_effect=lambda k, *a: (None if k == "ANTHROPIC_API_KEY" else os.environ.get(k, *a)),
         ):
             generator = RealTestGenerator(
                 project_root=str(tmp_path),
@@ -527,15 +523,17 @@ class TestRealTestGenerator:
 
         assert generator.use_llm is False  # Should fallback to template mode
 
-    def test_init_with_api_key_enables_llm(self, tmp_path, monkeypatch):
+    def test_init_with_api_key_enables_llm(self, tmp_path):
         """Test that API key enables LLM mode."""
-        # Mock the Anthropic import
-        mock_anthropic_module = Mock()
+        # Patch the import target directly. anthropic is installed, so
+        # patch("anthropic.Anthropic", ...) swaps a single attribute and
+        # restores it. Swapping the whole sys.modules entry instead
+        # (patch.dict) clears+rebuilds the global dict on teardown, which
+        # races under xdist and surfaces as a transient KeyError.
         mock_client = Mock()
         mock_anthropic_class = Mock(return_value=mock_client)
-        mock_anthropic_module.Anthropic = mock_anthropic_class
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
+        with patch("anthropic.Anthropic", mock_anthropic_class):
             generator = RealTestGenerator(
                 project_root=str(tmp_path),
                 api_key="test-key-123",
@@ -546,18 +544,21 @@ class TestRealTestGenerator:
             assert generator._llm == mock_client
             mock_anthropic_class.assert_called_once_with(api_key="test-key-123")
 
-    def test_init_with_missing_anthropic_package_disables_llm(self, tmp_path):
-        """Test that missing anthropic package disables LLM.
+    def test_init_with_missing_anthropic_package_disables_llm(self, tmp_path, monkeypatch):
+        """Test that a missing anthropic symbol disables LLM.
 
-        Uses sys.modules patch (setting to None triggers ImportError)
-        instead of __import__ mock to avoid Python 3.13 ExceptionGroup.
+        Deletes the Anthropic attribute so ``from anthropic import Anthropic``
+        raises ImportError. Surgical (monkeypatch restores the attribute) and
+        avoids swapping the whole sys.modules, which races under xdist.
         """
-        with patch.dict("sys.modules", {"anthropic": None}):
-            generator = RealTestGenerator(
-                project_root=str(tmp_path),
-                api_key="test-key",
-                use_llm=True,
-            )
+        import anthropic
+
+        monkeypatch.delattr(anthropic, "Anthropic", raising=False)
+        generator = RealTestGenerator(
+            project_root=str(tmp_path),
+            api_key="test-key",
+            use_llm=True,
+        )
 
         assert generator.use_llm is False  # Should fallback
 
@@ -630,10 +631,10 @@ def test_example():
         ]
         mock_client.messages.create.return_value = mock_response
 
-        # Mock the Anthropic import
-        mock_anthropic_module = Mock()
+        # Patch the import target directly (see note in
+        # test_init_with_api_key_enables_llm — avoids the xdist-racy
+        # whole-sys.modules swap).
         mock_anthropic_class = Mock(return_value=mock_client)
-        mock_anthropic_module.Anthropic = mock_anthropic_class
 
         # Create source file
         src_dir = tmp_path / "src"
@@ -641,7 +642,7 @@ def test_example():
         source_file = src_dir / "example.py"
         source_file.write_text("def foo(): pass")
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
+        with patch("anthropic.Anthropic", mock_anthropic_class):
             generator = RealTestGenerator(
                 project_root=str(tmp_path),
                 api_key="test-key",
@@ -674,17 +675,17 @@ def test_example():
         ]
         mock_client.messages.create.return_value = mock_response
 
-        # Mock the Anthropic import
-        mock_anthropic_module = Mock()
+        # Patch the import target directly (see note in
+        # test_init_with_api_key_enables_llm — avoids the xdist-racy
+        # whole-sys.modules swap).
         mock_anthropic_class = Mock(return_value=mock_client)
-        mock_anthropic_module.Anthropic = mock_anthropic_class
 
         src_dir = tmp_path / "src"
         src_dir.mkdir()
         source_file = src_dir / "example.py"
         source_file.write_text("def foo(): pass")
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
+        with patch("anthropic.Anthropic", mock_anthropic_class):
             generator = RealTestGenerator(
                 project_root=str(tmp_path),
                 api_key="test-key",
@@ -707,17 +708,17 @@ def test_example():
         # All models fail
         mock_client.messages.create.side_effect = Exception("API Error")
 
-        # Mock the Anthropic import
-        mock_anthropic_module = Mock()
+        # Patch the import target directly (see note in
+        # test_init_with_api_key_enables_llm — avoids the xdist-racy
+        # whole-sys.modules swap).
         mock_anthropic_class = Mock(return_value=mock_client)
-        mock_anthropic_module.Anthropic = mock_anthropic_class
 
         src_dir = tmp_path / "src"
         src_dir.mkdir()
         source_file = src_dir / "example.py"
         source_file.write_text("def foo(): pass")
 
-        with patch.dict("sys.modules", {"anthropic": mock_anthropic_module}):
+        with patch("anthropic.Anthropic", mock_anthropic_class):
             generator = RealTestGenerator(
                 project_root=str(tmp_path),
                 api_key="test-key",
