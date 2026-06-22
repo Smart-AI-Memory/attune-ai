@@ -665,3 +665,36 @@ def mock_workflow_config():
         "telemetry_enabled": False,
         "user_id": "test-user",
     }
+
+
+@pytest.fixture
+def fake_module(monkeypatch):
+    """Surgically register a fake/absent module in ``sys.modules``.
+
+    Use this INSTEAD of ``patch.dict`` on ``sys.modules``. That helper's
+    teardown does ``sys.modules.clear()`` then rebuilds from a snapshot — a
+    non-atomic global clear+rebuild that races under xdist (a background
+    thread or GC finalizer touching ``sys.modules`` mid-clear surfaces as a
+    transient ``KeyError: <object-id>``). ``monkeypatch.setitem`` restores
+    only the single key on teardown, so there is no global clear and no race.
+
+    Returns a factory ``register(name, module=None) -> module``:
+
+    - ``register("somepkg", mock)`` makes ``import somepkg`` return ``mock``.
+    - ``register("somepkg")`` (module=None) simulates an ABSENT package —
+      ``import somepkg`` / ``from somepkg import X`` raises ``ImportError``.
+
+    For an INSTALLED package where you only need to stub one symbol, prefer
+    patching that attribute directly, e.g. ``patch("anthropic.Anthropic", m)``
+    — it is even narrower than faking the whole module.
+
+    Example:
+        >>> def test_optional_dep_missing(fake_module):
+        ...     fake_module("some_optional_pkg")  # import now raises
+    """
+
+    def register(name: str, module=None):
+        monkeypatch.setitem(sys.modules, name, module)
+        return module
+
+    return register
