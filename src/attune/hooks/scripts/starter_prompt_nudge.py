@@ -1,12 +1,21 @@
 #!/usr/bin/env python3
-"""SessionStart hook: surface ~/.attune/next_session_starter.md when present.
+"""SessionStart hook: surface next_session_starter.md handoffs when present.
 
 Eliminates the cross-session handoff friction documented in the
 ``feedback_cross_account_handoff`` memory: previously, the starter
 prompt had to be pasted manually at the start of each new session.
-This hook reads ``~/.attune/next_session_starter.md`` (if it
-exists) and prints a short notice with the file path, last-modified
-date, and a one-line hint to read it.
+
+Two locations are surfaced, most-specific first:
+
+1. **Project-local** ``<repo-root>/.attune/next_session_starter.md`` —
+   the handoff for THIS repo. Lets a session that hands off to a
+   *different* repo (e.g. attune-ai → attune-gui) leave the starter
+   where the next session in that repo will actually find it, instead
+   of clobbering the single global file. ``<repo-root>`` is the git
+   toplevel discovered by walking up from the cwd.
+2. **Global** ``~/.attune/next_session_starter.md`` — the
+   cross-cutting / cwd-agnostic handoff (back-compat with the original
+   single-file behavior).
 
 The file content itself is NOT printed inline — keeps the
 SessionStart noise floor low. Users / the agent open it
@@ -33,6 +42,27 @@ from pathlib import Path
 
 STARTER_PATH = Path.home() / ".attune" / "next_session_starter.md"
 
+#: Relative location of a per-repo handoff, under the git toplevel.
+PROJECT_STARTER_RELPATH = Path(".attune") / "next_session_starter.md"
+
+
+def _find_project_starter(start: Path | None = None) -> Path | None:
+    """Return ``<git-toplevel>/.attune/next_session_starter.md`` or None.
+
+    Walks up from ``start`` (default: cwd) looking for a ``.git``
+    entry (dir for a normal checkout, file for a worktree/submodule).
+    Returns the project-local starter path if that file exists; None
+    if no repo root is found or the file is absent. ``start`` is a
+    parameter so tests can pin the search root.
+    """
+    if start is None:
+        start = Path.cwd()
+    for parent in [start, *start.parents]:
+        if (parent / ".git").exists():
+            candidate = parent / PROJECT_STARTER_RELPATH
+            return candidate if candidate.is_file() else None
+    return None
+
 
 def _format_age(mtime_ts: float, now: float | None = None) -> str:
     """Return a short human-readable age like '2h ago', '3d ago'.
@@ -55,28 +85,44 @@ def _format_age(mtime_ts: float, now: float | None = None) -> str:
     return f"{int(delta / 86400)}d ago"
 
 
-def main() -> int:
-    """Print the starter-prompt notice if the file exists."""
-    if not STARTER_PATH.is_file():
-        return 0
+def _emit_notice(path: Path, scope: str) -> bool:
+    """Print the starter-prompt notice for ``path`` if it has content.
 
+    ``scope`` is a short label ("project" / "global") shown in the
+    notice. Returns True if a notice was printed, False on any no-op
+    (missing / empty / vanished file).
+    """
+    if not path.is_file():
+        return False
     try:
-        stat = STARTER_PATH.stat()
+        stat = path.stat()
     except OSError:
         # File disappeared between is_file() and stat(); just no-op.
-        return 0
-
+        return False
     if stat.st_size == 0:
         # Empty file — nothing to surface.
-        return 0
+        return False
 
     age = _format_age(stat.st_mtime)
     size_kb = stat.st_size / 1024
-
     print(
-        f"[starter-prompt] {STARTER_PATH} ({size_kb:.1f} KB, modified {age}) — "
+        f"[starter-prompt:{scope}] {path} ({size_kb:.1f} KB, modified {age}) — "
         "read this for cross-session handoff context."
     )
+    return True
+
+
+def main() -> int:
+    """Surface project-local then global starter notices, if present."""
+    project_path = _find_project_starter()
+    if project_path is not None:
+        _emit_notice(project_path, "project")
+
+    # Always also surface the global handoff (it serves a different,
+    # cwd-agnostic purpose) — unless it IS the project-local file we
+    # already emitted (a repo rooted at ~ would alias the two).
+    if project_path is None or STARTER_PATH.resolve() != project_path.resolve():
+        _emit_notice(STARTER_PATH, "global")
     return 0
 
 

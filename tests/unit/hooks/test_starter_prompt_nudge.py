@@ -41,9 +41,14 @@ def hook_module():
 @pytest.fixture
 def isolated_starter(tmp_path, hook_module, monkeypatch):
     """Redirect STARTER_PATH to a tmp path so tests don't depend on
-    the user's real ~/.attune/next_session_starter.md."""
+    the user's real ~/.attune/next_session_starter.md.
+
+    Also stubs ``_find_project_starter`` to None so the global-focused
+    tests don't pick up a project-local file from the real cwd.
+    """
     path = tmp_path / "next_session_starter.md"
     monkeypatch.setattr(hook_module, "STARTER_PATH", path)
+    monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: None)
     return path
 
 
@@ -81,6 +86,57 @@ class TestSurfacing:
         hook_module.main()
         captured = capsys.readouterr()
         assert "just now" in captured.out or "m ago" in captured.out
+
+
+class TestProjectLocalStarter:
+    """Project-local <repo>/.attune/next_session_starter.md surfacing."""
+
+    def _make_repo(self, tmp_path: Path, with_starter: str | None) -> Path:
+        (tmp_path / ".git").mkdir()
+        if with_starter is not None:
+            d = tmp_path / ".attune"
+            d.mkdir()
+            (d / "next_session_starter.md").write_text(with_starter, encoding="utf-8")
+        return tmp_path
+
+    def test_finds_starter_at_git_toplevel(self, hook_module, tmp_path):
+        repo = self._make_repo(tmp_path, "handoff")
+        nested = repo / "src" / "deep"
+        nested.mkdir(parents=True)
+        found = hook_module._find_project_starter(start=nested)
+        assert found == repo / ".attune" / "next_session_starter.md"
+
+    def test_none_when_no_repo(self, hook_module, tmp_path):
+        # No .git anywhere up the tree.
+        assert hook_module._find_project_starter(start=tmp_path) is None
+
+    def test_none_when_repo_but_no_starter(self, hook_module, tmp_path):
+        repo = self._make_repo(tmp_path, None)
+        assert hook_module._find_project_starter(start=repo) is None
+
+    def test_project_notice_emitted(self, hook_module, tmp_path, monkeypatch, capsys):
+        repo = self._make_repo(tmp_path, "# repo handoff\n")
+        starter = repo / ".attune" / "next_session_starter.md"
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: starter)
+        # No global file.
+        monkeypatch.setattr(hook_module, "STARTER_PATH", tmp_path / "nope.md")
+        code = hook_module.main()
+        assert code == 0
+        out = capsys.readouterr().out
+        assert "[starter-prompt:project]" in out
+        assert str(starter) in out
+
+    def test_both_project_and_global_emitted(self, hook_module, tmp_path, monkeypatch, capsys):
+        repo = self._make_repo(tmp_path, "# repo\n")
+        starter = repo / ".attune" / "next_session_starter.md"
+        global_path = tmp_path / "global_starter.md"
+        global_path.write_text("# global\n", encoding="utf-8")
+        monkeypatch.setattr(hook_module, "_find_project_starter", lambda *a, **k: starter)
+        monkeypatch.setattr(hook_module, "STARTER_PATH", global_path)
+        hook_module.main()
+        out = capsys.readouterr().out
+        assert "[starter-prompt:project]" in out
+        assert "[starter-prompt:global]" in out
 
 
 class TestAgeFormatter:
