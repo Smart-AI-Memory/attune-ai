@@ -9956,3 +9956,61 @@ files.
   the "spec-named scope drifts from code reality" lesson (same family:
   the stated scope is a stale hypothesis; the diff-vs-current-main is
   the contract).
+
+- **A CI workflow that auto-commits regenerated artifacts BACK to
+  protected `main` fails silently at the push step — the build
+  "succeeds," only the push-back is rejected, and the symptom is a
+  frozen published artifact with no obvious alarm**: 2026-06-22,
+  `build-help-site.yml` (rebuilds the public Vercel help pages from the
+  `.help/` corpus and `git push`es the result to main) had been red
+  since ~06-12. The run shows `failure` on the step named "Commit
+  regenerated pages," not on the build, and the real error is buried:
+  `remote: error: GH006: Protected branch update failed for
+  refs/heads/main`. Because the rebuild steps pass and only the final
+  push fails, the public site quietly served STALE content while main
+  moved on — nothing screamed. Two distinct fixes, both learned here:
+  - **Root cause = the default `GITHUB_TOKEN` (github-actions[bot]) is
+    not an admin and can't push to a branch that "requires PRs."** When
+    `enforce_admins: false`, an admin identity CAN still push directly,
+    so check out with an admin PAT: `actions/checkout` with
+    `token: ${{ secrets.ADMIN_MERGE_TOKEN }}` (persist-credentials
+    defaults true, so the later `git push` uses it). One-line fix, no
+    branch-protection change. Diagnose first with `gh api
+    repos/<o>/<r>/branches/main/protection`: `required_pull_request_reviews`
+    PRESENT + `bypass_pull_request_allowances: None` + `enforce_admins:
+    false` is the exact shape where "admin token bypasses, bot token
+    doesn't." Distinct from the human-side "Must go through PR is a
+    derived property of branch protection" lesson — this is the
+    CI-workflow auto-commit-back surface.
+  - **Secondary failure after the token fix: a plain `git push` with no
+    rebase/retry loses a non-fast-forward race whenever ANOTHER commit
+    lands on main mid-run** — `! [rejected] main -> main (fetch first)`.
+    Hit immediately: a `workflow_dispatch` rebuild was kicked off at the
+    same moment a release PR was merging, so main moved between checkout
+    and push; a re-dispatch succeeded only because main was then quiet.
+    Durable fix (followed up separately): `git pull --rebase --autostash`
+    + a retry loop around the push. Distinguish the two by reading the
+    actual push error — `GH006` = protection/token; `fetch first` =
+    race, just re-run when main is settled.
+  - **Verify the fix end-to-end, don't infer from the yaml diff**: after
+    merging the token fix, a manual `workflow_dispatch` that ACTUALLY
+    committed (`chore(help-site): rebuild help pages`) is the receipt;
+    the checkout log line `token: ***` proves the new identity is in
+    use. Pairs with "registered ≠ working — dogfood the live loop."
+
+- **"Is the published version current?" is answered by upload-time vs
+  merge-time, NOT by version-number equality**: 2026-06-22, asked
+  whether updated docs had shipped. `main`'s pyproject version (8.6.2)
+  EQUALLED the PyPI latest (8.6.2) — which looks like "yes, shipped."
+  But the PyPI `upload_time` (06-20 18:43) PREDATED the doc PRs' merge
+  times (all 06-21), so the published 8.6.2 did NOT contain the doc
+  work — it sat unreleased on main. The check that actually answers the
+  question: `curl -s pypi.org/pypi/<pkg>/json` for the latest's
+  `upload_time`, then `gh pr view <n> --json mergedAt` for the content
+  PRs; if the release predates the merges, the content isn't published
+  regardless of matching version strings. Corollary: a feature can have
+  THREE independent publish surfaces — the PyPI package (ships `.help`
+  inside the wheel), the mkdocs site (`docs.yml`→Pages), and a separate
+  static help site (its own builder→Vercel) — so "did the docs publish?"
+  can be yes/no/no across the three. Enumerate the surfaces and check
+  each `on:`/deploy path; don't assume one answer covers all.
