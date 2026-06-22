@@ -10014,3 +10014,51 @@ files.
   static help site (its own builder→Vercel) — so "did the docs publish?"
   can be yes/no/no across the three. Enumerate the surfaces and check
   each `on:`/deploy path; don't assume one answer covers all.
+
+- **A deploy step can be GREEN yet serve NOTHING — verify the SERVED
+  artifact, not the deploy job's exit code**: 2026-06-22, the mkdocs
+  docs site had been frozen at a 2026-03-03 snapshot for ~3.5 months
+  while `docs.yml` ran green daily. Two independent traps combined:
+  (1) `mkdocs gh-deploy --force` succeeded pushing to the `gh-pages`
+  branch, but **GitHub Pages was disabled** for the repo (`gh api
+  repos/<o>/<r>/pages` → `source: None`), so gh-pages served nothing;
+  (2) the live URL (`smartaimemory.com/framework-docs/`) actually
+  served a **different committed path** — `website/public/framework-
+  docs/` (Next.js static), last touched in March — so the served
+  content and the deploy target were unrelated. Every tutorial
+  authored since March 404'd while CI was green. Diagnostic recipe:
+  (a) `curl` a page you KNOW is only in the stale build (200) vs a
+  current page (404) — the split proves served≠current; (b) `git log
+  -1 -- <served-dir>` for the served path's real age; (c) `gh api
+  .../pages` for whether Pages is even on; (d) read the deploy step's
+  *destination*, not just its green check. Fix: publish to the path
+  the site actually serves (build → `rsync --delete` into the served
+  dir → auto-commit with the protected-main admin-token + rebase-retry
+  push, per the build-help-site lesson). Pairs with the "registered ≠
+  working — dogfood the live loop" and "three independent publish
+  surfaces" lessons: a green pipeline is necessary, not sufficient;
+  curl the live URL.
+
+- **A relicense (BSL/source-available → Apache 2.0) leaves stale
+  commercial-license language scattered far beyond the LICENSE file —
+  grep ALL user-facing AND commerce surfaces, and watch for the
+  license NAME swapped while the clauses stayed**: 2026-06-22, the repo
+  was Apache 2.0 (LICENSE = Apache 2.0; pyproject classifier OSI
+  Apache) yet ~14 places still asserted the retired "free for teams ≤5
+  / commercial for 6+ / $99/dev/year / auto-converts in 2029" model —
+  including the garbled tell **"Apache License 2.0 0.9"** (the name was
+  find-replaced to "Apache 2.0" but the old version suffix + commercial
+  clauses remained, producing a self-contradiction). It was load-
+  bearing in the *legal* Terms of Service (`§2.2 Commercial License`,
+  linking to a non-existent `LICENSE-COMMERCIAL.md`) and in commerce
+  code (`website/lib/license.ts` — already `@deprecated` but live), not
+  just marketing. Two process lessons: (1) a first grep with narrow
+  patterns MISSES variants — "License Cost", "$0 (Free)", "Commercial
+  Evaluation", "free for up to 3 users" all evaded the first sweep;
+  iterate patterns until a broad re-grep is empty, and separate true
+  hits from legit noise (model-routing `$0.005/call`, cloud-provider
+  "free tier", `≤500 chars` limits). (2) Distinguish *license* claims
+  (must fix — they're legally wrong) from *business-model* content in
+  pitch decks (the owner's call) and *paid-support* offerings (Apache-
+  2.0-compatible, keep). When in doubt on commerce code, check for an
+  existing `@deprecated` marker before ripping it out.
