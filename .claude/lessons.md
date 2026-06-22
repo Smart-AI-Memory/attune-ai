@@ -10290,3 +10290,27 @@ files.
   response body. Recurs at every gated release; pairs with the existing
   "publish job awaits env approval, self-approve via gh api" lesson —
   this is the exact-flag correction.
+
+- **A long `pytest` run that shows ZERO output for 20+ min is usually
+  OUTPUT BUFFERING, not a deadlock — confirm with `ps` (CPU time
+  climbing = alive) before killing, and avoid the two buffer traps**:
+  ran the full `-m "not live"` suite from a worktree and saw 0 bytes of
+  output for 20 min — looked like the known xdist finalize-hang. It
+  wasn't: `ps aux | grep '[p]ytest'` showed the process at ~22% CPU
+  with cumulative CPU time *climbing*, i.e. genuinely running. Two
+  independent buffering traps had hidden all progress: (1) piping
+  through `| tail -N` buffers the ENTIRE stream until the process exits
+  (tail only prints the last N lines at EOF) — never pipe a
+  long-running test command through `tail` if you want progress; redirect
+  to a file with `> out.txt 2>&1` instead; (2) passing `-o addopts=`
+  STRIPS the repo's default `-n auto`, so the suite runs single-process
+  and is ~Nx slower (here 22320 tests single-process vs 2:54 with
+  `-n auto`). The fix that gave both speed AND streaming progress:
+  `PYTHONPATH=<worktree>/src ANTHROPIC_API_KEY="" <main-venv>/python -m
+  pytest -m "not live" -n auto -q > /tmp/run.txt 2>&1` (xdist flushes
+  the `....` progress line to the file as workers complete chunks).
+  Result: 22320 passed / 218 skipped / 6 xfailed in 2:54. Distinct from
+  the real CI-runner-hang lesson (that's an actual finalize-deadlock at
+  ~100%); the `ps` CPU-climbing check is what tells them apart before
+  you waste a kill+rerun cycle. Pairs with the worktree-PYTHONPATH
+  lesson (run worktree code, not main's via the editable MAPPING).
