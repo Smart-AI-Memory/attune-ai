@@ -25,7 +25,7 @@
     
     
       
-        <title>How to use deep review - Attune AI</title>
+        <title>Deep Review - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-use-deep-review" class="md-skip">
+        <a href="#deep-review" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How to use deep review
+              Deep Review
             
           </span>
         </div>
@@ -3784,6 +3784,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/deep-review/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Deep Review
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/fix-test/" class="md-nav__link">
         
   
@@ -3923,10 +3951,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quickstart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Quickstart
       
     </span>
   </a>
@@ -3934,57 +3962,124 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-api" class="md-nav__link">
+  <a href="#tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core API
+        Tasks
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Tasks">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#review-a-path-from-the-cli" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Review a path from the CLI
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-patterns" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#call-the-review-from-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Integration patterns
+        Call the review from Python
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#what-the-report-contains" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#run-only-the-passes-you-need" class="md-nav__link">
     <span class="md-ellipsis">
       
-        What the report contains
+        Run only the passes you need
       
     </span>
   </a>
   
 </li>
+        
+      </ul>
+    </nav>
+  
+</li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#deepreviewagentsdkworkflow-attuneworkflowsdeep_review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        DeepReviewAgentSDKWorkflow — attune.workflows.deep_review
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-agent-turn-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unresolved references
+        Depth → agent-turn budget
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#the-three-passes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        The three passes
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-review" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkflowResult fields read after a review
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4008,90 +4103,281 @@
   
 
 
-<h1 id="how-to-use-deep-review">How to use deep review<a class="headerlink" href="#how-to-use-deep-review" title="Permanent link">&para;</a></h1>
-<p>Use this guide when you want to run a multi-pass code review across security, quality, and test coverage in a single call — and get back a consolidated, prioritized report.</p>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.deep_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
+<h1 id="deep-review">Deep Review<a class="headerlink" href="#deep-review" title="Permanent link">&para;</a></h1>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<p>Review a directory and print the consolidated report.
+<code>DeepReviewAgentSDKWorkflow.execute</code> is an async coroutine, so
+drive it with <code>asyncio.run</code> (or <code>await</code> it inside an existing
+event loop):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
 <a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="n">result</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/payments&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="s2">&quot;standard&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>          <span class="c1"># True on a completed review</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>          <span class="c1"># short health summary</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>     <span class="c1"># the full consolidated report</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
-<p>This runs three specialized subagents — <code>security-reviewer</code>, <code>quality-reviewer</code>, and <code>test-gap-reviewer</code> — in parallel, then synthesizes their findings into one report. The output includes an overall health score (0–100), severity-ordered findings per domain, and up to ten prioritized next steps.</p>
-<h2 id="core-api">Core API<a class="headerlink" href="#core-api" title="Permanent link">&para;</a></h2>
+<p><code>depth</code> defaults to <code>"standard"</code>, so <code>execute(path="src/")</code> is
+equivalent. Use <code>"quick"</code> for a fast pass or <code>"deep"</code> for the
+fullest review.</p>
+<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="review-a-path-from-the-cli">Review a path from the CLI<a class="headerlink" href="#review-a-path-from-the-cli" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> run a one-off review over a directory without writing
+any Python.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Default depth (standard) over a directory:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>deep-review<span class="w"> </span>--path<span class="w"> </span>src/
+<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Deep review, JSON output for a pre-merge gate:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>deep-review<span class="w"> </span>--path<span class="w"> </span>src/<span class="w"> </span>--depth<span class="w"> </span>deep<span class="w"> </span>--json
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Narrow to the security pass via JSON input:</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>deep-review<span class="w"> </span>--path<span class="w"> </span>src/<span class="w"> </span>--input<span class="w"> </span><span class="s1">&#39;{&quot;focus&quot;: [&quot;security&quot;]}&#39;</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>--path</code> / <code>-p</code> defaults to the current directory;
+<code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code>
+emits machine-readable output. There is no dedicated <code>--focus</code>
+flag — pass <code>focus</code> through <code>--input</code> as JSON. Use
+<code>attune workflow info deep-review</code> to confirm registration and
+<code>attune workflow list</code> to see it alongside the other workflows.</p>
+<h3 id="call-the-review-from-python">Call the review from Python<a class="headerlink" href="#call-the-review-from-python" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> drive deep-review from a hook or pre-merge gate and act
+on the result.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/api/&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="s2">&quot;deep&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;review failed:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="k">return</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">suggestions</span><span class="p">:</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed
+review returns <code>success=True</code> with the report in <code>final_output</code>;
+a failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, <code>max_turns</code>,
+and active <code>focus</code>.</p>
+<h3 id="run-only-the-passes-you-need">Run only the passes you need<a class="headerlink" href="#run-only-the-passes-you-need" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> scope the review to one or two domains instead of all
+three.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>    <span class="c1"># Security pass only:</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>    <span class="n">sec</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;security&quot;</span><span class="p">])</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">sec</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="c1"># Security + quality, skip test gaps:</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="n">both</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>        <span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/&quot;</span><span class="p">,</span> <span class="n">focus</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;security&quot;</span><span class="p">,</span> <span class="s2">&quot;quality&quot;</span><span class="p">]</span>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>    <span class="p">)</span>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">both</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-3-18" name="__codelineno-3-18" href="#__codelineno-3-18"></a>
+<a id="__codelineno-3-19" name="__codelineno-3-19" href="#__codelineno-3-19"></a>
+<a id="__codelineno-3-20" name="__codelineno-3-20" href="#__codelineno-3-20"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>focus</code> accepts any subset of <code>"security"</code>,
+<code>"quality"</code>, <code>"test-gaps"</code>. Only the named passes run, and
+<code>metadata["focus"]</code> reflects the active set. An all-invalid
+<code>focus</code> returns <code>success=False</code> with an "Invalid focus values"
+error naming the valid options.</p>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Deep-review's public surface is the <code>DeepReviewAgentSDKWorkflow</code>
+class, re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes
+from <code>attune.workflows</code> as well.</p>
+<h3 id="deepreviewagentsdkworkflow-attuneworkflowsdeep_review"><code>DeepReviewAgentSDKWorkflow</code> — <code>attune.workflows.deep_review</code><a class="headerlink" href="#deepreviewagentsdkworkflow-attuneworkflowsdeep_review" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
+<th>Symbol</th>
 <th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DeepReviewAgentSDKWorkflow</code></td>
-<td>Orchestrates a multi-pass deep review using three Claude Agent SDK subagents; returns a <code>WorkflowResult</code> with consolidated findings.</td>
+<td><code>DeepReviewAgentSDKWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments (no <code>system_prompt_suffix</code>).</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the review. Honors <code>path</code> (str, required), <code>depth</code> (<code>"quick"</code> / <code>"standard"</code> / <code>"deep"</code>, default <code>"standard"</code>), and <code>focus</code> (list of <code>"security"</code> / <code>"quality"</code> / <code>"test-gaps"</code>, default all three). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.name</code></td>
+<td>The registered slug, <code>"deep-review"</code>.</td>
+</tr>
+<tr>
+<td><code>DeepReviewAgentSDKWorkflow.stages</code></td>
+<td><code>["deep-review"]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<p><code>execute(**kwargs)</code> accepts a <code>path</code> argument pointing to any directory or file you want reviewed.</p>
-<h2 id="integration-patterns">Integration patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
-<p>Call <code>deep_review</code> through the MCP tool interface when you need results inside an agent loop:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.deep_review</span><span class="w"> </span><span class="kn">import</span> <span class="n">DeepReviewAgentSDKWorkflow</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="c1"># Review a specific module before merging a PR</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth&quot;</span><span class="p">)</span>
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a><span class="c1"># The WorkflowResult contains structured sections you can parse</span>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># or forward directly to a downstream step</span>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
-</code></pre></div>
-<p>To scope the review to a single file rather than a whole directory, pass the file path directly:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">result</span> <span class="o">=</span> <span class="n">DeepReviewAgentSDKWorkflow</span><span class="p">()</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/token.py&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h2 id="what-the-report-contains">What the report contains<a class="headerlink" href="#what-the-report-contains" title="Permanent link">&para;</a></h2>
-<p>The consolidated output always includes these sections, in order:</p>
-<ul>
-<li><strong>Summary</strong> — overall health score and a short executive summary with finding counts by severity</li>
-<li><strong>Security</strong> — findings from the security subagent, ordered by severity</li>
-<li><strong>Quality</strong> — findings from the quality subagent, ordered by severity</li>
-<li><strong>Test Gaps</strong> — missing or weak test coverage, ordered by priority</li>
-<li><strong>Suggestions</strong> — the top 5–10 actionable next steps, each linked back to a specific finding</li>
-</ul>
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><strong>Reference</strong>: Tool: Deep Review — parameter reference and MCP call syntax</li>
-<li><strong>Reference</strong>: Tool: Security Audit — standalone security-only workflow</li>
-<li><strong>Reference</strong>: Tool: Code Review — lighter single-pass review without subagent orchestration</li>
-</ul>
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h3 id="depth-agent-turn-budget">Depth → agent-turn budget<a class="headerlink" href="#depth-agent-turn-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 14 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.deep_review import …</code> — module not importable</td>
+<td><code>quick</code></td>
+<td>15</td>
+<td>A fast pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>30</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>50</td>
+<td>The fullest review of a large or critical area.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="the-three-passes">The three passes<a class="headerlink" href="#the-three-passes" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th><code>focus</code> value</th>
+<th>Subagent</th>
+<th>Domain</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>security</code></td>
+<td><code>security-reviewer</code></td>
+<td>Injection, secrets, path traversal, auth, OWASP Top 10.</td>
+</tr>
+<tr>
+<td><code>quality</code></td>
+<td><code>quality-reviewer</code></td>
+<td>Complexity, broad excepts, dead code, naming, duplication, type hints, docstrings, long functions.</td>
+</tr>
+<tr>
+<td><code>test-gaps</code></td>
+<td><code>test-gap-reviewer</code></td>
+<td>Untested paths, missing edge cases, weak assertions, mocks hiding bugs.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-review"><code>WorkflowResult</code> fields read after a review<a class="headerlink" href="#workflowresult-fields-read-after-a-review" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the review completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The consolidated report — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short health summary.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, <code>max_turns</code>, <code>focus</code>, and <code>workflow</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason and category (<code>"config"</code> / <code>"runtime"</code> / <code>"provider"</code> / <code>"timeout"</code> / <code>"validation"</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/deep-review</code> in a Claude Code conversation.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run deep-review --path &lt;p&gt; [--depth quick\|standard\|deep] [--json] [--input '{"focus": [...]}']</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>deep_review</code> — one required <code>path</code> argument; runs all three passes at standard depth (the handler does not pass <code>depth</code> or <code>focus</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await DeepReviewAgentSDKWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;, focus=[...])</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- attune-generated: source_hash=5e2ccde04cab83b41196f2c5f05ef11b8e7be00e39bb8040b02fb2a225aef083 feature=deep-review kind=how-to generated_at=2026-06-23 -->
 
 
 
 
 
 
-
-  
-  
 
 
 
