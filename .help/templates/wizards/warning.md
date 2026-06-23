@@ -1,54 +1,38 @@
 ---
 type: warning
+name: wizards-warning
 feature: wizards
 depth: warning
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Wizards cautions
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-## What to watch for
+## Failure modes
 
-The wizards framework provides multi-step guided workflows that can accumulate significant LLM costs and execute long-running operations. Several design patterns in the framework can lead to unexpected behavior if not handled carefully.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BaseWizard.run' was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `AttributeError: 'NoneType' object has no attribute ...` after `get_wizard` | The wizard id is unknown; `get_wizard` returned `None` | Check `get_wizard(id) is not None`; list ids with `list_wizards()` | high |
+| A `question` step never prompts / hangs | No `ask_user_callback` wired (outside Claude Code) | Pass an `ask_user_callback` to the wizard, or run via the `/wizard` skill | medium |
+| `WizardResult.success` is `False` with a populated `error` | A step failed (LLM call, validation, or an aborted confirm) | Read `result.error` and `result.steps_completed` to see where it stopped | medium |
+| Custom wizard not found by `get_wizard` | It was never `register_wizard`'d (or `save_custom_wizard`'d) | Register the class or save the definition first | low |
 
-## Risk areas
+### Risk areas
 
-### Cost accumulation in wizard runs
+- **`run()` is async.** Forgetting to `await` it is the most common
+  mistake.
+- **There is no registry class.** Use the module-level functions
+  (`list_wizards`, `get_wizard`, …) — not a `WizardRegistry`.
+- **`question` steps need a callback.** Outside the `/wizard` skill,
+  supply an `ask_user_callback` or the wizard can't collect input.
 
-The `BaseWizard.run()` method executes multiple LLM calls across wizard steps, but cost tracking happens per step rather than with upfront validation. A wizard with many steps or high `max_tokens` values can exceed your budget before completion. Check the `estimated_cost_range` in `WizardConfig` before starting expensive wizards, and monitor `total_cost` in partial results.
+### Diagnosis order
 
-### Step condition evaluation timing
-
-The `condition` field in `WizardStep` gets evaluated during wizard execution, not at registration time. If your condition function depends on external state (file existence, network connectivity), it can cause steps to be skipped unexpectedly when that state changes between wizard initialization and step execution.
-
-### Custom wizard persistence edge cases
-
-`save_custom_wizard()` overwrites existing files without confirmation and can raise `ValueError` for filesystem issues that aren't obvious from the error message. The function creates the wizard directory if it doesn't exist, but won't create intermediate parent directories. Always verify the base directory structure exists before saving.
-
-### Registry state inconsistency
-
-The wizard registry is module-global state. Calling `register_wizard()` multiple times with the same `wizard_id` silently overwrites the previous registration. In test environments, this can cause tests to interfere with each other if they register wizards with identical IDs.
-
-### Step result processing mutations
-
-The `process_step_result()` method in wizard subclasses receives the raw result dictionary and can modify it in place. Changes made during processing affect the `collected_data` field in `WizardResult`, which can cause downstream steps to see modified data they weren't expecting.
-
-## How to avoid problems
-
-1. **Validate cost limits upfront.** Check `estimated_cost_range` and set reasonable `max_tokens` values for each step. Consider implementing cost guards that halt execution if `total_cost` approaches your budget.
-
-2. **Make step conditions resilient.** Write condition functions that handle missing files, network timeouts, and other transient failures gracefully. Return `False` rather than raising exceptions when external dependencies aren't available.
-
-3. **Use unique wizard IDs in tests.** Include test method names or random suffixes in wizard IDs when registering test wizards to avoid registry collisions between test runs.
-
-4. **Copy result data before processing.** If you need to modify step results in `process_step_result()`, work on a copy to avoid affecting the original data that gets stored in `WizardResult.collected_data`.
-
-5. **Verify directory structure for custom wizards.** Before calling `save_custom_wizard()`, ensure the base directory and any parent directories exist and are writable.
-
-## Source files
-
-- `src/attune/wizards/**`
-
-**Tags:** `wizards`, `interactive`
+1. Confirm you are awaiting: `await get_wizard(id)().run()`.
+2. Confirm the id exists: `get_wizard(id) is not None` /
+   `list_wizards()`.
+3. On failure, read `result.error` and `result.steps_completed`.
+4. If a `question` step stalls, check the `ask_user_callback` wiring.

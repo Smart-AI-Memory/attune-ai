@@ -1,22 +1,25 @@
 ---
 type: tip
+name: wizards-tip
 feature: wizards
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Tip: working effectively with wizards
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-## Extend BaseWizard, don't configure from scratch
+## Notes & tips
 
-Inherit from `BaseWizard` and override `build_prompt_context()` and `process_step_result()` instead of creating config-driven wizards from YAML. The built-in wizards like `DebugWizard` and `RefactorWizard` show this pattern consistently.
-
-You get type safety, IDE support, and easier testing compared to string-based configuration. The tradeoff is less runtime flexibility — you can't modify wizard behavior without code changes.
-
-## Source files
-
-- `src/attune/wizards/**`
-
-**Tags:** `wizards`, `interactive`
+- **Depend on the documented public surface.** The supported API is
+  the registry functions plus `BaseWizard`, `ConfigDrivenWizard`, the
+  `WizardConfig` / `WizardStep` / `WizardResult` dataclasses, `StepType`,
+  and `WizardSession` — all from `attune.wizards`.
+- **`await` the run.** `run()` is the only async method; the registry
+  functions are sync.
+- **Use the skill for interactive runs.** `/wizard` wires the
+  `ask_user_callback` to `AskUserQuestion`; a bare Python run needs you
+  to supply one for `question` steps.
+- **Discover before you run.** `list_wizards()` gives ids, names,
+  domains, and cost/duration estimates.

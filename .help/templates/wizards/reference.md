@@ -1,109 +1,53 @@
 ---
 type: reference
+name: wizards-reference
 feature: wizards
 depth: reference
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Wizards reference
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-Build and run interactive, multi-step workflows. Register built-in wizards for debugging, refactoring, security audits, and test generation. Create custom wizards from YAML definitions.
+## Reference
 
-## Classes
+The public surface is the registry functions and the wizard
+classes/dataclasses, all re-exported from `attune.wizards`.
 
-| Class | Description |
-|-------|-------------|
-| `StepType` | Execution mode for a wizard step |
-| `WizardStep` | Definition of a single wizard step |
-| `WizardConfig` | Metadata for a wizard |
-| `WizardResult` | Result from a completed wizard run |
-| `BaseWizard` | Abstract base class for interactive, multi-step wizards |
-| `DebugWizard` | Guided debugging wizard |
-| `RefactorWizard` | Guided refactoring wizard |
-| `ReleasePrepWizard` | Guided release preparation wizard |
-| `SecurityWizard` | Guided security audit wizard |
-| `TestGenWizard` | Guided test generation wizard |
+### Registry functions — `attune.wizards`
 
-## WizardStep fields
+| Function | Purpose |
+|----------|---------|
+| `list_wizards() -> list[WizardConfig]` | All registered wizard configs (built-in + custom). |
+| `get_wizard(wizard_id) -> type[BaseWizard] \| None` | The wizard class for an id, or `None`. |
+| `register_wizard(wizard_id, wizard_class) -> None` | Register a `BaseWizard` subclass. |
+| `save_custom_wizard(wizard_data, base_dir=None) -> Path` | Persist a config-driven wizard definition; returns the saved path. |
+| `delete_custom_wizard(wizard_id, base_dir=None) -> bool` | Remove a saved custom wizard. |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `id` | `str` | | Step identifier |
-| `name` | `str` | | Display name |
-| `description` | `str` | `''` | Step description |
-| `step_type` | `StepType` | `StepType.QUESTION` | Execution mode |
-| `prompt_template` | `str | None` | `None` | Template for LLM prompts |
-| `tier` | `str` | `'capable'` | Model tier requirement |
-| `questions` | `list[FormQuestion] | None` | `None` | User input questions |
-| `condition` | `Callable[[WizardSession], bool] | None` | `None` | Step execution condition |
-| `max_tokens` | `int` | `4096` | Maximum response tokens |
-| `prompt_context_template` | `dict[str, Any] | None` | `None` | Context for prompt rendering |
-| `review_source_step_id` | `str | None` | `None` | Step to review for output |
+### Classes — `attune.wizards`
 
-## WizardConfig fields
+| Symbol | Purpose |
+|--------|---------|
+| `BaseWizard(ask_user_callback=None, provider=None, **kwargs)` | Abstract base; async `run(initial_context=None) -> WizardResult`; hooks `build_prompt_context(step)` and `process_step_result(step, result)`. |
+| `ConfigDrivenWizard(config, steps, **kwargs)` | A wizard built from a `WizardConfig` + `list[WizardStep]`, no subclass needed. |
+| `WizardSession` | Per-run session state. |
+| `TaskDecomposer` / `DecomposedTask` | Back the `task_decompose` step type (XML task decomposition). |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `wizard_id` | `str` | | Unique wizard identifier |
-| `name` | `str` | | Display name |
-| `description` | `str` | | Wizard description |
-| `domain` | `str` | `'development'` | Application domain |
-| `version` | `str` | `'1.0.0'` | Wizard version |
-| `source` | `str` | `'builtin'` | Source type |
-| `estimated_cost_range` | `tuple[float, float]` | `(0.01, 0.5)` | Cost estimate range |
-| `estimated_duration_minutes` | `int` | `5` | Time estimate |
+### Dataclasses — `attune.wizards`
 
-## WizardResult fields
+| Type | Fields |
+|------|--------|
+| `WizardConfig` | `wizard_id`, `name`, `description`, `domain`, `version`, `source`, `estimated_cost_range`, `estimated_duration_minutes`. |
+| `WizardStep` | `id`, `name`, `description`, `step_type`, `prompt_template`, `tier`, `questions`, `condition`, `max_tokens`, `prompt_context_template`, `review_source_step_id`. |
+| `WizardResult` | `wizard_id`, `run_id`, `success`, `steps_completed`, `collected_data`, `generated_output`, `tasks`, `total_cost`, `total_duration_ms`, `error`. |
+| `StepType` | `question`, `llm_call`, `task_decompose`, `review`, `preview`, `confirm`. |
 
-| Field | Type | Default | Description |
-|-------|------|---------|-------------|
-| `wizard_id` | `str` | | Wizard that ran |
-| `run_id` | `str` | | Unique run identifier |
-| `success` | `bool` | | Whether wizard completed successfully |
-| `steps_completed` | `list[str]` | `[]` | IDs of completed steps |
-| `collected_data` | `dict[str, Any]` | `{}` | Data gathered from user |
-| `generated_output` | `str | dict[str, Any]` | `''` | Wizard output |
-| `tasks` | `list[dict[str, Any]]` | `[]` | Generated task list |
-| `total_cost` | `float` | `0.0` | Total API cost |
-| `total_duration_ms` | `float` | `0.0` | Total execution time |
-| `error` | `str | None` | `None` | Error message if failed |
+### Entry points
 
-## Functions
+| Surface | Invocation |
+|---------|------------|
+| Python | `get_wizard(<id>)`, then `await <cls>().run()`; `list_wizards()` to discover. |
+| Skill | `/wizard` in a Claude Code conversation. |
 
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `register_wizard` | `wizard_id: str, wizard_class: type[BaseWizard]` | `None` | Register a wizard class |
-| `get_wizard` | `wizard_id: str` | `type[BaseWizard] | None` | Get a wizard class by ID |
-| `list_wizards` | | `list[WizardConfig]` | List all registered wizard configs |
-| `save_custom_wizard` | `wizard_data: dict[str, Any], base_dir: str | None = None` | `Path` | Save a custom wizard definition to YAML |
-| `delete_custom_wizard` | `wizard_id: str, base_dir: str | None = None` | `bool` | Delete a custom wizard definition |
-
-## BaseWizard methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `ask_user_callback: AskUserQuestionCallback | None = None, provider: str | None = None, **workflow_kwargs: Any` | `None` | Initialize wizard with callbacks |
-| `run` | `initial_context: dict[str, Any] | None = None` | `WizardResult` | Run the wizard workflow |
-| `build_prompt_context` | `step: WizardStep` | `PromptContext` | Build context for step prompts |
-| `process_step_result` | `step: WizardStep, result: dict[str, Any]` | `None` | Process step execution results |
-
-## WizardResult methods
-
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `to_dict` | `self` | `dict[str, Any]` | Convert result to dictionary |
-
-## Raises
-
-| Function | Exception | Message |
-|----------|-----------|---------|
-| `save_custom_wizard` | `ValueError` | `'Cannot write wizard YAML: {...}'` |
-| `delete_custom_wizard` | `ValueError` | `"Cannot delete built-in wizard: '{...}'"` |
-
-## Constants
-
-| Constant | Value |
-|----------|-------|
-| `SCHEMA_VERSION` | `'1.0'` |
+No `attune wizard` CLI command and no MCP tool exist for wizards.

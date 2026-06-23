@@ -304,13 +304,23 @@ features:
     tags: [spec, planning]
     status: manual
 
+  # wizards is single-sourced (status: manual) from
+  # content/features/wizards.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/wizards/*.md. The entry is marked `status: manual`
+  # — WITHOUT `files:` — so topic resolution routes here while
+  # staleness/maintenance never runs `attune-author generate wizards
+  # --all-kinds` to overwrite the projected content with LLM output
+  # (DD5, help-docs-single-source decision, 2026-06-23). The retained
+  # faq.md stays on disk frozen until the four-channel FAQ Generator
+  # (D6/D7) replaces that path. The old hand-authored
+  # docs/reference/wizards.md is now the projected reference page.
+  # Description and tags are unchanged to preserve golden-query
+  # resolution (wz-002 "interactive"). See docs/specs/help-docs-single-source/.
   wizards:
     description: Multi-step guided interactive workflows
-    files:
-      - src/attune/wizards/**
     tags: [wizards, interactive]
-    doc_paths:
-      - docs/reference/wizards.md
+    status: manual
 
   configuration:
     description: Project configuration and settings management

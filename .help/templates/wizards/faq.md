@@ -1,58 +1,81 @@
 ---
 type: faq
+name: wizards-faq
 feature: wizards
 depth: faq
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
-status: generated
+status: manual
 ---
 
 # Wizards FAQ
 
 ## What are wizards?
 
-Interactive, multi-step workflows that guide you through complex tasks like debugging, refactoring, security audits, and test generation.
-
-## When should I use wizards?
-
-Use wizards when you need guided assistance with development tasks that involve multiple steps or decisions. For example, use the DebugWizard when troubleshooting issues, or the RefactorWizard when restructuring code.
+Interactive, multi-step workflows that guide you through complex tasks
+— collecting input via `question` steps, running LLM calls, decomposing
+tasks, and gating on review/confirm — and return a `WizardResult` with
+the collected data, generated output, and cost/duration.
 
 ## Which wizards are available?
 
-Attune includes five built-in wizards:
+Five ship built in (run `list_wizards()` to confirm):
 
-- **DebugWizard** - Helps troubleshoot code issues
-- **RefactorWizard** - Guides code restructuring
-- **ReleasePrepWizard** - Assists with release preparation
-- **SecurityWizard** - Performs guided security audits
-- **TestGenWizard** - Helps generate test code
+- `debug` (`DebugWizard`) — systematic debugging
+- `refactor` (`RefactorWizard`) — code restructuring with safety checks
+- `release-prep` (`ReleasePrepWizard`) — release preparation
+- `security` (`SecurityWizard`) — guided security audit
+- `test-gen` (`TestGenWizard`) — interactive test generation
 
 ## How do I run a wizard?
 
-Get a wizard class using `get_wizard()`, then create an instance and call `run()`:
+`get_wizard(id)` returns the wizard class; instantiate it and `await`
+its `run()` — `run()` is a coroutine:
 
 ```python
+import asyncio
+
 from attune.wizards import get_wizard
 
-wizard_class = get_wizard("debug")
-wizard = wizard_class()
-result = wizard.run(initial_context={"file": "my_script.py"})
+
+async def main() -> None:
+    wizard_cls = get_wizard("debug")
+    if wizard_cls is not None:
+        result = await wizard_cls().run(initial_context={"file": "my_script.py"})
+        print(result.success)
+
+
+asyncio.run(main())
 ```
+
+There is no `attune wizard` CLI command and no MCP tool — run wizards
+through the Python API or the `/wizard` skill.
+
+## Are the calls async?
+
+`run()` is a coroutine — `await` it or use `asyncio.run`. The registry
+functions (`list_wizards`, `get_wizard`) are synchronous.
+
+## Is there a `WizardRegistry` class?
+
+No. The registry is module-level functions in `attune.wizards`:
+`list_wizards`, `get_wizard`, `register_wizard`, `save_custom_wizard`,
+`delete_custom_wizard`.
 
 ## How do I see all available wizards?
 
-Call `list_wizards()` to get configuration details for all registered wizards, including estimated cost and duration.
+Call `list_wizards()` — it returns a `WizardConfig` per registered
+wizard, with id, name, domain, and estimated cost/duration.
 
 ## Can I create custom wizards?
 
-Yes. Either extend `BaseWizard` for programmatic wizards or use `save_custom_wizard()` to create YAML-defined wizards that follow a structured format.
+Yes — subclass `BaseWizard` (implement `build_prompt_context` and
+`process_step_result`) and `register_wizard(id, cls)`, or build a
+`ConfigDrivenWizard(config, steps)` / persist one with
+`save_custom_wizard(data)`.
 
-## How do I debug wizard issues?
+## How do I debug a wizard failure?
 
-Run `pytest -k "wizards" -v` to verify the wizard system works correctly. If your specific wizard fails, check the `WizardResult.error` field for error details, or add logging to your wizard's `build_prompt_context()` and `process_step_result()` methods.
-
-## Where are the source files?
-
-- `src/attune/wizards/**`
+Check `WizardResult.error` and `WizardResult.steps_completed` to see
+where it stopped. If a `question` step stalls outside the `/wizard`
+skill, wire an `ask_user_callback` into the wizard.
 
 **Tags:** `wizards`, `interactive`

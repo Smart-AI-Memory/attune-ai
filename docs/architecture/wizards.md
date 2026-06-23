@@ -1,14 +1,4 @@
----
-type: concept
-name: wizards-concept
-feature: wizards
-depth: concept
-generated_at: 2026-06-23T22:36:36.999673+00:00
-source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
-status: generated
----
-
-# Multi-step guided interactive workflows that walk users through complex tasks
+# Wizards
 
 ## Overview
 
@@ -93,3 +83,33 @@ Two ways to add a wizard:
   persist a definition with `save_custom_wizard(data, base_dir=None)`
   (returns the saved `Path`) and remove it with
   `delete_custom_wizard(id, base_dir=None)`.
+
+## Design & extension
+
+### Design decisions
+
+- **Functions, not a registry class.** The registry is a small set of
+  module-level functions over a dict of wizard classes — simpler than a
+  class, and the built-ins register themselves at import.
+- **Steps as data.** A wizard is a sequence of `WizardStep`s with typed
+  `StepType`s; `ConfigDrivenWizard` runs a config + steps with no
+  subclass, so simple wizards need no code.
+- **Interactive by design.** `question` / `confirm` steps put the user
+  in the loop via the `ask_user_callback`, distinguishing wizards from
+  fire-and-forget workflows.
+- **The result is data.** `run()` returns a `WizardResult` (collected
+  data, generated output, tasks, cost/duration) — the skill and any
+  caller render the same object.
+
+### Extension points
+
+- **Add a wizard:** subclass `BaseWizard` + `register_wizard`, or build
+  a `ConfigDrivenWizard` from a config + steps.
+- **Persist a definition:** `save_custom_wizard(data)` /
+  `delete_custom_wizard(id)`.
+- **Customize prompting:** override `build_prompt_context(step)` and
+  `process_step_result(step, result)`.
+- **Decompose work:** use a `task_decompose` step (backed by
+  `TaskDecomposer`) to break a task into an XML task tree.
+
+<!-- attune-generated: source_hash=0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0 feature=wizards kind=architecture generated_at=2026-06-23 -->
