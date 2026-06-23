@@ -3,23 +3,24 @@ type: tip
 name: smart-test-tip
 feature: smart-test
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: b1325f36412cbd67b36481e0f150de834b91392f8fa17c843f8aecd357d18b07
+generated_at: 2026-06-23T15:57:46.208360+00:00
+source_hash: d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe
 status: generated
 ---
 
-# Tip: Target modules below 50% coverage first
+# Find untested code with a coverage audit, then generate pytest tests to close the gaps
 
-When you run `/smart-test`, specify the module you care about most rather than pointing it at the entire codebase. `prioritize_modules()` already filters out anything above the 50% coverage threshold and ranks the rest by a priority score — so the first items in the gap report are the ones that matter most.
+## Notes & tips
 
-**Why it's memorable:** A focused target means the three subagents (function-identifier, test-designer, test-writer) spend their cycles on your riskiest code, not on modules that are already well-covered.
-
-**The tradeoff:** You may miss low-priority gaps in other modules. Run a broader audit with `TestAuditWorkflow` afterward to catch anything the scoped run skipped — but only after the high-risk gaps are closed.
-
-## Source files
-
-- `src/attune/workflows/test_audit/**`
-- `src/attune/workflows/test_gen/**`
-- `src/attune/workflows/test_gen_parallel.py`
-
-**Tags:** `tests`, `coverage`, `generation`
+- **Depend on the documented public surface.** The supported API is
+  the three workflow classes and their async `execute`, plus the
+  `WorkflowResult` they return. Internal helpers (underscore-
+  prefixed names, the AST/coverage parsing utilities) may change.
+- **Audit before you generate.** Running `test-audit` first tells
+  you *where* the gaps are so a `test-gen` pass spends its budget on
+  the modules that matter.
+- **Keep runs cheap with `path` and `depth`.** A `quick` pass over
+  one module is far faster than a `deep` pass over `src/`.
+- **Single-module generation is most reliable via CLI / Python.**
+  Drive it with `attune workflow run test-gen --path <module>` or
+  `TestGenerationWorkflow().execute(path=<module>)`.

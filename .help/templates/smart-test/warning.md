@@ -3,69 +3,48 @@ type: warning
 name: smart-test-warning
 feature: smart-test
 depth: warning
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: b1325f36412cbd67b36481e0f150de834b91392f8fa17c843f8aecd357d18b07
+generated_at: 2026-06-23T15:57:46.208360+00:00
+source_hash: d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe
 status: generated
 ---
 
-# Smart Test cautions
+# Find untested code with a coverage audit, then generate pytest tests to close the gaps
 
-## What to watch for
+## Failure modes
 
-Smart-test reads your coverage data, analyzes module structure with AST parsing, and generates pytest tests — all in a pipeline where a bad input at one stage silently degrades output at the next. The risks below are specific to that pipeline.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `DeprecationWarning: ...execute(src_path=...) is deprecated` | The audit was called with the legacy `src_path` kwarg | Use `path=` instead (the audit still runs) | low |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry | medium |
+| Generated tests don't pass as-is | Generation is a predictive starting point | Review, adjust, and run them before committing | medium |
+| Audit finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Risk areas
+### Risk areas
 
-### `parse_coverage_json()` raises on missing or malformed coverage files
+- **The async call is easy to get wrong.** `execute` is a
+  coroutine on every smart-test workflow. Forgetting to `await` it
+  is the single most common mistake.
+- **Two slugs, one feature.** The skill / topic is `smart-test`,
+  but the CLI slugs are `test-audit` and `test-gen`. And a
+  same-named repo-level skill (`.claude/skills/smart-test`) does
+  something different — it runs your diff's affected tests.
+- **Generation is a draft.** `test-gen` writes a starting point.
+  Run and review the output; a generated test that imports the
+  wrong symbol or asserts the wrong value is on you to catch.
 
-`parse_coverage_json()` raises `FileNotFoundError` if the coverage file doesn't exist and `ValueError` if the JSON is structurally unexpected — including a distinct error if the top-level `files` key is missing. If you run smart-test before generating coverage data (for example, before any `pytest --cov` run), you'll hit this immediately.
+### Diagnosis order
 
-**Mitigation:** Run `pytest --cov=<your-src-dir> --cov-report=json` before invoking smart-test. Confirm `coverage.json` exists at the path you're passing.
-
----
-
-### `prioritize_modules()` silently drops modules below the threshold
-
-`prioritize_modules()` filters out any module whose coverage is below `min_threshold` (default `50.0`). Modules with very low coverage — often the ones most in need of tests — are excluded from the output without any warning.
-
-**Mitigation:** If the gap report looks shorter than expected, check whether your lowest-coverage modules are being filtered. You can lower or override `min_threshold` to include them.
-
----
-
-### `group_into_batches()` caps output at five batches
-
-`group_into_batches()` groups modules by package path and caps the result at `max_batches=5`. In a large codebase, modules beyond that limit are silently omitted from test generation.
-
-**Mitigation:** For codebases with many low-coverage subsystems, run smart-test targeting specific subdirectories rather than the whole project at once. `ParallelTestGenerationWorkflow` supports a `top` parameter (default `200`) and a `batch_size` parameter (default `10`) for finer control.
-
----
-
-### AST analysis produces incomplete signatures for dynamically constructed code
-
-`ASTFunctionAnalyzer` derives function signatures — parameters, return types, raised exceptions, decorators — from static AST inspection. Dynamically generated functions, heavily decorated callables, or code using `__getattr__` tricks may yield incomplete `FunctionSignature` or `ClassSignature` data, which causes `generate_test_for_function()` and `generate_test_for_class()` to produce tests with missing assertions or wrong instantiation patterns.
-
-**Mitigation:** Review generated tests for dynamic or heavily decorated functions before committing them. Treat generated tests as a starting point, not a finished suite.
-
----
-
-### Generated tests use `"test_value"` as the default string parameter
-
-`get_param_test_values()` returns `"test_value"` as the literal test value for string parameters. Tests generated for functions that validate, transform, or reject specific string formats will pass the generation step but may assert incorrect behavior.
-
-**Mitigation:** After generation, search the output for `"test_value"` and replace it with domain-appropriate inputs — especially for functions that parse, sanitize, or pattern-match strings.
-
----
-
-### Private helpers change without notice
-
-Internal functions and constants prefixed with `_` (including `_SUBAGENT_NAMES`, `_SYSTEM_PROMPT`, and `_TASK_PROMPT_TEMPLATE` in both workflow packages) are not part of the public API and can change between releases. Both `TestAuditWorkflow` and `TestGenerationWorkflow` expose only their `execute()` method as a stable entry point.
-
-**Mitigation:** Depend on `execute()` and the public exports listed in each package's `__all__`. Avoid referencing underscore-prefixed names in downstream code or tests.
-
-## Source files
-
-- `src/attune/workflows/test_gen/**`
-- `src/attune/workflows/test_audit/**`
-- `src/attune/workflows/test_gen_parallel.py`
-
-**Tags:** `tests`, `coverage`, `generation`
+1. Confirm you are awaiting: `result = await
+   TestAuditWorkflow().execute(path="src/")` inside an `async def`
+   or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. For a CLI "unknown workflow" error, confirm the slug is
+   `test-audit` or `test-gen` (not `smart-test`).
+4. On an SDK error, inspect `result.metadata` for the captured SDK
+   error fields.
+5. Confirm the scope: `result.metadata` echoes the run's `path` /
+   `src_path`, `depth`, and `max_turns`.

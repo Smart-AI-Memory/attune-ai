@@ -1,116 +1,158 @@
-# Smart Test architecture
+# Smart Test
 
-Find untested code and generate pytest tests with edge cases.
+## Overview
 
-## Purpose
+Smart-test answers two questions about your test suite: *what isn't
+tested?* and *what tests would close the gap?* It pairs two
+SDK-native workflows:
 
-The smart-test subsystem locates under-tested Python code and generates pytest tests for it. It owns two distinct workflows: a **test audit** that parses coverage data, prioritizes modules by gap severity, and coordinates LLM subagents to produce a structured coverage report; and a **test generation** workflow that uses AST analysis to extract function and class signatures and then writes executable pytest tests, including edge cases, error paths, and parametrized combinations. The subsystem does not run pytest itself, manage test fixtures across projects, or decide which tests to delete — those concerns belong to the caller or to CI tooling.
+- **test-audit** (`TestAuditWorkflow`) — a coverage audit that
+  finds untested and under-tested code and prioritizes it;
+- **test-gen** (`TestGenerationWorkflow`) — test generation that
+  writes pytest tests with edge cases and error paths.
 
-## Key classes
+A third workflow, **`ParallelTestGenerationWorkflow`**, batches
+generation across many low-coverage modules at once. Each of the
+two primary workflows is SDK-native: it delegates to three
+specialized Claude Agent SDK subagents (scoped to Read / Glob /
+Grep) and synthesizes their findings into a single
+`WorkflowResult`.
 
-| Class | Responsibility | File |
-|-------|---------------|------|
-| `ModuleCoverage` | Holds parsed coverage metrics (statements, covered lines, missing lines, priority score) for one module. | `src/attune/workflows/test_audit/coverage_parser.py` |
-| `TestAuditWorkflow` | Orchestrates three named subagents (`coverage-auditor`, `gap-analyzer`, `test-planner`) to audit the test suite and synthesize a structured markdown report. | `src/attune/workflows/test_audit/workflow.py` |
-| `ASTFunctionAnalyzer` | Walks Python ASTs to extract `FunctionSignature` and `ClassSignature` records; handles sync, async, and nested class definitions. | `src/attune/workflows/test_gen/ast_analyzer.py` |
-| `FunctionSignature` | Carries the full static profile of a function (params with types, return type, raises set, async flag, complexity, decorators) consumed by test generators. | `src/attune/workflows/test_gen/data_models.py` |
-| `ClassSignature` | Carries the static profile of a class (methods, `__init__` params, base classes, enum/dataclass flags) consumed by test generators. | `src/attune/workflows/test_gen/data_models.py` |
-| `TestGenerationWorkflow` | Orchestrates three named subagents (`function-identifier`, `test-designer`, `test-writer`) to analyze a codebase path and produce a test generation report. | `src/attune/workflows/test_gen/workflow.py` |
-| `TestGenerationTask` | Tracks the lifecycle (`pending` → completed/failed) of one module's test generation job within the parallel workflow. | `src/attune/workflows/test_gen_parallel.py` |
-| `ParallelTestGenerationWorkflow` | Discovers low-coverage modules, fans out test generation across batches using a two-stage AI pipeline (template then completion), and writes results to `tests/behavioral/generated/`. | `src/attune/workflows/test_gen_parallel.py` |
+Like the other analysis workflows, the audit **predicts** — its
+findings are LLM judgments to verify, not proofs — and generated
+tests are a **starting point** to review and run, not guaranteed-
+passing code.
 
-## Data flow
+You reach smart-test several ways:
 
-The system has two entry paths that share the AST analysis layer but diverge at output:
+- the **`/smart-test`** skill, inside a Claude Code conversation —
+  a router for *gap analysis*, *test generation*, or *both* (see
+  *The `/smart-test` skill routes by approach* below);
+- the CLI — **`attune workflow run test-audit`** and
+  **`attune workflow run test-gen`**;
+- MCP tools — **`test_audit`** and **`test_gen_parallel`**;
+- the Python API — `await TestAuditWorkflow().execute(...)`,
+  `await TestGenerationWorkflow().execute(...)`, and
+  `await ParallelTestGenerationWorkflow().execute(...)`.
 
-```
-                          ┌─────────────────────────────────────────┐
-                          │           Audit path                    │
-                          │                                         │
-  coverage.json ──► parse_coverage_json()                          │
-                       │                                            │
-                       ▼                                            │
-               list[ModuleCoverage]                                 │
-                       │                                            │
-                       ▼                                            │
-             prioritize_modules()                                   │
-                       │                                            │
-                       ▼                                            │
-             group_into_batches()                                   │
-                       │                                            │
-                       ▼                                            │
-           TestAuditWorkflow.execute()                              │
-            ├─► coverage-auditor subagent                          │
-            ├─► gap-analyzer subagent                              │
-            └─► test-planner subagent                              │
-                       │                                            │
-                       ▼                                            │
-             Structured audit report ◄───────────────────────────┘
+A name note: the **feature, skill, and help topic** are
+`smart-test`, but the two workflows it drives register under the
+slugs **`test-audit`** and **`test-gen`**. There is also a
+**separate, unrelated** repo-level skill at
+`.claude/skills/smart-test` (alias `st`) that just runs the
+pytest tests affected by your recent diff — same name, different
+job. This page documents the gap-analysis-and-generation feature.
 
-                          ┌─────────────────────────────────────────┐
-                          │         Generation path                 │
-                          │                                         │
-  source files ──► ASTFunctionAnalyzer.analyze()                   │
-                       │                                            │
-                       ▼                                            │
-        list[FunctionSignature] + list[ClassSignature]             │
-                       │                                            │
-          ┌────────────┴────────────┐                              │
-          ▼                         ▼                              │
-  generate_test_for_function()  generate_test_for_class()         │
-          └────────────┬────────────┘                              │
-                       ▼                                            │
-           TestGenerationWorkflow.execute()                        │
-            ├─► function-identifier subagent                       │
-            ├─► test-designer subagent                             │
-            └─► test-writer subagent                               │
-                       │                                            │
-                       ▼                                            │
-             format_test_gen_report()                              │
-                       │                                            │
-                       ▼                                            │
-             Test generation report ◄────────────────────────────┘
+## Concepts
 
-  Parallel variant (ParallelTestGenerationWorkflow):
+### Audit, then generate
 
-  source files ──► discover_low_coverage_modules()
-                       │
-                       ▼  (top N modules, batched)
-              analyze_module_structure()
-                       │
-                       ▼
-        generate_test_template_with_ai()   ← stage 1 LLM
-                       │
-                       ▼
-          complete_test_with_ai()          ← stage 2 LLM
-                       │
-                       ▼
-          process_module_batch() ──► list[TestGenerationTask]
-                       │
-                       ▼
-          tests/behavioral/generated/
-```
+The two primary workflows compose: run the audit to find and rank
+gaps, then run generation to write the tests that close them.
 
-## Design decisions
+| Workflow | Slug | Subagents | What it produces |
+|----------|------|-----------|------------------|
+| `TestAuditWorkflow` | `test-audit` | `coverage-auditor`, `gap-analyzer`, `test-planner` | A coverage report: health score, coverage metrics, untested paths, and a prioritized plan. |
+| `TestGenerationWorkflow` | `test-gen` | `function-identifier`, `test-designer`, `test-writer` | A report of generated pytest tests covering happy paths, edge cases, and error handling. |
 
-**Two separate workflows instead of one.** Audit and generation have different LLM subagent sets and different output contracts. Merging them into one workflow would couple the prioritization logic (which needs `coverage.json`) to the AST analysis logic (which works purely from source). Keeping them separate lets you run an audit without generating tests, or generate tests for a handpicked module without running a full coverage audit first.
+Both synthesize their three passes into a report with the same
+four sections — **Summary** (an overall 0–100 health score plus a
+short executive summary), **Coverage**, **Test Gaps**, and
+**Suggestions** (next steps ordered by priority).
 
-**AST analysis before LLM generation.** `ASTFunctionAnalyzer` extracts precise signatures — parameter types, raises declarations, async flags, complexity scores — before any LLM subagent is invoked. This means the test-designer and test-writer subagents receive structured, accurate metadata rather than having to infer signatures from raw source, which reduces hallucinated parameter names and incorrect assertion types.
+### Depth controls the agent-turn budget
 
-**Parallel workflow as a separate class.** `ParallelTestGenerationWorkflow` uses a two-stage LLM pipeline (template generation, then completion) and operates on batches of up to 200 modules. Rather than adding batch-mode flags to `TestGenerationWorkflow`, this concern is encapsulated in its own class to avoid complicating the simpler single-module path. The tradeoff is a third workflow class to maintain.
+Both workflows take a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`, which maps to the maximum agent turns and a per-run
+cost cap:
 
-**Prompt templates as module-level constants.** `AUDIT_SYSTEM_PROMPT`, `PLAN_SYSTEM_PROMPT`, and `BATCH_TASK_TEMPLATE` are string constants in the prompts module rather than hardcoded inside workflow methods. This makes prompt iteration possible without touching workflow logic, and the constants are importable for testing in isolation.
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
 
-## Extension points
+An unrecognized depth falls back to the standard budget (20 turns).
 
-- **Add a new coverage source format:** implement a parser with the same signature as `parse_coverage_json(json_path: str) -> list[ModuleCoverage]` and pass the resulting list directly to `prioritize_modules()`. No changes to the workflow classes are needed.
+### `execute` is async
 
-- **Change module prioritization logic:** replace or wrap `prioritize_modules()` in `src/attune/workflows/test_audit/coverage_parser.py`. The function returns a sorted, filtered `list[ModuleCoverage]`; `TestAuditWorkflow` consumes whatever list it receives.
+On both workflows `execute` is a coroutine — `await` it (or drive
+it with `asyncio.run`). Each reads `path` (required) and `depth`
+(default `"standard"`); an empty or missing `path` returns a failed
+`WorkflowResult` ("path argument is required") rather than raising.
+`TestAuditWorkflow.execute` also accepts a deprecated `src_path`
+alias for `path` (it emits a `DeprecationWarning` and `path` wins
+if both are given).
 
-- **Add a new subagent to the audit:** extend `_SUBAGENT_NAMES` in `src/attune/workflows/test_audit/workflow.py` and update `_TASK_PROMPT_TEMPLATE` to include the new agent's section. The orchestrator prompt in `_SYSTEM_PROMPT` should be updated to name the new agent's domain.
+### Batch generation across many modules
 
-- **Support a new language or AST structure:** subclass `ASTFunctionAnalyzer` and override `visit_FunctionDef`, `visit_AsyncFunctionDef`, and `visit_ClassDef`. The `analyze()` method returns `(list[FunctionSignature], list[ClassSignature])`; downstream generators consume those dataclasses directly.
+`ParallelTestGenerationWorkflow` (registered name
+`parallel-test-generation`) is the batch path: its `execute` takes
+`top` (number of lowest-coverage modules to process, default
+`200`), `batch_size` (modules generated in parallel, default `10`),
+and `output_dir` (where tests are written, default
+`tests/behavioral/generated`). It discovers the lowest-coverage
+modules, generates a test template and completes it per module, and
+returns a `WorkflowResult` with the generated file paths and
+statistics. Unlike test-audit / test-gen it is a multi-stage
+pipeline (`discover` → `generate_templates` → `complete_tests` →
+`validate`), not a single SDK query.
 
-- **Add a custom test template:** `BATCH_TASK_TEMPLATE` in the prompts module is a plain Python format string with named fields (`batch_id`, `subsystem`, `target_pct`, `missing_lines_summary`, `source_path`, `key_signatures`, `test_path`, `test_class_specs`, `module`). Substitute a different template string to change the structure of generated test files without touching `ParallelTestGenerationWorkflow`.
+### The result is a `WorkflowResult`
 
-For usage questions — how to invoke `/smart-test` or interpret its output — see the concept doc (`concepts/tool-smart-test.md`) and quickstart (`quickstarts/skill-smart-test.md`).
+Each `execute` returns a `WorkflowResult` (from
+`attune.workflows`). The report lands in `final_output` — a
+serialized report when the findings parse, or the raw markdown
+otherwise — with a short `summary`, a `suggestions` list, the
+`cost_report`, the `provider`, and a `metadata` dict echoing the
+run's `path` (or `src_path` for the audit), `depth`, and
+`max_turns`. On failure, `success` is `False` and `error` /
+`error_type` carry the reason.
+
+### The `/smart-test` skill routes by approach
+
+The `/smart-test` skill picks the tool for the approach you ask
+for:
+
+- **Gap analysis** → the audit (find untested public functions);
+- **Generate tests** → test generation for a module;
+- **Both** → audit first, then generate for the gaps it found.
+
+The CLI and Python surfaces, by contrast, drive each workflow
+directly.
+
+## Design & extension
+
+### Design decisions
+
+- **Two SDK-native workflows, one feature.** Finding gaps and
+  writing tests are separable concerns, so smart-test keeps them as
+  two workflows — `test-audit` and `test-gen` — each a single
+  `claude_agent_sdk.query` with three focused subagents. The
+  `/smart-test` skill composes them.
+- **A separate batch path for scale.** `ParallelTestGenerationWorkflow`
+  is a multi-stage pipeline (discover → template → complete →
+  validate) rather than one SDK query, because batch generation
+  across hundreds of modules is a different shape from a single
+  focused pass.
+- **Prediction and drafts, not certification.** The audit returns
+  LLM-judged findings; generation returns draft tests. Both are
+  inputs to verify, never guarantees.
+- **The result is data, not print output.** Each `execute` returns
+  a `WorkflowResult` (report in `final_output`, plus `summary`,
+  `suggestions`, `cost_report`, and `metadata`); the CLI, MCP, and
+  Python surfaces render that same result.
+
+### Extension points
+
+- **Change the budget:** choose `depth` (`quick` / `standard` /
+  `deep`) on the audit or generation workflow.
+- **Scope the run:** point `path` at a narrower directory or file.
+- **Tune the batch run:** set `top`, `batch_size`, and `output_dir`
+  on `ParallelTestGenerationWorkflow.execute`.
+- **Add a subagent pass:** the subagent definitions live in each
+  workflow module (`test_audit/workflow.py`, `test_gen/workflow.py`)
+  with the names in `_SUBAGENT_NAMES`; a new pass is a new
+  `AgentDefinition` plus a synthesis section in the task template.
+
+<!-- attune-generated: source_hash=d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe feature=smart-test kind=architecture generated_at=2026-06-23 -->

@@ -1,54 +1,63 @@
-# Smart Test CLI Reference
+# Smart Test
 
-Analyze test coverage gaps and generate pytest tests for uncovered code.
+## Reference
 
-## Description
+Smart-test's public surface is the `TestAuditWorkflow`,
+`TestGenerationWorkflow`, and `ParallelTestGenerationWorkflow`
+classes, re-exported from `attune.workflows`. `WorkflowResult`
+comes from `attune.workflows` as well.
 
-`smart-test` runs an autonomous test coverage audit and test generation workflow against a Python codebase. It parses `pytest-cov` coverage output, identifies untested functions and branches, and writes executable pytest tests with edge cases and error-path assertions. Output is a structured report covering coverage gaps, generated test files, and prioritized next steps.
+### Workflow classes
 
-## Usage
+| Symbol | Purpose |
+|--------|---------|
+| `TestAuditWorkflow.execute(**kwargs)` | **Async.** Coverage audit. Honors `path` (str, required; deprecated `src_path` alias) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`). Slug `"test-audit"`. |
+| `TestGenerationWorkflow.execute(**kwargs)` | **Async.** Test generation. Honors `path` (str, required) and `depth` (default `"standard"`). Slug `"test-gen"`. |
+| `ParallelTestGenerationWorkflow.execute(top=200, batch_size=10, output_dir="tests/behavioral/generated")` | **Async.** Batch generation across low-coverage modules. Registered name `"parallel-test-generation"`. |
 
-```
-smart-test [OPTIONS] <PATH>
-```
+Each `test-audit` / `test-gen` stage runs at the `CAPABLE` model
+tier. Underscore-prefixed names (`_run_agent_audit`,
+`_run_agent_gen`, `_SUBAGENT_NAMES`) are internal and may change.
 
-## Options
+### Depth → agent-turn budget (test-audit / test-gen)
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--help` | — | Show this help message and exit |
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | The fullest pass on a large or critical area. |
 
-## Output
+### Subagents
 
-On success, `smart-test` prints a structured Markdown report to stdout with the following sections:
+| Workflow | Subagents |
+|----------|-----------|
+| `test-audit` | `coverage-auditor` (coverage metrics), `gap-analyzer` (untested paths), `test-planner` (prioritized plan). |
+| `test-gen` | `function-identifier` (finds untested functions), `test-designer` (designs cases), `test-writer` (writes pytest code). |
 
-```
-## Summary
-Overall test generation summary — how many functions were analyzed,
-how many test cases were designed, and how many test files were written.
+### `WorkflowResult` fields read after a run
 
-## Coverage
-Current coverage analysis and areas that need testing.
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the run completed. |
+| `final_output` | `Any` | The report — a serialized report when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short summary. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run (`"anthropic"` for the SDK workflows). |
+| `metadata` | `dict` | Echoes the run's `path` / `src_path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-## Test Gaps
-Functions and modules that lack adequate test coverage.
+### Entry points
 
-## Suggestions
-Actionable next steps for improving test coverage, ordered by priority.
-```
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/smart-test` in a Claude Code conversation — routes to gap analysis, generation, or both. |
+| CLI | `attune workflow run test-audit --path <p> [--depth ...] [--json]`; `attune workflow run test-gen --path <p> [--depth ...] [--json]`. |
+| MCP tools | `test_audit` (optional `path`, defaults to `src/`); `test_gen_parallel` (`top`, `batch_size`). |
+| Python | `await TestAuditWorkflow().execute(path=<p>)`; `await TestGenerationWorkflow().execute(path=<p>)`; `await ParallelTestGenerationWorkflow().execute(top=..., batch_size=...)`. |
 
-Generated test files are written to `tests/behavioral/generated/` by default.
+For single-module test generation, the reliable surfaces are the
+CLI (`attune workflow run test-gen --path <module>`) and the Python
+API (`TestGenerationWorkflow().execute(path=<module>)`).
 
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Workflow completed; report written to stdout |
-| `1` | Workflow failed — coverage file not found, invalid coverage JSON, or missing `files` key in coverage data |
-
-## Related commands
-
-- `/smart-test` — invoke the same workflow as a Claude Code skill from a conversation
-- `fix-test` — diagnose and repair failing pytest tests after a refactor or dependency upgrade
-
-<!-- attune-generated: source_hash=2ed25e274258323117a16cf96fcb5bf0a40e45a9bb8c246d4abfdc74365cfabc feature=smart-test kind=cli-reference generated_at=2026-05-16 -->
+<!-- attune-generated: source_hash=d6dccb651feffe160b811a9e8fef002ec3bb96ee10e3299e09f78b3c41c3cbbe feature=smart-test kind=reference generated_at=2026-06-23 -->
