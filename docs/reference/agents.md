@@ -1,14 +1,4 @@
----
-type: reference
-name: agents-reference
-feature: agents
-depth: reference
-generated_at: 2026-06-23T22:44:18.994422+00:00
-source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
-status: generated
----
-
-# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
+# Agents
 
 ## Reference
 
@@ -69,3 +59,5 @@ lives in `attune.agent_factory.base`. You rarely import either directly
 | Skill | `/agent` in a Claude Code conversation — create/manage agents and teams. |
 
 No `attune agent` CLI command and no MCP tool exist.
+
+<!-- attune-generated: source_hash=9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a feature=agents kind=reference generated_at=2026-06-23 -->

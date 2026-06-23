@@ -3,60 +3,77 @@ type: faq
 name: agents-faq
 feature: agents
 depth: faq
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
-status: generated
+status: manual
 ---
 
 # Agents FAQ
 
-## What does the agents feature do?
+## What is the Agent Factory?
 
-It provides release agents, state persistence, and recovery. This includes a universal agent factory, framework adapters for AutoGen, Haystack, LangChain, and LangGraph, and built-in tooling for tracking agent execution and recovering from failures.
+`AgentFactory` is one interface to create, run, and orchestrate AI
+agents across frameworks — native (the default), LangChain, LangGraph,
+AutoGen, and Haystack — without rewriting code when you switch. Its
+`create_agent` / `create_workflow` methods return `BaseAgent` /
+`BaseWorkflow` objects with a uniform interface.
 
-## Which frameworks does agents support?
+## How do I create and run an agent?
 
-AutoGen, Haystack, LangChain, and LangGraph. Each has a dedicated adapter class (`AutoGenAdapter`, `HaystackAdapter`, `LangChainAdapter`) and a corresponding lazy-import helper (`get_autogen_adapter()`, `get_haystack_adapter()`, `get_langchain_adapter()`, `get_langgraph_adapter()`).
+Build it with the factory, then `await` its async `invoke`:
 
-## How do I get an adapter for my framework?
+```python
+import asyncio
 
-Call the lazy-import helper for your framework. For example, call `get_langchain_adapter()` to get a `LangChainAdapter`, then use `create_agent(config)` or `create_workflow(config, agents)` on it. All adapters accept a `provider` and an optional `api_key` in their constructors.
+from attune.agent_factory import AgentFactory
 
-## How do I create an agent?
 
-Call `create_agent(config)` on an adapter instance, passing an `AgentConfig`. The method returns a framework-specific agent — for example, `LangChainAgent` or `AutoGenAgent` — that exposes `invoke()` and `stream()` methods.
+async def main() -> None:
+    factory = AgentFactory()                  # native framework
+    agent = factory.create_agent(name="helper")
+    print(await agent.invoke("Hello"))
 
-## How do I run a multi-agent workflow?
 
-Call `create_workflow(config, agents)` on an adapter, passing a `WorkflowConfig` and a list of `BaseAgent` instances. Then call `run()` or `stream()` on the returned workflow object.
+asyncio.run(main())
+```
 
-## Can I wrap an existing wizard as an agent?
+There is no `attune agent` CLI command and no MCP tool — use the
+Python API or the `/agent` skill.
 
-Yes. Call `wrap_wizard(wizard, name, model_tier)` to get back a `WizardAgent`. The `model_tier` parameter defaults to `'capable'`.
+## Are the calls async?
 
-## How do I add retry logic to an agent operation?
+Yes — `BaseAgent.invoke` / `stream` and `BaseWorkflow.run` / `stream`
+are coroutines (`await` them). The factory's `create_*` builders are
+synchronous.
 
-Decorate your function with `retry_on_failure(max_attempts, delay, backoff, exceptions)`. It retries with exponential backoff and re-raises the last exception if all attempts fail.
+## Which frameworks are supported?
 
-## How do I guard against unexpected errors in an agent operation?
+`native` (default, no extra deps), `langchain`, `langgraph`, `autogen`,
+`haystack`. The non-native ones are optional dependencies loaded
+lazily — `AgentFactory.list_frameworks(installed_only=True)` shows
+what's installed, and `recommend_framework(use_case)` suggests one.
+Switch with `switch_framework(...)`.
 
-Apply the `safe_agent_operation(operation_name)` decorator. It adds logging and error handling and raises `AgentOperationError` on failure.
+## How do I coordinate multiple agents?
 
-## How do I track which inputs are required before calling an agent?
+Create the agents, then `create_workflow(name, agents, mode=...)` and
+`await workflow.run(...)`. For ready-made teams use
+`create_code_review_pipeline()` or
+`create_research_pipeline(topic)`. Role-preset shortcuts
+(`create_researcher`, `create_writer`, `create_reviewer`,
+`create_coordinator`, `create_debugger`) return `BaseAgent`s.
 
-Use the `validate_input(required_fields)` decorator. It raises `ValueError` if the input is not a dict or if any field in `required_fields` is missing.
+## Is this the same as the release-prep agents?
 
-## How do I track API costs?
+No. This feature is the framework-agnostic **Agent Factory**
+(`src/attune/agent_factory/`). The release-readiness agent team
+(`src/attune/agents/release/`) is documented under **release-prep**,
+and its state/recovery store (`src/attune/agents/state/`) is that
+team's persistence layer.
 
-Decorate your function with `with_cost_tracking(operation_type)`. The `operation_type` parameter defaults to `'agent_call'`.
+## What's the public API surface?
 
-## How do I debug a failing agent call?
+`AgentFactory`, `Framework`, `BaseAdapter`, `BaseAgent`, `AgentConfig`,
+`WorkflowConfig`, `AgentRole`, and `AgentCapability` — all from
+`attune.agent_factory`. Framework-specific adapter/agent classes are
+internal.
 
-Run `pytest -k "agents" -v` first. If the tests pass but your code still fails, add a `logger.debug` statement at the suspected failure point and re-run with logging enabled. For symptom-based diagnosis, see the troubleshooting page for this feature.
-
-## Where does the agents source code live?
-
-- `src/attune/agents/**` — release agents, state persistence, and recovery
-- `src/attune/agent_factory/**` — universal agent factory and framework adapters
-
-**Tags:** `agents`, `ai`, `release`
+**Tags:** `agents`, `ai`

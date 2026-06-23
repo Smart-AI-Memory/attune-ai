@@ -3,107 +3,95 @@ type: task
 name: agents-task
 feature: agents
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
+generated_at: 2026-06-23T22:44:18.994422+00:00
+source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
 status: generated
-scaffold_hash: 7421c22965ec3807961fe28de1b2907cf8908cc785869e21935dddbcab0b5191
 ---
 
-# Work with agents
+# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
 
-Use the agent factory when you need to create and run agents backed by LangChain, LangGraph, AutoGen, or Haystack through a consistent interface for invocation, streaming, and tool registration.
+## Tasks
 
-## Prerequisites
+### Build and run a single agent
 
-- `attune-ai` installed with the extras for your target framework
-- Familiarity with `AgentConfig` and `WorkflowConfig` from `src/attune/agent_factory/`
+**Goal:** create one agent and get a result.
 
-## Create an agent
-
-1. Import the lazy-loading helper for your target framework:
-
-   ```python
-   from attune.agent_factory.adapters import (
-       get_langchain_adapter,   # LangChain
-       get_langgraph_adapter,   # LangGraph
-       get_autogen_adapter,     # AutoGen
-       get_haystack_adapter,    # Haystack
-   )
-   ```
-
-   Each helper defers the underlying framework import until you call it, so unused frameworks add no startup cost.
-
-2. Retrieve the adapter and confirm the framework is installed before proceeding:
-
-   ```python
-   adapter = get_langchain_adapter()
-   if not adapter.is_available():
-       raise RuntimeError(f"{adapter.framework_name} is not installed")
-   ```
-
-3. Build an `AgentConfig` with the role, capabilities, and model tier you need, then pass it to `create_agent()`:
-
-   ```python
-   agent = adapter.create_agent(config)
-   ```
-
-   The adapter returns a framework-specific instance — for example, `LangChainAgent`, `AutoGenAgent`, or `HaystackAgent` — all sharing the same `BaseAgent` interface.
-
-4. Run the agent by calling `invoke()` with a string or dict payload:
-
-   ```python
-   result = await agent.invoke("Summarize the release notes")
-   ```
-
-   To receive incremental output, call `stream()` instead — it returns an `AsyncGenerator[dict, None]`.
-
-## Wrap a wizard as an agent
-
-If you already have a wizard and want to expose it through the `BaseAgent` interface, use `wrap_wizard()` instead of building a full adapter:
+**Steps:**
 
 ```python
-from attune.agent_factory.adapters import wrap_wizard
+import asyncio
 
-agent = wrap_wizard(wizard, name="release-summarizer", model_tier="capable")
+from attune.agent_factory import AgentFactory, AgentRole
+
+
+async def main() -> None:
+    factory = AgentFactory()
+    reviewer = factory.create_agent(
+        name="reviewer",
+        role=AgentRole.REVIEWER,
+        model_tier="capable",
+    )
+    result = await reviewer.invoke({"code": "def f(): return 1/0"})
+    print(result)
+
+
+asyncio.run(main())
 ```
 
-`wrap_wizard()` returns a `WizardAgent`. The `name` parameter is optional; `model_tier` defaults to `"capable"`.
+**Verify:** `invoke` is a coroutine — `await` it; it returns a `dict`.
+`role` accepts an `AgentRole` (or its string). `model_tier` is
+`"cheap"` / `"capable"` / `"premium"`.
 
-## Apply decorators
+### Orchestrate a multi-agent workflow
 
-Add any of the following decorators to agent methods to improve reliability and observability:
+**Goal:** coordinate several agents and run them.
 
-| Decorator | What it does |
-|-----------|-------------|
-| `@safe_agent_operation(operation_name)` | Logs errors and re-raises them as `AgentOperationError` instead of leaking internal exceptions. |
-| `@retry_on_failure(max_attempts, delay, backoff, exceptions)` | Retries the call with exponential back-off; raises the last exception once all attempts are exhausted. |
-| `@log_performance(threshold_seconds)` | Logs a warning when the call exceeds the threshold (default `1.0` second). |
-| `@validate_input(required_fields)` | Raises `ValueError` if the input is not a dict or if any field in `required_fields` is absent. |
-| `@with_cost_tracking(operation_type)` | Records API cost for the call; `operation_type` defaults to `"agent_call"`. |
+**Steps:**
 
-## Locate key files
+```python
+import asyncio
 
-| Path | Contents |
-|------|----------|
-| `src/attune/agent_factory/adapters/__init__.py` | Lazy adapter helpers: `get_langchain_adapter`, `get_langgraph_adapter`, `get_autogen_adapter`, `get_haystack_adapter`, `wrap_wizard` |
-| `src/attune/agent_factory/decorators.py` | `safe_agent_operation`, `retry_on_failure`, `log_performance`, `validate_input`, `with_cost_tracking` |
-| `src/attune/agents/` | Built-in agents: `ReleaseAgent`, `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`, `TestCoverageAgent` |
+from attune.agent_factory import AgentFactory
 
-## Run the tests
 
-Run the agent test suite to confirm your changes work correctly:
+async def main() -> None:
+    factory = AgentFactory()
+    researcher = factory.create_researcher()
+    writer = factory.create_writer()
+    workflow = factory.create_workflow(
+        name="research-and-write",
+        agents=[researcher, writer],
+        mode="sequential",
+    )
+    result = await workflow.run("Summarize attune's memory tiers.")
+    print(result)
 
-```bash
-pytest -k "agents"
+
+asyncio.run(main())
 ```
 
-**Success criterion:** all tests pass with no new failures. If you added a new adapter method or decorated a new function, confirm that your new test cases appear in the collected output and pass.
+**Verify:** `run` is a coroutine — `await` it; it returns a `dict`.
+The role-preset shortcuts (`create_researcher`, `create_writer`, …)
+return `BaseAgent`s. For ready-made pipelines, use
+`create_code_review_pipeline()` or `create_research_pipeline(topic)`.
 
-## Unresolved references
+### Pick or switch the framework
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+**Goal:** choose a backend and see what's installed.
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 64 (code fence) | error | `from attune.agent_factory.adapters import …` — module not importable |
+**Steps:**
+
+```python
+from attune.agent_factory import AgentFactory, Framework
+
+print(AgentFactory.list_frameworks(installed_only=True))
+print(AgentFactory.recommend_framework("general"))   # -> Framework.NATIVE
+
+factory = AgentFactory(framework=Framework.LANGGRAPH)
+factory.switch_framework("native")
+```
+
+**Verify:** `list_frameworks` and `recommend_framework` are callable on
+the class. `Framework` values are `native`, `langchain`, `langgraph`,
+`autogen`, `haystack`. Non-native frameworks are optional deps —
+`list_frameworks(installed_only=True)` shows only those installed.
