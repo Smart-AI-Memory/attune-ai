@@ -10595,3 +10595,47 @@ files.
   registry mapping is. Pairs with the "spec-named work-scope drifts
   from code reality — grep the actual instances" lesson (the named
   scope is a hypothesis; the code is the contract).
+
+- **Renaming a CANONICAL workflow slug is a ~20-file / ~10-subsystem
+  cascade enforced by ops drift-guards — rename the LEAST-wired side of
+  a name collision and add a synonym slug; never rename the canonical
+  if you can avoid it**: 2026-06-23, resolving the `release-prep`
+  two-classes-one-name collision (PR #1018, sibling to the dual-impl
+  lesson above). The crew (`ReleasePrepTeamWorkflow`) owned
+  `name="release-prep"` as the CANONICAL slug, woven through ~20 src
+  files across ~10 subsystems: `workflows/{suggestions,config,
+  __init__,workflow_batch_runner,migration}`, `workflow_patterns/
+  output`, `verification/defaults`, `voice/spec_context`,
+  `meta_workflows/{builtin_templates,intent_detector,cli_commands}`,
+  `prompts/registry`, `routing/workflow_registry`,
+  `wizards/builtin/release_prep_wizard`, and ops
+  `{data.py,workflow_concern.py,static/js/runner.js}`. The SDK workflow
+  (`ReleasePreparationWorkflow`) was the ORPHAN duplicate — same `name`
+  attr but NOT even in `SLUG_TO_CLASS` (reachable only via the MCP
+  tool's direct class import). So I renamed the ORPHAN
+  (`name`→`release-notes` + one `SLUG_TO_CLASS` entry) and left the
+  crew canonical — collision resolved with a ~6-file footprint instead
+  of ~30. **Three ops DRIFT-GUARDS will fail CI the moment you add a
+  slug to `SLUG_TO_CLASS` without syncing their maps** (caught exactly
+  this on first test run): `tests/unit/ops/test_path_support_registry.py`
+  (every slug needs a `PathArgSpec` in `ops/data.py`),
+  `test_workflow_concern.py::...test_all_registered_workflows_have_explicit_concern`
+  (a concern string in `ops/workflow_concern.py`), and
+  `test_runner_js_parsing.py::test_workflow_names_array_is_generated_and_in_sync`
+  (the `runner.js` `WORKFLOW_NAMES` array — REGENERATE via
+  `scripts/sync_runner_workflow_names.py`, don't hand-edit). For a
+  clearer NAME without the rewire, register a SECOND `SLUG_TO_CLASS`
+  entry pointing at the same class as a first-class synonym
+  (`release-gate`→`ReleasePrepTeamWorkflow`) — cleaner than a
+  `migration.py` alias (no "you used a deprecated alias" migration hint;
+  it resolves directly). General rule: when two classes collide on a
+  name, `grep -rn '"<slug>"' src/` to SIZE each side's reference graph
+  first, rename the smaller one, and prefer synonym-slug over
+  canonical-rename. Also watch the worktree-hygiene trap that bit this
+  same turn: after committing PR-A's work, I kept editing PR-B's changes
+  on PR-A's branch — `git checkout -b <new> origin/main` carries the
+  uncommitted PR-B edits onto a clean base (PR-A's commit stays on its
+  pushed branch); verify with `git status --short` + `git log
+  --oneline -1` after the switch. And discard `.help/templates/<feat>/`
+  regen-hook artifacts left unstaged by editing that feature's source
+  (existing "focused-PR .help regen" lesson) before they ride along.
