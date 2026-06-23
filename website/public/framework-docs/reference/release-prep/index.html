@@ -25,7 +25,7 @@
     
     
       
-        <title>Release Prep CLI reference - Attune AI</title>
+        <title>Release Prep - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#release-prep-cli-reference" class="md-skip">
+        <a href="#release-prep" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Release Prep CLI reference
+              Release Prep
             
           </span>
         </div>
@@ -3896,6 +3896,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/memory/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Memory
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/models/" class="md-nav__link">
         
   
@@ -3960,6 +3988,34 @@
     
   
     Release Notes
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/release-prep/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Release Prep
   
 
     
@@ -4091,68 +4147,85 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#releaseprepteamworkflow-attuneagentsrelease" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        ReleasePrepTeamWorkflow — attune.agents.release
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#releaseprepteam-attuneagentsrelease" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        ReleasePrepTeam — attune.agents.release
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#default-quality-gates" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        Default quality gates
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#the-four-agents" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output
+        The four agents
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-run" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Exit codes
+        WorkflowResult fields read after a run
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Related commands
+        Entry points
       
     </span>
   </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -4176,81 +4249,183 @@
   
 
 
-<h1 id="release-prep-cli-reference">Release Prep CLI reference<a class="headerlink" href="#release-prep-cli-reference" title="Permanent link">&para;</a></h1>
-<p>Run a preflight readiness assessment before publishing a release.</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>release-prep</code> coordinates a team of specialized agents — <code>health-checker</code>, <code>security-scanner</code>, <code>changelog-generator</code>, and <code>release-assessor</code> — to assess whether a codebase is ready to ship. Each agent inspects its domain in parallel, and the results are synthesized into a <code>ReleaseReadinessReport</code> containing a go/no-go verdict, quality gate results, blockers, and warnings. The report is printed to stdout via <code>ReleaseReadinessReport.format_console_output()</code>.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>release-prep [OPTIONS] [PATH]
-</code></pre></div>
-<p><code>PATH</code> is the path to the codebase root. Defaults to <code>.</code> (the current directory).</p>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="release-prep">Release Prep<a class="headerlink" href="#release-prep" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Release-prep's public surface is the <code>ReleasePrepTeamWorkflow</code> (CLI /
+registry adapter) and the <code>ReleasePrepTeam</code> coordinator, both importable
+from <code>attune.agents.release</code>.</p>
+<h3 id="releaseprepteamworkflow-attuneagentsrelease"><code>ReleasePrepTeamWorkflow</code> — <code>attune.agents.release</code><a class="headerlink" href="#releaseprepteamworkflow-attuneagentsrelease" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show this help message and exit</td>
+<td><code>ReleasePrepTeamWorkflow(quality_gates=None, **kwargs)</code></td>
+<td>Construct the registry adapter. <code>quality_gates</code> overrides thresholds.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.execute(path=".", context=None, **kwargs)</code></td>
+<td><strong>Async.</strong> Run the gate. Maps <code>target</code> → <code>path</code> for CLI/VSCode. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.name</code></td>
+<td>The canonical slug, <code>"release-prep"</code> (synonym <code>release-gate</code>).</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeamWorkflow.stages</code></td>
+<td><code>["triage", "parallel-validation", "synthesis", "decision"]</code>.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p>The command prints the formatted <code>ReleaseReadinessReport</code> to stdout. The report includes a verdict, per-gate results, blockers, and warnings:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Release Readiness Assessment
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Verdict: NO-GO
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>Confidence: medium
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>Timestamp: 2024-11-15T14:32:07.841200
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>Quality Gates
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>  health        FAIL   actual=0.72  threshold=0.80  Tests failing in CI
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>  security      PASS   actual=0.95  threshold=0.80
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  changelog     PASS   actual=1.00  threshold=1.00
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  code-quality  PASS   actual=0.88  threshold=0.75
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>Blockers (1)
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>  health — Tests failing in CI: 3 test failures in tests/test_core.py
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>Warnings (1)
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  security — 2 advisory findings (non-critical)
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>Summary
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  Release is NOT approved. Resolve 1 blocker before publishing.
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>Duration: 18.42s  |  Cost: $0.0031
-</code></pre></div>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<h3 id="releaseprepteam-attuneagentsrelease"><code>ReleasePrepTeam</code> — <code>attune.agents.release</code><a class="headerlink" href="#releaseprepteam-attuneagentsrelease" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReleasePrepTeam(quality_gates=None, redis_url=None)</code></td>
+<td>Construct the coordinator. Optional Redis URL for coordination (graceful no-op when unavailable).</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam.assess_readiness(codebase_path=".")</code></td>
+<td><strong>Async.</strong> Run the four agents in parallel and return a <code>ReleaseReadinessReport</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePrepTeam.get_total_cost()</code></td>
+<td>Total LLM cost across agents ($0 in the default rule-based mode).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="default-quality-gates">Default quality gates<a class="headerlink" href="#default-quality-gates" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Gate</th>
+<th>Key</th>
+<th>Default</th>
+<th>Critical</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Security</td>
+<td><code>max_critical_issues</code></td>
+<td><code>0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Test Coverage</td>
+<td><code>min_coverage</code></td>
+<td><code>80.0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Code Quality</td>
+<td><code>min_quality_score</code></td>
+<td><code>7.0</code></td>
+<td>Yes</td>
+</tr>
+<tr>
+<td>Documentation</td>
+<td><code>min_doc_coverage</code></td>
+<td><code>80.0</code></td>
+<td>No</td>
+</tr>
+</tbody>
+</table>
+<h3 id="the-four-agents">The four agents<a class="headerlink" href="#the-four-agents" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>Tool</th>
+<th>Score basis</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>SecurityAuditorAgent</code></td>
+<td>bandit (JSON, severity ≥ medium)</td>
+<td>Severity-weighted; <code>critical_issues</code> = CRITICAL + HIGH.</td>
+</tr>
+<tr>
+<td><code>TestCoverageAgent</code></td>
+<td>pytest collect + <code>pytest --cov</code></td>
+<td>TOTAL coverage %; heuristic estimate as fallback.</td>
+</tr>
+<tr>
+<td><code>CodeQualityAgent</code></td>
+<td><code>ruff check --statistics</code></td>
+<td>0–10 by violation count.</td>
+</tr>
+<tr>
+<td><code>DocumentationAgent</code></td>
+<td>AST docstring walk</td>
+<td>Public-function docstring coverage %.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-run"><code>WorkflowResult</code> fields read after a run<a class="headerlink" href="#workflowresult-fields-read-after-a-run" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>Assessment completed. Check the <code>Verdict</code> field in the report — <code>NO-GO</code> is still exit code <code>0</code>.</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the assessment <strong>ran</strong> (always <code>True</code> on a completed run — not the verdict).</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Command failed before producing a report (for example, invalid path or agent initialization error).</td>
+<td><code>final_output</code></td>
+<td><code>dict</code></td>
+<td>The serialized <code>WorkflowReport</code> (verdict callout, gate table, per-agent breakdown, blockers, warnings, next steps).</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str</code></td>
+<td>Executive summary — approval status and the failed gates.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td><code>approved</code> (bool) and <code>confidence</code> (<code>high</code> / <code>medium</code> / <code>low</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>attune help-docs ref-skill-release-prep</code> — full skill reference, including quality gate configuration</li>
-<li><code>/release-prep check</code> — invoke the skill directly from Claude Code</li>
-<li><code>attune help-docs skill-release-prep</code> — quickstart for running release prep interactively</li>
-</ul>
-<!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=cli-reference generated_at=2026-06-02 -->
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run release-gate [--path &lt;p&gt;] [--json]</code> (canonical slug <code>release-prep</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await ReleasePrepTeamWorkflow().execute(path=&lt;p&gt;)</code> or <code>await ReleasePrepTeam().assess_readiness(codebase_path=&lt;p&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
+<p>There is <strong>no MCP tool</strong> for the gate — it is CLI / Python only.</p>
+<!-- attune-generated: source_hash=63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2 feature=release-prep kind=reference generated_at=2026-06-23 -->
 
 
 
