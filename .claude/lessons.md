@@ -9355,6 +9355,43 @@ files.
   and the lone pre-existing test used relative imports, so `@/` had never
   been exercised under vitest until an API-route test imported `@/lib/db`.
 
+- **`pytest.ini` wins over `pyproject.toml`, and the default `addopts`
+  already deselects `integration`+`network` — so "env-coupled test
+  failures" are usually an artifact of a CLEARED-addopts run, and a
+  fix in `pyproject.toml`'s `[tool.pytest.ini_options]` is inert**:
+  hit 2026-06-22 making three env-coupled `tests/unit` tests pass
+  regardless of a developer's shell key (#1007). This repo ships a
+  root `pytest.ini`; pytest's config precedence means it is the SOLE
+  config file and `pyproject.toml`'s `[tool.pytest.ini_options]` is
+  IGNORED ENTIRELY — pytest even prints `WARNING: ignoring pytest
+  config in pyproject.toml!`. So editing `addopts` in pyproject to
+  deselect/gate tests does nothing; the change must go in `pytest.ini`.
+  Second half: `pytest.ini`'s default `addopts` already carries
+  `-m "not integration and not network"`, so under the REAL default
+  config the `@pytest.mark.network` / `@pytest.mark.integration` tests
+  collect as `0 items` (deselected, never run). A reported set of
+  "env-coupled failures" that includes network/integration tests is
+  therefore almost always an artifact of a run that CLEARED addopts
+  (`-o addopts=""` / `-m ""`, the CI-faithful reproduction style) —
+  NOT the default. Diagnostic before "fixing" such a report: run the
+  named test under the genuine default (`python -m pytest <nodeid>`,
+  NO `-o`/`-m` override; note `-p no:xdist` then errors on the
+  addopts `-n auto` — drop it and let xdist run) and read the
+  collected-items count; `0 items` = already gated, no change needed.
+  In #1007 only the UNMARKED missing-key test was a real default-config
+  failure (env `ANTHROPIC_API_KEY` leaking into
+  `LangChainAdapter`'s `os.getenv` fallback → `DID NOT RAISE`), fixed
+  hermetically with `monkeypatch.delenv("ANTHROPIC_API_KEY",
+  raising=False)`; the other two were already deselected. CI-safety
+  rider when you DO add a config `-m`: a command-line `-m` OVERRIDES an
+  `addopts` `-m` (verified: `pytest -m EXPR` beats addopts' expr), and
+  `-o addopts=""` / `--override-ini="addopts="` clear it — so confirm
+  every CI pytest invocation either passes its own `-m` or clears
+  addopts before assuming a config default-deselect leaves CI
+  unchanged. Pairs with the "keyless-CI-faithful local runs need
+  EMPTY not unset" and "`-o addopts=""` clears only the addopts key"
+  lessons — same config-precedence/override family.
+
 - **`mergeStateStatus=CLEAN` + all per-PR checks green ≠ safe to
   merge when the validating job is KEYLESS and the real validation
   is a separate scheduled/dispatched job.** Reviewing PR #917
