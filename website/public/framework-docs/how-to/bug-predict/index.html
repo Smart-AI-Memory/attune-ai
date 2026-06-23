@@ -25,7 +25,7 @@
     
     
       
-        <title>How to Use Bug Prediction - Attune AI</title>
+        <title>Bug Predict - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#how-to-use-bug-prediction" class="md-skip">
+        <a href="#bug-predict" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              How to Use Bug Prediction
+              Bug Predict
             
           </span>
         </div>
@@ -3756,6 +3756,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/bug-predict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bug Predict
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/fix-test/" class="md-nav__link">
         
   
@@ -3792,6 +3820,34 @@
     
   
     Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/security-audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Audit
   
 
     
@@ -3867,10 +3923,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#quick-start" class="md-nav__link">
+  <a href="#quickstart" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Quick start
+        Quickstart
       
     </span>
   </a>
@@ -3878,44 +3934,22 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#core-api" class="md-nav__link">
+  <a href="#tasks" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Core API
+        Tasks
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#customizing-the-orchestrator-prompt" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Customizing the orchestrator prompt
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#integration-patterns" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Integration patterns
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Integration patterns">
+    <nav class="md-nav" aria-label="Tasks">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#formatting-and-persisting-a-report" class="md-nav__link">
+  <a href="#scan-a-path-from-the-cli" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Formatting and persisting a report
+        Scan a path from the CLI
       
     </span>
   </a>
@@ -3923,10 +3957,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#running-from-the-cli" class="md-nav__link">
+  <a href="#call-the-prediction-from-python" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Running from the CLI
+        Call the prediction from Python
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#steer-the-scan-with-a-prompt-suffix" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Steer the scan with a prompt suffix
       
     </span>
   </a>
@@ -3939,24 +3984,63 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        See also
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bugpredictionworkflow-attuneworkflowsbug_predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BugPredictionWorkflow — attune.workflows.bug_predict
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#unresolved-references" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-agent-turn-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Unresolved references
+        Depth → agent-turn budget
       
     </span>
   </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-scan" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        WorkflowResult fields read after a scan
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3980,32 +4064,114 @@
   
 
 
-<h1 id="how-to-use-bug-prediction">How to Use Bug Prediction<a class="headerlink" href="#how-to-use-bug-prediction" title="Permanent link">&para;</a></h1>
-<p>Use this guide when you need to scan a codebase for risky code patterns programmatically — calling the workflow directly from Python or the CLI rather than through the <code>/bug-predict</code> skill in conversation.</p>
-<h2 id="quick-start">Quick start<a class="headerlink" href="#quick-start" title="Permanent link">&para;</a></h2>
-<p>Run a scan against a local directory and print a formatted report:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.bug_predict_report</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_bug_predict_report</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">)</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/&quot;</span><span class="p">}</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">format_bug_predict_report</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">input_data</span><span class="p">))</span>
+<h1 id="bug-predict">Bug Predict<a class="headerlink" href="#bug-predict" title="Permanent link">&para;</a></h1>
+<h2 id="quickstart">Quickstart<a class="headerlink" href="#quickstart" title="Permanent link">&para;</a></h2>
+<p>Scan a directory and print the synthesized report.
+<code>BugPredictionWorkflow.execute</code> is an async coroutine, so drive
+it with <code>asyncio.run</code> (or <code>await</code> it inside an existing event
+loop):</p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>
+<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
+<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>
+<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>
+<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
+<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="s2">&quot;standard&quot;</span><span class="p">)</span>
+<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>
+<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">)</span>          <span class="c1"># True on a completed scan</span>
+<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">summary</span><span class="p">)</span>          <span class="c1"># short executive summary</span>
+<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>     <span class="c1"># the full synthesized report</span>
+<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>
+<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>
+<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
 </code></pre></div>
-<p>You'll see output structured like this:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Bug Prediction Report
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Risk Score: 73/100 | Files: 34 | Findings: 8
+<p><code>depth</code> defaults to <code>"standard"</code>, so <code>execute(path="src/")</code> is
+equivalent. Use <code>"quick"</code> for a fast pass or <code>"deep"</code> for a
+longer, costlier scan.</p>
+<h2 id="tasks">Tasks<a class="headerlink" href="#tasks" title="Permanent link">&para;</a></h2>
+<h3 id="scan-a-path-from-the-cli">Scan a path from the CLI<a class="headerlink" href="#scan-a-path-from-the-cli" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> run a one-off prediction over a directory without
+writing any Python.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="c1"># Default depth (standard) over a directory:</span>
+<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--path<span class="w"> </span>src/
 <a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>HIGH (2 findings)
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>MEDIUM (3 findings)
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>  src/api/webhook.py:67      broad_exception bare except: masks errors
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  ...
+<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a><span class="c1"># Deeper scan, JSON output for a CI step:</span>
+<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--path<span class="w"> </span>src/<span class="w"> </span>--depth<span class="w"> </span>deep<span class="w"> </span>--json
+<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
+<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a><span class="c1"># Cost-saving pass (unpinned subagents run on Haiku):</span>
+<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>attune<span class="w"> </span>workflow<span class="w"> </span>run<span class="w"> </span>bug-predict<span class="w"> </span>--path<span class="w"> </span>src/<span class="w"> </span>--cheap
 </code></pre></div>
-<h2 id="core-api">Core API<a class="headerlink" href="#core-api" title="Permanent link">&para;</a></h2>
+<p><strong>Verify:</strong> <code>--path</code> / <code>-p</code> defaults to the current directory;
+<code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code>
+emits machine-readable output; <code>--cheap</code> forces every subagent
+without an explicit model onto Haiku for that run. Use
+<code>attune workflow info bug-predict</code> to confirm the workflow is
+registered, and <code>attune workflow list</code> to see it alongside the
+other workflows.</p>
+<h3 id="call-the-prediction-from-python">Call the prediction from Python<a class="headerlink" href="#call-the-prediction-from-python" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> drive bug-predict from a hook or custom tool and act on
+the result.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>
+<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
+<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a>
+<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a>
+<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
+<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/api/&quot;</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="s2">&quot;quick&quot;</span><span class="p">)</span>
+<a id="__codelineno-2-9" name="__codelineno-2-9" href="#__codelineno-2-9"></a>
+<a id="__codelineno-2-10" name="__codelineno-2-10" href="#__codelineno-2-10"></a>    <span class="k">if</span> <span class="ow">not</span> <span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">:</span>
+<a id="__codelineno-2-11" name="__codelineno-2-11" href="#__codelineno-2-11"></a>        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;scan failed:&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">error</span><span class="p">)</span>
+<a id="__codelineno-2-12" name="__codelineno-2-12" href="#__codelineno-2-12"></a>        <span class="k">return</span>
+<a id="__codelineno-2-13" name="__codelineno-2-13" href="#__codelineno-2-13"></a>
+<a id="__codelineno-2-14" name="__codelineno-2-14" href="#__codelineno-2-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-2-15" name="__codelineno-2-15" href="#__codelineno-2-15"></a>    <span class="k">for</span> <span class="n">action</span> <span class="ow">in</span> <span class="n">result</span><span class="o">.</span><span class="n">suggestions</span><span class="p">:</span>
+<a id="__codelineno-2-16" name="__codelineno-2-16" href="#__codelineno-2-16"></a>        <span class="nb">print</span><span class="p">(</span><span class="n">action</span><span class="p">)</span>
+<a id="__codelineno-2-17" name="__codelineno-2-17" href="#__codelineno-2-17"></a>
+<a id="__codelineno-2-18" name="__codelineno-2-18" href="#__codelineno-2-18"></a>
+<a id="__codelineno-2-19" name="__codelineno-2-19" href="#__codelineno-2-19"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed
+scan returns <code>success=True</code> with the report in <code>final_output</code>;
+a failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, and
+<code>max_turns</code> actually used.</p>
+<h3 id="steer-the-scan-with-a-prompt-suffix">Steer the scan with a prompt suffix<a class="headerlink" href="#steer-the-scan-with-a-prompt-suffix" title="Permanent link">&para;</a></h3>
+<p><strong>Goal:</strong> narrow or focus the analysis without replacing the
+built-in orchestrator behavior.</p>
+<p><strong>Steps:</strong></p>
+<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
+<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>
+<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.workflows</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
+<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
+<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>
+<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="k">async</span> <span class="k">def</span><span class="w"> </span><span class="nf">main</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>    <span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">(</span>
+<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>        <span class="n">system_prompt_suffix</span><span class="o">=</span><span class="p">(</span>
+<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>            <span class="s2">&quot;Focus on authentication code. &quot;</span>
+<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a>            <span class="s2">&quot;Skip LOW severity findings.&quot;</span>
+<a id="__codelineno-3-11" name="__codelineno-3-11" href="#__codelineno-3-11"></a>        <span class="p">),</span>
+<a id="__codelineno-3-12" name="__codelineno-3-12" href="#__codelineno-3-12"></a>    <span class="p">)</span>
+<a id="__codelineno-3-13" name="__codelineno-3-13" href="#__codelineno-3-13"></a>    <span class="n">result</span> <span class="o">=</span> <span class="k">await</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/&quot;</span><span class="p">)</span>
+<a id="__codelineno-3-14" name="__codelineno-3-14" href="#__codelineno-3-14"></a>    <span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">final_output</span><span class="p">)</span>
+<a id="__codelineno-3-15" name="__codelineno-3-15" href="#__codelineno-3-15"></a>
+<a id="__codelineno-3-16" name="__codelineno-3-16" href="#__codelineno-3-16"></a>
+<a id="__codelineno-3-17" name="__codelineno-3-17" href="#__codelineno-3-17"></a><span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">main</span><span class="p">())</span>
+</code></pre></div>
+<p><strong>Verify:</strong> <code>system_prompt_suffix</code> is a keyword-only constructor
+argument appended to the orchestrator's system prompt at call
+time. The three subagents still run their normal analysis; the
+suffix only steers the orchestrator. The empty-string default
+leaves behavior unchanged (this is the hook discovery-sweep's
+<code>BugPredictSource</code> uses to augment the prompt per instance).</p>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Bug-predict's public surface is the <code>BugPredictionWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3 id="bugpredictionworkflow-attuneworkflowsbug_predict"><code>BugPredictionWorkflow</code> — <code>attune.workflows.bug_predict</code><a class="headerlink" href="#bugpredictionworkflow-attuneworkflowsbug_predict" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
@@ -4015,96 +4181,136 @@
 </thead>
 <tbody>
 <tr>
-<td><code>BugPredictionWorkflow</code></td>
-<td>Orchestrates three subagents (<code>pattern-scanner</code>, <code>risk-correlator</code>, <code>prevention-advisor</code>) to produce a unified prediction report</td>
-</tr>
-<tr>
-<td><code>BugPredictionWorkflow.__init__(*, system_prompt_suffix, **kwargs)</code></td>
-<td>Constructs the workflow; pass <code>system_prompt_suffix</code> to append custom instructions to the orchestrator prompt</td>
+<td><code>BugPredictionWorkflow(*, system_prompt_suffix="", **kwargs)</code></td>
+<td>Construct the workflow. <code>system_prompt_suffix</code> (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to <code>BaseWorkflow</code>.</td>
 </tr>
 <tr>
 <td><code>BugPredictionWorkflow.execute(**kwargs)</code></td>
-<td>Runs the scan; returns a <code>WorkflowResult</code></td>
+<td><strong>Async.</strong> Run the prediction. Honors <code>path</code> (str, required) and <code>depth</code> (<code>"quick"</code> / <code>"standard"</code> / <code>"deep"</code>, default <code>"standard"</code>); other kwargs are ignored. Returns a <code>WorkflowResult</code>.</td>
 </tr>
 <tr>
-<td><code>format_bug_predict_report(result, input_data)</code></td>
-<td>Converts a raw <code>WorkflowResult</code> dict into a human-readable markdown report</td>
+<td><code>BugPredictionWorkflow.name</code></td>
+<td>The registered slug, <code>"bug-predict"</code>.</td>
 </tr>
 <tr>
-<td><code>main()</code></td>
-<td>CLI entry point; invoke directly for one-off scans from the shell</td>
+<td><code>BugPredictionWorkflow.stages</code></td>
+<td><code>["agent-predict"]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="customizing-the-orchestrator-prompt">Customizing the orchestrator prompt<a class="headerlink" href="#customizing-the-orchestrator-prompt" title="Permanent link">&para;</a></h2>
-<p>Pass <code>system_prompt_suffix</code> to steer the orchestrator without replacing its default behavior:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">(</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a>    <span class="n">system_prompt_suffix</span><span class="o">=</span><span class="s2">&quot;Focus only on authentication-related files. Skip LOW severity findings.&quot;</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a><span class="p">)</span>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="n">path</span><span class="o">=</span><span class="s2">&quot;src/auth/&quot;</span><span class="p">)</span>
-</code></pre></div>
-<p>The suffix is appended to the built-in orchestrator prompt, so the three subagents still run their normal analysis.</p>
-<h2 id="integration-patterns">Integration patterns<a class="headerlink" href="#integration-patterns" title="Permanent link">&para;</a></h2>
-<h3 id="formatting-and-persisting-a-report">Formatting and persisting a report<a class="headerlink" href="#formatting-and-persisting-a-report" title="Permanent link">&para;</a></h3>
-<p><code>format_bug_predict_report</code> takes both the <code>WorkflowResult</code> and the original <code>input_data</code> dict, so it can echo the scan scope back into the report header:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.bug_predict</span><span class="w"> </span><span class="kn">import</span> <span class="n">BugPredictionWorkflow</span>
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">workflows.bug_predict_report</span><span class="w"> </span><span class="kn">import</span> <span class="n">format_bug_predict_report</span>
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a><span class="n">input_data</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;path&quot;</span><span class="p">:</span> <span class="s2">&quot;src/api/&quot;</span><span class="p">}</span>
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a><span class="n">workflow</span> <span class="o">=</span> <span class="n">BugPredictionWorkflow</span><span class="p">()</span>
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a><span class="n">result</span> <span class="o">=</span> <span class="n">workflow</span><span class="o">.</span><span class="n">execute</span><span class="p">(</span><span class="o">**</span><span class="n">input_data</span><span class="p">)</span>
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a><span class="n">report</span> <span class="o">=</span> <span class="n">format_bug_predict_report</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="n">input_data</span><span class="p">)</span>
-<a id="__codelineno-3-10" name="__codelineno-3-10" href="#__codelineno-3-10"></a><span class="n">Path</span><span class="p">(</span><span class="s2">&quot;bug_report.md&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">write_text</span><span class="p">(</span><span class="n">report</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="running-from-the-cli">Running from the CLI<a class="headerlink" href="#running-from-the-cli" title="Permanent link">&para;</a></h3>
-<p><code>main()</code> is the CLI entry point wired to the same workflow:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a>python<span class="w"> </span>-m<span class="w"> </span>workflows.bug_predict_report
-</code></pre></div>
-<p>Use this in CI pipelines where you want a non-zero exit on HIGH-severity findings without writing any Python glue code.</p>
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>quickstarts/skill-bug-predict.md</code> — run the scanner interactively via <code>/bug-predict</code> in Claude Code</li>
-<li><code>concepts/tool-bug-predict.md</code> — pattern reference (dangerous_eval, broad_exception, incomplete_code) and false-positive filtering rules</li>
-</ul>
-<!-- attune-generated: source_hash=c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde feature=bug-predict kind=how-to generated_at=2026-06-02 -->
-
-<h2 id="unresolved-references">Unresolved references<a class="headerlink" href="#unresolved-references" title="Permanent link">&para;</a></h2>
-<blockquote>
-<p>Auto-generated by attune-author fact-check. Review and either
-fix the source code, fix this doc, or add an override.</p>
-</blockquote>
+<h3 id="depth-agent-turn-budget">Depth → agent-turn budget<a class="headerlink" href="#depth-agent-turn-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Location</th>
-<th>Severity</th>
-<th>Issue</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.bug_predict import …</code> — module not importable</td>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast first pass on a small path.</td>
 </tr>
 <tr>
-<td>Line 16 (code fence)</td>
-<td>error</td>
-<td><code>from workflows.bug_predict_report import …</code> — module not importable</td>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>A thorough scan of a large or high-risk area.</td>
 </tr>
 </tbody>
 </table>
+<h3 id="workflowresult-fields-read-after-a-scan"><code>WorkflowResult</code> fields read after a scan<a class="headerlink" href="#workflowresult-fields-read-after-a-scan" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the scan completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The synthesized report — a serialized <code>WorkflowReport</code> when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short executive summary of the run.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason and category (<code>"config"</code> / <code>"runtime"</code> / <code>"provider"</code> / <code>"timeout"</code> / <code>"validation"</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/bug-predict</code> in a Claude Code conversation.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run bug-predict --path &lt;p&gt; [--depth quick\|standard\|deep] [--json] [--cheap]</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>bug_predict</code> — one required <code>path</code> argument; runs at standard depth (the handler does not pass <code>depth</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await BugPredictionWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=how-to generated_at=2026-06-23 -->
 
 
 
 
 
 
-
-  
-  
 
 
 

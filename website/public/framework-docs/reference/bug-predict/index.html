@@ -25,7 +25,7 @@
     
     
       
-        <title>Bug Predict CLI Reference - Attune AI</title>
+        <title>Bug Predict - Attune AI</title>
       
     
     
@@ -81,7 +81,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#bug-predict-cli-reference" class="md-skip">
+        <a href="#bug-predict" class="md-skip">
           Skip to content
         </a>
       
@@ -114,7 +114,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              Bug Predict CLI Reference
+              Bug Predict
             
           </span>
         </div>
@@ -3756,6 +3756,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/bug-predict/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Bug Predict
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/fix-test/" class="md-nav__link">
         
   
@@ -3792,6 +3820,34 @@
     
   
     Models
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/security-audit/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Security Audit
   
 
     
@@ -3867,68 +3923,63 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#description" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Description
+        Reference
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Reference">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#bugpredictionworkflow-attuneworkflowsbug_predict" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        BugPredictionWorkflow — attune.workflows.bug_predict
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#usage" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#depth-agent-turn-budget" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Usage
+        Depth → agent-turn budget
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#options" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#workflowresult-fields-read-after-a-scan" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Options
+        WorkflowResult fields read after a scan
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#output" class="md-nav__link">
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Output
+        Entry points
       
     </span>
   </a>
   
 </li>
-      
-        <li class="md-nav__item">
-  <a href="#exit-codes" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Exit codes
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#related-commands" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Related commands
-      
-    </span>
-  </a>
+        
+      </ul>
+    </nav>
   
 </li>
       
@@ -3952,86 +4003,145 @@
   
 
 
-<h1 id="bug-predict-cli-reference">Bug Predict CLI Reference<a class="headerlink" href="#bug-predict-cli-reference" title="Permanent link">&para;</a></h1>
-<p>Predict likely bug locations based on code patterns and complexity.</p>
-<h2 id="description">Description<a class="headerlink" href="#description" title="Permanent link">&para;</a></h2>
-<p><code>bug-predict</code> scans a codebase path using three specialized subagents — <code>pattern-scanner</code>, <code>risk-correlator</code>, and <code>prevention-advisor</code> — and synthesizes their findings into a unified risk report. It identifies high-risk patterns such as dangerous <code>eval()</code> usage, broad exception handling, and incomplete code markers. The report includes an overall risk score, per-finding file paths and line numbers, and prioritized prevention recommendations.</p>
-<h2 id="usage">Usage<a class="headerlink" href="#usage" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a>bug-predict [PATH]
-</code></pre></div>
-<p><code>PATH</code> is the file or directory to scan. Defaults to <code>src/</code> when omitted.</p>
-<h2 id="options">Options<a class="headerlink" href="#options" title="Permanent link">&para;</a></h2>
+<h1 id="bug-predict">Bug Predict<a class="headerlink" href="#bug-predict" title="Permanent link">&para;</a></h1>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>Bug-predict's public surface is the <code>BugPredictionWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3 id="bugpredictionworkflow-attuneworkflowsbug_predict"><code>BugPredictionWorkflow</code> — <code>attune.workflows.bug_predict</code><a class="headerlink" href="#bugpredictionworkflow-attuneworkflowsbug_predict" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Option</th>
-<th>Default</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>--help</code></td>
-<td>—</td>
-<td>Show help and exit</td>
+<td><code>BugPredictionWorkflow(*, system_prompt_suffix="", **kwargs)</code></td>
+<td>Construct the workflow. <code>system_prompt_suffix</code> (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to <code>BaseWorkflow</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the prediction. Honors <code>path</code> (str, required) and <code>depth</code> (<code>"quick"</code> / <code>"standard"</code> / <code>"deep"</code>, default <code>"standard"</code>); other kwargs are ignored. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.name</code></td>
+<td>The registered slug, <code>"bug-predict"</code>.</td>
+</tr>
+<tr>
+<td><code>BugPredictionWorkflow.stages</code></td>
+<td><code>["agent-predict"]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h2 id="output">Output<a class="headerlink" href="#output" title="Permanent link">&para;</a></h2>
-<p>On success, <code>bug-predict</code> prints a structured markdown report to stdout:</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a>Bug Prediction Report
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>Risk Score: 73/100 | Files: 34 | Findings: 8
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>## Summary
-<a id="__codelineno-1-5" name="__codelineno-1-5" href="#__codelineno-1-5"></a>&lt;2–3 sentence executive summary of predicted bug hotspots&gt;
-<a id="__codelineno-1-6" name="__codelineno-1-6" href="#__codelineno-1-6"></a>
-<a id="__codelineno-1-7" name="__codelineno-1-7" href="#__codelineno-1-7"></a>## Bugs
-<a id="__codelineno-1-8" name="__codelineno-1-8" href="#__codelineno-1-8"></a>
-<a id="__codelineno-1-9" name="__codelineno-1-9" href="#__codelineno-1-9"></a>HIGH (2 findings)
-<a id="__codelineno-1-10" name="__codelineno-1-10" href="#__codelineno-1-10"></a>  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-<a id="__codelineno-1-11" name="__codelineno-1-11" href="#__codelineno-1-11"></a>  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
-<a id="__codelineno-1-12" name="__codelineno-1-12" href="#__codelineno-1-12"></a>
-<a id="__codelineno-1-13" name="__codelineno-1-13" href="#__codelineno-1-13"></a>MEDIUM (3 findings)
-<a id="__codelineno-1-14" name="__codelineno-1-14" href="#__codelineno-1-14"></a>  src/api/webhook.py:67      broad_exception  bare except: masks errors
-<a id="__codelineno-1-15" name="__codelineno-1-15" href="#__codelineno-1-15"></a>  src/config.py:203          broad_exception  except Exception without logging
-<a id="__codelineno-1-16" name="__codelineno-1-16" href="#__codelineno-1-16"></a>  src/memory/store.py:88     broad_exception  swallowed error in write path
-<a id="__codelineno-1-17" name="__codelineno-1-17" href="#__codelineno-1-17"></a>
-<a id="__codelineno-1-18" name="__codelineno-1-18" href="#__codelineno-1-18"></a>LOW (3 findings)
-<a id="__codelineno-1-19" name="__codelineno-1-19" href="#__codelineno-1-19"></a>  src/auth/session.py:45     incomplete_code  TODO: add token rotation
-<a id="__codelineno-1-20" name="__codelineno-1-20" href="#__codelineno-1-20"></a>  src/api/routes.py:112      incomplete_code  FIXME: rate limiting
-<a id="__codelineno-1-21" name="__codelineno-1-21" href="#__codelineno-1-21"></a>  src/cli_router.py:78       incomplete_code  HACK: temporary workaround
-<a id="__codelineno-1-22" name="__codelineno-1-22" href="#__codelineno-1-22"></a>
-<a id="__codelineno-1-23" name="__codelineno-1-23" href="#__codelineno-1-23"></a>## Suggestions
-<a id="__codelineno-1-24" name="__codelineno-1-24" href="#__codelineno-1-24"></a>1. &lt;highest-priority refactoring recommendation&gt;
-<a id="__codelineno-1-25" name="__codelineno-1-25" href="#__codelineno-1-25"></a>2. &lt;testing recommendation for flagged files&gt;
-</code></pre></div>
-<p>Each finding includes the file path, line number, pattern type (<code>dangerous_eval</code>, <code>broad_exception</code>, or <code>incomplete_code</code>), and a plain-English description.</p>
-<h2 id="exit-codes">Exit codes<a class="headerlink" href="#exit-codes" title="Permanent link">&para;</a></h2>
+<h3 id="depth-agent-turn-budget">Depth → agent-turn budget<a class="headerlink" href="#depth-agent-turn-budget" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Code</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast first pass on a small path.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>A thorough scan of a large or high-risk area.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="workflowresult-fields-read-after-a-scan"><code>WorkflowResult</code> fields read after a scan<a class="headerlink" href="#workflowresult-fields-read-after-a-scan" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
 <th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>0</code></td>
-<td>Scan completed and report written successfully</td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the scan completed.</td>
 </tr>
 <tr>
-<td><code>1</code></td>
-<td>Scan failed (invalid path, workflow error, or subagent failure)</td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The synthesized report — a serialized <code>WorkflowReport</code> when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str \| None</code></td>
+<td>Short executive summary of the run.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run.</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str \| None</code></td>
+<td>Failure reason and category (<code>"config"</code> / <code>"runtime"</code> / <code>"provider"</code> / <code>"timeout"</code> / <code>"validation"</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2 id="related-commands">Related commands<a class="headerlink" href="#related-commands" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>attune help-docs ref-skill-bug-predict</code> — full skill reference</li>
-<li><code>/bug-predict</code> — invoke the skill directly inside Claude Code</li>
-<li><code>security-audit</code> — vulnerability-focused scan of the same codebase</li>
-</ul>
-<!-- attune-generated: source_hash=c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde feature=bug-predict kind=cli-reference generated_at=2026-05-16 -->
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/bug-predict</code> in a Claude Code conversation.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run bug-predict --path &lt;p&gt; [--depth quick\|standard\|deep] [--json] [--cheap]</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>bug_predict</code> — one required <code>path</code> argument; runs at standard depth (the handler does not pass <code>depth</code>).</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await BugPredictionWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
+<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=reference generated_at=2026-06-23 -->
 
 
 
