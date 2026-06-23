@@ -247,8 +247,13 @@ class TestRunTestGeneration:
         assert out["cost"] == 0.04
 
     @pytest.mark.asyncio
-    async def test_run_test_generation_passes_module_path(self):
-        """execute() is called with module_path kwarg."""
+    async def test_run_test_generation_passes_path(self):
+        """execute() is called with the canonical `path` kwarg.
+
+        The TOOL input key stays `module`; only the execute kwarg is
+        fixed from the legacy `module_path` (which execute ignored, so
+        every call failed with "path argument is required").
+        """
         server = _make_server()
         result = _make_result()
         mod = _make_workflow_module("attune.workflows.test_gen", "TestGenerationWorkflow", result)
@@ -256,9 +261,7 @@ class TestRunTestGeneration:
         with patch.dict(sys.modules, {"attune.workflows.test_gen": mod}):
             await server._run_test_generation({"module": "src/foo.py"})
 
-        mod.TestGenerationWorkflow.return_value.execute.assert_awaited_once_with(
-            module_path="src/foo.py"
-        )
+        mod.TestGenerationWorkflow.return_value.execute.assert_awaited_once_with(path="src/foo.py")
 
     @pytest.mark.asyncio
     async def test_run_test_generation_zero_tests_default(self):
