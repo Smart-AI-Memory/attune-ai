@@ -3,17 +3,24 @@ type: tip
 name: rag-grounding-tip
 feature: rag-grounding
 depth: tip
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 88333793edaf078345820f76455b27a1c759145c2e48dd64da93abf6f2d61450
+generated_at: 2026-06-23T22:13:00.800515+00:00
+source_hash: 80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4
 status: generated
 ---
 
-# Tip: Use `execute()` as your entry point into `RagCodeGenWorkflow`
+# RAG-grounded code generation — retrieves attune context and emits answers with source citations
 
-Instantiate `RagCodeGenWorkflow` and call `execute(**kwargs)` directly — don't subclass it or reconstruct its internals.
+## Notes & tips
 
-**Why:** The workflow is designed around a single call boundary. Bypassing `execute()` skips the retrieval-and-citation pipeline, so generated code loses its grounding in real attune APIs.
-
-**Tradeoff:** All customization must go through the `**kwargs` you pass to `__init__` and `execute`. If you need behavior that neither accepts, you are working outside the intended surface — and that gap is worth filing as a feature request rather than papering over with a subclass.
-
-**Tags:** `rag`, `retrieval`, `grounding`, `faithfulness`, `citation`
+- **Depend on the documented public surface.** The supported API is
+  `RagCodeGenWorkflow` and its async `execute`, and the
+  `WorkflowResult` it returns. Names with a leading underscore —
+  `_get_pipeline`, `_run_agent_generate`, `_record_feedback` — are
+  internal.
+- **Prefer `path` over `cwd`.** `cwd` is a deprecated alias kept for
+  back-compat; pass `path=` to scope the agent's file tools.
+- **Use `k` and `depth` to tune cost.** Fewer passages and a shallower
+  depth make a cheaper, faster run.
+- **Read the citations.** The `## Sources` block and
+  `metadata["citation"]` let you verify each claim against the real
+  attune-help template.

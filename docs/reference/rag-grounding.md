@@ -1,54 +1,45 @@
----
-type: cli-reference
-name: rag-grounding
-tags: [rag, code-generation, grounding, workflows]
-source: src/workflows/rag_code_gen.py
----
+# Rag Grounding
 
-# rag-grounding CLI reference
+## Reference
 
-## Description
+The public surface is `RagCodeGenWorkflow`, re-exported from
+`attune.workflows`.
 
-`rag-grounding` runs the `RagCodeGenWorkflow`, which retrieves attune-help context and feeds citation-forced prompts to Claude. The workflow grounds every response in retrieved documentation, ensuring that referenced APIs, workflow names, and CLI commands come from the attune ecosystem rather than model priors. Output includes the generated code or explanation together with provenance citations.
+### `RagCodeGenWorkflow` — `attune.workflows.rag_code_gen`
 
-## Usage
+| Symbol | Purpose |
+|--------|---------|
+| `RagCodeGenWorkflow(**kwargs)` | Construct the workflow (pipeline is lazily initialized on first `execute`). |
+| `RagCodeGenWorkflow.execute(**kwargs)` | **Async.** Retrieve + generate. Honors `query` (required), `k`, `depth`, `feedback`, `model`, `path` (and deprecated `cwd`). Returns a `WorkflowResult`. |
+| `RagCodeGenWorkflow.name` | The registered CLI slug, `"rag-code-gen"`. |
+| `RagCodeGenWorkflow.stages` | `["retrieve", "generate"]` — retrieve at `CHEAP` (zero-LLM), generate at `CAPABLE`. |
 
-```
-rag-grounding [OPTIONS]
-```
+### Depth → turns and budget
 
-## Options
+| Depth | Max turns | Budget cap | Notes |
+|-------|-----------|------------|-------|
+| `quick` | 6 | $2 | Narrowest, cheapest. |
+| `standard` | 12 | $10 | Default. |
+| `deep` | 24 | $25 | Enables extended thinking. |
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--help` | — | Show this message and exit |
+### `WorkflowResult` fields read after a run
 
-## Output
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the run completed. |
+| `final_output` | `Any` | Generated answer followed by a `## Sources` citations block. |
+| `summary` | `str \| None` | Short overview. |
+| `metadata` | `dict` | `query`, `depth`, `max_turns`, `citation` (structured provenance), `fallback_used`, `confidence`, `retrieval_ms`, `feedback_recorded`. |
+| `error` | `str \| None` | Failure reason (e.g. missing `query`, bad `k`, unknown `model`, RAG retrieval failure). |
 
-The command writes a `WorkflowResult` to stdout. The result contains the generated code or explanation and the retrieved passages that grounded the response.
+### Entry points
 
-```
-Retrieving attune-help context...
-Running RagCodeGenWorkflow...
+| Surface | Invocation |
+|---------|------------|
+| Python | `await RagCodeGenWorkflow().execute(query=<q>, k=<n>, depth=<d>)`. |
+| CLI | `attune workflow run rag-code-gen --input '{"query": "<q>"}' [--depth ...] [--json]`. |
+| Skill | `/rag-code-gen` in a Claude Code conversation. |
 
---- Result ---
-<generated code or explanation>
+There is no dedicated MCP tool for this workflow.
 
---- Sources ---
-[1] concepts/template-composition.md
-[2] concepts/task-template-design-patterns.md
-```
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Workflow completed and `WorkflowResult` was returned successfully |
-| `1` | Workflow failed — check stderr for details |
-
-## Related commands
-
-- `attune-help` — browse the help templates that supply retrieval context to this workflow
-- `attune-rag` — the retrieval layer this workflow calls to fetch attune-help passages
-
-<!-- attune-generated: source_hash=0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550 feature=rag-grounding kind=cli-reference generated_at=2026-06-02 -->
+<!-- attune-generated: source_hash=80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4 feature=rag-grounding kind=reference generated_at=2026-06-23 -->

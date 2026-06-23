@@ -1,78 +1,149 @@
----
-type: how-to
-name: rag-grounding
-tags: [rag, retrieval, grounding, faithfulness, citation]
-source: workflows.rag_code_gen
----
+# Rag Grounding
 
-# How to generate code grounded in attune-help context
+## Quickstart
 
-Use this guide when you need to generate code or explanations that cite real attune APIs, workflow names, and CLI commands — and you want the output to carry provenance back to the retrieved documentation that informed it.
-
-## Quick start
+Ask a grounded question and print the answer with its sources.
+`execute` is a coroutine, so drive it with `asyncio.run`:
 
 ```python
-from workflows.rag_code_gen import RagCodeGenWorkflow
+import asyncio
 
-workflow = RagCodeGenWorkflow()
-result = workflow.execute(query="How do I compose a RagCodeGenWorkflow with a custom retrieval step?")
-print(result)
+from attune.workflows import RagCodeGenWorkflow
+
+
+async def main() -> None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query="How do I run a security audit?")
+
+    print(result.success)        # True on a completed run
+    print(result.final_output)   # generated answer + a ## Sources block
+
+
+asyncio.run(main())
 ```
 
-Running this retrieves matching attune-help passages, constructs a citation-forced prompt, and returns a `WorkflowResult` whose answer is grounded in the retrieved context.
+`k` defaults to 3 and `depth` to `"standard"`, so
+`execute(query=...)` is equivalent.
 
-## Core API
+## Tasks
 
-| Class / Method | Purpose |
-|---|---|
-| `RagCodeGenWorkflow(**kwargs)` | Initializes the RAG-grounded code generation workflow; accepts keyword arguments for runtime configuration. |
-| `.execute(**kwargs)` | Runs retrieval and generation; returns a `WorkflowResult` containing the grounded answer. |
+### Generate a grounded answer from Python
 
-## Integration patterns
+**Goal:** answer a coding question grounded in attune docs, with
+citations.
 
-### Inspecting the result
-
-`execute` returns a `WorkflowResult`. Unpack it to separate the generated code from the provenance metadata:
+**Steps:**
 
 ```python
-from workflows.rag_code_gen import RagCodeGenWorkflow
+import asyncio
 
-workflow = RagCodeGenWorkflow()
-result = workflow.execute(query="Show a task template with numbered steps")
+from attune.workflows import RagCodeGenWorkflow
 
-# Access the generated content and its cited sources
-print(result.content)
-print(result.sources)
+
+async def main() -> None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query="How do I customize release gates?", k=5)
+
+    if not result.success:
+        print("generation failed:", result.error)
+        return
+
+    print(result.final_output)               # answer + ## Sources
+    print(result.metadata["citation"])       # structured provenance
+
+
+asyncio.run(main())
 ```
 
-### Passing context at instantiation
+**Verify:** `execute` is a coroutine — `await` it. `k` controls how
+many passages are retrieved. The output ends with a `## Sources` block;
+`metadata["citation"]["hits"]` lists each cited template with its
+`template_path`, `category`, and `score`.
 
-If your application already holds retrieval configuration, pass it through `__init__` so `execute` calls inherit it without repetition:
+### Run it from the CLI
+
+**Goal:** get a grounded answer without writing Python.
+
+**Steps:**
+
+```bash
+# query is passed as JSON input; the workflow slug is rag-code-gen:
+attune workflow run rag-code-gen --input '{"query": "how do I run a security audit?"}'
+
+# deeper run, JSON output:
+attune workflow run rag-code-gen --input '{"query": "...", "k": 5}' --depth deep --json
+```
+
+**Verify:** the slug is `rag-code-gen` (not `rag-grounding`, which is
+the feature/help name). `--input` / `-i` takes JSON carrying `query`
+(and optional `k`); `--depth` accepts `quick` / `standard` / `deep`;
+`--json` / `-j` emits machine-readable output.
+
+### Tune retrieval breadth and cost
+
+**Goal:** trade grounding breadth against speed and cost.
+
+**Steps:**
 
 ```python
-from workflows.rag_code_gen import RagCodeGenWorkflow
+import asyncio
 
-workflow = RagCodeGenWorkflow(top_k=5, min_score=0.75)
+from attune.workflows import RagCodeGenWorkflow
 
-for query in ["RagCodeGenWorkflow patterns", "how do I write a task template?"]:
-    result = workflow.execute(query=query)
-    print(result.content)
+
+async def main() -> None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query="explain the memory tiers", k=2, depth="quick")
+    print(result.final_output)
+
+
+asyncio.run(main())
 ```
 
-> **Note:** The underlying system prompt instructs the model to treat all content inside `<passage>` tags as retrieved documentation, not as instructions. Prompt-injection attempts embedded in retrieved passages are ignored by design.
+**Verify:** lower `k` retrieves fewer passages (faster, narrower
+grounding); `quick` uses the smallest turn budget (6) and lowest cap
+($2). `metadata["retrieval_ms"]` reports retrieval time.
 
-## See also
+## Reference
 
-- `concepts/task-template-design-patterns.md` — mental model for the template types that RAG retrieves
-- `concepts/task-template-migration.md` — how attune-help content stays fresh as source code changes
+The public surface is `RagCodeGenWorkflow`, re-exported from
+`attune.workflows`.
 
-<!-- attune-generated: source_hash=0c56c05d50048a3426da1a4782fa4bdecd9fc2a19dcd7d2d0957aa7b55b42550 feature=rag-grounding kind=how-to generated_at=2026-06-02 -->
+### `RagCodeGenWorkflow` — `attune.workflows.rag_code_gen`
 
-## Unresolved references
+| Symbol | Purpose |
+|--------|---------|
+| `RagCodeGenWorkflow(**kwargs)` | Construct the workflow (pipeline is lazily initialized on first `execute`). |
+| `RagCodeGenWorkflow.execute(**kwargs)` | **Async.** Retrieve + generate. Honors `query` (required), `k`, `depth`, `feedback`, `model`, `path` (and deprecated `cwd`). Returns a `WorkflowResult`. |
+| `RagCodeGenWorkflow.name` | The registered CLI slug, `"rag-code-gen"`. |
+| `RagCodeGenWorkflow.stages` | `["retrieve", "generate"]` — retrieve at `CHEAP` (zero-LLM), generate at `CAPABLE`. |
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+### Depth → turns and budget
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 14 (code fence) | error | `from workflows.rag_code_gen import …` — module not importable |
+| Depth | Max turns | Budget cap | Notes |
+|-------|-----------|------------|-------|
+| `quick` | 6 | $2 | Narrowest, cheapest. |
+| `standard` | 12 | $10 | Default. |
+| `deep` | 24 | $25 | Enables extended thinking. |
+
+### `WorkflowResult` fields read after a run
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the run completed. |
+| `final_output` | `Any` | Generated answer followed by a `## Sources` citations block. |
+| `summary` | `str \| None` | Short overview. |
+| `metadata` | `dict` | `query`, `depth`, `max_turns`, `citation` (structured provenance), `fallback_used`, `confidence`, `retrieval_ms`, `feedback_recorded`. |
+| `error` | `str \| None` | Failure reason (e.g. missing `query`, bad `k`, unknown `model`, RAG retrieval failure). |
+
+### Entry points
+
+| Surface | Invocation |
+|---------|------------|
+| Python | `await RagCodeGenWorkflow().execute(query=<q>, k=<n>, depth=<d>)`. |
+| CLI | `attune workflow run rag-code-gen --input '{"query": "<q>"}' [--depth ...] [--json]`. |
+| Skill | `/rag-code-gen` in a Claude Code conversation. |
+
+There is no dedicated MCP tool for this workflow.
+
+<!-- attune-generated: source_hash=80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4 feature=rag-grounding kind=how-to generated_at=2026-06-23 -->

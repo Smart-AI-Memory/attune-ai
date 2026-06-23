@@ -3,56 +3,88 @@ type: task
 name: rag-grounding-task
 feature: rag-grounding
 depth: task
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 88333793edaf078345820f76455b27a1c759145c2e48dd64da93abf6f2d61450
+generated_at: 2026-06-23T22:13:00.800515+00:00
+source_hash: 80d56595472151a9fe49e1354a100b17b22eefbeaefb0d01d9a569f85b28b5a4
 status: generated
 ---
 
-# Generate grounded code with RAG
+# RAG-grounded code generation — retrieves attune context and emits answers with source citations
 
-Use `RagCodeGenWorkflow` when you need to generate code that cites real attune APIs, workflow names, and CLI commands — retrieved from attune-help context and verified against actual source documentation.
+## Tasks
 
-## Prerequisites
+### Generate a grounded answer from Python
 
-- Read access to `src/attune/workflows/rag_code_gen.py`
-- A Python environment where you can import from `workflows.rag_code_gen`
+**Goal:** answer a coding question grounded in attune docs, with
+citations.
 
-## Instantiate and execute the workflow
+**Steps:**
 
-1. **Import `RagCodeGenWorkflow`.**
-   Add the following import to your module:
+```python
+import asyncio
 
-   ```python
-   from workflows.rag_code_gen import RagCodeGenWorkflow
-   ```
+from attune.workflows import RagCodeGenWorkflow
 
-2. **Instantiate the workflow.**
-   Pass any configuration as keyword arguments to `__init__`:
 
-   ```python
-   workflow = RagCodeGenWorkflow(**your_kwargs)
-   ```
+async def main() -> None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query="How do I customize release gates?", k=5)
 
-3. **Call `execute` to run the workflow.**
-   Pass your generation parameters as keyword arguments. The method returns a `WorkflowResult`:
+    if not result.success:
+        print("generation failed:", result.error)
+        return
 
-   ```python
-   result = workflow.execute(**your_kwargs)
-   ```
+    print(result.final_output)               # answer + ## Sources
+    print(result.metadata["citation"])       # structured provenance
 
-4. **Inspect the result for provenance.**
-   The `WorkflowResult` includes citations sourced from retrieved attune-help passages. Verify that any referenced APIs, workflow names, and CLI commands appear in those citations — the workflow is designed never to invent attune features.
 
-5. **Run the related tests** to confirm your usage is correct:
+asyncio.run(main())
+```
 
-   ```shell
-   pytest -k "rag-grounding"
-   ```
+**Verify:** `execute` is a coroutine — `await` it. `k` controls how
+many passages are retrieved. The output ends with a `## Sources` block;
+`metadata["citation"]["hits"]` lists each cited template with its
+`template_path`, `category`, and `score`.
 
-## Verify success
+### Run it from the CLI
 
-Your call succeeded when `execute` returns a `WorkflowResult` without raising an exception and the result contains citations that trace back to real attune-help source files. If the output references an attune feature that does not appear in the cited passages, the grounding has failed and you should review the context retrieval step.
+**Goal:** get a grounded answer without writing Python.
 
-## Key files
+**Steps:**
 
-- `src/attune/workflows/rag_code_gen.py` — defines `RagCodeGenWorkflow` and its `execute` method
+```bash
+# query is passed as JSON input; the workflow slug is rag-code-gen:
+attune workflow run rag-code-gen --input '{"query": "how do I run a security audit?"}'
+
+# deeper run, JSON output:
+attune workflow run rag-code-gen --input '{"query": "...", "k": 5}' --depth deep --json
+```
+
+**Verify:** the slug is `rag-code-gen` (not `rag-grounding`, which is
+the feature/help name). `--input` / `-i` takes JSON carrying `query`
+(and optional `k`); `--depth` accepts `quick` / `standard` / `deep`;
+`--json` / `-j` emits machine-readable output.
+
+### Tune retrieval breadth and cost
+
+**Goal:** trade grounding breadth against speed and cost.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import RagCodeGenWorkflow
+
+
+async def main() -> None:
+    workflow = RagCodeGenWorkflow()
+    result = await workflow.execute(query="explain the memory tiers", k=2, depth="quick")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** lower `k` retrieves fewer passages (faster, narrower
+grounding); `quick` uses the smallest turn budget (6) and lowest cap
+($2). `metadata["retrieval_ms"]` reports retrieval time.

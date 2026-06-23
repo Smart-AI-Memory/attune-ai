@@ -320,11 +320,24 @@ features:
     doc_paths:
       - docs/reference/configuration.md
 
+  # rag-grounding is single-sourced (status: manual) from
+  # content/features/rag-grounding.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/rag-grounding/*.md. The entry is marked
+  # `status: manual` — WITHOUT `files:` — so topic resolution routes
+  # here while staleness/maintenance never runs `attune-author generate
+  # rag-grounding --all-kinds` to overwrite the projected content with
+  # LLM output (DD5, help-docs-single-source decision, 2026-06-23). The
+  # retained faq.md stays on disk frozen until the four-channel FAQ
+  # Generator (D6/D7) replaces that path. Description and tags are
+  # unchanged to preserve golden-query resolution (rg-002 "grounding";
+  # rg-003 relies on "retrieval"/"retrieves" routing here, not to memory).
+  # The feature/help name is rag-grounding; the CLI workflow slug is
+  # rag-code-gen. See docs/specs/help-docs-single-source/.
   rag-grounding:
     description: RAG-grounded code generation — retrieves attune-help context via attune-rag, feeds citation-forced prompts to Claude, emits answers with provenance
-    files:
-      - src/attune/workflows/rag_code_gen.py
     tags: [rag, retrieval, grounding, faithfulness, citation]
+    status: manual
 
   resilience:
     description: Fault-tolerance primitives — circuit breakers, retries, timeouts, fallbacks, health checks
