@@ -244,6 +244,10 @@ class TestGetLLM:
 
     def test_anthropic_missing_key_raises(self, monkeypatch):
         monkeypatch.setattr(mod, "_langchain_available", True)
+        # Make the missing-key contract hermetic: LangChainAdapter falls back
+        # to os.getenv("ANTHROPIC_API_KEY"), so a developer with the key set in
+        # their shell would otherwise take the happy path and DID NOT RAISE.
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
         adapter = LangChainAdapter(provider="anthropic", api_key=None)
         with patch("langchain_anthropic.ChatAnthropic"), pytest.raises(ValueError):
             adapter._get_llm(_cfg(model_override="claude-sonnet-4-6"))
