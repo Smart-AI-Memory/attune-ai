@@ -110,6 +110,26 @@ class TestGetWorkflow:
         with pytest.raises(KeyError, match="Unknown workflow"):
             get_workflow("nonexistent-workflow-xyz")
 
+    def test_release_slugs_resolve_to_distinct_workflows(self):
+        """The two release workflows are distinct and named for what they do.
+
+        ``release-prep`` and its synonym ``release-gate`` are the
+        deterministic agent-team gate; ``release-notes`` is the SDK
+        advisory workflow. They must NOT collide on one class (the
+        original bug was both classes carrying ``name="release-prep"``).
+        """
+        from attune.workflows import get_workflow
+
+        gate = get_workflow("release-prep")
+        gate_synonym = get_workflow("release-gate")
+        notes = get_workflow("release-notes")
+
+        assert gate.__name__ == "ReleasePrepTeamWorkflow"
+        assert gate_synonym is gate
+        assert notes.__name__ == "ReleasePreparationWorkflow"
+        assert notes is not gate
+        assert notes.name == "release-notes"
+
 
 class TestListWorkflows:
     """Tests for list_workflows."""

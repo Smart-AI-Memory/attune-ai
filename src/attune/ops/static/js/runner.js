@@ -21,8 +21,9 @@
     "bug-predict", "code-review", "deep-review", "dependency-check",
     "discovery-sweep", "doc-audit", "doc-gen", "doc-orchestrator",
     "health-check", "orchestrated-health-check", "perf-audit", "rag-code-gen",
-    "refactor-plan", "release-prep", "research-synthesis", "secure-release",
-    "security-audit", "simplify-code", "test-audit", "test-gen"
+    "refactor-plan", "release-gate", "release-notes", "release-prep",
+    "research-synthesis", "secure-release", "security-audit", "simplify-code",
+    "test-audit", "test-gen"
   ];
   // <<< AUTO-GENERATED: WORKFLOW_NAMES
 

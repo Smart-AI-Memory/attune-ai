@@ -26,7 +26,7 @@ class TestReleasePreparationWorkflowAttributes:
         from attune.workflows.release_prep import ReleasePreparationWorkflow
 
         wf = ReleasePreparationWorkflow()
-        assert wf.name == "release-prep"
+        assert wf.name == "release-notes"
 
     def test_stages(self):
         """Test single agent stage."""

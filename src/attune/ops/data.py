@@ -95,6 +95,8 @@ PATH_ARG_REGISTRY: dict[str, PathArgSpec] = {
     "test-gen": PathArgSpec(kwarg="path"),
     # Category B — direct signature kwarg ``path: str = "."``
     "release-prep": PathArgSpec(kwarg="path"),
+    "release-gate": PathArgSpec(kwarg="path"),
+    "release-notes": PathArgSpec(kwarg="path"),
     "secure-release": PathArgSpec(kwarg="path"),
     # Category C — aliased to a different kwarg name
     "doc-orchestrator": PathArgSpec(kwarg="path"),

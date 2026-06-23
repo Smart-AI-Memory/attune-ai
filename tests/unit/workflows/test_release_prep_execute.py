@@ -341,7 +341,7 @@ class TestErrorResult:
     def test_stage_metadata(self, workflow):
         result = workflow._error_result("nope")
         assert len(result.stages) == 1
-        assert result.stages[0].name == "release-prep"
+        assert result.stages[0].name == "release-notes"
         assert result.stages[0].tier == ModelTier.CAPABLE
 
     def test_timestamps_bounded(self, workflow):
