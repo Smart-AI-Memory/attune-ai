@@ -1,64 +1,62 @@
-# Release Prep CLI reference
+# Release Prep
 
-Run a preflight readiness assessment before publishing a release.
+## Reference
 
-## Description
+Release-prep's public surface is the `ReleasePrepTeamWorkflow` (CLI /
+registry adapter) and the `ReleasePrepTeam` coordinator, both importable
+from `attune.agents.release`.
 
-`release-prep` coordinates a team of specialized agents — `health-checker`, `security-scanner`, `changelog-generator`, and `release-assessor` — to assess whether a codebase is ready to ship. Each agent inspects its domain in parallel, and the results are synthesized into a `ReleaseReadinessReport` containing a go/no-go verdict, quality gate results, blockers, and warnings. The report is printed to stdout via `ReleaseReadinessReport.format_console_output()`.
+### `ReleasePrepTeamWorkflow` — `attune.agents.release`
 
-## Usage
+| Symbol | Purpose |
+|--------|---------|
+| `ReleasePrepTeamWorkflow(quality_gates=None, **kwargs)` | Construct the registry adapter. `quality_gates` overrides thresholds. |
+| `ReleasePrepTeamWorkflow.execute(path=".", context=None, **kwargs)` | **Async.** Run the gate. Maps `target` → `path` for CLI/VSCode. Returns a `WorkflowResult`. |
+| `ReleasePrepTeamWorkflow.name` | The canonical slug, `"release-prep"` (synonym `release-gate`). |
+| `ReleasePrepTeamWorkflow.stages` | `["triage", "parallel-validation", "synthesis", "decision"]`. |
 
-```
-release-prep [OPTIONS] [PATH]
-```
+### `ReleasePrepTeam` — `attune.agents.release`
 
-`PATH` is the path to the codebase root. Defaults to `.` (the current directory).
+| Symbol | Purpose |
+|--------|---------|
+| `ReleasePrepTeam(quality_gates=None, redis_url=None)` | Construct the coordinator. Optional Redis URL for coordination (graceful no-op when unavailable). |
+| `ReleasePrepTeam.assess_readiness(codebase_path=".")` | **Async.** Run the four agents in parallel and return a `ReleaseReadinessReport`. |
+| `ReleasePrepTeam.get_total_cost()` | Total LLM cost across agents ($0 in the default rule-based mode). |
 
-## Options
+### Default quality gates
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--help` | — | Show this help message and exit |
+| Gate | Key | Default | Critical |
+|------|-----|---------|----------|
+| Security | `max_critical_issues` | `0` | Yes |
+| Test Coverage | `min_coverage` | `80.0` | Yes |
+| Code Quality | `min_quality_score` | `7.0` | Yes |
+| Documentation | `min_doc_coverage` | `80.0` | No |
 
-## Output
+### The four agents
 
-The command prints the formatted `ReleaseReadinessReport` to stdout. The report includes a verdict, per-gate results, blockers, and warnings:
+| Agent | Tool | Score basis |
+|-------|------|-------------|
+| `SecurityAuditorAgent` | bandit (JSON, severity ≥ medium) | Severity-weighted; `critical_issues` = CRITICAL + HIGH. |
+| `TestCoverageAgent` | pytest collect + `pytest --cov` | TOTAL coverage %; heuristic estimate as fallback. |
+| `CodeQualityAgent` | `ruff check --statistics` | 0–10 by violation count. |
+| `DocumentationAgent` | AST docstring walk | Public-function docstring coverage %. |
 
-```
-Release Readiness Assessment
-Verdict: NO-GO
-Confidence: medium
-Timestamp: 2024-11-15T14:32:07.841200
+### `WorkflowResult` fields read after a run
 
-Quality Gates
-  health        FAIL   actual=0.72  threshold=0.80  Tests failing in CI
-  security      PASS   actual=0.95  threshold=0.80
-  changelog     PASS   actual=1.00  threshold=1.00
-  code-quality  PASS   actual=0.88  threshold=0.75
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the assessment **ran** (always `True` on a completed run — not the verdict). |
+| `final_output` | `dict` | The serialized `WorkflowReport` (verdict callout, gate table, per-agent breakdown, blockers, warnings, next steps). |
+| `summary` | `str` | Executive summary — approval status and the failed gates. |
+| `metadata` | `dict` | `approved` (bool) and `confidence` (`high` / `medium` / `low`). |
 
-Blockers (1)
-  health — Tests failing in CI: 3 test failures in tests/test_core.py
+### Entry points
 
-Warnings (1)
-  security — 2 advisory findings (non-critical)
+| Surface | Invocation |
+|---------|------------|
+| CLI | `attune workflow run release-gate [--path <p>] [--json]` (canonical slug `release-prep`). |
+| Python | `await ReleasePrepTeamWorkflow().execute(path=<p>)` or `await ReleasePrepTeam().assess_readiness(codebase_path=<p>)`. |
 
-Summary
-  Release is NOT approved. Resolve 1 blocker before publishing.
+There is **no MCP tool** for the gate — it is CLI / Python only.
 
-Duration: 18.42s  |  Cost: $0.0031
-```
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Assessment completed. Check the `Verdict` field in the report — `NO-GO` is still exit code `0`. |
-| `1` | Command failed before producing a report (for example, invalid path or agent initialization error). |
-
-## Related commands
-
-- `attune help-docs ref-skill-release-prep` — full skill reference, including quality gate configuration
-- `/release-prep check` — invoke the skill directly from Claude Code
-- `attune help-docs skill-release-prep` — quickstart for running release prep interactively
-
-<!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=cli-reference generated_at=2026-06-02 -->
+<!-- attune-generated: source_hash=63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2 feature=release-prep kind=reference generated_at=2026-06-23 -->
