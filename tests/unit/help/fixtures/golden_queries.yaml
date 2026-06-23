@@ -45,8 +45,17 @@ queries:
 
   # release-prep
   - {id: rp-001,  query: release-prep,                expected: release-prep,   difficulty: easy}
-  - {id: rp-002,  query: release,                     expected: release-prep,   difficulty: medium}
+  # query changed "release" -> "publishing": bare "release" is now a
+  # substring of BOTH release-prep and release-notes (names, descriptions,
+  # and tags all carry "release"), so it is genuinely ambiguous since the
+  # split (#1018). "publishing" is a release-prep-only tag, so it stays a
+  # discriminating medium query that resolves to the gate.
+  - {id: rp-002,  query: publishing,                  expected: release-prep,   difficulty: medium}
   - {id: rp-003,  query: changelog,                   expected: release-prep,   difficulty: medium} # promoted — works today
+
+  # release-notes (the advisory half of the release pair)
+  - {id: rn-001,  query: release-notes,               expected: release-notes,  difficulty: easy}
+  - {id: rn-002,  query: release notes,               expected: release-notes,  difficulty: medium} # description match
 
   # refactor-plan
   - {id: rf-001,  query: refactor-plan,               expected: refactor-plan,  difficulty: easy}
