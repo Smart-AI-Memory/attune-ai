@@ -25,7 +25,7 @@
 
 A spec-driven development platform for Claude Code. Four pillars — AI
 workflows, project memory, retrieval grounding, and verification — turn
-requirements into reliable software. 20 workflows (17 multi-stage),
+requirements into reliable software. 21 workflows (17 multi-stage),
 17 auto-triggering skills, and 41 MCP tools run specialist teams of 2–6
 Claude subagents that review your code, surface vulnerabilities, generate
 tests, and plan refactors — grounded in your real source, with findings
@@ -218,6 +218,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 | **refactor-plan** | debt-scanner, impact, plan-generator | Plans large-scale refactors |
 | **simplify-code** | complexity, simplification, safety | Proposes simplifications with safety review |
 | **release-prep** | health, security, changelog, assessor | Go/no-go readiness check |
+| **release-notes** | agent-prep | Drafts release notes + LLM readiness advice |
 | **doc-orchestrator** | inventory, outline, content, polish | Full-project documentation |
 | **secure-release** | security, health, dep-auditor, gater | Release pipeline with risk scoring |
 | **research-synthesis** | summarizer, pattern-analyst, writer | Multi-source research synthesis |
@@ -237,7 +238,7 @@ per-surface extras (API-mode agents, ops dashboard, Redis memory).
 `performance_audit` `refactor_plan` `simplify_code`
 `deep_review` `test_generation` `test_audit`
 `test_gen_parallel` `doc_gen` `doc_audit`
-`doc_orchestrator` `release_prep` `health_check`
+`doc_orchestrator` `release_notes` `health_check`
 `dependency_check` `secure_release` `research_synthesis`
 `analyze_batch` `analyze_image` `rag_knowledge_query`
 
