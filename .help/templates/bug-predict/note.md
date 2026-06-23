@@ -3,30 +3,119 @@ type: note
 name: bug-predict-note
 feature: bug-predict
 depth: note
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Note: bug-predict internals
+# Predict likely bug hotspots with three Agent SDK subagents
 
-## How the workflow is structured
+## Overview
 
-`BugPredictionWorkflow` (in `workflows/bug_predict`) is an SDK-native orchestrator that coordinates three specialized subagents: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. Each subagent focuses on a distinct domain — detection, scoring, and remediation advice — and reports findings as structured markdown. The orchestrator synthesizes those findings into a single report with a **Summary**, **Bugs**, and **Suggestions** section.
+Bug-predict scans a codebase and predicts where bugs are most
+likely to hide. It is **SDK-native**: `BugPredictionWorkflow`
+delegates the analysis to three specialized Claude Agent SDK
+subagents and synthesizes their findings into a single report
+with an overall risk score, per-finding file/line locations, and
+prioritized prevention advice.
 
-The `system_prompt_suffix` parameter on `BugPredictionWorkflow.__init__` lets callers append instructions to the default orchestrator prompt without replacing it.
+It **predicts** — it does not prove. The three subagents apply
+LLM judgment over the code (via Read / Glob / Grep), so findings
+are risk hypotheses to triage, not the deterministic output of a
+linter. Treat a HIGH finding as "look here first," not "this line
+is definitely broken."
 
-## Report formatting
+You reach bug-predict four ways, all of which run the same
+workflow:
 
-`format_bug_predict_report(result, input_data)` in `workflows/bug_predict_report` takes the raw `dict` returned by `BugPredictionWorkflow.execute()` and renders it as a human-readable string. The `main()` function in the same module is the CLI entry point that wires these two together for standalone use.
+- the **`/bug-predict`** skill, inside a Claude Code conversation;
+- the CLI — **`attune workflow run bug-predict`**;
+- the **`bug_predict`** MCP tool (one required `path` argument);
+- the Python API — `await BugPredictionWorkflow().execute(...)`,
+  documented here for wiring bug-predict into a hook, a CI step,
+  or a custom tool.
 
-## False-positive suppression
+A separate set of regex/string pattern helpers also lives in the
+module (`bug_predict_patterns.py`). They are an internal,
+lower-level utility layer — **not** what the live workflow runs.
+The "Notes & tips" and "Design & extension" sections below say
+exactly what they do and do not affect.
 
-The scanner skips matches that contain any of the following keywords in surrounding context: `fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`. It also ignores results originating from test files matched by the patterns `test_bug_predict`, `test_scanner`, and `test_security_scan`.
+## Concepts
 
-## Source files
+### Three subagents, one synthesized report
 
-- `workflows/bug_predict.py` — `BugPredictionWorkflow` and subagent orchestration
-- `workflows/bug_predict_report.py` — `format_bug_predict_report()` and `main()`
+`BugPredictionWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents,
+each scoped to `Read` / `Glob` / `Grep`:
 
-**Tags:** `bugs`, `prediction`, `scanning`
+| Subagent | What it looks for |
+|----------|-------------------|
+| `pattern-scanner` | Null references, type mismatches, race conditions, `eval`/`exec` usage, broad exception handlers, resource leaks, off-by-one errors. Reports file path, line number, pattern type, and severity. |
+| `risk-correlator` | Correlates the scanner's findings with file complexity, change frequency, and historical bug density; assigns a per-file risk score and names the highest-risk modules. |
+| `prevention-advisor` | Reviews the correlated risks, ranks them by impact, and proposes specific fixes: refactoring, added tests, type annotations, error-handling, and architectural changes. |
+
+The orchestrator then synthesizes all three into one report with
+three sections — **Summary** (an overall 0–100 risk score plus a
+2–3 sentence executive summary), **Bugs** (grouped HIGH /
+MEDIUM / LOW, each with file, line, pattern, and description), and
+**Suggestions** (prioritized prevention strategies).
+
+### Depth controls the agent-turn budget
+
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum number of agent turns the
+SDK query may take, and to a per-run cost cap:
+
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
+
+An unrecognized depth falls back to the standard budget (20
+turns). Deeper scans let the subagents read more files and reason
+longer, at higher cost — the run is bounded by a `max_budget_usd`
+derived from the depth.
+
+### `execute` is async, and honors only `path` and `depth`
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+bug-predict mistake.
+
+It reads exactly two keyword arguments from `**kwargs`: `path`
+(required) and `depth` (default `"standard"`). Any other keyword
+is silently ignored — there is no `file_types`, `exclude`, or
+`depth=...` shorthand beyond those two. An empty or missing
+`path` returns a failed `WorkflowResult` rather than raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from
+`attune.workflows`). The synthesized report lands in
+`final_output` — a serialized `WorkflowReport` when the findings
+parse into categories, or the raw markdown text otherwise — with
+a short `summary`, a `suggestions` list, the `cost_report`, the
+`provider`, and a `metadata` dict echoing back `path`, `depth`,
+and `max_turns`. On failure, `success` is `False` and `error` /
+`error_type` carry the reason.
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API
+  is `BugPredictionWorkflow` (its constructor and async
+  `execute`) plus the `WorkflowResult` it returns. Names with a
+  leading underscore — the pattern helpers in
+  `bug_predict_patterns.py` and `_run_agent_predict` — are
+  internal and may change.
+- **`format_bug_predict_report` and `main` are legacy.**
+  `format_bug_predict_report(result, input_data)` consumes the
+  pre-v4.2.0 dict pipeline shape (`overall_risk_score`,
+  `patterns_found`, …), not the `WorkflowResult` that `execute`
+  returns; do not feed it `execute`'s output. Read
+  `result.final_output` and `result.summary` directly instead.
+- **Start shallow, then deepen.** Run `quick` to triage, and only
+  spend a `deep` budget on the modules that came back hot.
+- **Use `--cheap` for routine CLI runs.** It forces unpinned
+  subagents onto Haiku, trading some depth for cost.

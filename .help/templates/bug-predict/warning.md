@@ -3,54 +3,46 @@ type: warning
 name: bug-predict-warning
 feature: bug-predict
 depth: warning
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Bug Predict Cautions
+# Predict likely bug hotspots with three Agent SDK subagents
 
-## What to watch for
+## Failure modes
 
-Bug prediction coordinates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) and merges their output into a single report. Most surprises come from how that synthesis behaves at the edges — not from the pattern matching itself.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BugPredictionWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Scan stops early / partial report | The depth's agent-turn or `max_budget_usd` budget was reached | Use a shallower path or raise depth deliberately (cost rises) | medium |
+| `format_bug_predict_report(result, ...)` raises / prints nothing useful | It expects the pre-v4.2.0 dict shape, **not** the `WorkflowResult` `execute` returns | Read `result.final_output` / `result.summary` directly | medium |
+| Editing `./attune.config.yml`'s `bug_predict` block changes nothing | That block configures the internal static pattern helpers, which the live SDK workflow does not run | Steer the scan with `system_prompt_suffix` (or a deeper `depth`) instead | medium |
 
-## Risk areas
+### Risk areas
 
-### False-negative suppression removes real findings
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it
+  is the single most common bug-predict mistake.
+- **Findings are predictions, not proofs.** The subagents apply
+  LLM judgment; a HIGH finding means "investigate first," not
+  "this is definitely a bug." Confirm before acting.
+- **The static helpers are not the live scanner.** The regex
+  detectors in `bug_predict_patterns.py` and the
+  `./attune.config.yml` `bug_predict` settings are a separate
+  layer; they do not change what the three subagents do.
 
-The scanner automatically filters out patterns it considers safe — including `eval()` inside test fixture strings, `regex.exec()` calls, and broad exceptions annotated with `# INTENTIONAL:` or `# noqa: BLE001`. It also skips any file whose name matches `_SCANNER_TEST_PATTERNS` (e.g. `test_bug_predict`, `test_scanner`, `test_security_scan`).
+### Diagnosis order
 
-If a high-severity pattern like `dangerous_eval` disappears from your report after renaming or restructuring a file, check whether the new filename matches one of those test-file patterns. Production code in a file named `test_*` will be silently skipped.
-
-### `format_bug_predict_report()` expects a specific result shape
-
-`format_bug_predict_report(result: dict, input_data: dict)` formats the final output from `BugPredictionWorkflow.execute()`. It does not validate that `result` conforms to the expected structure — missing keys (such as `Summary`, `Bugs`, or `Suggestions` sections) produce incomplete or blank output rather than an error. If you pass a partial result, the report will appear to succeed but will omit findings silently.
-
-Always pass the unmodified `WorkflowResult` from `execute()` rather than a hand-constructed dict unless you can confirm your dict includes every expected section.
-
-### `system_prompt_suffix` appended without a separator
-
-`BugPredictionWorkflow.__init__` accepts a `system_prompt_suffix` keyword argument that is appended directly to `_SYSTEM_PROMPT`. There is no newline or separator injected between the base prompt and your suffix. A suffix that begins mid-sentence or contains conflicting instructions can degrade the orchestrator's output quality in ways that are difficult to trace in the report.
-
-Start `system_prompt_suffix` with a newline and a clear directive so it reads as a distinct instruction rather than a run-on continuation.
-
-### Private subagent names can change without notice
-
-The subagent identifiers in `_SUBAGENT_NAMES` (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) are module-level private constants. If your code references them directly — for example, to filter or re-route subagent output — a refactor can break that logic silently. Depend only on the public interface: `BugPredictionWorkflow` and `format_bug_predict_report`.
-
-## How to avoid problems
-
-1. **Verify suppression rules don't apply to your target.** Before concluding a file is clean, confirm it isn't being excluded by a test-file pattern match or an `# INTENTIONAL:` annotation that was added without review.
-
-2. **Pass `execute()` output directly to `format_bug_predict_report()`.** Avoid reshaping the `WorkflowResult` before formatting. If you need to filter findings, do so after formatting, not before.
-
-3. **Prefix `system_prompt_suffix` with a newline.** This keeps your additions structurally separate from the base orchestrator prompt and reduces the chance of malformed instruction sequences.
-
-4. **Use only the public API.** `BugPredictionWorkflow` and `format_bug_predict_report` are the stable surface. Private helpers and constants — anything prefixed with `_` — can change between releases without a deprecation notice.
-
-## Source files
-
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_report.py`
-
-**Tags:** `bugs`, `prediction`, `scanning`, `race-condition`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns` actually used.
+5. Run the related tests: `pytest -k bug_predict -v`.

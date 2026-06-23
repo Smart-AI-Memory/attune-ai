@@ -49,11 +49,9 @@ exclude_docs: |
   architecture/telemetry.md
   architecture/help-system.md
   architecture/plugin-system.md
-  architecture/bug-predict.md
   architecture/deep-review.md
   architecture/refactor-plan.md
   architecture/release-prep.md
-  architecture/security-audit.md
   architecture/smart-test.md
   architecture/rag-grounding.md
   development-logs/

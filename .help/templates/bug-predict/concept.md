@@ -3,48 +3,100 @@ type: concept
 name: bug-predict-concept
 feature: bug-predict
 depth: concept
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Bug Prediction
+# Predict likely bug hotspots with three Agent SDK subagents
 
-Bug prediction scans your codebase for code patterns and complexity signals that correlate with production failures, so you can act before bugs surface at runtime.
+## Overview
 
-## How it works
+Bug-predict scans a codebase and predicts where bugs are most
+likely to hide. It is **SDK-native**: `BugPredictionWorkflow`
+delegates the analysis to three specialized Claude Agent SDK
+subagents and synthesizes their findings into a single report
+with an overall risk score, per-finding file/line locations, and
+prioritized prevention advice.
 
-`BugPredictionWorkflow` orchestrates three specialized subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — that each focus on a distinct domain and report structured findings. After all three finish, the workflow synthesizes their output into a single report with three sections:
+It **predicts** — it does not prove. The three subagents apply
+LLM judgment over the code (via Read / Glob / Grep), so findings
+are risk hypotheses to triage, not the deterministic output of a
+linter. Treat a HIGH finding as "look here first," not "this line
+is definitely broken."
 
-- **Summary** — an overall risk score (0–100) and a brief executive summary of predicted hotspots
-- **Bugs** — findings organized by severity (HIGH, MEDIUM, LOW), each with a file path, line number, pattern type, and plain-English description
-- **Suggestions** — prioritized prevention strategies, including specific refactoring advice and testing recommendations
+You reach bug-predict four ways, all of which run the same
+workflow:
 
-The orchestrator prompt instructs the workflow to cite file paths and line numbers wherever possible, so findings are immediately actionable rather than vague.
+- the **`/bug-predict`** skill, inside a Claude Code conversation;
+- the CLI — **`attune workflow run bug-predict`**;
+- the **`bug_predict`** MCP tool (one required `path` argument);
+- the Python API — `await BugPredictionWorkflow().execute(...)`,
+  documented here for wiring bug-predict into a hook, a CI step,
+  or a custom tool.
 
-## The three-subagent pipeline
+A separate set of regex/string pattern helpers also lives in the
+module (`bug_predict_patterns.py`). They are an internal,
+lower-level utility layer — **not** what the live workflow runs.
+The "Notes & tips" and "Design & extension" sections below say
+exactly what they do and do not affect.
 
-Each subagent handles one slice of the analysis:
+## Concepts
 
-| Subagent | Role |
-|---|---|
-| `pattern-scanner` | Detects dangerous code patterns such as `eval()` on user input, bare `except:` clauses, and TODO/FIXME markers |
-| `risk-correlator` | Weighs contextual signals — cyclomatic complexity, change frequency, and code smells — to rank which findings matter most |
-| `prevention-advisor` | Translates ranked findings into concrete refactoring and testing recommendations |
+### Three subagents, one synthesized report
 
-This division keeps each subagent focused, which improves both precision and the quality of the final synthesized report.
+`BugPredictionWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents,
+each scoped to `Read` / `Glob` / `Grep`:
 
-## Report formatting
+| Subagent | What it looks for |
+|----------|-------------------|
+| `pattern-scanner` | Null references, type mismatches, race conditions, `eval`/`exec` usage, broad exception handlers, resource leaks, off-by-one errors. Reports file path, line number, pattern type, and severity. |
+| `risk-correlator` | Correlates the scanner's findings with file complexity, change frequency, and historical bug density; assigns a per-file risk score and names the highest-risk modules. |
+| `prevention-advisor` | Reviews the correlated risks, ranks them by impact, and proposes specific fixes: refactoring, added tests, type annotations, error-handling, and architectural changes. |
 
-`format_bug_predict_report(result, input_data)` converts the raw workflow output into the human-readable report you see in your conversation. The same formatting logic powers `main()`, the CLI entry point, so the report looks identical whether you invoke bug prediction through Claude Code or directly from the command line.
+The orchestrator then synthesizes all three into one report with
+three sections — **Summary** (an overall 0–100 risk score plus a
+2–3 sentence executive summary), **Bugs** (grouped HIGH /
+MEDIUM / LOW, each with file, line, pattern, and description), and
+**Suggestions** (prioritized prevention strategies).
 
-## False-positive suppression
+### Depth controls the agent-turn budget
 
-Not every pattern match represents a real bug. The scanner automatically ignores known-safe cases — for example, code marked with intentional keywords such as `fallback`, `graceful`, or `intentional`, and test files matched by patterns like `test_bug_predict` and `test_scanner`. This filtering happens before findings reach the risk-correlator, so your report reflects genuine risk rather than noise.
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum number of agent turns the
+SDK query may take, and to a per-run cost cap:
 
-## When bug prediction matters
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
 
-- **Before merging a large PR** — surface patterns that slip through manual review
-- **After onboarding unfamiliar code** — quickly map risk hotspots in a new module
-- **Before a release** — confirm no new HIGH-severity patterns crept into high-churn files
-- **As a periodic health check** — track whether risk scores improve or drift over time
+An unrecognized depth falls back to the standard budget (20
+turns). Deeper scans let the subagents read more files and reason
+longer, at higher cost — the run is bounded by a `max_budget_usd`
+derived from the depth.
+
+### `execute` is async, and honors only `path` and `depth`
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+bug-predict mistake.
+
+It reads exactly two keyword arguments from `**kwargs`: `path`
+(required) and `depth` (default `"standard"`). Any other keyword
+is silently ignored — there is no `file_types`, `exclude`, or
+`depth=...` shorthand beyond those two. An empty or missing
+`path` returns a failed `WorkflowResult` rather than raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from
+`attune.workflows`). The synthesized report lands in
+`final_output` — a serialized `WorkflowReport` when the findings
+parse into categories, or the raw markdown text otherwise — with
+a short `summary`, a `suggestions` list, the `cost_report`, the
+`provider`, and a `metadata` dict echoing back `path`, `depth`,
+and `max_turns`. On failure, `success` is `False` and `error` /
+`error_type` carry the reason.

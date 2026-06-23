@@ -28,15 +28,25 @@ _docs:
   - docs/architecture/extending-composition-patterns.md
 
 features:
+  # security-audit is single-sourced (status: manual) from
+  # content/features/security-audit.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/security-audit/*.md. The entry is retained —
+  # WITHOUT `files:` and marked `status: manual` — so topic resolution
+  # still routes here while staleness/maintenance never runs
+  # `attune-author generate security-audit --all-kinds` to overwrite
+  # the projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # The cross-cutting docs/how-to/security-architecture.md remains
+  # hand-authored (it is not a projected feature page). Note: the prior
+  # `files:` glob conflated `src/attune/monitoring/**` (a separate
+  # subsystem) with the audit workflow; the projected docs scope to the
+  # workflow only. See docs/specs/help-docs-single-source/.
   security-audit:
     description: Scan code for security vulnerabilities — eval/exec, path traversal, hardcoded secrets, injection risks
-    files:
-      - src/attune/workflows/security_audit.py
-      - src/attune/security/**
-      - src/attune/monitoring/**
     tags: [security, audit, owasp, scanning, cve]
-    doc_paths:
-      - docs/how-to/security-architecture.md
+    status: manual
 
   code-quality:
     description: Review code for style issues, likely bugs, and structural problems
@@ -58,12 +68,21 @@ features:
       - src/attune/workflows/document_gen/**
     tags: [docs, documentation, generation]
 
+  # bug-predict is single-sourced (status: manual) from
+  # content/features/bug-predict.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/bug-predict/*.md. The entry is retained — WITHOUT
+  # `files:` and marked `status: manual` — so topic resolution still
+  # routes here while staleness/maintenance never runs
+  # `attune-author generate bug-predict --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
   bug-predict:
     description: Predict likely bug locations based on code patterns and complexity
-    files:
-      - src/attune/workflows/bug_predict.py
-      - src/attune/workflows/bug_predict_*.py
     tags: [bugs, prediction, scanning, race-condition]
+    status: manual
 
   release-prep:
     description: Pre-release quality gate — health checks, security audit, changelog, version bumps

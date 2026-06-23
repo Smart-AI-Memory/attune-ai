@@ -3,37 +3,47 @@ type: error
 name: security-audit-error
 feature: security-audit
 depth: error
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131
+generated_at: 2026-06-23T12:50:51.607005+00:00
+source_hash: e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a
 status: generated
 ---
 
-# Security Audit errors
+# Audit code for vulnerabilities with four Agent SDK subagents
 
-## Common error signatures
+## Failure modes
 
-Failures in `SecurityAuditWorkflow` typically fall into three categories:
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'SecurityAuditWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Audit stops early / partial report | The depth's agent-turn or budget cap was reached | Use a shallower path or accept a deeper (costlier) run | medium |
+| `metadata["subagent_transcripts"]` is empty | The session transcript could not be recovered for this run | The synthesized `final_output` is still authoritative; transcripts are a supplement | low |
+| A finding looks like a false positive | Findings are LLM predictions, not verified exploits | Confirm against the cited file/line before acting | medium |
 
-- **Input and path errors** — `_validate_file_path` raises when the target path is missing, outside the working directory, or not readable. You'll see this before any subagent (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) starts work.
-- **Secret and PII detection errors** — `SecretsDetector` and `PIIScrubber` raise `SecurityViolation` when a file cannot be read or a pattern match produces an unexpected result. `detect_secrets` can also surface these if the file path fails `_validate_file_path`.
-- **Notification and webhook errors** — `_validate_webhook_url` raises when an `AlertConfig.webhook_url` is malformed. `deliver_webhook` and `deliver_email` can fail silently (returning `False`) or raise if the downstream channel is unreachable.
+### Risk areas
 
-## How to diagnose
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **Findings are predictions, not proofs.** The four subagents
+  apply LLM judgment; a CRITICAL finding means "audit this first,"
+  not "this is a confirmed vulnerability." Verify before acting —
+  and never treat a clean report as a security guarantee.
+- **Deep audits cost more.** `deep` engages extended thinking and
+  a larger budget; reserve it for high-risk areas rather than
+  whole-repo sweeps.
 
-1. **Check whether the failure is pre-scan or mid-scan.** An error before any subagent output points to path validation (`_validate_file_path`) or workflow initialization (`SecurityAuditWorkflow.__init__`). An error after partial output points to a subagent — check which of the four names (`vuln-scanner`, `secret-detector`, `auth-reviewer`, `remediation-planner`) last appeared in the report.
+### Diagnosis order
 
-2. **Inspect the `SecurityViolation` and `Severity` fields.** The `security` module exports `SecurityViolation` and `Severity` directly. If you catch a `SecurityViolation`, its severity level tells you whether the audit halted on a policy violation or logged and continued.
-
-3. **Verify the alert engine database.** `AlertEngine` defaults to `.attune/alerts.db`. If that path is not writable, `get_alert_engine()` fails on first call. Run `attune alerts metrics` to confirm the engine can read telemetry; a failure here means the SQLite file is missing or locked.
-
-4. **Check for failed notification backends.** After `check_and_trigger()` fires, call `MultiBackend.get_failed_backends()` to see which backends did not accept the `AlertEvent`. A non-empty list means at least one `deliver_webhook` or `deliver_email` call returned `False`.
-
-5. **Validate webhook URLs before adding alerts.** `_validate_webhook_url` is called inside `AlertEngine.add_alert`. If `init` fails with a validation error, re-run with explicit flags (`--webhook-url`, `--email`, `--channel`) to isolate which field is rejected.
-
-## Source files
-
-- `src/attune/workflows/security_audit.py`
-- `src/attune/security/**`
-- `src/attune/monitoring/**`
-
-**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns` actually used.
+5. Cross-check findings against `metadata["subagent_transcripts"]`
+   to see which subagent surfaced each.

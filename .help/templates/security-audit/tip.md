@@ -3,19 +3,29 @@ type: tip
 name: security-audit-tip
 feature: security-audit
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131
+generated_at: 2026-06-23T12:50:51.607005+00:00
+source_hash: e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a
 status: generated
 ---
 
-# Tip: Run the security audit before you ship, not after
+# Audit code for vulnerabilities with four Agent SDK subagents
 
-Run `attune workflow run security-audit --path "src/"` as a pre-release gate, not a one-off check.
+## Notes & tips
 
-**Why:** `SecurityAuditWorkflow` coordinates four subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner` — in parallel. Catching a hardcoded secret or an unvalidated file path costs seconds at audit time and hours in an incident.
-
-**How:** The workflow's `execute()` method returns findings grouped by severity (CRITICAL, HIGH, MEDIUM, LOW) with file paths, line numbers, and prioritized remediation steps. Treat any CRITICAL finding as a release blocker.
-
-**Tradeoff:** A full multi-pass audit takes roughly five minutes. If you run it only on changed paths rather than the whole codebase, you may miss vulnerabilities introduced by transitive effects — a utility function used in a new, riskier context, for example.
-
-**Tags:** `security`, `audit`, `owasp`, `scanning`, `cve`
+- **Depend on the documented public surface.** The supported API
+  is `SecurityAuditWorkflow` (its constructor and async `execute`)
+  plus the `WorkflowResult` it returns. Names with a leading
+  underscore — `_run_agent_audit`, `_SUBAGENT_NAMES` — are
+  internal and may change.
+- **Use `metadata["subagent_transcripts"]` to attribute findings.**
+  The synthesized report is the headline; the recovered transcripts
+  show which of the four subagents raised each finding, which helps
+  when triaging.
+- **Start shallow, then go deep on the hot spots.** Run `standard`
+  broadly, and spend a `deep` (extended-thinking) audit only on the
+  modules that came back risky.
+- **Use `--cheap` for routine CLI runs.** It forces unpinned
+  subagents onto Haiku, trading some depth for cost.
+- **Monitoring is a separate subsystem.** Alerting and telemetry
+  storage live in `attune.monitoring`, not here — this feature is
+  the audit workflow only.

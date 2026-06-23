@@ -1,70 +1,48 @@
-# Bug Predict CLI Reference
+# Bug Predict
 
-Predict likely bug locations based on code patterns and complexity.
+## Reference
 
-## Description
+Bug-predict's public surface is the `BugPredictionWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
 
-`bug-predict` scans a codebase path using three specialized subagents — `pattern-scanner`, `risk-correlator`, and `prevention-advisor` — and synthesizes their findings into a unified risk report. It identifies high-risk patterns such as dangerous `eval()` usage, broad exception handling, and incomplete code markers. The report includes an overall risk score, per-finding file paths and line numbers, and prioritized prevention recommendations.
+### `BugPredictionWorkflow` — `attune.workflows.bug_predict`
 
-## Usage
+| Symbol | Purpose |
+|--------|---------|
+| `BugPredictionWorkflow(*, system_prompt_suffix="", **kwargs)` | Construct the workflow. `system_prompt_suffix` (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to `BaseWorkflow`. |
+| `BugPredictionWorkflow.execute(**kwargs)` | **Async.** Run the prediction. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`); other kwargs are ignored. Returns a `WorkflowResult`. |
+| `BugPredictionWorkflow.name` | The registered slug, `"bug-predict"`. |
+| `BugPredictionWorkflow.stages` | `["agent-predict"]`; the stage runs at the `CAPABLE` model tier. |
 
-```
-bug-predict [PATH]
-```
+### Depth → agent-turn budget
 
-`PATH` is the file or directory to scan. Defaults to `src/` when omitted.
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast first pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | A thorough scan of a large or high-risk area. |
 
-## Options
+### `WorkflowResult` fields read after a scan
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--help` | — | Show help and exit |
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the scan completed. |
+| `final_output` | `Any` | The synthesized report — a serialized `WorkflowReport` when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short executive summary of the run. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run. |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-## Output
+### Entry points
 
-On success, `bug-predict` prints a structured markdown report to stdout:
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/bug-predict` in a Claude Code conversation. |
+| CLI | `attune workflow run bug-predict --path <p> [--depth quick\|standard\|deep] [--json] [--cheap]`. |
+| MCP tool | `bug_predict` — one required `path` argument; runs at standard depth (the handler does not pass `depth`). |
+| Python | `await BugPredictionWorkflow().execute(path=<p>, depth=<d>)`. |
 
-```
-Bug Prediction Report
-Risk Score: 73/100 | Files: 34 | Findings: 8
-
-## Summary
-<2–3 sentence executive summary of predicted bug hotspots>
-
-## Bugs
-
-HIGH (2 findings)
-  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
-
-MEDIUM (3 findings)
-  src/api/webhook.py:67      broad_exception  bare except: masks errors
-  src/config.py:203          broad_exception  except Exception without logging
-  src/memory/store.py:88     broad_exception  swallowed error in write path
-
-LOW (3 findings)
-  src/auth/session.py:45     incomplete_code  TODO: add token rotation
-  src/api/routes.py:112      incomplete_code  FIXME: rate limiting
-  src/cli_router.py:78       incomplete_code  HACK: temporary workaround
-
-## Suggestions
-1. <highest-priority refactoring recommendation>
-2. <testing recommendation for flagged files>
-```
-
-Each finding includes the file path, line number, pattern type (`dangerous_eval`, `broad_exception`, or `incomplete_code`), and a plain-English description.
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Scan completed and report written successfully |
-| `1` | Scan failed (invalid path, workflow error, or subagent failure) |
-
-## Related commands
-
-- `attune help-docs ref-skill-bug-predict` — full skill reference
-- `/bug-predict` — invoke the skill directly inside Claude Code
-- `security-audit` — vulnerability-focused scan of the same codebase
-
-<!-- attune-generated: source_hash=c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde feature=bug-predict kind=cli-reference generated_at=2026-05-16 -->
+<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=reference generated_at=2026-06-23 -->

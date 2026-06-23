@@ -3,50 +3,117 @@ type: concept
 name: security-audit-concept
 feature: security-audit
 depth: concept
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: eae54371f777d7daaf221262e83161689f726496eaa58090e4ea0460f613d131
+generated_at: 2026-06-23T12:50:51.607005+00:00
+source_hash: e6418a3912ca1198d747373f96c129051dd6130394ad9f787b25fd12acf68e4a
 status: generated
 ---
 
-# Security Audit
+# Audit code for vulnerabilities with four Agent SDK subagents
 
-Security audit is a workflow that scans your codebase for vulnerabilities that are easy to introduce and hard to spot in code review — things like `eval()` on untrusted input, file paths built without validation, API keys committed to source control, and injection risks in queries or shell commands.
+## Overview
 
-## How it works
+Security-audit scans a codebase for vulnerabilities and reports
+them by severity with prioritized remediation. It is **SDK-native**:
+`SecurityAuditWorkflow` delegates the analysis to four specialized
+Claude Agent SDK subagents and synthesizes their findings into one
+report — an overall security score, findings grouped CRITICAL /
+HIGH / MEDIUM / LOW, and an effort-ranked remediation plan.
 
-`SecurityAuditWorkflow` coordinates four specialized subagents — `vuln-scanner`, `secret-detector`, `auth-reviewer`, and `remediation-planner` — each focused on a distinct domain. After all four finish, the workflow synthesizes their output into a single report structured around three sections:
+Like its sibling bug-predict, it **predicts** rather than proves:
+the four subagents apply LLM judgment over the code (via Read /
+Glob / Grep), so a finding is a lead to verify, not a confirmed
+exploit. Treat a CRITICAL finding as "audit this first," not "this
+is definitely exploitable."
 
-- **Summary** — an overall security score (0–100) and a short executive summary of your security posture
-- **Security** — consolidated findings organized by severity (`CRITICAL`, `HIGH`, `MEDIUM`, `LOW`)
-- **Suggestions** — actionable remediation steps ordered by priority, with estimated effort for each fix
+You reach security-audit four ways, all of which run the same
+workflow:
 
-Findings cite file paths and line numbers where possible.
+- the **`/security-audit`** skill, inside a Claude Code
+  conversation;
+- the CLI — **`attune workflow run security-audit`**;
+- the **`security_audit`** MCP tool (one required `path`
+  argument);
+- the Python API — `await SecurityAuditWorkflow().execute(...)`,
+  documented here for wiring an audit into a hook, a CI gate, or a
+  custom tool.
 
-On the security side, the `security` module exposes `SecretsDetector`, `PIIScrubber`, and `AuditLogger` as the underlying detection primitives. `detect_secrets` and `_validate_file_path` are the functions most likely to appear in scan results. `SecurityViolation` and `Severity` carry individual finding details through the pipeline.
+The audit workflow is self-contained — it owns scanning and
+report synthesis only. Alerting, telemetry storage, and
+monitoring live in a **separate** subsystem (`attune.monitoring`)
+and are not part of this feature.
 
-## What the scan covers
+## Concepts
 
-| Category | What to look for |
-|----------|-----------------|
-| **Code injection** | `eval()`, `exec()`, and `compile()` on untrusted input |
-| **Path traversal** | File operations that don't validate the path first |
-| **Hardcoded secrets** | API keys, tokens, and passwords committed to source |
-| **SQL/command injection** | String concatenation in queries or shell commands |
-| **PII exposure** | Personal data handled without scrubbing (`PIIScrubber`, `PIIPattern`) |
-| **Weak cryptography** | MD5/SHA1 for security purposes, hardcoded IVs |
+### Four subagents, one synthesized report
 
-## How security audit relates to monitoring
+`SecurityAuditWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define four subagents, each
+scoped to `Read` / `Glob` / `Grep`:
 
-Security audit findings feed into the broader monitoring system. `AuditEvent` records are what the `AuditLogger` writes; those records can drive `AlertEngine` thresholds. An `AlertConfig` ties a specific `AlertMetric` to a `threshold` float and an `AlertChannel` (webhook, email, or stdout). When `AlertEngine.check_and_trigger()` finds a metric above its threshold, it produces an `AlertEvent` — a snapshot containing `current_value`, `threshold`, `severity`, and `triggered_at` — and delivers it via `deliver_notification`.
+| Subagent | What it looks for |
+|----------|-------------------|
+| `vuln-scanner` | `eval`/`exec` usage, SQL injection, XSS, path traversal, command injection, and insecure deserialization. Reports file, line, severity, and remediation advice. |
+| `secret-detector` | Hardcoded API keys, passwords, tokens, private keys, database credentials, and sensitive environment variables committed to source — plus how to externalize each. |
+| `auth-reviewer` | Missing auth checks, broken access control, insecure session management, weak password policies, and privilege-escalation risks. |
+| `remediation-planner` | Reviews all findings and builds a prioritized fix plan, grouped by effort (quick wins / medium / major refactors), with time estimates and inter-fix dependencies. |
 
-The `cooldown_seconds` field on `AlertConfig` (default `3600`) prevents alert storms: once an alert fires, it won't fire again until the cooldown expires.
+The orchestrator then synthesizes all four into one report with
+three sections — **Summary** (an overall 0–100 security score plus
+a 2–3 sentence posture summary), **Security** (consolidated
+findings grouped CRITICAL / HIGH / MEDIUM / LOW), and
+**Suggestions** (remediation steps ordered by priority, each with
+an effort estimate).
 
-## Entry points
+### Depth controls the budget — and deep engages extended thinking
 
-| Surface | How you reach it |
-|---------|-----------------|
-| `SecurityAuditWorkflow.execute(**kwargs)` | SDK — run the four-subagent workflow programmatically |
-| `attune workflow run security-audit --path "src/"` | CLI — scan a directory and get severity-grouped findings |
-| `/security-audit <path>` | Claude Code skill — structured results in your conversation |
-| `detect_secrets(...)` | Python API — call the secret-detection primitive directly |
-| `AuditLogger` | Python API — write `AuditEvent` records from your own code |
+`execute` takes a `depth` of `"quick"`, `"standard"` (default),
+or `"deep"`. Depth maps to the maximum agent turns and a per-run
+cost cap:
+
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
+
+An unrecognized depth falls back to the standard budget (20
+turns). A `deep` audit additionally engages a token-aware task
+budget and **extended thinking** (with high reasoning effort), so
+the remediation-planner and architecture-level reasoning get more
+room — at higher cost.
+
+### Findings survive synthesis
+
+Two mechanisms keep findings from being lost in the
+orchestrator's synthesis step:
+
+- the query runs with a structured `output_format`, so findings
+  parse into categories reliably rather than depending on prose
+  formatting; and
+- after the run, the per-subagent transcripts are recovered from
+  the session and appended to the report under a
+  **"## Subagent findings"** heading — so a finding a subagent
+  surfaced is preserved even if the synthesis under-reports it.
+  The raw transcripts are also attached to the result's
+  `metadata["subagent_transcripts"]`.
+
+### `execute` is async, and honors only `path` and `depth`
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake.
+
+It reads exactly two keyword arguments: `path` (required) and
+`depth` (default `"standard"`). Any other keyword is ignored. An
+empty or missing `path` returns a failed `WorkflowResult` rather
+than raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from `attune.workflows`).
+The synthesized report lands in `final_output` — a serialized
+report when the findings parse, or the raw markdown otherwise —
+with a short `summary`, a `suggestions` list, the `cost_report`,
+the `provider`, and a `metadata` dict echoing `path`, `depth`,
+`max_turns`, and the recovered `subagent_transcripts`. On failure,
+`success` is `False` and `error` / `error_type` carry the reason.

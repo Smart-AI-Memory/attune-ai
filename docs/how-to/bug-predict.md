@@ -1,109 +1,174 @@
----
-type: how-to
-name: use-bug-predict
-tags: [skill, task]
-source: plugin/skills/bug-predict/SKILL.md
----
+# Bug Predict
 
-# How to Use Bug Prediction
+## Quickstart
 
-Use this guide when you need to scan a codebase for risky code patterns programmatically — calling the workflow directly from Python or the CLI rather than through the `/bug-predict` skill in conversation.
-
-## Quick start
-
-Run a scan against a local directory and print a formatted report:
+Scan a directory and print the synthesized report.
+`BugPredictionWorkflow.execute` is an async coroutine, so drive
+it with `asyncio.run` (or `await` it inside an existing event
+loop):
 
 ```python
-from workflows.bug_predict import BugPredictionWorkflow
-from workflows.bug_predict_report import format_bug_predict_report
+import asyncio
 
-workflow = BugPredictionWorkflow()
-result = workflow.execute(path="src/")
+from attune.workflows import BugPredictionWorkflow
 
-input_data = {"path": "src/"}
-print(format_bug_predict_report(result, input_data))
+
+async def main() -> None:
+    workflow = BugPredictionWorkflow()
+    result = await workflow.execute(path="src/", depth="standard")
+
+    print(result.success)          # True on a completed scan
+    print(result.summary)          # short executive summary
+    print(result.final_output)     # the full synthesized report
+
+
+asyncio.run(main())
 ```
 
-You'll see output structured like this:
+`depth` defaults to `"standard"`, so `execute(path="src/")` is
+equivalent. Use `"quick"` for a fast pass or `"deep"` for a
+longer, costlier scan.
 
+## Tasks
+
+### Scan a path from the CLI
+
+**Goal:** run a one-off prediction over a directory without
+writing any Python.
+
+**Steps:**
+
+```bash
+# Default depth (standard) over a directory:
+attune workflow run bug-predict --path src/
+
+# Deeper scan, JSON output for a CI step:
+attune workflow run bug-predict --path src/ --depth deep --json
+
+# Cost-saving pass (unpinned subagents run on Haiku):
+attune workflow run bug-predict --path src/ --cheap
 ```
-Bug Prediction Report
-Risk Score: 73/100 | Files: 34 | Findings: 8
 
-HIGH (2 findings)
-  src/hooks/executor.py:89   dangerous_eval  eval() on user input
-  src/plugins/loader.py:142  dangerous_eval  exec() in plugin loader
+**Verify:** `--path` / `-p` defaults to the current directory;
+`--depth` accepts `quick`, `standard`, or `deep`; `--json` / `-j`
+emits machine-readable output; `--cheap` forces every subagent
+without an explicit model onto Haiku for that run. Use
+`attune workflow info bug-predict` to confirm the workflow is
+registered, and `attune workflow list` to see it alongside the
+other workflows.
 
-MEDIUM (3 findings)
-  src/api/webhook.py:67      broad_exception bare except: masks errors
-  ...
+### Call the prediction from Python
+
+**Goal:** drive bug-predict from a hook or custom tool and act on
+the result.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import BugPredictionWorkflow
+
+
+async def main() -> None:
+    workflow = BugPredictionWorkflow()
+    result = await workflow.execute(path="src/api/", depth="quick")
+
+    if not result.success:
+        print("scan failed:", result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
 ```
 
-## Core API
+**Verify:** `execute` is a coroutine — `await` it. A completed
+scan returns `success=True` with the report in `final_output`;
+a failure returns `success=False` with a populated `error` and
+`error_type`. `metadata` echoes the `path`, `depth`, and
+`max_turns` actually used.
+
+### Steer the scan with a prompt suffix
+
+**Goal:** narrow or focus the analysis without replacing the
+built-in orchestrator behavior.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import BugPredictionWorkflow
+
+
+async def main() -> None:
+    workflow = BugPredictionWorkflow(
+        system_prompt_suffix=(
+            "Focus on authentication code. "
+            "Skip LOW severity findings."
+        ),
+    )
+    result = await workflow.execute(path="src/auth/")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `system_prompt_suffix` is a keyword-only constructor
+argument appended to the orchestrator's system prompt at call
+time. The three subagents still run their normal analysis; the
+suffix only steers the orchestrator. The empty-string default
+leaves behavior unchanged (this is the hook discovery-sweep's
+`BugPredictSource` uses to augment the prompt per instance).
+
+## Reference
+
+Bug-predict's public surface is the `BugPredictionWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
+
+### `BugPredictionWorkflow` — `attune.workflows.bug_predict`
 
 | Symbol | Purpose |
 |--------|---------|
-| `BugPredictionWorkflow` | Orchestrates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) to produce a unified prediction report |
-| `BugPredictionWorkflow.__init__(*, system_prompt_suffix, **kwargs)` | Constructs the workflow; pass `system_prompt_suffix` to append custom instructions to the orchestrator prompt |
-| `BugPredictionWorkflow.execute(**kwargs)` | Runs the scan; returns a `WorkflowResult` |
-| `format_bug_predict_report(result, input_data)` | Converts a raw `WorkflowResult` dict into a human-readable markdown report |
-| `main()` | CLI entry point; invoke directly for one-off scans from the shell |
+| `BugPredictionWorkflow(*, system_prompt_suffix="", **kwargs)` | Construct the workflow. `system_prompt_suffix` (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to `BaseWorkflow`. |
+| `BugPredictionWorkflow.execute(**kwargs)` | **Async.** Run the prediction. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`); other kwargs are ignored. Returns a `WorkflowResult`. |
+| `BugPredictionWorkflow.name` | The registered slug, `"bug-predict"`. |
+| `BugPredictionWorkflow.stages` | `["agent-predict"]`; the stage runs at the `CAPABLE` model tier. |
 
-## Customizing the orchestrator prompt
+### Depth → agent-turn budget
 
-Pass `system_prompt_suffix` to steer the orchestrator without replacing its default behavior:
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast first pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | A thorough scan of a large or high-risk area. |
 
-```python
-workflow = BugPredictionWorkflow(
-    system_prompt_suffix="Focus only on authentication-related files. Skip LOW severity findings."
-)
-result = workflow.execute(path="src/auth/")
-```
+### `WorkflowResult` fields read after a scan
 
-The suffix is appended to the built-in orchestrator prompt, so the three subagents still run their normal analysis.
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the scan completed. |
+| `final_output` | `Any` | The synthesized report — a serialized `WorkflowReport` when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short executive summary of the run. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run. |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-## Integration patterns
+### Entry points
 
-### Formatting and persisting a report
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/bug-predict` in a Claude Code conversation. |
+| CLI | `attune workflow run bug-predict --path <p> [--depth quick\|standard\|deep] [--json] [--cheap]`. |
+| MCP tool | `bug_predict` — one required `path` argument; runs at standard depth (the handler does not pass `depth`). |
+| Python | `await BugPredictionWorkflow().execute(path=<p>, depth=<d>)`. |
 
-`format_bug_predict_report` takes both the `WorkflowResult` and the original `input_data` dict, so it can echo the scan scope back into the report header:
-
-```python
-from workflows.bug_predict import BugPredictionWorkflow
-from workflows.bug_predict_report import format_bug_predict_report
-from pathlib import Path
-
-input_data = {"path": "src/api/"}
-workflow = BugPredictionWorkflow()
-result = workflow.execute(**input_data)
-
-report = format_bug_predict_report(result, input_data)
-Path("bug_report.md").write_text(report)
-```
-
-### Running from the CLI
-
-`main()` is the CLI entry point wired to the same workflow:
-
-```bash
-python -m workflows.bug_predict_report
-```
-
-Use this in CI pipelines where you want a non-zero exit on HIGH-severity findings without writing any Python glue code.
-
-## See also
-
-- `quickstarts/skill-bug-predict.md` — run the scanner interactively via `/bug-predict` in Claude Code
-- `concepts/tool-bug-predict.md` — pattern reference (dangerous_eval, broad_exception, incomplete_code) and false-positive filtering rules
-
-<!-- attune-generated: source_hash=c4c1270dc9f702965624a9648b2eb72a439ab5e8009c5bf4c13f0018002eecde feature=bug-predict kind=how-to generated_at=2026-06-02 -->
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 16 (code fence) | error | `from workflows.bug_predict import …` — module not importable |
-| Line 16 (code fence) | error | `from workflows.bug_predict_report import …` — module not importable |
+<!-- attune-generated: source_hash=3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d feature=bug-predict kind=how-to generated_at=2026-06-23 -->

@@ -3,56 +3,54 @@ type: reference
 name: bug-predict-reference
 feature: bug-predict
 depth: reference
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Bug Predict reference
+# Predict likely bug hotspots with three Agent SDK subagents
 
-Predict likely bug locations based on code patterns and complexity.
+## Reference
 
-## Classes
+Bug-predict's public surface is the `BugPredictionWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
 
-| Class | Description |
-|-------|-------------|
-| `BugPredictionWorkflow` | SDK-native bug prediction with three specialized subagents. |
+### `BugPredictionWorkflow` — `attune.workflows.bug_predict`
 
-### `BugPredictionWorkflow`
+| Symbol | Purpose |
+|--------|---------|
+| `BugPredictionWorkflow(*, system_prompt_suffix="", **kwargs)` | Construct the workflow. `system_prompt_suffix` (keyword-only) is appended to the orchestrator's system prompt; the empty default preserves stock behavior. Other kwargs pass to `BaseWorkflow`. |
+| `BugPredictionWorkflow.execute(**kwargs)` | **Async.** Run the prediction. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`); other kwargs are ignored. Returns a `WorkflowResult`. |
+| `BugPredictionWorkflow.name` | The registered slug, `"bug-predict"`. |
+| `BugPredictionWorkflow.stages` | `["agent-predict"]`; the stage runs at the `CAPABLE` model tier. |
 
-#### Constructor
+### Depth → agent-turn budget
 
-| Parameters | Type | Default | Description |
-|------------|------|---------|-------------|
-| `system_prompt_suffix` | `str` | `''` | Text appended to the orchestrator system prompt. |
-| `**kwargs` | `Any` | — | Forwarded to the parent workflow class. |
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast first pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | A thorough scan of a large or high-risk area. |
 
-#### Methods
+### `WorkflowResult` fields read after a scan
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `execute` | `**kwargs: Any` | `WorkflowResult` | Run the bug prediction workflow and return structured results. |
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the scan completed. |
+| `final_output` | `Any` | The synthesized report — a serialized `WorkflowReport` when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short executive summary of the run. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run. |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-## Functions
+### Entry points
 
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `format_bug_predict_report` | `result: dict, input_data: dict` | `str` | Format bug prediction output as a human-readable report. |
-| `main` | — | — | CLI entry point for the bug prediction workflow. |
-
-## Constants
-
-| Constant | Type | Members |
-|----------|------|---------|
-| `_SUBAGENT_NAMES` | `list` | `'pattern-scanner'`, `'risk-correlator'`, `'prevention-advisor'` |
-| `_INTENTIONAL_KEYWORDS` | `list` | `'fallback'`, `'ignore'`, `'optional'`, `'best effort'`, `'graceful'`, `'intentional'` |
-| `_SCANNER_TEST_PATTERNS` | `list` | `'test_bug_predict'`, `'test_scanner'`, `'test_security_scan'` |
-
-## Source files
-
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_report.py`
-
-## Tags
-
-`bugs`, `prediction`, `scanning`
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/bug-predict` in a Claude Code conversation. |
+| CLI | `attune workflow run bug-predict --path <p> [--depth quick\|standard\|deep] [--json] [--cheap]`. |
+| MCP tool | `bug_predict` — one required `path` argument; runs at standard depth (the handler does not pass `depth`). |
+| Python | `await BugPredictionWorkflow().execute(path=<p>, depth=<d>)`. |
