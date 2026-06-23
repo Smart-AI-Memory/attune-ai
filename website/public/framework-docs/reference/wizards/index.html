@@ -6,7 +6,7 @@
       <meta charset="utf-8">
       <meta name="viewport" content="width=device-width,initial-scale=1">
       
-        <meta name="description" content="Reference for `attune.wizards` — guided multi-step wizards with XML task decomposition. Covers the 5 built-in developer wizards, the `BaseWizard` lifecycle, and config-driven YAML wizards.">
+        <meta name="description" content="AI-powered developer workflows with cost optimization and multi-agent orchestration. Built exclusively for Anthropic Claude.">
       
       
         <meta name="author" content="Patrick Roebuck">
@@ -3756,6 +3756,34 @@
   
   
     <li class="md-nav__item">
+      <a href="../../features/agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
       <a href="../../features/bug-predict/" class="md-nav__link">
         
   
@@ -3876,6 +3904,34 @@
     
   
     Fix Test
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/mcp-server/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Mcp Server
   
 
     
@@ -4141,6 +4197,34 @@
 
               
             
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../features/wizards/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Wizards
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
           </ul>
         </nav>
       
@@ -4175,33 +4259,22 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#public-api-at-a-glance" class="md-nav__link">
+  <a href="#reference" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Public API at a glance
+        Reference
       
     </span>
   </a>
   
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#listing-and-running-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Listing and running wizards
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Listing and running wizards">
+    <nav class="md-nav" aria-label="Reference">
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
-  <a href="#listing-wizards-python" class="md-nav__link">
+  <a href="#registry-functions-attunewizards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Listing wizards (Python)
+        Registry functions — attune.wizards
       
     </span>
   </a>
@@ -4209,10 +4282,10 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#getting-and-running-a-wizard-python" class="md-nav__link">
+  <a href="#classes-attunewizards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Getting and running a wizard (Python)
+        Classes — attune.wizards
       
     </span>
   </a>
@@ -4220,10 +4293,21 @@
 </li>
         
           <li class="md-nav__item">
-  <a href="#listing-and-running-wizards-claude-code-skill" class="md-nav__link">
+  <a href="#dataclasses-attunewizards" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Listing and running wizards (Claude Code skill)
+        Dataclasses — attune.wizards
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#entry-points" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Entry points
       
     </span>
   </a>
@@ -4232,139 +4316,6 @@
         
       </ul>
     </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#the-5-built-in-wizards" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        The 5 built-in wizards
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#step-types" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Step types
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#basewizard-lifecycle" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        BaseWizard lifecycle
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="BaseWizard lifecycle">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#minimal-custom-wizard-python" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Minimal custom wizard (Python)
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#config-driven-wizards-yaml" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Config-driven wizards (YAML)
-      
-    </span>
-  </a>
-  
-    <nav class="md-nav" aria-label="Config-driven wizards (YAML)">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#yaml-schema-v10" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        YAML schema (v1.0)
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#example" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Example
-      
-    </span>
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#lifecycle-helpers" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Lifecycle helpers
-      
-    </span>
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#sessions" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Sessions
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#discovery-registration" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Discovery &amp; registration
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#see-also" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        See also
-      
-    </span>
-  </a>
   
 </li>
       
@@ -4389,365 +4340,121 @@
 
 
 <h1 id="wizards">Wizards<a class="headerlink" href="#wizards" title="Permanent link">&para;</a></h1>
-<p><code>attune.wizards</code> is the runtime for <strong>guided, multi-step interactive
-wizards</strong> in Attune AI. A wizard is an ordered sequence of typed steps
-(questions, LLM calls, task decomposition, review, preview, confirm)
-that walks a user through a task with structured prompts and
-checkpoints.</p>
-<p>It ships with 5 built-in developer-focused wizards and a config-driven
-mode that lets users define custom wizards in YAML — no Python
-required.</p>
-<blockquote>
-<p><strong>Note</strong>: This is not a collection of "industry-specific" or
-"domain-compliance" wizards. The package has no Healthcare, Finance,
-Legal, HIPAA, or SOC2 wizards. Earlier docs that described such a
-surface were fiction — see the <code>doc-fiction-cleanup</code> spec.</p>
-</blockquote>
-<hr />
-<h2 id="public-api-at-a-glance">Public API at a glance<a class="headerlink" href="#public-api-at-a-glance" title="Permanent link">&para;</a></h2>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-0-1" name="__codelineno-0-1" href="#__codelineno-0-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
-<a id="__codelineno-0-2" name="__codelineno-0-2" href="#__codelineno-0-2"></a>    <span class="n">BaseWizard</span><span class="p">,</span>
-<a id="__codelineno-0-3" name="__codelineno-0-3" href="#__codelineno-0-3"></a>    <span class="n">ConfigDrivenWizard</span><span class="p">,</span>
-<a id="__codelineno-0-4" name="__codelineno-0-4" href="#__codelineno-0-4"></a>    <span class="n">DecomposedTask</span><span class="p">,</span>
-<a id="__codelineno-0-5" name="__codelineno-0-5" href="#__codelineno-0-5"></a>    <span class="n">StepType</span><span class="p">,</span>
-<a id="__codelineno-0-6" name="__codelineno-0-6" href="#__codelineno-0-6"></a>    <span class="n">TaskDecomposer</span><span class="p">,</span>
-<a id="__codelineno-0-7" name="__codelineno-0-7" href="#__codelineno-0-7"></a>    <span class="n">WizardConfig</span><span class="p">,</span>
-<a id="__codelineno-0-8" name="__codelineno-0-8" href="#__codelineno-0-8"></a>    <span class="n">WizardResult</span><span class="p">,</span>
-<a id="__codelineno-0-9" name="__codelineno-0-9" href="#__codelineno-0-9"></a>    <span class="n">WizardSession</span><span class="p">,</span>
-<a id="__codelineno-0-10" name="__codelineno-0-10" href="#__codelineno-0-10"></a>    <span class="n">WizardStep</span><span class="p">,</span>
-<a id="__codelineno-0-11" name="__codelineno-0-11" href="#__codelineno-0-11"></a>    <span class="n">delete_custom_wizard</span><span class="p">,</span>
-<a id="__codelineno-0-12" name="__codelineno-0-12" href="#__codelineno-0-12"></a>    <span class="n">get_wizard</span><span class="p">,</span>
-<a id="__codelineno-0-13" name="__codelineno-0-13" href="#__codelineno-0-13"></a>    <span class="n">list_wizards</span><span class="p">,</span>
-<a id="__codelineno-0-14" name="__codelineno-0-14" href="#__codelineno-0-14"></a>    <span class="n">register_wizard</span><span class="p">,</span>
-<a id="__codelineno-0-15" name="__codelineno-0-15" href="#__codelineno-0-15"></a>    <span class="n">save_custom_wizard</span><span class="p">,</span>
-<a id="__codelineno-0-16" name="__codelineno-0-16" href="#__codelineno-0-16"></a><span class="p">)</span>
-</code></pre></div>
-<p>These are the only names exported from <code>attune.wizards</code>
-(<code>src/attune/wizards/__init__.py</code>).</p>
-<hr />
-<h2 id="listing-and-running-wizards">Listing and running wizards<a class="headerlink" href="#listing-and-running-wizards" title="Permanent link">&para;</a></h2>
-<h3 id="listing-wizards-python">Listing wizards (Python)<a class="headerlink" href="#listing-wizards-python" title="Permanent link">&para;</a></h3>
-<p><code>list_wizards()</code> is a module-level function. It returns a list of
-<code>WizardConfig</code> objects sorted by <code>wizard_id</code>, covering built-ins plus
-any custom YAML wizards loaded from <code>.attune/wizards/</code>.</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-1-1" name="__codelineno-1-1" href="#__codelineno-1-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">list_wizards</span>
-<a id="__codelineno-1-2" name="__codelineno-1-2" href="#__codelineno-1-2"></a>
-<a id="__codelineno-1-3" name="__codelineno-1-3" href="#__codelineno-1-3"></a><span class="k">for</span> <span class="n">cfg</span> <span class="ow">in</span> <span class="n">list_wizards</span><span class="p">():</span>
-<a id="__codelineno-1-4" name="__codelineno-1-4" href="#__codelineno-1-4"></a>    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">wizard_id</span><span class="si">:</span><span class="s2">14</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">name</span><span class="si">:</span><span class="s2">30</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">cfg</span><span class="o">.</span><span class="n">source</span><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
-</code></pre></div>
-<h3 id="getting-and-running-a-wizard-python">Getting and running a wizard (Python)<a class="headerlink" href="#getting-and-running-a-wizard-python" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-2-1" name="__codelineno-2-1" href="#__codelineno-2-1"></a><span class="kn">import</span><span class="w"> </span><span class="nn">asyncio</span>
-<a id="__codelineno-2-2" name="__codelineno-2-2" href="#__codelineno-2-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_wizard</span>
-<a id="__codelineno-2-3" name="__codelineno-2-3" href="#__codelineno-2-3"></a>
-<a id="__codelineno-2-4" name="__codelineno-2-4" href="#__codelineno-2-4"></a><span class="n">WizardCls</span> <span class="o">=</span> <span class="n">get_wizard</span><span class="p">(</span><span class="s2">&quot;debug&quot;</span><span class="p">)</span>          <span class="c1"># type[BaseWizard] | None</span>
-<a id="__codelineno-2-5" name="__codelineno-2-5" href="#__codelineno-2-5"></a><span class="n">wizard</span> <span class="o">=</span> <span class="n">WizardCls</span><span class="p">(</span><span class="n">ask_user_callback</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<a id="__codelineno-2-6" name="__codelineno-2-6" href="#__codelineno-2-6"></a><span class="n">result</span> <span class="o">=</span> <span class="n">asyncio</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">wizard</span><span class="o">.</span><span class="n">run</span><span class="p">({</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;TypeError: ...&quot;</span><span class="p">}))</span>
-<a id="__codelineno-2-7" name="__codelineno-2-7" href="#__codelineno-2-7"></a>
-<a id="__codelineno-2-8" name="__codelineno-2-8" href="#__codelineno-2-8"></a><span class="nb">print</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">success</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">steps_completed</span><span class="p">)</span>
-</code></pre></div>
-<p><code>get_wizard()</code> checks the in-memory registry, then triggers entry-point
-discovery (group <code>empathy.wizards</code>), then loads built-ins, then loads
-custom YAML wizards from <code>.attune/wizards/</code>. Returns <code>None</code> if the
-wizard ID is not found.</p>
-<h3 id="listing-and-running-wizards-claude-code-skill">Listing and running wizards (Claude Code skill)<a class="headerlink" href="#listing-and-running-wizards-claude-code-skill" title="Permanent link">&para;</a></h3>
-<p>In Claude Code, the <code>/wizard</code> skill drives the runtime. Routes (from
-<code>.claude/skills/wizard/SKILL.md</code>):</p>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-3-1" name="__codelineno-3-1" href="#__codelineno-3-1"></a>/wizard                      Ask what to do
-<a id="__codelineno-3-2" name="__codelineno-3-2" href="#__codelineno-3-2"></a>/wizard list                 List available wizards
-<a id="__codelineno-3-3" name="__codelineno-3-3" href="#__codelineno-3-3"></a>/wizard run debug            Debug wizard
-<a id="__codelineno-3-4" name="__codelineno-3-4" href="#__codelineno-3-4"></a>/wizard run test-gen         Test generation wizard
-<a id="__codelineno-3-5" name="__codelineno-3-5" href="#__codelineno-3-5"></a>/wizard run refactor         Refactoring wizard
-<a id="__codelineno-3-6" name="__codelineno-3-6" href="#__codelineno-3-6"></a>/wizard run security         Security wizard
-<a id="__codelineno-3-7" name="__codelineno-3-7" href="#__codelineno-3-7"></a>/wizard run release-prep     Release prep wizard
-<a id="__codelineno-3-8" name="__codelineno-3-8" href="#__codelineno-3-8"></a>/wizard create               Create a custom wizard
-<a id="__codelineno-3-9" name="__codelineno-3-9" href="#__codelineno-3-9"></a>/wizard edit                 Edit a wizard
-</code></pre></div>
-<p>The skill aliases (e.g. <code>wizard-debug</code>, <code>wizard-create</code>) are listed in
-<code>src/attune/cli_router.py</code>.</p>
-<blockquote>
-<p>There is currently no top-level <code>attune wizard ...</code> subcommand on
-the Python CLI. <code>attune health</code> does include a wizard discovery
-probe — it calls <code>list_wizards()</code> and reports the count.</p>
-</blockquote>
-<hr />
-<h2 id="the-5-built-in-wizards">The 5 built-in wizards<a class="headerlink" href="#the-5-built-in-wizards" title="Permanent link">&para;</a></h2>
-<p>The built-in set is defined in
-<code>src/attune/wizards/builtin/__init__.py</code> as the <code>BUILTIN_WIZARDS</code> dict:</p>
+<h2 id="reference">Reference<a class="headerlink" href="#reference" title="Permanent link">&para;</a></h2>
+<p>The public surface is the registry functions and the wizard
+classes/dataclasses, all re-exported from <code>attune.wizards</code>.</p>
+<h3 id="registry-functions-attunewizards">Registry functions — <code>attune.wizards</code><a class="headerlink" href="#registry-functions-attunewizards" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th>Wizard ID</th>
-<th>Class</th>
-<th>Domain</th>
-<th>What it does</th>
+<th>Function</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>debug</code></td>
-<td><code>DebugWizard</code></td>
-<td>development</td>
-<td>Gather error details, analyze root cause, decompose a fix</td>
+<td><code>list_wizards() -&gt; list[WizardConfig]</code></td>
+<td>All registered wizard configs (built-in + custom).</td>
 </tr>
 <tr>
-<td><code>test-gen</code></td>
-<td><code>TestGenWizard</code></td>
-<td>testing</td>
-<td>Pick a target, analyze untested paths, plan test files</td>
+<td><code>get_wizard(wizard_id) -&gt; type[BaseWizard] \| None</code></td>
+<td>The wizard class for an id, or <code>None</code>.</td>
 </tr>
 <tr>
-<td><code>refactor</code></td>
-<td><code>RefactorWizard</code></td>
-<td>development</td>
-<td>Describe goal, analyze structure, plan incremental refactor</td>
+<td><code>register_wizard(wizard_id, wizard_class) -&gt; None</code></td>
+<td>Register a <code>BaseWizard</code> subclass.</td>
 </tr>
 <tr>
-<td><code>security</code></td>
-<td><code>SecurityWizard</code></td>
-<td>(varies)</td>
-<td>Scope a scan, generate findings, plan remediations</td>
+<td><code>save_custom_wizard(wizard_data, base_dir=None) -&gt; Path</code></td>
+<td>Persist a config-driven wizard definition; returns the saved path.</td>
 </tr>
 <tr>
-<td><code>release-prep</code></td>
-<td><code>ReleasePrepWizard</code></td>
-<td>release</td>
-<td>Version info, readiness check, optional changelog, plan</td>
+<td><code>delete_custom_wizard(wizard_id, base_dir=None) -&gt; bool</code></td>
+<td>Remove a saved custom wizard.</td>
 </tr>
 </tbody>
 </table>
-<p>Each built-in subclasses <code>BaseWizard</code>, defines a <code>WizardConfig</code>, and
-declares an ordered <code>steps</code> list. For example, <code>DebugWizard</code> runs:</p>
-<ol>
-<li><code>gather_info</code> (QUESTION) — error description, file, stack-trace flag</li>
-<li><code>analyze</code> (LLM_CALL, <code>bug-analysis</code> template, <code>capable</code> tier)</li>
-<li><code>review_analysis</code> (REVIEW of the <code>analyze</code> result)</li>
-<li><code>decompose_fix</code> (TASK_DECOMPOSE)</li>
-<li><code>preview</code> (PREVIEW)</li>
-<li><code>confirm</code> (CONFIRM)</li>
-</ol>
-<p><code>RefactorWizard</code> and <code>SecurityWizard</code> additionally delegate their
-analysis step to a heavier workflow (<code>RefactorPlanWorkflow</code> and
-<code>SecurityAuditWorkflow</code> respectively) for multi-stage scanning while
-preserving the wizard-guided UX.</p>
-<hr />
-<h2 id="step-types">Step types<a class="headerlink" href="#step-types" title="Permanent link">&para;</a></h2>
-<p>The wizard runtime supports six step types, defined as the <code>StepType</code>
-enum in <code>src/attune/wizards/_types.py</code>:</p>
+<h3 id="classes-attunewizards">Classes — <code>attune.wizards</code><a class="headerlink" href="#classes-attunewizards" title="Permanent link">&para;</a></h3>
 <table>
 <thead>
 <tr>
-<th><code>StepType</code></th>
-<th>What it does</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>QUESTION</code></td>
-<td>Collect user input via <code>AskUserQuestion</code> (rendered through <code>SocraticFormEngine</code>).</td>
+<td><code>BaseWizard(ask_user_callback=None, provider=None, **kwargs)</code></td>
+<td>Abstract base; async <code>run(initial_context=None) -&gt; WizardResult</code>; hooks <code>build_prompt_context(step)</code> and <code>process_step_result(step, result)</code>.</td>
 </tr>
 <tr>
-<td><code>LLM_CALL</code></td>
-<td>Render an XML prompt and call an LLM at the step's tier (<code>cheap</code> / <code>capable</code> / <code>premium</code>).</td>
+<td><code>ConfigDrivenWizard(config, steps, **kwargs)</code></td>
+<td>A wizard built from a <code>WizardConfig</code> + <code>list[WizardStep]</code>, no subclass needed.</td>
 </tr>
 <tr>
-<td><code>TASK_DECOMPOSE</code></td>
-<td>Use <code>TaskDecomposer</code> to break the current problem into structured XML sub-tasks.</td>
+<td><code>WizardSession</code></td>
+<td>Per-run session state.</td>
 </tr>
 <tr>
-<td><code>REVIEW</code></td>
-<td>Show the result of a prior <code>LLM_CALL</code> step and ask "does this look right?" (up to 2 retries).</td>
-</tr>
-<tr>
-<td><code>PREVIEW</code></td>
-<td>Format collected data, step results, and tasks into a preview block and store it.</td>
-</tr>
-<tr>
-<td><code>CONFIRM</code></td>
-<td>Final yes/no gate; "no" aborts the wizard cleanly.</td>
+<td><code>TaskDecomposer</code> / <code>DecomposedTask</code></td>
+<td>Back the <code>task_decompose</code> step type (XML task decomposition).</td>
 </tr>
 </tbody>
 </table>
-<p>A step can also carry a <code>condition: Callable[[WizardSession], bool]</code>
-that, when it returns <code>False</code>, causes the step to be skipped.
-<code>ReleasePrepWizard</code> uses this to skip changelog generation when the
-user opts out.</p>
-<hr />
-<h2 id="basewizard-lifecycle"><code>BaseWizard</code> lifecycle<a class="headerlink" href="#basewizard-lifecycle" title="Permanent link">&para;</a></h2>
-<p><code>BaseWizard</code> (in <code>src/attune/wizards/base.py</code>) is an abstract class.
-Subclasses must define:</p>
-<ul>
-<li><code>config: WizardConfig</code> — wizard identity and cost/duration estimates.</li>
-<li><code>steps: list[WizardStep]</code> — the ordered step list.</li>
-<li><code>build_prompt_context(step) -&gt; PromptContext</code> — builds the prompt
-  context for <code>LLM_CALL</code> and <code>TASK_DECOMPOSE</code> steps from session state.</li>
-<li><code>process_step_result(step, result) -&gt; None</code> — stores or transforms
-  the LLM response for use by later steps.</li>
-</ul>
-<p>Everything else — step dispatch, retries, the session, the form
-engine, the XML prompt rendering, the preview/confirm UX — is provided
-for free.</p>
-<p><code>BaseWizard.run(initial_context=None)</code> is the single entry point. It
-is <code>async</code>, creates a fresh <code>WizardSession</code>, iterates over <code>self.steps</code>,
-dispatches each one by <code>StepType</code>, and returns a <code>WizardResult</code> with:</p>
-<ul>
-<li><code>success: bool</code></li>
-<li><code>steps_completed: list[str]</code></li>
-<li><code>collected_data: dict[str, Any]</code> (everything from QUESTION steps)</li>
-<li><code>generated_output: str | dict</code> (the PREVIEW text)</li>
-<li><code>tasks: list[dict]</code> (from TASK_DECOMPOSE)</li>
-<li><code>total_cost: float</code> and <code>total_duration_ms: float</code></li>
-<li><code>error: str | None</code> if the run failed</li>
-</ul>
-<p>If a <code>CONFIRM</code> step gets a "no" answer, the wizard raises an internal
-<code>_WizardAbort</code> and exits cleanly with <code>success=True</code> but no further
-steps.</p>
-<h3 id="minimal-custom-wizard-python">Minimal custom wizard (Python)<a class="headerlink" href="#minimal-custom-wizard-python" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-4-1" name="__codelineno-4-1" href="#__codelineno-4-1"></a><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
-<a id="__codelineno-4-2" name="__codelineno-4-2" href="#__codelineno-4-2"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.meta_workflows.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">FormQuestion</span><span class="p">,</span> <span class="n">QuestionType</span>
-<a id="__codelineno-4-3" name="__codelineno-4-3" href="#__codelineno-4-3"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.prompts</span><span class="w"> </span><span class="kn">import</span> <span class="n">PromptContext</span>
-<a id="__codelineno-4-4" name="__codelineno-4-4" href="#__codelineno-4-4"></a><span class="kn">from</span><span class="w"> </span><span class="nn">attune.wizards</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseWizard</span><span class="p">,</span> <span class="n">StepType</span><span class="p">,</span> <span class="n">WizardConfig</span><span class="p">,</span> <span class="n">WizardStep</span>
-<a id="__codelineno-4-5" name="__codelineno-4-5" href="#__codelineno-4-5"></a>
-<a id="__codelineno-4-6" name="__codelineno-4-6" href="#__codelineno-4-6"></a>
-<a id="__codelineno-4-7" name="__codelineno-4-7" href="#__codelineno-4-7"></a><span class="k">class</span><span class="w"> </span><span class="nc">HelloWizard</span><span class="p">(</span><span class="n">BaseWizard</span><span class="p">):</span>
-<a id="__codelineno-4-8" name="__codelineno-4-8" href="#__codelineno-4-8"></a>    <span class="n">config</span> <span class="o">=</span> <span class="n">WizardConfig</span><span class="p">(</span>
-<a id="__codelineno-4-9" name="__codelineno-4-9" href="#__codelineno-4-9"></a>        <span class="n">wizard_id</span><span class="o">=</span><span class="s2">&quot;hello&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-10" name="__codelineno-4-10" href="#__codelineno-4-10"></a>        <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Hello Wizard&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-11" name="__codelineno-4-11" href="#__codelineno-4-11"></a>        <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Trivial example&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-12" name="__codelineno-4-12" href="#__codelineno-4-12"></a>    <span class="p">)</span>
-<a id="__codelineno-4-13" name="__codelineno-4-13" href="#__codelineno-4-13"></a>
-<a id="__codelineno-4-14" name="__codelineno-4-14" href="#__codelineno-4-14"></a>    <span class="n">steps</span> <span class="o">=</span> <span class="p">[</span>
-<a id="__codelineno-4-15" name="__codelineno-4-15" href="#__codelineno-4-15"></a>        <span class="n">WizardStep</span><span class="p">(</span>
-<a id="__codelineno-4-16" name="__codelineno-4-16" href="#__codelineno-4-16"></a>            <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;ask&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-17" name="__codelineno-4-17" href="#__codelineno-4-17"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Ask name&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-18" name="__codelineno-4-18" href="#__codelineno-4-18"></a>            <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">QUESTION</span><span class="p">,</span>
-<a id="__codelineno-4-19" name="__codelineno-4-19" href="#__codelineno-4-19"></a>            <span class="n">questions</span><span class="o">=</span><span class="p">[</span>
-<a id="__codelineno-4-20" name="__codelineno-4-20" href="#__codelineno-4-20"></a>                <span class="n">FormQuestion</span><span class="p">(</span>
-<a id="__codelineno-4-21" name="__codelineno-4-21" href="#__codelineno-4-21"></a>                    <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-22" name="__codelineno-4-22" href="#__codelineno-4-22"></a>                    <span class="n">text</span><span class="o">=</span><span class="s2">&quot;What&#39;s your name?&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-23" name="__codelineno-4-23" href="#__codelineno-4-23"></a>                    <span class="nb">type</span><span class="o">=</span><span class="n">QuestionType</span><span class="o">.</span><span class="n">TEXT_INPUT</span><span class="p">,</span>
-<a id="__codelineno-4-24" name="__codelineno-4-24" href="#__codelineno-4-24"></a>                <span class="p">),</span>
-<a id="__codelineno-4-25" name="__codelineno-4-25" href="#__codelineno-4-25"></a>            <span class="p">],</span>
-<a id="__codelineno-4-26" name="__codelineno-4-26" href="#__codelineno-4-26"></a>        <span class="p">),</span>
-<a id="__codelineno-4-27" name="__codelineno-4-27" href="#__codelineno-4-27"></a>        <span class="n">WizardStep</span><span class="p">(</span>
-<a id="__codelineno-4-28" name="__codelineno-4-28" href="#__codelineno-4-28"></a>            <span class="nb">id</span><span class="o">=</span><span class="s2">&quot;greet&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-29" name="__codelineno-4-29" href="#__codelineno-4-29"></a>            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Generate greeting&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-30" name="__codelineno-4-30" href="#__codelineno-4-30"></a>            <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">LLM_CALL</span><span class="p">,</span>
-<a id="__codelineno-4-31" name="__codelineno-4-31" href="#__codelineno-4-31"></a>            <span class="n">tier</span><span class="o">=</span><span class="s2">&quot;cheap&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-32" name="__codelineno-4-32" href="#__codelineno-4-32"></a>        <span class="p">),</span>
-<a id="__codelineno-4-33" name="__codelineno-4-33" href="#__codelineno-4-33"></a>        <span class="n">WizardStep</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;preview&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Preview&quot;</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">PREVIEW</span><span class="p">),</span>
-<a id="__codelineno-4-34" name="__codelineno-4-34" href="#__codelineno-4-34"></a>        <span class="n">WizardStep</span><span class="p">(</span><span class="nb">id</span><span class="o">=</span><span class="s2">&quot;confirm&quot;</span><span class="p">,</span> <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Confirm&quot;</span><span class="p">,</span> <span class="n">step_type</span><span class="o">=</span><span class="n">StepType</span><span class="o">.</span><span class="n">CONFIRM</span><span class="p">),</span>
-<a id="__codelineno-4-35" name="__codelineno-4-35" href="#__codelineno-4-35"></a>    <span class="p">]</span>
-<a id="__codelineno-4-36" name="__codelineno-4-36" href="#__codelineno-4-36"></a>
-<a id="__codelineno-4-37" name="__codelineno-4-37" href="#__codelineno-4-37"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">build_prompt_context</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PromptContext</span><span class="p">:</span>
-<a id="__codelineno-4-38" name="__codelineno-4-38" href="#__codelineno-4-38"></a>        <span class="n">name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;name&quot;</span><span class="p">,</span> <span class="s2">&quot;stranger&quot;</span><span class="p">)</span>
-<a id="__codelineno-4-39" name="__codelineno-4-39" href="#__codelineno-4-39"></a>        <span class="k">return</span> <span class="n">PromptContext</span><span class="p">(</span>
-<a id="__codelineno-4-40" name="__codelineno-4-40" href="#__codelineno-4-40"></a>            <span class="n">role</span><span class="o">=</span><span class="s2">&quot;friendly assistant&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-41" name="__codelineno-4-41" href="#__codelineno-4-41"></a>            <span class="n">goal</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Write a one-sentence greeting for </span><span class="si">{</span><span class="n">name</span><span class="si">}</span><span class="s2">.&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-42" name="__codelineno-4-42" href="#__codelineno-4-42"></a>            <span class="n">instructions</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Be warm and concise.&quot;</span><span class="p">],</span>
-<a id="__codelineno-4-43" name="__codelineno-4-43" href="#__codelineno-4-43"></a>            <span class="n">input_type</span><span class="o">=</span><span class="s2">&quot;name&quot;</span><span class="p">,</span>
-<a id="__codelineno-4-44" name="__codelineno-4-44" href="#__codelineno-4-44"></a>            <span class="n">input_payload</span><span class="o">=</span><span class="n">name</span><span class="p">,</span>
-<a id="__codelineno-4-45" name="__codelineno-4-45" href="#__codelineno-4-45"></a>        <span class="p">)</span>
-<a id="__codelineno-4-46" name="__codelineno-4-46" href="#__codelineno-4-46"></a>
-<a id="__codelineno-4-47" name="__codelineno-4-47" href="#__codelineno-4-47"></a>    <span class="k">def</span><span class="w"> </span><span class="nf">process_step_result</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">step</span><span class="p">:</span> <span class="n">WizardStep</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-<a id="__codelineno-4-48" name="__codelineno-4-48" href="#__codelineno-4-48"></a>        <span class="bp">self</span><span class="o">.</span><span class="n">_session</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="s2">&quot;greeting&quot;</span><span class="p">,</span> <span class="n">result</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;summary&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">))</span>
-</code></pre></div>
-<p>Register it (once per process) with <code>register_wizard("hello", HelloWizard)</code>,
-or expose it via the <code>empathy.wizards</code> entry-point group for automatic
-discovery.</p>
-<hr />
-<h2 id="config-driven-wizards-yaml">Config-driven wizards (YAML)<a class="headerlink" href="#config-driven-wizards-yaml" title="Permanent link">&para;</a></h2>
-<p><code>ConfigDrivenWizard</code> lets users author wizards entirely in YAML. A
-custom wizard is a single file under <code>.attune/wizards/&lt;wizard_id&gt;.yaml</code>.</p>
-<h3 id="yaml-schema-v10">YAML schema (v1.0)<a class="headerlink" href="#yaml-schema-v10" title="Permanent link">&para;</a></h3>
-<p>Required top-level fields (validated by <code>_validate_schema</code> in
-<code>config_driven.py</code>):</p>
-<ul>
-<li><code>wizard_id</code></li>
-<li><code>name</code></li>
-<li><code>steps</code> (non-empty list)</li>
-</ul>
-<p>Optional: <code>description</code>, <code>domain</code>, <code>version</code>,
-<code>estimated_cost_range</code> (list of two floats),
-<code>estimated_duration_minutes</code>, <code>schema_version</code>.</p>
-<p>Each step must include <code>id</code> and a valid <code>step_type</code>
-(<code>question</code>, <code>llm_call</code>, <code>task_decompose</code>, <code>review</code>, <code>preview</code>, <code>confirm</code>).
-For <code>llm_call</code> steps, supply a declarative <code>prompt_context</code> block —
-<code>role</code>, <code>goal</code>, <code>instructions</code>, <code>constraints</code>, <code>input_type</code>,
-<code>input_payload</code> — with <code>{session.var_name}</code> placeholders that the
-runtime substitutes from current session state.</p>
-<h3 id="example">Example<a class="headerlink" href="#example" title="Permanent link">&para;</a></h3>
-<div class="highlight"><pre><span></span><code><a id="__codelineno-5-1" name="__codelineno-5-1" href="#__codelineno-5-1"></a><span class="nt">schema_version</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;1.0&quot;</span>
-<a id="__codelineno-5-2" name="__codelineno-5-2" href="#__codelineno-5-2"></a><span class="nt">wizard_id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;code-migration&quot;</span>
-<a id="__codelineno-5-3" name="__codelineno-5-3" href="#__codelineno-5-3"></a><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Code</span><span class="nv"> </span><span class="s">Migration</span><span class="nv"> </span><span class="s">Wizard&quot;</span>
-<a id="__codelineno-5-4" name="__codelineno-5-4" href="#__codelineno-5-4"></a><span class="nt">description</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Guide</span><span class="nv"> </span><span class="s">through</span><span class="nv"> </span><span class="s">migrating</span><span class="nv"> </span><span class="s">code</span><span class="nv"> </span><span class="s">between</span><span class="nv"> </span><span class="s">frameworks&quot;</span>
-<a id="__codelineno-5-5" name="__codelineno-5-5" href="#__codelineno-5-5"></a><span class="nt">domain</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;development&quot;</span>
-<a id="__codelineno-5-6" name="__codelineno-5-6" href="#__codelineno-5-6"></a>
-<a id="__codelineno-5-7" name="__codelineno-5-7" href="#__codelineno-5-7"></a><span class="nt">steps</span><span class="p">:</span>
-<a id="__codelineno-5-8" name="__codelineno-5-8" href="#__codelineno-5-8"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;gather_info&quot;</span>
-<a id="__codelineno-5-9" name="__codelineno-5-9" href="#__codelineno-5-9"></a><span class="w">    </span><span class="nt">name</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Migration</span><span class="nv"> </span><span class="s">Scope&quot;</span>
-<a id="__codelineno-5-10" name="__codelineno-5-10" href="#__codelineno-5-10"></a><span class="w">    </span><span class="nt">step_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;question&quot;</span>
-<a id="__codelineno-5-11" name="__codelineno-5-11" href="#__codelineno-5-11"></a><span class="w">    </span><span class="nt">questions</span><span class="p">:</span>
-<a id="__codelineno-5-12" name="__codelineno-5-12" href="#__codelineno-5-12"></a><span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;source&quot;</span>
-<a id="__codelineno-5-13" name="__codelineno-5-13" href="#__codelineno-5-13"></a><span class="w">        </span><span class="nt">text</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Migrating</span><span class="nv"> </span><span class="s">FROM</span><span class="nv"> </span><span class="s">which</span><span class="nv"> </span><span class="s">framework?&quot;</span>
-<a id="__codelineno-5-14" name="__codelineno-5-14" href="#__codelineno-5-14"></a><span class="w">        </span><span class="nt">type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;text_input&quot;</span>
-<a id="__codelineno-5-15" name="__codelineno-5-15" href="#__codelineno-5-15"></a><span class="w">  </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">id</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;analyze&quot;</span>
-<a id="__codelineno-5-16" name="__codelineno-5-16" href="#__codelineno-5-16"></a><span class="w">    </span><span class="nt">step_type</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;llm_call&quot;</span>
-<a id="__codelineno-5-17" name="__codelineno-5-17" href="#__codelineno-5-17"></a><span class="w">    </span><span class="nt">tier</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;capable&quot;</span>
-<a id="__codelineno-5-18" name="__codelineno-5-18" href="#__codelineno-5-18"></a><span class="w">    </span><span class="nt">prompt_context</span><span class="p">:</span>
-<a id="__codelineno-5-19" name="__codelineno-5-19" href="#__codelineno-5-19"></a><span class="w">      </span><span class="nt">role</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;migration</span><span class="nv"> </span><span class="s">specialist&quot;</span>
-<a id="__codelineno-5-20" name="__codelineno-5-20" href="#__codelineno-5-20"></a><span class="w">      </span><span class="nt">goal</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;Plan</span><span class="nv"> </span><span class="s">migration</span><span class="nv"> </span><span class="s">from</span><span class="nv"> </span><span class="s">{session.source}&quot;</span>
-</code></pre></div>
-<h3 id="lifecycle-helpers">Lifecycle helpers<a class="headerlink" href="#lifecycle-helpers" title="Permanent link">&para;</a></h3>
-<ul>
-<li><code>save_custom_wizard(data, base_dir=None)</code> — validate, write
-  <code>&lt;wizard_id&gt;.yaml</code> under <code>.attune/wizards/</code> (or <code>base_dir</code>), and
-  register the wizard.</li>
-<li><code>delete_custom_wizard(wizard_id, base_dir=None)</code> — remove the YAML
-  and unregister. Raises <code>ValueError</code> if <code>wizard_id</code> is a built-in
-  (the five IDs in <code>BUILTIN_WIZARDS</code>).</li>
-</ul>
-<hr />
-<h2 id="sessions">Sessions<a class="headerlink" href="#sessions" title="Permanent link">&para;</a></h2>
-<p><code>WizardSession</code> (in <code>src/attune/wizards/session.py</code>) is the mutable
-state object that lives for the duration of one <code>wizard.run()</code> call.
-It is created automatically; subclasses interact with it via
-<code>self._session</code> in <code>build_prompt_context</code> and <code>process_step_result</code>.</p>
-<p>Key fields: <code>wizard_id</code>, <code>run_id</code> (12-hex), <code>initial_context</code>,
-<code>collected_data</code>, <code>step_results</code>, <code>tasks</code>, <code>steps_completed</code>,
-<code>steps_skipped</code>, <code>generated_output</code>, <code>total_cost</code>, <code>started_at</code>.</p>
-<p><code>session.get(key, default)</code> does a layered lookup —
-<code>collected_data</code> first, then <code>initial_context</code>.</p>
-<hr />
-<h2 id="discovery-registration">Discovery &amp; registration<a class="headerlink" href="#discovery-registration" title="Permanent link">&para;</a></h2>
-<p><code>get_wizard()</code> and <code>list_wizards()</code> both trigger three loaders, each
-guarded so they run at most once per process:</p>
-<ol>
-<li><code>_discover_wizards()</code> — entry-point group <code>empathy.wizards</code></li>
-<li><code>_load_builtins()</code> — the <code>BUILTIN_WIZARDS</code> dict</li>
-<li><code>_load_custom_wizards()</code> — YAML files in <code>.attune/wizards/</code></li>
-</ol>
-<p><code>register_wizard(wizard_id, wizard_class)</code> is the manual hook — useful
-for tests or in-process registration of Python wizards.</p>
-<hr />
-<h2 id="see-also">See also<a class="headerlink" href="#see-also" title="Permanent link">&para;</a></h2>
-<ul>
-<li><code>src/attune/wizards/</code> — implementation (start with <code>__init__.py</code>,
-  <code>base.py</code>, <code>_types.py</code>, <code>registry.py</code>, <code>config_driven.py</code>).</li>
-<li><code>src/attune/wizards/builtin/</code> — the five built-in wizards.</li>
-<li><code>.claude/skills/wizard/SKILL.md</code> — the Claude Code skill that drives
-  the wizard runtime in a session.</li>
-<li><code>attune health</code> — includes a wizard discovery probe that calls
-  <code>list_wizards()</code>.</li>
-</ul>
+<h3 id="dataclasses-attunewizards">Dataclasses — <code>attune.wizards</code><a class="headerlink" href="#dataclasses-attunewizards" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Type</th>
+<th>Fields</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>WizardConfig</code></td>
+<td><code>wizard_id</code>, <code>name</code>, <code>description</code>, <code>domain</code>, <code>version</code>, <code>source</code>, <code>estimated_cost_range</code>, <code>estimated_duration_minutes</code>.</td>
+</tr>
+<tr>
+<td><code>WizardStep</code></td>
+<td><code>id</code>, <code>name</code>, <code>description</code>, <code>step_type</code>, <code>prompt_template</code>, <code>tier</code>, <code>questions</code>, <code>condition</code>, <code>max_tokens</code>, <code>prompt_context_template</code>, <code>review_source_step_id</code>.</td>
+</tr>
+<tr>
+<td><code>WizardResult</code></td>
+<td><code>wizard_id</code>, <code>run_id</code>, <code>success</code>, <code>steps_completed</code>, <code>collected_data</code>, <code>generated_output</code>, <code>tasks</code>, <code>total_cost</code>, <code>total_duration_ms</code>, <code>error</code>.</td>
+</tr>
+<tr>
+<td><code>StepType</code></td>
+<td><code>question</code>, <code>llm_call</code>, <code>task_decompose</code>, <code>review</code>, <code>preview</code>, <code>confirm</code>.</td>
+</tr>
+</tbody>
+</table>
+<h3 id="entry-points">Entry points<a class="headerlink" href="#entry-points" title="Permanent link">&para;</a></h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Python</td>
+<td><code>get_wizard(&lt;id&gt;)</code>, then <code>await &lt;cls&gt;().run()</code>; <code>list_wizards()</code> to discover.</td>
+</tr>
+<tr>
+<td>Skill</td>
+<td><code>/wizard</code> in a Claude Code conversation.</td>
+</tr>
+</tbody>
+</table>
+<p>No <code>attune wizard</code> CLI command and no MCP tool exist for wizards.</p>
+<!-- attune-generated: source_hash=0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0 feature=wizards kind=reference generated_at=2026-06-23 -->
 
 
 
 
 
 
-
-  
-  
 
 
 

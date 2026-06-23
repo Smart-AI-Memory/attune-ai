@@ -41,6 +41,10 @@
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/architecture/agents/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/architecture/bug-predict/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
@@ -58,6 +62,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/architecture/fix-test/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/architecture/mcp-server/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
@@ -86,6 +94,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/architecture/spec-engine/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/architecture/wizards/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
@@ -165,6 +177,10 @@
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/features/agents/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/features/bug-predict/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
@@ -182,6 +198,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/features/fix-test/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/features/mcp-server/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
@@ -218,6 +238,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/features/spec-engine/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/features/wizards/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
@@ -273,6 +297,10 @@
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/how-to/agents/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/auto-chaining/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
@@ -310,6 +338,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/how-to/lessons-workflow/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/how-to/mcp-server/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
@@ -397,6 +429,10 @@
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/how-to/wizards/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/integration/claude-code-integration/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
@@ -457,6 +493,10 @@
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
+         <loc>https://smartaimemory.com/framework-docs/reference/agents/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
          <loc>https://smartaimemory.com/framework-docs/reference/bug-predict/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
@@ -502,6 +542,10 @@
     </url>
     <url>
          <loc>https://smartaimemory.com/framework-docs/reference/llm-toolkit/</loc>
+         <lastmod>2026-06-23</lastmod>
+    </url>
+    <url>
+         <loc>https://smartaimemory.com/framework-docs/reference/mcp-server/</loc>
          <lastmod>2026-06-23</lastmod>
     </url>
     <url>
