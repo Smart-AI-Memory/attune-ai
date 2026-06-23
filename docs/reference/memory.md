@@ -1,14 +1,4 @@
----
-type: reference
-name: memory-reference
-feature: memory
-depth: reference
-generated_at: 2026-06-23T21:52:16.487778+00:00
-source_hash: 544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b
-status: generated
----
-
-# Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security
+# Memory
 
 ## Reference
 
@@ -82,3 +72,5 @@ satisfies the protocol.
 | Custom backend | Implement `MemoryBackend` / `SearchableMemoryBackend` (from `attune.memory.backend`). |
 | Static context | `ClaudeMemoryLoader().load_all_memory()`. |
 | Runtime management | `MemoryControlPanel`. |
+
+<!-- attune-generated: source_hash=544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b feature=memory kind=reference generated_at=2026-06-23 -->

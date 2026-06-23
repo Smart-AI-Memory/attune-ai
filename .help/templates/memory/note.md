@@ -3,45 +3,127 @@ type: note
 name: memory-note
 feature: memory
 depth: note
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 7d6a88f7e825fe56e3b06e3bce6dd904fe6a75cd1c13a3a134e4b44138df245e
+generated_at: 2026-06-23T21:52:16.487778+00:00
+source_hash: 544951b28662066a703ef7be552af08e83ef52a5186e5ad71ad216119352938b
 status: generated
 ---
 
-# Note: memory
+# Two-tier memory subsystem — short-term working storage, long-term pattern lookup, and security
 
-## Context
+## Overview
 
-The memory subsystem (`src/attune/memory/`) covers short-term storage, semantic search, Claude Code memory file loading, Redis configuration, and an enterprise control panel. It is versioned at `2.2.0`.
+Attune's memory subsystem gives agents two tiers of storage behind one
+API: **short-term** working memory (fast, TTL-expiring, optionally
+Redis-backed) and **long-term** pattern memory (durable, searchable,
+classified). Security runs before anything durable is written —
+auto-classification, PII scrubbing, secrets detection, and at-rest
+encryption for sensitive patterns.
 
-## Two-layer public surface
+The recommended entry point is **`UnifiedMemory`**, which composes both
+tiers and the security layer behind a single object. It is
+environment-aware: a `MemoryConfig` auto-detected from the environment
+chooses backends (in-process for development, Redis for production) so
+the same code runs in either. For custom backends, two protocols —
+`MemoryBackend` and `SearchableMemoryBackend` — define the short-term
+and searchable contracts.
 
-The package exposes two protocol classes that define the storage contract and a set of top-level functions that configure and instantiate backends.
+You reach memory these ways:
 
-**Protocols** (defined in `src/attune/memory/backend.py`):
+- the Python API — `from attune.memory import UnifiedMemory` (the
+  primary surface, documented throughout);
+- the **`MemoryBackend` / `SearchableMemoryBackend` protocols** (in
+  `attune.memory.backend`) — for wiring a custom store (any class
+  implementing the methods works);
+- **`ClaudeMemoryLoader`** — for static project context merged from
+  `CLAUDE.md` files;
+- **`MemoryControlPanel`** — a runtime management surface for browsing,
+  exporting, and clearing stored memory.
 
-- `MemoryBackend` — the base protocol for short-term memory backends. Every backend must implement `stash`, `retrieve`, `delete`, `keys`, `is_connected`, `get_stats`, `close`, `supports_realtime`, and `supports_distributed`.
-- `SearchableMemoryBackend` — extends `MemoryBackend` with semantic operations: `search`, `remember`, `promote`, `prune`, and `recent`.
+`UnifiedMemory`'s public methods are synchronous — call them directly,
+no `await`.
 
-**Configuration and factory functions** (in `src/attune/memory/config.py` and `src/attune/memory/__init__.py`):
+## Concepts
 
-- `is_redis_available()` — probes Redis availability without importing the Redis subsystem, making it safe to call at startup.
-- `parse_redis_url(url)` — converts a Redis URL string into a connection-parameter dict.
-- `get_redis_config()` — reads connection parameters from environment variables; marked legacy because it returns a plain dict rather than a typed config object.
-- `get_redis_memory(url, use_mock)` — the preferred factory; returns a `RedisShortTermMemory` instance configured from the environment.
+### Two tiers, one object
 
-The functions and classes are designed to compose: factory functions typically return objects that satisfy `MemoryBackend` or `SearchableMemoryBackend`, and backend methods mirror the top-level function signatures.
+`UnifiedMemory(user_id=...)` exposes both tiers:
 
-## Claude Code memory integration
+- **Short-term** — a keyed working store: `stash(key, value,
+  ttl_seconds=None)` writes, `retrieve(key)` reads. Entries expire
+  after `ttl_seconds` (or the config default). Backed by Redis when
+  available, an in-process store otherwise.
+- **Long-term** — durable, searchable **patterns**:
+  `persist_pattern(content, pattern_type, ...)` stores one,
+  `recall_pattern(pattern_id)` reads it back, and `search_patterns(
+  query=..., limit=10)` queries by content. Patterns can be **staged**
+  first (`stage_pattern(...)`) and later **promoted** to durable
+  storage (`promote_pattern(staged_id)`).
 
-`ClaudeMemoryLoader` (in `src/attune/memory/claude_memory.py`) loads and caches `CLAUDE.md` files. Its behavior is controlled by `ClaudeMemoryConfig`, which lets you enable or disable each memory scope (`load_enterprise`, `load_user`, `load_project`), cap file size with `max_file_size_bytes` (default 1 000 000 bytes), and limit import recursion with `max_import_depth` (default 5). Each loaded file is represented as a `MemoryFile` dataclass carrying its `level`, `path`, `content`, `imports`, and `load_order`.
+### Construction is environment-aware
 
-`create_default_project_memory(project_root, framework)` writes a starter `.claude/CLAUDE.md` file into a project tree. The injected block is delimited by the markers `<!-- attune-lessons-start -->` and `<!-- attune-lessons-end -->`.
+`UnifiedMemory` takes a required `user_id`, an optional `config`
+(`MemoryConfig`, default auto-detected from the environment), and an
+optional `access_tier` (`AccessTier`, default `CONTRIBUTOR`).
+`MemoryConfig.from_environment()` reads `ATTUNE_`-prefixed variables
+(`EMPATHY_` also accepted) — `ATTUNE_ENV` selects `development`,
+`staging`, or `production`, which in turn drives Redis and storage
+defaults. Construct one with explicit settings via
+`UnifiedMemory(user_id="me", config=MemoryConfig(...))`.
 
-## Enterprise control panel
+### Security runs before durable writes
 
-`MemoryControlPanel` (configured via `ControlPanelConfig`) provides operational management: starting and stopping Redis, retrieving statistics via `get_statistics()`, listing or deleting stored patterns, clearing short-term memory with `clear_short_term()`, and exporting patterns with `export_patterns()`. `run_api_server()` exposes these operations over HTTP with optional API-key authentication (`APIKeyAuth`), rate limiting (`RateLimiter`), and TLS.
+When you persist a pattern, classification and scrubbing run first.
+`auto_classify=True` (the default) assigns a `Classification` —
+`PUBLIC`, `INTERNAL`, or `SENSITIVE` — from the content and pattern
+type; PII is scrubbed and credential-like content is flagged before
+storage; `SENSITIVE` patterns are encrypted at rest. You can pass an
+explicit `classification` to override the auto-assignment. Reads honor
+the caller's `access_tier` unless you set `check_permissions=False` on
+`recall_pattern`.
 
-## Railway deployment
+### Capabilities tell you what the backend can do
 
-`get_railway_redis()` is a convenience factory for Railway-hosted deployments. It raises `OSError` if `REDIS_URL` is not set in the environment, with a message directing you to run `railway add --database redis`.
+A deployment's backend may or may not support real-time updates,
+distribution across processes, or durable persistence. `UnifiedMemory`
+surfaces this: `get_capabilities()` returns a `dict[str, bool]`, and
+`supports_realtime()`, `supports_distributed()`, and
+`supports_persistence()` answer individually. `health_check()` and
+`get_backend_status()` report runtime state. Check capabilities before
+relying on, say, cross-process coordination.
+
+### Custom backends implement a protocol
+
+`MemoryBackend` is a `@runtime_checkable` `Protocol` for short-term
+stores: `stash(key, value, ttl, agent_id)`, `retrieve(key, agent_id)`,
+`delete(key)`, `keys(pattern)`, `is_connected()`, `get_stats()`,
+`close()`, plus `supports_realtime()` / `supports_distributed()`.
+`SearchableMemoryBackend` extends it with `search(query, limit)`,
+`remember(content, ...)`, `promote(session_id)`, `prune(max_age_days)`,
+and `recent(limit)`. Any class implementing the methods satisfies the
+protocol — no base class to inherit. (Note these protocol signatures —
+`stash(key, value, ttl, agent_id)` — differ from `UnifiedMemory`'s
+own `stash(key, value, ttl_seconds)`.)
+
+### Static project context
+
+`ClaudeMemoryLoader` resolves `CLAUDE.md` files at enterprise, user,
+and project levels and merges them via its `load_all_memory()` method.
+Which levels load is controlled by the `MemoryConfig` **fields**
+`load_enterprise_memory` / `load_user_memory` / `load_project_memory`
+(not loader methods). This is the static counterpart to the read/write
+tiers above.
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API is
+  `UnifiedMemory`, `MemoryConfig`, and the security/loader classes
+  re-exported from `attune.memory`, plus the `MemoryBackend` /
+  `SearchableMemoryBackend` protocols from `attune.memory.backend`.
+  Submodule internals (`mixins/`, `short_term/`, `long_term_*`) may
+  change.
+- **Let classification run.** Keep `auto_classify=True` unless you have
+  a reason to set the level yourself.
+- **Check capabilities, don't assume.** Use `get_capabilities()` /
+  `supports_*()` before relying on real-time or cross-process behavior.
+- **Close when done.** Call `close()` (or `save()`) to flush and
+  release the backend.
