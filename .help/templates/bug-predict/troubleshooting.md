@@ -3,94 +3,46 @@ type: troubleshooting
 name: bug-predict-troubleshooting
 feature: bug-predict
 depth: troubleshooting
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Troubleshoot bug predict
+# Predict likely bug hotspots with three Agent SDK subagents
 
-## Before you start
+## Failure modes
 
-Bug prediction scans your codebase for patterns that historically cause production incidents — `dangerous_eval`, `broad_exception`, and `incomplete_code` — and returns a risk report scored 0–100. The workflow coordinates three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) and formats output through `format_bug_predict_report()`. Failures can occur at the workflow, subagent, or report-formatting layer.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BugPredictionWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Scan stops early / partial report | The depth's agent-turn or `max_budget_usd` budget was reached | Use a shallower path or raise depth deliberately (cost rises) | medium |
+| `format_bug_predict_report(result, ...)` raises / prints nothing useful | It expects the pre-v4.2.0 dict shape, **not** the `WorkflowResult` `execute` returns | Read `result.final_output` / `result.summary` directly | medium |
+| Editing `./attune.config.yml`'s `bug_predict` block changes nothing | That block configures the internal static pattern helpers, which the live SDK workflow does not run | Steer the scan with `system_prompt_suffix` (or a deeper `depth`) instead | medium |
 
-## Symptom table
+### Risk areas
 
-| If you observe | Check |
-|----------------|-------|
-| `BugPredictionWorkflow.execute()` raises an exception | Read the full traceback — it names the file and line. Check whether the `path` argument resolves to a real directory before calling `execute()`. |
-| The report is empty or shows 0 findings on a path that should have issues | Confirm the scanned path contains `.py` files. If it does, check whether all findings are being suppressed by the false-positive filter (look for `# INTENTIONAL:`, `# noqa: BLE001`, or `_INTENTIONAL_KEYWORDS` matches). |
-| `format_bug_predict_report()` returns garbled or incomplete output | Verify that the `result` dict passed to `format_bug_predict_report(result, input_data)` is the unmodified return value of `execute()`. A partial or manually constructed dict can omit required keys. |
-| The CLI entry point (`main()`) exits without output | Run with a path argument and check stderr for an error message. `main()` is the CLI entry point — it does not return a value, so silent exit usually means the path was not found or was empty. |
-| Risk score is unexpectedly low despite known risky patterns | Check whether the flagged files match any of the test-file patterns (`test_bug_predict`, `test_scanner`, `test_security_scan`). Test files are excluded from scoring. |
-| Behavior differs between two runs on the same code | Look for environment drift: changed files, a dependency upgrade, or a different working directory affecting relative path resolution. |
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it
+  is the single most common bug-predict mistake.
+- **Findings are predictions, not proofs.** The subagents apply
+  LLM judgment; a HIGH finding means "investigate first," not
+  "this is definitely a bug." Confirm before acting.
+- **The static helpers are not the live scanner.** The regex
+  detectors in `bug_predict_patterns.py` and the
+  `./attune.config.yml` `bug_predict` settings are a separate
+  layer; they do not change what the three subagents do.
 
-## Step-by-step diagnosis
+### Diagnosis order
 
-Work from cheapest to most invasive. Stop as soon as you find the cause.
-
-1. **Reproduce against a minimal path.**
-   Call `/bug-predict` on a single file you control — for example, a file you know contains a bare `except:`. If the expected finding appears, the scanner is working and the issue is specific to your target path or environment.
-
-   ```
-   /bug-predict src/api/webhook.py
-   ```
-
-2. **Verify the path is reachable.**
-   Relative paths resolve from the working directory at the time `execute()` is called. Print or log the resolved path before passing it to `BugPredictionWorkflow.execute()` to rule out a working-directory mismatch.
-
-3. **Check false-positive suppression.**
-   If findings disappear unexpectedly, review the code under scan for any of the suppression markers the scanner honors:
-   - `# INTENTIONAL:` comments on broad-exception blocks
-   - `# noqa: BLE001` markers
-   - Keywords from `_INTENTIONAL_KEYWORDS`: `fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`
-
-   These are intentional suppressions — remove the marker if the suppression is wrong, not the pattern check.
-
-4. **Run the related test suite.**
-   ```
-   pytest -k "bug_predict" -v
-   ```
-   If a test exercises the failing path, its fixtures show you the expected input shape for `BugPredictionWorkflow` and `format_bug_predict_report()`.
-
-5. **Inspect `format_bug_predict_report()` inputs directly.**
-   If the report output is wrong but `execute()` succeeds, call `format_bug_predict_report(result, input_data)` in isolation with the raw `result` dict to confirm the formatting layer is the source. A malformed `result` dict is the most common cause of garbled report output.
-
-6. **Check subagent completion.**
-   `BugPredictionWorkflow` coordinates three subagents: `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. If the returned report is missing a section (Summary, Bugs, or Suggestions), one subagent likely did not complete. Look for timeout or error signals in the `WorkflowResult` before the report is formatted.
-
-## Common fixes
-
-- **Path does not exist or is empty.**
-  Pass an absolute path or confirm your working directory before calling `execute()`:
-  ```python
-  import os
-  from workflows.bug_predict import BugPredictionWorkflow
-
-  wf = BugPredictionWorkflow()
-  result = wf.execute(path=os.path.abspath("src/"))
-  ```
-
-- **All findings suppressed by false-positive filter.**
-  If every match in a file carries a suppression marker and the suppression is wrong, remove the marker from the source file. Do not disable the filter globally — it exists to reduce noise from safe patterns like `regex.exec()` and test fixture strings.
-
-- **`format_bug_predict_report()` receives a partial dict.**
-  Always pass the unmodified return value of `execute()` as the `result` argument:
-  ```python
-  from workflows.bug_predict_report import format_bug_predict_report
-
-  report = format_bug_predict_report(result=wf.execute(path="src/"), input_data={"path": "src/"})
-  ```
-
-- **Dependency version mismatch.**
-  A dependency upgrade can change pattern-matching behavior. Run `pip show <dep>` to confirm installed versions match your lockfile. This is a change outside the feature itself — align your environment before rerunning.
-
-- **Test files excluded from results.**
-  Files whose names match `test_bug_predict`, `test_scanner`, or `test_security_scan` are excluded from scoring. If you are scanning a test directory and seeing no results, this is expected behavior.
-
-## Source files
-
-- `workflows/bug_predict.py` — `BugPredictionWorkflow` class and subagent orchestration
-- `workflows/bug_predict_report.py` — `format_bug_predict_report()` and `main()` CLI entry point
-
-**Tags:** `bugs`, `prediction`, `scanning`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns` actually used.
+5. Run the related tests: `pytest -k bug_predict -v`.

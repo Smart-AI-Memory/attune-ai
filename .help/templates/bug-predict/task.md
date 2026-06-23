@@ -3,75 +3,106 @@ type: task
 name: bug-predict-task
 feature: bug-predict
 depth: task
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Run Bug Prediction
+# Predict likely bug hotspots with three Agent SDK subagents
 
-Use `/bug-predict` when you want to find likely bug locations in a codebase before they surface in production, using pattern detection and complexity analysis.
+## Tasks
 
-## Prerequisites
+### Scan a path from the CLI
 
-- Access to the project source code
-- The target path you want to scan (a single file, a directory, or `.` for the whole project)
+**Goal:** run a one-off prediction over a directory without
+writing any Python.
 
-## Run a scan
+**Steps:**
 
-1. **Choose your entry point.**
-   - To scan interactively from the command line, call `main()` in `workflows.bug_predict_report`. This is the CLI entry point for the bug prediction workflow.
-   - To run a scan programmatically, instantiate `BugPredictionWorkflow` from `workflows.bug_predict` and call `execute()`:
+```bash
+# Default depth (standard) over a directory:
+attune workflow run bug-predict --path src/
 
-     ```python
-     from workflows.bug_predict import BugPredictionWorkflow
+# Deeper scan, JSON output for a CI step:
+attune workflow run bug-predict --path src/ --depth deep --json
 
-     workflow = BugPredictionWorkflow()
-     result = workflow.execute(path="src/")
-     ```
+# Cost-saving pass (unpinned subagents run on Haiku):
+attune workflow run bug-predict --path src/ --cheap
+```
 
-2. **Scope the scan to the path you care about.**
-   Pass the target as the `path` argument to `execute()`. You can target a single file, a directory tree, or the whole project:
+**Verify:** `--path` / `-p` defaults to the current directory;
+`--depth` accepts `quick`, `standard`, or `deep`; `--json` / `-j`
+emits machine-readable output; `--cheap` forces every subagent
+without an explicit model onto Haiku for that run. Use
+`attune workflow info bug-predict` to confirm the workflow is
+registered, and `attune workflow list` to see it alongside the
+other workflows.
 
-   | Target | Example |
-   |--------|---------|
-   | One file | `path="src/auth.py"` |
-   | A directory | `path="src/"` |
-   | Whole project | `path="."` |
+### Call the prediction from Python
 
-3. **Format the output.**
-   Pass the `WorkflowResult` returned by `execute()` to `format_bug_predict_report()`:
+**Goal:** drive bug-predict from a hook or custom tool and act on
+the result.
 
-   ```python
-   from workflows.bug_predict_report import format_bug_predict_report
+**Steps:**
 
-   report = format_bug_predict_report(result=result.data, input_data={"path": "src/"})
-   print(report)
-   ```
+```python
+import asyncio
 
-   The report organizes findings by severity (HIGH, MEDIUM, LOW) with file paths, line numbers, pattern types, and plain-English descriptions.
+from attune.workflows import BugPredictionWorkflow
 
-4. **Customize the orchestrator prompt if needed.**
-   `BugPredictionWorkflow.__init__` accepts a `system_prompt_suffix` keyword argument. Pass a string to append additional instructions to the default orchestrator prompt — for example, to restrict the scan to specific pattern types or adjust the output format.
 
-   ```python
-   workflow = BugPredictionWorkflow(system_prompt_suffix="Focus only on dangerous_eval findings.")
-   ```
+async def main() -> None:
+    workflow = BugPredictionWorkflow()
+    result = await workflow.execute(path="src/api/", depth="quick")
 
-5. **Run the tests to verify your changes.**
-   After any modification to `workflows/bug_predict.py` or `workflows/bug_predict_report.py`, run:
+    if not result.success:
+        print("scan failed:", result.error)
+        return
 
-   ```
-   pytest -k "bug-predict"
-   ```
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
 
-## Confirm success
 
-The scan succeeded when `format_bug_predict_report()` returns a non-empty report string that includes a **Summary** section with an overall risk score (0–100), a **Bugs** section with at least one severity group, and a **Suggestions** section with prioritized prevention strategies.
+asyncio.run(main())
+```
 
-## Key files
+**Verify:** `execute` is a coroutine — `await` it. A completed
+scan returns `success=True` with the report in `final_output`;
+a failure returns `success=False` with a populated `error` and
+`error_type`. `metadata` echoes the `path`, `depth`, and
+`max_turns` actually used.
 
-| File | Purpose |
-|------|---------|
-| `src/attune/workflows/bug_predict.py` | `BugPredictionWorkflow` class and three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) |
-| `src/attune/workflows/bug_predict_report.py` | `format_bug_predict_report()` and the `main()` CLI entry point |
+### Steer the scan with a prompt suffix
+
+**Goal:** narrow or focus the analysis without replacing the
+built-in orchestrator behavior.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import BugPredictionWorkflow
+
+
+async def main() -> None:
+    workflow = BugPredictionWorkflow(
+        system_prompt_suffix=(
+            "Focus on authentication code. "
+            "Skip LOW severity findings."
+        ),
+    )
+    result = await workflow.execute(path="src/auth/")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `system_prompt_suffix` is a keyword-only constructor
+argument appended to the orchestrator's system prompt at call
+time. The three subagents still run their normal analysis; the
+suffix only steers the orchestrator. The empty-string default
+leaves behavior unchanged (this is the hook discovery-sweep's
+`BugPredictSource` uses to augment the prompt per instance).

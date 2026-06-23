@@ -3,53 +3,46 @@ type: error
 name: bug-predict-error
 feature: bug-predict
 depth: error
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 750014addbbc0825c7da37de3ee7d765c2c29f9e0e9db47dbc9d3df3542340a0
+generated_at: 2026-06-23T12:37:44.972124+00:00
+source_hash: 3c6441a981e2df351b5043ad522cb27f0fed3c7907db1157a7f65632cc74504d
 status: generated
 ---
 
-# Bug Predict errors
+# Predict likely bug hotspots with three Agent SDK subagents
 
-## Common error signatures
+## Failure modes
 
-Errors in bug predict fall into three categories: failures during workflow execution, failures during report formatting, and failures in the subagent coordination layer.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BugPredictionWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Scan stops early / partial report | The depth's agent-turn or `max_budget_usd` budget was reached | Use a shallower path or raise depth deliberately (cost rises) | medium |
+| `format_bug_predict_report(result, ...)` raises / prints nothing useful | It expects the pre-v4.2.0 dict shape, **not** the `WorkflowResult` `execute` returns | Read `result.final_output` / `result.summary` directly | medium |
+| Editing `./attune.config.yml`'s `bug_predict` block changes nothing | That block configures the internal static pattern helpers, which the live SDK workflow does not run | Steer the scan with `system_prompt_suffix` (or a deeper `depth`) instead | medium |
 
-**Workflow execution (`BugPredictionWorkflow.execute`)**
+### Risk areas
 
-- `ValueError` — the `path` argument in the task prompt template is missing or resolves to a location the orchestrator cannot access.
-- `RuntimeError` — one or more of the three subagents (`pattern-scanner`, `risk-correlator`, `prevention-advisor`) did not return a result before the workflow completed.
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it
+  is the single most common bug-predict mistake.
+- **Findings are predictions, not proofs.** The subagents apply
+  LLM judgment; a HIGH finding means "investigate first," not
+  "this is definitely a bug." Confirm before acting.
+- **The static helpers are not the live scanner.** The regex
+  detectors in `bug_predict_patterns.py` and the
+  `./attune.config.yml` `bug_predict` settings are a separate
+  layer; they do not change what the three subagents do.
 
-**Report formatting (`format_bug_predict_report`)**
+### Diagnosis order
 
-- `KeyError` — `result` or `input_data` is missing a field the formatter expects (for example, `severity`, `findings`, or `risk_score`).
-- `TypeError` — `result` or `input_data` was passed as `None` or an unexpected type instead of `dict`.
-
-**CLI entry point (`main`)**
-
-- `SystemExit` with a non-zero code — the path argument was not supplied or could not be resolved before `BugPredictionWorkflow` was instantiated.
-
-## Where errors originate
-
-- `BugPredictionWorkflow.__init__` in `workflows/bug_predict.py` — validates constructor arguments, including `system_prompt_suffix`, before the workflow starts. A bad value here prevents any scanning from running.
-- `BugPredictionWorkflow.execute` in `workflows/bug_predict.py` — coordinates `pattern-scanner`, `risk-correlator`, and `prevention-advisor`. If subagent synthesis fails, the error surfaces here as a `WorkflowResult` with no findings or as an unhandled exception.
-- `format_bug_predict_report` in `workflows/bug_predict_report.py` — converts the raw `result` dict and `input_data` dict into the human-readable report. Malformed or incomplete dicts from a partial `execute` run will cause this function to fail.
-- `main` in `workflows/bug_predict_report.py` — the CLI entry point. Errors here typically mean the workflow never ran, not that it ran and produced bad output.
-
-## How to diagnose
-
-1. **Identify which layer failed.** Check whether the traceback points to `bug_predict.py` (workflow or subagent coordination) or `bug_predict_report.py` (formatting or CLI). The fix differs by layer.
-
-2. **Check the `result` dict shape.** If the error is a `KeyError` or `TypeError` inside `format_bug_predict_report`, inspect the `WorkflowResult` returned by `execute`. A partial run — for example, one where `risk-correlator` or `prevention-advisor` did not finish — produces an incomplete dict that the formatter cannot process.
-
-3. **Check the path argument.** `_TASK_PROMPT_TEMPLATE` requires a `{path}` value. If `execute` was called without a resolvable path, the orchestrator prompt is malformed and all three subagents receive bad input. Confirm the path exists before calling `execute`.
-
-4. **Inspect false-positive filter state.** If the scan runs but returns no findings on code you expect to be flagged, check whether the matched lines contain any `_INTENTIONAL_KEYWORDS` (`fallback`, `ignore`, `optional`, `best effort`, `graceful`, `intentional`) or a `# INTENTIONAL:` / `# noqa: BLE001` marker, which the scanner suppresses automatically.
-
-5. **Verify test files are not contaminating results.** Files matching `_SCANNER_TEST_PATTERNS` (`test_bug_predict`, `test_scanner`, `test_security_scan`) are excluded from scanning. If your production code path shares a name with one of these patterns, it will be silently skipped.
-
-## Source files
-
-- `src/attune/workflows/bug_predict.py`
-- `src/attune/workflows/bug_predict_report.py`
-
-**Tags:** `bugs`, `prediction`, `scanning`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns` actually used.
+5. Run the related tests: `pytest -k bug_predict -v`.
