@@ -535,6 +535,38 @@ def _disable_help_telemetry(monkeypatch):
 
 
 @pytest.fixture(autouse=True, scope="function")
+def _isolate_attune_home(tmp_path, monkeypatch):
+    """Route ~/.attune writes to a per-test tmp dir.
+
+    Without this, anything that resolves the default attune home writes
+    into the developer's real ``~/.attune`` during the test run. The worst
+    offender is the workflow telemetry singleton
+    (``UsageTracker.get_instance()``): every test that executes a stub
+    workflow appended ``stub-workflow`` / ``test-tier-fallback`` rows to the
+    real ``~/.attune/telemetry/usage.jsonl``, polluting it (and drowning any
+    genuine dogfood signal). Setting ``ATTUNE_HOME`` per test (auto-undone by
+    monkeypatch, and honored by both ``attune.ops.config.attune_home`` and
+    ``UsageTracker``) redirects those writes; resetting the singleton forces
+    it to re-resolve under the tmp dir on next use and prevents a
+    tmp-pointed instance from leaking into the next test.
+    """
+    monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / ".attune"))
+
+    def _reset_usage_singleton():
+        try:
+            from attune.telemetry.usage_tracker import UsageTracker
+
+            UsageTracker._instance = None
+        except Exception:  # noqa: BLE001
+            # INTENTIONAL: telemetry is optional; env isolation still applies.
+            pass
+
+    _reset_usage_singleton()
+    yield
+    _reset_usage_singleton()
+
+
+@pytest.fixture(autouse=True, scope="function")
 def _stop_leaked_heartbeat_threads():
     """Stop any CrossSessionCoordinator heartbeat thread a test leaks.
 

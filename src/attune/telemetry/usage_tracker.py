@@ -12,6 +12,7 @@ import hashlib
 import hmac
 import json
 import logging
+import os
 import threading
 from collections.abc import Iterator
 from datetime import datetime, timedelta, timezone
@@ -67,7 +68,14 @@ class UsageTracker:
                         on unexpected process termination.
 
         """
-        self.telemetry_dir = telemetry_dir or Path.home() / ".attune" / "telemetry"
+        # Resolve the default under ATTUNE_HOME (env override -> ~/.attune),
+        # matching attune.ops.config.attune_home(). Read inline rather than
+        # importing that module to keep this base-telemetry module free of any
+        # attune.ops dependency. Lets ops/tests relocate telemetry off real
+        # ~/.attune (tests isolate it per-test; see tests/conftest.py).
+        _home = os.environ.get("ATTUNE_HOME")
+        _attune_dir = Path(_home).expanduser() if _home else Path.home() / ".attune"
+        self.telemetry_dir = telemetry_dir or _attune_dir / "telemetry"
         self.retention_days = retention_days
         self.max_file_size_mb = max_file_size_mb
         self.buffer_size = buffer_size
@@ -229,18 +237,28 @@ class UsageTracker:
         If no summary file exists (e.g. first run after upgrade), rebuilds
         it from existing JSONL files. This is a one-time O(entries) cost;
         subsequent loads are O(days).
-        """
-        if self._summary_file.exists():
-            try:
-                with open(self._summary_file, encoding="utf-8") as f:
-                    data = json.load(f)
-                self._daily_summary = data.get("days", {})
-                return
-            except (OSError, json.JSONDecodeError):
-                self._daily_summary = {}
 
-        # No summary file — build from existing disk data (migration path)
-        self._rebuild_summary_from_disk()
+        Telemetry is best-effort: a read-only or otherwise unreadable
+        telemetry dir (the ``.exists()`` stat and the rebuild glob both
+        touch the filesystem) must degrade to an empty summary, never
+        raise — the same contract as the guarded ``mkdir`` in __init__.
+        """
+        try:
+            if self._summary_file.exists():
+                try:
+                    with open(self._summary_file, encoding="utf-8") as f:
+                        data = json.load(f)
+                    self._daily_summary = data.get("days", {})
+                    return
+                except (OSError, json.JSONDecodeError):
+                    self._daily_summary = {}
+
+            # No summary file — build from existing disk data (migration path)
+            self._rebuild_summary_from_disk()
+        except OSError:
+            # Telemetry dir unreadable (e.g. read-only) — disable gracefully.
+            logger.debug("Failed to load telemetry summary: %s", self.telemetry_dir)
+            self._daily_summary = {}
 
     def _rebuild_summary_from_disk(self) -> None:
         """Scan all JSONL files to build the daily summary.

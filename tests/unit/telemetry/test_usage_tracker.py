@@ -506,6 +506,26 @@ class TestSingletonPattern:
         UsageTracker._instance = None
 
 
+class TestDefaultTelemetryDir:
+    """The default telemetry dir must honor ATTUNE_HOME.
+
+    Regression guard for the test-pollution leak: the default used
+    ``Path.home() / ".attune"`` directly, so the workflow telemetry
+    singleton wrote stub/test events into the developer's real
+    ``~/.attune/telemetry/usage.jsonl`` during the suite. The default now
+    reads ``ATTUNE_HOME`` (matching ``attune.ops.config.attune_home``),
+    which ``tests/conftest.py`` isolates to a tmp dir per test.
+    """
+
+    def test_default_dir_respects_attune_home(self, tmp_path, monkeypatch):
+        """With no explicit telemetry_dir, the default lands under ATTUNE_HOME."""
+        monkeypatch.setenv("ATTUNE_HOME", str(tmp_path / "home"))
+        UsageTracker._instance = None
+        tracker = UsageTracker()  # no telemetry_dir -> resolve default
+        assert tracker.telemetry_dir == tmp_path / "home" / "telemetry"
+        UsageTracker._instance = None
+
+
 class TestPermissionErrors:
     """Test handling of permission errors."""
 
