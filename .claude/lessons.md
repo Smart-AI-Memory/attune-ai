@@ -10526,3 +10526,72 @@ files.
   Reinforces that the independent adversarial-review step (R7 step 4b)
   is load-bearing, not decorative — it found a real omission the author
   missed.
+
+- **MCP tool handlers can silently pass STALE kwargs the workflow's
+  current `execute()` ignores — "registered ≠ working" at the MCP
+  boundary; verify the handler's `execute(...)` kwargs are actually
+  read by that workflow's CURRENT signature**: 2026-06-23, grounding
+  the smart-test and doc-gen single-source masters against source
+  exposed TWO broken MCP tools of the same shape. The v4.2.0 SDK
+  migration changed several workflow `execute` signatures to
+  `(path, depth)`, but the MCP handlers in `src/attune/mcp/server.py`
+  / `workflow_handlers.py` were never updated, so they pass
+  pre-migration kwargs that the new `execute` silently drops:
+  `_run_test_generation` →
+  `TestGenerationWorkflow().execute(module_path=...)` and
+  `_run_doc_gen` →
+  `DocumentGenerationWorkflow().execute(source_code=..., doc_type=...,
+  audience=...)`. Both workflows' `execute` read only
+  `kwargs.get("path","")` / `kwargs.get("depth",...)`, so `path` is
+  empty and EVERY call returns the `"path argument is required"`
+  failure — the tools never run. Unit tests mock `execute`, so they
+  never caught it (the classic "Registered ≠ working — dogfood the
+  live loop" failure mode, here at the MCP layer). The `tool_schemas`
+  entries also still declare the old interface (`source_path`/
+  `doc_type`/`audience`; a `module` param), so the schema is no proof
+  of reality either. Detection that works: grep the kwarg names the
+  handler passes (`module_path`, `source_code`, `doc_type`) INSIDE the
+  workflow module — zero hits = silently dropped. Durable rules: (1)
+  when documenting or trusting an MCP tool, verify its handler's
+  `execute(...)` call against the workflow's CURRENT `execute`
+  signature, don't trust the schema; (2) ship NON-mocked
+  handler→workflow round-trip tests so a kwarg-name drift fails
+  loudly; (3) one found instance is a signal to AUDIT every `_run_*`
+  handler — the drift is systemic after any execute-signature
+  migration. For docs-only work, under-claim the broken MCP surface
+  (steer users to the CLI / Python API, which pass `path` correctly)
+  and flag the bug for a src fix rather than asserting the tool works.
+
+- **One feature NAME can map to TWO distinct, fully-built
+  implementations reached by different entry points — resolve which
+  workflow each surface actually runs (registry `SLUG_TO_CLASS` for
+  the CLI vs the MCP handler's direct import) before single-sourcing
+  or trusting it**: 2026-06-23, `release-prep` could not be
+  single-sourced because BOTH `ReleasePreparationWorkflow`
+  (`src/attune/workflows/release_prep.py`) and `ReleasePrepTeamWorkflow`
+  (`src/attune/agents/release/release_prep_team.py`) set
+  `name = "release-prep"`, and the two are reached by DIFFERENT entry
+  points running DIFFERENT code. The CLI `attune workflow run
+  release-prep` resolves the slug via `workflows/__init__.py`
+  `SLUG_TO_CLASS["release-prep"] → "ReleasePrepTeamWorkflow"` (four
+  REAL agent classes — SecurityAuditor/TestCoverage/CodeQuality/
+  Documentation — run in parallel with quality gates; stages
+  triage/parallel-validation/synthesis/decision), while the MCP
+  `release_prep` tool's handler (`server.py`) imports and runs
+  `ReleasePreparationWorkflow` directly (four `claude_agent_sdk`
+  SUBAGENTS — health/security/changelog/assessor; sections
+  Summary/Health/Security/Changelog/Suggestions). There is no single
+  "the release-prep workflow" to document; picking one misleads about
+  the other surface. The disciplined call under the autonomous-rollout
+  contract was to SKIP the feature and FLAG it for an architecture
+  decision (unify the two behind one impl, or give them distinct
+  slugs/names) rather than ship uncertain docs. Detection recipe
+  before authoring a feature master: `grep '"<slug>":'
+  src/attune/workflows/__init__.py` for the CLI/registry binding AND
+  grep the MCP handler's `from attune.workflows... import` line — if
+  the class the CLI resolves differs from the class the MCP handler
+  imports, the "feature" is two features. A class's own `name =
+  "<slug>"` attribute is NOT proof it is what the CLI runs; the
+  registry mapping is. Pairs with the "spec-named work-scope drifts
+  from code reality — grep the actual instances" lesson (the named
+  scope is a hypothesis; the code is the contract).
