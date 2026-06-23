@@ -3,41 +3,104 @@ type: concept
 name: refactor-plan-concept
 feature: refactor-plan
 depth: concept
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
+generated_at: 2026-06-23T16:06:40.108874+00:00
+source_hash: 198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb
 status: generated
 ---
 
-# Refactor Plan
+# Prioritize tech debt — scan for code smells and generate a refactoring roadmap
 
-A refactor plan scans a codebase for structural problems and produces a prioritized roadmap — with effort estimates and risk levels — so you know which changes to make first and why.
+## Overview
 
-## How the workflow runs
+Refactor-plan turns "this code needs work" into a prioritized
+roadmap. It is **SDK-native**: `RefactorPlanWorkflow` delegates to
+three specialized Claude Agent SDK subagents — one scans for tech
+debt, one assesses the impact of changing it, and one assembles a
+prioritized plan — and synthesizes their findings into a single
+report with an overall tech-debt score, a ranked list of
+refactoring opportunities (each with an effort estimate and risk
+level), and an ordered set of next steps.
 
-`RefactorPlanWorkflow` orchestrates three specialized subagents in sequence: `debt-scanner`, `impact-analyzer`, and `plan-generator`. Each subagent focuses on its own domain and reports findings as structured markdown. Once all three finish, the workflow synthesizes their output into a single report.
+It **plans, it doesn't change code**: the subagents are scoped to
+`Read` / `Glob` / `Grep`, so refactor-plan reads the codebase and
+produces a roadmap — it is the *decide what to do* half of
+refactoring, paired with **simplify-code** for the *do it* half
+(see *Plan versus act* below). Like the other analysis workflows
+it **predicts** rather than proves — its findings are LLM judgments
+to verify, not a mechanical debt report.
 
-You call the workflow through its `execute()` method, which returns a `WorkflowResult`. The report formatting step — handled by `format_refactor_plan_report(result, input_data)` — converts that result into a human-readable document structured around three sections:
+You reach refactor-plan four ways:
 
-| Section | What it contains |
-|---|---|
-| **Summary** | Overall tech debt score (0–100) and a 2–3 sentence executive summary |
-| **Refactoring** | Prioritized opportunities, each tagged with effort (small / medium / large) and risk (low / medium / high) |
-| **Suggestions** | Actionable next steps ordered by priority, from quick wins to longer-term improvements |
+- the **`/refactor`** skill, inside a Claude Code conversation —
+  routes a full analysis to refactor-plan, or a complexity-only
+  pass to simplify-code;
+- the CLI — **`attune workflow run refactor-plan`**;
+- the **`refactor_plan`** MCP tool (an optional `path`, defaulting
+  to the current directory);
+- the Python API — `await RefactorPlanWorkflow().execute(...)`,
+  documented here for wiring planning into a hook or report.
 
-The separation between `RefactorPlanWorkflow` and `format_refactor_plan_report` means the raw result is available for programmatic use before any formatting is applied — useful if you want to filter or re-rank items before presenting them.
+## Concepts
 
-## What the subagents look for
+### Three passes, one prioritized roadmap
 
-The `debt-scanner` subagent surfaces issues in categories like long methods, god classes, high cyclomatic complexity, deep nesting, copy-pasted blocks, circular imports, and dead code. The `impact-analyzer` then weighs each finding against how many files it touches and how much improvement a fix would deliver. The `plan-generator` uses that scoring to sort items so that high-severity, low-effort, high-impact changes appear at the top and risky changes are explicitly flagged.
+`RefactorPlanWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents, each
+scoped to `Read` / `Glob` / `Grep`:
 
-## When it matters
+| Subagent | Pass | What it does |
+|----------|------|--------------|
+| `debt-scanner` | Find the debt | Scans for code smells, duplication, complex conditionals, dead code, overly long functions, and deeply nested logic. Reports file, line, severity, and a brief description. |
+| `impact-analyzer` | Weigh the risk | Assesses test coverage of affected code, dependency chains, API-surface changes, and downstream consumers — the cost of touching each candidate. |
+| `plan-generator` | Order the work | Turns the scanner's and analyzer's findings into a prioritized plan: per item an effort estimate (small/medium/large), a risk level (low/medium/high), the expected benefit, and a suggested implementation order. |
 
-Run a refactor plan when a module feels hard to change or test, before extending a tangled area with new features, or when you need concrete data to justify refactoring time to stakeholders. Because the roadmap is prioritized, you can stop at any point and still have addressed the highest-value items — avoiding the yak-shaving that comes from refactoring without a plan.
+The orchestrator then synthesizes the passes into one report with
+three sections — **Summary** (an overall 0–100 tech-debt score plus
+a 2–3 sentence summary of the opportunities found),
+**Refactoring** (the prioritized opportunities with effort
+estimates and risk levels), and **Suggestions** (actionable next
+steps ordered by priority, including quick wins and longer-term
+improvements).
 
-## Entry points
+### Depth controls the agent-turn budget
 
-| Symbol | Role |
-|---|---|
-| `RefactorPlanWorkflow.execute()` | Runs the full three-subagent analysis and returns a `WorkflowResult` |
-| `format_refactor_plan_report(result, input_data)` | Formats a `WorkflowResult` dict as a human-readable report |
-| `main()` | CLI entry point that wires the two together for command-line use |
+`execute` takes a `depth` of `"quick"`, `"standard"` (default), or
+`"deep"`. Depth maps to the maximum agent turns and a per-run cost
+cap:
+
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
+
+An unrecognized depth falls back to the standard budget (20 turns).
+
+### `execute` is async
+
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake. It reads two keyword arguments: `path` (required) and
+`depth` (default `"standard"`). An empty or missing `path` returns
+a failed `WorkflowResult` ("path argument is required") rather than
+raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from `attune.workflows`). The
+roadmap lands in `final_output` — a serialized report when the
+findings parse, or the raw markdown otherwise — with a short
+`summary`, a `suggestions` list, the `cost_report`, the `provider`,
+and a `metadata` dict echoing `path`, `depth`, and `max_turns`. On
+failure, `success` is `False` and `error` / `error_type` carry the
+reason.
+
+### Plan versus act
+
+Refactor-plan and **simplify-code** are the two halves the
+`/refactor` skill routes between. Refactor-plan *analyzes* — it
+produces a roadmap and changes nothing. Simplify-code *acts* — it
+reduces complexity in a target file (flattening nested
+conditionals, inlining trivial helpers, removing dead code).
+Reach for refactor-plan to decide what to tackle and in what
+order; reach for simplify-code to apply a focused cleanup.

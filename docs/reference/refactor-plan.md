@@ -1,76 +1,56 @@
-# Refactor Plan CLI Reference
+# Refactor Plan
 
-Detect code smells and generate a prioritized refactoring roadmap.
+## Reference
 
-## Description
+Refactor-plan's public surface is the `RefactorPlanWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
 
-`refactor-plan` runs the `RefactorPlanWorkflow`, which coordinates three specialized subagents (`debt-scanner`, `impact-analyzer`, and `plan-generator`) to analyze a codebase and produce a unified refactoring roadmap. It writes a human-readable report to stdout, scoring overall tech debt and listing prioritized refactoring opportunities with effort estimates and risk levels.
+### `RefactorPlanWorkflow` — `attune.workflows.refactor_plan`
 
-## Usage
+| Symbol | Purpose |
+|--------|---------|
+| `RefactorPlanWorkflow()` | Construct the workflow. Takes no special constructor arguments. |
+| `RefactorPlanWorkflow.execute(**kwargs)` | **Async.** Run the analysis. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`). No `focus`. Returns a `WorkflowResult`. |
+| `RefactorPlanWorkflow.name` | The registered slug, `"refactor-plan"`. |
+| `RefactorPlanWorkflow.stages` | `["agent-plan"]`; the stage runs at the `CAPABLE` model tier. |
 
-```
-refactor-plan [OPTIONS] PATH
-```
+### Depth → agent-turn budget
 
-## Options
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | The fullest roadmap of a large or legacy area. |
 
-| Option | Default | Description |
-|--------|---------|-------------|
-| `--help` | — | Show this help message and exit |
+### The three passes
 
-## Output
+| Subagent | Domain |
+|----------|--------|
+| `debt-scanner` | Code smells, duplication, complex conditionals, dead code, long functions, deep nesting. |
+| `impact-analyzer` | Test coverage, dependency chains, API-surface changes, downstream consumers. |
+| `plan-generator` | Prioritized plan: effort (small/medium/large), risk (low/medium/high), benefit, order. |
 
-On success, the command prints a formatted report with three sections:
+### `WorkflowResult` fields read after a run
 
-```
-## Summary
-Overall tech debt score (0-100) and a 2–3 sentence executive summary
-of the refactoring opportunities found.
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the analysis completed. |
+| `final_output` | `Any` | The roadmap — a serialized report when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short tech-debt summary. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run (`"anthropic"`). |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-## Refactoring
-Prioritized list of refactoring opportunities with effort estimates
-(small/medium/large) and risk levels (low/medium/high) for each item.
+### Entry points
 
-## Suggestions
-Actionable next steps ordered by priority, including quick wins and
-longer-term improvements.
-```
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/refactor` in a Claude Code conversation — full analysis routes to refactor-plan; a complexity-only pass routes to simplify-code. |
+| CLI | `attune workflow run refactor-plan --path <p> [--depth quick\|standard\|deep] [--json]`. |
+| MCP tool | `refactor_plan` — optional `path` (defaults to the current directory), validated against the workspace root. |
+| Python | `await RefactorPlanWorkflow().execute(path=<p>, depth=<d>)`. |
 
-A realistic excerpt:
-
-```
-## Summary
-Score: 64/100
-
-Three high-priority issues were found in src/engine.py and src/utils.py.
-Structural complexity and duplicated logic are the dominant sources of debt.
-
-## Refactoring
-1. [High Impact / Low Effort / Risk: Medium]
-   src/engine.py:45 — God class with 14 responsibilities
-   Fix: Split into Engine + Parser + Validator
-
-2. [High Impact / Low Effort / Risk: Low]
-   src/utils.py:89 — Logic duplicated in 4 places
-   Fix: Extract to shared helper
-
-## Suggestions
-- Start with src/utils.py deduplication (~30 min, low risk)
-- Refactor src/engine.py god class before adding new features
-- Add tests for src/engine.py before making structural changes
-```
-
-## Exit codes
-
-| Code | Meaning |
-|------|---------|
-| `0` | Workflow completed and report written successfully |
-| `1` | Workflow failed — invalid path, subagent error, or unhandled exception |
-
-## Related commands
-
-- `/refactor-plan` — Claude Code skill that invokes this workflow interactively
-- `code-review` — run a general code quality review instead of a refactoring roadmap
-- `security-audit` — scan for vulnerabilities rather than structural debt
-
-<!-- attune-generated: source_hash=048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38 feature=refactor-plan kind=cli-reference generated_at=2026-06-02 -->
+<!-- attune-generated: source_hash=198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb feature=refactor-plan kind=reference generated_at=2026-06-23 -->

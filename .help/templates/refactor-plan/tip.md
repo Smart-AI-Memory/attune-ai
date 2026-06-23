@@ -3,34 +3,24 @@ type: tip
 name: refactor-plan-tip
 feature: refactor-plan
 depth: tip
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
+generated_at: 2026-06-23T16:06:40.108874+00:00
+source_hash: 198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb
 status: generated
 ---
 
-# Tip: Use `format_refactor_plan_report()` to read results outside the conversation
+# Prioritize tech debt — scan for code smells and generate a refactoring roadmap
 
-## Recommendation
+## Notes & tips
 
-When you need the refactor-plan output in a script or CI pipeline, call
-`format_refactor_plan_report(result, input_data)` from
-`workflows.refactor_plan_report` directly. It converts the raw `WorkflowResult`
-dict into a human-readable report with the same Summary, Refactoring, and
-Suggestions sections you see in a Claude Code conversation.
-
-**Why:** The three internal subagents (`debt-scanner`, `impact-analyzer`,
-`plan-generator`) are underscore-prefixed internals that can change without
-notice. `format_refactor_plan_report()` is the stable surface for consuming
-their synthesized output.
-
-**Tradeoff:** The function expects the result dict that `RefactorPlanWorkflow.execute()`
-produces. If you pass a partial or hand-constructed dict, sections may render
-incomplete. Run `execute()` first; don't shortcut by constructing the dict
-yourself.
-
-## Source files
-
-- `src/attune/workflows/refactor_plan.py`
-- `src/attune/workflows/refactor_plan_report.py`
-
-**Tags:** `refactor`, `tech-debt`, `complexity`
+- **Depend on the documented public surface.** The supported API is
+  `RefactorPlanWorkflow` and its async `execute`, plus the
+  `WorkflowResult` it returns. Names with a leading underscore —
+  `_run_agent_plan`, `_SUBAGENT_NAMES` — are internal and may
+  change.
+- **Plan with refactor-plan, act with simplify-code.** Run the
+  planner to get a sequenced roadmap, then apply individual items
+  with simplify-code or your own edits.
+- **Use `path` and `depth` to keep runs cheap.** A `quick` pass
+  over one module is far faster than a `deep` pass over `src/`.
+- **Read `metadata` to confirm scope.** It records the `path`,
+  `depth`, and `max_turns` the run actually used.

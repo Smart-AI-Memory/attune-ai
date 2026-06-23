@@ -3,48 +3,44 @@ type: warning
 name: refactor-plan-warning
 feature: refactor-plan
 depth: warning
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
+generated_at: 2026-06-23T16:06:40.108874+00:00
+source_hash: 198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb
 status: generated
 ---
 
-# Refactor Plan cautions
+# Prioritize tech debt — scan for code smells and generate a refactoring roadmap
 
-## What to watch for
+## Failure modes
 
-A refactor plan roadmap is only as reliable as the analysis that produced it. Three subagents — `debt-scanner`, `impact-analyzer`, and `plan-generator` — each contribute findings that `RefactorPlanWorkflow.execute()` synthesizes into a single report. If the path you supply is incomplete, or if one subagent's output is sparse, the synthesized roadmap can quietly under-report issues without raising an error.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'RefactorPlanWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Roadmap stops early / partial report | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Risk areas
+### Risk areas
 
-### Partial-path analysis produces a misleadingly clean score
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **It plans, it doesn't apply.** Refactor-plan produces a roadmap;
+  it does not edit code. Use simplify-code (or your own change) to
+  act on it.
+- **Findings are predictions, not proofs.** A high-priority item
+  means "look here first," not a confirmed defect. Verify the
+  effort and risk estimates against the real code before committing
+  to them.
 
-`RefactorPlanWorkflow.execute()` scans whatever path you give it and scores only what it finds. Pointing the workflow at a subdirectory rather than the full module boundary means coupling issues and cross-file duplication that cross that boundary will be missed. The resulting tech debt score (0–100) will appear better than it is. Always align the analysis path with a meaningful module or package boundary, not a convenience slice of the tree.
+### Diagnosis order
 
-### `format_refactor_plan_report()` silently accepts empty input
-
-`format_refactor_plan_report(result, input_data)` formats whatever you pass it. If `result` is an empty dict — for example, because `execute()` returned a `WorkflowResult` whose payload was not unpacked before being passed — the function returns a structurally valid but content-free report rather than raising an error. Verify that `result` contains the expected `Summary`, `Refactoring`, and `Suggestions` sections before passing it to the formatter.
-
-### Effort and risk estimates are model-generated, not measured
-
-The roadmap's effort estimates (`small` / `medium` / `large`) and risk levels (`low` / `medium` / `high`) come from the `plan-generator` subagent's interpretation of the other subagents' findings, not from static analysis metrics. A `Risk: Low` label on a rename in a widely-imported module does not account for callers outside the scanned path. Treat these labels as a starting point for planning, not a substitute for your own impact assessment.
-
-### Private subagent names can change without notice
-
-The subagent identifiers `debt-scanner`, `impact-analyzer`, and `plan-generator` are internal constants. If you have tooling or logging that keys on these names, it will break silently if the constants change. Depend on the public `RefactorPlanWorkflow` and `format_refactor_plan_report` surface instead.
-
-## How to avoid problems
-
-1. **Set the path at a real module boundary.** Run `/refactor-plan src/auth/` rather than `/refactor-plan src/auth/utils/` so that cross-file coupling and duplication are fully visible to all three subagents.
-
-2. **Validate `WorkflowResult` before formatting.** Unpack and inspect the result of `execute()` before passing it to `format_refactor_plan_report()`. Confirm the dict contains substantive content; an empty or minimal result is a signal to re-run, not to format and act on.
-
-3. **Generate tests before acting on high-risk items.** For any roadmap item marked `Risk: High`, ask for a test suite covering the target file before making structural changes. This is especially important for items flagged as god classes or high-complexity functions, where the refactoring surface is large.
-
-4. **Depend only on the public API.** Build any automation around `RefactorPlanWorkflow` and `format_refactor_plan_report` — both in `workflows.refactor_plan` and `workflows.refactor_plan_report`. Avoid referencing internal constants by name.
-
-## Source files
-
-- `src/attune/workflows/refactor_plan.py`
-- `src/attune/workflows/refactor_plan_report.py`
-
-**Tags:** `refactor`, `tech-debt`, `complexity`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns`.
