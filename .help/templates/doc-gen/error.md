@@ -1,47 +1,47 @@
 ---
 type: error
+name: doc-gen-error
 feature: doc-gen
 depth: error
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122
+generated_at: 2026-06-23T16:17:04.175824+00:00
+source_hash: bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384
 status: generated
 ---
 
-# Doc Gen errors
+# Generate new documentation from source code with three specialized subagents
 
-Documentation generation failures occur during the multi-stage workflow that extracts API references, generates content outlines, writes documentation, and applies final polish.
+## Failure modes
 
-## Common error signatures
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'DocumentGenerationWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` (e.g. passing a source string instead of `path`) | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Generation stops early / partial document | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| Expected files weren't written | Doc-gen returns content in the result; it does not write files | Take the document from `final_output` and place it yourself | low |
 
-- **Workflow execution failures**: Errors from `DocumentGenerationWorkflow.execute()` when the orchestration of subagents fails
-- **Context initialization errors**: Problems in `default_context()` when XML configuration is invalid or missing required fields
-- **Subagent coordination failures**: Communication breakdowns between the three specialized subagents (outline-planner, content-writer, polish-reviewer)
-- **Report formatting errors**: Exceptions from `format_doc_gen_report()` when result data is malformed or missing expected keys
-- **Cost tracking errors**: Failures in `DocGenCostMixin` when token usage cannot be calculated or limits are exceeded
+### Risk areas
 
-## Where errors originate
+- **The async call is easy to get wrong.** `execute` is the main
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **Pass `path`, not a source string.** `execute` reads `path` (and
+  `depth`); it does not take a raw source-code string or a
+  `doc_type`. The CLI and Python API supply `path` correctly.
+- **It generates, it doesn't place.** The output is documentation
+  content in the result, not files on disk — review and position it
+  yourself.
 
-Most doc-gen failures stem from the workflow orchestration or report generation:
+### Diagnosis order
 
-- `DocumentGenerationWorkflow.execute()` — Main workflow execution that coordinates all three documentation generation stages
-- `format_doc_gen_report()` in `src/attune/workflows/document_gen/report_formatter.py` — Report formatting that expects specific result structure
-- Individual stage mixins (`OutlineStageMixin`, `WriteStageMixin`, `PolishStageMixin`) — Stage-specific processing failures
-- `DocGenCostMixin` — Token cost calculation and management errors
-
-## How to diagnose
-
-1. **Check the workflow stage.** The error message or traceback should indicate whether failure occurred during outline planning, content writing, or polish review. Each stage has different failure modes.
-
-2. **Validate input paths and configuration.** Verify that the source code path exists and is readable, and that any XML configuration passed to `default_context()` contains required fields.
-
-3. **Examine subagent coordination.** If the workflow executes but produces incomplete results, check that all three subagents (_SUBAGENT_NAMES) are responding correctly and their outputs match the expected markdown structure.
-
-4. **Verify report data structure.** If `format_doc_gen_report()` fails, inspect the `result` dictionary to ensure it contains the sections expected by the formatting logic (Summary, Outline, Documentation, Suggestions).
-
-5. **Check cost limits.** Review token usage through `DocGenCostMixin` to determine if generation failed due to cost constraints or calculation errors.
-
-## Source files
-
-- `src/attune/workflows/document_gen/**`
-
-**Tags:** `docs`, `documentation`, `generation`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. If `error` is "path argument is required", confirm you passed
+   `path=` (not a source string or other kwarg).
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`, `depth`,
+   and `max_turns`.
