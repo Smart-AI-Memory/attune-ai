@@ -271,7 +271,7 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
             "code_review": self._run_code_review,
             "test_generation": self._run_test_generation,
             "performance_audit": self._run_performance_audit,
-            "release_prep": self._run_release_prep,
+            "release_notes": self._run_release_notes,
             "doc_audit": self._run_doc_audit,
             "doc_gen": self._run_doc_gen,
             "doc_orchestrator": self._run_doc_orchestrator,
@@ -441,8 +441,8 @@ class EmpathyMCPServer(MemoryHandlersMixin, WorkflowHandlersMixin):
 
         return _workflow_response(result, findings=("findings", []), score="score")
 
-    async def _run_release_prep(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Run release preparation workflow."""
+    async def _run_release_notes(self, args: dict[str, Any]) -> dict[str, Any]:
+        """Run the release-notes advisory workflow (changelog draft + go/no-go)."""
         from attune.security.path_validation import _validate_file_path
         from attune.workflows.release_prep import ReleasePreparationWorkflow
 

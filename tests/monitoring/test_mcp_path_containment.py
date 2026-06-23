@@ -50,9 +50,9 @@ class TestMCPWorkspaceContainment:
             await method({path_key: "/home/other/repo/file.py"})
 
     @pytest.mark.asyncio
-    async def test_release_prep_blocks_external_path(self, server):
+    async def test_release_notes_blocks_external_path(self, server):
         with pytest.raises(ValueError, match="outside allowed directory"):
-            await server._run_release_prep({"path": "/home/other/repo"})
+            await server._run_release_notes({"path": "/home/other/repo"})
 
     @pytest.mark.asyncio
     async def test_auth_recommend_blocks_external_path(self, server):

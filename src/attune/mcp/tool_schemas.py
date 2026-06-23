@@ -76,8 +76,8 @@ def get_workflow_tools() -> dict[str, dict[str, Any]]:
             param_desc="Path to directory or file to audit",
             required=True,
         ),
-        "release_prep": _pt(
-            "Run release preparation workflow. Checks health, security, changelog, and provides release recommendation.",
+        "release_notes": _pt(
+            "Run the release-notes advisory workflow. Drafts a changelog from git history and gives a go/no-go recommendation. Advisory only — not a gate; the deterministic 4-agent gate is CLI-only (attune workflow run release-gate).",
             param_desc="Path to project root",
         ),
         "doc_audit": _pt(

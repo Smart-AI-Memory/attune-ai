@@ -101,7 +101,7 @@ The Attune MCP server exposes all production workflows as tools:
 | `code_review` | Comprehensive code quality analysis with suggestions | `path` |
 | `test_generation` | Generate tests for code (supports batch mode) | `module`, `batch` (optional) |
 | `performance_audit` | Identify bottlenecks, memory leaks, optimization opportunities | `path` |
-| `release_prep` | Run release checks: health, security, changelog | `path` (optional) |
+| `release_notes` | Changelog draft + go/no-go advisory (not a gate) | `path` (optional) |
 | `doc_audit` | Audit documentation coverage and freshness | `path` |
 | `doc_gen` | Generate documentation for source code | `source_path` |
 | `test_audit` | Deep test coverage analysis | `path` |

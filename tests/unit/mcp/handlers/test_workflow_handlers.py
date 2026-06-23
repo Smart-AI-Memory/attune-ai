@@ -1,7 +1,7 @@
 """Unit tests for workflow handler methods on EmpathyMCPServer.
 
 Tests cover _run_security_audit, _run_bug_predict, _run_code_review,
-_run_test_generation, _run_performance_audit, and _run_release_prep
+_run_test_generation, _run_performance_audit, and _run_release_notes
 via the server methods (previously tested via standalone functions in
 the deleted attune.mcp.handlers.workflow_handlers module).
 
@@ -329,11 +329,11 @@ class TestRunPerformanceAudit:
         mod.PerformanceAuditWorkflow.return_value.execute.assert_awaited_once_with(path="/app")
 
 
-class TestRunReleasePrep:
-    """Tests for _run_release_prep()."""
+class TestRunReleaseNotes:
+    """Tests for _run_release_notes()."""
 
     @pytest.mark.asyncio
-    async def test_run_release_prep_returns_expected_keys(self):
+    async def test_run_release_notes_returns_expected_keys(self):
         """Happy path: returns approved, health_score, recommendation, cost."""
         server = _make_server()
         result = _make_result(
@@ -350,7 +350,7 @@ class TestRunReleasePrep:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
-            out = await server._run_release_prep({"path": "."})
+            out = await server._run_release_notes({"path": "."})
 
         assert out["success"] is True
         assert out["approved"] is True
@@ -359,7 +359,7 @@ class TestRunReleasePrep:
         assert out["cost"] == 0.08
 
     @pytest.mark.asyncio
-    async def test_run_release_prep_defaults_path_to_dot(self):
+    async def test_run_release_notes_defaults_path_to_dot(self):
         """When path is not in args, defaults to '.'."""
         server = _make_server()
         result = _make_result()
@@ -368,12 +368,12 @@ class TestRunReleasePrep:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
-            out = await server._run_release_prep({})
+            out = await server._run_release_notes({})
 
         assert "success" in out
 
     @pytest.mark.asyncio
-    async def test_run_release_prep_instantiates_without_args(self):
+    async def test_run_release_notes_instantiates_without_args(self):
         """ReleasePreparationWorkflow is instantiated with no arguments."""
         server = _make_server()
         result = _make_result()
@@ -382,12 +382,12 @@ class TestRunReleasePrep:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
-            await server._run_release_prep({"path": "/proj"})
+            await server._run_release_notes({"path": "/proj"})
 
         mod.ReleasePreparationWorkflow.assert_called_once_with()
 
     @pytest.mark.asyncio
-    async def test_run_release_prep_passes_path_to_execute(self):
+    async def test_run_release_notes_passes_path_to_execute(self):
         """execute() receives path kwarg."""
         server = _make_server()
         result = _make_result()
@@ -396,12 +396,12 @@ class TestRunReleasePrep:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
-            await server._run_release_prep({"path": "/proj"})
+            await server._run_release_notes({"path": "/proj"})
 
         mod.ReleasePreparationWorkflow.return_value.execute.assert_awaited_once_with(path="/proj")
 
     @pytest.mark.asyncio
-    async def test_run_release_prep_handles_string_final_output(self):
+    async def test_run_release_notes_handles_string_final_output(self):
         """Regression: when ``final_output`` degrades to a plain string
         (workflow short-circuited with an error message), the handler
         must not AttributeError on ``.get()``. The string is surfaced as
@@ -417,7 +417,7 @@ class TestRunReleasePrep:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.release_prep": mod}):
-            out = await server._run_release_prep({"path": "."})
+            out = await server._run_release_notes({"path": "."})
 
         assert out["success"] is False
         assert out["approved"] is None
