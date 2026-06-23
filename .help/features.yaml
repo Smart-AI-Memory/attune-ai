@@ -221,17 +221,28 @@ features:
     tags: [memory, storage]
     status: manual
 
+  # agents is single-sourced (status: manual) from
+  # content/features/agents.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/agents/*.md. The entry is marked `status: manual`
+  # — WITHOUT `files:` — so topic resolution routes here while
+  # staleness/maintenance never runs `attune-author generate agents
+  # --all-kinds` to overwrite the projected content with LLM output
+  # (DD5, help-docs-single-source decision, 2026-06-23). The retained
+  # faq.md stays on disk frozen until the four-channel FAQ Generator
+  # (D6/D7) replaces that path. SCOPE: this feature is the Universal
+  # Agent Factory (src/attune/agent_factory/); the prior `files:` glob
+  # conflated the release agent TEAM (src/attune/agents/release/, now
+  # under release-prep) and its state/recovery store
+  # (src/attune/agents/state/). Description updated + "release" tag
+  # dropped to match; the old hand-authored agent-factory docs are
+  # superseded by the projected agents pages. "agents"/"ai" tags
+  # preserved for golden-query resolution (ag-001/ag-002).
+  # See docs/specs/help-docs-single-source/.
   agents:
-    description: Release agents, state persistence, and recovery
-    files:
-      - src/attune/agents/**
-      - src/attune/agent_factory/**
-    tags: [agents, ai, release]
-    doc_paths:
-      - docs/how-to/agent-factory.md
-      - docs/reference/agent-factory-api.md
-      - docs/reference/agent-factory-overview.md
-      - docs/reference/agent-factory-readme.md
+    description: Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
+    tags: [agents, ai]
+    status: manual
 
   cli:
     description: Command-line interface and routing

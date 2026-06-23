@@ -1,14 +1,118 @@
----
-type: reference
-name: agents-reference
-feature: agents
-depth: reference
-generated_at: 2026-06-23T22:44:18.994422+00:00
-source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
-status: generated
----
+# Agents
 
-# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
+## Quickstart
+
+Create an agent and invoke it. `invoke` is a coroutine, so drive it
+with `asyncio.run`:
+
+```python
+import asyncio
+
+from attune.agent_factory import AgentFactory
+
+
+async def main() -> None:
+    factory = AgentFactory()  # native framework by default
+    agent = factory.create_agent(
+        name="helper",
+        description="Answers questions about the codebase.",
+    )
+    result = await agent.invoke("What does the release-prep gate check?")
+    print(result)
+
+
+asyncio.run(main())
+```
+
+`AgentFactory()` uses the `native` framework; pass
+`AgentFactory(framework="langgraph")` (or a `Framework` value) to use
+another backend.
+
+## Tasks
+
+### Build and run a single agent
+
+**Goal:** create one agent and get a result.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.agent_factory import AgentFactory, AgentRole
+
+
+async def main() -> None:
+    factory = AgentFactory()
+    reviewer = factory.create_agent(
+        name="reviewer",
+        role=AgentRole.REVIEWER,
+        model_tier="capable",
+    )
+    result = await reviewer.invoke({"code": "def f(): return 1/0"})
+    print(result)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `invoke` is a coroutine — `await` it; it returns a `dict`.
+`role` accepts an `AgentRole` (or its string). `model_tier` is
+`"cheap"` / `"capable"` / `"premium"`.
+
+### Orchestrate a multi-agent workflow
+
+**Goal:** coordinate several agents and run them.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.agent_factory import AgentFactory
+
+
+async def main() -> None:
+    factory = AgentFactory()
+    researcher = factory.create_researcher()
+    writer = factory.create_writer()
+    workflow = factory.create_workflow(
+        name="research-and-write",
+        agents=[researcher, writer],
+        mode="sequential",
+    )
+    result = await workflow.run("Summarize attune's memory tiers.")
+    print(result)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `run` is a coroutine — `await` it; it returns a `dict`.
+The role-preset shortcuts (`create_researcher`, `create_writer`, …)
+return `BaseAgent`s. For ready-made pipelines, use
+`create_code_review_pipeline()` or `create_research_pipeline(topic)`.
+
+### Pick or switch the framework
+
+**Goal:** choose a backend and see what's installed.
+
+**Steps:**
+
+```python
+from attune.agent_factory import AgentFactory, Framework
+
+print(AgentFactory.list_frameworks(installed_only=True))
+print(AgentFactory.recommend_framework("general"))   # -> Framework.NATIVE
+
+factory = AgentFactory(framework=Framework.LANGGRAPH)
+factory.switch_framework("native")
+```
+
+**Verify:** `list_frameworks` and `recommend_framework` are callable on
+the class. `Framework` values are `native`, `langchain`, `langgraph`,
+`autogen`, `haystack`. Non-native frameworks are optional deps —
+`list_frameworks(installed_only=True)` shows only those installed.
 
 ## Reference
 
@@ -69,3 +173,5 @@ lives in `attune.agent_factory.base`. You rarely import either directly
 | Skill | `/agent` in a Claude Code conversation — create/manage agents and teams. |
 
 No `attune agent` CLI command and no MCP tool exist.
+
+<!-- attune-generated: source_hash=9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a feature=agents kind=how-to generated_at=2026-06-23 -->

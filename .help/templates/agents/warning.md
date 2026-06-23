@@ -3,58 +3,39 @@ type: warning
 name: agents-warning
 feature: agents
 depth: warning
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
+generated_at: 2026-06-23T22:44:18.994422+00:00
+source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
 status: generated
 ---
 
-# Agents cautions
+# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
 
-## What to watch for
+## Failure modes
 
-The agents feature spans release automation, state persistence, and multi-framework adapters. The risks below are most likely to surface during integration work and production rollouts.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BaseAgent.invoke' was never awaited` | `invoke` / `run` called without `await` | They are coroutines — `await` them or use `asyncio.run` | high |
+| Constructing a non-native factory raises / `is_available()` is `False` | The framework's optional dependency isn't installed | Install the framework extra, or use `native`; check `list_frameworks(installed_only=True)` | high |
+| `recommend_framework` / `list_frameworks` "needs an instance" error | Called as if instance-only | They are callable on the class; call `AgentFactory.list_frameworks()` | low |
+| `get_agent(name)` returns `None` | No agent with that name was created on this factory | Check `list_agents()`; names are per-factory | low |
+| A tool isn't used by the agent | Tool not added / wrong schema | Build it with `create_tool(...)` and pass it via `tools=` or `add_tool(...)` | medium |
 
-## Risk areas
+### Risk areas
 
-### Lazy adapter imports can silently return `None`
+- **The run methods are async.** `invoke`, `run`, and `stream` are
+  coroutines — forgetting to `await` is the most common mistake.
+- **Non-native frameworks are optional.** They load lazily; check
+  `is_available()` / `list_frameworks(installed_only=True)` before
+  selecting one.
+- **Scope.** This feature is the Factory; the release agent team and
+  its state store live under release-prep, not here.
 
-`get_langchain_adapter()`, `get_langgraph_adapter()`, `get_autogen_adapter()`, and `get_haystack_adapter()` all use lazy imports. If the underlying framework package is not installed, `is_available()` returns `False` and the adapter may not be usable. Call `is_available()` on the adapter before invoking `create_agent()` or `create_workflow()`, otherwise you will get a runtime failure at the point of first use rather than at startup.
+### Diagnosis order
 
-### `wrap_wizard()` silently applies a default model tier
-
-`wrap_wizard(wizard, name, model_tier='capable')` defaults `model_tier` to `'capable'`. If you intend to run the wrapped agent under a cost-constrained tier, you must pass `model_tier` explicitly. Omitting it will not raise an error, so cost overruns from unintended tier selection can go unnoticed until billing review.
-
-### `safe_agent_operation` swallows errors as `AgentOperationError`
-
-The `@safe_agent_operation` decorator catches exceptions and re-raises them as `AgentOperationError`. If you nest decorated operations, the original exception type is lost at each layer. Preserve the original error in your exception handling and log the full chain before it is wrapped.
-
-### `retry_on_failure` can multiply API costs
-
-`retry_on_failure(max_attempts=3, delay=1.0, backoff=2.0)` retries on any exception in the `exceptions` tuple. If you include broad exception types such as `Exception`, transient network errors and genuine model errors both trigger retries — up to three billable API calls per invocation. Scope the `exceptions` tuple to the specific retriable error types your framework raises.
-
-### `validate_input` rejects non-dict inputs without a framework-specific message
-
-`@validate_input(required_fields)` raises `ValueError` with the message `'Input must be a dict, got {...}'` when `input_data` is a string. The `invoke()` methods on `AutoGenAgent`, `HaystackAgent`, and `LangChainAgent` accept `str | dict`, but the decorator does not. If you apply `validate_input` to a method that advertises string input, callers will hit an undocumented `ValueError`.
-
-### Agent state records are not automatically recovered
-
-`AgentStateStore` and `AgentRecoveryManager` persist execution state, but recovery is not triggered automatically on agent restart. If a release workflow exits mid-run, you must explicitly invoke recovery through `AgentRecoveryManager` before re-running. Skipping this step can cause `ReleasePrepTeamWorkflow` to reprocess completed stages or miss state that was recorded before the failure.
-
-## How to avoid problems
-
-1. **Check adapter availability at startup.** Call `is_available()` immediately after obtaining an adapter from any of the `get_*_adapter()` functions. Fail fast with a clear message rather than letting the error surface during a workflow run.
-
-2. **Be explicit with `wrap_wizard()` model tier.** Always pass `model_tier` by name — for example, `wrap_wizard(wizard, name="my-agent", model_tier="efficient")` — so the tier is visible at the call site and not hidden in a default.
-
-3. **Narrow the `exceptions` tuple in `retry_on_failure`.** Restrict retries to the specific exception classes that represent transient failures in your framework, rather than catching `Exception` broadly.
-
-4. **Run recovery before re-executing interrupted workflows.** After any unclean shutdown, use `AgentRecoveryManager` to inspect and restore state from `AgentStateStore` before calling `ReleasePrepTeamWorkflow.run()` again.
-
-5. **Avoid depending on private helpers.** Functions and methods prefixed with `_` (such as `_run_command`) are not part of the public API and can change without notice. Use only the names exported in `__all__`.
-
-## Source files
-
-- `src/attune/agents/**`
-- `src/attune/agent_factory/**`
-
-**Tags:** `agents`, `ai`, `release`
+1. Confirm you are awaiting: `await agent.invoke(...)` /
+   `await workflow.run(...)`.
+2. Confirm the framework is installed: `AgentFactory.list_frameworks(
+   installed_only=True)`.
+3. For a missing agent, check `list_agents()`.
+4. For tool issues, confirm the tool was built with `create_tool` and
+   attached.

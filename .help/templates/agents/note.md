@@ -3,46 +3,105 @@ type: note
 name: agents-note
 feature: agents
 depth: note
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f67c2f70bbc6d8bdf391e3cbf1ac1e57c554913aa2b3b355f736347e5526634
+generated_at: 2026-06-23T22:44:18.994422+00:00
+source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
 status: generated
 ---
 
-# Note: agents
+# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
 
-## Context
+## Overview
 
-The `agents` feature covers three concerns: release agents, state persistence, and recovery. It spans two source trees — `src/attune/agents/` and `src/attune/agent_factory/` — with framework adapters living under `src/attune/agent_factory/adapters/`.
+The agents feature is Attune's **Universal Agent Factory** — one
+interface for creating, running, and orchestrating AI agents, backed by
+your choice of framework (native, LangChain, LangGraph, AutoGen, or
+Haystack) without rewriting code when you switch frameworks. The entry
+point is **`AgentFactory`**: it picks a framework adapter, and its
+`create_agent` / `create_workflow` methods return `BaseAgent` /
+`BaseWorkflow` objects with a uniform interface.
 
-## Framework adapters
+The agent and workflow run methods (`invoke`, `run`, `stream`) are
+**async** — `await` them.
 
-Each supported framework has a matching adapter, agent, and workflow class:
+You reach it two ways:
 
-| Framework | Adapter | Agent class | Workflow class |
-|---|---|---|---|
-| Microsoft AutoGen | `AutoGenAdapter` | `AutoGenAgent` | `AutoGenWorkflow` |
-| deepset Haystack | `HaystackAdapter` | `HaystackAgent` | `HaystackWorkflow` |
-| LangChain | `LangChainAdapter` | `LangChainAgent` | `LangChainWorkflow` |
+- the Python API — `from attune.agent_factory import AgentFactory,
+  Framework` (the primary surface, documented throughout);
+- the **`/agent`** skill, inside a Claude Code conversation — create
+  and manage custom agents and teams.
 
-Every adapter exposes `is_available()` to check whether the underlying framework is installed, and `create_agent()`, `create_workflow()`, and `create_tool()` to construct the framework-specific objects from shared `AgentConfig` and `WorkflowConfig` values.
+There is no `attune agent` CLI command and no MCP tool.
 
-## Lazy loading
+> **Scope.** This feature is the framework-agnostic Agent Factory
+> (`src/attune/agent_factory/`). The release-readiness agent **team**
+> (`src/attune/agents/release/`) is documented under **release-prep**,
+> and the agent state/recovery store (`src/attune/agents/state/`) is
+> that team's persistence layer — not part of the Factory's public
+> surface.
 
-Adapters are not imported at package load time. The top-level functions `get_autogen_adapter()`, `get_haystack_adapter()`, `get_langchain_adapter()`, and `get_langgraph_adapter()` each perform a lazy import, so only the frameworks you actually use contribute to import cost.
+## Concepts
 
-## Adapter and class composition
+### One factory, many frameworks
 
-The adapter functions and the agent/workflow classes are designed to work together. Adapters produce agent and workflow instances; those instances expose `invoke()`, `stream()`, and `run()` methods that match the signatures expected by higher-level orchestration code. `wrap_wizard()` provides a shortcut when you want to treat an existing wizard as a `WizardAgent` without going through a full adapter.
+`AgentFactory(framework=None, provider="anthropic", api_key=None,
+use_case="general")` is the entry point. `framework` is a `Framework`
+enum (or its string) — `native` (the default when unset), `langchain`,
+`langgraph`, `autogen`, or `haystack`. Each non-native framework is an
+optional dependency loaded lazily; `AgentFactory.list_frameworks(
+installed_only=True)` reports what's available and
+`AgentFactory.recommend_framework(use_case)` suggests one. Call
+`switch_framework(framework)` to move an existing factory to another
+backend.
 
-## Resilience utilities
+### Create agents and workflows
 
-Several decorators in the feature support safe operation at runtime:
+| Method | Returns | What it does |
+|--------|---------|--------------|
+| `create_agent(name, role=AgentRole.CUSTOM, model_tier="capable", ...)` | `BaseAgent` | Build one agent. Many options — `capabilities`, `tools`, `system_prompt`, `temperature`, `memory_enabled`, `resilience_enabled`, … |
+| `create_workflow(name, agents, mode="sequential", ...)` | `BaseWorkflow` | Coordinate several agents (sequential or other modes). |
+| `create_tool(name, description, func, args_schema=None)` | tool | Wrap a Python callable as an agent tool. |
+| `create_coordinator` / `create_researcher` / `create_writer` / `create_reviewer` / `create_debugger` | `BaseAgent` | Role-preset agent shortcuts. |
+| `create_code_review_pipeline()` / `create_research_pipeline(topic, include_reviewer=True)` | `BaseWorkflow` | Ready-made multi-agent pipelines. |
+| `get_agent(name)` / `list_agents()` | `BaseAgent \| None` / `list[str]` | Look up agents the factory has created. |
 
-- `safe_agent_operation` wraps a method with logging and raises `AgentOperationError` on failure.
-- `retry_on_failure` retries a failing operation up to `max_attempts` times with exponential backoff controlled by `delay` and `backoff`.
-- `log_performance` logs any call that exceeds `threshold_seconds`.
-- `validate_input` checks that required fields are present in dict input before the wrapped function runs.
+### Agents and workflows run async
 
-State persistence and recovery are handled by `AgentStateStore`, `AgentStateRecord`, `AgentExecutionRecord`, and `AgentRecoveryManager`.
+A `BaseAgent` exposes async `invoke(input_data, context=None) -> dict`
+and an async `stream(...)` generator, plus `add_tool`,
+`get_conversation_history`, and `clear_history`. A `BaseWorkflow`
+exposes async `run(input_data, initial_state=None) -> dict` and async
+`stream(...)`, plus `get_agent` and `get_state`. Always `await` the
+run methods.
 
-**Tags:** `agents`, `ai`, `release`
+### Config and taxonomy
+
+`AgentConfig` and `WorkflowConfig` capture an agent's / workflow's
+settings (the `create_*` kwargs map onto them). `AgentRole` enumerates
+roles (coordinator, researcher, writer, reviewer, editor, executor,
+debugger, security, architect, tester, documenter, retriever,
+summarizer, answerer, custom) and `AgentCapability` enumerates
+capabilities (code_execution, tool_use, web_search, file_access,
+memory, retrieval, vision, function_calling).
+
+### Adapters implement one protocol
+
+Each framework is wrapped by a `BaseAdapter` with a uniform surface —
+`create_agent(config)`, `create_workflow(config, agents)`,
+`create_tool(...)`, `get_model_for_tier(tier, provider)`, and
+`is_available()`. The factory selects the adapter; you normally don't
+touch adapters directly.
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API is
+  `AgentFactory`, `Framework`, `BaseAdapter`, `BaseAgent`,
+  `AgentConfig`, `WorkflowConfig`, `AgentRole`, and `AgentCapability`
+  from `attune.agent_factory`. Framework-specific adapter/agent classes
+  are internal.
+- **`await` the run methods.** Only `invoke` / `run` / `stream` are
+  async; the `create_*` builders are sync.
+- **Start native.** The `native` framework needs no extra deps; reach
+  for LangChain/LangGraph/AutoGen/Haystack when you need their
+  features.
+- **Use role presets and pipelines.** `create_researcher()` /
+  `create_research_pipeline()` are faster than wiring configs by hand.

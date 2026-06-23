@@ -1,14 +1,4 @@
----
-type: concept
-name: agents-concept
-feature: agents
-depth: concept
-generated_at: 2026-06-23T22:44:18.994422+00:00
-source_hash: 9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a
-status: generated
----
-
-# Universal Agent Factory — create, run, and orchestrate AI agents across frameworks
+# Agents
 
 ## Overview
 
@@ -90,3 +80,36 @@ Each framework is wrapped by a `BaseAdapter` with a uniform surface —
 `create_tool(...)`, `get_model_for_tier(tier, provider)`, and
 `is_available()`. The factory selects the adapter; you normally don't
 touch adapters directly.
+
+## Design & extension
+
+### Design decisions
+
+- **One factory over many frameworks.** `AgentFactory` hides
+  framework differences behind `create_agent` / `create_workflow`, so
+  switching backends (`switch_framework`) doesn't rewrite caller code.
+- **Uniform agent/workflow interface.** Every adapter produces objects
+  implementing `BaseAgent` / `BaseWorkflow`, so `invoke` / `run` /
+  `stream` behave the same regardless of framework.
+- **Optional frameworks, lazy load.** Non-native frameworks are
+  optional dependencies imported on demand; `is_available()` /
+  `list_frameworks` keep the factory usable with none of them
+  installed.
+- **Config as data.** `AgentConfig` / `WorkflowConfig` capture
+  settings; the `create_*` kwargs populate them, and adapters consume
+  them.
+
+### Extension points
+
+- **Add a framework:** implement a `BaseAdapter`
+  (`create_agent` / `create_workflow` / `create_tool` /
+  `get_model_for_tier` / `is_available`).
+- **Add a tool:** `create_tool(name, description, func)` and attach via
+  `tools=` or `add_tool`.
+- **Tune the agent:** `create_agent` exposes capabilities, memory,
+  resilience (circuit breaker / retry / timeout), and model tier.
+- **Compose pipelines:** combine agents with `create_workflow`, or
+  start from `create_code_review_pipeline` /
+  `create_research_pipeline`.
+
+<!-- attune-generated: source_hash=9f8352e822bbdc7e4000d3afae65bd38c29cb5a219fd6aded8e91de285f5a54a feature=agents kind=architecture generated_at=2026-06-23 -->
