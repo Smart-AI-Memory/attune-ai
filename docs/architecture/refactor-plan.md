@@ -1,57 +1,130 @@
-# Refactor Plan architecture
+# Refactor Plan
 
-Detect code smells and generate a prioritized refactoring roadmap.
+## Overview
 
-## Purpose
+Refactor-plan turns "this code needs work" into a prioritized
+roadmap. It is **SDK-native**: `RefactorPlanWorkflow` delegates to
+three specialized Claude Agent SDK subagents — one scans for tech
+debt, one assesses the impact of changing it, and one assembles a
+prioritized plan — and synthesizes their findings into a single
+report with an overall tech-debt score, a ranked list of
+refactoring opportunities (each with an effort estimate and risk
+level), and an ordered set of next steps.
 
-The refactor-plan subsystem scans a codebase for structural problems — god classes, duplication, high cyclomatic complexity, tight coupling — and synthesizes findings into a prioritized roadmap with effort estimates and risk levels. It is explicitly not responsible for executing any refactoring changes, rendering output to a terminal or file (that belongs to `format_refactor_plan_report`), or managing the individual subagent implementations themselves.
+It **plans, it doesn't change code**: the subagents are scoped to
+`Read` / `Glob` / `Grep`, so refactor-plan reads the codebase and
+produces a roadmap — it is the *decide what to do* half of
+refactoring, paired with **simplify-code** for the *do it* half
+(see *Plan versus act* below). Like the other analysis workflows
+it **predicts** rather than proves — its findings are LLM judgments
+to verify, not a mechanical debt report.
 
-## Key classes
+You reach refactor-plan four ways:
 
-| Class | Responsibility | File |
-|-------|----------------|------|
-| `RefactorPlanWorkflow` | Orchestrates three Agent SDK subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`), collects their structured findings, and synthesizes them into a single `WorkflowResult`. | `workflows/refactor_plan.py` |
+- the **`/refactor`** skill, inside a Claude Code conversation —
+  routes a full analysis to refactor-plan, or a complexity-only
+  pass to simplify-code;
+- the CLI — **`attune workflow run refactor-plan`**;
+- the **`refactor_plan`** MCP tool (an optional `path`, defaulting
+  to the current directory);
+- the Python API — `await RefactorPlanWorkflow().execute(...)`,
+  documented here for wiring planning into a hook or report.
 
-The report layer lives outside `RefactorPlanWorkflow` entirely — `format_refactor_plan_report` in `workflows/refactor_plan_report.py` converts the raw `dict` result into human-readable output, and `main()` in that same module provides the CLI entry point.
+## Concepts
 
-## Data flow
+### Three passes, one prioritized roadmap
 
-```
-CLI (main())
-    |
-    v
-RefactorPlanWorkflow.execute(path=...)
-    |
-    +---> debt-scanner subagent      (code smells, duplication, dead code)
-    |
-    +---> impact-analyzer subagent   (severity, effort, risk scoring)
-    |
-    +---> plan-generator subagent    (prioritized roadmap, quick wins)
-    |
-    v
-WorkflowResult  (raw dict)
-    |
-    v
-format_refactor_plan_report(result, input_data)
-    |
-    v
-Human-readable report string
-```
+`RefactorPlanWorkflow.execute` issues a single
+`claude_agent_sdk.query` whose options define three subagents, each
+scoped to `Read` / `Glob` / `Grep`:
 
-Each subagent focuses on its own domain and reports findings as structured markdown. `RefactorPlanWorkflow` receives all three outputs and synthesizes them into a unified report with Summary, Refactoring, and Suggestions sections, as defined in `_TASK_PROMPT_TEMPLATE`.
+| Subagent | Pass | What it does |
+|----------|------|--------------|
+| `debt-scanner` | Find the debt | Scans for code smells, duplication, complex conditionals, dead code, overly long functions, and deeply nested logic. Reports file, line, severity, and a brief description. |
+| `impact-analyzer` | Weigh the risk | Assesses test coverage of affected code, dependency chains, API-surface changes, and downstream consumers — the cost of touching each candidate. |
+| `plan-generator` | Order the work | Turns the scanner's and analyzer's findings into a prioritized plan: per item an effort estimate (small/medium/large), a risk level (low/medium/high), the expected benefit, and a suggested implementation order. |
 
-## Design decisions
+The orchestrator then synthesizes the passes into one report with
+three sections — **Summary** (an overall 0–100 tech-debt score plus
+a 2–3 sentence summary of the opportunities found),
+**Refactoring** (the prioritized opportunities with effort
+estimates and risk levels), and **Suggestions** (actionable next
+steps ordered by priority, including quick wins and longer-term
+improvements).
 
-**Three specialized subagents instead of one general agent.** Splitting analysis across `debt-scanner`, `impact-analyzer`, and `plan-generator` means each agent can be given a tightly scoped prompt and domain context. A single monolithic agent would need to trade depth for breadth across six detection categories simultaneously. The downside is that synthesis becomes the orchestrator's responsibility — `RefactorPlanWorkflow` must reconcile potentially conflicting findings from separate agents.
+### Depth controls the agent-turn budget
 
-**Report formatting separated from workflow execution.** `format_refactor_plan_report` is a plain function in its own module rather than a method on `RefactorPlanWorkflow`. This means the workflow's `WorkflowResult` can be consumed programmatically without incurring any formatting logic, and the CLI (`main()`) composes the two independently. Adding a JSON or Markdown export variant requires only a new formatting function, not changes to the workflow.
+`execute` takes a `depth` of `"quick"`, `"standard"` (default), or
+`"deep"`. Depth maps to the maximum agent turns and a per-run cost
+cap:
 
-## Extension points
+| Depth | Max agent turns |
+|-------|-----------------|
+| `quick` | 10 |
+| `standard` | 20 |
+| `deep` | 40 |
 
-- **Add or replace a subagent** by modifying the entries in `_SUBAGENT_NAMES` (`{'debt-scanner', 'impact-analyzer', 'plan-generator'}`). Each name corresponds to a subagent the orchestrator dispatches; adding a fourth (for example, a `security-scanner`) means extending that set and updating `_TASK_PROMPT_TEMPLATE` to instruct synthesis of its output.
-- **Change orchestration behavior** by subclassing `RefactorPlanWorkflow` and overriding `execute()`. The base class accepts `**kwargs` throughout, so you can pass additional context (target language, ignore patterns) without altering the constructor signature.
-- **Add a new report format** by writing a new function alongside `format_refactor_plan_report(result: dict, input_data: dict) -> str` in `workflows/refactor_plan_report.py`. Wire it into a new CLI entry point or call it directly — no changes to the workflow layer are needed.
+An unrecognized depth falls back to the standard budget (20 turns).
 
-For usage questions, see the task guide (`tasks/use-refactor-plan.md`) or the concept overview (`concepts/tool-refactor-plan.md`).
+### `execute` is async
 
-<!-- attune-generated: source_hash=048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38 feature=refactor-plan kind=architecture generated_at=2026-06-02 -->
+`execute` is a coroutine — `await` it (or drive it with
+`asyncio.run`). Calling it without awaiting is the most common
+mistake. It reads two keyword arguments: `path` (required) and
+`depth` (default `"standard"`). An empty or missing `path` returns
+a failed `WorkflowResult` ("path argument is required") rather than
+raising.
+
+### The result is a `WorkflowResult`
+
+`execute` returns a `WorkflowResult` (from `attune.workflows`). The
+roadmap lands in `final_output` — a serialized report when the
+findings parse, or the raw markdown otherwise — with a short
+`summary`, a `suggestions` list, the `cost_report`, the `provider`,
+and a `metadata` dict echoing `path`, `depth`, and `max_turns`. On
+failure, `success` is `False` and `error` / `error_type` carry the
+reason.
+
+### Plan versus act
+
+Refactor-plan and **simplify-code** are the two halves the
+`/refactor` skill routes between. Refactor-plan *analyzes* — it
+produces a roadmap and changes nothing. Simplify-code *acts* — it
+reduces complexity in a target file (flattening nested
+conditionals, inlining trivial helpers, removing dead code).
+Reach for refactor-plan to decide what to tackle and in what
+order; reach for simplify-code to apply a focused cleanup.
+
+## Design & extension
+
+### Design decisions
+
+- **SDK-native, three planning passes.** Refactor-plan is a single
+  `claude_agent_sdk.query` with three subagents — a `debt-scanner`,
+  an `impact-analyzer`, and a `plan-generator` — each writing under
+  its own heading. Splitting scanning, impact, and planning keeps
+  each subagent's context focused; the orchestrator merges them
+  into one prioritized roadmap.
+- **Plan, don't apply.** The subagents are read-only (`Read` /
+  `Glob` / `Grep`), so refactor-plan produces a roadmap and leaves
+  the code untouched — applying the plan is simplify-code's job.
+- **Prediction, not certification, is the contract.** The workflow
+  returns LLM-judged opportunities with effort and risk estimates;
+  it trades a metric's precision for a sequenced, actionable plan.
+  Findings are leads to verify, never a guarantee.
+- **The result is data, not print output.** `execute` returns a
+  `WorkflowResult` (roadmap in `final_output`, plus `summary`,
+  `suggestions`, `cost_report`, and `metadata`); the CLI, MCP, and
+  Python surfaces all render that same result.
+
+### Extension points
+
+- **Change the budget:** choose `depth` (`quick` / `standard` /
+  `deep`) to trade coverage against cost.
+- **Scope the run:** point `path` at a narrower directory or file.
+- **Add a planning pass:** the subagent definitions are built
+  inline in `_run_agent_plan`, with the names listed in
+  `_SUBAGENT_NAMES`; a new pass is a new `AgentDefinition` plus a
+  synthesis section in the task template in `refactor_plan.py`.
+
+<!-- attune-generated: source_hash=198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb feature=refactor-plan kind=architecture generated_at=2026-06-23 -->

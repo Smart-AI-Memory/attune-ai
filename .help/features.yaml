@@ -115,12 +115,21 @@ features:
       - src/attune/ops/**
     tags: [ops, dashboard, runner, workflows, scope-picker, persistence, sse]
 
+  # refactor-plan is single-sourced (status: manual) from
+  # content/features/refactor-plan.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/refactor-plan/*.md. The entry is retained — WITHOUT
+  # `files:` and marked `status: manual` — so topic resolution still
+  # routes here while staleness/maintenance never runs
+  # `attune-author generate refactor-plan --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
   refactor-plan:
     description: Detect code smells and generate a prioritized refactoring roadmap
-    files:
-      - src/attune/workflows/refactor_plan.py
-      - src/attune/workflows/refactor_plan_report.py
     tags: [refactor, tech-debt, complexity]
+    status: manual
 
   # deep-review is single-sourced (status: manual) from
   # content/features/deep-review.md and rendered by

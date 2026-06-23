@@ -3,48 +3,62 @@ type: reference
 name: refactor-plan-reference
 feature: refactor-plan
 depth: reference
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
+generated_at: 2026-06-23T16:06:40.108874+00:00
+source_hash: 198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb
 status: generated
 ---
 
-# Refactor Plan reference
+# Prioritize tech debt — scan for code smells and generate a refactoring roadmap
 
-Scan code for structural problems and generate a prioritized refactoring roadmap.
+## Reference
 
-## Classes
+Refactor-plan's public surface is the `RefactorPlanWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
 
-| Class | Description |
-|-------|-------------|
-| `RefactorPlanWorkflow` | Prioritize tech debt with Agent SDK subagents. |
+### `RefactorPlanWorkflow` — `attune.workflows.refactor_plan`
 
-### `RefactorPlanWorkflow`
+| Symbol | Purpose |
+|--------|---------|
+| `RefactorPlanWorkflow()` | Construct the workflow. Takes no special constructor arguments. |
+| `RefactorPlanWorkflow.execute(**kwargs)` | **Async.** Run the analysis. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`). No `focus`. Returns a `WorkflowResult`. |
+| `RefactorPlanWorkflow.name` | The registered slug, `"refactor-plan"`. |
+| `RefactorPlanWorkflow.stages` | `["agent-plan"]`; the stage runs at the `CAPABLE` model tier. |
 
-| Method | Parameters | Returns | Description |
-|--------|------------|---------|-------------|
-| `__init__` | `**kwargs: Any` | `None` | Initialize the workflow. |
-| `execute` | `**kwargs: Any` | `WorkflowResult` | Run the refactor plan workflow and return the result. |
+### Depth → agent-turn budget
 
-## Functions
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | The fullest roadmap of a large or legacy area. |
 
-| Function | Parameters | Returns | Description |
-|----------|------------|---------|-------------|
-| `format_refactor_plan_report` | `result: dict, input_data: dict` | `str` | Format refactor plan output as a human-readable report. |
-| `main` | — | `None` | CLI entry point for refactor planning workflow. |
+### The three passes
 
-## Constants
+| Subagent | Domain |
+|----------|--------|
+| `debt-scanner` | Code smells, duplication, complex conditionals, dead code, long functions, deep nesting. |
+| `impact-analyzer` | Test coverage, dependency chains, API-surface changes, downstream consumers. |
+| `plan-generator` | Prioritized plan: effort (small/medium/large), risk (low/medium/high), benefit, order. |
 
-| Constant | Type | Members / Value |
-|----------|------|-----------------|
-| `_SUBAGENT_NAMES` | `list` | `'debt-scanner'`, `'impact-analyzer'`, `'plan-generator'` |
-| `_SYSTEM_PROMPT` | `str` | `'You are a senior refactoring plan orchestrator. You coordinate three specialized subagents to produce a unified refactoring roadmap. Be thorough but concise. Cite file paths and line numbers when possible.'` |
-| `_TASK_PROMPT_TEMPLATE` | `str` | `'Analyze the codebase at {path} using the three specialized subagents below. Each subagent should focus on its domain and report findings as structured markdown.\n\nAfter all subagents finish, synthesize their findings into a single report with these sections:\n\n## Summary\nOverall tech debt score (0-100) and a 2-3 sentence executive summary of the refactoring opportunities found.\n\n## Refactoring\nPrioritized list of refactoring opportunities with effort estimates (small/medium/large) and risk levels (low/medium/high) for each item.\n\n## Suggestions\nActionable next steps ordered by priority, including quick wins and longer-term improvements.'` |
+### `WorkflowResult` fields read after a run
 
-## Source files
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the analysis completed. |
+| `final_output` | `Any` | The roadmap — a serialized report when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short tech-debt summary. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run (`"anthropic"`). |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-- `src/attune/workflows/refactor_plan.py`
-- `src/attune/workflows/refactor_plan_report.py`
+### Entry points
 
-## Tags
-
-`refactor`, `tech-debt`, `complexity`
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/refactor` in a Claude Code conversation — full analysis routes to refactor-plan; a complexity-only pass routes to simplify-code. |
+| CLI | `attune workflow run refactor-plan --path <p> [--depth quick\|standard\|deep] [--json]`. |
+| MCP tool | `refactor_plan` — optional `path` (defaults to the current directory), validated against the workspace root. |
+| Python | `await RefactorPlanWorkflow().execute(path=<p>, depth=<d>)`. |

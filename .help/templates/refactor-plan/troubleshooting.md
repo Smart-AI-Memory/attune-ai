@@ -3,128 +3,44 @@ type: troubleshooting
 name: refactor-plan-troubleshooting
 feature: refactor-plan
 depth: troubleshooting
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: a8b5dc570639e8d2770577c7a57611f86fbf596d547e3e6299cd6a5dd1281ea0
+generated_at: 2026-06-23T16:06:40.108874+00:00
+source_hash: 198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb
 status: generated
 ---
 
-# Troubleshoot refactor plan
+# Prioritize tech debt — scan for code smells and generate a refactoring roadmap
 
-## Symptom table
+## Failure modes
 
-| If you observe | Check |
-|----------------|-------|
-| `RefactorPlanWorkflow.execute()` raises an exception | Read the full traceback — the raise site names the file and line. Confirm the path argument passed to `execute()` exists and is readable. |
-| Report is empty or missing sections (Summary, Refactoring, Suggestions) | Check what `format_refactor_plan_report(result, input_data)` received. A missing key in `result` or `input_data` causes sections to be skipped silently. |
-| One or more subagents produce no output | The workflow coordinates three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`). Confirm each can reach the target path and has sufficient read permissions. |
-| CLI (`main()`) exits without output | Run with a concrete path argument and check stderr for errors before assuming the workflow itself failed. |
-| Results are inconsistent across runs | Check for environment drift — changed files, modified environment variables, or a caching layer between runs. |
-| Execution is unexpectedly slow | The workflow calls three subagents sequentially. Large directory trees multiply the cost; try scoping the path to a subdirectory first. |
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'RefactorPlanWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Roadmap stops early / partial report | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Diagnose the issue
+### Risk areas
 
-### 1. Reproduce with a minimal path
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **It plans, it doesn't apply.** Refactor-plan produces a roadmap;
+  it does not edit code. Use simplify-code (or your own change) to
+  act on it.
+- **Findings are predictions, not proofs.** A high-priority item
+  means "look here first," not a confirmed defect. Verify the
+  effort and risk estimates against the real code before committing
+  to them.
 
-Narrow the input to the smallest path that still triggers the failure:
+### Diagnosis order
 
-```python
-from workflows.refactor_plan import RefactorPlanWorkflow
-
-workflow = RefactorPlanWorkflow()
-result = workflow.execute(path="src/auth/")  # swap in the failing path
-print(result)
-```
-
-If the failure disappears with a smaller scope, the problem is likely in the content being analyzed, not the workflow itself.
-
-### 2. Inspect what `execute()` returns
-
-`execute()` returns a `WorkflowResult`. Before blaming report formatting, confirm the result object is well-formed:
-
-```python
-result = workflow.execute(path="src/auth/")
-print(type(result))
-print(vars(result))  # or result.__dict__ if dataclass
-```
-
-If `result` is `None` or missing expected fields, the failure is inside `execute()`, not in `format_refactor_plan_report()`.
-
-### 3. Check the report formatter in isolation
-
-If `execute()` returns data but the report looks wrong, test `format_refactor_plan_report()` directly:
-
-```python
-from workflows.refactor_plan_report import format_refactor_plan_report
-
-# Use the raw dict from your execute() call
-report = format_refactor_plan_report(result=your_result_dict, input_data=your_input_dict)
-print(report)
-```
-
-A `KeyError` or empty string here points to a mismatch between what `execute()` produces and what the formatter expects.
-
-### 4. Run the targeted tests
-
-```bash
-pytest -k "refactor_plan" -v
-```
-
-A failing test that covers your scenario gives you a reproducible fixture and a clear pass/fail signal before you change any code.
-
-### 5. Enable debug logging
-
-If the above steps don't isolate the issue, raise the log level to `DEBUG` and re-run. The subagent coordination layer logs state transitions that can reveal which of the three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`) stalled or returned unexpected output.
-
-## Common fixes
-
-**The path does not exist or is not readable**
-`execute()` requires a valid, accessible path. Verify it before invoking the workflow:
-
-```bash
-ls -la src/auth/   # confirm the path exists and is readable
-```
-
-**A required key is missing from `result` or `input_data`**
-`format_refactor_plan_report(result, input_data)` expects both arguments to contain the keys the formatter references. If `execute()` returned an error state, the result dict may be incomplete. Add a guard before calling the formatter:
-
-```python
-if result and not result.get("error"):
-    report = format_refactor_plan_report(result=dict(result), input_data=input_data)
-```
-
-**Subagent output is missing a required section**
-The synthesized report must include `## Summary`, `## Refactoring`, and `## Suggestions` sections. If a subagent returns no findings, that section may be absent, causing the formatter to produce an incomplete report. Re-run with a broader path to confirm there is analyzable content.
-
-**Dependency version mismatch**
-A dependency upgrade can change the behavior of the Agent SDK subagents. If the workflow worked previously, check whether a recent `pip install --upgrade` changed a relevant package:
-
-```bash
-pip show <dependency-name>
-```
-
-Pin the version in your requirements file if the upgrade introduced a regression.
-
-**Stale environment state**
-If the workflow fails intermittently without a code change, check for modified environment variables or cached state from a previous run. A clean environment often resolves this:
-
-```bash
-unset <relevant-env-var>
-# then re-run
-```
-
-## Source files
-
-- `src/attune/workflows/refactor_plan.py`
-- `src/attune/workflows/refactor_plan_report.py`
-
-**Tags:** `refactor`, `tech-debt`, `complexity`
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 30 (code fence) | error | `from workflows.refactor_plan import …` — module not importable |
-| Line 56 (code fence) | error | `from workflows.refactor_plan_report import …` — module not importable |
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+4. Confirm the scope: `result.metadata` echoes the `path`,
+   `depth`, and `max_turns`.

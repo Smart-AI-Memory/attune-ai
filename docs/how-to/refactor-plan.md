@@ -1,84 +1,167 @@
-# How to Use Refactor Plan
+# Refactor Plan
 
-Use this guide when you need to scan a codebase for technical debt and produce a prioritized refactoring roadmap — programmatically or from the command line.
+## Quickstart
 
-## Quick start
+Analyze a directory and print the refactoring roadmap.
+`RefactorPlanWorkflow.execute` is an async coroutine, so drive it
+with `asyncio.run` (or `await` it inside an existing event loop):
 
 ```python
-from workflows.refactor_plan import RefactorPlanWorkflow
-from workflows.refactor_plan_report import format_refactor_plan_report
+import asyncio
 
-workflow = RefactorPlanWorkflow()
-result = workflow.execute(path="src/auth/")
+from attune.workflows import RefactorPlanWorkflow
 
-input_data = {"path": "src/auth/"}
-report = format_refactor_plan_report(result=result.__dict__, input_data=input_data)
-print(report)
+
+async def main() -> None:
+    workflow = RefactorPlanWorkflow()
+    result = await workflow.execute(path="src/", depth="standard")
+
+    print(result.success)          # True on a completed analysis
+    print(result.summary)          # short tech-debt summary
+    print(result.final_output)     # the full roadmap
+
+
+asyncio.run(main())
 ```
 
-Running this prints a structured report with a tech debt score, a prioritized refactoring list with effort and risk estimates, and actionable next steps.
+`depth` defaults to `"standard"`, so `execute(path="src/")` is
+equivalent. Use `"quick"` for a fast pass or `"deep"` for the
+fullest roadmap.
 
-## Core API
+## Tasks
+
+### Generate a roadmap from the CLI
+
+**Goal:** produce a prioritized refactoring plan for a directory
+without writing any Python.
+
+**Steps:**
+
+```bash
+# Default depth (standard) over a directory:
+attune workflow run refactor-plan --path src/
+
+# Deep analysis, JSON output for a report:
+attune workflow run refactor-plan --path src/ --depth deep --json
+```
+
+**Verify:** the slug is `refactor-plan`. `--path` / `-p` defaults
+to the current directory; `--depth` accepts `quick`, `standard`, or
+`deep`; `--json` / `-j` emits machine-readable output. Use
+`attune workflow info refactor-plan` to confirm registration.
+
+### Call the planner from Python
+
+**Goal:** drive refactor-plan from a hook or scheduled report and
+act on the result.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import RefactorPlanWorkflow
+
+
+async def main() -> None:
+    workflow = RefactorPlanWorkflow()
+    result = await workflow.execute(path="src/legacy/", depth="deep")
+
+    if not result.success:
+        print("analysis failed:", result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
+```
+
+**Verify:** `execute` is a coroutine — `await` it. A completed run
+returns `success=True` with the roadmap in `final_output`; a
+failure returns `success=False` with a populated `error` and
+`error_type`. `metadata` echoes the `path`, `depth`, and
+`max_turns`.
+
+### Scope the analysis to a smaller area
+
+**Goal:** keep a run fast and focused on the module you care about.
+
+**Steps:**
+
+```python
+import asyncio
+
+from attune.workflows import RefactorPlanWorkflow
+
+
+async def main() -> None:
+    workflow = RefactorPlanWorkflow()
+    result = await workflow.execute(path="src/attune/config.py", depth="quick")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** refactor-plan has no `focus` parameter, so the levers
+are `path` (point it at a narrower directory or file) and `depth`
+(`quick` trims the agent-turn budget to 10). All three passes run
+over whatever `path` covers.
+
+## Reference
+
+Refactor-plan's public surface is the `RefactorPlanWorkflow` class,
+re-exported from `attune.workflows`. `WorkflowResult` comes from
+`attune.workflows` as well.
+
+### `RefactorPlanWorkflow` — `attune.workflows.refactor_plan`
 
 | Symbol | Purpose |
 |--------|---------|
-| `RefactorPlanWorkflow` | Orchestrates three subagents (`debt-scanner`, `impact-analyzer`, `plan-generator`) to produce a unified refactoring roadmap |
-| `RefactorPlanWorkflow.execute(**kwargs)` | Runs the workflow and returns a `WorkflowResult` |
-| `format_refactor_plan_report(result, input_data)` | Formats a `WorkflowResult` dict as a human-readable report |
-| `main()` | CLI entry point — runs the workflow and prints the report to stdout |
+| `RefactorPlanWorkflow()` | Construct the workflow. Takes no special constructor arguments. |
+| `RefactorPlanWorkflow.execute(**kwargs)` | **Async.** Run the analysis. Honors `path` (str, required) and `depth` (`"quick"` / `"standard"` / `"deep"`, default `"standard"`). No `focus`. Returns a `WorkflowResult`. |
+| `RefactorPlanWorkflow.name` | The registered slug, `"refactor-plan"`. |
+| `RefactorPlanWorkflow.stages` | `["agent-plan"]`; the stage runs at the `CAPABLE` model tier. |
 
-## Integration patterns
+### Depth → agent-turn budget
 
-### Run from the command line
+| Depth | Max turns | Use when |
+|-------|-----------|----------|
+| `quick` | 10 | A fast pass on a small path. |
+| `standard` | 20 | The default — balanced coverage and cost. |
+| `deep` | 40 | The fullest roadmap of a large or legacy area. |
 
-If you only need a one-off report, call the CLI entry point directly:
+### The three passes
 
-```python
-from workflows.refactor_plan_report import main
+| Subagent | Domain |
+|----------|--------|
+| `debt-scanner` | Code smells, duplication, complex conditionals, dead code, long functions, deep nesting. |
+| `impact-analyzer` | Test coverage, dependency chains, API-surface changes, downstream consumers. |
+| `plan-generator` | Prioritized plan: effort (small/medium/large), risk (low/medium/high), benefit, order. |
 
-main()
-```
+### `WorkflowResult` fields read after a run
 
-Or invoke it as a script. `main()` handles argument parsing, calls `RefactorPlanWorkflow.execute`, and prints the formatted report.
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the analysis completed. |
+| `final_output` | `Any` | The roadmap — a serialized report when findings parse, else the raw markdown. |
+| `summary` | `str \| None` | Short tech-debt summary. |
+| `suggestions` | `list[NextAction]` | Prioritized next actions. |
+| `cost_report` | `CostReport` | Cost / usage for the run. |
+| `provider` | `str` | The provider that served the run (`"anthropic"`). |
+| `metadata` | `dict` | Echoes `path`, `depth`, and `max_turns`; carries SDK error fields on failure. |
+| `error` / `error_type` | `str \| None` | Failure reason and category (`"config"` / `"runtime"` / `"provider"` / `"timeout"` / `"validation"`). |
 
-### Embed in a larger pipeline
+### Entry points
 
-When you want to act on the results programmatically — for example, to gate a CI step on the debt score — consume the `WorkflowResult` before formatting:
+| Surface | Invocation |
+|---------|------------|
+| Skill | `/refactor` in a Claude Code conversation — full analysis routes to refactor-plan; a complexity-only pass routes to simplify-code. |
+| CLI | `attune workflow run refactor-plan --path <p> [--depth quick\|standard\|deep] [--json]`. |
+| MCP tool | `refactor_plan` — optional `path` (defaults to the current directory), validated against the workspace root. |
+| Python | `await RefactorPlanWorkflow().execute(path=<p>, depth=<d>)`. |
 
-```python
-from workflows.refactor_plan import RefactorPlanWorkflow
-from workflows.refactor_plan_report import format_refactor_plan_report
-
-def check_debt_gate(path: str, score_threshold: int = 50) -> bool:
-    workflow = RefactorPlanWorkflow()
-    result = workflow.execute(path=path)
-
-    report = format_refactor_plan_report(
-        result=result.__dict__,
-        input_data={"path": path},
-    )
-    print(report)
-
-    # WorkflowResult carries the raw findings; inspect them
-    # before deciding whether to fail the pipeline.
-    return result.score >= score_threshold
-```
-
-The workflow internally coordinates `debt-scanner`, `impact-analyzer`, and `plan-generator` subagents; your code only needs to handle the final `WorkflowResult`.
-
-## See also
-
-- `tasks/use-refactor-plan.md` — slash-command usage and how to read the roadmap output
-- `concepts/tool-refactor-plan.md` — how scoring, severity, and prioritization work
-
-<!-- attune-generated: source_hash=048ea0ef75e8eaeda7382792e46947bba2ddef4a450bb9395be4c8ba0c1d1f38 feature=refactor-plan kind=how-to generated_at=2026-06-02 -->
-
-## Unresolved references
-
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
-
-| Location | Severity | Issue |
-|---|---|---|
-| Line 7 (code fence) | error | `from workflows.refactor_plan import …` — module not importable |
-| Line 7 (code fence) | error | `from workflows.refactor_plan_report import …` — module not importable |
+<!-- attune-generated: source_hash=198d821e7ba1dffdfe00c207be171d13fcf198bedb8c0fd84f251e83f8015fbb feature=refactor-plan kind=how-to generated_at=2026-06-23 -->
