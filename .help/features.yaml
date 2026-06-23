@@ -80,11 +80,21 @@ features:
     tags: [tests, coverage, generation]
     status: manual
 
+  # doc-gen is single-sourced (status: manual) from
+  # content/features/doc-gen.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/doc-gen/*.md. The entry is retained — WITHOUT
+  # `files:` and marked `status: manual` — so topic resolution still
+  # routes here while staleness/maintenance never runs
+  # `attune-author generate doc-gen --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
   doc-gen:
     description: Generate documentation from source code — docstrings, README sections, API references
-    files:
-      - src/attune/workflows/document_gen/**
     tags: [docs, documentation, generation]
+    status: manual
 
   # bug-predict is single-sourced (status: manual) from
   # content/features/bug-predict.md and rendered by

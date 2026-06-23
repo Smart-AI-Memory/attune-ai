@@ -1,60 +1,40 @@
 ---
 type: quickstart
+name: doc-gen-quickstart
 feature: doc-gen
 depth: quickstart
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122
+generated_at: 2026-06-23T16:17:04.175824+00:00
+source_hash: bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384
 status: generated
 ---
 
-# Quickstart: doc gen
+# Generate new documentation from source code with three specialized subagents
 
-Generate comprehensive documentation from your codebase using AI-powered analysis.
+## Quickstart
 
-```python
-from attune.workflows.document_gen import DocumentGenerationWorkflow
-
-workflow = DocumentGenerationWorkflow()
-result = workflow.execute(path="./src")
-print(result.output)
-```
-
-## Prerequisites
-
-- Python environment with the attune package installed
-- Source code directory you want to document
-
-## Generate your first documentation
-
-1. **Create a workflow instance** and point it at your source code:
+Generate documentation for a directory and print the result.
+`DocumentGenerationWorkflow.execute` is an async coroutine, so
+drive it with `asyncio.run` (or `await` it inside an existing event
+loop):
 
 ```python
-from attune.workflows.document_gen import DocumentGenerationWorkflow
+import asyncio
 
-workflow = DocumentGenerationWorkflow()
-result = workflow.execute(path="./your-project-directory")
+from attune.workflows import DocumentGenerationWorkflow
+
+
+async def main() -> None:
+    workflow = DocumentGenerationWorkflow()
+    result = await workflow.execute(path="src/attune/config.py")
+
+    print(result.success)          # True on a completed run
+    print(result.summary)          # short overview
+    print(result.final_output)     # the generated documentation
+
+
+asyncio.run(main())
 ```
 
-2. **Review the generated documentation** structure:
-
-```python
-print(result.output)
-# Output includes:
-# - Summary: Overview of your codebase
-# - Outline: Documentation structure
-# - Documentation: Full content with API references
-# - Suggestions: Improvement recommendations
-```
-
-3. **Format the output** for human reading:
-
-```python
-from attune.workflows.document_gen import format_doc_gen_report
-
-report = format_doc_gen_report(result.raw_data, {"path": "./your-project-directory"})
-print(report)
-```
-
-**Expected output:** A structured markdown document with sections for summary, outline, detailed documentation, and improvement suggestions for your codebase.
-
-**Next:** Save the generated documentation to a file and integrate it into your project's docs folder.
+`depth` defaults to `"standard"`, so `execute(path="...")` is
+equivalent. Use `"quick"` for a fast pass or `"deep"` for the
+fullest treatment.

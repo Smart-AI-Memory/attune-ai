@@ -1,14 +1,4 @@
----
-type: reference
-name: doc-gen-reference
-feature: doc-gen
-depth: reference
-generated_at: 2026-06-23T16:17:04.175824+00:00
-source_hash: bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384
-status: generated
----
-
-# Generate new documentation from source code with three specialized subagents
+# Doc Gen
 
 ## Reference
 
@@ -62,3 +52,5 @@ re-exported from `attune.workflows`. `WorkflowResult` comes from
 | Skill | `/doc-gen` in a Claude Code conversation — routes to `doc_gen` (generate), `doc_audit` (stale/missing), or `doc_orchestrator` (pipeline). |
 | CLI | `attune workflow run doc-gen --path <p> [--depth quick\|standard\|deep] [--json]`. |
 | Python | `await DocumentGenerationWorkflow().execute(path=<p>, depth=<d>)`. |
+
+<!-- attune-generated: source_hash=bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384 feature=doc-gen kind=reference generated_at=2026-06-23 -->

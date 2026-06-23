@@ -1,40 +1,47 @@
 ---
 type: warning
+name: doc-gen-warning
 feature: doc-gen
 depth: warning
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122
+generated_at: 2026-06-23T16:17:04.175824+00:00
+source_hash: bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384
 status: generated
 ---
 
-# Doc Gen cautions
+# Generate new documentation from source code with three specialized subagents
 
-## What to watch for
+## Failure modes
 
-The document generation workflow orchestrates three specialized subagents to create comprehensive documentation from source code. The most significant risks involve cost management during chunked operations and stage coordination failures.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'DocumentGenerationWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` (e.g. passing a source string instead of `path`) | Pass a non-empty `path` | high |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Generation stops early / partial document | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| Expected files weren't written | Doc-gen returns content in the result; it does not write files | Take the document from `final_output` and place it yourself | low |
 
-## Risk areas
+### Risk areas
 
-**Cost overruns in chunked operations.** The `ChunkedGenerationMixin` processes large codebases in segments, but token consumption can escalate quickly across the outline, write, and polish stages. Each subagent (`outline-planner`, `content-writer`, `polish-reviewer`) operates independently and doesn't share token budgets, making it difficult to predict total costs upfront.
+- **The async call is easy to get wrong.** `execute` is the main
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **Pass `path`, not a source string.** `execute` reads `path` (and
+  `depth`); it does not take a raw source-code string or a
+  `doc_type`. The CLI and Python API supply `path` correctly.
+- **It generates, it doesn't place.** The output is documentation
+  content in the result, not files on disk — review and position it
+  yourself.
 
-**Stage dependencies breaking silently.** The workflow executes three distinct stages where each depends on output from the previous stage. If the outline planner produces malformed structure data, the content writer may generate incomplete sections, and the polish reviewer will work with inconsistent input. These failures often propagate without clear error messages.
+### Diagnosis order
 
-**API reference extraction inconsistencies.** The `APIReferenceMixin` extracts docstrings and function signatures, but it can miss dynamically defined methods, inherited behavior from complex class hierarchies, or modules with conditional imports. The generated documentation may appear complete while missing critical API details.
-
-**Report formatting edge cases.** The `format_doc_gen_report()` function structures the final output, but it assumes specific keys exist in the result dictionary. When subagents return unexpected data structures or partial results, the formatter can produce truncated reports without indicating what content was dropped.
-
-## How to avoid problems
-
-**Set explicit cost limits before starting.** Use the `DocGenCostMixin` to establish token budgets for each stage rather than relying on default limits. Monitor consumption during the outline phase since it determines the scope for subsequent stages.
-
-**Validate stage outputs immediately.** Check that each stage produces the expected data structure before proceeding to the next. The outline stage should return structured markdown with clear section headers, and the write stage should populate all outlined sections.
-
-**Test API extraction on your specific codebase patterns.** Run the workflow on a small subset of your code first to identify whether the extraction logic handles your project's inheritance patterns, dynamic imports, and documentation styles correctly.
-
-**Verify complete report generation.** After workflow execution, check that the final report contains all four expected sections (Summary, Outline, Documentation, Suggestions) and that no placeholder text remains from incomplete processing.
-
-## Source files
-
-- `src/attune/workflows/document_gen/**`
-
-**Tags:** `docs`, `documentation`, `generation`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. If `error` is "path argument is required", confirm you passed
+   `path=` (not a source string or other kwarg).
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`, `depth`,
+   and `max_turns`.

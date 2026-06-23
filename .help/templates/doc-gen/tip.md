@@ -1,18 +1,26 @@
 ---
 type: tip
+name: doc-gen-tip
 feature: doc-gen
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: e72f8c7df1bc5e57a104c92b8ea7ec8a43b33084d7d1ab2add257441af45c122
+generated_at: 2026-06-23T16:17:04.175824+00:00
+source_hash: bcc987b14e370273da9042e975c82dcf5af466e245d407e9ce45d5250d354384
 status: generated
 ---
 
-# Tip: working effectively with doc gen
+# Generate new documentation from source code with three specialized subagents
 
-## Use the workflow's built-in cost tracking to avoid LLM token surprises
+## Notes & tips
 
-The `DocGenCostMixin` tracks token usage across all three subagents (outline-planner, content-writer, polish-reviewer) and provides real-time cost estimates. Check costs before processing large codebases to avoid unexpected bills.
-
-The mixin is already integrated into `DocumentGenerationWorkflow`, so you get automatic cost reporting in the workflow result without any additional setup.
-
-**Tags:** `docs`, `documentation`, `generation`
+- **Depend on the documented public surface.** The supported API is
+  `DocumentGenerationWorkflow` and its async `execute` (plus the
+  `default_context` classmethod for composition), and the
+  `WorkflowResult` it returns. Names with a leading underscore —
+  `_run_agent_gen`, `_SUBAGENT_NAMES` — are internal and may
+  change.
+- **Audit first, then generate.** Run doc-audit to find the gaps,
+  then point doc-gen at the modules that need new content.
+- **Use `path` and `depth` to keep runs cheap.** A `quick` pass
+  over one module is far faster than a `deep` pass over `src/`.
+- **Take the output from `final_output`.** Doc-gen returns
+  generated content; review it and place it where it belongs.
