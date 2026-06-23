@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with Refactor Plan — task</title>
-  <meta name="description" content="Use the refactor plan workflow when you want to scan a codebase for technical debt and produce a prioritized refactoring roadmap with effort estimates and risk levels." />
-  <meta property="og:title" content="Work with Refactor Plan — task" />
-  <meta property="og:description" content="Use the refactor plan workflow when you want to scan a codebase for technical debt and produce a prioritized refactoring roadmap with effort estimates and risk levels." />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — task</title>
+  <meta name="description" content="**Goal:** produce a prioritized refactoring plan for a directory without writing any Python." />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — task" />
+  <meta property="og:description" content="**Goal:** produce a prioritized refactoring plan for a directory without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/task" />
   <style>
@@ -272,72 +272,71 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with Refactor Plan</h1>
-<p>Use the refactor plan workflow when you want to scan a codebase for technical debt and produce a prioritized refactoring roadmap with effort estimates and risk levels.</p>
-<h2>Prerequisites</h2>
-<ul>
-<li>Access to the project source code</li>
-<li>The relevant source files:
-<ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
-</ul>
-</li>
-</ul>
-<h2>Run a refactor plan</h2>
-<ol>
-<li>
-<p><strong>Instantiate <code>RefactorPlanWorkflow</code>.</strong>
-Import the class from <code>workflows.refactor_plan</code> and create an instance. The constructor accepts keyword arguments that are forwarded to the underlying subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code>).</p>
-<pre><code class="language-python">from workflows.refactor_plan import RefactorPlanWorkflow
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Tasks</h2>
+<h3>Generate a roadmap from the CLI</h3>
+<p><strong>Goal:</strong> produce a prioritized refactoring plan for a directory
+without writing any Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) over a directory:
+attune workflow run refactor-plan --path src/
 
-workflow = RefactorPlanWorkflow()
+# Deep analysis, JSON output for a report:
+attune workflow run refactor-plan --path src/ --depth deep --json
 </code></pre>
-</li>
-<li>
-<p><strong>Call <code>execute()</code> with the target path.</strong>
-Pass the path you want to analyze as a keyword argument. The workflow coordinates all three subagents and returns a <code>WorkflowResult</code>.</p>
-<pre><code class="language-python">result = workflow.execute(path=&quot;src/auth/&quot;)
-</code></pre>
-</li>
-<li>
-<p><strong>Format the output.</strong>
-Pass the result and your original input data to <code>format_refactor_plan_report()</code> to produce a human-readable report.</p>
-<pre><code class="language-python">from workflows.refactor_plan_report import format_refactor_plan_report
+<p><strong>Verify:</strong> the slug is <code>refactor-plan</code>. <code>--path</code> / <code>-p</code> defaults
+to the current directory; <code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or
+<code>deep</code>; <code>--json</code> / <code>-j</code> emits machine-readable output. Use
+<code>attune workflow info refactor-plan</code> to confirm registration.</p>
+<h3>Call the planner from Python</h3>
+<p><strong>Goal:</strong> drive refactor-plan from a hook or scheduled report and
+act on the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
 
-report = format_refactor_plan_report(result, input_data={&quot;path&quot;: &quot;src/auth/&quot;})
-print(report)
+from attune.workflows import RefactorPlanWorkflow
+
+
+async def main() -&gt; None:
+    workflow = RefactorPlanWorkflow()
+    result = await workflow.execute(path=&quot;src/legacy/&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;analysis failed:&quot;, result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Or run the CLI entry point directly.</strong>
-Call <code>main()</code> from <code>workflows.refactor_plan_report</code> to run the full workflow from the command line without writing any Python.</p>
-</li>
-</ol>
-<h2>Modify report formatting</h2>
-<ol>
-<li>
-<p><strong>Open <code>src/attune/workflows/refactor_plan_report.py</code>.</strong>
-The <code>format_refactor_plan_report(result: dict, input_data: dict) -&gt; str</code> function is the single place responsible for converting raw workflow output into the final report string.</p>
-</li>
-<li>
-<p><strong>Identify the section to change.</strong>
-The report is structured around three sections driven by the workflow output: <strong>Summary</strong>, <strong>Refactoring</strong>, and <strong>Suggestions</strong>. Find the block that renders the section you need to adjust.</p>
-</li>
-<li>
-<p><strong>Edit the formatting logic and verify the signature.</strong>
-<code>format_refactor_plan_report</code> takes <code>result</code> (the <code>dict</code> returned by <code>execute()</code>) and <code>input_data</code> (the original inputs). Make sure your changes consume only fields present in those arguments.</p>
-</li>
-<li>
-<p><strong>Confirm the output looks correct.</strong>
-Call <code>format_refactor_plan_report</code> directly in a Python shell with a representative <code>result</code> dict and inspect the returned string.</p>
-</li>
-</ol>
-<h2>Verify success</h2>
-<p>Run the test suite targeting this feature:</p>
-<pre><code>pytest -k &quot;refactor-plan&quot;
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed run
+returns <code>success=True</code> with the roadmap in <code>final_output</code>; a
+failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, and
+<code>max_turns</code>.</p>
+<h3>Scope the analysis to a smaller area</h3>
+<p><strong>Goal:</strong> keep a run fast and focused on the module you care about.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import RefactorPlanWorkflow
+
+
+async def main() -&gt; None:
+    workflow = RefactorPlanWorkflow()
+    result = await workflow.execute(path=&quot;src/attune/config.py&quot;, depth=&quot;quick&quot;)
+    print(result.final_output)
+
+
+asyncio.run(main())
 </code></pre>
-<p>All tests pass and <code>format_refactor_plan_report</code> returns a non-empty string that includes a <strong>Summary</strong>, <strong>Refactoring</strong>, and <strong>Suggestions</strong> section for a valid <code>result</code> input.</p>
+<p><strong>Verify:</strong> refactor-plan has no <code>focus</code> parameter, so the levers
+are <code>path</code> (point it at a narrower directory or file) and <code>depth</code>
+(<code>quick</code> trims the agent-turn budget to 10). All three passes run
+over whatever <code>path</code> covers.</p>
 
   </article>
   <footer>

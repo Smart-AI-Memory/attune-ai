@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Refactor Plan cautions — warning</title>
-  <meta name="description" content="A refactor plan roadmap is only as reliable as the analysis that produced it. Three subagents — `debt-scanner`, `impact-analyzer`, and `plan-generator` — each contribute findings that `RefactorPlanWor" />
-  <meta property="og:title" content="Refactor Plan cautions — warning" />
-  <meta property="og:description" content="A refactor plan roadmap is only as reliable as the analysis that produced it. Three subagents — `debt-scanner`, `impact-analyzer`, and `plan-generator` — each contribute findings that `RefactorPlanWor" />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — warning</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RefactorPlanWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` i" />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — warning" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RefactorPlanWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` i" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/warning" />
   <style>
@@ -272,39 +272,79 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Refactor Plan cautions</h1>
-<h2>What to watch for</h2>
-<p>A refactor plan roadmap is only as reliable as the analysis that produced it. Three subagents — <code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code> — each contribute findings that <code>RefactorPlanWorkflow.execute()</code> synthesizes into a single report. If the path you supply is incomplete, or if one subagent's output is sparse, the synthesized roadmap can quietly under-report issues without raising an error.</p>
-<h2>Risk areas</h2>
-<h3>Partial-path analysis produces a misleadingly clean score</h3>
-<p><code>RefactorPlanWorkflow.execute()</code> scans whatever path you give it and scores only what it finds. Pointing the workflow at a subdirectory rather than the full module boundary means coupling issues and cross-file duplication that cross that boundary will be missed. The resulting tech debt score (0–100) will appear better than it is. Always align the analysis path with a meaningful module or package boundary, not a convenience slice of the tree.</p>
-<h3><code>format_refactor_plan_report()</code> silently accepts empty input</h3>
-<p><code>format_refactor_plan_report(result, input_data)</code> formats whatever you pass it. If <code>result</code> is an empty dict — for example, because <code>execute()</code> returned a <code>WorkflowResult</code> whose payload was not unpacked before being passed — the function returns a structurally valid but content-free report rather than raising an error. Verify that <code>result</code> contains the expected <code>Summary</code>, <code>Refactoring</code>, and <code>Suggestions</code> sections before passing it to the formatter.</p>
-<h3>Effort and risk estimates are model-generated, not measured</h3>
-<p>The roadmap's effort estimates (<code>small</code> / <code>medium</code> / <code>large</code>) and risk levels (<code>low</code> / <code>medium</code> / <code>high</code>) come from the <code>plan-generator</code> subagent's interpretation of the other subagents' findings, not from static analysis metrics. A <code>Risk: Low</code> label on a rename in a widely-imported module does not account for callers outside the scanned path. Treat these labels as a starting point for planning, not a substitute for your own impact assessment.</p>
-<h3>Private subagent names can change without notice</h3>
-<p>The subagent identifiers <code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code> are internal constants. If you have tooling or logging that keys on these names, it will break silently if the constants change. Depend on the public <code>RefactorPlanWorkflow</code> and <code>format_refactor_plan_report</code> surface instead.</p>
-<h2>How to avoid problems</h2>
-<ol>
-<li>
-<p><strong>Set the path at a real module boundary.</strong> Run <code>/refactor-plan src/auth/</code> rather than <code>/refactor-plan src/auth/utils/</code> so that cross-file coupling and duplication are fully visible to all three subagents.</p>
-</li>
-<li>
-<p><strong>Validate <code>WorkflowResult</code> before formatting.</strong> Unpack and inspect the result of <code>execute()</code> before passing it to <code>format_refactor_plan_report()</code>. Confirm the dict contains substantive content; an empty or minimal result is a signal to re-run, not to format and act on.</p>
-</li>
-<li>
-<p><strong>Generate tests before acting on high-risk items.</strong> For any roadmap item marked <code>Risk: High</code>, ask for a test suite covering the target file before making structural changes. This is especially important for items flagged as god classes or high-complexity functions, where the refactoring surface is large.</p>
-</li>
-<li>
-<p><strong>Depend only on the public API.</strong> Build any automation around <code>RefactorPlanWorkflow</code> and <code>format_refactor_plan_report</code> — both in <code>workflows.refactor_plan</code> and <code>workflows.refactor_plan_report</code>. Avoid referencing internal constants by name.</p>
-</li>
-</ol>
-<h2>Source files</h2>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'RefactorPlanWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Roadmap stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a narrower <code>path</code>, a shallower <code>depth</code>, or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong>It plans, it doesn't apply.</strong> Refactor-plan produces a roadmap;
+it does not edit code. Use simplify-code (or your own change) to
+act on it.</li>
+<li><strong>Findings are predictions, not proofs.</strong> A high-priority item
+means &quot;look here first,&quot; not a confirmed defect. Verify the
+effort and risk estimates against the real code before committing
+to them.</li>
 </ul>
-<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code>.</li>
+</ol>
 
   </article>
   <footer>

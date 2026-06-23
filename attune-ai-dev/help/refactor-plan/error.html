@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Refactor Plan errors — error</title>
-  <meta name="description" content="Errors in the refactor plan feature fall into two categories: failures during workflow execution (orchestrating the three subagents and synthesizing their output) and failures during report formatting" />
-  <meta property="og:title" content="Refactor Plan errors — error" />
-  <meta property="og:description" content="Errors in the refactor plan feature fall into two categories: failures during workflow execution (orchestrating the three subagents and synthesizing their output) and failures during report formatting" />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — error</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RefactorPlanWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` i" />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — error" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;RefactorPlanWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `await` i" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/error" />
   <style>
@@ -272,48 +272,79 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Refactor Plan errors</h1>
-<p>Errors in the refactor plan feature fall into two categories: failures during workflow execution (orchestrating the three subagents and synthesizing their output) and failures during report formatting (converting the raw result into a human-readable report).</p>
-<h2>Common error signatures</h2>
-<p>Errors most commonly appear in these forms:</p>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'RefactorPlanWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity / retry; <code>transient</code> is set when a retry is reasonable</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Roadmap stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a narrower <code>path</code>, a shallower <code>depth</code>, or accept a deeper (costlier) run</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>A finding looks like a false positive</td>
+<td>Findings are LLM predictions, not verified defects</td>
+<td>Confirm against the cited file/line before acting</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
 <ul>
-<li><strong>Missing or invalid path</strong> — <code>RefactorPlanWorkflow.execute()</code> receives a path that doesn't exist or isn't accessible, causing the workflow to fail before any subagent runs.</li>
-<li><strong>Malformed result dict</strong> — <code>format_refactor_plan_report(result, input_data)</code> raises a <code>KeyError</code> or <code>TypeError</code> when <code>result</code> is missing expected keys (such as <code>Summary</code>, <code>Refactoring</code>, or <code>Suggestions</code> sections) or when <code>input_data</code> is <code>None</code>.</li>
-<li><strong>Subagent synthesis failure</strong> — the orchestrator (<code>debt-scanner</code>, <code>impact-analyzer</code>, or <code>plan-generator</code>) returns an incomplete response, leaving <code>result</code> in a partial state that <code>format_refactor_plan_report()</code> cannot render.</li>
-<li><strong>CLI argument error</strong> — <code>main()</code> exits early if required arguments are not supplied or are in an unexpected format.</li>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the only
+public method and it is a coroutine. Forgetting to <code>await</code> it is
+the single most common mistake.</li>
+<li><strong>It plans, it doesn't apply.</strong> Refactor-plan produces a roadmap;
+it does not edit code. Use simplify-code (or your own change) to
+act on it.</li>
+<li><strong>Findings are predictions, not proofs.</strong> A high-priority item
+means &quot;look here first,&quot; not a confirmed defect. Verify the
+effort and risk estimates against the real code before committing
+to them.</li>
 </ul>
-<h2>Where errors originate</h2>
-<ul>
-<li><strong><code>RefactorPlanWorkflow.execute()</code></strong> — orchestrates the three subagents and produces a <code>WorkflowResult</code>. Failures here usually indicate a bad input path, a subagent that did not complete, or a synthesis step that produced unexpected output structure.</li>
-<li><strong><code>format_refactor_plan_report(result, input_data)</code></strong> — converts the workflow's <code>result</code> dict and the original <code>input_data</code> dict into a readable report string. Failures here usually mean <code>execute()</code> returned a result dict that is missing required sections or has an unexpected shape.</li>
-<li><strong><code>main()</code></strong> — the CLI entry point that wires together argument parsing, <code>RefactorPlanWorkflow</code>, and <code>format_refactor_plan_report()</code>. Errors here are often missing CLI arguments or an unhandled exception bubbling up from one of the two functions above.</li>
-</ul>
-<h2>How to diagnose</h2>
+<h3>Diagnosis order</h3>
 <ol>
-<li>
-<p><strong>Read the traceback call stack top-to-bottom.</strong> Identify whether the raise site is in <code>refactor_plan.py</code> (workflow/subagent layer) or <code>refactor_plan_report.py</code> (formatting layer). That tells you which half of the pipeline failed.</p>
-</li>
-<li>
-<p><strong>Check the exception type at the raise site.</strong></p>
-<ul>
-<li>A <code>KeyError</code> in <code>format_refactor_plan_report()</code> means <code>result</code> is missing a key the formatter expects — inspect the dict returned by <code>execute()</code> to see what sections are present.</li>
-<li>A <code>TypeError</code> in <code>format_refactor_plan_report()</code> often means <code>result</code> or <code>input_data</code> is <code>None</code>, which points back to <code>execute()</code> returning an empty or failed <code>WorkflowResult</code>.</li>
-<li>An <code>OSError</code> or <code>FileNotFoundError</code> in <code>execute()</code> means the path passed to the workflow does not exist or is not readable.</li>
-</ul>
-</li>
-<li>
-<p><strong>Inspect the <code>result</code> dict before formatting.</strong> If you can reproduce the failure, print or log the value of <code>result</code> after <code>execute()</code> returns and before passing it to <code>format_refactor_plan_report()</code>. The three expected top-level sections are <code>Summary</code>, <code>Refactoring</code>, and <code>Suggestions</code> — a missing section identifies which subagent (<code>debt-scanner</code>, <code>impact-analyzer</code>, or <code>plan-generator</code>) did not complete successfully.</p>
-</li>
-<li>
-<p><strong>Verify the path argument.</strong> The <code>_TASK_PROMPT_TEMPLATE</code> requires a <code>{path}</code> value. If <code>main()</code> is the entry point, confirm the path argument was supplied and points to a readable file or directory.</p>
-</li>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;src/&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code> and
+<code>result.error_type</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code>.</li>
 </ol>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
 
   </article>
   <footer>

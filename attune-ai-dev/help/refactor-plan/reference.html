@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Refactor Plan reference — reference</title>
-  <meta name="description" content="Scan code for structural problems and generate a prioritized refactoring roadmap." />
-  <meta property="og:title" content="Refactor Plan reference — reference" />
-  <meta property="og:description" content="Scan code for structural problems and generate a prioritized refactoring roadmap." />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — reference</title>
+  <meta name="description" content="Refactor-plan&#x27;s public surface is the `RefactorPlanWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — reference" />
+  <meta property="og:description" content="Refactor-plan&#x27;s public surface is the `RefactorPlanWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/reference" />
   <style>
@@ -272,107 +272,167 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Refactor Plan reference</h1>
-<p>Scan code for structural problems and generate a prioritized refactoring roadmap.</p>
-<h2>Classes</h2>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Reference</h2>
+<p>Refactor-plan's public surface is the <code>RefactorPlanWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3><code>RefactorPlanWorkflow</code> — <code>attune.workflows.refactor_plan</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>RefactorPlanWorkflow</code></td>
-<td>Prioritize tech debt with Agent SDK subagents.</td>
+<td><code>RefactorPlanWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the analysis. Honors <code>path</code> (str, required) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>). No <code>focus</code>. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;refactor-plan&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>RefactorPlanWorkflow.stages</code></td>
+<td><code>[&quot;agent-plan&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h3><code>RefactorPlanWorkflow</code></h3>
+<h3>Depth → agent-turn budget</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>__init__</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>None</code></td>
-<td>Initialize the workflow.</td>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a small path.</td>
 </tr>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Run the refactor plan workflow and return the result.</td>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest roadmap of a large or legacy area.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>The three passes</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Subagent</th>
+<th>Domain</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>format_refactor_plan_report</code></td>
-<td><code>result: dict, input_data: dict</code></td>
-<td><code>str</code></td>
-<td>Format refactor plan output as a human-readable report.</td>
+<td><code>debt-scanner</code></td>
+<td>Code smells, duplication, complex conditionals, dead code, long functions, deep nesting.</td>
 </tr>
 <tr>
-<td><code>main</code></td>
-<td>—</td>
-<td><code>None</code></td>
-<td>CLI entry point for refactor planning workflow.</td>
+<td><code>impact-analyzer</code></td>
+<td>Test coverage, dependency chains, API-surface changes, downstream consumers.</td>
+</tr>
+<tr>
+<td><code>plan-generator</code></td>
+<td>Prioritized plan: effort (small/medium/large), risk (low/medium/high), benefit, order.</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
+<th>Field</th>
 <th>Type</th>
-<th>Members / Value</th>
+<th>Meaning</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>_SUBAGENT_NAMES</code></td>
-<td><code>list</code></td>
-<td><code>'debt-scanner'</code>, <code>'impact-analyzer'</code>, <code>'plan-generator'</code></td>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the analysis completed.</td>
 </tr>
 <tr>
-<td><code>_SYSTEM_PROMPT</code></td>
-<td><code>str</code></td>
-<td><code>'You are a senior refactoring plan orchestrator. You coordinate three specialized subagents to produce a unified refactoring roadmap. Be thorough but concise. Cite file paths and line numbers when possible.'</code></td>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The roadmap — a serialized report when findings parse, else the raw markdown.</td>
 </tr>
 <tr>
-<td><code>_TASK_PROMPT_TEMPLATE</code></td>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short tech-debt summary.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
 <td><code>str</code></td>
-<td><code>'Analyze the codebase at {path} using the three specialized subagents below. Each subagent should focus on its domain and report findings as structured markdown.\n\nAfter all subagents finish, synthesize their findings into a single report with these sections:\n\n## Summary\nOverall tech debt score (0-100) and a 2-3 sentence executive summary of the refactoring opportunities found.\n\n## Refactoring\nPrioritized list of refactoring opportunities with effort estimates (small/medium/large) and risk levels (low/medium/high) for each item.\n\n## Suggestions\nActionable next steps ordered by priority, including quick wins and longer-term improvements.'</code></td>
+<td>The provider that served the run (<code>&quot;anthropic&quot;</code>).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
+<h3>Entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/refactor</code> in a Claude Code conversation — full analysis routes to refactor-plan; a complexity-only pass routes to simplify-code.</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run refactor-plan --path &lt;p&gt; [--depth quick|standard|deep] [--json]</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>refactor_plan</code> — optional <code>path</code> (defaults to the current directory), validated against the workspace root.</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await RefactorPlanWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>

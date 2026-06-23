@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Refactor Plan vs alternatives — comparison</title>
-  <meta name="description" content="Refactor Plan scans your codebase for structural problems — god classes, duplicated blocks, high cyclomatic complexity, tight coupling — and produces a prioritized roadmap with effort estimates and ri" />
-  <meta property="og:title" content="Comparison: Refactor Plan vs alternatives — comparison" />
-  <meta property="og:description" content="Refactor Plan scans your codebase for structural problems — god classes, duplicated blocks, high cyclomatic complexity, tight coupling — and produces a prioritized roadmap with effort estimates and ri" />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — comparison</title>
+  <meta name="description" content="Refactor-plan and **code-quality** are both SDK-native, predictive, read-only analysis workflows reached with `attune workflow run &lt;slug&gt;` — but they answer different questions." />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — comparison" />
+  <meta property="og:description" content="Refactor-plan and **code-quality** are both SDK-native, predictive, read-only analysis workflows reached with `attune workflow run &lt;slug&gt;` — but they answer different questions." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/comparison" />
   <style>
@@ -272,103 +272,50 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Refactor Plan vs alternatives</h1>
-<h2>Context</h2>
-<p>Refactor Plan scans your codebase for structural problems — god classes, duplicated blocks, high cyclomatic complexity, tight coupling — and produces a prioritized roadmap with effort estimates and risk levels. It coordinates three specialized subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code>) to do this work, then synthesizes their findings into a single report.</p>
-<p>This page helps you decide between running Refactor Plan, writing a custom static-analysis script, or using a general-purpose code review.</p>
-<h2>Feature comparison</h2>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Comparison</h2>
+<p>Refactor-plan and <strong>code-quality</strong> are both SDK-native, predictive,
+read-only analysis workflows reached with <code>attune workflow run &lt;slug&gt;</code> — but they answer different questions.</p>
 <table>
 <thead>
 <tr>
-<th>Capability</th>
-<th>Refactor Plan</th>
-<th>Custom script</th>
-<th>General code review</th>
+<th></th>
+<th><code>refactor-plan</code></th>
+<th><code>code-quality</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td>Prioritized roadmap (severity × effort × impact)</td>
-<td>✅ Built in</td>
-<td>❌ You build it</td>
-<td>⚠️ Ad hoc, not scored</td>
+<td><strong>Question</strong></td>
+<td>What tech debt should I tackle, and in what order?</td>
+<td>Is this code healthy across security, quality, performance, architecture?</td>
 </tr>
 <tr>
-<td>Effort estimates per issue</td>
-<td>✅ small / medium / large</td>
-<td>❌</td>
-<td>❌</td>
+<td><strong>Subagents</strong></td>
+<td>Three: <code>debt-scanner</code>, <code>impact-analyzer</code>, <code>plan-generator</code></td>
+<td>Four: <code>security-</code>, <code>quality-</code>, <code>perf-</code>, <code>architect-reviewer</code></td>
 </tr>
 <tr>
-<td>Risk levels per issue</td>
-<td>✅ low / medium / high</td>
-<td>❌</td>
-<td>⚠️ Subjective</td>
+<td><strong>Output</strong></td>
+<td>A prioritized roadmap with effort + risk per item</td>
+<td>A health report with findings per domain</td>
 </tr>
 <tr>
-<td>Three-subagent analysis (debt, impact, plan)</td>
-<td>✅ Orchestrated automatically</td>
-<td>❌</td>
-<td>❌</td>
+<td><strong>Sections</strong></td>
+<td>Summary / Refactoring / Suggestions</td>
+<td>Summary / Security / Quality / Performance / Architecture / Suggestions</td>
 </tr>
 <tr>
-<td>Human-readable report via <code>format_refactor_plan_report()</code></td>
-<td>✅</td>
-<td>❌</td>
-<td>❌</td>
-</tr>
-<tr>
-<td>CLI entry point (<code>main()</code>)</td>
-<td>✅</td>
-<td>✅</td>
-<td>❌</td>
-</tr>
-<tr>
-<td>Covers code smells, duplication, complexity, coupling, naming, dead code</td>
-<td>✅ All categories</td>
-<td>⚠️ Whatever you code</td>
-<td>⚠️ Varies</td>
-</tr>
-<tr>
-<td>Actionable fix suggestions with file + line citations</td>
-<td>✅</td>
-<td>⚠️ Depends on tooling</td>
-<td>⚠️ Inconsistent</td>
-</tr>
-<tr>
-<td>Setup required</td>
-<td>None — invoke <code>/refactor-plan &lt;path&gt;</code></td>
-<td>High</td>
-<td>Low</td>
+<td><strong>Slug</strong></td>
+<td><code>attune workflow run refactor-plan</code></td>
+<td><code>attune workflow run code-review</code></td>
 </tr>
 </tbody>
 </table>
-<h2>Tradeoffs</h2>
-<p><strong>Refactor Plan vs. a custom static-analysis script</strong></p>
-<p>Refactor Plan produces a scored, ranked roadmap immediately — no toolchain to wire up. A custom script gives you full control over rules and output format, but you are responsible for scoring logic, prioritization, and report formatting. For one-off checks or CI rules that need machine-readable output in a specific schema, a custom script may be more appropriate. For everything else, Refactor Plan delivers a richer result with less effort.</p>
-<p><strong>Refactor Plan vs. a general code review</strong></p>
-<p>A general code review (<code>/review</code> or equivalent) gives you broad feedback on correctness, style, and logic. It does not produce a scored debt inventory or rank issues by effort-to-impact ratio. If you already know the code has structural problems and you need to justify refactoring time or decide what to fix first, Refactor Plan's structured roadmap is more actionable than review prose.</p>
-<p><strong>Limitations of Refactor Plan</strong></p>
-<ul>
-<li>The <code>RefactorPlanWorkflow</code> surface (<code>execute(**kwargs)</code>) does not expose per-category filtering through the public API; focused analysis (e.g., duplication only) is available through the conversational interface (<code>/refactor-plan</code>), not programmatic calls.</li>
-<li>Because the workflow orchestrates subagents, it is heavier than a single-pass linter. Running it against a very large monorepo may be slower than a targeted script scoped to one package.</li>
-<li><code>format_refactor_plan_report()</code> formats output for human reading. If you need structured data (JSON, SARIF) for downstream tooling, you will need to process <code>WorkflowResult</code> directly rather than using the report formatter.</li>
-</ul>
-<h2>Use Refactor Plan when…</h2>
-<ul>
-<li>You want a <strong>prioritized roadmap</strong> without building scoring logic yourself — Refactor Plan scores every issue by severity, effort, impact, and risk out of the box.</li>
-<li>You are about to <strong>add features to a complex area</strong> and need to know which structural problems to clear first.</li>
-<li>You need <strong>data to justify refactoring work</strong> to stakeholders — the scored report and effort estimates give you concrete numbers.</li>
-<li>You want to <strong>act on results immediately</strong> — the roadmap integrates with follow-on actions like targeted simplification or test generation.</li>
-</ul>
-<p><strong>Use a custom script instead when</strong> you need machine-readable output in a specific format, you are enforcing a small set of hard rules in CI, or the analysis scope is narrow enough that a single-pass linter covers it.</p>
-<p><strong>Use a general code review instead when</strong> your concern is correctness or style across the whole codebase, not structural debt specifically.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
+<p>Reach for <strong>refactor-plan</strong> when you've decided to invest in
+cleanup and need a sequenced plan; reach for <strong>code-quality</strong> for a
+broad health read across more concerns. To actually <em>apply</em> a
+cleanup once the plan names it, use <strong>simplify-code</strong>.</p>
 
   </article>
   <footer>

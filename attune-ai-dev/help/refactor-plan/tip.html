@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: Use `format_refactor_plan_report()` to read results outside the conversation — tip</title>
-  <meta name="description" content="When you need the refactor-plan output in a script or CI pipeline, call `format_refactor_plan_report(result, input_data)` from `workflows.refactor_plan_report` directly. It converts the raw `WorkflowR" />
-  <meta property="og:title" content="Tip: Use `format_refactor_plan_report()` to read results outside the conversation — tip" />
-  <meta property="og:description" content="When you need the refactor-plan output in a script or CI pipeline, call `format_refactor_plan_report(result, input_data)` from `workflows.refactor_plan_report` directly. It converts the raw `WorkflowR" />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `RefactorPlanWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_agent_" />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `RefactorPlanWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_agent_" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/tip" />
   <style>
@@ -272,27 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: Use <code>format_refactor_plan_report()</code> to read results outside the conversation</h1>
-<h2>Recommendation</h2>
-<p>When you need the refactor-plan output in a script or CI pipeline, call
-<code>format_refactor_plan_report(result, input_data)</code> from
-<code>workflows.refactor_plan_report</code> directly. It converts the raw <code>WorkflowResult</code>
-dict into a human-readable report with the same Summary, Refactoring, and
-Suggestions sections you see in a Claude Code conversation.</p>
-<p><strong>Why:</strong> The three internal subagents (<code>debt-scanner</code>, <code>impact-analyzer</code>,
-<code>plan-generator</code>) are underscore-prefixed internals that can change without
-notice. <code>format_refactor_plan_report()</code> is the stable surface for consuming
-their synthesized output.</p>
-<p><strong>Tradeoff:</strong> The function expects the result dict that <code>RefactorPlanWorkflow.execute()</code>
-produces. If you pass a partial or hand-constructed dict, sections may render
-incomplete. Run <code>execute()</code> first; don't shortcut by constructing the dict
-yourself.</p>
-<h2>Source files</h2>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Notes &amp; tips</h2>
 <ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>RefactorPlanWorkflow</code> and its async <code>execute</code>, plus the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_agent_plan</code>, <code>_SUBAGENT_NAMES</code> — are internal and may
+change.</li>
+<li><strong>Plan with refactor-plan, act with simplify-code.</strong> Run the
+planner to get a sequenced roadmap, then apply individual items
+with simplify-code or your own edits.</li>
+<li><strong>Use <code>path</code> and <code>depth</code> to keep runs cheap.</strong> A <code>quick</code> pass
+over one module is far faster than a <code>deep</code> pass over <code>src/</code>.</li>
+<li><strong>Read <code>metadata</code> to confirm scope.</strong> It records the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> the run actually used.</li>
 </ul>
-<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
 
   </article>
   <footer>

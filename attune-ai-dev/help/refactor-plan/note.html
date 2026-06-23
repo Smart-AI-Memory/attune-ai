@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: Refactor Plan — note</title>
-  <meta name="description" content="The refactor-plan feature is implemented across two modules with distinct responsibilities." />
-  <meta property="og:title" content="Note: Refactor Plan — note" />
-  <meta property="og:description" content="The refactor-plan feature is implemented across two modules with distinct responsibilities." />
+  <title>Prioritize tech debt — scan for code smells and generate a refactoring roadmap — note</title>
+  <meta name="description" content="Refactor-plan turns &quot;this code needs work&quot; into a prioritized roadmap. It is **SDK-native**: `RefactorPlanWorkflow` delegates to three specialized Claude Agent SDK subagents — one scans for tech debt," />
+  <meta property="og:title" content="Prioritize tech debt — scan for code smells and generate a refactoring roadmap — note" />
+  <meta property="og:description" content="Refactor-plan turns &quot;this code needs work&quot; into a prioritized roadmap. It is **SDK-native**: `RefactorPlanWorkflow` delegates to three specialized Claude Agent SDK subagents — one scans for tech debt," />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/refactor-plan/note" />
   <style>
@@ -272,17 +272,137 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: Refactor Plan</h1>
-<p>The refactor-plan feature is implemented across two modules with distinct responsibilities.</p>
-<p><code>workflows.refactor_plan</code> contains <code>RefactorPlanWorkflow</code>, which orchestrates three specialized subagents — <code>debt-scanner</code>, <code>impact-analyzer</code>, and <code>plan-generator</code> — using the Agent SDK. Each subagent focuses on a separate domain; the workflow synthesizes their output into a unified roadmap covering a summary, prioritized refactoring opportunities, and actionable next steps.</p>
-<p><code>workflows.refactor_plan_report</code> handles output formatting and CLI access. <code>format_refactor_plan_report(result, input_data)</code> converts the raw workflow result into a human-readable report. <code>main()</code> is the CLI entry point that runs the full planning workflow from the command line.</p>
-<p>The two modules are complementary but separate: <code>RefactorPlanWorkflow.execute()</code> produces the result dict, and <code>format_refactor_plan_report()</code> consumes it. Neither module inherits from the other.</p>
-<h2>Source files</h2>
+<h1>Prioritize tech debt — scan for code smells and generate a refactoring roadmap</h1>
+<h2>Overview</h2>
+<p>Refactor-plan turns &quot;this code needs work&quot; into a prioritized
+roadmap. It is <strong>SDK-native</strong>: <code>RefactorPlanWorkflow</code> delegates to
+three specialized Claude Agent SDK subagents — one scans for tech
+debt, one assesses the impact of changing it, and one assembles a
+prioritized plan — and synthesizes their findings into a single
+report with an overall tech-debt score, a ranked list of
+refactoring opportunities (each with an effort estimate and risk
+level), and an ordered set of next steps.</p>
+<p>It <strong>plans, it doesn't change code</strong>: the subagents are scoped to
+<code>Read</code> / <code>Glob</code> / <code>Grep</code>, so refactor-plan reads the codebase and
+produces a roadmap — it is the <em>decide what to do</em> half of
+refactoring, paired with <strong>simplify-code</strong> for the <em>do it</em> half
+(see <em>Plan versus act</em> below). Like the other analysis workflows
+it <strong>predicts</strong> rather than proves — its findings are LLM judgments
+to verify, not a mechanical debt report.</p>
+<p>You reach refactor-plan four ways:</p>
 <ul>
-<li><code>src/attune/workflows/refactor_plan.py</code></li>
-<li><code>src/attune/workflows/refactor_plan_report.py</code></li>
+<li>the <strong><code>/refactor</code></strong> skill, inside a Claude Code conversation —
+routes a full analysis to refactor-plan, or a complexity-only
+pass to simplify-code;</li>
+<li>the CLI — <strong><code>attune workflow run refactor-plan</code></strong>;</li>
+<li>the <strong><code>refactor_plan</code></strong> MCP tool (an optional <code>path</code>, defaulting
+to the current directory);</li>
+<li>the Python API — <code>await RefactorPlanWorkflow().execute(...)</code>,
+documented here for wiring planning into a hook or report.</li>
 </ul>
-<p><strong>Tags:</strong> <code>refactor</code>, <code>tech-debt</code>, <code>complexity</code></p>
+<h2>Concepts</h2>
+<h3>Three passes, one prioritized roadmap</h3>
+<p><code>RefactorPlanWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define three subagents, each
+scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Subagent</th>
+<th>Pass</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>debt-scanner</code></td>
+<td>Find the debt</td>
+<td>Scans for code smells, duplication, complex conditionals, dead code, overly long functions, and deeply nested logic. Reports file, line, severity, and a brief description.</td>
+</tr>
+<tr>
+<td><code>impact-analyzer</code></td>
+<td>Weigh the risk</td>
+<td>Assesses test coverage of affected code, dependency chains, API-surface changes, and downstream consumers — the cost of touching each candidate.</td>
+</tr>
+<tr>
+<td><code>plan-generator</code></td>
+<td>Order the work</td>
+<td>Turns the scanner's and analyzer's findings into a prioritized plan: per item an effort estimate (small/medium/large), a risk level (low/medium/high), the expected benefit, and a suggested implementation order.</td>
+</tr>
+</tbody>
+</table>
+<p>The orchestrator then synthesizes the passes into one report with
+three sections — <strong>Summary</strong> (an overall 0–100 tech-debt score plus
+a 2–3 sentence summary of the opportunities found),
+<strong>Refactoring</strong> (the prioritized opportunities with effort
+estimates and risk levels), and <strong>Suggestions</strong> (actionable next
+steps ordered by priority, including quick wins and longer-term
+improvements).</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default), or
+<code>&quot;deep&quot;</code>. Depth maps to the maximum agent turns and a per-run cost
+cap:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (20 turns).</p>
+<h3><code>execute</code> is async</h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+mistake. It reads two keyword arguments: <code>path</code> (required) and
+<code>depth</code> (default <code>&quot;standard&quot;</code>). An empty or missing <code>path</code> returns
+a failed <code>WorkflowResult</code> (&quot;path argument is required&quot;) rather than
+raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from <code>attune.workflows</code>). The
+roadmap lands in <code>final_output</code> — a serialized report when the
+findings parse, or the raw markdown otherwise — with a short
+<code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>, the <code>provider</code>,
+and a <code>metadata</code> dict echoing <code>path</code>, <code>depth</code>, and <code>max_turns</code>. On
+failure, <code>success</code> is <code>False</code> and <code>error</code> / <code>error_type</code> carry the
+reason.</p>
+<h3>Plan versus act</h3>
+<p>Refactor-plan and <strong>simplify-code</strong> are the two halves the
+<code>/refactor</code> skill routes between. Refactor-plan <em>analyzes</em> — it
+produces a roadmap and changes nothing. Simplify-code <em>acts</em> — it
+reduces complexity in a target file (flattening nested
+conditionals, inlining trivial helpers, removing dead code).
+Reach for refactor-plan to decide what to tackle and in what
+order; reach for simplify-code to apply a focused cleanup.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>RefactorPlanWorkflow</code> and its async <code>execute</code>, plus the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_agent_plan</code>, <code>_SUBAGENT_NAMES</code> — are internal and may
+change.</li>
+<li><strong>Plan with refactor-plan, act with simplify-code.</strong> Run the
+planner to get a sequenced roadmap, then apply individual items
+with simplify-code or your own edits.</li>
+<li><strong>Use <code>path</code> and <code>depth</code> to keep runs cheap.</strong> A <code>quick</code> pass
+over one module is far faster than a <code>deep</code> pass over <code>src/</code>.</li>
+<li><strong>Read <code>metadata</code> to confirm scope.</strong> It records the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> the run actually used.</li>
+</ul>
 
   </article>
   <footer>
