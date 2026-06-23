@@ -1,108 +1,38 @@
 ---
 type: troubleshooting
+name: wizards-troubleshooting
 feature: wizards
 depth: troubleshooting
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Troubleshoot wizards
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-## Before you start
+## Failure modes
 
-The wizards feature provides XML-enhanced interactive workflows for Attune AI. These multi-step guided processes help with debugging, refactoring, release preparation, security audits, and test generation.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BaseWizard.run' was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `AttributeError: 'NoneType' object has no attribute ...` after `get_wizard` | The wizard id is unknown; `get_wizard` returned `None` | Check `get_wizard(id) is not None`; list ids with `list_wizards()` | high |
+| A `question` step never prompts / hangs | No `ask_user_callback` wired (outside Claude Code) | Pass an `ask_user_callback` to the wizard, or run via the `/wizard` skill | medium |
+| `WizardResult.success` is `False` with a populated `error` | A step failed (LLM call, validation, or an aborted confirm) | Read `result.error` and `result.steps_completed` to see where it stopped | medium |
+| Custom wizard not found by `get_wizard` | It was never `register_wizard`'d (or `save_custom_wizard`'d) | Register the class or save the definition first | low |
 
-## Symptom table
+### Risk areas
 
-| If you observe | Check |
-|----------------|-------|
-| `ValueError: Cannot write wizard YAML` | File permissions on the target directory and available disk space |
-| `ValueError: Cannot delete built-in wizard` | Whether you're trying to delete a built-in wizard (only custom wizards can be deleted) |
-| Wizard step skipped unexpectedly | The step's `condition` function and the current `WizardSession` state |
-| `WizardResult.success` is `False` but no error message | The `WizardResult.error` field and exception handling in `BaseWizard.run()` |
-| Wizard hangs on a step | Token limits (`max_tokens`) and provider response timeouts |
-| Empty or malformed wizard output | The `prompt_template` and `prompt_context_template` for the failing step |
+- **`run()` is async.** Forgetting to `await` it is the most common
+  mistake.
+- **There is no registry class.** Use the module-level functions
+  (`list_wizards`, `get_wizard`, …) — not a `WizardRegistry`.
+- **`question` steps need a callback.** Outside the `/wizard` skill,
+  supply an `ask_user_callback` or the wizard can't collect input.
 
-## Step-by-step diagnosis
+### Diagnosis order
 
-1. **Reproduce the failure with a minimal wizard run.**
-   Create a simple test that calls `BaseWizard.run()` with the same `initial_context` that triggers the issue. This isolates the problem from surrounding application logic.
-
-2. **Check wizard registration and retrieval.**
-   Verify the wizard is properly registered by running:
-   ```python
-   from attune.wizards import list_wizards, get_wizard
-   print([w.wizard_id for w in list_wizards()])
-   wizard_class = get_wizard("your-wizard-id")
-   print(f"Found: {wizard_class}")
-   ```
-
-3. **Enable debug logging and examine step execution.**
-   Set logging to `DEBUG` level before running the wizard. Look for patterns in the step processing, particularly around `build_prompt_context()` and `process_step_result()` calls.
-
-4. **Inspect the `WizardResult` object.**
-   After a failed run, examine these fields in order:
-   - `WizardResult.error` - Contains the failure reason
-   - `WizardResult.steps_completed` - Shows how far the wizard got
-   - `WizardResult.collected_data` - Reveals what data was gathered
-   - `WizardResult.total_cost` and `total_duration_ms` - Indicates resource usage
-
-5. **Validate step configuration.**
-   For each failing step, check:
-   - `step_type` matches the intended execution mode
-   - `prompt_template` is not None for steps that need AI interaction
-   - `questions` list is properly defined for form-based steps
-   - `tier` setting matches your provider capabilities
-
-## Common fixes
-
-- **Fix wizard registration errors.**
-  ```python
-  from attune.wizards import register_wizard
-  register_wizard("my-wizard", MyWizardClass)
-  ```
-  Ensure you call `register_wizard()` before trying to retrieve the wizard with `get_wizard()`.
-
-- **Resolve custom wizard file permissions.**
-  ```bash
-  # Make wizard directory writable
-  chmod 755 ~/.attune/wizards/
-  # Check available disk space
-  df -h ~/.attune/
-  ```
-
-- **Fix step condition logic.**
-  If steps are skipping unexpectedly, verify the condition function:
-  ```python
-  # In your WizardStep definition
-  condition=lambda session: session.collected_data.get('prerequisite_done', False)
-  ```
-
-- **Adjust token limits for complex steps.**
-  Increase `max_tokens` for steps that generate long outputs:
-  ```python
-  WizardStep(
-      id="analysis",
-      step_type=StepType.QUESTION,
-      max_tokens=8192  # Increase from default 4096
-  )
-  ```
-
-- **Handle missing ask_user_callback.**
-  For interactive wizards, ensure you provide a callback function:
-  ```python
-  def my_callback(question):
-      return input(f"{question}: ")
-
-  wizard = MyWizard(ask_user_callback=my_callback)
-  ```
-
-## Source files
-
-- `src/attune/wizards/base.py` - `BaseWizard` class and core logic
-- `src/attune/wizards/types.py` - Data structures (`WizardStep`, `WizardConfig`, etc.)
-- `src/attune/wizards/registry.py` - Wizard registration and management
-- `src/attune/wizards/builtin/` - Built-in wizard implementations
-
-**Tags:** `wizards`, `interactive`
+1. Confirm you are awaiting: `await get_wizard(id)().run()`.
+2. Confirm the id exists: `get_wizard(id) is not None` /
+   `list_wizards()`.
+3. On failure, read `result.error` and `result.steps_completed`.
+4. If a `question` step stalls, check the `ask_user_callback` wiring.

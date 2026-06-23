@@ -1,47 +1,38 @@
 ---
 type: error
+name: wizards-error
 feature: wizards
 depth: error
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Wizards errors
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-Failures in Attune AI's XML-enhanced wizard system, which provides guided multi-step workflows for development tasks like debugging, refactoring, and security audits.
+## Failure modes
 
-## Common error signatures
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'BaseWizard.run' was never awaited` | `run()` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `AttributeError: 'NoneType' object has no attribute ...` after `get_wizard` | The wizard id is unknown; `get_wizard` returned `None` | Check `get_wizard(id) is not None`; list ids with `list_wizards()` | high |
+| A `question` step never prompts / hangs | No `ask_user_callback` wired (outside Claude Code) | Pass an `ask_user_callback` to the wizard, or run via the `/wizard` skill | medium |
+| `WizardResult.success` is `False` with a populated `error` | A step failed (LLM call, validation, or an aborted confirm) | Read `result.error` and `result.steps_completed` to see where it stopped | medium |
+| Custom wizard not found by `get_wizard` | It was never `register_wizard`'d (or `save_custom_wizard`'d) | Register the class or save the definition first | low |
 
-- `ValueError: Cannot write wizard YAML: {error_details}` — Custom wizard save operations failed due to filesystem issues or invalid YAML structure
-- `ValueError: Cannot delete built-in wizard: '{wizard_id}'` — Attempted to delete a built-in wizard (DebugWizard, RefactorWizard, etc.)
-- `KeyError` or `None` returned from `get_wizard()` — Requested wizard ID not found in registry
-- Step execution failures during `BaseWizard.run()` — Wizard step conditions, prompt generation, or result processing errors
-- XML parsing errors in task decomposition — Invalid XML structure in decomposed task responses
+### Risk areas
 
-## Where errors originate
+- **`run()` is async.** Forgetting to `await` it is the most common
+  mistake.
+- **There is no registry class.** Use the module-level functions
+  (`list_wizards`, `get_wizard`, …) — not a `WizardRegistry`.
+- **`question` steps need a callback.** Outside the `/wizard` skill,
+  supply an `ask_user_callback` or the wizard can't collect input.
 
-Wizard errors typically start at these key entry points:
+### Diagnosis order
 
-- **Registry operations**: `register_wizard()`, `get_wizard()`, `list_wizards()` — Wizard registration and lookup failures
-- **Custom wizard management**: `save_custom_wizard()`, `delete_custom_wizard()` — File I/O and validation errors when persisting wizard definitions
-- **Wizard execution**: `BaseWizard.run()` — Step processing, condition evaluation, and prompt context building failures
-- **Step processing**: `build_prompt_context()`, `process_step_result()` — Individual wizard implementations failing to handle step data
-
-## How to diagnose
-
-1. **Check the wizard ID and registration status.** Use `list_wizards()` to verify the wizard exists and `get_wizard(wizard_id)` returns a valid class. Missing wizards return `None` rather than raising exceptions.
-
-2. **Examine custom wizard YAML structure.** If `save_custom_wizard()` fails, validate that your wizard definition matches the expected schema with required fields like `wizard_id`, `name`, `description`, and properly formatted `steps`.
-
-3. **Review step conditions and context.** When `BaseWizard.run()` fails mid-execution, check that step conditions (`WizardStep.condition`) evaluate correctly and that `build_prompt_context()` can access all required data from the wizard session.
-
-4. **Validate filesystem permissions.** Custom wizard save/delete operations require write access to the wizard definitions directory. Permission errors manifest as `ValueError` with "Cannot write wizard YAML" messages.
-
-5. **Check built-in wizard constraints.** Attempts to modify built-in wizards (DebugWizard, RefactorWizard, ReleasePrepWizard, SecurityWizard, TestGenWizard) will fail with explicit error messages about protected wizard IDs.
-
-## Source files
-
-- `src/attune/wizards/**`
-
-**Tags:** `wizards`, `interactive`
+1. Confirm you are awaiting: `await get_wizard(id)().run()`.
+2. Confirm the id exists: `get_wizard(id) is not None` /
+   `list_wizards()`.
+3. On failure, read `result.error` and `result.steps_completed`.
+4. If a `question` step stalls, check the `ask_user_callback` wiring.

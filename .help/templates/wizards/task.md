@@ -1,110 +1,91 @@
 ---
 type: task
+name: wizards-task
 feature: wizards
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Work with wizards
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-Use wizards when you need to create guided, multi-step interactive workflows that collect user input and generate structured output.
+## Tasks
 
-## Prerequisites
+### Run a built-in wizard
 
-- Access to the project source code
-- Understanding of the wizard system architecture in `src/attune/wizards/`
-- Python development environment configured
+**Goal:** run a guided wizard and read its result.
 
-## Steps
+**Steps:**
 
-1. **Choose your wizard approach**
+```python
+import asyncio
 
-   Determine whether to use a built-in wizard, extend an existing one, or create a custom wizard:
-   - For debugging workflows, use `DebugWizard`
-   - For code refactoring, use `RefactorWizard`
-   - For security audits, use `SecurityWizard`
-   - For test generation, use `TestGenWizard`
-   - For release preparation, use `ReleasePrepWizard`
+from attune.wizards import get_wizard
 
-2. **Register or retrieve your wizard**
 
-   For built-in wizards, retrieve them with:
-   ```python
-   from attune.wizards import get_wizard
-   wizard_class = get_wizard("debug")  # or "refactor", "security", etc.
-   ```
+async def main() -> None:
+    wizard_cls = get_wizard("security")
+    if wizard_cls is None:
+        print("unknown wizard")
+        return
 
-   For custom wizards, register them first:
-   ```python
-   from attune.wizards import register_wizard
-   register_wizard("my-custom-wizard", MyCustomWizardClass)
-   ```
+    result = await wizard_cls().run(initial_context={"path": "src/"})
+    print("success:", result.success)
+    print("output:", result.generated_output)
+    print("cost:", result.total_cost)
 
-3. **Configure wizard steps**
 
-   Create `WizardStep` instances with the required fields:
-   ```python
-   from attune.wizards import WizardStep, StepType
+asyncio.run(main())
+```
 
-   step = WizardStep(
-       id="analyze-code",
-       name="Code Analysis",
-       description="Analyze the codebase for issues",
-       step_type=StepType.QUESTION,
-       prompt_template="What specific issues should I look for?",
-       tier="capable"
-   )
-   ```
+**Verify:** `run()` is a coroutine — `await` it. The result is a
+`WizardResult` with `success`, `collected_data`, `generated_output`,
+`tasks`, `total_cost`, `total_duration_ms`, and `error` on failure.
+`initial_context` seeds the run.
 
-4. **Initialize and run the wizard**
+### Discover what's available
 
-   Create a wizard instance and execute it:
-   ```python
-   wizard = wizard_class(ask_user_callback=your_callback_function)
-   result = wizard.run(initial_context={"project_path": "/path/to/project"})
-   ```
+**Goal:** list the registered wizards and their metadata.
 
-5. **Process the wizard result**
+**Steps:**
 
-   Handle the `WizardResult` object returned:
-   ```python
-   if result.success:
-       print(f"Wizard completed {len(result.steps_completed)} steps")
-       print(f"Generated output: {result.generated_output}")
-       print(f"Total cost: ${result.total_cost:.2f}")
-   else:
-       print(f"Wizard failed: {result.error}")
-   ```
+```python
+from attune.wizards import get_wizard, list_wizards
 
-6. **Save custom wizard definitions (optional)**
+for cfg in list_wizards():
+    print(f"{cfg.wizard_id}: {cfg.name} ({cfg.domain})")
+    print(f"  ~{cfg.estimated_duration_minutes} min, {cfg.estimated_cost_range}")
 
-   For reusable custom wizards, save the configuration:
-   ```python
-   from attune.wizards import save_custom_wizard
+cls = get_wizard("test-gen")   # -> TestGenWizard class, or None
+```
 
-   wizard_data = {
-       "wizard_id": "my-workflow",
-       "name": "My Custom Workflow",
-       "description": "Custom workflow description",
-       "steps": [/* step definitions */]
-   }
-   save_custom_wizard(wizard_data)
-   ```
+**Verify:** `list_wizards()` returns `WizardConfig` objects (sync). The
+five built-ins are `debug`, `refactor`, `release-prep`, `security`,
+and `test-gen`. `get_wizard(id)` returns the class or `None`.
 
-## Verification
+### Register a custom wizard
 
-Run your wizard and verify:
-- All wizard steps execute in the correct order
-- User input is collected and processed correctly
-- The wizard generates the expected output format
-- The `WizardResult` contains complete execution data
-- Custom wizards appear in `list_wizards()` output
+**Goal:** make your own wizard discoverable.
 
-## Key files
+**Steps:**
 
-- `src/attune/wizards/base.py` - `BaseWizard` abstract class
-- `src/attune/wizards/types.py` - Data type definitions
-- `src/attune/wizards/builtin.py` - Pre-built wizard implementations
-- `src/attune/wizards/registry.py` - Wizard registration and management
+```python
+from attune.wizards import BaseWizard, register_wizard
+
+
+class MyWizard(BaseWizard):
+    def build_prompt_context(self, step):
+        ...
+
+    def process_step_result(self, step, result):
+        ...
+
+
+register_wizard("my-wizard", MyWizard)
+```
+
+**Verify:** after `register_wizard`, `get_wizard("my-wizard")` returns
+your class and it appears in `list_wizards()`. For a config-only
+wizard, build a `ConfigDrivenWizard(config, steps)` or persist a
+definition with `save_custom_wizard(data)`.

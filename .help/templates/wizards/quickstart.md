@@ -1,60 +1,38 @@
 ---
 type: quickstart
+name: wizards-quickstart
 feature: wizards
 depth: quickstart
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 322dc43a8cc4749920887d066cffb815d8c6faee0b2e93968e78ac53228d58b1
+generated_at: 2026-06-23T22:36:36.999673+00:00
+source_hash: 0383bd1ba48703a82f700d50a22fc06aa7d00b38cf01550ca0a1f41adea84bc0
 status: generated
 ---
 
-# Quickstart: wizards
+# Multi-step guided interactive workflows that walk users through complex tasks
 
-Run a built-in interactive wizard to guide you through common development tasks.
+## Quickstart
 
-```python
-from attune.wizards import DebugWizard
-
-wizard = DebugWizard()
-result = wizard.run({"error_message": "ImportError: No module named 'requests'"})
-print(f"Debugging complete: {result.success}")
-```
-
-## Prerequisites
-
-- Attune AI installed locally
-- Python environment with the attune package available
-
-## Run your first wizard
-
-1. **Choose a built-in wizard.** Start with `DebugWizard` for troubleshooting errors:
+List the built-in wizards, then run one. `run()` is a coroutine, so
+drive it with `asyncio.run`:
 
 ```python
-from attune.wizards import DebugWizard
+import asyncio
 
-wizard = DebugWizard()
+from attune.wizards import get_wizard, list_wizards
+
+
+async def main() -> None:
+    for cfg in list_wizards():
+        print(cfg.wizard_id, "-", cfg.name)
+
+    wizard_cls = get_wizard("debug")
+    if wizard_cls is not None:
+        result = await wizard_cls().run()
+        print(result.success, result.wizard_id)
+
+
+asyncio.run(main())
 ```
 
-2. **Run the wizard with context.** Provide an initial context like an error message or code snippet:
-
-```python
-result = wizard.run({"error_message": "ModuleNotFoundError: No module named 'pandas'"})
-```
-
-3. **Check the results.** The wizard returns a `WizardResult` with guidance and next steps:
-
-```python
-print(f"Success: {result.success}")
-print(f"Generated guidance: {result.generated_output}")
-print(f"Steps completed: {result.steps_completed}")
-```
-
-Expected output:
-```
-Success: True
-Generated guidance: Install pandas using: pip install pandas
-Steps completed: ['analyze_error', 'suggest_fix', 'verify_solution']
-```
-
-## Next steps
-
-**Next:** Browse available wizards with `list_wizards()` to see RefactorWizard, SecurityWizard, and TestGenWizard options.
+`get_wizard` returns the wizard class (or `None` if the id is
+unknown); instantiate it and `await run()`.
