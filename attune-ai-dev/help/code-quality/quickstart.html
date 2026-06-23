@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: code quality — quickstart</title>
-  <meta name="description" content="Review code for style issues, likely bugs, and structural problems." />
-  <meta property="og:title" content="Quickstart: code quality — quickstart" />
-  <meta property="og:description" content="Review code for style issues, likely bugs, and structural problems." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — quickstart</title>
+  <meta name="description" content="Review a directory and print the consolidated report. `CodeReviewWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — quickstart" />
+  <meta property="og:description" content="Review a directory and print the consolidated report. `CodeReviewWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/quickstart" />
   <style>
@@ -272,49 +272,30 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: code quality</h1>
-<p>Review code for style issues, likely bugs, and structural problems.</p>
-<pre><code class="language-python">from attune.workflows import CodeReviewWorkflow
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Quickstart</h2>
+<p>Review a directory and print the consolidated report.
+<code>CodeReviewWorkflow.execute</code> is an async coroutine, so drive it
+with <code>asyncio.run</code> (or <code>await</code> it inside an existing event loop):</p>
+<pre><code class="language-python">import asyncio
 
-workflow = CodeReviewWorkflow()
-result = workflow.execute(path=&quot;src/auth/&quot;)
-print(result)
+from attune.workflows import CodeReviewWorkflow
+
+
+async def main() -&gt; None:
+    workflow = CodeReviewWorkflow()
+    result = await workflow.execute(path=&quot;src/&quot;, depth=&quot;standard&quot;)
+
+    print(result.success)          # True on a completed review
+    print(result.summary)          # short health summary
+    print(result.final_output)     # the full consolidated report
+
+
+asyncio.run(main())
 </code></pre>
-<p>This runs a comprehensive code review using four specialized subagents (security, quality, performance, and architecture reviewers) and returns a unified report with an overall health score.</p>
-<h2>Expected output</h2>
-<pre><code>Code Review Report
-
-Summary:
-Health Score: 78/100
-The authentication module shows good overall structure with some quality concerns around error handling and a few minor security considerations.
-
-Security:
-✓ No critical vulnerabilities found
-⚠ Consider using secrets module for token generation (src/auth/tokens.py:23)
-
-Quality:
-⚠ Broad exception handling masks errors (src/auth/login.py:45)
-⚠ Mutable default argument (src/auth/session.py:67)
-
-Performance:
-✓ No significant bottlenecks identified
-
-Architecture:
-⚠ High coupling between auth modules (8 cross-imports)
-
-Suggestions:
-1. Replace generic exceptions with specific error types
-2. Use immutable defaults in function signatures
-3. Consider breaking auth module into smaller components
-</code></pre>
-<h2>Run a targeted review</h2>
-<pre><code class="language-python"># Review just one file
-result = workflow.execute(path=&quot;src/auth/login.py&quot;)
-
-# Review with specific focus
-result = workflow.execute(path=&quot;src/&quot;, focus=&quot;security&quot;)
-</code></pre>
-<p><strong>Next:</strong> Run <code>attune help-docs use-code-quality</code> to learn about depth options (quick, standard, deep) and result interpretation.</p>
+<p><code>depth</code> defaults to <code>&quot;standard&quot;</code>, so <code>execute(path=&quot;src/&quot;)</code> is
+equivalent. Use <code>&quot;quick&quot;</code> for a fast pass or <code>&quot;deep&quot;</code> for the
+fullest review.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Note: code quality — note</title>
-  <meta name="description" content="The code quality feature provides unified code review across style, correctness, bugs, and architecture through a single coordinated workflow." />
-  <meta property="og:title" content="Note: code quality — note" />
-  <meta property="og:description" content="The code quality feature provides unified code review across style, correctness, bugs, and architecture through a single coordinated workflow." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — note</title>
+  <meta name="description" content="Code-quality runs a code review in one call. It is **SDK-native**: the `CodeReviewWorkflow` (registered under the slug `code-review`) delegates to four specialized Claude Agent SDK subagents — one eac" />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — note" />
+  <meta property="og:description" content="Code-quality runs a code review in one call. It is **SDK-native**: the `CodeReviewWorkflow` (registered under the slug `code-review`) delegates to four specialized Claude Agent SDK subagents — one eac" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/note" />
   <style>
@@ -272,25 +272,165 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Note: code quality</h1>
-<h2>Context</h2>
-<p>The code quality feature provides unified code review across style, correctness, bugs, and architecture through a single coordinated workflow.</p>
-<h2>Implementation</h2>
-<p>The feature centers on <code>CodeReviewWorkflow</code>, which orchestrates four specialized subagents to analyze different aspects of code health:</p>
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Overview</h2>
+<p>Code-quality runs a code review in one call. It is <strong>SDK-native</strong>:
+the <code>CodeReviewWorkflow</code> (registered under the slug <code>code-review</code>)
+delegates to four specialized Claude Agent SDK subagents — one each
+for security, quality, performance, and architecture — and
+synthesizes their findings into a single report with an overall
+health score, per-domain findings, and a prioritized list of next
+steps.</p>
+<p>It is the <strong>everyday breadth</strong> review: where deep-review trades the
+performance and architecture passes for a dedicated test-gap pass
+(and lets you narrow with <code>focus</code>), code-quality always runs its
+four passes and has no narrowing knob. Like the other analysis
+workflows it <strong>predicts</strong> rather than proves — the subagents apply
+LLM judgment over the code (via Read / Glob / Grep), so a finding is
+a lead to verify, not a confirmed defect.</p>
+<p>You reach code-quality four ways:</p>
 <ul>
-<li><strong>security-reviewer</strong> — Scans for security vulnerabilities</li>
-<li><strong>quality-reviewer</strong> — Checks style, formatting, and code correctness</li>
-<li><strong>perf-reviewer</strong> — Identifies performance bottlenecks</li>
-<li><strong>architect-reviewer</strong> — Evaluates structural design and coupling</li>
+<li>the <strong><code>/code-quality</code></strong> skill, inside a Claude Code conversation —
+a router that picks the right tool for the depth you ask for (see
+<em>The <code>/code-quality</code> skill routes by depth</em> below);</li>
+<li>the CLI — <strong><code>attune workflow run code-review</code></strong> (note the slug is
+<code>code-review</code>, not <code>code-quality</code>);</li>
+<li>the <strong><code>code_review</code></strong> MCP tool (one required <code>path</code> argument);</li>
+<li>the Python API — <code>await CodeReviewWorkflow().execute(...)</code>,
+documented here for wiring a review into a hook, a pre-merge gate,
+or a custom tool.</li>
 </ul>
-<p>The workflow synthesizes findings from all four subagents into a unified report with an overall health score (0-100) and actionable recommendations prioritized by impact.</p>
-<p>This architecture allows the <code>/code-quality</code> skill to provide comprehensive analysis in a single pass rather than requiring users to run separate tools for linting, security scanning, performance analysis, and architectural review.</p>
-<h2>Source files</h2>
+<p>A naming note worth pinning up front: the <strong>feature, skill, and
+help topic</strong> are all <code>code-quality</code>, but the <strong>workflow slug and
+MCP tool</strong> are <code>code-review</code>. The skill name is the user-facing
+front door; the slug is the registered workflow it (sometimes) runs.</p>
+<h2>Concepts</h2>
+<h3>Four review passes, one consolidated report</h3>
+<p><code>CodeReviewWorkflow.execute</code> issues a single
+<code>claude_agent_sdk.query</code> whose options define four subagents, each
+scoped to <code>Read</code> / <code>Glob</code> / <code>Grep</code>:</p>
+<table>
+<thead>
+<tr>
+<th>Subagent</th>
+<th>Pass</th>
+<th>What it looks for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>security-reviewer</code></td>
+<td>Security</td>
+<td><code>eval</code>/<code>exec</code> usage, injection vulnerabilities, path traversal, hardcoded secrets, authentication issues. Reports file, line, severity, and remediation.</td>
+</tr>
+<tr>
+<td><code>quality-reviewer</code></td>
+<td>Quality</td>
+<td>Code complexity, error-handling patterns, naming conventions, duplication, and test-coverage gaps. Reports file, severity, and improvement advice.</td>
+</tr>
+<tr>
+<td><code>perf-reviewer</code></td>
+<td>Performance</td>
+<td>N+1 patterns, unnecessary list copies, blocking I/O in async code, and missing caching opportunities. Reports file, estimated impact, and fix.</td>
+</tr>
+<tr>
+<td><code>architect-reviewer</code></td>
+<td>Architecture</td>
+<td>Coupling between modules, SOLID violations, circular dependencies, API-design issues, and abstraction-level mismatches. Reports affected modules and refactoring suggestions.</td>
+</tr>
+</tbody>
+</table>
+<p>The orchestrator then synthesizes the passes into one report with
+six sections — <strong>Summary</strong> (an overall 0–100 health score plus a
+2–3 sentence summary), then <strong>Security</strong>, <strong>Quality</strong>,
+<strong>Performance</strong>, and <strong>Architecture</strong> (each reviewer's findings),
+and <strong>Suggestions</strong> (actionable next steps ordered by priority).
+Per-subagent transcripts are recovered and appended under a
+<strong>Subagent findings</strong> heading so each pass's findings survive even
+when the orchestrator synthesizes tersely or hits the budget cap.</p>
+<h3>Depth controls the agent-turn budget</h3>
+<p><code>execute</code> takes a <code>depth</code> of <code>&quot;quick&quot;</code>, <code>&quot;standard&quot;</code> (default), or
+<code>&quot;deep&quot;</code>. Depth maps to the maximum agent turns and a per-run cost
+cap:</p>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max agent turns</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+</tr>
+</tbody>
+</table>
+<p>An unrecognized depth falls back to the standard budget (20 turns).</p>
+<h3>There is no <code>focus</code> knob</h3>
+<p>Unlike deep-review, code-quality has no <code>focus</code> parameter — all
+four passes always run. <code>execute</code> reads exactly two keyword
+arguments: <code>path</code> (required) and <code>depth</code> (default <code>&quot;standard&quot;</code>).
+To scope a review, point <code>path</code> at a narrower directory or file.</p>
+<h3><code>execute</code> is async</h3>
+<p><code>execute</code> is a coroutine — <code>await</code> it (or drive it with
+<code>asyncio.run</code>). Calling it without awaiting is the most common
+mistake. An empty or missing <code>path</code> returns a failed
+<code>WorkflowResult</code> (&quot;path argument is required&quot;) rather than raising.</p>
+<h3>The result is a <code>WorkflowResult</code></h3>
+<p><code>execute</code> returns a <code>WorkflowResult</code> (from <code>attune.workflows</code>). The
+consolidated report lands in <code>final_output</code> — a serialized report
+when the findings parse, or the raw markdown otherwise — with a
+short <code>summary</code>, a <code>suggestions</code> list, the <code>cost_report</code>, the
+<code>provider</code>, and a <code>metadata</code> dict echoing <code>path</code>, <code>depth</code>,
+<code>max_turns</code>, and the recovered <code>subagent_transcripts</code>. On failure,
+<code>success</code> is <code>False</code> and <code>error</code> / <code>error_type</code> carry the reason.</p>
+<h3>Code-quality can recommend a follow-up bug-predict run</h3>
+<p>When the synthesized review surfaces security-shaped findings — a
+CWE/CVE reference, an injection or path-traversal mention, a
+hardcoded-secret call-out, or a literal <code>eval(</code> / <code>exec(</code> — the
+workflow prints an <code>ATTUNE_REC</code> marker recommending a <code>bug-predict</code>
+run on the same scope. code-quality reads and narrates; bug-predict
+pinpoints the exact line. The ops dashboard's runner parses the
+marker and renders an action card.</p>
+<h3>The <code>/code-quality</code> skill routes by depth</h3>
+<p>The <code>/code-quality</code> skill is not a thin wrapper over one workflow —
+it is a router that picks the tool for the depth you ask for:</p>
 <ul>
-<li><code>src/attune/workflows/code_review.py</code></li>
-<li><code>src/attune/workflows/code_review_*.py</code></li>
+<li><strong>Quick</strong> → <code>code_review</code> alone;</li>
+<li><strong>Thorough</strong> → <code>code_review</code> <strong>and</strong> <code>bug_predict</code>, then merges
+and deduplicates the results;</li>
+<li><strong>Deep</strong> → <code>deep_review</code> (the multi-pass security / quality /
+test-gaps review).</li>
 </ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>quality</code>, <code>bugs</code></p>
+<p>So a &quot;deep&quot; code-quality request runs the <em>deep-review</em> workflow,
+not a deeper code-review. The CLI, MCP, and Python surfaces, by
+contrast, drive <code>CodeReviewWorkflow</code> directly.</p>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>CodeReviewWorkflow</code> and its async <code>execute</code>, plus the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_agent_review</code>, <code>_SUBAGENT_NAMES</code> — are internal and may
+change.</li>
+<li><strong>Use <code>path</code> and <code>depth</code> to keep runs cheap.</strong> A <code>quick</code> pass
+over one subsystem is far faster than a <code>deep</code> pass over <code>src/</code>;
+reserve the full <code>deep</code> run for pre-merge or release gates.</li>
+<li><strong>Watch for the bug-predict recommendation.</strong> When the review
+surfaces security-shaped findings, the run emits an <code>ATTUNE_REC</code>
+suggesting a <code>bug-predict</code> pass on the same scope to locate the
+exact lines.</li>
+<li><strong>Read <code>metadata</code> to confirm scope.</strong> It records the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> the run actually used.</li>
+</ul>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Comparison: Code Quality vs alternatives — comparison</title>
-  <meta name="description" content="Review code for style issues, likely bugs, and structural problems using four specialized subagents that examine security, quality, performance, and architecture in a single coordinated pass." />
-  <meta property="og:title" content="Comparison: Code Quality vs alternatives — comparison" />
-  <meta property="og:description" content="Review code for style issues, likely bugs, and structural problems using four specialized subagents that examine security, quality, performance, and architecture in a single coordinated pass." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — comparison</title>
+  <meta name="description" content="Code-quality (`code-review`) and **deep-review** are both SDK-native review workflows reached with `attune workflow run &lt;slug&gt;`, both async, both predictive (LLM judgment) — but they trade a different" />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — comparison" />
+  <meta property="og:description" content="Code-quality (`code-review`) and **deep-review** are both SDK-native review workflows reached with `attune workflow run &lt;slug&gt;`, both async, both predictive (LLM judgment) — but they trade a different" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/comparison" />
   <style>
@@ -272,130 +272,58 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Comparison: Code Quality vs alternatives</h1>
-<h2>Context</h2>
-<p>Review code for style issues, likely bugs, and structural problems using four specialized subagents that examine security, quality, performance, and architecture in a single coordinated pass.</p>
-<h2>Feature comparison</h2>
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Comparison</h2>
+<p>Code-quality (<code>code-review</code>) and <strong>deep-review</strong> are both
+SDK-native review workflows reached with <code>attune workflow run &lt;slug&gt;</code>, both async, both predictive (LLM judgment) — but they
+trade a different mix of passes and one has a narrowing knob.</p>
 <table>
 <thead>
 <tr>
-<th>Aspect</th>
-<th>Code Quality Review</th>
-<th>Traditional Linters</th>
-<th>Security-only Scans</th>
-<th>Manual Code Review</th>
+<th></th>
+<th><code>code-quality</code> (<code>code-review</code>)</th>
+<th><code>deep-review</code></th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Coverage</strong></td>
-<td>Style, bugs, security, architecture, performance</td>
-<td>Style and basic errors only</td>
-<td>Security vulnerabilities only</td>
-<td>Depends on reviewer expertise</td>
+<td><strong>Passes</strong></td>
+<td>Four: security, quality, performance, architecture</td>
+<td>Three: security, quality, test gaps</td>
 </tr>
 <tr>
-<td><strong>Integration</strong></td>
-<td>Unified report with single health score</td>
-<td>Separate tools, separate reports</td>
-<td>Security-focused output</td>
-<td>Ad-hoc feedback</td>
+<td><strong>Subagents</strong></td>
+<td><code>security-</code> / <code>quality-</code> / <code>perf-</code> / <code>architect-reviewer</code></td>
+<td><code>security-</code> / <code>quality-</code> / <code>test-gap-reviewer</code></td>
 </tr>
 <tr>
-<td><strong>Speed</strong></td>
-<td>~1-3 minutes depending on depth</td>
-<td>Seconds to minutes</td>
-<td>Minutes to hours</td>
-<td>Hours to days</td>
+<td><strong>Narrowing</strong></td>
+<td>None — scope via <code>path</code> only</td>
+<td><code>focus</code> selects a subset of passes</td>
 </tr>
 <tr>
-<td><strong>Automation</strong></td>
-<td>Fully automated with guided setup</td>
-<td>Fully automated</td>
-<td>Fully automated</td>
-<td>Manual process</td>
+<td><strong>Turn budget</strong></td>
+<td>10 / 20 / 40 (quick / standard / deep)</td>
+<td>15 / 30 / 50</td>
 </tr>
 <tr>
-<td><strong>Context awareness</strong></td>
-<td>Four specialized subagents coordinate findings</td>
-<td>Rule-based, no context</td>
-<td>Security-specific context</td>
-<td>High context, but inconsistent</td>
+<td><strong>Report sections</strong></td>
+<td>Summary / Security / Quality / Performance / Architecture / Suggestions</td>
+<td>Summary / Security / Quality / Test Gaps / Suggestions</td>
 </tr>
 <tr>
-<td><strong>Actionability</strong></td>
-<td>Prioritized suggestions with file/line citations</td>
-<td>Raw violation lists</td>
-<td>Vulnerability reports</td>
-<td>Variable quality feedback</td>
+<td><strong>Slug</strong></td>
+<td><code>attune workflow run code-review</code></td>
+<td><code>attune workflow run deep-review</code></td>
 </tr>
 </tbody>
 </table>
-<h2>When to use code quality</h2>
-<p>Use the code quality review when you need comprehensive analysis that goes beyond what individual tools provide:</p>
-<ul>
-<li><strong>Before pull requests</strong> — catch multiple issue types in one pass instead of running separate linters, security scanners, and architectural reviews</li>
-<li><strong>Inheriting unfamiliar code</strong> — get a unified health assessment that covers security, quality, performance, and structure</li>
-<li><strong>After major refactors</strong> — verify nothing degraded across multiple dimensions of code health</li>
-<li><strong>Regular health checks</strong> — establish baseline scores and track improvement over time</li>
-</ul>
-<p>The <code>CodeReviewWorkflow</code> with its four subagents (security-reviewer, quality-reviewer, perf-reviewer, architect-reviewer) is purpose-built for comprehensive analysis that synthesizes findings into actionable recommendations.</p>
-<h2>When NOT to use it</h2>
-<p>Don't use code quality review when:</p>
-<ul>
-<li><strong>You need real-time feedback</strong> — traditional linters are faster for immediate style checking during development</li>
-<li><strong>You only care about one dimension</strong> — if you specifically need security analysis, use a dedicated security audit tool</li>
-<li><strong>You're working with non-standard codebases</strong> — the four subagents are optimized for typical application code patterns</li>
-<li><strong>You need custom rule sets</strong> — the review uses predefined criteria rather than configurable rules</li>
-</ul>
-<h2>Decision guide</h2>
-<table>
-<thead>
-<tr>
-<th>Your goal</th>
-<th>Best choice</th>
-<th>Why</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Pre-commit style check</td>
-<td>Traditional linter</td>
-<td>Faster feedback loop</td>
-</tr>
-<tr>
-<td>Comprehensive PR review</td>
-<td><strong>Code quality review</strong></td>
-<td>Unified analysis across all dimensions</td>
-</tr>
-<tr>
-<td>Security vulnerability scan</td>
-<td>Security-specific tool</td>
-<td>Deeper security focus</td>
-</tr>
-<tr>
-<td>Architecture assessment</td>
-<td><strong>Code quality review</strong></td>
-<td>Architect-reviewer subagent provides structural analysis</td>
-</tr>
-<tr>
-<td>Performance bottleneck hunting</td>
-<td>Profiling tools</td>
-<td>Runtime analysis beats static review</td>
-</tr>
-<tr>
-<td>Code health baseline</td>
-<td><strong>Code quality review</strong></td>
-<td>Single score tracks multiple quality factors</td>
-</tr>
-</tbody>
-</table>
-<p><strong>Recommendation:</strong> Use code quality review as your primary comprehensive analysis tool, supplemented by real-time linters during development and specialized tools for deep dives into specific areas.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/code_review.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>quality</code>, <code>bugs</code></p>
+<p>Reach for <strong>code-quality</strong> for the everyday maintainability read —
+the performance and architecture passes catch coupling and
+inefficiency that a test-focused review skips. Reach for
+<strong>deep-review</strong> when test coverage is the concern, or when you want
+to narrow to a single domain with <code>focus</code>. The <code>/code-quality</code>
+skill's &quot;deep&quot; option runs deep-review for exactly this reason.</p>
 
   </article>
   <footer>

@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Start with a quick scan before going deep — tip</title>
-  <meta name="description" content="Run `/code-quality` with quick depth first to catch style issues and obvious problems before investing time in a thorough review." />
-  <meta property="og:title" content="Start with a quick scan before going deep — tip" />
-  <meta property="og:description" content="Run `/code-quality` with quick depth first to catch style issues and obvious problems before investing time in a thorough review." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `CodeReviewWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_agent_re" />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `CodeReviewWorkflow` and its async `execute`, plus the `WorkflowResult` it returns. Names with a leading underscore — `_run_agent_re" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/tip" />
   <style>
@@ -272,10 +272,24 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Start with a quick scan before going deep</h1>
-<p>Run <code>/code-quality</code> with quick depth first to catch style issues and obvious problems before investing time in a thorough review.</p>
-<p>The four-subagent workflow (security, quality, performance, architecture) takes several minutes on large codebases, but a quick scan finishes in seconds and catches 80% of the issues you'll actually fix. Deep reviews are valuable for critical modules, but most day-to-day development benefits more from fast feedback loops.</p>
-<p><strong>Tradeoff:</strong> Quick scans miss complex logic errors and architectural problems that only surface during deep analysis.</p>
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>CodeReviewWorkflow</code> and its async <code>execute</code>, plus the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_agent_review</code>, <code>_SUBAGENT_NAMES</code> — are internal and may
+change.</li>
+<li><strong>Use <code>path</code> and <code>depth</code> to keep runs cheap.</strong> A <code>quick</code> pass
+over one subsystem is far faster than a <code>deep</code> pass over <code>src/</code>;
+reserve the full <code>deep</code> run for pre-merge or release gates.</li>
+<li><strong>Watch for the bug-predict recommendation.</strong> When the review
+surfaces security-shaped findings, the run emits an <code>ATTUNE_REC</code>
+suggesting a <code>bug-predict</code> pass on the same scope to locate the
+exact lines.</li>
+<li><strong>Read <code>metadata</code> to confirm scope.</strong> It records the <code>path</code>,
+<code>depth</code>, and <code>max_turns</code> the run actually used.</li>
+</ul>
 
   </article>
   <footer>

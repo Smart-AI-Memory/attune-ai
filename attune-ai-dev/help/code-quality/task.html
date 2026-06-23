@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Triage a code-quality report — task</title>
-  <meta name="description" content="Use this procedure after running `/code-quality` to decide what to fix now, what to fix in this PR, what to defer, and what to ignore." />
-  <meta property="og:title" content="Triage a code-quality report — task" />
-  <meta property="og:description" content="Use this procedure after running `/code-quality` to decide what to fix now, what to fix in this PR, what to defer, and what to ignore." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — task</title>
+  <meta name="description" content="**Goal:** run a one-off review over a directory without writing any Python." />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — task" />
+  <meta property="og:description" content="**Goal:** run a one-off review over a directory without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/task" />
   <style>
@@ -272,103 +272,75 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Triage a code-quality report</h1>
-<p>Use this procedure after running <code>/code-quality</code> to decide what to fix now, what to fix in this PR, what to defer, and what to ignore.</p>
-<h2>Pick your scope first</h2>
-<p>The scope you choose determines depth, time, and signal density. Pick before you run.</p>
-<table>
-<thead>
-<tr>
-<th>Scope</th>
-<th>Recommended depth</th>
-<th>Time</th>
-<th>Best for</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Single file</td>
-<td><code>quick</code></td>
-<td>seconds</td>
-<td>Spot-check during edits</td>
-</tr>
-<tr>
-<td>Module / subdirectory</td>
-<td><code>standard</code></td>
-<td>~1 min</td>
-<td>Pre-PR review</td>
-</tr>
-<tr>
-<td>Whole repo</td>
-<td><code>deep</code></td>
-<td>~3 min</td>
-<td>Inherited code, periodic baselines</td>
-</tr>
-</tbody>
-</table>
-<p>If you don't know which to pick, start with <code>standard</code> on the module you touched in this PR. Going wider rarely surfaces issues you'll act on; going narrower misses cross-file architecture problems.</p>
-<h2>Read the summary score</h2>
-<p>The first line of the report is a 0–100 health score. Use it to triage urgency, not as a metric to optimize.</p>
-<table>
-<thead>
-<tr>
-<th>Score</th>
-<th>What it means</th>
-<th>Next action</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>90–100</td>
-<td>Excellent</td>
-<td>Ship. Skim findings; fix anything trivial inline.</td>
-</tr>
-<tr>
-<td>75–89</td>
-<td>Good</td>
-<td>Fix Security findings in this PR; queue Quality for follow-up.</td>
-</tr>
-<tr>
-<td>50–74</td>
-<td>Needs work</td>
-<td>Stop and triage before merging. Likely 1–2 categories of systemic issues.</td>
-</tr>
-<tr>
-<td>0–49</td>
-<td>Poor</td>
-<td>Don't merge. Open issues for each finding category and address them as separate PRs.</td>
-</tr>
-</tbody>
-</table>
-<p>The score averages across the four reviewers, so a 78 can hide a critical Security finding. Always read the Security section before trusting the score.</p>
-<h2>Triage by section</h2>
-<p>The report has four sections, in this priority order.</p>
-<p><strong>Security.</strong> Treat every finding as fix-now unless you can prove it's a false positive. The security-reviewer catches injection vectors, unsafe deserialization, hardcoded credentials, and auth bypasses. If a finding cites a file and line, open that file before deciding to defer.</p>
-<p><strong>Quality.</strong> Includes likely bugs (mutable defaults, broad exceptions, null dereferences) and style issues. Fix likely bugs in this PR; style issues can defer to a cleanup sweep. The reviewer doesn't distinguish between the two — you do, by reading the description.</p>
-<p><strong>Performance.</strong> Static analysis catches O(n²) loops, leaky resource handling, and obvious memory anti-patterns. Defer unless the finding is in a hot path or marked high severity. Profiling beats static analysis here, so don't over-invest.</p>
-<p><strong>Architecture.</strong> High coupling, circular imports, god classes, module sprawl. Almost never fix in the same PR as a feature — these are refactor PRs. Open an issue and move on unless the finding is blocking the feature itself.</p>
-<h2>What to do next</h2>
-<p>When findings cross feature boundaries, follow up with the matching specialist:</p>
-<ul>
-<li>Security findings that need deeper investigation: <code>/security-audit</code> on the affected files.</li>
-<li>Likely-bug findings in code you're about to extend: <code>/bug-predict</code> to surface similar patterns.</li>
-<li>Architecture findings that warrant a refactor: <code>/refactor-plan</code> on the implicated module.</li>
-<li>Test-coverage gaps surfaced by Quality: <code>/smart-test</code> to fill them.</li>
-</ul>
-<p>When you've fixed the highest-priority findings, re-run <code>/code-quality</code> on the same scope to confirm the score improved and no new findings emerged.</p>
-<h2>Verify success</h2>
-<p>Triage is complete when:</p>
-<ul>
-<li>Every Security finding is either fixed, has an issue link, or has a documented false-positive justification.</li>
-<li>Quality findings split cleanly into &quot;fixed in this PR&quot; and &quot;tracked in issue/backlog.&quot;</li>
-<li>Performance and Architecture findings are either fixed, deferred with a link, or explicitly accepted.</li>
-<li>A fresh <code>/code-quality</code> run on the same scope shows no new findings introduced by your fixes.</li>
-</ul>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/code_review.py</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>review</code>, <code>quality</code>, <code>triage</code>, <code>bugs</code>, <code>report</code></p>
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Tasks</h2>
+<h3>Review a path from the CLI</h3>
+<p><strong>Goal:</strong> run a one-off review over a directory without writing any
+Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) over a directory:
+attune workflow run code-review --path src/
+
+# Deep review, JSON output for a pre-merge gate:
+attune workflow run code-review --path src/ --depth deep --json
+</code></pre>
+<p><strong>Verify:</strong> the slug is <code>code-review</code> (not <code>code-quality</code>).
+<code>--path</code> / <code>-p</code> defaults to the current directory; <code>--depth</code>
+accepts <code>quick</code>, <code>standard</code>, or <code>deep</code>; <code>--json</code> / <code>-j</code> emits
+machine-readable output. Use <code>attune workflow info code-review</code> to
+confirm registration and <code>attune workflow list</code> to see it alongside
+the other workflows.</p>
+<h3>Call the review from Python</h3>
+<p><strong>Goal:</strong> drive code-quality from a hook or pre-merge gate and act
+on the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import CodeReviewWorkflow
+
+
+async def main() -&gt; None:
+    workflow = CodeReviewWorkflow()
+    result = await workflow.execute(path=&quot;src/api/&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;review failed:&quot;, result.error)
+        return
+
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed
+review returns <code>success=True</code> with the report in <code>final_output</code>; a
+failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, and
+<code>max_turns</code>.</p>
+<h3>Scope a review to a smaller area</h3>
+<p><strong>Goal:</strong> keep a run fast and cheap by narrowing what it reads.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import CodeReviewWorkflow
+
+
+async def main() -&gt; None:
+    workflow = CodeReviewWorkflow()
+
+    # A single subsystem, quick pass:
+    result = await workflow.execute(path=&quot;src/auth/&quot;, depth=&quot;quick&quot;)
+    print(result.final_output)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> code-quality has no <code>focus</code> parameter, so the only
+levers are <code>path</code> (point it at a narrower directory or file) and
+<code>depth</code> (<code>quick</code> trims the agent-turn budget to 10). All four passes
+still run over whatever <code>path</code> covers.</p>
 
   </article>
   <footer>

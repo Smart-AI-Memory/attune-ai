@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Code Quality reference — reference</title>
-  <meta name="description" content="Analyze code for style violations, correctness issues, potential bugs, and architectural problems using specialized review agents." />
-  <meta property="og:title" content="Code Quality reference — reference" />
-  <meta property="og:description" content="Analyze code for style violations, correctness issues, potential bugs, and architectural problems using specialized review agents." />
+  <title>Multi-subagent code review across security, quality, performance, and architecture — reference</title>
+  <meta name="description" content="Code-quality&#x27;s public surface is the `CodeReviewWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Multi-subagent code review across security, quality, performance, and architecture — reference" />
+  <meta property="og:description" content="Code-quality&#x27;s public surface is the `CodeReviewWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/code-quality/reference" />
   <style>
@@ -272,82 +272,171 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Code Quality reference</h1>
-<p>Analyze code for style violations, correctness issues, potential bugs, and architectural problems using specialized review agents.</p>
-<h2>Classes</h2>
+<h1>Multi-subagent code review across security, quality, performance, and architecture</h1>
+<h2>Reference</h2>
+<p>Code-quality's public surface is the <code>CodeReviewWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3><code>CodeReviewWorkflow</code> — <code>attune.workflows.code_review</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>CodeReviewWorkflow</code></td>
-<td>SDK-native code review with four specialized subagents</td>
+<td><code>CodeReviewWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments.</td>
+</tr>
+<tr>
+<td><code>CodeReviewWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Run the review. Honors <code>path</code> (str, required) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>). No <code>focus</code>. Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>CodeReviewWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;code-review&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>CodeReviewWorkflow.stages</code></td>
+<td><code>[&quot;agent-review&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h3>CodeReviewWorkflow</h3>
+<h3>Depth → agent-turn budget</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>__init__</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>None</code></td>
-<td>Initialize the code review workflow</td>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a small path.</td>
 </tr>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Run the multi-agent code review process</td>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest review of a large or critical area.</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3>The four passes</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
-<th>Values</th>
-<th>Description</th>
+<th>Subagent</th>
+<th>Domain</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>_SUBAGENT_NAMES</code></td>
-<td><code>{'security-reviewer', 'quality-reviewer', 'perf-reviewer', 'architect-reviewer'}</code></td>
-<td>Names of the four specialized review agents</td>
+<td><code>security-reviewer</code></td>
+<td>eval/exec, injection, path traversal, secrets, auth.</td>
 </tr>
 <tr>
-<td><code>_SYSTEM_PROMPT</code></td>
-<td><code>'You are a senior code review orchestrator. You coordinate four specialized subagents to produce a unified code review report. Be thorough but concise. Cite file paths and line numbers when possible.'</code></td>
-<td>System prompt for the orchestrating agent</td>
+<td><code>quality-reviewer</code></td>
+<td>Complexity, error handling, naming, duplication, test-coverage gaps.</td>
 </tr>
 <tr>
-<td><code>_TASK_PROMPT_TEMPLATE</code></td>
-<td><code>'Review the codebase at {path} using the four specialized subagents below. Each subagent should focus on its domain and report findings as structured markdown.\n\nAfter all subagents finish, synthesize their findings into a single report with these sections:\n\n## Summary\nOverall code health score (0-100) and a 2-3 sentence executive summary.\n\n## Security\nFindings from the security reviewer.\n\n## Quality\nFindings from the quality reviewer.\n\n## Performance\nFindings from the performance reviewer.\n\n## Architecture\nFindings from the architecture reviewer.\n\n## Suggestions\nActionable next steps ordered by priority.'</code></td>
-<td>Template for structuring the multi-agent review task</td>
+<td><code>perf-reviewer</code></td>
+<td>N+1, unnecessary copies, blocking I/O in async, missing caching.</td>
+</tr>
+<tr>
+<td><code>architect-reviewer</code></td>
+<td>Coupling, SOLID, circular deps, API design, abstraction mismatches.</td>
 </tr>
 </tbody>
 </table>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/code_review.py</code></li>
-<li><code>src/attune/workflows/code_review_*.py</code></li>
-</ul>
-<h2>Tags</h2>
-<p><code>review</code>, <code>quality</code>, <code>bugs</code>, <code>lint</code></p>
+<h3><code>WorkflowResult</code> fields read after a review</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the review completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The consolidated report — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short health summary.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next actions.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run (<code>&quot;anthropic&quot;</code>).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, <code>max_turns</code>, and <code>subagent_transcripts</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
+</tr>
+</tbody>
+</table>
+<h3>Entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Skill</td>
+<td><code>/code-quality</code> in a Claude Code conversation — routes by depth to <code>code_review</code> (quick), <code>code_review</code> + <code>bug_predict</code> (thorough), or <code>deep_review</code> (deep).</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run code-review --path &lt;p&gt; [--depth quick|standard|deep] [--json]</code>.</td>
+</tr>
+<tr>
+<td>MCP tool</td>
+<td><code>code_review</code> — one required <code>path</code> argument; runs at standard depth (the handler does not pass <code>depth</code>) and validates the path against the workspace root.</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await CodeReviewWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
 
   </article>
   <footer>
