@@ -112,6 +112,22 @@ features:
     tags: [bugs, prediction, scanning, race-condition]
     status: manual
 
+  # release-notes is single-sourced (status: manual) from
+  # content/features/release-notes.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/release-notes/*.md. The entry is marked
+  # `status: manual` — WITHOUT `files:` — so topic resolution routes
+  # here while staleness/maintenance never runs
+  # `attune-author generate release-notes --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
+  release-notes:
+    description: Draft release notes + an LLM go/no-go readiness advisory (Agent SDK)
+    tags: [release, changelog, advisory]
+    status: manual
+
   release-prep:
     description: Pre-release quality gate — health checks, security audit, changelog, version bumps
     files:
