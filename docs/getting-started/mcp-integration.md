@@ -110,7 +110,7 @@ The Attune MCP server exposes all production workflows as tools:
 | `simplify_code` | Find and simplify overly complex code | `path` |
 | `deep_review` | Multi-pass security + quality + test-gap review | `path` |
 | `health_check` | Comprehensive project health score | `project_root` |
-| `research_synthesis` | Synthesize multiple sources into a research answer | `sources`, `question` |
+| `research_synthesis` | Synthesize insights from local source documents at a path | `path` (optional), `depth` (optional) |
 | `analyze_batch` | Submit tasks to Anthropic Batch API (50% cost savings) | `requests` |
 | `rag_knowledge_query` | Query the RAG corpus for contextual knowledge | `query` |
 

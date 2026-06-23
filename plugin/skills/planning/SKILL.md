@@ -31,10 +31,16 @@ High-level development planning and architecture design.
 
 | Tool | What It Does |
 | ---- | ------------ |
-| `research_synthesis` | Synthesize insights from multiple documents to inform planning |
+| `research_synthesis` | Synthesize insights from source documents at a path to inform planning |
 
 Use `research_synthesis` when the user needs to gather
-context from multiple files or docs before planning.
+context from a directory of files or docs before planning.
+Pass the directory (or file) as `path`; optionally set
+`depth` to `quick`, `standard`, or `deep`:
+
+```
+research_synthesis(path="<dir or file>", depth="standard")
+```
 
 ## Scoping
 

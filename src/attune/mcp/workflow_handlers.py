@@ -437,31 +437,28 @@ class WorkflowHandlersMixin:
     # ------------------------------------------------------------------
 
     async def _run_research_synthesis(self, args: dict[str, Any]) -> dict[str, Any]:
-        """Run research synthesis workflow.
+        """Run the research-synthesis workflow over local documents.
 
         Args:
-            args: ``sources`` (list[str], required, min 2) and
-                ``question`` (str, required).
+            args: ``path`` (str, optional, default ".") — directory or
+                file of source documents to analyze; ``depth`` (str,
+                optional) — "quick", "standard" (default), or "deep".
 
         Returns:
-            Dict with synthesized answer and key insights.
+            Dict with the synthesized answer and key insights.
 
         """
         from attune.workflows.research_synthesis import (
             ResearchSynthesisWorkflow,
         )
 
-        sources = args.get("sources", [])
-        if len(sources) < 2:
-            return {
-                "success": False,
-                "error": "At least 2 sources are required.",
-            }
-
+        # The workflow is a path-driven 3-agent pipeline (it reads source
+        # documents at ``path``); passing the legacy ``sources``/``question``
+        # kwargs left ``path`` empty → "path argument is required".
         workflow = ResearchSynthesisWorkflow()
         result = await workflow.execute(
-            sources=sources,
-            question=args.get("question", ""),
+            path=self._validated_path(args),
+            depth=args.get("depth", "standard"),
         )
 
         final = result.final_output if hasattr(result, "final_output") else result

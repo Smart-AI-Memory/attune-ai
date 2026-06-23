@@ -696,10 +696,10 @@ class TestRunHealthCheck:
 
 
 class TestRunResearchSynthesis:
-    """Tests for _run_research_synthesis() — no path validation needed."""
+    """Tests for _run_research_synthesis() — path-driven workflow."""
 
     @pytest.mark.asyncio
-    async def test_returns_expected_keys(self):
+    async def test_returns_expected_keys(self, _bypass_path_validation):
         """Happy path: returns answer and insights."""
         server = _make_server()
         result = _make_result(
@@ -717,30 +717,45 @@ class TestRunResearchSynthesis:
         )
 
         with patch.dict(sys.modules, {"attune.workflows.research_synthesis": mod}):
-            out = await server._run_research_synthesis(
-                {
-                    "sources": ["src-a", "src-b"],
-                    "question": "what is X?",
-                }
-            )
+            out = await server._run_research_synthesis({"path": "docs", "depth": "quick"})
 
         assert out["success"] is True
         assert out["answer"] == "synthesis result"
         assert out["key_insights"] == ["insight-1"]
 
     @pytest.mark.asyncio
-    async def test_fewer_than_two_sources_returns_error(self):
-        """Returns error dict when fewer than 2 sources provided."""
+    async def test_passes_path_and_depth_to_execute(self, _bypass_path_validation):
+        """execute() receives validated path + depth (regression for the
+        sources/question kwarg drift that left path empty)."""
         server = _make_server()
-        out = await server._run_research_synthesis({"sources": ["only-one"]})
+        result = _make_result(final_output={"answer": "ok"})
+        mod = _make_workflow_module(
+            "attune.workflows.research_synthesis",
+            "ResearchSynthesisWorkflow",
+            result,
+        )
 
-        assert out["success"] is False
-        assert "2 sources" in out["error"]
+        with patch.dict(sys.modules, {"attune.workflows.research_synthesis": mod}):
+            await server._run_research_synthesis({"path": "research", "depth": "deep"})
+
+        mod.ResearchSynthesisWorkflow.return_value.execute.assert_awaited_once_with(
+            path="research", depth="deep"
+        )
 
     @pytest.mark.asyncio
-    async def test_empty_sources_returns_error(self):
-        """Returns error dict when no sources provided."""
+    async def test_depth_defaults_to_standard(self, _bypass_path_validation):
+        """Omitted depth defaults to 'standard'; omitted path defaults to '.'."""
         server = _make_server()
-        out = await server._run_research_synthesis({})
+        result = _make_result(final_output={"answer": "ok"})
+        mod = _make_workflow_module(
+            "attune.workflows.research_synthesis",
+            "ResearchSynthesisWorkflow",
+            result,
+        )
 
-        assert out["success"] is False
+        with patch.dict(sys.modules, {"attune.workflows.research_synthesis": mod}):
+            await server._run_research_synthesis({})
+
+        mod.ResearchSynthesisWorkflow.return_value.execute.assert_awaited_once_with(
+            path=".", depth="standard"
+        )

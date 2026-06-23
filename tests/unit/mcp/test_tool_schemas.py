@@ -113,11 +113,20 @@ class TestGetWorkflowTools:
         schema = get_workflow_tools()["test_generation"]["input_schema"]
         assert "module" in schema["required"]
 
-    def test_research_synthesis_requires_sources_and_question(self) -> None:
-        """research_synthesis requires both sources and question."""
+    def test_research_synthesis_is_path_based(self) -> None:
+        """research_synthesis takes optional path + depth (no required args).
+
+        The workflow is a path-driven 3-agent pipeline; the tool must not
+        require the legacy sources/question contract.
+        """
         schema = get_workflow_tools()["research_synthesis"]["input_schema"]
-        assert "sources" in schema["required"]
-        assert "question" in schema["required"]
+        props = schema["properties"]
+        assert "path" in props
+        assert "depth" in props
+        assert props["depth"]["enum"] == ["quick", "standard", "deep"]
+        assert "required" not in schema
+        assert "sources" not in props
+        assert "question" not in props
 
 
 # -- get_utility_tools ------------------------------------------------

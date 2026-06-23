@@ -10639,3 +10639,31 @@ files.
   --oneline -1` after the switch. And discard `.help/templates/<feat>/`
   regen-hook artifacts left unstaged by editing that feature's source
   (existing "focused-PR .help regen" lesson) before they ride along.
+
+- **`scripts/generate_all.py` regenerates the WHOLE help corpus and
+  sweeps in unrelated lessons-drift — never run it for a focused
+  feature PR; generated help refreshes at RELEASE-PREP cadence**: hit
+  2026-06-23 on the `release_prep`→`release_notes` MCP tool rename
+  (#1020). A next-session-starter note said "regenerate, don't
+  hand-edit `plugin/help/generated/*`," but running
+  `python scripts/generate_all.py` re-derived dozens of UNRELATED files
+  (lessons-corpus `errors/`/`faqs/`/`warnings/` that had drifted on
+  main — `tags:` additions, new sections) PLUS many untracked `??`
+  files — turning a 7-file rename into a 30+-file scope-polluting diff.
+  Root cause: per the **polish-cost-reduction spec (lever 1, ratified
+  2026-06-10)** per-commit auto-regen was DELIBERATELY eliminated;
+  `plugin/help/generated/*` is refreshed at release-prep cadence via
+  `attune-author regenerate`, and the pre-commit
+  `regenerate_help_templates.py` hook is **check-only / WARN — it never
+  regenerates and never spends budget**. So for a feature PR that
+  touches `tool_schemas.py` / a `SKILL.md`: edit the SOURCE, and LEAVE
+  `plugin/help/generated/*` alone — revert any accidental regen with
+  `git checkout -- plugin/help/generated/ && git clean -fdq
+  plugin/help/generated/`. The rename rides into the next
+  release-cadence regen (which also absorbs the unrelated drift at
+  once). The starter's "regenerate, don't hand-edit" guidance predates
+  the spec and is now wrong for feature PRs. Extends the existing
+  ".help template regen = whole-feature re-polish, discard from focused
+  PRs" lesson to the `generate_all.py` / `plugin/help/generated`
+  surface (the `.help/templates/` lesson is the sibling on the
+  template side).
