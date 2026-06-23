@@ -1,14 +1,4 @@
----
-type: reference
-name: mcp-server-reference
-feature: mcp-server
-depth: reference
-generated_at: 2026-06-23T22:52:03.357140+00:00
-source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
-status: generated
----
-
-# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
+# Mcp Server
 
 ## Reference
 
@@ -52,3 +42,5 @@ from `attune.mcp`.
 | Client registration | `.mcp.json` → `python -m attune.mcp.server` (plugin uses `uvx --from attune-ai …`). |
 | Direct | `python -m attune.mcp.server` (stdio). |
 | Python | `create_server()` / `EmpathyMCPServer`. |
+
+<!-- attune-generated: source_hash=08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f feature=mcp-server kind=reference generated_at=2026-06-23 -->

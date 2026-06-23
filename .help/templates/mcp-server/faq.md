@@ -1,44 +1,65 @@
 ---
 type: faq
+name: mcp-server-faq
 feature: mcp-server
 depth: faq
-generated_at: 2026-04-20T01:21:43.968634+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
-status: generated
+status: manual
 ---
 
-# MCP server FAQ
+# MCP Server FAQ
 
 ## What is the MCP server?
 
-The Model Context Protocol server that provides tools, prompts, and resources to Claude Code and other MCP clients. It handles authentication, telemetry, memory operations, help lookup, and workflow execution.
+`EmpathyMCPServer` — attune's Model Context Protocol server. It exposes
+attune's workflows, help, and memory as MCP **tools**, **resources**,
+and **prompts** to a client like Claude Code, speaking MCP over stdio.
+It's how the conversational surface reaches every attune feature.
 
-## When do I need to use it?
+## How do I run it / make the tools show up?
 
-You use the MCP server whenever you work with Attune AI features through Claude Code. The server runs automatically when you have a `.mcp.json` file in your project root - you don't need to start it manually.
+Register `python -m attune.mcp.server` in `.mcp.json` (the plugin ships
+one). The plugin entry uses `uvx --from attune-ai python -m
+attune.mcp.server`; a local checkout uses `uv run python -m
+attune.mcp.server`. Run the same command directly to test the server.
 
-## What tools does it provide?
+## How many tools does it expose?
 
-The server provides several categories of tools:
+41 built-in tools, across five categories — workflow (21), utility (7),
+help (5), memory (4), and personal-memory (4) — plus 3 resources
+(`attune://workflows`, `attune://auth/config`, `attune://telemetry`)
+and 3 prompts (`security-scan`, `test-gen`, `cost-report`). Installed
+plugins can register more (e.g. attune-redis adds five `redis_*`
+tools), so `server.tools` may hold more than 41.
 
-- **Help tools**: `help_lookup`, `help_maintain`, `help_init` for contextual documentation
-- **Memory tools**: `memory_store`, `memory_retrieve`, `memory_search`, `memory_forget` for persistent data
-- **Utility tools**: `auth_status`, `telemetry_stats`, `attune_get_level` for configuration and monitoring
-- **Workflow tools**: Access to all available Attune workflows
+## Is `call_tool` async?
 
-## How do I start the server manually?
+Yes — `await EmpathyMCPServer.call_tool(name, arguments)`. The
+inspection helpers `create_server()`, `get_resource_list()`, and
+`get_prompt_list()` are synchronous.
 
-Run `uv run python -m attune.mcp.server` from your project directory. This is mainly useful for testing - Claude Code normally starts it automatically.
+## How do I inspect the server from Python?
+
+```python
+from attune.mcp import create_server
+
+server = create_server()
+print(len(server.tools), "tools")
+print([r["uri"] for r in server.get_resource_list()])
+print([p["name"] for p in server.get_prompt_list()])
+```
 
 ## What if the server isn't responding?
 
-Check that your `.mcp.json` file exists and uses `uv run` instead of bare `python`. See the troubleshooting guide for MCP server issues for the complete diagnosis flow.
+Confirm `.mcp.json` exists and its command launches (`python -m
+attune.mcp.server`). stdout is the MCP protocol channel, so logs go to
+`<tmp>/attune/attune-mcp.log` — read that to debug a connection.
 
 ## Where is the server code?
 
-The main implementation is in `src/attune/mcp/server.py`. Tool definitions are spread across several modules:
-- Memory tools: `src/attune/mcp/memory.py`
-- Prompt handling: `src/attune/mcp/prompts.py`
-- Rate limiting: `src/attune/mcp/server.py`
+`src/attune/mcp/server.py` (the `EmpathyMCPServer` class). Tool
+*schemas* live in `src/attune/mcp/tool_schemas.py` (the five
+`get_*_tools` groups + `get_resources` + `get_prompts`); *handlers*
+live in `memory_handlers.py` / `workflow_handlers.py`; rate limiting is
+in `rate_limiter.py`.
 
 **Tags:** `mcp`, `tools`, `server`

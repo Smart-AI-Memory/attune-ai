@@ -1,40 +1,39 @@
 ---
 type: warning
+name: mcp-server-warning
 feature: mcp-server
 depth: warning
-generated_at: 2026-04-20T01:21:12.205897+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
+generated_at: 2026-06-23T22:52:03.357140+00:00
+source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
 status: generated
 ---
 
-# MCP Server cautions
+# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
 
-## Rate limiting can silently drop calls
+## Failure modes
 
-The `RateLimiter` class uses a sliding window with a 60-call default limit. When you exceed this limit, `check()` returns `False` but doesn't raise an exception. Tool calls fail silently, which can make debugging difficult.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| Tools don't appear in Claude Code | The `.mcp.json` entry is missing or the command can't launch | Add/repair the `mcpServers` entry; confirm `python -m attune.mcp.server` runs | high |
+| `RuntimeWarning: coroutine 'EmpathyMCPServer.call_tool' was never awaited` | `call_tool` invoked without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| Tool calls start getting rejected under load | The rate limiter tripped (60 calls / 60 s) | Slow the call rate, or construct with a higher `max_calls` | medium |
+| A tool returns a "path/argument required" error | The tool's own input contract wasn't met | See that tool's feature page; the server just dispatches | medium |
+| Can't tell why the connection failed | Logs aren't on stdout (stdio is the protocol channel) | Read `<tmp>/attune/attune-mcp.log` | low |
 
-**Avoid this:** Check the rate limiter's return value before making tool calls, especially in loops or batch operations. Consider increasing the limit for heavy workflows using `RateLimiter(max_calls=200)`.
+### Risk areas
 
-## Missing prompts cause runtime failures
+- **`call_tool` is async.** Dispatching without `await` is the common
+  mistake when driving the server from Python.
+- **stdio is the protocol channel.** Don't print to stdout from a
+  handler — logs go to the temp log file, not the console.
+- **The server dispatches; tools own their contracts.** A tool-level
+  error (bad args) is the tool's, not the server's.
 
-The `get_prompt_messages()` function raises `ValueError` for unknown prompt names, but only at runtime. If you reference a prompt that doesn't exist in the prompt registry, you won't discover the problem until the tool is called.
+### Diagnosis order
 
-**Avoid this:** Validate prompt names against `get_prompt_list()` during initialization. Test all prompt references in your integration tests.
-
-## Tool schema validation is deferred
-
-The MCP server defines tool schemas but doesn't validate arguments until `call_tool()` executes. Invalid arguments reach your tool handlers, where they may cause unexpected behavior or crashes.
-
-**Avoid this:** Add explicit validation at the start of your tool handlers. Use the input schema patterns from `get_utility_tools()` and `get_help_tools()` as templates for required field checking.
-
-## Memory tools fail without attune-ai package
-
-Memory-related tools (`memory_store`, `memory_retrieve`, etc.) import the `attune-ai` package dynamically. If the package isn't installed, these tools fail at runtime with an import error rather than being disabled gracefully.
-
-**Avoid this:** Check for the attune-ai dependency during server initialization. Consider making memory tools optional in your MCP client configuration.
-
-## Workspace isolation can break file operations
-
-The `EmpathyMCPServer` accepts a `workspace_root` parameter that scopes file operations. If you pass relative paths to tools that expect absolute paths, operations may target the wrong files or fail silently.
-
-**Avoid this:** Always resolve relative paths against the workspace root before passing them to file-based tools. Use `os.path.abspath()` to convert relative paths in tool arguments.
+1. Confirm the server launches: `python -m attune.mcp.server`.
+2. Confirm registration: the `.mcp.json` `mcpServers` entry.
+3. From Python, `create_server().tools` / `get_resource_list()` to
+   confirm the surface.
+4. For a connection problem, read `<tmp>/attune/attune-mcp.log`.
+5. For a single tool failing, consult that tool's feature page.

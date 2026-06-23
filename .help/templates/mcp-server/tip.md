@@ -1,22 +1,23 @@
 ---
 type: tip
+name: mcp-server-tip
 feature: mcp-server
 depth: tip
-generated_at: 2026-04-20T01:22:04.436199+00:00
-source_hash: cab70f0aeb1782a9a9523b0ae9f7a4efe73904a1e5f3f26ec70fc1f9dc7cd315
+generated_at: 2026-06-23T22:52:03.357140+00:00
+source_hash: 08e50eacebc45c71e34c3de6ca5e70b0eed13373bff884ee18bc5f88124ac95f
 status: generated
 ---
 
-# Tip: Use the EmpathyMCPServer class for MCP integration
+# The Model Context Protocol server that exposes attune workflows, help, and memory as tools
 
-Use `create_server()` to get a pre-configured MCP server instance rather than instantiating `EmpathyMCPServer` directly. The factory function handles workspace root detection, user ID resolution, and mixin initialization automatically.
+## Notes & tips
 
-## Why
-
-MCP server configuration is surprisingly error-prone — workspace paths need validation, handler mixins must be initialized in the right order, and rate limiting requires careful setup. The factory function encapsulates these details and reduces setup bugs by 80%.
-
-## Tradeoff
-
-You lose fine-grained control over server initialization. If you need custom workspace detection or specialized handler mixins, you'll need to subclass `EmpathyMCPServer` instead.
-
-**Tags:** `mcp`, `tools`, `server`
+- **Depend on the documented public surface.** The supported API is
+  `create_server` and `EmpathyMCPServer` from `attune.mcp`; the
+  tool-schema group functions live in `attune.mcp.tool_schemas`.
+  Handler methods and the dispatch table are internal.
+- **`await` `call_tool`.** It's the one async entry; the inspection
+  helpers are sync.
+- **Read the log file to debug.** stdout is reserved for the protocol.
+- **Tool contracts live with their features.** This page covers the
+  server; each tool's inputs are documented on its own feature page.

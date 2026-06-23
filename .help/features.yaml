@@ -187,11 +187,22 @@ features:
     tags: [tests, debugging, fixes]
     status: manual
 
+  # mcp-server is single-sourced (status: manual) from
+  # content/features/mcp-server.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/mcp-server/*.md. The entry is marked `status: manual`
+  # — WITHOUT `files:` — so topic resolution routes here while
+  # staleness/maintenance never runs `attune-author generate mcp-server
+  # --all-kinds` to overwrite the projected content with LLM output
+  # (DD5, help-docs-single-source decision, 2026-06-23). The retained
+  # faq.md stays on disk frozen until the four-channel FAQ Generator
+  # (D6/D7) replaces that path. Description and tags unchanged to
+  # preserve golden-query resolution (mc-001 "mcp-server"; mc-002 "mcp").
+  # See docs/specs/help-docs-single-source/.
   mcp-server:
     description: Model Context Protocol server and tool handlers
-    files:
-      - src/attune/mcp/**
     tags: [mcp, tools, server]
+    status: manual
 
   help-system:
     description: Progressive-depth help engine and template management
