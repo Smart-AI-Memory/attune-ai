@@ -1,14 +1,4 @@
----
-type: note
-name: code-quality-note
-feature: code-quality
-depth: note
-generated_at: 2026-06-23T15:45:20.604236+00:00
-source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
-status: generated
----
-
-# Multi-subagent code review across security, quality, performance, and architecture
+# Code Quality
 
 ## Overview
 
@@ -132,19 +122,38 @@ So a "deep" code-quality request runs the *deep-review* workflow,
 not a deeper code-review. The CLI, MCP, and Python surfaces, by
 contrast, drive `CodeReviewWorkflow` directly.
 
-## Notes & tips
+## Design & extension
 
-- **Depend on the documented public surface.** The supported API is
-  `CodeReviewWorkflow` and its async `execute`, plus the
-  `WorkflowResult` it returns. Names with a leading underscore —
-  `_run_agent_review`, `_SUBAGENT_NAMES` — are internal and may
-  change.
-- **Use `path` and `depth` to keep runs cheap.** A `quick` pass
-  over one subsystem is far faster than a `deep` pass over `src/`;
-  reserve the full `deep` run for pre-merge or release gates.
-- **Watch for the bug-predict recommendation.** When the review
-  surfaces security-shaped findings, the run emits an `ATTUNE_REC`
-  suggesting a `bug-predict` pass on the same scope to locate the
-  exact lines.
-- **Read `metadata` to confirm scope.** It records the `path`,
-  `depth`, and `max_turns` the run actually used.
+### Design decisions
+
+- **SDK-native, four review passes.** Code-quality is a single
+  `claude_agent_sdk.query` with four subagents — `security-`,
+  `quality-`, `perf-`, and `architect-reviewer` — each writing
+  under its own report heading. Splitting the passes keeps each
+  subagent's context focused; the orchestrator merges them into one
+  consolidated report.
+- **Breadth without a narrowing knob.** Where deep-review lets
+  `focus` trim its passes, code-quality always runs all four — it
+  is the default everyday review, and the `/code-quality` skill
+  escalates to deep-review (with its `focus`) when you ask for a
+  deep pass.
+- **Prediction, not certification, is the contract.** The workflow
+  returns LLM-judged findings; it trades a linter's precision for
+  breadth and a prioritized next-step list. Findings are leads to
+  verify, never a guarantee.
+- **The result is data, not print output.** `execute` returns a
+  `WorkflowResult` (report in `final_output`, plus `summary`,
+  `suggestions`, `cost_report`, and `metadata`); the CLI, MCP, and
+  Python surfaces all render that same result.
+
+### Extension points
+
+- **Change the budget:** choose `depth` (`quick` / `standard` /
+  `deep`) to trade coverage against cost.
+- **Scope the run:** point `path` at a narrower directory or file.
+- **Add a review pass:** the subagent definitions are built inline
+  in `_run_agent_review`, with the names listed in
+  `_SUBAGENT_NAMES`; a new pass is a new `AgentDefinition` plus a
+  synthesis section in the task template in `code_review.py`.
+
+<!-- attune-generated: source_hash=3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472 feature=code-quality kind=architecture generated_at=2026-06-23 -->

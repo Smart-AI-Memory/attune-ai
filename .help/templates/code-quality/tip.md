@@ -1,16 +1,28 @@
 ---
 type: tip
+name: code-quality-tip
 feature: code-quality
 depth: tip
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
+generated_at: 2026-06-23T15:45:20.604236+00:00
+source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
 status: generated
 ---
 
-# Start with a quick scan before going deep
+# Multi-subagent code review across security, quality, performance, and architecture
 
-Run `/code-quality` with quick depth first to catch style issues and obvious problems before investing time in a thorough review.
+## Notes & tips
 
-The four-subagent workflow (security, quality, performance, architecture) takes several minutes on large codebases, but a quick scan finishes in seconds and catches 80% of the issues you'll actually fix. Deep reviews are valuable for critical modules, but most day-to-day development benefits more from fast feedback loops.
-
-**Tradeoff:** Quick scans miss complex logic errors and architectural problems that only surface during deep analysis.
+- **Depend on the documented public surface.** The supported API is
+  `CodeReviewWorkflow` and its async `execute`, plus the
+  `WorkflowResult` it returns. Names with a leading underscore —
+  `_run_agent_review`, `_SUBAGENT_NAMES` — are internal and may
+  change.
+- **Use `path` and `depth` to keep runs cheap.** A `quick` pass
+  over one subsystem is far faster than a `deep` pass over `src/`;
+  reserve the full `deep` run for pre-merge or release gates.
+- **Watch for the bug-predict recommendation.** When the review
+  surfaces security-shaped findings, the run emits an `ATTUNE_REC`
+  suggesting a `bug-predict` pass on the same scope to locate the
+  exact lines.
+- **Read `metadata` to confirm scope.** It records the `path`,
+  `depth`, and `max_turns` the run actually used.

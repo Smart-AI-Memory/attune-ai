@@ -1,75 +1,98 @@
 ---
 type: task
+name: code-quality-task
 feature: code-quality
 depth: task
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
-status: hand_authored
+generated_at: 2026-06-23T15:45:20.604236+00:00
+source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
+status: generated
 ---
 
-# Triage a code-quality report
+# Multi-subagent code review across security, quality, performance, and architecture
 
-Use this procedure after running `/code-quality` to decide what to fix now, what to fix in this PR, what to defer, and what to ignore.
+## Tasks
 
-## Pick your scope first
+### Review a path from the CLI
 
-The scope you choose determines depth, time, and signal density. Pick before you run.
+**Goal:** run a one-off review over a directory without writing any
+Python.
 
-| Scope | Recommended depth | Time | Best for |
-|-------|-------------------|------|----------|
-| Single file | `quick` | seconds | Spot-check during edits |
-| Module / subdirectory | `standard` | ~1 min | Pre-PR review |
-| Whole repo | `deep` | ~3 min | Inherited code, periodic baselines |
+**Steps:**
 
-If you don't know which to pick, start with `standard` on the module you touched in this PR. Going wider rarely surfaces issues you'll act on; going narrower misses cross-file architecture problems.
+```bash
+# Default depth (standard) over a directory:
+attune workflow run code-review --path src/
 
-## Read the summary score
+# Deep review, JSON output for a pre-merge gate:
+attune workflow run code-review --path src/ --depth deep --json
+```
 
-The first line of the report is a 0–100 health score. Use it to triage urgency, not as a metric to optimize.
+**Verify:** the slug is `code-review` (not `code-quality`).
+`--path` / `-p` defaults to the current directory; `--depth`
+accepts `quick`, `standard`, or `deep`; `--json` / `-j` emits
+machine-readable output. Use `attune workflow info code-review` to
+confirm registration and `attune workflow list` to see it alongside
+the other workflows.
 
-| Score | What it means | Next action |
-|-------|---------------|-------------|
-| 90–100 | Excellent | Ship. Skim findings; fix anything trivial inline. |
-| 75–89 | Good | Fix Security findings in this PR; queue Quality for follow-up. |
-| 50–74 | Needs work | Stop and triage before merging. Likely 1–2 categories of systemic issues. |
-| 0–49 | Poor | Don't merge. Open issues for each finding category and address them as separate PRs. |
+### Call the review from Python
 
-The score averages across the four reviewers, so a 78 can hide a critical Security finding. Always read the Security section before trusting the score.
+**Goal:** drive code-quality from a hook or pre-merge gate and act
+on the result.
 
-## Triage by section
+**Steps:**
 
-The report has four sections, in this priority order.
+```python
+import asyncio
 
-**Security.** Treat every finding as fix-now unless you can prove it's a false positive. The security-reviewer catches injection vectors, unsafe deserialization, hardcoded credentials, and auth bypasses. If a finding cites a file and line, open that file before deciding to defer.
+from attune.workflows import CodeReviewWorkflow
 
-**Quality.** Includes likely bugs (mutable defaults, broad exceptions, null dereferences) and style issues. Fix likely bugs in this PR; style issues can defer to a cleanup sweep. The reviewer doesn't distinguish between the two — you do, by reading the description.
 
-**Performance.** Static analysis catches O(n²) loops, leaky resource handling, and obvious memory anti-patterns. Defer unless the finding is in a hot path or marked high severity. Profiling beats static analysis here, so don't over-invest.
+async def main() -> None:
+    workflow = CodeReviewWorkflow()
+    result = await workflow.execute(path="src/api/", depth="deep")
 
-**Architecture.** High coupling, circular imports, god classes, module sprawl. Almost never fix in the same PR as a feature — these are refactor PRs. Open an issue and move on unless the finding is blocking the feature itself.
+    if not result.success:
+        print("review failed:", result.error)
+        return
 
-## What to do next
+    print(result.final_output)
+    for action in result.suggestions:
+        print(action)
 
-When findings cross feature boundaries, follow up with the matching specialist:
 
-- Security findings that need deeper investigation: `/security-audit` on the affected files.
-- Likely-bug findings in code you're about to extend: `/bug-predict` to surface similar patterns.
-- Architecture findings that warrant a refactor: `/refactor-plan` on the implicated module.
-- Test-coverage gaps surfaced by Quality: `/smart-test` to fill them.
+asyncio.run(main())
+```
 
-When you've fixed the highest-priority findings, re-run `/code-quality` on the same scope to confirm the score improved and no new findings emerged.
+**Verify:** `execute` is a coroutine — `await` it. A completed
+review returns `success=True` with the report in `final_output`; a
+failure returns `success=False` with a populated `error` and
+`error_type`. `metadata` echoes the `path`, `depth`, and
+`max_turns`.
 
-## Verify success
+### Scope a review to a smaller area
 
-Triage is complete when:
+**Goal:** keep a run fast and cheap by narrowing what it reads.
 
-- Every Security finding is either fixed, has an issue link, or has a documented false-positive justification.
-- Quality findings split cleanly into "fixed in this PR" and "tracked in issue/backlog."
-- Performance and Architecture findings are either fixed, deferred with a link, or explicitly accepted.
-- A fresh `/code-quality` run on the same scope shows no new findings introduced by your fixes.
+**Steps:**
 
-## Source files
+```python
+import asyncio
 
-- `src/attune/workflows/code_review.py`
+from attune.workflows import CodeReviewWorkflow
 
-**Tags:** `review`, `quality`, `triage`, `bugs`, `report`
+
+async def main() -> None:
+    workflow = CodeReviewWorkflow()
+
+    # A single subsystem, quick pass:
+    result = await workflow.execute(path="src/auth/", depth="quick")
+    print(result.final_output)
+
+
+asyncio.run(main())
+```
+
+**Verify:** code-quality has no `focus` parameter, so the only
+levers are `path` (point it at a narrower directory or file) and
+`depth` (`quick` trims the agent-turn budget to 10). All four passes
+still run over whatever `path` covers.

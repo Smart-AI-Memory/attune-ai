@@ -1,40 +1,49 @@
 ---
 type: warning
+name: code-quality-warning
 feature: code-quality
 depth: warning
-generated_at: 2026-06-22T10:11:35.814147+00:00
-source_hash: 4f0f1e5876a5f83b83316fb690fa9aa652fd8f63b15844a89c384083fbac424f
+generated_at: 2026-06-23T15:45:20.604236+00:00
+source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
 status: generated
 ---
 
-# Code Quality cautions
+# Multi-subagent code review across security, quality, performance, and architecture
 
-## What to watch for
+## Failure modes
 
-The code quality review orchestrates four specialized subagents that can produce conflicting or overwhelming results when not properly scoped.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'CodeReviewWorkflow.execute' was never awaited` | `execute` called without `await` | It is a coroutine — `await` it or use `asyncio.run` | high |
+| `WorkflowResult.success` is `False`, `error` is `"path argument is required"` | `execute` called with empty or missing `path` | Pass a non-empty `path` | high |
+| `attune workflow run code-quality` errors "unknown workflow" | The slug is `code-review`, not `code-quality` | Run `attune workflow run code-review` (the skill / help topic is `code-quality`) | medium |
+| `error` reads `"Agent SDK unavailable: ..."` | `claude_agent_sdk` is not importable | Install the Agent SDK dependency for the environment | high |
+| `error` reads `"Agent SDK connection failed: ..."` | A `ConnectionError` / `TimeoutError` reaching the SDK | Check connectivity / retry; `transient` is set when a retry is reasonable | medium |
+| Review stops early / partial report | The depth's agent-turn or budget cap was reached | Use a narrower `path`, a shallower `depth`, or accept a deeper (costlier) run | medium |
+| A finding looks like a false positive | Findings are LLM predictions, not verified defects | Confirm against the cited file/line before acting | medium |
 
-## Risk areas
+### Risk areas
 
-**Large repository scans overwhelm the output.** Running `/code-quality .` on a project with hundreds of files generates reports that are too long to parse effectively. The four subagents (security, quality, performance, and architecture reviewers) each contribute findings, creating noise that obscures critical issues.
+- **The async call is easy to get wrong.** `execute` is the only
+  public method and it is a coroutine. Forgetting to `await` it is
+  the single most common mistake.
+- **The slug differs from the name.** The feature, skill, and help
+  topic are `code-quality`; the workflow slug and MCP tool are
+  `code-review`. Use `code-review` for `attune workflow run` and
+  the MCP call.
+- **Findings are predictions, not proofs.** A CRITICAL or HIGH
+  finding means "look here first," not a confirmed defect — and a
+  clean review is not a guarantee. Verify before acting.
 
-**Subagent coordination can mask critical findings.** The `CodeReviewWorkflow` synthesizes results from all four reviewers into a single health score. High-severity security issues can get averaged out by clean style scores, giving a misleadingly positive overall rating.
+### Diagnosis order
 
-**Deep reviews trigger expensive analysis.** The deep scan mode enables security and architecture analysis that examines cross-file dependencies and control flow. This can time out on complex codebases or consume significant compute resources when run repeatedly.
-
-**False confidence from partial scans.** Quick scans only check style and formatting, but the unified health score doesn't clearly indicate this limited scope. You might ship code thinking it's been thoroughly reviewed when only cosmetic issues were checked.
-
-## How to avoid problems
-
-**Scope reviews to specific directories or files.** Use `/code-quality src/auth/` instead of `/code-quality .` to keep results focused and actionable.
-
-**Check the depth setting matches your needs.** Reserve deep reviews for critical modules before release. Use standard depth for pull requests and quick scans only for pre-commit style checks.
-
-**Read category breakdowns, not just the overall score.** A score of 85/100 could hide three critical security vulnerabilities if the style and performance scores are perfect.
-
-**Test the workflow on small samples first.** Before running a full project scan, verify the setup works correctly on a single file: `/code-quality src/config.py`.
-
-## Source files
-
-- `src/attune/workflows/code_review.py`
-
-**Tags:** `review`, `quality`, `bugs`
+1. Confirm you are awaiting: `result = await workflow.execute(
+   path="src/")` inside an `async def` or `asyncio.run`.
+2. Check `result.success`; if `False`, read `result.error` and
+   `result.error_type`.
+3. For an "unknown workflow" CLI error, confirm you used the
+   `code-review` slug.
+4. On an SDK error, inspect `result.metadata` for the captured
+   `sdk_stderr` / SDK error kind.
+5. Confirm the scope: `result.metadata` echoes the `path`, `depth`,
+   and `max_turns`.

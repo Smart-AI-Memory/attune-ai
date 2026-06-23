@@ -1,14 +1,4 @@
----
-type: reference
-name: code-quality-reference
-feature: code-quality
-depth: reference
-generated_at: 2026-06-23T15:45:20.604236+00:00
-source_hash: 3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472
-status: generated
----
-
-# Multi-subagent code review across security, quality, performance, and architecture
+# Code Quality
 
 ## Reference
 
@@ -63,3 +53,5 @@ re-exported from `attune.workflows`. `WorkflowResult` comes from
 | CLI | `attune workflow run code-review --path <p> [--depth quick\|standard\|deep] [--json]`. |
 | MCP tool | `code_review` — one required `path` argument; runs at standard depth (the handler does not pass `depth`) and validates the path against the workspace root. |
 | Python | `await CodeReviewWorkflow().execute(path=<p>, depth=<d>)`. |
+
+<!-- attune-generated: source_hash=3f9592fd884ddc994048dbdc80fa264339717c64b37d33385ef2e36088c41472 feature=code-quality kind=reference generated_at=2026-06-23 -->
