@@ -3,42 +3,118 @@ type: note
 name: release-prep-note
 feature: release-prep
 depth: note
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 2e9628fb196173f4048d6aab29c024a2318abaeea4420bd4865253bdc1d46702
+generated_at: 2026-06-23T21:32:41.155408+00:00
+source_hash: 63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2
 status: generated
 ---
 
-# Note: release prep
+# Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds
 
-## How the agent team is structured
+## Overview
 
-Release prep runs four specialized agents in parallel, each responsible for a distinct domain. A `ReleasePrepTeam` coordinates their execution and aggregates results into a `ReleaseReadinessReport`.
+Release-prep is the **deterministic gate** for shipping. A team of four
+agents runs **real tools** — `bandit`, `ruff`, `pytest --cov`, and a
+docstring/README/CHANGELOG check — in parallel, measures the results
+against **hard quality-gate thresholds**, and returns an APPROVED or
+BLOCKED verdict. It is the enforcement half of the release pair.
 
-| Agent | What it checks |
-|---|---|
-| `CodeQualityAgent` | Runs `ruff`, checks type hints and complexity |
-| `TestCoverageAgent` | Runs `pytest --cov` and parses the coverage report |
-| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence |
-| `SecurityAuditorAgent` | Scans for vulnerabilities, secret leaks, and unsafe patterns |
+It is the counterpart to **release-notes**, the advisory workflow.
+Release-notes *predicts and drafts* (a changelog plus an LLM go/no-go);
+release-prep *measures and gates* (real numbers against thresholds).
+Reach for release-prep when you need a pass/fail you can trust before
+tagging a release or uploading to PyPI.
 
-Every agent extends `ReleaseAgent`, which handles CHEAP → CAPABLE → PREMIUM model-tier escalation automatically. The `escalated` field on `ReleaseAgentResult` records whether a given run required escalation.
+Two things distinguish release-prep from the SDK workflows:
 
-## How readiness is decided
+- **It runs by default at zero API cost.** The agents are rule-based
+  (`RELEASE_LLM_MODE` defaults to `"simulated"`) — they parse real tool
+  output, not LLM responses. LLM enhancement is opt-in.
+- **It is CLI-only.** There is no MCP tool for the gate (that keeps the
+  conversational surface advisory). Run it with **`attune workflow run
+  release-gate`** (or the canonical slug `release-prep`).
 
-Each agent produces a `ReleaseAgentResult` with a `score`, a `confidence`, and a `findings` dict. Those results feed into a list of `QualityGate` checks. A gate has a `threshold` and an `actual` value; if `actual` falls short of `threshold` and `critical` is `True`, the gate blocks the release.
+You also reach release-prep through the Python API
+(`ReleasePrepTeamWorkflow` / `ReleasePrepTeam`), documented here for
+wiring the gate into a release script or CI step.
 
-The final `ReleaseReadinessReport` rolls everything up:
+## Concepts
 
-- `approved` — `True` only when all critical gates pass
-- `blockers` — gates or findings that must be resolved before shipping
-- `warnings` — non-critical issues worth noting
-- `confidence` — a string label reflecting overall certainty
+### Four agents, real tools, run in parallel
 
-Call `format_console_output()` to render a human-readable summary, or `to_dict()` to get a serializable dict for downstream tooling.
+`ReleasePrepTeam.assess_readiness` runs four agents concurrently
+(`asyncio.gather` over `run_in_executor`). Each runs a real tool and
+parses its output into a score and findings:
 
-## Source files
+| Agent | Tool it runs | What it measures |
+|-------|--------------|------------------|
+| `SecurityAuditorAgent` | `uv run bandit -r src/ -f json --severity-level medium` | Counts vulnerabilities by severity; `critical_issues` = CRITICAL + HIGH. |
+| `TestCoverageAgent` | `uv run pytest --co` then `uv run pytest --cov=<target> -x --timeout=30` | Parses the TOTAL coverage percentage; estimates from test count if coverage can't be measured. |
+| `CodeQualityAgent` | `uv run ruff check src/ --statistics` | Counts lint violations and maps them to a 0–10 quality score. |
+| `DocumentationAgent` | AST walk of `src/**/*.py` | Docstring coverage of public functions, plus README/CHANGELOG presence. |
 
-- `src/attune/workflows/release_prep.py`
-- `src/attune/agents/release/**`
+### Four quality gates, four thresholds
 
-**Tags:** `release`, `publishing`, `quality`
+The team evaluates the agent results against `DEFAULT_QUALITY_GATES`.
+Three gates are **critical** (a failure blocks release); documentation
+is a warning only:
+
+| Gate | Threshold key | Default | Critical? |
+|------|---------------|---------|-----------|
+| Security | `max_critical_issues` | `0` | Yes — blocks |
+| Test Coverage | `min_coverage` | `80.0` | Yes — blocks |
+| Code Quality | `min_quality_score` | `7.0` | Yes — blocks |
+| Documentation | `min_doc_coverage` | `80.0` | No — warning |
+
+A release is **approved** when no critical gate fails and there are no
+blockers. Confidence is `high` (approved, no warnings), `medium`
+(approved with warnings), or `low` (not approved).
+
+### Rule-based by default, LLM-enhanced on request
+
+`RELEASE_LLM_MODE` defaults to `"simulated"` — the agents score real
+tool output with rule-based logic and make **no** API calls (cost is
+$0). Set `RELEASE_LLM_MODE=real` **and** provide an `ANTHROPIC_API_KEY`
+to let the security and quality agents send their tool output to an LLM
+for nuanced classification (coverage and documentation stay
+rule-based). The mode is recorded per agent in `findings["mode"]`.
+
+### Progressive tier escalation
+
+Each agent starts at the `CHEAP` model tier and escalates to `CAPABLE`,
+then `PREMIUM`, only if its run reports failure (for the security agent,
+"failure" means critical issues remain; for code quality, a score below
+threshold). Escalation is most meaningful in `real` LLM mode, where a
+stronger model re-analyzes; in the default rule-based mode it re-runs
+the same deterministic command. `ReleaseAgentResult.escalated` records
+whether escalation happened and `tier_used` records the final tier.
+
+### The assessment always "succeeds"; the verdict is the payload
+
+`ReleasePrepTeamWorkflow.execute` returns a `WorkflowResult` whose
+`success` reflects that the assessment **ran** — not the release
+verdict. A BLOCKED release still returns `success=True` and exits 0; the
+verdict lives in `metadata["approved"]` (and `metadata["confidence"]`),
+and the full report is the serialized `WorkflowReport` in
+`final_output`. Read the verdict from the report, not from `success`.
+
+### `execute` and `assess_readiness` are async
+
+Both `ReleasePrepTeamWorkflow.execute` and
+`ReleasePrepTeam.assess_readiness` are coroutines — `await` them (or
+drive them with `asyncio.run`). Calling `assess_readiness` without
+awaiting is the most common mistake.
+
+## Notes & tips
+
+- **Depend on the documented public surface.** The supported API is
+  `ReleasePrepTeamWorkflow`, `ReleasePrepTeam`, and the
+  `ReleaseReadinessReport` it returns. Names with a leading underscore —
+  `_evaluate_quality_gates`, `_run_command`, `_execute_tier` — are
+  internal.
+- **Gate after you draft.** Use release-notes to draft the changelog,
+  then release-prep to gate the ship on measured numbers.
+- **Keep it free.** The default rule-based mode costs $0. Only set
+  `RELEASE_LLM_MODE=real` when you want LLM-nuanced security/quality
+  classification.
+- **Read the verdict, not the exit code.** `metadata["approved"]` is the
+  pass/fail; `success` only says the run completed.

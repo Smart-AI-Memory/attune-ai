@@ -3,78 +3,89 @@ type: task
 name: release-prep-task
 feature: release-prep
 depth: task
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 2e9628fb196173f4048d6aab29c024a2318abaeea4420bd4865253bdc1d46702
+generated_at: 2026-06-23T21:32:41.155408+00:00
+source_hash: 63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2
 status: generated
-scaffold_hash: 27a90574d75339f2fab8f7a1a95121920a49e38a867a7c39451f9987629e9532
 ---
 
-# Work with release prep
+# Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds
 
-Use `ReleasePrepTeam` when you need an objective go/no-go recommendation before cutting a release tag — it runs health checks, security scanning, documentation review, and changelog generation in parallel and aggregates the results into a single `ReleaseReadinessReport`.
+## Tasks
 
-## Prerequisites
+### Gate a release from the CLI
 
-- A local checkout of the codebase you want to assess
-- The `release` package available in your Python environment
+**Goal:** get a pass/fail verdict before tagging a release.
 
-## Run a release readiness assessment
+**Steps:**
 
-1. **Instantiate `ReleasePrepTeam`.**
+```bash
+# Run the gate at the project root:
+attune workflow run release-gate
 
-   ```python
-   from release import ReleasePrepTeam
+# JSON output for a CI step:
+attune workflow run release-gate --json
+```
 
-   team = ReleasePrepTeam()
-   ```
+**Verify:** the slugs are `release-gate` and `release-prep` (both run
+`ReleasePrepTeamWorkflow`). `--path` / `-p` defaults to the current
+directory; `--json` / `-j` emits machine-readable output. The verdict
+is APPROVED or BLOCKED; the run exits 0 even when BLOCKED (the verdict
+is data, not the exit code).
 
-   To tighten or relax thresholds, pass a `quality_gates` dict at construction time:
+### Run the gate from Python
 
-   ```python
-   team = ReleasePrepTeam(quality_gates={"test_coverage": 0.85, "code_quality": 0.80})
-   ```
+**Goal:** drive the gate from a release script and branch on the
+verdict.
 
-2. **Call `assess_readiness` against your codebase path.**
+**Steps:**
 
-   ```python
-   report = team.assess_readiness(codebase_path=".")
-   ```
+```python
+import asyncio
 
-   This coordinates four agents — `health-checker`, `security-scanner`, `changelog-generator`, and `release-assessor` — and returns a `ReleaseReadinessReport`. Each agent produces a `ReleaseAgentResult` containing a `score`, a `confidence` value, and a `findings` dict. Agents that need deeper analysis automatically escalate through model tiers (CHEAP → CAPABLE → PREMIUM); the tier used is recorded in the `tier_used` field of each result.
+from attune.agents.release import ReleasePrepTeamWorkflow
 
-3. **Print the formatted report.**
 
-   ```python
-   print(report.format_console_output())
-   ```
+async def main() -> None:
+    workflow = ReleasePrepTeamWorkflow()
+    result = await workflow.execute(path=".")
 
-4. **Review blockers and warnings.**
+    approved = result.metadata["approved"]
+    print("APPROVED" if approved else "BLOCKED", result.metadata["confidence"])
+    print(result.summary)
 
-   Entries in `report.blockers` must be resolved before release. Entries in `report.warnings` are non-critical but worth addressing:
 
-   ```python
-   for blocker in report.blockers:
-       print(f"BLOCKER: {blocker}")
+asyncio.run(main())
+```
 
-   for warning in report.warnings:
-       print(f"WARNING: {warning}")
-   ```
+**Verify:** `execute` is a coroutine — `await` it. `result.success` is
+`True` whenever the assessment ran; the verdict is
+`result.metadata["approved"]`. The full report is in
+`result.final_output`.
 
-5. **Serialize the report for CI pipelines (optional).**
+### Customize the quality-gate thresholds
 
-   ```python
-   import json
+**Goal:** raise (or lower) the bars the gate enforces.
 
-   with open("release-readiness.json", "w") as f:
-       json.dump(report.to_dict(), f, indent=2)
-   ```
+**Steps:**
 
-## Confirm success
+```python
+import asyncio
 
-The assessment passes when `report.approved` is `True` and `report.blockers` is empty. To see the detail behind the verdict, inspect `report.quality_gates`: each `QualityGate` exposes the gate's `threshold`, the measured `actual` value, and whether it `passed`. Any gate where `critical` is `True` and `passed` is `False` sets `report.approved` to `False`.
+from attune.agents.release import ReleasePrepTeam
 
-## Key files
 
-- `src/attune/workflows/release_prep.py` — `ReleasePrepTeamWorkflow`, `ReleasePreparationWorkflow`
-- `src/attune/agents/release/release_prep_team.py` — `ReleasePrepTeam`
-- `src/attune/agents/release/release_models.py` — `ReleaseReadinessReport`, `QualityGate`, `ReleaseAgentResult`
+async def main() -> None:
+    team = ReleasePrepTeam(
+        quality_gates={"min_coverage": 90.0, "min_quality_score": 8.0},
+    )
+    report = await team.assess_readiness(codebase_path=".")
+    print(report.format_console_output())
+
+
+asyncio.run(main())
+```
+
+**Verify:** `assess_readiness` is a coroutine — `await` it. The
+`quality_gates` keys are `max_critical_issues`, `min_coverage`,
+`min_quality_score`, and `min_doc_coverage`; any you pass override the
+defaults, the rest stay at `DEFAULT_QUALITY_GATES`.

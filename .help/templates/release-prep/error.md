@@ -3,55 +3,43 @@ type: error
 name: release-prep-error
 feature: release-prep
 depth: error
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 2e9628fb196173f4048d6aab29c024a2318abaeea4420bd4865253bdc1d46702
+generated_at: 2026-06-23T21:32:41.155408+00:00
+source_hash: 63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2
 status: generated
 ---
 
-# Release Prep errors
+# Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds
 
-Release prep errors fall into two categories: failures during agent execution (a subagent like `TestCoverageAgent` or `CodeQualityAgent` cannot complete its check) and quality gate failures (an agent completes successfully but `ReleaseReadinessReport.approved` is `False` because one or more `QualityGate` thresholds were not met). The sections below help you tell them apart.
+## Failure modes
 
-## Common error signatures
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'ReleasePrepTeam.assess_readiness' was never awaited` | `assess_readiness` (or `execute`) called without `await` | Both are coroutines — `await` them or use `asyncio.run` | high |
+| Verdict is BLOCKED but the command exited 0 | `success` reflects that the assessment ran, not the verdict | Read `metadata["approved"]` / the report — don't gate on the exit code alone | medium |
+| Security gate shows `actual: -1` / a gate can't be measured | The agent errored (e.g. the tool raised); `critical_issues` falls back to `-1` | Inspect that agent's `findings["error"]`; confirm the tool runs in the project | medium |
+| Coverage reads as estimated, not measured | `pytest --cov` output wasn't parseable (timeout, no TOTAL line) | The percentage is heuristic from test count (`findings["estimated"]` is `True`); run coverage directly to confirm | low |
+| A gate reports `"bandit not available"` / `"ruff not available"` | The tool isn't installed in the run environment | Install the tool; the agent scores a neutral fallback otherwise | medium |
+| Setting `quality_gates={"coverage": 0.9}` has no effect | Wrong key | Use `min_coverage` (a percentage like `90.0`), not `coverage` | medium |
 
-| Symptom | Likely cause |
-|---------|--------------|
-| `ReleaseAgentResult.success` is `False` for a specific agent | The agent raised an exception internally; inspect `ReleaseAgentResult.findings` for the error detail |
-| `ReleaseReadinessReport.approved` is `False` with entries in `blockers` | At least one `QualityGate` with `critical=True` has `passed=False` — `QualityGate.actual` is below `QualityGate.threshold` |
-| `ReleasePrepTeam.assess_readiness()` raises during startup | `redis_url` is set but Redis is unreachable, or `quality_gates` contains a key that no agent recognises |
-| `ReleasePrepTeamWorkflow.execute()` raises before any agent runs | `path` does not point to a valid codebase directory |
-| `TestCoverageAgent` fails | `pytest --cov` is not installed or no test files are found at `codebase_path` |
-| `CodeQualityAgent` fails | `ruff` is not installed or the project has no Python source files at `codebase_path` |
-| `DocumentationAgent` fails | `CHANGELOG` file is absent and the agent cannot locate a README at `codebase_path` |
-| `ReleaseAgent.process()` returns with `escalated=True` and `success=False` | All three tiers (CHEAP → CAPABLE → PREMIUM) were tried and none produced a confident result |
+### Risk areas
 
-## Where errors originate
+- **The async call is easy to get wrong.** `assess_readiness` and
+  `execute` are coroutines. Calling `assess_readiness` synchronously is
+  the single most common mistake.
+- **`success` is not the verdict.** A BLOCKED release returns
+  `success=True`. Branch on `metadata["approved"]`.
+- **Threshold keys are specific.** They are `max_critical_issues`,
+  `min_coverage`, `min_quality_score`, `min_doc_coverage` — coverage and
+  doc-coverage are percentages (e.g. `80.0`), not fractions.
 
-Different failure modes surface in different classes. Match the symptom to the class before walking the call stack further.
+### Diagnosis order
 
-- **`ReleasePrepTeam.assess_readiness()`** — top-level entry point; collects `ReleaseAgentResult` objects from all subagents and assembles the `ReleaseReadinessReport`. If this raises, check connectivity (Redis) and whether `codebase_path` is readable.
-- **`ReleasePrepTeamWorkflow.execute()`** — workflow wrapper around `ReleasePrepTeam`; validates `path` and `quality_gates` before delegating. Errors here usually mean a misconfigured `quality_gates` dict or an invalid `path` argument.
-- **`ReleaseAgent.process()`** — base agent that drives tier escalation (CHEAP → CAPABLE → PREMIUM). When `escalated=True` in the returned `ReleaseAgentResult`, the agent exhausted all tiers.
-- **`TestCoverageAgent`** — calls `pytest --cov` as a subprocess; fails if pytest or the coverage plugin is missing.
-- **`CodeQualityAgent`** — calls `ruff` as a subprocess; fails if ruff is not on `PATH`.
-- **`DocumentationAgent`** — inspects docstring coverage, README currency, and CHANGELOG presence; fails if expected files are missing.
-- **`SecurityAuditorAgent`** — scans for vulnerabilities and secret leaks; may fail if required scanning tools are unavailable.
-
-## How to diagnose
-
-1. **Check `ReleaseReadinessReport` fields first.** Call `report.format_console_output()` or `report.to_dict()` to see the full picture: `approved`, `blockers`, `warnings`, each `QualityGate.passed` / `QualityGate.actual` / `QualityGate.threshold`, and each `ReleaseAgentResult.success`. This tells you whether an agent crashed or simply found a failing gate.
-
-2. **Distinguish a gate failure from an agent failure.** If `ReleaseReadinessReport.approved` is `False` but every `ReleaseAgentResult.success` is `True`, the problem is a quality gate threshold, not a code error — look at `QualityGate.actual` vs `QualityGate.threshold` for each gate where `passed=False`. If any `ReleaseAgentResult.success` is `False`, an agent itself failed; check that result's `findings` dict for the underlying exception or subprocess error.
-
-3. **Identify which agent failed.** Match `ReleaseAgentResult.agent_id` and `ReleaseAgentResult.agent_role` to the agent class (`TestCoverageAgent`, `CodeQualityAgent`, `DocumentationAgent`, `SecurityAuditorAgent`). Each agent runs a specific external tool — confirm that tool is installed and accessible from the working directory.
-
-4. **Check for tier escalation.** If `ReleaseAgentResult.escalated` is `True`, `ReleaseAgent.process()` tried every model tier without reaching sufficient confidence. This usually indicates an ambiguous or incomplete codebase state rather than a tool failure.
-
-5. **Verify `quality_gates` configuration.** `ReleasePrepTeam` and `ReleasePrepTeamWorkflow` both accept a `quality_gates` dict. A threshold of `0.0` means the gate always passes; a threshold higher than any achievable `actual` value means it always blocks. Print your `quality_gates` dict and compare each key against the `QualityGate.name` values in the report.
-
-## Source files
-
-- `src/attune/workflows/release_prep.py`
-- `src/attune/agents/release/**`
-
-**Tags:** `release`, `publishing`, `quality`
+1. Confirm you are awaiting: `await workflow.execute(path=".")` /
+   `await team.assess_readiness(codebase_path=".")`.
+2. Read the verdict from `result.metadata["approved"]`, not `success`.
+3. For a blocked gate, read the report's blockers and the failing
+   gate's actual-vs-threshold.
+4. For an errored agent, inspect its `findings["error"]` in
+   `report.agent_results`.
+5. Confirm the tools (`bandit`, `ruff`, `pytest`) run in the project
+   environment.

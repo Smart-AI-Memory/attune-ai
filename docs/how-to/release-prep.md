@@ -1,105 +1,155 @@
-# How to run release prep
+# Release Prep
 
-Use this guide when you need to run a pre-release quality gate against a codebase — checking test coverage, code quality, security vulnerabilities, and documentation — and get a structured go/no-go verdict before publishing.
+## Quickstart
 
-## Quick start
+Run the gate from the CLI at your project root:
 
-```python
-from release import ReleasePrepTeam, ReleaseReadinessReport
-
-team = ReleasePrepTeam()
-report: ReleaseReadinessReport = team.assess_readiness(codebase_path='.')
-
-print(report.format_console_output())
-
-if not report.approved:
-    for blocker in report.blockers:
-        print(f"BLOCKER: {blocker}")
+```bash
+attune workflow run release-gate
 ```
 
-Running this against your project root produces a formatted readiness report, lists any blockers, and sets `report.approved` to `True` only when every critical quality gate passes.
+The output is the readiness report — the verdict (APPROVED / BLOCKED),
+the four quality gates with actual-vs-threshold values, a per-agent
+breakdown, and any blockers or warnings. The canonical slug
+`release-prep` runs the same workflow.
 
-## Core API
+## Tasks
 
-| Class | Purpose |
-|-------|---------|
-| `ReleasePrepTeam` | Coordinates parallel execution of all release agents; primary entry point |
-| `ReleasePrepTeamWorkflow` | Wraps `ReleasePrepTeam` for use with the CLI workflow registry |
-| `ReleasePreparationWorkflow` | Standalone workflow that runs the full pre-release quality gate |
-| `ReleaseAgent` | Base agent with CHEAP → CAPABLE → PREMIUM tier escalation |
-| `TestCoverageAgent` | Runs `pytest --cov` and parses the coverage report |
-| `CodeQualityAgent` | Runs `ruff`, checks type hints and complexity |
-| `DocumentationAgent` | Checks docstring coverage, README currency, and CHANGELOG presence |
-| `SecurityAuditorAgent` | Analyzes `bandit` output and classifies vulnerabilities by severity |
-| `ReleaseReadinessReport` | Aggregated assessment with `approved`, `blockers`, `warnings`, and `quality_gates` |
-| `ReleaseAgentResult` | Per-agent result carrying `score`, `confidence`, `findings`, and `cost` |
-| `QualityGate` | A named threshold with `actual` vs. `threshold` and a `passed` flag |
+### Gate a release from the CLI
 
-## Configuration
+**Goal:** get a pass/fail verdict before tagging a release.
 
-Pass custom quality gate thresholds to `ReleasePrepTeam` or `ReleasePrepTeamWorkflow` at construction time:
+**Steps:**
 
-```python
-from release import ReleasePrepTeam
+```bash
+# Run the gate at the project root:
+attune workflow run release-gate
 
-gates = {
-    "coverage": 0.80,   # fail if coverage drops below 80 %
-    "quality":  0.75,
-    "security": 1.0,    # must be perfect — no critical findings
-}
-
-team = ReleasePrepTeam(quality_gates=gates, redis_url="redis://localhost:6379")
-report = team.assess_readiness(codebase_path="/path/to/project")
+# JSON output for a CI step:
+attune workflow run release-gate --json
 ```
 
-Omit `quality_gates` to use the built-in defaults. Pass `redis_url` when you want agents to share state across runs via Redis.
+**Verify:** the slugs are `release-gate` and `release-prep` (both run
+`ReleasePrepTeamWorkflow`). `--path` / `-p` defaults to the current
+directory; `--json` / `-j` emits machine-readable output. The verdict
+is APPROVED or BLOCKED; the run exits 0 even when BLOCKED (the verdict
+is data, not the exit code).
 
-## Integration patterns
+### Run the gate from Python
 
-### Embed in a CI script
+**Goal:** drive the gate from a release script and branch on the
+verdict.
 
-Call `assess_readiness` and exit non-zero when the report is not approved:
-
-```python
-import sys
-from release import ReleasePrepTeam
-
-team = ReleasePrepTeam()
-report = team.assess_readiness(codebase_path=".")
-
-print(report.format_console_output())
-print(f"\nTotal cost: ${team.get_total_cost():.4f}")
-
-sys.exit(0 if report.approved else 1)
-```
-
-### Run as a workflow with context
-
-`ReleasePrepTeamWorkflow.execute` accepts an optional `context` dict, which lets you thread release metadata through the run:
+**Steps:**
 
 ```python
-from release import ReleasePrepTeamWorkflow
+import asyncio
 
-workflow = ReleasePrepTeamWorkflow(quality_gates={"security": 1.0})
-report = workflow.execute(
-    path=".",
-    context={"version": "5.6.0", "branch": "main"},
-)
+from attune.agents.release import ReleasePrepTeamWorkflow
 
-# Serialize for storage or downstream consumption
-data = report.to_dict()
-print(data["approved"], data["blockers"])
+
+async def main() -> None:
+    workflow = ReleasePrepTeamWorkflow()
+    result = await workflow.execute(path=".")
+
+    approved = result.metadata["approved"]
+    print("APPROVED" if approved else "BLOCKED", result.metadata["confidence"])
+    print(result.summary)
+
+
+asyncio.run(main())
 ```
 
-<!-- attune-generated: source_hash=154aea0206f2809204a60d671b6411b36f1e98b1dd2cd5158175147523b39cc2 feature=release-prep kind=how-to generated_at=2026-06-02 -->
+**Verify:** `execute` is a coroutine — `await` it. `result.success` is
+`True` whenever the assessment ran; the verdict is
+`result.metadata["approved"]`. The full report is in
+`result.final_output`.
 
-## Unresolved references
+### Customize the quality-gate thresholds
 
-> Auto-generated by attune-author fact-check. Review and either
-> fix the source code, fix this doc, or add an override.
+**Goal:** raise (or lower) the bars the gate enforces.
 
-| Location | Severity | Issue |
-|---|---|---|
-| Line 7 (code fence) | error | `from release import …` — module not importable |
-| Line 96 | error | `[Release Prep concept overview](../concepts/tool-release-prep.md)` — target does not exist |
-| Line 97 | error | `[Release Prep quickstart](../quickstarts/skill-release-prep.md)` — target does not exist |
+**Steps:**
+
+```python
+import asyncio
+
+from attune.agents.release import ReleasePrepTeam
+
+
+async def main() -> None:
+    team = ReleasePrepTeam(
+        quality_gates={"min_coverage": 90.0, "min_quality_score": 8.0},
+    )
+    report = await team.assess_readiness(codebase_path=".")
+    print(report.format_console_output())
+
+
+asyncio.run(main())
+```
+
+**Verify:** `assess_readiness` is a coroutine — `await` it. The
+`quality_gates` keys are `max_critical_issues`, `min_coverage`,
+`min_quality_score`, and `min_doc_coverage`; any you pass override the
+defaults, the rest stay at `DEFAULT_QUALITY_GATES`.
+
+## Reference
+
+Release-prep's public surface is the `ReleasePrepTeamWorkflow` (CLI /
+registry adapter) and the `ReleasePrepTeam` coordinator, both importable
+from `attune.agents.release`.
+
+### `ReleasePrepTeamWorkflow` — `attune.agents.release`
+
+| Symbol | Purpose |
+|--------|---------|
+| `ReleasePrepTeamWorkflow(quality_gates=None, **kwargs)` | Construct the registry adapter. `quality_gates` overrides thresholds. |
+| `ReleasePrepTeamWorkflow.execute(path=".", context=None, **kwargs)` | **Async.** Run the gate. Maps `target` → `path` for CLI/VSCode. Returns a `WorkflowResult`. |
+| `ReleasePrepTeamWorkflow.name` | The canonical slug, `"release-prep"` (synonym `release-gate`). |
+| `ReleasePrepTeamWorkflow.stages` | `["triage", "parallel-validation", "synthesis", "decision"]`. |
+
+### `ReleasePrepTeam` — `attune.agents.release`
+
+| Symbol | Purpose |
+|--------|---------|
+| `ReleasePrepTeam(quality_gates=None, redis_url=None)` | Construct the coordinator. Optional Redis URL for coordination (graceful no-op when unavailable). |
+| `ReleasePrepTeam.assess_readiness(codebase_path=".")` | **Async.** Run the four agents in parallel and return a `ReleaseReadinessReport`. |
+| `ReleasePrepTeam.get_total_cost()` | Total LLM cost across agents ($0 in the default rule-based mode). |
+
+### Default quality gates
+
+| Gate | Key | Default | Critical |
+|------|-----|---------|----------|
+| Security | `max_critical_issues` | `0` | Yes |
+| Test Coverage | `min_coverage` | `80.0` | Yes |
+| Code Quality | `min_quality_score` | `7.0` | Yes |
+| Documentation | `min_doc_coverage` | `80.0` | No |
+
+### The four agents
+
+| Agent | Tool | Score basis |
+|-------|------|-------------|
+| `SecurityAuditorAgent` | bandit (JSON, severity ≥ medium) | Severity-weighted; `critical_issues` = CRITICAL + HIGH. |
+| `TestCoverageAgent` | pytest collect + `pytest --cov` | TOTAL coverage %; heuristic estimate as fallback. |
+| `CodeQualityAgent` | `ruff check --statistics` | 0–10 by violation count. |
+| `DocumentationAgent` | AST docstring walk | Public-function docstring coverage %. |
+
+### `WorkflowResult` fields read after a run
+
+| Field | Type | Meaning |
+|-------|------|---------|
+| `success` | `bool` | Whether the assessment **ran** (always `True` on a completed run — not the verdict). |
+| `final_output` | `dict` | The serialized `WorkflowReport` (verdict callout, gate table, per-agent breakdown, blockers, warnings, next steps). |
+| `summary` | `str` | Executive summary — approval status and the failed gates. |
+| `metadata` | `dict` | `approved` (bool) and `confidence` (`high` / `medium` / `low`). |
+
+### Entry points
+
+| Surface | Invocation |
+|---------|------------|
+| CLI | `attune workflow run release-gate [--path <p>] [--json]` (canonical slug `release-prep`). |
+| Python | `await ReleasePrepTeamWorkflow().execute(path=<p>)` or `await ReleasePrepTeam().assess_readiness(codebase_path=<p>)`. |
+
+There is **no MCP tool** for the gate — it is CLI / Python only.
+
+<!-- attune-generated: source_hash=63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2 feature=release-prep kind=how-to generated_at=2026-06-23 -->

@@ -128,12 +128,21 @@ features:
     tags: [release, changelog, advisory]
     status: manual
 
+  # release-prep is single-sourced (status: manual) from
+  # content/features/release-prep.md and rendered by
+  # attune_author.projector (scripts/project_features.py), which owns
+  # .help/templates/release-prep/*.md. The entry is marked
+  # `status: manual` — WITHOUT `files:` — so topic resolution routes
+  # here while staleness/maintenance never runs
+  # `attune-author generate release-prep --all-kinds` to overwrite the
+  # projected content with LLM output (DD5, help-docs-single-source
+  # decision, 2026-06-23). The retained faq.md stays on disk frozen
+  # until the four-channel FAQ Generator (D6/D7) replaces that path.
+  # See docs/specs/help-docs-single-source/.
   release-prep:
     description: Pre-release quality gate — health checks, security audit, changelog, version bumps
-    files:
-      - src/attune/workflows/release_prep.py
-      - src/attune/agents/release/**
     tags: [release, publishing, quality]
+    status: manual
 
   ops-dashboard:
     description: Local operations dashboard — workflow runner with per-feature scope picker, persisted run history, clickable workflow chaining, and live SSE log streaming

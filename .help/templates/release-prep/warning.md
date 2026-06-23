@@ -3,40 +3,43 @@ type: warning
 name: release-prep-warning
 feature: release-prep
 depth: warning
-generated_at: 2026-06-22T10:13:38.223145+00:00
-source_hash: 2e9628fb196173f4048d6aab29c024a2318abaeea4420bd4865253bdc1d46702
+generated_at: 2026-06-23T21:32:41.155408+00:00
+source_hash: 63942851d2e8b65c33fd9851fa0f4a2706c1389fb5673a4789c74ae3735154c2
 status: generated
 ---
 
-# Release Prep: What to Watch For
+# Deterministic pre-release gate — four agents run real bandit, ruff, pytest, and docstring checks against hard thresholds
 
-## Critical quality gates can block a release silently
+## Failure modes
 
-`ReleasePrepTeam.assess_readiness()` evaluates each `QualityGate` against a `threshold` value. If `QualityGate.critical` is `True` and `QualityGate.passed` is `False`, the gate contributes a blocker to `ReleaseReadinessReport.blockers` and sets `ReleaseReadinessReport.approved` to `False`. If you pass custom `quality_gates` to `ReleasePrepTeam.__init__()` with thresholds that don't match your project's actual metrics, you can get a false GO or an unexplained NO-GO with no clear message in `ReleaseReadinessReport.warnings`.
+| Symptom | Cause | Fix | Severity |
+|---|---|---|---|
+| `RuntimeWarning: coroutine 'ReleasePrepTeam.assess_readiness' was never awaited` | `assess_readiness` (or `execute`) called without `await` | Both are coroutines — `await` them or use `asyncio.run` | high |
+| Verdict is BLOCKED but the command exited 0 | `success` reflects that the assessment ran, not the verdict | Read `metadata["approved"]` / the report — don't gate on the exit code alone | medium |
+| Security gate shows `actual: -1` / a gate can't be measured | The agent errored (e.g. the tool raised); `critical_issues` falls back to `-1` | Inspect that agent's `findings["error"]`; confirm the tool runs in the project | medium |
+| Coverage reads as estimated, not measured | `pytest --cov` output wasn't parseable (timeout, no TOTAL line) | The percentage is heuristic from test count (`findings["estimated"]` is `True`); run coverage directly to confirm | low |
+| A gate reports `"bandit not available"` / `"ruff not available"` | The tool isn't installed in the run environment | Install the tool; the agent scores a neutral fallback otherwise | medium |
+| Setting `quality_gates={"coverage": 0.9}` has no effect | Wrong key | Use `min_coverage` (a percentage like `90.0`), not `coverage` | medium |
 
-**Mitigation:** After calling `assess_readiness()`, inspect `report.quality_gates` directly — check both `QualityGate.actual` and `QualityGate.threshold` for each gate before trusting the top-level `report.approved` field. Use `ReleaseReadinessReport.format_console_output()` to surface the full picture, not just the verdict.
+### Risk areas
 
-## Tier escalation adds cost and latency you may not expect
+- **The async call is easy to get wrong.** `assess_readiness` and
+  `execute` are coroutines. Calling `assess_readiness` synchronously is
+  the single most common mistake.
+- **`success` is not the verdict.** A BLOCKED release returns
+  `success=True`. Branch on `metadata["approved"]`.
+- **Threshold keys are specific.** They are `max_critical_issues`,
+  `min_coverage`, `min_quality_score`, `min_doc_coverage` — coverage and
+  doc-coverage are percentages (e.g. `80.0`), not fractions.
 
-`ReleaseAgent` escalates automatically through CHEAP → CAPABLE → PREMIUM tiers when confidence is low. Each `ReleaseAgentResult` records `tier_used`, `escalated`, `cost`, and `execution_time_ms`. Because `ReleasePrepTeam` runs agents in parallel, a single low-confidence result from `SecurityAuditorAgent` or `TestCoverageAgent` can trigger escalation on that agent without affecting others — but the cumulative cost across agents can be higher than expected for a routine check run.
+### Diagnosis order
 
-**Mitigation:** Call `ReleasePrepTeam.get_total_cost()` after `assess_readiness()` completes. If cost is a concern, review `report.agent_results` and check `escalated` on each `ReleaseAgentResult` to identify which agents triggered escalation.
-
-## `_run_command` output is consumed by agents, not returned to callers
-
-`CodeQualityAgent` (runs `ruff`, checks type hints and complexity) and `TestCoverageAgent` (runs `pytest --cov`) both rely on `_run_command` internally. This helper is exported in `release.release_agents.__all__` but is a private implementation detail — its interface can change without notice. If you call it directly in tests or custom agents, a refactor can break your code without breaking the published API.
-
-**Mitigation:** Depend only on the classes and functions listed in `release.__init__.__all__`: `ReleaseAgent`, `ReleasePrepTeam`, `ReleasePrepTeamWorkflow`, and `ReleaseReadinessReport`. Use `ReleaseAgent.process()` to run an individual agent rather than invoking `_run_command` directly.
-
-## `DocumentationAgent` checks the CHANGELOG at assessment time
-
-`DocumentationAgent` verifies docstring coverage, README currency, and CHANGELOG presence during the `assess_readiness()` call. If your CHANGELOG is updated after assessment starts — for example, by a parallel CI step — the result recorded in `ReleaseAgentResult.findings` reflects the file state at the moment the agent ran. Re-running `assess_readiness()` after all file changes are committed is the only way to get an accurate result.
-
-**Mitigation:** Commit all documentation and CHANGELOG updates before calling `assess_readiness()`. Do not rely on a cached `ReleaseReadinessReport` across commits — the `timestamp` field shows when the report was generated.
-
-## Source files
-
-- `src/attune/workflows/release_prep.py`
-- `src/attune/agents/release/**`
-
-**Tags:** `release`, `publishing`, `quality`
+1. Confirm you are awaiting: `await workflow.execute(path=".")` /
+   `await team.assess_readiness(codebase_path=".")`.
+2. Read the verdict from `result.metadata["approved"]`, not `success`.
+3. For a blocked gate, read the report's blockers and the failing
+   gate's actual-vs-threshold.
+4. For an errored agent, inspect its `findings["error"]` in
+   `report.agent_results`.
+5. Confirm the tools (`bandit`, `ruff`, `pytest`) run in the project
+   environment.
