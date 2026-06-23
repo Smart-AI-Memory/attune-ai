@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — troubleshooting</title>
+  <meta name="description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePreparationWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
+  <meta property="og:title" content="Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — troubleshooting" />
+  <meta property="og:description" content="| Symptom | Cause | Fix | Severity | |---|---|---|---| | `RuntimeWarning: coroutine &#x27;ReleasePreparationWorkflow.execute&#x27; was never awaited` | `execute` called without `await` | It is a coroutine — `aw" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/release-notes/troubleshooting" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,85 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-notes">Release Notes</a><span class="sep">&rsaquo;</span><span>troubleshooting</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">3 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents</h1>
+<h2>Failure modes</h2>
+<table>
+<thead>
+<tr>
+<th>Symptom</th>
+<th>Cause</th>
+<th>Fix</th>
+<th>Severity</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>RuntimeWarning: coroutine 'ReleasePreparationWorkflow.execute' was never awaited</code></td>
+<td><code>execute</code> called without <code>await</code></td>
+<td>It is a coroutine — <code>await</code> it or use <code>asyncio.run</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>WorkflowResult.success</code> is <code>False</code>, <code>error</code> is <code>&quot;path argument is required&quot;</code></td>
+<td><code>execute</code> called with an empty or missing <code>path</code></td>
+<td>Pass a non-empty <code>path</code></td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK unavailable: ...&quot;</code></td>
+<td><code>claude_agent_sdk</code> is not importable</td>
+<td>Install the Agent SDK dependency for the environment</td>
+<td>high</td>
+</tr>
+<tr>
+<td><code>error</code> reads <code>&quot;Agent SDK connection failed: ...&quot;</code></td>
+<td>A <code>ConnectionError</code> / <code>TimeoutError</code> reaching the SDK</td>
+<td>Check connectivity and retry</td>
+<td>medium</td>
+</tr>
+<tr>
+<td>Advisory stops early / partial report</td>
+<td>The depth's agent-turn or budget cap was reached</td>
+<td>Use a shallower <code>depth</code>, or raise the cap with <code>ATTUNE_MAX_BUDGET_USD</code></td>
+<td>medium</td>
+</tr>
+<tr>
+<td>The release shipped despite a &quot;no-go&quot;</td>
+<td>Release-notes is advisory — it never blocks</td>
+<td>Use <code>release-prep</code> (<code>attune workflow run release-gate</code>) for an enforced gate</td>
+<td>medium</td>
+</tr>
+</tbody>
+</table>
+<h3>Risk areas</h3>
+<ul>
+<li><strong>The async call is easy to get wrong.</strong> <code>execute</code> is the main
+public method and it is a coroutine. Forgetting to <code>await</code> it is the
+single most common mistake.</li>
+<li><strong>Advisory ≠ gate.</strong> The go/no-go is a recommendation from an LLM
+assessor, not a measured pass/fail. Don't wire it into CI as a
+blocking check — use <code>release-prep</code> for that.</li>
+<li><strong>Pass <code>path</code>.</strong> <code>execute</code> reads <code>path</code> (and <code>depth</code>); the CLI and
+Python API supply <code>path</code> correctly.</li>
+</ul>
+<h3>Diagnosis order</h3>
+<ol>
+<li>Confirm you are awaiting: <code>result = await workflow.execute( path=&quot;.&quot;)</code> inside an <code>async def</code> or <code>asyncio.run</code>.</li>
+<li>Check <code>result.success</code>; if <code>False</code>, read <code>result.error</code>.</li>
+<li>If <code>error</code> is &quot;path argument is required&quot;, confirm you passed
+<code>path=</code>.</li>
+<li>On an SDK error, inspect <code>result.metadata</code> for the captured
+<code>sdk_stderr</code> / SDK error kind.</li>
+<li>Confirm the scope: <code>result.metadata</code> echoes the <code>path</code>, <code>depth</code>,
+and <code>max_turns</code>.</li>
+</ol>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

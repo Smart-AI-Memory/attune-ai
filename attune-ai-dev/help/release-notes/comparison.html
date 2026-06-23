@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — comparison</title>
+  <meta name="description" content="Release-notes is the **advisory** half of the release pair. The two share the &quot;release prep&quot; idea but differ in kind:" />
+  <meta property="og:title" content="Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — comparison" />
+  <meta property="og:description" content="Release-notes is the **advisory** half of the release pair. The two share the &quot;release prep&quot; idea but differ in kind:" />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/release-notes/comparison" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,48 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-notes">Release Notes</a><span class="sep">&rsaquo;</span><span>comparison</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">3 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents</h1>
+<h2>Comparison</h2>
+<p>Release-notes is the <strong>advisory</strong> half of the release pair. The two
+share the &quot;release prep&quot; idea but differ in kind:</p>
+<table>
+<thead>
+<tr>
+<th>Workflow</th>
+<th>Slug(s)</th>
+<th>Kind</th>
+<th>What it does</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>release-notes</code> (this feature)</td>
+<td><code>release-notes</code></td>
+<td>Advisory (SDK)</td>
+<td>Drafts a changelog + an LLM go/no-go. Does not block. Subscription-billed with depth budget caps.</td>
+</tr>
+<tr>
+<td><code>release-prep</code></td>
+<td><code>release-prep</code>, <code>release-gate</code></td>
+<td>Deterministic gate (agent team)</td>
+<td>Runs real <code>bandit</code> / <code>ruff</code> / <code>pytest</code> / docstring checks against hard thresholds and returns an APPROVED / BLOCKED verdict. CLI-only.</td>
+</tr>
+</tbody>
+</table>
+<p>Reach for <strong>release-notes</strong> when you want the changelog written and a
+recommendation. Reach for <strong>release-prep</strong> (<code>attune workflow run release-gate</code>) when you need an enforced gate on measured numbers. A
+common flow is release-notes to draft the notes and read the
+landscape, then release-prep to gate the actual ship.</p>
+<p>Two adjacent tools the <code>/release</code> skill also exposes: <code>dependency_check</code>
+(dependency audit / vulnerability scan) and <code>secure_release</code> (the
+composite security pipeline).</p>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — reference</title>
+  <meta name="description" content="Release-notes&#x27; public surface is the `ReleasePreparationWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — reference" />
+  <meta property="og:description" content="Release-notes&#x27; public surface is the `ReleasePreparationWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/release-notes/reference" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,178 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-notes">Release Notes</a><span class="sep">&rsaquo;</span><span>reference</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">3 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents</h1>
+<h2>Reference</h2>
+<p>Release-notes' public surface is the <code>ReleasePreparationWorkflow</code>
+class, re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes
+from <code>attune.workflows</code> as well.</p>
+<h3><code>ReleasePreparationWorkflow</code> — <code>attune.workflows.release_prep</code></h3>
+<table>
+<thead>
+<tr>
+<th>Symbol</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ReleasePreparationWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments.</td>
+</tr>
+<tr>
+<td><code>ReleasePreparationWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Draft release notes + advisory. Honors <code>path</code> (str, required) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>). Returns a <code>WorkflowResult</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePreparationWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;release-notes&quot;</code>.</td>
+</tr>
+<tr>
+<td><code>ReleasePreparationWorkflow.stages</code></td>
+<td><code>[&quot;agent-prep&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
+</tr>
+</tbody>
+</table>
+<h3>Depth → turns and budget</h3>
+<table>
+<thead>
+<tr>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Budget cap</th>
+<th>Use when</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>quick</code></td>
+<td>10</td>
+<td>$2</td>
+<td>A fast pass for an early read.</td>
+</tr>
+<tr>
+<td><code>standard</code></td>
+<td>20</td>
+<td>$10</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>$25</td>
+<td>The fullest treatment before a major release.</td>
+</tr>
+</tbody>
+</table>
+<h3>The four subagents</h3>
+<table>
+<thead>
+<tr>
+<th>Subagent</th>
+<th>Role</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>health-checker</code></td>
+<td>Runs tests, checks dependency/lock status, verifies CI.</td>
+</tr>
+<tr>
+<td><code>security-scanner</code></td>
+<td>Flags vulnerabilities, secrets, eval/exec, path traversal.</td>
+</tr>
+<tr>
+<td><code>changelog-generator</code></td>
+<td>Drafts a Keep a Changelog section from <code>git log</code>.</td>
+</tr>
+<tr>
+<td><code>release-assessor</code></td>
+<td>Judges overall readiness and gives a go/no-go.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The synthesized report — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Readiness score + go/no-go overview.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Prioritized next steps, including blockers.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
+<td><code>str</code></td>
+<td>The provider that served the run (<code>&quot;anthropic&quot;</code>).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason. (<code>error_type</code> and <code>transient</code> exist on <code>WorkflowResult</code> but this workflow's failure path leaves them unset.)</td>
+</tr>
+</tbody>
+</table>
+<h3>Entry points</h3>
+<table>
+<thead>
+<tr>
+<th>Surface</th>
+<th>Invocation</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>MCP tool</td>
+<td><code>release_notes(path=&lt;p&gt;)</code> — changelog draft + go/no-go advisory (reached via the <code>/release</code> skill).</td>
+</tr>
+<tr>
+<td>CLI</td>
+<td><code>attune workflow run release-notes --path &lt;p&gt; [--depth quick|standard|deep] [--json]</code>.</td>
+</tr>
+<tr>
+<td>Python</td>
+<td><code>await ReleasePreparationWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
+</tr>
+</tbody>
+</table>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>

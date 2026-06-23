@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>attune help</title>
-  <meta name="description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
-  <meta property="og:title" content="attune help" />
-  <meta property="og:description" content="Browse and search the attune help corpus — tasks, concepts, reference, and troubleshooting for every feature." />
+  <title>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — task</title>
+  <meta name="description" content="**Goal:** draft a changelog and get a go/no-go recommendation without writing any Python." />
+  <meta property="og:title" content="Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents — task" />
+  <meta property="og:description" content="**Goal:** draft a changelog and get a go/no-go recommendation without writing any Python." />
   <meta property="og:type" content="website" />
-  <link rel="canonical" href="https://attune-ai.dev/help" />
+  <link rel="canonical" href="https://attune-ai.dev/help/release-notes/task" />
   <style>
     :root {
       --primary: #004ac6;
@@ -267,23 +267,78 @@
 </head>
 <body>
   <nav class="help-nav">
-    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><span>Help</span></span>
+    <span class="crumbs"><a href="/">attune-ai</a><span class="sep">&rsaquo;</span><a href="/help">Help</a><span class="sep">&rsaquo;</span><a href="/help/release-notes">Release Notes</a><span class="sep">&rsaquo;</span><span>task</span></span>
     <a class="api-link" href="https://smartaimemory.com/framework-docs/"
       >API &amp; contributor docs &rarr;</a>
   </nav>
-  <main class="help-home">
-    <h1>attune help</h1>
-    <p class="lede">Learn, do, solve, and look things up — generated from the live attune codebase.</p>
-    <div class="search-wrap">
-      <input id="help-search" type="search" placeholder="Search help…" autocomplete="off" />
-      <ul id="search-results"></ul>
-    </div>
-    <div class="section-h">Browse by what you need</div>
-    <div class="intent-row"><a class="intent-card" href="/help/agents/task"><span class="it-title">Do something</span><span class="it-sub">tasks &amp; quickstarts</span></a><a class="intent-card" href="/help/agents/troubleshooting"><span class="it-title">Solve a problem</span><span class="it-sub">troubleshooting, errors, FAQ</span></a><a class="intent-card" href="/help/agents/concept"><span class="it-title">Understand a concept</span><span class="it-sub">how it works</span></a><a class="intent-card" href="/help/agents/reference"><span class="it-title">Look something up</span><span class="it-sub">reference</span></a></div>
-    <div class="section-h">All features</div>
-    <div class="feature-grid"><a class="feature-card" href="/help/agents"><span class="fc-name">Agents</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/bug-predict"><span class="fc-name">Bug Predict</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/cli"><span class="fc-name">Cli</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/code-quality"><span class="fc-name">Code Quality</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/configuration"><span class="fc-name">Configuration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/deep-review"><span class="fc-name">Deep Review</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/doc-gen"><span class="fc-name">Doc Gen</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/fix-test"><span class="fc-name">Fix Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/help-system"><span class="fc-name">Help System</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/hooks"><span class="fc-name">Hooks</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/mcp-server"><span class="fc-name">Mcp Server</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/memory"><span class="fc-name">Memory</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/models"><span class="fc-name">Models</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/ops-dashboard"><span class="fc-name">Ops Dashboard</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/orchestration"><span class="fc-name">Orchestration</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/plugin"><span class="fc-name">Plugin</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/rag-grounding"><span class="fc-name">Rag Grounding</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/refactor-plan"><span class="fc-name">Refactor Plan</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-notes"><span class="fc-name">Release Notes</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/release-prep"><span class="fc-name">Release Prep</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/resilience"><span class="fc-name">Resilience</span><span class="fc-meta">3 kinds</span></a><a class="feature-card" href="/help/security-audit"><span class="fc-name">Security Audit</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/smart-test"><span class="fc-name">Smart Test</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/spec-engine"><span class="fc-name">Spec Engine</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/telemetry"><span class="fc-name">Telemetry</span><span class="fc-meta">11 kinds</span></a><a class="feature-card" href="/help/wizards"><span class="fc-name">Wizards</span><span class="fc-meta">11 kinds</span></a></div>
-    <script src="/help/search.js" defer></script>
-  </main>
+  <article class="markdown-body">
+<h1>Draft release notes and an LLM go/no-go readiness advisory with four Agent SDK subagents</h1>
+<h2>Tasks</h2>
+<h3>Draft release notes from the CLI</h3>
+<p><strong>Goal:</strong> draft a changelog and get a go/no-go recommendation without
+writing any Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) at the project root:
+attune workflow run release-notes --path .
+
+# Deep advisory, JSON output:
+attune workflow run release-notes --path . --depth deep --json
+</code></pre>
+<p><strong>Verify:</strong> the slug is <code>release-notes</code>. <code>--path</code> / <code>-p</code> defaults to
+the current directory; <code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or
+<code>deep</code>; <code>--json</code> / <code>-j</code> emits machine-readable output. Use <code>attune workflow info release-notes</code> to confirm registration. The report
+includes a readiness score, the drafted changelog, and prioritized
+next steps — this is advice, not a gate.</p>
+<h3>Draft release notes from Python</h3>
+<p><strong>Goal:</strong> wire the advisory into a release hook or pipeline and act on
+the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import ReleasePreparationWorkflow
+
+
+async def main() -&gt; None:
+    workflow = ReleasePreparationWorkflow()
+    result = await workflow.execute(path=&quot;.&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;advisory failed:&quot;, result.error)
+        return
+
+    print(result.final_output)     # synthesized report + changelog
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed run
+returns <code>success=True</code> with the report in <code>final_output</code>; a failure
+returns <code>success=False</code> with a populated <code>error</code>. <code>metadata</code> echoes
+the <code>path</code>, <code>depth</code>, and <code>max_turns</code>.</p>
+<h3>Keep the advisory cheap</h3>
+<p><strong>Goal:</strong> run the advisory at the lowest cost.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import ReleasePreparationWorkflow
+
+
+async def main() -&gt; None:
+    workflow = ReleasePreparationWorkflow()
+    result = await workflow.execute(path=&quot;.&quot;, depth=&quot;quick&quot;)
+    print(result.summary)
+
+
+asyncio.run(main())
+</code></pre>
+<p><strong>Verify:</strong> <code>quick</code> uses the smallest agent-turn budget (10) and the
+lowest cap ($2). To let a deep pre-release run finish without a cap,
+export <code>ATTUNE_MAX_BUDGET_USD=0</code>. Subscription users pay no
+per-request cost regardless.</p>
+
+  </article>
   <footer>
     <span>Smart AI Memory</span>
     <span><a href="https://github.com/Smart-AI-Memory/attune-ai">GitHub</a>
