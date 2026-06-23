@@ -10690,3 +10690,71 @@ files.
   This is a sibling to the existing "plugin-reference-validation tests
   parse skill .md for tool names" lesson — both are PR-only skill-surface
   gates that pre-commit misses.
+
+- **Single-sourcing a help feature via the projector — five
+  Tier-2-rollout traps the dry-run fact-check is blind to** (hit
+  2026-06-23 single-sourcing release-notes / release-prep / memory /
+  rag-grounding). The per-feature loop's static `project_features.py
+  --dry-run` + `check_doc_examples.py` only prove symbols/imports/CLI
+  flags exist and that code blocks compile/await — they miss everything
+  below. Run the FULL `tests/unit/help/` suite LOCALLY before pushing
+  (caught memory's failure pre-CI; release-notes' golden-query failure
+  surfaced only in CI because I skipped this).
+  - **Adversarial review (playbook step 4b) earns its keep EVERY time** —
+    across 4 features the dry-run found 0 but the independent reviewer
+    found real fiction on each: release-notes documented `error_type` /
+    `transient` that its `_error_result` path never sets; release-prep
+    documented bare `bandit`/`ruff`/`pytest` when the agents run
+    `uv run <tool>`; memory claimed `MemoryBackend` /
+    `SearchableMemoryBackend` are re-exported from `attune.memory` when
+    they live only in `attune.memory.backend`. Static checks can't see
+    "this field is never populated" or "the import path is wrong in
+    prose." Always run it; require 0 FALSE / 0 MISLEADING before project.
+    (Watch for reviewer FALSE-positives too: it flagged the gate's
+    "APPROVED/BLOCKED" verdict as unreal because it read
+    `format_console_output` ("READY/NOT READY"), missing
+    `_to_workflow_report:468` which literally emits `APPROVED`/`BLOCKED`
+    — verify the reviewer's refutation against code before "fixing.")
+  - **GOLDEN-QUERY COLLISION when adding a sibling feature.** Adding a
+    second `release-*` feature made the bare golden query `"release"`
+    ambiguous at EVERY `resolve_topic` step (it is a substring of both
+    feature NAMES, both DESCRIPTIONS contain "release", and both carry a
+    `release` TAG) → the waterfall returns `None` →
+    `test_golden_queries.py::test_medium_queries_resolve` fails hard. Fix
+    = RETARGET the golden query to a tag UNIQUE to the intended feature
+    (`"publishing"` is release-prep-only), NOT demote it to `hard`. Before
+    adding a feature whose name/description/tags overlap an existing one,
+    run `tests/unit/help/test_golden_queries.py` locally.
+  - **DD5 `status: manual` is MANDATORY for the manifest-integrity symbol
+    guard to skip a feature.** `test_help_manifest_integrity.py` builds
+    its parametrize list from `[name for name, feat in features if not
+    feat.is_manual]`; `is_manual` is true only when the entry literally
+    has `status: manual`. A single-sourced feature still carrying `files:`
+    (or whose `status` got mangled) is NOT skipped → the guard resolves
+    its source text and flags EVERY documented symbol as missing.
+  - **A DD5 `features.yaml` edit must capture the ENTIRE `files:`/
+    `doc_paths:` block.** Leaving orphaned `- path` list items after the
+    new `status: manual` line makes YAML fold them INTO the `status`
+    scalar (it became a multiline string → `is_manual` False → the guard
+    above fires). After editing a features.yaml entry, `grep` it / load
+    it (`yaml.safe_load`) and assert `status == "manual"` and `files ==
+    []` before trusting it.
+  - **`memory_lint.py` over-matches any `/memory/` path segment.** Writing
+    `.help/templates/memory/faq.md` via the Write tool trips the
+    PostToolUse personal-memory linter (which expects the
+    `name`/`description`/`metadata.type` schema), because it keys on the
+    bare `/memory/` substring rather than a `.claude/.../memory/` ancestor.
+    The other features' faqs don't trip it (different path), and
+    projector-written templates don't (written via Bash, not the Write
+    tool). The file still lands (PostToolUse fires after write) — treat it
+    as a false positive for help-template paths; don't reformat the
+    template to the memory schema.
+  - **Doc-rollout PRs do NOT change the installed wheel.** The wheel only
+    packages files under `src/attune/` (`[tool.setuptools.package-data]`;
+    no `MANIFEST.in` graft of repo-root dirs). The rollout edits
+    `.help/templates/`, `content/features/`, `docs/`, and `tests/` — none
+    under `src/attune/` — so they reach the ops dashboard / website /
+    mkdocs but NOT `pip install attune-ai`. The bundled help
+    (`plugin/help/generated/`) is refreshed only at release-prep cadence.
+    So a PyPI release for a batch of doc-rollout PRs ships byte-identical
+    runtime — defer the release until the bundled help is regenerated.
