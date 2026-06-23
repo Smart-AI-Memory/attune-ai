@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Quickstart: doc gen — quickstart</title>
-  <meta name="description" content="Generate comprehensive documentation from your codebase using AI-powered analysis." />
-  <meta property="og:title" content="Quickstart: doc gen — quickstart" />
-  <meta property="og:description" content="Generate comprehensive documentation from your codebase using AI-powered analysis." />
+  <title>Generate new documentation from source code with three specialized subagents — quickstart</title>
+  <meta name="description" content="Generate documentation for a directory and print the result. `DocumentGenerationWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
+  <meta property="og:title" content="Generate new documentation from source code with three specialized subagents — quickstart" />
+  <meta property="og:description" content="Generate documentation for a directory and print the result. `DocumentGenerationWorkflow.execute` is an async coroutine, so drive it with `asyncio.run` (or `await` it inside an existing event loop):" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/quickstart" />
   <style>
@@ -272,48 +272,31 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Quickstart: doc gen</h1>
-<p>Generate comprehensive documentation from your codebase using AI-powered analysis.</p>
-<pre><code class="language-python">from attune.workflows.document_gen import DocumentGenerationWorkflow
+<h1>Generate new documentation from source code with three specialized subagents</h1>
+<h2>Quickstart</h2>
+<p>Generate documentation for a directory and print the result.
+<code>DocumentGenerationWorkflow.execute</code> is an async coroutine, so
+drive it with <code>asyncio.run</code> (or <code>await</code> it inside an existing event
+loop):</p>
+<pre><code class="language-python">import asyncio
 
-workflow = DocumentGenerationWorkflow()
-result = workflow.execute(path=&quot;./src&quot;)
-print(result.output)
-</code></pre>
-<h2>Prerequisites</h2>
-<ul>
-<li>Python environment with the attune package installed</li>
-<li>Source code directory you want to document</li>
-</ul>
-<h2>Generate your first documentation</h2>
-<ol>
-<li><strong>Create a workflow instance</strong> and point it at your source code:</li>
-</ol>
-<pre><code class="language-python">from attune.workflows.document_gen import DocumentGenerationWorkflow
+from attune.workflows import DocumentGenerationWorkflow
 
-workflow = DocumentGenerationWorkflow()
-result = workflow.execute(path=&quot;./your-project-directory&quot;)
-</code></pre>
-<ol start="2">
-<li><strong>Review the generated documentation</strong> structure:</li>
-</ol>
-<pre><code class="language-python">print(result.output)
-# Output includes:
-# - Summary: Overview of your codebase
-# - Outline: Documentation structure
-# - Documentation: Full content with API references
-# - Suggestions: Improvement recommendations
-</code></pre>
-<ol start="3">
-<li><strong>Format the output</strong> for human reading:</li>
-</ol>
-<pre><code class="language-python">from attune.workflows.document_gen import format_doc_gen_report
 
-report = format_doc_gen_report(result.raw_data, {&quot;path&quot;: &quot;./your-project-directory&quot;})
-print(report)
+async def main() -&gt; None:
+    workflow = DocumentGenerationWorkflow()
+    result = await workflow.execute(path=&quot;src/attune/config.py&quot;)
+
+    print(result.success)          # True on a completed run
+    print(result.summary)          # short overview
+    print(result.final_output)     # the generated documentation
+
+
+asyncio.run(main())
 </code></pre>
-<p><strong>Expected output:</strong> A structured markdown document with sections for summary, outline, detailed documentation, and improvement suggestions for your codebase.</p>
-<p><strong>Next:</strong> Save the generated documentation to a file and integrate it into your project's docs folder.</p>
+<p><code>depth</code> defaults to <code>&quot;standard&quot;</code>, so <code>execute(path=&quot;...&quot;)</code> is
+equivalent. Use <code>&quot;quick&quot;</code> for a fast pass or <code>&quot;deep&quot;</code> for the
+fullest treatment.</p>
 
   </article>
   <footer>

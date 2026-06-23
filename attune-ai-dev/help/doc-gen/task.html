@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Work with doc gen — task</title>
-  <meta name="description" content="Use doc gen when you need to generate documentation from source code — docstrings, readme sections, or API references." />
-  <meta property="og:title" content="Work with doc gen — task" />
-  <meta property="og:description" content="Use doc gen when you need to generate documentation from source code — docstrings, readme sections, or API references." />
+  <title>Generate new documentation from source code with three specialized subagents — task</title>
+  <meta name="description" content="**Goal:** generate documentation for a module without writing any Python." />
+  <meta property="og:title" content="Generate new documentation from source code with three specialized subagents — task" />
+  <meta property="og:description" content="**Goal:** generate documentation for a module without writing any Python." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/task" />
   <style>
@@ -272,78 +272,73 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Work with doc gen</h1>
-<p>Use doc gen when you need to generate documentation from source code — docstrings, readme sections, or API references.</p>
-<h2>Set up your environment</h2>
-<ol>
-<li>
-<p><strong>Navigate to the document generation module</strong></p>
-<pre><code class="language-bash">cd src/attune/workflows/document_gen/
+<h1>Generate new documentation from source code with three specialized subagents</h1>
+<h2>Tasks</h2>
+<h3>Generate docs from the CLI</h3>
+<p><strong>Goal:</strong> generate documentation for a module without writing any
+Python.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-bash"># Default depth (standard) over a module:
+attune workflow run doc-gen --path src/attune/config.py
+
+# Deep generation, JSON output:
+attune workflow run doc-gen --path src/attune/ --depth deep --json
 </code></pre>
-</li>
-<li>
-<p><strong>Review the workflow structure</strong>
-Examine the main entry point to understand the current generation pipeline:</p>
-<ul>
-<li><code>DocumentGenerationWorkflow</code> orchestrates three specialized subagents</li>
-<li>Each subagent handles outline planning, content writing, or final polish</li>
-<li>The workflow produces structured markdown output</li>
-</ul>
-</li>
-</ol>
-<h2>Modify generation behavior</h2>
-<ol>
-<li>
-<p><strong>Choose the right mixin for your change</strong>
-Each mixin handles a specific stage:</p>
-<ul>
-<li><code>OutlineStageMixin</code> — controls documentation structure planning</li>
-<li><code>WriteStageMixin</code> — handles content generation</li>
-<li><code>PolishStageMixin</code> — manages final review and formatting</li>
-<li><code>ChunkedGenerationMixin</code> — breaks large codebases into manageable pieces</li>
-<li><code>DocGenCostMixin</code> — tracks token usage and generation costs</li>
-</ul>
-</li>
-<li>
-<p><strong>Update the workflow configuration</strong>
-Modify <code>default_context()</code> in <code>DocumentGenerationWorkflow</code> to change:</p>
-<ul>
-<li>Which subagents run in the pipeline</li>
-<li>Default parameters for each generation stage</li>
-<li>Cost limits or chunking thresholds</li>
-</ul>
-</li>
-<li>
-<p><strong>Customize the output format</strong>
-Edit <code>format_doc_gen_report()</code> in <code>report_formatter.py</code> to change:</p>
-<ul>
-<li>Report structure and sections</li>
-<li>How generation results are displayed</li>
-<li>Progress indicators or completion status</li>
-</ul>
-</li>
-</ol>
-<h2>Test your changes</h2>
-<ol>
-<li>
-<p><strong>Run the doc generation tests</strong></p>
-<pre><code class="language-bash">pytest -k &quot;doc_gen&quot; -v
+<p><strong>Verify:</strong> the slug is <code>doc-gen</code>. <code>--path</code> / <code>-p</code> defaults to the
+current directory; <code>--depth</code> accepts <code>quick</code>, <code>standard</code>, or
+<code>deep</code>; <code>--json</code> / <code>-j</code> emits machine-readable output. Use
+<code>attune workflow info doc-gen</code> to confirm registration. The
+generated documentation is printed in the result — place it where
+it belongs.</p>
+<h3>Generate docs from Python</h3>
+<p><strong>Goal:</strong> drive doc-gen from a hook or a docs pipeline and act on
+the result.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import DocumentGenerationWorkflow
+
+
+async def main() -&gt; None:
+    workflow = DocumentGenerationWorkflow()
+    result = await workflow.execute(path=&quot;src/attune/api/&quot;, depth=&quot;deep&quot;)
+
+    if not result.success:
+        print(&quot;generation failed:&quot;, result.error)
+        return
+
+    print(result.final_output)     # the generated document
+    for action in result.suggestions:
+        print(action)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-<li>
-<p><strong>Verify workflow execution</strong>
-Test the complete pipeline by running:</p>
-<pre><code class="language-bash">python -m attune.workflows.document_gen --path ./test_module
+<p><strong>Verify:</strong> <code>execute</code> is a coroutine — <code>await</code> it. A completed run
+returns <code>success=True</code> with the document in <code>final_output</code>; a
+failure returns <code>success=False</code> with a populated <code>error</code> and
+<code>error_type</code>. <code>metadata</code> echoes the <code>path</code>, <code>depth</code>, and
+<code>max_turns</code>.</p>
+<h3>Scope the run to keep it fast</h3>
+<p><strong>Goal:</strong> generate docs for one module cheaply.</p>
+<p><strong>Steps:</strong></p>
+<pre><code class="language-python">import asyncio
+
+from attune.workflows import DocumentGenerationWorkflow
+
+
+async def main() -&gt; None:
+    workflow = DocumentGenerationWorkflow()
+    result = await workflow.execute(path=&quot;src/attune/config.py&quot;, depth=&quot;quick&quot;)
+    print(result.final_output)
+
+
+asyncio.run(main())
 </code></pre>
-</li>
-</ol>
-<p>You know the changes work when the workflow executes without errors and produces documentation in the expected format with your modifications applied.</p>
-<h2>Key files to modify</h2>
-<ul>
-<li><code>src/attune/workflows/document_gen/workflow.py</code> — Main workflow orchestration</li>
-<li><code>src/attune/workflows/document_gen/report_formatter.py</code> — Output formatting</li>
-<li>Individual mixin files for stage-specific behavior changes</li>
-</ul>
+<p><strong>Verify:</strong> doc-gen has no <code>focus</code> parameter, so the levers are
+<code>path</code> (point it at a narrower file or directory) and <code>depth</code>
+(<code>quick</code> uses the smallest agent-turn budget). All three passes run
+over whatever <code>path</code> covers.</p>
 
   </article>
   <footer>

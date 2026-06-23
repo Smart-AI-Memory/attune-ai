@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Tip: working effectively with doc gen — tip</title>
-  <meta name="description" content="The `DocGenCostMixin` tracks token usage across all three subagents (outline-planner, content-writer, polish-reviewer) and provides real-time cost estimates. Check costs before processing large codeba" />
-  <meta property="og:title" content="Tip: working effectively with doc gen — tip" />
-  <meta property="og:description" content="The `DocGenCostMixin` tracks token usage across all three subagents (outline-planner, content-writer, polish-reviewer) and provides real-time cost estimates. Check costs before processing large codeba" />
+  <title>Generate new documentation from source code with three specialized subagents — tip</title>
+  <meta name="description" content="- **Depend on the documented public surface.** The supported API is `DocumentGenerationWorkflow` and its async `execute` (plus the `default_context` classmethod for composition), and the `WorkflowResu" />
+  <meta property="og:title" content="Generate new documentation from source code with three specialized subagents — tip" />
+  <meta property="og:description" content="- **Depend on the documented public surface.** The supported API is `DocumentGenerationWorkflow` and its async `execute` (plus the `default_context` classmethod for composition), and the `WorkflowResu" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/tip" />
   <style>
@@ -272,11 +272,22 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Tip: working effectively with doc gen</h1>
-<h2>Use the workflow's built-in cost tracking to avoid LLM token surprises</h2>
-<p>The <code>DocGenCostMixin</code> tracks token usage across all three subagents (outline-planner, content-writer, polish-reviewer) and provides real-time cost estimates. Check costs before processing large codebases to avoid unexpected bills.</p>
-<p>The mixin is already integrated into <code>DocumentGenerationWorkflow</code>, so you get automatic cost reporting in the workflow result without any additional setup.</p>
-<p><strong>Tags:</strong> <code>docs</code>, <code>documentation</code>, <code>generation</code></p>
+<h1>Generate new documentation from source code with three specialized subagents</h1>
+<h2>Notes &amp; tips</h2>
+<ul>
+<li><strong>Depend on the documented public surface.</strong> The supported API is
+<code>DocumentGenerationWorkflow</code> and its async <code>execute</code> (plus the
+<code>default_context</code> classmethod for composition), and the
+<code>WorkflowResult</code> it returns. Names with a leading underscore —
+<code>_run_agent_gen</code>, <code>_SUBAGENT_NAMES</code> — are internal and may
+change.</li>
+<li><strong>Audit first, then generate.</strong> Run doc-audit to find the gaps,
+then point doc-gen at the modules that need new content.</li>
+<li><strong>Use <code>path</code> and <code>depth</code> to keep runs cheap.</strong> A <code>quick</code> pass
+over one module is far faster than a <code>deep</code> pass over <code>src/</code>.</li>
+<li><strong>Take the output from <code>final_output</code>.</strong> Doc-gen returns
+generated content; review it and place it where it belongs.</li>
+</ul>
 
   </article>
   <footer>

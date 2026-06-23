@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Doc gen vs alternatives — comparison</title>
-  <meta name="description" content="The doc gen workflow creates comprehensive documentation by orchestrating three specialized AI agents: an outline planner, content writer, and polish reviewer. It analyzes source code to extract API r" />
-  <meta property="og:title" content="Doc gen vs alternatives — comparison" />
-  <meta property="og:description" content="The doc gen workflow creates comprehensive documentation by orchestrating three specialized AI agents: an outline planner, content writer, and polish reviewer. It analyzes source code to extract API r" />
+  <title>Generate new documentation from source code with three specialized subagents — comparison</title>
+  <meta name="description" content="Doc-gen is the **creation** workflow in a family of three documentation tools the `/doc-gen` skill routes between:" />
+  <meta property="og:title" content="Generate new documentation from source code with three specialized subagents — comparison" />
+  <meta property="og:description" content="Doc-gen is the **creation** workflow in a family of three documentation tools the `/doc-gen` skill routes between:" />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/comparison" />
   <style>
@@ -272,86 +272,37 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Doc gen vs alternatives</h1>
-<h2>Context</h2>
-<p>The doc gen workflow creates comprehensive documentation by orchestrating three specialized AI agents: an outline planner, content writer, and polish reviewer. It analyzes source code to extract API references, generate structured content, and produce human-readable reports.</p>
-<h2>Feature comparison</h2>
+<h1>Generate new documentation from source code with three specialized subagents</h1>
+<h2>Comparison</h2>
+<p>Doc-gen is the <strong>creation</strong> workflow in a family of three
+documentation tools the <code>/doc-gen</code> skill routes between:</p>
 <table>
 <thead>
 <tr>
-<th>Feature</th>
-<th>Doc gen workflow</th>
-<th>Manual documentation</th>
-<th>Single-pass generators</th>
+<th>Tool</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><strong>Structure</strong></td>
-<td>Three-stage pipeline (outline → write → polish)</td>
-<td>Fully manual</td>
-<td>Single AI call</td>
+<td><code>doc-gen</code> (this feature)</td>
+<td>Generate new documentation from source code.</td>
 </tr>
 <tr>
-<td><strong>Cost management</strong></td>
-<td>Built-in token tracking and budgeting</td>
-<td>No cost tracking</td>
-<td>No cost oversight</td>
+<td><code>doc_audit</code></td>
+<td>Check for stale or missing documentation.</td>
 </tr>
 <tr>
-<td><strong>Chunked processing</strong></td>
-<td>Handles large codebases via chunking</td>
-<td>Manual file splitting</td>
-<td>Often fails on large inputs</td>
-</tr>
-<tr>
-<td><strong>API extraction</strong></td>
-<td>Automatic docstring and signature parsing</td>
-<td>Manual API documentation</td>
-<td>Basic code scanning</td>
-</tr>
-<tr>
-<td><strong>Quality control</strong></td>
-<td>Dedicated polish/review stage</td>
-<td>Developer review only</td>
-<td>No built-in review</td>
-</tr>
-<tr>
-<td><strong>Output format</strong></td>
-<td>Structured markdown with citations</td>
-<td>Varies by author</td>
-<td>Usually plain text</td>
+<td><code>doc_orchestrator</code></td>
+<td>Run a full documentation maintenance pipeline.</td>
 </tr>
 </tbody>
 </table>
-<h2>Use doc gen when</h2>
-<ul>
-<li>You need comprehensive documentation for a medium-to-large codebase (the chunking handles projects that exceed token limits)</li>
-<li>Cost visibility matters — the <code>DocGenCostMixin</code> tracks token usage across all three stages</li>
-<li>You want structured output with file path citations rather than generic descriptions</li>
-<li>Your codebase has substantial API surface area that benefits from automated extraction</li>
-<li>Quality matters more than speed — the three-stage pipeline produces more thorough results than single-pass tools</li>
-</ul>
-<h2>Don't use doc gen when</h2>
-<ul>
-<li>You need real-time documentation updates — the workflow is designed for periodic comprehensive generation, not continuous integration</li>
-<li>You're documenting a single small file — the orchestration overhead isn't worth it</li>
-<li>You need non-markdown output formats — the workflow targets structured markdown specifically</li>
-<li>Your codebase lacks docstrings or clear structure — garbage in, garbage out applies</li>
-<li>You're prototyping and need quick iteration — the three-stage process prioritizes thoroughness over speed</li>
-</ul>
-<h2>Alternative approaches</h2>
-<p><strong>Manual documentation</strong>: Full control but no automation benefits. Choose this for highly specialized content where AI assistance adds little value.</p>
-<p><strong>Docstring-only tools</strong>: Tools that extract existing docstrings without generating new content. Faster but limited to what developers already wrote.</p>
-<p><strong>IDE documentation features</strong>: Real-time tooltips and inline help. Complements but doesn't replace comprehensive documentation generation.</p>
-<p><strong>Single-pass AI generators</strong>: Simpler but less structured. Consider for quick documentation tasks where the three-stage quality improvement isn't needed.</p>
-<h2>Recommendation</h2>
-<p>Use doc gen as your primary documentation generator if you have a substantial codebase (10+ files) and care about output quality. The three-stage approach and built-in cost management make it suitable for regular documentation updates in professional projects. For smaller codebases or quick prototypes, simpler alternatives may be more efficient.</p>
-<h2>Source files</h2>
-<ul>
-<li><code>src/attune/workflows/document_gen/**</code></li>
-</ul>
-<p><strong>Tags:</strong> <code>docs</code>, <code>documentation</code>, <code>generation</code></p>
+<p>Reach for <strong>doc-gen</strong> when you need new content written for a
+module that lacks it; reach for <strong>doc_audit</strong> to find what's stale
+or missing first; reach for <strong>doc_orchestrator</strong> when you want the
+end-to-end maintenance pass. A common flow is doc_audit to find the
+gaps, then doc-gen to fill them.</p>
 
   </article>
   <footer>

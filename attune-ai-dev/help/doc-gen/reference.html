@@ -3,10 +3,10 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Doc-gen reference — reference</title>
-  <meta name="description" content="Generate documentation from source code using a multi-stage workflow that orchestrates specialized subagents for outline planning, content writing, and polishing." />
-  <meta property="og:title" content="Doc-gen reference — reference" />
-  <meta property="og:description" content="Generate documentation from source code using a multi-stage workflow that orchestrates specialized subagents for outline planning, content writing, and polishing." />
+  <title>Generate new documentation from source code with three specialized subagents — reference</title>
+  <meta name="description" content="Doc-gen&#x27;s public surface is the `DocumentGenerationWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
+  <meta property="og:title" content="Generate new documentation from source code with three specialized subagents — reference" />
+  <meta property="og:description" content="Doc-gen&#x27;s public surface is the `DocumentGenerationWorkflow` class, re-exported from `attune.workflows`. `WorkflowResult` comes from `attune.workflows` as well." />
   <meta property="og:type" content="website" />
   <link rel="canonical" href="https://attune-ai.dev/help/doc-gen/reference" />
   <style>
@@ -272,125 +272,164 @@
       >API &amp; contributor docs &rarr;</a>
   </nav>
   <article class="markdown-body">
-<h1>Doc-gen reference</h1>
-<p>Generate documentation from source code using a multi-stage workflow that orchestrates specialized subagents for outline planning, content writing, and polishing.</p>
-<h2>Classes</h2>
+<h1>Generate new documentation from source code with three specialized subagents</h1>
+<h2>Reference</h2>
+<p>Doc-gen's public surface is the <code>DocumentGenerationWorkflow</code> class,
+re-exported from <code>attune.workflows</code>. <code>WorkflowResult</code> comes from
+<code>attune.workflows</code> as well.</p>
+<h3><code>DocumentGenerationWorkflow</code> — <code>attune.workflows.document_gen</code></h3>
 <table>
 <thead>
 <tr>
-<th>Class</th>
-<th>Description</th>
+<th>Symbol</th>
+<th>Purpose</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DocumentGenerationWorkflow</code></td>
-<td>Generate new documentation from source code using coordinated subagents</td>
+<td><code>DocumentGenerationWorkflow()</code></td>
+<td>Construct the workflow. Takes no special constructor arguments.</td>
 </tr>
 <tr>
-<td><code>APIReferenceMixin</code></td>
-<td>Extract and generate API reference sections from source code</td>
+<td><code>DocumentGenerationWorkflow.execute(**kwargs)</code></td>
+<td><strong>Async.</strong> Generate docs. Honors <code>path</code> (str, required) and <code>depth</code> (<code>&quot;quick&quot;</code> / <code>&quot;standard&quot;</code> / <code>&quot;deep&quot;</code>, default <code>&quot;standard&quot;</code>). No <code>focus</code>. Returns a <code>WorkflowResult</code>.</td>
 </tr>
 <tr>
-<td><code>ChunkedGenerationMixin</code></td>
-<td>Handle large documentation generation through chunked operations</td>
+<td><code>DocumentGenerationWorkflow.default_context(xml_config=None)</code></td>
+<td>Classmethod returning a <code>WorkflowContext</code> pre-configured with prompt and parsing services, for composition.</td>
 </tr>
 <tr>
-<td><code>DocGenCostMixin</code></td>
-<td>Track and manage token costs during documentation generation</td>
+<td><code>DocumentGenerationWorkflow.name</code></td>
+<td>The registered slug, <code>&quot;doc-gen&quot;</code>.</td>
 </tr>
 <tr>
-<td><code>OutlineStageMixin</code></td>
-<td>Generate structured documentation outlines from codebase analysis</td>
-</tr>
-<tr>
-<td><code>PolishStageMixin</code></td>
-<td>Review and polish generated documentation for final output</td>
-</tr>
-<tr>
-<td><code>WriteStageMixin</code></td>
-<td>Generate documentation content from outlined structure</td>
+<td><code>DocumentGenerationWorkflow.stages</code></td>
+<td><code>[&quot;agent-gen&quot;]</code>; the stage runs at the <code>CAPABLE</code> model tier.</td>
 </tr>
 </tbody>
 </table>
-<h3>DocumentGenerationWorkflow</h3>
+<h3>Depth → agent-turn budget</h3>
 <table>
 <thead>
 <tr>
-<th>Method</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Depth</th>
+<th>Max turns</th>
+<th>Use when</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>default_context</code></td>
-<td><code>xml_config: dict | None = None</code></td>
-<td><code>WorkflowContext</code></td>
-<td>Create default workflow context for documentation generation</td>
+<td><code>quick</code></td>
+<td>10</td>
+<td>A fast pass on a single module.</td>
 </tr>
 <tr>
-<td><code>execute</code></td>
-<td><code>**kwargs: Any</code></td>
-<td><code>WorkflowResult</code></td>
-<td>Execute the documentation generation workflow</td>
+<td><code>standard</code></td>
+<td>20</td>
+<td>The default — balanced coverage and cost.</td>
+</tr>
+<tr>
+<td><code>deep</code></td>
+<td>40</td>
+<td>The fullest treatment of a large or public-facing area.</td>
 </tr>
 </tbody>
 </table>
-<h2>Functions</h2>
+<h3>The three passes</h3>
 <table>
 <thead>
 <tr>
-<th>Function</th>
-<th>Parameters</th>
-<th>Returns</th>
-<th>Description</th>
+<th>Subagent</th>
+<th>Role</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>format_doc_gen_report</code></td>
-<td><code>result: dict, input_data: dict</code></td>
+<td><code>outline-planner</code></td>
+<td>Plans the doc structure: modules, APIs, example sections.</td>
+</tr>
+<tr>
+<td><code>content-writer</code></td>
+<td>Writes the content with code examples and API references.</td>
+</tr>
+<tr>
+<td><code>polish-reviewer</code></td>
+<td>Refines for clarity and consistency.</td>
+</tr>
+</tbody>
+</table>
+<h3><code>WorkflowResult</code> fields read after a run</h3>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+<th>Meaning</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>success</code></td>
+<td><code>bool</code></td>
+<td>Whether the run completed.</td>
+</tr>
+<tr>
+<td><code>final_output</code></td>
+<td><code>Any</code></td>
+<td>The generated document — a serialized report when findings parse, else the raw markdown.</td>
+</tr>
+<tr>
+<td><code>summary</code></td>
+<td><code>str | None</code></td>
+<td>Short overview of the documented codebase.</td>
+</tr>
+<tr>
+<td><code>suggestions</code></td>
+<td><code>list[NextAction]</code></td>
+<td>Recommendations for improving coverage.</td>
+</tr>
+<tr>
+<td><code>cost_report</code></td>
+<td><code>CostReport</code></td>
+<td>Cost / usage for the run.</td>
+</tr>
+<tr>
+<td><code>provider</code></td>
 <td><code>str</code></td>
-<td>Format document generation output as a human-readable report</td>
+<td>The provider that served the run (<code>&quot;anthropic&quot;</code>).</td>
+</tr>
+<tr>
+<td><code>metadata</code></td>
+<td><code>dict</code></td>
+<td>Echoes <code>path</code>, <code>depth</code>, and <code>max_turns</code>; carries SDK error fields on failure.</td>
+</tr>
+<tr>
+<td><code>error</code> / <code>error_type</code></td>
+<td><code>str | None</code></td>
+<td>Failure reason and category (<code>&quot;config&quot;</code> / <code>&quot;runtime&quot;</code> / <code>&quot;provider&quot;</code> / <code>&quot;timeout&quot;</code> / <code>&quot;validation&quot;</code>).</td>
 </tr>
 </tbody>
 </table>
-<h2>Constants</h2>
+<h3>Entry points</h3>
 <table>
 <thead>
 <tr>
-<th>Constant</th>
-<th>Values</th>
-<th>Description</th>
+<th>Surface</th>
+<th>Invocation</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>DOC_GEN_STEPS</code></td>
-<td>(exported in <code>__all__</code>)</td>
-<td>Documentation generation workflow steps</td>
+<td>Skill</td>
+<td><code>/doc-gen</code> in a Claude Code conversation — routes to <code>doc_gen</code> (generate), <code>doc_audit</code> (stale/missing), or <code>doc_orchestrator</code> (pipeline).</td>
 </tr>
 <tr>
-<td><code>TOKEN_COSTS</code></td>
-<td>(exported in <code>__all__</code>)</td>
-<td>Token cost tracking configuration</td>
+<td>CLI</td>
+<td><code>attune workflow run doc-gen --path &lt;p&gt; [--depth quick|standard|deep] [--json]</code>.</td>
 </tr>
 <tr>
-<td><code>_SUBAGENT_NAMES</code></td>
-<td><code>['outline-planner', 'content-writer', 'polish-reviewer']</code></td>
-<td>Names of specialized documentation subagents</td>
-</tr>
-<tr>
-<td><code>_SYSTEM_PROMPT</code></td>
-<td><code>'You are a documentation generation orchestrator...'</code></td>
-<td>System prompt for workflow coordination</td>
-</tr>
-<tr>
-<td><code>_TASK_PROMPT_TEMPLATE</code></td>
-<td>Template string</td>
-<td>Task prompt template for documentation generation</td>
+<td>Python</td>
+<td><code>await DocumentGenerationWorkflow().execute(path=&lt;p&gt;, depth=&lt;d&gt;)</code>.</td>
 </tr>
 </tbody>
 </table>
